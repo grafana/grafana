@@ -115,55 +115,32 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
-    if (this.configs.queryType === AzureQueryType.LogAnalytics) {
-      const item = target.azureLogAnalytics;
+    const item = target.azureLogAnalytics;
 
-      const templateSrv = getTemplateSrv();
-      let workspace = templateSrv.replace(item.workspace, scopedVars);
-
-      if (!workspace && this.defaultOrFirstWorkspace) {
-        workspace = this.defaultOrFirstWorkspace;
-      }
-
-      const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
-      const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
-
-      return {
-        refId: target.refId,
-        format: target.format,
-        queryType: AzureQueryType.LogAnalytics,
-        subscriptionId: subscriptionId,
-        azureLogAnalytics: {
-          resultFormat: item.resultFormat,
-          query: query,
-          workspace: workspace,
-        },
-      };
-    } else {
-      const item = target.azureResourceLogAnalytics;
-
-      const templateSrv = getTemplateSrv();
-      let resource = templateSrv.replace(item.resource, scopedVars);
-
-      if (!resource && this.defaultOrFirstResource) {
-        resource = this.defaultOrFirstResource;
-      }
-
-      const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
-      const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
-
-      return {
-        refId: target.refId,
-        format: target.format,
-        queryType: AzureQueryType.ResourceLogAnalytics,
-        subscriptionId: subscriptionId,
-        azureResourceLogAnalytics: {
-          resultFormat: item.resultFormat,
-          query: query,
-          resource: resource,
-        },
-      };
+    const templateSrv = getTemplateSrv();
+    let workspace = templateSrv.replace(item.workspace, scopedVars);
+    let resource = templateSrv.replace(item.resource, scopedVars);
+    if (!workspace && this.defaultOrFirstWorkspace) {
+      workspace = this.defaultOrFirstWorkspace;
     }
+    if (!resource && this.defaultOrFirstResource) {
+      resource = this.defaultOrFirstResource;
+    }
+    const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
+    const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
+
+    return {
+      refId: target.refId,
+      format: target.format,
+      queryType: this.configs.queryType,
+      subscriptionId: subscriptionId,
+      azureLogAnalytics: {
+        resultFormat: item.resultFormat,
+        query: query,
+        workspace: workspace,
+        resource: resource,
+      },
+    };
   }
 
   /**

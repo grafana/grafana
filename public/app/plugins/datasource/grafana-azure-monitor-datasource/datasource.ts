@@ -105,7 +105,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     optionsKey[AzureQueryType.AzureMonitor] = 'azureMonitor';
     optionsKey[AzureQueryType.InsightsAnalytics] = 'insightsAnalytics';
     optionsKey[AzureQueryType.LogAnalytics] = 'azureLogAnalytics';
-    optionsKey[AzureQueryType.ResourceLogAnalytics] = 'azureResourceLogAnalytics';
+    optionsKey[AzureQueryType.ResourceLogAnalytics] = 'azureLogAnalytics';
     this.optionsKey = optionsKey;
   }
 

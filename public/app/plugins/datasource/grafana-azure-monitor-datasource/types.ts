@@ -17,7 +17,6 @@ export interface AzureMonitorQuery extends DataQuery {
 
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
-  azureResourceLogAnalytics: AzureResourceLogsQuery;
   appInsights?: ApplicationInsightsQuery;
   insightsAnalytics: InsightsAnalyticsQuery;
 }
@@ -75,11 +74,6 @@ export interface AzureLogsQuery {
   query: string;
   resultFormat: string;
   workspace: string;
-}
-
-export interface AzureResourceLogsQuery {
-  query: string;
-  resultFormat: string;
   resource: string;
 }
 

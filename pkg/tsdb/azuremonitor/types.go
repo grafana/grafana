@@ -134,12 +134,8 @@ type logJSONQuery struct {
 		Query        string `json:"query"`
 		ResultFormat string `json:"resultFormat"`
 		Workspace    string `json:"workspace"`
-	} `json:"azureLogAnalytics"`
-	AzureResourceLogAnalytics struct {
-		Query        string `json:"query"`
-		ResultFormat string `json:"resultFormat"`
 		Resource     string `json:"resource"`
-	} `json:"azureResourceLogAnalytics"`
+	} `json:"azureLogAnalytics"`
 }
 
 // InsightsDimensions will unmarshal from a JSON string, or an array of strings,

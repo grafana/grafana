@@ -51,10 +51,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       query: string;
       resultFormat: string;
       workspace: string;
-    };
-    azureResourceLogAnalytics: {
-      query: string;
-      resultFormat: string;
       resource: string;
     };
     appInsights: {
@@ -98,10 +94,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       query: defaultQuery,
       resultFormat: 'time_series',
       workspace: this.datasource?.azureLogAnalyticsDatasource.defaultOrFirstWorkspace ?? '',
-    },
-    azureResourceLogAnalytics: {
-      query: defaultQuery,
-      resultFormat: 'time_series',
       resource: this.datasource?.azureResourceLogAnalyticsDatasource.defaultOrFirstResource ?? '',
     },
     appInsights: {
@@ -600,13 +592,13 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .then((list: any[]) => {
         this.resources = list;
 
-        if (list.length > 0 && !this.target.azureResourceLogAnalytics.resource) {
+        if (list.length > 0 && !this.target.azureLogAnalytics.resource) {
           if (this.datasource.azureResourceLogAnalyticsDatasource.defaultOrFirstResource) {
-            this.target.azureResourceLogAnalytics.resource = this.datasource.azureResourceLogAnalyticsDatasource.defaultOrFirstResource;
+            this.target.azureLogAnalytics.resource = this.datasource.azureResourceLogAnalyticsDatasource.defaultOrFirstResource;
           }
 
-          if (!this.target.azureResourceLogAnalytics.resource) {
-            this.target.azureResourceLogAnalytics.resource = list[0].value;
+          if (!this.target.azureLogAnalytics.resource) {
+            this.target.azureLogAnalytics.resource = list[0].value;
           }
         }
 
@@ -626,19 +618,13 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   getAzureResourceLogAnalyticsSchema = () => {
     return this.getResources()
       .then(() => {
-        return this.datasource.azureResourceLogAnalyticsDatasource.getSchema(
-          this.target.azureResourceLogAnalytics.resource
-        );
+        return this.datasource.azureResourceLogAnalyticsDatasource.getSchema(this.target.azureLogAnalytics.resource);
       })
       .catch(this.handleQueryCtrlError.bind(this));
   };
 
   onLogAnalyticsQueryChange = (nextQuery: string) => {
     this.target.azureLogAnalytics.query = nextQuery;
-  };
-
-  onResourceLogAnalyticsQueryChange = (nextQuery: string) => {
-    this.target.azureResourceLogAnalytics.query = nextQuery;
   };
 
   onLogAnalyticsQueryExecute = () => {

@@ -85,10 +85,10 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 			resultFormat = "time_series"
 		}
 
-		urlComponents := map[string]string{}
-		urlComponents["workspace"] = azureLogAnalyticsTarget.Workspace
-		apiURL := fmt.Sprintf("%s/query", urlComponents["workspace"])
-
+		apiURL := fmt.Sprintf("%s/query", azureLogAnalyticsTarget.Resource)
+		if query.QueryType == "Azure Log Analytics" {
+			apiURL = fmt.Sprintf("%s/query", azureLogAnalyticsTarget.Workspace)
+		}
 		params := url.Values{}
 		rawQuery, err := KqlInterpolate(query, timeRange, azureLogAnalyticsTarget.Query, "TimeGenerated")
 		if err != nil {
@@ -126,7 +126,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return queryResult
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, e.dsInfo, query)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult
@@ -197,14 +197,24 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	return queryResult
 }
 
-func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource, query *AzureLogAnalyticsQuery) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err
 	}
 	u.Path = path.Join(u.Path, "render")
+	values := map[string]string{"query": query.Params.Get("query")}
+	jsonStr, _ := json.Marshal(values)
 
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	var req *http.Request
+	queryType := query.Model.Get("queryType").MustString("")
+
+	if queryType == "Azure Log Analytics" {
+		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+	} else {
+		req, err = http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(jsonStr))
+	}
+
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("failed to create request", err)
@@ -220,7 +230,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	}
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 
-	logAnalyticsRoute, proxypass, err := e.getPluginRoute(plugin, cloudName)
+	logAnalyticsRoute, proxypass, err := e.getPluginRoute(plugin, cloudName, queryType)
 	if err != nil {
 		return nil, err
 	}
@@ -229,14 +239,27 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	return req, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (*plugins.AppPluginRoute, string, error) {
-	pluginRouteName := "loganalyticsazure"
+func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string, queryType string) (*plugins.AppPluginRoute, string, error) {
+	var pluginRouteName string
 
-	switch cloudName {
-	case "chinaazuremonitor":
-		pluginRouteName = "chinaloganalyticsazure"
-	case "govazuremonitor":
-		pluginRouteName = "govloganalyticsazure"
+	if queryType == "Azure Log Analytics" {
+		pluginRouteName = "loganalyticsazure"
+
+		switch cloudName {
+		case "chinaazuremonitor":
+			pluginRouteName = "chinaloganalyticsazure"
+		case "govazuremonitor":
+			pluginRouteName = "govloganalyticsazure"
+		}
+	} else {
+		pluginRouteName = "resourceloganalyticsazure"
+
+		switch cloudName {
+		case "chinaazuremonitor":
+			pluginRouteName = "resourcechinaloganalyticsazure"
+		case "govazuremonitor":
+			pluginRouteName = "resourcegovloganalyticsazure"
+		}
 	}
 
 	var logAnalyticsRoute *plugins.AppPluginRoute
@@ -301,7 +324,6 @@ type LogAnalyticsMeta struct {
 
 func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) error {
 	frame.Meta.ExecutedQueryString = query
-	fmt.Println("workspace", workspace)
 	la, ok := frame.Meta.Custom.(*LogAnalyticsMeta)
 	if !ok {
 		return fmt.Errorf("unexpected type found for frame's custom metadata")
