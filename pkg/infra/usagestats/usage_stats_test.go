@@ -28,7 +28,7 @@ import (
 
 // This is to ensure that the interface contract is held by the implementation
 func Test_InterfaceContractValidity(t *testing.T) {
-	newUsageStats := func() usageStats {
+	newUsageStats := func() UsageStats {
 		return &UsageStatsService{}
 	}
 	v, ok := newUsageStats().(*UsageStatsService)
@@ -380,7 +380,7 @@ func TestMetrics(t *testing.T) {
 		metricName := "stats.test_metric.count"
 
 		t.Run("Adds a new metric to the external metrics", func(t *testing.T) {
-			uss.registerMetric(metricName, func() (interface{}, error) {
+			uss.RegisterMetric(metricName, func() (interface{}, error) {
 				return 1, nil
 			})
 
@@ -390,7 +390,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		t.Run("When metric already exists, the metric should be overridden", func(t *testing.T) {
-			uss.registerMetric(metricName, func() (interface{}, error) {
+			uss.RegisterMetric(metricName, func() (interface{}, error) {
 				return 1, nil
 			})
 
@@ -398,7 +398,7 @@ func TestMetrics(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 1, metric)
 
-			uss.registerMetric(metricName, func() (interface{}, error) {
+			uss.RegisterMetric(metricName, func() (interface{}, error) {
 				return 2, nil
 			})
 			newMetric, err := uss.externalMetrics[metricName]()
@@ -434,7 +434,7 @@ func TestMetrics(t *testing.T) {
 		createConcurrentTokens(t, uss.SQLStore)
 
 		t.Run("Should include metrics for concurrent users", func(t *testing.T) {
-			report, err := uss.getUsageReport(context.Background())
+			report, err := uss.GetUsageReport(context.Background())
 			require.NoError(t, err)
 
 			assert.Equal(t, int32(1), report.Metrics["stats.auth_token_per_user_le_3"])
@@ -446,11 +446,11 @@ func TestMetrics(t *testing.T) {
 		})
 
 		t.Run("Should include external metrics", func(t *testing.T) {
-			uss.registerMetric(metricName, func() (interface{}, error) {
+			uss.RegisterMetric(metricName, func() (interface{}, error) {
 				return 1, nil
 			})
 
-			report, err := uss.getUsageReport(context.Background())
+			report, err := uss.GetUsageReport(context.Background())
 			require.NoError(t, err, "Expected no error")
 
 			metric := report.Metrics[metricName]
@@ -463,7 +463,7 @@ func TestMetrics(t *testing.T) {
 		metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
 		extMetricName := "stats.test_external_metric.count"
 
-		uss.registerMetric(extMetricName, func() (interface{}, error) {
+		uss.RegisterMetric(extMetricName, func() (interface{}, error) {
 			return 1, nil
 		})
 
@@ -472,13 +472,13 @@ func TestMetrics(t *testing.T) {
 		assert.Equal(t, 1, metrics[extMetricName])
 
 		t.Run("When loading a metric results to an error", func(t *testing.T) {
-			uss.registerMetric(extMetricName, func() (interface{}, error) {
+			uss.RegisterMetric(extMetricName, func() (interface{}, error) {
 				return 1, nil
 			})
 			extErrorMetricName := "stats.test_external_metric_error.count"
 
 			t.Run("Should not add it to metrics", func(t *testing.T) {
-				uss.registerMetric(extErrorMetricName, func() (interface{}, error) {
+				uss.RegisterMetric(extErrorMetricName, func() (interface{}, error) {
 					return 1, errors.New("some error")
 				})
 

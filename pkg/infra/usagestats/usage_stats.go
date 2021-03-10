@@ -27,7 +27,7 @@ type UsageReport struct {
 	Packaging       string                 `json:"packaging"`
 }
 
-func (uss *UsageStatsService) getUsageReport(ctx context.Context) (UsageReport, error) {
+func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, error) {
 	version := strings.ReplaceAll(uss.Cfg.BuildVersion, ".", "_")
 
 	metrics := map[string]interface{}{}
@@ -229,7 +229,7 @@ func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interfa
 	}
 }
 
-func (uss *UsageStatsService) registerMetric(name string, fn metricFunc) {
+func (uss *UsageStatsService) RegisterMetric(name string, fn metricFunc) {
 	uss.externalMetrics[name] = fn
 }
 
@@ -240,7 +240,7 @@ func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
 
 	metricsLogger.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
 
-	report, err := uss.getUsageReport(ctx)
+	report, err := uss.GetUsageReport(ctx)
 	if err != nil {
 		return err
 	}

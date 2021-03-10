@@ -25,9 +25,9 @@ func init() {
 	})
 }
 
-type usageStats interface {
-	getUsageReport(ctx context.Context) (UsageReport, error)
-	registerMetric(name string, fn metricFunc)
+type UsageStats interface {
+	GetUsageReport(ctx context.Context) (UsageReport, error)
+	RegisterMetric(name string, fn metricFunc)
 }
 
 type metricFunc func() (interface{}, error)
