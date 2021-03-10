@@ -21,17 +21,16 @@ var metricsLogger log.Logger = log.New("metrics")
 func init() {
 	registry.RegisterService(&UsageStatsService{
 		log:             log.New("infra.usagestats"),
-		externalMetrics: make(map[string]MetricFunc),
+		externalMetrics: make(map[string]metricFunc),
 	})
 }
 
-type UsageStats interface {
-	GetUsageReport(ctx context.Context) (UsageReport, error)
-
-	RegisterMetric(name string, fn MetricFunc)
+type usageStats interface {
+	getUsageReport(ctx context.Context) (UsageReport, error)
+	registerMetric(name string, fn metricFunc)
 }
 
-type MetricFunc func() (interface{}, error)
+type metricFunc func() (interface{}, error)
 
 type UsageStatsService struct {
 	Cfg                *setting.Cfg               `inject:""`
@@ -43,7 +42,7 @@ type UsageStatsService struct {
 	log log.Logger
 
 	oauthProviders           map[string]bool
-	externalMetrics          map[string]MetricFunc
+	externalMetrics          map[string]metricFunc
 	concurrentUserStatsCache memoConcurrentUserStats
 }
 
