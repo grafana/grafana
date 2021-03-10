@@ -1,13 +1,13 @@
 // +build integration
 
-package sqlstore
+package dashboards
 
 import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -18,7 +18,7 @@ import (
 
 func TestIntegratedDashboardService(t *testing.T) {
 	Convey("Dashboard service integration tests", t, func() {
-		InitTestDB(t)
+		sqlStore := sqlstore.InitTestDB(t)
 		var testOrgId int64 = 1
 
 		Convey("Given saved folders and dashboards in organization A", func() {
@@ -31,11 +31,11 @@ func TestIntegratedDashboardService(t *testing.T) {
 				return nil
 			})
 
-			savedFolder := saveTestFolder(t, "Saved folder", testOrgId)
-			savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgId, savedFolder.Id)
-			saveTestDashboard(t, "Other saved dash in folder", testOrgId, savedFolder.Id)
-			savedDashInGeneralFolder := saveTestDashboard(t, "Saved dashboard in general folder", testOrgId, 0)
-			otherSavedFolder := saveTestFolder(t, "Other saved folder", testOrgId)
+			savedFolder := saveTestFolder(t, "Saved folder", testOrgId, sqlStore)
+			savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgId, savedFolder.Id, sqlStore)
+			saveTestDashboard(t, "Other saved dash in folder", testOrgId, savedFolder.Id, sqlStore)
+			savedDashInGeneralFolder := saveTestDashboard(t, "Saved dashboard in general folder", testOrgId, 0, sqlStore)
+			otherSavedFolder := saveTestFolder(t, "Other saved folder", testOrgId, sqlStore)
 
 			Convey("Should return dashboard model", func() {
 				So(savedFolder.Title, ShouldEqual, "Saved folder")
@@ -64,7 +64,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 					}),
 				}
 
-				err := callSaveWithError(cmd)
+				err := callSaveWithError(cmd, sqlStore)
 
 				Convey("It should result in not found error", func() {
 					So(err, ShouldNotBeNil)
@@ -87,7 +87,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: false,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should result in not found error", func() {
 						So(err, ShouldNotBeNil)
@@ -107,7 +107,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: false,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 
 						Convey("It should create a new dashboard in organization B", func() {
 							So(res, ShouldNotBeNil)
@@ -138,7 +138,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should create dashboard guardian for General Folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
@@ -161,7 +161,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should create dashboard guardian for other folder with correct arguments and rsult in access denied error", func() {
 						So(err, ShouldNotBeNil)
@@ -184,7 +184,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should create dashboard guardian for folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
@@ -208,7 +208,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should create dashboard guardian for folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
@@ -232,7 +232,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should create dashboard guardian for dashboard with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
@@ -256,7 +256,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should create dashboard guardian for dashboard with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
@@ -280,7 +280,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should create dashboard guardian for other folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
@@ -304,7 +304,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should create dashboard guardian for General folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
@@ -328,7 +328,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should create dashboard guardian for other folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
@@ -352,7 +352,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd)
+					err := callSaveWithError(cmd, sqlStore)
 
 					Convey("It should create dashboard guardian for General folder with correct arguments and result in access denied error", func() {
 						So(err, ShouldNotBeNil)
@@ -382,7 +382,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 						So(res, ShouldNotBeNil)
 
 						Convey("It should create a new dashboard", func() {
@@ -406,7 +406,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 						So(res, ShouldNotBeNil)
 
 						Convey("It should create a new dashboard", func() {
@@ -431,7 +431,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 						So(res, ShouldNotBeNil)
 
 						Convey("It should create a new folder", func() {
@@ -456,7 +456,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 						So(res, ShouldNotBeNil)
 
 						Convey("It should create a new dashboard", func() {
@@ -481,7 +481,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 						So(res, ShouldNotBeNil)
 
 						Convey("It should create a new dashboard", func() {
@@ -503,7 +503,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in folder not found error", func() {
 							So(err, ShouldNotBeNil)
@@ -522,7 +522,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in version mismatch error", func() {
 							So(err, ShouldNotBeNil)
@@ -542,7 +542,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 						So(res, ShouldNotBeNil)
 
 						Convey("It should update dashboard", func() {
@@ -567,7 +567,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in version mismatch error", func() {
 							So(err, ShouldNotBeNil)
@@ -587,7 +587,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 						So(res, ShouldNotBeNil)
 
 						Convey("It should update dashboard", func() {
@@ -612,7 +612,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in dashboard with same name in folder error", func() {
 							So(err, ShouldNotBeNil)
@@ -631,7 +631,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in dashboard with same name in folder error", func() {
 							So(err, ShouldNotBeNil)
@@ -650,7 +650,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in dashboard with same name in folder error", func() {
 							So(err, ShouldNotBeNil)
@@ -673,7 +673,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 						So(res, ShouldNotBeNil)
 
 						Convey("It should update dashboard", func() {
@@ -698,7 +698,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 						So(res, ShouldNotBeNil)
 
 						Convey("It should update dashboard", func() {
@@ -723,7 +723,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 
 						Convey("It should update dashboard", func() {
 							So(res, ShouldNotBeNil)
@@ -750,7 +750,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in same uid exists error", func() {
 							So(err, ShouldNotBeNil)
@@ -769,7 +769,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 
 						Convey("It should overwrite existing dashboard", func() {
 							So(res, ShouldNotBeNil)
@@ -796,7 +796,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd)
+						res := callSaveWithResult(t, cmd, sqlStore)
 
 						Convey("It should overwrite existing dashboard", func() {
 							So(res, ShouldNotBeNil)
@@ -823,7 +823,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in type mismatch error", func() {
 							So(err, ShouldNotBeNil)
@@ -842,7 +842,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in type mismatch error", func() {
 							So(err, ShouldNotBeNil)
@@ -861,7 +861,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in type mismatch error", func() {
 							So(err, ShouldNotBeNil)
@@ -880,7 +880,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in type mismatch error", func() {
 							So(err, ShouldNotBeNil)
@@ -898,7 +898,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in dashboard with same name as folder error", func() {
 							So(err, ShouldNotBeNil)
@@ -916,7 +916,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd)
+						err := callSaveWithError(cmd, sqlStore)
 
 						Convey("It should result in folder with same name as dashboard error", func() {
 							So(err, ShouldNotBeNil)
@@ -959,23 +959,23 @@ func permissionScenario(desc string, canSave bool, fn dashboardPermissionScenari
 	dashboardPermissionScenario(desc, mock, fn)
 }
 
-func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand) *models.Dashboard {
+func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) *models.Dashboard {
 	t.Helper()
 
 	dto := toSaveDashboardDto(cmd)
-	res, err := dashboards.NewService(nil).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore, nil).SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res
 }
 
-func callSaveWithError(cmd models.SaveDashboardCommand) error {
+func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
-	_, err := dashboards.NewService(nil).SaveDashboard(&dto, false)
+	_, err := NewService(sqlStore, nil).SaveDashboard(&dto, false)
 	return err
 }
 
-func saveTestDashboard(t *testing.T, title string, orgId int64, folderId int64) *models.Dashboard {
+func saveTestDashboard(t *testing.T, title string, orgId int64, folderId int64, sqlStore *sqlstore.SQLStore) *models.Dashboard {
 	t.Helper()
 
 	cmd := models.SaveDashboardCommand{
@@ -988,7 +988,7 @@ func saveTestDashboard(t *testing.T, title string, orgId int64, folderId int64) 
 		}),
 	}
 
-	dto := dashboards.SaveDashboardDTO{
+	dto := SaveDashboardDTO{
 		OrgId:     orgId,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
@@ -997,13 +997,13 @@ func saveTestDashboard(t *testing.T, title string, orgId int64, folderId int64) 
 		},
 	}
 
-	res, err := dashboards.NewService(nil).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore, nil).SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res
 }
 
-func saveTestFolder(t *testing.T, title string, orgId int64) *models.Dashboard {
+func saveTestFolder(t *testing.T, title string, orgId int64, sqlStore *sqlstore.SQLStore) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
 		OrgId:    orgId,
@@ -1015,7 +1015,7 @@ func saveTestFolder(t *testing.T, title string, orgId int64) *models.Dashboard {
 		}),
 	}
 
-	dto := dashboards.SaveDashboardDTO{
+	dto := SaveDashboardDTO{
 		OrgId:     orgId,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
@@ -1024,16 +1024,16 @@ func saveTestFolder(t *testing.T, title string, orgId int64) *models.Dashboard {
 		},
 	}
 
-	res, err := dashboards.NewService(nil).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore, nil).SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res
 }
 
-func toSaveDashboardDto(cmd models.SaveDashboardCommand) dashboards.SaveDashboardDTO {
+func toSaveDashboardDto(cmd models.SaveDashboardCommand) SaveDashboardDTO {
 	dash := (&cmd).GetDashboardModel()
 
-	return dashboards.SaveDashboardDTO{
+	return SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   cmd.Message,
 		OrgId:     cmd.OrgId,
