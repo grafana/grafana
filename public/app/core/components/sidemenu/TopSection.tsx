@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import _ from 'lodash';
 import TopSectionItem from './TopSectionItem';
 import config from '../../config';
-import { getLocationSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 
 const TopSection: FC<any> = () => {
   const navTree = _.cloneDeep(config.bootData.navTree);
@@ -13,7 +13,7 @@ const TopSection: FC<any> = () => {
   };
 
   const onOpenSearch = () => {
-    getLocationSrv().update({ query: { search: 'open' }, partial: true });
+    locationService.partial({ search: 'open' });
   };
 
   return (

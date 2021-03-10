@@ -149,7 +149,9 @@ export const DashboardImportPage = connectWithCleanUp(
   mapDispatchToProps,
   (state) => state.importDashboard
 )(DashboardImportUnConnected);
+
 export default DashboardImportPage;
+
 DashboardImportPage.displayName = 'DashboardImport';
 
 const importStyles = stylesFactory(() => {
