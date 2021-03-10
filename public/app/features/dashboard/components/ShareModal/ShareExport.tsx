@@ -4,7 +4,7 @@ import { Button, Field, Switch } from '@grafana/ui';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { appEvents } from 'app/core/core';
-import { CoreEvents } from 'app/types';
+import { ShowModalEvent } from 'app/types/events';
 
 interface Props {
   dashboard: DashboardModel;
@@ -75,10 +75,12 @@ export class ShareExport extends PureComponent<Props, State> {
       enableCopy: true,
     };
 
-    appEvents.emit(CoreEvents.showModal, {
-      src: 'public/app/partials/edit_json.html',
-      model,
-    });
+    appEvents.publish(
+      new ShowModalEvent({
+        src: 'public/app/partials/edit_json.html',
+        model,
+      })
+    );
 
     this.props.onDismiss();
   };

@@ -1,10 +1,10 @@
 import React from 'react';
-import * as redux from 'react-redux';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import SignupInvitedPage from './SignupInvited';
+import { SignupInvitedPage, Props } from './SignupInvited';
 import { backendSrv } from '../../core/services/backend_srv';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
@@ -27,16 +27,21 @@ const defaultGet = {
 async function setupTestContext({ get = defaultGet }: { get?: typeof defaultGet | null } = {}) {
   jest.clearAllMocks();
 
-  const reduxSpy = jest.spyOn(redux, 'useSelector');
-  reduxSpy.mockReturnValue('some code');
-
   const getSpy = jest.spyOn(backendSrv, 'get');
   getSpy.mockResolvedValue(get);
 
   const postSpy = jest.spyOn(backendSrv, 'post');
   postSpy.mockResolvedValue([]);
 
-  render(<SignupInvitedPage />);
+  const props: Props = {
+    ...getRouteComponentProps({
+      match: {
+        params: { code: 'some code' },
+      } as any,
+    }),
+  };
+
+  render(<SignupInvitedPage {...props} />);
 
   await waitFor(() => expect(getSpy).toHaveBeenCalled());
   expect(getSpy).toHaveBeenCalledTimes(1);

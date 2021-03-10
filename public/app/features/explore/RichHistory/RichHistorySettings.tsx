@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import { stylesFactory, useTheme, Select, Button, Switch, Field } from '@grafana/ui';
 import { GrafanaTheme, AppEvents } from '@grafana/data';
 import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
+import { ShowConfirmModalEvent } from '../../../types/events';
 
 export interface RichHistorySettingsProps {
   retentionPeriod: number;
@@ -59,16 +59,18 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
   const selectedOption = retentionPeriodOptions.find((v) => v.value === retentionPeriod);
 
   const onDelete = () => {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete',
-      text: 'Are you sure you want to permanently delete your query history?',
-      yesText: 'Delete',
-      icon: 'trash-alt',
-      onConfirm: () => {
-        deleteRichHistory();
-        appEvents.emit(AppEvents.alertSuccess, ['Query history deleted']);
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete',
+        text: 'Are you sure you want to permanently delete your query history?',
+        yesText: 'Delete',
+        icon: 'trash-alt',
+        onConfirm: () => {
+          deleteRichHistory();
+          appEvents.emit(AppEvents.alertSuccess, ['Query history deleted']);
+        },
+      })
+    );
   };
 
   return (

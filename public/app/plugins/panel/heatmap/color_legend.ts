@@ -104,7 +104,7 @@ function drawColorLegend(
   clearLegend(elem);
 
   const legendWidth = Math.floor(legendElem.outerWidth() ?? 10) - 30;
-  const legendHeight = legendElem.attr('height');
+  const legendHeight = legendElem.attr('height') as any;
 
   const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * LEGEND_SEGMENT_WIDTH;
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
@@ -142,7 +142,7 @@ function drawOpacityLegend(
   clearLegend(elem);
 
   const legendWidth = Math.floor(legendElem.outerWidth() ?? 30) - 30;
-  const legendHeight = legendElem.attr('height');
+  const legendHeight = legendElem.attr('height') as any;
 
   const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * LEGEND_SEGMENT_WIDTH;
   const widthFactor = legendWidth / (rangeTo - rangeFrom);
@@ -207,7 +207,7 @@ function drawSimpleColorLegend(elem: JQuery, colorScale: any) {
   clearLegend(elem);
 
   const legendWidth = Math.floor(legendElem.outerWidth() ?? 30);
-  const legendHeight = legendElem.attr('height');
+  const legendHeight = legendElem.attr('height') as any;
 
   if (legendWidth) {
     const valuesNumber = Math.floor(legendWidth / 2);
@@ -235,7 +235,7 @@ function drawSimpleOpacityLegend(elem: JQuery, options: { colorScale: string; ex
 
   const legend = d3.select(legendElem.get(0));
   const legendWidth = Math.floor(legendElem.outerWidth() ?? 30);
-  const legendHeight = legendElem.attr('height');
+  const legendHeight = legendElem.attr('height') as any;
 
   if (legendWidth) {
     let legendOpacityScale: any;
@@ -276,7 +276,7 @@ function getSvgElemX(elem: JQuery) {
   }
 }
 
-function getSvgElemHeight(elem: JQuery) {
+function getSvgElemHeight(elem: JQuery<any>) {
   const svgElem: any = elem.get(0);
   if (svgElem && svgElem.height && svgElem.height.baseVal) {
     return svgElem.height.baseVal.value;

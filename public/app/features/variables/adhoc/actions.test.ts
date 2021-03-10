@@ -17,14 +17,15 @@ import {
 } from './actions';
 import { filterAdded, filterRemoved, filtersRestored, filterUpdated } from './reducer';
 import { addVariable, changeVariableProp } from '../state/sharedReducer';
-import { updateLocation } from 'app/core/actions';
 import { VariableModel } from 'app/features/variables/types';
 import { changeVariableEditorExtended, setIdInEditor } from '../editor/reducer';
 import { adHocBuilder } from '../shared/testing/builders';
+import { locationService } from '@grafana/runtime';
 
 const getMetricSources = jest.fn().mockReturnValue([]);
 const getDatasource = jest.fn().mockResolvedValue({});
 
+locationService.partial = jest.fn();
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: jest.fn(() => ({
     get: getDatasource,
@@ -66,10 +67,9 @@ describe('adhoc actions', () => {
       const expectedQuery = { 'var-Filters': ['filter-key|!=|filter-existing', 'filter-key|=|filter-value'] };
       const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
 
-      tester.thenDispatchedActionsShouldEqual(
-        filterAdded(toVariablePayload(variable, expectedFilter)),
-        updateLocation({ query: expectedQuery })
-      );
+      tester.thenDispatchedActionsShouldEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
+
+      expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
 
@@ -93,9 +93,10 @@ describe('adhoc actions', () => {
 
       tester.thenDispatchedActionsShouldEqual(
         createAddVariableAction(variable),
-        filterAdded(toVariablePayload(variable, expectedFilter)),
-        updateLocation({ query: expectedQuery })
+        filterAdded(toVariablePayload(variable, expectedFilter))
       );
+
+      expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
 
@@ -123,10 +124,8 @@ describe('adhoc actions', () => {
       const expectedFilter = { key: 'filter-key', value: 'filter-value', operator: '=', condition: '' };
       const expectedQuery = { 'var-Filters': ['filter-key|=|filter-value'] };
 
-      tester.thenDispatchedActionsShouldEqual(
-        filterAdded(toVariablePayload(variable, expectedFilter)),
-        updateLocation({ query: expectedQuery })
-      );
+      tester.thenDispatchedActionsShouldEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
+      expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
 
@@ -157,9 +156,10 @@ describe('adhoc actions', () => {
 
       tester.thenDispatchedActionsShouldEqual(
         createAddVariableAction(variable, 1),
-        filterAdded(toVariablePayload(variable, expectedFilter)),
-        updateLocation({ query: expectedQuery })
+        filterAdded(toVariablePayload(variable, expectedFilter))
       );
+
+      expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
 
@@ -194,10 +194,9 @@ describe('adhoc actions', () => {
       const expectedQuery = { 'var-elastic-filter': ['key|!=|value'] };
       const expectedUpdate = { index: 0, filter: updated };
 
-      tester.thenDispatchedActionsShouldEqual(
-        filterUpdated(toVariablePayload(variable, expectedUpdate)),
-        updateLocation({ query: expectedQuery })
-      );
+      tester.thenDispatchedActionsShouldEqual(filterUpdated(toVariablePayload(variable, expectedUpdate)));
+
+      expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
 
@@ -230,10 +229,8 @@ describe('adhoc actions', () => {
       const expectedQuery = { 'var-elastic-filter': ['key|=|value', 'key|!=|value'] };
       const expectedFilter = { key: 'key', value: 'value', operator: '!=', condition: '' };
 
-      tester.thenDispatchedActionsShouldEqual(
-        filterAdded(toVariablePayload(variable, expectedFilter)),
-        updateLocation({ query: expectedQuery })
-      );
+      tester.thenDispatchedActionsShouldEqual(filterAdded(toVariablePayload(variable, expectedFilter)));
+      expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
 
@@ -260,10 +257,8 @@ describe('adhoc actions', () => {
 
       const expectedQuery = { 'var-elastic-filter': ['key|=|value'] };
 
-      tester.thenDispatchedActionsShouldEqual(
-        filterAdded(toVariablePayload(variable, adding)),
-        updateLocation({ query: expectedQuery })
-      );
+      tester.thenDispatchedActionsShouldEqual(filterAdded(toVariablePayload(variable, adding)));
+      expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
 
@@ -283,10 +278,8 @@ describe('adhoc actions', () => {
 
       const expectedQuery = { 'var-elastic-filter': [] as string[] };
 
-      tester.thenDispatchedActionsShouldEqual(
-        filterRemoved(toVariablePayload(variable, 0)),
-        updateLocation({ query: expectedQuery })
-      );
+      tester.thenDispatchedActionsShouldEqual(filterRemoved(toVariablePayload(variable, 0)));
+      expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
 
@@ -313,10 +306,8 @@ describe('adhoc actions', () => {
 
       const expectedQuery = { 'var-elastic-filter': [] as string[] };
 
-      tester.thenDispatchedActionsShouldEqual(
-        filterRemoved(toVariablePayload(variable, 0)),
-        updateLocation({ query: expectedQuery })
-      );
+      tester.thenDispatchedActionsShouldEqual(filterRemoved(toVariablePayload(variable, 0)));
+      expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
 
@@ -352,10 +343,8 @@ describe('adhoc actions', () => {
         { key: 'key', value: 'value', operator: '=', condition: '', name: 'value-2' },
       ];
 
-      tester.thenDispatchedActionsShouldEqual(
-        filtersRestored(toVariablePayload(variable, expectedFilters)),
-        updateLocation({ query: expectedQuery })
-      );
+      tester.thenDispatchedActionsShouldEqual(filtersRestored(toVariablePayload(variable, expectedFilters)));
+      expect(locationService.partial).toHaveBeenLastCalledWith(expectedQuery);
     });
   });
 

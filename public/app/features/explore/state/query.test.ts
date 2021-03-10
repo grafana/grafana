@@ -107,11 +107,7 @@ describe('running queries', () => {
       .givenThunk(cancelQueries)
       .whenThunkIsDispatched(exploreId);
 
-    expect(dispatchedActions).toEqual([
-      scanStopAction({ exploreId }),
-      cancelQueriesAction({ exploreId }),
-      expect.anything(),
-    ]);
+    expect(dispatchedActions).toEqual([scanStopAction({ exploreId }), cancelQueriesAction({ exploreId })]);
   });
 });
 

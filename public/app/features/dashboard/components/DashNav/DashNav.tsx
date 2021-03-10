@@ -2,32 +2,31 @@
 import React, { PureComponent, FC, ReactNode } from 'react';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils & Services
-import { appEvents } from 'app/core/app_events';
-import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar } from '@grafana/ui';
 import { textUtil } from '@grafana/data';
 // State
-import { updateLocation } from 'app/core/actions';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
-import { CoreEvents, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { locationService } from '@grafana/runtime';
+import { toggleKioskMode } from 'app/core/navigation/kiosk';
+import { getDashboardSrv } from '../../services/DashboardSrv';
 
 export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
-  $injector: any;
   onAddPanel: () => void;
 }
 
 interface DispatchProps {
   updateTimeZoneForSession: typeof updateTimeZoneForSession;
-  updateLocation: typeof updateLocation;
 }
 
 interface DashNavButtonModel {
@@ -47,48 +46,32 @@ export function addCustomRightAction(content: DashNavButtonModel) {
   customRightActions.push(content);
 }
 
-export interface StateProps {
-  location: any;
-}
-
-type Props = StateProps & OwnProps & DispatchProps;
+type Props = OwnProps & DispatchProps;
 
 class DashNav extends PureComponent<Props> {
-  playlistSrv: PlaylistSrv;
-
   constructor(props: Props) {
     super(props);
-    this.playlistSrv = this.props.$injector.get('playlistSrv');
   }
 
   onFolderNameClick = () => {
-    this.props.updateLocation({
-      query: { search: 'open', folder: 'current' },
-      partial: true,
-    });
+    locationService.partial({ search: 'open', folder: 'current' });
   };
 
   onClose = () => {
-    this.props.updateLocation({
-      query: { viewPanel: null },
-      partial: true,
-    });
+    locationService.partial({ viewPanel: null });
   };
 
   onToggleTVMode = () => {
-    appEvents.emit(CoreEvents.toggleKioskMode);
+    toggleKioskMode();
   };
 
   onOpenSettings = () => {
-    this.props.updateLocation({
-      query: { editview: 'settings' },
-      partial: true,
-    });
+    locationService.partial({ editview: 'settings' });
   };
 
   onStarDashboard = () => {
-    const { dashboard, $injector } = this.props;
-    const dashboardSrv = $injector.get('dashboardSrv');
+    const { dashboard } = this.props;
+    const dashboardSrv = getDashboardSrv();
 
     dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState: any) => {
       dashboard.meta.isStarred = newState;
@@ -97,23 +80,20 @@ class DashNav extends PureComponent<Props> {
   };
 
   onPlaylistPrev = () => {
-    this.playlistSrv.prev();
+    playlistSrv.prev();
   };
 
   onPlaylistNext = () => {
-    this.playlistSrv.next();
+    playlistSrv.next();
   };
 
   onPlaylistStop = () => {
-    this.playlistSrv.stop();
+    playlistSrv.stop();
     this.forceUpdate();
   };
 
   onDashboardNameClick = () => {
-    this.props.updateLocation({
-      query: { search: 'open' },
-      partial: true,
-    });
+    locationService.partial({ search: 'open' });
   };
 
   addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {
@@ -125,11 +105,12 @@ class DashNav extends PureComponent<Props> {
   }
 
   isInKioskMode() {
-    return !!this.props.location.query.kiosk;
+    // TODO fix this
+    return false;
   }
 
   isPlaylistRunning() {
-    return this.playlistSrv.isPlaying;
+    return playlistSrv.isPlaying;
   }
 
   renderLeftActionsButton() {
@@ -189,7 +170,7 @@ class DashNav extends PureComponent<Props> {
   }
 
   renderRightActionsButton() {
-    const { dashboard, onAddPanel, location, updateTimeZoneForSession, isFullscreen } = this.props;
+    const { dashboard, onAddPanel, updateTimeZoneForSession, isFullscreen } = this.props;
     const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -198,12 +179,7 @@ class DashNav extends PureComponent<Props> {
       <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
     );
     const timeControls = (
-      <DashNavTimeControls
-        dashboard={dashboard}
-        location={location}
-        onChangeTimeZone={updateTimeZoneForSession}
-        key="time-controls"
-      />
+      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
     );
 
     if (this.isPlaylistRunning()) {
@@ -285,12 +261,9 @@ class DashNav extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  location: state.location,
-});
+const mapStateToProps = (state: StoreState) => ({});
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  updateLocation,
   updateTimeZoneForSession,
 };
 

@@ -6,10 +6,10 @@ import { SqlPart } from 'app/core/components/sql_part/sql_part';
 import MysqlQuery from './mysql_query';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
-import { CoreEvents } from 'app/types';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { TemplateSrv } from '@grafana/runtime';
+import { ShowConfirmModalEvent } from '../../../types/events';
 
 const defaultQuery = `SELECT
   UNIX_TIMESTAMP(<time_column>) as time_sec,
@@ -157,15 +157,17 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
   toggleEditorMode() {
     if (this.target.rawQuery) {
-      appEvents.emit(CoreEvents.showConfirmModal, {
-        title: 'Warning',
-        text2: 'Switching to query builder may overwrite your raw SQL.',
-        icon: 'exclamation-triangle',
-        yesText: 'Switch',
-        onConfirm: () => {
-          this.target.rawQuery = !this.target.rawQuery;
-        },
-      });
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: 'Warning',
+          text2: 'Switching to query builder may overwrite your raw SQL.',
+          icon: 'exclamation-triangle',
+          yesText: 'Switch',
+          onConfirm: () => {
+            this.target.rawQuery = !this.target.rawQuery;
+          },
+        })
+      );
     } else {
       this.target.rawQuery = !this.target.rawQuery;
     }

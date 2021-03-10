@@ -1,7 +1,7 @@
 import { DataFrame, dateTime, FieldType } from '@grafana/data';
-import throttle from 'lodash/throttle';
 import { AlignedData, Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
+import { createLogger } from '../../utils/logger';
 
 const LOGGING_ENABLED = false;
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
@@ -53,15 +53,4 @@ export function preparePlotData(frame: DataFrame): AlignedData {
 // Dev helpers
 
 /** @internal */
-export const throttledLog = throttle((...t: any[]) => {
-  console.log(...t);
-}, 500);
-
-/** @internal */
-export function pluginLog(id: string, throttle = false, ...t: any[]) {
-  if (process.env.NODE_ENV === 'production' || !LOGGING_ENABLED) {
-    return;
-  }
-  const fn = throttle ? throttledLog : console.log;
-  fn(`[Plugin: ${id}]: `, ...t);
-}
+export const pluginLog = createLogger('uPlot Plugin', LOGGING_ENABLED);

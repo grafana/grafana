@@ -178,6 +178,9 @@ export const Components = {
     dropDown: 'Dashboard link dropdown',
     link: 'Dashboard link',
   },
+  LoadingIndicator: {
+    icon: 'Loading indicator',
+  },
   CallToActionCard: {
     button: (name: string) => `Call to action button ${name}`,
   },

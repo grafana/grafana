@@ -10,11 +10,12 @@ import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHi
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import appEvents from 'app/core/app_events';
-import { StoreState, CoreEvents } from 'app/types';
+import { StoreState } from 'app/types';
 
 import { updateRichHistory } from '../state/history';
 import { changeDatasource } from '../state/datasource';
 import { setQueries } from '../state/query';
+import { ShowConfirmModalEvent } from '../../../types/events';
 
 export interface Props {
   query: RichHistoryQuery;
@@ -189,16 +190,18 @@ export function RichHistoryCard(props: Props) {
   const onDeleteQuery = () => {
     // For starred queries, we want confirmation. For non-starred, we don't.
     if (query.starred) {
-      appEvents.emit(CoreEvents.showConfirmModal, {
-        title: 'Delete',
-        text: 'Are you sure you want to permanently delete your starred query?',
-        yesText: 'Delete',
-        icon: 'trash-alt',
-        onConfirm: () => {
-          updateRichHistory(query.ts, 'delete');
-          appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
-        },
-      });
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: 'Delete',
+          text: 'Are you sure you want to permanently delete your starred query?',
+          yesText: 'Delete',
+          icon: 'trash-alt',
+          onConfirm: () => {
+            updateRichHistory(query.ts, 'delete');
+            appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
+          },
+        })
+      );
     } else {
       updateRichHistory(query.ts, 'delete');
       appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);

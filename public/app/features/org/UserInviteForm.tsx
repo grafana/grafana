@@ -12,10 +12,7 @@ import {
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole } from 'app/types';
-import { getBackendSrv } from '@grafana/runtime';
-import { updateLocation } from 'app/core/actions';
-import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { AppEvents, locationUtil } from '@grafana/data';
 
@@ -33,19 +30,18 @@ interface FormModel {
   email: string;
 }
 
-interface Props {
-  updateLocation: typeof updateLocation;
-}
+interface Props {}
 
-export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
+export const UserInviteForm: FC<Props> = ({}) => {
   const onSubmit = async (formData: FormModel) => {
     try {
       await getBackendSrv().post('/api/org/invites', formData);
     } catch (err) {
       appEvents.emit(AppEvents.alertError, ['Failed to send invite', err.message]);
     }
-    updateLocation({ path: 'org/users/' });
+    locationService.push('/org/users/');
   };
+
   const defaultValues: FormModel = {
     name: '',
     email: '',
@@ -87,8 +83,4 @@ export const UserInviteForm: FC<Props> = ({ updateLocation }) => {
   );
 };
 
-const mapDispatchToProps = {
-  updateLocation,
-};
-
-export default hot(module)(connect(null, mapDispatchToProps)(UserInviteForm));
+export default UserInviteForm;

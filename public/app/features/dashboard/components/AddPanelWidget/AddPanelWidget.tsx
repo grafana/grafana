@@ -3,14 +3,13 @@ import { connect, MapDispatchToProps } from 'react-redux';
 import { css, cx, keyframes } from 'emotion';
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
-import { LocationUpdate } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Icon, IconButton, styleMixins, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { DateTimeInput, GrafanaTheme } from '@grafana/data';
 
 import config from 'app/core/config';
 import store from 'app/core/store';
-import { updateLocation } from 'app/core/actions';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 import { DashboardModel, PanelModel } from '../../state';
 import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
@@ -27,7 +26,6 @@ export interface OwnProps {
 
 export interface DispatchProps {
   addPanel: typeof addPanel;
-  updateLocation: typeof updateLocation;
 }
 
 export type Props = OwnProps & DispatchProps;
@@ -55,7 +53,7 @@ const getCopiedPanelPlugins = () => {
   return _.sortBy(copiedPanels, 'sort');
 };
 
-export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateLocation }) => {
+export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard }) => {
   const [addPanelView, setAddPanelView] = useState(false);
 
   const onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {
@@ -79,14 +77,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
     dashboard.addPanel(newPanel);
     dashboard.removePanel(panel);
 
-    const location: LocationUpdate = {
-      query: {
-        editPanel: newPanel.id,
-      },
-      partial: true,
-    };
-
-    updateLocation(location);
+    locationService.partial({ editPanel: newPanel.id });
   };
 
   const onPasteCopiedPanel = (panelPluginInfo: PanelPluginInfo) => {
@@ -187,7 +178,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
   );
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel, updateLocation };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel };
 
 export const AddPanelWidget = connect(undefined, mapDispatchToProps)(AddPanelWidgetUnconnected);
 

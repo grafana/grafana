@@ -19,7 +19,7 @@ import { AppNotification, StoreState, ThunkResult } from '../../../types';
 import { getVariable, getVariables } from './selectors';
 import { variableAdapters } from '../adapters';
 import { Graph } from '../../../core/utils/dag';
-import { notifyApp, updateLocation } from 'app/core/actions';
+import { notifyApp } from 'app/core/actions';
 import {
   addVariable,
   changeVariableProp,
@@ -57,6 +57,7 @@ import { store } from 'app/store/store';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { cleanEditorState } from '../editor/reducer';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
+import { locationService } from '@grafana/runtime';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -268,7 +269,7 @@ export const processVariable = (
 
 export const processVariables = (): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
-    const queryParams = getState().location.query;
+    const queryParams = locationService.getSearchObject();
     const promises = getVariables(getState()).map(
       async (variable: VariableModel) => await dispatch(processVariable(toVariableIdentifier(variable), queryParams))
     );
@@ -493,7 +494,7 @@ export const variableUpdated = (
       if (emitChangeEvents) {
         const dashboard = getState().dashboard.getModel();
         dashboard?.processRepeats();
-        dispatch(updateLocation({ query: getQueryWithVariables(getState) }));
+        locationService.partial(getQueryWithVariables(getState));
         dashboard?.startRefresh();
       }
     });
@@ -573,7 +574,7 @@ const isVariableUrlValueDifferentFromCurrent = (variable: VariableModel, urlValu
 };
 
 const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {
-  const queryParams = getState().location.query;
+  const queryParams = locationService.getSearchObject();
 
   const queryParamsNew = Object.keys(queryParams)
     .filter((key) => key.indexOf('var-') === -1)

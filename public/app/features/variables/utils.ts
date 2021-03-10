@@ -1,5 +1,7 @@
 import isString from 'lodash/isString';
-import { ScopedVars, VariableType } from '@grafana/data';
+import isArray from 'lodash/isArray';
+import isEqual from 'lodash/isEqual';
+import { ScopedVars, UrlQueryMap, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './state/types';
@@ -170,4 +172,54 @@ export function getVariableTypes(): Array<{ label: string; value: VariableType }
       label: name,
       value: id,
     }));
+}
+
+function getUrlValueForComparison(value: any): any {
+  if (isArray(value)) {
+    if (value.length === 0) {
+      value = undefined;
+    } else if (value.length === 1) {
+      value = value[0];
+    }
+  }
+
+  return value;
+}
+
+export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): UrlQueryMap | undefined {
+  let count = 0;
+  const changes: UrlQueryMap = {};
+
+  for (const key in query) {
+    if (!key.startsWith('var-')) {
+      continue;
+    }
+
+    let oldValue = getUrlValueForComparison(old[key]);
+    let newValue = getUrlValueForComparison(query[key]);
+
+    if (!isEqual(newValue, oldValue)) {
+      changes[key] = query[key];
+      count++;
+    }
+  }
+
+  for (const key in old) {
+    if (!key.startsWith('var-')) {
+      continue;
+    }
+
+    const value = old[key];
+
+    // ignore empty array values
+    if (isArray(value) && value.length === 0) {
+      continue;
+    }
+
+    if (!query.hasOwnProperty(key)) {
+      changes[key] = ''; // removed
+      count++;
+    }
+  }
+  return count ? changes : undefined;
 }

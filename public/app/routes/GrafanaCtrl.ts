@@ -1,8 +1,6 @@
 // Libraries
 import _ from 'lodash';
 import $ from 'jquery';
-// @ts-ignore
-import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
@@ -11,8 +9,8 @@ import {
   setBackendSrv,
   setDataSourceSrv,
   setLegacyAngularInjector,
-  LocationUpdate,
   setLocationSrv,
+  locationService,
 } from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
@@ -20,22 +18,16 @@ import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
 import { TimeSrv, setTimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
-import { configureStore } from 'app/store/configureStore';
-
-import { updateLocation } from 'app/core/actions';
 
 // Types
-import { KioskUrlValue, CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
+import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
 import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { BridgeSrv } from 'app/core/services/bridge_srv';
-import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent, auto } from 'angular';
-import { AppEvent, AppEvents, locationUtil } from '@grafana/data';
+import { IRootScopeService, IAngularEvent, auto } from 'angular';
+import { AppEvent, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initGrafanaLive } from 'app/features/live/live';
 
@@ -48,11 +40,9 @@ export class GrafanaCtrl {
     utilSrv: UtilSrv,
     $rootScope: GrafanaRootScope,
     contextSrv: ContextSrv,
-    bridgeSrv: BridgeSrv,
     timeSrv: TimeSrv,
     linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
-    keybindingSrv: KeybindingSrv,
     dashboardSrv: DashboardSrv,
     angularLoader: AngularLoader,
     $injector: auto.IInjectorService
@@ -63,25 +53,19 @@ export class GrafanaCtrl {
     setDataSourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);
     setLinkSrv(linkSrv);
-    setKeybindingSrv(keybindingSrv);
     setDashboardSrv(dashboardSrv);
     setLegacyAngularInjector($injector);
 
     datasourceSrv.init(config.datasources, config.defaultDatasource);
 
     locationUtil.initialize({
-      getConfig: () => config,
+      config,
       getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
       // @ts-ignore
       buildParamsFromVariables: getTemplateSrv().fillVariableValuesForUrl,
     });
 
-    const store = configureStore();
-    setLocationSrv({
-      update: (opt: LocationUpdate) => {
-        store.dispatch(updateLocation(opt));
-      },
-    });
+    setLocationSrv(locationService);
 
     // Initialize websocket event streaming
     if (config.featureToggles.live) {
@@ -95,7 +79,6 @@ export class GrafanaCtrl {
 
       profiler.init(config, $rootScope);
       utilSrv.init();
-      bridgeSrv.init();
     };
 
     $rootScope.colors = colors;
@@ -136,33 +119,8 @@ export class GrafanaCtrl {
   }
 }
 
-function setViewModeBodyClass(body: JQuery, mode: KioskUrlValue) {
-  body.removeClass('view-mode--tv');
-  body.removeClass('view-mode--kiosk');
-  body.removeClass('view-mode--inactive');
-
-  switch (mode) {
-    case 'tv': {
-      body.addClass('view-mode--tv');
-      break;
-    }
-    // 1 & true for legacy states
-    case '1':
-    case true: {
-      body.addClass('view-mode--kiosk');
-      break;
-    }
-  }
-}
-
 /** @ngInject */
-export function grafanaAppDirective(
-  playlistSrv: PlaylistSrv,
-  contextSrv: ContextSrv,
-  $timeout: ITimeoutService,
-  $rootScope: IRootScopeService,
-  $location: ILocationService
-) {
+export function grafanaAppDirective() {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
@@ -179,71 +137,6 @@ export function grafanaAppDirective(
 
       appEvents.on(CoreEvents.toggleSidemenuHidden, () => {
         body.toggleClass('sidemenu-hidden');
-      });
-
-      appEvents.on(CoreEvents.playlistStarted, () => {
-        elem.toggleClass('view-mode--playlist', true);
-      });
-
-      appEvents.on(CoreEvents.playlistStopped, () => {
-        elem.toggleClass('view-mode--playlist', false);
-      });
-
-      // tooltip removal fix
-      // manage page classes
-      let pageClass: string;
-      scope.$on('$routeChangeSuccess', (evt: any, data: any) => {
-        if (pageClass) {
-          body.removeClass(pageClass);
-        }
-
-        if (data.$$route) {
-          pageClass = data.$$route.pageClass;
-          if (pageClass) {
-            body.addClass(pageClass);
-          }
-        }
-
-        // clear body class sidemenu states
-        body.removeClass('sidemenu-open--xs');
-
-        $('#tooltip, .tooltip').remove();
-
-        // check for kiosk url param
-        setViewModeBodyClass(body, data.params.kiosk);
-
-        // close all drops
-        for (const drop of Drop.drops) {
-          drop.destroy();
-        }
-      });
-
-      // handle kiosk mode
-      appEvents.on(CoreEvents.toggleKioskMode, (options: { exit?: boolean }) => {
-        const search: { kiosk?: KioskUrlValue } = $location.search();
-
-        if (options && options.exit) {
-          search.kiosk = '1';
-        }
-
-        switch (search.kiosk) {
-          case 'tv': {
-            search.kiosk = true;
-            appEvents.emit(AppEvents.alertSuccess, ['Press ESC to exit Kiosk mode']);
-            break;
-          }
-          case '1':
-          case true: {
-            delete search.kiosk;
-            break;
-          }
-          default: {
-            search.kiosk = 'tv';
-          }
-        }
-
-        $timeout(() => $location.search(search));
-        setViewModeBodyClass(body, search.kiosk!);
       });
 
       // handle in active view state class
@@ -284,11 +177,6 @@ export function grafanaAppDirective(
 
       // check every 2 seconds
       setInterval(checkForInActiveUser, 2000);
-
-      appEvents.on(CoreEvents.toggleViewMode, () => {
-        lastActivity = 0;
-        checkForInActiveUser();
-      });
 
       // handle document clicks that should hide things
       body.click((evt) => {

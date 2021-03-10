@@ -144,6 +144,7 @@ export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarB
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
+export { Link } from './Link/Link';
 
 export { Label } from './Forms/Label';
 export { Field } from './Forms/Field';

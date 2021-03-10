@@ -1,5 +1,5 @@
 import { DashboardModel, PanelModel } from '../../../state';
-import { CoreEvents, ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types';
 import { appEvents } from 'app/core/core';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import {
@@ -10,10 +10,11 @@ import {
   updateEditorInitState,
   setDiscardChanges,
 } from './reducers';
-import { updateLocation } from 'app/core/actions';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
 import pick from 'lodash/pick';
+import { locationService } from '@grafana/runtime';
+import { ShowModalReactEvent } from '../../../../../types/events';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return (dispatch) => {
@@ -45,13 +46,7 @@ export function exitPanelEditor(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, shouldDiscardChanges } = getStore().panelEditor;
-    const onConfirm = () =>
-      dispatch(
-        updateLocation({
-          query: { editPanel: null, tab: null },
-          partial: true,
-        })
-      );
+    const onConfirm = () => locationService.partial({ editPanel: null, tab: null });
 
     const onDiscard = () => {
       dispatch(setDiscardChanges(true));
@@ -70,16 +65,18 @@ export function exitPanelEditor(): ThunkResult<void> {
       return;
     }
 
-    appEvents.emit(CoreEvents.showModalReact, {
-      component: SaveLibraryPanelModal,
-      props: {
-        panel,
-        folderId: dashboard!.meta.folderId,
-        isOpen: true,
-        onConfirm,
-        onDiscard,
-      },
-    });
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: SaveLibraryPanelModal,
+        props: {
+          panel,
+          folderId: dashboard!.meta.folderId,
+          isOpen: true,
+          onConfirm,
+          onDiscard,
+        },
+      })
+    );
   };
 }
 

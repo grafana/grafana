@@ -205,22 +205,53 @@
           <br />
           4. Sometimes restarting grafana-server can help<br />
           <br />
-          5. Check if you are using a non-supported browser. For more information, refer to the list of <a 
-            href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">
-            supported browsers</a>.
+          5. Check if you are using a non-supported browser. For more information, refer to the list of
+          <a href="https://grafana.com/docs/grafana/latest/installation/requirements/#supported-web-browsers">
+            supported browsers</a
+          >.
         </p>
       </div>
+      <script>
+        // Check to see if browser is not supported by Grafana
+        // Source file in app/core/utils/browser.ts & tests make edits there and copy compiled typescript here
+        function checkBrowserCompatibility() {
+          var isIE = navigator.userAgent.indexOf('MSIE') > -1;
+          var isEdge = navigator.userAgent.indexOf('Edge/') > -1 || navigator.userAgent.indexOf('Edg/') > -1;
+          var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+          var isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+
+          /* Check for
+          <= IE11 (Trident 7)
+          Edge <= 16
+          Firefox <= 64
+          Chrome <= 54
+          */
+          var isEdgeVersion = /Edge\/([0-9.]+)/.exec(navigator.userAgent);
+
+          if (isIE && parseFloat(/Trident\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 7) {
+            return false;
+          } else if (
+            isEdge &&
+            ((isEdgeVersion && parseFloat(isEdgeVersion[1]) <= 16) ||
+              parseFloat(/Edg\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 16)
+          ) {
+            return false;
+          } else if (isFirefox && parseFloat(/Firefox\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 64) {
+            return false;
+          } else if (isChrome && parseFloat(/Chrome\/([0-9.]+)/.exec(navigator.userAgent)[1]) <= 54) {
+            return false;
+          }
+
+          return true;
+        }
+
+        if (!checkBrowserCompatibility()) {
+          alert('Your browser is not fully supported, please try newer version.');
+        }
+      </script>
     </div>
 
-    <grafana-app class="grafana-app" ng-cloak>
-      <sidemenu class="sidemenu"></sidemenu>
-      <app-notifications-list class="page-alert-list"></app-notifications-list>
-      <search-wrapper></search-wrapper>
-
-      <div class="main-view">
-        <div ng-view class="scroll-canvas"></div>
-      </div>
-    </grafana-app>
+    <div id="reactRoot"></div>
 
     <script nonce="[[.Nonce]]">
         window.grafanaBootData = {
@@ -236,65 +267,61 @@
             preloader[0].className = "preloader preloader--done";
           }
         };
-        [[if .ContentDeliveryURL]]    
+        [[if .ContentDeliveryURL]]
           window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
         [[end]]
     </script>
 
     [[if .GoogleTagManagerId]]
-      <!-- Google Tag Manager -->
-      <script nonce="[[.Nonce]]">
-        dataLayer = [
-          {
-            IsSignedIn: '[[.User.IsSignedIn]]',
-            Email: '[[.User.Email]]',
-            Name: '[[.User.Name]]',
-            UserId: '[[.User.Id]]',
-            OrgId: '[[.User.OrgId]]',
-            OrgName: '[[.User.OrgName]]',
-          },
-        ];
-      </script>
-      <noscript>
-        <iframe
-          src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]"
-          height="0"
-          width="0"
-          style="display: none; visibility: hidden"
-        ></iframe>
-      </noscript>
-      <script nonce="[[.Nonce]]">
-        (function (w, d, s, l, i) {
-          w[l] = w[l] || [];
-          w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-          var f = d.getElementsByTagName(s)[0],
-            j = d.createElement(s),
-            dl = l != 'dataLayer' ? '&l=' + l : '';
-          j.async = true;
-          j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl;
-          f.parentNode.insertBefore(j, f);
-        })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
-      </script>
-      <!-- End Google Tag Manager -->
-    [[end]] 
-
-    <% for (key in htmlWebpackPlugin.files.chunks) { %>
-      <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
-        <script
-          nonce="[[.Nonce]]"
-          src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.chunks[key].entry %>"
-          type="text/javascript"
-          integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
-          crossorigin="<%= webpackConfig.output.crossOriginLoading %>">
-        </script>
-      <% } else { %>
-        <script
-          nonce="[[.Nonce]]"
-          src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.chunks[key].entry %>"
-          type="text/javascript">
-        </script>
-      <% } %>
-    <% } %>
+    <!-- Google Tag Manager -->
+    <script nonce="[[.Nonce]]">
+      dataLayer = [
+        {
+          IsSignedIn: '[[.User.IsSignedIn]]',
+          Email: '[[.User.Email]]',
+          Name: '[[.User.Name]]',
+          UserId: '[[.User.Id]]',
+          OrgId: '[[.User.OrgId]]',
+          OrgName: '[[.User.OrgName]]',
+        },
+      ];
+    </script>
+    <noscript>
+      <iframe
+        src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]"
+        height="0"
+        width="0"
+        style="display: none; visibility: hidden"
+      ></iframe>
+    </noscript>
+    <script nonce="[[.Nonce]]">
+      (function (w, d, s, l, i) {
+        w[l] = w[l] || [];
+        w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+        var f = d.getElementsByTagName(s)[0],
+          j = d.createElement(s),
+          dl = l != 'dataLayer' ? '&l=' + l : '';
+        j.async = true;
+        j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');
+    </script>
+    <!-- End Google Tag Manager -->
+    [[end]] <% for (key in htmlWebpackPlugin.files.chunks) { %> <% if (htmlWebpackPlugin.files.jsIntegrity) { %>
+    <script
+      nonce="[[.Nonce]]"
+      src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+      type="text/javascript"
+      integrity="<%= htmlWebpackPlugin.files.jsIntegrity[htmlWebpackPlugin.files.js.indexOf(htmlWebpackPlugin.files.chunks[key].entry)] %>"
+      crossorigin="<%= webpackConfig.output.crossOriginLoading %>"
+    ></script>
+    <% } else { %>
+    <script
+      nonce="[[.Nonce]]"
+      src="[[.ContentDeliveryURL]]<%= htmlWebpackPlugin.files.chunks[key].entry %>"
+      type="text/javascript"
+    ></script>
+    <% } %> <% } %>
     <script nonce="[[.Nonce]]">
       performance.mark('js done blocking');
     </script>

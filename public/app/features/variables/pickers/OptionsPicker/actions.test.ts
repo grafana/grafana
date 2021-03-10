@@ -22,7 +22,7 @@ import { toVariablePayload } from '../../state/types';
 import { addVariable, changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { variableAdapters } from '../../adapters';
 import { createQueryVariableAdapter } from '../../query/adapter';
-import { updateLocation } from 'app/core/actions';
+import { locationService } from '@grafana/runtime';
 
 const datasource = {
   metricFindQuery: jest.fn(() => Promise.resolve([])),
@@ -36,6 +36,10 @@ jest.mock('@grafana/runtime', () => {
     getDataSourceSrv: jest.fn(() => ({
       get: () => datasource,
     })),
+    locationService: {
+      partial: jest.fn(),
+      getSearchObject: () => ({}),
+    },
   };
 });
 
@@ -192,9 +196,9 @@ describe('options picker actions', () => {
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
         hideOptions(),
-        setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': ['B'] } })
+        setCurrentVariableValue(toVariablePayload(variable, { option }))
       );
+      expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-Constant': ['B'] });
     });
   });
 
@@ -265,9 +269,9 @@ describe('options picker actions', () => {
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
         hideOptions(),
-        setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': [] } })
+        setCurrentVariableValue(toVariablePayload(variable, { option }))
       );
+      expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-Constant': [] });
     });
   });
 
@@ -297,9 +301,9 @@ describe('options picker actions', () => {
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: 'C' })),
         hideOptions(),
-        setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': [] } })
+        setCurrentVariableValue(toVariablePayload(variable, { option }))
       );
+      expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-Constant': [] });
     });
   });
 

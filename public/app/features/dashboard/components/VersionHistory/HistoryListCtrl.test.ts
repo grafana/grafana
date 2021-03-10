@@ -1,9 +1,12 @@
-import _ from 'lodash';
 import { IScope } from 'angular';
 
 import { HistoryListCtrl } from './HistoryListCtrl';
-import { compare, restore, versions } from './__mocks__/history';
-import { CoreEvents } from 'app/types';
+import { compare, restore, versions } from './__mocks__/dashboardHistoryMocks';
+import { appEvents } from '../../../../core/core';
+
+jest.mock('app/core/core', () => ({
+  appEvents: { publish: jest.fn() },
+}));
 
 describe('HistoryListCtrl', () => {
   const RESTORE_ID = 4;
@@ -140,8 +143,8 @@ describe('HistoryListCtrl', () => {
     });
 
     it('should display a modal allowing the user to restore or cancel', () => {
-      expect($rootScope.appEvent).toHaveBeenCalledTimes(1);
-      expect($rootScope.appEvent.mock.calls[0][0]).toBe(CoreEvents.showConfirmModal);
+      expect(appEvents.publish).toHaveBeenCalledTimes(1);
+      expect(appEvents.publish).toHaveBeenCalledWith(expect.objectContaining({ type: 'show-confirm-modal' }));
     });
 
     describe('and restore fails to fetch', () => {
