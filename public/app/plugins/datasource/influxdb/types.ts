@@ -27,8 +27,8 @@ export interface InfluxSecureJsonData {
 
 export interface InfluxQueryPart {
   type: string;
-  params?: string[];
-  interval?: string;
+  params?: Array<string | number>;
+  interval?: string; // FIXME: is this ever used?
 }
 
 export interface InfluxQueryTag {
