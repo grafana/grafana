@@ -1,0 +1,296 @@
+import React, { useState } from 'react';
+import sortBy from 'lodash/sortBy';
+import { PanelProps, GrafanaTheme, dateMath, dateTime } from '@grafana/data';
+import { CustomScrollbar, Icon, stylesFactory, useStyles } from '@grafana/ui';
+import { css, cx } from 'emotion';
+import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { useAsync } from 'react-use';
+import alertDef from 'app/features/alerting/state/alertDef';
+import { AlertRuleDTO, AnnotationItemDTO } from 'app/types';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { AlertListOptions, ShowOption, SortOrder } from './types';
+
+export function AlertList(props: PanelProps<AlertListOptions>) {
+  const [noAlertsMessage, setNoAlertsMessage] = useState('');
+
+  const currentAlertState = useAsync(async () => {
+    if (props.options.showOptions !== ShowOption.Current) {
+      return;
+    }
+
+    const params: any = {
+      state: getStateFilter(props.options.stateFilter),
+    };
+    const panel = getDashboardSrv().getCurrent().getPanelById(props.id)!;
+
+    if (props.options.alertName) {
+      params.query = getTemplateSrv().replace(props.options.alertName, panel.scopedVars);
+    }
+
+    if (props.options.folderId >= 0) {
+      params.folderId = props.options.folderId;
+    }
+
+    if (props.options.dashboardTitle) {
+      params.dashboardQuery = props.options.dashboardTitle;
+    }
+
+    if (props.options.dashboardAlerts) {
+      params.dashboardId = getDashboardSrv().getCurrent().id;
+    }
+
+    if (props.options.tags) {
+      params.dashboardTag = props.options.tags;
+    }
+
+    const alerts: AlertRuleDTO[] = await getBackendSrv().get(
+      '/api/alerts',
+      params,
+      `alert-list-get-current-alert-state-${props.id}`
+    );
+    let currentAlerts = sortAlerts(
+      props.options.sortOrder,
+      alerts.map((al) => ({
+        ...al,
+        stateModel: alertDef.getStateDisplayModel(al.state),
+        newStateDateAgo: dateTime(al.newStateDate).locale('en').fromNow(true),
+      }))
+    );
+
+    if (currentAlerts.length > props.options.maxItems) {
+      currentAlerts = currentAlerts.slice(0, props.options.maxItems);
+    }
+    setNoAlertsMessage(currentAlerts.length === 0 ? 'No alerts' : '');
+
+    return currentAlerts;
+  }, [
+    props.options.showOptions,
+    props.options.stateFilter.alerting,
+    props.options.stateFilter.execution_error,
+    props.options.stateFilter.no_data,
+    props.options.stateFilter.ok,
+    props.options.stateFilter.paused,
+    props.options.stateFilter.pending,
+    props.options.maxItems,
+    props.options.tags,
+    props.options.dashboardAlerts,
+    props.options.dashboardTitle,
+    props.options.folderId,
+    props.options.alertName,
+    props.options.sortOrder,
+  ]);
+
+  const recentStateChanges = useAsync(async () => {
+    if (props.options.showOptions !== ShowOption.RecentChanges) {
+      return;
+    }
+
+    const params: any = {
+      limit: props.options.maxItems,
+      type: 'alert',
+      newState: getStateFilter(props.options.stateFilter),
+    };
+    const currentDashboard = getDashboardSrv().getCurrent();
+
+    if (props.options.dashboardAlerts) {
+      params.dashboardId = currentDashboard.id;
+    }
+
+    params.from = dateMath.parse(currentDashboard.time.from)!.unix() * 1000;
+    params.to = dateMath.parse(currentDashboard.time.to)!.unix() * 1000;
+
+    const data: AnnotationItemDTO[] = await getBackendSrv().get(
+      '/api/annotations',
+      params,
+      `alert-list-get-state-changes-${props.id}`
+    );
+    const alertHistory = sortAlerts(
+      props.options.sortOrder,
+      data.map((al) => {
+        return {
+          ...al,
+          time: currentDashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss'),
+          stateModel: alertDef.getStateDisplayModel(al.newState),
+          info: alertDef.getAlertAnnotationInfo(al),
+        };
+      })
+    );
+
+    setNoAlertsMessage(alertHistory.length === 0 ? 'No alerts in current time range' : '');
+    return alertHistory;
+  }, [
+    props.options.showOptions,
+    props.options.maxItems,
+    props.options.stateFilter.alerting,
+    props.options.stateFilter.execution_error,
+    props.options.stateFilter.no_data,
+    props.options.stateFilter.ok,
+    props.options.stateFilter.paused,
+    props.options.stateFilter.pending,
+    props.options.dashboardAlerts,
+  ]);
+
+  const styles = useStyles(getStyles);
+
+  return (
+    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
+      <div className={styles.container}>
+        {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
+
+        {props.options.showOptions === ShowOption.Current
+          ? !currentAlertState.loading &&
+            currentAlertState.value && (
+              <section>
+                <ol className={styles.alertRuleList}>
+                  {currentAlertState.value!.map((alert) => (
+                    <li className={styles.alertRuleItem} key={`alert-${alert.id}`}>
+                      <div className={cx(styles.alertRuleItemIcon, alert.stateModel.stateClass)}>
+                        <Icon name={alert.stateModel.iconClass} size="xl" className={styles.alertIcon} />
+                      </div>
+                      <div className={styles.alertRuleItemBody}>
+                        <div className={styles.alertRuleItemHeader}>
+                          <p className={styles.alertRuleItemName}>
+                            <a href={`${alert.url}?viewPanel=${alert.panelId}`}>{alert.name}</a>
+                          </p>
+                          <div className={styles.alertRuleItemText}>
+                            <span className={alert.stateModel.stateClass}>{alert.stateModel.text}</span>
+                            <span className={styles.alertRuleItemTime}> for {alert.newStateDateAgo}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )
+          : !recentStateChanges.loading &&
+            recentStateChanges.value && (
+              <section>
+                <ol className={styles.alertRuleList}>
+                  {recentStateChanges.value.map((alert) => (
+                    <li className={styles.alertRuleItem} key={`alert-${alert.id}`}>
+                      <div className={cx(styles.alertRuleItemIcon, alert.stateModel.stateClass)}>
+                        <Icon name={alert.stateModel.iconClass} size="xl" />
+                      </div>
+                      <div className={styles.alertRuleItemBody}>
+                        <div className={styles.alertRuleItemHeader}>
+                          <p className={styles.alertRuleItemName}>{alert.alertName}</p>
+                          <div className={styles.alertRuleItemText}>
+                            <span className={alert.stateModel.stateClass}>{alert.stateModel.text}</span>
+                          </div>
+                        </div>
+                        <span className={styles.alertRuleItemInfo}>{alert.info}</span>
+                      </div>
+                      <div className={styles.alertRuleItemTime}>
+                        <span>{alert.time}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+      </div>
+    </CustomScrollbar>
+  );
+}
+
+function sortAlerts(sortOrder: SortOrder, alerts: any[]) {
+  if (sortOrder === SortOrder.Importance) {
+    // @ts-ignore
+    return sortBy(alerts, (a) => alertDef.alertStateSortScore[a.state || a.newState]);
+  } else if (sortOrder === SortOrder.TimeAsc) {
+    return sortBy(alerts, (a) => new Date(a.newStateDate || a.time));
+  } else if (sortOrder === SortOrder.TimeDesc) {
+    return sortBy(alerts, (a) => new Date(a.newStateDate || a.time)).reverse();
+  }
+
+  const result = sortBy(alerts, (a) => (a.name || a.alertName).toLowerCase());
+  if (sortOrder === SortOrder.AlphaDesc) {
+    result.reverse();
+  }
+
+  return result;
+}
+
+function getStateFilter(stateFilter: Record<string, boolean>) {
+  return Object.entries(stateFilter)
+    .filter(([_, val]) => val)
+    .map(([key, _]) => key);
+}
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  container: css`
+    overflow-y: auto;
+    height: 100%;
+  `,
+  alertRuleList: css`
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    list-style-type: none;
+  `,
+  alertRuleItem: css`
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background: ${theme.colors.bg2};
+    padding: ${theme.spacing.xs} ${theme.spacing.sm};
+    border-radius: ${theme.border.radius.md};
+    margin-bottom: ${theme.spacing.xs};
+  `,
+  alertRuleItemBody: css`
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: center;
+    overflow: hidden;
+  `,
+  alertRuleItemIcon: css`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: ${theme.spacing.xl};
+    padding: 0 ${theme.spacing.xs} 0 ${theme.spacing.xxs};
+  `,
+  alertRuleItemHeader: css`
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  `,
+  alertRuleItemName: css`
+    font-size: ${theme.typography.size.base};
+    margin: 0;
+    font-weight: ${theme.typography.weight.semibold};
+  `,
+  alertRuleItemText: css`
+    font-weight: ${theme.typography.weight.bold};
+    font-size: ${theme.typography.size.sm};
+    margin: 0;
+  `,
+  alertRuleItemTime: css`
+    color: ${theme.colors.textWeak};
+    font-weight: normal;
+    white-space: nowrap;
+  `,
+  alertRuleItemInfo: css`
+    font-weight: normal;
+    flex-grow: 2;
+    display: flex;
+    align-items: flex-end;
+  `,
+  noAlertsMessage: css`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  `,
+  testClass: css`
+    font-size: small;
+  `,
+  alertIcon: css`
+    margin-right: ${theme.spacing.xs};
+  `,
+}));
