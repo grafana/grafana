@@ -71,6 +71,7 @@ func init() {
 type CloudWatchService struct {
 	LogsService          *LogsService          `inject:""`
 	BackendPluginManager backendplugin.Manager `inject:""`
+	Cfg                  *setting.Cfg          `inject:""`
 }
 
 func (s *CloudWatchService) Init() error {
@@ -79,7 +80,7 @@ func (s *CloudWatchService) Init() error {
 	im := datasource.NewInstanceManager(NewInstanceSettings())
 
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(s.LogsService, im),
+		QueryDataHandler: newExecutor(s.LogsService, im, s.Cfg),
 	})
 
 	if err := s.BackendPluginManager.Register("cloudwatch", factory); err != nil {
@@ -88,10 +89,11 @@ func (s *CloudWatchService) Init() error {
 	return nil
 }
 
-func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager) *cloudWatchExecutor {
+func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager, cfg *setting.Cfg) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
 		logsService: logsService,
 		im:          im,
+		cfg:         cfg,
 	}
 }
 
@@ -123,6 +125,8 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 			at = authTypeKeys
 		case "default":
 			at = authTypeDefault
+		case "ec2_iam_role":
+			at = authTypeEC2IAMRole
 		case "arn":
 			at = authTypeDefault
 			plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
@@ -150,12 +154,28 @@ type cloudWatchExecutor struct {
 
 	logsService *LogsService
 	im          instancemgmt.InstanceManager
+	cfg         *setting.Cfg
 }
 
 func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginContext) (*session.Session, error) {
 	dsInfo, err := e.getDSInfo(pluginCtx)
 	if err != nil {
 		return nil, err
+	}
+
+	authTypeAllowed := false
+	for _, provider := range e.cfg.AWSAllowedAuthProviders {
+		if provider == dsInfo.authType.String() {
+			authTypeAllowed = true
+			break
+		}
+	}
+	if !authTypeAllowed {
+		return nil, fmt.Errorf("attempting to use an auth type that is not allowed: %q", dsInfo.authType.String())
+	}
+
+	if dsInfo.assumeRoleARN != "" && !e.cfg.AWSAssumeRoleEnabled {
+		return nil, fmt.Errorf("attempting to use assume role (ARN) which is disabled in grafana.ini")
 	}
 
 	bldr := strings.Builder{}
@@ -212,6 +232,13 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 		})
 	case authTypeDefault:
 		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.region)
+	case authTypeEC2IAMRole:
+		plog.Debug("Authenticating towards AWS with IAM Role", "region", dsInfo.region)
+		sess, err := newSession(cfgs...)
+		if err != nil {
+			return nil, err
+		}
+		cfgs = append(cfgs, &aws.Config{Credentials: newEC2RoleCredentials(sess)})
 	default:
 		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.authType))
 	}
@@ -222,7 +249,7 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 
 	duration := stscreds.DefaultDuration
 	expiration := time.Now().UTC().Add(duration)
-	if dsInfo.assumeRoleARN != "" {
+	if dsInfo.assumeRoleARN != "" && e.cfg.AWSAssumeRoleEnabled {
 		// We should assume a role in AWS
 		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.assumeRoleARN)
 
@@ -458,6 +485,7 @@ const (
 	authTypeDefault authType = iota
 	authTypeSharedCreds
 	authTypeKeys
+	authTypeEC2IAMRole
 )
 
 func (at authType) String() string {
@@ -465,9 +493,11 @@ func (at authType) String() string {
 	case authTypeDefault:
 		return "default"
 	case authTypeSharedCreds:
-		return "sharedCreds"
+		return "credentials"
 	case authTypeKeys:
 		return "keys"
+	case authTypeEC2IAMRole:
+		return "ec2_iam_role"
 	default:
 		panic(fmt.Sprintf("Unrecognized auth type %d", at))
 	}

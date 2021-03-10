@@ -13,8 +13,11 @@
     links:
       - influxdb2
     image: quay.io/influxdb/influxdb:v2.0.3
+    # The following long command does 2 things:
+    #   1. It initializes the bucket
+    #   2. Maps bucket to database to enable backward-compatible access (influxql queries)
     # Use these same configurations parameters in your telegraf configuration, mytelegraf.conf.
-    entrypoint: influx setup --bucket mybucket -t mytoken -o myorg --username=grafana --password=grafana12345 --host=http://influxdb2:8086 -f
+    entrypoint: bash -c "influx setup --bucket mybucket -t mytoken -o myorg --username=grafana --password=grafana12345 --host=http://influxdb2:8086 -f && influx -t mytoken -o myorg --host=http://influxdb2:8086 bucket list -n mybucket --hide-headers | cut -f 1 | xargs influx -t mytoken -o myorg --host=http://influxdb2:8086 v1 dbrp create --db site --rp default --default --bucket-id"
       # Wait for the influxd service in the influxdb container has fully bootstrapped before trying to setup an influxdb instance with the influxdb_cli service.
     restart: on-failure:10
     depends_on:

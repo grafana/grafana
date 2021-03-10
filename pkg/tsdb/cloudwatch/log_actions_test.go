@@ -53,7 +53,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(nil, im)
+		executor := newExecutor(nil, im, newTestConfig())
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -63,7 +63,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 					JSON: json.RawMessage(`{
 						"type":    "logAction",
 						"subtype": "DescribeLogGroups",
-						"limit": 50
+						"limit":   50
 					}`),
 				},
 			},
@@ -112,7 +112,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(nil, im)
+		executor := newExecutor(nil, im, newTestConfig())
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -190,7 +190,7 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 		return datasourceInfo{}, nil
 	})
 
-	executor := newExecutor(nil, im)
+	executor := newExecutor(nil, im, newTestConfig())
 	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -274,7 +274,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(nil, im)
+		executor := newExecutor(nil, im, newTestConfig())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -283,10 +283,10 @@ func TestQuery_StartQuery(t *testing.T) {
 				{
 					TimeRange: timeRange,
 					JSON: json.RawMessage(`{
-						"type":    "logAction",
-						"subtype": "StartQuery",
-						"limit": 50,
-						"region": "default",
+						"type":        "logAction",
+						"subtype":     "StartQuery",
+						"limit":       50,
+						"region":      "default",
 						"queryString": "fields @message"
 					}`),
 				},
@@ -327,7 +327,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(nil, im)
+		executor := newExecutor(nil, im, newTestConfig())
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -337,10 +337,10 @@ func TestQuery_StartQuery(t *testing.T) {
 					RefID:     refID,
 					TimeRange: timeRange,
 					JSON: json.RawMessage(`{
-						"type":    "logAction",
-						"subtype": "StartQuery",
-						"limit": 50,
-						"region": "default",
+						"type":        "logAction",
+						"subtype":     "StartQuery",
+						"limit":       50,
+						"region":      "default",
 						"queryString": "fields @message"
 					}`),
 				},
@@ -408,7 +408,7 @@ func TestQuery_StopQuery(t *testing.T) {
 		To:   time.Unix(1584700643, 0),
 	}
 
-	executor := newExecutor(nil, im)
+	executor := newExecutor(nil, im, newTestConfig())
 	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -501,7 +501,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		return datasourceInfo{}, nil
 	})
 
-	executor := newExecutor(nil, im)
+	executor := newExecutor(nil, im, newTestConfig())
 	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},

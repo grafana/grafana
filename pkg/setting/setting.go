@@ -141,10 +141,8 @@ var (
 	appliedEnvOverrides          []string
 
 	// analytics
-	ReportingEnabled     bool
-	ReportingDistributor string
-	GoogleAnalyticsId    string
-	GoogleTagManagerId   string
+	GoogleAnalyticsId  string
+	GoogleTagManagerId string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -275,6 +273,7 @@ type Cfg struct {
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
+	AWSListMetricsPageLimit int
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -336,7 +335,9 @@ type Cfg struct {
 	Env string
 
 	// Analytics
-	CheckForUpdates bool
+	CheckForUpdates      bool
+	ReportingDistributor string
+	ReportingEnabled     bool
 
 	// LDAP
 	LDAPEnabled     bool
@@ -830,10 +831,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
-	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
-	ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
-	if len(ReportingDistributor) >= 100 {
-		ReportingDistributor = ReportingDistributor[:100]
+	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
+	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
+	if len(cfg.ReportingDistributor) >= 100 {
+		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
 
 	if err := readAlertingSettings(iniFile); err != nil {
@@ -944,6 +945,7 @@ func (cfg *Cfg) readAWSConfig() {
 			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
 		}
 	}
+	cfg.AWSListMetricsPageLimit = awsPluginSec.Key("list_metrics_page_limit").MustInt(500)
 }
 
 func (cfg *Cfg) readSessionConfig() {

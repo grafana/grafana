@@ -8,6 +8,7 @@ import {
   PanelEditorUIState,
   setPanelEditorUIState,
   updateEditorInitState,
+  setDiscardChanges,
 } from './reducers';
 import { updateLocation } from 'app/core/actions';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
@@ -52,6 +53,11 @@ export function exitPanelEditor(): ThunkResult<void> {
         })
       );
 
+    const onDiscard = () => {
+      dispatch(setDiscardChanges(true));
+      onConfirm();
+    };
+
     const panel = getPanel();
 
     if (shouldDiscardChanges || !panel.libraryPanel) {
@@ -71,6 +77,7 @@ export function exitPanelEditor(): ThunkResult<void> {
         folderId: dashboard!.meta.folderId,
         isOpen: true,
         onConfirm,
+        onDiscard,
       },
     });
   };
