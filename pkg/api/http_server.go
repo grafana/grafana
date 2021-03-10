@@ -63,6 +63,7 @@ type HTTPServer struct {
 	context     context.Context
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
+	pluginFS    http.FileSystem
 
 	RouteRegister          routing.RouteRegister              `inject:""`
 	Bus                    bus.Bus                            `inject:""`
@@ -92,11 +93,18 @@ type HTTPServer struct {
 	Listener               net.Listener
 }
 
+func (hs *HTTPServer) FetchStaticPluginFile(path string) (http.File, error) {
+	pluginFile := strings.TrimPrefix(path, "/public/plugins")
+
+	return hs.pluginFS.Open(pluginFile)
+}
+
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
+	hs.pluginFS = http.Dir(hs.Cfg.PluginsPath)
 
 	return nil
 }
@@ -317,12 +325,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
-
-	for _, route := range manager.StaticRoutes {
-		pluginRoute := path.Join("/public/plugins/", route.PluginId)
-		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
-		hs.mapStatic(m, route.Directory, "", pluginRoute)
-	}
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")

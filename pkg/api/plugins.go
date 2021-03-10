@@ -3,9 +3,13 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"sort"
 	"time"
+
+	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -281,6 +285,51 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 	headers.Set("Content-Type", "text/plain")
 
 	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
+}
+
+// GetPluginAssets returns public plugin assets (images, JS, etc.)
+//
+// /public/plugins/:pluginId/*
+func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
+	pluginID := c.Params("pluginId")
+	_, exists := manager.Plugins[pluginID]
+	if !exists {
+		c.Handle(hs.Cfg, 404, "Plugin not found parameters error", nil)
+		return
+	}
+
+	headers := func(c *macaron.Context) {
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
+	}
+
+	if hs.Cfg.Env == setting.Dev {
+		headers = func(c *macaron.Context) {
+			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+		}
+	}
+
+	path := c.Req.URL.Path
+
+	f, err := hs.FetchStaticPluginFile(path)
+	if err != nil {
+		c.Handle(hs.Cfg, 500, "Could not open plugin file", err)
+		return
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("Failed to close file: %s\n", err)
+		}
+	}()
+
+	fi, err := f.Stat()
+	if err != nil {
+		c.Handle(hs.Cfg, 500, "Plugin file exists but could not open", err)
+		return
+	}
+
+	headers(c.Context)
+
+	http.ServeContent(c.Resp, c.Req.Request, path, fi.ModTime(), f)
 }
 
 // CheckHealth returns the health of a plugin.
