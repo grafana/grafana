@@ -1,9 +1,9 @@
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { AnnotationsSrv } from 'app/features/annotations/annotations_srv';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
 // Actions
@@ -84,8 +84,7 @@ async function fetchDashboard(
           return null;
         }
 
-        const loaderSrv: DashboardLoaderSrv = args.$injector.get('dashboardLoaderSrv');
-        const dashDTO: DashboardDTO = await loaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
+        const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
         if (args.fixUrl && dashDTO.meta.url) {
           // check if the current url is correct (might be old slug)
@@ -174,9 +173,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     }
 
     // init services
-    const timeSrv: TimeSrv = args.$injector.get('timeSrv');
+    const timeSrv: TimeSrv = getTimeSrv();
     const annotationsSrv: AnnotationsSrv = args.$injector.get('annotationsSrv');
-    const dashboardSrv: DashboardSrv = args.$injector.get('dashboardSrv');
+    const dashboardSrv: DashboardSrv = getDashboardSrv();
     const changeTracker = new ChangeTracker();
 
     timeSrv.init(dashboard);
