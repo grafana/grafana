@@ -63,27 +63,22 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
         style={positionStyles}
         ariaLabel={selectors.components.Menu.MenuComponent('Context')}
       >
-        {itemsGroup &&
-          itemsGroup.map((group) => (
-            <MenuGroup key={group.label} label={group.label} ariaLabel={group.label}>
-              <List
-                items={group.items || []}
-                renderItem={(item) => {
-                  return (
-                    <MenuItem
-                      url={item.url}
-                      label={item.label}
-                      ariaLabel={item.label}
-                      target={item.target}
-                      icon={item.icon}
-                      active={item.active}
-                      onClick={onClick}
-                    />
-                  );
-                }}
+        {itemsGroup?.map((group, index) => (
+          <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+            {(group.items || []).map((item) => (
+              <MenuItem
+                key={`${item.label}`}
+                url={item.url}
+                label={item.label}
+                ariaLabel={item.label}
+                target={item.target}
+                icon={item.icon}
+                active={item.active}
+                onClick={onClick}
               />
-            </MenuGroup>
-          ))}
+            ))}
+          </MenuGroup>
+        ))}
       </Menu>
     </Portal>
   );
