@@ -53,7 +53,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
       <Route
         exact
         path={route.path}
-        key={`${route.path}`}
+        key={route.path}
         render={(props) => {
           navigationLogger('AppWrapper', false, 'Rendering route', route, 'with match', props.location);
           // TODO[Router]: test this logic
