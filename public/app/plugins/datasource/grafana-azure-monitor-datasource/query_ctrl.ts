@@ -707,12 +707,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
    * Receives a full new query object from React and updates it into the Angular controller
    */
   handleNewQuery = (newQuery: AzureMonitorQuery) => {
-    console.log('angular got a new query', newQuery);
-    // const { appInsights } = newQuery;
-
-    // // TODO: resolve this appInsights: any issue
-    // // The type of appInsights is a bit inconsistent...
-    // this.target = { ...newQuery, appInsights: appInsights as any };
     Object.assign(this.target, newQuery);
     this.refresh();
   };

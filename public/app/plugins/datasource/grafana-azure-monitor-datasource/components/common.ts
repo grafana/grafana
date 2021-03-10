@@ -1,14 +1,14 @@
 import { rangeUtil } from '@grafana/data';
 import TimegrainConverter from '../time_grain_converter';
-import { Option } from '../types';
+import { AzureMonitorOption } from '../types';
 
 // Defaults to returning a fallback option so the UI still shows the value while the API is loading
-export const findOption = (options: Option[], value: string) =>
+export const findOption = (options: AzureMonitorOption[], value: string) =>
   options.find((v) => v.value === value) ?? { value, label: value };
 
 export const toOption = (v: { text: string; value: string }) => ({ value: v.value, label: v.text });
 
-export function convertTimeGrainsToMs(timeGrains: Array<{ text: string; value: string }>) {
+export function convertTimeGrainsToMs<T extends { value: string }>(timeGrains: T[]) {
   const allowedTimeGrainsMs: number[] = [];
   timeGrains.forEach((tg: any) => {
     if (tg.value !== 'auto') {

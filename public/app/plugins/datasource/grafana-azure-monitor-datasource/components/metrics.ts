@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 import Datasource from '../datasource';
 import { AzureMonitorQuery } from '../types';
-import { convertTimeGrainsToMs, toOption } from './common';
+import { convertTimeGrainsToMs } from './common';
 
 export interface MetricMetadata {
   aggOptions: Array<{ label: string; value: string }>;
@@ -52,7 +52,7 @@ export function useMetricsMetadata(
             ...query.azureMonitor,
             aggregation: metadata.primaryAggType,
             timeGrain: 'auto',
-            allowedTimeGrainsMs: convertTimeGrainsToMs(metadata.supportedTimeGrains || []),
+            allowedTimeGrainsMs: convertTimeGrainsToMs(metadata.supportedTimeGrains),
           },
         });
 
@@ -64,8 +64,8 @@ export function useMetricsMetadata(
 
         setMetricMetadata({
           aggOptions: aggregations,
-          timeGrains: [{ text: 'Auto', value: 'auto' }].concat(metadata.supportedTimeGrains).map(toOption),
-          dimensions: metadata.dimensions.map(toOption),
+          timeGrains: metadata.supportedTimeGrains,
+          dimensions: metadata.dimensions,
         });
       })
       .catch((err) => {
