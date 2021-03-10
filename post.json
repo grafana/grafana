@@ -1103,7 +1103,10 @@
   },
   "NamespaceConfigResponse": {
    "additionalProperties": {
-    "$ref": "#/definitions/RuleGroupConfig"
+    "items": {
+     "$ref": "#/definitions/RuleGroupConfig"
+    },
+    "type": "array"
    },
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
