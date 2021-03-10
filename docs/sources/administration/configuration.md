@@ -788,6 +788,10 @@ Set to `false` to disable AWS authentication from using an assumed role with tem
 
 If this option is disabled, the **Assume Role** and the **External Id** field are removed from the AWS data source configuration page. If the plugin is configured using provisioning, it is possible to use an assumed role as long as `assume_role_enabled` is set to `true`.
 
+### list_metrics_page_limit
+
+Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) option to load metrics for custom namespaces in the CloudWatch data source. By default, the page limit is 500.
+
 <hr />
 
 ## [smtp]
