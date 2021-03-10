@@ -1,6 +1,6 @@
 import React from 'react';
 import Datasource from '../../datasource';
-import { AzureMonitorQuery, AzureQueryType, Option } from '../../types';
+import { AzureMonitorQuery, AzureQueryType, AzureMonitorOption } from '../../types';
 import MetricsQueryEditor from '../MetricsQueryEditor';
 import QueryTypeField from './QueryTypeField';
 
@@ -8,7 +8,7 @@ interface BaseQueryEditorProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
   onChange: (newQuery: AzureMonitorQuery) => void;
-  variableOptionGroup: { label: string; options: Option[] };
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 }
 
 const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChange }) => {

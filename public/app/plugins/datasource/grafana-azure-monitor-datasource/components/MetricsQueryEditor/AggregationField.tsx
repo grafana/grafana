@@ -1,13 +1,13 @@
 import React, { useCallback, useMemo } from 'react';
 import { Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
 import { findOption } from '../common';
-import { SelectableValue } from '@grafana/data';
-import { AzureQueryEditorFieldProps, Option } from '../../types';
+import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
 interface AggregationFieldProps extends AzureQueryEditorFieldProps {
-  aggregationOptions: Option[];
+  aggregationOptions: AzureMonitorOption[];
 }
 
 const AggregationField: React.FC<AggregationFieldProps> = ({

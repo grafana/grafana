@@ -92,6 +92,30 @@ export interface InsightsAnalyticsQuery {
 
 // Azure Monitor API Types
 
+export interface AzureMonitorMetricsMetadataResponse {
+  value: AzureMonitorMetricMetadataItem[];
+}
+
+export interface AzureMonitorMetricMetadataItem {
+  id: string;
+  resourceId: string;
+  primaryAggregationType: string;
+  supportedAggregationTypes: string[];
+  name: AzureMonitorLocalizedValue;
+  dimensions?: AzureMonitorLocalizedValue[];
+  metricAvailabilities?: AzureMonitorMetricAvailabilityMetadata[];
+}
+
+export interface AzureMonitorMetricAvailabilityMetadata {
+  timeGrain: string;
+  retention: string;
+}
+
+export interface AzureMonitorLocalizedValue {
+  value: string;
+  localizedValue: string;
+}
+
 export interface AzureMonitorMetricDefinitionsResponse {
   data: {
     value: Array<{ name: string; type: string; location?: string }>;
@@ -155,13 +179,16 @@ export interface AzureLogsTableColumn {
   type: string;
 }
 
-export type Option = { label: string; value: string };
+export interface AzureMonitorOption<T = string> {
+  label: string;
+  value: T;
+}
 
 export interface AzureQueryEditorFieldProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
   subscriptionId: string;
-  variableOptionGroup: { label: string; options: Option[] };
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }

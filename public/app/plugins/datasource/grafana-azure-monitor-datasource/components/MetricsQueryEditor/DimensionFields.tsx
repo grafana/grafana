@@ -3,10 +3,10 @@ import { Button, Select, Input, HorizontalGroup, VerticalGroup, InlineLabel } fr
 
 import { Field } from '../Field';
 import { findOption } from '../common';
-import { AzureMetricDimension, AzureQueryEditorFieldProps, Option } from '../../types';
+import { AzureMetricDimension, AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types';
 
 interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
-  dimensionOptions: Option[];
+  dimensionOptions: AzureMonitorOption[];
 }
 
 const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptions, onQueryChange }) => {

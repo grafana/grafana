@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
 import { findOption, toOption } from '../common';
-import { AzureQueryEditorFieldProps, Option } from '../../types';
+import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
 const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
@@ -13,7 +13,7 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   variableOptionGroup,
   onQueryChange,
 }) => {
-  const [metricNamespaces, setMetricNamespaces] = useState<Option[]>([]);
+  const [metricNamespaces, setMetricNamespaces] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
     if (!(subscriptionId && query.azureMonitor.resourceGroup, query.azureMonitor.metricDefinition)) {

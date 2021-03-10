@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { AzureMonitorQuery, AzureQueryType, AzureQueryEditorFieldProps, Option } from '../types';
+import { AzureMonitorQuery, AzureQueryType, AzureQueryEditorFieldProps, AzureMonitorOption } from '../types';
 import { findOption } from './common';
 import { Field } from './Field';
 
@@ -16,7 +16,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   variableOptionGroup,
   onQueryChange,
 }) => {
-  const [subscriptions, setSubscriptions] = useState<Option[]>([]);
+  const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
     if (!datasource.azureMonitorDatasource.isConfigured()) {

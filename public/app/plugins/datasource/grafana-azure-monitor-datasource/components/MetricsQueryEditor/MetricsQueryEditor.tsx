@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Datasource from '../../datasource';
-import { AzureMonitorQuery, Option } from '../../types';
+import { AzureMonitorQuery, AzureMonitorOption } from '../../types';
 import { useMetricsMetadata } from '../metrics';
 import SubscriptionField from '../SubscriptionField';
 import MetricNamespaceField from './MetricNamespaceField';
@@ -21,7 +21,7 @@ interface MetricsQueryEditorProps {
   datasource: Datasource;
   subscriptionId: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
-  variableOptionGroup: { label: string; options: Option[] };
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 }
 
 const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({

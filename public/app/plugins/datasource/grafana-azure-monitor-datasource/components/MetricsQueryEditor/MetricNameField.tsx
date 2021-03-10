@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
 import { findOption, toOption } from '../common';
-import { AzureQueryEditorFieldProps, Option } from '../../types';
+import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
 const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   query,
@@ -13,7 +13,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   variableOptionGroup,
   onQueryChange,
 }) => {
-  const [metricNames, setMetricNames] = useState<Option[]>([]);
+  const [metricNames, setMetricNames] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
     if (

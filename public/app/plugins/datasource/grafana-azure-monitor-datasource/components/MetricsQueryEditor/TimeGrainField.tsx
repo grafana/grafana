@@ -5,10 +5,10 @@ import { SelectableValue } from '@grafana/data';
 import { Field } from '../Field';
 import { findOption } from '../common';
 import TimegrainConverter from '../../time_grain_converter';
-import { AzureQueryEditorFieldProps, Option } from '../../types';
+import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
 interface TimeGrainFieldProps extends AzureQueryEditorFieldProps {
-  timeGrainOptions: Option[];
+  timeGrainOptions: AzureMonitorOption[];
 }
 
 const TimeGrainField: React.FC<TimeGrainFieldProps> = ({
