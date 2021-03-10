@@ -5,6 +5,7 @@ import { GrafanaRouteComponentProps } from './types';
 import { locationSearchToObject, navigationLogger } from '@grafana/runtime';
 import { keybindingSrv } from '../services/keybindingSrv';
 import { shouldReloadPage } from './utils';
+import { analyticsService } from '../services/analytics';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
@@ -16,7 +17,7 @@ export class GrafanaRoute extends React.Component<Props> {
     // unbinds all and re-bind global keybindins
     keybindingSrv.reset();
     keybindingSrv.initGlobals();
-
+    analyticsService.track();
     navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
   }
 
@@ -29,6 +30,7 @@ export class GrafanaRoute extends React.Component<Props> {
       delete (this.props.history.location.state as any)?.forceRouteReload;
     }
 
+    analyticsService.track();
     navigationLogger('GrafanaRoute', false, 'Updated', this.props, prevProps);
   }
 

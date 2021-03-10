@@ -36,14 +36,15 @@ export interface InitDashboardArgs {
   fixUrl: boolean;
 }
 
-async function redirectToNewUrl(slug: string, dispatch: ThunkDispatch, currentPath: string) {
+async function redirectToNewUrl(slug: string) {
   const res = await backendSrv.getDashboardBySlug(slug);
 
   if (res) {
+    const location = locationService.getLocation();
     let newUrl = res.meta.url;
 
     // fix solo route urls
-    if (currentPath.indexOf('dashboard-solo') !== -1) {
+    if (location.pathname.indexOf('dashboard-solo') !== -1) {
       newUrl = newUrl.replace('/d/', '/d-solo/');
     }
 
@@ -79,7 +80,7 @@ async function fetchDashboard(
       case DashboardRoutes.Normal: {
         // for old db routes we redirect
         if (args.urlType === 'db') {
-          redirectToNewUrl(args.urlSlug!, dispatch, getState().location.path);
+          redirectToNewUrl(args.urlSlug!);
           return null;
         }
 

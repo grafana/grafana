@@ -103,33 +103,33 @@ export class KeybindingSrv {
       return;
     }
 
-    const search = locationService.getSearch();
+    const search = locationService.getSearchObject();
 
-    if (search.get('editview')) {
+    if (search.editview) {
       locationService.partial({ editview: null });
       return;
     }
 
-    if (search.get('inspect')) {
+    if (search.inspect) {
       locationService.partial({ inspect: null, inspectTab: null });
       return;
     }
 
-    if (search.get('editPanel')) {
+    if (search.editPanel) {
       locationService.partial({ editPanel: null, tab: null });
       return;
     }
 
-    if (search.get('viewPanel')) {
+    if (search.viewPanel) {
       locationService.partial({ viewPanel: null, tab: null });
       return;
     }
 
-    if (search.get('kiosk')) {
+    if (search.kiosk) {
       exitKioskMode();
     }
 
-    if (search.get('search')) {
+    if (search.search) {
       this.closeSearch();
     }
   }

@@ -1,5 +1,5 @@
 import { GrafanaRouteComponentProps } from '../types';
-import createMemoryHistory from 'history/createMemoryHistory';
+import { createMemoryHistory } from 'history';
 import { merge } from 'lodash';
 
 export function getRouteComponentProps<T = {}, Q extends Record<string, string | null | undefined> = {}>(

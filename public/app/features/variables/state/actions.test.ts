@@ -1,12 +1,6 @@
 import { AnyAction } from 'redux';
 
-import {
-  getRootReducer,
-  getTemplatingAndLocationRootReducer,
-  getTemplatingRootReducer,
-  RootReducerType,
-  TemplatingAndLocationReducerType,
-} from './helpers';
+import { getRootReducer, getTemplatingRootReducer, RootReducerType, TemplatingReducerType } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -155,8 +149,8 @@ describe('shared actions', () => {
         location: ({ query: {} } as unknown) as LocationState,
       };
 
-      const tester = await reduxTester<TemplatingAndLocationReducerType>({ preloadedState })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
@@ -214,8 +208,8 @@ describe('shared actions', () => {
         location: ({ query } as unknown) as LocationState,
       };
 
-      const tester = await reduxTester<TemplatingAndLocationReducerType>({ preloadedState })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
