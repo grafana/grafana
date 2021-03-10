@@ -2,7 +2,7 @@ import { GrafanaConfig, RawTimeRange, ScopedVars } from '../types';
 import { urlUtil } from './url';
 import { textUtil } from '../text';
 
-let grafanaConfig: GrafanaConfig = {} as any;
+let grafanaConfig: GrafanaConfig = { appSubUrl: '' } as any;
 let getTimeRangeUrlParams: () => RawTimeRange;
 let getVariablesUrlParams: (params?: Record<string, any>, scopedVars?: ScopedVars) => string;
 
