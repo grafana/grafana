@@ -288,7 +288,7 @@ describe('DashboardPage', () => {
   dashboardPageScenario('Kiosk mode full', (ctx) => {
     ctx.setup(() => {
       ctx.mount({
-        queryParams: { kiosk: 'full' },
+        queryParams: { kiosk: true },
       });
       ctx.setDashboardProp({
         panels: [{ id: 0, type: 'graph' }],
