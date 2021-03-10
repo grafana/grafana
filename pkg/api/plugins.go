@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -293,7 +295,7 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 // /public/plugins/:pluginId/*
 func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
-	_, exists := manager.Plugins[pluginID]
+	plugin, exists := manager.Plugins[pluginID]
 	if !exists {
 		c.Handle(hs.Cfg, 404, "Plugin not found parameters error", nil)
 		return
@@ -309,9 +311,16 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		}
 	}
 
-	path := strings.TrimPrefix(c.Req.URL.Path, "/public/plugins") // + fix mismatch between plugin dir vs plugin ID differences
+	requestedFile := c.Params("*")
 
-	f, err := hs.FetchStaticPluginFile(path)
+	// security check
+	if strings.Contains(requestedFile, string(filepath.Separator)) {
+		c.Handle(hs.Cfg, 400, "Could not open plugin file", nil)
+		return
+	}
+
+	path := filepath.Join(plugin.PluginDir, requestedFile)
+	f, err := os.Open(path)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Could not open plugin file", err)
 		return
