@@ -1,9 +1,9 @@
 /**
  * Type representing a tag in a trace span or fields of a log.
  */
-export type TraceKeyValuePair = {
+export type TraceKeyValuePair<T = any> = {
   key: string;
-  value: any;
+  value: T;
 };
 
 /**
