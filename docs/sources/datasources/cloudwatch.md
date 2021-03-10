@@ -381,7 +381,7 @@ In the [Grafana configuration](https://grafana.com/docs/grafana/latest/administr
 
 ### allowed_auth_providers
 
-Specify which authentication providers are allowed for the CloudWatch data source. The following providers are enabled by default in OSS Grafana: `default` (AWS SDK default), keys (Access and secret key), credentials (Credentials file), ec2_IAM_role (EC2 IAM role).
+Specify which authentication providers are allowed for the CloudWatch data source. The following providers are enabled by default in OSS Grafana: `default` (AWS SDK default), keys (Access and secret key), credentials (Credentials file), ec2_iam_role (EC2 IAM role).
 
 ### assume_role_enabled
 
