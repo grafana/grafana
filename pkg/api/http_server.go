@@ -93,10 +93,8 @@ type HTTPServer struct {
 	Listener               net.Listener
 }
 
-func (hs *HTTPServer) FetchStaticPluginFile(path string) (http.File, error) {
-	pluginFile := strings.TrimPrefix(path, "/public/plugins")
-
-	return hs.pluginFS.Open(pluginFile)
+func (hs *HTTPServer) FetchStaticPluginFile(file string) (http.File, error) {
+	return hs.pluginFS.Open(file)
 }
 
 func (hs *HTTPServer) Init() error {

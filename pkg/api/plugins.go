@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -308,7 +309,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		}
 	}
 
-	path := c.Req.URL.Path
+	path := strings.TrimPrefix(c.Req.URL.Path, "/public/plugins") // + fix mismatch between plugin dir vs plugin ID differences
 
 	f, err := hs.FetchStaticPluginFile(path)
 	if err != nil {
