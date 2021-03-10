@@ -9,7 +9,7 @@ import (
 )
 
 func TestTimeSeriesQuery(t *testing.T) {
-	executor := newExecutor(nil)
+	executor := newExecutor(nil, newTestConfig())
 
 	t.Run("End time before start time should result in error", func(t *testing.T) {
 		timeRange := plugins.NewDataTimeRange("now-1h", "now-2h")
