@@ -3,8 +3,11 @@ import { LocationType, StorageLocation } from '../StorageLocations.types';
 export interface AddStorageLocationModalProps {
   isVisible: boolean;
   location: StorageLocation | null;
+  showLocationValidation?: boolean;
+  waitingLocationValidation?: boolean;
   onClose: () => void;
   onAdd: (location: StorageLocation) => void;
+  onTest?: (location: StorageLocation) => void;
 }
 
 export interface AddStorageLocationFormProps {
@@ -19,7 +22,6 @@ export interface AddStorageLocationFormProps {
   secretKey: string;
   bucketName: string;
 }
-
 export interface TypeFieldProps {
   values: AddStorageLocationFormProps;
 }

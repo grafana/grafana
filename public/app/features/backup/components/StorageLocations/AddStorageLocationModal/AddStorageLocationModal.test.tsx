@@ -96,4 +96,84 @@ describe('AddStorageLocationModal', () => {
     );
     expect(wrapper.find(LoaderButton).text()).toBe(Messages.editAction);
   });
+
+  it('should not show the test button if "needsLocationValidation" prop is not passed', () => {
+    const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
+
+    expect(wrapper.find(dataQa('storage-location-test-button')).exists()).toBeFalsy();
+  });
+
+  it('should show the test button if "needsLocationValidation" prop is passed', () => {
+    const wrapper = mount(
+      <AddStorageLocationModal showLocationValidation location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
+    );
+
+    expect(wrapper.find(dataQa('storage-location-test-button')).exists()).toBeTruthy();
+  });
+
+  it('should disable the test button if the form is invalid', () => {
+    const wrapper = mount(
+      <AddStorageLocationModal showLocationValidation location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
+    );
+
+    expect(
+      wrapper
+        .find(dataQa('storage-location-test-button'))
+        .last()
+        .props().disabled
+    ).toBe(true);
+  });
+
+  it('should enable the test button if the form is valid', () => {
+    const location: StorageLocation = {
+      locationID: 'Location_1',
+      name: 'client_fs',
+      description: 'description',
+      type: LocationType.CLIENT,
+      path: '/foo/bar',
+    };
+    const wrapper = mount(
+      <AddStorageLocationModal
+        location={location}
+        showLocationValidation
+        onClose={jest.fn()}
+        onAdd={jest.fn()}
+        isVisible
+      />
+    );
+
+    expect(
+      wrapper
+        .find(dataQa('storage-location-test-button'))
+        .last()
+        .props().disabled
+    ).toBe(false);
+  });
+
+  it('should disable the add button while waiting for test validation', () => {
+    const location: StorageLocation = {
+      locationID: 'Location_1',
+      name: 'client_fs',
+      description: 'description',
+      type: LocationType.CLIENT,
+      path: '/foo/bar',
+    };
+    const wrapper = mount(
+      <AddStorageLocationModal
+        location={location}
+        showLocationValidation
+        waitingLocationValidation
+        onClose={jest.fn()}
+        onAdd={jest.fn()}
+        isVisible
+      />
+    );
+
+    expect(
+      wrapper
+        .find(dataQa('storage-location-add-button'))
+        .last()
+        .props().disabled
+    ).toBe(true);
+  });
 });

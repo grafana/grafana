@@ -36,10 +36,13 @@ export const formatLocationList = (rawList: StorageLocationListReponse): Storage
   return parsedLocations;
 };
 
-export const formatToRawLocation = (location: StorageLocation | S3Location): StorageLocationReponse => {
+export const formatToRawLocation = (
+  location: StorageLocation | S3Location,
+  stripOnlyConfig = false
+): Partial<StorageLocationReponse> => {
   const { name, description, path, type, locationID } = location;
   const localObj = { path };
-  const result: Partial<StorageLocationReponse> = { name, description, location_id: locationID };
+  const result: Partial<StorageLocationReponse> = stripOnlyConfig ? {} : { name, description, location_id: locationID };
 
   if (isS3Location(location)) {
     const { accessKey, secretKey, bucketName } = location;
@@ -50,5 +53,5 @@ export const formatToRawLocation = (location: StorageLocation | S3Location): Sto
     result.pmm_server_config = localObj;
   }
 
-  return result as StorageLocationReponse;
+  return result;
 };

@@ -2,6 +2,7 @@ import React, { FC, useState, useEffect } from 'react';
 import { Column, Row } from 'react-table';
 import { logger } from '@percona/platform-core';
 import { Button, IconButton, useStyles } from '@grafana/ui';
+import { config } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 import { Table } from 'app/features/integrated-alerting/components/Table/Table';
@@ -20,6 +21,7 @@ const { name, type, path, actions } = columns;
 
 export const StorageLocations: FC = () => {
   const [pending, setPending] = useState(true);
+  const [validatingLocation, setValidatingLocation] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deletePending, setDeletePending] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<StorageLocation | null>(null);
@@ -71,6 +73,7 @@ export const StorageLocations: FC = () => {
     ],
     []
   );
+  const isAdmin = config.bootData.user.isGrafanaAdmin;
 
   const getData = async () => {
     setPending(true);
@@ -110,6 +113,19 @@ export const StorageLocations: FC = () => {
   const handleUpdate = (location: StorageLocation) => {
     setSelectedLocation(location);
     setAddModalVisible(true);
+  };
+
+  const handleTest = async (location: StorageLocation) => {
+    setValidatingLocation(true);
+    try {
+      const rawLocation = formatToRawLocation(location, true);
+      await StorageLocationsService.testLocation(rawLocation);
+      appEvents.emit(AppEvents.alertSuccess, [Messages.testSuccess]);
+    } catch (e) {
+      logger.error(e);
+    } finally {
+      setValidatingLocation(false);
+    }
   };
 
   const onDeleteCLick = (location: StorageLocation) => {
@@ -163,8 +179,11 @@ export const StorageLocations: FC = () => {
       <AddStorageLocationModal
         location={selectedLocation}
         isVisible={addModalVisible}
+        showLocationValidation={isAdmin}
+        waitingLocationValidation={validatingLocation}
         onClose={() => setAddModalVisible(false)}
         onAdd={onAdd}
+        onTest={handleTest}
       ></AddStorageLocationModal>
       <RemoveStorageLocationModal
         location={selectedLocation}
