@@ -387,6 +387,10 @@ Specify which authentication providers are allowed for the CloudWatch data sourc
 
 Allows you to disable `assume role (ARN)` in the CloudWatch data source. By default, assume role (ARN) is enabled for OSS Grafana.
 
+### list_metrics_page_limit
+
+When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) is used to populate the _Metrics_ field and the _Dimension_ fields. The API is paginated and returns up to 500 results per page. The CloudWatch data source also limits the number of pages to 500. However, you can change this limit using the `list_metrics_page_limit` variable in the [grafana configuration file](https://grafana.com/docs/grafana/latest/administration/configuration/#aws).
+
 ## Configure the data source with provisioning
 
 It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
