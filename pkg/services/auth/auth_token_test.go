@@ -60,7 +60,7 @@ func TestUserAuthToken(t *testing.T) {
 				So(userToken, ShouldBeNil)
 			})
 
-			Convey("soft revoking existing token should not delete token", func() {
+			Convey("soft revoking existing token should not delete it", func() {
 				err = userAuthTokenService.RevokeToken(context.Background(), userToken, true)
 				So(err, ShouldBeNil)
 
@@ -70,7 +70,7 @@ func TestUserAuthToken(t *testing.T) {
 				So(model.RevokedAt, ShouldBeGreaterThan, 0)
 			})
 
-			Convey("revoking existing token should delete token", func() {
+			Convey("revoking existing token should delete it", func() {
 				err = userAuthTokenService.RevokeToken(context.Background(), userToken, false)
 				So(err, ShouldBeNil)
 
