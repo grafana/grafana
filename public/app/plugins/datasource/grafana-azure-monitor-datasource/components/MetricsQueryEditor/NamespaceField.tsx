@@ -17,7 +17,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
 
   useEffect(() => {
     if (!(subscriptionId && query.azureMonitor.resourceGroup)) {
-      namespaces.length > 0 && setNamespaces([]);
+      namespaces.length && setNamespaces([]);
       return;
     }
 
