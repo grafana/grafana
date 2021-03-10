@@ -27,8 +27,8 @@ export interface InfluxSecureJsonData {
 
 export interface InfluxQueryPart {
   type: string;
-  params?: string[];
-  interval?: string;
+  params?: Array<string | number>;
+  interval?: string; // FIXME: is this ever used?
 }
 
 export interface InfluxQueryTag {
@@ -48,8 +48,8 @@ export interface InfluxQuery extends DataQuery {
   tags?: InfluxQueryTag[];
   groupBy?: InfluxQueryPart[];
   select?: InfluxQueryPart[][];
-  limit?: string;
-  slimit?: string;
+  limit?: string | number;
+  slimit?: string | number;
   tz?: string;
   fill?: string;
   rawQuery?: boolean;
