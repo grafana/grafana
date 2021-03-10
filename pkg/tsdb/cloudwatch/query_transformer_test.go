@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQueryTransformer(t *testing.T) {
-	executor := newExecutor(nil)
+	executor := newExecutor(nil, &setting.Cfg{})
 	t.Run("One cloudwatchQuery is generated when its request query has one stat", func(t *testing.T) {
 		requestQueries := []*requestQuery{
 			{

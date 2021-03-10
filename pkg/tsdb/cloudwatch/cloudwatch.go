@@ -64,21 +64,22 @@ func init() {
 
 type CloudWatchService struct {
 	LogsService *LogsService `inject:""`
+	Cfg         *setting.Cfg `inject:""`
 }
 
 func (s *CloudWatchService) Init() error {
 	plog.Debug("initing")
-
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return newExecutor(s.LogsService), nil
+		return newExecutor(s.LogsService, s.Cfg), nil
 	})
 
 	return nil
 }
 
-func newExecutor(logsService *LogsService) *cloudWatchExecutor {
+func newExecutor(logsService *LogsService, cfg *setting.Cfg) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
 		logsService: logsService,
+		cfg:         cfg,
 	}
 }
 
@@ -90,10 +91,26 @@ type cloudWatchExecutor struct {
 	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 
 	logsService *LogsService
+	cfg         *setting.Cfg
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
 	dsInfo := e.getDSInfo(region)
+
+	authTypeAllowed := false
+	for _, provider := range e.cfg.AWSAllowedAuthProviders {
+		if provider == dsInfo.AuthType.String() {
+			authTypeAllowed = true
+			break
+		}
+	}
+	if !authTypeAllowed {
+		return nil, fmt.Errorf("attempting to use an auth type that is not allowed: %q", dsInfo.AuthType.String())
+	}
+
+	if dsInfo.AssumeRoleARN != "" && !e.cfg.AWSAssumeRoleEnabled {
+		return nil, fmt.Errorf("attempting to use assume role (ARN) which is disabled in grafana.ini")
+	}
 
 	bldr := strings.Builder{}
 	for i, s := range []string{
@@ -166,7 +183,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 
 	duration := stscreds.DefaultDuration
 	expiration := time.Now().UTC().Add(duration)
-	if dsInfo.AssumeRoleARN != "" {
+	if dsInfo.AssumeRoleARN != "" && e.cfg.AWSAssumeRoleEnabled {
 		// We should assume a role in AWS
 		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
 
