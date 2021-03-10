@@ -275,7 +275,6 @@ type Cfg struct {
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
-	AWSListMetricsPageLimit int
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -945,7 +944,6 @@ func (cfg *Cfg) readAWSConfig() {
 			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
 		}
 	}
-	cfg.AWSListMetricsPageLimit = awsPluginSec.Key("list_metrics_page_limit").MustInt(500)
 }
 
 func (cfg *Cfg) readSessionConfig() {
