@@ -78,7 +78,7 @@ const setVariable = async (updated: VariableWithMultiSupport) => {
   return;
 };
 
-export const commitChangesToVariable = (callback?: (updated: VariableWithMultiSupport) => void): ThunkResult<void> => {
+export const commitChangesToVariable = (callback?: (updated: any) => void): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const picker = getState().templating.optionsPicker;
     const existing = getVariable<VariableWithMultiSupport>(picker.id, getState());
@@ -144,7 +144,7 @@ const fetchTagValues = (tagText: string): ThunkResult<Promise<string[]>> => {
 };
 
 const getTimeRange = (variable: QueryVariableModel) => {
-  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+  if (variable.refresh === VariableRefresh.onTimeRangeChanged || variable.refresh === VariableRefresh.onDashboardLoad) {
     return getTimeSrv().timeRange();
   }
   return undefined;

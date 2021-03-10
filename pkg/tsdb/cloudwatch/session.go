@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -34,3 +36,9 @@ var newSTSCredentials = stscreds.NewCredentials
 // Stubbable by tests.
 //nolint:gocritic
 var newEC2Metadata = ec2metadata.New
+
+// EC2 role credentials factory.
+// Stubbable by tests.
+var newEC2RoleCredentials = func(sess *session.Session) *credentials.Credentials {
+	return credentials.NewCredentials(&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: stscreds.DefaultDuration})
+}

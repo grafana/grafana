@@ -46,7 +46,12 @@ export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => 
 };
 
 export const copyPanel = (panel: PanelModel) => {
-  store.set(LS_PANEL_COPY_KEY, JSON.stringify(panel.getSaveModel()));
+  let saveModel = panel;
+  if (panel instanceof PanelModel) {
+    saveModel = panel.getSaveModel();
+  }
+
+  store.set(LS_PANEL_COPY_KEY, JSON.stringify(saveModel));
   appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Open Add Panel to paste']);
 };
 

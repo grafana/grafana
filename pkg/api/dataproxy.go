@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 )
 
 // ProxyDataSourceRequest proxies datasource requests
@@ -34,7 +34,7 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 	}
 
 	// find plugin
-	plugin, ok := plugins.DataSources[ds.Type]
+	plugin, ok := manager.DataSources[ds.Type]
 	if !ok {
 		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
 		return

@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -36,6 +36,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			Name:      ds.Name,
 			Url:       ds.Url,
 			Type:      ds.Type,
+			TypeName:  ds.Type,
 			Access:    ds.Access,
 			Password:  ds.Password,
 			Database:  ds.Database,
@@ -46,8 +47,9 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		if plugin, exists := plugins.DataSources[ds.Type]; exists {
+		if plugin, exists := manager.DataSources[ds.Type]; exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
+			dsItem.TypeName = plugin.Name
 		} else {
 			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
 		}
@@ -361,19 +363,19 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	}
 
 	// find plugin
-	plugin, ok := plugins.DataSources[ds.Type]
+	plugin, ok := manager.DataSources[ds.Type]
 	if !ok {
 		c.JsonApiErr(500, "Unable to find datasource plugin", err)
 		return
 	}
 
-	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds)
 	if err != nil {
 		c.JsonApiErr(500, "Unable to process datasource instance model", err)
 	}
 
 	pCtx := backend.PluginContext{
-		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
+		User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
 		OrgID:                      c.OrgId,
 		PluginID:                   plugin.Id,
 		DataSourceInstanceSettings: dsInstanceSettings,
@@ -431,12 +433,12 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		return response.Error(500, "Unable to find datasource plugin", err)
 	}
 
-	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds)
 	if err != nil {
 		return response.Error(500, "Unable to get datasource model", err)
 	}
 	pCtx := backend.PluginContext{
-		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
+		User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
 		OrgID:                      c.OrgId,
 		PluginID:                   plugin.Id,
 		DataSourceInstanceSettings: dsInstanceSettings,

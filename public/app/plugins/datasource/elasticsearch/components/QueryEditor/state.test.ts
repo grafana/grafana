@@ -1,8 +1,29 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 import { ElasticsearchQuery } from '../../types';
-import { aliasPatternReducer, changeAliasPattern, changeQuery, queryReducer } from './state';
+import { aliasPatternReducer, changeAliasPattern, changeQuery, initQuery, queryReducer } from './state';
 
 describe('Query Reducer', () => {
+  describe('On Init', () => {
+    it('Should maintain the previous `query` if present', () => {
+      const initialQuery: ElasticsearchQuery['query'] = 'Some lucene query';
+
+      reducerTester()
+        .givenReducer(queryReducer, initialQuery)
+        .whenActionIsDispatched(initQuery())
+        .thenStateShouldEqual(initialQuery);
+    });
+
+    it('Should set an empty `query` if it is not already set', () => {
+      const initialQuery: ElasticsearchQuery['query'] = undefined;
+      const expectedQuery = '';
+
+      reducerTester()
+        .givenReducer(queryReducer, initialQuery)
+        .whenActionIsDispatched(initQuery())
+        .thenStateShouldEqual(expectedQuery);
+    });
+  });
+
   it('Should correctly set `query`', () => {
     const expectedQuery: ElasticsearchQuery['query'] = 'Some lucene query';
 

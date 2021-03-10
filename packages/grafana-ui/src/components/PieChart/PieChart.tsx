@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { DisplayValue, formattedValueToString, GrafanaTheme } from '@grafana/data';
+import { DisplayValue, FALLBACK_COLOR, formattedValueToString, GrafanaTheme } from '@grafana/data';
 import { useStyles, useTheme } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
@@ -9,13 +9,32 @@ import { localPoint } from '@visx/event';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
 import { css } from 'emotion';
+import { VizLegend, VizLegendItem } from '..';
+import { VizLayout } from '../VizLayout/VizLayout';
+import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
 
-export interface Props {
+export enum PieChartLabels {
+  Name = 'name',
+  Value = 'value',
+  Percent = 'percent',
+}
+
+export enum PieChartLegendValues {
+  Value = 'value',
+  Percent = 'percent',
+}
+
+interface SvgProps {
   height: number;
   width: number;
   values: DisplayValue[];
   pieType: PieChartType;
-  labelOptions?: PieChartLabelOptions;
+  displayLabels?: PieChartLabels[];
+  useGradients?: boolean;
+  onSeriesColorChange?: (label: string, color: string) => void;
+}
+export interface Props extends SvgProps {
+  legendOptions?: PieChartLegendOptions;
 }
 
 export enum PieChartType {
@@ -23,13 +42,88 @@ export enum PieChartType {
   Donut = 'donut',
 }
 
-export interface PieChartLabelOptions {
-  showName?: boolean;
-  showValue?: boolean;
-  showPercent?: boolean;
+export interface PieChartLegendOptions extends VizLegendOptions {
+  values: PieChartLegendValues[];
 }
 
-export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptions = { showName: true } }) => {
+const defaultLegendOptions: PieChartLegendOptions = {
+  displayMode: LegendDisplayMode.List,
+  placement: 'right',
+  calcs: [],
+  values: [PieChartLegendValues.Percent],
+};
+
+export const PieChart: FC<Props> = ({
+  values,
+  legendOptions = defaultLegendOptions,
+  onSeriesColorChange,
+  width,
+  height,
+  ...restProps
+}) => {
+  const getLegend = (values: DisplayValue[], legendOptions: PieChartLegendOptions) => {
+    if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
+      return undefined;
+    }
+    const total = values.reduce((acc, item) => item.numeric + acc, 0);
+
+    const legendItems = values.map<VizLegendItem>((value) => {
+      return {
+        label: value.title ?? '',
+        color: value.color ?? FALLBACK_COLOR,
+        yAxis: 1,
+        getDisplayValues: () => {
+          const valuesToShow = legendOptions.values ?? [];
+          let displayValues = [];
+
+          if (valuesToShow.includes(PieChartLegendValues.Value)) {
+            displayValues.push({ numeric: value.numeric, text: formattedValueToString(value), title: 'Value' });
+          }
+
+          if (valuesToShow.includes(PieChartLegendValues.Percent)) {
+            const fractionOfTotal = value.numeric / total;
+            const percentOfTotal = fractionOfTotal * 100;
+
+            displayValues.push({
+              numeric: fractionOfTotal,
+              percent: percentOfTotal,
+              text: percentOfTotal.toFixed(0) + '%',
+              title: valuesToShow.length > 1 ? 'Percent' : undefined,
+            });
+          }
+
+          return displayValues;
+        },
+      };
+    });
+
+    return (
+      <VizLegend
+        items={legendItems}
+        onSeriesColorChange={onSeriesColorChange}
+        placement={legendOptions.placement}
+        displayMode={legendOptions.displayMode}
+      />
+    );
+  };
+
+  return (
+    <VizLayout width={width} height={height} legend={getLegend(values, legendOptions)}>
+      {(vizWidth: number, vizHeight: number) => {
+        return <PieChartSvg width={vizWidth} height={vizHeight} values={values} {...restProps} />;
+      }}
+    </VizLayout>
+  );
+};
+
+export const PieChartSvg: FC<SvgProps> = ({
+  values,
+  pieType,
+  width,
+  height,
+  useGradients = true,
+  displayLabels = [],
+}) => {
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
   const styles = useStyles(getStyles);
@@ -43,20 +137,11 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
     return <div>No data</div>;
   }
 
-  const margin = 16;
-  const size = Math.min(width, height);
-  const outerRadius = (size - margin * 2) / 2;
-  const donutThickness = pieType === PieChartType.Pie ? outerRadius : Math.max(outerRadius / 3, 20);
-  const innerRadius = outerRadius - donutThickness;
-  const centerOffset = (size - margin * 2) / 2;
-  const total = values.reduce((acc, item) => item.numeric + acc, 0);
-  // for non donut pie charts shift gradient out a bit
-  const gradientFromOffset = 1 - (outerRadius - innerRadius) / outerRadius;
-  const showLabel = labelOptions.showName || labelOptions.showPercent || labelOptions.showValue;
-
   const getValue = (d: DisplayValue) => d.numeric;
-  const getGradientId = (idx: number) => `${componentInstanceId}-${idx}`;
-  const getColor = (arc: PieArcDatum<DisplayValue>) => `url(#${getGradientId(arc.index)})`;
+  const getGradientId = (color: string) => `${componentInstanceId}-${color}`;
+  const getGradientColor = (color: string) => {
+    return `url(#${getGradientId(color)})`;
+  };
 
   const onMouseMoveOverArc = (event: any, datum: any) => {
     const coords = localPoint(event.target.ownerSVGElement, event);
@@ -67,32 +152,36 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
     });
   };
 
+  const showLabel = displayLabels.length > 0;
+  const total = values.reduce((acc, item) => item.numeric + acc, 0);
+  const layout = getPieLayout(width, height, pieType);
+
   return (
     <div className={styles.container}>
-      <svg width={size} height={size} ref={containerRef}>
-        <Group top={centerOffset + margin} left={centerOffset + margin}>
-          {values.map((value, idx) => {
-            const color = value.color ?? 'gray';
+      <svg width={layout.size} height={layout.size} ref={containerRef}>
+        <Group top={layout.position} left={layout.position}>
+          {values.map((value) => {
+            const color = value.color ?? FALLBACK_COLOR;
             return (
               <RadialGradient
-                key={idx}
-                id={getGradientId(idx)}
+                key={value.color}
+                id={getGradientId(color)}
                 from={getGradientColorFrom(color, theme)}
                 to={getGradientColorTo(color, theme)}
-                fromOffset={gradientFromOffset}
+                fromOffset={layout.gradientFromOffset}
                 toOffset="1"
                 gradientUnits="userSpaceOnUse"
                 cx={0}
                 cy={0}
-                radius={outerRadius}
+                radius={layout.outerRadius}
               />
             );
           })}
           <Pie
             data={values}
             pieValue={getValue}
-            outerRadius={outerRadius}
-            innerRadius={innerRadius}
+            outerRadius={layout.outerRadius}
+            innerRadius={layout.innerRadius}
             cornerRadius={3}
             padAngle={0.005}
           >
@@ -107,17 +196,18 @@ export const PieChart: FC<Props> = ({ values, pieType, width, height, labelOptio
                   >
                     <path
                       d={pie.path({ ...arc })!}
-                      fill={getColor(arc)}
+                      fill={useGradients ? getGradientColor(arc.data.color ?? FALLBACK_COLOR) : arc.data.color}
                       stroke={theme.colors.panelBg}
                       strokeWidth={1}
                     />
                     {showLabel && (
                       <PieLabel
                         arc={arc}
-                        outerRadius={outerRadius}
-                        innerRadius={innerRadius}
-                        labelOptions={labelOptions}
+                        outerRadius={layout.outerRadius}
+                        innerRadius={layout.innerRadius}
+                        displayLabels={displayLabels}
                         total={total}
+                        color={theme.colors.text}
                       />
                     )}
                   </g>
@@ -140,9 +230,10 @@ const PieLabel: FC<{
   arc: PieArcDatum<DisplayValue>;
   outerRadius: number;
   innerRadius: number;
-  labelOptions: PieChartLabelOptions;
+  displayLabels: PieChartLabels[];
   total: number;
-}> = ({ arc, outerRadius, innerRadius, labelOptions, total }) => {
+  color: string;
+}> = ({ arc, outerRadius, innerRadius, displayLabels, total, color }) => {
   const labelRadius = innerRadius === 0 ? outerRadius / 6 : innerRadius;
   const [labelX, labelY] = getLabelPos(arc, outerRadius, labelRadius);
   const hasSpaceForLabel = arc.endAngle - arc.startAngle >= 0.3;
@@ -151,14 +242,14 @@ const PieLabel: FC<{
     return null;
   }
 
-  let labelFontSize = labelOptions.showName
+  let labelFontSize = displayLabels.includes(PieChartLabels.Name)
     ? Math.min(Math.max((outerRadius / 150) * 14, 12), 30)
     : Math.min(Math.max((outerRadius / 100) * 14, 12), 36);
 
   return (
     <g>
       <text
-        fill="white"
+        fill={color}
         x={labelX}
         y={labelY}
         dy=".33em"
@@ -166,17 +257,17 @@ const PieLabel: FC<{
         textAnchor="middle"
         pointerEvents="none"
       >
-        {labelOptions.showName && (
+        {displayLabels.includes(PieChartLabels.Name) && (
           <tspan x={labelX} dy="1.2em">
             {arc.data.title}
           </tspan>
         )}
-        {labelOptions.showValue && (
+        {displayLabels.includes(PieChartLabels.Value) && (
           <tspan x={labelX} dy="1.2em">
             {formattedValueToString(arc.data)}
           </tspan>
         )}
-        {labelOptions.showPercent && (
+        {displayLabels.includes(PieChartLabels.Percent) && (
           <tspan x={labelX} dy="1.2em">
             {((arc.data.numeric / total) * 100).toFixed(0) + '%'}
           </tspan>
@@ -204,6 +295,31 @@ function getGradientColorTo(color: string, theme: GrafanaTheme) {
     .darken(10 * (theme.isDark ? 1 : -0.7))
     .spin(-8)
     .toRgbString();
+}
+
+interface PieLayout {
+  position: number;
+  size: number;
+  outerRadius: number;
+  innerRadius: number;
+  gradientFromOffset: number;
+}
+
+function getPieLayout(height: number, width: number, pieType: PieChartType, margin = 16): PieLayout {
+  const size = Math.min(width, height);
+  const outerRadius = (size - margin * 2) / 2;
+  const donutThickness = pieType === PieChartType.Pie ? outerRadius : Math.max(outerRadius / 3, 20);
+  const innerRadius = outerRadius - donutThickness;
+  const centerOffset = (size - margin * 2) / 2;
+  // for non donut pie charts shift gradient out a bit
+  const gradientFromOffset = 1 - (outerRadius - innerRadius) / outerRadius;
+  return {
+    position: centerOffset + margin,
+    size: size,
+    outerRadius: outerRadius,
+    innerRadius: innerRadius,
+    gradientFromOffset: gradientFromOffset,
+  };
 }
 
 const getStyles = (theme: GrafanaTheme) => {
