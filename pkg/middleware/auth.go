@@ -35,15 +35,7 @@ func notAuthorized(c *models.ReqContext) {
 		return
 	}
 
-	redirectTo := c.Req.RequestURI
-	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
-		redirectTo = setting.AppSubUrl + c.Req.RequestURI
-	}
-
-	// remove any forceLogin=true params
-	redirectTo = removeForceLoginParams(redirectTo)
-
-	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
+	writeRedirectCookie(c)
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
@@ -53,7 +45,20 @@ func tokenRevoked(c *models.ReqContext) {
 		return
 	}
 
-	c.Redirect(setting.AppSubUrl + "/")
+	writeRedirectCookie(c)
+	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func writeRedirectCookie(c *models.ReqContext) {
+	redirectTo := c.Req.RequestURI
+	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
+		redirectTo = setting.AppSubUrl + c.Req.RequestURI
+	}
+
+	// remove any forceLogin=true params
+	redirectTo = removeForceLoginParams(redirectTo)
+
+	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 }
 
 var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
