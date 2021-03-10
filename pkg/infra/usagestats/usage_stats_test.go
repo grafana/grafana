@@ -560,6 +560,6 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 		SQLStore:           sqlstore.InitTestDB(t),
 		License:            &licensing.OSSLicensingService{},
 		AlertingUsageStats: &alertingUsageMock{},
-		externalMetrics:    make(map[string]metricFunc),
+		externalMetrics:    make(map[string]MetricFunc),
 	}
 }
