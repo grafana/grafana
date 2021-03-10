@@ -1,22 +1,28 @@
 import React from 'react';
 import { css } from 'emotion';
+import { compare, Operation } from 'fast-json-patch';
+import jsonMap from 'json-source-map';
 import _ from 'lodash';
-import DeepDiff from 'deep-diff';
+
 import { Button, HorizontalGroup } from '@grafana/ui';
-import { DashboardModel } from '../../state/DashboardModel';
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
-import { VersionHistoryBlock } from './VersionHistoryBlock';
+import { DiffGroup } from './DiffGroup';
+import { DiffViewer } from './DiffViewer';
 
 type DiffViewProps = {
   isNewLatest: boolean;
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
-  delta: { lhs: DashboardModel; rhs: DashboardModel };
+  versions?: { lhs: Object; rhs: Object };
   onFetchFail: () => void;
 };
 
-export const VersionHistoryComparison = ({ baseInfo, newInfo, delta, isNewLatest, onFetchFail }: DiffViewProps) => {
-  const basicDiff = _.groupBy(DeepDiff.diff(delta.lhs, delta.rhs), (change) => change.path![0]);
+export const VersionHistoryComparison = ({ baseInfo, newInfo, versions, isNewLatest, onFetchFail }: DiffViewProps) => {
+  if (!versions) {
+    return null;
+  }
+  const basicDiff = jsonDiff(versions.lhs, versions.rhs);
+
   return (
     <div>
       <HorizontalGroup justify="space-between" align="center">
@@ -46,16 +52,72 @@ export const VersionHistoryComparison = ({ baseInfo, newInfo, delta, isNewLatest
           padding-top: 16px;
         `}
       >
-        {Object.entries(basicDiff).map(([key, value]) => (
-          <VersionHistoryBlock changes={value} key={key} title={key} />
+        {Object.entries(basicDiff).map(([key, diffs]) => (
+          <DiffGroup diffs={diffs} key={key} title={key} />
         ))}
       </div>
 
+      <DiffViewer original={JSON.stringify(versions.lhs, null, 2)} value={JSON.stringify(versions.rhs, null, 2)} />
+
       <div className="gf-form-button-row">
-        <Button variant="secondary" onClick={() => console.log({ basicDiff, lhs: delta.lhs, rhs: delta.rhs })}>
+        <Button variant="secondary" onClick={() => console.log(basicDiff)}>
           View JSON Diff
         </Button>
       </div>
     </div>
   );
+};
+
+const jsonDiff = (lhs: Object, rhs: Object) => {
+  const diffs = compare(lhs, rhs);
+  const lhsMap = jsonMap.stringify(lhs, null, 2);
+  const rhsMap = jsonMap.stringify(rhs, null, 2);
+
+  const getDiffInformation = (diffs: Operation[]) =>
+    diffs.map((diff) => {
+      let originalValue = undefined;
+      let value = undefined;
+      let startLineNumber = 0;
+
+      const path = _.tail(diff.path.split('/'));
+      if (diff.op === 'replace') {
+        originalValue = _.get(lhs, path);
+        value = diff.value;
+        startLineNumber = rhsMap.pointers[diff.path].value.line;
+      }
+      if (diff.op === 'add') {
+        value = diff.value;
+        startLineNumber = rhsMap.pointers[diff.path].value.line;
+      }
+      if (diff.op === 'remove') {
+        originalValue = _.get(lhs, path);
+        console.log(_.head(diff.path));
+        startLineNumber = lhsMap.pointers[diff.path].value.line;
+      }
+
+      return {
+        op: diff.op,
+        value,
+        path,
+        originalValue,
+        startLineNumber,
+      };
+    });
+
+  const sortByLineNumber = (diffs) => _.sortBy(diffs, 'startLineNumber');
+  const groupByPath = (diffs) =>
+    diffs.reduce((acc, value) => {
+      const groupKey: string = _.first(value.path) || 'group';
+      const itemKey: string = value.path[1] || '0';
+      if (!acc[groupKey]) {
+        acc[groupKey] = {};
+      }
+      if (!acc[groupKey][itemKey]) {
+        acc[groupKey][itemKey] = [];
+      }
+      acc[groupKey][itemKey].push(value);
+      return acc;
+    }, {});
+
+  return _.flow([getDiffInformation, sortByLineNumber, groupByPath])(diffs);
 };

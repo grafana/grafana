@@ -15,7 +15,7 @@ type State = {
   isAppending: boolean;
   versions: DecoratedRevisionModel[];
   viewMode: 'list' | 'compare';
-  delta?: { lhs: any; rhs: any };
+  diffData: { lhs: any; rhs: any };
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   isNewLatest: boolean;
@@ -42,6 +42,10 @@ export class VersionsSettings extends PureComponent<Props, State> {
       versions: [],
       viewMode: 'list',
       isNewLatest: false,
+      diffData: {
+        lhs: {},
+        rhs: {},
+      },
     };
   }
 
@@ -82,7 +86,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
       isNewLatest,
       newInfo,
       viewMode: 'compare',
-      delta: {
+      diffData: {
         rhs: rhs.data,
         lhs: lhs.data,
       },
@@ -112,7 +116,10 @@ export class VersionsSettings extends PureComponent<Props, State> {
   reset = () => {
     this.setState({
       baseInfo: undefined,
-      delta: undefined,
+      diffData: {
+        lhs: {},
+        rhs: {},
+      },
       isNewLatest: false,
       newInfo: undefined,
       versions: this.state.versions.map((version) => ({ ...version, checked: false })),
@@ -121,7 +128,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
   };
 
   render() {
-    const { versions, viewMode, baseInfo, newInfo, isNewLatest, isLoading, delta } = this.state;
+    const { versions, viewMode, baseInfo, newInfo, isNewLatest, isLoading, diffData: versionModels } = this.state;
     const canCompare = versions.filter((version) => version.checked).length !== 2;
     const showButtons = versions.length > 1;
     const hasMore = versions.length >= this.limit;
@@ -140,11 +147,11 @@ export class VersionsSettings extends PureComponent<Props, State> {
             <VersionsHistorySpinner msg="Fetching changes&hellip;" />
           ) : (
             <VersionHistoryComparison
-              newInfo={newInfo}
-              baseInfo={baseInfo}
+              newInfo={newInfo!}
+              baseInfo={baseInfo!}
               isNewLatest={isNewLatest}
               onFetchFail={this.reset}
-              delta={delta}
+              versions={versionModels}
             />
           )}
         </div>
