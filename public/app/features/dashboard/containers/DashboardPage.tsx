@@ -27,6 +27,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
 import { shouldReloadPage } from 'app/core/navigation/utils';
 import { getKioskMode } from 'app/core/navigation/kiosk';
+import { UrlQueryValue } from '@grafana/data';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -41,7 +42,7 @@ type DashboardPageRouteSearchParams = {
   viewPanel?: string;
   editview?: string;
   inspect?: string;
-  kiosk?: KioskMode;
+  kiosk?: UrlQueryValue;
 };
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
