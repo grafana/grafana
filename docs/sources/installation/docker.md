@@ -112,6 +112,19 @@ docker build \
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
 
+### Build with pre-installed plugins from other sources
+You can build a Docker image with plugins from other sources by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`.
+
+```bash
+cd packaging/docker/custom
+docker build \
+  --build-arg "GRAFANA_VERSION=latest" \
+  --build-arg "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel" \
+  -t grafana-custom -f Dockerfile .
+
+docker run -d -p 3000:3000 --name=grafana grafana-custom
+```
+
 Replace `Dockerfile` in above example with `ubuntu.Dockerfile` to build a custom Ubuntu based image (Grafana v6.5+).
 
 ### Build with Grafana Image Renderer plugin pre-installed
