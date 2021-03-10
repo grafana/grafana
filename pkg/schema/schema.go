@@ -41,6 +41,7 @@ func (s Seq) Validate() error {
 
 	// TODO semver-style thinking would entail that something can sit on v0
 	// through breaking changes
+	return nil
 }
 
 // CueSchema represents a single, complete CUE-based schema that can perform
@@ -109,7 +110,7 @@ type VersionedCueSchema interface {
 //
 // Additional CueSchema may be provided to check for validation.
 func (f *Family) Validate(r Resource, s ...CueSchema) (CueSchema, error) {
-
+	return nil, nil
 }
 
 // A Resource represents a concrete configuration object - e.g., JSON

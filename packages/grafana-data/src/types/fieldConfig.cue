@@ -5,6 +5,13 @@ package grafanaschema
 // current go implementation is here:
 // https://github.com/grafana/grafana-plugin-sdk-go/blob/master/data/field_config.go#L10
 
+// FieldConfig is probably closed. But.
+//
+// FieldConfig on timeseries panel is gonna have a well-defined field called
+// 'custom,' where we know its shape.
+//
+// Look at table panel as easiest for getting it all working here. It exercises everything, but with few fields.
+
 //  Every property is optional
 //  Plugins may extend this with additional properties. Something like series overrides
 FieldConfig: {
@@ -59,6 +66,8 @@ FieldConfig: {
   noValue?: string
 
   // Panel Specific Values
+  // Can always exist. Valid fields within this are defined by the panel plugin
+  // - that's the FieldConfig that comes from the plugin.
   custom?: {} // Can cuetsy make this generic? <T = any>
 
 } @cuetsy(targetType="interface") 
@@ -69,6 +78,8 @@ FieldConfigSource: {
   defaults: FieldConfig // or empty {}
 
   // Rules to override individual values
+  // These are a map of k=>v. Keys MUST only either be labels from FieldConfig,
+  // OR from the custom, plugin-defined schema.
   overrides: [...ConfigOverrideRule]
 } @cuetsy(targetType="interface")
 

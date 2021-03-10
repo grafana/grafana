@@ -1,8 +1,10 @@
 package load
 
 import (
-	"io"
+	"fmt"
+	"path/filepath"
 
+	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
 )
@@ -20,23 +22,59 @@ import (
 type BaseLoadPaths struct {
 	// BaseCueFS should be rooted at a directory containing the filesystem layout
 	// expected to exist at github.com/grafana/grafana/cue.
-	BaseCueFS io.FS
+	BaseCueFS string
+
+	packageName string
 
 	// DistPluginCueFS should point to some fs path (TBD) under which all core
 	// plugins live.
-	DistPluginCueFS io.FS
+	DistPluginCueFS string
 
 	// InstanceCueFS should point to a root dir in which non-core plugins live.
 	// Normal case will be that this only happens when an actual Grafana
 	// instance is making the call, and has a plugin dir to offer - though
 	// external tools could always create their own dirs shaped like a Grafana
 	// plugin dir, and point to those.
-	InstanceCueFS io.FS
+	InstanceCueFS string
 }
 
-// LoadBaseDashboard creates a schema.Family that correponds to all known
+var buildFamilyFunc = BuildDashboardFamily
+
+// BuildDashboardFamily read from cue file and build schema.Family go object
+func BuildDashboardFamily(fam *schema.Family, famval cue.Value) (*schema.Family, error) {
+	majorVersionArray := famval.Lookup("seqs")
+	if !majorVersionArray.Exists() {
+		return fam, fmt.Errorf("seqs field has to exist in cue definition")
+	}
+
+	majorVerstionIte, err := majorVersionArray.List()
+	if err != nil {
+		return fam, err
+	}
+
+	major := 0
+	for majorVerstionIte.Next() {
+		minor := 0
+		var majorseq schema.Seq
+		minorVersionIte, err := majorVerstionIte.Value().List()
+		if err != nil {
+			return fam, err
+		}
+		for minorVersionIte.Next() {
+			fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<< %v+", minorVersionIte.Value())
+			vcs := NewVersionedCueSchema(minorVersionIte.Value(), major, minor)
+			majorseq = append(majorseq, *vcs)
+			minor++
+		}
+		fam.Seqs = append(fam.Seqs, majorseq)
+		major++
+	}
+	return fam, nil
+}
+
+// BaseDashboard creates a schema.Family that correponds to all known
 // core-only dashboard schemata in this version of Grafana.
-func LoadBaseDashboard(p BaseLoadPaths) (*schema.Family, error) {
+func BaseDashboard(p BaseLoadPaths) (*schema.Family, error) {
 	// TODO deal with making sure we're using the same cue.Runtime everywhere
 
 	// TODO see if we can trick load.Instances into using our io.FS. If not, we'll
@@ -44,14 +82,28 @@ func LoadBaseDashboard(p BaseLoadPaths) (*schema.Family, error) {
 	// be the default `cue` behavior for loading packages in ancestor dirs, all files
 	// of the same package in a dir, etc. We could minimize the cost by keeping our
 	// on-disk filesystem structures simple.
-	l := load.Instances([]string{p.BaseCueFS + "/cue/data"}, &load.Config{Package: "grafanaschema"})
+	testdataDir := filepath.Join(p.BaseCueFS, "data")
+	dirCfg := &load.Config{
+		Dir:     testdataDir,
+		Package: p.packageName,
+		Tools:   true,
+	}
 
+	SchemaInstances := load.Instances([]string{"."}, dirCfg)
 	// Select the dashboard schema Value from the instance path at which we have
 	// defined it to live.
 	// TODO ugh, we need to fully define the schema family pattern to pull out the current dashboard
-	famval := l.Lookup("dashboardFamily")
 	fam := &schema.Family{}
-
+	var err error
+	insts := cue.Build(SchemaInstances)
+	for _, l := range insts {
+		famval := l.Lookup("dashboardFamily")
+		if famval.Exists() == true {
+			fam, err = buildFamilyFunc(fam, famval)
+			return fam, err
+		}
+	}
+	return fam, nil
 	// TODO Iterate over seqs in famval, create corresponding CueSchema on fam
 }
 
@@ -114,3 +166,66 @@ func LoadBaseDashboard(p BaseLoadPaths) (*schema.Family, error) {
 // erring on the side of making a conditional field required and giving it a
 // default value, then ensuring that the mere presence of the field does not
 // change behavior in consumers of the schema.
+
+// DashboardVersionedCueSchema is the implementation of VersionedCueSchema for dashboard
+type DashboardVersionedCueSchema struct {
+	ActualSchema           cue.Value
+	major                  int
+	minor                  int
+	nextVersionedCueSchema *DashboardVersionedCueSchema
+}
+
+// NewVersionedCueSchema create a new versioned cue schema object
+func NewVersionedCueSchema(cv cue.Value, mj int, mn int) *DashboardVersionedCueSchema {
+	return &DashboardVersionedCueSchema{
+		ActualSchema: cv,
+		major:        mj,
+		minor:        mn,
+	}
+}
+
+// Validate checks that the resource is correct with respect to the schema.
+func (cs DashboardVersionedCueSchema) Validate(input schema.Resource) error {
+	return nil
+}
+
+// ApplyDefaults returns a new, concrete copy of the Resource with all paths
+// that are 1) missing in the Resource AND 2) specified by the schema,
+// filled with default values specified by the schema.
+func (cs DashboardVersionedCueSchema) ApplyDefaults(input schema.Resource) (schema.Resource, error) {
+	return input, nil
+}
+
+// TrimDefaults returns a new, concrete copy of the Resource where all paths
+// in the  where the values at those paths are the same as the default value
+// given in the schema.
+func (cs DashboardVersionedCueSchema) TrimDefaults(input schema.Resource) (schema.Resource, error) {
+	return input, nil
+}
+
+// Migrate transforms an Resource into a new Resource that is correct with
+// respect to its Successor schema.
+func (cs DashboardVersionedCueSchema) Migrate(input schema.Resource) (schema.Resource, bool, error) {
+	return input, true, nil
+}
+
+// Successor returns the CueSchema to which this CueSchema knows how to
+// migrate, if any.
+func (cs DashboardVersionedCueSchema) Successor() schema.CueSchema {
+	return cs
+}
+
+// Actual returns the cue.Value representing the actual schema.
+func (cs DashboardVersionedCueSchema) Actual() cue.Value {
+	return cs.ActualSchema
+}
+
+// Version reports the major and minor versions of the schema.
+func (cs DashboardVersionedCueSchema) Version() (int, int) {
+	return cs.major, cs.minor
+}
+
+// Next Returns the next VersionedCueSchema
+func (cs DashboardVersionedCueSchema) Next() schema.VersionedCueSchema {
+	return *cs.nextVersionedCueSchema
+}
