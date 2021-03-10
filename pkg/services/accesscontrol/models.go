@@ -1,4 +1,4 @@
-package rbac
+package accesscontrol
 
 import (
 	"errors"
@@ -14,6 +14,7 @@ var (
 	ErrTeamNotFound                  = errors.New("team not found")
 	ErrPermissionNotFound            = errors.New("permission not found")
 	ErrPolicyFailedGenerateUniqueUID = errors.New("failed to generate policy definition UID")
+	ErrVersionLE                     = errors.New("the provided policy version is smaller than or equal to stored policy")
 )
 
 // Policy is the model for Policy in RBAC.

@@ -1,4 +1,4 @@
-package rbac
+package middleware
 
 import (
 	"bytes"
@@ -9,14 +9,10 @@ import (
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-type AccessControl interface {
-	// Evaluate evaluates access to the given resource
-	Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error)
-}
-
-func Middleware(ac AccessControl) func(string, ...string) macaron.Handler {
+func Middleware(ac accesscontrol.AccessControl) func(string, ...string) macaron.Handler {
 	return func(permission string, scopes ...string) macaron.Handler {
 		return func(c *models.ReqContext) {
 			for i, scope := range scopes {

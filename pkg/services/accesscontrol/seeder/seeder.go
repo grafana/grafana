@@ -1,4 +1,4 @@
-package rbac
+package seeder
 
 import (
 	"context"
@@ -6,18 +6,19 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 type seeder struct {
-	Service *RBACService
-	log     log.Logger
+	Store accesscontrol.Store
+	log   log.Logger
 }
 
-var builtInPolicies = []PolicyDTO{
+var builtInPolicies = []accesscontrol.PolicyDTO{
 	{
 		Name:    "grafana:builtin:users:read:self",
 		Version: 1,
-		Permissions: []Permission{
+		Permissions: []accesscontrol.Permission{
 			{
 				Permission: "users:read",
 				Scope:      "users:self",
@@ -41,18 +42,22 @@ var builtInPolicyGrants = map[string][]string{
 	},
 }
 
+func NewSeeder(s accesscontrol.AccessControl, log log.Logger) *seeder {
+	return &seeder{Store: s, log: log}
+}
+
 func (s *seeder) Seed(ctx context.Context, orgID int64) error {
 	err := s.seed(ctx, orgID, builtInPolicies, builtInPolicyGrants)
 	return err
 }
 
-func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO, policyGrants map[string][]string) error {
+func (s *seeder) seed(ctx context.Context, orgID int64, policies []accesscontrol.PolicyDTO, policyGrants map[string][]string) error {
 	// FIXME: As this will run on startup, we want to optimize running this
-	existingPolicies, err := s.Service.GetPolicies(ctx, orgID)
+	existingPolicies, err := s.Store.GetPolicies(ctx, orgID)
 	if err != nil {
 		return err
 	}
-	policySet := map[string]*Policy{}
+	policySet := map[string]*accesscontrol.Policy{}
 	for _, policy := range existingPolicies {
 		if policy == nil {
 			continue
@@ -78,8 +83,8 @@ func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO, po
 
 		if roles, exists := policyGrants[policy.Name]; exists {
 			for _, role := range roles {
-				err := s.Service.AddBuiltinRolePolicy(ctx, orgID, policyID, role)
-				if err != nil && !errors.Is(err, ErrUserPolicyAlreadyAdded) {
+				err := s.Store.AddBuiltinRolePolicy(ctx, orgID, policyID, role)
+				if err != nil && !errors.Is(err, accesscontrol.ErrUserPolicyAlreadyAdded) {
 					s.log.Error("failed to assign policy to role",
 						"name", policy.Name,
 						"role", role,
@@ -94,13 +99,13 @@ func (s *seeder) seed(ctx context.Context, orgID int64, policies []PolicyDTO, po
 	return nil
 }
 
-func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old *Policy) (int64, error) {
+func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy accesscontrol.PolicyDTO, old *accesscontrol.Policy) (int64, error) {
 	if policy.Version == 0 {
 		return 0, fmt.Errorf("error when seeding '%s': all seeder policies must have a version", policy.Name)
 	}
 
 	if old == nil {
-		p, err := s.Service.CreatePolicyWithPermissions(ctx, CreatePolicyWithPermissionsCommand{
+		p, err := s.Store.CreatePolicyWithPermissions(ctx, accesscontrol.CreatePolicyWithPermissionsCommand{
 			OrgId:       policy.OrgId,
 			Version:     policy.Version,
 			Name:        policy.Name,
@@ -113,20 +118,20 @@ func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old
 		return p.Id, nil
 	}
 
-	_, err := s.Service.UpdatePolicy(ctx, UpdatePolicyCommand{
+	_, err := s.Store.UpdatePolicy(ctx, accesscontrol.UpdatePolicyCommand{
 		UID:         old.UID,
 		Name:        policy.Name,
 		Description: policy.Description,
 		Version:     policy.Version,
 	})
 	if err != nil {
-		if errors.Is(err, errVersionLE) {
+		if errors.Is(err, accesscontrol.ErrVersionLE) {
 			return old.Id, nil
 		}
 		return 0, err
 	}
 
-	existingPermissions, err := s.Service.GetPolicyPermissions(ctx, old.Id)
+	existingPermissions, err := s.Store.GetPolicyPermissions(ctx, old.Id)
 	if err != nil {
 		s.log.Info("failed to get current permissions for policy", "name", policy.Name, "err", err)
 	}
@@ -138,7 +143,7 @@ func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy PolicyDTO, old
 	return old.Id, nil
 }
 
-func (s *seeder) idempotentUpdatePermissions(ctx context.Context, policyID int64, new []Permission, old []Permission) error {
+func (s *seeder) idempotentUpdatePermissions(ctx context.Context, policyID int64, new []accesscontrol.Permission, old []accesscontrol.Permission) error {
 	if policyID == 0 {
 		return fmt.Errorf("refusing to add permissions to policy with ID 0 (it should not exist)")
 	}
@@ -146,7 +151,7 @@ func (s *seeder) idempotentUpdatePermissions(ctx context.Context, policyID int64
 	added, removed := diffPermissionList(new, old)
 
 	for _, p := range added {
-		_, err := s.Service.CreatePermission(ctx, CreatePermissionCommand{
+		_, err := s.Store.CreatePermission(ctx, accesscontrol.CreatePermissionCommand{
 			PolicyId:   policyID,
 			Permission: p.Permission,
 			Scope:      p.Scope,
@@ -157,7 +162,7 @@ func (s *seeder) idempotentUpdatePermissions(ctx context.Context, policyID int64
 	}
 
 	for _, p := range removed {
-		err := s.Service.DeletePermission(ctx, &DeletePermissionCommand{
+		err := s.Store.DeletePermission(ctx, &accesscontrol.DeletePermissionCommand{
 			Id: p.Id,
 		})
 		if err != nil {
@@ -168,11 +173,11 @@ func (s *seeder) idempotentUpdatePermissions(ctx context.Context, policyID int64
 	return nil
 }
 
-func diffPermissionList(new, old []Permission) (added, removed []Permission) {
+func diffPermissionList(new, old []accesscontrol.Permission) (added, removed []accesscontrol.Permission) {
 	newMap, oldMap := permissionMap(new), permissionMap(old)
 
-	added = []Permission{}
-	removed = []Permission{}
+	added = []accesscontrol.Permission{}
+	removed = []accesscontrol.Permission{}
 
 	for _, p := range newMap {
 		if _, exists := oldMap[permissionTuple{
@@ -202,8 +207,8 @@ type permissionTuple struct {
 	Scope      string
 }
 
-func permissionMap(l []Permission) map[permissionTuple]Permission {
-	m := make(map[permissionTuple]Permission, len(l))
+func permissionMap(l []accesscontrol.Permission) map[permissionTuple]accesscontrol.Permission {
+	m := make(map[permissionTuple]accesscontrol.Permission, len(l))
 	for _, p := range l {
 		m[permissionTuple{
 			Permission: p.Permission,

@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -40,7 +41,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/rbac"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -90,7 +90,7 @@ type HTTPServer struct {
 	DataService            *tsdb.Service                      `inject:""`
 	PluginDashboardService *plugindashboards.Service          `inject:""`
 	AlertEngine            *alerting.AlertEngine              `inject:""`
-	AccessControl          rbac.AccessControl                 `inject:""`
+	AccessControl          accesscontrol.AccessControl        `inject:""`
 	Listener               net.Listener
 }
 

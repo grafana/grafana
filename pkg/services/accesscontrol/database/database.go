@@ -1,4 +1,4 @@
-package rbac
+package database
 
 import (
 	"context"
@@ -7,19 +7,31 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// timeNow makes it possible to test usage of time
-var timeNow = time.Now
-var errVersionLE = fmt.Errorf("the provided policy version is smaller than or equal to stored policy")
+// TimeNow makes it possible to test usage of time
+var TimeNow = time.Now
 
-func (ac *RBACService) GetPolicies(ctx context.Context, orgID int64) ([]*Policy, error) {
-	var result []*Policy
+type AccessControlStore struct {
+	SQLStore *sqlstore.SQLStore `inject:""`
+}
+
+func init() {
+	registry.RegisterService(&AccessControlStore{})
+}
+
+func (ac *AccessControlStore) Init() error {
+	return nil
+}
+
+func (ac *AccessControlStore) GetPolicies(ctx context.Context, orgID int64) ([]*accesscontrol.Policy, error) {
+	var result []*accesscontrol.Policy
 	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		policies := make([]*Policy, 0)
+		policies := make([]*accesscontrol.Policy, 0)
 		q := "SELECT id, uid, org_id, name, description, updated FROM policy WHERE org_id = ?"
 		if err := sess.SQL(q, orgID).Find(&policies); err != nil {
 			return err
@@ -31,8 +43,8 @@ func (ac *RBACService) GetPolicies(ctx context.Context, orgID int64) ([]*Policy,
 	return result, err
 }
 
-func (ac *RBACService) GetPolicy(ctx context.Context, orgID, policyID int64) (*PolicyDTO, error) {
-	var result *PolicyDTO
+func (ac *AccessControlStore) GetPolicy(ctx context.Context, orgID, policyID int64) (*accesscontrol.PolicyDTO, error) {
+	var result *accesscontrol.PolicyDTO
 
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		policy, err := getPolicyById(sess, policyID, orgID)
@@ -53,8 +65,8 @@ func (ac *RBACService) GetPolicy(ctx context.Context, orgID, policyID int64) (*P
 	return result, err
 }
 
-func (ac *RBACService) GetPolicyByUID(ctx context.Context, orgId int64, uid string) (*PolicyDTO, error) {
-	var result *PolicyDTO
+func (ac *AccessControlStore) GetPolicyByUID(ctx context.Context, orgId int64, uid string) (*accesscontrol.PolicyDTO, error) {
+	var result *accesscontrol.PolicyDTO
 
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		policy, err := getPolicyByUID(sess, uid, orgId)
@@ -75,8 +87,8 @@ func (ac *RBACService) GetPolicyByUID(ctx context.Context, orgId int64, uid stri
 	return result, err
 }
 
-func (ac *RBACService) CreatePolicy(ctx context.Context, cmd CreatePolicyCommand) (*Policy, error) {
-	var result *Policy
+func (ac *AccessControlStore) CreatePolicy(ctx context.Context, cmd accesscontrol.CreatePolicyCommand) (*accesscontrol.Policy, error) {
+	var result *accesscontrol.Policy
 
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		policy, err := ac.createPolicy(sess, cmd)
@@ -91,7 +103,7 @@ func (ac *RBACService) CreatePolicy(ctx context.Context, cmd CreatePolicyCommand
 	return result, err
 }
 
-func (ac *RBACService) createPolicy(sess *sqlstore.DBSession, cmd CreatePolicyCommand) (*Policy, error) {
+func (ac *AccessControlStore) createPolicy(sess *sqlstore.DBSession, cmd accesscontrol.CreatePolicyCommand) (*accesscontrol.Policy, error) {
 	if cmd.UID == "" {
 		uid, err := generateNewPolicyUID(sess, cmd.OrgId)
 		if err != nil {
@@ -100,13 +112,13 @@ func (ac *RBACService) createPolicy(sess *sqlstore.DBSession, cmd CreatePolicyCo
 		cmd.UID = uid
 	}
 
-	policy := &Policy{
+	policy := &accesscontrol.Policy{
 		OrgId:       cmd.OrgId,
 		UID:         cmd.UID,
 		Name:        cmd.Name,
 		Description: cmd.Description,
-		Created:     timeNow(),
-		Updated:     timeNow(),
+		Created:     TimeNow(),
+		Updated:     TimeNow(),
 	}
 
 	if _, err := sess.Insert(policy); err != nil {
@@ -119,11 +131,11 @@ func (ac *RBACService) createPolicy(sess *sqlstore.DBSession, cmd CreatePolicyCo
 	return policy, nil
 }
 
-func (ac *RBACService) CreatePolicyWithPermissions(ctx context.Context, cmd CreatePolicyWithPermissionsCommand) (*PolicyDTO, error) {
-	var result *PolicyDTO
+func (ac *AccessControlStore) CreatePolicyWithPermissions(ctx context.Context, cmd accesscontrol.CreatePolicyWithPermissionsCommand) (*accesscontrol.PolicyDTO, error) {
+	var result *accesscontrol.PolicyDTO
 
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		createPolicyCmd := CreatePolicyCommand{
+		createPolicyCmd := accesscontrol.CreatePolicyCommand{
 			OrgId:       cmd.OrgId,
 			UID:         cmd.UID,
 			Name:        cmd.Name,
@@ -135,7 +147,7 @@ func (ac *RBACService) CreatePolicyWithPermissions(ctx context.Context, cmd Crea
 			return err
 		}
 
-		result = &PolicyDTO{
+		result = &accesscontrol.PolicyDTO{
 			Id:          policy.Id,
 			UID:         policy.UID,
 			OrgId:       policy.OrgId,
@@ -147,7 +159,7 @@ func (ac *RBACService) CreatePolicyWithPermissions(ctx context.Context, cmd Crea
 
 		// Add permissions
 		for _, p := range cmd.Permissions {
-			createPermissionCmd := CreatePermissionCommand{
+			createPermissionCmd := accesscontrol.CreatePermissionCommand{
 				PolicyId:   policy.Id,
 				Permission: p.Permission,
 				Scope:      p.Scope,
@@ -167,8 +179,8 @@ func (ac *RBACService) CreatePolicyWithPermissions(ctx context.Context, cmd Crea
 }
 
 // UpdatePolicy updates policy with permissions
-func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand) (*PolicyDTO, error) {
-	var result *PolicyDTO
+func (ac *AccessControlStore) UpdatePolicy(ctx context.Context, cmd accesscontrol.UpdatePolicyCommand) (*accesscontrol.PolicyDTO, error) {
+	var result *accesscontrol.PolicyDTO
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: work with both ID and UID
 		existingPolicy, err := getPolicyByUID(sess, cmd.UID, cmd.OrgId)
@@ -185,20 +197,20 @@ func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand
 					existingPolicy.UID,
 					existingPolicy.Version,
 					cmd.Version,
-					errVersionLE,
+					accesscontrol.ErrVersionLE,
 				)
 			}
 			version = cmd.Version
 		}
 
-		policy := &Policy{
+		policy := &accesscontrol.Policy{
 			Id:          existingPolicy.Id,
 			UID:         existingPolicy.UID,
 			Version:     version,
 			OrgId:       existingPolicy.OrgId,
 			Name:        cmd.Name,
 			Description: cmd.Description,
-			Updated:     timeNow(),
+			Updated:     TimeNow(),
 		}
 
 		affectedRows, err := sess.ID(existingPolicy.Id).Update(policy)
@@ -208,10 +220,10 @@ func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand
 		}
 
 		if affectedRows == 0 {
-			return ErrPolicyNotFound
+			return accesscontrol.ErrPolicyNotFound
 		}
 
-		result = &PolicyDTO{
+		result = &accesscontrol.PolicyDTO{
 			Id:          policy.Id,
 			Version:     version,
 			UID:         policy.UID,
@@ -230,7 +242,7 @@ func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand
 
 		// Add permissions
 		for _, p := range cmd.Permissions {
-			createPermissionCmd := CreatePermissionCommand{
+			createPermissionCmd := accesscontrol.CreatePermissionCommand{
 				PolicyId:   policy.Id,
 				Permission: p.Permission,
 				Scope:      p.Scope,
@@ -249,7 +261,7 @@ func (ac *RBACService) UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand
 	return result, err
 }
 
-func (ac *RBACService) DeletePolicy(cmd *DeletePolicyCommand) error {
+func (ac *AccessControlStore) DeletePolicy(cmd *accesscontrol.DeletePolicyCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		policyId := cmd.Id
 		if policyId == 0 {
@@ -275,8 +287,8 @@ func (ac *RBACService) DeletePolicy(cmd *DeletePolicyCommand) error {
 	})
 }
 
-func (ac *RBACService) GetPolicyPermissions(ctx context.Context, policyID int64) ([]Permission, error) {
-	var result []Permission
+func (ac *AccessControlStore) GetPolicyPermissions(ctx context.Context, policyID int64) ([]accesscontrol.Permission, error) {
+	var result []accesscontrol.Permission
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		permissions, err := getPolicyPermissions(sess, policyID)
 		if err != nil {
@@ -289,8 +301,8 @@ func (ac *RBACService) GetPolicyPermissions(ctx context.Context, policyID int64)
 	return result, err
 }
 
-func (ac *RBACService) CreatePermission(ctx context.Context, cmd CreatePermissionCommand) (*Permission, error) {
-	var result *Permission
+func (ac *AccessControlStore) CreatePermission(ctx context.Context, cmd accesscontrol.CreatePermissionCommand) (*accesscontrol.Permission, error) {
+	var result *accesscontrol.Permission
 	err := ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		permission, err := createPermission(sess, cmd)
 		if err != nil {
@@ -304,13 +316,13 @@ func (ac *RBACService) CreatePermission(ctx context.Context, cmd CreatePermissio
 	return result, err
 }
 
-func (ac *RBACService) UpdatePermission(cmd *UpdatePermissionCommand) (*Permission, error) {
-	var result *Permission
+func (ac *AccessControlStore) UpdatePermission(cmd *accesscontrol.UpdatePermissionCommand) (*accesscontrol.Permission, error) {
+	var result *accesscontrol.Permission
 	err := ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		permission := &Permission{
+		permission := &accesscontrol.Permission{
 			Permission: cmd.Permission,
 			Scope:      cmd.Scope,
-			Updated:    timeNow(),
+			Updated:    TimeNow(),
 		}
 
 		affectedRows, err := sess.ID(cmd.Id).Update(permission)
@@ -320,7 +332,7 @@ func (ac *RBACService) UpdatePermission(cmd *UpdatePermissionCommand) (*Permissi
 		}
 
 		if affectedRows == 0 {
-			return ErrPermissionNotFound
+			return accesscontrol.ErrPermissionNotFound
 		}
 
 		result = permission
@@ -330,7 +342,7 @@ func (ac *RBACService) UpdatePermission(cmd *UpdatePermissionCommand) (*Permissi
 	return result, err
 }
 
-func (ac *RBACService) DeletePermission(ctx context.Context, cmd *DeletePermissionCommand) error {
+func (ac *AccessControlStore) DeletePermission(ctx context.Context, cmd *accesscontrol.DeletePermissionCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Exec("DELETE FROM permission WHERE id = ?", cmd.Id)
 		if err != nil {
@@ -341,8 +353,8 @@ func (ac *RBACService) DeletePermission(ctx context.Context, cmd *DeletePermissi
 	})
 }
 
-func (ac *RBACService) GetTeamPolicies(query *GetTeamPoliciesQuery) ([]*PolicyDTO, error) {
-	var result []*PolicyDTO
+func (ac *AccessControlStore) GetTeamPolicies(query *accesscontrol.GetTeamPoliciesQuery) ([]*accesscontrol.PolicyDTO, error) {
+	var result []*accesscontrol.PolicyDTO
 	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		q := `SELECT
 			policy.id,
@@ -362,8 +374,8 @@ func (ac *RBACService) GetTeamPolicies(query *GetTeamPoliciesQuery) ([]*PolicyDT
 	return result, err
 }
 
-func (ac *RBACService) GetUserPolicies(ctx context.Context, query GetUserPoliciesQuery) ([]*PolicyDTO, error) {
-	var result []*PolicyDTO
+func (ac *AccessControlStore) GetUserPolicies(ctx context.Context, query accesscontrol.GetUserPoliciesQuery) ([]*accesscontrol.PolicyDTO, error) {
+	var result []*accesscontrol.PolicyDTO
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: optimize this
 		filter, params := ac.userPoliciesFilter(query.OrgId, query.UserId, query.Roles)
@@ -385,8 +397,8 @@ func (ac *RBACService) GetUserPolicies(ctx context.Context, query GetUserPolicie
 	return result, err
 }
 
-func (ac *RBACService) GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error) {
-	var result []*Permission
+func (ac *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]*accesscontrol.Permission, error) {
+	var result []*accesscontrol.Permission
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		filter, params := ac.userPoliciesFilter(query.OrgId, query.UserId, query.Roles)
 
@@ -412,7 +424,7 @@ func (ac *RBACService) GetUserPermissions(ctx context.Context, query GetUserPerm
 	return result, err
 }
 
-func (*RBACService) userPoliciesFilter(orgID, userID int64, roles []string) (string, []interface{}) {
+func (*AccessControlStore) userPoliciesFilter(orgID, userID int64, roles []string) (string, []interface{}) {
 	q := `WHERE policy.id IN (
 		SELECT up.policy_id FROM user_policy AS up WHERE up.user_id = ?
 		UNION
@@ -437,12 +449,12 @@ func (*RBACService) userPoliciesFilter(orgID, userID int64, roles []string) (str
 	return q, params
 }
 
-func (ac *RBACService) AddTeamPolicy(cmd *AddTeamPolicyCommand) error {
+func (ac *AccessControlStore) AddTeamPolicy(cmd *accesscontrol.AddTeamPolicyCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		if res, err := sess.Query("SELECT 1 from team_policy WHERE org_id=? and team_id=? and policy_id=?", cmd.OrgId, cmd.TeamId, cmd.PolicyId); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return ErrTeamPolicyAlreadyAdded
+			return accesscontrol.ErrTeamPolicyAlreadyAdded
 		}
 
 		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
@@ -453,12 +465,12 @@ func (ac *RBACService) AddTeamPolicy(cmd *AddTeamPolicyCommand) error {
 			return err
 		}
 
-		teamPolicy := &TeamPolicy{
+		teamPolicy := &accesscontrol.TeamPolicy{
 			OrgId:    cmd.OrgId,
 			TeamId:   cmd.TeamId,
 			PolicyId: cmd.PolicyId,
-			Created:  timeNow(),
-			Updated:  timeNow(),
+			Created:  TimeNow(),
+			Updated:  TimeNow(),
 		}
 
 		_, err := sess.Insert(teamPolicy)
@@ -466,7 +478,7 @@ func (ac *RBACService) AddTeamPolicy(cmd *AddTeamPolicyCommand) error {
 	})
 }
 
-func (ac *RBACService) RemoveTeamPolicy(cmd *RemoveTeamPolicyCommand) error {
+func (ac *AccessControlStore) RemoveTeamPolicy(cmd *accesscontrol.RemoveTeamPolicyCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
 			return err
@@ -483,31 +495,31 @@ func (ac *RBACService) RemoveTeamPolicy(cmd *RemoveTeamPolicyCommand) error {
 		}
 		rows, err := res.RowsAffected()
 		if rows == 0 {
-			return ErrTeamPolicyNotFound
+			return accesscontrol.ErrTeamPolicyNotFound
 		}
 
 		return err
 	})
 }
 
-func (ac *RBACService) AddUserPolicy(cmd *AddUserPolicyCommand) error {
+func (ac *AccessControlStore) AddUserPolicy(cmd *accesscontrol.AddUserPolicyCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		if res, err := sess.Query("SELECT 1 from user_policy WHERE org_id=? and user_id=? and policy_id=?", cmd.OrgId, cmd.UserId, cmd.PolicyId); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return ErrUserPolicyAlreadyAdded
+			return accesscontrol.ErrUserPolicyAlreadyAdded
 		}
 
 		if _, err := policyExists(cmd.OrgId, cmd.PolicyId, sess); err != nil {
 			return err
 		}
 
-		userPolicy := &UserPolicy{
+		userPolicy := &accesscontrol.UserPolicy{
 			OrgId:    cmd.OrgId,
 			UserId:   cmd.UserId,
 			PolicyId: cmd.PolicyId,
-			Created:  timeNow(),
-			Updated:  timeNow(),
+			Created:  TimeNow(),
+			Updated:  TimeNow(),
 		}
 
 		_, err := sess.Insert(userPolicy)
@@ -515,7 +527,7 @@ func (ac *RBACService) AddUserPolicy(cmd *AddUserPolicyCommand) error {
 	})
 }
 
-func (ac *RBACService) RemoveUserPolicy(cmd *RemoveUserPolicyCommand) error {
+func (ac *AccessControlStore) RemoveUserPolicy(cmd *accesscontrol.RemoveUserPolicyCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		if _, err := policyExists(cmd.OrgId, cmd.PolicyId, sess); err != nil {
 			return err
@@ -528,14 +540,14 @@ func (ac *RBACService) RemoveUserPolicy(cmd *RemoveUserPolicyCommand) error {
 		}
 		rows, err := res.RowsAffected()
 		if rows == 0 {
-			return ErrUserPolicyNotFound
+			return accesscontrol.ErrUserPolicyNotFound
 		}
 
 		return err
 	})
 }
 
-func (ac *RBACService) AddBuiltinRolePolicy(ctx context.Context, orgID, policyID int64, role string) error {
+func (ac *AccessControlStore) AddBuiltinRolePolicy(ctx context.Context, orgID, policyID int64, role string) error {
 	if !models.RoleType(role).IsValid() && role != "Grafana Admin" {
 		return fmt.Errorf("role '%s' is not a valid role", role)
 	}
@@ -544,18 +556,18 @@ func (ac *RBACService) AddBuiltinRolePolicy(ctx context.Context, orgID, policyID
 		if res, err := sess.Query("SELECT 1 from builtin_role_policy WHERE policy_id=? and role=?", policyID, role); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return ErrUserPolicyAlreadyAdded
+			return accesscontrol.ErrUserPolicyAlreadyAdded
 		}
 
 		if _, err := policyExists(orgID, policyID, sess); err != nil {
 			return err
 		}
 
-		policy := BuiltinRolePolicy{
+		policy := accesscontrol.BuiltinRolePolicy{
 			PolicyID: policyID,
 			Role:     role,
-			Updated:  timeNow(),
-			Created:  timeNow(),
+			Updated:  TimeNow(),
+			Created:  TimeNow(),
 		}
 
 		_, err := sess.Table("builtin_role_policy").Insert(policy)
@@ -563,17 +575,17 @@ func (ac *RBACService) AddBuiltinRolePolicy(ctx context.Context, orgID, policyID
 	})
 }
 
-func getPolicyById(sess *sqlstore.DBSession, policyId int64, orgId int64) (*PolicyDTO, error) {
-	policy := Policy{OrgId: orgId, Id: policyId}
+func getPolicyById(sess *sqlstore.DBSession, policyId int64, orgId int64) (*accesscontrol.PolicyDTO, error) {
+	policy := accesscontrol.Policy{OrgId: orgId, Id: policyId}
 	has, err := sess.Get(&policy)
 	if !has {
-		return nil, ErrPolicyNotFound
+		return nil, accesscontrol.ErrPolicyNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	policyDTO := PolicyDTO{
+	policyDTO := accesscontrol.PolicyDTO{
 		Id:          policyId,
 		OrgId:       policy.OrgId,
 		Name:        policy.Name,
@@ -586,17 +598,17 @@ func getPolicyById(sess *sqlstore.DBSession, policyId int64, orgId int64) (*Poli
 	return &policyDTO, nil
 }
 
-func getPolicyByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*PolicyDTO, error) {
-	policy := Policy{OrgId: orgId, UID: uid}
+func getPolicyByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*accesscontrol.PolicyDTO, error) {
+	policy := accesscontrol.Policy{OrgId: orgId, UID: uid}
 	has, err := sess.Get(&policy)
 	if !has {
-		return nil, ErrPolicyNotFound
+		return nil, accesscontrol.ErrPolicyNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	policyDTO := PolicyDTO{
+	policyDTO := accesscontrol.PolicyDTO{
 		Id:          policy.Id,
 		UID:         policy.UID,
 		Version:     policy.Version,
@@ -611,8 +623,8 @@ func getPolicyByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*PolicyD
 	return &policyDTO, nil
 }
 
-func getPolicyPermissions(sess *sqlstore.DBSession, policyId int64) ([]Permission, error) {
-	permissions := make([]Permission, 0)
+func getPolicyPermissions(sess *sqlstore.DBSession, policyId int64) ([]accesscontrol.Permission, error) {
+	permissions := make([]accesscontrol.Permission, 0)
 	q := "SELECT id, policy_id, permission, scope, updated, created FROM permission WHERE policy_id = ?"
 	if err := sess.SQL(q, policyId).Find(&permissions); err != nil {
 		return nil, err
@@ -621,13 +633,13 @@ func getPolicyPermissions(sess *sqlstore.DBSession, policyId int64) ([]Permissio
 	return permissions, nil
 }
 
-func createPermission(sess *sqlstore.DBSession, cmd CreatePermissionCommand) (*Permission, error) {
-	permission := &Permission{
+func createPermission(sess *sqlstore.DBSession, cmd accesscontrol.CreatePermissionCommand) (*accesscontrol.Permission, error) {
+	permission := &accesscontrol.Permission{
 		PolicyId:   cmd.PolicyId,
 		Permission: cmd.Permission,
 		Scope:      cmd.Scope,
-		Created:    timeNow(),
-		Updated:    timeNow(),
+		Created:    TimeNow(),
+		Updated:    TimeNow(),
 	}
 
 	if _, err := sess.Insert(permission); err != nil {
@@ -641,7 +653,7 @@ func teamExists(orgId int64, teamId int64, sess *sqlstore.DBSession) (bool, erro
 	if res, err := sess.Query("SELECT 1 from team WHERE org_id=? and id=?", orgId, teamId); err != nil {
 		return false, err
 	} else if len(res) != 1 {
-		return false, ErrTeamNotFound
+		return false, accesscontrol.ErrTeamNotFound
 	}
 
 	return true, nil
@@ -651,7 +663,7 @@ func policyExists(orgId int64, policyId int64, sess *sqlstore.DBSession) (bool, 
 	if res, err := sess.Query("SELECT 1 from policy WHERE org_id=? and id=?", orgId, policyId); err != nil {
 		return false, err
 	} else if len(res) != 1 {
-		return false, ErrPolicyNotFound
+		return false, accesscontrol.ErrPolicyNotFound
 	}
 
 	return true, nil
@@ -661,7 +673,7 @@ func generateNewPolicyUID(sess *sqlstore.DBSession, orgID int64) (string, error)
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 
-		exists, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&Policy{})
+		exists, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&accesscontrol.Policy{})
 		if err != nil {
 			return "", err
 		}
@@ -671,5 +683,18 @@ func generateNewPolicyUID(sess *sqlstore.DBSession, orgID int64) (string, error)
 		}
 	}
 
-	return "", ErrPolicyFailedGenerateUniqueUID
+	return "", accesscontrol.ErrPolicyFailedGenerateUniqueUID
+}
+
+func MockTimeNow() {
+	var timeSeed int64
+	TimeNow = func() time.Time {
+		fakeNow := time.Unix(timeSeed, 0).UTC()
+		timeSeed++
+		return fakeNow
+	}
+}
+
+func ResetTimeNow() {
+	TimeNow = time.Now
 }

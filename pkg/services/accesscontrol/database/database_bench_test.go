@@ -1,4 +1,4 @@
-package rbac
+package database
 
 import (
 	"context"
@@ -6,19 +6,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	actesting "github.com/grafana/grafana/pkg/services/accesscontrol/testing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func setup(b *testing.B, policiesPerUser, users int) *RBACService {
+func setup(b *testing.B, policiesPerUser, users int) *accessControlStoreTestImpl {
 	ac := setupTestEnv(b)
 	b.Cleanup(registry.ClearOverrides)
-	generatePolicies(b, ac, policiesPerUser, users)
+	actesting.GeneratePolicies(b, ac, policiesPerUser, users)
 	return ac
 }
 
-func getPolicies(b *testing.B, ac *RBACService, policiesPerUser, users int) {
+func getPolicies(b *testing.B, ac accesscontrol.Store, policiesPerUser, users int) {
 	userQuery := models.GetUserByLoginQuery{
 		LoginOrEmail: "user1@test.com",
 	}
@@ -26,10 +28,10 @@ func getPolicies(b *testing.B, ac *RBACService, policiesPerUser, users int) {
 	require.NoError(b, err)
 	userId := userQuery.Result.Id
 
-	userPermissionsQuery := GetUserPermissionsQuery{OrgId: 1, UserId: userId}
+	userPermissionsQuery := accesscontrol.GetUserPermissionsQuery{OrgId: 1, UserId: userId}
 	res, err := ac.GetUserPermissions(context.Background(), userPermissionsQuery)
 	require.NoError(b, err)
-	expectedPermissions := permissionsPerPolicy * policiesPerUser
+	expectedPermissions := actesting.PermissionsPerPolicy * policiesPerUser
 	assert.Greater(b, len(res), expectedPermissions)
 }
 

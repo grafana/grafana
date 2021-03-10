@@ -1,4 +1,4 @@
-package rbac
+package manager
 
 import (
 	"context"
@@ -6,9 +6,10 @@ import (
 	"github.com/gobwas/glob"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func (ac *RBACService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
+func (ac *AccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
 	roles := []string{string(user.OrgRole)}
 	for _, role := range user.OrgRole.Children() {
 		roles = append(roles, string(role))
@@ -17,7 +18,7 @@ func (ac *RBACService) Evaluate(ctx context.Context, user *models.SignedInUser, 
 		roles = append(roles, "Grafana Admin")
 	}
 
-	res, err := ac.GetUserPermissions(ctx, GetUserPermissionsQuery{
+	res, err := ac.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgId:  user.OrgId,
 		UserId: user.UserId,
 		Roles:  roles,
@@ -53,7 +54,7 @@ func (ac *RBACService) Evaluate(ctx context.Context, user *models.SignedInUser, 
 	return true, nil
 }
 
-func extractPermission(permissions []*Permission, permission string) (bool, map[string]struct{}) {
+func extractPermission(permissions []*accesscontrol.Permission, permission string) (bool, map[string]struct{}) {
 	scopes := map[string]struct{}{}
 	ok := false
 

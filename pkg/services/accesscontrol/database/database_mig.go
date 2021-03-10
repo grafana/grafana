@@ -1,8 +1,8 @@
-package rbac
+package database
 
 import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
-func addRBACMigrations(mg *migrator.Migrator) {
+func AddAccessControlMigrations(mg *migrator.Migrator) {
 	permissionV1 := migrator.Table{
 		Name: "permission",
 		Columns: []*migrator.Column{

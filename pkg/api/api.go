@@ -4,8 +4,6 @@ package api
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/rbac"
-
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -14,13 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 )
 
 var plog = log.New("api")
 
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
-	authorize := rbac.Middleware(hs.AccessControl)
+	authorize := acmiddleware.Middleware(hs.AccessControl)
 	reqSignedIn := middleware.ReqSignedIn
 	reqSignedInNoAnonymous := middleware.ReqSignedInNoAnonymous
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
