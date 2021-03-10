@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRequestParser(t *testing.T) {
-	timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
+	timeRange := plugins.NewDataTimeRange("now-1h", "now-2h")
 	from, err := timeRange.ParseFrom()
 	require.NoError(t, err)
 	to, err := timeRange.ParseTo()
@@ -102,7 +102,7 @@ func TestRequestParser(t *testing.T) {
 			"hide":       false,
 		})
 		query.Set("period", "900")
-		timeRange := tsdb.NewTimeRange("now-1h", "now-2h")
+		timeRange := plugins.NewDataTimeRange("now-1h", "now-2h")
 		from, err := timeRange.ParseFrom()
 		require.NoError(t, err)
 		to, err := timeRange.ParseTo()

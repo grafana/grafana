@@ -17,6 +17,11 @@ const mapStateToProps = (state: StoreState) => ({
   variables: getEditorVariables(state),
   idInEditor: state.templating.editor.id,
   dashboard: state.dashboard.getModel(),
+  unknownsNetwork: state.templating.inspect.unknownsNetwork,
+  unknownExists: state.templating.inspect.unknownExits,
+  usagesNetwork: state.templating.inspect.usagesNetwork,
+  unknown: state.templating.inspect.unknown,
+  usages: state.templating.inspect.usages,
 });
 
 const mapDispatchToProps = {
@@ -67,6 +72,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 
   render() {
     const variableToEdit = this.props.variables.find((s) => s.id === this.props.idInEditor) ?? null;
+
     return (
       <div>
         <div className="page-action-bar">
@@ -114,8 +120,10 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
               onChangeVariableOrder={this.onChangeVariableOrder}
               onDuplicateVariable={this.onDuplicateVariable}
               onRemoveVariable={this.onRemoveVariable}
+              usages={this.props.usages}
+              usagesNetwork={this.props.usagesNetwork}
             />
-            <VariablesUnknownTable dashboard={this.props.dashboard} variables={this.props.variables} />
+            {this.props.unknownExists ? <VariablesUnknownTable usages={this.props.unknownsNetwork} /> : null}
           </>
         )}
         {variableToEdit && <VariableEditorEditor identifier={toVariableIdentifier(variableToEdit)} />}

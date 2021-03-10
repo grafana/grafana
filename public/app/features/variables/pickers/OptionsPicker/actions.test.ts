@@ -422,7 +422,7 @@ function createMultiVariable(extend?: Partial<QueryVariableModel>): QueryVariabl
     tagsQuery: 'tags-query',
     tagValuesQuery: '',
     useTags: true,
-    refresh: VariableRefresh.onDashboardLoad,
+    refresh: VariableRefresh.never,
     regex: '',
     multi: true,
     includeAll: true,

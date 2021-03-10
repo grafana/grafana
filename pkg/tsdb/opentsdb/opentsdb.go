@@ -17,29 +17,23 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type OpenTsdbExecutor struct {
 }
 
-func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 	return &OpenTsdbExecutor{}, nil
 }
 
 var (
-	plog log.Logger
+	plog = log.New("tsdb.opentsdb")
 )
 
-func init() {
-	plog = log.New("tsdb.opentsdb")
-	tsdb.RegisterTsdbQueryEndpoint("opentsdb", NewOpenTsdbExecutor)
-}
-
-func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{}
-
+func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	var tsdbQuery OpenTsdbQuery
 
 	tsdbQuery.Start = queryContext.TimeRange.GetFromAsMsEpoch()
@@ -50,32 +44,34 @@ func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}
 
+	// TODO: Don't use global variable
 	if setting.Env == setting.Dev {
 		plog.Debug("OpenTsdb request", "params", tsdbQuery)
 	}
 
 	req, err := e.createRequest(dsInfo, tsdbQuery)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	queryResult, err := e.parseResponse(tsdbQuery, res)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
-	result.Results = queryResult
-	return result, nil
+	return plugins.DataResponse{
+		Results: queryResult,
+	}, nil
 }
 
 func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsdbQuery) (*http.Request, error) {
@@ -102,12 +98,12 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
 	}
 
-	return req, err
+	return req, nil
 }
 
-func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]*tsdb.QueryResult, error) {
-	queryResults := make(map[string]*tsdb.QueryResult)
-	queryRes := tsdb.NewQueryResult()
+func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]plugins.DataQueryResult, error) {
+	queryResults := make(map[string]plugins.DataQueryResult)
+	queryRes := plugins.DataQueryResult{}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -132,7 +128,7 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 	}
 
 	for _, val := range data {
-		series := tsdb.TimeSeries{
+		series := plugins.DataTimeSeries{
 			Name: val.Metric,
 		}
 
@@ -142,17 +138,19 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 				plog.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
 				return nil, err
 			}
-			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(value), timestamp))
+			series.Points = append(series.Points, plugins.DataTimePoint{
+				null.FloatFrom(value), null.FloatFrom(timestamp),
+			})
 		}
 
-		queryRes.Series = append(queryRes.Series, &series)
+		queryRes.Series = append(queryRes.Series, series)
 	}
 
 	queryResults["A"] = queryRes
 	return queryResults, nil
 }
 
-func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{} {
+func (e *OpenTsdbExecutor) buildMetric(query plugins.DataSubQuery) map[string]interface{} {
 	metric := make(map[string]interface{})
 
 	// Setting metric and aggregator
