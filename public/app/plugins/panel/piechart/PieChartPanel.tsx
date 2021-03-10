@@ -23,20 +23,20 @@ export const PieChartPanel: React.FC<Props> = ({
     [fieldConfig, onFieldConfigChange]
   );
 
-  const values = getFieldDisplayValues({
+  const fieldDisplayValues = getFieldDisplayValues({
     fieldConfig,
     reduceOptions: options.reduceOptions,
     data: data.series,
     theme: useTheme(),
     replaceVariables: replaceVariables,
     timeZone,
-  }).map((v) => v.display);
+  });
 
   return (
     <PieChart
       width={width}
       height={height}
-      values={values}
+      fieldDisplayValues={fieldDisplayValues}
       onSeriesColorChange={onSeriesColorChange}
       pieType={options.pieType}
       displayLabels={options.displayLabels}
