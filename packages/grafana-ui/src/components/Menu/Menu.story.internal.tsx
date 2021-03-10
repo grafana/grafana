@@ -4,6 +4,8 @@ import { Menu, MenuProps } from './Menu';
 import { MenuItem } from './MenuItem';
 import { MenuGroup } from './MenuGroup';
 import { GraphContextMenuHeader } from '..';
+import { StoryExample } from '../../utils/storybook/StoryExample';
+import { VerticalGroup } from '../Layout/Layout';
 
 export default {
   title: 'General/Menu',
@@ -27,17 +29,28 @@ export default {
 
 export const Simple: Story<MenuProps> = (args) => {
   return (
-    <div>
-      <Menu header={args.header} ariaLabel="Menu header">
-        <MenuGroup label="Group 1" ariaLabel="Menu Group">
-          <MenuItem label="item1" icon="history" active={true} ariaLabel="Menu item" />
-          <MenuItem label="item2" icon="filter" active={true} ariaLabel="Menu item" />
-        </MenuGroup>
-        <MenuGroup label="Group 2" ariaLabel="Menu Group">
-          <MenuItem label="item1" icon="history" active={true} ariaLabel="Menu item" />
-        </MenuGroup>
-      </Menu>
-    </div>
+    <VerticalGroup>
+      <StoryExample name="Simple">
+        <Menu>
+          <MenuItem label="Google" icon="search-plus" ariaLabel="Menu item" />
+          <MenuItem label="Filter" icon="filter" ariaLabel="Menu item" />
+          <MenuItem label="History" icon="history" ariaLabel="Menu item" />
+          <MenuItem label="Active" icon="history" active ariaLabel="Menu item" />
+          <MenuItem label="Apps" icon="apps" ariaLabel="Menu item" />
+        </Menu>
+      </StoryExample>
+      <StoryExample name="With header & groups">
+        <Menu header={args.header} ariaLabel="Menu header">
+          <MenuGroup label="Group 1" ariaLabel="Menu Group">
+            <MenuItem label="item1" icon="history" ariaLabel="Menu item" />
+            <MenuItem label="item2" icon="filter" ariaLabel="Menu item" />
+          </MenuGroup>
+          <MenuGroup label="Group 2" ariaLabel="Menu Group">
+            <MenuItem label="item1" icon="history" ariaLabel="Menu item" />
+          </MenuGroup>
+        </Menu>
+      </StoryExample>
+    </VerticalGroup>
   );
 };
 

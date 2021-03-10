@@ -5,10 +5,8 @@ import { ToolbarButtonVariant, ToolbarButton } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { css } from 'emotion';
 import { useStyles } from '../../themes/ThemeContext';
-import { List } from '../List/List';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
-import { MenuGroup } from '../Menu/MenuGroup';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
@@ -60,21 +58,15 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
         <div className={styles.menuWrapper}>
           <ClickOutsideWrapper onClick={onCloseMenu} parent={document}>
             <Menu>
-              <MenuGroup>
-                <List
-                  items={options || []}
-                  renderItem={(item) => {
-                    return (
-                      <MenuItem
-                        label={(item.label || item.value) as string}
-                        ariaLabel={(item.label || item.value) as string}
-                        onClick={() => onChangeInternal(item)}
-                        active={item.value === value?.value}
-                      />
-                    );
-                  }}
+              {options.map((item) => (
+                <MenuItem
+                  key={`${item.value}`}
+                  label={(item.label || item.value) as string}
+                  ariaLabel={(item.label || item.value) as string}
+                  onClick={() => onChangeInternal(item)}
+                  active={item.value === value?.value}
                 />
-              </MenuGroup>
+              ))}
             </Menu>
           </ClickOutsideWrapper>
         </div>
