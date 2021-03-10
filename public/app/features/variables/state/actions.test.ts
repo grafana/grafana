@@ -1,12 +1,6 @@
 import { AnyAction } from 'redux';
 
-import {
-  getRootReducer,
-  getTemplatingAndLocationRootReducer,
-  getTemplatingRootReducer,
-  RootReducerType,
-  TemplatingAndLocationReducerType,
-} from './helpers';
+import { getRootReducer, getTemplatingRootReducer, RootReducerType, TemplatingReducerType } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -155,8 +149,8 @@ describe('shared actions', () => {
         location: ({ query: {} } as unknown) as LocationState,
       };
 
-      const tester = await reduxTester<TemplatingAndLocationReducerType>({ preloadedState })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
@@ -214,8 +208,8 @@ describe('shared actions', () => {
         location: ({ query } as unknown) as LocationState,
       };
 
-      const tester = await reduxTester<TemplatingAndLocationReducerType>({ preloadedState })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
@@ -229,9 +223,6 @@ describe('shared actions', () => {
           toVariablePayload(stats, { option: { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false } })
         ),
         variableStateCompleted(toVariablePayload(stats)),
-        setCurrentVariableValue(
-          toVariablePayload(stats, { option: { text: ['response'], value: ['response'], selected: false } })
-        ),
         variableStateFetching(toVariablePayload(substats)),
         updateVariableOptions(
           toVariablePayload(substats, { results: [{ text: '200' }, { text: '500' }], templatedRegex: '' })
@@ -241,12 +232,7 @@ describe('shared actions', () => {
             option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: true },
           })
         ),
-        variableStateCompleted(toVariablePayload(substats)),
-        setCurrentVariableValue(
-          toVariablePayload(substats, {
-            option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: false },
-          })
-        )
+        variableStateCompleted(toVariablePayload(substats))
       );
     });
   });
