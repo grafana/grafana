@@ -240,7 +240,7 @@ func TestMetrics(t *testing.T) {
 			select {
 			case resp = <-ch:
 				require.NoError(t, resp.err, "Fake server experienced an error")
-			case _ = <-ticker.C:
+			case <-ticker.C:
 				t.Fatalf("Timed out waiting for HTTP request")
 			}
 
@@ -506,20 +506,6 @@ func (aum *alertingUsageMock) QueryUsageStats() (*alerting.UsageStats, error) {
 			"unknown-datasource": 90,
 		},
 	}, nil
-}
-
-type fakePluginManager struct {
-	manager.PluginManager
-
-	dataSources map[string]*plugins.DataSourcePlugin
-}
-
-func (pm fakePluginManager) NumDataSources() int {
-	return len(pm.dataSources)
-}
-
-func (pm fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
-	return pm.dataSources[id]
 }
 
 func setupSomeDataSourcePlugins(t *testing.T, uss *UsageStatsService) {
