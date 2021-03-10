@@ -11,6 +11,9 @@ import { createConstantVariableAdapter } from 'app/features/variables/constant/a
 import { constantBuilder } from 'app/features/variables/shared/testing/builders';
 import { TransactionStatus, variablesInitTransaction } from '../../variables/state/transactionReducer';
 import { keybindingSrv } from 'app/core/services/keybindingSrv';
+import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
+import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
+import { getDashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -35,9 +38,7 @@ const mockStore = configureMockStore([thunk]);
 
 interface ScenarioContext {
   args: InitDashboardArgs;
-  timeSrv: any;
   annotationsSrv: any;
-  dashboardSrv: any;
   loaderSrv: any;
   backendSrv: any;
   setup: (fn: () => void) => void;
@@ -49,9 +50,8 @@ type ScenarioFn = (ctx: ScenarioContext) => void;
 
 function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
   describe(description, () => {
-    const timeSrv = { init: jest.fn() };
     const annotationsSrv = { init: jest.fn() };
-    const dashboardSrv = { setCurrent: jest.fn() };
+
     const loaderSrv = {
       loadDashboard: jest.fn(() => ({
         meta: {
@@ -83,17 +83,13 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
       })),
     };
 
+    setDashboardLoaderSrv((loaderSrv as unknown) as DashboardLoaderSrv);
+
     const injectorMock = {
       get: (name: string) => {
         switch (name) {
-          case 'timeSrv':
-            return timeSrv;
           case 'annotationsSrv':
             return annotationsSrv;
-          case 'dashboardLoaderSrv':
-            return loaderSrv;
-          case 'dashboardSrv':
-            return dashboardSrv;
           default:
             throw { message: 'Unknown service ' + name };
         }
@@ -110,9 +106,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
         routeName: DashboardRoutes.Normal,
       },
       backendSrv: getBackendSrv(),
-      timeSrv,
       annotationsSrv,
-      dashboardSrv,
       loaderSrv,
       actions: [],
       storeState: {
@@ -141,6 +135,14 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
 
     beforeEach(async () => {
       keybindingSrv.setupDashboardBindings = jest.fn();
+
+      setDashboardSrv({
+        setCurrent: jest.fn(),
+      } as any);
+
+      setTimeSrv({
+        init: jest.fn(),
+      } as any);
 
       setupFn();
       setEchoSrv(new Echo());
@@ -181,9 +183,9 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
   });
 
   it('Should initialize services', () => {
-    expect(ctx.timeSrv.init).toBeCalled();
+    expect(getTimeSrv().init).toBeCalled();
+    expect(getDashboardSrv().setCurrent).toBeCalled();
     expect(ctx.annotationsSrv.init).toBeCalled();
-    expect(ctx.dashboardSrv.setCurrent).toBeCalled();
     expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 });
@@ -253,9 +255,9 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
   });
 
   it('Should initialize services', () => {
-    expect(ctx.timeSrv.init).toBeCalled();
+    expect(getTimeSrv().init).toBeCalled();
     expect(ctx.annotationsSrv.init).toBeCalled();
-    expect(ctx.dashboardSrv.setCurrent).toBeCalled();
+    expect(getDashboardSrv().setCurrent).toBeCalled();
     expect(keybindingSrv.setupDashboardBindings).toBeCalled();
   });
 
@@ -285,12 +287,12 @@ describeInitScenario('Initializing previously canceled dashboard initialization'
   });
 
   it('Should initialize timeSrv and annotationsSrv', () => {
-    expect(ctx.timeSrv.init).toBeCalled();
+    expect(getTimeSrv().init).toBeCalled();
     expect(ctx.annotationsSrv.init).toBeCalled();
   });
 
   it('Should not initialize other services', () => {
-    expect(ctx.dashboardSrv.setCurrent).not.toBeCalled();
+    expect(getDashboardSrv().setCurrent).not.toBeCalled();
     expect(keybindingSrv.setupDashboardBindings).not.toBeCalled();
   });
 });
