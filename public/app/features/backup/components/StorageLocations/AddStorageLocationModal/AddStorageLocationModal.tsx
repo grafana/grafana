@@ -6,17 +6,19 @@ import {
   validators,
   LoaderButton,
 } from '@percona/platform-core';
+import { cx } from 'emotion';
 import React, { FC } from 'react';
 import { withTypes } from 'react-final-form';
 
 import { SelectableValue } from '@grafana/data';
-import { Button, HorizontalGroup } from '@grafana/ui';
+import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 
 import { LocationType } from '../StorageLocations.types';
 
 import { toFormStorageLocation, toStorageLocation } from './AddStorageLocation.utils';
 import { MAX_NAME_LENGTH } from './AddStorageLocationModal.constants';
 import { Messages } from './AddStorageLocationModal.messages';
+import { getStyles } from './AddStorageLocationModal.styles';
 import {
   AddStorageLocationFormProps,
   AddStorageLocationModalProps,
@@ -59,12 +61,16 @@ const required = [validators.required];
 export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
   isVisible,
   location = null,
+  showLocationValidation = false,
+  waitingLocationValidation = false,
   onClose = () => null,
   onAdd = () => null,
+  onTest = () => null,
 }) => {
   const initialValues = toFormStorageLocation(location);
-
+  const styles = useStyles(getStyles);
   const onSubmit = (values: AddStorageLocationFormProps) => onAdd(toStorageLocation(values));
+  const handleTest = (values: AddStorageLocationFormProps) => onTest(toStorageLocation(values));
 
   return (
     <Modal title={location ? Messages.editTitle : Messages.addTitle} isVisible={isVisible} onClose={onClose}>
@@ -85,15 +91,34 @@ export const AddStorageLocationModal: FC<AddStorageLocationModalProps> = ({
             <TypeField values={values} />
             <HorizontalGroup justify="center" spacing="md">
               <LoaderButton
+                className={styles.button}
                 data-qa="storage-location-add-button"
                 size="md"
                 variant="primary"
-                disabled={!valid || pristine}
+                disabled={!valid || pristine || waitingLocationValidation}
                 loading={submitting}
               >
                 {location ? Messages.editAction : Messages.addAction}
               </LoaderButton>
-              <Button data-qa="storage-location-cancel-button" variant="secondary" onClick={onClose}>
+              {showLocationValidation ? (
+                <LoaderButton
+                  type="button"
+                  className={cx(styles.button, styles.testButton)}
+                  data-qa="storage-location-test-button"
+                  size="md"
+                  loading={waitingLocationValidation}
+                  disabled={!valid}
+                  onClick={() => handleTest(values)}
+                >
+                  {Messages.test}
+                </LoaderButton>
+              ) : null}
+              <Button
+                className={styles.button}
+                data-qa="storage-location-cancel-button"
+                variant="secondary"
+                onClick={onClose}
+              >
                 {Messages.cancelAction}
               </Button>
             </HorizontalGroup>
