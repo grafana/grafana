@@ -83,6 +83,15 @@ For more information, refer to [Deprecating Application Insights and Insights An
 
 In previous versions, when querying metrics for Service Level Objectives (SLOs) in the CloudMonitoring data source, only the first 100 services were listed in the **Service** field list. To overcome this issue, the API limit for listing services has been increased to 1000.
 
+### Tempo as a backend data source
+
+We have converted Tempo to a backend data source and dropped support for tempo-query's (Jaeger) response. To configure it, you can now point to the port that is set in the Tempo configuration file.
+
+```yaml
+server:
+  http_listen_port: 3101
+```
+
 ## Enterprise features
 
 These features are included in the Grafana Enterprise edition.
@@ -98,11 +107,15 @@ Query caching advantages:
 
 Caching currently works for all backend data sources. You can enable the cache globally or per data source, and you can configure the cache duration per data source. The cache is currently in-memory.
 
+For more information, refer to [Query caching]({{< relref "../enterprise/query-caching.md" >}}).
+
 ### Use template variable in reports
 
 If you have created dashboards with template variables, then you can choose which values are selected when rendering a report. This makes it easier to tailor reports to their audience or generate multiple reports from the same dashboard.
 
 Enable this feature in configuration settings using the `templateVariables` flag.
+
+For more information, refer to [Reporting]({{< relref "../enterprise/reporting.md#choose-template-variables" >}}).
 
 ### Active user limits
 
@@ -125,15 +138,6 @@ Each Grafana Enterprise user will be limited to three concurrent user sessions. 
 A new session is created when you sign in to Grafana from a different device or a different browser. Multiple windows and tabs in the same browser are all part of the same session, so having many Grafana tabs open will not cause any issues.
 
 For more information on Grafana Enterprise licensing and restrictions, refer to [License restrictions]({{< relref "../enterprise/license-restrictions.md" >}}).
-
-### Tempo as a backend data source
-
-We have converted Tempo to a backend data source and dropped support for tempo-query's (Jaeger) response. To configure, you can now point to the port that is set in Tempo's configuration file.
-
-```yaml
-server:
-  http_listen_port: 3101
-```
 
 ## Breaking changes
 
