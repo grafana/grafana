@@ -4,9 +4,9 @@ import selectEvent from 'react-select-event';
 
 import QueryEditor from './QueryEditor';
 
-import mockQuery from '../__mocks__/query';
-import createMockDatasource from '../__mocks__/datasource';
-import { AzureQueryType } from '../types';
+import mockQuery from '../../__mocks__/query';
+import createMockDatasource from '../../__mocks__/datasource';
+import { AzureQueryType } from '../../types';
 
 const variableOptionGroup = {
   label: 'Template variables',

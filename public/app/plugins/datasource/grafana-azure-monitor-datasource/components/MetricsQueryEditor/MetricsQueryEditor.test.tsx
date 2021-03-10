@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 
-import MetricsQueryEditor from '../MetricsQueryEditor';
+import MetricsQueryEditor from './MetricsQueryEditor';
 
 import mockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';

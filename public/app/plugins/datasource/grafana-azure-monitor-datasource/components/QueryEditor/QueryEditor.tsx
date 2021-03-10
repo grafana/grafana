@@ -1,7 +1,7 @@
 import React from 'react';
-import Datasource from '../datasource';
-import { AzureMonitorQuery, AzureQueryType, Option } from '../types';
-import MetricsQueryEditor from './MetricsQueryEditor';
+import Datasource from '../../datasource';
+import { AzureMonitorQuery, AzureQueryType, Option } from '../../types';
+import MetricsQueryEditor from '../MetricsQueryEditor';
 import QueryTypeField from './QueryTypeField';
 
 interface BaseQueryEditorProps {

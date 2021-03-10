@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react';
 import { Select } from '@grafana/ui';
-import { Field } from './Field';
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+import { Field } from '../Field';
+import { AzureMonitorQuery, AzureQueryType } from '../../types';
 import { SelectableValue } from '@grafana/data';
-import { findOption } from './common';
+import { findOption } from '../common';
 
 const QUERY_TYPES = [
   { value: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
