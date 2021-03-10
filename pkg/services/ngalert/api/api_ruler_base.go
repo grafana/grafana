@@ -88,5 +88,6 @@ func (base RulerApiBase) RoutePostNameRulesConfig(c *models.ReqContext, body api
 	base.log.Info("RoutePostNameRulesConfig: ", "DatasourceId", datasourceId)
 	namespace := c.Params(":Namespace")
 	base.log.Info("RoutePostNameRulesConfig: ", "Namespace", namespace)
+	base.log.Info("RoutePostNameRulesConfig: ", "body", body)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }

@@ -42,5 +42,6 @@ func (base PermissionsApiBase) RouteGetNamespacePermissions(c *models.ReqContext
 func (base PermissionsApiBase) RouteSetNamespacePermissions(c *models.ReqContext, body apimodels.Permissions) response.Response {
 	namespace := c.Params(":Namespace")
 	base.log.Info("RouteSetNamespacePermissions: ", "Namespace", namespace)
+	base.log.Info("RouteSetNamespacePermissions: ", "body", body)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }

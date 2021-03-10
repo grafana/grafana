@@ -30,7 +30,8 @@ func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service) {
 
 func (base {{classname}}Base) {{nickname}}(c *models.ReqContext{{#bodyParams}}, {{paramName}} apimodels.{{dataType}}{{/bodyParams}}) response.Response { {{#pathParams}}
 	{{paramName}} := c.Params(":{{baseName}}")
-	base.log.Info("{{nickname}}: ", "{{baseName}}", {{paramName}}){{/pathParams}}
+	base.log.Info("{{nickname}}: ", "{{baseName}}", {{paramName}}){{/pathParams}}{{#bodyParams}}
+	base.log.Info("{{nickname}}: ", "{{baseName}}", {{paramName}}){{/bodyParams}}
 	return response.Error(http.StatusNotImplemented, "", nil)
 }{{/operation}}{{/operations}}
 

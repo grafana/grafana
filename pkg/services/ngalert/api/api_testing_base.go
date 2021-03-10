@@ -34,9 +34,11 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApiService) {
 }
 
 func (base TestingApiBase) RouteTestReceiverConfig(c *models.ReqContext, body apimodels.ExtendedReceiver) response.Response {
+	base.log.Info("RouteTestReceiverConfig: ", "body", body)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
 func (base TestingApiBase) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+	base.log.Info("RouteTestRuleConfig: ", "body", body)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }

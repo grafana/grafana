@@ -52,6 +52,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 func (base AlertmanagerApiBase) RouteCreateSilence(c *models.ReqContext, body apimodels.SilenceBody) response.Response {
 	datasourceId := c.Params(":DatasourceId")
 	base.log.Info("RouteCreateSilence: ", "DatasourceId", datasourceId)
+	base.log.Info("RouteCreateSilence: ", "body", body)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
@@ -104,11 +105,13 @@ func (base AlertmanagerApiBase) RouteGetSilences(c *models.ReqContext) response.
 func (base AlertmanagerApiBase) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.UserConfig) response.Response {
 	datasourceId := c.Params(":DatasourceId")
 	base.log.Info("RoutePostAlertingConfig: ", "DatasourceId", datasourceId)
+	base.log.Info("RoutePostAlertingConfig: ", "body", body)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
 func (base AlertmanagerApiBase) RoutePostAmAlerts(c *models.ReqContext, body apimodels.PostableAlerts) response.Response {
 	datasourceId := c.Params(":DatasourceId")
 	base.log.Info("RoutePostAmAlerts: ", "DatasourceId", datasourceId)
+	base.log.Info("RoutePostAmAlerts: ", "body", body)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
