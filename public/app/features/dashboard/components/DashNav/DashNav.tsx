@@ -2,7 +2,7 @@
 import React, { PureComponent, FC, ReactNode } from 'react';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils & Services
-import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
@@ -15,7 +15,7 @@ import { DashboardModel } from '../../state';
 import { StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-import { getLegacyAngularInjector, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 
@@ -49,11 +49,8 @@ export function addCustomRightAction(content: DashNavButtonModel) {
 type Props = OwnProps & DispatchProps;
 
 class DashNav extends PureComponent<Props> {
-  playlistSrv: PlaylistSrv;
-
   constructor(props: Props) {
     super(props);
-    this.playlistSrv = getLegacyAngularInjector().get('playlistSrv');
   }
 
   onFolderNameClick = () => {
@@ -83,15 +80,15 @@ class DashNav extends PureComponent<Props> {
   };
 
   onPlaylistPrev = () => {
-    this.playlistSrv.prev();
+    playlistSrv.prev();
   };
 
   onPlaylistNext = () => {
-    this.playlistSrv.next();
+    playlistSrv.next();
   };
 
   onPlaylistStop = () => {
-    this.playlistSrv.stop();
+    playlistSrv.stop();
     this.forceUpdate();
   };
 
@@ -113,7 +110,7 @@ class DashNav extends PureComponent<Props> {
   }
 
   isPlaylistRunning() {
-    return this.playlistSrv.isPlaying;
+    return playlistSrv.isPlaying;
   }
 
   renderLeftActionsButton() {

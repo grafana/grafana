@@ -25,9 +25,8 @@ import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
 import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { ITimeoutService, IRootScopeService, IAngularEvent, auto } from 'angular';
+import { IRootScopeService, IAngularEvent, auto } from 'angular';
 import { AppEvent, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initGrafanaLive } from 'app/features/live/live';
@@ -60,7 +59,7 @@ export class GrafanaCtrl {
     datasourceSrv.init(config.datasources, config.defaultDatasource);
 
     locationUtil.initialize({
-      getConfig: () => config,
+      config,
       getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
       // @ts-ignore
       buildParamsFromVariables: getTemplateSrv().fillVariableValuesForUrl,
@@ -121,12 +120,7 @@ export class GrafanaCtrl {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(
-  playlistSrv: PlaylistSrv,
-  contextSrv: ContextSrv,
-  $timeout: ITimeoutService,
-  $rootScope: IRootScopeService
-) {
+export function grafanaAppDirective() {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
@@ -143,14 +137,6 @@ export function grafanaAppDirective(
 
       appEvents.on(CoreEvents.toggleSidemenuHidden, () => {
         body.toggleClass('sidemenu-hidden');
-      });
-
-      appEvents.on(CoreEvents.playlistStarted, () => {
-        elem.toggleClass('view-mode--playlist', true);
-      });
-
-      appEvents.on(CoreEvents.playlistStopped, () => {
-        elem.toggleClass('view-mode--playlist', false);
       });
 
       // handle in active view state class

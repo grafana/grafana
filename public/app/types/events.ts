@@ -91,9 +91,6 @@ export const dsRequestError = eventFactory<any>('ds-request-error');
 export const toggleSidemenuMobile = eventFactory('toggle-sidemenu-mobile');
 export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');
 
-export const playlistStarted = eventFactory('playlist-started');
-export const playlistStopped = eventFactory('playlist-stopped');
-
 export const toggleKioskMode = eventFactory<ToggleKioskModePayload>('toggle-kiosk-mode');
 
 export const timeRangeUpdated = eventFactory<TimeRange>('time-range-updated');

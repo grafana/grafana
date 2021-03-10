@@ -2,10 +2,6 @@
 import _ from 'lodash';
 
 // Utils
-import coreModule from '../../core/core_module';
-import appEvents from 'app/core/app_events';
-
-import { CoreEvents } from 'app/types';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
 import { Location } from 'history';
@@ -17,7 +13,7 @@ export const queryParamsToPreserve: { [key: string]: boolean } = {
 };
 
 export class PlaylistSrv {
-  private cancelPromise: any;
+  private nextTimeoutId: any;
   private dashboards: Array<{ url: string }>;
   private index: number;
   private interval: number;
@@ -28,13 +24,12 @@ export class PlaylistSrv {
 
   isPlaying: boolean;
 
-  /** @ngInject */
-  constructor(private $timeout: any) {
+  constructor() {
     this.locationUpdated = this.locationUpdated.bind(this);
   }
 
   next() {
-    this.$timeout.cancel(this.cancelPromise);
+    clearTimeout(this.nextTimeoutId);
 
     const playedAllDashboards = this.index > this.dashboards.length - 1;
     if (playedAllDashboards) {
@@ -56,7 +51,7 @@ export class PlaylistSrv {
 
     this.index++;
     this.validPlaylistUrl = nextDashboardUrl;
-    this.cancelPromise = this.$timeout(() => this.next(), this.interval);
+    this.nextTimeoutId = setTimeout(() => this.next(), this.interval);
 
     locationService.push(nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams));
   }
@@ -69,7 +64,6 @@ export class PlaylistSrv {
   // Detect url changes not caused by playlist srv and stop playlist
   locationUpdated(location: Location) {
     if (location.pathname !== this.validPlaylistUrl) {
-      console.log('asd', location.pathname, this.validPlaylistUrl);
       this.stop();
     }
   }
@@ -83,8 +77,6 @@ export class PlaylistSrv {
 
     // setup location tracking
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
-
-    appEvents.emit(CoreEvents.playlistStarted);
 
     return getBackendSrv()
       .get(`/api/playlists/${playlistId}`)
@@ -100,11 +92,8 @@ export class PlaylistSrv {
   }
 
   stop() {
-    if (this.isPlaying) {
-      const queryParams = locationService.getSearchObject();
-      if (queryParams.kiosk) {
-        appEvents.emit(CoreEvents.toggleKioskMode, { exit: true });
-      }
+    if (!this.isPlaying) {
+      return;
     }
 
     this.index = 0;
@@ -114,12 +103,14 @@ export class PlaylistSrv {
       this.locationListenerUnsub();
     }
 
-    if (this.cancelPromise) {
-      this.$timeout.cancel(this.cancelPromise);
+    if (this.nextTimeoutId) {
+      clearTimeout(this.nextTimeoutId);
     }
 
-    appEvents.emit(CoreEvents.playlistStopped);
+    if (locationService.getSearchObject().kiosk) {
+      locationService.partial({ kiosk: null });
+    }
   }
 }
 
-coreModule.service('playlistSrv', PlaylistSrv);
+export const playlistSrv = new PlaylistSrv();

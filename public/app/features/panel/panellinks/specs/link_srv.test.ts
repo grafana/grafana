@@ -125,9 +125,7 @@ describe('linkSrv', () => {
         "when link '$url' and config.appSubUrl set to '$appSubUrl' then result should be '$expected'",
         ({ url, appSubUrl, expected }) => {
           locationUtil.initialize({
-            getConfig: () => {
-              return { appSubUrl } as any;
-            },
+            config: { appSubUrl } as any,
             // @ts-ignore
             buildParamsFromVariables: () => {},
             // @ts-ignore
