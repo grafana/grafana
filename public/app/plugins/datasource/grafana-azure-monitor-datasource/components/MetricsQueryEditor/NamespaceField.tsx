@@ -12,6 +12,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  onError,
 }) => {
   const [namespaces, setNamespaces] = useState<AzureMonitorOption[]>([]);
 
@@ -26,10 +27,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
     datasource
       .getMetricDefinitions(subscriptionId, resourceGroup)
       .then((results) => setNamespaces(results.map(toOption)))
-      .catch((err) => {
-        // TODO: handle error
-        console.error(err);
-      });
+      .catch((err) => onError(err));
   }, [subscriptionId, query.azureMonitor.resourceGroup]);
 
   const handleChange = useCallback(

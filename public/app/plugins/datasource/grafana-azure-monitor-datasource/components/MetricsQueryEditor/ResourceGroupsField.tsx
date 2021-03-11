@@ -12,6 +12,7 @@ const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  onError,
 }) => {
   const [resourceGroups, setResourceGroups] = useState<AzureMonitorOption[]>([]);
 
@@ -24,10 +25,7 @@ const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
     datasource
       .getResourceGroups(subscriptionId)
       .then((results) => setResourceGroups(results.map(toOption)))
-      .catch((err) => {
-        // TODO: handle error
-        console.error(err);
-      });
+      .catch((err) => onError(err));
   }, [subscriptionId]);
 
   const handleChange = useCallback(

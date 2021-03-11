@@ -12,6 +12,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  onError,
 }) => {
   const [metricNames, setMetricNames] = useState<AzureMonitorOption[]>([]);
 
@@ -28,10 +29,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
       .then((results) => {
         setMetricNames(results.map(toOption));
       })
-      .catch((err) => {
-        // TODO: handle error
-        console.error(err);
-      });
+      .catch((err) => onError(err));
   }, [
     subscriptionId,
     query.azureMonitor.resourceGroup,

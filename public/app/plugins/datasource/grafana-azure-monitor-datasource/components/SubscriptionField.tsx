@@ -15,6 +15,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   query,
   variableOptionGroup,
   onQueryChange,
+  onError,
 }) => {
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
 
@@ -23,31 +24,34 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       return;
     }
 
-    datasource.azureMonitorDatasource.getSubscriptions().then((results) => {
-      const newSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
-      setSubscriptions(newSubscriptions);
+    datasource.azureMonitorDatasource
+      .getSubscriptions()
+      .then((results) => {
+        const newSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
+        setSubscriptions(newSubscriptions);
 
-      // Set a default subscription ID, if we can
-      let newSubscription = query.subscription;
+        // Set a default subscription ID, if we can
+        let newSubscription = query.subscription;
 
-      if (!newSubscription && query.queryType === AzureQueryType.AzureMonitor) {
-        newSubscription = datasource.azureMonitorDatasource.subscriptionId;
-      } else if (!query.subscription && query.queryType === AzureQueryType.LogAnalytics) {
-        newSubscription =
-          datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId ||
-          datasource.azureLogAnalyticsDatasource.subscriptionId;
-      }
+        if (!newSubscription && query.queryType === AzureQueryType.AzureMonitor) {
+          newSubscription = datasource.azureMonitorDatasource.subscriptionId;
+        } else if (!query.subscription && query.queryType === AzureQueryType.LogAnalytics) {
+          newSubscription =
+            datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId ||
+            datasource.azureLogAnalyticsDatasource.subscriptionId;
+        }
 
-      if (!newSubscription && newSubscriptions.length > 0) {
-        newSubscription = newSubscriptions[0].value;
-      }
+        if (!newSubscription && newSubscriptions.length > 0) {
+          newSubscription = newSubscriptions[0].value;
+        }
 
-      newSubscription !== query.subscription &&
-        onQueryChange({
-          ...query,
-          subscription: newSubscription,
-        });
-    });
+        newSubscription !== query.subscription &&
+          onQueryChange({
+            ...query,
+            subscription: newSubscription,
+          });
+      })
+      .catch((err) => onError(err));
   }, []);
 
   const handleChange = useCallback(
