@@ -1173,10 +1173,6 @@ func callPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 	assert.Equal(sc.t, 200, sc.resp.Code)
 }
 
-func (m mockDashboardProvisioningService) DeleteProvisionedDashboard(dashboardId int64, orgId int64) error {
-	panic("implement me")
-}
-
 func postDashboardScenario(t *testing.T, desc string, url string, routePattern string,
 	mock *dashboards.FakeDashboardService, cmd models.SaveDashboardCommand, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
@@ -1280,27 +1276,4 @@ func (sc *scenarioContext) ToJSON() *simplejson.Json {
 	err := json.NewDecoder(sc.resp.Body).Decode(&result)
 	require.NoError(sc.t, err)
 	return result
-}
-
-type mockDashboardProvisioningService struct {
-}
-
-func (m mockDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
-	panic("implement me")
-}
-
-func (m mockDashboardProvisioningService) SaveFolderForProvisionedDashboards(*dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
-	panic("implement me")
-}
-
-func (m mockDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
-	panic("implement me")
-}
-
-func (m mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardId int64) (*models.DashboardProvisioning, error) {
-	return &models.DashboardProvisioning{}, nil
-}
-
-func (m mockDashboardProvisioningService) UnprovisionDashboard(dashboardId int64) error {
-	panic("implement me")
 }
