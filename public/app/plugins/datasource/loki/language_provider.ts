@@ -413,10 +413,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   async fetchLogLabels(): Promise<any> {
     const url = '/loki/api/v1/label';
+    const timeRange = this.datasource.getTimeRangeParams();
     this.logLabelFetchTs = Date.now().valueOf();
-    const rangeParams = this.datasource.getTimeRangeParams();
-    const res = await this.request(url, rangeParams);
-    if (res && Array.isArray(res)) {
+
+    const res = await this.request(url, timeRange);
+    if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
     }
 
@@ -493,8 +494,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
       // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
       this.labelsCache.set(cacheKey, []);
       const res = await this.request(url, params);
-      if (res && Array.isArray(res)) {
-        labelValue = res.slice().sort() as string[];
+      if (Array.isArray(res)) {
+        labelValue = res.slice().sort();
         this.labelsCache.set(cacheKey, labelValue);
       }
     }
