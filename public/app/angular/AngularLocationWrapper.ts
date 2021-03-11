@@ -1,16 +1,35 @@
 import { locationSearchToObject, locationService, navigationLogger } from '@grafana/runtime';
-import { urlUtil } from '@grafana/data';
+import { deprecationWarning, urlUtil } from '@grafana/data';
 
 // Ref: https://github.com/angular/angular.js/blob/ae8e903edf88a83fedd116ae02c0628bf72b150c/src/ng/location.js#L5
 const DEFAULT_PORTS: Record<string, number> = { http: 80, https: 443, ftp: 21 };
 
 export class AngularLocationWrapper {
+  constructor() {
+    this.absUrl = this.wrapInDeprecationWarning(this.absUrl);
+    this.hash = this.wrapInDeprecationWarning(this.hash);
+    this.host = this.wrapInDeprecationWarning(this.host);
+    this.path = this.wrapInDeprecationWarning(this.path);
+    this.port = this.wrapInDeprecationWarning(this.port, 'window.location');
+    this.protocol = this.wrapInDeprecationWarning(this.protocol, 'window.location');
+    this.replace = this.wrapInDeprecationWarning(this.replace);
+    this.search = this.wrapInDeprecationWarning(this.search);
+    this.state = this.wrapInDeprecationWarning(this.state);
+    this.url = this.wrapInDeprecationWarning(this.url);
+  }
+
+  wrapInDeprecationWarning = (fn: Function, replacement?: string) => {
+    deprecationWarning('$location', fn.name, replacement || 'locationService');
+    return fn.bind(this);
+  };
+
   absUrl(): string {
     return `${window.location.origin}${this.url()}`;
   }
 
-  hash(newHash?: any) {
+  hash(newHash?: string | null) {
     navigationLogger('AngularLocationWrapper', false, 'Angular compat layer: hash');
+
     if (!newHash) {
       return locationService.getLocation().hash.substr(1);
     } else {
