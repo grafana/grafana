@@ -289,7 +289,6 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	svc := dashboards.NewService(hs.DataService)
 	dashboard, err := svc.SaveDashboard(dashItem, allowUiUpdate)
 	if err != nil {
 		return dashboardSaveErrorToApiResponse(err)
