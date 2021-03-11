@@ -1672,14 +1672,10 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "GettableSilence": {
-      "$ref": "#/definitions/silence"
+      "$ref": "#/definitions/gettableSilence"
     },
     "GettableSilences": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/gettableSilences"
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+      "$ref": "#/definitions/gettableSilences"
     },
     "GlobalConfig": {
       "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",

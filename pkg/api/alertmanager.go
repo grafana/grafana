@@ -108,10 +108,10 @@ type SilenceBody struct {
 }
 
 // swagger:model
-type GettableSilences []amv2.GettableSilences
+type GettableSilences amv2.GettableSilences
 
 // swagger:model
-type GettableSilence amv2.Silence
+type GettableSilence amv2.GettableSilence
 
 // swagger:model
 type GettableAlerts amv2.GettableAlerts
