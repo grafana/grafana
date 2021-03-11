@@ -25,4 +25,4 @@ To enable and configure query caching, please refer the the [Query caching secti
 
 ## Skip caching per request
 
-Requests that contain the header `X-Cache-Skip` with any value will be skipped. This can be particularly useful when debugging datasource queries using cURL.
+Requests that contain the header `X-Cache-Skip` with any value are skipped. This can be particularly useful when debugging data source queries using cURL.
