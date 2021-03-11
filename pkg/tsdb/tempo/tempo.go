@@ -23,7 +23,8 @@ type tempoExecutor struct {
 	httpClient *http.Client
 }
 
-func newTempoExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+// NewExecutor returns a tempoExecutor.
+func NewExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
@@ -40,31 +41,19 @@ var (
 
 func init() {
 	tlog = log.New("tsdb.tempo")
-	tsdb.RegisterTsdbQueryEndpoint("tempo", newTempoExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("tempo", NewExecutor)
 }
 
-func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{},
-	}
-	refID := tsdbQuery.Queries[0].RefId
+func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
+	queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	refID := queryContext.Queries[0].RefId
 	queryResult := &tsdb.QueryResult{}
-	result.Results[refID] = queryResult
+	traceID := queryContext.Queries[0].Model.Get("query").MustString("")
 
-	traceID := tsdbQuery.Queries[0].Model.Get("query").MustString("")
-
-	tlog.Debug("Querying tempo with traceID", "traceID", traceID)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", dsInfo.Url+"/api/traces/"+traceID, nil)
+	req, err := e.createRequest(ctx, dsInfo, traceID)
 	if err != nil {
 		return nil, err
 	}
-
-	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
-	}
-
-	req.Header.Set("Accept", "application/protobuf")
 
 	resp, err := e.httpClient.Do(req)
 	if err != nil {
@@ -83,9 +72,12 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		queryResult.Error = fmt.Errorf("failed to get trace: %s", traceID)
-		tlog.Error("Request to tempo failed", "Status", resp.Status, "Body", string(body))
-		return result, nil
+		queryResult.ErrorString = fmt.Sprintf("failed to get trace with id: %s Status: %s Body: %s", traceID, resp.Status, string(body))
+		return &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
+				refID: queryResult,
+			},
+		}, nil
 	}
 
 	otTrace := ot_pdata.NewTraces()
@@ -128,5 +120,25 @@ func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 	}
 	queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
 
-	return result, nil
+	return &tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			refID: queryResult,
+		},
+	}, nil
+}
+
+func (e *tempoExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, traceID string) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", dsInfo.Url+"/api/traces/"+traceID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if dsInfo.BasicAuth {
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
+	}
+
+	req.Header.Set("Accept", "application/protobuf")
+
+	tlog.Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
+	return req, nil
 }
