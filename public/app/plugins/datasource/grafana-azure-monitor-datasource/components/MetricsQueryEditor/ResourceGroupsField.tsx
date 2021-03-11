@@ -28,7 +28,7 @@ const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
         // TODO: handle error
         console.error(err);
       });
-  }, [subscriptionId]);
+  }, [datasource, resourceGroups.length, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -51,7 +51,7 @@ const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...resourceGroups, variableOptionGroup], [resourceGroups, variableOptionGroup]);

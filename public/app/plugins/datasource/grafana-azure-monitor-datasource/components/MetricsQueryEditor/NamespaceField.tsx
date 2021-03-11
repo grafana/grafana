@@ -28,7 +28,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
         // TODO: handle error
         console.error(err);
       });
-  }, [subscriptionId, query.azureMonitor.resourceGroup]);
+  }, [subscriptionId, query.azureMonitor.resourceGroup, datasource, namespaces.length]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -50,7 +50,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...namespaces, variableOptionGroup], [namespaces, variableOptionGroup]);

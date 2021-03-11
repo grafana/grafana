@@ -30,7 +30,7 @@ const AggregationField: React.FC<AggregationFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...aggregationOptions, variableOptionGroup], [

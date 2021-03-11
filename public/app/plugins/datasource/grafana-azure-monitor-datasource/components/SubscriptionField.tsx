@@ -48,7 +48,13 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
           subscription: newSubscription,
         });
     });
-  }, []);
+  }, [
+    datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId,
+    datasource.azureLogAnalyticsDatasource.subscriptionId,
+    datasource.azureMonitorDatasource,
+    onQueryChange,
+    query,
+  ]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {

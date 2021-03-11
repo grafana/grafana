@@ -48,6 +48,8 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
     query.azureMonitor.metricDefinition,
     query.azureMonitor.resourceName,
     query.azureMonitor.metricNamespace,
+    datasource,
+    metricNames.length,
   ]);
 
   const handleChange = useCallback(
@@ -64,7 +66,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...metricNames, variableOptionGroup], [metricNames, variableOptionGroup]);

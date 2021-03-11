@@ -26,7 +26,7 @@ const QueryTypeField: React.FC<QueryTypeFieldProps> = ({ query, onQueryChange })
           queryType: change.value,
         });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   return (
