@@ -27,8 +27,9 @@ Use the following options to refine your visualization:
 ### Show
 
 Choose how much information to show.
-**Calculate -** Reduces a series to a single value to be displayed.
-**All values -** Displays every value from a single series.
+
+- **Calculate -** Reduces a series to a single value to be displayed.
+- **All values -** Displays every value from a single series.
 
 ### Calculation
 
@@ -37,14 +38,15 @@ Select a calculation to reduce each series when Calculate has been selected. For
 ### Limit
 
 When displaying every value from a single series, this limits the number of values displayed.
+
 ### Fields
 
 Select which field or fields to display in the visualization.
 
-**Numeric fields -** All fields with numerical values.
-**All fields -** All fields that are not removed by transformations.
-**Time -** All fields with time values.
-**<field name> -** Each field name is available in the list.
+- **Numeric fields -** All fields with numerical values.
+- **All fields -** All fields that are not removed by transformations.
+- **Time -** All fields with time values.
+- **<field name> -** Each field name is available in the list.
 
 ### Pie chart type
 
@@ -52,16 +54,19 @@ Select the pie chart display style.
 
 #### Pie
 
+
+
 #### Donut
+
 
 
 ### Labels
 
 Select labels to display on the pie chart. You can select more than one.
 
-**Name -** The series or field name.
-**Percent -** The percentage of the whole.
-**Value -** The raw numerical value.
+- **Name -** The series or field name.
+- **Percent -** The percentage of the whole.
+- **Value -** The raw numerical value.
 
 Labels are displayed in white over the body of the chart. You might need to select darker chart colors to make them more visible. Long names or numbers might be clipped.
 
@@ -69,20 +74,7 @@ The example below shows a pie chart with **Name** and **Percent** labels display
 
 
 
-### Legend mode
-
-Use these settings to refine how the legend appears in your visualization.
-
-- **List -** Displays the legend as a list. This is a default display mode of the legend.
-- **Table -** Displays the legend as a table.
-- **Hidden -** Hides the legend.
-
-### Legend placement
-
-Choose where to display the legend.
-
-- **Bottom -** Below the graph.
-- **Right -** To the right of the graph.
+{{< docs/shared "visualizations/legend-mode.md" >}}
 
 ### Legend values
 
