@@ -183,6 +183,7 @@ function makeNode(index: number) {
     arc__errors: 0.5,
     mainStat: 0.1,
     secondaryStat: 2,
+    color: 0.5,
   };
 }
 
@@ -217,6 +218,12 @@ function nodesFrame() {
       values: new ArrayVector(),
       type: FieldType.number,
       config: { color: { fixedColor: 'red' } },
+    },
+
+    [NodeGraphDataFrameFieldNames.color]: {
+      values: new ArrayVector(),
+      type: FieldType.number,
+      config: { color: { mode: 'continuous-GrYlRd' } },
     },
   };
 
