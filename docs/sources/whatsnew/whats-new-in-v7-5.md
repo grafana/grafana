@@ -22,6 +22,10 @@ These features are included in the Grafana open source edition.
 
 Grafana 7.5 adds a beta version of the next-gen pie chart panel.
 
+![Pie chart panel](/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
+
+For more information, refer to [Pie chart panel]({{< relref "../panels/visualizations/pie-chart-panel.md" >}}).
+
 ### Alerting for Loki
 
 Grafana 7.5 comes with alerting support for Loki. With LogQL you can wrap a log query with the functions that allow for creating metrics out of the logs, such as "rate()". Metric queries can then be used to calculate things such as the rate of error messages. [When combined with log parsers](https://www.youtube.com/watch?v=H9z2V0Ib1q0), they can be used to calculate metrics from a value within the log line, such latency or request size.
