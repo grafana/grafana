@@ -113,6 +113,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
 
 ### Build with pre-installed plugins from other sources
+
 You can build a Docker image with plugins from other sources by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`.
 
 ```bash
@@ -239,5 +240,4 @@ Refer to [Configure a Grafana Docker image]({{< relref "../administration/config
 ## Configure Grafana
 
 Refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
-
 
