@@ -63,7 +63,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 					sch.log.Debug("new alert definition version fetched", "title", alertDefinition.Title, "key", key, "version", alertDefinition.Version)
 				}
 
-				condition := eval.Condition{
+				condition := models.Condition{
 					RefID:                 alertDefinition.Condition,
 					OrgID:                 alertDefinition.OrgID,
 					QueriesAndExpressions: alertDefinition.Data,
