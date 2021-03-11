@@ -21,7 +21,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 		sqlStore := sqlstore.InitTestDB(t)
 		const testOrgID int64 = 1
 
-		FocusConvey("Given saved folders and dashboards in organization A", func() {
+		Convey("Given saved folders and dashboards in organization A", func() {
 			origUpdateAlerting := UpdateAlerting
 			t.Cleanup(func() {
 				UpdateAlerting = origUpdateAlerting
