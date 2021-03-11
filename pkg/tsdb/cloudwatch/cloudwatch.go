@@ -64,6 +64,7 @@ func init() {
 
 type CloudWatchService struct {
 	LogsService *LogsService `inject:""`
+	Cfg         *setting.Cfg `inject:""`
 }
 
 func (s *CloudWatchService) Init() error {
@@ -71,12 +72,13 @@ func (s *CloudWatchService) Init() error {
 }
 
 func (s *CloudWatchService) NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
-	return newExecutor(s.LogsService), nil
+	return newExecutor(s.LogsService, s.Cfg), nil
 }
 
-func newExecutor(logsService *LogsService) *cloudWatchExecutor {
+func newExecutor(logsService *LogsService, cfg *setting.Cfg) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
 		logsService: logsService,
+		cfg:         cfg,
 	}
 }
 
@@ -88,10 +90,26 @@ type cloudWatchExecutor struct {
 	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 
 	logsService *LogsService
+	cfg         *setting.Cfg
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
 	dsInfo := e.getDSInfo(region)
+
+	authTypeAllowed := false
+	for _, provider := range e.cfg.AWSAllowedAuthProviders {
+		if provider == dsInfo.AuthType.String() {
+			authTypeAllowed = true
+			break
+		}
+	}
+	if !authTypeAllowed {
+		return nil, fmt.Errorf("attempting to use an auth type that is not allowed: %q", dsInfo.AuthType.String())
+	}
+
+	if dsInfo.AssumeRoleARN != "" && !e.cfg.AWSAssumeRoleEnabled {
+		return nil, fmt.Errorf("attempting to use assume role (ARN) which is disabled in grafana.ini")
+	}
 
 	bldr := strings.Builder{}
 	for i, s := range []string{
@@ -147,6 +165,13 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 		})
 	case authTypeDefault:
 		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
+	case authTypeEC2IAMRole:
+		plog.Debug("Authenticating towards AWS with IAM Role", "region", dsInfo.Region)
+		sess, err := newSession(cfgs...)
+		if err != nil {
+			return nil, err
+		}
+		cfgs = append(cfgs, &aws.Config{Credentials: newEC2RoleCredentials(sess)})
 	default:
 		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.AuthType))
 	}
@@ -157,7 +182,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 
 	duration := stscreds.DefaultDuration
 	expiration := time.Now().UTC().Add(duration)
-	if dsInfo.AssumeRoleARN != "" {
+	if dsInfo.AssumeRoleARN != "" && e.cfg.AWSAssumeRoleEnabled {
 		// We should assume a role in AWS
 		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
 
@@ -396,6 +421,7 @@ const (
 	authTypeDefault authType = iota
 	authTypeSharedCreds
 	authTypeKeys
+	authTypeEC2IAMRole
 )
 
 func (at authType) String() string {
@@ -403,9 +429,11 @@ func (at authType) String() string {
 	case authTypeDefault:
 		return "default"
 	case authTypeSharedCreds:
-		return "sharedCreds"
+		return "credentials"
 	case authTypeKeys:
 		return "keys"
+	case authTypeEC2IAMRole:
+		return "ec2_iam_role"
 	default:
 		panic(fmt.Sprintf("Unrecognized auth type %d", at))
 	}
@@ -432,6 +460,8 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 		at = authTypeKeys
 	case "default":
 		at = authTypeDefault
+	case "ec2_iam_role":
+		at = authTypeEC2IAMRole
 	case "arn":
 		at = authTypeDefault
 		plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
