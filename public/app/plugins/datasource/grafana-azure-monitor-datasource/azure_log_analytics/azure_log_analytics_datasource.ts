@@ -21,10 +21,17 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   url: string;
   baseUrl: string;
   applicationId: string;
+
+  /**
+   * @deprecated
+   * TODO: Which one of these values should be used? Was there a migration?
+   * */
+  logAnalyticsSubscriptionId: string;
+  subscriptionId: string;
+
   azureMonitorUrl: string;
   defaultOrFirstWorkspace: string;
   defaultOrFirstResource: string;
-  subscriptionId: string;
   cache: Map<string, any>;
 
   constructor(
