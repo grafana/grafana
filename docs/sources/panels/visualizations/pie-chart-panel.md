@@ -54,11 +54,11 @@ Select the pie chart display style.
 
 #### Pie
 
-
+![Pie type chart](/img/docs/pie-chart-panel/pie-type-chart-7-5.png)
 
 #### Donut
 
-
+![Donut type chart](/img/docs/pie-chart-panel/donut-type-chart-7-5.png)
 
 ### Labels
 
@@ -72,12 +72,13 @@ Labels are displayed in white over the body of the chart. You might need to sele
 
 The example below shows a pie chart with **Name** and **Percent** labels displayed.
 
-
+![Pie chart labels](/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
 {{< docs/shared "visualizations/legend-mode.md" >}}
 
 ### Legend values
 
 Select values to display in the legend. You can select more than one.
+
 **Percent -** The percentage of the whole.
 **Value -** The raw numerical value.
