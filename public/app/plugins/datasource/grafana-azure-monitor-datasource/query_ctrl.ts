@@ -7,7 +7,9 @@ import './editor/editor_component';
 import { TemplateSrv } from '@grafana/runtime';
 import { auto, IPromise } from 'angular';
 import { DataFrame, PanelEvents, rangeUtil } from '@grafana/data';
-import { AzureQueryType, AzureMetricQuery } from './types';
+import { AzureQueryType, AzureMetricQuery, AzureMonitorQuery } from './types';
+import { convertTimeGrainsToMs } from './components/common';
+import Datasource from './datasource';
 
 export interface ResultFormat {
   text: string;
@@ -27,6 +29,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
     { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
   ];
+
+  // Query types that have been migrated to React
+  reactQueryEditors = [AzureQueryType.AzureMonitor];
+
+  // target: AzureMonitorQuery;
 
   target: {
     // should be: AzureMonitorQuery
@@ -217,7 +224,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       oldAzureTimeGrains.length > 0 &&
       (!this.target.azureMonitor.allowedTimeGrainsMs || this.target.azureMonitor.allowedTimeGrainsMs.length === 0)
     ) {
-      this.target.azureMonitor.allowedTimeGrainsMs = this.convertTimeGrainsToMs(oldAzureTimeGrains);
+      this.target.azureMonitor.allowedTimeGrainsMs = convertTimeGrainsToMs(oldAzureTimeGrains);
     }
 
     if (
@@ -225,7 +232,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       this.target.appInsights.timeGrains.length > 0 &&
       (!this.target.appInsights.allowedTimeGrainsMs || this.target.appInsights.allowedTimeGrainsMs.length === 0)
     ) {
-      this.target.appInsights.allowedTimeGrainsMs = this.convertTimeGrainsToMs(this.target.appInsights.timeGrains);
+      this.target.appInsights.allowedTimeGrainsMs = convertTimeGrainsToMs(this.target.appInsights.timeGrains);
     }
   }
 
@@ -279,9 +286,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
   }
 
-  replace(variable: string) {
+  replace = (variable: string) => {
     return this.templateSrv.replace(variable, this.panelCtrl.panel.scopedVars);
-  }
+  };
 
   onQueryTypeChange() {
     if (this.target.queryType === 'Azure Log Analytics') {
@@ -294,7 +301,18 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       return;
     }
 
-    return this.datasource.azureMonitorDatasource.getSubscriptions().then((subs: any) => {
+    // assert the type
+    if (!(this.datasource instanceof Datasource)) {
+      return;
+    }
+
+    return this.datasource.azureMonitorDatasource.getSubscriptions().then((subscriptions) => {
+      // We changed the format in the datasource for the new react stuff, so here we change it back
+      const subs = subscriptions.map((v) => ({
+        text: `${v.text} - ${v.value}`,
+        value: v.value,
+      }));
+
       this.subscriptions = subs;
       if (!this.target.subscription && this.target.queryType === 'Azure Monitor') {
         this.target.subscription = this.datasource.azureMonitorDatasource.subscriptionId;
@@ -475,7 +493,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .then((metadata: any) => {
         this.target.azureMonitor.aggregation = metadata.primaryAggType;
         this.target.azureMonitor.timeGrain = 'auto';
-        this.target.azureMonitor.allowedTimeGrainsMs = this.convertTimeGrainsToMs(metadata.supportedTimeGrains || []);
+        this.target.azureMonitor.allowedTimeGrainsMs = convertTimeGrainsToMs(metadata.supportedTimeGrains || []);
 
         // HACK: this saves the last metadata values in the panel json ¯\_(ツ)_/¯
         const hackState = this.target.azureMonitor as any;
@@ -492,6 +510,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
+  // This is reimplement
   convertTimeGrainsToMs(timeGrains: Array<{ text: string; value: string }>) {
     const allowedTimeGrainsMs: number[] = [];
     timeGrains.forEach((tg: any) => {
@@ -683,6 +702,14 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
     this.refresh();
   }
+
+  /**
+   * Receives a full new query object from React and updates it into the Angular controller
+   */
+  handleNewQuery = (newQuery: AzureMonitorQuery) => {
+    Object.assign(this.target, newQuery);
+    this.refresh();
+  };
 }
 
 // Modifies the actual query object

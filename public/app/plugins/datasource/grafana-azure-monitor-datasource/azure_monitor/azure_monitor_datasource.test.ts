@@ -105,9 +105,9 @@ describe('AzureMonitorDatasource', () => {
       it('should return a list of subscriptions', () => {
         return ctx.ds.metricFindQuery('subscriptions()').then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toBe(2);
-          expect(results[0].text).toBe('Primary - sub1');
+          expect(results[0].text).toBe('Primary');
           expect(results[0].value).toBe('sub1');
-          expect(results[1].text).toBe('Secondary - sub2');
+          expect(results[1].text).toBe('Secondary');
           expect(results[1].value).toBe('sub2');
         });
       });
@@ -545,7 +545,7 @@ describe('AzureMonitorDatasource', () => {
     it('should return list of Resource Groups', () => {
       return ctx.ds.getSubscriptions().then((results: Array<{ text: string; value: string }>) => {
         expect(results.length).toEqual(1);
-        expect(results[0].text).toEqual('Primary Subscription - 99999999-cccc-bbbb-aaaa-9106972f9572');
+        expect(results[0].text).toEqual('Primary Subscription');
         expect(results[0].value).toEqual('99999999-cccc-bbbb-aaaa-9106972f9572');
       });
     });
@@ -856,10 +856,10 @@ describe('AzureMonitorDatasource', () => {
           'default',
           'UsedCapacity'
         )
-        .then((results: any) => {
+        .then((results) => {
           expect(results.primaryAggType).toEqual('Total');
           expect(results.supportedAggTypes.length).toEqual(6);
-          expect(results.supportedTimeGrains.length).toEqual(4);
+          expect(results.supportedTimeGrains.length).toEqual(5); // 4 time grains from the API + auto
         });
     });
   });
@@ -934,15 +934,15 @@ describe('AzureMonitorDatasource', () => {
           expect(results.dimensions).toMatchInlineSnapshot(`
             Array [
               Object {
-                "text": "Response type",
+                "label": "Response type",
                 "value": "ResponseType",
               },
               Object {
-                "text": "Geo type",
+                "label": "Geo type",
                 "value": "GeoType",
               },
               Object {
-                "text": "API name",
+                "label": "API name",
                 "value": "ApiName",
               },
             ]

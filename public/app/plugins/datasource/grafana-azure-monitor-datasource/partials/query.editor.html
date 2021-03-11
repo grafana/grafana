@@ -1,4 +1,8 @@
-<query-editor-row query-ctrl="ctrl" can-collapse="false">
+<query-editor-row
+  query-ctrl="ctrl"
+  can-collapse="false"
+  ng-if="!ctrl.reactQueryEditors.includes(ctrl.target.queryType)"
+>
   <div class="gf-form-inline">
     <div class="gf-form">
       <label class="gf-form-label query-keyword width-9">Service</label>
@@ -519,3 +523,9 @@
     </p>
   </div>
 </query-editor-row>
+
+<!-- Partial migration to React -->
+<div ng-if="ctrl.reactQueryEditors.includes(ctrl.target.queryType)">
+  <azure-monitor-query-editor query="ctrl.target" datasource="ctrl.datasource" on-change="ctrl.handleNewQuery">
+  </azure-monitor-query-editor>
+</div>
