@@ -14,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -36,7 +36,7 @@ type FileReader struct {
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, reqHandler tsdbifaces.RequestHandler) (*FileReader, error) {
+func NewDashboardFileReader(cfg *config, log log.Logger, reqHandler plugins.DataRequestHandler) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {

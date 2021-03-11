@@ -6,13 +6,13 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
 	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -29,7 +29,7 @@ func init() {
 	registry.Register(&registry.Descriptor{
 		Name: "ProvisioningService",
 		Instance: NewProvisioningServiceImpl(
-			func(path string, reqHandler tsdbifaces.RequestHandler) (dashboards.DashboardProvisioner, error) {
+			func(path string, reqHandler plugifaces.DataRequestHandler) (dashboards.DashboardProvisioner, error) {
 				return dashboards.New(path, reqHandler)
 			},
 			notifiers.Provision,
@@ -56,8 +56,8 @@ func NewProvisioningServiceImpl(
 }
 
 type provisioningServiceImpl struct {
-	Cfg                     *setting.Cfg              `inject:""`
-	RequestHandler          tsdbifaces.RequestHandler `inject:""`
+	Cfg                     *setting.Cfg                  `inject:""`
+	RequestHandler          plugifaces.DataRequestHandler `inject:""`
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory

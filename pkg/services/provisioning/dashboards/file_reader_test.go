@@ -11,8 +11,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -396,7 +396,7 @@ func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
 	mock := fakeDashboardProvisioningService{
 		provisioned: map[string][]*models.DashboardProvisioning{},
 	}
-	dashboards.NewProvisioningService = func(tsdbifaces.RequestHandler) dashboards.DashboardProvisioningService {
+	dashboards.NewProvisioningService = func(plugins.DataRequestHandler) dashboards.DashboardProvisioningService {
 		return &mock
 	}
 	return &mock

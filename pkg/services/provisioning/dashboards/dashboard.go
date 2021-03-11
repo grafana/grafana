@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -23,7 +23,7 @@ type DashboardProvisioner interface {
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(string, tsdbifaces.RequestHandler) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(string, plugins.DataRequestHandler) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -33,7 +33,7 @@ type Provisioner struct {
 }
 
 // New returns a new DashboardProvisioner
-func New(configDirectory string, reqHandler tsdbifaces.RequestHandler) (*Provisioner, error) {
+func New(configDirectory string, reqHandler plugins.DataRequestHandler) (*Provisioner, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger}
 	configs, err := cfgReader.readConfig()
@@ -116,7 +116,7 @@ func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 	return false
 }
 
-func getFileReaders(configs []*config, logger log.Logger, reqHandler tsdbifaces.RequestHandler) ([]*FileReader, error) {
+func getFileReaders(configs []*config, logger log.Logger, reqHandler plugins.DataRequestHandler) ([]*FileReader, error) {
 	var readers []*FileReader
 
 	for _, config := range configs {
