@@ -15,7 +15,6 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 import { LokiQuery } from './types';
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
-import { RATE_RANGES } from '../prometheus/promql';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
@@ -26,6 +25,19 @@ const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 10;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 const NS_IN_MS = 1000000;
+
+// When changing RATE_RANGES, check if Prometheus/PromQL ranges should be changed too
+// @see public/app/plugins/datasource/prometheus/promql.ts
+const RATE_RANGES: CompletionItem[] = [
+  { label: '$__interval', sortText: '$__interval' },
+  { label: '1m', sortText: '00:01:00' },
+  { label: '5m', sortText: '00:05:00' },
+  { label: '10m', sortText: '00:10:00' },
+  { label: '30m', sortText: '00:30:00' },
+  { label: '1h', sortText: '01:00:00' },
+  { label: '1d', sortText: '24:00:00' },
+];
+
 export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
 
 const wrapLabel = (label: string) => ({ label, filterText: `\"${label}\"` });
