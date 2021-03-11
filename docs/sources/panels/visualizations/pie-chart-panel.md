@@ -6,7 +6,6 @@ weight = 850
 # Pie chart v2 panel
 > **Note:** This documentation refers to a beta feature.
 
-The pie chart compares series from one or more queries.
 
 The pie chart displays reduced series or values in a series as they relate to each other in the form of slices of a pie. The arc length, area and central angle of a slice are all proportional to the slices value, as it relates to the sum of all values. This type of chart is best used when you want a quick comparison of a small set of values in an aesthetically pleasing form.
 
