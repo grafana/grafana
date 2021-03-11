@@ -63,7 +63,6 @@ type HTTPServer struct {
 	context     context.Context
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
-	pluginFS    http.FileSystem
 
 	RouteRegister          routing.RouteRegister              `inject:""`
 	Bus                    bus.Bus                            `inject:""`
@@ -93,16 +92,11 @@ type HTTPServer struct {
 	Listener               net.Listener
 }
 
-func (hs *HTTPServer) FetchStaticPluginFile(file string) (http.File, error) {
-	return hs.pluginFS.Open(file)
-}
-
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
-	hs.pluginFS = http.Dir(hs.Cfg.PluginsPath)
 
 	return nil
 }
