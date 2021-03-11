@@ -618,6 +618,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           text: 'string',
           scaled_float: 'number',
           nested: 'nested',
+          histogram: 'number',
         };
 
         const shouldAddField = (obj: any, key: string) => {
