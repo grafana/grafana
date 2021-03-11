@@ -4,6 +4,9 @@ import _ from 'lodash';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime, getFrameDisplayName } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -16,7 +19,7 @@ interface Context {
 }
 
 describe('graphiteDatasource', () => {
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   let ctx = {} as Context;
 
@@ -113,9 +116,9 @@ describe('graphiteDatasource', () => {
     let requestOptions: any;
 
     beforeEach(async () => {
-      datasourceRequestMock.mockImplementation((options: any) => {
+      fetchMock.mockImplementation((options: any) => {
         requestOptions = options;
-        return Promise.resolve({
+        return createFetchResponse({
           data: [
             {
               target: 'prod1.count',
@@ -128,9 +131,12 @@ describe('graphiteDatasource', () => {
         });
       });
 
-      await ctx.ds.query(query as any).then((data: any) => {
-        results = data;
-      });
+      await ctx.ds
+        .query(query as any)
+        .toPromise()
+        .then((data: any) => {
+          results = data;
+        });
     });
 
     it('X-Dashboard and X-Panel headers to be set!', () => {
@@ -197,8 +203,8 @@ describe('graphiteDatasource', () => {
       };
 
       beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: any) => {
-          return Promise.resolve(response);
+        fetchMock.mockImplementation((options: any) => {
+          return createFetchResponse(response);
         });
         await ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
@@ -226,8 +232,8 @@ describe('graphiteDatasource', () => {
         ],
       };
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: any) => {
-          return Promise.resolve(response);
+        fetchMock.mockImplementation((options: any) => {
+          return createFetchResponse(response);
         });
 
         ctx.ds.annotationQuery(options).then((data: any) => {
@@ -345,9 +351,9 @@ describe('graphiteDatasource', () => {
     let requestOptions: any;
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: any) => {
+      fetchMock.mockImplementation((options: any) => {
         requestOptions = options;
-        return Promise.resolve({
+        return createFetchResponse({
           data: ['backend_01', 'backend_02'],
         });
       });
@@ -503,3 +509,22 @@ accessScenario('with direct access', 'http://localhost:8080', (httpOptions: any)
   expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
   expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
 });
+
+const createFetchResponse = (response: Partial<FetchResponse>): Observable<FetchResponse> => {
+  const defaults: FetchResponse = {
+    status: 200,
+    statusText: 'OK',
+    data: [],
+    ok: true,
+    headers: {} as Headers,
+    redirected: false,
+    type: 'default',
+    url: '',
+    config: {} as BackendSrvRequest,
+  };
+
+  return of({
+    ...defaults,
+    ...response,
+  });
+};
