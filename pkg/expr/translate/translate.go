@@ -117,9 +117,9 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 
 		// track unique time ranges within the same refId
 		timeRangesToCondIdx := make(map[[2]string][]int)
-		for i, idx := range condIdxes {
-			timeParamFrom := dc.Conditions[i].Query.Params[1]
-			timeParamTo := dc.Conditions[i].Query.Params[2]
+		for _, idx := range condIdxes {
+			timeParamFrom := dc.Conditions[idx].Query.Params[1]
+			timeParamTo := dc.Conditions[idx].Query.Params[2]
 			key := [2]string{timeParamFrom, timeParamTo}
 			timeRangesToCondIdx[key] = append(timeRangesToCondIdx[key], idx)
 		}
