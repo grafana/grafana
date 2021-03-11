@@ -2,13 +2,9 @@
 import _ from 'lodash';
 
 // Utils
-import coreModule from '../../core/core_module';
-import appEvents from 'app/core/app_events';
-
-import { store } from 'app/store/store';
-import { CoreEvents } from 'app/types';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
+import { Location } from 'history';
 
 export const queryParamsToPreserve: { [key: string]: boolean } = {
   kiosk: true,
@@ -17,21 +13,23 @@ export const queryParamsToPreserve: { [key: string]: boolean } = {
 };
 
 export class PlaylistSrv {
-  private cancelPromise: any;
+  private nextTimeoutId: any;
   private dashboards: Array<{ url: string }>;
   private index: number;
   private interval: number;
   private startUrl: string;
   private numberOfLoops = 0;
-  private storeUnsub: () => void;
   private validPlaylistUrl: string;
+  private locationListenerUnsub?: () => void;
+
   isPlaying: boolean;
 
-  /** @ngInject */
-  constructor(private $location: any, private $timeout: any) {}
+  constructor() {
+    this.locationUpdated = this.locationUpdated.bind(this);
+  }
 
   next() {
-    this.$timeout.cancel(this.cancelPromise);
+    clearTimeout(this.nextTimeoutId);
 
     const playedAllDashboards = this.index > this.dashboards.length - 1;
     if (playedAllDashboards) {
@@ -47,19 +45,15 @@ export class PlaylistSrv {
     }
 
     const dash = this.dashboards[this.index];
-    const queryParams = this.$location.search();
+    const queryParams = locationService.getSearchObject();
     const filteredParams = _.pickBy(queryParams, (value: any, key: string) => queryParamsToPreserve[key]);
     const nextDashboardUrl = locationUtil.stripBaseFromUrl(dash.url);
 
-    // this is done inside timeout to make sure digest happens after
-    // as this can be called from react
-    this.$timeout(() => {
-      this.$location.url(nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams));
-    });
-
     this.index++;
     this.validPlaylistUrl = nextDashboardUrl;
-    this.cancelPromise = this.$timeout(() => this.next(), this.interval);
+    this.nextTimeoutId = setTimeout(() => this.next(), this.interval);
+
+    locationService.push(nextDashboardUrl + '?' + urlUtil.toUrlParams(filteredParams));
   }
 
   prev() {
@@ -68,10 +62,8 @@ export class PlaylistSrv {
   }
 
   // Detect url changes not caused by playlist srv and stop playlist
-  storeUpdated() {
-    const state = store.getState();
-
-    if (state.location.path !== this.validPlaylistUrl) {
+  locationUpdated(location: Location) {
+    if (location.pathname !== this.validPlaylistUrl) {
       this.stop();
     }
   }
@@ -84,10 +76,7 @@ export class PlaylistSrv {
     this.isPlaying = true;
 
     // setup location tracking
-    this.storeUnsub = store.subscribe(() => this.storeUpdated());
-    this.validPlaylistUrl = this.$location.path();
-
-    appEvents.emit(CoreEvents.playlistStarted);
+    this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
 
     return getBackendSrv()
       .get(`/api/playlists/${playlistId}`)
@@ -103,26 +92,25 @@ export class PlaylistSrv {
   }
 
   stop() {
-    if (this.isPlaying) {
-      const queryParams = this.$location.search();
-      if (queryParams.kiosk) {
-        appEvents.emit(CoreEvents.toggleKioskMode, { exit: true });
-      }
+    if (!this.isPlaying) {
+      return;
     }
 
     this.index = 0;
     this.isPlaying = false;
 
-    if (this.storeUnsub) {
-      this.storeUnsub();
+    if (this.locationListenerUnsub) {
+      this.locationListenerUnsub();
     }
 
-    if (this.cancelPromise) {
-      this.$timeout.cancel(this.cancelPromise);
+    if (this.nextTimeoutId) {
+      clearTimeout(this.nextTimeoutId);
     }
 
-    appEvents.emit(CoreEvents.playlistStopped);
+    if (locationService.getSearchObject().kiosk) {
+      locationService.partial({ kiosk: null });
+    }
   }
 }
 
-coreModule.service('playlistSrv', PlaylistSrv);
+export const playlistSrv = new PlaylistSrv();

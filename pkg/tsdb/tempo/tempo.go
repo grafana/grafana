@@ -23,6 +23,7 @@ type tempoExecutor struct {
 	httpClient *http.Client
 }
 
+// NewExecutor returns a tempoExecutor.
 func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
@@ -42,21 +43,12 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	refID := queryContext.Queries[0].RefID
 	queryResult := plugins.DataQueryResult{}
-
 	traceID := queryContext.Queries[0].Model.Get("query").MustString("")
 
-	tlog.Debug("Querying tempo with traceID", "traceID", traceID)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", dsInfo.Url+"/api/traces/"+traceID, nil)
+	req, err := e.createRequest(ctx, dsInfo, traceID)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
-
-	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
-	}
-
-	req.Header.Set("Accept", "application/protobuf")
 
 	resp, err := e.httpClient.Do(req)
 	if err != nil {
@@ -75,8 +67,7 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		queryResult.Error = fmt.Errorf("failed to get trace: %s", traceID)
-		tlog.Error("Request to tempo failed", "Status", resp.Status, "Body", string(body))
+		queryResult.ErrorString = fmt.Sprintf("failed to get trace with id: %s Status: %s Body: %s", traceID, resp.Status, string(body))
 		return plugins.DataResponse{
 			Results: map[string]plugins.DataQueryResult{
 				refID: queryResult,
@@ -129,4 +120,20 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 			refID: queryResult,
 		},
 	}, nil
+}
+
+func (e *tempoExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, traceID string) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", dsInfo.Url+"/api/traces/"+traceID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if dsInfo.BasicAuth {
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
+	}
+
+	req.Header.Set("Accept", "application/protobuf")
+
+	tlog.Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
+	return req, nil
 }

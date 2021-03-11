@@ -56,7 +56,7 @@ func (ns *NotificationService) Init() error {
 		"Subject": subjectTemplateFunc,
 	})
 
-	templatePattern := filepath.Join(setting.StaticRootPath, ns.Cfg.Smtp.TemplatesPattern)
+	templatePattern := filepath.Join(ns.Cfg.StaticRootPath, ns.Cfg.Smtp.TemplatesPattern)
 	_, err := mailTemplates.ParseGlob(templatePattern)
 	if err != nil {
 		return err

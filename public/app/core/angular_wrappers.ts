@@ -5,9 +5,7 @@ import { AnnotationQueryEditor as CloudWatchAnnotationQueryEditor } from 'app/pl
 import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import { TagFilter } from './components/TagFilter/TagFilter';
-import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
-import AppNotificationList from './components/AppNotifications/AppNotificationList';
 import {
   ColorPicker,
   DataLinksInlineEditor,
@@ -24,7 +22,7 @@ import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/component
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { SearchField, SearchResults, SearchResultsFilter, SearchWrapper } from '../features/search';
+import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
 
 const { SecretFormField } = LegacyForms;
 
@@ -38,9 +36,7 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('spinner', Spinner, ['inline']);
   react2AngularDirective('helpModal', HelpModal, []);
-  react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
-  react2AngularDirective('appNotificationsList', AppNotificationList, []);
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
   react2AngularDirective('emptyListCta', EmptyListCTA, [
     'title',
@@ -84,7 +80,6 @@ export function registerAngularDirectives() {
     ['onStarredFilterChange', { watchDepth: 'reference' }],
     ['onTagFilterChange', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('searchWrapper', SearchWrapper, []);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
     ['onChange', { watchDepth: 'reference' }],

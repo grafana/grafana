@@ -230,6 +230,16 @@ func extractFiles(archiveFile string, pluginName string, dstDir string, allowSym
 	}
 	logger.Debugf("Extracting archive %q to %q...\n", archiveFile, dstDir)
 
+	existingInstallDir := filepath.Join(dstDir, pluginName)
+	if _, err := os.Stat(existingInstallDir); !os.IsNotExist(err) {
+		err = os.RemoveAll(existingInstallDir)
+		if err != nil {
+			return err
+		}
+
+		logger.Infof("Removed existing installation of %s\n\n", pluginName)
+	}
+
 	r, err := zip.OpenReader(archiveFile)
 	if err != nil {
 		return err
