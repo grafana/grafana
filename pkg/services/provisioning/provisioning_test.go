@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -91,7 +92,7 @@ func setup() *serviceTestStruct {
 	}
 
 	serviceTest.service = NewProvisioningServiceImpl(
-		func(path string) (dashboards.DashboardProvisioner, error) {
+		func(path string, reqHandler tsdbifaces.RequestHandler) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
 		nil,
