@@ -38,7 +38,7 @@ Given a limit of three sessions, the longest inactive session is signed out of w
 
 ### Usage billing
 
-You can request usage billing to be turned on in order to have an unlimited number of active users. When usage billing is enabled, Grafana does not enforce active user limits. Instead, we charge for active users above the limit, according to your customer contract. 
+You can request Grafana Labs to turn on usage billing to allow an unlimited number of active users. When usage billing is enabled, Grafana does not enforce active user limits. Instead, we charge for active users above the limit, according to your customer contract. 
 
 Usage billing must be agreed upon with Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license](https://grafana.com/docs/grafana/latest/enterprise/enterprise-configuration/#auto_refresh_license).
 
