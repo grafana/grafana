@@ -51,6 +51,11 @@ const bust = `?_cache=${Date.now()}`;
 function locate(load: { address: string }) {
   return load.address + bust;
 }
+
+const DEPRECATED_PANELS: Record<string, string> = {
+  singlestat: 'stat',
+};
+
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
 
 grafanaRuntime.SystemJS.config({
@@ -222,6 +227,10 @@ interface PanelCache {
 const panelCache: PanelCache = {};
 
 export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> {
+  if (DEPRECATED_PANELS[id]) {
+    id = DEPRECATED_PANELS[id];
+  }
+
   const loaded = panelCache[id];
 
   if (loaded) {
