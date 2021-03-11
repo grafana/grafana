@@ -4,6 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -36,8 +41,8 @@ type AlertNG struct {
 	RouteRegister   routing.RouteRegister    `inject:""`
 	SQLStore        *sqlstore.SQLStore       `inject:""`
 	DataService     *tsdb.Service            `inject:""`
-	log             log.Logger
-	schedule        scheduleService
+	Log             log.Logger
+	schedule        schedule.ScheduleService
 }
 
 func init() {
@@ -46,37 +51,37 @@ func init() {
 
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
-	ng.log = log.New("ngalert")
+	ng.Log = log.New("ngalert")
 
 	baseInterval := baseIntervalSeconds * time.Second
 
-	store := storeImpl{baseInterval: baseInterval, SQLStore: ng.SQLStore}
+	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
 
-	schedCfg := schedulerCfg{
-		c:            clock.New(),
-		baseInterval: baseInterval,
-		logger:       ng.log,
-		evaluator:    eval.Evaluator{Cfg: ng.Cfg},
-		store:        store,
+	schedCfg := schedule.SchedulerCfg{
+		C:            clock.New(),
+		BaseInterval: baseInterval,
+		Logger:       ng.Log,
+		MaxAttempts:  maxAttempts,
+		Evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+		Store:        store,
 	}
-	ng.schedule = newScheduler(schedCfg, ng.DataService)
+	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
 
-	api := apiImpl{
+	api := api.API{
 		Cfg:             ng.Cfg,
 		DatasourceCache: ng.DatasourceCache,
 		RouteRegister:   ng.RouteRegister,
 		DataService:     ng.DataService,
-		schedule:        ng.schedule,
-		store:           store,
-	}
-	api.registerAPIEndpoints()
+		Schedule:        ng.schedule,
+		Store:           store}
+	api.RegisterAPIEndpoints()
 
 	return nil
 }
 
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
-	ng.log.Debug("ngalert starting")
+	ng.Log.Debug("ngalert starting")
 	return ng.schedule.Ticker(ctx)
 }
 
@@ -99,24 +104,4 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	addAlertDefinitionVersionMigrations(mg)
 	// Create alert_instance table
 	alertInstanceMigration(mg)
-}
-
-// LoadAlertCondition returns a Condition object for the given alertDefinitionID.
-func (api *apiImpl) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*eval.Condition, error) {
-	q := getAlertDefinitionByUIDQuery{UID: alertDefinitionUID, OrgID: orgID}
-	if err := api.store.getAlertDefinitionByUID(&q); err != nil {
-		return nil, err
-	}
-	alertDefinition := q.Result
-
-	err := api.store.validateAlertDefinition(alertDefinition, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return &eval.Condition{
-		RefID:                 alertDefinition.Condition,
-		OrgID:                 alertDefinition.OrgID,
-		QueriesAndExpressions: alertDefinition.Data,
-	}, nil
 }

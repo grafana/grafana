@@ -67,8 +67,8 @@ func (rs *RenderingService) Init() error {
 		// RendererCallbackUrl has already been passed, it won't generate an error.
 		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
 		rs.domain = u.Hostname()
-	case setting.HttpAddr != setting.DefaultHTTPAddr:
-		rs.domain = setting.HttpAddr
+	case rs.Cfg.HTTPAddr != setting.DefaultHTTPAddr:
+		rs.domain = rs.Cfg.HTTPAddr
 	default:
 		rs.domain = "localhost"
 	}
@@ -244,7 +244,7 @@ func (rs *RenderingService) getURL(path string) string {
 	}
 
 	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, setting.HttpPort, subPath, path)
+	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, rs.Cfg.HTTPPort, subPath, path)
 }
 
 func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {

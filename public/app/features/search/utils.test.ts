@@ -8,7 +8,7 @@ import {
   parseRouteParams,
 } from './utils';
 import { sections, searchResults } from './testData';
-import { RouteParams } from './types';
+import { SearchQueryParams } from './types';
 
 describe('Search utils', () => {
   describe('getFlattenedSections', () => {
@@ -151,12 +151,10 @@ describe('Search utils', () => {
 
   describe('parseRouteParams', () => {
     it('should remove all undefined keys', () => {
-      const params: Partial<RouteParams> = { sort: undefined, tag: undefined, query: 'test' };
+      const params: Partial<SearchQueryParams> = { sort: undefined, tag: undefined, query: 'test' };
 
       expect(parseRouteParams(params)).toEqual({
-        params: {
-          query: 'test',
-        },
+        query: 'test',
       });
     });
 
@@ -164,43 +162,35 @@ describe('Search utils', () => {
       //@ts-ignore
       const params = { sort: undefined, tag: 'test', query: 'test' };
       expect(parseRouteParams(params)).toEqual({
-        params: {
-          query: 'test',
-          tag: ['test'],
-        },
+        query: 'test',
+        tag: ['test'],
       });
 
-      const params2: Partial<RouteParams> = { sort: undefined, tag: ['test'], query: 'test' };
+      const params2: Partial<SearchQueryParams> = { sort: undefined, tag: ['test'], query: 'test' };
       expect(parseRouteParams(params2)).toEqual({
-        params: {
-          query: 'test',
-          tag: ['test'],
-        },
+        query: 'test',
+        tag: ['test'],
       });
     });
 
     it('should return sort as a SelectableValue', () => {
-      const params: Partial<RouteParams> = { sort: 'test' };
+      const params: Partial<SearchQueryParams> = { sort: 'test' };
 
       expect(parseRouteParams(params)).toEqual({
-        params: {
-          sort: { value: 'test' },
-        },
+        sort: { value: 'test' },
       });
     });
 
     it('should prepend folder:{folder} to the query if folder is present', () => {
-      expect(parseRouteParams({}, 'current')).toEqual({
-        params: {
-          query: 'folder:current ',
-        },
+      expect(parseRouteParams({ folder: 'current' })).toEqual({
+        folder: 'current',
+        query: 'folder:current ',
       });
       // Prepend to exiting query
-      const params: Partial<RouteParams> = { query: 'test' };
-      expect(parseRouteParams(params, 'current')).toEqual({
-        params: {
-          query: 'folder:current test',
-        },
+      const params: Partial<SearchQueryParams> = { query: 'test', folder: 'current' };
+      expect(parseRouteParams(params)).toEqual({
+        folder: 'current',
+        query: 'folder:current test',
       });
     });
   });
