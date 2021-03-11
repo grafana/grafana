@@ -7,6 +7,7 @@ import { Reduce } from './components/Reduce';
 import { Math } from './components/Math';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from './types';
 import { getDefaults } from './utils/expressionTypes';
+import { ClassicConditions } from './components/ClassicConditions';
 
 type Props = QueryEditorProps<ExpressionDatasourceApi, ExpressionQuery>;
 
@@ -41,7 +42,7 @@ export class ExpressionQueryEditor extends PureComponent<Props> {
         return <Resample query={query} labelWidth={labelWidth} onChange={onChange} refIds={refIds} />;
 
       case ExpressionQueryType.classic:
-        return null;
+        return <ClassicConditions />;
     }
   }
 
