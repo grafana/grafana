@@ -1,4 +1,4 @@
-package dataproxy
+package datasourceproxy
 
 import (
 	"errors"
@@ -10,21 +10,30 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type DataProxy struct {
-	DatasourceCache        datasources.CacheService
-	PluginRequestValidator models.PluginRequestValidator
-	Cfg                    *setting.Cfg
+func init() {
+	registry.RegisterService(&DatasourceProxyService{})
 }
 
-func (p *DataProxy) ProxyDataSourceRequest(c *models.ReqContext) {
+type DatasourceProxyService struct {
+	DatasourceCache        datasources.CacheService      `inject:""`
+	PluginRequestValidator models.PluginRequestValidator `inject:""`
+	Cfg                    *setting.Cfg                  `inject:""`
+}
+
+func (p *DatasourceProxyService) Init() error {
+	return nil
+}
+
+func (p *DatasourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 	p.ProxyDatasourceRequestWithID(c, c.ParamsInt64(":id"))
 }
 
-func (p *DataProxy) ProxyDatasourceRequestWithID(c *models.ReqContext, dsID int64) {
+func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
 	ds, err := p.DatasourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
