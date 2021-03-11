@@ -35,6 +35,12 @@ Sometimes it is useful to sign in to an account from multiple locations simultan
 
 Given a limit of three sessions, the longest inactive session is signed out of when a fourth person signs in to the same account.
 
+### Usage billing
+
+You can request Grafana Labs to turn on usage billing to allow an unlimited number of active users. When usage billing is enabled, Grafana does not enforce active user limits. Instead, we charge for active users above the limit, according to your customer contract. 
+
+Usage billing must be agreed upon with Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license](https://grafana.com/docs/grafana/latest/enterprise/enterprise-configuration/#auto_refresh_license).
+
 ## Expiration date
 
 The license expiration date is the date when a license is no longer active. As the license expiration date approaches, Grafana Enterprise displays a banner.
