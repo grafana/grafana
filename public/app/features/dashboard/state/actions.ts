@@ -15,6 +15,8 @@ import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
 import { PanelModel } from './PanelModel';
 import { cancelVariables } from '../../variables/state/actions';
+import { isDeprecatedPanel } from '../utils/panel';
+import { DEPRECATED_PANELS } from '../../../core/constants';
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async (dispatch) => {
@@ -119,10 +121,22 @@ export function removeDashboard(uri: string): ThunkResult<void> {
 
 export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    let plugin = getStore().plugins.panels[panel.type];
+    let pluginToLoad = panel.type;
+
+    const isDeprecated = isDeprecatedPanel(panel.type);
+
+    if (isDeprecated) {
+      pluginToLoad = DEPRECATED_PANELS[panel.type];
+    }
+
+    let plugin = getStore().plugins.panels[pluginToLoad];
 
     if (!plugin) {
-      plugin = await dispatch(loadPanelPlugin(panel.type));
+      plugin = await dispatch(loadPanelPlugin(pluginToLoad));
+    }
+
+    if (isDeprecated) {
+      dispatch(changePanelPlugin(panel, DEPRECATED_PANELS[panel.type]));
     }
 
     if (!panel.plugin) {
