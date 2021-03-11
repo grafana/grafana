@@ -39,9 +39,15 @@ func notAuthorized(c *models.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
-func tokenRevoked(c *models.ReqContext) {
+func tokenRevoked(c *models.ReqContext, err *models.TokenRevokedError) {
 	if c.IsApiRequest() {
-		c.JsonApiErr(401, "Token revoked", nil)
+		c.JSON(401, map[string]interface{}{
+			"message": "Token revoked",
+			"error": map[string]interface{}{
+				"id":                    "ERR_TOKEN_REVOKED",
+				"maxConcurrentSessions": err.MaxConcurrentSessions,
+			},
+		})
 		return
 	}
 
@@ -113,7 +119,7 @@ func Auth(options *AuthOptions) macaron.Handler {
 			lookupTokenErr, hasTokenErr := c.Data["lookupTokenErr"].(error)
 			var revokedErr *models.TokenRevokedError
 			if hasTokenErr && errors.As(lookupTokenErr, &revokedErr) {
-				tokenRevoked(c)
+				tokenRevoked(c, revokedErr)
 				return
 			}
 
