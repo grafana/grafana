@@ -25896,10 +25896,10 @@ uplot@1.6.4:
   resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.4.tgz#016e9f66796d78c187957e710743f7ca405dfb4d"
   integrity sha512-4d6JixG54HQKFDLAegzwgwf87GtEbp6pt3YlHygyLt+mJ9RHneCXYlZxr1QOhLetoSSHeeDuWP5RFMv8mdltpg==
 
-uplot@1.6.6:
-  version "1.6.6"
-  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.6.tgz#81a139acd1f422bdaeedab3f273786114131ae0f"
-  integrity sha512-iy2hv7rGswvS4yWyPKOTQ3T7qEzv8h8EjSugq5iD2ybGjmg/6EHQB1FhJhWvw/Ibn1MrE75wignQudAr1p/PrQ==
+uplot@1.6.7:
+  version "1.6.7"
+  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.6.7.tgz#d3faaec899791ee3fdf5d2835b19a33d9117566a"
+  integrity sha512-6aYZmGywrHTqTgT1GfYHnU77xDUdutR1EJbVX4P9I45CGrtXN77S69/cgW2BXPL1lR4g6V6bh7ujJsFyvHw1hg==
 
 upper-case@^1.1.1:
   version "1.1.3"
