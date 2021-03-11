@@ -49,8 +49,8 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         });
     });
   }, [
-    datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId,
-    datasource.azureLogAnalyticsDatasource.subscriptionId,
+    datasource.azureLogAnalyticsDatasource?.logAnalyticsSubscriptionId,
+    datasource.azureLogAnalyticsDatasource?.subscriptionId,
     datasource.azureMonitorDatasource,
     onQueryChange,
     query,
