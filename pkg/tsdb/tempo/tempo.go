@@ -24,7 +24,7 @@ type tempoExecutor struct {
 }
 
 // NewExecutor returns a tempoExecutor.
-func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+func NewExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
@@ -39,10 +39,15 @@ var (
 	tlog log.Logger
 )
 
-func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
-	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
-	refID := queryContext.Queries[0].RefID
-	queryResult := plugins.DataQueryResult{}
+func init() {
+	tlog = log.New("tsdb.tempo")
+	tsdb.RegisterTsdbQueryEndpoint("tempo", NewExecutor)
+}
+
+func (e *tempoExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
+	queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	refID := queryContext.Queries[0].RefId
+	queryResult := &tsdb.QueryResult{}
 	traceID := queryContext.Queries[0].Model.Get("query").MustString("")
 
 	req, err := e.createRequest(ctx, dsInfo, traceID)
@@ -68,8 +73,8 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 
 	if resp.StatusCode != http.StatusOK {
 		queryResult.ErrorString = fmt.Sprintf("failed to get trace with id: %s Status: %s Body: %s", traceID, resp.Status, string(body))
-		return plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
+		return &tsdb.Response{
+			Results: map[string]*tsdb.QueryResult{
 				refID: queryResult,
 			},
 		}, nil
@@ -115,7 +120,11 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 	}
 	queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
 
-	return result, nil
+	return &tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			refID: queryResult,
+		},
+	}, nil
 }
 
 func (e *tempoExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, traceID string) (*http.Request, error) {
