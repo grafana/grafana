@@ -83,7 +83,13 @@ const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {
 
   return (
     <Tooltip content="Cancel query">
-      <Icon className="spin-clockwise" name="sync" size="xs" onClick={onClick} />
+      <Icon
+        className="spin-clockwise"
+        name="sync"
+        size="xs"
+        onClick={onClick}
+        aria-label={selectors.components.LoadingIndicator.icon}
+      />
     </Tooltip>
   );
 };

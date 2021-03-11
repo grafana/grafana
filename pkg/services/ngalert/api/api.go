@@ -72,7 +72,7 @@ func (api *API) RegisterAPIEndpoints() {
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
 func (api *API) conditionEvalEndpoint(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand) response.Response {
-	evalCond := eval.Condition{
+	evalCond := ngmodels.Condition{
 		RefID:                 cmd.Condition,
 		OrgID:                 c.SignedInUser.OrgId,
 		QueriesAndExpressions: cmd.Data,
@@ -175,7 +175,7 @@ func (api *API) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels
 	cmd.UID = c.Params(":alertDefinitionUID")
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	evalCond := eval.Condition{
+	evalCond := ngmodels.Condition{
 		RefID:                 cmd.Condition,
 		OrgID:                 c.SignedInUser.OrgId,
 		QueriesAndExpressions: cmd.Data,
@@ -195,7 +195,7 @@ func (api *API) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels
 func (api *API) createAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels.SaveAlertDefinitionCommand) response.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	evalCond := eval.Condition{
+	evalCond := ngmodels.Condition{
 		RefID:                 cmd.Condition,
 		OrgID:                 c.SignedInUser.OrgId,
 		QueriesAndExpressions: cmd.Data,
@@ -263,7 +263,7 @@ func (api *API) alertDefinitionUnpauseEndpoint(c *models.ReqContext, cmd ngmodel
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.
-func (api *API) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*eval.Condition, error) {
+func (api *API) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*ngmodels.Condition, error) {
 	q := ngmodels.GetAlertDefinitionByUIDQuery{UID: alertDefinitionUID, OrgID: orgID}
 	if err := api.Store.GetAlertDefinitionByUID(&q); err != nil {
 		return nil, err
@@ -275,14 +275,14 @@ func (api *API) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*eva
 		return nil, err
 	}
 
-	return &eval.Condition{
+	return &ngmodels.Condition{
 		RefID:                 alertDefinition.Condition,
 		OrgID:                 alertDefinition.OrgID,
 		QueriesAndExpressions: alertDefinition.Data,
 	}, nil
 }
 
-func (api *API) validateCondition(c eval.Condition, user *models.SignedInUser, skipCache bool) error {
+func (api *API) validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool) error {
 	var refID string
 
 	if len(c.QueriesAndExpressions) == 0 {

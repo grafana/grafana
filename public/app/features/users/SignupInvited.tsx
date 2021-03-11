@@ -1,13 +1,11 @@
 import React, { FC, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Form, Input } from '@grafana/ui';
 import { useAsync } from 'react-use';
-
-import { StoreState } from 'app/types';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { getConfig } from 'app/core/config';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 interface FormModel {
   email: string;
@@ -28,13 +26,17 @@ const navModel = {
   },
 };
 
-export const SignupInvitedPage: FC = () => {
-  const code = useSelector((state: StoreState) => state.location.routeParams.code);
+export interface Props extends GrafanaRouteComponentProps<{ code: string }> {}
+
+export const SignupInvitedPage: FC<Props> = ({ match }) => {
+  const code = match.params.code;
   const [initFormModel, setInitFormModel] = useState<FormModel>();
   const [greeting, setGreeting] = useState<string>();
   const [invitedBy, setInvitedBy] = useState<string>();
+
   useAsync(async () => {
     const invite = await getBackendSrv().get(`/api/user/invite/${code}`);
+
     setInitFormModel({
       email: invite.email,
       name: invite.name,

@@ -6,6 +6,7 @@ import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
+import { locationService } from '@grafana/runtime';
 
 jest.mock('app/core/services/search_srv');
 // Typecast the mock search so the mock import is correctly recognised by TS
@@ -36,6 +37,7 @@ const setup = (testProps?: Partial<Props>) => {
  */
 describe('DashboardSearch', () => {
   it('should call search api with default query when initialised', async () => {
+    locationService.push('/');
     setup();
 
     await waitFor(() => screen.getByPlaceholderText('Search dashboards by name'));
@@ -55,6 +57,7 @@ describe('DashboardSearch', () => {
   });
 
   it('should call api with updated query on query change', async () => {
+    locationService.push('/');
     setup();
 
     const input = await screen.findByPlaceholderText('Search dashboards by name');
@@ -77,6 +80,7 @@ describe('DashboardSearch', () => {
   });
 
   it("should render 'No results' message when there are no dashboards", async () => {
+    locationService.push('/');
     setup();
 
     const message = await screen.findByText('No dashboards matching your query were found.');
@@ -86,13 +90,16 @@ describe('DashboardSearch', () => {
   it('should render search results', async () => {
     mockSearch.mockResolvedValueOnce(searchResults);
 
+    locationService.push('/');
     setup();
+
     const section = await screen.findAllByLabelText('Search section');
     expect(section).toHaveLength(2);
     expect(screen.getAllByLabelText('Search items')).toHaveLength(1);
   });
 
   it('should call search with selected tags', async () => {
+    locationService.push('/');
     setup();
 
     await waitFor(() => screen.getByLabelText('Tag filter'));
@@ -118,8 +125,8 @@ describe('DashboardSearch', () => {
   });
 
   it('should call search api with provided search params', async () => {
-    const params = { query: 'test query', tag: ['tag1'], sort: { value: 'asc' } };
-    setup({ params });
+    locationService.partial({ query: 'test query', tag: ['tag1'], sort: 'asc' });
+    setup({});
 
     await waitFor(() => {
       expect(mockSearch).toHaveBeenCalledTimes(1);
