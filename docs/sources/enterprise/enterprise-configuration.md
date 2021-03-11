@@ -350,4 +350,4 @@ The default TTL (time to live) if no other TTL is available.
 
 ### gc_interval
 
-When storing cache data in-memory, this setting defines how often a background process will clean up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
+When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
