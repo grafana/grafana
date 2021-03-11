@@ -13,6 +13,11 @@ export const Components = {
       },
     },
   },
+  Menu: {
+    MenuComponent: (title: string) => `${title} menu`,
+    MenuGroup: (title: string) => `${title} menu group`,
+    MenuItem: (title: string) => `${title} menu item`,
+  },
   Panels: {
     Panel: {
       title: (title: string) => `Panel header title item ${title}`,

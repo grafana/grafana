@@ -141,7 +141,7 @@ export function registerAngularDirectives() {
   react2AngularDirective('graphContextMenu', GraphContextMenu, [
     'x',
     'y',
-    'items',
+    'itemsGroup',
     ['onClose', { watchDepth: 'reference', wrapApply: true }],
     ['getContextMenuSource', { watchDepth: 'reference', wrapApply: true }],
     ['timeZone', { watchDepth: 'reference', wrapApply: true }],

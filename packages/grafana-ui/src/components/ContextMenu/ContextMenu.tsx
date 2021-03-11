@@ -1,7 +1,10 @@
-import React, { useRef, useState, useLayoutEffect } from 'react';
+import React, { useRef, useState, useLayoutEffect, useCallback } from 'react';
+import { selectors } from '@grafana/e2e-selectors';
 import { useClickAway } from 'react-use';
 import { Portal } from '../Portal/Portal';
-import { Menu, MenuItemsGroup } from '../Menu/Menu';
+import { Menu } from '../Menu/Menu';
+import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
+import { MenuItem } from '../Menu/MenuItem';
 
 export interface ContextMenuProps {
   /** Starting horizontal position for the menu */
@@ -11,12 +14,12 @@ export interface ContextMenuProps {
   /** Callback for closing the menu */
   onClose?: () => void;
   /** List of the menu items to display */
-  items?: MenuItemsGroup[];
+  itemsGroup?: MenuItemsGroup[];
   /** A function that returns header element */
   renderHeader?: () => React.ReactNode;
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, items, renderHeader }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, itemsGroup, renderHeader }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const [positionStyles, setPositionStyles] = useState({});
 
@@ -44,10 +47,38 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
     }
   });
 
+  const onClick = useCallback(() => {
+    if (onClose) {
+      onClose();
+    }
+  }, [onClose]);
+
   const header = renderHeader && renderHeader();
   return (
     <Portal>
-      <Menu header={header} items={items} onClose={onClose} ref={menuRef} style={positionStyles} />
+      <Menu
+        header={header}
+        ref={menuRef}
+        style={positionStyles}
+        ariaLabel={selectors.components.Menu.MenuComponent('Context')}
+      >
+        {itemsGroup?.map((group, index) => (
+          <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+            {(group.items || []).map((item) => (
+              <MenuItem
+                key={`${item.label}`}
+                url={item.url}
+                label={item.label}
+                ariaLabel={item.label}
+                target={item.target}
+                icon={item.icon}
+                active={item.active}
+                onClick={onClick}
+              />
+            ))}
+          </MenuGroup>
+        ))}
+      </Menu>
     </Portal>
   );
 });

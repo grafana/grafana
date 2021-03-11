@@ -16,10 +16,18 @@ export default {
   },
 };
 
-const menuItems = [{ label: 'Test', items: [{ label: 'First' }, { label: 'Second' }] }];
+const menuItems = [
+  {
+    label: 'Test',
+    items: [
+      { label: 'First', ariaLabel: 'First' },
+      { label: 'Second', ariaLabel: 'Second' },
+    ],
+  },
+];
 
 export const Basic = () => {
-  return <ContextMenu x={10} y={11} onClose={() => {}} items={menuItems} />;
+  return <ContextMenu x={10} y={11} onClose={() => {}} itemsGroup={menuItems} />;
 };
 
 export const WithState = () => {
