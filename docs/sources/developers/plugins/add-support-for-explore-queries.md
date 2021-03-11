@@ -87,9 +87,9 @@ The query editor for Explore is similar to the query editor for the data source 
 
 ## Selecting preferred visualisation
 
-Explore should be default select a reasonable visualisation for your data so users do not have to tweak and play with the visualisations and just focus on querying. This usually works fairly well and Explore can figure out whether the returned data is time series data or logs or something else.
+Explore should by default select a reasonable visualization for your data so users do not have to tweak and play with the visualizations and just focus on querying. This usually works fairly well and Explore can figure out whether the returned data is time series data or logs or something else.
 
-Occasionally this may not work or you really want to show some data in a specific visualisation. In that cases you can add a hint to your returned data frame, setting the preferredVisualisationType meta attribute.
+Occasionally this might not work or you might want to show some data in a specific visualization. In that case, you can add a hint to your returned data frame, setting the `preferredVisualisationType` meta attribute.
 
 You can construct data frame with specific metadata like this:
 ```
