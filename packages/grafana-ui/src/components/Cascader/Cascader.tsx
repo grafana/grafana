@@ -182,6 +182,17 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     });
   };
 
+  // update the searchableOptions when the options has been updated
+  componentDidUpdate(prevProps: CascaderProps) {
+    if (prevProps.options === this.props.options) {
+      return;
+    }
+
+    this.setState({
+      searchableOptions: this.flattenOptions(this.props.options),
+    });
+  }
+
   render() {
     const { allowCustomValue, placeholder, width, changeOnSelect } = this.props;
     const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
