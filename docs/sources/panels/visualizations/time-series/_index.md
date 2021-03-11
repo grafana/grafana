@@ -46,21 +46,3 @@ When you hover your cursor over the graph, Grafana can display tooltips. Choose 
 ### Legend calculations
 
 Choose which of the [standard calculations]({{< relref "../../calculations-list.md">}}) to show in the legend. You can have more than one.
-
-## Legend options
-
-The Time series legend has additional features.
-
-### Toggle series
-
-Click on the series label in the legend to isolate the series in the visualization. All other series are hidden in the visualization. The data of the hidden series is still accessible.
-
-Cmd/Ctrl+click on the series label to hide the clicked series and remove the toggle.
-
-> **Note:** This option is persistent when you save the dashboard.
-
-This creates a system override that hides the other series. You can view this override in the Overrides tab. If you delete the override, then it removes the toggle.
-
-### Change series color
-
-Click on the series icon (colored line beside the series label) in the legend to change selected series color.
