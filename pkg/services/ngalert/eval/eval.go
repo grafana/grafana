@@ -42,15 +42,6 @@ func (e *invalidEvalResultFormatError) Unwrap() error {
 	return e.err
 }
 
-// Condition contains backend expressions and queries and the RefID
-// of the query or expression that will be evaluated.
-type Condition struct {
-	RefID string `json:"refId"`
-	OrgID int64  `json:"-"`
-
-	QueriesAndExpressions []models.AlertQuery `json:"queriesAndExpressions"`
-}
-
 // ExecutionResults contains the unevaluated results from executing
 // a condition.
 type ExecutionResults struct {
@@ -96,12 +87,6 @@ func (s state) String() string {
 	return [...]string{"Normal", "Alerting", "NoData", "Error"}[s]
 }
 
-// IsValid checks the condition's validity.
-func (c Condition) IsValid() bool {
-	// TODO search for refIDs in QueriesAndExpressions
-	return len(c.QueriesAndExpressions) != 0
-}
-
 // AlertExecCtx is the context provided for executing an alert condition.
 type AlertExecCtx struct {
 	OrgID              int64
@@ -111,7 +96,7 @@ type AlertExecCtx struct {
 }
 
 // GetQueryDataRequest creates a backend.QueryDataRequest from the condition.
-func (c *Condition) GetQueryDataRequest(ctx AlertExecCtx, now time.Time) (*backend.QueryDataRequest, error) {
+func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (*backend.QueryDataRequest, error) {
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
 		// TODO: Things probably
@@ -153,10 +138,10 @@ func (c *Condition) GetQueryDataRequest(ctx AlertExecCtx, now time.Time) (*backe
 }
 
 // execute runs the Condition's expressions or queries.
-func (c *Condition) execute(ctx AlertExecCtx, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
+func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 
-	queryDataReq, err := c.GetQueryDataRequest(ctx, now)
+	queryDataReq, err := GetQueryDataRequest(ctx, c, now)
 	if err != nil {
 		return &result, err
 	}
@@ -253,13 +238,13 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 // ConditionEval executes conditions and evaluates the result.
-func (e *Evaluator) ConditionEval(condition *Condition, now time.Time, dataService *tsdb.Service) (Results, error) {
+func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, dataService *tsdb.Service) (Results, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
 
-	execResult, err := condition.execute(alertExecCtx, now, dataService)
+	execResult, err := execute(alertExecCtx, condition, now, dataService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}

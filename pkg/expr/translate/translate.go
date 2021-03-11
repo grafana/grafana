@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -32,7 +31,7 @@ Need To:
 */
 
 // DashboardAlertConditions turns dashboard alerting conditions into a server side expression conditions.
-func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*eval.Condition, error) {
+func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*ngmodels.Condition, error) {
 	oldCond := dashConditionsJSON{}
 
 	err := json.Unmarshal(rawDCondJSON, &oldCond)
@@ -90,7 +89,7 @@ type conditionEvalJSON struct {
 	Type   string    `json:"type"` // e.g. "gt"
 }
 
-func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
+func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	refIDtoCondIdx := make(map[string][]int)
 	for i, cond := range dc.Conditions {
 		if len(cond.Query.Params) != 3 {
@@ -99,8 +98,6 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 		refID := cond.Query.Params[0]
 		refIDtoCondIdx[refID] = append(refIDtoCondIdx[refID], i)
 	}
-
-	spew.Dump(refIDtoCondIdx)
 
 	newRefIDstoCondIdx := make(map[string][]int)
 	newRefIDsToTimeRanges := make(map[string][2]string)
@@ -167,7 +164,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 	sort.Strings(newRefIDs)
 	spew.Dump(newRefIDs, newRefIDstoCondIdx)
 
-	ngCond := &eval.Condition{}
+	ngCond := &ngmodels.Condition{}
 	// will need to sort for stable output
 	condIdxToNewRefID := make(map[int]string)
 	for _, refID := range newRefIDs {

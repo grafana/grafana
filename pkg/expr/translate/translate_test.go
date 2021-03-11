@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
 )
@@ -24,12 +23,12 @@ func TestDashboardAlertConditions(t *testing.T) {
 		rawJSON string
 
 		// Condition is quite large (and unexported things), so check misc attributes.
-		spotCheckFn func(t *testing.T, cond *eval.Condition)
+		spotCheckFn func(t *testing.T, cond *ngmodels.Condition)
 	}{
 		{
 			name:    "two conditions one query but different time ranges",
 			rawJSON: twoCondOneQueryDiffTime,
-			spotCheckFn: func(t *testing.T, cond *eval.Condition) {
+			spotCheckFn: func(t *testing.T, cond *ngmodels.Condition) {
 				require.Equal(t, "C", cond.RefID, "unexpected refId for condition")
 				require.Equal(t, 3, len(cond.QueriesAndExpressions), "unexpected query/expression array length")
 
@@ -76,7 +75,7 @@ func TestDashboardAlertConditions(t *testing.T) {
 		{
 			name:    "something",
 			rawJSON: mixedSharedUnsharedTimeRange,
-			spotCheckFn: func(t *testing.T, cond *eval.Condition) {
+			spotCheckFn: func(t *testing.T, cond *ngmodels.Condition) {
 			},
 		},
 	}
