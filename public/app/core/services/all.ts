@@ -7,4 +7,3 @@ import './popover_srv';
 import './segment_srv';
 import './backend_srv';
 import './dynamic_directive_srv';
-import './bridge_srv';

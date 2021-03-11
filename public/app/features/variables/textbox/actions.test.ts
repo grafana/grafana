@@ -7,9 +7,20 @@ import { VariableOption } from '../types';
 import { toVariablePayload } from '../state/types';
 import { createTextBoxOptions } from './reducer';
 import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
-import { updateLocation } from 'app/core/actions';
 import { textboxBuilder } from '../shared/testing/builders';
+import { locationService } from '@grafana/runtime';
 
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+
+  return {
+    ...original,
+    locationService: {
+      partial: jest.fn(),
+      getSearchObject: () => ({}),
+    },
+  };
+});
 describe('textbox actions', () => {
   variableAdapters.setInit(() => [createTextBoxVariableAdapter()]);
 
@@ -30,9 +41,9 @@ describe('textbox actions', () => {
 
       tester.thenDispatchedActionsShouldEqual(
         createTextBoxOptions(toVariablePayload(variable)),
-        setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-textbox': 'A' } })
+        setCurrentVariableValue(toVariablePayload(variable, { option }))
       );
+      expect(locationService.partial).toHaveBeenLastCalledWith({ 'var-textbox': 'A' });
     });
   });
 

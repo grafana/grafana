@@ -186,7 +186,6 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
   ) {
     return this.addCustomEditor({
       ...config,
-      defaultValue: config.defaultValue ?? [],
       id: config.path,
       editor: standardEditorsRegistry.get('multi-select').editor as any,
     });
