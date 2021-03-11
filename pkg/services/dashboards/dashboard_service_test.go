@@ -188,10 +188,6 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
-					return nil
-				})
-
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
@@ -222,9 +218,13 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
-					return nil
+				origUpdateAlerting := updateAlerting
+				t.Cleanup(func() {
+					updateAlerting = origUpdateAlerting
 				})
+				updateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+					return nil
+				}
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
@@ -259,9 +259,13 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
-					return nil
+				origUpdateAlerting := updateAlerting
+				t.Cleanup(func() {
+					updateAlerting = origUpdateAlerting
 				})
+				updateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+					return nil
+				}
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)

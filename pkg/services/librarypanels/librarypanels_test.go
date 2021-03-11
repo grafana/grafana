@@ -753,9 +753,13 @@ func createDashboard(t *testing.T, user models.SignedInUser, title string, folde
 		cmd.Result = nil
 		return nil
 	})
-	bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
-		return nil
+	origUpdateAlerting := updateAlerting
+	t.Cleanup(func() {
+		updateAlerting = origUpdateAlerting
 	})
+	updateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+		return nil
+	}
 
 	dashboard, err := dashboards.NewService(&fakeDashboardValidator{}, nil).SaveDashboard(dashItem, true)
 	require.NoError(t, err)

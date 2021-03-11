@@ -19,23 +19,27 @@ import (
 func TestIntegratedDashboardService(t *testing.T) {
 	Convey("Dashboard service integration tests", t, func() {
 		sqlStore := sqlstore.InitTestDB(t)
-		var testOrgId int64 = 1
+		const testOrgID int64 = 1
 
-		Convey("Given saved folders and dashboards in organization A", func() {
-			bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
-				return nil
+		FocusConvey("Given saved folders and dashboards in organization A", func() {
+			origUpdateAlerting := updateAlerting
+			t.Cleanup(func() {
+				updateAlerting = origUpdateAlerting
 			})
+			updateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+				return nil
+			}
 
 			bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 				cmd.Result = nil
 				return nil
 			})
 
-			savedFolder := saveTestFolder(t, "Saved folder", testOrgId, sqlStore)
-			savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgId, savedFolder.Id, sqlStore)
-			saveTestDashboard(t, "Other saved dash in folder", testOrgId, savedFolder.Id, sqlStore)
-			savedDashInGeneralFolder := saveTestDashboard(t, "Saved dashboard in general folder", testOrgId, 0, sqlStore)
-			otherSavedFolder := saveTestFolder(t, "Other saved folder", testOrgId, sqlStore)
+			savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
+			savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.Id, sqlStore)
+			saveTestDashboard(t, "Other saved dash in folder", testOrgID, savedFolder.Id, sqlStore)
+			savedDashInGeneralFolder := saveTestDashboard(t, "Saved dashboard in general folder", testOrgID, 0, sqlStore)
+			otherSavedFolder := saveTestFolder(t, "Other saved folder", testOrgID, sqlStore)
 
 			Convey("Should return dashboard model", func() {
 				So(savedFolder.Title, ShouldEqual, "Saved folder")
@@ -57,7 +61,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 			Convey("When saving a dashboard with non-existing id", func() {
 				cmd := models.SaveDashboardCommand{
-					OrgId: testOrgId,
+					OrgId: testOrgID,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    float64(123412321),
 						"title": "Expect error",
@@ -130,7 +134,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 			permissionScenario("Given user has no permission to save", false, func(sc *dashboardPermissionScenarioContext) {
 				Convey("When creating a new dashboard in the General folder", func() {
 					cmd := models.SaveDashboardCommand{
-						OrgId: testOrgId,
+						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"title": "Dash",
 						}),
@@ -152,7 +156,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 				Convey("When creating a new dashboard in other folder", func() {
 					cmd := models.SaveDashboardCommand{
-						OrgId: testOrgId,
+						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"title": "Dash",
 						}),
@@ -175,7 +179,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 				Convey("When creating a new dashboard by existing title in folder", func() {
 					cmd := models.SaveDashboardCommand{
-						OrgId: testOrgId,
+						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"title": savedDashInFolder.Title,
 						}),
@@ -198,7 +202,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 				Convey("When creating a new dashboard by existing uid in folder", func() {
 					cmd := models.SaveDashboardCommand{
-						OrgId: testOrgId,
+						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"uid":   savedDashInFolder.Uid,
 							"title": "New dash",
@@ -222,7 +226,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 				Convey("When updating a dashboard by existing id in the General folder", func() {
 					cmd := models.SaveDashboardCommand{
-						OrgId: testOrgId,
+						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"id":    savedDashInGeneralFolder.Id,
 							"title": "Dash",
@@ -246,7 +250,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 				Convey("When updating a dashboard by existing id in other folder", func() {
 					cmd := models.SaveDashboardCommand{
-						OrgId: testOrgId,
+						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"id":    savedDashInFolder.Id,
 							"title": "Dash",
@@ -270,7 +274,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 				Convey("When moving a dashboard by existing id to other folder from General folder", func() {
 					cmd := models.SaveDashboardCommand{
-						OrgId: testOrgId,
+						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"id":    savedDashInGeneralFolder.Id,
 							"title": "Dash",
@@ -294,7 +298,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 				Convey("When moving a dashboard by existing id to the General folder from other folder", func() {
 					cmd := models.SaveDashboardCommand{
-						OrgId: testOrgId,
+						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"id":    savedDashInFolder.Id,
 							"title": "Dash",
@@ -318,7 +322,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 				Convey("When moving a dashboard by existing uid to other folder from General folder", func() {
 					cmd := models.SaveDashboardCommand{
-						OrgId: testOrgId,
+						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"uid":   savedDashInGeneralFolder.Uid,
 							"title": "Dash",
@@ -342,7 +346,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 				Convey("When moving a dashboard by existing uid to the General folder from other folder", func() {
 					cmd := models.SaveDashboardCommand{
-						OrgId: testOrgId,
+						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"uid":   savedDashInFolder.Uid,
 							"title": "Dash",
@@ -373,7 +377,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When creating a dashboard in General folder with same name as dashboard in other folder", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
 								"title": savedDashInFolder.Title,
@@ -397,7 +401,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When creating a dashboard in other folder with same name as dashboard in General folder", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
 								"title": savedDashInGeneralFolder.Title,
@@ -422,7 +426,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When creating a folder with same name as dashboard in other folder", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
 								"title": savedDashInFolder.Title,
@@ -449,7 +453,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When saving a dashboard without id and uid and unique title in folder", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"title": "Dash without id and uid",
 							}),
@@ -473,7 +477,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When saving a dashboard when dashboard id is zero ", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    0,
 								"title": "Dash with zero id",
@@ -495,7 +499,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When saving a dashboard in non-existing folder", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"title": "Expect error",
 							}),
@@ -603,7 +607,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When creating a dashboard with same name as dashboard in other folder", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
 								"title": savedDashInFolder.Title,
@@ -622,7 +626,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When creating a dashboard with same name as dashboard in General folder", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
 								"title": savedDashInGeneralFolder.Title,
@@ -641,7 +645,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When creating a folder with same name as existing folder", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
 								"title": savedFolder.Title,
@@ -760,7 +764,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When creating a dashboard with same name as dashboard in other folder", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
 								"title": savedDashInFolder.Title,
@@ -787,7 +791,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 					Convey("When creating a dashboard with same name as dashboard in General folder", func() {
 						cmd := models.SaveDashboardCommand{
-							OrgId: testOrgId,
+							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
 								"title": savedDashInGeneralFolder.Title,
