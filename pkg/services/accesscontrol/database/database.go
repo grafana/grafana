@@ -28,91 +28,91 @@ func (ac *AccessControlStore) Init() error {
 	return nil
 }
 
-func (ac *AccessControlStore) GetPolicies(ctx context.Context, orgID int64) ([]*accesscontrol.Policy, error) {
-	var result []*accesscontrol.Policy
+func (ac *AccessControlStore) GetRoles(ctx context.Context, orgID int64) ([]*accesscontrol.Role, error) {
+	var result []*accesscontrol.Role
 	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		policies := make([]*accesscontrol.Policy, 0)
-		q := "SELECT id, uid, org_id, name, description, updated FROM policy WHERE org_id = ?"
-		if err := sess.SQL(q, orgID).Find(&policies); err != nil {
+		roles := make([]*accesscontrol.Role, 0)
+		q := "SELECT id, uid, org_id, name, description, updated FROM role WHERE org_id = ?"
+		if err := sess.SQL(q, orgID).Find(&roles); err != nil {
 			return err
 		}
 
-		result = policies
+		result = roles
 		return nil
 	})
 	return result, err
 }
 
-func (ac *AccessControlStore) GetPolicy(ctx context.Context, orgID, policyID int64) (*accesscontrol.PolicyDTO, error) {
-	var result *accesscontrol.PolicyDTO
+func (ac *AccessControlStore) GetRole(ctx context.Context, orgID, roleID int64) (*accesscontrol.RoleDTO, error) {
+	var result *accesscontrol.RoleDTO
 
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		policy, err := getPolicyById(sess, policyID, orgID)
+		role, err := getRoleById(sess, roleID, orgID)
 		if err != nil {
 			return err
 		}
 
-		permissions, err := getPolicyPermissions(sess, policyID)
+		permissions, err := getRolePermissions(sess, roleID)
 		if err != nil {
 			return err
 		}
 
-		policy.Permissions = permissions
-		result = policy
+		role.Permissions = permissions
+		result = role
 		return nil
 	})
 
 	return result, err
 }
 
-func (ac *AccessControlStore) GetPolicyByUID(ctx context.Context, orgId int64, uid string) (*accesscontrol.PolicyDTO, error) {
-	var result *accesscontrol.PolicyDTO
+func (ac *AccessControlStore) GetRoleByUID(ctx context.Context, orgId int64, uid string) (*accesscontrol.RoleDTO, error) {
+	var result *accesscontrol.RoleDTO
 
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		policy, err := getPolicyByUID(sess, uid, orgId)
+		role, err := getRoleByUID(sess, uid, orgId)
 		if err != nil {
 			return err
 		}
 
-		permissions, err := getPolicyPermissions(sess, policy.Id)
+		permissions, err := getRolePermissions(sess, role.Id)
 		if err != nil {
 			return err
 		}
 
-		policy.Permissions = permissions
-		result = policy
+		role.Permissions = permissions
+		result = role
 		return nil
 	})
 
 	return result, err
 }
 
-func (ac *AccessControlStore) CreatePolicy(ctx context.Context, cmd accesscontrol.CreatePolicyCommand) (*accesscontrol.Policy, error) {
-	var result *accesscontrol.Policy
+func (ac *AccessControlStore) CreateRole(ctx context.Context, cmd accesscontrol.CreateRoleCommand) (*accesscontrol.Role, error) {
+	var result *accesscontrol.Role
 
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		policy, err := ac.createPolicy(sess, cmd)
+		role, err := ac.createRole(sess, cmd)
 		if err != nil {
 			return err
 		}
 
-		result = policy
+		result = role
 		return nil
 	})
 
 	return result, err
 }
 
-func (ac *AccessControlStore) createPolicy(sess *sqlstore.DBSession, cmd accesscontrol.CreatePolicyCommand) (*accesscontrol.Policy, error) {
+func (ac *AccessControlStore) createRole(sess *sqlstore.DBSession, cmd accesscontrol.CreateRoleCommand) (*accesscontrol.Role, error) {
 	if cmd.UID == "" {
-		uid, err := generateNewPolicyUID(sess, cmd.OrgId)
+		uid, err := generateNewRoleUID(sess, cmd.OrgId)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate UID for policy %q: %w", cmd.Name, err)
+			return nil, fmt.Errorf("failed to generate UID for role %q: %w", cmd.Name, err)
 		}
 		cmd.UID = uid
 	}
 
-	policy := &accesscontrol.Policy{
+	role := &accesscontrol.Role{
 		OrgId:       cmd.OrgId,
 		UID:         cmd.UID,
 		Name:        cmd.Name,
@@ -121,46 +121,46 @@ func (ac *AccessControlStore) createPolicy(sess *sqlstore.DBSession, cmd accessc
 		Updated:     TimeNow(),
 	}
 
-	if _, err := sess.Insert(policy); err != nil {
+	if _, err := sess.Insert(role); err != nil {
 		if ac.SQLStore.Dialect.IsUniqueConstraintViolation(err) && strings.Contains(err.Error(), "name") {
-			return nil, fmt.Errorf("policy with the name '%s' already exists: %w", cmd.Name, err)
+			return nil, fmt.Errorf("role with the name '%s' already exists: %w", cmd.Name, err)
 		}
 		return nil, err
 	}
 
-	return policy, nil
+	return role, nil
 }
 
-func (ac *AccessControlStore) CreatePolicyWithPermissions(ctx context.Context, cmd accesscontrol.CreatePolicyWithPermissionsCommand) (*accesscontrol.PolicyDTO, error) {
-	var result *accesscontrol.PolicyDTO
+func (ac *AccessControlStore) CreateRoleWithPermissions(ctx context.Context, cmd accesscontrol.CreateRoleWithPermissionsCommand) (*accesscontrol.RoleDTO, error) {
+	var result *accesscontrol.RoleDTO
 
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		createPolicyCmd := accesscontrol.CreatePolicyCommand{
+		createRoleCmd := accesscontrol.CreateRoleCommand{
 			OrgId:       cmd.OrgId,
 			UID:         cmd.UID,
 			Name:        cmd.Name,
 			Description: cmd.Description,
 		}
 
-		policy, err := ac.createPolicy(sess, createPolicyCmd)
+		role, err := ac.createRole(sess, createRoleCmd)
 		if err != nil {
 			return err
 		}
 
-		result = &accesscontrol.PolicyDTO{
-			Id:          policy.Id,
-			UID:         policy.UID,
-			OrgId:       policy.OrgId,
-			Name:        policy.Name,
-			Description: policy.Description,
-			Created:     policy.Created,
-			Updated:     policy.Updated,
+		result = &accesscontrol.RoleDTO{
+			Id:          role.Id,
+			UID:         role.UID,
+			OrgId:       role.OrgId,
+			Name:        role.Name,
+			Description: role.Description,
+			Created:     role.Created,
+			Updated:     role.Updated,
 		}
 
 		// Add permissions
 		for _, p := range cmd.Permissions {
 			createPermissionCmd := accesscontrol.CreatePermissionCommand{
-				PolicyId:   policy.Id,
+				RoleId:     role.Id,
 				Permission: p.Permission,
 				Scope:      p.Scope,
 			}
@@ -178,24 +178,24 @@ func (ac *AccessControlStore) CreatePolicyWithPermissions(ctx context.Context, c
 	return result, err
 }
 
-// UpdatePolicy updates policy with permissions
-func (ac *AccessControlStore) UpdatePolicy(ctx context.Context, cmd accesscontrol.UpdatePolicyCommand) (*accesscontrol.PolicyDTO, error) {
-	var result *accesscontrol.PolicyDTO
+// UpdateRole updates role with permissions
+func (ac *AccessControlStore) UpdateRole(ctx context.Context, cmd accesscontrol.UpdateRoleCommand) (*accesscontrol.RoleDTO, error) {
+	var result *accesscontrol.RoleDTO
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: work with both ID and UID
-		existingPolicy, err := getPolicyByUID(sess, cmd.UID, cmd.OrgId)
+		existingRole, err := getRoleByUID(sess, cmd.UID, cmd.OrgId)
 		if err != nil {
 			return err
 		}
 
-		version := existingPolicy.Version + 1
+		version := existingRole.Version + 1
 		if cmd.Version != 0 {
-			if existingPolicy.Version >= cmd.Version {
+			if existingRole.Version >= cmd.Version {
 				return fmt.Errorf(
 					"could not update '%s' (UID %s) from version %d to %d: %w",
 					cmd.Name,
-					existingPolicy.UID,
-					existingPolicy.Version,
+					existingRole.UID,
+					existingRole.Version,
 					cmd.Version,
 					accesscontrol.ErrVersionLE,
 				)
@@ -203,39 +203,39 @@ func (ac *AccessControlStore) UpdatePolicy(ctx context.Context, cmd accesscontro
 			version = cmd.Version
 		}
 
-		policy := &accesscontrol.Policy{
-			Id:          existingPolicy.Id,
-			UID:         existingPolicy.UID,
+		role := &accesscontrol.Role{
+			Id:          existingRole.Id,
+			UID:         existingRole.UID,
 			Version:     version,
-			OrgId:       existingPolicy.OrgId,
+			OrgId:       existingRole.OrgId,
 			Name:        cmd.Name,
 			Description: cmd.Description,
 			Updated:     TimeNow(),
 		}
 
-		affectedRows, err := sess.ID(existingPolicy.Id).Update(policy)
+		affectedRows, err := sess.ID(existingRole.Id).Update(role)
 
 		if err != nil {
 			return err
 		}
 
 		if affectedRows == 0 {
-			return accesscontrol.ErrPolicyNotFound
+			return accesscontrol.ErrRoleNotFound
 		}
 
-		result = &accesscontrol.PolicyDTO{
-			Id:          policy.Id,
+		result = &accesscontrol.RoleDTO{
+			Id:          role.Id,
 			Version:     version,
-			UID:         policy.UID,
-			OrgId:       policy.OrgId,
-			Name:        policy.Name,
-			Description: policy.Description,
-			Created:     policy.Created,
-			Updated:     policy.Updated,
+			UID:         role.UID,
+			OrgId:       role.OrgId,
+			Name:        role.Name,
+			Description: role.Description,
+			Created:     role.Created,
+			Updated:     role.Updated,
 		}
 
-		// Delete policy's permissions
-		_, err = sess.Exec("DELETE FROM permission WHERE policy_id = ?", existingPolicy.Id)
+		// Delete role's permissions
+		_, err = sess.Exec("DELETE FROM permission WHERE role_id = ?", existingRole.Id)
 		if err != nil {
 			return err
 		}
@@ -243,7 +243,7 @@ func (ac *AccessControlStore) UpdatePolicy(ctx context.Context, cmd accesscontro
 		// Add permissions
 		for _, p := range cmd.Permissions {
 			createPermissionCmd := accesscontrol.CreatePermissionCommand{
-				PolicyId:   policy.Id,
+				RoleId:     role.Id,
 				Permission: p.Permission,
 				Scope:      p.Scope,
 			}
@@ -261,24 +261,24 @@ func (ac *AccessControlStore) UpdatePolicy(ctx context.Context, cmd accesscontro
 	return result, err
 }
 
-func (ac *AccessControlStore) DeletePolicy(cmd *accesscontrol.DeletePolicyCommand) error {
+func (ac *AccessControlStore) DeleteRole(cmd *accesscontrol.DeleteRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		policyId := cmd.Id
-		if policyId == 0 {
-			policy, err := getPolicyByUID(sess, cmd.UID, cmd.OrgId)
+		roleId := cmd.Id
+		if roleId == 0 {
+			role, err := getRoleByUID(sess, cmd.UID, cmd.OrgId)
 			if err != nil {
 				return err
 			}
-			policyId = policy.Id
+			roleId = role.Id
 		}
 
-		// Delete policy's permissions
-		_, err := sess.Exec("DELETE FROM permission WHERE policy_id = ?", policyId)
+		// Delete role's permissions
+		_, err := sess.Exec("DELETE FROM permission WHERE role_id = ?", roleId)
 		if err != nil {
 			return err
 		}
 
-		_, err = sess.Exec("DELETE FROM policy WHERE id = ? AND org_id = ?", policyId, cmd.OrgId)
+		_, err = sess.Exec("DELETE FROM role WHERE id = ? AND org_id = ?", roleId, cmd.OrgId)
 		if err != nil {
 			return err
 		}
@@ -287,10 +287,10 @@ func (ac *AccessControlStore) DeletePolicy(cmd *accesscontrol.DeletePolicyComman
 	})
 }
 
-func (ac *AccessControlStore) GetPolicyPermissions(ctx context.Context, policyID int64) ([]accesscontrol.Permission, error) {
+func (ac *AccessControlStore) GetRolePermissions(ctx context.Context, roleID int64) ([]accesscontrol.Permission, error) {
 	var result []accesscontrol.Permission
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		permissions, err := getPolicyPermissions(sess, policyID)
+		permissions, err := getRolePermissions(sess, roleID)
 		if err != nil {
 			return err
 		}
@@ -353,16 +353,16 @@ func (ac *AccessControlStore) DeletePermission(ctx context.Context, cmd *accessc
 	})
 }
 
-func (ac *AccessControlStore) GetTeamPolicies(query *accesscontrol.GetTeamPoliciesQuery) ([]*accesscontrol.PolicyDTO, error) {
-	var result []*accesscontrol.PolicyDTO
+func (ac *AccessControlStore) GetTeamRoles(query *accesscontrol.GetTeamRolesQuery) ([]*accesscontrol.RoleDTO, error) {
+	var result []*accesscontrol.RoleDTO
 	err := ac.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		q := `SELECT
-			policy.id,
-			policy.name AS name,
-			policy.description AS description,
-			policy.updated FROM policy AS policy
-			INNER JOIN team_policy ON policy.id = team_policy.policy_id AND team_policy.team_id = ?
-			WHERE policy.org_id = ? `
+			role.id,
+			role.name AS name,
+			role.description AS description,
+			role.updated FROM role AS role
+			INNER JOIN team_role ON role.id = team_role.role_id AND team_role.team_id = ?
+			WHERE role.org_id = ? `
 
 		if err := sess.SQL(q, query.TeamId, query.OrgId).Find(&result); err != nil {
 			return err
@@ -374,20 +374,20 @@ func (ac *AccessControlStore) GetTeamPolicies(query *accesscontrol.GetTeamPolici
 	return result, err
 }
 
-func (ac *AccessControlStore) GetUserPolicies(ctx context.Context, query accesscontrol.GetUserPoliciesQuery) ([]*accesscontrol.PolicyDTO, error) {
-	var result []*accesscontrol.PolicyDTO
+func (ac *AccessControlStore) GetUserRoles(ctx context.Context, query accesscontrol.GetUserRolesQuery) ([]*accesscontrol.RoleDTO, error) {
+	var result []*accesscontrol.RoleDTO
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: optimize this
-		filter, params := ac.userPoliciesFilter(query.OrgId, query.UserId, query.Roles)
+		filter, params := ac.userRolesFilter(query.OrgId, query.UserId, query.Roles)
 
 		q := `SELECT
-			policy.id,
-			policy.org_id,
-			policy.name,
-			policy.description,
-			policy.created,
-			policy.updated
-				FROM policy
+			role.id,
+			role.org_id,
+			role.name,
+			role.description,
+			role.created,
+			role.updated
+				FROM role
 				` + filter
 
 		err := sess.SQL(q, params...).Find(&result)
@@ -400,18 +400,18 @@ func (ac *AccessControlStore) GetUserPolicies(ctx context.Context, query accessc
 func (ac *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]*accesscontrol.Permission, error) {
 	var result []*accesscontrol.Permission
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		filter, params := ac.userPoliciesFilter(query.OrgId, query.UserId, query.Roles)
+		filter, params := ac.userRolesFilter(query.OrgId, query.UserId, query.Roles)
 
 		// TODO: optimize this
 		q := `SELECT
 			permission.id,
-			permission.policy_id,
+			permission.role_id,
 			permission.permission,
 			permission.scope,
 			permission.updated,
 			permission.created
 				FROM permission
-				INNER JOIN policy ON policy.id = permission.policy_id
+				INNER JOIN role ON role.id = permission.role_id
 				` + filter
 
 		if err := sess.SQL(q, params...).Find(&result); err != nil {
@@ -424,11 +424,11 @@ func (ac *AccessControlStore) GetUserPermissions(ctx context.Context, query acce
 	return result, err
 }
 
-func (*AccessControlStore) userPoliciesFilter(orgID, userID int64, roles []string) (string, []interface{}) {
-	q := `WHERE policy.id IN (
-		SELECT up.policy_id FROM user_policy AS up WHERE up.user_id = ?
+func (*AccessControlStore) userRolesFilter(orgID, userID int64, roles []string) (string, []interface{}) {
+	q := `WHERE role.id IN (
+		SELECT up.role_id FROM user_role AS up WHERE up.user_id = ?
 		UNION
-		SELECT tp.policy_id FROM team_policy as tp
+		SELECT tp.role_id FROM team_role as tp
 			INNER JOIN team_member as tm ON tm.team_id = tp.team_id
 			WHERE tm.user_id = ?`
 	params := []interface{}{userID, userID}
@@ -436,197 +436,197 @@ func (*AccessControlStore) userPoliciesFilter(orgID, userID int64, roles []strin
 	if len(roles) != 0 {
 		q += `
 	UNION
-	SELECT rp.policy_id FROM builtin_role_policy AS rp
+	SELECT br.role_id FROM builtin_role AS br
 	WHERE role IN (? ` + strings.Repeat(", ?", len(roles)-1) + `)`
 		for _, role := range roles {
 			params = append(params, role)
 		}
 	}
 
-	q += `) and policy.org_id = ?`
+	q += `) and role.org_id = ?`
 	params = append(params, orgID)
 
 	return q, params
 }
 
-func (ac *AccessControlStore) AddTeamPolicy(cmd *accesscontrol.AddTeamPolicyCommand) error {
+func (ac *AccessControlStore) AddTeamRole(cmd *accesscontrol.AddTeamRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if res, err := sess.Query("SELECT 1 from team_policy WHERE org_id=? and team_id=? and policy_id=?", cmd.OrgId, cmd.TeamId, cmd.PolicyId); err != nil {
+		if res, err := sess.Query("SELECT 1 from team_role WHERE org_id=? and team_id=? and role_id=?", cmd.OrgId, cmd.TeamId, cmd.RoleId); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return accesscontrol.ErrTeamPolicyAlreadyAdded
+			return accesscontrol.ErrTeamRoleAlreadyAdded
 		}
 
 		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
 			return err
 		}
 
-		if _, err := policyExists(cmd.OrgId, cmd.PolicyId, sess); err != nil {
+		if _, err := roleExists(cmd.OrgId, cmd.RoleId, sess); err != nil {
 			return err
 		}
 
-		teamPolicy := &accesscontrol.TeamPolicy{
-			OrgId:    cmd.OrgId,
-			TeamId:   cmd.TeamId,
-			PolicyId: cmd.PolicyId,
-			Created:  TimeNow(),
-			Updated:  TimeNow(),
+		teamRole := &accesscontrol.TeamRole{
+			OrgId:   cmd.OrgId,
+			TeamId:  cmd.TeamId,
+			RoleId:  cmd.RoleId,
+			Created: TimeNow(),
+			Updated: TimeNow(),
 		}
 
-		_, err := sess.Insert(teamPolicy)
+		_, err := sess.Insert(teamRole)
 		return err
 	})
 }
 
-func (ac *AccessControlStore) RemoveTeamPolicy(cmd *accesscontrol.RemoveTeamPolicyCommand) error {
+func (ac *AccessControlStore) RemoveTeamRole(cmd *accesscontrol.RemoveTeamRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
 			return err
 		}
 
-		if _, err := policyExists(cmd.OrgId, cmd.PolicyId, sess); err != nil {
+		if _, err := roleExists(cmd.OrgId, cmd.RoleId, sess); err != nil {
 			return err
 		}
 
-		q := "DELETE FROM team_policy WHERE org_id=? and team_id=? and policy_id=?"
-		res, err := sess.Exec(q, cmd.OrgId, cmd.TeamId, cmd.PolicyId)
+		q := "DELETE FROM team_role WHERE org_id=? and team_id=? and role_id=?"
+		res, err := sess.Exec(q, cmd.OrgId, cmd.TeamId, cmd.RoleId)
 		if err != nil {
 			return err
 		}
 		rows, err := res.RowsAffected()
 		if rows == 0 {
-			return accesscontrol.ErrTeamPolicyNotFound
+			return accesscontrol.ErrTeamRoleNotFound
 		}
 
 		return err
 	})
 }
 
-func (ac *AccessControlStore) AddUserPolicy(cmd *accesscontrol.AddUserPolicyCommand) error {
+func (ac *AccessControlStore) AddUserRole(cmd *accesscontrol.AddUserRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if res, err := sess.Query("SELECT 1 from user_policy WHERE org_id=? and user_id=? and policy_id=?", cmd.OrgId, cmd.UserId, cmd.PolicyId); err != nil {
+		if res, err := sess.Query("SELECT 1 from user_role WHERE org_id=? and user_id=? and role_id=?", cmd.OrgId, cmd.UserId, cmd.RoleId); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return accesscontrol.ErrUserPolicyAlreadyAdded
+			return accesscontrol.ErrUserRoleAlreadyAdded
 		}
 
-		if _, err := policyExists(cmd.OrgId, cmd.PolicyId, sess); err != nil {
+		if _, err := roleExists(cmd.OrgId, cmd.RoleId, sess); err != nil {
 			return err
 		}
 
-		userPolicy := &accesscontrol.UserPolicy{
-			OrgId:    cmd.OrgId,
-			UserId:   cmd.UserId,
-			PolicyId: cmd.PolicyId,
-			Created:  TimeNow(),
-			Updated:  TimeNow(),
+		userRole := &accesscontrol.UserRole{
+			OrgId:   cmd.OrgId,
+			UserId:  cmd.UserId,
+			RoleId:  cmd.RoleId,
+			Created: TimeNow(),
+			Updated: TimeNow(),
 		}
 
-		_, err := sess.Insert(userPolicy)
+		_, err := sess.Insert(userRole)
 		return err
 	})
 }
 
-func (ac *AccessControlStore) RemoveUserPolicy(cmd *accesscontrol.RemoveUserPolicyCommand) error {
+func (ac *AccessControlStore) RemoveUserRole(cmd *accesscontrol.RemoveUserRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if _, err := policyExists(cmd.OrgId, cmd.PolicyId, sess); err != nil {
+		if _, err := roleExists(cmd.OrgId, cmd.RoleId, sess); err != nil {
 			return err
 		}
 
-		q := "DELETE FROM user_policy WHERE org_id=? and user_id=? and policy_id=?"
-		res, err := sess.Exec(q, cmd.OrgId, cmd.UserId, cmd.PolicyId)
+		q := "DELETE FROM user_role WHERE org_id=? and user_id=? and role_id=?"
+		res, err := sess.Exec(q, cmd.OrgId, cmd.UserId, cmd.RoleId)
 		if err != nil {
 			return err
 		}
 		rows, err := res.RowsAffected()
 		if rows == 0 {
-			return accesscontrol.ErrUserPolicyNotFound
+			return accesscontrol.ErrUserRoleNotFound
 		}
 
 		return err
 	})
 }
 
-func (ac *AccessControlStore) AddBuiltinRolePolicy(ctx context.Context, orgID, policyID int64, role string) error {
-	if !models.RoleType(role).IsValid() && role != "Grafana Admin" {
-		return fmt.Errorf("role '%s' is not a valid role", role)
+func (ac *AccessControlStore) AddBuiltinRoleRole(ctx context.Context, orgID, roleID int64, roleName string) error {
+	if !models.RoleType(roleName).IsValid() && roleName != "Grafana Admin" {
+		return fmt.Errorf("role '%s' is not a valid role", roleName)
 	}
 
 	return ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if res, err := sess.Query("SELECT 1 from builtin_role_policy WHERE policy_id=? and role=?", policyID, role); err != nil {
+		if res, err := sess.Query("SELECT 1 from builtin_role WHERE role_id=? and role=?", roleID, roleName); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return accesscontrol.ErrUserPolicyAlreadyAdded
+			return accesscontrol.ErrUserRoleAlreadyAdded
 		}
 
-		if _, err := policyExists(orgID, policyID, sess); err != nil {
+		if _, err := roleExists(orgID, roleID, sess); err != nil {
 			return err
 		}
 
-		policy := accesscontrol.BuiltinRolePolicy{
-			PolicyID: policyID,
-			Role:     role,
-			Updated:  TimeNow(),
-			Created:  TimeNow(),
+		role := accesscontrol.BuiltinRole{
+			RoleID:  roleID,
+			Role:    roleName,
+			Updated: TimeNow(),
+			Created: TimeNow(),
 		}
 
-		_, err := sess.Table("builtin_role_policy").Insert(policy)
+		_, err := sess.Table("builtin_role").Insert(role)
 		return err
 	})
 }
 
-func getPolicyById(sess *sqlstore.DBSession, policyId int64, orgId int64) (*accesscontrol.PolicyDTO, error) {
-	policy := accesscontrol.Policy{OrgId: orgId, Id: policyId}
-	has, err := sess.Get(&policy)
+func getRoleById(sess *sqlstore.DBSession, roleId int64, orgId int64) (*accesscontrol.RoleDTO, error) {
+	role := accesscontrol.Role{OrgId: orgId, Id: roleId}
+	has, err := sess.Get(&role)
 	if !has {
-		return nil, accesscontrol.ErrPolicyNotFound
+		return nil, accesscontrol.ErrRoleNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	policyDTO := accesscontrol.PolicyDTO{
-		Id:          policyId,
-		OrgId:       policy.OrgId,
-		Name:        policy.Name,
-		Description: policy.Description,
+	roleDTO := accesscontrol.RoleDTO{
+		Id:          roleId,
+		OrgId:       role.OrgId,
+		Name:        role.Name,
+		Description: role.Description,
 		Permissions: nil,
-		Created:     policy.Created,
-		Updated:     policy.Updated,
+		Created:     role.Created,
+		Updated:     role.Updated,
 	}
 
-	return &policyDTO, nil
+	return &roleDTO, nil
 }
 
-func getPolicyByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*accesscontrol.PolicyDTO, error) {
-	policy := accesscontrol.Policy{OrgId: orgId, UID: uid}
-	has, err := sess.Get(&policy)
+func getRoleByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*accesscontrol.RoleDTO, error) {
+	role := accesscontrol.Role{OrgId: orgId, UID: uid}
+	has, err := sess.Get(&role)
 	if !has {
-		return nil, accesscontrol.ErrPolicyNotFound
+		return nil, accesscontrol.ErrRoleNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	policyDTO := accesscontrol.PolicyDTO{
-		Id:          policy.Id,
-		UID:         policy.UID,
-		Version:     policy.Version,
-		OrgId:       policy.OrgId,
-		Name:        policy.Name,
-		Description: policy.Description,
+	roleDTO := accesscontrol.RoleDTO{
+		Id:          role.Id,
+		UID:         role.UID,
+		Version:     role.Version,
+		OrgId:       role.OrgId,
+		Name:        role.Name,
+		Description: role.Description,
 		Permissions: nil,
-		Created:     policy.Created,
-		Updated:     policy.Updated,
+		Created:     role.Created,
+		Updated:     role.Updated,
 	}
 
-	return &policyDTO, nil
+	return &roleDTO, nil
 }
 
-func getPolicyPermissions(sess *sqlstore.DBSession, policyId int64) ([]accesscontrol.Permission, error) {
+func getRolePermissions(sess *sqlstore.DBSession, roleId int64) ([]accesscontrol.Permission, error) {
 	permissions := make([]accesscontrol.Permission, 0)
-	q := "SELECT id, policy_id, permission, scope, updated, created FROM permission WHERE policy_id = ?"
-	if err := sess.SQL(q, policyId).Find(&permissions); err != nil {
+	q := "SELECT id, role_id, permission, scope, updated, created FROM permission WHERE role_id = ?"
+	if err := sess.SQL(q, roleId).Find(&permissions); err != nil {
 		return nil, err
 	}
 
@@ -635,7 +635,7 @@ func getPolicyPermissions(sess *sqlstore.DBSession, policyId int64) ([]accesscon
 
 func createPermission(sess *sqlstore.DBSession, cmd accesscontrol.CreatePermissionCommand) (*accesscontrol.Permission, error) {
 	permission := &accesscontrol.Permission{
-		PolicyId:   cmd.PolicyId,
+		RoleId:     cmd.RoleId,
 		Permission: cmd.Permission,
 		Scope:      cmd.Scope,
 		Created:    TimeNow(),
@@ -659,21 +659,21 @@ func teamExists(orgId int64, teamId int64, sess *sqlstore.DBSession) (bool, erro
 	return true, nil
 }
 
-func policyExists(orgId int64, policyId int64, sess *sqlstore.DBSession) (bool, error) {
-	if res, err := sess.Query("SELECT 1 from policy WHERE org_id=? and id=?", orgId, policyId); err != nil {
+func roleExists(orgId int64, roleId int64, sess *sqlstore.DBSession) (bool, error) {
+	if res, err := sess.Query("SELECT 1 from role WHERE org_id=? and id=?", orgId, roleId); err != nil {
 		return false, err
 	} else if len(res) != 1 {
-		return false, accesscontrol.ErrPolicyNotFound
+		return false, accesscontrol.ErrRoleNotFound
 	}
 
 	return true, nil
 }
 
-func generateNewPolicyUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
+func generateNewRoleUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 
-		exists, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&accesscontrol.Policy{})
+		exists, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&accesscontrol.Role{})
 		if err != nil {
 			return "", err
 		}
@@ -683,7 +683,7 @@ func generateNewPolicyUID(sess *sqlstore.DBSession, orgID int64) (string, error)
 		}
 	}
 
-	return "", accesscontrol.ErrPolicyFailedGenerateUniqueUID
+	return "", accesscontrol.ErrRoleFailedGenerateUniqueUID
 }
 
 func MockTimeNow() {

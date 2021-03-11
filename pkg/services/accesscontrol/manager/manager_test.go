@@ -62,7 +62,7 @@ type evaluatingPermissionsTestCase struct {
 	endpoint string
 	action   string
 	userName string
-	policies []actesting.PolicyTestCase
+	roles    []actesting.RoleTestCase
 
 	expectedError  error
 	expectedAccess bool
@@ -78,7 +78,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			endpoint: "/api/admin/users",
 			action:   "post",
 			userName: "testuser",
-			policies: []actesting.PolicyTestCase{
+			roles: []actesting.RoleTestCase{
 				{
 					Name: "CreateUser", Permissions: []actesting.PermissionTestCase{
 						{Scope: "/api/admin/users", Permission: "post"},
@@ -95,7 +95,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			ac := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			actesting.CreateUserWithPolicy(t, ac, tc.userName, tc.policies)
+			actesting.CreateUserWithRole(t, ac, tc.userName, tc.roles)
 
 			userQuery := models.GetUserByLoginQuery{
 				LoginOrEmail: tc.userName,
@@ -103,14 +103,14 @@ func TestEvaluatingPermissions(t *testing.T) {
 			err := sqlstore.GetUserByLogin(&userQuery)
 			require.NoError(t, err)
 
-			userPoliciesQuery := accesscontrol.GetUserPoliciesQuery{
+			userRolesQuery := accesscontrol.GetUserRolesQuery{
 				OrgId:  1,
 				UserId: userQuery.Result.Id,
 			}
 
-			res, err := ac.GetUserPolicies(context.Background(), userPoliciesQuery)
+			res, err := ac.GetUserRoles(context.Background(), userRolesQuery)
 			require.NoError(t, err)
-			assert.Equal(t, len(tc.policies), len(res))
+			assert.Equal(t, len(tc.roles), len(res))
 
 			userPermissionsQuery := accesscontrol.GetUserPermissionsQuery{
 				OrgId:  1,
@@ -119,7 +119,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 
 			permissions, err := ac.GetUserPermissions(context.Background(), userPermissionsQuery)
 			require.NoError(t, err)
-			assert.Equal(t, len(tc.policies[0].Permissions), len(permissions))
+			assert.Equal(t, len(tc.roles[0].Permissions), len(permissions))
 		})
 	}
 }

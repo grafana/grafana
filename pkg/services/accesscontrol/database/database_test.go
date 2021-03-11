@@ -70,29 +70,29 @@ func OverrideDatabaseInRegistry(cfg *setting.Cfg) accessControlStoreTestImpl {
 	return store
 }
 
-func TestCreatingPolicy(t *testing.T) {
+func TestCreatingRole(t *testing.T) {
 	MockTimeNow()
 	defer ResetTimeNow()
 
 	testCases := []struct {
 		desc        string
-		policy      actesting.PolicyTestCase
+		role        actesting.RoleTestCase
 		permissions []actesting.PermissionTestCase
 
 		expectedError   error
 		expectedUpdated time.Time
 	}{
 		{
-			desc: "should successfuly create simple policy",
-			policy: actesting.PolicyTestCase{
+			desc: "should successfuly create simple role",
+			role: actesting.RoleTestCase{
 				Name:        "a name",
 				Permissions: nil,
 			},
 			expectedUpdated: time.Unix(1, 0).UTC(),
 		},
 		{
-			desc: "should successfuly create policy with UID",
-			policy: actesting.PolicyTestCase{
+			desc: "should successfuly create role with UID",
+			role: actesting.RoleTestCase{
 				Name:        "a name",
 				UID:         "testUID",
 				Permissions: nil,
@@ -100,8 +100,8 @@ func TestCreatingPolicy(t *testing.T) {
 			expectedUpdated: time.Unix(3, 0).UTC(),
 		},
 		{
-			desc: "should successfuly create policy with permissions",
-			policy: actesting.PolicyTestCase{
+			desc: "should successfuly create role with permissions",
+			role: actesting.RoleTestCase{
 				Name: "a name",
 				Permissions: []actesting.PermissionTestCase{
 					{Scope: "users", Permission: "admin.users:create"},
@@ -116,51 +116,51 @@ func TestCreatingPolicy(t *testing.T) {
 			store := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			createPolicyRes := actesting.CreatePolicy(t, store, tc.policy)
+			createRoleRes := actesting.CreateRole(t, store, tc.role)
 
-			res, err := store.GetPolicyByUID(context.Background(), 1, createPolicyRes.UID)
-			policy := res
+			res, err := store.GetRoleByUID(context.Background(), 1, createRoleRes.UID)
+			role := res
 
 			require.NoError(t, err)
-			assert.Equal(t, tc.expectedUpdated, policy.Updated)
+			assert.Equal(t, tc.expectedUpdated, role.Updated)
 
-			if tc.policy.UID != "" {
-				assert.Equal(t, tc.policy.UID, policy.UID)
+			if tc.role.UID != "" {
+				assert.Equal(t, tc.role.UID, role.UID)
 			}
 
-			if tc.policy.Permissions == nil {
-				assert.Empty(t, policy.Permissions)
+			if tc.role.Permissions == nil {
+				assert.Empty(t, role.Permissions)
 			} else {
-				assert.Equal(t, len(tc.policy.Permissions), len(policy.Permissions))
-				for i, p := range policy.Permissions {
-					assert.Equal(t, tc.policy.Permissions[i].Permission, p.Permission)
-					assert.Equal(t, tc.policy.Permissions[i].Scope, p.Scope)
+				assert.Equal(t, len(tc.role.Permissions), len(role.Permissions))
+				for i, p := range role.Permissions {
+					assert.Equal(t, tc.role.Permissions[i].Permission, p.Permission)
+					assert.Equal(t, tc.role.Permissions[i].Scope, p.Scope)
 				}
 			}
 		})
 	}
 }
 
-func TestUpdatingPolicy(t *testing.T) {
+func TestUpdatingRole(t *testing.T) {
 	MockTimeNow()
 	defer ResetTimeNow()
 
 	testCases := []struct {
-		desc      string
-		policy    actesting.PolicyTestCase
-		newPolicy actesting.PolicyTestCase
+		desc    string
+		role    actesting.RoleTestCase
+		newRole actesting.RoleTestCase
 
 		expectedError error
 	}{
 		{
-			desc: "should successfuly update policy name",
-			policy: actesting.PolicyTestCase{
+			desc: "should successfuly update role name",
+			role: actesting.RoleTestCase{
 				Name: "a name",
 				Permissions: []actesting.PermissionTestCase{
 					{Scope: "reports", Permission: "reports:read"},
 				},
 			},
-			newPolicy: actesting.PolicyTestCase{
+			newRole: actesting.RoleTestCase{
 				Name: "a different name",
 				Permissions: []actesting.PermissionTestCase{
 					{Scope: "reports", Permission: "reports:create"},
@@ -169,15 +169,15 @@ func TestUpdatingPolicy(t *testing.T) {
 			},
 		},
 		{
-			desc: "should successfuly create policy with permissions",
-			policy: actesting.PolicyTestCase{
+			desc: "should successfuly create role with permissions",
+			role: actesting.RoleTestCase{
 				Name: "a name",
 				Permissions: []actesting.PermissionTestCase{
 					{Scope: "users", Permission: "admin.users:create"},
 					{Scope: "reports", Permission: "reports:read"},
 				},
 			},
-			newPolicy: actesting.PolicyTestCase{
+			newRole: actesting.RoleTestCase{
 				Name: "a different name",
 				Permissions: []actesting.PermissionTestCase{
 					{Scope: "users", Permission: "admin.users:read"},
@@ -191,79 +191,79 @@ func TestUpdatingPolicy(t *testing.T) {
 			store := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			policy := actesting.CreatePolicy(t, store, tc.policy)
-			updated := policy.Updated
+			role := actesting.CreateRole(t, store, tc.role)
+			updated := role.Updated
 
-			updatePolicyCmd := accesscontrol.UpdatePolicyCommand{
-				UID:  policy.UID,
-				Name: tc.newPolicy.Name,
+			updateRoleCmd := accesscontrol.UpdateRoleCommand{
+				UID:  role.UID,
+				Name: tc.newRole.Name,
 			}
-			for _, perm := range tc.newPolicy.Permissions {
-				updatePolicyCmd.Permissions = append(updatePolicyCmd.Permissions, accesscontrol.Permission{
+			for _, perm := range tc.newRole.Permissions {
+				updateRoleCmd.Permissions = append(updateRoleCmd.Permissions, accesscontrol.Permission{
 					Permission: perm.Permission,
 					Scope:      perm.Scope,
 				})
 			}
 
-			_, err := store.UpdatePolicy(context.Background(), updatePolicyCmd)
+			_, err := store.UpdateRole(context.Background(), updateRoleCmd)
 			require.NoError(t, err)
 
-			updatedPolicy, err := store.GetPolicyByUID(context.Background(), 1, policy.UID)
+			updatedRole, err := store.GetRoleByUID(context.Background(), 1, role.UID)
 
 			require.NoError(t, err)
-			assert.Equal(t, tc.newPolicy.Name, updatedPolicy.Name)
-			assert.True(t, updatedPolicy.Updated.After(updated))
-			assert.Equal(t, len(tc.newPolicy.Permissions), len(updatedPolicy.Permissions))
+			assert.Equal(t, tc.newRole.Name, updatedRole.Name)
+			assert.True(t, updatedRole.Updated.After(updated))
+			assert.Equal(t, len(tc.newRole.Permissions), len(updatedRole.Permissions))
 
 			// Check permissions
 			require.NoError(t, err)
-			for i, updatedPermission := range updatedPolicy.Permissions {
-				assert.Equal(t, tc.newPolicy.Permissions[i].Permission, updatedPermission.Permission)
-				assert.Equal(t, tc.newPolicy.Permissions[i].Scope, updatedPermission.Scope)
+			for i, updatedPermission := range updatedRole.Permissions {
+				assert.Equal(t, tc.newRole.Permissions[i].Permission, updatedPermission.Permission)
+				assert.Equal(t, tc.newRole.Permissions[i].Scope, updatedPermission.Scope)
 			}
 		})
 	}
 }
 
-type userPolicyTestCase struct {
-	desc         string
-	userName     string
-	teamName     string
-	userPolicies []actesting.PolicyTestCase
-	teamPolicies []actesting.PolicyTestCase
+type userRoleTestCase struct {
+	desc      string
+	userName  string
+	teamName  string
+	userRoles []actesting.RoleTestCase
+	teamRoles []actesting.RoleTestCase
 
 	expectedError  error
 	expectedAccess bool
 }
 
-func TestUserPolicy(t *testing.T) {
+func TestUserRole(t *testing.T) {
 	MockTimeNow()
 	defer ResetTimeNow()
 
-	testCases := []userPolicyTestCase{
+	testCases := []userRoleTestCase{
 		{
-			desc:     "should successfuly get user policies",
+			desc:     "should successfuly get user roles",
 			userName: "testuser",
 			teamName: "team1",
-			userPolicies: []actesting.PolicyTestCase{
+			userRoles: []actesting.RoleTestCase{
 				{
 					Name: "CreateUser", Permissions: []actesting.PermissionTestCase{},
 				},
 			},
-			teamPolicies:   nil,
+			teamRoles:      nil,
 			expectedError:  nil,
 			expectedAccess: false,
 		},
 		{
-			desc:     "should successfuly get user and team policies",
+			desc:     "should successfuly get user and team roles",
 			userName: "testuser",
 			teamName: "team1",
-			userPolicies: []actesting.PolicyTestCase{
+			userRoles: []actesting.RoleTestCase{
 				{
 					Name: "CreateUser", Permissions: []actesting.PermissionTestCase{},
 				},
 			},
-			teamPolicies: []actesting.PolicyTestCase{
+			teamRoles: []actesting.RoleTestCase{
 				{
 					Name: "CreateDataSource", Permissions: []actesting.PermissionTestCase{},
 				},
@@ -275,11 +275,11 @@ func TestUserPolicy(t *testing.T) {
 			expectedAccess: false,
 		},
 		{
-			desc:         "should successfuly get user and team policies if user has no policies",
-			userName:     "testuser",
-			teamName:     "team1",
-			userPolicies: nil,
-			teamPolicies: []actesting.PolicyTestCase{
+			desc:      "should successfuly get user and team roles if user has no roles",
+			userName:  "testuser",
+			teamName:  "team1",
+			userRoles: nil,
+			teamRoles: []actesting.RoleTestCase{
 				{
 					Name: "CreateDataSource", Permissions: []actesting.PermissionTestCase{},
 				},
@@ -296,21 +296,21 @@ func TestUserPolicy(t *testing.T) {
 			store := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			actesting.CreateUserWithPolicy(t, store, tc.userName, tc.userPolicies)
-			actesting.CreateTeamWithPolicy(t, store, tc.teamName, tc.teamPolicies)
+			actesting.CreateUserWithRole(t, store, tc.userName, tc.userRoles)
+			actesting.CreateTeamWithRole(t, store, tc.teamName, tc.teamRoles)
 
 			// Create more teams
 			for i := 0; i < 10; i++ {
 				teamName := fmt.Sprintf("faketeam%v", i)
-				policies := []actesting.PolicyTestCase{
+				roles := []actesting.RoleTestCase{
 					{
-						Name: fmt.Sprintf("fakepolicy%v", i),
+						Name: fmt.Sprintf("fakerole%v", i),
 						Permissions: []actesting.PermissionTestCase{
 							{Scope: "datasources", Permission: "datasources:create"},
 						},
 					},
 				}
-				actesting.CreateTeamWithPolicy(t, store, teamName, policies)
+				actesting.CreateTeamWithRole(t, store, teamName, roles)
 			}
 
 			userQuery := models.GetUserByLoginQuery{
@@ -337,24 +337,24 @@ func TestUserPolicy(t *testing.T) {
 			err = sqlstore.AddTeamMember(&addTeamMemberCmd)
 			require.NoError(t, err)
 
-			userPoliciesQuery := accesscontrol.GetUserPoliciesQuery{
+			userRolesQuery := accesscontrol.GetUserRolesQuery{
 				OrgId:  1,
 				UserId: userQuery.Result.Id,
 			}
 
-			res, err := store.GetUserPolicies(context.Background(), userPoliciesQuery)
+			res, err := store.GetUserRoles(context.Background(), userRolesQuery)
 			require.NoError(t, err)
-			assert.Equal(t, len(tc.userPolicies)+len(tc.teamPolicies), len(res))
+			assert.Equal(t, len(tc.userRoles)+len(tc.teamRoles), len(res))
 		})
 	}
 }
 
-type userTeamPolicyTestCase struct {
-	desc         string
-	userName     string
-	teamName     string
-	userPolicies []actesting.PolicyTestCase
-	teamPolicies []actesting.PolicyTestCase
+type userTeamRoleTestCase struct {
+	desc      string
+	userName  string
+	teamName  string
+	userRoles []actesting.RoleTestCase
+	teamRoles []actesting.RoleTestCase
 
 	expectedError  error
 	expectedAccess bool
@@ -364,12 +364,12 @@ func TestUserPermissions(t *testing.T) {
 	MockTimeNow()
 	defer ResetTimeNow()
 
-	testCases := []userTeamPolicyTestCase{
+	testCases := []userTeamRoleTestCase{
 		{
 			desc:     "should successfuly get user and team permissions",
 			userName: "testuser",
 			teamName: "team1",
-			userPolicies: []actesting.PolicyTestCase{
+			userRoles: []actesting.RoleTestCase{
 				{
 					Name: "CreateUser", Permissions: []actesting.PermissionTestCase{
 						{Scope: "users", Permission: "admin.users:create"},
@@ -377,7 +377,7 @@ func TestUserPermissions(t *testing.T) {
 					},
 				},
 			},
-			teamPolicies: []actesting.PolicyTestCase{
+			teamRoles: []actesting.RoleTestCase{
 				{
 					Name: "CreateDataSource", Permissions: []actesting.PermissionTestCase{
 						{Scope: "datasources", Permission: "datasources:create"},
@@ -393,21 +393,21 @@ func TestUserPermissions(t *testing.T) {
 			store := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			actesting.CreateUserWithPolicy(t, store, tc.userName, tc.userPolicies)
-			actesting.CreateTeamWithPolicy(t, store, tc.teamName, tc.teamPolicies)
+			actesting.CreateUserWithRole(t, store, tc.userName, tc.userRoles)
+			actesting.CreateTeamWithRole(t, store, tc.teamName, tc.teamRoles)
 
 			// Create more teams
 			for i := 0; i < 10; i++ {
 				teamName := fmt.Sprintf("faketeam%v", i)
-				policies := []actesting.PolicyTestCase{
+				roles := []actesting.RoleTestCase{
 					{
-						Name: fmt.Sprintf("fakepolicy%v", i),
+						Name: fmt.Sprintf("fakerole%v", i),
 						Permissions: []actesting.PermissionTestCase{
 							{Scope: "datasources", Permission: "datasources:create"},
 						},
 					},
 				}
-				actesting.CreateTeamWithPolicy(t, store, teamName, policies)
+				actesting.CreateTeamWithRole(t, store, teamName, roles)
 			}
 
 			userQuery := models.GetUserByLoginQuery{
@@ -448,10 +448,10 @@ func TestUserPermissions(t *testing.T) {
 			require.Len(t, getUserTeamsQuery.Result, 1)
 
 			expectedPermissions := []actesting.PermissionTestCase{}
-			for _, p := range tc.userPolicies {
+			for _, p := range tc.userRoles {
 				expectedPermissions = append(expectedPermissions, p.Permissions...)
 			}
-			for _, p := range tc.teamPolicies {
+			for _, p := range tc.teamRoles {
 				expectedPermissions = append(expectedPermissions, p.Permissions...)
 			}
 

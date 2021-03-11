@@ -13,14 +13,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setup(b *testing.B, policiesPerUser, users int) *accessControlStoreTestImpl {
+func setup(b *testing.B, rolesPerUser, users int) *accessControlStoreTestImpl {
 	ac := setupTestEnv(b)
 	b.Cleanup(registry.ClearOverrides)
-	actesting.GeneratePolicies(b, ac, policiesPerUser, users)
+	actesting.GenerateRoles(b, ac, rolesPerUser, users)
 	return ac
 }
 
-func getPolicies(b *testing.B, ac accesscontrol.Store, policiesPerUser, users int) {
+func getRoles(b *testing.B, ac accesscontrol.Store, rolesPerUser, users int) {
 	userQuery := models.GetUserByLoginQuery{
 		LoginOrEmail: "user1@test.com",
 	}
@@ -31,34 +31,34 @@ func getPolicies(b *testing.B, ac accesscontrol.Store, policiesPerUser, users in
 	userPermissionsQuery := accesscontrol.GetUserPermissionsQuery{OrgId: 1, UserId: userId}
 	res, err := ac.GetUserPermissions(context.Background(), userPermissionsQuery)
 	require.NoError(b, err)
-	expectedPermissions := actesting.PermissionsPerPolicy * policiesPerUser
+	expectedPermissions := actesting.PermissionsPerRole * rolesPerUser
 	assert.Greater(b, len(res), expectedPermissions)
 }
 
-func benchmarkPolicies(b *testing.B, policiesPerUser, users int) {
-	ac := setup(b, policiesPerUser, users)
+func benchmarkRoles(b *testing.B, rolesPerUser, users int) {
+	ac := setup(b, rolesPerUser, users)
 	// We don't wanna measure DB initialization
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		getPolicies(b, ac, policiesPerUser, users)
+		getRoles(b, ac, rolesPerUser, users)
 	}
 }
 
-func BenchmarkPoliciesUsers10_10(b *testing.B) { benchmarkPolicies(b, 10, 10) }
+func BenchmarkRolesUsers10_10(b *testing.B) { benchmarkRoles(b, 10, 10) }
 
-func BenchmarkPoliciesUsers10_100(b *testing.B)  { benchmarkPolicies(b, 10, 100) }
-func BenchmarkPoliciesUsers10_500(b *testing.B)  { benchmarkPolicies(b, 10, 500) }
-func BenchmarkPoliciesUsers10_1000(b *testing.B) { benchmarkPolicies(b, 10, 1000) }
-func BenchmarkPoliciesUsers10_5000(b *testing.B) { benchmarkPolicies(b, 10, 5000) }
-func BenchmarkPoliciesUsers10_10000(b *testing.B) {
+func BenchmarkRolesUsers10_100(b *testing.B)  { benchmarkRoles(b, 10, 100) }
+func BenchmarkRolesUsers10_500(b *testing.B)  { benchmarkRoles(b, 10, 500) }
+func BenchmarkRolesUsers10_1000(b *testing.B) { benchmarkRoles(b, 10, 1000) }
+func BenchmarkRolesUsers10_5000(b *testing.B) { benchmarkRoles(b, 10, 5000) }
+func BenchmarkRolesUsers10_10000(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping benchmark in short mode")
 	}
-	benchmarkPolicies(b, 10, 10000)
+	benchmarkRoles(b, 10, 10000)
 }
 
-func BenchmarkPoliciesPerUser10_10(b *testing.B)   { benchmarkPolicies(b, 10, 10) }
-func BenchmarkPoliciesPerUser100_10(b *testing.B)  { benchmarkPolicies(b, 100, 10) }
-func BenchmarkPoliciesPerUser500_10(b *testing.B)  { benchmarkPolicies(b, 500, 10) }
-func BenchmarkPoliciesPerUser1000_10(b *testing.B) { benchmarkPolicies(b, 1000, 10) }
+func BenchmarkRolesPerUser10_10(b *testing.B)   { benchmarkRoles(b, 10, 10) }
+func BenchmarkRolesPerUser100_10(b *testing.B)  { benchmarkRoles(b, 100, 10) }
+func BenchmarkRolesPerUser500_10(b *testing.B)  { benchmarkRoles(b, 500, 10) }
+func BenchmarkRolesPerUser1000_10(b *testing.B) { benchmarkRoles(b, 1000, 10) }

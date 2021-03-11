@@ -13,13 +13,13 @@ import (
 )
 
 const (
-	usernamePrefix       = "user"
-	teamPrefix           = "team"
-	PermissionsPerPolicy = 10
-	UsersPerTeam         = 10
+	usernamePrefix     = "user"
+	teamPrefix         = "team"
+	PermissionsPerRole = 10
+	UsersPerTeam       = 10
 )
 
-func GeneratePolicies(b *testing.B, ac accesscontrol.Store, policiesPerUser, users int) {
+func GenerateRoles(b *testing.B, ac accesscontrol.Store, rolesPerUser, users int) {
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
 	for i := 0; i < numberOfTeams; i++ {
@@ -31,19 +31,19 @@ func GeneratePolicies(b *testing.B, ac accesscontrol.Store, policiesPerUser, use
 		require.NoError(b, err)
 		teamId := createTeamCmd.Result.Id
 
-		// Create team policies
-		for j := 0; j < policiesPerUser; j++ {
-			policyName := fmt.Sprintf("policy_%s_%v", teamName, j)
-			createPolicyCmd := accesscontrol.CreatePolicyCommand{OrgId: 1, Name: policyName}
-			res, err := ac.CreatePolicy(context.Background(), createPolicyCmd)
+		// Create team roles
+		for j := 0; j < rolesPerUser; j++ {
+			roleName := fmt.Sprintf("role_%s_%v", teamName, j)
+			createRoleCmd := accesscontrol.CreateRoleCommand{OrgId: 1, Name: roleName}
+			res, err := ac.CreateRole(context.Background(), createRoleCmd)
 			require.NoError(b, err)
-			policyId := res.Id
+			roleId := res.Id
 
-			for k := 0; k < PermissionsPerPolicy; k++ {
+			for k := 0; k < PermissionsPerRole; k++ {
 				permission := fmt.Sprintf("permission_%v", k)
 				scope := fmt.Sprintf("scope_%v", k)
 				permCmd := accesscontrol.CreatePermissionCommand{
-					PolicyId:   policyId,
+					RoleId:     roleId,
 					Permission: permission,
 					Scope:      scope,
 				}
@@ -52,12 +52,12 @@ func GeneratePolicies(b *testing.B, ac accesscontrol.Store, policiesPerUser, use
 				require.NoError(b, err)
 			}
 
-			addTeamPolicyCmd := accesscontrol.AddTeamPolicyCommand{
-				OrgId:    1,
-				PolicyId: policyId,
-				TeamId:   teamId,
+			addTeamRoleCmd := accesscontrol.AddTeamRoleCommand{
+				OrgId:  1,
+				RoleId: roleId,
+				TeamId: teamId,
 			}
-			err = ac.AddTeamPolicy(&addTeamPolicyCmd)
+			err = ac.AddTeamRole(&addTeamRoleCmd)
 			require.NoError(b, err)
 		}
 
@@ -72,19 +72,19 @@ func GeneratePolicies(b *testing.B, ac accesscontrol.Store, policiesPerUser, use
 			userId := createUserCmd.Result.Id
 			globalUserId++
 
-			// Create user policies
-			for j := 0; j < policiesPerUser; j++ {
-				policyName := fmt.Sprintf("policy_%s_%v", userName, j)
-				createPolicyCmd := accesscontrol.CreatePolicyCommand{OrgId: 1, Name: policyName}
-				res, err := ac.CreatePolicy(context.Background(), createPolicyCmd)
+			// Create user roles
+			for j := 0; j < rolesPerUser; j++ {
+				roleName := fmt.Sprintf("role_%s_%v", userName, j)
+				createRoleCmd := accesscontrol.CreateRoleCommand{OrgId: 1, Name: roleName}
+				res, err := ac.CreateRole(context.Background(), createRoleCmd)
 				require.NoError(b, err)
-				policyId := res.Id
+				roleId := res.Id
 
-				for k := 0; k < PermissionsPerPolicy; k++ {
+				for k := 0; k < PermissionsPerRole; k++ {
 					permission := fmt.Sprintf("permission_%v", k)
 					scope := fmt.Sprintf("scope_%v", k)
 					permCmd := accesscontrol.CreatePermissionCommand{
-						PolicyId:   policyId,
+						RoleId:     roleId,
 						Permission: permission,
 						Scope:      scope,
 					}
@@ -93,12 +93,12 @@ func GeneratePolicies(b *testing.B, ac accesscontrol.Store, policiesPerUser, use
 					require.NoError(b, err)
 				}
 
-				addUserPolicyCmd := accesscontrol.AddUserPolicyCommand{
-					OrgId:    1,
-					PolicyId: policyId,
-					UserId:   userId,
+				addUserRoleCmd := accesscontrol.AddUserRoleCommand{
+					OrgId:  1,
+					RoleId: roleId,
+					UserId: userId,
 				}
-				err = ac.AddUserPolicy(&addUserPolicyCmd)
+				err = ac.AddUserRole(&addUserRoleCmd)
 				require.NoError(b, err)
 			}
 

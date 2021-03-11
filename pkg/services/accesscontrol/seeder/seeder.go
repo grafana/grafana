@@ -14,7 +14,7 @@ type seeder struct {
 	log   log.Logger
 }
 
-var builtInPolicies = []accesscontrol.PolicyDTO{
+var builtInRoles = []accesscontrol.RoleDTO{
 	{
 		Name:    "grafana:builtin:users:read:self",
 		Version: 1,
@@ -36,7 +36,7 @@ var builtInPolicies = []accesscontrol.PolicyDTO{
 }
 
 // FIXME: Make sure builtin grants can be removed without being recreated
-var builtInPolicyGrants = map[string][]string{
+var builtInRoleGrants = map[string][]string{
 	"grafana:builtin:users:read:self": {
 		"Viewer",
 	},
@@ -47,47 +47,47 @@ func NewSeeder(s accesscontrol.AccessControl, log log.Logger) *seeder {
 }
 
 func (s *seeder) Seed(ctx context.Context, orgID int64) error {
-	err := s.seed(ctx, orgID, builtInPolicies, builtInPolicyGrants)
+	err := s.seed(ctx, orgID, builtInRoles, builtInRoleGrants)
 	return err
 }
 
-func (s *seeder) seed(ctx context.Context, orgID int64, policies []accesscontrol.PolicyDTO, policyGrants map[string][]string) error {
+func (s *seeder) seed(ctx context.Context, orgID int64, roles []accesscontrol.RoleDTO, roleGrants map[string][]string) error {
 	// FIXME: As this will run on startup, we want to optimize running this
-	existingPolicies, err := s.Store.GetPolicies(ctx, orgID)
+	existingRoles, err := s.Store.GetRoles(ctx, orgID)
 	if err != nil {
 		return err
 	}
-	policySet := map[string]*accesscontrol.Policy{}
-	for _, policy := range existingPolicies {
-		if policy == nil {
+	roleSet := map[string]*accesscontrol.Role{}
+	for _, role := range existingRoles {
+		if role == nil {
 			continue
 		}
-		policySet[policy.Name] = policy
+		roleSet[role.Name] = role
 	}
 
-	for _, policy := range policies {
-		policy.OrgId = orgID
+	for _, role := range roles {
+		role.OrgId = orgID
 
-		current, exists := policySet[policy.Name]
+		current, exists := roleSet[role.Name]
 		if exists {
-			if policy.Version <= current.Version {
+			if role.Version <= current.Version {
 				continue
 			}
 		}
 
-		policyID, err := s.createOrUpdatePolicy(ctx, policy, current)
+		roleID, err := s.createOrUpdateRole(ctx, role, current)
 		if err != nil {
-			s.log.Error("failed to create/update policy", "name", policy.Name, "err", err)
+			s.log.Error("failed to create/update role", "name", role.Name, "err", err)
 			continue
 		}
 
-		if roles, exists := policyGrants[policy.Name]; exists {
-			for _, role := range roles {
-				err := s.Store.AddBuiltinRolePolicy(ctx, orgID, policyID, role)
-				if err != nil && !errors.Is(err, accesscontrol.ErrUserPolicyAlreadyAdded) {
-					s.log.Error("failed to assign policy to role",
-						"name", policy.Name,
-						"role", role,
+		if builtinRoles, exists := roleGrants[role.Name]; exists {
+			for _, builtinRole := range builtinRoles {
+				err := s.Store.AddBuiltinRoleRole(ctx, orgID, roleID, builtinRole)
+				if err != nil && !errors.Is(err, accesscontrol.ErrUserRoleAlreadyAdded) {
+					s.log.Error("failed to assign role to role",
+						"name", role.Name,
+						"role", builtinRole,
 						"err", err,
 					)
 					return err
@@ -99,18 +99,18 @@ func (s *seeder) seed(ctx context.Context, orgID int64, policies []accesscontrol
 	return nil
 }
 
-func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy accesscontrol.PolicyDTO, old *accesscontrol.Policy) (int64, error) {
-	if policy.Version == 0 {
-		return 0, fmt.Errorf("error when seeding '%s': all seeder policies must have a version", policy.Name)
+func (s *seeder) createOrUpdateRole(ctx context.Context, role accesscontrol.RoleDTO, old *accesscontrol.Role) (int64, error) {
+	if role.Version == 0 {
+		return 0, fmt.Errorf("error when seeding '%s': all seeder roles must have a version", role.Name)
 	}
 
 	if old == nil {
-		p, err := s.Store.CreatePolicyWithPermissions(ctx, accesscontrol.CreatePolicyWithPermissionsCommand{
-			OrgId:       policy.OrgId,
-			Version:     policy.Version,
-			Name:        policy.Name,
-			Description: policy.Description,
-			Permissions: policy.Permissions,
+		p, err := s.Store.CreateRoleWithPermissions(ctx, accesscontrol.CreateRoleWithPermissionsCommand{
+			OrgId:       role.OrgId,
+			Version:     role.Version,
+			Name:        role.Name,
+			Description: role.Description,
+			Permissions: role.Permissions,
 		})
 		if err != nil {
 			return 0, err
@@ -118,11 +118,11 @@ func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy accesscontrol.
 		return p.Id, nil
 	}
 
-	_, err := s.Store.UpdatePolicy(ctx, accesscontrol.UpdatePolicyCommand{
+	_, err := s.Store.UpdateRole(ctx, accesscontrol.UpdateRoleCommand{
 		UID:         old.UID,
-		Name:        policy.Name,
-		Description: policy.Description,
-		Version:     policy.Version,
+		Name:        role.Name,
+		Description: role.Description,
+		Version:     role.Version,
 	})
 	if err != nil {
 		if errors.Is(err, accesscontrol.ErrVersionLE) {
@@ -131,28 +131,28 @@ func (s *seeder) createOrUpdatePolicy(ctx context.Context, policy accesscontrol.
 		return 0, err
 	}
 
-	existingPermissions, err := s.Store.GetPolicyPermissions(ctx, old.Id)
+	existingPermissions, err := s.Store.GetRolePermissions(ctx, old.Id)
 	if err != nil {
-		s.log.Info("failed to get current permissions for policy", "name", policy.Name, "err", err)
+		s.log.Info("failed to get current permissions for role", "name", role.Name, "err", err)
 	}
 
-	err = s.idempotentUpdatePermissions(ctx, old.Id, policy.Permissions, existingPermissions)
+	err = s.idempotentUpdatePermissions(ctx, old.Id, role.Permissions, existingPermissions)
 	if err != nil {
-		s.log.Error("failed to update policy permissions", "name", policy.Name, "err", err)
+		s.log.Error("failed to update role permissions", "name", role.Name, "err", err)
 	}
 	return old.Id, nil
 }
 
-func (s *seeder) idempotentUpdatePermissions(ctx context.Context, policyID int64, new []accesscontrol.Permission, old []accesscontrol.Permission) error {
-	if policyID == 0 {
-		return fmt.Errorf("refusing to add permissions to policy with ID 0 (it should not exist)")
+func (s *seeder) idempotentUpdatePermissions(ctx context.Context, roleID int64, new []accesscontrol.Permission, old []accesscontrol.Permission) error {
+	if roleID == 0 {
+		return fmt.Errorf("refusing to add permissions to role with ID 0 (it should not exist)")
 	}
 
 	added, removed := diffPermissionList(new, old)
 
 	for _, p := range added {
 		_, err := s.Store.CreatePermission(ctx, accesscontrol.CreatePermissionCommand{
-			PolicyId:   policyID,
+			RoleId:     roleID,
 			Permission: p.Permission,
 			Scope:      p.Scope,
 		})

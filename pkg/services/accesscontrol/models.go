@@ -6,19 +6,19 @@ import (
 )
 
 var (
-	ErrPolicyNotFound                = errors.New("policy not found")
-	ErrTeamPolicyAlreadyAdded        = errors.New("policy is already added to this team")
-	ErrUserPolicyAlreadyAdded        = errors.New("policy is already added to this user")
-	ErrTeamPolicyNotFound            = errors.New("team policy not found")
-	ErrUserPolicyNotFound            = errors.New("user policy not found")
-	ErrTeamNotFound                  = errors.New("team not found")
-	ErrPermissionNotFound            = errors.New("permission not found")
-	ErrPolicyFailedGenerateUniqueUID = errors.New("failed to generate policy definition UID")
-	ErrVersionLE                     = errors.New("the provided policy version is smaller than or equal to stored policy")
+	ErrRoleNotFound                = errors.New("role not found")
+	ErrTeamRoleAlreadyAdded        = errors.New("role is already added to this team")
+	ErrUserRoleAlreadyAdded        = errors.New("role is already added to this user")
+	ErrTeamRoleNotFound            = errors.New("team role not found")
+	ErrUserRoleNotFound            = errors.New("user role not found")
+	ErrTeamNotFound                = errors.New("team not found")
+	ErrPermissionNotFound          = errors.New("permission not found")
+	ErrRoleFailedGenerateUniqueUID = errors.New("failed to generate role definition UID")
+	ErrVersionLE                   = errors.New("the provided role version is smaller than or equal to stored role")
 )
 
-// Policy is the model for Policy in RBAC.
-type Policy struct {
+// Role is the model for Role in RBAC.
+type Role struct {
 	Id          int64  `json:"id"`
 	OrgId       int64  `json:"orgId"`
 	Version     int64  `json:"version"`
@@ -30,7 +30,7 @@ type Policy struct {
 	Created time.Time `json:"created"`
 }
 
-type PolicyDTO struct {
+type RoleDTO struct {
 	Id          int64        `json:"id"`
 	OrgId       int64        `json:"orgId"`
 	Version     int64        `json:"version"`
@@ -43,10 +43,10 @@ type PolicyDTO struct {
 	Created time.Time `json:"created"`
 }
 
-// Policy is the model for Permission in RBAC.
+// Permission is the model for Permission in RBAC.
 type Permission struct {
 	Id         int64  `json:"id"`
-	PolicyId   int64  `json:"-"`
+	RoleId     int64  `json:"-"`
 	Permission string `json:"permission"`
 	Scope      string `json:"scope"`
 
@@ -54,41 +54,41 @@ type Permission struct {
 	Created time.Time `json:"created"`
 }
 
-type TeamPolicy struct {
-	Id       int64
-	OrgId    int64
-	PolicyId int64
-	TeamId   int64
+type TeamRole struct {
+	Id     int64
+	OrgId  int64
+	RoleId int64
+	TeamId int64
 
 	Updated time.Time
 	Created time.Time
 }
 
-type UserPolicy struct {
-	Id       int64
-	OrgId    int64
-	PolicyId int64
-	UserId   int64
+type UserRole struct {
+	Id     int64
+	OrgId  int64
+	RoleId int64
+	UserId int64
 
 	Updated time.Time
 	Created time.Time
 }
 
-type BuiltinRolePolicy struct {
-	ID       *int64 `xorm:"id"`
-	PolicyID int64  `xorm:"policy_id"`
-	Role     string
+type BuiltinRole struct {
+	ID     *int64 `xorm:"id"`
+	RoleID int64  `xorm:"role_id"`
+	Role   string
 
 	Updated time.Time
 	Created time.Time
 }
 
-type GetTeamPoliciesQuery struct {
+type GetTeamRolesQuery struct {
 	OrgId  int64 `json:"-"`
 	TeamId int64
 }
 
-type GetUserPoliciesQuery struct {
+type GetUserRolesQuery struct {
 	OrgId  int64 `json:"-"`
 	UserId int64
 	Roles  []string
@@ -101,7 +101,7 @@ type GetUserPermissionsQuery struct {
 }
 
 type CreatePermissionCommand struct {
-	PolicyId   int64
+	RoleId     int64
 	Permission string
 	Scope      string
 }
@@ -116,7 +116,7 @@ type DeletePermissionCommand struct {
 	Id int64
 }
 
-type CreatePolicyCommand struct {
+type CreateRoleCommand struct {
 	OrgId       int64  `json:"-"`
 	UID         string `json:"uid"`
 	Version     int64  `json:"version"`
@@ -124,7 +124,7 @@ type CreatePolicyCommand struct {
 	Description string `json:"description"`
 }
 
-type CreatePolicyWithPermissionsCommand struct {
+type CreateRoleWithPermissionsCommand struct {
 	OrgId       int64        `json:"orgId"`
 	UID         string       `json:"uid"`
 	Version     int64        `json:"version"`
@@ -133,7 +133,7 @@ type CreatePolicyWithPermissionsCommand struct {
 	Permissions []Permission `json:"permissions"`
 }
 
-type UpdatePolicyCommand struct {
+type UpdateRoleCommand struct {
 	Id          int64        `json:"id"`
 	OrgId       int64        `json:"orgId"`
 	Version     int64        `json:"version"`
@@ -143,34 +143,34 @@ type UpdatePolicyCommand struct {
 	Permissions []Permission `json:"permissions"`
 }
 
-type DeletePolicyCommand struct {
+type DeleteRoleCommand struct {
 	Id    int64
 	UID   string `json:"uid"`
 	OrgId int64
 }
 
-type AddTeamPolicyCommand struct {
-	OrgId    int64
-	PolicyId int64
-	TeamId   int64
+type AddTeamRoleCommand struct {
+	OrgId  int64
+	RoleId int64
+	TeamId int64
 }
 
-type RemoveTeamPolicyCommand struct {
-	OrgId    int64
-	PolicyId int64
-	TeamId   int64
+type RemoveTeamRoleCommand struct {
+	OrgId  int64
+	RoleId int64
+	TeamId int64
 }
 
-type AddUserPolicyCommand struct {
-	OrgId    int64
-	PolicyId int64
-	UserId   int64
+type AddUserRoleCommand struct {
+	OrgId  int64
+	RoleId int64
+	UserId int64
 }
 
-type RemoveUserPolicyCommand struct {
-	OrgId    int64
-	PolicyId int64
-	UserId   int64
+type RemoveUserRoleCommand struct {
+	OrgId  int64
+	RoleId int64
+	UserId int64
 }
 
 type EvaluationResult struct {
@@ -178,8 +178,8 @@ type EvaluationResult struct {
 	Meta      interface{}
 }
 
-func (p PolicyDTO) Policy() Policy {
-	return Policy{
+func (p RoleDTO) Role() Role {
+	return Role{
 		Id:          p.Id,
 		OrgId:       p.OrgId,
 		Name:        p.Name,

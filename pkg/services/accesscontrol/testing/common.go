@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type PolicyTestCase struct {
+type RoleTestCase struct {
 	Name        string
 	UID         string
 	Permissions []PermissionTestCase
@@ -60,27 +60,27 @@ type PermissionTestCase struct {
 // 	return &ac
 // }
 
-func CreatePolicy(t *testing.T, ac accesscontrol.Store, p PolicyTestCase) *accesscontrol.PolicyDTO {
-	createPolicyCmd := accesscontrol.CreatePolicyWithPermissionsCommand{
+func CreateRole(t *testing.T, ac accesscontrol.Store, p RoleTestCase) *accesscontrol.RoleDTO {
+	createRoleCmd := accesscontrol.CreateRoleWithPermissionsCommand{
 		OrgId:       1,
 		UID:         p.UID,
 		Name:        p.Name,
 		Permissions: []accesscontrol.Permission{},
 	}
 	for _, perm := range p.Permissions {
-		createPolicyCmd.Permissions = append(createPolicyCmd.Permissions, accesscontrol.Permission{
+		createRoleCmd.Permissions = append(createRoleCmd.Permissions, accesscontrol.Permission{
 			Permission: perm.Permission,
 			Scope:      perm.Scope,
 		})
 	}
 
-	res, err := ac.CreatePolicyWithPermissions(context.Background(), createPolicyCmd)
+	res, err := ac.CreateRoleWithPermissions(context.Background(), createRoleCmd)
 	require.NoError(t, err)
 
 	return res
 }
 
-func CreateUserWithPolicy(t *testing.T, ac accesscontrol.Store, user string, policies []PolicyTestCase) {
+func CreateUserWithRole(t *testing.T, ac accesscontrol.Store, user string, roles []RoleTestCase) {
 	createUserCmd := models.CreateUserCommand{
 		Email: user + "@test.com",
 		Name:  user,
@@ -92,18 +92,18 @@ func CreateUserWithPolicy(t *testing.T, ac accesscontrol.Store, user string, pol
 	require.NoError(t, err)
 	userId := createUserCmd.Result.Id
 
-	for _, p := range policies {
-		createPolicyCmd := accesscontrol.CreatePolicyCommand{
+	for _, p := range roles {
+		createRoleCmd := accesscontrol.CreateRoleCommand{
 			OrgId: 1,
 			Name:  p.Name,
 		}
-		res, err := ac.CreatePolicy(context.Background(), createPolicyCmd)
+		res, err := ac.CreateRole(context.Background(), createRoleCmd)
 		require.NoError(t, err)
-		policyId := res.Id
+		roleId := res.Id
 
 		for _, perm := range p.Permissions {
 			permCmd := accesscontrol.CreatePermissionCommand{
-				PolicyId:   policyId,
+				RoleId:     roleId,
 				Permission: perm.Permission,
 				Scope:      perm.Scope,
 			}
@@ -112,34 +112,34 @@ func CreateUserWithPolicy(t *testing.T, ac accesscontrol.Store, user string, pol
 			require.NoError(t, err)
 		}
 
-		addUserPolicyCmd := accesscontrol.AddUserPolicyCommand{
-			OrgId:    1,
-			PolicyId: policyId,
-			UserId:   userId,
+		addUserRoleCmd := accesscontrol.AddUserRoleCommand{
+			OrgId:  1,
+			RoleId: roleId,
+			UserId: userId,
 		}
-		err = ac.AddUserPolicy(&addUserPolicyCmd)
+		err = ac.AddUserRole(&addUserRoleCmd)
 		require.NoError(t, err)
 	}
 }
 
-func CreateTeamWithPolicy(t *testing.T, ac accesscontrol.Store, team string, policies []PolicyTestCase) {
+func CreateTeamWithRole(t *testing.T, ac accesscontrol.Store, team string, roles []RoleTestCase) {
 	createTeamCmd := models.CreateTeamCommand{OrgId: 1, Name: team, Email: team + "@test.com"}
 	err := sqlstore.CreateTeam(&createTeamCmd)
 	require.NoError(t, err)
 	teamId := createTeamCmd.Result.Id
 
-	for _, p := range policies {
-		createPolicyCmd := accesscontrol.CreatePolicyCommand{
+	for _, p := range roles {
+		createRoleCmd := accesscontrol.CreateRoleCommand{
 			OrgId: 1,
 			Name:  p.Name,
 		}
-		res, err := ac.CreatePolicy(context.Background(), createPolicyCmd)
+		res, err := ac.CreateRole(context.Background(), createRoleCmd)
 		require.NoError(t, err)
-		policyId := res.Id
+		roleId := res.Id
 
 		for _, perm := range p.Permissions {
 			permCmd := accesscontrol.CreatePermissionCommand{
-				PolicyId:   policyId,
+				RoleId:     roleId,
 				Permission: perm.Permission,
 				Scope:      perm.Scope,
 			}
@@ -148,12 +148,12 @@ func CreateTeamWithPolicy(t *testing.T, ac accesscontrol.Store, team string, pol
 			require.NoError(t, err)
 		}
 
-		addTeamPolicyCmd := accesscontrol.AddTeamPolicyCommand{
-			OrgId:    1,
-			PolicyId: policyId,
-			TeamId:   teamId,
+		addTeamRoleCmd := accesscontrol.AddTeamRoleCommand{
+			OrgId:  1,
+			RoleId: roleId,
+			TeamId: teamId,
 		}
-		err = ac.AddTeamPolicy(&addTeamPolicyCmd)
+		err = ac.AddTeamRole(&addTeamRoleCmd)
 		require.NoError(t, err)
 	}
 }

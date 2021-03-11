@@ -18,25 +18,25 @@ type Evaluator interface {
 
 type Store interface {
 	// Database access methods
-	GetPolicies(ctx context.Context, orgID int64) ([]*Policy, error)
-	GetPolicy(ctx context.Context, orgID, policyID int64) (*PolicyDTO, error)
-	GetPolicyByUID(ctx context.Context, orgId int64, uid string) (*PolicyDTO, error)
-	CreatePolicy(ctx context.Context, cmd CreatePolicyCommand) (*Policy, error)
-	CreatePolicyWithPermissions(ctx context.Context, cmd CreatePolicyWithPermissionsCommand) (*PolicyDTO, error)
-	UpdatePolicy(ctx context.Context, cmd UpdatePolicyCommand) (*PolicyDTO, error)
-	DeletePolicy(cmd *DeletePolicyCommand) error
-	GetPolicyPermissions(ctx context.Context, policyID int64) ([]Permission, error)
+	GetRoles(ctx context.Context, orgID int64) ([]*Role, error)
+	GetRole(ctx context.Context, orgID, roleID int64) (*RoleDTO, error)
+	GetRoleByUID(ctx context.Context, orgId int64, uid string) (*RoleDTO, error)
+	CreateRole(ctx context.Context, cmd CreateRoleCommand) (*Role, error)
+	CreateRoleWithPermissions(ctx context.Context, cmd CreateRoleWithPermissionsCommand) (*RoleDTO, error)
+	UpdateRole(ctx context.Context, cmd UpdateRoleCommand) (*RoleDTO, error)
+	DeleteRole(cmd *DeleteRoleCommand) error
+	GetRolePermissions(ctx context.Context, roleID int64) ([]Permission, error)
 	CreatePermission(ctx context.Context, cmd CreatePermissionCommand) (*Permission, error)
 	UpdatePermission(cmd *UpdatePermissionCommand) (*Permission, error)
 	DeletePermission(ctx context.Context, cmd *DeletePermissionCommand) error
-	GetTeamPolicies(query *GetTeamPoliciesQuery) ([]*PolicyDTO, error)
-	GetUserPolicies(ctx context.Context, query GetUserPoliciesQuery) ([]*PolicyDTO, error)
+	GetTeamRoles(query *GetTeamRolesQuery) ([]*RoleDTO, error)
+	GetUserRoles(ctx context.Context, query GetUserRolesQuery) ([]*RoleDTO, error)
 	GetUserPermissions(ctx context.Context, query GetUserPermissionsQuery) ([]*Permission, error)
-	AddTeamPolicy(cmd *AddTeamPolicyCommand) error
-	RemoveTeamPolicy(cmd *RemoveTeamPolicyCommand) error
-	AddUserPolicy(cmd *AddUserPolicyCommand) error
-	RemoveUserPolicy(cmd *RemoveUserPolicyCommand) error
-	AddBuiltinRolePolicy(ctx context.Context, orgID, policyID int64, role string) error
+	AddTeamRole(cmd *AddTeamRoleCommand) error
+	RemoveTeamRole(cmd *RemoveTeamRoleCommand) error
+	AddUserRole(cmd *AddUserRoleCommand) error
+	RemoveUserRole(cmd *RemoveUserRoleCommand) error
+	AddBuiltinRoleRole(ctx context.Context, orgID, roleID int64, roleName string) error
 }
 
 type Seeder interface {

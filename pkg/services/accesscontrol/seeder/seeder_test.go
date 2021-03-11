@@ -79,7 +79,7 @@ func TestSeeder(t *testing.T) {
 		log:   log.New("accesscontrol-test"),
 	}
 
-	v1 := accesscontrol.PolicyDTO{
+	v1 := accesscontrol.RoleDTO{
 		OrgId:   1,
 		Name:    "grafana:tests:fake",
 		Version: 1,
@@ -94,7 +94,7 @@ func TestSeeder(t *testing.T) {
 			},
 		},
 	}
-	v2 := accesscontrol.PolicyDTO{
+	v2 := accesscontrol.RoleDTO{
 		OrgId:   1,
 		Name:    "grafana:tests:fake",
 		Version: 2,
@@ -114,8 +114,8 @@ func TestSeeder(t *testing.T) {
 		},
 	}
 
-	t.Run("create policy", func(t *testing.T) {
-		id, err := s.createOrUpdatePolicy(
+	t.Run("create role", func(t *testing.T) {
+		id, err := s.createOrUpdateRole(
 			context.Background(),
 			v1,
 			nil,
@@ -123,7 +123,7 @@ func TestSeeder(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotZero(t, id)
 
-		p, err := s.Store.GetPolicy(context.Background(), 1, id)
+		p, err := s.Store.GetRole(context.Background(), 1, id)
 		require.NoError(t, err)
 
 		lookup := permissionMap(p.Permissions)
@@ -136,17 +136,17 @@ func TestSeeder(t *testing.T) {
 			Scope:      "flavor:chocolate",
 		})
 
-		policy := p.Policy()
+		role := p.Role()
 
 		t.Run("update to same version", func(t *testing.T) {
-			err := s.seed(context.Background(), 1, []accesscontrol.PolicyDTO{v1}, nil)
+			err := s.seed(context.Background(), 1, []accesscontrol.RoleDTO{v1}, nil)
 			require.NoError(t, err)
 		})
-		t.Run("update to new policy version", func(t *testing.T) {
-			err := s.seed(context.Background(), 1, []accesscontrol.PolicyDTO{v2}, nil)
+		t.Run("update to new role version", func(t *testing.T) {
+			err := s.seed(context.Background(), 1, []accesscontrol.RoleDTO{v2}, nil)
 			require.NoError(t, err)
 
-			p, err := s.Store.GetPolicy(context.Background(), 1, policy.Id)
+			p, err := s.Store.GetRole(context.Background(), 1, role.Id)
 			require.NoError(t, err)
 			assert.Len(t, p.Permissions, len(v2.Permissions))
 
