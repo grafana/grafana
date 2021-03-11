@@ -345,3 +345,9 @@ Setting 'enabled' to true enables caching datasource queries for all data source
 ### ttl
 
 The default TTL (time to live) if no other TTL is available.
+
+## [caching.memory]
+
+### gc_interval
+
+When storing cache data in-memory, this setting defines how often a background process will clean up stale data from the in-memory cache. More frequent "garbage collection" can keep memory using from climbing but will increase CPU usage.
