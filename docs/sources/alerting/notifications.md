@@ -137,7 +137,7 @@ This behavior will become the default in a future version of Grafana.
 
 To configure VictorOps, provide the URL from the Grafana Integration and substitute `$routing_key` with a valid key.
 
->**Note:** The tag `Severity` has special meaning in the [VictorOps Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this key, then it replaces the `message_type` in the root of the event sent to VictorOps.
+> **Note:** The tag `Severity` has special meaning in the [VictorOps Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this key, then it replaces the `message_type` in the root of the event sent to VictorOps.
 ### Pushover
 
 To set up Pushover, you must provide a user key and an API token. Refer to [What is Pushover and how do I use it](https://support.pushover.net/i7-what-is-pushover-and-how-do-i-use-it) for instructions on how to generate them.
