@@ -19,6 +19,101 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var prometheusAlert = []ngmodels.AlertQuery{
+	{
+		Model: json.RawMessage(`{
+			"datasource": "gdev-prometheus",
+			"datasourceUid": "000000002",
+			"expr": "http_request_duration_microseconds_count",
+			"hide": false,
+			"interval": "",
+			"intervalMs": 1000,
+			"legendFormat": "",
+			"maxDataPoints": 100,
+			"refId": "query"
+		}`),
+		RefID: "query",
+		RelativeTimeRange: ngmodels.RelativeTimeRange{
+			From: ngmodels.Duration(time.Duration(5) * time.Hour),
+			To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+		},
+	},
+	{
+		Model: json.RawMessage(`{
+			"datasource": "__expr__",
+			"datasourceUid": "-100",
+			"expression": "query",
+			"hide": false,
+			"intervalMs": 1000,
+			"maxDataPoints": 100,
+			"reducer": "mean",
+			"refId": "reduced",
+			"type": "reduce"
+		}`),
+		RefID: "reduced",
+		RelativeTimeRange: ngmodels.RelativeTimeRange{
+			From: ngmodels.Duration(time.Duration(5) * time.Hour),
+			To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+		},
+	},
+	{
+		Model: json.RawMessage(`{
+			"datasource": "__expr__",
+			"datasourceUid": "-100",
+			"expression": "$reduced > 10",
+			"hide": false,
+			"intervalMs": 1000,
+			"maxDataPoints": 100,
+			"refId": "condition",
+			"type": "math"
+		}`),
+		RefID: "condition",
+		RelativeTimeRange: ngmodels.RelativeTimeRange{
+			From: ngmodels.Duration(time.Duration(5) * time.Hour),
+			To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+		},
+	},
+}
+
+var testAlert = []ngmodels.AlertQuery{
+	{
+		Model: json.RawMessage(`{
+			"alias": "just-testing",
+			"datasource": "000000004",
+			"datasourceUid": "000000004",
+			"intervalMs": 1000,
+			"maxDataPoints": 100,
+			"orgId": 0,
+			"refId": "A",
+			"scenarioId": "csv_metric_values",
+			"stringInput": "1,20,90,30,5,0"
+		}`),
+		RefID: "A",
+		RelativeTimeRange: ngmodels.RelativeTimeRange{
+			From: ngmodels.Duration(time.Duration(5) * time.Hour),
+			To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+		},
+	},
+	{
+		Model: json.RawMessage(`{
+			"datasource": "__expr__",
+			"datasourceUid": "__expr__",
+			"expression": "$A",
+			"intervalMs": 2000,
+			"maxDataPoints": 200,
+			"orgId": 0,
+			"reducer": "mean",
+			"refId": "B",
+			"type": "reduce"
+		}`),
+		RefID: "B",
+		RelativeTimeRange: ngmodels.RelativeTimeRange{
+			From: ngmodels.Duration(time.Duration(5) * time.Hour),
+			To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+		},
+	},
+}
+
 type RulerApiMock struct {
 	log log.Logger
 }
@@ -60,21 +155,8 @@ func (mock RulerApiMock) RouteGetNamespaceRulesConfig(c *models.ReqContext) resp
 								UID:       "UID",
 								OrgID:     1,
 								Title:     "rule 1-1",
-								Condition: "A",
-								Data: []ngmodels.AlertQuery{
-									{
-										Model: json.RawMessage(`{
-												"datasource": "__expr__",
-												"type":"math",
-												"expression":"2 + 2 > 1"
-											}`),
-										RefID: "A",
-										RelativeTimeRange: ngmodels.RelativeTimeRange{
-											From: ngmodels.Duration(time.Duration(5) * time.Hour),
-											To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-										},
-									},
-								},
+								Condition: "condition",
+								Data:      prometheusAlert,
 							},
 						},
 					},
@@ -86,21 +168,8 @@ func (mock RulerApiMock) RouteGetNamespaceRulesConfig(c *models.ReqContext) resp
 								UID:       "UID",
 								OrgID:     1,
 								Title:     "rule 1-2",
-								Condition: "A",
-								Data: []ngmodels.AlertQuery{
-									{
-										Model: json.RawMessage(`{
-												"datasource": "__expr__",
-												"type":"math",
-												"expression":"2 + 2 == 1"
-											}`),
-										RefID: "A",
-										RelativeTimeRange: ngmodels.RelativeTimeRange{
-											From: ngmodels.Duration(time.Duration(5) * time.Hour),
-											To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-										},
-									},
-								},
+								Condition: "B",
+								Data:      testAlert,
 							},
 						},
 					},
@@ -132,20 +201,7 @@ func (mock RulerApiMock) RouteGetRulegGroupConfig(c *models.ReqContext) response
 							OrgID:     1,
 							Title:     "something completely different",
 							Condition: "A",
-							Data: []ngmodels.AlertQuery{
-								{
-									Model: json.RawMessage(`{
-										"datasource": "__expr__",
-										"type":"math",
-										"expression":"2 + 2 > 1"
-									}`),
-									RefID: "A",
-									RelativeTimeRange: ngmodels.RelativeTimeRange{
-										From: ngmodels.Duration(time.Duration(5) * time.Hour),
-										To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-									},
-								},
-							},
+							Data:      testAlert,
 						},
 					},
 				},
@@ -173,20 +229,7 @@ func (mock RulerApiMock) RouteGetRulesConfig(c *models.ReqContext) response.Resp
 								OrgID:     1,
 								Title:     "rule 1-1",
 								Condition: "A",
-								Data: []ngmodels.AlertQuery{
-									{
-										Model: json.RawMessage(`{
-												"datasource": "__expr__",
-												"type":"math",
-												"expression":"2 + 2 > 1"
-											}`),
-										RefID: "A",
-										RelativeTimeRange: ngmodels.RelativeTimeRange{
-											From: ngmodels.Duration(time.Duration(5) * time.Hour),
-											To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-										},
-									},
-								},
+								Data:      testAlert,
 							},
 						},
 					},
@@ -199,20 +242,7 @@ func (mock RulerApiMock) RouteGetRulesConfig(c *models.ReqContext) response.Resp
 								OrgID:     1,
 								Title:     "rule 1-2",
 								Condition: "A",
-								Data: []ngmodels.AlertQuery{
-									{
-										Model: json.RawMessage(`{
-												"datasource": "__expr__",
-												"type":"math",
-												"expression":"2 + 2 == 1"
-											}`),
-										RefID: "A",
-										RelativeTimeRange: ngmodels.RelativeTimeRange{
-											From: ngmodels.Duration(time.Duration(5) * time.Hour),
-											To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-										},
-									},
-								},
+								Data:      testAlert,
 							},
 						},
 					},
@@ -231,20 +261,7 @@ func (mock RulerApiMock) RouteGetRulesConfig(c *models.ReqContext) response.Resp
 								OrgID:     1,
 								Title:     "rule 2-1",
 								Condition: "A",
-								Data: []ngmodels.AlertQuery{
-									{
-										Model: json.RawMessage(`{
-												"datasource": "__expr__",
-												"type":"math",
-												"expression":"2 + 2 > 1"
-											}`),
-										RefID: "A",
-										RelativeTimeRange: ngmodels.RelativeTimeRange{
-											From: ngmodels.Duration(time.Duration(5) * time.Hour),
-											To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-										},
-									},
-								},
+								Data:      prometheusAlert,
 							},
 						},
 					},
@@ -257,20 +274,7 @@ func (mock RulerApiMock) RouteGetRulesConfig(c *models.ReqContext) response.Resp
 								OrgID:     1,
 								Title:     "rule 2-2",
 								Condition: "A",
-								Data: []ngmodels.AlertQuery{
-									{
-										Model: json.RawMessage(`{
-												"datasource": "__expr__",
-												"type":"math",
-												"expression":"2 + 2 == 1"
-											}`),
-										RefID: "A",
-										RelativeTimeRange: ngmodels.RelativeTimeRange{
-											From: ngmodels.Duration(time.Duration(5) * time.Hour),
-											To:   ngmodels.Duration(time.Duration(3) * time.Hour),
-										},
-									},
-								},
+								Data:      testAlert,
 							},
 						},
 					},
