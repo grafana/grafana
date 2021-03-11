@@ -5,7 +5,6 @@ import { Portal } from '../Portal/Portal';
 import { Menu } from '../Menu/Menu';
 import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
-import { List } from '../List/List';
 
 export interface ContextMenuProps {
   /** Starting horizontal position for the menu */
