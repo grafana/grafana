@@ -23,7 +23,7 @@ import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import { Observable, throwError, of } from 'rxjs';
-import { FluxQueryEditorForAnnotations } from './components/FluxQueryEditorForAnnotations';
+import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { catchError, map } from 'rxjs/operators';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
@@ -66,7 +66,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (this.isFlux) {
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
       this.annotations = {
-        QueryEditor: FluxQueryEditorForAnnotations,
+        QueryEditor: FluxQueryEditor,
       };
     }
   }

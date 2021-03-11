@@ -12,21 +12,17 @@ import {
   CodeEditorSuggestionItemKind,
 } from '@grafana/ui';
 import { getTemplateSrv } from '@grafana/runtime';
-
-// NOTE: we must not have an attribute called `onChange` here,
-// because when this component is called from angular,
-// the angular-widget gets a prop named "onchange",
-// and as this widget contains a textarea inside,
-// it will sometimes emit onchange events, they will bubble up,
-// and the browser will try to call that "onchange"
-// attribute. the easiest fix is to simply use a different name,
-// we use "onRunQuery". when the angular-integration is removed,
-// this restriction will not be necessary.
+import InfluxDatasource from '../datasource';
 
 type Props = {
-  onQueryChange: (query: InfluxQuery) => void;
+  onChange: (query: InfluxQuery) => void;
   onRunQuery: () => void;
   query: InfluxQuery;
+  // `datasource` is not used internally, but this component is used at some places
+  // directly, where the `datasource` prop has to exist. later, when the whole
+  // query-editor gets converted to react we can stop using this component directly
+  // and then we can probably remove the datasource attribute.
+  datasource: InfluxDatasource;
 };
 
 const samples: Array<SelectableValue<string>> = [
@@ -97,12 +93,12 @@ v1.tagValues(
 
 export class FluxQueryEditor extends PureComponent<Props> {
   onFluxQueryChange = (query: string) => {
-    this.props.onQueryChange({ ...this.props.query, query });
+    this.props.onChange({ ...this.props.query, query });
     this.props.onRunQuery();
   };
 
   onSampleChange = (val: SelectableValue<string>) => {
-    this.props.onQueryChange({
+    this.props.onChange({
       ...this.props.query,
       query: val.value!,
     });
@@ -220,6 +216,6 @@ export class FluxQueryEditor extends PureComponent<Props> {
 coreModule.directive('fluxQueryEditor', [
   'reactDirective',
   (reactDirective: any) => {
-    return reactDirective(FluxQueryEditor, ['query', 'onQueryChange', 'onRunQuery']);
+    return reactDirective(FluxQueryEditor, ['query', 'onChange', 'onRunQuery']);
   },
 ]);
