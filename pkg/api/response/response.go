@@ -1,7 +1,6 @@
 package response
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 
@@ -23,32 +22,17 @@ type Response interface {
 func CreateNormalResponse(header http.Header, body []byte, status int) *NormalResponse {
 	return &NormalResponse{
 		header: header,
-		body:   bytes.NewBuffer(body),
+		body:   body,
 		status: status,
 	}
 }
 
 type NormalResponse struct {
 	status     int
-	body       *bytes.Buffer
+	body       []byte
 	header     http.Header
 	errMessage string
 	err        error
-}
-
-// Write implements http.ResponseWriter
-func (r *NormalResponse) Write(b []byte) (int, error) {
-	return r.body.Write(b)
-}
-
-// Header implements http.ResponseWriter
-func (r *NormalResponse) Header() http.Header {
-	return r.header
-}
-
-// WriteHeader implements http.ResponseWriter
-func (r *NormalResponse) WriteHeader(statusCode int) {
-	r.status = statusCode
 }
 
 // Status gets the response's status.
@@ -58,7 +42,7 @@ func (r *NormalResponse) Status() int {
 
 // Body gets the response's body.
 func (r *NormalResponse) Body() []byte {
-	return r.body.Bytes()
+	return r.body
 }
 
 // Err gets the response's err.
@@ -81,9 +65,14 @@ func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 		header[k] = v
 	}
 	ctx.Resp.WriteHeader(r.status)
-	if _, err := ctx.Resp.Write(r.body.Bytes()); err != nil {
+	if _, err := ctx.Resp.Write(r.body); err != nil {
 		ctx.Logger.Error("Error writing to response", "err", err)
 	}
+}
+
+func (r *NormalResponse) Header(key, value string) *NormalResponse {
+	r.header.Set(key, value)
+	return r
 }
 
 // StreamingResponse is a response that streams itself back to the client.
@@ -148,9 +137,7 @@ func (r *RedirectResponse) Body() []byte {
 
 // JSON creates a JSON response.
 func JSON(status int, body interface{}) *NormalResponse {
-	resp := Respond(status, body)
-	resp.Header().Set("Content-Type", "application/json")
-	return resp
+	return Respond(status, body).Header("Content-Type", "application/json")
 }
 
 // JSONStreaming creates a streaming JSON response.
@@ -224,7 +211,7 @@ func Respond(status int, body interface{}) *NormalResponse {
 
 	return &NormalResponse{
 		status: status,
-		body:   bytes.NewBuffer(b),
+		body:   b,
 		header: make(http.Header),
 	}
 }
