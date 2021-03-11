@@ -20,7 +20,7 @@ import {
   TimeZone,
   UrlQueryValue,
 } from '@grafana/data';
-import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
+import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
@@ -968,7 +968,7 @@ export class DashboardModel {
     }
 
     // add back navbar height
-    if (kioskMode && kioskMode !== KIOSK_MODE_TV) {
+    if (kioskMode && kioskMode !== KioskMode.TV) {
       visibleHeight += navbarHeight;
     }
 

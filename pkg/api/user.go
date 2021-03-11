@@ -213,7 +213,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *models.ReqContext) {
 		hs.NotFoundHandler(c)
 	}
 
-	c.Redirect(setting.AppSubUrl + "/")
+	c.Redirect(hs.Cfg.AppSubURL + "/")
 }
 
 func ChangeUserPassword(c *models.ReqContext, cmd models.ChangeUserPasswordCommand) response.Response {
