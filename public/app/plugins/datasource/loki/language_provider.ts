@@ -68,7 +68,6 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
-  logLabelOptions: any[];
   logLabelFetchTs: number;
   started: boolean;
   datasource: LokiDatasource;
@@ -87,7 +86,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     this.datasource = datasource;
     this.labelKeys = [];
-    this.logLabelOptions = [];
     this.logLabelFetchTs = 0;
 
     Object.assign(this, initialValues);
@@ -415,15 +413,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   async fetchLogLabels(): Promise<any> {
     const url = '/loki/api/v1/label';
-    try {
-      this.logLabelFetchTs = Date.now().valueOf();
-      const rangeParams = this.datasource.getTimeRangeParams();
-      const res = await this.request(url, rangeParams);
+    this.logLabelFetchTs = Date.now().valueOf();
+    const rangeParams = this.datasource.getTimeRangeParams();
+    const res = await this.request(url, rangeParams);
+    if (res && Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
-      this.logLabelOptions = this.labelKeys.map((key: string) => ({ label: key, value: key, isLeaf: false }));
-    } catch (e) {
-      console.error(e);
     }
+
     return [];
   }
 
@@ -486,41 +482,23 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   async fetchLabelValues(key: string): Promise<string[]> {
     const url = `/loki/api/v1/label/${key}/values`;
-    let values: string[] = [];
     const rangeParams = this.datasource.getTimeRangeParams();
     const { from: start, to: end } = rangeParams;
 
     const cacheKey = this.generateCacheKey(url, start, end, key);
     const params = { start, end };
 
-    let value = this.labelsCache.get(cacheKey);
-    if (!value) {
-      try {
-        // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
-        this.labelsCache.set(cacheKey, []);
-        const res = await this.request(url, params);
-        values = res.slice().sort();
-        value = values;
-        this.labelsCache.set(cacheKey, value);
-
-        this.logLabelOptions = this.addLabelValuesToOptions(key, values);
-      } catch (e) {
-        console.error(e);
+    let labelValue = this.labelsCache.get(cacheKey);
+    if (!labelValue) {
+      // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
+      this.labelsCache.set(cacheKey, []);
+      const res = await this.request(url, params);
+      if (res && Array.isArray(res)) {
+        labelValue = res.slice().sort() as string[];
+        this.labelsCache.set(cacheKey, labelValue);
       }
-    } else {
-      this.logLabelOptions = this.addLabelValuesToOptions(key, value);
     }
-    return value ?? [];
-  }
 
-  private addLabelValuesToOptions = (labelKey: string, values: string[]) => {
-    return this.logLabelOptions.map((keyOption) =>
-      keyOption.value === labelKey
-        ? {
-            ...keyOption,
-            children: values.map((value) => ({ label: value, value })),
-          }
-        : keyOption
-    );
-  };
+    return labelValue ?? [];
+  }
 }
