@@ -1,7 +1,8 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC } from 'react';
 import { TextArea, InlineFormLabel, Input, Select, HorizontalGroup } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { ResultFormat, InfluxQuery } from '../types';
+import { useShadowedState } from './useShadowedState';
 
 const RESULT_FORMATS: Array<SelectableValue<ResultFormat>> = [
   { label: 'Time series', value: 'time_series' },
@@ -21,22 +22,8 @@ type Props = {
 // "resultFormat" changes are applied immediately
 // "query" and "alias" changes only happen on onblur
 export const RawInfluxQLEditor: FC<Props> = ({ query, onChange, onRunQuery }) => {
-  const [currentQuery, setCurrentQuery] = useState(query.query);
-  const [currentAlias, setCurrentAlias] = useState(query.alias);
-
-  useEffect(() => {
-    // if the value changes from the outside, we accept it
-    if (currentQuery !== query.query) {
-      setCurrentQuery(query.query);
-    }
-  }, [query.query]);
-
-  useEffect(() => {
-    // if the value changes from the outside, we accept it
-    if (currentAlias !== query.alias) {
-      setCurrentAlias(query.alias);
-    }
-  }, [query.alias]);
+  const [currentQuery, setCurrentQuery] = useShadowedState(query.query);
+  const [currentAlias, setCurrentAlias] = useShadowedState(query.alias);
 
   const applyDelayedChangesAndRunQuery = () => {
     onChange({
