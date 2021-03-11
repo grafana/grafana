@@ -38,7 +38,12 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
              from environment variables or IAM roles'
       );
     }
-  }, []);
+  }, [
+    props.options.jsonData.authType,
+    props.options.jsonData.database,
+    props.options.jsonData.profile,
+    props.options.name,
+  ]);
 
   return (
     <>

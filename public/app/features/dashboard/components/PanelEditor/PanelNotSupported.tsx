@@ -17,7 +17,7 @@ export const PanelNotSupported: FC<Props> = ({ message, dispatch: propsDispatch 
   dispatch = propsDispatch ?? dispatch;
   const onBackToQueries = useCallback(() => {
     locationService.partial({ tab: PanelEditorTabId.Query });
-  }, [dispatch]);
+  }, []);
 
   return (
     <Layout justify="center" style={{ marginTop: '100px' }}>

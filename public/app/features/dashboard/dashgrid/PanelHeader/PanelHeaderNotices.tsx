@@ -14,7 +14,7 @@ export const PanelHeaderNotices: FC<Props> = ({ frames, panelId }) => {
       e.stopPropagation();
       locationService.partial({ inspect: panelId, inspectTab: tab });
     },
-    [dispatch, panelId]
+    [panelId]
   );
 
   // dedupe on severity

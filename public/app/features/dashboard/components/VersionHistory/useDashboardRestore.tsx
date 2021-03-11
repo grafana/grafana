@@ -21,6 +21,6 @@ export const useDashboardRestore = (version: number) => {
       locationService.replace(newUrl, true);
       appEvents.emit(AppEvents.alertSuccess, ['Dashboard restored', 'Restored from version ' + version]);
     }
-  }, [dispatch, state, version]);
+  }, [state, version]);
   return { state, onRestoreDashboard };
 };

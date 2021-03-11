@@ -31,7 +31,7 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelOptionsChanged,
 }) => {
   const visTabInputRef = useRef<HTMLInputElement>(null);
-  const makeDummyEdit = useCallback(() => onPanelConfigChange('isEditing', true), []);
+  const makeDummyEdit = useCallback(() => onPanelConfigChange('isEditing', true), [onPanelConfigChange]);
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
     onPanelConfigChange,

@@ -39,7 +39,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
         locationService.replace(newUrl);
       }
     }
-  }, [dashboard, dispatch, location.path, state]);
+  }, [dashboard, state]);
 
   return { state, onDashboardSave };
 };
