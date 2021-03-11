@@ -47,7 +47,7 @@ export const isSystemOverride = (override: ConfigOverrideRule): override is Syst
   return typeof (override as SystemConfigOverrideRule)?.__systemRef === 'string';
 };
 
-export interface FieldConfigSource<TOptions extends object = any> {
+export interface FieldConfigSource<TOptions = {}> {
   // Defaults applied to all numeric fields
   defaults: FieldConfig<TOptions>;
 
