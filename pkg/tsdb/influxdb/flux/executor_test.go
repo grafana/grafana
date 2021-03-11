@@ -58,18 +58,24 @@ func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableRes
 	return client.QueryAPI("x").Query(ctx, q)
 }
 
-func verifyGoldenResponse(t *testing.T, name string) *backend.DataResponse {
+func executeMockedQuery(t *testing.T, name string, query queryModel) *backend.DataResponse {
 	runner := &MockRunner{
 		testDataPath: name + ".csv",
 	}
 
-	dr := executeQuery(context.Background(), queryModel{MaxDataPoints: 100}, runner, 50)
+	dr := executeQuery(context.Background(), query, runner, 50)
+	return &dr
+}
+
+func verifyGoldenResponse(t *testing.T, name string) *backend.DataResponse {
+	dr := executeMockedQuery(t, name, queryModel{MaxDataPoints: 100})
+
 	err := experimental.CheckGoldenDataResponse(filepath.Join("testdata", fmt.Sprintf("%s.golden.txt", name)),
-		&dr, true)
+		dr, true)
 	require.NoError(t, err)
 	require.NoError(t, dr.Error)
 
-	return &dr
+	return dr
 }
 
 func TestExecuteSimple(t *testing.T) {
@@ -101,6 +107,11 @@ func TestExecuteMultiple(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Println(st)
 	fmt.Println("----------------------")
+}
+
+func TestExecuteColumnNamedTable(t *testing.T) {
+	dr := verifyGoldenResponse(t, "table")
+	require.Len(t, dr.Frames, 1)
 }
 
 func TestExecuteGrouping(t *testing.T) {
@@ -223,4 +234,34 @@ func TestRealQuery(t *testing.T) {
 		err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", "buckets-real.golden.txt"), &dr, true)
 		require.NoError(t, err)
 	})
+}
+
+func assertDataResponseDimensions(t *testing.T, dr *backend.DataResponse, rows int, columns int) {
+	require.Len(t, dr.Frames, 1)
+	fields := dr.Frames[0].Fields
+	require.Len(t, fields, rows)
+	require.Equal(t, fields[0].Len(), columns)
+	require.Equal(t, fields[1].Len(), columns)
+}
+
+func TestMaxDataPointsExceededNoAggregate(t *testing.T) {
+	// unfortunately the golden-response style tests do not support
+	// responses that contain errors, so we can only do manual checks
+	// on the DataResponse
+	dr := executeMockedQuery(t, "max_data_points_exceeded", queryModel{MaxDataPoints: 2})
+
+	// it should contain the error-message
+	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2. Try using the aggregateWindow() function in your query to reduce the number of points returned.")
+	assertDataResponseDimensions(t, dr, 2, 21)
+}
+
+func TestMaxDataPointsExceededWithAggregate(t *testing.T) {
+	// unfortunately the golden-response style tests do not support
+	// responses that contain errors, so we can only do manual checks
+	// on the DataResponse
+	dr := executeMockedQuery(t, "max_data_points_exceeded", queryModel{RawQuery: "aggregateWindow()", MaxDataPoints: 2})
+
+	// it should contain the error-message
+	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2.")
+	assertDataResponseDimensions(t, dr, 2, 21)
 }

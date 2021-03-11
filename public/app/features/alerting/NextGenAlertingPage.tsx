@@ -21,19 +21,17 @@ import {
   updateAlertDefinitionOption,
   updateAlertDefinitionUiState,
 } from './state/actions';
-import { getRouteParamsId } from 'app/core/selectors/location';
 import { StoreState } from 'app/types';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-function mapStateToProps(state: StoreState) {
-  const pageId = getRouteParamsId(state.location);
-
+function mapStateToProps(state: StoreState, props: RouteProps) {
   return {
     uiState: state.alertDefinition.uiState,
     getQueryOptions: state.alertDefinition.getQueryOptions,
     queryRunner: state.alertDefinition.queryRunner,
     getInstances: state.alertDefinition.getInstances,
     alertDefinition: state.alertDefinition.alertDefinition,
-    pageId: (pageId as string) ?? '',
+    pageId: props.match.params.id as string,
   };
 }
 
@@ -50,6 +48,8 @@ const mapDispatchToProps = {
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface RouteProps extends GrafanaRouteComponentProps<{ id: string }> {}
 
 interface OwnProps {
   saveDefinition: typeof createAlertDefinition | typeof updateAlertDefinition;

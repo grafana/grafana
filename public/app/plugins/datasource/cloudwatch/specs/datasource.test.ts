@@ -11,7 +11,13 @@ import {
 import * as redux from 'app/store/store';
 import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CloudWatchLogsQuery, CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, LogAction } from '../types';
+import {
+  CloudWatchJsonData,
+  CloudWatchLogsQuery,
+  CloudWatchLogsQueryStatus,
+  CloudWatchMetricsQuery,
+  LogAction,
+} from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
@@ -46,7 +52,7 @@ function getTestContext({ response = {}, throws = false, templateSrv = new Templ
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1' },
     name: 'TestDatasource',
-  } as DataSourceInstanceSettings;
+  } as DataSourceInstanceSettings<CloudWatchJsonData>;
 
   const timeSrv = {
     time: { from: '2016-12-31 15:00:00Z', to: '2016-12-31 16:00:00Z' },

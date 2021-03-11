@@ -17,7 +17,13 @@ export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholde
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export { PieChart, PieChartType, PieChartLabelOptions } from './PieChart/PieChart';
+export {
+  PieChart,
+  PieChartType,
+  PieChartLabels,
+  PieChartLegendOptions,
+  PieChartLegendValues,
+} from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -129,6 +135,7 @@ export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
 export { SliderValueEditor } from './OptionsUI/slider';
 export { SelectValueEditor } from './OptionsUI/select';
+export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
 
 // Next-gen forms
 export { Form } from './Forms/Form';
@@ -137,6 +144,7 @@ export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarB
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
+export { Link } from './Link/Link';
 
 export { Label } from './Forms/Label';
 export { Field } from './Forms/Field';

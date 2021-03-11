@@ -3,7 +3,7 @@ import { e2e } from '@grafana/e2e';
 e2e.scenario({
   describeName: 'Explore',
   itName: 'Basic path through Explore.',
-  addScenarioDataSource: true,
+  addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {

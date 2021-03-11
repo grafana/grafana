@@ -1,7 +1,6 @@
 import { AnyAction } from 'redux';
-import { UrlQueryMap } from '@grafana/data';
 
-import { getRootReducer, getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
+import { getRootReducer, getTemplatingRootReducer, RootReducerType, TemplatingReducerType } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -49,7 +48,6 @@ import {
   initialVariableEditorState,
   setIdInEditor,
 } from '../editor/reducer';
-import { DashboardState, LocationState } from '../../../types';
 import {
   TransactionStatus,
   variablesClearTransaction,
@@ -63,6 +61,7 @@ import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { LocationState } from 'app/types';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -145,11 +144,13 @@ describe('shared actions', () => {
       const custom = customBuilder().build();
       const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
+      const preloadedState = {
+        templating: ({} as unknown) as TemplatingState,
+        location: ({ query: {} } as unknown) as LocationState,
+      };
 
-      const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
-        preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query: {} } },
-      })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
@@ -202,10 +203,13 @@ describe('shared actions', () => {
 
       const list = [stats, substats];
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
-      const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
-        preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query } },
-      })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
+      const preloadedState = {
+        templating: ({} as unknown) as TemplatingState,
+        location: ({ query } as unknown) as LocationState,
+      };
+
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
@@ -219,9 +223,6 @@ describe('shared actions', () => {
           toVariablePayload(stats, { option: { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false } })
         ),
         variableStateCompleted(toVariablePayload(stats)),
-        setCurrentVariableValue(
-          toVariablePayload(stats, { option: { text: ['response'], value: ['response'], selected: false } })
-        ),
         variableStateFetching(toVariablePayload(substats)),
         updateVariableOptions(
           toVariablePayload(substats, { results: [{ text: '200' }, { text: '500' }], templatedRegex: '' })
@@ -231,12 +232,7 @@ describe('shared actions', () => {
             option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: true },
           })
         ),
-        variableStateCompleted(toVariablePayload(substats)),
-        setCurrentVariableValue(
-          toVariablePayload(substats, {
-            option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: false },
-          })
-        )
+        variableStateCompleted(toVariablePayload(substats))
       );
     });
   });
@@ -558,11 +554,6 @@ describe('shared actions', () => {
   });
 
   describe('initVariablesTransaction', () => {
-    type ReducersUsedInContext = {
-      templating: TemplatingState;
-      dashboard: DashboardState;
-      location: LocationState;
-    };
     const constant = constantBuilder().withId('constant').withName('constant').build();
     const templating: any = { list: [constant] };
     const uid = 'uid';
@@ -570,7 +561,7 @@ describe('shared actions', () => {
 
     describe('when called and the previous dashboard has completed', () => {
       it('then correct actions are dispatched', async () => {
-        const tester = await reduxTester<ReducersUsedInContext>()
+        const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
 
@@ -598,7 +589,7 @@ describe('shared actions', () => {
       it('then correct actions are dispatched', async () => {
         const transactionState = { uid: 'previous-uid', status: TransactionStatus.Fetching };
 
-        const tester = await reduxTester<ReducersUsedInContext>({
+        const tester = await reduxTester<RootReducerType>({
           preloadedState: ({
             templating: {
               transaction: transactionState,
@@ -606,7 +597,7 @@ describe('shared actions', () => {
               optionsPicker: { ...initialState },
               editor: { ...initialVariableEditorState },
             },
-          } as unknown) as ReducersUsedInContext,
+          } as unknown) as RootReducerType,
         })
           .givenRootReducer(getRootReducer())
           .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
