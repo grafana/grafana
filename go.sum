@@ -792,6 +792,8 @@ github.com/grafana/alerting-api v0.0.0-20210310155814-c1ce61993143 h1:jPv8R9q52I
 github.com/grafana/alerting-api v0.0.0-20210310155814-c1ce61993143/go.mod h1:JH+OnDbaY14NcLgB+9mhFYyfLILhNtJjGTEoSVp2mzM=
 github.com/grafana/alerting-api v0.0.0-20210311143043-45ae733ad75e h1:JkD9vPupGCuxBg6rwZekreqwXWDsZyQ/M6EHQCup24k=
 github.com/grafana/alerting-api v0.0.0-20210311143043-45ae733ad75e/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
+github.com/grafana/alerting-api v0.0.0-20210311171115-b0eb4577f38c h1:xmmEjOGr87S1ZMinUTCA+ikMSLvJRrCYADZ9/ewMtWM=
+github.com/grafana/alerting-api v0.0.0-20210311171115-b0eb4577f38c/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
 github.com/grafana/grafana v1.9.2-0.20210308201921-4ce0a49eac03/go.mod h1:AHRRvd4utJGY25J5nW8aL7wZzn/LcJ0z2za9oOp14j4=
 github.com/grafana/grafana-aws-sdk v0.1.0 h1:25TSkS57lvVen3nTCNMu5SdI8ju5Z0f7cvCsukhlqJc=
 github.com/grafana/grafana-aws-sdk v0.1.0/go.mod h1:+pPo5U+pX0zWimR7YBc7ASeSQfbRkcTyQYqMiAj7G5U=
@@ -1311,6 +1313,7 @@ github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f/go.mod h1:hoL
 github.com/prometheus/alertmanager v0.18.0/go.mod h1:WcxHBl40VSPuOaqWae6l6HpnEOVRIycEJ7i9iYkadEE=
 github.com/prometheus/alertmanager v0.19.0/go.mod h1:Eyp94Yi/T+kdeb2qvq66E3RGuph5T/jm/RBVh4yz1xo=
 github.com/prometheus/alertmanager v0.20.0/go.mod h1:9g2i48FAyZW6BtbsnvHtMHQXl2aVtrORKwKVCQ+nbrg=
+github.com/prometheus/alertmanager v0.21.0 h1:qK51JcUR9l/unhawGA9F9B64OCYfcGewhPNprem/Acc=
 github.com/prometheus/alertmanager v0.21.0/go.mod h1:h7tJ81NA0VLWvWEayi1QltevFkLF3KxmC/malTcT8Go=
 github.com/prometheus/alertmanager v0.21.1-0.20200911160112-1fdff6b3f939/go.mod h1:imXRHOP6QTsE0fFsIsAV/cXimS32m7gVZOiUj11m6Ig=
 github.com/prometheus/alertmanager v0.21.1-0.20210211203738-a7ca7b1d2951 h1:cRvcZrzWZ55FK2AzBgPk6M6MeWuYEW5ldp/Sv/C/LL4=

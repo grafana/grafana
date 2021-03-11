@@ -148,7 +148,7 @@ func (mock RulerApiMock) RouteGetNamespaceRulesConfig(c *models.ReqContext) resp
 				Interval: 60,
 				Rules: []apimodels.ExtendedRuleNode{
 					{
-						GrafanaManagedAlert: apimodels.ExtendedUpsertAlertDefinitionCommand{
+						GrafanaManagedAlert: &apimodels.ExtendedUpsertAlertDefinitionCommand{
 							NoDataState:         apimodels.NoData,
 							ExecutionErrorState: apimodels.AlertingErrState,
 							UpdateAlertDefinitionCommand: ngmodels.UpdateAlertDefinitionCommand{
@@ -161,7 +161,7 @@ func (mock RulerApiMock) RouteGetNamespaceRulesConfig(c *models.ReqContext) resp
 						},
 					},
 					{
-						GrafanaManagedAlert: apimodels.ExtendedUpsertAlertDefinitionCommand{
+						GrafanaManagedAlert: &apimodels.ExtendedUpsertAlertDefinitionCommand{
 							NoDataState:         apimodels.NoData,
 							ExecutionErrorState: apimodels.AlertingErrState,
 							UpdateAlertDefinitionCommand: ngmodels.UpdateAlertDefinitionCommand{
@@ -193,7 +193,7 @@ func (mock RulerApiMock) RouteGetRulegGroupConfig(c *models.ReqContext) response
 			Interval: 60,
 			Rules: []apimodels.ExtendedRuleNode{
 				{
-					GrafanaManagedAlert: apimodels.ExtendedUpsertAlertDefinitionCommand{
+					GrafanaManagedAlert: &apimodels.ExtendedUpsertAlertDefinitionCommand{
 						NoDataState:         apimodels.NoData,
 						ExecutionErrorState: apimodels.AlertingErrState,
 						UpdateAlertDefinitionCommand: ngmodels.UpdateAlertDefinitionCommand{
@@ -221,7 +221,7 @@ func (mock RulerApiMock) RouteGetRulesConfig(c *models.ReqContext) response.Resp
 				Interval: 60,
 				Rules: []apimodels.ExtendedRuleNode{
 					{
-						GrafanaManagedAlert: apimodels.ExtendedUpsertAlertDefinitionCommand{
+						GrafanaManagedAlert: &apimodels.ExtendedUpsertAlertDefinitionCommand{
 							NoDataState:         apimodels.NoData,
 							ExecutionErrorState: apimodels.AlertingErrState,
 							UpdateAlertDefinitionCommand: ngmodels.UpdateAlertDefinitionCommand{
@@ -234,7 +234,7 @@ func (mock RulerApiMock) RouteGetRulesConfig(c *models.ReqContext) response.Resp
 						},
 					},
 					{
-						GrafanaManagedAlert: apimodels.ExtendedUpsertAlertDefinitionCommand{
+						GrafanaManagedAlert: &apimodels.ExtendedUpsertAlertDefinitionCommand{
 							NoDataState:         apimodels.NoData,
 							ExecutionErrorState: apimodels.AlertingErrState,
 							UpdateAlertDefinitionCommand: ngmodels.UpdateAlertDefinitionCommand{
@@ -253,7 +253,7 @@ func (mock RulerApiMock) RouteGetRulesConfig(c *models.ReqContext) response.Resp
 				Interval: 60,
 				Rules: []apimodels.ExtendedRuleNode{
 					{
-						GrafanaManagedAlert: apimodels.ExtendedUpsertAlertDefinitionCommand{
+						GrafanaManagedAlert: &apimodels.ExtendedUpsertAlertDefinitionCommand{
 							NoDataState:         apimodels.NoData,
 							ExecutionErrorState: apimodels.AlertingErrState,
 							UpdateAlertDefinitionCommand: ngmodels.UpdateAlertDefinitionCommand{
@@ -266,7 +266,7 @@ func (mock RulerApiMock) RouteGetRulesConfig(c *models.ReqContext) response.Resp
 						},
 					},
 					{
-						GrafanaManagedAlert: apimodels.ExtendedUpsertAlertDefinitionCommand{
+						GrafanaManagedAlert: &apimodels.ExtendedUpsertAlertDefinitionCommand{
 							NoDataState:         apimodels.NoData,
 							ExecutionErrorState: apimodels.AlertingErrState,
 							UpdateAlertDefinitionCommand: ngmodels.UpdateAlertDefinitionCommand{
