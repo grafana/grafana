@@ -16,9 +16,9 @@ The pie chart displays reduced series or values in a series as they relate to ea
 
 Time series visualizations allow you to apply:
 
-- [Data transformations]({{< relref "../../transformations/_index.md" >}})
-- [Field options and overrides]({{< relref "../../field-options/_index.md" >}})
-- [Thresholds]({{< relref "../../thresholds.md" >}})
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
+- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
+- [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
 
