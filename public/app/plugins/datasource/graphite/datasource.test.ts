@@ -5,7 +5,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime, getFrameDisplayName } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
