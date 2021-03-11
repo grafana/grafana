@@ -19,7 +19,7 @@ import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } f
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -201,7 +201,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   interpolateVariablesInQueries(queries: GraphiteQuery[], scopedVars: ScopedVars): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
@@ -224,54 +224,61 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         maxDataPoints: 100,
       } as unknown) as DataQueryRequest<GraphiteQuery>;
 
-      return this.query(graphiteQuery).then(result => {
-        const list = [];
+      return this.query(graphiteQuery)
+        .pipe(
+          map((result: any) => {
+            const list = [];
 
-        for (let i = 0; i < result.data.length; i++) {
-          const target = result.data[i];
+            for (let i = 0; i < result.data.length; i++) {
+              const target = result.data[i];
 
-          for (let y = 0; y < target.length; y++) {
-            const time = target.fields[0].values.get(y);
-            const value = target.fields[1].values.get(y);
+              for (let y = 0; y < target.length; y++) {
+                const time = target.fields[0].values.get(y);
+                const value = target.fields[1].values.get(y);
 
-            if (!value) {
-              continue;
+                if (!value) {
+                  continue;
+                }
+
+                list.push({
+                  annotation: options.annotation,
+                  time,
+                  title: target.name,
+                });
+              }
+            }
+
+            return list;
+          })
+        )
+        .toPromise();
+    } else {
+      // Graphite event as annotation
+      const tags = this.templateSrv.replace(options.annotation.tags);
+      return this.events({ range: options.range, tags: tags })
+        .pipe(map((results: any) => {}))
+
+        .then((results: any) => {
+          const list = [];
+          for (let i = 0; i < results.data.length; i++) {
+            const e = results.data[i];
+
+            let tags = e.tags;
+            if (_.isString(e.tags)) {
+              tags = this.parseTags(e.tags);
             }
 
             list.push({
               annotation: options.annotation,
-              time,
-              title: target.name,
+              time: e.when * 1000,
+              title: e.what,
+              tags: tags,
+              text: e.data,
             });
           }
-        }
 
-        return list;
-      });
-    } else {
-      // Graphite event as annotation
-      const tags = this.templateSrv.replace(options.annotation.tags);
-      return this.events({ range: options.range, tags: tags }).then((results: any) => {
-        const list = [];
-        for (let i = 0; i < results.data.length; i++) {
-          const e = results.data[i];
-
-          let tags = e.tags;
-          if (_.isString(e.tags)) {
-            tags = this.parseTags(e.tags);
-          }
-
-          list.push({
-            annotation: options.annotation,
-            time: e.when * 1000,
-            title: e.what,
-            tags: tags,
-            text: e.data,
-          });
-        }
-
-        return list;
-      });
+          return list;
+        });
     }
   }
 
@@ -289,7 +296,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           '&until=' +
           this.translateTime(options.range.raw.to, true, options.timezone) +
           tags,
-      });
+      }).toPromise();
     } catch (err) {
       return Promise.reject(err);
     }
@@ -389,14 +396,18 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions).then((results: any) => {
-      return _.map(results.data, metric => {
-        return {
-          text: metric.text,
-          expandable: metric.expandable ? true : false,
-        };
-      });
-    });
+    return this.doGraphiteRequest(httpOptions)
+      .pipe(
+        map((results: any) => {
+          return _.map(results.data, (metric) => {
+            return {
+              text: metric.text,
+              expandable: metric.expandable ? true : false,
+            };
+          });
+        })
+      )
+      .toPromise();
   }
 
   getTags(optionalOptions: any) {
@@ -414,14 +425,18 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions).then((results: any) => {
-      return _.map(results.data, tag => {
-        return {
-          text: tag.tag,
-          id: tag.id,
-        };
-      });
-    });
+    return this.doGraphiteRequest(httpOptions)
+      .pipe(
+        map((results: any) => {
+          return _.map(results.data, (tag) => {
+            return {
+              text: tag.tag,
+              id: tag.id,
+            };
+          });
+        })
+      )
+      .toPromise();
   }
 
   getTagValues(options: any = {}) {
@@ -437,18 +452,22 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions).then((results: any) => {
-      if (results.data && results.data.values) {
-        return _.map(results.data.values, value => {
-          return {
-            text: value.value,
-            id: value.id,
-          };
-        });
-      } else {
-        return [];
-      }
-    });
+    return this.doGraphiteRequest(httpOptions)
+      .pipe(
+        map((results: any) => {
+          if (results.data && results.data.values) {
+            return _.map(results.data.values, (value) => {
+              return {
+                text: value.value,
+                id: value.id,
+              };
+            });
+          } else {
+            return [];
+          }
+        })
+      )
+      .toPromise();
   }
 
   getTagsAutoComplete(expressions: any[], tagPrefix: any, optionalOptions: any) {
@@ -458,7 +477,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       method: 'GET',
       url: '/tags/autoComplete/tags',
       params: {
-        expr: _.map(expressions, expression => this.templateSrv.replace((expression || '').trim())),
+        expr: _.map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
       },
       // for cancellations
       requestId: options.requestId,
@@ -475,15 +494,19 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions).then((results: any) => {
-      if (results.data) {
-        return _.map(results.data, tag => {
-          return { text: tag };
-        });
-      } else {
-        return [];
-      }
-    });
+    return this.doGraphiteRequest(httpOptions)
+      .pipe(
+        map((results: any) => {
+          if (results.data) {
+            return _.map(results.data, (tag) => {
+              return { text: tag };
+            });
+          } else {
+            return [];
+          }
+        })
+      )
+      .toPromise();
   }
 
   getTagValuesAutoComplete(expressions: any[], tag: any, valuePrefix: any, optionalOptions: any) {
@@ -493,7 +516,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
-        expr: _.map(expressions, expression => this.templateSrv.replace((expression || '').trim())),
+        expr: _.map(expressions, (expression) => this.templateSrv.replace((expression || '').trim())),
         tag: this.templateSrv.replace((tag || '').trim()),
       },
       // for cancellations
@@ -511,15 +534,19 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions).then((results: any) => {
-      if (results.data) {
-        return _.map(results.data, value => {
-          return { text: value };
-        });
-      } else {
-        return [];
-      }
-    });
+    return this.doGraphiteRequest(httpOptions)
+      .pipe(
+        map((results: any) => {
+          if (results.data) {
+            return _.map(results.data, (value) => {
+              return { text: value };
+            });
+          } else {
+            return [];
+          }
+        })
+      )
+      .toPromise();
   }
 
   getVersion(optionalOptions: any) {
@@ -532,16 +559,19 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     };
 
     return this.doGraphiteRequest(httpOptions)
-      .then((results: any) => {
-        if (results.data) {
-          const semver = new SemVersion(results.data);
-          return semver.isValid() ? results.data : '';
-        }
-        return '';
-      })
-      .catch(() => {
-        return '';
-      });
+      .pipe(
+        map((results: any) => {
+          if (results.data) {
+            const semver = new SemVersion(results.data);
+            return semver.isValid() ? results.data : '';
+          }
+          return '';
+        }),
+        catchError(() => {
+          return of('');
+        })
+      )
+      .toPromise();
   }
 
   createFuncInstance(funcDef: any, options?: any) {
@@ -572,22 +602,23 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       url: '/functions',
     };
 
-    this.funcDefsPromise = this.doGraphiteRequest(httpOptions)
-      .then((results: any) => {
-        if (results.status !== 200 || typeof results.data !== 'object') {
+    return this.doGraphiteRequest(httpOptions)
+      .pipe(
+        map((results: any) => {
+          if (results.status !== 200 || typeof results.data !== 'object') {
+            this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+          } else {
+            this.funcDefs = gfunc.parseFuncDefs(results.data);
+          }
+          return this.funcDefs;
+        }),
+        catchError((error: any) => {
+          console.error('Fetching graphite functions error', error);
           this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
-        } else {
-          this.funcDefs = gfunc.parseFuncDefs(results.data);
-        }
-        return this.funcDefs;
-      })
-      .catch((err: any) => {
-        console.error('Fetching graphite functions error', err);
-        this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
-        return this.funcDefs;
-      });
-
-    return this.funcDefsPromise;
+          return of(this.funcDefs);
+        })
+      )
+      .toPromise();
   }
 
   testDatasource() {
@@ -600,9 +631,10 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       targets: [{ target: 'constantLine(100)' }],
       maxDataPoints: 300,
     } as unknown) as DataQueryRequest<GraphiteQuery>;
-    return this.query(query).then(() => {
-      return { status: 'success', message: 'Data source is working' };
-    });
+
+    return this.query(query)
+      .toPromise()
+      .then(() => ({ status: 'success', message: 'Data source is working' }));
   }
 
   doGraphiteRequest(options: {
