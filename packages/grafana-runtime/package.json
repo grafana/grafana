@@ -25,7 +25,8 @@
     "@grafana/data": "7.5.0-pre.0",
     "@grafana/ui": "7.5.0-pre.0",
     "systemjs": "0.20.19",
-    "systemjs-plugin-css": "0.1.37"
+    "systemjs-plugin-css": "0.1.37",
+    "history": "4.10.1"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.0.0-rc1",
@@ -34,6 +35,7 @@
     "@types/jest": "26.0.15",
     "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/systemjs": "^0.20.6",
+    "@types/history": "^4.7.8",
     "lodash": "4.17.21",
     "pretty-format": "25.1.0",
     "rollup": "2.33.3",

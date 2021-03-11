@@ -14,9 +14,9 @@ type FrontendPluginBase struct {
 	PluginBase
 }
 
-func (fp *FrontendPluginBase) InitFrontendPlugin() []*PluginStaticRoute {
+func (fp *FrontendPluginBase) InitFrontendPlugin(cfg *setting.Cfg) []*PluginStaticRoute {
 	var staticRoutes []*PluginStaticRoute
-	if isExternalPlugin(fp.PluginDir) {
+	if isExternalPlugin(fp.PluginDir, cfg) {
 		staticRoutes = []*PluginStaticRoute{
 			{
 				Directory: fp.PluginDir,
@@ -25,7 +25,7 @@ func (fp *FrontendPluginBase) InitFrontendPlugin() []*PluginStaticRoute {
 		}
 	}
 
-	fp.handleModuleDefaults()
+	fp.handleModuleDefaults(cfg)
 
 	fp.Info.Logos.Small = getPluginLogoUrl(fp.Type, fp.Info.Logos.Small, fp.BaseUrl)
 	fp.Info.Logos.Large = getPluginLogoUrl(fp.Type, fp.Info.Logos.Large, fp.BaseUrl)
@@ -45,20 +45,20 @@ func getPluginLogoUrl(pluginType, path, baseUrl string) string {
 	return evalRelativePluginUrlPath(path, baseUrl)
 }
 
-func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
+func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin, cfg *setting.Cfg) {
 	appSubPath := strings.ReplaceAll(strings.Replace(fp.PluginDir, app.PluginDir, "", 1), "\\", "/")
 	fp.IncludedInAppId = app.Id
 	fp.BaseUrl = app.BaseUrl
 
-	if isExternalPlugin(app.PluginDir) {
+	if isExternalPlugin(app.PluginDir, cfg) {
 		fp.Module = util.JoinURLFragments("plugins/"+app.Id, appSubPath) + "/module"
 	} else {
 		fp.Module = util.JoinURLFragments("app/plugins/app/"+app.Id, appSubPath) + "/module"
 	}
 }
 
-func (fp *FrontendPluginBase) handleModuleDefaults() {
-	if isExternalPlugin(fp.PluginDir) {
+func (fp *FrontendPluginBase) handleModuleDefaults(cfg *setting.Cfg) {
+	if isExternalPlugin(fp.PluginDir, cfg) {
 		fp.Module = path.Join("plugins", fp.Id, "module")
 		fp.BaseUrl = path.Join("public/plugins", fp.Id)
 		return
@@ -75,8 +75,8 @@ func (fp *FrontendPluginBase) handleModuleDefaults() {
 	fp.BaseUrl = path.Join("public/app/plugins", fp.Type, currentDir)
 }
 
-func isExternalPlugin(pluginDir string) bool {
-	return !strings.Contains(pluginDir, setting.StaticRootPath)
+func isExternalPlugin(pluginDir string, cfg *setting.Cfg) bool {
+	return !strings.Contains(pluginDir, cfg.StaticRootPath)
 }
 
 func evalRelativePluginUrlPath(pathStr string, baseUrl string) string {

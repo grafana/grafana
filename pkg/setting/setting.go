@@ -70,8 +70,6 @@ var (
 	CustomInitPath = "conf/custom.ini"
 
 	// HTTP server options
-	HttpAddr, HttpPort             string
-	CertFile, KeyFile              string
 	DataProxyLogging               bool
 	DataProxyTimeout               int
 	DataProxyTLSHandshakeTimeout   int
@@ -80,8 +78,6 @@ var (
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
 	StaticRootPath                 string
-	EnableGzip                     bool
-	EnforceDomain                  bool
 
 	// Security settings.
 	SecretKey              string
@@ -141,10 +137,8 @@ var (
 	appliedEnvOverrides          []string
 
 	// analytics
-	ReportingEnabled     bool
-	ReportingDistributor string
-	GoogleAnalyticsId    string
-	GoogleTagManagerId   string
+	GoogleAnalyticsId  string
+	GoogleTagManagerId string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -189,6 +183,10 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
+	CertFile         string
+	KeyFile          string
+	HTTPAddr         string
+	HTTPPort         string
 	AppURL           string
 	AppSubURL        string
 	ServeFromSubPath bool
@@ -198,6 +196,8 @@ type Cfg struct {
 	RouterLogging    bool
 	Domain           string
 	CDNRootURL       *url.URL
+	EnableGzip       bool
+	EnforceDomain    bool
 
 	// build
 	BuildVersion string
@@ -275,6 +275,7 @@ type Cfg struct {
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
+	AWSListMetricsPageLimit int
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -336,7 +337,9 @@ type Cfg struct {
 	Env string
 
 	// Analytics
-	CheckForUpdates bool
+	CheckForUpdates      bool
+	ReportingDistributor string
+	ReportingEnabled     bool
 
 	// LDAP
 	LDAPEnabled     bool
@@ -352,6 +355,8 @@ type Cfg struct {
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
+
+	ImageUploadProvider string
 }
 
 // IsLiveEnabled returns if grafana live should be enabled
@@ -830,10 +835,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
-	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
-	ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
-	if len(ReportingDistributor) >= 100 {
-		ReportingDistributor = ReportingDistributor[:100]
+	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
+	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
+	if len(cfg.ReportingDistributor) >= 100 {
+		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
 
 	if err := readAlertingSettings(iniFile); err != nil {
@@ -894,7 +899,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	imageUploadingSection := iniFile.Section("external_image_storage")
-	ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
+	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
+	ImageUploadProvider = cfg.ImageUploadProvider
 
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
@@ -944,6 +950,7 @@ func (cfg *Cfg) readAWSConfig() {
 			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
 		}
 	}
+	cfg.AWSListMetricsPageLimit = awsPluginSec.Key("list_metrics_page_limit").MustInt(500)
 }
 
 func (cfg *Cfg) readSessionConfig() {
@@ -1301,13 +1308,13 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	if protocolStr == "https" {
 		cfg.Protocol = HTTPSScheme
-		CertFile = server.Key("cert_file").String()
-		KeyFile = server.Key("cert_key").String()
+		cfg.CertFile = server.Key("cert_file").String()
+		cfg.KeyFile = server.Key("cert_key").String()
 	}
 	if protocolStr == "h2" {
 		cfg.Protocol = HTTP2Scheme
-		CertFile = server.Key("cert_file").String()
-		KeyFile = server.Key("cert_key").String()
+		cfg.CertFile = server.Key("cert_file").String()
+		cfg.KeyFile = server.Key("cert_key").String()
 	}
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme
@@ -1315,12 +1322,12 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 
 	cfg.Domain = valueAsString(server, "domain", "localhost")
-	HttpAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
-	HttpPort = valueAsString(server, "http_port", "3000")
+	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
+	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
-	EnableGzip = server.Key("enable_gzip").MustBool(false)
-	EnforceDomain = server.Key("enforce_domain").MustBool(false)
+	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)
+	cfg.EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	staticRoot := valueAsString(server, "static_root_path", "")
 	StaticRootPath = makeAbsolute(staticRoot, HomePath)
 	cfg.StaticRootPath = StaticRootPath

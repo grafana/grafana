@@ -462,14 +462,21 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 		}
 	}
 
-	metrics, err := e.cloudwatchListMetrics(region, namespace, metricName, dimensions)
+	params := &cloudwatch.ListMetricsInput{
+		Namespace:  aws.String(namespace),
+		Dimensions: dimensions,
+	}
+	if metricName != "" {
+		params.MetricName = aws.String(metricName)
+	}
+	metrics, err := e.listMetrics(region, params)
 	if err != nil {
 		return nil, err
 	}
 
 	result := make([]suggestData, 0)
 	dupCheck := make(map[string]bool)
-	for _, metric := range metrics.Metrics {
+	for _, metric := range metrics {
 		for _, dim := range metric.Dimensions {
 			if *dim.Name == dimensionKey {
 				if _, exists := dupCheck[*dim.Value]; exists {
@@ -631,36 +638,29 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string,
-	dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
-	svc, err := e.getCWClient(region)
+func (e *cloudWatchExecutor) listMetrics(region string, params *cloudwatch.ListMetricsInput) ([]*cloudwatch.Metric, error) {
+	client, err := e.getCWClient(region)
 	if err != nil {
 		return nil, err
 	}
 
-	params := &cloudwatch.ListMetricsInput{
-		Namespace:  aws.String(namespace),
-		Dimensions: dimensions,
-	}
+	plog.Debug("Listing metrics pages")
+	cloudWatchMetrics := []*cloudwatch.Metric{}
 
-	if metricName != "" {
-		params.MetricName = aws.String(metricName)
-	}
-
-	var resp cloudwatch.ListMetricsOutput
-	if err := svc.ListMetricsPages(params,
-		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
-			metrics.MAwsCloudWatchListMetrics.Inc()
-			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
+	pageNum := 0
+	err = client.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+		pageNum++
+		metrics.MAwsCloudWatchListMetrics.Inc()
+		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
+		if err == nil {
 			for _, metric := range metrics {
-				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
+				cloudWatchMetrics = append(cloudWatchMetrics, metric.(*cloudwatch.Metric))
 			}
-			return !lastPage
-		}); err != nil {
-		return nil, fmt.Errorf("failed to call cloudwatch:ListMetrics: %w", err)
-	}
+		}
+		return !lastPage && pageNum < e.cfg.AWSListMetricsPageLimit
+	})
 
-	return &resp, nil
+	return cloudWatchMetrics, err
 }
 
 func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
@@ -709,34 +709,6 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) getAllMetrics(region, namespace string) (cloudwatch.ListMetricsOutput, error) {
-	client, err := e.getCWClient(region)
-	if err != nil {
-		return cloudwatch.ListMetricsOutput{}, err
-	}
-
-	params := &cloudwatch.ListMetricsInput{
-		Namespace: aws.String(namespace),
-	}
-
-	plog.Debug("Listing metrics pages")
-	var resp cloudwatch.ListMetricsOutput
-	err = client.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
-		metrics.MAwsCloudWatchListMetrics.Inc()
-		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
-		if err != nil {
-			return !lastPage
-		}
-
-		for _, metric := range metrics {
-			resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
-		}
-		return !lastPage
-	})
-
-	return resp, err
-}
-
 var metricsCacheLock sync.Mutex
 
 func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string) ([]string, error) {
@@ -760,7 +732,10 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire.After(time.Now()) {
 		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
 	}
-	result, err := e.getAllMetrics(region, namespace)
+	metrics, err := e.listMetrics(region, &cloudwatch.ListMetricsInput{
+		Namespace: aws.String(namespace),
+	})
+
 	if err != nil {
 		return []string{}, err
 	}
@@ -768,7 +743,7 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
 	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire = time.Now().Add(5 * time.Minute)
 
-	for _, metric := range result.Metrics {
+	for _, metric := range metrics {
 		if isDuplicate(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *metric.MetricName) {
 			continue
 		}
@@ -801,14 +776,15 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace str
 	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire.After(time.Now()) {
 		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
 	}
-	result, err := e.getAllMetrics(region, namespace)
+
+	metrics, err := e.listMetrics(region, &cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
 	if err != nil {
 		return []string{}, err
 	}
 	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
 	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire = time.Now().Add(5 * time.Minute)
 
-	for _, metric := range result.Metrics {
+	for _, metric := range metrics {
 		for _, dimension := range metric.Dimensions {
 			if isDuplicate(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *dimension.Name) {
 				continue
