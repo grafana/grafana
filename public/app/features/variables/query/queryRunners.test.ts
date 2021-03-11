@@ -70,6 +70,41 @@ describe('QueryRunners', () => {
       });
     });
 
+    describe('and calling runRequest with a variable that refreshes on dashboard load', () => {
+      const { datasource, runner, runnerArgs, request, timeSrv, defaultTimeRange } = getLegacyTestContext({
+        query: 'A query',
+        refresh: VariableRefresh.onDashboardLoad,
+      });
+      const observable = runner.runRequest(runnerArgs, request);
+
+      it('then it should return correct observable', async () => {
+        await expect(observable).toEmitValuesWith((received) => {
+          const value = received[0];
+          expect(value).toEqual({
+            series: [{ text: 'A', value: 'A' }],
+            state: 'Done',
+            timeRange: defaultTimeRange,
+          });
+        });
+      });
+
+      it('and it should call timeSrv.timeRange()', () => {
+        expect(timeSrv.timeRange).toHaveBeenCalledTimes(1);
+      });
+
+      it('and it should call metricFindQuery with correct options', () => {
+        expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
+        expect(datasource.metricFindQuery).toHaveBeenCalledWith('A query', {
+          range: defaultTimeRange,
+          searchFilter: 'A searchFilter',
+          variable: {
+            query: 'A query',
+            refresh: VariableRefresh.onDashboardLoad,
+          },
+        });
+      });
+    });
+
     describe('and calling runRequest with a variable that does not refresh when time range changes', () => {
       const { datasource, runner, runnerArgs, request, timeSrv } = getLegacyTestContext({
         query: 'A query',

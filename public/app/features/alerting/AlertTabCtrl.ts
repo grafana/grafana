@@ -13,6 +13,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
 import { CoreEvents } from 'app/types';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { ShowConfirmModalEvent } from '../../types/events';
 
 export class AlertTabCtrl {
   panel: PanelModel;
@@ -230,17 +231,19 @@ export class AlertTabCtrl {
       }
 
       if (!model) {
-        appEvents.emit(CoreEvents.showConfirmModal, {
-          title: 'Notifier with invalid identifier is detected',
-          text: `Do you want to delete notifier with invalid identifier: ${identifier} from the dashboard JSON?`,
-          text2: 'After successful deletion, make sure to save the dashboard for storing the update JSON.',
-          icon: 'trash-alt',
-          confirmText: 'Delete',
-          yesText: 'Delete',
-          onConfirm: async () => {
-            this.removeNotification(addedNotification);
-          },
-        });
+        appEvents.publish(
+          new ShowConfirmModalEvent({
+            title: 'Notifier with invalid identifier is detected',
+            text: `Do you want to delete notifier with invalid identifier: ${identifier} from the dashboard JSON?`,
+            text2: 'After successful deletion, make sure to save the dashboard for storing the update JSON.',
+            icon: 'trash-alt',
+            confirmText: 'Delete',
+            yesText: 'Delete',
+            onConfirm: async () => {
+              this.removeNotification(addedNotification);
+            },
+          })
+        );
       }
 
       if (model && model.isDefault === false) {
@@ -424,21 +427,23 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete Alert',
-      text: 'Are you sure you want to delete this alert rule?',
-      text2: 'You need to save dashboard for the delete to take effect',
-      icon: 'trash-alt',
-      yesText: 'Delete',
-      onConfirm: () => {
-        delete this.panel.alert;
-        this.alert = null;
-        this.panel.thresholds = [];
-        this.conditionModels = [];
-        this.panelCtrl.alertState = null;
-        this.panelCtrl.render();
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete Alert',
+        text: 'Are you sure you want to delete this alert rule?',
+        text2: 'You need to save dashboard for the delete to take effect',
+        icon: 'trash-alt',
+        yesText: 'Delete',
+        onConfirm: () => {
+          delete this.panel.alert;
+          this.alert = null;
+          this.panel.thresholds = [];
+          this.conditionModels = [];
+          this.panelCtrl.alertState = null;
+          this.panelCtrl.render();
+        },
+      })
+    );
   }
 
   enable = () => {
@@ -474,25 +479,27 @@ export class AlertTabCtrl {
   }
 
   clearHistory() {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete Alert History',
-      text: 'Are you sure you want to remove all history & annotations for this alert?',
-      icon: 'trash-alt',
-      yesText: 'Yes',
-      onConfirm: () => {
-        promiseToDigest(this.$scope)(
-          getBackendSrv()
-            .post('/api/annotations/mass-delete', {
-              dashboardId: this.panelCtrl.dashboard.id,
-              panelId: this.panel.id,
-            })
-            .then(() => {
-              this.alertHistory = [];
-              this.panelCtrl.refresh();
-            })
-        );
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete Alert History',
+        text: 'Are you sure you want to remove all history & annotations for this alert?',
+        icon: 'trash-alt',
+        yesText: 'Yes',
+        onConfirm: () => {
+          promiseToDigest(this.$scope)(
+            getBackendSrv()
+              .post('/api/annotations/mass-delete', {
+                dashboardId: this.panelCtrl.dashboard.id,
+                panelId: this.panel.id,
+              })
+              .then(() => {
+                this.alertHistory = [];
+                this.panelCtrl.refresh();
+              })
+          );
+        },
+      })
+    );
   }
 }
 

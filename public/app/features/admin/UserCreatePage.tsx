@@ -7,11 +7,10 @@ import { getBackendSrv } from '@grafana/runtime';
 import { StoreState } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
-import { updateLocation } from 'app/core/actions';
+import { useHistory } from 'react-router-dom';
 
 interface UserCreatePageProps {
   navModel: NavModel;
-  updateLocation: typeof updateLocation;
 }
 interface UserDTO {
   name: string;
@@ -22,13 +21,15 @@ interface UserDTO {
 
 const createUser = async (user: UserDTO) => getBackendSrv().post('/api/admin/users', user);
 
-const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocation }) => {
+const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
+  const history = useHistory();
+
   const onSubmit = useCallback(
     async (data: UserDTO) => {
       await createUser(data);
-      updateLocation({ path: '/admin/users' });
+      history.push('/admin/users');
     },
-    [updateLocation]
+    [history]
   );
 
   return (
@@ -83,7 +84,4 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'global-users'),
 });
 
-const mapDispatchToProps = {
-  updateLocation,
-};
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserCreatePage));
+export default hot(module)(connect(mapStateToProps)(UserCreatePage));

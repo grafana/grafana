@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"xorm.io/xorm"
 
@@ -48,11 +48,11 @@ func TestMySQL(t *testing.T) {
 		}
 
 		origInterpolate := sqleng.Interpolate
-		sqleng.Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+		sqleng.Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 			return sql, nil
 		}
 
-		endpoint, err := newMysqlQueryEndpoint(&models.DataSource{
+		exe, err := NewExecutor(&models.DataSource{
 			JsonData:       simplejson.New(),
 			SecureJsonData: securejsondata.SecureJsonData{},
 		})
@@ -123,19 +123,19 @@ func TestMySQL(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Query with Table format should map MySQL column types to Go types", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": "SELECT * FROM mysql_types",
 								"format": "table",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -212,19 +212,19 @@ func TestMySQL(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("When doing a metric query using timeGroup", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": "SELECT $__timeGroup(time, '5m') as time_sec, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -255,23 +255,23 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using timeGroup with NULL fill enabled", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": "SELECT $__timeGroup(time, '5m', NULL) as time_sec, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
-					TimeRange: &tsdb.TimeRange{
+					TimeRange: &plugins.DataTimeRange{
 						From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 						To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -316,24 +316,24 @@ func TestMySQL(t *testing.T) {
 				})
 
 				Convey("Should replace $__interval", func() {
-					query := &tsdb.TsdbQuery{
-						Queries: []*tsdb.Query{
+					query := plugins.DataQuery{
+						Queries: []plugins.DataSubQuery{
 							{
 								DataSource: &models.DataSource{JsonData: simplejson.New()},
 								Model: simplejson.NewFromAny(map[string]interface{}{
 									"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 									"format": "time_series",
 								}),
-								RefId: "A",
+								RefID: "A",
 							},
 						},
-						TimeRange: &tsdb.TimeRange{
+						TimeRange: &plugins.DataTimeRange{
 							From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 							To:   fmt.Sprintf("%v", fromStart.Add(30*time.Minute).Unix()*1000),
 						},
 					}
 
-					resp, err := endpoint.Query(context.Background(), nil, query)
+					resp, err := exe.DataQuery(context.Background(), nil, query)
 					So(err, ShouldBeNil)
 					queryResult := resp.Results["A"]
 					So(queryResult.Error, ShouldBeNil)
@@ -342,23 +342,23 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using timeGroup with value fill enabled", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": "SELECT $__timeGroup(time, '5m', 1.5) as time_sec, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
-					TimeRange: &tsdb.TimeRange{
+					TimeRange: &plugins.DataTimeRange{
 						From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 						To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -368,23 +368,23 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using timeGroup with previous fill enabled", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": "SELECT $__timeGroup(time, '5m', previous) as time_sec, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
-					TimeRange: &tsdb.TimeRange{
+					TimeRange: &plugins.DataTimeRange{
 						From: fmt.Sprintf("%v", fromStart.Unix()*1000),
 						To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -467,19 +467,19 @@ func TestMySQL(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("When doing a metric query using time as time column should return metric with time in milliseconds", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT time, valueOne FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -489,19 +489,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using time (nullable) as time column should return metric with time in milliseconds", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT timeNullable as time, valueOne FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -511,19 +511,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in milliseconds", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT timeInt64 as time, timeInt64 FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -533,19 +533,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using epoch (int64 nullable) as time column and value column (int64 nullable) should return metric with time in milliseconds", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT timeInt64Nullable as time, timeInt64Nullable FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -555,19 +555,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using epoch (float64) as time column and value column (float64) should return metric with time in milliseconds", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT timeFloat64 as time, timeFloat64 FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -577,19 +577,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using epoch (float64 nullable) as time column and value column (float64 nullable) should return metric with time in milliseconds", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT timeFloat64Nullable as time, timeFloat64Nullable FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -599,19 +599,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using epoch (int32) as time column and value column (int32) should return metric with time in milliseconds", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT timeInt32 as time, timeInt32 FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -621,19 +621,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using epoch (int32 nullable) as time column and value column (int32 nullable) should return metric with time in milliseconds", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT timeInt32Nullable as time, timeInt32Nullable FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -643,19 +643,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using epoch (float32) as time column and value column (float32) should return metric with time in milliseconds", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT timeFloat32 as time, timeFloat32 FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -665,19 +665,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using epoch (float32 nullable) as time column and value column (float32 nullable) should return metric with time in milliseconds", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT timeFloat32Nullable as time, timeFloat32Nullable FROM metric_values ORDER BY time LIMIT 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -687,19 +687,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query grouping by time and select metric column should return correct series", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT $__time(time), CONCAT(measurement, ' - value one') as metric, valueOne FROM metric_values ORDER BY 1,2`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -710,19 +710,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query with metric column and multiple value columns", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT $__time(time), measurement as metric, valueOne, valueTwo FROM metric_values ORDER BY 1,2`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -735,19 +735,19 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing a metric query grouping by time should return correct series", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT $__time(time), valueOne, valueTwo FROM metric_values ORDER BY 1`,
 								"format": "time_series",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -760,21 +760,21 @@ func TestMySQL(t *testing.T) {
 
 		Convey("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func() {
 			sqleng.Interpolate = origInterpolate
-			query := &tsdb.TsdbQuery{
-				TimeRange: tsdb.NewFakeTimeRange("5m", "now", fromStart),
-				Queries: []*tsdb.Query{
+			query := plugins.DataQuery{
+				TimeRange: &plugins.DataTimeRange{From: "5m", To: "now", Now: fromStart},
+				Queries: []plugins.DataSubQuery{
 					{
 						DataSource: &models.DataSource{JsonData: simplejson.New()},
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT time FROM metric_values WHERE time > $__timeFrom() OR time < $__timeTo() OR 1 < $__unixEpochFrom() OR $__unixEpochTo() > 1 ORDER BY 1`,
 							"format": "time_series",
 						}),
-						RefId: "A",
+						RefID: "A",
 					},
 				},
 			}
 
-			resp, err := endpoint.Query(context.Background(), nil, query)
+			resp, err := exe.DataQuery(context.Background(), nil, query)
 			So(err, ShouldBeNil)
 			queryResult := resp.Results["A"]
 			So(queryResult.Error, ShouldBeNil)
@@ -816,46 +816,46 @@ func TestMySQL(t *testing.T) {
 			}
 
 			Convey("When doing an annotation query of deploy events should return expected result", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT time_sec, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC`,
 								"format": "table",
 							}),
-							RefId: "Deploys",
+							RefID: "Deploys",
 						},
 					},
-					TimeRange: &tsdb.TimeRange{
+					TimeRange: &plugins.DataTimeRange{
 						From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
 						To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				queryResult := resp.Results["Deploys"]
 				So(err, ShouldBeNil)
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
 			})
 
 			Convey("When doing an annotation query of ticket events should return expected result", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT time_sec, description as text, tags FROM event WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC`,
 								"format": "table",
 							}),
-							RefId: "Tickets",
+							RefID: "Tickets",
 						},
 					},
-					TimeRange: &tsdb.TimeRange{
+					TimeRange: &plugins.DataTimeRange{
 						From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
 						To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				queryResult := resp.Results["Tickets"]
 				So(err, ShouldBeNil)
 				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
@@ -865,8 +865,8 @@ func TestMySQL(t *testing.T) {
 				dt := time.Date(2018, 3, 14, 21, 20, 6, 0, time.UTC)
 				dtFormat := "2006-01-02 15:04:05.999999999"
 
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
@@ -876,12 +876,12 @@ func TestMySQL(t *testing.T) {
 								`, dt.Format(dtFormat)),
 								"format": "table",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -895,8 +895,8 @@ func TestMySQL(t *testing.T) {
 			Convey("When doing an annotation query with a time column in epoch second format should return ms", func() {
 				dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
@@ -906,12 +906,12 @@ func TestMySQL(t *testing.T) {
 								`, dt.Unix()),
 								"format": "table",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -925,8 +925,8 @@ func TestMySQL(t *testing.T) {
 			Convey("When doing an annotation query with a time column in epoch second format (signed integer) should return ms", func() {
 				dt := time.Date(2018, 3, 14, 21, 20, 6, 0, time.Local)
 
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
@@ -936,12 +936,12 @@ func TestMySQL(t *testing.T) {
 								`, dt.Unix()),
 								"format": "table",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -955,8 +955,8 @@ func TestMySQL(t *testing.T) {
 			Convey("When doing an annotation query with a time column in epoch millisecond format should return ms", func() {
 				dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
 
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
@@ -966,12 +966,12 @@ func TestMySQL(t *testing.T) {
 								`, dt.Unix()*1000),
 								"format": "table",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -983,8 +983,8 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing an annotation query with a time column holding a unsigned integer null value should return nil", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT
@@ -994,12 +994,12 @@ func TestMySQL(t *testing.T) {
 								`,
 								"format": "table",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
@@ -1011,8 +1011,8 @@ func TestMySQL(t *testing.T) {
 			})
 
 			Convey("When doing an annotation query with a time column holding a DATETIME null value should return nil", func() {
-				query := &tsdb.TsdbQuery{
-					Queries: []*tsdb.Query{
+				query := plugins.DataQuery{
+					Queries: []plugins.DataSubQuery{
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT
@@ -1022,12 +1022,12 @@ func TestMySQL(t *testing.T) {
 								`,
 								"format": "table",
 							}),
-							RefId: "A",
+							RefID: "A",
 						},
 					},
 				}
 
-				resp, err := endpoint.Query(context.Background(), nil, query)
+				resp, err := exe.DataQuery(context.Background(), nil, query)
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)

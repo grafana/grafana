@@ -9,9 +9,10 @@ import {
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
   AzureQueryType,
+  AzureMonitorMetricsMetadataResponse,
 } from '../types';
 import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
-import { getBackendSrv, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { getBackendSrv, DataSourceWithBackend, getTemplateSrv, FetchResponse } from '@grafana/runtime';
 
 const defaultDropdownValue = 'select';
 
@@ -224,7 +225,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
-      .then((result: any) => {
+      .then((result) => {
         return filter(result, (t) => {
           for (let i = 0; i < this.supportedMetricNamespaces.length; i++) {
             if (t.value.toLowerCase() === this.supportedMetricNamespaces[i].toLowerCase()) {
@@ -235,7 +236,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
           return false;
         });
       })
-      .then((result: any) => {
+      .then((result) => {
         let shouldHardcodeBlobStorage = false;
         for (let i = 0; i < result.length; i++) {
           if (result[i].value === 'Microsoft.Storage/storageAccounts') {
@@ -340,8 +341,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.apiVersion
     );
 
-    return this.doRequest(url).then((result: any) => {
-      return ResponseParser.parseMetadata(result, metricName);
+    return this.doRequest<AzureMonitorMetricsMetadataResponse>(url).then((result) => {
+      return ResponseParser.parseMetadata(result.data, metricName);
     });
   }
 
@@ -400,15 +401,15 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return field && field.length > 0;
   }
 
-  doRequest(url: string, maxRetries = 1): Promise<any> {
+  doRequest<T = any>(url: string, maxRetries = 1): Promise<FetchResponse<T>> {
     return getBackendSrv()
-      .datasourceRequest({
+      .datasourceRequest<T>({
         url: this.url + url,
         method: 'GET',
       })
       .catch((error: any) => {
         if (maxRetries > 0) {
-          return this.doRequest(url, maxRetries - 1);
+          return this.doRequest<T>(url, maxRetries - 1);
         }
 
         throw error;

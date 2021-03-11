@@ -8,5 +8,4 @@ if ((window as any).public_cdn_path) {
 }
 
 import app from './app';
-app.initEchoSrv();
 app.init();
