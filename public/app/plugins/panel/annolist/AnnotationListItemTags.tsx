@@ -1,4 +1,4 @@
-import React, { FC, MouseEvent } from 'react';
+import React, { FC, MouseEvent, useCallback } from 'react';
 
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
@@ -14,10 +14,13 @@ interface Props {
 
 export const AnnotationListItemTags: FC<Props> = ({ tags, remove, onClick }) => {
   const styles = useStyles(getStyles);
-  const onTagClicked = (e: MouseEvent, tag: string) => {
-    e.stopPropagation();
-    onClick(tag, remove);
-  };
+  const onTagClicked = useCallback(
+    (e: MouseEvent, tag: string) => {
+      e.stopPropagation();
+      onClick(tag, remove);
+    },
+    [remove]
+  );
 
   if (!tags || !tags.length) {
     return null;

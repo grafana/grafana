@@ -7,16 +7,11 @@ import { AnnoOptions } from './types';
 import { backendSrv } from '../../../core/services/backend_srv';
 import userEvent from '@testing-library/user-event';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
-}));
-
-jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
-  getDashboardSrv: () => ({
-    getCurrent: () => ({ id: 1, formatDate: (time: number) => new Date(time).toISOString() }),
-  }),
 }));
 
 const defaultOptions: AnnoOptions = {
@@ -52,6 +47,10 @@ async function setupTestContext({
 
   const getMock = jest.spyOn(backendSrv, 'get');
   getMock.mockResolvedValue(results);
+
+  const dash: any = { id: 1, formatDate: (time: number) => new Date(time).toISOString() };
+  const dashSrv: any = { getCurrent: () => dash };
+  setDashboardSrv(dashSrv);
 
   const props: Props = {
     data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
