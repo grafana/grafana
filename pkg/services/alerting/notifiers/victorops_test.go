@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/validations"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -88,7 +90,7 @@ func TestVictoropsNotifier(t *testing.T) {
 						{Key: "keyOnly"},
 						{Key: "severity", Value: "warning"},
 					},
-				})
+				}, &validations.OSSPluginRequestValidator{})
 				evalContext.IsTestRun = true
 
 				payload, err := victoropsNotifier.buildEventPayload(evalContext)
@@ -136,7 +138,7 @@ func TestVictoropsNotifier(t *testing.T) {
 						{Key: "keyOnly"},
 						{Key: "severity", Value: "warning"},
 					},
-				})
+				}, &validations.OSSPluginRequestValidator{})
 				evalContext.IsTestRun = true
 
 				payload, err := victoropsNotifier.buildEventPayload(evalContext)
