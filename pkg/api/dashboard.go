@@ -121,7 +121,8 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
+	svc := dashboards.NewService(hs.SQLStore, hs.SQLStore, hs.DataService)
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -225,7 +226,8 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		}
 	}
 
-	err := dashboards.NewService(hs.SQLStore, hs.DataService).DeleteDashboard(dash.Id, c.OrgId)
+	svc := dashboards.NewService(hs.SQLStore, hs.SQLStore, hs.DataService)
+	err := svc.DeleteDashboard(dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -261,7 +263,8 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
+	svc := dashboards.NewService(hs.SQLStore, hs.SQLStore, hs.DataService)
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -287,7 +290,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := dashboards.NewService(hs.SQLStore, hs.DataService).SaveDashboard(dashItem, allowUiUpdate)
+	dashboard, err := svc.SaveDashboard(dashItem, allowUiUpdate)
 	if err != nil {
 		return hs.dashboardSaveErrorToApiResponse(err)
 	}

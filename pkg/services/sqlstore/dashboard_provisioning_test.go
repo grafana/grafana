@@ -13,7 +13,7 @@ import (
 
 func TestDashboardProvisioningTest(t *testing.T) {
 	Convey("Testing Dashboard provisioning", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
 
 		folderCmd := &models.SaveDashboardCommand{
 			OrgId:    1,
@@ -104,20 +104,16 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			})
 
 			Convey("Can query for one provisioned dashboard", func() {
-				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: cmd.Result.Id}
-
-				err := GetProvisionedDataByDashboardId(query)
+				data, err := sqlStore.GetProvisionedDataByDashboardID(cmd.Result.Id)
 				So(err, ShouldBeNil)
 
-				So(query.Result, ShouldNotBeNil)
+				So(data, ShouldNotBeNil)
 			})
 
 			Convey("Can query for none provisioned dashboard", func() {
-				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: 3000}
-
-				err := GetProvisionedDataByDashboardId(query)
+				data, err := sqlStore.GetProvisionedDataByDashboardID(3000)
 				So(err, ShouldBeNil)
-				So(query.Result, ShouldBeNil)
+				So(data, ShouldBeNil)
 			})
 
 			Convey("Deleting folder should delete provision meta data", func() {
@@ -128,11 +124,9 @@ func TestDashboardProvisioningTest(t *testing.T) {
 
 				So(DeleteDashboard(deleteCmd), ShouldBeNil)
 
-				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: cmd.Result.Id}
-
-				err = GetProvisionedDataByDashboardId(query)
+				data, err := sqlStore.GetProvisionedDataByDashboardID(cmd.Result.Id)
 				So(err, ShouldBeNil)
-				So(query.Result, ShouldBeNil)
+				So(data, ShouldBeNil)
 			})
 
 			Convey("UnprovisionDashboard should delete provisioning metadata", func() {
@@ -142,11 +136,9 @@ func TestDashboardProvisioningTest(t *testing.T) {
 
 				So(UnprovisionDashboard(unprovisionCmd), ShouldBeNil)
 
-				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: dashId}
-
-				err = GetProvisionedDataByDashboardId(query)
+				data, err := sqlStore.GetProvisionedDataByDashboardID(dashId)
 				So(err, ShouldBeNil)
-				So(query.Result, ShouldBeNil)
+				So(data, ShouldBeNil)
 			})
 		})
 	})

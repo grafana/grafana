@@ -60,7 +60,7 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 		User:      user,
 	}
 
-	savedDash, err := dashboards.NewService(nil, requestHandler).ImportDashboard(dto)
+	savedDash, err := dashboards.NewService(pm.SQLStore, pm.SQLStore, requestHandler).ImportDashboard(dto)
 	if err != nil {
 		return plugins.PluginDashboardInfoDTO{}, err
 	}

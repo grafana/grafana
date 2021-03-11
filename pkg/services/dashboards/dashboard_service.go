@@ -19,14 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-// DashboardService service for operating on dashboards
-type DashboardService interface {
-	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
-	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
-	DeleteDashboard(dashboardId int64, orgId int64) error
-}
-
-// DashboardProvisioningService service for operating on provisioned dashboards
+// DashboardProvisioningService is a service for operating on provisioned dashboards.
 type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
@@ -36,19 +29,23 @@ type DashboardProvisioningService interface {
 	DeleteProvisionedDashboard(dashboardId int64, orgId int64) error
 }
 
-// NewService factory for creating a new dashboard service
-var NewService = func(validator dashboards.Validator, reqHandler plugins.DataRequestHandler) DashboardService {
-	return &dashboardServiceImpl{
-		dashboardValidator: validator,
-		log:                log.New("dashboard-service"),
-		reqHandler:         reqHandler,
-	}
+// DashboardService is a service for operating on dashboards.
+type DashboardService interface {
+	DashboardProvisioningService
+
+	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
+	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
+	DeleteDashboard(dashboardId int64, orgId int64) error
 }
 
-// NewProvisioningService factory for creating a new dashboard provisioning service
-var NewProvisioningService = func() DashboardProvisioningService {
+// NewService is a factory for creating a new dashboard service.
+var NewService = func(validator dashboards.Validator, getter dashboards.ProvisionedDashboardGetter,
+	reqHandler plugins.DataRequestHandler) DashboardService {
 	return &dashboardServiceImpl{
-		log: log.New("dashboard-provisioning-service"),
+		dashboardValidator:         validator,
+		provisionedDashboardGetter: getter,
+		log:                        log.New("dashboard-service"),
+		reqHandler:                 reqHandler,
 	}
 }
 
@@ -62,11 +59,12 @@ type SaveDashboardDTO struct {
 }
 
 type dashboardServiceImpl struct {
-	dashboardValidator dashboards.Validator
-	orgId              int64
-	user               *models.SignedInUser
-	log                log.Logger
-	reqHandler         plugins.DataRequestHandler
+	provisionedDashboardGetter dashboards.ProvisionedDashboardGetter
+	dashboardValidator         dashboards.Validator
+	orgId                      int64
+	user                       *models.SignedInUser
+	log                        log.Logger
+	reqHandler                 plugins.DataRequestHandler
 }
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
@@ -79,14 +77,16 @@ func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*mod
 	return cmd.Result, nil
 }
 
-func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(dashboardId int64) (*models.DashboardProvisioning, error) {
-	cmd := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: dashboardId}
-	err := bus.Dispatch(cmd)
-	if err != nil {
-		return nil, err
-	}
+// GetProvisionedData gets provisioned dashboard data.
+//
+// Stubbable by tests.
+var GetProvisionedData = func(getter dashboards.ProvisionedDashboardGetter,
+	dashboardID int64) (*models.DashboardProvisioning, error) {
+	return getter.GetProvisionedDataByDashboardID(dashboardID)
+}
 
-	return cmd.Result, nil
+func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
+	return GetProvisionedData(dr.provisionedDashboardGetter, dashboardID)
 }
 
 func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO, shouldValidateAlerts bool,
@@ -209,7 +209,10 @@ func validateDashboardRefreshInterval(dash *models.Dashboard) error {
 	return nil
 }
 
-var updateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+// UpdateAlerting updates alerting.
+//
+// Stubbable by tests.
+var UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 	extractor := alerting.NewDashAlertExtractor(dashboard, orgID, user)
 	alerts, err := extractor.GetAlerts()
 	if err != nil {
@@ -257,7 +260,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO,
 	}
 
 	// alerts
-	err = updateAlerting(dto.OrgId, cmd.Result, dto.User)
+	err = UpdateAlerting(dto.OrgId, cmd.Result, dto.User)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +283,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 		return nil, err
 	}
 
-	err = updateAlerting(dto.OrgId, cmd.Result, dto.User)
+	err = UpdateAlerting(dto.OrgId, cmd.Result, dto.User)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +308,7 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO, allowUiUpda
 		return nil, fmt.Errorf("saving dashboard failed: %w", err)
 	}
 
-	if err := updateAlerting(dto.OrgId, cmd.Result, dto.User); err != nil {
+	if err := UpdateAlerting(dto.OrgId, cmd.Result, dto.User); err != nil {
 		return nil, err
 	}
 
@@ -368,9 +371,12 @@ func (dr *dashboardServiceImpl) UnprovisionDashboard(dashboardId int64) error {
 }
 
 type FakeDashboardService struct {
+	DashboardService
+
 	SaveDashboardResult *models.Dashboard
 	SaveDashboardError  error
 	SavedDashboards     []*SaveDashboardDTO
+	ProvisionedDashData *models.DashboardProvisioning
 }
 
 func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
@@ -397,8 +403,12 @@ func (s *FakeDashboardService) DeleteDashboard(dashboardId int64, orgId int64) e
 	return nil
 }
 
+func (s *FakeDashboardService) GetProvisionedDashboardDataByDashboardID(id int64) (*models.DashboardProvisioning, error) {
+	return s.ProvisionedDashData, nil
+}
+
 func MockDashboardService(mock *FakeDashboardService) {
-	NewService = func(dashboards.Validator, plugins.DataRequestHandler) DashboardService {
+	NewService = func(dashboards.Validator, dashboards.ProvisionedDashboardGetter, plugins.DataRequestHandler) DashboardService {
 		return mock
 	}
 }

@@ -22,18 +22,13 @@ func TestIntegratedDashboardService(t *testing.T) {
 		const testOrgID int64 = 1
 
 		FocusConvey("Given saved folders and dashboards in organization A", func() {
-			origUpdateAlerting := updateAlerting
+			origUpdateAlerting := UpdateAlerting
 			t.Cleanup(func() {
-				updateAlerting = origUpdateAlerting
+				UpdateAlerting = origUpdateAlerting
 			})
-			updateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+			UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 				return nil
 			}
-
-			bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
-				cmd.Result = nil
-				return nil
-			})
 
 			savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
 			savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.Id, sqlStore)
@@ -967,7 +962,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 	t.Helper()
 
 	dto := toSaveDashboardDto(cmd)
-	res, err := NewService(sqlStore, nil).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore, sqlStore, nil).SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -975,7 +970,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 
 func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
-	_, err := NewService(sqlStore, nil).SaveDashboard(&dto, false)
+	_, err := NewService(sqlStore, sqlStore, nil).SaveDashboard(&dto, false)
 	return err
 }
 
@@ -1001,7 +996,7 @@ func saveTestDashboard(t *testing.T, title string, orgId int64, folderId int64, 
 		},
 	}
 
-	res, err := NewService(sqlStore, nil).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore, sqlStore, nil).SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -1028,7 +1023,7 @@ func saveTestFolder(t *testing.T, title string, orgId int64, sqlStore *sqlstore.
 		},
 	}
 
-	res, err := NewService(sqlStore, nil).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore, sqlStore, nil).SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res

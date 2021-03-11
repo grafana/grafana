@@ -753,15 +753,15 @@ func createDashboard(t *testing.T, user models.SignedInUser, title string, folde
 		cmd.Result = nil
 		return nil
 	})
-	origUpdateAlerting := updateAlerting
+	origUpdateAlerting := dashboards.UpdateAlerting
 	t.Cleanup(func() {
-		updateAlerting = origUpdateAlerting
+		dashboards.UpdateAlerting = origUpdateAlerting
 	})
-	updateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+	dashboards.UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 		return nil
 	}
 
-	dashboard, err := dashboards.NewService(&fakeDashboardValidator{}, nil).SaveDashboard(dashItem, true)
+	dashboard, err := dashboards.NewService(&fakeDashboardValidator{}, nil, nil).SaveDashboard(dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard

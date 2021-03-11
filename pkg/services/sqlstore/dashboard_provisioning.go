@@ -10,7 +10,6 @@ import (
 func init() {
 	bus.AddHandler("sql", GetProvisionedDashboardDataQuery)
 	bus.AddHandler("sql", SaveProvisionedDashboard)
-	bus.AddHandler("sql", GetProvisionedDataByDashboardId)
 	bus.AddHandler("sql", UnprovisionDashboard)
 	bus.AddHandler("sql", DeleteOrphanedProvisionedDashboards)
 }
@@ -22,17 +21,16 @@ type DashboardExtras struct {
 	Value       string
 }
 
-func GetProvisionedDataByDashboardId(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
-	result := &models.DashboardProvisioning{}
-
-	exist, err := x.Where("dashboard_id = ?", cmd.DashboardId).Get(result)
+func (ss *SQLStore) GetProvisionedDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
+	var data models.DashboardProvisioning
+	exists, err := x.Where("dashboard_id = ?", dashboardID).Get(&data)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if exist {
-		cmd.Result = result
+	if exists {
+		return &data, nil
 	}
-	return nil
+	return nil, nil
 }
 
 func SaveProvisionedDashboard(cmd *models.SaveProvisionedDashboardCommand) error {

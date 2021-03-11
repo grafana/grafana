@@ -85,11 +85,11 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			origUpdateAlerting := updateAlerting
+			origUpdateAlerting := UpdateAlerting
 			t.Cleanup(func() {
-				updateAlerting = origUpdateAlerting
+				UpdateAlerting = origUpdateAlerting
 			})
-			updateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+			UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 				return nil
 			}
 

@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -27,7 +29,7 @@ const (
 	foldersFromFilesStructure = "testdata/test-dashboards/folders-from-files-structure"
 )
 
-var fakeService *fakeDashboardProvisioningService
+var fakeService *fakeDashboardService
 
 func TestCreatingNewDashboardFileReader(t *testing.T) {
 	Convey("creating new dashboard file reader", t, func() {
@@ -41,14 +43,14 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 
 		Convey("using path parameter", func() {
 			cfg.Options["path"] = defaultDashboards
-			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil, nil, nil)
 			So(err, ShouldBeNil)
 			So(reader.Path, ShouldNotEqual, "")
 		})
 
 		Convey("using folder as options", func() {
 			cfg.Options["folder"] = defaultDashboards
-			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil, nil, nil)
 			So(err, ShouldBeNil)
 			So(reader.Path, ShouldNotEqual, "")
 		})
@@ -56,7 +58,7 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 		Convey("using foldersFromFilesStructure as options", func() {
 			cfg.Options["path"] = foldersFromFilesStructure
 			cfg.Options["foldersFromFilesStructure"] = true
-			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil, nil, nil)
 			So(err, ShouldBeNil)
 			So(reader.Path, ShouldNotEqual, "")
 		})
@@ -68,7 +70,7 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 			}
 
 			cfg.Options["folder"] = fullPath
-			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil, nil, nil)
 			So(err, ShouldBeNil)
 
 			So(reader.Path, ShouldEqual, fullPath)
@@ -77,7 +79,7 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 
 		Convey("using relative path", func() {
 			cfg.Options["folder"] = defaultDashboards
-			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil, nil, nil)
 			So(err, ShouldBeNil)
 
 			resolvedPath := reader.resolvedPath()
@@ -89,7 +91,7 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 func TestDashboardFileReader(t *testing.T) {
 	Convey("Dashboard file reader", t, func() {
 		bus.ClearBusHandlers()
-		origNewDashboardProvisioningService := dashboards.NewProvisioningService
+		origNewDashboardService := dashboards.NewService
 		fakeService = mockDashboardProvisioningService()
 
 		bus.AddHandler("test", mockGetDashboardQuery)
@@ -108,7 +110,7 @@ func TestDashboardFileReader(t *testing.T) {
 				cfg.Options["path"] = defaultDashboards
 				cfg.Folder = "Team A"
 
-				reader, err := NewDashboardFileReader(cfg, logger)
+				reader, err := NewDashboardFileReader(cfg, logger, nil, nil, nil)
 				So(err, ShouldBeNil)
 
 				err = reader.walkDisk()
@@ -139,7 +141,7 @@ func TestDashboardFileReader(t *testing.T) {
 					Slug:    "grafana",
 				})
 
-				reader, err := NewDashboardFileReader(cfg, logger)
+				reader, err := NewDashboardFileReader(cfg, logger, nil, nil, nil)
 				So(err, ShouldBeNil)
 
 				err = reader.walkDisk()
@@ -151,7 +153,7 @@ func TestDashboardFileReader(t *testing.T) {
 			Convey("Overrides id from dashboard.json files", func() {
 				cfg.Options["path"] = containingID
 
-				reader, err := NewDashboardFileReader(cfg, logger)
+				reader, err := NewDashboardFileReader(cfg, logger, nil, nil, nil)
 				So(err, ShouldBeNil)
 
 				err = reader.walkDisk()
@@ -164,7 +166,7 @@ func TestDashboardFileReader(t *testing.T) {
 				cfg.Options["path"] = foldersFromFilesStructure
 				cfg.Options["foldersFromFilesStructure"] = true
 
-				reader, err := NewDashboardFileReader(cfg, logger)
+				reader, err := NewDashboardFileReader(cfg, logger, nil, nil, nil)
 				So(err, ShouldBeNil)
 
 				err = reader.walkDisk()
@@ -208,14 +210,14 @@ func TestDashboardFileReader(t *testing.T) {
 					Folder: "",
 				}
 
-				_, err := NewDashboardFileReader(cfg, logger)
+				_, err := NewDashboardFileReader(cfg, logger, nil, nil, nil)
 				So(err, ShouldNotBeNil)
 			})
 
 			Convey("Broken dashboards should not cause error", func() {
 				cfg.Options["path"] = brokenDashboards
 
-				_, err := NewDashboardFileReader(cfg, logger)
+				_, err := NewDashboardFileReader(cfg, logger, nil, nil, nil)
 				So(err, ShouldBeNil)
 			})
 
@@ -223,13 +225,13 @@ func TestDashboardFileReader(t *testing.T) {
 				cfg1 := &config{Name: "1", Type: "file", OrgID: 1, Folder: "f1", Options: map[string]interface{}{"path": containingID}}
 				cfg2 := &config{Name: "2", Type: "file", OrgID: 1, Folder: "f2", Options: map[string]interface{}{"path": containingID}}
 
-				reader1, err := NewDashboardFileReader(cfg1, logger)
+				reader1, err := NewDashboardFileReader(cfg1, logger, nil, nil, nil)
 				So(err, ShouldBeNil)
 
 				err = reader1.walkDisk()
 				So(err, ShouldBeNil)
 
-				reader2, err := NewDashboardFileReader(cfg2, logger)
+				reader2, err := NewDashboardFileReader(cfg2, logger, nil, nil, nil)
 				So(err, ShouldBeNil)
 
 				err = reader2.walkDisk()
@@ -333,7 +335,7 @@ func TestDashboardFileReader(t *testing.T) {
 			Convey("Missing dashboard should be unprovisioned if DisableDeletion = true", func() {
 				cfg.DisableDeletion = true
 
-				reader, err := NewDashboardFileReader(cfg, logger)
+				reader, err := NewDashboardFileReader(cfg, logger, nil, nil, nil)
 				So(err, ShouldBeNil)
 
 				err = reader.walkDisk()
@@ -344,7 +346,7 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 
 			Convey("Missing dashboard should be deleted if DisableDeletion = false", func() {
-				reader, err := NewDashboardFileReader(cfg, logger)
+				reader, err := NewDashboardFileReader(cfg, logger, nil, nil, nil)
 				So(err, ShouldBeNil)
 
 				err = reader.walkDisk()
@@ -358,7 +360,7 @@ func TestDashboardFileReader(t *testing.T) {
 		})
 
 		Reset(func() {
-			dashboards.NewProvisioningService = origNewDashboardProvisioningService
+			dashboards.NewService = origNewDashboardService
 		})
 	})
 }
@@ -392,23 +394,26 @@ func (ffi FakeFileInfo) Sys() interface{} {
 	return nil
 }
 
-func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
-	mock := fakeDashboardProvisioningService{
+func mockDashboardProvisioningService() *fakeDashboardService {
+	mock := fakeDashboardService{
 		provisioned: map[string][]*models.DashboardProvisioning{},
 	}
-	dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
+	dashboards.NewService = func(dboards.Validator, dboards.ProvisionedDashboardGetter,
+		plugins.DataRequestHandler) dashboards.DashboardService {
 		return &mock
 	}
 	return &mock
 }
 
-type fakeDashboardProvisioningService struct {
+type fakeDashboardService struct {
+	dashboards.DashboardService
+
 	inserted     []*dashboards.SaveDashboardDTO
 	provisioned  map[string][]*models.DashboardProvisioning
 	getDashboard []*models.Dashboard
 }
 
-func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+func (s *fakeDashboardService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
 	if _, ok := s.provisioned[name]; !ok {
 		s.provisioned[name] = []*models.DashboardProvisioning{}
 	}
@@ -416,7 +421,8 @@ func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name stri
 	return s.provisioned[name], nil
 }
 
-func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+func (s *fakeDashboardService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO,
+	provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	// Copy the structs as we need to change them but do not want to alter outside world.
 	var copyProvisioning = &models.DashboardProvisioning{}
 	*copyProvisioning = *provisioning
@@ -453,12 +459,12 @@ func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboa
 	return dto.Dashboard, nil
 }
 
-func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
+func (s *fakeDashboardService) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
 	s.inserted = append(s.inserted, dto)
 	return dto.Dashboard, nil
 }
 
-func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardID int64) error {
+func (s *fakeDashboardService) UnprovisionDashboard(dashboardID int64) error {
 	for key, val := range s.provisioned {
 		for index, dashboard := range val {
 			if dashboard.DashboardId == dashboardID {
@@ -469,7 +475,7 @@ func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardID int6
 	return nil
 }
 
-func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardID int64, orgID int64) error {
+func (s *fakeDashboardService) DeleteProvisionedDashboard(dashboardID int64, orgID int64) error {
 	err := s.UnprovisionDashboard(dashboardID)
 	if err != nil {
 		return err
@@ -483,7 +489,7 @@ func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardI
 	return nil
 }
 
-func (s *fakeDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
+func (s *fakeDashboardService) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
 	return nil, nil
 }
 
