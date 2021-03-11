@@ -28,7 +28,7 @@ Use the following options to refine your visualization:
 
 Choose how much information to show.
 
-- **Calculate -** Reduces a series to a single value to be displayed.
+- **Calculate -** Reduces each value to a single value per series.
 - **All values -** Displays every value from a single series.
 
 ### Calculation
