@@ -1,0 +1,91 @@
++++
+title = "Pie chart panel"
+keywords = ["grafana", "pie chart"]
+weight = 850
++++
+# Pie chart v2 panel
+> **Note:** This documentation refers to a beta feature.
+
+The pie chart compares series from one or more queries.
+
+The pie chart displays reduced series or values in a series as they relate to each other in the form of slices of a pie. The arc length, area and central angle of a slice are all proportional to the slices value, as it relates to the sum of all values. This type of chart is best used when you want a quick comparison of a small set of values in an aesthetically pleasing form.
+
+![Pie chart panel](/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
+
+## Data and field options
+
+Time series visualizations allow you to apply:
+
+- [Data transformations]({{< relref "../../transformations/_index.md" >}})
+- [Field options and overrides]({{< relref "../../field-options/_index.md" >}})
+- [Thresholds]({{< relref "../../thresholds.md" >}})
+
+## Display options
+
+Use the following options to refine your visualization:
+
+### Show
+
+Choose how much information to show.
+**Calculate -** Reduces a series to a single value to be displayed.
+**All values -** Displays every value from a single series.
+
+### Calculation
+
+Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to the [Calculation list]({{< relref "../calculations-list.md" >}}).
+
+### Limit
+
+When displaying every value from a single series, this limits the number of values displayed.
+### Fields
+
+Select which field or fields to display in the visualization.
+
+**Numeric fields -** All fields with numerical values.
+**All fields -** All fields that are not removed by transformations.
+**Time -** All fields with time values.
+**<field name> -** Each field name is available in the list.
+
+### Pie chart type
+
+Select the pie chart display style.
+
+#### Pie
+
+#### Donut
+
+
+### Labels
+
+Select labels to display on the pie chart. You can select more than one.
+
+**Name -** The series or field name.
+**Percent -** The percentage of the whole.
+**Value -** The raw numerical value.
+
+Labels are displayed in white over the body of the chart. You might need to select darker chart colors to make them more visible. Long names or numbers might be clipped.
+
+The example below shows a pie chart with **Name** and **Percent** labels displayed.
+
+
+
+### Legend mode
+
+Use these settings to refine how the legend appears in your visualization.
+
+- **List -** Displays the legend as a list. This is a default display mode of the legend.
+- **Table -** Displays the legend as a table.
+- **Hidden -** Hides the legend.
+
+### Legend placement
+
+Choose where to display the legend.
+
+- **Bottom -** Below the graph.
+- **Right -** To the right of the graph.
+
+### Legend values
+
+Select values to display in the legend. You can select more than one.
+**Percent -** The percentage of the whole.
+**Value -** The raw numerical value.
