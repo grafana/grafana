@@ -5,11 +5,11 @@ weight = 50
 
 # Legend
 
-Use the legend adjust how a visualization displays series.
+Use the legend to adjust how a visualization displays series. This legend functionality only applies to a few panels now, but it will eventually be common to all visualizations.
 
-This topic applies to the following visualizations:
+This topic currently applies to the following visualizations:
 
-- [Pie chart v2 panel]({{< relref "pie-chart-panel.md">}})
+- [Pie chart panel]({{< relref "pie-chart-panel.md">}})
 - [Time series panel]({{< relref "time-series/_index.md" >}})
 
 ## Toggle series
