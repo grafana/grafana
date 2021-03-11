@@ -72,7 +72,6 @@ func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 		return
 	}
 	proxy.HandleRequest()
-
 }
 
 // ensureProxyPathTrailingSlash Check for a trailing slash in original path and makes
