@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -38,6 +40,14 @@ type API struct {
 
 // RegisterAPIEndpoints registers API handlers
 func (api *API) RegisterAPIEndpoints() {
+	logger := log.New("ngalert.api")
+	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiBase{log: logger})
+	api.RegisterPermissionsApiEndpoints(PermissionsApiBase{log: logger})
+	api.RegisterPrometheusApiEndpoints(PrometheusApiBase{log: logger})
+	api.RegisterRulerApiEndpoints(RulerApiMock{log: logger})
+	api.RegisterTestingApiEndpoints(TestingApiBase{log: logger})
+
+	// Legacy routes; they will be removed in v8
 	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 		alertDefinitions.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertDefinitions))
 		alertDefinitions.Get("/eval/:alertDefinitionUID", middleware.ReqSignedIn, api.validateOrgAlertDefinition, routing.Wrap(api.alertDefinitionEvalEndpoint))
