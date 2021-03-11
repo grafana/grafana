@@ -1,17 +1,17 @@
 import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
 
-export enum GELQueryType {
+export enum ExpressionQueryType {
   math = 'math',
   reduce = 'reduce',
   resample = 'resample',
   classic = 'classic',
 }
 
-export const gelTypes: Array<SelectableValue<GELQueryType>> = [
-  { value: GELQueryType.math, label: 'Math' },
-  { value: GELQueryType.reduce, label: 'Reduce' },
-  { value: GELQueryType.resample, label: 'Resample' },
-  { value: GELQueryType.classic, label: 'Classic condition' },
+export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
+  { value: ExpressionQueryType.math, label: 'Math' },
+  { value: ExpressionQueryType.reduce, label: 'Reduce' },
+  { value: ExpressionQueryType.resample, label: 'Resample' },
+  { value: ExpressionQueryType.classic, label: 'Classic condition' },
 ];
 
 export const reducerTypes: Array<SelectableValue<string>> = [
@@ -40,7 +40,7 @@ export const upsamplingTypes: Array<SelectableValue<string>> = [
  * want to split this up by type as the complexity increases
  */
 export interface ExpressionQuery extends DataQuery {
-  type: GELQueryType;
+  type: ExpressionQueryType;
   reducer?: string;
   expression?: string;
   window?: string;

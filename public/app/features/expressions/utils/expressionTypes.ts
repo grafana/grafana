@@ -1,13 +1,13 @@
 import { ReducerID } from '@grafana/data';
-import { ExpressionQuery, GELQueryType } from '../types';
+import { ExpressionQuery, ExpressionQueryType } from '../types';
 
 export const getDefaults = (query: ExpressionQuery) => {
-  if (query.type === GELQueryType.reduce) {
+  if (query.type === ExpressionQueryType.reduce) {
     if (!query.reducer) {
       query.reducer = ReducerID.mean;
     }
     query.expression = undefined;
-  } else if (query.type === GELQueryType.resample) {
+  } else if (query.type === ExpressionQueryType.resample) {
     if (!query.downsampler) {
       query.downsampler = ReducerID.mean;
     }
