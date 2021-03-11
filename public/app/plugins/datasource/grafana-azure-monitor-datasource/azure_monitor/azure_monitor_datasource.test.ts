@@ -856,10 +856,10 @@ describe('AzureMonitorDatasource', () => {
           'default',
           'UsedCapacity'
         )
-        .then((results: any) => {
+        .then((results) => {
           expect(results.primaryAggType).toEqual('Total');
           expect(results.supportedAggTypes.length).toEqual(6);
-          expect(results.supportedTimeGrains.length).toEqual(4);
+          expect(results.supportedTimeGrains.length).toEqual(5); // 4 time grains from the API + auto
         });
     });
   });
@@ -934,15 +934,15 @@ describe('AzureMonitorDatasource', () => {
           expect(results.dimensions).toMatchInlineSnapshot(`
             Array [
               Object {
-                "text": "Response type",
+                "label": "Response type",
                 "value": "ResponseType",
               },
               Object {
-                "text": "Geo type",
+                "label": "Geo type",
                 "value": "GeoType",
               },
               Object {
-                "text": "API name",
+                "label": "API name",
                 "value": "ApiName",
               },
             ]
