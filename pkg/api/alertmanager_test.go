@@ -58,6 +58,7 @@ func Test_ApiReceiver_Marshaling(t *testing.T) {
 			if tc.err {
 				require.Error(t, err)
 			} else {
+				require.Nil(t, err)
 				require.Equal(t, tc.input, out)
 			}
 		})
@@ -200,6 +201,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 			if tc.err {
 				require.Error(t, err)
 			} else {
+				require.Nil(t, err)
 				require.Equal(t, tc.input, out)
 			}
 		})

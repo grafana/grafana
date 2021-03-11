@@ -227,6 +227,19 @@ func (c *ApiAlertingConfig) validate() error {
 	return nil
 }
 
+// Type requires validate has been called and just checks the first receiver type
+func (c *ApiAlertingConfig) Type() (backend Backend) {
+	for _, r := range c.Receivers {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			return GrafanaBackend
+		case AlertmanagerReceiverType:
+			return AlertmanagerBackend
+		}
+	}
+	return
+}
+
 // AllReceivers will recursively walk a routing tree and return a list of all the
 // referenced receiver names.
 func AllReceivers(route *config.Route) (res []string) {
