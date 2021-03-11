@@ -69,7 +69,7 @@ Select labels to display on the pie chart. You can select more than one.
 
 Labels are displayed in white over the body of the chart. You might need to select darker chart colors to make them more visible. Long names or numbers might be clipped.
 
-The example below shows a pie chart with **Name** and **Percent** labels displayed.
+The following example shows a pie chart with **Name** and **Percent** labels displayed.
 
 ![Pie chart labels](/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
