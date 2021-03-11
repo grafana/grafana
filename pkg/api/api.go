@@ -27,3 +27,11 @@ type ValidationError struct {
 
 // swagger:model
 type Ack struct{}
+
+type Backend int
+
+const (
+	GrafanaBackend Backend = iota
+	AlertmanagerBackend
+	LoTexRulerBackend
+)

@@ -1,6 +1,9 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/common/model"
 )
@@ -97,6 +100,45 @@ type RuleGroupConfig struct {
 	Rules    []ExtendedRuleNode `yaml:"rules" json:"rules"`
 }
 
+func (c *RuleGroupConfig) UnmarshalJSON(b []byte) error {
+	type plain RuleGroupConfig
+	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
+		return err
+	}
+
+	return c.validate()
+}
+
+// Type requires validate has been called and just checks the first rule type
+func (c *RuleGroupConfig) Type() (backend Backend) {
+	for _, rule := range c.Rules {
+		switch rule.Type() {
+		case GrafanaManagedRule:
+			return GrafanaBackend
+		case LoTexManagedRule:
+			return LoTexRulerBackend
+		}
+	}
+	return
+}
+
+func (c *RuleGroupConfig) validate() error {
+	var hasGrafRules, hasLotexRules bool
+	for _, rule := range c.Rules {
+		switch rule.Type() {
+		case GrafanaManagedRule:
+			hasGrafRules = true
+		case LoTexManagedRule:
+			hasLotexRules = true
+		}
+	}
+
+	if hasGrafRules && hasLotexRules {
+		return fmt.Errorf("cannot mix Grafana & Prometheus style rules")
+	}
+	return nil
+}
+
 type ApiRuleNode struct {
 	Record      string            `yaml:"record,omitempty" json:"record,omitempty"`
 	Alert       string            `yaml:"alert,omitempty" json:"alert,omitempty"`
@@ -106,10 +148,40 @@ type ApiRuleNode struct {
 	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 }
 
+type RuleType int
+
+const (
+	GrafanaManagedRule RuleType = iota
+	LoTexManagedRule
+)
+
 type ExtendedRuleNode struct {
-	ApiRuleNode
+	*ApiRuleNode
 	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
-	GrafanaManagedAlert ExtendedUpsertAlertDefinitionCommand `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
+	GrafanaManagedAlert *ExtendedUpsertAlertDefinitionCommand `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
+}
+
+func (n *ExtendedRuleNode) Type() RuleType {
+	if n.ApiRuleNode != nil {
+		return LoTexManagedRule
+	}
+	return GrafanaManagedRule
+}
+
+func (n *ExtendedRuleNode) UnmarshalJSON(b []byte) error {
+	type plain ExtendedRuleNode
+	if err := json.Unmarshal(b, (*plain)(n)); err != nil {
+		return err
+	}
+
+	if n.ApiRuleNode != nil && n.GrafanaManagedAlert != nil {
+		return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
+	}
+	if n.ApiRuleNode == nil && n.GrafanaManagedAlert == nil {
+		return fmt.Errorf("cannot have empty rule")
+	}
+
+	return nil
 }
 
 // swagger:enum NoDataState
