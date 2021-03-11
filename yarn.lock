@@ -3462,6 +3462,22 @@
     prettier "2.2.1"
     typescript "4.1.3"
 
+"@grafana/eslint-config@2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.3.0.tgz#2d053d488854e2fcbaa1ebc0ed4c0258fc014aa4"
+  integrity sha512-QX9QbgT6nehLU91HncdE0bXEaGLmB7tSyxyj60+lQYWPygaoFUCsQWKBYxBRsyTYQahQGqkfS+y3scvkCLDCcw==
+  dependencies:
+    "@typescript-eslint/eslint-plugin" "4.15.0"
+    "@typescript-eslint/parser" "4.15.0"
+    eslint "7.21.0"
+    eslint-config-prettier "7.2.0"
+    eslint-plugin-jsdoc "31.6.1"
+    eslint-plugin-prettier "3.3.1"
+    eslint-plugin-react "7.22.0"
+    eslint-plugin-react-hooks "4.2.0"
+    prettier "2.2.1"
+    typescript "4.1.3"
+
 "@grafana/slate-react@0.22.9-grafana":
   version "0.22.9-grafana"
   resolved "https://registry.yarnpkg.com/@grafana/slate-react/-/slate-react-0.22.9-grafana.tgz#07f35f0ffc018f616b9f82fa6e5ba65fae75c6a0"
