@@ -91,8 +91,8 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
-		var getESDatasSourcesQuery *models.GetDataSourcesQuery
-		uss.Bus.AddHandler(func(query *models.GetDataSourcesQuery) error {
+		var getESDatasSourcesQuery *models.GetDataSourcesByTypeQuery
+		uss.Bus.AddHandler(func(query *models.GetDataSourcesByTypeQuery) error {
 			query.Result = []*models.DataSource{
 				{
 					JsonData: simplejson.NewFromAny(map[string]interface{}{
@@ -317,7 +317,7 @@ func TestMetrics(t *testing.T) {
 
 			assert.Equal(t, 2, metrics.Get("stats.ds."+models.DS_ES+".v2.count").MustInt())
 			assert.Equal(t, 1, metrics.Get("stats.ds."+models.DS_ES+".v70.count").MustInt())
-			
+
 			assert.Equal(t, 11+12, metrics.Get("stats.ds.other.count").MustInt())
 
 			assert.Equal(t, 1, metrics.Get("stats.ds_access."+models.DS_ES+".direct.count").MustInt())
@@ -450,7 +450,7 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
-		uss.Bus.AddHandler(func(query *models.GetDataSourcesQuery) error {
+		uss.Bus.AddHandler(func(query *models.GetDataSourcesByTypeQuery) error {
 			query.Result = []*models.DataSource{}
 			return nil
 		})

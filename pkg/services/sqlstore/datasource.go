@@ -18,6 +18,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetDataSources)
+	bus.AddHandler("sql", GetDataSourcesByType)
 	bus.AddHandler("sql", GetDataSource)
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSource)
@@ -66,15 +67,20 @@ func GetDataSource(query *models.GetDataSourceQuery) error {
 
 func GetDataSources(query *models.GetDataSourcesQuery) error {
 	var sess *xorm.Session
-	sess = x.Asc("name")
-
-	if query.OrgId != 0 {
-		sess = sess.Where("org_id=?", query.OrgId)
+	if query.DataSourceLimit <= 0 {
+		sess = x.Where("org_id=?", query.OrgId).Asc("name")
+	} else {
+		sess = x.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
 	}
 
-	if query.DataSourceLimit > 0 {
-		sess = sess.Limit(query.DataSourceLimit, 0)
-	}
+	query.Result = make([]*models.DataSource, 0)
+	return sess.Find(&query.Result)
+}
+
+// GetDataSourcesByType returns all datasources for a given type
+func GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) error {
+	var sess *xorm.Session
+	sess = x.Asc("id")
 
 	if query.Type != "" {
 		sess = sess.Where("type=?", query.Type)

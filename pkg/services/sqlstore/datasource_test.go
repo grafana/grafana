@@ -287,7 +287,9 @@ func TestDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, numberOfDatasource, len(query.Result))
 		})
+	})
 
+	t.Run("GetDataSourcesByType", func(t *testing.T) {
 		t.Run("Only returns datasources of specified type", func(t *testing.T) {
 			InitTestDB(t)
 
@@ -313,9 +315,9 @@ func TestDataAccess(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			query := models.GetDataSourcesQuery{Type: models.DS_ES}
+			query := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
 
-			err = GetDataSources(&query)
+			err = GetDataSourcesByType(&query)
 
 			require.NoError(t, err)
 			require.Equal(t, 1, len(query.Result))
@@ -346,9 +348,9 @@ func TestDataAccess(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			query := models.GetDataSourcesQuery{}
+			query := models.GetDataSourcesByTypeQuery{}
 
-			err = GetDataSources(&query)
+			err = GetDataSourcesByType(&query)
 
 			require.NoError(t, err)
 			require.Equal(t, 2, len(query.Result))

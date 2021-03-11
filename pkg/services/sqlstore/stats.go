@@ -12,7 +12,6 @@ import (
 func init() {
 	bus.AddHandler("sql", GetSystemStats)
 	bus.AddHandler("sql", GetDataSourceStats)
-	bus.AddHandler("sql", GetDataSources)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
 	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
