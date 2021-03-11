@@ -16,6 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+// DashboardService is a service for operating on dashboards.
+type DashboardService interface {
+	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
+	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
+	DeleteDashboard(dashboardId int64, orgId int64) error
+}
+
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
 type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
@@ -26,21 +33,17 @@ type DashboardProvisioningService interface {
 	DeleteProvisionedDashboard(dashboardId int64, orgId int64) error
 }
 
-// DashboardService is a service for operating on dashboards.
-type DashboardService interface {
-	DashboardProvisioningService
-
-	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
-	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
-	DeleteDashboard(dashboardId int64, orgId int64) error
-}
-
-// NewService factory for creating a new dashboard service
+// NewService is a factory for creating a new dashboard service.
 var NewService = func(reqHandler tsdbifaces.RequestHandler) DashboardService {
 	return &dashboardServiceImpl{
 		log:        log.New("dashboard-service"),
 		reqHandler: reqHandler,
 	}
+}
+
+// NewProvisioningService is a factory for creating a new dashboard provisioning service.
+var NewProvisioningService = func(reqHandler tsdbifaces.RequestHandler) DashboardProvisioningService {
+	return NewService(reqHandler).(*dashboardServiceImpl)
 }
 
 type SaveDashboardDTO struct {
@@ -359,7 +362,6 @@ type FakeDashboardService struct {
 	SaveDashboardResult *models.Dashboard
 	SaveDashboardError  error
 	SavedDashboards     []*SaveDashboardDTO
-	ProvisionedDashData *models.DashboardProvisioning
 }
 
 func (s *FakeDashboardService) SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
@@ -384,10 +386,6 @@ func (s *FakeDashboardService) DeleteDashboard(dashboardId int64, orgId int64) e
 		}
 	}
 	return nil
-}
-
-func (s *FakeDashboardService) GetProvisionedDashboardDataByDashboardID(id int64) (*models.DashboardProvisioning, error) {
-	return s.ProvisionedDashData, nil
 }
 
 func MockDashboardService(mock *FakeDashboardService) {

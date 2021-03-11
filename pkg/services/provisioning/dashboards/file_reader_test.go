@@ -28,7 +28,7 @@ const (
 	foldersFromFilesStructure = "testdata/test-dashboards/folders-from-files-structure"
 )
 
-var fakeService *fakeDashboardService
+var fakeService *fakeDashboardProvisioningService
 
 func TestCreatingNewDashboardFileReader(t *testing.T) {
 	Convey("creating new dashboard file reader", t, func() {
@@ -90,7 +90,10 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 func TestDashboardFileReader(t *testing.T) {
 	Convey("Dashboard file reader", t, func() {
 		bus.ClearBusHandlers()
-		origNewDashboardService := dashboards.NewService
+		origNewDashboardProvisioningService := dashboards.NewProvisioningService
+		Reset(func() {
+			dashboards.NewProvisioningService = origNewDashboardProvisioningService
+		})
 		fakeService = mockDashboardProvisioningService()
 
 		bus.AddHandler("test", mockGetDashboardQuery)
@@ -357,10 +360,6 @@ func TestDashboardFileReader(t *testing.T) {
 				So(fakeService.inserted[0].Dashboard.Id, ShouldEqual, 1)
 			})
 		})
-
-		Reset(func() {
-			dashboards.NewService = origNewDashboardService
-		})
 	})
 }
 
@@ -393,25 +392,25 @@ func (ffi FakeFileInfo) Sys() interface{} {
 	return nil
 }
 
-func mockDashboardProvisioningService() *fakeDashboardService {
-	mock := fakeDashboardService{
+func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
+	mock := fakeDashboardProvisioningService{
 		provisioned: map[string][]*models.DashboardProvisioning{},
 	}
-	dashboards.NewService = func(tsdbifaces.RequestHandler) dashboards.DashboardService {
+	dashboards.NewProvisioningService = func(tsdbifaces.RequestHandler) dashboards.DashboardProvisioningService {
 		return &mock
 	}
 	return &mock
 }
 
-type fakeDashboardService struct {
-	dashboards.DashboardService
+type fakeDashboardProvisioningService struct {
+	dashboards.DashboardProvisioningService
 
 	inserted     []*dashboards.SaveDashboardDTO
 	provisioned  map[string][]*models.DashboardProvisioning
 	getDashboard []*models.Dashboard
 }
 
-func (s *fakeDashboardService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
 	if _, ok := s.provisioned[name]; !ok {
 		s.provisioned[name] = []*models.DashboardProvisioning{}
 	}
@@ -419,7 +418,7 @@ func (s *fakeDashboardService) GetProvisionedDashboardData(name string) ([]*mode
 	return s.provisioned[name], nil
 }
 
-func (s *fakeDashboardService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO,
+func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO,
 	provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	// Copy the structs as we need to change them but do not want to alter outside world.
 	var copyProvisioning = &models.DashboardProvisioning{}
@@ -457,12 +456,12 @@ func (s *fakeDashboardService) SaveProvisionedDashboard(dto *dashboards.SaveDash
 	return dto.Dashboard, nil
 }
 
-func (s *fakeDashboardService) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
+func (s *fakeDashboardProvisioningService) SaveFolderForProvisionedDashboards(dto *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
 	s.inserted = append(s.inserted, dto)
 	return dto.Dashboard, nil
 }
 
-func (s *fakeDashboardService) UnprovisionDashboard(dashboardID int64) error {
+func (s *fakeDashboardProvisioningService) UnprovisionDashboard(dashboardID int64) error {
 	for key, val := range s.provisioned {
 		for index, dashboard := range val {
 			if dashboard.DashboardId == dashboardID {
@@ -473,7 +472,7 @@ func (s *fakeDashboardService) UnprovisionDashboard(dashboardID int64) error {
 	return nil
 }
 
-func (s *fakeDashboardService) DeleteProvisionedDashboard(dashboardID int64, orgID int64) error {
+func (s *fakeDashboardProvisioningService) DeleteProvisionedDashboard(dashboardID int64, orgID int64) error {
 	err := s.UnprovisionDashboard(dashboardID)
 	if err != nil {
 		return err
@@ -487,7 +486,7 @@ func (s *fakeDashboardService) DeleteProvisionedDashboard(dashboardID int64, org
 	return nil
 }
 
-func (s *fakeDashboardService) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
+func (s *fakeDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
 	return nil, nil
 }
 

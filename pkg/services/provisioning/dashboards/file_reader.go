@@ -57,7 +57,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, reqHandler tsdbifaces.R
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
-		dashboardProvisioningService: dashboards.NewService(reqHandler),
+		dashboardProvisioningService: dashboards.NewProvisioningService(reqHandler),
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 	}, nil
 }

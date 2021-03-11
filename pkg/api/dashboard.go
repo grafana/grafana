@@ -122,7 +122,8 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	provisioningData, err := dashboards.NewService(hs.DataService).GetProvisionedDashboardDataByDashboardID(dash.Id)
+	svc := dashboards.NewProvisioningService(hs.DataService)
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -262,7 +263,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	svc := dashboards.NewService(hs.DataService)
+	svc := dashboards.NewProvisioningService(hs.DataService)
 	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
@@ -289,7 +290,8 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := svc.SaveDashboard(dashItem, allowUiUpdate)
+	dashSvc := dashboards.NewService(hs.DataService)
+	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
 	if err != nil {
 		return dashboardSaveErrorToApiResponse(err)
 	}
