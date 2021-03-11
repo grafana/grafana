@@ -1,4 +1,4 @@
-package api
+package dataproxy
 
 import (
 	"errors"
@@ -10,14 +10,24 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-// ProxyDataSourceRequest proxies datasource requests
-func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
+type DataProxy struct {
+	DatasourceCache        datasources.CacheService
+	PluginRequestValidator models.PluginRequestValidator
+	Cfg                    *setting.Cfg
+}
+
+func (p *DataProxy) ProxyDataSourceRequest(c *models.ReqContext) {
+	p.ProxyDatasourceRequestWithID(c, c.ParamsInt64(":id"))
+}
+
+func (p *DataProxy) ProxyDatasourceRequestWithID(c *models.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	dsID := c.ParamsInt64(":id")
-	ds, err := hs.DatasourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
+	ds, err := p.DatasourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
@@ -27,7 +37,7 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 		return
 	}
 
-	err = hs.PluginRequestValidator.Validate(ds.Url, c.Req.Request)
+	err = p.PluginRequestValidator.Validate(ds.Url, c.Req.Request)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
@@ -41,9 +51,9 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 	}
 
 	// macaron does not include trailing slashes when resolving a wildcard path
-	proxyPath := ensureProxyPathTrailingSlash(c.Req.URL.Path, c.Params("*"))
+	proxyPath := EnsureProxyPathTrailingSlash(c.Req.URL.Path, c.Params("*"))
 
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, hs.Cfg)
+	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, p.Cfg)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)
@@ -53,11 +63,12 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 		return
 	}
 	proxy.HandleRequest()
+
 }
 
 // ensureProxyPathTrailingSlash Check for a trailing slash in original path and makes
 // sure that a trailing slash is added to proxy path, if not already exists.
-func ensureProxyPathTrailingSlash(originalPath, proxyPath string) string {
+func EnsureProxyPathTrailingSlash(originalPath, proxyPath string) string {
 	if len(proxyPath) > 1 {
 		if originalPath[len(originalPath)-1] == '/' && proxyPath[len(proxyPath)-1] != '/' {
 			return proxyPath + "/"

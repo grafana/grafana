@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tsdb"
 
+	"github.com/grafana/grafana/pkg/api/dataproxy"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -78,6 +79,7 @@ type HTTPServer struct {
 	Login                  *login.LoginService                `inject:""`
 	License                models.Licensing                   `inject:""`
 	BackendPluginManager   backendplugin.Manager              `inject:""`
+	DataProxy              *dataproxy.DataProxy               `inject:""`
 	PluginRequestValidator models.PluginRequestValidator      `inject:""`
 	PluginManager          *manager.PluginManager             `inject:""`
 	SearchService          *search.SearchService              `inject:""`
