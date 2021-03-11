@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,16 +33,15 @@ type DashboardProvisioningService interface {
 }
 
 // NewService is a factory for creating a new dashboard service.
-var NewService = func(reqHandler tsdbifaces.RequestHandler) DashboardService {
+var NewService = func() DashboardService {
 	return &dashboardServiceImpl{
-		log:        log.New("dashboard-service"),
-		reqHandler: reqHandler,
+		log: log.New("dashboard-service"),
 	}
 }
 
 // NewProvisioningService is a factory for creating a new dashboard provisioning service.
-var NewProvisioningService = func(reqHandler tsdbifaces.RequestHandler) DashboardProvisioningService {
-	return NewService(reqHandler).(*dashboardServiceImpl)
+var NewProvisioningService = func() DashboardProvisioningService {
+	return NewService().(*dashboardServiceImpl)
 }
 
 type SaveDashboardDTO struct {
@@ -56,10 +54,9 @@ type SaveDashboardDTO struct {
 }
 
 type dashboardServiceImpl struct {
-	orgId      int64
-	user       *models.SignedInUser
-	log        log.Logger
-	reqHandler tsdbifaces.RequestHandler
+	orgId int64
+	user  *models.SignedInUser
+	log   log.Logger
 }
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
@@ -389,7 +386,7 @@ func (s *FakeDashboardService) DeleteDashboard(dashboardId int64, orgId int64) e
 }
 
 func MockDashboardService(mock *FakeDashboardService) {
-	NewService = func(tsdbifaces.RequestHandler) DashboardService {
+	NewService = func() DashboardService {
 		return mock
 	}
 }

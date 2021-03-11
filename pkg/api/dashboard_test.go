@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1205,7 +1204,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			dashboards.NewProvisioningService = origProvisioningService
 		})
 		dashboards.MockDashboardService(mock)
-		dashboards.NewProvisioningService = func(tsdbifaces.RequestHandler) dashboards.DashboardProvisioningService {
+		dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
 
@@ -1269,7 +1268,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			dashboards.NewService = origNewDashboardService
 			dashboards.NewProvisioningService = origProvisioningService
 		})
-		dashboards.NewProvisioningService = func(tsdbifaces.RequestHandler) dashboards.DashboardProvisioningService {
+		dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
 		dashboards.MockDashboardService(mock)
