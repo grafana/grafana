@@ -213,9 +213,12 @@ export class BackendSrv implements BackendService {
               const firstAttempt = i === 0 && options.retry === 0;
 
               if (error.status === 401 && isLocalUrl(options.url) && firstAttempt && isSignedIn) {
-                if (error.data?.message?.includes('revoked')) {
+                if (error.data?.error?.id === 'ERR_TOKEN_REVOKED') {
                   this.dependencies.appEvents.emit(CoreEvents.showModalReact, {
                     component: TokenRevokedModal,
+                    props: {
+                      maxConcurrentSessions: error.data?.error?.maxConcurrentSessions,
+                    },
                   });
 
                   return of({});
