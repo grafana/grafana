@@ -255,30 +255,27 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     } else {
       // Graphite event as annotation
       const tags = this.templateSrv.replace(options.annotation.tags);
-      return this.events({ range: options.range, tags: tags })
-        .pipe(map((results: any) => {}))
+      return this.events({ range: options.range, tags: tags }).then((results: any) => {
+        const list = [];
+        for (let i = 0; i < results.data.length; i++) {
+          const e = results.data[i];
 
-        .then((results: any) => {
-          const list = [];
-          for (let i = 0; i < results.data.length; i++) {
-            const e = results.data[i];
-
-            let tags = e.tags;
-            if (_.isString(e.tags)) {
-              tags = this.parseTags(e.tags);
-            }
-
-            list.push({
-              annotation: options.annotation,
-              time: e.when * 1000,
-              title: e.what,
-              tags: tags,
-              text: e.data,
-            });
+          let tags = e.tags;
+          if (_.isString(e.tags)) {
+            tags = this.parseTags(e.tags);
           }
 
-          return list;
-        });
+          list.push({
+            annotation: options.annotation,
+            time: e.when * 1000,
+            title: e.what,
+            tags: tags,
+            text: e.data,
+          });
+        }
+
+        return list;
+      });
     }
   }
 
