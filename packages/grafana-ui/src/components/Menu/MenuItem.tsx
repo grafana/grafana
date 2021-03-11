@@ -24,9 +24,20 @@ export interface MenuItemProps {
   /** Active */
   active?: boolean;
 }
+/** This interface was created because we are utilizing two different events in the onClick props*/
+interface ItemProps {
+  label: string;
+  ariaLabel: string;
+  target?: LinkTarget;
+  icon?: IconName;
+  url?: string;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  className?: string;
+  active?: boolean;
+}
 
 /** @internal */
-export const MenuItem: React.FC<MenuItemProps> = React.memo(
+export const MenuItem: React.FC<ItemProps> = React.memo(
   ({ url, icon, label, ariaLabel, target, onClick, className, active }) => {
     const styles = useStyles(getStyles);
     const itemStyle = cx(

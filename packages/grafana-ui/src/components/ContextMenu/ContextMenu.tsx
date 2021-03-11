@@ -73,7 +73,23 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
                 target={item.target}
                 icon={item.icon}
                 active={item.active}
-                onClick={onClick}
+                onClick={(e: React.MouseEvent<HTMLElement>) => {
+                  // We can have both url and onClick and we want to allow user to open the link in new tab/window
+                  const isSpecialKeyPressed = e.ctrlKey || e.metaKey || e.shiftKey;
+                  if (isSpecialKeyPressed && item.url) {
+                    return;
+                  }
+
+                  if (item.onClick) {
+                    e.preventDefault();
+                    item.onClick(e);
+                  }
+
+                  // Typically closes the context menu
+                  if (onClick) {
+                    onClick();
+                  }
+                }}
               />
             ))}
           </MenuGroup>
