@@ -22,3 +22,7 @@ Query caching currently works for all backend data sources. You can enable the c
 ## Enable query caching
 
 To enable and configure query caching, please refer the the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#query-caching" >}}).
+
+## Skip caching per request
+
+Requests that contain the header `X-Cache-Skip` with any value will be skipped. This can be particularly useful when debugging datasource queries using cURL.
