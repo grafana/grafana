@@ -87,6 +87,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     this.datasource = datasource;
     this.labelKeys = [];
+    this.logLabelOptions = [];
     this.logLabelFetchTs = 0;
 
     Object.assign(this, initialValues);
