@@ -4,6 +4,6 @@ import { RawInfluxQLEditor } from './components/RawInfluxQLEditor';
 coreModule.directive('rawInfluxEditor', [
   'reactDirective',
   (reactDirective: any) => {
-    return reactDirective(RawInfluxQLEditor, ['query', 'onQueryChange', 'onRunQuery']);
+    return reactDirective(RawInfluxQLEditor, ['query', 'onChange', 'onRunQuery']);
   },
 ]);

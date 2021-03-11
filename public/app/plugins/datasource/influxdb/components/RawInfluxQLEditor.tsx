@@ -13,14 +13,14 @@ const DEFAULT_RESULT_FORMAT: ResultFormat = 'time_series';
 
 type Props = {
   query: InfluxQuery;
-  onQueryChange: (query: InfluxQuery) => void;
+  onChange: (query: InfluxQuery) => void;
   onRunQuery: () => void;
 };
 
 // we handle 3 fields: "query", "alias", "resultFormat"
 // "resultFormat" changes are applied immediately
 // "query" and "alias" changes only happen on onblur
-export const RawInfluxQLEditor: FC<Props> = ({ query, onQueryChange, onRunQuery }) => {
+export const RawInfluxQLEditor: FC<Props> = ({ query, onChange, onRunQuery }) => {
   const [currentQuery, setCurrentQuery] = useState(query.query);
   const [currentAlias, setCurrentAlias] = useState(query.alias);
 
@@ -39,7 +39,7 @@ export const RawInfluxQLEditor: FC<Props> = ({ query, onQueryChange, onRunQuery 
   }, [query.alias]);
 
   const applyDelayedChangesAndRunQuery = () => {
-    onQueryChange({
+    onChange({
       ...query,
       query: currentQuery,
       alias: currentAlias,
@@ -63,7 +63,7 @@ export const RawInfluxQLEditor: FC<Props> = ({ query, onQueryChange, onRunQuery 
         <InlineFormLabel>Format as</InlineFormLabel>
         <Select
           onChange={(e) => {
-            onQueryChange({ ...query, resultFormat: e.value });
+            onChange({ ...query, resultFormat: e.value });
             onRunQuery();
           }}
           value={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
