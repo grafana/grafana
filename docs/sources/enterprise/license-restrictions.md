@@ -1,4 +1,3 @@
-
 +++
 title = "License restrictions"
 description = "Grafana Enterprise license restrictions"
