@@ -7,10 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // Decide on input (model or json, and from where?)
@@ -98,6 +100,8 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 		refIDtoCondIdx[refID] = append(refIDtoCondIdx[refID], i)
 	}
 
+	spew.Dump(refIDtoCondIdx)
+
 	newRefIDstoCondIdx := make(map[string][]int)
 	newRefIDsToTimeRanges := make(map[string][2]string)
 
@@ -126,8 +130,10 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 
 		if len(timeRangesToCondIdx) == 1 {
 			// all shared time range, no need to create refIds
-			newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[0])
-			newRefIDsToTimeRanges[refID] = [2]string{dc.Conditions[condIdxes[0]].Query.Params[1], dc.Conditions[condIdxes[0]].Query.Params[2]}
+			for i := range condIdxes {
+				newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[i])
+				newRefIDsToTimeRanges[refID] = [2]string{dc.Conditions[condIdxes[i]].Query.Params[1], dc.Conditions[condIdxes[i]].Query.Params[2]}
+			}
 			continue
 		}
 
@@ -159,6 +165,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 		newRefIDs = append(newRefIDs, refID)
 	}
 	sort.Strings(newRefIDs)
+	spew.Dump(newRefIDs, newRefIDstoCondIdx)
 
 	ngCond := &eval.Condition{}
 	// will need to sort for stable output
@@ -207,7 +214,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 				return nil, err
 			}
 
-			alertQuery := eval.AlertQuery{
+			alertQuery := ngmodels.AlertQuery{
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
@@ -255,7 +262,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*eval.Condition, error) {
 		return nil, err
 	}
 
-	ccAlertQuery := eval.AlertQuery{
+	ccAlertQuery := ngmodels.AlertQuery{
 		RefID: ccRefID,
 		Model: exprModelJSON,
 	}
@@ -295,7 +302,7 @@ func getLetter(refIDs map[string][]int) (string, error) {
 	return "", fmt.Errorf("ran out of letters when creating expression")
 }
 
-func getRelativeDuration(rawFrom, rawTo string) (*eval.RelativeTimeRange, error) {
+func getRelativeDuration(rawFrom, rawTo string) (*ngmodels.RelativeTimeRange, error) {
 	fromD, err := getFrom(rawFrom)
 	if err != nil {
 		return nil, err
@@ -305,9 +312,9 @@ func getRelativeDuration(rawFrom, rawTo string) (*eval.RelativeTimeRange, error)
 	if err != nil {
 		return nil, err
 	}
-	return &eval.RelativeTimeRange{
-		From: eval.Duration(fromD),
-		To:   eval.Duration(toD),
+	return &ngmodels.RelativeTimeRange{
+		From: ngmodels.Duration(fromD),
+		To:   ngmodels.Duration(toD),
 	}, nil
 }
 

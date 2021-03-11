@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,16 +35,16 @@ func TestDashboardAlertConditions(t *testing.T) {
 
 				firstQuery := cond.QueriesAndExpressions[0]
 				require.Equal(t, "A", firstQuery.RefID, "unexpected refId for first query")
-				require.Equal(t, eval.RelativeTimeRange{
-					From: eval.Duration(time.Second * 600),
-					To:   eval.Duration(time.Second * 300),
+				require.Equal(t, ngmodels.RelativeTimeRange{
+					From: ngmodels.Duration(time.Second * 600),
+					To:   ngmodels.Duration(time.Second * 300),
 				}, firstQuery.RelativeTimeRange, "unexpected timerange for first query")
 
 				secondQuery := cond.QueriesAndExpressions[1]
 				require.Equal(t, "B", secondQuery.RefID, "unexpected refId for second query")
-				require.Equal(t, eval.RelativeTimeRange{
-					From: eval.Duration(time.Second * 300),
-					To:   eval.Duration(0),
+				require.Equal(t, ngmodels.RelativeTimeRange{
+					From: ngmodels.Duration(time.Second * 300),
+					To:   ngmodels.Duration(0),
 				}, secondQuery.RelativeTimeRange, "unexpected timerange for second query")
 
 				condQuery := cond.QueriesAndExpressions[2]

@@ -72,7 +72,7 @@ func (api *API) RegisterAPIEndpoints() {
 }
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/evalOld.
-func (api *apiImpl) conditionEvalOldEndpoint(c *models.ReqContext) response.Response {
+func (api *API) conditionEvalOldEndpoint(c *models.ReqContext) response.Response {
 	b, err := c.Req.Body().Bytes()
 	if err != nil {
 		response.Error(400, "failed to read body", err)
@@ -110,7 +110,7 @@ func (api *apiImpl) conditionEvalOldEndpoint(c *models.ReqContext) response.Resp
 }
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/evalOld.
-func (api *apiImpl) conditionEvalOldEndpointByID(c *models.ReqContext) response.Response {
+func (api *API) conditionEvalOldEndpointByID(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64("id")
 	if id == 0 {
 		return response.Error(400, "missing id", nil)
