@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import sortBy from 'lodash/sortBy';
 import { PanelProps, GrafanaTheme, dateMath, dateTime } from '@grafana/data';
-import { CustomScrollbar, Icon, stylesFactory, useStyles } from '@grafana/ui';
+import { Card, CustomScrollbar, Icon, stylesFactory, useStyles } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import { useAsync } from 'react-use';
@@ -136,59 +136,50 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
         {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
-
-        {props.options.showOptions === ShowOption.Current
-          ? !currentAlertState.loading &&
-            currentAlertState.value && (
-              <section>
-                <ol className={styles.alertRuleList}>
-                  {currentAlertState.value!.map((alert) => (
-                    <li className={styles.alertRuleItem} key={`alert-${alert.id}`}>
-                      <div className={cx(styles.alertRuleItemIcon, alert.stateModel.stateClass)}>
+        <section>
+          <ol className={styles.alertRuleList}>
+            {props.options.showOptions === ShowOption.Current
+              ? !currentAlertState.loading &&
+                currentAlertState.value &&
+                currentAlertState.value!.map((alert) => (
+                  <li className={styles.alertRuleItem} key={`alert-${alert.id}`}>
+                    <Card
+                      heading={alert.name}
+                      href={`${alert.url}?viewPanel=${alert.panelId}`}
+                      className={styles.cardContainer}
+                    >
+                      <Card.Figure className={cx(styles.alertRuleItemIcon, alert.stateModel.stateClass)}>
                         <Icon name={alert.stateModel.iconClass} size="xl" className={styles.alertIcon} />
-                      </div>
-                      <div className={styles.alertRuleItemBody}>
-                        <div className={styles.alertRuleItemHeader}>
-                          <p className={styles.alertRuleItemName}>
-                            <a href={`${alert.url}?viewPanel=${alert.panelId}`}>{alert.name}</a>
-                          </p>
-                          <div className={styles.alertRuleItemText}>
-                            <span className={alert.stateModel.stateClass}>{alert.stateModel.text}</span>
-                            <span className={styles.alertRuleItemTime}> for {alert.newStateDateAgo}</span>
-                          </div>
+                      </Card.Figure>
+                      <Card.Meta>
+                        <div className={styles.alertRuleItemText}>
+                          <span className={alert.stateModel.stateClass}>{alert.stateModel.text}</span>
+                          <span className={styles.alertRuleItemTime}> for {alert.newStateDateAgo}</span>
                         </div>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-            )
-          : !recentStateChanges.loading &&
-            recentStateChanges.value && (
-              <section>
-                <ol className={styles.alertRuleList}>
-                  {recentStateChanges.value.map((alert) => (
-                    <li className={styles.alertRuleItem} key={`alert-${alert.id}`}>
-                      <div className={cx(styles.alertRuleItemIcon, alert.stateModel.stateClass)}>
+                      </Card.Meta>
+                    </Card>
+                  </li>
+                ))
+              : !recentStateChanges.loading &&
+                recentStateChanges.value &&
+                recentStateChanges.value.map((alert) => (
+                  <li className={styles.alertRuleItem} key={`alert-${alert.id}`}>
+                    <Card heading={alert.alertName} className={styles.cardContainer}>
+                      <Card.Figure className={cx(styles.alertRuleItemIcon, alert.stateModel.stateClass)}>
                         <Icon name={alert.stateModel.iconClass} size="xl" />
-                      </div>
-                      <div className={styles.alertRuleItemBody}>
-                        <div className={styles.alertRuleItemHeader}>
-                          <p className={styles.alertRuleItemName}>{alert.alertName}</p>
-                          <div className={styles.alertRuleItemText}>
-                            <span className={alert.stateModel.stateClass}>{alert.stateModel.text}</span>
-                          </div>
-                        </div>
-                        <span className={styles.alertRuleItemInfo}>{alert.info}</span>
-                      </div>
-                      <div className={styles.alertRuleItemTime}>
+                      </Card.Figure>
+                      <Card.Meta>
+                        <span className={cx(styles.alertRuleItemText, alert.stateModel.stateClass)}>
+                          {alert.stateModel.text}
+                        </span>
                         <span>{alert.time}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-            )}
+                        {alert.info && <span className={styles.alertRuleItemInfo}>{alert.info}</span>}
+                      </Card.Meta>
+                    </Card>
+                  </li>
+                ))}
+          </ol>
+        </section>
       </div>
     </CustomScrollbar>
   );
@@ -219,13 +210,17 @@ function getStateFilter(stateFilter: Record<string, boolean>) {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  cardContainer: css`
+    padding: ${theme.spacing.xs} 0 ${theme.spacing.xxs} 0;
+    line-height: ${theme.typography.lineHeight.md};
+    margin-bottom: 0px;
+  `,
   container: css`
     overflow-y: auto;
     height: 100%;
   `,
   alertRuleList: css`
     display: flex;
-    flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-between;
     list-style-type: none;
@@ -240,29 +235,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     border-radius: ${theme.border.radius.md};
     margin-bottom: ${theme.spacing.xs};
   `,
-  alertRuleItemBody: css`
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    justify-content: center;
-    overflow: hidden;
-  `,
   alertRuleItemIcon: css`
     display: flex;
     justify-content: center;
     align-items: center;
     width: ${theme.spacing.xl};
     padding: 0 ${theme.spacing.xs} 0 ${theme.spacing.xxs};
-  `,
-  alertRuleItemHeader: css`
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  `,
-  alertRuleItemName: css`
-    font-size: ${theme.typography.size.base};
-    margin: 0;
-    font-weight: ${theme.typography.weight.semibold};
+    margin-right: 0px;
   `,
   alertRuleItemText: css`
     font-weight: ${theme.typography.weight.bold};
@@ -286,9 +265,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     justify-content: center;
     width: 100%;
     height: 100%;
-  `,
-  testClass: css`
-    font-size: small;
   `,
   alertIcon: css`
     margin-right: ${theme.spacing.xs};

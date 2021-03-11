@@ -1,5 +1,4 @@
 import React from 'react';
-import _ from 'lodash';
 import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 import { AlertList } from './AlertList';
