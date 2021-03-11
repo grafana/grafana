@@ -156,13 +156,7 @@ export function buildQueryTransaction(
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
     maxDataPoints: queryOptions.maxDataPoints,
-    exploreMode: undefined,
     liveStreaming: queryOptions.liveStreaming,
-    /**
-     * @deprecated (external API) showingGraph and showingTable are always set to true and set to true
-     */
-    showingGraph: true,
-    showingTable: true,
   };
 
   return {
