@@ -32,7 +32,7 @@ export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, on
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
   const styles = getStyles(config.theme);
   const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
-  const data = useObservable(observable);
+  const data = useObservable<PanelData>(observable);
   const instances = getInstances();
 
   return (
@@ -51,25 +51,46 @@ export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, on
       </TabsBar>
       <TabContent className={styles.tabContent}>
         {data &&
-          (data.state === 'Error'
-            ? error(data)
-            : queriesAndInstances(queries, instances, onTest, data, activeTab, onRunQueries))}
+          (data.state === 'Error' ? (
+            <EmptyState title="There was an error :(">
+              <div>{data.error?.data?.error}</div>
+            </EmptyState>
+          ) : (
+            <QueriesAndInstances
+              instances={instances}
+              onTest={onTest}
+              data={data}
+              activeTab={activeTab}
+              onRunQueries={onRunQueries}
+              queries={queries}
+            />
+          ))}
       </TabContent>
     </div>
   );
 };
 
-const queriesAndInstances = (
-  queries: DataQuery[],
-  instances: DataFrame[],
-  onTest: () => void,
-  data: PanelData,
-  activeTab: string,
-  onRunQueries: () => void
-) => {
+interface PreviewProps {
+  queries: DataQuery[];
+  instances: DataFrame[];
+  onTest: () => void;
+  data: PanelData;
+  activeTab: string;
+  onRunQueries: () => void;
+}
+
+const QueriesAndInstances: FC<PreviewProps> = ({ queries, instances, onTest, data, activeTab, onRunQueries }) => {
   if (queries && queries.length === 0) {
-    return noQueries();
+    return (
+      <EmptyState title="No queries added.">
+        <div>Start adding queries to this alert and a visualisation for your queries will appear here.</div>
+        <div>
+          Learn more about how to create alert definitions <Icon name="external-link-alt" />
+        </div>
+      </EmptyState>
+    );
   }
+
   return (
     <AutoSizer style={{ width: '100%', height: '100%' }}>
       {({ width, height }) => {
@@ -86,29 +107,9 @@ const queriesAndInstances = (
   );
 };
 
-const noQueries = () => {
-  return (
-    <EmptyState title="No queries added.">
-      <div>Start adding queries to this alert and a visualisation for your queries will appear here.</div>
-      <div>
-        Learn more about how to create alert definitions <Icon name="external-link-alt" />
-      </div>
-    </EmptyState>
-  );
-};
-
-const error = (data: PanelData) => {
-  return (
-    <EmptyState title="There was an error :(">
-      <div>{data.error?.data?.error}</div>
-    </EmptyState>
-  );
-};
-
 const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
-      label: alertDefinitionPreviewTabs;
       display: flex;
       flex-direction: column;
       width: 100%;
