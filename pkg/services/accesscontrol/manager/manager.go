@@ -40,7 +40,7 @@ func (ac *AccessControlService) Init() error {
 }
 
 func (ac *AccessControlService) IsDisabled() bool {
-	_, exists := ac.Cfg.FeatureToggles["new_authz"]
+	_, exists := ac.Cfg.FeatureToggles["accesscontrol"]
 	return !exists
 }
 

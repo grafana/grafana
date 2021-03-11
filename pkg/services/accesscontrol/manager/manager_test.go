@@ -45,7 +45,7 @@ func overrideAccessControlInRegistry(cfg *setting.Cfg) AccessControlService {
 
 func setupTestEnv(t testing.TB) *AccessControlService {
 	cfg := setting.NewCfg()
-	cfg.FeatureToggles = map[string]bool{"new_authz": true}
+	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 	ac := overrideAccessControlInRegistry(cfg)
 
