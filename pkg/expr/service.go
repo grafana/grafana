@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // DatasourceName is the string constant used as the datasource name in requests
@@ -21,7 +22,8 @@ const DatasourceUID = "-100"
 
 // Service is service representation for expression handling.
 type Service struct {
-	Cfg *setting.Cfg
+	Cfg         *setting.Cfg
+	DataService *tsdb.Service
 }
 
 func (s *Service) isDisabled() bool {
@@ -33,13 +35,13 @@ func (s *Service) isDisabled() bool {
 
 // BuildPipeline builds a pipeline from a request.
 func (s *Service) BuildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
-	return buildPipeline(req)
+	return s.buildPipeline(req)
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.
 func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
 	res := backend.NewQueryDataResponse()
-	vars, err := pipeline.execute(ctx)
+	vars, err := pipeline.execute(ctx, s)
 	if err != nil {
 		return nil, err
 	}

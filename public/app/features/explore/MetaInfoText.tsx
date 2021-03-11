@@ -32,7 +32,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 
 export interface MetaItemProps {
   label?: string;
-  value: string;
+  value: string | JSX.Element;
 }
 
 export const MetaInfoItem = memo(function MetaInfoItem(props: MetaItemProps) {
