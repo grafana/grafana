@@ -2,9 +2,35 @@ import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { Cascader } from '@grafana/ui';
-import { CascaderProps } from './Cascader';
+import { CascaderOption, CascaderProps } from './Cascader';
 import mdx from './Cascader.mdx';
 import React from 'react';
+
+const onSelect = (val: string) => console.log(val);
+const options = [
+  {
+    label: 'First',
+    value: '1',
+    items: [
+      {
+        label: 'Second',
+        value: '2',
+      },
+      {
+        label: 'Third',
+        value: '3',
+      },
+      {
+        label: 'Fourth',
+        value: '4',
+      },
+    ],
+  },
+  {
+    label: 'FirstFirst',
+    value: '5',
+  },
+];
 
 export default {
   title: 'Forms/Cascader',
@@ -19,31 +45,8 @@ export default {
     },
   },
   args: {
-    onSelect: (val: string) => console.log(val),
-    options: [
-      {
-        label: 'First',
-        value: '1',
-        items: [
-          {
-            label: 'Second',
-            value: '2',
-          },
-          {
-            label: 'Third',
-            value: '3',
-          },
-          {
-            label: 'Fourth',
-            value: '4',
-          },
-        ],
-      },
-      {
-        label: 'FirstFirst',
-        value: '5',
-      },
-    ],
+    onSelect,
+    options,
   },
   argTypes: {
     width: { control: { type: 'range', min: 0, max: 70 } },
@@ -76,4 +79,17 @@ export const WithDisplayAllSelectedLevels = Template.bind({});
 WithDisplayAllSelectedLevels.args = {
   displayAllSelectedLevels: true,
   separator: ',',
+};
+
+export const WithOptionsStateUpdate = () => {
+  const [updatedOptions, setOptions] = React.useState<CascaderOption[]>([
+    {
+      label: 'Initial state option',
+      value: 'initial',
+    },
+  ]);
+
+  setTimeout(() => setOptions(options), 2000);
+
+  return <Cascader options={updatedOptions} onSelect={onSelect} />;
 };
