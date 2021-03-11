@@ -49,7 +49,6 @@ func AddAccessControlMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add unique index role_org_id_name", migrator.NewAddIndexMigration(roleV1, roleV1.Indices[1]))
 	mg.AddMigration("add index role_org_id_uid", migrator.NewAddIndexMigration(roleV1, roleV1.Indices[2]))
 
-	// Or rolePolicy? Role == Team in this case
 	teamRoleV1 := migrator.Table{
 		Name: "team_role",
 		Columns: []*migrator.Column{
@@ -58,8 +57,6 @@ func AddAccessControlMigrations(mg *migrator.Migrator) {
 			{Name: "team_id", Type: migrator.DB_BigInt},
 			{Name: "role_id", Type: migrator.DB_BigInt},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
-			// TODO: looks like we dont't really need this field since role assignment only can be created or removed
-			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id"}},
@@ -83,8 +80,6 @@ func AddAccessControlMigrations(mg *migrator.Migrator) {
 			{Name: "user_id", Type: migrator.DB_BigInt},
 			{Name: "role_id", Type: migrator.DB_BigInt},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
-			// TODO: looks like we dont't really need this field since role assignment only can be created or removed
-			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id"}},

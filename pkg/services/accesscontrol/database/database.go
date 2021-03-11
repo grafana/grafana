@@ -470,7 +470,6 @@ func (ac *AccessControlStore) AddTeamRole(cmd *accesscontrol.AddTeamRoleCommand)
 			TeamId:  cmd.TeamId,
 			RoleId:  cmd.RoleId,
 			Created: TimeNow(),
-			Updated: TimeNow(),
 		}
 
 		_, err := sess.Insert(teamRole)
@@ -519,7 +518,6 @@ func (ac *AccessControlStore) AddUserRole(cmd *accesscontrol.AddUserRoleCommand)
 			UserId:  cmd.UserId,
 			RoleId:  cmd.RoleId,
 			Created: TimeNow(),
-			Updated: TimeNow(),
 		}
 
 		_, err := sess.Insert(userRole)

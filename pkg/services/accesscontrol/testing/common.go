@@ -21,45 +21,6 @@ type PermissionTestCase struct {
 	Scope      string
 }
 
-// func OverrideRBACInRegistry(cfg *setting.Cfg) manager.AccessControlService {
-// 	ac := manager.AccessControlService{
-// 		Cfg:           cfg,
-// 		RouteRegister: routing.NewRouteRegister(),
-// 		Log:           log.New("rbac-test"),
-// 		AccessControlStore: &database.AccessControlStore{
-// 			SQLStore: nil,
-// 		},
-// 	}
-
-// 	overrideServiceFunc := func(descriptor registry.Descriptor) (*registry.Descriptor, bool) {
-// 		if _, ok := descriptor.Instance.(*manager.AccessControlService); ok {
-// 			return &registry.Descriptor{
-// 				Name:         "RBAC",
-// 				Instance:     &ac,
-// 				InitPriority: descriptor.InitPriority,
-// 			}, true
-// 		}
-// 		return nil, false
-// 	}
-
-// 	registry.RegisterOverride(overrideServiceFunc)
-
-// 	return ac
-// }
-
-// func SetupTestEnv(t testing.TB) *manager.AccessControlService {
-// 	cfg := setting.NewCfg()
-
-// 	ac := OverrideRBACInRegistry(cfg)
-
-// 	sqlStore := sqlstore.InitTestDB(t)
-// 	ac.AccessControlStore.SQLStore = sqlStore
-
-// 	err := ac.Init()
-// 	require.NoError(t, err)
-// 	return &ac
-// }
-
 func CreateRole(t *testing.T, ac accesscontrol.Store, p RoleTestCase) *accesscontrol.RoleDTO {
 	createRoleCmd := accesscontrol.CreateRoleWithPermissionsCommand{
 		OrgId:       1,

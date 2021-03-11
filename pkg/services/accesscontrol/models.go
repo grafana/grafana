@@ -60,7 +60,6 @@ type TeamRole struct {
 	RoleId int64
 	TeamId int64
 
-	Updated time.Time
 	Created time.Time
 }
 
@@ -70,7 +69,6 @@ type UserRole struct {
 	RoleId int64
 	UserId int64
 
-	Updated time.Time
 	Created time.Time
 }
 
