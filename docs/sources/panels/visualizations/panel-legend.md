@@ -14,7 +14,9 @@ This applies to the following visualizations:
 
 ## Toggle series
 
-Click on the series label in the legend to isolate the series in the visualization. All other series are hidden in the visualization. The data of the hidden series is still accessible.
+To toggle a series:
+Click on the series label in the legend to isolate the series in the visualization. 
+All other series are hidden in the visualization. The data of the hidden series is still accessible.
 
 Cmd/Ctrl+click on the series label to hide the clicked series and remove the toggle.
 
