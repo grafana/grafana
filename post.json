@@ -231,15 +231,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "AlertingConfigResponse": {
-   "properties": {
-    "Body": {
-     "$ref": "#/definitions/UserConfig"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-  },
   "AlertingRule": {
    "description": "adapted from cortex",
    "properties": {
@@ -482,15 +473,6 @@
    "title": "BasicAuth contains basic HTTP authentication credentials.",
    "type": "object",
    "x-go-package": "github.com/prometheus/common/config"
-  },
-  "BodyAlertingConfig": {
-   "properties": {
-    "Body": {
-     "$ref": "#/definitions/UserConfig"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "Config": {
    "properties": {
@@ -2031,6 +2013,7 @@
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2063,9 +2046,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object",
-   "x-go-package": "github.com/prometheus/common/config"
+   "x-go-package": "net/url"
   },
   "UpdateAlertDefinitionCommand": {
    "properties": {
@@ -3257,9 +3240,9 @@
     ],
     "responses": {
      "200": {
-      "description": "AlertingConfigResponse",
+      "description": "UserConfig",
       "schema": {
-       "$ref": "#/definitions/AlertingConfigResponse"
+       "$ref": "#/definitions/UserConfig"
       }
      },
      "400": {

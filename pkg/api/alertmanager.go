@@ -22,7 +22,7 @@ import (
 // gets an Alerting config
 //
 //     Responses:
-//       200: AlertingConfigResponse
+//       200: UserConfig
 //       400: ValidationError
 
 // swagger:route DELETE /alertmanager/{DatasourceId}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
@@ -175,11 +175,6 @@ type DatasourceReference struct {
 type UserConfig struct {
 	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig ApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-}
-
-// swagger:model
-type AlertingConfigResponse struct {
-	BodyAlertingConfig
 }
 
 type ApiAlertingConfig struct {
