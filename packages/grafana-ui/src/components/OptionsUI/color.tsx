@@ -10,7 +10,9 @@ export interface Props {
   onChange: (value?: string) => void;
 }
 
-// Supporting FixedColor only currently
+/**
+ * @alpha
+ * */
 export const ColorValueEditor: React.FC<Props> = ({ value, onChange }) => {
   const theme = useTheme();
   const styles = getStyles(theme);

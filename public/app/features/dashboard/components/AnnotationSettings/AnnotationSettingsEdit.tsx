@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
-import { Field, Input } from '@grafana/ui';
+import { Checkbox, CollapsableSection, ColorValueEditor, Field, HorizontalGroup, Input } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
 import { AnnotationQuery, DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { useAsync } from 'react-use';
+import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
+import { AngularEditorLoader } from './AngularEditorLoader';
 
 export const newAnnotation: AnnotationQuery = {
   name: 'New annotation',
@@ -18,6 +22,10 @@ type Props = {
 
 export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) => {
   const [annotation, setAnnotation] = useState(editIdx !== null ? dashboard.annotations.list[editIdx] : newAnnotation);
+
+  const { value: ds } = useAsync(async () => {
+    return await getDataSourceSrv().get(annotation.datasource);
+  }, [annotation.datasource]);
 
   const onUpdate = (annotation: AnnotationQuery) => {
     const list = [...dashboard.annotations.list];
@@ -40,14 +48,51 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
     });
   };
 
+  const onChange = (ev: React.FocusEvent<HTMLInputElement>) => {
+    const target = ev.currentTarget;
+    onUpdate({
+      ...annotation,
+      [target.name]: target.type === 'checkbox' ? target.checked : target.value,
+    });
+  };
+
+  const onColorChange = (color: string) => {
+    onUpdate({
+      ...annotation,
+      iconColor: color,
+    });
+  };
+
   return (
-    <div style={{ maxWidth: '600px' }}>
+    <div>
       <Field label="Name">
-        <Input name="name" aria-label="name" value={annotation.name} onChange={onNameChange} />
+        <Input name="name" aria-label="name" value={annotation.name} onChange={onNameChange} width={50} />
       </Field>
       <Field label="Data source">
         <DataSourcePicker annotations current={annotation.datasource} onChange={onDataSourceChange} />
       </Field>
+      <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
+        <Checkbox name="enable" value={annotation.enable} onChange={onChange} />
+      </Field>
+      <Field
+        label="Hidden"
+        description="Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden."
+      >
+        <Checkbox name="hide" value={annotation.enable} onChange={onChange} />
+      </Field>
+      <Field label="Color" description="Color to use for the annotation event markers">
+        <HorizontalGroup>
+          <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
+        </HorizontalGroup>
+      </Field>
+      <CollapsableSection isOpen={true} label="Query">
+        {ds?.annotations && (
+          <StandardAnnotationQueryEditor datasource={ds} annotation={annotation} onChange={onUpdate} />
+        )}
+        {ds && !ds.annotations && <AngularEditorLoader datasource={ds} annotation={annotation} onChange={onUpdate} />}
+      </CollapsableSection>
     </div>
   );
 };
+
+AnnotationSettingsEdit.displayName = 'AnnotationSettingsEdit';
