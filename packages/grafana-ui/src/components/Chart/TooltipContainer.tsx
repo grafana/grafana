@@ -3,7 +3,7 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
 import useWindowSize from 'react-use/lib/useWindowSize';
-import { GrafanaTheme } from '@grafana/data';
+import { Dimensions2D, GrafanaTheme } from '@grafana/data';
 
 interface TooltipContainerProps extends HTMLAttributes<HTMLDivElement> {
   position: { x: number; y: number };
@@ -20,18 +20,37 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({
 }) => {
   const theme = useTheme();
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const tooltipMeasurementRef = useRef<Dimensions2D>({ width: 0, height: 0 });
   const { width, height } = useWindowSize();
   const [placement, setPlacement] = useState({
     x: positionX + offsetX,
     y: positionY + offsetY,
   });
 
+  const resizeObserver = new ResizeObserver((entries) => {
+    for (let entry of entries) {
+      const tW = Math.floor(entry.contentRect.width);
+      const tH = Math.floor(entry.contentRect.height);
+
+      if (tooltipMeasurementRef.current.width !== tW || tooltipMeasurementRef.current.height !== tH) {
+        tooltipMeasurementRef.current = {
+          width: tW,
+          height: tH,
+        };
+      }
+    }
+  });
+
+  if (tooltipRef.current) {
+    resizeObserver.observe(tooltipRef.current);
+  }
+
   // Make sure tooltip does not overflow window
   useLayoutEffect(() => {
     let xO = 0,
       yO = 0;
     if (tooltipRef && tooltipRef.current) {
-      const measurement = tooltipRef.current.getBoundingClientRect();
+      const measurement = tooltipMeasurementRef.current;
       const xOverflow = width - (positionX + measurement.width);
       const yOverflow = height - (positionY + measurement.height);
       if (xOverflow < 0) {
@@ -47,7 +66,7 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({
       x: positionX + offsetX - xO,
       y: positionY + offsetY - yO,
     });
-  }, [tooltipRef, width, height, positionX, offsetX, positionY, offsetY]);
+  }, [width, height, positionX, offsetX, positionY, offsetY]);
 
   const styles = getTooltipContainerStyles(theme);
 
