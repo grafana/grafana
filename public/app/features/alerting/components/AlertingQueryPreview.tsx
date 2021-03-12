@@ -80,7 +80,7 @@ interface PreviewProps {
 }
 
 const QueriesAndInstances: FC<PreviewProps> = ({ queries, instances, onTest, data, activeTab, onRunQueries }) => {
-  if (queries && queries.length === 0) {
+  if (queries.length === 0) {
     return (
       <EmptyState title="No queries added.">
         <div>Start adding queries to this alert and a visualisation for your queries will appear here.</div>

@@ -31,7 +31,7 @@ function mapStateToProps(state: StoreState, props: RouteProps) {
     queryRunner: state.alertDefinition.queryRunner,
     getInstances: state.alertDefinition.getInstances,
     alertDefinition: state.alertDefinition.alertDefinition,
-    pageId: props.queryParams.id as string,
+    pageId: props.match.params.id as string,
   };
 }
 

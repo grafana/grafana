@@ -38,7 +38,7 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, onRunQueries, width }
     return null;
   }
 
-  if (data.series?.length > 1) {
+  if (data.series.length > 1) {
     return (
       <div className={styles.wrapper}>
         <div style={{ height: height - theme.spacing.formInputHeight - 16 }}>
