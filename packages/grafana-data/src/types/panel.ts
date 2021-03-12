@@ -10,6 +10,8 @@ import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
+import { Observable } from 'rxjs';
+import { DataFrameJSON } from '../dataframe';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -28,6 +30,16 @@ export interface PanelData {
 
   /** Contains data frames with field overrides applied */
   series: DataFrame[];
+
+  /**
+   * For streaming data sources, this will fire events only when new data is recieved
+   * that matches the same schema/structure as the existing series data.  Note that
+   * the `key` object from each event can be matched with the existing series data.
+   *
+   * When this observer has subscriptions, all append events will be sent though this
+   * channel and will no longer cause full props refresh path.
+   */
+  appendObserver?: Observable<DataFrameJSON>;
 
   /** A list of annotation items */
   annotations?: DataFrame[];
