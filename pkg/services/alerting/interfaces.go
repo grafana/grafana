@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 type evalHandler interface {
@@ -60,5 +60,5 @@ type ConditionResult struct {
 
 // Condition is responsible for evaluating an alert condition.
 type Condition interface {
-	Eval(result *EvalContext, requestHandler tsdbifaces.RequestHandler) (*ConditionResult, error)
+	Eval(result *EvalContext, requestHandler plugins.DataRequestHandler) (*ConditionResult, error)
 }

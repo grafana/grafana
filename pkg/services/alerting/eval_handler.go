@@ -7,18 +7,18 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // DefaultEvalHandler is responsible for evaluating the alert rule.
 type DefaultEvalHandler struct {
 	log             log.Logger
 	alertJobTimeout time.Duration
-	requestHandler  tsdbifaces.RequestHandler
+	requestHandler  plugins.DataRequestHandler
 }
 
 // NewEvalHandler is the `DefaultEvalHandler` constructor.
-func NewEvalHandler(requestHandler tsdbifaces.RequestHandler) *DefaultEvalHandler {
+func NewEvalHandler(requestHandler plugins.DataRequestHandler) *DefaultEvalHandler {
 	return &DefaultEvalHandler{
 		log:             log.New("alerting.evalHandler"),
 		alertJobTimeout: time.Second * 5,
