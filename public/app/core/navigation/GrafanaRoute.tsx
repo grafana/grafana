@@ -18,6 +18,7 @@ export class GrafanaRoute extends React.Component<Props> {
     keybindingSrv.reset();
     keybindingSrv.initGlobals();
     analyticsService.track();
+    delete (this.props.history.location.state as any)?.forceRouteReload;
     navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
   }
 
