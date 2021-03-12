@@ -11,12 +11,16 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type streamPublisher struct {
+type streamSender struct {
 	channel          string
 	channelPublisher channelPublisher
 }
 
-func (p *streamPublisher) Send(packet *backend.StreamPacket) error {
+func newStreamSender(channel string, publisher channelPublisher) *streamSender {
+	return &streamSender{channel: channel, channelPublisher: publisher}
+}
+
+func (p *streamSender) Send(packet *backend.StreamPacket) error {
 	return p.channelPublisher.Publish(p.channel, packet.Payload)
 }
 
@@ -130,7 +134,7 @@ func (r *PluginPathRunner) runStream(pCtx backend.PluginContext, channel string)
 			PluginContext: pCtx,
 			Path:          r.path,
 		},
-		&streamPublisher{channel: channel, channelPublisher: r.channelPublisher},
+		newStreamSender(channel, r.channelPublisher),
 	)
 	if err != nil {
 		if ctx.Err() == context.Canceled {

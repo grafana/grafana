@@ -1,7 +1,6 @@
 package live
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -15,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/features"
@@ -69,49 +67,6 @@ type GrafanaLive struct {
 	GrafanaScope CoreGrafanaScope
 }
 
-type pluginChannelPublisher struct {
-	node *centrifuge.Node
-}
-
-func (p *pluginChannelPublisher) Publish(channel string, data []byte) error {
-	_, err := p.node.Publish(channel, data)
-	return err
-}
-
-type pluginPresenceGetter struct {
-	node *centrifuge.Node
-}
-
-type pluginContextGetter struct {
-	Bus             bus.Bus
-	Cache           *localcache.CacheService
-	DatasourceCache datasources.CacheService
-}
-
-func newPluginContextGetter(bus bus.Bus, cache *localcache.CacheService, datasourceCache datasources.CacheService) *pluginContextGetter {
-	return &pluginContextGetter{
-		DatasourceCache: datasourceCache,
-		Bus:             bus,
-		Cache:           cache,
-	}
-}
-
-func (g *pluginContextGetter) GetPluginContext(ctx context.Context, pluginID string, datasourceID int64) (backend.PluginContext, bool, error) {
-	user, ok := getContextSignedUser(ctx)
-	if !ok {
-		return backend.PluginContext{}, false, fmt.Errorf("no signed user found in context")
-	}
-	return plugincontext.Get(pluginID, datasourceID, user, g.Cache, g.Bus, g.DatasourceCache)
-}
-
-func (p *pluginPresenceGetter) GetNumSubscribers(channel string) (int, error) {
-	res, err := p.node.PresenceStats(channel)
-	if err != nil {
-		return 0, err
-	}
-	return res.NumClients, nil
-}
-
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
 	plugin := g.PluginManager.GetDataPlugin(pluginID)
 	if plugin == nil {
@@ -122,23 +77,6 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 		return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
 	}
 	return streamHandler, nil
-}
-
-type signedUserContextKeyType int
-
-var signedUserContextKey signedUserContextKeyType
-
-func setContextSignedUser(ctx context.Context, user *models.SignedInUser) context.Context {
-	ctx = context.WithValue(ctx, signedUserContextKey, user)
-	return ctx
-}
-
-func getContextSignedUser(ctx context.Context) (*models.SignedInUser, bool) {
-	if val := ctx.Value(signedUserContextKey); val != nil {
-		user, ok := val.(*models.SignedInUser)
-		return user, ok
-	}
-	return nil, false
 }
 
 // Init initializes the instance.
@@ -177,8 +115,8 @@ func (g *GrafanaLive) Init() error {
 	//g.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
 
 	contextGetter := newPluginContextGetter(g.Bus, g.CacheService, g.DatasourceCache)
-	channelPublisher := &pluginChannelPublisher{node: node}
-	presenceGetter := &pluginPresenceGetter{node: node}
+	channelPublisher := newPluginChannelPublisher(node)
+	presenceGetter := newPluginPresenceGetter(node)
 
 	// TODO: tmp hack sleep (data plugin not initialized yet and can't handle data queries)!
 	go func() {
