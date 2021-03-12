@@ -129,7 +129,8 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return queryResult
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo, query)
+	queryType := query.Model.Get("queryType").MustString("")
+	req, err := e.createRequest(ctx, e.dsInfo, queryType)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult
@@ -200,23 +201,16 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	return queryResult
 }
 
-func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource, query *AzureLogAnalyticsQuery) (*http.Request, error) {
+func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource, queryType string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err
 	}
 	u.Path = path.Join(u.Path, "render")
-	values := map[string]string{"query": query.Params.Get("query")}
-	jsonStr, _ := json.Marshal(values)
 
 	var req *http.Request
-	queryType := query.Model.Get("queryType").MustString("")
 
-	if queryType == "Azure Log Analytics" {
-		req, err = http.NewRequest(http.MethodGet, u.String(), nil)
-	} else {
-		req, err = http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(jsonStr))
-	}
+	req, err = http.NewRequest(http.MethodGet, u.String(), nil)
 
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)

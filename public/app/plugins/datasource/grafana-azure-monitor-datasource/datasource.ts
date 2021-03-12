@@ -202,9 +202,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return amResult;
     }
 
-    const arlaResult = query.includes('resource')
-      ? this.azureResourceLogAnalyticsDatasource.metricFindQueryInternal(query)
-      : null;
+    const arlaResult = this.azureResourceLogAnalyticsDatasource.metricFindQueryInternal(query);
     if (arlaResult) {
       return arlaResult;
     }

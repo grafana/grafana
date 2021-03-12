@@ -202,7 +202,7 @@
     },
     {
       "path": "resourceloganalyticsazure",
-      "method": "POST",
+      "method": "GET",
       "url": "https://api.loganalytics.io/v1",
       "tokenAuth": {
         "url": "https://login.microsoftonline.com/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
@@ -220,7 +220,7 @@
     },
     {
       "path": "chinaresourceloganalyticsazure",
-      "method": "POST",
+      "method": "GET",
       "url": "https://api.loganalytics.azure.cn/v1",
       "tokenAuth": {
         "url": "https://login.chinacloudapi.cn/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",
@@ -238,7 +238,7 @@
     },
     {
       "path": "govresourceloganalyticsazure",
-      "method": "POST",
+      "method": "GET",
       "url": "https://api.loganalytics.us/v1",
       "tokenAuth": {
         "url": "https://login.microsoftonline.us/{{.JsonData.logAnalyticsTenantId}}/oauth2/token",

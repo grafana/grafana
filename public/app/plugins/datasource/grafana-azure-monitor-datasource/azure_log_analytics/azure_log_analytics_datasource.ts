@@ -97,14 +97,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return this.configs.getWorkspacesOrResources(subscription, this.url);
   }
 
-  // TODO change this when support templating variables for resources.
   getWorkspaceList(subscription: string): Promise<any> {
     const subscriptionId = subscription || this.subscriptionId;
 
     const workspaceListUrl =
       this.azureMonitorUrl +
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
-    return this.doRequest(workspaceListUrl, undefined, undefined, true);
+    return this.doRequest(workspaceListUrl, true);
   }
 
   getSchema(id: string) {
@@ -116,7 +115,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       ? this.doRequest(`${this.baseUrl}/${getTemplateSrv().replace(id, {})}/metadata`).then((response: any) =>
           new ResponseParser(response.data).parseSchemaResult()
         )
-      : this.doRequest(`${this.baseUrl}${getTemplateSrv().replace(id, {})}/metadata`, 'POST').then((response: any) =>
+      : this.doRequest(`${this.baseUrl}${getTemplateSrv().replace(id, {})}/metadata`).then((response: any) =>
           new ResponseParser(response.data).parseSchemaResult()
         );
   }
@@ -203,10 +202,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         `%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true/timespanInIsoFormat/P1D`
       );
     } else {
+      const resource = customMeta.resource.replaceAll('/', '%2F');
       return (
         `https://portal.azure.com/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
         `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
-        `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22${customMeta.resource.replaceAll('/', '%2F')}` +
+        `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22${resource}` +
         `%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true/timespanInIsoFormat/P1D`
       );
     }
@@ -378,7 +378,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     });
   }
 
-  async doRequest(url: string, method = 'GET', data?: any, useCache = false, maxRetries = 1): Promise<any> {
+  async doRequest(url: string, useCache = false, maxRetries = 1): Promise<any> {
     try {
       if (useCache && this.cache.has(url)) {
         return this.cache.get(url);
@@ -386,8 +386,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
       const res = await getBackendSrv().datasourceRequest({
         url: this.url + url,
-        method,
-        data,
+        method: 'GET',
       });
 
       if (useCache) {
@@ -397,7 +396,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return res;
     } catch (error) {
       if (maxRetries > 0) {
-        return this.doRequest(url, method, data, useCache, maxRetries - 1);
+        return this.doRequest(url, useCache, maxRetries - 1);
       }
 
       throw error;
@@ -411,11 +410,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     return this.getDefaultOrFirst()
-      .then((ws: any) => {
-        return this.configs.queryType === AzureQueryType.LogAnalytics
-          ? this.doRequest(`${this.baseUrl}/${ws}/metadata`, 'GET')
-          : this.doRequest(`${this.baseUrl}${ws}/metadata`, 'POST');
-      })
+      .then((id: any) =>
+        this.doRequest(
+          this.configs.queryType === AzureQueryType.LogAnalytics
+            ? `${this.baseUrl}/${id}/metadata`
+            : `${this.baseUrl}${id}/metadata`
+        )
+      )
       .then((response: any) => {
         if (response.status === 200) {
           return {
