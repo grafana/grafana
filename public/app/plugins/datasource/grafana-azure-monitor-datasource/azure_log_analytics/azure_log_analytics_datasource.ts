@@ -186,30 +186,20 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   private async buildDeepLink(customMeta: Record<string, any>) {
     const base64Enc = encodeURIComponent(customMeta.encodedQuery);
     const subscription = customMeta.subscription;
-    if (this.configs.queryType === AzureQueryType.LogAnalytics) {
-      const workspaceId = customMeta.workspace;
+    const workspaceId = customMeta.workspace;
 
-      const details = await this.getWorkspaceDetails(workspaceId);
-      if (!details.workspace || !details.resourceGroup) {
-        return '';
-      }
-
-      return (
-        `https://portal.azure.com/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
-        `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
-        `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2F${subscription}` +
-        `%2Fresourcegroups%2F${details.resourceGroup}%2Fproviders%2Fmicrosoft.operationalinsights%2Fworkspaces%2F${details.workspace}` +
-        `%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true/timespanInIsoFormat/P1D`
-      );
-    } else {
-      const resource = customMeta.resource.replaceAll('/', '%2F');
-      return (
-        `https://portal.azure.com/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
-        `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
-        `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22${resource}` +
-        `%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true/timespanInIsoFormat/P1D`
-      );
+    const details = await this.getWorkspaceDetails(workspaceId);
+    if (!details.workspace || !details.resourceGroup) {
+      return '';
     }
+
+    return (
+      `https://portal.azure.com/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
+      `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
+      `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2F${subscription}` +
+      `%2Fresourcegroups%2F${details.resourceGroup}%2Fproviders%2Fmicrosoft.operationalinsights%2Fworkspaces%2F${details.workspace}` +
+      `%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true/timespanInIsoFormat/P1D`
+    );
   }
 
   async getWorkspaceDetails(workspaceId: string) {
