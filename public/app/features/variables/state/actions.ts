@@ -307,13 +307,12 @@ export const setOptionFromUrl = (
     }
 
     if (!option) {
-      let defaultText = stringUrlValue as string | string[];
-      const defaultValue = stringUrlValue as string | string[];
+      let defaultText = stringUrlValue;
+      const defaultValue = stringUrlValue;
 
       if (Array.isArray(stringUrlValue)) {
         // Multiple values in the url. We construct text as a list of texts from all matched options.
-        const urlValueArray = stringUrlValue as string[];
-        defaultText = urlValueArray.reduce((acc: string[], item: string) => {
+        defaultText = stringUrlValue.reduce((acc: string[], item: string) => {
           const foundOption = variableFromState.options.find((o) => o.value === item);
           if (!foundOption) {
             // @ts-ignore according to strict null errors this can never happen
