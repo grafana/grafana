@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
@@ -29,8 +28,8 @@ func init() {
 	registry.Register(&registry.Descriptor{
 		Name: "ProvisioningService",
 		Instance: NewProvisioningServiceImpl(
-			func(path string, reqHandler plugifaces.DataRequestHandler) (dashboards.DashboardProvisioner, error) {
-				return dashboards.New(path, reqHandler)
+			func(path string) (dashboards.DashboardProvisioner, error) {
+				return dashboards.New(path)
 			},
 			notifiers.Provision,
 			datasources.Provision,
@@ -56,8 +55,7 @@ func NewProvisioningServiceImpl(
 }
 
 type provisioningServiceImpl struct {
-	Cfg                     *setting.Cfg                  `inject:""`
-	RequestHandler          plugifaces.DataRequestHandler `inject:""`
+	Cfg                     *setting.Cfg `inject:""`
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
@@ -136,7 +134,7 @@ func (ps *provisioningServiceImpl) ProvisionNotifications() error {
 
 func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath, ps.RequestHandler)
+	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}

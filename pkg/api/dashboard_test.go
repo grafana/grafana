@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -1205,7 +1204,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			dashboards.NewProvisioningService = origProvisioningService
 		})
 		dashboards.MockDashboardService(mock)
-		dashboards.NewProvisioningService = func(plugins.DataRequestHandler) dashboards.DashboardProvisioningService {
+		dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
 
@@ -1269,7 +1268,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			dashboards.NewService = origNewDashboardService
 			dashboards.NewProvisioningService = origProvisioningService
 		})
-		dashboards.NewProvisioningService = func(plugins.DataRequestHandler) dashboards.DashboardProvisioningService {
+		dashboards.NewProvisioningService = func() dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
 		dashboards.MockDashboardService(mock)

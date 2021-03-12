@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -92,7 +91,7 @@ func setup() *serviceTestStruct {
 	}
 
 	serviceTest.service = NewProvisioningServiceImpl(
-		func(path string, reqHandler plugifaces.DataRequestHandler) (dashboards.DashboardProvisioner, error) {
+		func(path string) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
 		nil,
