@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -33,9 +34,10 @@ type DashboardProvisioningService interface {
 }
 
 // NewService factory for creating a new dashboard service
-var NewService = func() DashboardService {
+var NewService = func(reqHandler tsdbifaces.RequestHandler) DashboardService {
 	return &dashboardServiceImpl{
-		log: log.New("dashboard-service"),
+		log:        log.New("dashboard-service"),
+		reqHandler: reqHandler,
 	}
 }
 
@@ -56,9 +58,10 @@ type SaveDashboardDTO struct {
 }
 
 type dashboardServiceImpl struct {
-	orgId int64
-	user  *models.SignedInUser
-	log   log.Logger
+	orgId      int64
+	user       *models.SignedInUser
+	log        log.Logger
+	reqHandler tsdbifaces.RequestHandler
 }
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
@@ -386,7 +389,7 @@ func (s *FakeDashboardService) DeleteDashboard(dashboardId int64, orgId int64) e
 }
 
 func MockDashboardService(mock *FakeDashboardService) {
-	NewService = func() DashboardService {
+	NewService = func(tsdbifaces.RequestHandler) DashboardService {
 		return mock
 	}
 }

@@ -1,4 +1,5 @@
 import { DataQuery, DataSourceJsonData, DataSourceSettings, TableData } from '@grafana/data';
+import Datasource from './datasource';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
@@ -91,6 +92,30 @@ export interface InsightsAnalyticsQuery {
 
 // Azure Monitor API Types
 
+export interface AzureMonitorMetricsMetadataResponse {
+  value: AzureMonitorMetricMetadataItem[];
+}
+
+export interface AzureMonitorMetricMetadataItem {
+  id: string;
+  resourceId: string;
+  primaryAggregationType: string;
+  supportedAggregationTypes: string[];
+  name: AzureMonitorLocalizedValue;
+  dimensions?: AzureMonitorLocalizedValue[];
+  metricAvailabilities?: AzureMonitorMetricAvailabilityMetadata[];
+}
+
+export interface AzureMonitorMetricAvailabilityMetadata {
+  timeGrain: string;
+  retention: string;
+}
+
+export interface AzureMonitorLocalizedValue {
+  value: string;
+  localizedValue: string;
+}
+
 export interface AzureMonitorMetricDefinitionsResponse {
   data: {
     value: Array<{ name: string; type: string; location?: string }>;
@@ -152,4 +177,18 @@ export interface AzureLogsTableData extends TableData {
 export interface AzureLogsTableColumn {
   text: string;
   type: string;
+}
+
+export interface AzureMonitorOption<T = string> {
+  label: string;
+  value: T;
+}
+
+export interface AzureQueryEditorFieldProps {
+  query: AzureMonitorQuery;
+  datasource: Datasource;
+  subscriptionId: string;
+  variableOptionGroup: { label: string; options: AzureMonitorOption[] };
+
+  onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }

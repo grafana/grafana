@@ -15,7 +15,7 @@ import (
 var (
 	sqlStatmentLibrayPanelDTOWithMeta = `
 SELECT DISTINCT
-	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by
+	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by, lp.version
 	, 0 AS can_edit
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
@@ -53,6 +53,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		UID:      util.GenerateShortUID(),
 		Name:     cmd.Name,
 		Model:    cmd.Model,
+		Version:  1,
 
 		Created: time.Now(),
 		Updated: time.Now(),
@@ -66,6 +67,9 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 	}
 
 	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		if err := requirePermissionsOnFolder(c.SignedInUser, cmd.FolderID); err != nil {
+			return err
+		}
 		if _, err := session.Insert(&libraryPanel); err != nil {
 			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 				return errLibraryPanelAlreadyExists
@@ -82,6 +86,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		UID:      libraryPanel.UID,
 		Name:     libraryPanel.Name,
 		Model:    libraryPanel.Model,
+		Version:  libraryPanel.Version,
 		Meta: LibraryPanelDTOMeta{
 			CanEdit:             true,
 			ConnectedDashboards: 0,
@@ -106,6 +111,9 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 func connectDashboard(session *sqlstore.DBSession, dialect migrator.Dialect, user *models.SignedInUser, uid string, dashboardID int64) error {
 	panel, err := getLibraryPanel(session, uid, user.OrgId)
 	if err != nil {
+		return err
+	}
+	if err := requirePermissionsOnFolder(user, panel.FolderID); err != nil {
 		return err
 	}
 
@@ -161,7 +169,9 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid str
 		if err != nil {
 			return err
 		}
-
+		if err := requirePermissionsOnFolder(c.SignedInUser, panel.FolderID); err != nil {
+			return err
+		}
 		if _, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=?", panel.ID); err != nil {
 			return err
 		}
@@ -185,6 +195,9 @@ func (lps *LibraryPanelService) disconnectDashboard(c *models.ReqContext, uid st
 	return lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		panel, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
+			return err
+		}
+		if err := requirePermissionsOnFolder(c.SignedInUser, panel.FolderID); err != nil {
 			return err
 		}
 
@@ -220,6 +233,59 @@ func (lps *LibraryPanelService) disconnectLibraryPanelsForDashboard(c *models.Re
 	})
 }
 
+// deleteLibraryPanelsInFolder deletes all Library Panels for a folder.
+func (lps *LibraryPanelService) deleteLibraryPanelsInFolder(c *models.ReqContext, folderUID string) error {
+	return lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		var folderUIDs []struct {
+			ID int64 `xorm:"id"`
+		}
+		err := session.SQL("SELECT id from dashboard WHERE uid=? AND org_id=? AND is_folder=1", folderUID, c.SignedInUser.OrgId).Find(&folderUIDs)
+		if err != nil {
+			return err
+		}
+		if len(folderUIDs) != 1 {
+			return fmt.Errorf("found %d folders, while expecting at most one", len(folderUIDs))
+		}
+		folderID := folderUIDs[0].ID
+
+		if err := requirePermissionsOnFolder(c.SignedInUser, folderID); err != nil {
+			return err
+		}
+		var dashIDs []struct {
+			DashboardID int64 `xorm:"dashboard_id"`
+		}
+		sql := "SELECT lpd.dashboard_id FROM library_panel AS lp"
+		sql += " INNER JOIN library_panel_dashboard lpd on lp.id = lpd.librarypanel_id"
+		sql += " WHERE lp.folder_id=? AND lp.org_id=?"
+		err = session.SQL(sql, folderID, c.SignedInUser.OrgId).Find(&dashIDs)
+		if err != nil {
+			return err
+		}
+		if len(dashIDs) > 0 {
+			return ErrFolderHasConnectedLibraryPanels
+		}
+
+		var panelIDs []struct {
+			ID int64 `xorm:"id"`
+		}
+		err = session.SQL("SELECT id from library_panel WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId).Find(&panelIDs)
+		if err != nil {
+			return err
+		}
+		for _, panelID := range panelIDs {
+			_, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=?", panelID.ID)
+			if err != nil {
+				return err
+			}
+		}
+		if _, err := session.Exec("DELETE FROM library_panel WHERE folder_id=? AND org_id=?", folderID, c.SignedInUser.OrgId); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (LibraryPanelWithMeta, error) {
 	libraryPanels := make([]LibraryPanelWithMeta, 0)
 	sql := sqlStatmentLibrayPanelDTOWithMeta + "WHERE lp.uid=? AND lp.org_id=?"
@@ -242,9 +308,31 @@ func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (Libr
 func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string) (LibraryPanelDTO, error) {
 	var libraryPanel LibraryPanelWithMeta
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		var err error
-		libraryPanel, err = getLibraryPanel(session, uid, c.SignedInUser.OrgId)
-		return err
+		libraryPanels := make([]LibraryPanelWithMeta, 0)
+		builder := sqlstore.SQLBuilder{}
+		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(` WHERE lp.uid=? AND lp.org_id=? AND lp.folder_id=0`, uid, c.SignedInUser.OrgId)
+		builder.Write(" UNION ")
+		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id <> 0")
+		builder.Write(` WHERE lp.uid=? AND lp.org_id=?`, uid, c.SignedInUser.OrgId)
+		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		builder.Write(` OR dashboard.id=0`)
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanels); err != nil {
+			return err
+		}
+		if len(libraryPanels) == 0 {
+			return errLibraryPanelNotFound
+		}
+		if len(libraryPanels) > 1 {
+			return fmt.Errorf("found %d panels, while expecting at most one", len(libraryPanels))
+		}
+
+		libraryPanel = libraryPanels[0]
+
+		return nil
 	})
 
 	dto := LibraryPanelDTO{
@@ -254,6 +342,7 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 		UID:      libraryPanel.UID,
 		Name:     libraryPanel.Name,
 		Model:    libraryPanel.Model,
+		Version:  libraryPanel.Version,
 		Meta: LibraryPanelDTOMeta{
 			CanEdit:             true,
 			ConnectedDashboards: libraryPanel.ConnectedDashboards,
@@ -281,8 +370,11 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, limit 
 	err := lps.SQLStore.WithDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
 		builder := sqlstore.SQLBuilder{}
 		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
-		builder.Write(" LEFT JOIN dashboard AS dashboard on lp.folder_id = dashboard.id")
-		builder.Write(` WHERE lp.org_id = ?`, c.SignedInUser.OrgId)
+		builder.Write(` WHERE lp.org_id=? AND lp.folder_id=0`, c.SignedInUser.OrgId)
+		builder.Write(" UNION ")
+		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
+		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id<>0")
+		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
 		}
@@ -306,6 +398,7 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, limit 
 			UID:      panel.UID,
 			Name:     panel.Name,
 			Model:    panel.Model,
+			Version:  panel.Version,
 			Meta: LibraryPanelDTOMeta{
 				CanEdit:             true,
 				ConnectedDashboards: panel.ConnectedDashboards,
@@ -336,12 +429,15 @@ func (lps *LibraryPanelService) getConnectedDashboards(c *models.ReqContext, uid
 		if err != nil {
 			return err
 		}
-
 		var libraryPanelDashboards []libraryPanelDashboard
-		session.Table("library_panel_dashboard")
-		session.Where("librarypanel_id=?", panel.ID)
-		err = session.Find(&libraryPanelDashboards)
-		if err != nil {
+		builder := sqlstore.SQLBuilder{}
+		builder.Write("SELECT lpd.* FROM library_panel_dashboard lpd")
+		builder.Write(" INNER JOIN dashboard AS dashboard on lpd.dashboard_id = dashboard.id")
+		builder.Write(` WHERE lpd.librarypanel_id=?`, panel.ID)
+		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
+			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
+		}
+		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryPanelDashboards); err != nil {
 			return err
 		}
 
@@ -374,6 +470,7 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 				UID:      panel.UID,
 				Name:     panel.Name,
 				Model:    panel.Model,
+				Version:  panel.Version,
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             panel.CanEdit,
 					ConnectedDashboards: panel.ConnectedDashboards,
@@ -399,6 +496,29 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 	return libraryPanelMap, err
 }
 
+func handleFolderIDPatches(panelToPatch *LibraryPanel, fromFolderID int64, toFolderID int64, user *models.SignedInUser) error {
+	// FolderID was not provided in the PATCH request
+	if toFolderID == -1 {
+		toFolderID = fromFolderID
+	}
+
+	// FolderID was provided in the PATCH request
+	if toFolderID != -1 && toFolderID != fromFolderID {
+		if err := requirePermissionsOnFolder(user, toFolderID); err != nil {
+			return err
+		}
+	}
+
+	// Always check permissions for the folder where library panel resides
+	if err := requirePermissionsOnFolder(user, fromFolderID); err != nil {
+		return err
+	}
+
+	panelToPatch.FolderID = toFolderID
+
+	return nil
+}
+
 // patchLibraryPanel updates a Library Panel.
 func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patchLibraryPanelCommand, uid string) (LibraryPanelDTO, error) {
 	var dto LibraryPanelDTO
@@ -406,6 +526,9 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		panelInDB, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
+		}
+		if panelInDB.Version != cmd.Version {
+			return errLibraryPanelVersionMismatch
 		}
 
 		var libraryPanel = LibraryPanel{
@@ -415,25 +538,25 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 			UID:       uid,
 			Name:      cmd.Name,
 			Model:     cmd.Model,
+			Version:   panelInDB.Version + 1,
 			Created:   panelInDB.Created,
 			CreatedBy: panelInDB.CreatedBy,
 			Updated:   time.Now(),
 			UpdatedBy: c.SignedInUser.UserId,
 		}
 
-		if cmd.FolderID == 0 {
-			libraryPanel.FolderID = panelInDB.FolderID
-		}
 		if cmd.Name == "" {
 			libraryPanel.Name = panelInDB.Name
 		}
 		if cmd.Model == nil {
 			libraryPanel.Model = panelInDB.Model
 		}
+		if err := handleFolderIDPatches(&libraryPanel, panelInDB.FolderID, cmd.FolderID, c.SignedInUser); err != nil {
+			return err
+		}
 		if err := syncTitleWithName(&libraryPanel); err != nil {
 			return err
 		}
-
 		if rowsAffected, err := session.ID(panelInDB.ID).Update(&libraryPanel); err != nil {
 			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 				return errLibraryPanelAlreadyExists
@@ -450,6 +573,7 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 			UID:      libraryPanel.UID,
 			Name:     libraryPanel.Name,
 			Model:    libraryPanel.Model,
+			Version:  libraryPanel.Version,
 			Meta: LibraryPanelDTOMeta{
 				CanEdit:             true,
 				ConnectedDashboards: panelInDB.ConnectedDashboards,

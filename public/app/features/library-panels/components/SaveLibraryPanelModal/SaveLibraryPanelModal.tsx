@@ -1,22 +1,30 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Button, HorizontalGroup, Icon, Input, Modal, stylesFactory, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { useAsync, useDebounce } from 'react-use';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { usePanelSave } from '../../utils/usePanelSave';
-import { PanelModel } from 'app/features/dashboard/state';
-import { getLibraryPanelConnectedDashboards, LibraryPanelDTO } from '../../state/api';
+import { getLibraryPanelConnectedDashboards } from '../../state/api';
+import { PanelModelWithLibraryPanel } from '../../types';
 
 interface Props {
-  panel: PanelModel & { libraryPanel: Pick<LibraryPanelDTO, 'uid' | 'name' | 'meta'> };
+  panel: PanelModelWithLibraryPanel;
   folderId: number;
   isOpen: boolean;
   onConfirm: () => void;
   onDismiss: () => void;
+  onDiscard: () => void;
 }
 
-export const SaveLibraryPanelModal: React.FC<Props> = ({ panel, folderId, isOpen, onDismiss, onConfirm }: Props) => {
+export const SaveLibraryPanelModal: React.FC<Props> = ({
+  panel,
+  folderId,
+  isOpen,
+  onDismiss,
+  onConfirm,
+  onDiscard,
+}) => {
   const [searchString, setSearchString] = useState('');
   const connectedDashboardsState = useAsync(async () => {
     const connectedDashboards = await getLibraryPanelConnectedDashboards(panel.libraryPanel.uid);
@@ -50,6 +58,10 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({ panel, folderId, isOpen
 
   const { saveLibraryPanel } = usePanelSave();
   const styles = useStyles(getModalStyles);
+  const discardAndClose = useCallback(() => {
+    onDiscard();
+    onDismiss();
+  }, []);
 
   return (
     <Modal title="Update all panel instances" icon="save" onDismiss={onDismiss} isOpen={isOpen}>
@@ -100,6 +112,9 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({ panel, folderId, isOpen
           </Button>
           <Button variant="secondary" onClick={onDismiss}>
             Cancel
+          </Button>
+          <Button variant="destructive" onClick={discardAndClose}>
+            Discard
           </Button>
         </HorizontalGroup>
       </div>

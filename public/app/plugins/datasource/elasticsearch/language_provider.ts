@@ -116,7 +116,6 @@ export default class ElasticsearchLanguageProvider extends LanguageProvider {
         let prometheusQuery = query as PromQuery;
         const expr = getElasticsearchQuery(extractPrometheusLabels(prometheusQuery.expr));
         return {
-          isLogsQuery: true,
           metrics: [
             {
               id: '1',

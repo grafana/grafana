@@ -1,5 +1,5 @@
 import { DashboardModel, PanelModel } from '../../../state';
-import { CoreEvents, ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types';
 import { appEvents } from 'app/core/core';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import {
@@ -8,13 +8,13 @@ import {
   PanelEditorUIState,
   setPanelEditorUIState,
   updateEditorInitState,
+  setDiscardChanges,
 } from './reducers';
-import { updateLocation } from 'app/core/actions';
 import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reducers';
 import store from 'app/core/store';
 import pick from 'lodash/pick';
-import omit from 'lodash/omit';
-import isEqual from 'lodash/isEqual';
+import { locationService } from '@grafana/runtime';
+import { ShowModalReactEvent } from '../../../../../types/events';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return (dispatch) => {
@@ -43,35 +43,40 @@ export function updateSourcePanel(sourcePanel: PanelModel): ThunkResult<void> {
 }
 
 export function exitPanelEditor(): ThunkResult<void> {
-  return (dispatch, getStore) => {
+  return async (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
-    const { getPanel, getSourcePanel, shouldDiscardChanges } = getStore().panelEditor;
-    const onConfirm = () =>
-      dispatch(
-        updateLocation({
-          query: { editPanel: null, tab: null },
-          partial: true,
-        })
-      );
+    const { getPanel, shouldDiscardChanges } = getStore().panelEditor;
+    const onConfirm = () => locationService.partial({ editPanel: null, tab: null });
 
-    const modifiedPanel = getPanel();
-    const modifiedSaveModel = modifiedPanel.getSaveModel();
-    const initialSaveModel = getSourcePanel().getSaveModel();
-    const panelChanged = !isEqual(omit(initialSaveModel, 'id'), omit(modifiedSaveModel, 'id'));
-    if (shouldDiscardChanges || !modifiedPanel.libraryPanel || !panelChanged) {
+    const onDiscard = () => {
+      dispatch(setDiscardChanges(true));
+      onConfirm();
+    };
+
+    const panel = getPanel();
+
+    if (shouldDiscardChanges || !panel.libraryPanel) {
       onConfirm();
       return;
     }
 
-    appEvents.emit(CoreEvents.showModalReact, {
-      component: SaveLibraryPanelModal,
-      props: {
-        panel: modifiedPanel,
-        folderId: dashboard!.meta.folderId,
-        isOpen: true,
-        onConfirm,
-      },
-    });
+    if (!panel.hasChanged) {
+      onConfirm();
+      return;
+    }
+
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: SaveLibraryPanelModal,
+        props: {
+          panel,
+          folderId: dashboard!.meta.folderId,
+          isOpen: true,
+          onConfirm,
+          onDiscard,
+        },
+      })
+    );
   };
 }
 

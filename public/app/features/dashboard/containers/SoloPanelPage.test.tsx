@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react';
 import { SoloPanelPage, Props } from './SoloPanelPage';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
 import { DashboardModel } from '../state';
-import { DashboardRouteInfo } from 'app/types';
+import { DashboardRoutes } from 'app/types';
+import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
@@ -63,12 +64,15 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       },
       mount: (propOverrides?: Partial<Props>) => {
         const props: Props = {
-          urlSlug: 'my-dash',
-          $scope: {},
-          urlUid: '11',
-          urlPanelId: '1',
-          $injector: {},
-          routeInfo: DashboardRouteInfo.Normal,
+          ...getRouteComponentProps({
+            match: {
+              params: { slug: 'my-dash', uid: '11' },
+            } as any,
+            queryParams: {
+              panelId: '1',
+            },
+            route: { routeName: DashboardRoutes.Normal } as any,
+          }),
           initDashboard: jest.fn(),
           dashboard: null,
         };
