@@ -2,14 +2,15 @@ import React from 'react';
 import { Button, InfoBox, Portal, stylesFactory, useTheme } from '@grafana/ui';
 import { getModalStyles } from '@grafana/ui/src/components/Modal/getModalStyles';
 import { css, cx } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
 
-const getStyles = stylesFactory(() => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     infobox: css`
       margin-bottom: 0;
     `,
     text: css`
-      margin: 8px 0 16px;
+      margin: ${theme.spacing.sm} 0 ${theme.spacing.md};
     `,
     backdrop: css`
       background-color: #0b0d10;
@@ -25,10 +26,10 @@ interface Props {
 export const TokenRevokedModal = (props: Props) => {
   const theme = useTheme();
 
-  const styles = getStyles();
+  const styles = getStyles(theme);
   const modalStyles = getModalStyles(theme);
 
-  const showMaxConcurrentSessions = props.maxConcurrentSessions && props.maxConcurrentSessions > 0;
+  const showMaxConcurrentSessions = Boolean(props.maxConcurrentSessions);
 
   const redirectToLogin = () => {
     window.location.reload();
