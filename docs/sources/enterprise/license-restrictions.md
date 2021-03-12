@@ -22,7 +22,7 @@ In the context of licensing, each user is classified as either a viewer or an ed
 - An editor is a user who has permission to edit and save a dashboard. Examples of editors are as follows:
     - Grafana server administrators.
     - Users who are assigned an organizational role of Editor or Admin.
-    - Users that have been granted Admin or Edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions](https://grafana.com/docs/grafana/latest/permissions/dashboard_folder_permissions/).     
+    - Users that have been granted Admin or Edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions](https://grafana.com/docs/grafana/latest/permissions/dashboard-folder-permissions/).     
 - A viewer is a user with the Viewer role, which does not permit the user to save a dashboard.
 
 Restrictions are applied separately for viewers and editors.
@@ -34,6 +34,12 @@ When the number of maximum active viewers or editors is reached, only they can s
 Sometimes it is useful to sign in to an account from multiple locations simultaneously. As of Grafana Enterprise 7.5+, accounts are limited to the number of concurrent sessions authorized in each license, which is typically three. A new session is created when a user signs in to Grafana from a new device, a different browser, or an incognito window. If a user signs in to Grafana from another tab or window within the same browser, then only one session is used.
 
 Given a limit of three sessions, the longest inactive session is signed out of when a fourth person signs in to the same account.
+
+### Usage billing
+
+You can request Grafana Labs to turn on usage billing to allow an unlimited number of active users. When usage billing is enabled, Grafana does not enforce active user limits. Instead, we charge for active users above the limit, according to your customer contract. 
+
+Usage billing must be agreed upon with Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license](https://grafana.com/docs/grafana/latest/enterprise/enterprise-configuration/#auto_refresh_license).
 
 ## Expiration date
 
