@@ -106,11 +106,7 @@ func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
 
 func (m *manager) GetDataPlugin(pluginID string) interface{} {
 	plugin := m.plugins[pluginID]
-	if plugin == nil {
-		return nil
-	}
-
-	if !plugin.CanHandleDataQueries() {
+	if plugin == nil || !plugin.CanHandleDataQueries() {
 		return nil
 	}
 
