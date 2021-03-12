@@ -4,21 +4,6 @@ import { getModalStyles } from '@grafana/ui/src/components/Modal/getModalStyles'
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    infobox: css`
-      margin-bottom: 0;
-    `,
-    text: css`
-      margin: ${theme.spacing.sm} 0 ${theme.spacing.md};
-    `,
-    backdrop: css`
-      background-color: #0b0d10;
-      opacity: 0.8;
-    `,
-  };
-});
-
 interface Props {
   maxConcurrentSessions?: number;
 }
@@ -64,3 +49,18 @@ export const TokenRevokedModal = (props: Props) => {
     </Portal>
   );
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    infobox: css`
+      margin-bottom: 0;
+    `,
+    text: css`
+      margin: ${theme.spacing.sm} 0 ${theme.spacing.md};
+    `,
+    backdrop: css`
+      background-color: ${theme.colors.dashboardBg};
+      opacity: 0.8;
+    `,
+  };
+});
