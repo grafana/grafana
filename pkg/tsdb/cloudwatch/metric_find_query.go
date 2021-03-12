@@ -323,7 +323,7 @@ func parseMultiSelectValue(input string) []string {
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json,
 	queryContext plugins.DataQuery) ([]suggestData, error) {
-	dsInfo := e.getDSInfo(defaultRegion)
+	dsInfo := e.getAWSDatasourceSettings(defaultRegion)
 	profile := dsInfo.Profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
@@ -716,7 +716,7 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	dsInfo := e.getDSInfo(region)
+	dsInfo := e.getAWSDatasourceSettings(region)
 
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
 		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
@@ -760,7 +760,7 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace str
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
-	dsInfo := e.getDSInfo(region)
+	dsInfo := e.getAWSDatasourceSettings(region)
 
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
 		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
