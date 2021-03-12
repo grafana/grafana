@@ -1,15 +1,23 @@
 package live
 
 import (
+	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -21,13 +29,13 @@ var (
 )
 
 func init() {
-	registry.RegisterService(&GrafanaLive{
+	registry.RegisterServiceWithPriority(&GrafanaLive{
 		channels:   make(map[string]models.ChannelHandler),
 		channelsMu: sync.RWMutex{},
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
 		},
-	})
+	}, registry.Low)
 }
 
 // CoreGrafanaScope list of core features
@@ -40,10 +48,15 @@ type CoreGrafanaScope struct {
 
 // GrafanaLive pretends to be the server
 type GrafanaLive struct {
-	Cfg           *setting.Cfg            `inject:""`
-	RouteRegister routing.RouteRegister   `inject:""`
-	LogsService   *cloudwatch.LogsService `inject:""`
-	node          *centrifuge.Node
+	Cfg             *setting.Cfg             `inject:""`
+	RouteRegister   routing.RouteRegister    `inject:""`
+	LogsService     *cloudwatch.LogsService  `inject:""`
+	PluginManager   *manager.PluginManager   `inject:""`
+	Bus             bus.Bus                  `inject:""`
+	CacheService    *localcache.CacheService `inject:""`
+	DatasourceCache datasources.CacheService `inject:""`
+
+	node *centrifuge.Node
 
 	// The websocket handler
 	WebsocketHandler interface{}
@@ -54,6 +67,78 @@ type GrafanaLive struct {
 
 	// The core internal features
 	GrafanaScope CoreGrafanaScope
+}
+
+type pluginChannelPublisher struct {
+	node *centrifuge.Node
+}
+
+func (p *pluginChannelPublisher) Publish(channel string, data []byte) error {
+	_, err := p.node.Publish(channel, data)
+	return err
+}
+
+type pluginPresenceGetter struct {
+	node *centrifuge.Node
+}
+
+type pluginContextGetter struct {
+	Bus             bus.Bus
+	Cache           *localcache.CacheService
+	DatasourceCache datasources.CacheService
+}
+
+func newPluginContextGetter(bus bus.Bus, cache *localcache.CacheService, datasourceCache datasources.CacheService) *pluginContextGetter {
+	return &pluginContextGetter{
+		DatasourceCache: datasourceCache,
+		Bus:             bus,
+		Cache:           cache,
+	}
+}
+
+func (g *pluginContextGetter) GetPluginContext(ctx context.Context, pluginID string, datasourceID int64) (backend.PluginContext, bool, error) {
+	user, ok := getContextSignedUser(ctx)
+	if !ok {
+		return backend.PluginContext{}, false, fmt.Errorf("no signed user found in context")
+	}
+	return plugincontext.Get(pluginID, datasourceID, user, g.Cache, g.Bus, g.DatasourceCache)
+}
+
+func (p *pluginPresenceGetter) GetNumSubscribers(channel string) (int, error) {
+	res, err := p.node.PresenceStats(channel)
+	if err != nil {
+		return 0, err
+	}
+	return res.NumClients, nil
+}
+
+func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
+	plugin := g.PluginManager.GetDataPlugin(pluginID)
+	if plugin == nil {
+		return nil, fmt.Errorf("data plugin not found: %s", pluginID)
+	}
+	streamHandler, ok := plugin.(backend.StreamHandler)
+	if !ok {
+		return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
+	}
+	return streamHandler, nil
+}
+
+type signedUserContextKeyType int
+
+var signedUserContextKey signedUserContextKeyType
+
+func setContextSignedUser(ctx context.Context, user *models.SignedInUser) context.Context {
+	ctx = context.WithValue(ctx, signedUserContextKey, user)
+	return ctx
+}
+
+func getContextSignedUser(ctx context.Context) (*models.SignedInUser, bool) {
+	if val := ctx.Value(signedUserContextKey); val != nil {
+		user, ok := val.(*models.SignedInUser)
+		return user, ok
+	}
+	return nil, false
 }
 
 // Init initializes the instance.
@@ -75,8 +160,7 @@ func (g *GrafanaLive) Init() error {
 
 	// Node is the core object in Centrifuge library responsible for many useful
 	// things. For example Node allows to publish messages to channels from server
-	// side with its Publish method, but in this example we will publish messages
-	// only from client side.
+	// side with its Publish method.
 	node, err := centrifuge.New(cfg)
 	if err != nil {
 		return err
@@ -87,25 +171,57 @@ func (g *GrafanaLive) Init() error {
 	dash := &features.DashboardHandler{
 		Publisher: g.Publish,
 	}
-
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
-	g.GrafanaScope.Features["testdata"] = &features.TestDataSupplier{
-		Publisher: g.Publish,
-	}
 	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
-	g.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
+	//g.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
+
+	contextGetter := newPluginContextGetter(g.Bus, g.CacheService, g.DatasourceCache)
+	channelPublisher := &pluginChannelPublisher{node: node}
+	presenceGetter := &pluginPresenceGetter{node: node}
+
+	// TODO: tmp hack sleep (data plugin not initialized yet and can't handle data queries)!
+	go func() {
+		time.Sleep(2 * time.Second)
+		signalHandler, err := g.getStreamPlugin("grafana-signal-datasource")
+		if err != nil {
+			panic(err)
+		}
+		// TODO: grafana-signal-datasource should operate in `ds` scope?
+		g.GrafanaScope.Features["measurements"] = features.NewPluginRunner(
+			"grafana-signal-datasource",
+			channelPublisher,
+			presenceGetter,
+			contextGetter,
+			signalHandler,
+		)
+	}()
+
+	testDataStreamHandler, err := g.getStreamPlugin("testdata")
+	if err != nil {
+		return err
+	}
+	g.GrafanaScope.Features["testdata"] = features.NewPluginRunner(
+		"testdata",
+		channelPublisher,
+		presenceGetter,
+		contextGetter,
+		testDataStreamHandler,
+	)
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
 	// different goroutines (belonging to different client connections). This is also
 	// true for other event handlers.
 	node.OnConnect(func(client *centrifuge.Client) {
-		logger.Debug("Client connected", "user", client.UserID())
+		logger.Debug("Client connected", "user", client.UserID(), "client", client.ID())
+		connectedAt := time.Now()
 
 		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
+			logger.Debug("Client wants to subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 			handler, err := g.GetChannelHandler(e.Channel)
 			if err != nil {
+				logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 				cb(centrifuge.SubscribeReply{}, err)
 			} else {
 				cb(handler.OnSubscribe(client, e))
@@ -116,12 +232,17 @@ func (g *GrafanaLive) Init() error {
 		// In general, we should prefer writing to the HTTP API, but this
 		// allows some simple prototypes to work quickly.
 		client.OnPublish(func(e centrifuge.PublishEvent, cb centrifuge.PublishCallback) {
+			logger.Debug("Client wants to publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 			handler, err := g.GetChannelHandler(e.Channel)
 			if err != nil {
 				cb(centrifuge.PublishReply{}, err)
 			} else {
 				cb(handler.OnPublish(client, e))
 			}
+		})
+
+		client.OnDisconnect(func(_ centrifuge.DisconnectEvent) {
+			logger.Debug("Client disconnected", "user", client.UserID(), "client", client.ID(), "elapsed", time.Since(connectedAt))
 		})
 	})
 
@@ -148,6 +269,7 @@ func (g *GrafanaLive) Init() error {
 			UserID: fmt.Sprintf("%d", user.UserId),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
+		newCtx = setContextSignedUser(newCtx, user)
 
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx) // Set a user ID.

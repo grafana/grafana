@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"path/filepath"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -65,12 +68,39 @@ func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSou
 	}
 
 	if p.client != nil {
-		endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
+		endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin, p.client.StreamClient)
 		return endpoint.Query(ctx, dsInfo, query)
 	}
 
 	endpoint := newDataSourcePluginWrapper(p.logger, p.legacyClient.DatasourcePlugin)
 	return endpoint.Query(ctx, dsInfo, query)
+}
+
+func (p *DataSourcePlugin) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+	// TODO: plugin context?
+	res, err := p.client.StreamClient.CanSubscribeToStream(ctx, backend.ToProto().SubscribeToStreamRequest(request))
+	if err != nil {
+		return nil, err
+	}
+	return backend.FromProto().SubscribeToStreamResponse(res), nil
+}
+
+func (p *DataSourcePlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	// TODO: plugin context?
+	res, err := p.client.StreamClient.RunStream(ctx, backend.ToProto().RunStreamRequest(request))
+	if err != nil {
+		return err
+	}
+	for {
+		p, err := res.Recv()
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+		_ = sender.Send(backend.FromProto().StreamPacket(p))
+	}
 }
 
 func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {

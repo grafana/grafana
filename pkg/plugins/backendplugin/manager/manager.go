@@ -101,7 +101,11 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 
 func (m *manager) GetDataPlugin(pluginID string) interface{} {
 	plugin := m.plugins[pluginID]
-	if plugin == nil || !plugin.CanHandleDataQueries() {
+	if plugin == nil {
+		return nil
+	}
+
+	if !plugin.CanHandleDataQueries() {
 		return nil
 	}
 
