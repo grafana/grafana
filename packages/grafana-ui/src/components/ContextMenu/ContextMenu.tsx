@@ -1,4 +1,4 @@
-import React, { useRef, useState, useLayoutEffect, useCallback } from 'react';
+import React, { useRef, useState, useLayoutEffect } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { useClickAway } from 'react-use';
 import { Portal } from '../Portal/Portal';
@@ -47,12 +47,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
     }
   });
 
-  const onClick = useCallback(() => {
-    if (onClose) {
-      onClose();
-    }
-  }, [onClose]);
-
   const header = renderHeader && renderHeader();
   return (
     <Portal>
@@ -61,6 +55,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
         ref={menuRef}
         style={positionStyles}
         ariaLabel={selectors.components.Menu.MenuComponent('Context')}
+        onClick={onClose}
       >
         {itemsGroup?.map((group, index) => (
           <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
@@ -73,7 +68,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
                 target={item.target}
                 icon={item.icon}
                 active={item.active}
-                onClick={onClick}
+                onClick={item.onClick}
               />
             ))}
           </MenuGroup>
