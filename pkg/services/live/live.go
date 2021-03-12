@@ -68,9 +68,9 @@ type GrafanaLive struct {
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
-	plugin := g.PluginManager.GetDataPlugin(pluginID)
-	if plugin == nil {
-		return nil, fmt.Errorf("data plugin not found: %s", pluginID)
+	plugin, ok := g.PluginManager.BackendPluginManager.Get(pluginID)
+	if !ok {
+		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
 	streamHandler, ok := plugin.(backend.StreamHandler)
 	if !ok {
@@ -159,7 +159,7 @@ func (g *GrafanaLive) Init() error {
 			logger.Debug("Client wants to subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 			handler, err := g.GetChannelHandler(e.Channel)
 			if err != nil {
-				logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+				logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 				cb(centrifuge.SubscribeReply{}, err)
 			} else {
 				cb(handler.OnSubscribe(client, e))
