@@ -27,11 +27,10 @@ export const TokenRevokedModal = (props: Props) => {
           <div className={styles.text}>
             <p>
               Your session token was automatically revoked because you have reached
-              <strong>
-                {' '}
-                the maximum number of
-                {showMaxConcurrentSessions && <span> {props.maxConcurrentSessions} </span>}
-                concurrent sessions{' '}
+            <strong>
+                {` the maximum number of ${
+                  showMaxConcurrentSessions ? props.maxConcurrentSessions : ''
+                } concurrent sessions `}
               </strong>
               for your account.
             </p>
