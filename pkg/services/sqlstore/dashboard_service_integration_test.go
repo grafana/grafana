@@ -967,7 +967,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand) *models.D
 	t.Helper()
 
 	dto := toSaveDashboardDto(cmd)
-	res, err := dashboards.NewService(nil).SaveDashboard(&dto, false)
+	res, err := dashboards.NewService().SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -975,7 +975,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand) *models.D
 
 func callSaveWithError(cmd models.SaveDashboardCommand) error {
 	dto := toSaveDashboardDto(cmd)
-	_, err := dashboards.NewService(nil).SaveDashboard(&dto, false)
+	_, err := dashboards.NewService().SaveDashboard(&dto, false)
 	return err
 }
 
@@ -1001,7 +1001,7 @@ func saveTestDashboard(t *testing.T, title string, orgId int64, folderId int64) 
 		},
 	}
 
-	res, err := dashboards.NewService(nil).SaveDashboard(&dto, false)
+	res, err := dashboards.NewService().SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -1028,7 +1028,7 @@ func saveTestFolder(t *testing.T, title string, orgId int64) *models.Dashboard {
 		},
 	}
 
-	res, err := dashboards.NewService(nil).SaveDashboard(&dto, false)
+	res, err := dashboards.NewService().SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res
