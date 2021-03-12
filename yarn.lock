@@ -25058,9 +25058,9 @@ test-value@^3.0.0:
     array-back "^2.0.0"
     typical "^2.6.1"
 
-"tether-drop@https://github.com/torkelo/drop/tarball/master":
+"tether-drop@https://github.com/torkelo/drop":
   version "1.5.0"
-  resolved "https://github.com/torkelo/drop/tarball/master#6a3eb15b882b416f06e1e7ae04c7e57d08418020"
+  resolved "https://github.com/torkelo/drop#fc83ca88db0076fbf6359cbe1743a9ef0f1ee6e1"
   dependencies:
     tether "^1.1.0"
 
