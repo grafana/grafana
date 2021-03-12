@@ -11,12 +11,12 @@ import (
 func Test_ApiReceiver_Marshaling(t *testing.T) {
 	for _, tc := range []struct {
 		desc  string
-		input ApiReceiver
+		input PostableApiReceiver
 		err   bool
 	}{
 		{
 			desc: "success AM",
-			input: ApiReceiver{
+			input: PostableApiReceiver{
 				Receiver: config.Receiver{
 					Name:         "foo",
 					EmailConfigs: []*config.EmailConfig{{}},
@@ -25,24 +25,24 @@ func Test_ApiReceiver_Marshaling(t *testing.T) {
 		},
 		{
 			desc: "success GM",
-			input: ApiReceiver{
+			input: PostableApiReceiver{
 				Receiver: config.Receiver{
 					Name: "foo",
 				},
-				GrafanaReceivers: GrafanaReceivers{
-					GrafanaManagedReceivers: []*GrafanaReceiver{{}},
+				PostableGrafanaReceivers: PostableGrafanaReceivers{
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{}},
 				},
 			},
 		},
 		{
 			desc: "failure mixed",
-			input: ApiReceiver{
+			input: PostableApiReceiver{
 				Receiver: config.Receiver{
 					Name:         "foo",
 					EmailConfigs: []*config.EmailConfig{{}},
 				},
-				GrafanaReceivers: GrafanaReceivers{
-					GrafanaManagedReceivers: []*GrafanaReceiver{{}},
+				PostableGrafanaReceivers: PostableGrafanaReceivers{
+					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{}},
 				},
 			},
 			err: true,
@@ -52,7 +52,7 @@ func Test_ApiReceiver_Marshaling(t *testing.T) {
 			encoded, err := json.Marshal(tc.input)
 			require.Nil(t, err)
 
-			var out ApiReceiver
+			var out PostableApiReceiver
 			err = json.Unmarshal(encoded, &out)
 
 			if tc.err {
@@ -89,12 +89,12 @@ func Test_AllReceivers(t *testing.T) {
 func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 	for _, tc := range []struct {
 		desc  string
-		input ApiAlertingConfig
+		input PostableApiAlertingConfig
 		err   bool
 	}{
 		{
 			desc: "success am",
-			input: ApiAlertingConfig{
+			input: PostableApiAlertingConfig{
 				Config: config.Config{
 					Route: &config.Route{
 						Receiver: "am",
@@ -105,7 +105,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*ApiReceiver{
+				Receivers: []*PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
 							Name:         "am",
@@ -117,7 +117,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 		},
 		{
 			desc: "success graf",
-			input: ApiAlertingConfig{
+			input: PostableApiAlertingConfig{
 				Config: config.Config{
 					Route: &config.Route{
 						Receiver: "graf",
@@ -128,13 +128,13 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*ApiReceiver{
+				Receivers: []*PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
 							Name: "graf",
 						},
-						GrafanaReceivers: GrafanaReceivers{
-							GrafanaManagedReceivers: []*GrafanaReceiver{{}},
+						PostableGrafanaReceivers: PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*PostableGrafanaReceiver{{}},
 						},
 					},
 				},
@@ -142,7 +142,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 		},
 		{
 			desc: "failure undefined am receiver",
-			input: ApiAlertingConfig{
+			input: PostableApiAlertingConfig{
 				Config: config.Config{
 					Route: &config.Route{
 						Receiver: "am",
@@ -153,7 +153,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*ApiReceiver{
+				Receivers: []*PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
 							Name:         "am",
@@ -166,7 +166,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 		},
 		{
 			desc: "failure undefined graf receiver",
-			input: ApiAlertingConfig{
+			input: PostableApiAlertingConfig{
 				Config: config.Config{
 					Route: &config.Route{
 						Receiver: "graf",
@@ -177,13 +177,13 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 						},
 					},
 				},
-				Receivers: []*ApiReceiver{
+				Receivers: []*PostableApiReceiver{
 					{
 						Receiver: config.Receiver{
 							Name: "graf",
 						},
-						GrafanaReceivers: GrafanaReceivers{
-							GrafanaManagedReceivers: []*GrafanaReceiver{{}},
+						PostableGrafanaReceivers: PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*PostableGrafanaReceiver{{}},
 						},
 					},
 				},
@@ -195,7 +195,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 			encoded, err := json.Marshal(tc.input)
 			require.Nil(t, err)
 
-			var out ApiAlertingConfig
+			var out PostableApiAlertingConfig
 			err = json.Unmarshal(encoded, &out)
 
 			if tc.err {

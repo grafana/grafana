@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
@@ -22,7 +23,7 @@ import (
 // gets an Alerting config
 //
 //     Responses:
-//       200: UserConfig
+//       200: GettableUserConfig
 //       400: ValidationError
 
 // swagger:route DELETE /alertmanager/{DatasourceId}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
@@ -157,7 +158,7 @@ type PostableAlerts struct {
 // swagger:parameters RoutePostAlertingConfig
 type BodyAlertingConfig struct {
 	// in:body
-	Body UserConfig
+	Body PostableUserConfig
 }
 
 // alertmanager routes
@@ -172,20 +173,25 @@ type DatasourceReference struct {
 }
 
 // swagger:model
-type UserConfig struct {
-	TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
-	AlertmanagerConfig ApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+type PostableUserConfig struct {
+	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 }
 
-type ApiAlertingConfig struct {
+// swagger:model
+type GettableUserConfig struct {
+	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
+	AlertmanagerConfig GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+}
+type GettableApiAlertingConfig struct {
 	config.Config
 
 	// Override with our superset receiver type
-	Receivers []*ApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+	Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
-func (c *ApiAlertingConfig) UnmarshalJSON(b []byte) error {
-	type plain ApiAlertingConfig
+func (c *GettableApiAlertingConfig) UnmarshalJSON(b []byte) error {
+	type plain GettableApiAlertingConfig
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
 		return err
 	}
@@ -194,7 +200,7 @@ func (c *ApiAlertingConfig) UnmarshalJSON(b []byte) error {
 }
 
 // validate ensures that the two routing trees use the correct receiver types.
-func (c *ApiAlertingConfig) validate() error {
+func (c *GettableApiAlertingConfig) validate() error {
 	receivers := make(map[string]struct{}, len(c.Receivers))
 
 	var hasGrafReceivers, hasAMReceivers bool
@@ -223,7 +229,65 @@ func (c *ApiAlertingConfig) validate() error {
 }
 
 // Type requires validate has been called and just checks the first receiver type
-func (c *ApiAlertingConfig) Type() (backend Backend) {
+func (c *GettableApiAlertingConfig) Type() (backend Backend) {
+	for _, r := range c.Receivers {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			return GrafanaBackend
+		case AlertmanagerReceiverType:
+			return AlertmanagerBackend
+		}
+	}
+	return
+}
+
+type PostableApiAlertingConfig struct {
+	config.Config
+
+	// Override with our superset receiver type
+	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+}
+
+func (c *PostableApiAlertingConfig) UnmarshalJSON(b []byte) error {
+	type plain PostableApiAlertingConfig
+	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
+		return err
+	}
+
+	return c.validate()
+}
+
+// validate ensures that the two routing trees use the correct receiver types.
+func (c *PostableApiAlertingConfig) validate() error {
+	receivers := make(map[string]struct{}, len(c.Receivers))
+
+	var hasGrafReceivers, hasAMReceivers bool
+	for _, r := range c.Receivers {
+		receivers[r.Name] = struct{}{}
+		switch r.Type() {
+		case GrafanaReceiverType:
+			hasGrafReceivers = true
+		case AlertmanagerReceiverType:
+			hasAMReceivers = true
+		}
+	}
+
+	if hasGrafReceivers && hasAMReceivers {
+		return fmt.Errorf("cannot mix Alertmanager & Grafana receiver types")
+	}
+
+	for _, receiver := range AllReceivers(c.Route) {
+		_, ok := receivers[receiver]
+		if !ok {
+			return fmt.Errorf("unexpected receiver (%s) is undefined", receiver)
+		}
+	}
+
+	return nil
+}
+
+// Type requires validate has been called and just checks the first receiver type
+func (c *PostableApiAlertingConfig) Type() (backend Backend) {
 	for _, r := range c.Receivers {
 		switch r.Type() {
 		case GrafanaReceiverType:
@@ -245,7 +309,8 @@ func AllReceivers(route *config.Route) (res []string) {
 	return res
 }
 
-type GrafanaReceiver models.CreateAlertNotificationCommand
+type GettableGrafanaReceiver dtos.AlertNotification
+type PostableGrafanaReceiver models.CreateAlertNotificationCommand
 
 type ReceiverType int
 
@@ -254,18 +319,18 @@ const (
 	AlertmanagerReceiverType
 )
 
-type ApiReceiver struct {
+type GettableApiReceiver struct {
 	config.Receiver
-	GrafanaReceivers
+	GettableGrafanaReceivers
 }
 
-func (r *ApiReceiver) UnmarshalJSON(b []byte) error {
-	type plain ApiReceiver
+func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
+	type plain GettableApiReceiver
 	if err := json.Unmarshal(b, (*plain)(r)); err != nil {
 		return err
 	}
 
-	hasGrafanaReceivers := len(r.GrafanaReceivers.GrafanaManagedReceivers) > 0
+	hasGrafanaReceivers := len(r.GettableGrafanaReceivers.GrafanaManagedReceivers) > 0
 
 	if hasGrafanaReceivers {
 		if len(r.EmailConfigs) > 0 {
@@ -299,13 +364,69 @@ func (r *ApiReceiver) UnmarshalJSON(b []byte) error {
 
 }
 
-func (r *ApiReceiver) Type() ReceiverType {
-	if len(r.GrafanaReceivers.GrafanaManagedReceivers) > 0 {
+func (r *GettableApiReceiver) Type() ReceiverType {
+	if len(r.GettableGrafanaReceivers.GrafanaManagedReceivers) > 0 {
 		return GrafanaReceiverType
 	}
 	return AlertmanagerReceiverType
 }
 
-type GrafanaReceivers struct {
-	GrafanaManagedReceivers []*GrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
+type PostableApiReceiver struct {
+	config.Receiver
+	PostableGrafanaReceivers
+}
+
+func (r *PostableApiReceiver) UnmarshalJSON(b []byte) error {
+	type plain PostableApiReceiver
+	if err := json.Unmarshal(b, (*plain)(r)); err != nil {
+		return err
+	}
+
+	hasGrafanaReceivers := len(r.PostableGrafanaReceivers.GrafanaManagedReceivers) > 0
+
+	if hasGrafanaReceivers {
+		if len(r.EmailConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager EmailConfigs & Grafana receivers together")
+		}
+		if len(r.PagerdutyConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager PagerdutyConfigs & Grafana receivers together")
+		}
+		if len(r.SlackConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager SlackConfigs & Grafana receivers together")
+		}
+		if len(r.WebhookConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager WebhookConfigs & Grafana receivers together")
+		}
+		if len(r.OpsGenieConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager OpsGenieConfigs & Grafana receivers together")
+		}
+		if len(r.WechatConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager WechatConfigs & Grafana receivers together")
+		}
+		if len(r.PushoverConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager PushoverConfigs & Grafana receivers together")
+		}
+		if len(r.VictorOpsConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager VictorOpsConfigs & Grafana receivers together")
+		}
+
+	}
+
+	return nil
+
+}
+
+func (r *PostableApiReceiver) Type() ReceiverType {
+	if len(r.PostableGrafanaReceivers.GrafanaManagedReceivers) > 0 {
+		return GrafanaReceiverType
+	}
+	return AlertmanagerReceiverType
+}
+
+type GettableGrafanaReceivers struct {
+	GrafanaManagedReceivers []*GettableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
+}
+
+type PostableGrafanaReceivers struct {
+	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
 }

@@ -355,9 +355,9 @@
         ],
         "responses": {
           "200": {
-            "description": "UserConfig",
+            "description": "GettableUserConfig",
             "schema": {
-              "$ref": "#/definitions/UserConfig"
+              "$ref": "#/definitions/GettableUserConfig"
             }
           },
           "400": {
@@ -379,7 +379,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/UserConfig"
+              "$ref": "#/definitions/PostableUserConfig"
             }
           },
           {
@@ -980,6 +980,7 @@
           "x-go-name": "DisableResolveMessage"
         },
         "frequency": {
+          "type": "string",
           "$ref": "#/definitions/Duration"
         },
         "id": {
@@ -995,8 +996,12 @@
           "type": "string",
           "x-go-name": "Name"
         },
-        "secureSettings": {
-          "$ref": "#/definitions/SecureJsonData"
+        "secureFields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "x-go-name": "SecureFields"
         },
         "sendReminder": {
           "type": "boolean",
@@ -1009,13 +1014,17 @@
           "type": "string",
           "x-go-name": "Type"
         },
+        "uid": {
+          "type": "string",
+          "x-go-name": "Uid"
+        },
         "updated": {
           "type": "string",
           "format": "date-time",
           "x-go-name": "Updated"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
+      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "AlertQuery": {
       "type": "object",
@@ -1129,114 +1138,6 @@
         },
         "type": {
           "$ref": "#/definitions/RuleType"
-        }
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-    },
-    "ApiAlertingConfig": {
-      "type": "object",
-      "properties": {
-        "global": {
-          "$ref": "#/definitions/GlobalConfig"
-        },
-        "inhibit_rules": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/InhibitRule"
-          },
-          "x-go-name": "InhibitRules"
-        },
-        "receivers": {
-          "description": "Override with our superset receiver type",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ApiReceiver"
-          },
-          "x-go-name": "Receivers"
-        },
-        "route": {
-          "$ref": "#/definitions/Route"
-        },
-        "templates": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "x-go-name": "Templates"
-        }
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-    },
-    "ApiReceiver": {
-      "type": "object",
-      "properties": {
-        "email_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/EmailConfig"
-          },
-          "x-go-name": "EmailConfigs"
-        },
-        "grafana_managed_receiver_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/GrafanaReceiver"
-          },
-          "x-go-name": "GrafanaManagedReceivers"
-        },
-        "name": {
-          "description": "A unique identifier for this receiver.",
-          "type": "string",
-          "x-go-name": "Name"
-        },
-        "opsgenie_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OpsGenieConfig"
-          },
-          "x-go-name": "OpsGenieConfigs"
-        },
-        "pagerduty_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PagerdutyConfig"
-          },
-          "x-go-name": "PagerdutyConfigs"
-        },
-        "pushover_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PushoverConfig"
-          },
-          "x-go-name": "PushoverConfigs"
-        },
-        "slack_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SlackConfig"
-          },
-          "x-go-name": "SlackConfigs"
-        },
-        "victorops_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/VictorOpsConfig"
-          },
-          "x-go-name": "VictorOpsConfigs"
-        },
-        "webhook_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/WebhookConfig"
-          },
-          "x-go-name": "WebhookConfigs"
-        },
-        "wechat_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/WechatConfig"
-          },
-          "x-go-name": "WechatConfigs"
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
@@ -1520,7 +1421,7 @@
           "$ref": "#/definitions/EmailConfig"
         },
         "grafana_managed_receiver": {
-          "$ref": "#/definitions/GrafanaReceiver"
+          "$ref": "#/definitions/PostableGrafanaReceiver"
         },
         "opsgenie_configs": {
           "$ref": "#/definitions/OpsGenieConfig"
@@ -1653,11 +1554,151 @@
     "GettableAlerts": {
       "$ref": "#/definitions/gettableAlerts"
     },
+    "GettableApiAlertingConfig": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/GlobalConfig"
+        },
+        "inhibit_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InhibitRule"
+          },
+          "x-go-name": "InhibitRules"
+        },
+        "receivers": {
+          "description": "Override with our superset receiver type",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableApiReceiver"
+          },
+          "x-go-name": "Receivers"
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Templates"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "GettableApiReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailConfig"
+          },
+          "x-go-name": "EmailConfigs"
+        },
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableGrafanaReceiver"
+          },
+          "x-go-name": "GrafanaManagedReceivers"
+        },
+        "name": {
+          "description": "A unique identifier for this receiver.",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "opsgenie_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpsGenieConfig"
+          },
+          "x-go-name": "OpsGenieConfigs"
+        },
+        "pagerduty_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagerdutyConfig"
+          },
+          "x-go-name": "PagerdutyConfigs"
+        },
+        "pushover_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PushoverConfig"
+          },
+          "x-go-name": "PushoverConfigs"
+        },
+        "slack_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackConfig"
+          },
+          "x-go-name": "SlackConfigs"
+        },
+        "victorops_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VictorOpsConfig"
+          },
+          "x-go-name": "VictorOpsConfigs"
+        },
+        "webhook_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebhookConfig"
+          },
+          "x-go-name": "WebhookConfigs"
+        },
+        "wechat_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WechatConfig"
+          },
+          "x-go-name": "WechatConfigs"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "GettableGrafanaReceiver": {
+      "$ref": "#/definitions/AlertNotification"
+    },
+    "GettableGrafanaReceivers": {
+      "type": "object",
+      "properties": {
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/GettableGrafanaReceiver"
+          },
+          "x-go-name": "GrafanaManagedReceivers"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
     "GettableSilence": {
       "$ref": "#/definitions/gettableSilence"
     },
     "GettableSilences": {
       "$ref": "#/definitions/gettableSilences"
+    },
+    "GettableUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/GettableApiAlertingConfig"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "TemplateFiles"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "GlobalConfig": {
       "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
@@ -1728,22 +1769,6 @@
         }
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
-    },
-    "GrafanaReceiver": {
-      "$ref": "#/definitions/CreateAlertNotificationCommand"
-    },
-    "GrafanaReceivers": {
-      "type": "object",
-      "properties": {
-        "grafana_managed_receiver_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/GrafanaReceiver"
-          },
-          "x-go-name": "GrafanaManagedReceivers"
-        }
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "HTTPClientConfig": {
       "type": "object",
@@ -2150,6 +2175,146 @@
         }
       },
       "x-go-package": "github.com/prometheus/prometheus/promql"
+    },
+    "PostableApiAlertingConfig": {
+      "type": "object",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/GlobalConfig"
+        },
+        "inhibit_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/InhibitRule"
+          },
+          "x-go-name": "InhibitRules"
+        },
+        "receivers": {
+          "description": "Override with our superset receiver type",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableApiReceiver"
+          },
+          "x-go-name": "Receivers"
+        },
+        "route": {
+          "$ref": "#/definitions/Route"
+        },
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Templates"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "PostableApiReceiver": {
+      "type": "object",
+      "properties": {
+        "email_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailConfig"
+          },
+          "x-go-name": "EmailConfigs"
+        },
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableGrafanaReceiver"
+          },
+          "x-go-name": "GrafanaManagedReceivers"
+        },
+        "name": {
+          "description": "A unique identifier for this receiver.",
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "opsgenie_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpsGenieConfig"
+          },
+          "x-go-name": "OpsGenieConfigs"
+        },
+        "pagerduty_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PagerdutyConfig"
+          },
+          "x-go-name": "PagerdutyConfigs"
+        },
+        "pushover_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PushoverConfig"
+          },
+          "x-go-name": "PushoverConfigs"
+        },
+        "slack_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SlackConfig"
+          },
+          "x-go-name": "SlackConfigs"
+        },
+        "victorops_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VictorOpsConfig"
+          },
+          "x-go-name": "VictorOpsConfigs"
+        },
+        "webhook_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebhookConfig"
+          },
+          "x-go-name": "WebhookConfigs"
+        },
+        "wechat_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WechatConfig"
+          },
+          "x-go-name": "WechatConfigs"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "PostableGrafanaReceiver": {
+      "$ref": "#/definitions/CreateAlertNotificationCommand"
+    },
+    "PostableGrafanaReceivers": {
+      "type": "object",
+      "properties": {
+        "grafana_managed_receiver_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostableGrafanaReceiver"
+          },
+          "x-go-name": "GrafanaManagedReceivers"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+    },
+    "PostableUserConfig": {
+      "type": "object",
+      "properties": {
+        "alertmanager_config": {
+          "$ref": "#/definitions/PostableApiAlertingConfig"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "TemplateFiles"
+        }
+      },
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "PushoverConfig": {
       "type": "object",
@@ -2849,9 +3014,8 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -2884,7 +3048,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "UpdateAlertDefinitionCommand": {
       "type": "object",
@@ -2928,22 +3092,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
-    },
-    "UserConfig": {
-      "type": "object",
-      "properties": {
-        "alertmanager_config": {
-          "$ref": "#/definitions/ApiAlertingConfig"
-        },
-        "template_files": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "TemplateFiles"
-        }
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
