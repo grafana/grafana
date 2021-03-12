@@ -59,13 +59,8 @@ func setupTestEnv(t testing.TB) *AccessControlService {
 
 type evaluatingPermissionsTestCase struct {
 	desc     string
-	endpoint string
-	action   string
 	userName string
 	roles    []actesting.RoleTestCase
-
-	expectedError  error
-	expectedAccess bool
 }
 
 func TestEvaluatingPermissions(t *testing.T) {
@@ -74,9 +69,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 
 	testCases := []evaluatingPermissionsTestCase{
 		{
-			desc:     "should successfuly evaluate access to the endpoint",
-			endpoint: "/api/admin/users",
-			action:   "post",
+			desc:     "should successfully evaluate access to the endpoint",
 			userName: "testuser",
 			roles: []actesting.RoleTestCase{
 				{
@@ -86,8 +79,6 @@ func TestEvaluatingPermissions(t *testing.T) {
 					},
 				},
 			},
-			expectedError:  nil,
-			expectedAccess: true,
 		},
 	}
 	for _, tc := range testCases {

@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// accessControlStoreTestImpl is a test store implementation which additionaly executes a database migrations
+// accessControlStoreTestImpl is a test store implementation which additionally executes a database migrations
 type accessControlStoreTestImpl struct {
 	database.AccessControlStore
 }

@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// accessControlStoreTestImpl is a test store implementation which additionaly executes a database migrations
+// accessControlStoreTestImpl is a test store implementation which additionally executes a database migrations
 type accessControlStoreTestImpl struct {
 	AccessControlStore
 }
@@ -83,7 +83,7 @@ func TestCreatingRole(t *testing.T) {
 		expectedUpdated time.Time
 	}{
 		{
-			desc: "should successfuly create simple role",
+			desc: "should successfully create simple role",
 			role: actesting.RoleTestCase{
 				Name:        "a name",
 				Permissions: nil,
@@ -91,7 +91,7 @@ func TestCreatingRole(t *testing.T) {
 			expectedUpdated: time.Unix(1, 0).UTC(),
 		},
 		{
-			desc: "should successfuly create role with UID",
+			desc: "should successfully create role with UID",
 			role: actesting.RoleTestCase{
 				Name:        "a name",
 				UID:         "testUID",
@@ -100,7 +100,7 @@ func TestCreatingRole(t *testing.T) {
 			expectedUpdated: time.Unix(3, 0).UTC(),
 		},
 		{
-			desc: "should successfuly create role with permissions",
+			desc: "should successfully create role with permissions",
 			role: actesting.RoleTestCase{
 				Name: "a name",
 				Permissions: []actesting.PermissionTestCase{
@@ -153,7 +153,7 @@ func TestUpdatingRole(t *testing.T) {
 		expectedError error
 	}{
 		{
-			desc: "should successfuly update role name",
+			desc: "should successfully update role name",
 			role: actesting.RoleTestCase{
 				Name: "a name",
 				Permissions: []actesting.PermissionTestCase{
@@ -169,7 +169,7 @@ func TestUpdatingRole(t *testing.T) {
 			},
 		},
 		{
-			desc: "should successfuly create role with permissions",
+			desc: "should successfully create role with permissions",
 			role: actesting.RoleTestCase{
 				Name: "a name",
 				Permissions: []actesting.PermissionTestCase{
@@ -231,9 +231,6 @@ type userRoleTestCase struct {
 	teamName  string
 	userRoles []actesting.RoleTestCase
 	teamRoles []actesting.RoleTestCase
-
-	expectedError  error
-	expectedAccess bool
 }
 
 func TestUserRole(t *testing.T) {
@@ -242,7 +239,7 @@ func TestUserRole(t *testing.T) {
 
 	testCases := []userRoleTestCase{
 		{
-			desc:     "should successfuly get user roles",
+			desc:     "should successfully get user roles",
 			userName: "testuser",
 			teamName: "team1",
 			userRoles: []actesting.RoleTestCase{
@@ -250,12 +247,10 @@ func TestUserRole(t *testing.T) {
 					Name: "CreateUser", Permissions: []actesting.PermissionTestCase{},
 				},
 			},
-			teamRoles:      nil,
-			expectedError:  nil,
-			expectedAccess: false,
+			teamRoles: nil,
 		},
 		{
-			desc:     "should successfuly get user and team roles",
+			desc:     "should successfully get user and team roles",
 			userName: "testuser",
 			teamName: "team1",
 			userRoles: []actesting.RoleTestCase{
@@ -271,11 +266,9 @@ func TestUserRole(t *testing.T) {
 					Name: "EditDataSource", Permissions: []actesting.PermissionTestCase{},
 				},
 			},
-			expectedError:  nil,
-			expectedAccess: false,
 		},
 		{
-			desc:      "should successfuly get user and team roles if user has no roles",
+			desc:      "should successfully get user and team roles if user has no roles",
 			userName:  "testuser",
 			teamName:  "team1",
 			userRoles: nil,
@@ -287,8 +280,6 @@ func TestUserRole(t *testing.T) {
 					Name: "EditDataSource", Permissions: []actesting.PermissionTestCase{},
 				},
 			},
-			expectedError:  nil,
-			expectedAccess: false,
 		},
 	}
 	for _, tc := range testCases {
@@ -355,9 +346,6 @@ type userTeamRoleTestCase struct {
 	teamName  string
 	userRoles []actesting.RoleTestCase
 	teamRoles []actesting.RoleTestCase
-
-	expectedError  error
-	expectedAccess bool
 }
 
 func TestUserPermissions(t *testing.T) {
@@ -366,7 +354,7 @@ func TestUserPermissions(t *testing.T) {
 
 	testCases := []userTeamRoleTestCase{
 		{
-			desc:     "should successfuly get user and team permissions",
+			desc:     "should successfully get user and team permissions",
 			userName: "testuser",
 			teamName: "team1",
 			userRoles: []actesting.RoleTestCase{
@@ -384,8 +372,6 @@ func TestUserPermissions(t *testing.T) {
 					},
 				},
 			},
-			expectedError:  nil,
-			expectedAccess: false,
 		},
 	}
 	for _, tc := range testCases {
