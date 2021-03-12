@@ -14,24 +14,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
-func newDataSourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, dataClient grpcplugin.DataClient, streamClient grpcplugin.StreamClient) *DatasourcePluginWrapperV2 {
-	return &DatasourcePluginWrapperV2{DataClient: dataClient, StreamClient: streamClient, logger: log, pluginId: pluginId, pluginType: pluginType}
+func newDataSourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, dataClient grpcplugin.DataClient) *DatasourcePluginWrapperV2 {
+	return &DatasourcePluginWrapperV2{DataClient: dataClient, logger: log, pluginId: pluginId, pluginType: pluginType}
 }
 
 type DatasourcePluginWrapperV2 struct {
-	grpcplugin.StreamClient
 	grpcplugin.DataClient
 	logger     log.Logger
 	pluginId   string
 	pluginType string
-}
-
-func (tw *DatasourcePluginWrapperV2) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
-	panic("implement me")
-}
-
-func (tw *DatasourcePluginWrapperV2) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
-	panic("implement me")
 }
 
 func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataSource, query DataQuery) (DataResponse, error) {

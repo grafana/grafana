@@ -68,7 +68,7 @@ func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSou
 	}
 
 	if p.client != nil {
-		endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin, p.client.StreamClient)
+		endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
 		return endpoint.Query(ctx, dsInfo, query)
 	}
 
@@ -77,7 +77,7 @@ func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSou
 }
 
 func (p *DataSourcePlugin) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
-	// TODO: plugin context?
+	// TODO: should we do this over newDataSourcePluginWrapperV2 since it has some token logic?
 	res, err := p.client.StreamClient.CanSubscribeToStream(ctx, backend.ToProto().SubscribeToStreamRequest(request))
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (p *DataSourcePlugin) CanSubscribeToStream(ctx context.Context, request *ba
 }
 
 func (p *DataSourcePlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
-	// TODO: plugin context?
+	// TODO: should we do this over newDataSourcePluginWrapperV2 since it has some token logic?
 	res, err := p.client.StreamClient.RunStream(ctx, backend.ToProto().RunStreamRequest(request))
 	if err != nil {
 		return err
