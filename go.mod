@@ -23,16 +23,13 @@ require (
 	github.com/crewjam/saml v0.4.6-0.20201227203850-bca570abb2ce
 	github.com/davecgh/go-spew v1.1.1
 	github.com/denisenkom/go-mssqldb v0.0.0-20200910202707-1e08a3fab204
-	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
-	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
-	github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691 // indirect
-	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/fatih/color v1.10.0
 	github.com/gchaincl/sqlhooks v1.3.0
 	github.com/getsentry/sentry-go v0.10.0
 	github.com/go-macaron/binding v0.0.0-20190806013118-0b4f37bab25b
 	github.com/go-macaron/gzip v0.0.0-20160222043647-cad1c6580a07
+	github.com/go-openapi/strfmt v0.20.0
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/go-stack/stack v1.8.0
@@ -42,6 +39,7 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
+	github.com/grafana/alerting-api v0.0.0-20210311171115-b0eb4577f38c
 	github.com/grafana/grafana-aws-sdk v0.1.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.88.0
@@ -54,7 +52,6 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.2.2
 	github.com/jaegertracing/jaeger v1.22.0
 	github.com/jmespath/go-jmespath v0.4.0
-	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/json-iterator/go v1.1.10
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/lib/pq v1.10.0
@@ -65,9 +62,10 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/alertmanager v0.21.1-0.20210211203738-a7ca7b1d2951
 	github.com/prometheus/client_golang v1.9.0
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.18.0
+	github.com/prometheus/common v0.18.1-0.20210305175002-2a23014b3b39
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.0
@@ -91,8 +89,6 @@ require (
 	gonum.org/v1/gonum v0.8.2
 	google.golang.org/api v0.40.0
 	google.golang.org/grpc v1.36.0
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
-	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect
 	gopkg.in/ini.v1 v1.62.0
 	gopkg.in/ldap.v3 v3.0.2
 	gopkg.in/macaron.v1 v1.4.0
