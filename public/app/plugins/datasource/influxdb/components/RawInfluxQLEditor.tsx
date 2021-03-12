@@ -3,6 +3,7 @@ import { TextArea, InlineFormLabel, Input, Select, HorizontalGroup } from '@graf
 import { SelectableValue } from '@grafana/data';
 import { ResultFormat, InfluxQuery } from '../types';
 import { useShadowedState } from './useShadowedState';
+import { useUniqueId } from './useUniqueId';
 
 const RESULT_FORMATS: Array<SelectableValue<ResultFormat>> = [
   { label: 'Time series', value: 'time_series' },
@@ -24,6 +25,8 @@ type Props = {
 export const RawInfluxQLEditor: FC<Props> = ({ query, onChange, onRunQuery }) => {
   const [currentQuery, setCurrentQuery] = useShadowedState(query.query);
   const [currentAlias, setCurrentAlias] = useShadowedState(query.alias);
+  const aliasElementId = useUniqueId();
+  const selectElementId = useUniqueId();
 
   const applyDelayedChangesAndRunQuery = () => {
     onChange({
@@ -37,6 +40,7 @@ export const RawInfluxQLEditor: FC<Props> = ({ query, onChange, onRunQuery }) =>
   return (
     <div>
       <TextArea
+        aria-label="query"
         rows={3}
         spellCheck={false}
         placeholder="InfluxDB Query"
@@ -47,17 +51,19 @@ export const RawInfluxQLEditor: FC<Props> = ({ query, onChange, onRunQuery }) =>
         value={currentQuery ?? ''}
       />
       <HorizontalGroup>
-        <InlineFormLabel>Format as</InlineFormLabel>
+        <InlineFormLabel htmlFor={selectElementId}>Format as</InlineFormLabel>
         <Select
-          onChange={(e) => {
-            onChange({ ...query, resultFormat: e.value });
+          inputId={selectElementId}
+          onChange={(v) => {
+            onChange({ ...query, resultFormat: v.value });
             onRunQuery();
           }}
           value={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
           options={RESULT_FORMATS}
         />
-        <InlineFormLabel>Alias by</InlineFormLabel>
+        <InlineFormLabel htmlFor={aliasElementId}>Alias by</InlineFormLabel>
         <Input
+          id={aliasElementId}
           type="text"
           spellCheck={false}
           placeholder="Naming pattern"
