@@ -8,7 +8,7 @@ import { DataFrame } from './dataFrame';
  * This JSON object is stored in the dashboard json model.
  */
 export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
-  datasource: string | null;
+  datasource?: string | null;
   enable: boolean;
   name: string;
   iconColor: string;
@@ -22,6 +22,9 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
 
   // Convert a dataframe to an AnnotationEvent
   mappings?: AnnotationEventMappings;
+
+  // Sadly plugins can set any propery directly on the main object
+  [str: string]: any;
 }
 
 export interface AnnotationEvent {

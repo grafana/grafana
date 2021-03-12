@@ -1,22 +1,19 @@
 import React from 'react';
 import { Button, Icon, HorizontalGroup } from '@grafana/ui';
-import { AnnotationSettingsMode } from '../DashboardSettings/AnnotationsSettings';
 
 type AnnotationSettingsHeaderProps = {
   onNavClick: () => void;
   onBtnClick: () => void;
-  mode: AnnotationSettingsMode;
+  isEditing: boolean;
   hasAnnotations: boolean;
 };
 
 export const AnnotationSettingsHeader: React.FC<AnnotationSettingsHeaderProps> = ({
   onNavClick,
   onBtnClick,
-  mode,
+  isEditing,
   hasAnnotations,
 }) => {
-  const isEditing = mode !== 'list';
-
   return (
     <div className="dashboard-settings__header">
       <HorizontalGroup align="center" justify="space-between">
@@ -26,7 +23,7 @@ export const AnnotationSettingsHeader: React.FC<AnnotationSettingsHeaderProps> =
           </span>
           {isEditing && (
             <span>
-              <Icon name="angle-right" /> {mode === 'new' ? 'New' : 'Edit'}
+              <Icon name="angle-right" /> Edit
             </span>
           )}
         </h3>

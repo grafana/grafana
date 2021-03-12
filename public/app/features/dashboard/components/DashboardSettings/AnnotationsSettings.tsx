@@ -1,39 +1,42 @@
 import React, { useState } from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
 import { AnnotationSettingsEdit, AnnotationSettingsHeader, AnnotationSettingsList } from '../AnnotationSettings';
+import { newAnnotation } from '../AnnotationSettings/AnnotationSettingsEdit';
 interface Props {
   dashboard: DashboardModel;
 }
 
-export type AnnotationSettingsMode = 'list' | 'new' | 'edit';
-
 export const AnnotationsSettings: React.FC<Props> = ({ dashboard }) => {
-  const [mode, setMode] = useState<AnnotationSettingsMode>('list');
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const hasAnnotations = dashboard.annotations.list.length > 0;
 
   const onGoBack = () => {
-    setMode('list');
+    setEditIdx(null);
   };
 
   const onNew = () => {
-    setEditIdx(null);
-    setMode('new');
+    dashboard.annotations.list.push({
+      ...newAnnotation,
+    });
+    setEditIdx(dashboard.annotations.list.length - 1);
   };
 
   const onEdit = (idx: number) => {
     setEditIdx(idx);
-    setMode('edit');
   };
+
+  const isEditing = editIdx !== null;
 
   return (
     <>
-      <AnnotationSettingsHeader onNavClick={onGoBack} onBtnClick={onNew} mode={mode} hasAnnotations={hasAnnotations} />
-      {mode === 'list' ? (
-        <AnnotationSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />
-      ) : (
-        <AnnotationSettingsEdit dashboard={dashboard} mode={mode} editIdx={editIdx} onGoBack={onGoBack} />
-      )}
+      <AnnotationSettingsHeader
+        onNavClick={onGoBack}
+        onBtnClick={onNew}
+        isEditing={isEditing}
+        hasAnnotations={hasAnnotations}
+      />
+      {!isEditing && <AnnotationSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
+      {isEditing && <AnnotationSettingsEdit dashboard={dashboard} editIdx={editIdx} />}
     </>
   );
 };

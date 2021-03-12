@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
-import { Button, Field, Input } from '@grafana/ui';
-import { AnnotationSettingsMode } from '../DashboardSettings/AnnotationsSettings';
+import { Field, Input } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
-import { AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 
-const newAnnotation: AnnotationQuery = {
+export const newAnnotation: AnnotationQuery = {
   name: 'New annotation',
   enable: true,
   datasource: null,
@@ -13,48 +12,42 @@ const newAnnotation: AnnotationQuery = {
 };
 
 type Props = {
-  mode: AnnotationSettingsMode;
   editIdx: number | null;
   dashboard: DashboardModel;
-  onGoBack: () => void;
 };
 
-export const AnnotationSettingsEdit: React.FC<Props> = ({ mode, editIdx, dashboard, onGoBack }) => {
+export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) => {
   const [annotation, setAnnotation] = useState(editIdx !== null ? dashboard.annotations.list[editIdx] : newAnnotation);
 
+  const onUpdate = (annotation: AnnotationQuery) => {
+    const list = [...dashboard.annotations.list];
+    list.splice(editIdx!, 1, annotation);
+    setAnnotation(annotation);
+    dashboard.annotations = dashboard.annotations;
+  };
+
   const onNameChange = (ev: React.FocusEvent<HTMLInputElement>) => {
-    setAnnotation({
+    onUpdate({
       ...annotation,
       name: ev.currentTarget.value,
     });
   };
 
-  const updateLink = () => {
-    dashboard.annotations.list.splice(editIdx!, 1, annotation);
-    dashboard.updateSubmenuVisibility();
-    onGoBack();
-  };
-
-  const addLink = () => {
-    dashboard.annotations.list = [...dashboard.annotations.list, annotation];
-    dashboard.updateSubmenuVisibility();
-    onGoBack();
+  const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
+    onUpdate({
+      ...annotation,
+      datasource: ds.name,
+    });
   };
 
   return (
-    <div
-      className={css`
-        max-width: 600px;
-      `}
-    >
+    <div style={{ maxWidth: '600px' }}>
       <Field label="Name">
         <Input name="name" aria-label="name" value={annotation.name} onChange={onNameChange} />
       </Field>
-
-      <div className="gf-form-button-row">
-        {mode === 'new' && <Button onClick={addLink}>Add</Button>}
-        {mode === 'edit' && <Button onClick={updateLink}>Update</Button>}
-      </div>
+      <Field label="Data source">
+        <DataSourcePicker annotations current={annotation.datasource} onChange={onDataSourceChange} />
+      </Field>
     </div>
   );
 };

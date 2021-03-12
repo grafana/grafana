@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DeleteButton, Icon, IconButton, Tag, useTheme } from '@grafana/ui';
+import { DeleteButton, Icon, IconButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { DashboardModel } from '../../state/DashboardModel';
