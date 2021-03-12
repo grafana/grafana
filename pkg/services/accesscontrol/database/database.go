@@ -545,7 +545,7 @@ func (ac *AccessControlStore) RemoveUserRole(cmd *accesscontrol.RemoveUserRoleCo
 	})
 }
 
-func (ac *AccessControlStore) AddBuiltinRoleRole(ctx context.Context, orgID, roleID int64, roleName string) error {
+func (ac *AccessControlStore) AddBuiltinRole(ctx context.Context, orgID, roleID int64, roleName string) error {
 	if !models.RoleType(roleName).IsValid() && roleName != "Grafana Admin" {
 		return fmt.Errorf("role '%s' is not a valid role", roleName)
 	}

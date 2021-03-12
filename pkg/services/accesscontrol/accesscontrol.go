@@ -36,7 +36,7 @@ type Store interface {
 	RemoveTeamRole(cmd *RemoveTeamRoleCommand) error
 	AddUserRole(cmd *AddUserRoleCommand) error
 	RemoveUserRole(cmd *RemoveUserRoleCommand) error
-	AddBuiltinRoleRole(ctx context.Context, orgID, roleID int64, roleName string) error
+	AddBuiltinRole(ctx context.Context, orgID, roleID int64, roleName string) error
 }
 
 type Seeder interface {

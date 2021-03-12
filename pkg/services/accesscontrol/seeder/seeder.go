@@ -83,7 +83,7 @@ func (s *seeder) seed(ctx context.Context, orgID int64, roles []accesscontrol.Ro
 
 		if builtinRoles, exists := roleGrants[role.Name]; exists {
 			for _, builtinRole := range builtinRoles {
-				err := s.Store.AddBuiltinRoleRole(ctx, orgID, roleID, builtinRole)
+				err := s.Store.AddBuiltinRole(ctx, orgID, roleID, builtinRole)
 				if err != nil && !errors.Is(err, accesscontrol.ErrUserRoleAlreadyAdded) {
 					s.log.Error("failed to assign role to role",
 						"name", role.Name,
