@@ -20,7 +20,11 @@ These features are included in the Grafana open source edition.
 
 ### Pie chart panel visualization (beta)
 
-Grafana 7.5 adds a beta version of the next-gen pie chart panel.
+Grafana 7.5 adds a beta version of the next-generation pie chart panel.
+
+![Pie chart panel](/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
+
+For more information, refer to [Pie chart panel]({{< relref "../panels/visualizations/pie-chart-panel.md" >}}).
 
 ### Alerting for Loki
 
