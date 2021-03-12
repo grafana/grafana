@@ -44,7 +44,7 @@ func New(configDirectory string, validator dashboards.Validator, getter dashboar
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}
 
-	fileReaders, err := getFileReaders(configs, logger, validator, getter, reqHandler)
+	fileReaders, err := getFileReaders(configs, logger, validator, getter)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
@@ -119,14 +119,14 @@ func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 }
 
 func getFileReaders(configs []*config, logger log.Logger, validator dashboards.Validator,
-	getter dashboards.ProvisionedDashboardGetter, reqHandler plugins.DataRequestHandler) ([]*FileReader, error) {
+	getter dashboards.ProvisionedDashboardGetter) ([]*FileReader, error) {
 	var readers []*FileReader
 
 	for _, config := range configs {
 		switch config.Type {
 		case "file":
 			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name),
-				validator, getter, reqHandler)
+				validator, getter)
 			if err != nil {
 				return nil, errutil.Wrapf(err, "Failed to create file reader for config %v", config.Name)
 			}

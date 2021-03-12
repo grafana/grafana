@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/dashboards"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -19,6 +18,13 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+// DashboardService is a service for operating on dashboards.
+type DashboardService interface {
+	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
+	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
+	DeleteDashboard(dashboardId int64, orgId int64) error
+}
+
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
 type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
@@ -29,24 +35,18 @@ type DashboardProvisioningService interface {
 	DeleteProvisionedDashboard(dashboardId int64, orgId int64) error
 }
 
-// DashboardService is a service for operating on dashboards.
-type DashboardService interface {
-	DashboardProvisioningService
-
-	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
-	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
-	DeleteDashboard(dashboardId int64, orgId int64) error
-}
-
 // NewService is a factory for creating a new dashboard service.
-var NewService = func(validator dashboards.Validator, getter dashboards.ProvisionedDashboardGetter,
-	reqHandler plugins.DataRequestHandler) DashboardService {
+var NewService = func(validator dashboards.Validator, getter dashboards.ProvisionedDashboardGetter) DashboardService {
 	return &dashboardServiceImpl{
 		dashboardValidator:         validator,
 		provisionedDashboardGetter: getter,
 		log:                        log.New("dashboard-service"),
-		reqHandler:                 reqHandler,
 	}
+}
+
+// NewProvisioningService is a factory for creating a new dashboard provisioning service.
+var NewProvisioningService = func(validator dashboards.Validator, getter dashboards.ProvisionedDashboardGetter) DashboardProvisioningService {
+	return NewService(validator, getter).(*dashboardServiceImpl)
 }
 
 type SaveDashboardDTO struct {
@@ -64,7 +64,6 @@ type dashboardServiceImpl struct {
 	orgId                      int64
 	user                       *models.SignedInUser
 	log                        log.Logger
-	reqHandler                 plugins.DataRequestHandler
 }
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
@@ -408,7 +407,7 @@ func (s *FakeDashboardService) GetProvisionedDashboardDataByDashboardID(id int64
 }
 
 func MockDashboardService(mock *FakeDashboardService) {
-	NewService = func(dashboards.Validator, dashboards.ProvisionedDashboardGetter, plugins.DataRequestHandler) DashboardService {
+	NewService = func(dashboards.Validator, dashboards.ProvisionedDashboardGetter) DashboardService {
 		return mock
 	}
 }

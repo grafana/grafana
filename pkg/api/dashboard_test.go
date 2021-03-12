@@ -1189,13 +1189,18 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		})
 
 		origNewDashboardService := dashboards.NewService
+		origProvisioningService := dashboards.NewProvisioningService
+		t.Cleanup(func() {
+			dashboards.NewService = origNewDashboardService
+			dashboards.NewProvisioningService = origProvisioningService
+		})
 		dashboards.MockDashboardService(mock)
+		dashboards.NewProvisioningService = func(dboards.Validator,
+			dboards.ProvisionedDashboardGetter) dashboards.DashboardProvisioningService {
+			return mockDashboardProvisioningService{}
+		}
 
 		sc.m.Post(routePattern, sc.defaultHandler)
-
-		defer func() {
-			dashboards.NewService = origNewDashboardService
-		}()
 
 		fn(sc)
 	})
@@ -1249,10 +1254,16 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			return hs.RestoreDashboardVersion(c, cmd)
 		})
 
+		origProvisioningService := dashboards.NewProvisioningService
 		origNewDashboardService := dashboards.NewService
 		t.Cleanup(func() {
 			dashboards.NewService = origNewDashboardService
+			dashboards.NewProvisioningService = origProvisioningService
 		})
+		dashboards.NewProvisioningService = func(dboards.Validator,
+			dboards.ProvisionedDashboardGetter) dashboards.DashboardProvisioningService {
+			return mockDashboardProvisioningService{}
+		}
 		dashboards.MockDashboardService(mock)
 
 		sc.m.Post(routePattern, sc.defaultHandler)
@@ -1266,4 +1277,12 @@ func (sc *scenarioContext) ToJSON() *simplejson.Json {
 	err := json.NewDecoder(sc.resp.Body).Decode(&result)
 	require.NoError(sc.t, err)
 	return result
+}
+
+type mockDashboardProvisioningService struct {
+	dashboards.DashboardProvisioningService
+}
+
+func (m mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardId int64) (*models.DashboardProvisioning, error) {
+	return &models.DashboardProvisioning{}, nil
 }
