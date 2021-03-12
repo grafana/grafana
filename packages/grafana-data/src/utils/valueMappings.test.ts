@@ -123,9 +123,12 @@ describe('isNumeric', () => {
   it.each`
     value         | expected
     ${123}        | ${true}
+    ${0}          | ${true}
     ${'123'}      | ${true}
+    ${'0'}        | ${true}
     ${' 123'}     | ${true}
     ${' 123 '}    | ${true}
+    ${' 0 '}      | ${true}
     ${-123.4}     | ${true}
     ${'-123.4'}   | ${true}
     ${0.41}       | ${true}
