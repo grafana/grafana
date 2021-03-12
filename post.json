@@ -573,28 +573,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/models"
   },
-  "DashboardAclUpdateItem": {
-   "properties": {
-    "permission": {
-     "$ref": "#/definitions/PermissionType"
-    },
-    "role": {
-     "$ref": "#/definitions/RoleType"
-    },
-    "teamId": {
-     "format": "int64",
-     "type": "integer",
-     "x-go-name": "TeamID"
-    },
-    "userId": {
-     "format": "int64",
-     "type": "integer",
-     "x-go-name": "UserID"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
-  },
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
    "format": "date-time",
@@ -1306,18 +1284,6 @@
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
   },
-  "PermissionType": {
-   "format": "int64",
-   "type": "integer",
-   "x-go-package": "github.com/grafana/grafana/pkg/models"
-  },
-  "Permissions": {
-   "items": {
-    "$ref": "#/definitions/UpdateDashboardAclCommand"
-   },
-   "type": "array",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-  },
   "Point": {
    "properties": {
     "T": {
@@ -1482,10 +1448,6 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-  },
-  "RoleType": {
-   "type": "string",
-   "x-go-package": "github.com/grafana/grafana/pkg/models"
   },
   "Route": {
    "properties": {
@@ -2096,19 +2058,6 @@
    "title": "UpdateAlertDefinitionCommand is the query for updating an existing alert definition.",
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
-  },
-  "UpdateDashboardAclCommand": {
-   "properties": {
-    "items": {
-     "items": {
-      "$ref": "#/definitions/DashboardAclUpdateItem"
-     },
-     "type": "array",
-     "x-go-name": "Items"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
   },
   "UserConfig": {
    "properties": {
@@ -3307,76 +3256,6 @@
     },
     "tags": [
      "alertmanager"
-    ]
-   }
-  },
-  "/api/v1/namespace/{Namespace}/permissions": {
-   "get": {
-    "description": "sets an Alerting config",
-    "operationId": "RouteGetNamespacePermissions",
-    "parameters": [
-     {
-      "description": "Namespace name",
-      "in": "path",
-      "name": "Namespace",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "200": {
-      "description": "Permissions",
-      "schema": {
-       "$ref": "#/definitions/Permissions"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "tags": [
-     "permissions"
-    ]
-   },
-   "post": {
-    "description": "gets an Alerting config",
-    "operationId": "RouteSetNamespacePermissions",
-    "parameters": [
-     {
-      "description": "Namespace name to apply perms to",
-      "in": "path",
-      "name": "Namespace",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "description": "New namespace permissions",
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/Permissions"
-      }
-     }
-    ],
-    "responses": {
-     "201": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "tags": [
-     "permissions"
     ]
    }
   },
