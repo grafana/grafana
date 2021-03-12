@@ -3,8 +3,8 @@ import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
-
 import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
@@ -21,20 +21,17 @@ import {
   updateAlertDefinitionOption,
   updateAlertDefinitionUiState,
 } from './state/actions';
-import { updateLocation } from 'app/core/actions';
-import { getRouteParamsId } from 'app/core/selectors/location';
 import { StoreState } from 'app/types';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-function mapStateToProps(state: StoreState) {
-  const pageId = getRouteParamsId(state.location);
-
+function mapStateToProps(state: StoreState, props: RouteProps) {
   return {
     uiState: state.alertDefinition.uiState,
     getQueryOptions: state.alertDefinition.getQueryOptions,
     queryRunner: state.alertDefinition.queryRunner,
     getInstances: state.alertDefinition.getInstances,
     alertDefinition: state.alertDefinition.alertDefinition,
-    pageId: (pageId as string) ?? '',
+    pageId: props.queryParams.id as string,
   };
 }
 
@@ -48,10 +45,11 @@ const mapDispatchToProps = {
   evaluateNotSavedAlertDefinition,
   onRunQueries,
   cleanUpDefinitionState,
-  updateLocation,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface RouteProps extends GrafanaRouteComponentProps<{ id: string }> {}
 
 interface OwnProps {
   saveDefinition: typeof createAlertDefinition | typeof updateAlertDefinition;
@@ -100,7 +98,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   };
 
   onDiscard = () => {
-    this.props.updateLocation({ path: `${config.appSubUrl}/alerting/list` });
+    locationService.replace(`${config.appSubUrl}/alerting/list`);
   };
 
   onTest = () => {
