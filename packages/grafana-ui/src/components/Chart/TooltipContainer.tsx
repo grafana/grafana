@@ -29,8 +29,8 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({
 
   const resizeObserver = new ResizeObserver((entries) => {
     for (let entry of entries) {
-      const tW = Math.floor(entry.contentRect.width);
-      const tH = Math.floor(entry.contentRect.height);
+      const tW = Math.floor(entry.contentRect.width + 2 * 8); //  adding padding until Safari supports borderBoxSize
+      const tH = Math.floor(entry.contentRect.height + 2 * 8);
 
       if (tooltipMeasurementRef.current.width !== tW || tooltipMeasurementRef.current.height !== tH) {
         tooltipMeasurementRef.current = {
