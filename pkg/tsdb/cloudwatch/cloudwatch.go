@@ -49,7 +49,7 @@ func init() {
 type CloudWatchService struct {
 	LogsService *LogsService `inject:""`
 	Cfg         *setting.Cfg `inject:""`
-	sessions    *awsds.SessionCache
+	sessions    SessionCache
 }
 
 func (s *CloudWatchService) Init() error {
@@ -61,7 +61,11 @@ func (s *CloudWatchService) NewExecutor(*models.DataSource) (plugins.DataPlugin,
 	return newExecutor(s.LogsService, s.Cfg, s.sessions), nil
 }
 
-func newExecutor(logsService *LogsService, cfg *setting.Cfg, sessions *awsds.SessionCache) *cloudWatchExecutor {
+type SessionCache interface {
+	GetSession(region string, s awsds.AWSDatasourceSettings) (*session.Session, error)
+}
+
+func newExecutor(logsService *LogsService, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
 		cfg:         cfg,
 		logsService: logsService,
@@ -78,7 +82,7 @@ type cloudWatchExecutor struct {
 
 	logsService *LogsService
 	cfg         *setting.Cfg
-	sessions    *awsds.SessionCache
+	sessions    SessionCache
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {

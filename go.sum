@@ -794,6 +794,7 @@ github.com/grafana/alerting-api v0.0.0-20210311143043-45ae733ad75e/go.mod h1:5Ip
 github.com/grafana/alerting-api v0.0.0-20210311171115-b0eb4577f38c h1:xmmEjOGr87S1ZMinUTCA+ikMSLvJRrCYADZ9/ewMtWM=
 github.com/grafana/alerting-api v0.0.0-20210311171115-b0eb4577f38c/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
 github.com/grafana/grafana v1.9.2-0.20210308201921-4ce0a49eac03/go.mod h1:AHRRvd4utJGY25J5nW8aL7wZzn/LcJ0z2za9oOp14j4=
+github.com/grafana/grafana-aws-sdk v0.1.0/go.mod h1:+pPo5U+pX0zWimR7YBc7ASeSQfbRkcTyQYqMiAj7G5U=
 github.com/grafana/grafana-aws-sdk v0.2.0 h1:UTBBYwye+ad5YUIlwN7TGxLdz1wXN3Ezhl0pseDGRVA=
 github.com/grafana/grafana-aws-sdk v0.2.0/go.mod h1:+pPo5U+pX0zWimR7YBc7ASeSQfbRkcTyQYqMiAj7G5U=
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4 h1:SPdxCL9BChFTlyi0Khv64vdCW4TMna8+sxL7+Chx+Ag=
@@ -1168,6 +1169,7 @@ github.com/mitchellh/mapstructure v1.2.2/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RR
 github.com/mitchellh/mapstructure v1.3.2/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/mitchellh/mapstructure v1.3.3/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/mitchellh/mapstructure v1.4.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
+github.com/mitchellh/mapstructure v1.4.1 h1:CpVNEelQCZBooIPDn+AR3NpivK/TIKU8bDxdASFVQag=
 github.com/mitchellh/mapstructure v1.4.1/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/mitchellh/reflectwalk v1.0.1 h1:FVzMWA5RllMAKIdUSC8mdWo3XtwoecrH79BY70sEEpE=
 github.com/mitchellh/reflectwalk v1.0.1/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
