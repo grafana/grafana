@@ -1,15 +1,20 @@
 import React from 'react';
 import { Button, Icon, HorizontalGroup } from '@grafana/ui';
-import { LinkSettingsMode } from '../DashboardSettings/LinksSettings';
+import { AnnotationSettingsMode } from '../DashboardSettings/AnnotationsSettings';
 
-type LinkSettingsHeaderProps = {
+type AnnotationSettingsHeaderProps = {
   onNavClick: () => void;
-  onNew: () => void;
-  mode: LinkSettingsMode;
-  hasLinks: boolean;
+  onBtnClick: () => void;
+  mode: AnnotationSettingsMode;
+  hasAnnotations: boolean;
 };
 
-export const LinkSettingsHeader: React.FC<LinkSettingsHeaderProps> = ({ onNavClick, onNew, mode, hasLinks }) => {
+export const AnnotationSettingsHeader: React.FC<AnnotationSettingsHeaderProps> = ({
+  onNavClick,
+  onBtnClick,
+  mode,
+  hasAnnotations,
+}) => {
   const isEditing = mode !== 'list';
 
   return (
@@ -17,7 +22,7 @@ export const LinkSettingsHeader: React.FC<LinkSettingsHeaderProps> = ({ onNavCli
       <HorizontalGroup align="center" justify="space-between">
         <h3>
           <span onClick={onNavClick} className={isEditing ? 'pointer' : ''}>
-            Dashboard Links
+            Annotations
           </span>
           {isEditing && (
             <span>
@@ -25,7 +30,7 @@ export const LinkSettingsHeader: React.FC<LinkSettingsHeaderProps> = ({ onNavCli
             </span>
           )}
         </h3>
-        {!isEditing && hasLinks ? <Button onClick={onNew}>New</Button> : null}
+        {!isEditing && hasAnnotations ? <Button onClick={onBtnClick}>New</Button> : null}
       </HorizontalGroup>
     </div>
   );

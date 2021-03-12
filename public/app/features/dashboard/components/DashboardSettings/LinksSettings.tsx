@@ -12,25 +12,25 @@ export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
   const [editLinkIdx, setEditLinkIdx] = useState<number | null>(null);
   const hasLinks = dashboard.links.length > 0;
 
-  const backToList = () => {
+  const onGoBack = () => {
     setMode('list');
   };
-  const setupNew = () => {
+  const onNew = () => {
     setEditLinkIdx(null);
     setMode('new');
   };
-  const editLink = (idx: number) => {
+  const onEdit = (idx: number) => {
     setEditLinkIdx(idx);
     setMode('edit');
   };
 
   return (
     <>
-      <LinkSettingsHeader onNavClick={backToList} onBtnClick={setupNew} mode={mode} hasLinks={hasLinks} />
+      <LinkSettingsHeader onNavClick={onGoBack} onNew={onNew} mode={mode} hasLinks={hasLinks} />
       {mode === 'list' ? (
-        <LinkSettingsList dashboard={dashboard} setupNew={setupNew} editLink={editLink} />
+        <LinkSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />
       ) : (
-        <LinkSettingsEdit dashboard={dashboard} mode={mode} editLinkIdx={editLinkIdx} backToList={backToList} />
+        <LinkSettingsEdit dashboard={dashboard} mode={mode} editLinkIdx={editLinkIdx} onGoBack={onGoBack} />
       )}
     </>
   );

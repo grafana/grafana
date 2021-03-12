@@ -39,10 +39,10 @@ type LinkSettingsEditProps = {
   mode: LinkSettingsMode;
   editLinkIdx: number | null;
   dashboard: DashboardModel;
-  backToList: () => void;
+  onGoBack: () => void;
 };
 
-export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLinkIdx, dashboard, backToList }) => {
+export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLinkIdx, dashboard, onGoBack }) => {
   const [linkSettings, setLinkSettings] = useState(editLinkIdx !== null ? dashboard.links[editLinkIdx] : newLink);
 
   const onTagsChange = (tags: any[]) => {
@@ -68,13 +68,13 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLi
   const addLink = () => {
     dashboard.links = [...dashboard.links, linkSettings];
     dashboard.updateSubmenuVisibility();
-    backToList();
+    onGoBack();
   };
 
   const updateLink = () => {
     dashboard.links.splice(editLinkIdx!, 1, linkSettings);
     dashboard.updateSubmenuVisibility();
-    backToList();
+    onGoBack();
   };
 
   return (

@@ -10,6 +10,7 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 import { GridPos, PanelModel } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import {
+  AnnotationQuery,
   AppEvent,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
@@ -66,7 +67,7 @@ export class DashboardModel {
   timepicker: any;
   templating: { list: any[] };
   private originalTemplating: any;
-  annotations: { list: any[] };
+  annotations: { list: AnnotationQuery[] };
   refresh: any;
   snapshot: any;
   schemaVersion: number;

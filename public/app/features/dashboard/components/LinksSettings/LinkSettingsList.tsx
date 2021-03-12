@@ -7,11 +7,11 @@ import { DashboardModel, DashboardLink } from '../../state/DashboardModel';
 
 type LinkSettingsListProps = {
   dashboard: DashboardModel;
-  setupNew: () => void;
-  editLink: (idx: number) => void;
+  onNew: () => void;
+  onEdit: (idx: number) => void;
 };
 
-export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, setupNew, editLink }) => {
+export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, onNew, onEdit }) => {
   const theme = useTheme();
   // @ts-ignore
   const [renderCounter, setRenderCounter] = useState(0);
@@ -20,11 +20,13 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, s
     arrayMove(dashboard.links, idx, idx + direction);
     setRenderCounter((renderCount) => renderCount + 1);
   };
+
   const duplicateLink = (link: DashboardLink, idx: number) => {
     dashboard.links.splice(idx, 0, link);
     dashboard.updateSubmenuVisibility();
     setRenderCounter((renderCount) => renderCount + 1);
   };
+
   const deleteLink = (idx: number) => {
     dashboard.links.splice(idx, 1);
     dashboard.updateSubmenuVisibility();
@@ -35,11 +37,11 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, s
     <div>
       {dashboard.links.length === 0 ? (
         <EmptyListCTA
-          onClick={setupNew}
+          onClick={onNew}
           title="There are no dashboard links added yet"
           buttonIcon="link"
-          buttonTitle="Add Dashboard Link"
-          infoBoxTitle="What are Dashboard Links?"
+          buttonTitle="Add dashboard link"
+          infoBoxTitle="What are dashboard links?"
           infoBox={{
             __html:
               '<p>Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header.</p>',
@@ -56,8 +58,8 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, s
           </thead>
           <tbody>
             {dashboard.links.map((link, idx) => (
-              <tr key={idx}>
-                <td className="pointer" onClick={() => editLink(idx)}>
+              <tr key={`${link.title}-idx`}>
+                <td className="pointer" onClick={() => onEdit(idx)}>
                   <Icon
                     name="external-link-alt"
                     className={css`
