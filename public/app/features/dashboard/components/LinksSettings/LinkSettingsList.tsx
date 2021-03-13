@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
-import { DeleteButton, Icon, IconButton, Tag, useTheme } from '@grafana/ui';
+import { DeleteButton, HorizontalGroup, Icon, IconButton, TagList } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { arrayMove } from 'app/core/utils/arrayMove';
 import { DashboardModel, DashboardLink } from '../../state/DashboardModel';
 import { ListNewButton } from '../DashboardSettings/ListNewButton';
+import { arrayUtils } from '@grafana/data';
 
 type LinkSettingsListProps = {
   dashboard: DashboardModel;
@@ -13,25 +12,21 @@ type LinkSettingsListProps = {
 };
 
 export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, onNew, onEdit }) => {
-  const theme = useTheme();
-  // @ts-ignore
-  const [renderCounter, setRenderCounter] = useState(0);
+  const [links, setLinks] = useState(dashboard.links);
 
   const moveLink = (idx: number, direction: number) => {
-    arrayMove(dashboard.links, idx, idx + direction);
-    setRenderCounter((renderCount) => renderCount + 1);
+    dashboard.links = arrayUtils.moveItemImmutably(links, idx, idx + direction);
+    setLinks(dashboard.links);
   };
 
   const duplicateLink = (link: DashboardLink, idx: number) => {
-    dashboard.links.splice(idx, 0, link);
-    dashboard.updateSubmenuVisibility();
-    setRenderCounter((renderCount) => renderCount + 1);
+    dashboard.links = [...links, { ...link }];
+    setLinks(dashboard.links);
   };
 
   const deleteLink = (idx: number) => {
-    dashboard.links.splice(idx, 1);
-    dashboard.updateSubmenuVisibility();
-    setRenderCounter((renderCount) => renderCount + 1);
+    dashboard.links = [...links.slice(0, idx), ...links.slice(idx + 1)];
+    setLinks(dashboard.links);
   };
 
   const isEmptyList = dashboard.links.length === 0;
@@ -63,35 +58,17 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, o
           </tr>
         </thead>
         <tbody>
-          {dashboard.links.map((link, idx) => (
+          {links.map((link, idx) => (
             <tr key={`${link.title}-idx`}>
               <td className="pointer" onClick={() => onEdit(idx)}>
-                <Icon
-                  name="external-link-alt"
-                  className={css`
-                    margin-right: ${theme.spacing.xs};
-                  `}
-                />
-                {link.type}
+                <Icon name="external-link-alt" /> &nbsp; {link.type}
               </td>
               <td>
-                {link.title && <div>{link.title}</div>}
-                {!link.title && link.url ? <div>{link.url}</div> : null}
-                {!link.title && link.tags
-                  ? link.tags.map((tag, idx) => (
-                      <Tag
-                        name={tag}
-                        key={tag}
-                        className={
-                          idx !== 0
-                            ? css`
-                                margin-left: ${theme.spacing.xs};
-                              `
-                            : ''
-                        }
-                      />
-                    ))
-                  : null}
+                <HorizontalGroup>
+                  {link.title && <span>{link.title}</span>}
+                  {link.type === 'link' && <span>{link.url}</span>}
+                  {link.type === 'dashboards' && <TagList tags={link.tags ?? []} />}
+                </HorizontalGroup>
               </td>
               <td style={{ width: '1%' }}>
                 {idx !== 0 && (
@@ -104,7 +81,7 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, o
                 )}
               </td>
               <td style={{ width: '1%' }}>
-                {dashboard.links.length > 1 && idx !== dashboard.links.length - 1 ? (
+                {links.length > 1 && idx !== links.length - 1 ? (
                   <IconButton
                     surface="header"
                     name="arrow-down"

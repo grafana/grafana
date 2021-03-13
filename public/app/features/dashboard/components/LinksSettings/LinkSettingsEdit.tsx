@@ -54,7 +54,17 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
   };
 
   const onTypeChange = (selectedItem: SelectableValue) => {
-    onUpdate({ ...linkSettings, type: selectedItem.value });
+    const update = { ...linkSettings, type: selectedItem.value };
+
+    // clear props that are no longe revant for this type
+    if (update.type === 'dashboards') {
+      update.url = '';
+      update.tooltip = '';
+    } else {
+      update.tags = [];
+    }
+
+    onUpdate(update);
   };
 
   const onIconChange = (selectedItem: SelectableValue) => {

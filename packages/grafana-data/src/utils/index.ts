@@ -9,6 +9,7 @@ export * from './object';
 export * from './namedColorsPalette';
 export * from './series';
 export * from './binaryOperators';
+export * from './arrayUtils';
 export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './OptionsUIBuilders';
 
 export { getMappedValue } from './valueMappings';

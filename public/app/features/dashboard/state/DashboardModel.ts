@@ -731,25 +731,20 @@ export class DashboardModel {
     this.meta.focusPanelId = id;
   }
 
-  updateSubmenuVisibility() {
-    this.meta.submenuEnabled = (() => {
-      if (this.links.length > 0) {
-        return true;
-      }
+  isSubMenuVisible() {
+    if (this.links.length > 0) {
+      return true;
+    }
 
-      const visibleVars = _.filter(this.templating.list, (variable: any) => variable.hide !== 2);
-      if (visibleVars.length > 0) {
-        return true;
-      }
+    if (this.getVariables().find((variable) => variable.hide !== 2)) {
+      return true;
+    }
 
-      const visibleAnnotations = _.filter(this.annotations.list, (annotation: any) => annotation.hide !== true);
-      if (visibleAnnotations.length > 0) {
-        return true;
-      }
+    if (this.annotations.list.find((annotation) => annotation.hide !== true)) {
+      return true;
+    }
 
-      return false;
-    })();
-    this.events.emit(CoreEvents.submenuVisibilityChanged, this.meta.submenuEnabled);
+    return false;
   }
 
   getPanelInfoById(panelId: number) {

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { DeleteButton, Icon, IconButton } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { arrayMove } from 'app/core/utils/arrayMove';
 import { DashboardModel } from '../../state/DashboardModel';
 import { ListNewButton } from '../DashboardSettings/ListNewButton';
+import { arrayUtils } from '@grafana/data';
 
 type Props = {
   dashboard: DashboardModel;
@@ -12,19 +12,16 @@ type Props = {
 };
 
 export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEdit }) => {
-  // @ts-ignore
-  const [renderCounter, setRenderCounter] = useState(0);
-  const annotations = dashboard.annotations.list;
+  const [annotations, updateAnnotations] = useState(dashboard.annotations.list);
 
   const onMove = (idx: number, direction: number) => {
-    arrayMove(dashboard.annotations.list, idx, idx + direction);
-    setRenderCounter((renderCount) => renderCount + 1);
+    dashboard.annotations.list = arrayUtils.moveItemImmutably(annotations, idx, idx + direction);
+    updateAnnotations(dashboard.annotations.list);
   };
 
   const onDelete = (idx: number) => {
-    dashboard.annotations.list.splice(idx, 1);
-    dashboard.updateSubmenuVisibility();
-    setRenderCounter((renderCount) => renderCount + 1);
+    dashboard.annotations.list = [...annotations.slice(0, idx), ...annotations.slice(idx + 1)];
+    updateAnnotations(dashboard.annotations.list);
   };
 
   const isEmptyList = annotations.length === 0 || (annotations.length === 1 && annotations[0].builtIn);

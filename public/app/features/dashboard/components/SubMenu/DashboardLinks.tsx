@@ -32,13 +32,6 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
     };
   });
 
-  useEffectOnce(() => {
-    dashboard.on(CoreEvents.submenuVisibilityChanged, forceUpdate);
-    return () => {
-      dashboard.off(CoreEvents.submenuVisibilityChanged, forceUpdate);
-    };
-  });
-
   return (
     <>
       {links.map((link: DashboardLink, index: number) => {
