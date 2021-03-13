@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
-import { FieldType, PanelProps, VizOrientation } from '@grafana/data';
-import { Timeline, TimelineOptions, GraphNGLegendEvent } from '@grafana/ui';
+import React, { useCallback } from 'react';
+import { PanelProps } from '@grafana/data';
+import { Timeline, GraphNGLegendEvent } from '@grafana/ui';
 import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 import { Options } from './types';
@@ -38,24 +38,6 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
-      </div>
-    );
-  }
-
-  const firstFrame = data.series[0];
-
-  if (!firstFrame.fields.some((f) => f.type === FieldType.string)) {
-    return (
-      <div className="panel-empty">
-        <p>Bar charts requires a string field</p>
-      </div>
-    );
-  }
-
-  if (!firstFrame.fields.some((f) => f.type === FieldType.number)) {
-    return (
-      <div className="panel-empty">
-        <p>No numeric fields found</p>
       </div>
     );
   }

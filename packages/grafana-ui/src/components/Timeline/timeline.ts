@@ -1,4 +1,4 @@
-import uPlot, { Axis, Series, Cursor, Scale } from 'uplot';
+import uPlot, { Series, Cursor } from 'uplot';
 import { Quadtree, Rect, pointWithin } from '../BarChart/quadtree';
 import { distribute, SPACE_BETWEEN } from '../BarChart/distribute';
 import { TimelineMode } from './types';
@@ -32,7 +32,7 @@ export interface TimelineCoreOptions {
 
   /** used only for grid mode */
   align?: -1 | 0 | 1;
-  size?: [factor: number, max?: number];
+  size?: [number, number?]; //[factor: number, max?: number];
 
   label: (seriesIdx: number) => string;
   fill: (seriesIdx: number, valueIdx: number, value: any) => CanvasRenderingContext2D['fillStyle'];
@@ -56,8 +56,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     fill,
     stroke,
     formatValue,
-    onHover,
-    onLeave,
+    // onHover,
+    // onLeave,
   } = opts;
 
   let qt: Quadtree;

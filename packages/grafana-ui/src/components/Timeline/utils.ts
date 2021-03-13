@@ -3,7 +3,6 @@ import { GraphNGLegendEventMode, XYFieldMatchers } from '../GraphNG/types';
 import {
   DataFrame,
   FieldConfig,
-  FieldType,
   getFieldDisplayName,
   GrafanaTheme,
   outerJoinDataFrames,
@@ -39,6 +38,13 @@ export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) 
     keepOriginIndices: true,
   });
 }
+
+export type uPlotConfigBuilderSupplier = (
+  frame: DataFrame,
+  theme: GrafanaTheme,
+  getTimeRange: () => TimeRange,
+  getTimeZone: () => TimeZone
+) => UPlotConfigBuilder;
 
 export function preparePlotConfigBuilder(
   frame: DataFrame,
