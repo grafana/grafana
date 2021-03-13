@@ -16,20 +16,20 @@ export const newAnnotation: AnnotationQuery = {
 };
 
 type Props = {
-  editIdx: number | null;
+  editIdx: number;
   dashboard: DashboardModel;
 };
 
 export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) => {
   const [annotation, setAnnotation] = useState(editIdx !== null ? dashboard.annotations.list[editIdx] : newAnnotation);
 
-  const { value: ds } = useAsync(async () => {
-    return await getDataSourceSrv().get(annotation.datasource);
+  const { value: ds } = useAsync(() => {
+    return getDataSourceSrv().get(annotation.datasource);
   }, [annotation.datasource]);
 
   const onUpdate = (annotation: AnnotationQuery) => {
     const list = [...dashboard.annotations.list];
-    list.splice(editIdx!, 1, annotation);
+    list.splice(editIdx, 1, annotation);
     setAnnotation(annotation);
     dashboard.annotations.list = list;
   };
@@ -70,7 +70,7 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
       <Field label="Name">
         <Input
           name="name"
-          aria-label="name"
+          id="name"
           autoFocus={isNewAnnotation}
           value={annotation.name}
           onChange={onNameChange}

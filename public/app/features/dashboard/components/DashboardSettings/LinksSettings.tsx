@@ -17,7 +17,7 @@ export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
   };
 
   const onNew = () => {
-    dashboard.links = [...dashboard.links, newLink];
+    dashboard.links = [...dashboard.links, { ...newLink }];
     setEditIdx(dashboard.links.length - 1);
   };
 
@@ -31,7 +31,7 @@ export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
     <>
       <DashboardSettingsHeader onGoBack={onGoBack} title="Dashboard links" isEditing={isEditing} />
       {!isEditing && <LinkSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
-      {isEditing && <LinkSettingsEdit dashboard={dashboard} editLinkIdx={editIdx} onGoBack={onGoBack} />}
+      {isEditing && <LinkSettingsEdit dashboard={dashboard} editLinkIdx={editIdx!} onGoBack={onGoBack} />}
     </>
   );
 };

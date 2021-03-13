@@ -16,9 +16,7 @@ export const AnnotationsSettings: React.FC<Props> = ({ dashboard }) => {
   };
 
   const onNew = () => {
-    dashboard.annotations.list.push({
-      ...newAnnotation,
-    });
+    dashboard.annotations.list = [...dashboard.annotations.list, { ...newAnnotation }];
     setEditIdx(dashboard.annotations.list.length - 1);
   };
 
@@ -32,7 +30,7 @@ export const AnnotationsSettings: React.FC<Props> = ({ dashboard }) => {
     <>
       <DashboardSettingsHeader title="Annotations" onGoBack={onGoBack} isEditing={isEditing} />
       {!isEditing && <AnnotationSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
-      {isEditing && <AnnotationSettingsEdit dashboard={dashboard} editIdx={editIdx} />}
+      {isEditing && <AnnotationSettingsEdit dashboard={dashboard} editIdx={editIdx!} />}
     </>
   );
 };

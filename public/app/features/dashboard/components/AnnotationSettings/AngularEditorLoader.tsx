@@ -18,7 +18,7 @@ export const AngularEditorLoader: React.FC<Props> = React.memo(({ annotation, da
         angularComponent.destroy();
       }
     };
-  }, [angularComponent, ref]);
+  }, [angularComponent]);
 
   useEffect(() => {
     if (ref.current) {

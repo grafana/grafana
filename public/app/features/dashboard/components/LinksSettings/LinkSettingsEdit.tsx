@@ -34,7 +34,7 @@ export const linkIconMap: { [key: string]: string } = {
 const linkIconOptions = Object.keys(linkIconMap).map((key) => ({ label: key, value: key }));
 
 type LinkSettingsEditProps = {
-  editLinkIdx: number | null;
+  editLinkIdx: number;
   dashboard: DashboardModel;
   onGoBack: () => void;
 };
@@ -44,7 +44,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
 
   const onUpdate = (link: DashboardLink) => {
     const links = [...dashboard.links];
-    links.splice(editLinkIdx!, 1, link);
+    links.splice(editLinkIdx, 1, link);
     dashboard.links = links;
     setLinkSettings(link);
   };
@@ -84,7 +84,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx,
   return (
     <div style={{ maxWidth: '600px' }}>
       <Field label="Title">
-        <Input name="title" aria-label="title" value={linkSettings.title} onChange={onChange} autoFocus={isNew} />
+        <Input name="title" id="title" value={linkSettings.title} onChange={onChange} autoFocus={isNew} />
       </Field>
       <Field label="Type">
         <Select value={linkSettings.type} options={linkTypeOptions} onChange={onTypeChange} />
