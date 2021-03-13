@@ -1,57 +1,16 @@
 import React from 'react';
-import { AlignedData } from 'uplot';
-import {
-  compareArrayValues,
-  compareDataFrameStructures,
-  DataFrame,
-  DataFrameFieldIndex,
-  FieldMatcherID,
-  fieldMatchers,
-  TimeRange,
-  TimeZone,
-} from '@grafana/data';
+import { compareArrayValues, compareDataFrameStructures, FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { withTheme } from '../../themes';
-import { Themeable } from '../../types';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { GraphNGLegendEvent, XYFieldMatchers } from './types';
-import { GraphNGContext } from './hooks';
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { GraphNGContext } from '../GraphNG/hooks';
+import { GraphNGProps, GraphNGState } from '../GraphNG/GraphNG';
+import { preparePlotConfigBuilder, preparePlotFrame } from './utils'; // << preparePlotConfigBuilder is really the only change vs GraphNG
 import { preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
-import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
+import { LegendDisplayMode } from '../VizLegend/types';
 import { VizLayout } from '../VizLayout/VizLayout';
 
-/**
- * @internal -- not a public API
- */
-export const FIXED_UNIT = '__fixed';
-
-export interface GraphNGProps extends Themeable {
-  width: number;
-  height: number;
-  data: DataFrame[];
-  timeRange: TimeRange;
-  legend: VizLegendOptions;
-  timeZone: TimeZone;
-  fields?: XYFieldMatchers; // default will assume timeseries data
-  onLegendClick?: (event: GraphNGLegendEvent) => void;
-  onSeriesColorChange?: (label: string, color: string) => void;
-  children?: React.ReactNode;
-}
-
-/**
- * @internal -- not a public API
- */
-export interface GraphNGState {
-  data: AlignedData;
-  alignedDataFrame: DataFrame;
-  dimFields: XYFieldMatchers;
-  seriesToDataFrameFieldIndexMap: DataFrameFieldIndex[];
-  config?: UPlotConfigBuilder;
-}
-
-class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
+class UnthemedTimeline extends React.Component<GraphNGProps, GraphNGState> {
   constructor(props: GraphNGProps) {
     super(props);
     let dimFields = props.fields;
@@ -59,7 +18,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     if (!dimFields) {
       dimFields = {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+        y: fieldMatchers.get(FieldMatcherID.numeric).get({}), // this may be either numeric or strings, (or bools?)
       };
     }
     this.state = { dimFields } as GraphNGState;
@@ -211,5 +170,5 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 }
 
-export const GraphNG = withTheme(UnthemedGraphNG);
-GraphNG.displayName = 'GraphNG';
+export const Timeline = withTheme(UnthemedTimeline);
+Timeline.displayName = 'Timeline';

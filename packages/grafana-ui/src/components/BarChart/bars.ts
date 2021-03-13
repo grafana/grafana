@@ -46,8 +46,8 @@ export interface BarsOptions {
   groupWidth: number;
   barWidth: number;
   formatValue?: (seriesIdx: number, value: any) => string;
-  onHover?: (seriesIdx: number, valueIdx: any) => void;
-  onLeave?: (seriesIdx: number, valueIdx: any) => void;
+  onHover?: (seriesIdx: number, valueIdx: number) => void;
+  onLeave?: (seriesIdx: number, valueIdx: number) => void;
 }
 
 /**
