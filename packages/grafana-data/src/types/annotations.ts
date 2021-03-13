@@ -24,7 +24,7 @@ export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
   mappings?: AnnotationEventMappings;
 
   // Sadly plugins can set any propery directly on the main object
-  [str: string]: any;
+  [key: string]: any;
 }
 
 export interface AnnotationEvent {
