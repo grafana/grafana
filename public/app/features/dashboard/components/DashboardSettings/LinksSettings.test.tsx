@@ -62,9 +62,9 @@ describe('LinksSettings', () => {
     // @ts-ignore
     render(<LinksSettings dashboard={linklessDashboard} />);
 
-    expect(screen.getByRole('heading', { name: 'Dashboard Links' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Dashboard links' })).toBeInTheDocument();
     expect(
-      screen.getByLabelText(selectors.components.CallToActionCard.button('Add Dashboard Link'))
+      screen.getByLabelText(selectors.components.CallToActionCard.button('Add dashboard link'))
     ).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
@@ -77,7 +77,7 @@ describe('LinksSettings', () => {
 
     expect(tableBodyRows.length).toBe(links.length);
     expect(
-      screen.queryByLabelText(selectors.components.CallToActionCard.button('Add Dashboard Link'))
+      screen.queryByLabelText(selectors.components.CallToActionCard.button('Add dashboard link'))
     ).not.toBeInTheDocument();
   });
 

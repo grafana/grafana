@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
-import { LinkSettingsEdit, LinkSettingsHeader, LinkSettingsList } from '../LinksSettings';
+import { LinkSettingsEdit, LinkSettingsList } from '../LinksSettings';
+import { newLink } from '../LinksSettings/LinkSettingsEdit';
+import { DashboardSettingsHeader } from './DashboardSettingsHeader';
 interface Props {
   dashboard: DashboardModel;
 }
@@ -8,30 +10,28 @@ interface Props {
 export type LinkSettingsMode = 'list' | 'new' | 'edit';
 
 export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
-  const [mode, setMode] = useState<LinkSettingsMode>('list');
-  const [editLinkIdx, setEditLinkIdx] = useState<number | null>(null);
-  const hasLinks = dashboard.links.length > 0;
+  const [editIdx, setEditIdx] = useState<number | null>(null);
 
   const onGoBack = () => {
-    setMode('list');
+    setEditIdx(null);
   };
+
   const onNew = () => {
-    setEditLinkIdx(null);
-    setMode('new');
+    dashboard.links = [...dashboard.links, newLink];
+    setEditIdx(dashboard.links.length - 1);
   };
+
   const onEdit = (idx: number) => {
-    setEditLinkIdx(idx);
-    setMode('edit');
+    setEditIdx(idx);
   };
+
+  const isEditing = editIdx !== null;
 
   return (
     <>
-      <LinkSettingsHeader onNavClick={onGoBack} onNew={onNew} mode={mode} hasLinks={hasLinks} />
-      {mode === 'list' ? (
-        <LinkSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />
-      ) : (
-        <LinkSettingsEdit dashboard={dashboard} mode={mode} editLinkIdx={editLinkIdx} onGoBack={onGoBack} />
-      )}
+      <DashboardSettingsHeader onGoBack={onGoBack} title="Dashboard links" isEditing={isEditing} />
+      {!isEditing && <LinkSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
+      {isEditing && <LinkSettingsEdit dashboard={dashboard} editLinkIdx={editIdx} onGoBack={onGoBack} />}
     </>
   );
 };

@@ -31,7 +31,7 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
     const list = [...dashboard.annotations.list];
     list.splice(editIdx!, 1, annotation);
     setAnnotation(annotation);
-    dashboard.annotations = dashboard.annotations;
+    dashboard.annotations.list = list;
   };
 
   const onNameChange = (ev: React.FocusEvent<HTMLInputElement>) => {
@@ -63,13 +63,22 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
     });
   };
 
+  const isNewAnnotation = annotation.name === newAnnotation.name;
+
   return (
     <div>
       <Field label="Name">
-        <Input name="name" aria-label="name" value={annotation.name} onChange={onNameChange} width={50} />
+        <Input
+          name="name"
+          aria-label="name"
+          autoFocus={isNewAnnotation}
+          value={annotation.name}
+          onChange={onNameChange}
+          width={50}
+        />
       </Field>
       <Field label="Data source">
-        <DataSourcePicker annotations current={annotation.datasource} onChange={onDataSourceChange} />
+        <DataSourcePicker width={50} annotations current={annotation.datasource} onChange={onDataSourceChange} />
       </Field>
       <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
         <Checkbox name="enable" value={annotation.enable} onChange={onChange} />

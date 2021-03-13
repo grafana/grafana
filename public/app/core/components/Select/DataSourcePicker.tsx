@@ -24,6 +24,7 @@ export interface Props {
   variables?: boolean;
   pluginId?: string;
   noDefault?: boolean;
+  width?: number;
 }
 
 export interface State {
@@ -112,7 +113,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
   }
 
   render() {
-    const { autoFocus, onBlur, openMenuOnFocus, placeholder } = this.props;
+    const { autoFocus, onBlur, openMenuOnFocus, placeholder, width } = this.props;
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
@@ -128,6 +129,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
           options={options}
           autoFocus={autoFocus}
           onBlur={onBlur}
+          width={width}
           openMenuOnFocus={openMenuOnFocus}
           maxMenuHeight={500}
           placeholder={placeholder}

@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
-import { AnnotationSettingsEdit, AnnotationSettingsHeader, AnnotationSettingsList } from '../AnnotationSettings';
+import { AnnotationSettingsEdit, AnnotationSettingsList } from '../AnnotationSettings';
 import { newAnnotation } from '../AnnotationSettings/AnnotationSettingsEdit';
+import { DashboardSettingsHeader } from './DashboardSettingsHeader';
+
 interface Props {
   dashboard: DashboardModel;
 }
 
 export const AnnotationsSettings: React.FC<Props> = ({ dashboard }) => {
   const [editIdx, setEditIdx] = useState<number | null>(null);
-  const hasAnnotations = dashboard.annotations.list.length > 0;
 
   const onGoBack = () => {
     setEditIdx(null);
@@ -29,12 +30,7 @@ export const AnnotationsSettings: React.FC<Props> = ({ dashboard }) => {
 
   return (
     <>
-      <AnnotationSettingsHeader
-        onNavClick={onGoBack}
-        onBtnClick={onNew}
-        isEditing={isEditing}
-        hasAnnotations={hasAnnotations}
-      />
+      <DashboardSettingsHeader title="Annotations" onGoBack={onGoBack} isEditing={isEditing} />
       {!isEditing && <AnnotationSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
       {isEditing && <AnnotationSettingsEdit dashboard={dashboard} editIdx={editIdx} />}
     </>

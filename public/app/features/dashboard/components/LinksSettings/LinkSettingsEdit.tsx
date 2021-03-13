@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
-import { CollapsableSection, Button, TagsInput, Select, Field, Input, Checkbox } from '@grafana/ui';
+import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { LinkSettingsMode } from '../DashboardSettings/LinksSettings';
 import { DashboardLink, DashboardModel } from '../../state/DashboardModel';
 
-const newLink = {
+export const newLink = {
   icon: 'external link',
-  title: '',
+  title: 'New link',
   tooltip: '',
   type: 'dashboards',
   url: '',
@@ -36,58 +34,50 @@ export const linkIconMap: { [key: string]: string } = {
 const linkIconOptions = Object.keys(linkIconMap).map((key) => ({ label: key, value: key }));
 
 type LinkSettingsEditProps = {
-  mode: LinkSettingsMode;
   editLinkIdx: number | null;
   dashboard: DashboardModel;
   onGoBack: () => void;
 };
 
-export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLinkIdx, dashboard, onGoBack }) => {
+export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ editLinkIdx, dashboard }) => {
   const [linkSettings, setLinkSettings] = useState(editLinkIdx !== null ? dashboard.links[editLinkIdx] : newLink);
 
+  const onUpdate = (link: DashboardLink) => {
+    const links = [...dashboard.links];
+    links.splice(editLinkIdx!, 1, link);
+    dashboard.links = links;
+    setLinkSettings(link);
+  };
+
   const onTagsChange = (tags: any[]) => {
-    setLinkSettings((link) => ({ ...link, tags: tags }));
+    onUpdate({ ...linkSettings, tags: tags });
   };
 
   const onTypeChange = (selectedItem: SelectableValue) => {
-    setLinkSettings((link) => ({ ...link, type: selectedItem.value }));
+    onUpdate({ ...linkSettings, type: selectedItem.value });
   };
 
   const onIconChange = (selectedItem: SelectableValue) => {
-    setLinkSettings((link) => ({ ...link, icon: selectedItem.value }));
+    onUpdate({ ...linkSettings, icon: selectedItem.value });
   };
 
   const onChange = (ev: React.FocusEvent<HTMLInputElement>) => {
     const target = ev.currentTarget;
-    setLinkSettings((link) => ({
-      ...link,
+    onUpdate({
+      ...linkSettings,
       [target.name]: target.type === 'checkbox' ? target.checked : target.value,
-    }));
+    });
   };
 
-  const addLink = () => {
-    dashboard.links = [...dashboard.links, linkSettings];
-    dashboard.updateSubmenuVisibility();
-    onGoBack();
-  };
-
-  const updateLink = () => {
-    dashboard.links.splice(editLinkIdx!, 1, linkSettings);
-    dashboard.updateSubmenuVisibility();
-    onGoBack();
-  };
+  const isNew = linkSettings.title === newLink.title;
 
   return (
-    <div
-      className={css`
-        max-width: 600px;
-      `}
-    >
+    <div style={{ maxWidth: '600px' }}>
+      <Field label="Title">
+        <Input name="title" aria-label="title" value={linkSettings.title} onChange={onChange} autoFocus={isNew} />
+      </Field>
       <Field label="Type">
         <Select value={linkSettings.type} options={linkTypeOptions} onChange={onTypeChange} />
-      </Field>
-      <Field label="Title">
-        <Input name="title" aria-label="title" value={linkSettings.title} onChange={onChange} />
       </Field>
       {linkSettings.type === 'dashboards' && (
         <>
@@ -140,11 +130,6 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLi
           />
         </Field>
       </CollapsableSection>
-
-      <div className="gf-form-button-row">
-        {mode === 'new' && <Button onClick={addLink}>Add</Button>}
-        {mode === 'edit' && <Button onClick={updateLink}>Update</Button>}
-      </div>
     </div>
   );
 };
