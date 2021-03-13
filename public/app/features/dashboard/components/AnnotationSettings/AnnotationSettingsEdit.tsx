@@ -87,7 +87,7 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
         label="Hidden"
         description="Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden."
       >
-        <Checkbox name="hide" value={annotation.enable} onChange={onChange} />
+        <Checkbox name="hide" value={annotation.hide} onChange={onChange} />
       </Field>
       <Field label="Color" description="Color to use for the annotation event markers">
         <HorizontalGroup>
