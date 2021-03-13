@@ -2,6 +2,7 @@ import { Field, DataFrame, FieldType } from '../types/dataFrame';
 import { QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities } from './DataFrameJSON';
+import { Subject } from 'rxjs';
 
 /**
  * @alpha
@@ -28,6 +29,10 @@ export class StreamingDataFrame implements DataFrame {
   private lastUpdateTime = 0;
   private timeFieldIndex = -1;
 
+  // Append observers
+  private readonly subject = new Subject<DataFrameJSON>();
+  readonly appendObserver = this.subject.asObservable();
+
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
       maxLength: 1000,
@@ -43,7 +48,10 @@ export class StreamingDataFrame implements DataFrame {
     return this.fields[0].values.length;
   }
 
-  update(msg: DataFrameJSON) {
+  /**
+   * returns true if the operation was an append
+   */
+  update(msg: DataFrameJSON): boolean {
     const { schema, data } = msg;
     if (schema) {
       if (this.fields.length > 0) {
@@ -68,7 +76,7 @@ export class StreamingDataFrame implements DataFrame {
       this.timeFieldIndex = this.fields.findIndex((f) => f.type === FieldType.time);
     }
 
-    if (data) {
+    if (data && data.values.length && data.values[0].length) {
       const { values, entities } = data;
       if (values.length !== this.fields.length) {
         throw new Error('update message mismatch');
@@ -108,6 +116,13 @@ export class StreamingDataFrame implements DataFrame {
         }
         this.lastUpdateTime = now;
       }
+
+      if (!schema && this.subject.observers.length) {
+        this.subject.next(msg);
+        return true;
+      }
     }
+
+    return false;
   }
 }

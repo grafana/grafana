@@ -115,12 +115,6 @@ export interface QueryResultBase {
   refId?: string;
 
   /**
-   * A unique key that can be used to identify a frame within larger result set.
-   * This is particuarly useful for linking streaming 'append' events when the schema has not changed
-   */
-  key?: string;
-
-  /**
    * Used by some backend data sources to communicate back info about the execution (generated sql, timing)
    */
   meta?: QueryResultMeta;

@@ -6,6 +6,8 @@ import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
 import { FieldColor } from './fieldColor';
 import { ScopedVars } from './ScopedVars';
+import { Observable } from 'rxjs';
+import { DataFrameJSON } from '../dataframe';
 
 export enum FieldType {
   time = 'time', // or date
@@ -183,6 +185,9 @@ export interface DataFrame extends QueryResultBase {
 
   // The number of rows
   length: number;
+
+  // append rows
+  appendObserver?: Observable<DataFrameJSON>;
 }
 
 /**

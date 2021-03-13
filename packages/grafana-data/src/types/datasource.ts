@@ -11,7 +11,6 @@ import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 import { LiveChannelSupport } from './live';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
-import { DataFrameJSON } from '../dataframe';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -398,13 +397,6 @@ export interface DataQueryResponse {
    * or a partial result set
    */
   data: DataQueryResponseData[];
-
-  /**
-   * For streaming data sources, this will return a subscription to append events
-   * When subscriptions exist, append only events will no longer be broadcast in the
-   * initial response.
-   */
-  appendObserver?: Observable<DataFrameJSON>;
 
   /**
    * When returning multiple partial responses or streams

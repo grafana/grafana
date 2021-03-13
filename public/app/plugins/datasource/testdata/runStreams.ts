@@ -87,7 +87,8 @@ export function runSignalStream(
         data.values.push([max]);
       }
 
-      frame.update({ data });
+      const event = { data };
+      return frame.update(event);
     };
 
     // Fill the buffer on init
@@ -100,14 +101,13 @@ export function runSignalStream(
     }
 
     const pushNextEvent = () => {
-      addNextRow(Date.now());
-      console.log('NEXT', frame.length, frame.fields[1].values.buffer);
-      subscriber.next({
-        data: [frame],
-        key: streamId,
-        state: LoadingState.Streaming,
-      });
-
+      if (!addNextRow(Date.now())) {
+        subscriber.next({
+          data: [frame],
+          key: streamId,
+          state: LoadingState.Streaming,
+        });
+      }
       timeoutId = setTimeout(pushNextEvent, speed);
     };
 
