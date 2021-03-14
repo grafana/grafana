@@ -86,13 +86,13 @@ export function preparePlotConfigBuilder(
     },
   };
 
-  const config = getConfig(opts);
+  const coreConfig = getConfig(opts);
 
-  builder.addHook('init', config.init);
-  builder.addHook('drawClear', config.drawClear);
-  builder.addHook('setCursor', config.setCursor);
+  builder.addHook('init', coreConfig.init);
+  builder.addHook('drawClear', coreConfig.drawClear);
+  builder.addHook('setCursor', coreConfig.setCursor);
 
-  builder.setCursor(config.cursor);
+  builder.setCursor(coreConfig.cursor);
 
   builder.addScale({
     scaleKey: 'x',
@@ -110,7 +110,7 @@ export function preparePlotConfigBuilder(
     isTime: false,
     orientation: ScaleOrientation.Vertical,
     direction: ScaleDirection.Up,
-    range: config.yRange,
+    range: coreConfig.yRange,
   });
 
   builder.addAxis({
@@ -125,8 +125,8 @@ export function preparePlotConfigBuilder(
     scaleKey: FIXED_UNIT, // y
     isTime: false,
     placement: AxisPlacement.Left,
-    splits: config.ySplits,
-    values: config.yValues,
+    splits: coreConfig.ySplits,
+    values: coreConfig.yValues,
     grid: false,
     ticks: false,
     gap: 15,
@@ -157,6 +157,8 @@ export function preparePlotConfigBuilder(
 
     builder.addSeries({
       scaleKey: FIXED_UNIT,
+      pathBuilder: coreConfig.drawPaths,
+      pointsBuilder: coreConfig.drawPaths as any,
       //colorMode,
       fillOpacity,
       theme,
