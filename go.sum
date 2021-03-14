@@ -788,15 +788,12 @@ github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0U
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gosimple/slug v1.9.0 h1:r5vDcYrFz9BmfIAMC829un9hq7hKM4cHUrsv36LbEqs=
 github.com/gosimple/slug v1.9.0/go.mod h1:AMZ+sOVe65uByN3kgEyf9WEBKBCSS+dJjMX9x4vDJbg=
-github.com/grafana/alerting-api v0.0.0-20210310155814-c1ce61993143 h1:jPv8R9q52ItGl+FrQdZGzzBUKx+5vH14pJ81MXUmCM8=
-github.com/grafana/alerting-api v0.0.0-20210310155814-c1ce61993143/go.mod h1:JH+OnDbaY14NcLgB+9mhFYyfLILhNtJjGTEoSVp2mzM=
-github.com/grafana/alerting-api v0.0.0-20210311143043-45ae733ad75e h1:JkD9vPupGCuxBg6rwZekreqwXWDsZyQ/M6EHQCup24k=
-github.com/grafana/alerting-api v0.0.0-20210311143043-45ae733ad75e/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
 github.com/grafana/alerting-api v0.0.0-20210311171115-b0eb4577f38c h1:xmmEjOGr87S1ZMinUTCA+ikMSLvJRrCYADZ9/ewMtWM=
 github.com/grafana/alerting-api v0.0.0-20210311171115-b0eb4577f38c/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
 github.com/grafana/grafana v1.9.2-0.20210308201921-4ce0a49eac03/go.mod h1:AHRRvd4utJGY25J5nW8aL7wZzn/LcJ0z2za9oOp14j4=
-github.com/grafana/grafana-aws-sdk v0.1.0 h1:25TSkS57lvVen3nTCNMu5SdI8ju5Z0f7cvCsukhlqJc=
 github.com/grafana/grafana-aws-sdk v0.1.0/go.mod h1:+pPo5U+pX0zWimR7YBc7ASeSQfbRkcTyQYqMiAj7G5U=
+github.com/grafana/grafana-aws-sdk v0.2.0 h1:UTBBYwye+ad5YUIlwN7TGxLdz1wXN3Ezhl0pseDGRVA=
+github.com/grafana/grafana-aws-sdk v0.2.0/go.mod h1:+pPo5U+pX0zWimR7YBc7ASeSQfbRkcTyQYqMiAj7G5U=
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4 h1:SPdxCL9BChFTlyi0Khv64vdCW4TMna8+sxL7+Chx+Ag=
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4/go.mod h1:nc0XxBzjeGcrMltCDw269LoWF9S8ibhgxolCdA1R8To=
 github.com/grafana/grafana-plugin-sdk-go v0.79.0/go.mod h1:NvxLzGkVhnoBKwzkst6CFfpMFKwAdIUZ1q8ssuLeF60=
