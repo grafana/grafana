@@ -8,18 +8,56 @@ import {
   BigValueTextMode,
 } from '@grafana/ui';
 import {
+  DataFrameJSON,
   DisplayValueAlignmentFactors,
   FieldDisplay,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
   PanelProps,
+  toDataFrameDTO,
 } from '@grafana/data';
 
 import { config } from 'app/core/config';
 import { StatPanelOptions } from './types';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
+import { Observer } from 'rxjs';
 
-export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
+interface LocalState {
+  counter: number; // force redraw
+}
+
+type Props = PanelProps<StatPanelOptions>;
+
+export class StatPanel extends PureComponent<Props, LocalState> {
+  state: LocalState = { counter: 0 };
+
+  componentDidMount() {}
+
+  componentDidUpdate(oldProps: Props) {
+    const { data } = this.props;
+    if (oldProps.data !== data) {
+      for (const series of data.series) {
+        if (series.appendObserver) {
+          //console.log('TODO subscribe!!!!', series);
+          series.appendObserver.subscribe(this.events);
+        }
+      }
+    }
+  }
+
+  events: Observer<DataFrameJSON> = {
+    next: (v: DataFrameJSON) => {
+      // console.log('GOT', v);
+      this.setState({ counter: this.state.counter + 1 });
+    },
+    error: (err: any) => {
+      console.log('ERR', err);
+    },
+    complete: () => {
+      console.log('complete');
+    },
+  };
+
   renderComponent = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi
@@ -96,6 +134,18 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
 
   render() {
     const { height, options, width, data, renderCounter } = this.props;
+
+    if (true) {
+      return (
+        <div>
+          {data.series.map((v, idx) => (
+            <div key={idx}>
+              <pre>{JSON.stringify(toDataFrameDTO(v))}</pre>
+            </div>
+          ))}
+        </div>
+      );
+    }
 
     return (
       <VizRepeater
