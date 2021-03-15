@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useRef, HTMLAttributes } from 'react';
+import React, { useState, useLayoutEffect, useRef, HTMLAttributes, useMemo } from 'react';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
@@ -27,23 +27,33 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({
     y: positionY + offsetY,
   });
 
-  const resizeObserver = new ResizeObserver((entries) => {
-    for (let entry of entries) {
-      const tW = Math.floor(entry.contentRect.width + 2 * 8); //  adding padding until Safari supports borderBoxSize
-      const tH = Math.floor(entry.contentRect.height + 2 * 8);
+  const resizeObserver = useMemo(
+    () =>
+      new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const tW = Math.floor(entry.contentRect.width + 2 * 8); //  adding padding until Safari supports borderBoxSize
+          const tH = Math.floor(entry.contentRect.height + 2 * 8);
 
-      if (tooltipMeasurementRef.current.width !== tW || tooltipMeasurementRef.current.height !== tH) {
-        tooltipMeasurementRef.current = {
-          width: tW,
-          height: tH,
-        };
-      }
+          if (tooltipMeasurementRef.current.width !== tW || tooltipMeasurementRef.current.height !== tH) {
+            tooltipMeasurementRef.current = {
+              width: tW,
+              height: tH,
+            };
+          }
+        }
+      }),
+    []
+  );
+
+  useLayoutEffect(() => {
+    if (tooltipRef.current) {
+      resizeObserver.observe(tooltipRef.current);
     }
-  });
 
-  if (tooltipRef.current) {
-    resizeObserver.observe(tooltipRef.current);
-  }
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [resizeObserver]);
 
   // Make sure tooltip does not overflow window
   useLayoutEffect(() => {
