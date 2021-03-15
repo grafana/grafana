@@ -356,7 +356,7 @@ When storing cache data in-memory, this setting defines how often a background p
 
 ### url
 
-The full redis URL of your redis server. Example: `redis://localhost:6739/0`.
+The full Redis URL of your Redis server. Example: `redis://localhost:6739/0`.
 
 ### prefix
 
