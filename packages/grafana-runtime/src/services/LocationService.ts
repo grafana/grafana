@@ -1,4 +1,4 @@
-import { UrlQueryMap, urlUtil } from '@grafana/data';
+import { deprecationWarning, UrlQueryMap, urlUtil } from '@grafana/data';
 import * as H from 'history';
 import { LocationUpdate } from './LocationSrv';
 import { createLogger } from '@grafana/ui';
@@ -123,8 +123,9 @@ export class HistoryWrapper implements LocationService {
     return locationSearchToObject(this.history.location.search);
   }
 
-  /** @depecreated */
+  /** @depecreated use partial, push or replace instead */
   update(options: LocationUpdate) {
+    deprecationWarning('LocationSrv', 'update', 'partial, push or replace');
     if (options.partial && options.query) {
       this.partial(options.query, options.partial);
     } else {
