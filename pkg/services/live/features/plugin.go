@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -26,10 +25,9 @@ func (p *streamSender) Send(packet *backend.StreamPacket) error {
 
 type PluginRunner struct {
 	pluginID            string
-	channelPublisher    channelPublisher
-	presenceGetter      presenceGetter
 	pluginContextGetter pluginContextGetter
 	handler             backend.StreamHandler
+	streamManager       *StreamManager
 }
 
 type pluginContextGetter interface {
@@ -44,13 +42,12 @@ type presenceGetter interface {
 	GetNumSubscribers(channel string) (int, error)
 }
 
-func NewPluginRunner(pluginID string, publisher channelPublisher, presenceGetter presenceGetter, pluginContextGetter pluginContextGetter, handler backend.StreamHandler) *PluginRunner {
+func NewPluginRunner(pluginID string, streamManager *StreamManager, pluginContextGetter pluginContextGetter, handler backend.StreamHandler) *PluginRunner {
 	return &PluginRunner{
 		pluginID:            pluginID,
-		channelPublisher:    publisher,
-		presenceGetter:      presenceGetter,
 		pluginContextGetter: pluginContextGetter,
 		handler:             handler,
+		streamManager:       streamManager,
 	}
 }
 
@@ -59,10 +56,9 @@ func (m *PluginRunner) GetHandlerForPath(path string) (models.ChannelHandler, er
 	return &PluginPathRunner{
 		path:                path,
 		pluginID:            m.pluginID,
-		channelPublisher:    m.channelPublisher,
-		presenceGetter:      m.presenceGetter,
 		pluginContextGetter: m.pluginContextGetter,
 		handler:             m.handler,
+		streamManager:       m.streamManager,
 	}, nil
 }
 
@@ -70,82 +66,12 @@ type PluginPathRunner struct {
 	mu                  sync.RWMutex
 	path                string
 	pluginID            string
-	channelPublisher    channelPublisher
-	presenceGetter      presenceGetter
 	pluginContextGetter pluginContextGetter
 	handler             backend.StreamHandler
-	streamRunning       bool
+	streamManager       *StreamManager
 }
 
-func (r *PluginPathRunner) watchStream(ctx context.Context, channel string, cancelFn func()) {
-	numNoSubscribersChecks := 0
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(5 * time.Second):
-			numSubscribers, err := r.presenceGetter.GetNumSubscribers(channel)
-			if err != nil {
-				continue
-			}
-			if numSubscribers == 0 {
-				numNoSubscribersChecks++
-				if numNoSubscribersChecks >= 3 {
-					logger.Info("Stop stream since no active subscribers", "channel", channel, "path", r.path)
-					cancelFn()
-					return
-				}
-			} else {
-				// reset counter since channel has active subscribers.
-				numNoSubscribersChecks = 0
-			}
-		}
-	}
-}
-
-func (r *PluginPathRunner) isStreamRunning() bool {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return r.streamRunning
-}
-
-func (r *PluginPathRunner) setStreamRunning(running bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.streamRunning = running
-}
-
-func (r *PluginPathRunner) runStream(pCtx backend.PluginContext, channel string) {
-	if r.isStreamRunning() {
-		return
-	}
-	r.setStreamRunning(true)
-	defer func() {
-		r.setStreamRunning(false)
-	}()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go r.watchStream(ctx, channel, cancel)
-	logger.Info("Start running stream", "channel", channel, "path", r.path)
-	err := r.handler.RunStream(
-		ctx,
-		&backend.RunStreamRequest{
-			PluginContext: pCtx,
-			Path:          r.path,
-		},
-		newStreamSender(channel, r.channelPublisher),
-	)
-	if err != nil {
-		if ctx.Err() == context.Canceled {
-			logger.Info("Stream cleanly finished", "path", r.path)
-		} else {
-			logger.Error("Error running stream", "path", r.path, "error", err)
-		}
-	}
-}
-
-// OnSubscribe ....
+// OnSubscribe ...
 func (r *PluginPathRunner) OnSubscribe(client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	// TODO: tmp hardcoded datasource ID!
 	pCtx, found, err := r.pluginContextGetter.GetPluginContext(client.Context(), r.pluginID, 2)
@@ -168,16 +94,11 @@ func (r *PluginPathRunner) OnSubscribe(client *centrifuge.Client, e centrifuge.S
 	if !resp.OK {
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
 	}
-	if r.isStreamRunning() {
-		logger.Debug("Skip running new stream (already exists)", "path", r.path)
-		return centrifuge.SubscribeReply{
-			Options: centrifuge.SubscribeOptions{
-				Presence: true,
-			},
-		}, nil
+	err = r.streamManager.SubmitStream(e.Channel, r.path, pCtx, r.handler)
+	if err != nil {
+		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
+		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
 	}
-	// TODO: better stream manager via separate entity.
-	go r.runStream(pCtx, e.Channel)
 	return centrifuge.SubscribeReply{
 		Options: centrifuge.SubscribeOptions{
 			Presence: true,

@@ -32,7 +32,6 @@ func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,
 			StreamHandler:       opts.StreamHandler,
-			isDataPlugin:        opts.QueryDataHandler != nil,
 		}, nil
 	}
 }
@@ -58,6 +57,7 @@ func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (cp *corePlugin) Start(ctx context.Context) error {
+	cp.isDataPlugin = cp.QueryDataHandler != nil
 	return nil
 }
 
