@@ -3,8 +3,8 @@ import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
-
 import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
@@ -97,7 +97,9 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
     }
   };
 
-  onDiscard = () => {};
+  onDiscard = () => {
+    locationService.replace(`${config.appSubUrl}/alerting/list`);
+  };
 
   onTest = () => {
     const { alertDefinition, evaluateAlertDefinition, evaluateNotSavedAlertDefinition } = this.props;
@@ -125,12 +127,12 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   render() {
     const {
       alertDefinition,
-      getInstances,
       uiState,
       updateAlertDefinitionUiState,
-      queryRunner,
       getQueryOptions,
+      getInstances,
       onRunQueries,
+      queryRunner,
     } = this.props;
 
     const styles = getStyles(config.theme);
@@ -146,10 +148,10 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
             leftPaneComponents={[
               <AlertingQueryPreview
                 key="queryPreview"
-                queryRunner={queryRunner!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
-                getInstances={getInstances}
-                queries={queryOptions.queries}
                 onTest={this.onTest}
+                queries={queryOptions.queries}
+                getInstances={getInstances}
+                queryRunner={queryRunner!}
                 onRunQueries={onRunQueries}
               />,
               <AlertingQueryEditor key="queryEditor" />,
