@@ -29,6 +29,8 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({
 
   const resizeObserver = useMemo(
     () =>
+      // TS has hard time playing games with @types/resize-observer-browser, hence the ignore
+      // @ts-ignore
       new ResizeObserver((entries) => {
         for (let entry of entries) {
           const tW = Math.floor(entry.contentRect.width + 2 * 8); //  adding padding until Safari supports borderBoxSize

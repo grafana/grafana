@@ -104,7 +104,6 @@
     "@types/react-custom-scrollbars": "4.0.5",
     "@types/react-test-renderer": "16.9.2",
     "@types/react-transition-group": "4.4.0",
-    "@types/resize-observer-browser": "0.1.5",
     "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/tinycolor2": "1.4.1",
     "common-tags": "^1.8.0",
