@@ -3,6 +3,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import {
   applyFieldOverrides,
   applyRawFieldOverrides,
+  CSVConfig,
   DataFrame,
   DataTransformerID,
   dateTimeFormat,
@@ -10,9 +11,8 @@ import {
   SelectableValue,
   toCSV,
   transformDataFrame,
-  CSVConfig,
 } from '@grafana/data';
-import { Button, Container, Field, HorizontalGroup, Spinner, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
+import { Button, Container, Field, HorizontalGroup, Select, Spinner, Switch, Table, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { getPanelInspectorStyles } from './styles';
@@ -94,7 +94,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       type: 'text/csv;charset=utf-8',
     });
     const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
-    const fileName = `${panel.title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
+    const fileName = `${panel.getDisplayTitle()}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
     saveAs(blob, fileName);
   };
 
