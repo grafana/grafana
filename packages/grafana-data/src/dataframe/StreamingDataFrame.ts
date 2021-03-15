@@ -2,7 +2,6 @@ import { Field, DataFrame, FieldType } from '../types/dataFrame';
 import { QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities } from './DataFrameJSON';
-import { Subject } from 'rxjs';
 
 /**
  * @alpha
@@ -28,10 +27,6 @@ export class StreamingDataFrame implements DataFrame {
   options: StreamingFrameOptions;
   private lastUpdateTime = 0;
   private timeFieldIndex = -1;
-
-  // Append observers
-  private readonly subject = new Subject<DataFrameJSON>();
-  readonly appendObserver = this.subject.asObservable();
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
@@ -116,13 +111,7 @@ export class StreamingDataFrame implements DataFrame {
         }
         this.lastUpdateTime = now;
       }
-
-      if (!schema && this.subject.observers.length) {
-        this.subject.next(msg);
-        return true;
-      }
     }
-
     return false;
   }
 }

@@ -92,7 +92,7 @@ export function runSignalStream(
     };
 
     // Fill the buffer on init
-    if (false) {
+    if (true) {
       let time = Date.now() - maxDataPoints * speed;
       for (let i = 0; i < maxDataPoints; i++) {
         addNextRow(time);
@@ -101,13 +101,12 @@ export function runSignalStream(
     }
 
     const pushNextEvent = () => {
-      if (!addNextRow(Date.now())) {
-        subscriber.next({
-          data: [frame],
-          key: streamId,
-          state: LoadingState.Streaming,
-        });
-      }
+      addNextRow(Date.now());
+      subscriber.next({
+        data: [frame],
+        key: streamId,
+        state: LoadingState.Streaming,
+      });
       timeoutId = setTimeout(pushNextEvent, speed);
     };
 

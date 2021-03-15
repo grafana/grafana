@@ -185,9 +185,6 @@ export interface DataFrame extends QueryResultBase {
 
   // The number of rows
   length: number;
-
-  // append rows
-  appendObserver?: Observable<DataFrameJSON>;
 }
 
 /**
