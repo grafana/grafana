@@ -9,6 +9,7 @@ import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { initialVariablesState, VariablesState } from './variablesReducer';
 import { isQuery } from '../guard';
+import { ensureStringValues } from '../utils';
 
 const sharedReducerSlice = createSlice({
   name: 'templating/shared',
@@ -121,10 +122,12 @@ const sharedReducerSlice = createSlice({
       }
 
       const instanceState = getInstanceState<VariableWithOptions>(state, action.payload.id);
-      const current = { ...action.payload.data.option };
+      const { option } = action.payload.data;
+      const current = { ...option, text: ensureStringValues(option?.text), value: ensureStringValues(option?.value) };
 
       instanceState.current = current;
       instanceState.options = instanceState.options.map((option) => {
+        option.value = ensureStringValues(option.value);
         let selected = false;
         if (Array.isArray(current.value)) {
           for (let index = 0; index < current.value.length; index++) {

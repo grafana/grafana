@@ -52,7 +52,7 @@ import {
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
 import isEqual from 'lodash/isEqual';
-import { getCurrentText, getVariableRefresh } from '../utils';
+import { ensureStringValues, getCurrentText, getVariableRefresh } from '../utils';
 import { store } from 'app/store/store';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { cleanEditorState } from '../editor/reducer';
@@ -247,7 +247,8 @@ export const processVariable = (
 
     const urlValue = queryParams['var-' + variable.name];
     if (urlValue !== void 0) {
-      await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue ?? '');
+      const stringUrlValue = ensureStringValues(urlValue);
+      await variableAdapters.get(variable.type).setValueFromUrl(variable, stringUrlValue);
       return;
     }
 
@@ -283,6 +284,7 @@ export const setOptionFromUrl = (
   urlValue: UrlQueryValue
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
+    const stringUrlValue = ensureStringValues(urlValue);
     const variable = getVariable(identifier.id, getState());
     if (getVariableRefresh(variable) !== VariableRefresh.never) {
       // updates options
@@ -296,23 +298,22 @@ export const setOptionFromUrl = (
     }
     // Simple case. Value in url matches existing options text or value.
     let option = variableFromState.options.find((op) => {
-      return op.text === urlValue || op.value === urlValue;
+      return op.text === stringUrlValue || op.value === stringUrlValue;
     });
 
     if (!option && isMulti(variableFromState)) {
-      if (variableFromState.allValue && urlValue === variableFromState.allValue) {
+      if (variableFromState.allValue && stringUrlValue === variableFromState.allValue) {
         option = { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false };
       }
     }
 
     if (!option) {
-      let defaultText = urlValue as string | string[];
-      const defaultValue = urlValue as string | string[];
+      let defaultText = stringUrlValue;
+      const defaultValue = stringUrlValue;
 
-      if (Array.isArray(urlValue)) {
+      if (Array.isArray(stringUrlValue)) {
         // Multiple values in the url. We construct text as a list of texts from all matched options.
-        const urlValueArray = urlValue as string[];
-        defaultText = urlValueArray.reduce((acc: string[], item: string) => {
+        defaultText = stringUrlValue.reduce((acc: string[], item: string) => {
           const foundOption = variableFromState.options.find((o) => o.value === item);
           if (!foundOption) {
             // @ts-ignore according to strict null errors this can never happen
@@ -569,8 +570,9 @@ export const templateVarsChangedInUrl = (vars: UrlQueryMap): ThunkResult<void> =
 };
 
 const isVariableUrlValueDifferentFromCurrent = (variable: VariableModel, urlValue: any): boolean => {
+  const stringUrlValue = ensureStringValues(urlValue);
   // lodash isEqual handles array of value equality checks as well
-  return !isEqual(variableAdapters.get(variable.type).getValueForUrl(variable), urlValue);
+  return !isEqual(variableAdapters.get(variable.type).getValueForUrl(variable), stringUrlValue);
 };
 
 const getQueryWithVariables = (getState: () => StoreState): UrlQueryMap => {

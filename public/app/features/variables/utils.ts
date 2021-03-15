@@ -223,3 +223,23 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ur
   }
   return count ? changes : undefined;
 }
+
+export function ensureStringValues(value: any | any[]): string | string[] {
+  if (Array.isArray(value)) {
+    return value.map(String);
+  }
+
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'number') {
+    return value.toString(10);
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return '';
+}
