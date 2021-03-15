@@ -6,6 +6,8 @@ import {
   IconName,
   MenuItemProps,
   MenuItemsGroup,
+  MenuGroup,
+  MenuItem,
   Portal,
   useGraphNGContext,
 } from '@grafana/ui';
@@ -22,20 +24,13 @@ import { getFieldLinksSupplier } from '../../../../features/panel/panellinks/lin
 
 interface ContextMenuPluginProps {
   data: DataFrame[];
-  defaultItems?: MenuItemsGroup[];
   timeZone: TimeZone;
   onOpen?: () => void;
   onClose?: () => void;
   replaceVariables?: InterpolateFunction;
 }
 
-export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
-  data,
-  onClose,
-  timeZone,
-  defaultItems,
-  replaceVariables,
-}) => {
+export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({ data, onClose, timeZone, replaceVariables }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onClick = useCallback(() => {
@@ -49,7 +44,6 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
           <Portal>
             <ContextMenuView
               data={data}
-              defaultItems={defaultItems}
               timeZone={timeZone}
               selection={{ point, coords }}
               replaceVariables={replaceVariables}
@@ -69,7 +63,6 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
 
 interface ContextMenuProps {
   data: DataFrame[];
-  defaultItems?: MenuItemsGroup[];
   timeZone: TimeZone;
   onClose?: () => void;
   selection: {
@@ -82,7 +75,6 @@ interface ContextMenuProps {
 export const ContextMenuView: React.FC<ContextMenuProps> = ({
   selection,
   timeZone,
-  defaultItems,
   replaceVariables,
   data,
   ...otherProps
@@ -106,7 +98,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     return null;
   }
 
-  const items = defaultItems ? [...defaultItems] : [];
+  const items: MenuItemsGroup[] = [];
   let renderHeader: () => JSX.Element | null = () => null;
 
   const { seriesIdx, dataIdx } = selection.point;
@@ -160,9 +152,28 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     );
   }
 
+  const renderMenuGroupItems = () => {
+    return items?.map((group, index) => (
+      <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+        {(group.items || []).map((item) => (
+          <MenuItem
+            key={`${item.label}`}
+            url={item.url}
+            label={item.label}
+            ariaLabel={item.label}
+            target={item.target}
+            icon={item.icon}
+            active={item.active}
+            onClick={item.onClick}
+          />
+        ))}
+      </MenuGroup>
+    ));
+  };
+
   return (
     <ContextMenu
-      itemsGroup={items}
+      renderMenu={renderMenuGroupItems}
       renderHeader={renderHeader}
       x={selection.coords.viewport.x}
       y={selection.coords.viewport.y}
