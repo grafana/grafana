@@ -4,8 +4,8 @@ import _ from 'lodash';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime, getFrameDisplayName } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { Observable, of } from 'rxjs';
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
+import { of } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -111,14 +111,14 @@ describe('graphiteDatasource', () => {
       maxDataPoints: 500,
     };
 
-    let results: any;
+    let response: any;
     let requestOptions: any;
 
-    beforeEach(async () => {
+    beforeEach(() => {
       fetchMock.mockImplementation((options: any) => {
         requestOptions = options;
-        return createFetchResponse({
-          data: [
+        return of(
+          createFetchResponse([
             {
               target: 'prod1.count',
               datapoints: [
@@ -126,16 +126,11 @@ describe('graphiteDatasource', () => {
                 [12, 1],
               ],
             },
-          ],
-        });
+          ])
+        );
       });
 
-      await ctx.ds
-        .query(query as any)
-        .toPromise()
-        .then((data: any) => {
-          results = data;
-        });
+      response = ctx.ds.query(query as any);
     });
 
     it('X-Dashboard and X-Panel headers to be set!', () => {
@@ -164,13 +159,19 @@ describe('graphiteDatasource', () => {
       expect(params).not.toContain('cacheTimeout=undefined');
     });
 
-    it('should return series list', () => {
-      expect(results.data.length).toBe(1);
-      expect(results.data[0].name).toBe('prod1.count');
+    it('should return series list', async () => {
+      await expect(response).toEmitValuesWith((values: any) => {
+        const results = values[0];
+        expect(results.data.length).toBe(1);
+        expect(results.data[0].name).toBe('prod1.count');
+      });
     });
 
-    it('should convert to millisecond resolution', () => {
-      expect(results.data[0].fields[1].values.get(0)).toBe(10);
+    it('should convert to millisecond resolution', async () => {
+      await expect(response).toEmitValuesWith((values: any) => {
+        const results = values[0];
+        expect(results.data[0].fields[1].values.get(0)).toBe(10);
+      });
     });
   });
 
@@ -189,21 +190,19 @@ describe('graphiteDatasource', () => {
     };
 
     describe('and tags are returned as string', () => {
-      const response = {
-        data: [
-          {
-            when: 1507222850,
-            tags: 'tag1 tag2',
-            data: 'some text',
-            id: 2,
-            what: 'Event - deploy',
-          },
-        ],
-      };
+      const response = [
+        {
+          when: 1507222850,
+          tags: 'tag1 tag2',
+          data: 'some text',
+          id: 2,
+          what: 'Event - deploy',
+        },
+      ];
 
       beforeEach(async () => {
         fetchMock.mockImplementation((options: any) => {
-          return createFetchResponse(response);
+          return of(createFetchResponse(response));
         });
         await ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
@@ -219,20 +218,19 @@ describe('graphiteDatasource', () => {
     });
 
     describe('and tags are returned as an array', () => {
-      const response = {
-        data: [
-          {
-            when: 1507222850,
-            tags: ['tag1', 'tag2'],
-            data: 'some text',
-            id: 2,
-            what: 'Event - deploy',
-          },
-        ],
-      };
+      const response = [
+        {
+          when: 1507222850,
+          tags: ['tag1', 'tag2'],
+          data: 'some text',
+          id: 2,
+          what: 'Event - deploy',
+        },
+      ];
+
       beforeEach(() => {
         fetchMock.mockImplementation((options: any) => {
-          return createFetchResponse(response);
+          return of(createFetchResponse(response));
         });
 
         ctx.ds.annotationQuery(options).then((data: any) => {
@@ -352,9 +350,7 @@ describe('graphiteDatasource', () => {
     beforeEach(() => {
       fetchMock.mockImplementation((options: any) => {
         requestOptions = options;
-        return createFetchResponse({
-          data: ['backend_01', 'backend_02'],
-        });
+        return of(createFetchResponse(['backend_01', 'backend_02']));
       });
     });
 
@@ -508,22 +504,3 @@ accessScenario('with direct access', 'http://localhost:8080', (httpOptions: any)
   expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
   expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
 });
-
-const createFetchResponse = (response: Partial<FetchResponse>): Observable<FetchResponse> => {
-  const defaults: FetchResponse = {
-    status: 200,
-    statusText: 'OK',
-    data: [],
-    ok: true,
-    headers: {} as Headers,
-    redirected: false,
-    type: 'default',
-    url: '',
-    config: {} as BackendSrvRequest,
-  };
-
-  return of({
-    ...defaults,
-    ...response,
-  });
-};

@@ -18,7 +18,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-import { Observable, of } from 'rxjs';
+import { Observable, of, OperatorFunction, pipe } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
@@ -490,20 +490,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
-
-    return this.doGraphiteRequest(httpOptions)
-      .pipe(
-        map((results: any) => {
-          if (results.data) {
-            return _.map(results.data, (tag) => {
-              return { text: tag };
-            });
-          } else {
-            return [];
-          }
-        })
-      )
-      .toPromise();
+    return this.doGraphiteRequest(httpOptions).pipe(mapToTags()).toPromise();
   }
 
   getTagValuesAutoComplete(expressions: any[], tag: any, valuePrefix: any, optionalOptions: any) {
@@ -530,20 +517,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
-
-    return this.doGraphiteRequest(httpOptions)
-      .pipe(
-        map((results: any) => {
-          if (results.data) {
-            return _.map(results.data, (value) => {
-              return { text: value };
-            });
-          } else {
-            return [];
-          }
-        })
-      )
-      .toPromise();
+    return this.doGraphiteRequest(httpOptions).pipe(mapToTags()).toPromise();
   }
 
   getVersion(optionalOptions: any) {
@@ -729,4 +703,18 @@ function supportsTags(version: string): boolean {
 
 function supportsFunctionIndex(version: string): boolean {
   return isVersionGtOrEq(version, '1.1');
+}
+
+function mapToTags(): OperatorFunction<any, Array<{ text: string }>> {
+  return pipe(
+    map((results: any) => {
+      if (results.data) {
+        return _.map(results.data, (value) => {
+          return { text: value };
+        });
+      } else {
+        return [];
+      }
+    })
+  );
 }
