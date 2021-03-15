@@ -123,7 +123,7 @@ export class HistoryWrapper implements LocationService {
     return locationSearchToObject(this.history.location.search);
   }
 
-  /** @depecreated use partial, push or replace instead */
+  /** @deprecated use partial, push or replace instead */
   update(options: LocationUpdate) {
     deprecationWarning('LocationSrv', 'update', 'partial, push or replace');
     if (options.partial && options.query) {
