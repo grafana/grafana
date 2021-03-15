@@ -158,7 +158,7 @@ export function preparePlotConfigBuilder(
     builder.addSeries({
       scaleKey: FIXED_UNIT,
       pathBuilder: coreConfig.drawPaths,
-      pointsBuilder: coreConfig.drawPaths as any,
+      pointsBuilder: coreConfig.drawPoints,
       //colorMode,
       fillOpacity,
       theme,

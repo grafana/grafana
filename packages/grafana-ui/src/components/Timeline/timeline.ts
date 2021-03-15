@@ -1,4 +1,5 @@
 import uPlot, { Series, Cursor } from 'uplot';
+import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import { Quadtree, Rect, pointWithin } from '../BarChart/quadtree';
 import { distribute, SPACE_BETWEEN } from '../BarChart/distribute';
 import { TimelineMode } from './types';
@@ -13,7 +14,7 @@ const font = Math.round(10 * pxRatio) + 'px Arial';
 
 type WalkCb = (idx: number, offPx: number, dimPx: number) => void;
 
-function walk(laneWidth: number, yIdx: number, count: number, dim: number, draw: WalkCb) {
+function walk(laneWidth: number, yIdx: number | null, count: number, dim: number, draw: WalkCb) {
   distribute(count, laneWidth, laneDistr, yIdx, (i, offPct, dimPct) => {
     let laneOffPx = dim * offPct;
     let laneWidPx = dim * dimPct;
@@ -74,8 +75,6 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   const hovered: Array<Rect | null> = Array(count).fill(null);
 
-  const yMids: number[] = Array(count).fill(0);
-
   const gapFactor = 1 - size[0];
   const maxWidth = (size[1] ?? Infinity) * pxRatio;
 
@@ -127,10 +126,6 @@ export function getConfig(opts: TimelineCoreOptions) {
         u.ctx.clip();
 
         walk(laneWidth, sidx - 1, count, yDim, (iy, y0, hgt) => {
-          hgt = round(hgt);
-          // vertical midpoints of each series' timeline
-          yMids[iy] = round(y0) + hgt / 2;
-
           if (mode === TimelineMode.Spans) {
             for (let ix = 0; ix < dataY.length; ix++) {
               if (dataY[ix] != null) {
@@ -145,7 +140,20 @@ export function getConfig(opts: TimelineCoreOptions) {
                     ? xOff + xDim + strokeWidth
                     : Math.round(valToPosX(dataX[nextIx], scaleX, xDim, xOff));
 
-                putBox(u.ctx, rect, xOff, yOff, lft, round(yOff + y0), rgt - lft, hgt, strokeWidth, iy, ix, dataY[ix]);
+                putBox(
+                  u.ctx,
+                  rect,
+                  xOff,
+                  yOff,
+                  lft,
+                  round(yOff + y0),
+                  rgt - lft,
+                  round(hgt),
+                  strokeWidth,
+                  iy,
+                  ix,
+                  dataY[ix]
+                );
 
                 ix = nextIx - 1;
               }
@@ -169,7 +177,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                   round(lft - xShift),
                   round(yOff + y0),
                   barWid,
-                  hgt,
+                  round(hgt),
                   strokeWidth,
                   iy,
                   ix,
@@ -191,6 +199,10 @@ export function getConfig(opts: TimelineCoreOptions) {
     formatValue == null
       ? false
       : (u, sidx, i0, i1) => {
+          u.ctx.save();
+          u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+          u.ctx.clip();
+
           u.ctx.font = font;
           u.ctx.fillStyle = 'black';
           u.ctx.textAlign = mode === TimelineMode.Spans ? 'left' : 'center';
@@ -215,20 +227,18 @@ export function getConfig(opts: TimelineCoreOptions) {
               lineTo,
               rect
             ) => {
-              walk(laneWidth, sidx - 1, count, yDim, (iy, y0, hgt) => {
-                let top = Math.round(yOff + y0);
-                let laneHgt = Math.round(hgt);
-                let y = Math.round(top + laneHgt / 2);
+              let y = round(yOff + yMids[sidx - 1]);
 
-                for (let ix = 0; ix < dataY.length; ix++) {
-                  if (dataY[ix] != null) {
-                    let x = valToPosX(dataX[ix], scaleX, xDim, xOff);
-                    u.ctx.fillText(formatValue(iy, dataY[ix]), x, y);
-                  }
+              for (let ix = 0; ix < dataY.length; ix++) {
+                if (dataY[ix] != null) {
+                  let x = valToPosX(dataX[ix], scaleX, xDim, xOff);
+                  u.ctx.fillText(formatValue(sidx, dataY[ix]), x, y);
                 }
-              });
+              }
             }
           );
+
+          u.ctx.restore();
 
           return false;
         };
@@ -254,14 +264,13 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 
   const setCursor = (u: uPlot) => {
-    let cx = u.cursor!.left! * pxRatio;
-    //	let cy = u.cursor.top * pxRatio;
+    let cx = round(u.cursor!.left! * pxRatio);
 
     for (let i = 0; i < count; i++) {
       let found: Rect | null = null;
 
       if (cx >= 0) {
-        let cy = yMids[i] * pxRatio;
+        let cy = yMids[i];
 
         qt.get(cx, cy, 1, 1, (o) => {
           if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
@@ -277,10 +286,10 @@ export function getConfig(opts: TimelineCoreOptions) {
           hovered[i] = found;
 
           h.style.display = '';
-          h.style.left = found!.x / pxRatio + 'px';
-          h.style.top = found!.y / pxRatio + 'px';
-          h.style.width = found!.w / pxRatio + 'px';
-          h.style.height = found!.h / pxRatio + 'px';
+          h.style.left = round(found!.x / pxRatio) + 'px';
+          h.style.top = round(found!.y / pxRatio) + 'px';
+          h.style.width = round(found!.w / pxRatio) + 'px';
+          h.style.height = round(found!.h / pxRatio) + 'px';
         }
       } else if (hovered[i] != null) {
         h.style.display = 'none';
@@ -295,10 +304,21 @@ export function getConfig(opts: TimelineCoreOptions) {
     points: { show: false },
   };
 
+  const yMids: number[] = Array(count).fill(0);
+  const ySplits: number[] = Array(count).fill(0);
+
   return {
     cursor,
 
-    ySplits: (u: uPlot) => yMids.map((yMid) => u.posToVal(yMid, 'y')),
+    ySplits: (u: uPlot) => {
+      walk(laneWidth, null, count, u.bbox.height, (iy, y0, hgt) => {
+        // vertical midpoints of each series' timeline (stored relative to .u-over)
+        yMids[iy] = round(y0 + hgt / 2);
+        ySplits[iy] = u.posToVal(yMids[iy], FIXED_UNIT);
+      });
+
+      return ySplits;
+    },
     yValues: (u: uPlot, splits: number[]) => splits.map((v, i) => label(i + 1)),
 
     yRange: [0, 1] as uPlot.Range.MinMax,
