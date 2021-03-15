@@ -762,7 +762,7 @@ describe('optionsPickerReducer', () => {
             { text: 'B', value: 'B', selected: true },
           ],
           selectedValues: [{ text: 'B', value: 'B', selected: true }],
-          queryValue: queryValue,
+          queryValue: 'A',
         })
         .whenActionIsDispatched(updateOptionsAndFilter(options))
         .thenStateShouldEqual({
@@ -772,7 +772,7 @@ describe('optionsPickerReducer', () => {
             { text: 'A', value: 'A', selected: false },
           ],
           selectedValues: [{ text: 'B', value: 'B', selected: true }],
-          queryValue: queryValue,
+          queryValue: 'A',
           highlightIndex: 0,
         })
         .whenActionIsDispatched(updateSearchQuery(''))
