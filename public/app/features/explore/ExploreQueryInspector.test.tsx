@@ -38,6 +38,7 @@ const setup = () => {
       series: [],
       timeRange: {} as TimeRange,
     },
+    runQueries: jest.fn(),
   };
 
   return render(<ExploreQueryInspector {...props} />);
