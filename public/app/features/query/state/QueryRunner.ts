@@ -1,13 +1,12 @@
 import {
   CoreApp,
-  DataQuery,
   DataQueryRequest,
   DataSourceApi,
   PanelData,
   rangeUtil,
   ScopedVars,
-  TimeRange,
-  TimeZone,
+  QueryRunnerOptions,
+  QueryRunner as QueryRunnerSrv,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -15,23 +14,7 @@ import { cloneDeep } from 'lodash';
 import { Observable, ReplaySubject, Unsubscribable } from 'rxjs';
 import { getNextRequestId } from './PanelQueryRunner';
 import { preProcessPanelData, runRequest } from './runRequest';
-
-export interface QueryRunnerOptions {
-  datasource: string | DataSourceApi | null;
-  queries: DataQuery[];
-  panelId?: number;
-  dashboardId?: number;
-  timezone: TimeZone;
-  timeRange: TimeRange;
-  timeInfo?: string; // String description of time range for display
-  maxDataPoints: number;
-  minInterval: string | undefined | null;
-  scopedVars?: ScopedVars;
-  cacheTimeout?: string;
-  app?: string;
-}
-
-export class QueryRunner {
+export class QueryRunner implements QueryRunnerSrv {
   private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
@@ -44,7 +27,7 @@ export class QueryRunner {
     return this.subject;
   }
 
-  async run(options: QueryRunnerOptions) {
+  async run(options: QueryRunnerOptions): Promise<void> {
     const {
       queries,
       timezone,

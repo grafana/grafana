@@ -13,3 +13,4 @@ export { logInfo, logDebug, logWarning, logError } from './utils/logging';
 export { DataSourceWithBackend, HealthCheckResult, HealthStatus } from './utils/DataSourceWithBackend';
 export { toDataQueryError, toDataQueryResponse, frameToMetricFindValue } from './utils/queryResponse';
 export * from './components/PanelRenderer';
+export { setQueryRunnerFactory, createQueryRunner, QueryRunnerFactory } from './services/QueryRunner';
