@@ -13,7 +13,6 @@ type fieldsQuery struct {
 	tsdbQuery plugins.DataQuery
 }
 
-
 var newFieldsQuery = func(client es.Client, dataQuery plugins.DataQuery) *fieldsQuery {
 	return &fieldsQuery{
 		client:    client,
@@ -174,17 +173,17 @@ func isMetadataField(fieldName string) bool {
 // eg. a "string" type alias will return `true` for fields of type "text" and "sring"
 func fieldTypeMatchesAlias(fieldType string, typeAlias string) bool {
 	typeMap := map[string]string{
-		"float":		"number",
-		"double":		"number",
-		"integer":		"number",
-		"long":			"number",
-		"scaled_float":	"number",
-		"histogram":	"number",
-		"date":			"date",
-		"date_nanos":	"date",
-		"string":		"string",
-		"text":			"string",
-		"nested":		"nested",
+		"float":        "number",
+		"double":       "number",
+		"integer":      "number",
+		"long":         "number",
+		"scaled_float": "number",
+		"histogram":    "number",
+		"date":         "date",
+		"date_nanos":   "date",
+		"string":       "string",
+		"text":         "string",
+		"nested":       "nested",
 	}
 
 	return typeMap[fieldType] == typeAlias
