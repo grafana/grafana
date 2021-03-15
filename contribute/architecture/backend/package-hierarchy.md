@@ -11,5 +11,6 @@ following principles:
 ## Practical example
 
 The `pkg/plugins` package contains plugin domain types, for example `DataPlugin`, and also interfaces
-such as `RequestHandler`. Then you have the `pkg/plugins/managers` package, which contains concrete implementations
-such as the service `PluginManager`.
+such as `RequestHandler`. Then you have the `pkg/plugins/managers` subpackage, which contains concrete implementations
+such as the service `PluginManager`. The subpackage `pkg/plugins/backendplugin/coreplugin` contains `plugins.DataPlugin`
+implementations.
