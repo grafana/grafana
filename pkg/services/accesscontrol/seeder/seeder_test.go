@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -11,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // accessControlStoreTestImpl is a test store implementation which additionally executes a database migrations
@@ -80,7 +81,7 @@ func TestSeeder(t *testing.T) {
 	}
 
 	v1 := accesscontrol.RoleDTO{
-		OrgId:   1,
+		OrgID:   1,
 		Name:    "grafana:tests:fake",
 		Version: 1,
 		Permissions: []accesscontrol.Permission{
@@ -95,7 +96,7 @@ func TestSeeder(t *testing.T) {
 		},
 	}
 	v2 := accesscontrol.RoleDTO{
-		OrgId:   1,
+		OrgID:   1,
 		Name:    "grafana:tests:fake",
 		Version: 2,
 		Permissions: []accesscontrol.Permission{
@@ -146,7 +147,7 @@ func TestSeeder(t *testing.T) {
 			err := s.seed(context.Background(), 1, []accesscontrol.RoleDTO{v2}, nil)
 			require.NoError(t, err)
 
-			p, err := s.Store.GetRole(context.Background(), 1, role.Id)
+			p, err := s.Store.GetRole(context.Background(), 1, role.ID)
 			require.NoError(t, err)
 			assert.Len(t, p.Permissions, len(v2.Permissions))
 

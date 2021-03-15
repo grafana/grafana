@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/stretchr/testify/require"
 )
 
 type RoleTestCase struct {
@@ -23,7 +24,7 @@ type PermissionTestCase struct {
 
 func CreateRole(t *testing.T, ac accesscontrol.Store, p RoleTestCase) *accesscontrol.RoleDTO {
 	createRoleCmd := accesscontrol.CreateRoleWithPermissionsCommand{
-		OrgId:       1,
+		OrgID:       1,
 		UID:         p.UID,
 		Name:        p.Name,
 		Permissions: []accesscontrol.Permission{},
@@ -55,16 +56,16 @@ func CreateUserWithRole(t *testing.T, ac accesscontrol.Store, user string, roles
 
 	for _, p := range roles {
 		createRoleCmd := accesscontrol.CreateRoleCommand{
-			OrgId: 1,
+			OrgID: 1,
 			Name:  p.Name,
 		}
 		res, err := ac.CreateRole(context.Background(), createRoleCmd)
 		require.NoError(t, err)
-		roleId := res.Id
+		roleId := res.ID
 
 		for _, perm := range p.Permissions {
 			permCmd := accesscontrol.CreatePermissionCommand{
-				RoleId:     roleId,
+				RoleID:     roleId,
 				Permission: perm.Permission,
 				Scope:      perm.Scope,
 			}
@@ -74,9 +75,9 @@ func CreateUserWithRole(t *testing.T, ac accesscontrol.Store, user string, roles
 		}
 
 		addUserRoleCmd := accesscontrol.AddUserRoleCommand{
-			OrgId:  1,
-			RoleId: roleId,
-			UserId: userId,
+			OrgID:  1,
+			RoleID: roleId,
+			UserID: userId,
 		}
 		err = ac.AddUserRole(&addUserRoleCmd)
 		require.NoError(t, err)
@@ -91,16 +92,16 @@ func CreateTeamWithRole(t *testing.T, ac accesscontrol.Store, team string, roles
 
 	for _, p := range roles {
 		createRoleCmd := accesscontrol.CreateRoleCommand{
-			OrgId: 1,
+			OrgID: 1,
 			Name:  p.Name,
 		}
 		res, err := ac.CreateRole(context.Background(), createRoleCmd)
 		require.NoError(t, err)
-		roleId := res.Id
+		roleId := res.ID
 
 		for _, perm := range p.Permissions {
 			permCmd := accesscontrol.CreatePermissionCommand{
-				RoleId:     roleId,
+				RoleID:     roleId,
 				Permission: perm.Permission,
 				Scope:      perm.Scope,
 			}
@@ -110,9 +111,9 @@ func CreateTeamWithRole(t *testing.T, ac accesscontrol.Store, team string, roles
 		}
 
 		addTeamRoleCmd := accesscontrol.AddTeamRoleCommand{
-			OrgId:  1,
-			RoleId: roleId,
-			TeamId: teamId,
+			OrgID:  1,
+			RoleID: roleId,
+			TeamID: teamId,
 		}
 		err = ac.AddTeamRole(&addTeamRoleCmd)
 		require.NoError(t, err)

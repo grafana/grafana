@@ -6,10 +6,11 @@ import (
 	"math"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -34,16 +35,16 @@ func GenerateRoles(b *testing.B, ac accesscontrol.Store, rolesPerUser, users int
 		// Create team roles
 		for j := 0; j < rolesPerUser; j++ {
 			roleName := fmt.Sprintf("role_%s_%v", teamName, j)
-			createRoleCmd := accesscontrol.CreateRoleCommand{OrgId: 1, Name: roleName}
+			createRoleCmd := accesscontrol.CreateRoleCommand{OrgID: 1, Name: roleName}
 			res, err := ac.CreateRole(context.Background(), createRoleCmd)
 			require.NoError(b, err)
-			roleId := res.Id
+			roleId := res.ID
 
 			for k := 0; k < PermissionsPerRole; k++ {
 				permission := fmt.Sprintf("permission_%v", k)
 				scope := fmt.Sprintf("scope_%v", k)
 				permCmd := accesscontrol.CreatePermissionCommand{
-					RoleId:     roleId,
+					RoleID:     roleId,
 					Permission: permission,
 					Scope:      scope,
 				}
@@ -53,9 +54,9 @@ func GenerateRoles(b *testing.B, ac accesscontrol.Store, rolesPerUser, users int
 			}
 
 			addTeamRoleCmd := accesscontrol.AddTeamRoleCommand{
-				OrgId:  1,
-				RoleId: roleId,
-				TeamId: teamId,
+				OrgID:  1,
+				RoleID: roleId,
+				TeamID: teamId,
 			}
 			err = ac.AddTeamRole(&addTeamRoleCmd)
 			require.NoError(b, err)
@@ -75,16 +76,16 @@ func GenerateRoles(b *testing.B, ac accesscontrol.Store, rolesPerUser, users int
 			// Create user roles
 			for j := 0; j < rolesPerUser; j++ {
 				roleName := fmt.Sprintf("role_%s_%v", userName, j)
-				createRoleCmd := accesscontrol.CreateRoleCommand{OrgId: 1, Name: roleName}
+				createRoleCmd := accesscontrol.CreateRoleCommand{OrgID: 1, Name: roleName}
 				res, err := ac.CreateRole(context.Background(), createRoleCmd)
 				require.NoError(b, err)
-				roleId := res.Id
+				roleId := res.ID
 
 				for k := 0; k < PermissionsPerRole; k++ {
 					permission := fmt.Sprintf("permission_%v", k)
 					scope := fmt.Sprintf("scope_%v", k)
 					permCmd := accesscontrol.CreatePermissionCommand{
-						RoleId:     roleId,
+						RoleID:     roleId,
 						Permission: permission,
 						Scope:      scope,
 					}
@@ -94,9 +95,9 @@ func GenerateRoles(b *testing.B, ac accesscontrol.Store, rolesPerUser, users int
 				}
 
 				addUserRoleCmd := accesscontrol.AddUserRoleCommand{
-					OrgId:  1,
-					RoleId: roleId,
-					UserId: userId,
+					OrgID:  1,
+					RoleID: roleId,
+					UserID: userId,
 				}
 				err = ac.AddUserRole(&addUserRoleCmd)
 				require.NoError(b, err)

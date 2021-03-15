@@ -74,7 +74,7 @@ func (ac *AccessControlStore) GetRoleByUID(ctx context.Context, orgId int64, uid
 			return err
 		}
 
-		permissions, err := getRolePermissions(sess, role.Id)
+		permissions, err := getRolePermissions(sess, role.ID)
 		if err != nil {
 			return err
 		}
@@ -105,7 +105,7 @@ func (ac *AccessControlStore) CreateRole(ctx context.Context, cmd accesscontrol.
 
 func (ac *AccessControlStore) createRole(sess *sqlstore.DBSession, cmd accesscontrol.CreateRoleCommand) (*accesscontrol.Role, error) {
 	if cmd.UID == "" {
-		uid, err := generateNewRoleUID(sess, cmd.OrgId)
+		uid, err := generateNewRoleUID(sess, cmd.OrgID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate UID for role %q: %w", cmd.Name, err)
 		}
@@ -113,7 +113,7 @@ func (ac *AccessControlStore) createRole(sess *sqlstore.DBSession, cmd accesscon
 	}
 
 	role := &accesscontrol.Role{
-		OrgId:       cmd.OrgId,
+		OrgID:       cmd.OrgID,
 		UID:         cmd.UID,
 		Name:        cmd.Name,
 		Description: cmd.Description,
@@ -136,7 +136,7 @@ func (ac *AccessControlStore) CreateRoleWithPermissions(ctx context.Context, cmd
 
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		createRoleCmd := accesscontrol.CreateRoleCommand{
-			OrgId:       cmd.OrgId,
+			OrgID:       cmd.OrgID,
 			UID:         cmd.UID,
 			Name:        cmd.Name,
 			Description: cmd.Description,
@@ -148,9 +148,9 @@ func (ac *AccessControlStore) CreateRoleWithPermissions(ctx context.Context, cmd
 		}
 
 		result = &accesscontrol.RoleDTO{
-			Id:          role.Id,
+			ID:          role.ID,
 			UID:         role.UID,
-			OrgId:       role.OrgId,
+			OrgID:       role.OrgID,
 			Name:        role.Name,
 			Description: role.Description,
 			Created:     role.Created,
@@ -160,7 +160,7 @@ func (ac *AccessControlStore) CreateRoleWithPermissions(ctx context.Context, cmd
 		// Add permissions
 		for _, p := range cmd.Permissions {
 			createPermissionCmd := accesscontrol.CreatePermissionCommand{
-				RoleId:     role.Id,
+				RoleID:     role.ID,
 				Permission: p.Permission,
 				Scope:      p.Scope,
 			}
@@ -183,7 +183,7 @@ func (ac *AccessControlStore) UpdateRole(ctx context.Context, cmd accesscontrol.
 	var result *accesscontrol.RoleDTO
 	err := ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: work with both ID and UID
-		existingRole, err := getRoleByUID(sess, cmd.UID, cmd.OrgId)
+		existingRole, err := getRoleByUID(sess, cmd.UID, cmd.OrgID)
 		if err != nil {
 			return err
 		}
@@ -204,16 +204,16 @@ func (ac *AccessControlStore) UpdateRole(ctx context.Context, cmd accesscontrol.
 		}
 
 		role := &accesscontrol.Role{
-			Id:          existingRole.Id,
+			ID:          existingRole.ID,
 			UID:         existingRole.UID,
 			Version:     version,
-			OrgId:       existingRole.OrgId,
+			OrgID:       existingRole.OrgID,
 			Name:        cmd.Name,
 			Description: cmd.Description,
 			Updated:     TimeNow(),
 		}
 
-		affectedRows, err := sess.ID(existingRole.Id).Update(role)
+		affectedRows, err := sess.ID(existingRole.ID).Update(role)
 		if err != nil {
 			return err
 		}
@@ -223,10 +223,10 @@ func (ac *AccessControlStore) UpdateRole(ctx context.Context, cmd accesscontrol.
 		}
 
 		result = &accesscontrol.RoleDTO{
-			Id:          role.Id,
+			ID:          role.ID,
 			Version:     version,
 			UID:         role.UID,
-			OrgId:       role.OrgId,
+			OrgID:       role.OrgID,
 			Name:        role.Name,
 			Description: role.Description,
 			Created:     role.Created,
@@ -234,7 +234,7 @@ func (ac *AccessControlStore) UpdateRole(ctx context.Context, cmd accesscontrol.
 		}
 
 		// Delete role's permissions
-		_, err = sess.Exec("DELETE FROM permission WHERE role_id = ?", existingRole.Id)
+		_, err = sess.Exec("DELETE FROM permission WHERE role_id = ?", existingRole.ID)
 		if err != nil {
 			return err
 		}
@@ -242,7 +242,7 @@ func (ac *AccessControlStore) UpdateRole(ctx context.Context, cmd accesscontrol.
 		// Add permissions
 		for _, p := range cmd.Permissions {
 			createPermissionCmd := accesscontrol.CreatePermissionCommand{
-				RoleId:     role.Id,
+				RoleID:     role.ID,
 				Permission: p.Permission,
 				Scope:      p.Scope,
 			}
@@ -262,13 +262,13 @@ func (ac *AccessControlStore) UpdateRole(ctx context.Context, cmd accesscontrol.
 
 func (ac *AccessControlStore) DeleteRole(cmd *accesscontrol.DeleteRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		roleId := cmd.Id
+		roleId := cmd.ID
 		if roleId == 0 {
-			role, err := getRoleByUID(sess, cmd.UID, cmd.OrgId)
+			role, err := getRoleByUID(sess, cmd.UID, cmd.OrgID)
 			if err != nil {
 				return err
 			}
-			roleId = role.Id
+			roleId = role.ID
 		}
 
 		// Delete role's permissions
@@ -277,7 +277,7 @@ func (ac *AccessControlStore) DeleteRole(cmd *accesscontrol.DeleteRoleCommand) e
 			return err
 		}
 
-		_, err = sess.Exec("DELETE FROM role WHERE id = ? AND org_id = ?", roleId, cmd.OrgId)
+		_, err = sess.Exec("DELETE FROM role WHERE id = ? AND org_id = ?", roleId, cmd.OrgID)
 		if err != nil {
 			return err
 		}
@@ -324,7 +324,7 @@ func (ac *AccessControlStore) UpdatePermission(cmd *accesscontrol.UpdatePermissi
 			Updated:    TimeNow(),
 		}
 
-		affectedRows, err := sess.ID(cmd.Id).Update(permission)
+		affectedRows, err := sess.ID(cmd.ID).Update(permission)
 		if err != nil {
 			return err
 		}
@@ -342,7 +342,7 @@ func (ac *AccessControlStore) UpdatePermission(cmd *accesscontrol.UpdatePermissi
 
 func (ac *AccessControlStore) DeletePermission(ctx context.Context, cmd *accesscontrol.DeletePermissionCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM permission WHERE id = ?", cmd.Id)
+		_, err := sess.Exec("DELETE FROM permission WHERE id = ?", cmd.ID)
 		if err != nil {
 			return err
 		}
@@ -362,7 +362,7 @@ func (ac *AccessControlStore) GetTeamRoles(query *accesscontrol.GetTeamRolesQuer
 			INNER JOIN team_role ON role.id = team_role.role_id AND team_role.team_id = ?
 			WHERE role.org_id = ? `
 
-		if err := sess.SQL(q, query.TeamId, query.OrgId).Find(&result); err != nil {
+		if err := sess.SQL(q, query.TeamID, query.OrgID).Find(&result); err != nil {
 			return err
 		}
 
@@ -376,7 +376,7 @@ func (ac *AccessControlStore) GetUserRoles(ctx context.Context, query accesscont
 	var result []*accesscontrol.RoleDTO
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// TODO: optimize this
-		filter, params := ac.userRolesFilter(query.OrgId, query.UserId, query.Roles)
+		filter, params := ac.userRolesFilter(query.OrgID, query.UserID, query.Roles)
 
 		q := `SELECT
 			role.id,
@@ -398,7 +398,7 @@ func (ac *AccessControlStore) GetUserRoles(ctx context.Context, query accesscont
 func (ac *AccessControlStore) GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]*accesscontrol.Permission, error) {
 	var result []*accesscontrol.Permission
 	err := ac.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		filter, params := ac.userRolesFilter(query.OrgId, query.UserId, query.Roles)
+		filter, params := ac.userRolesFilter(query.OrgID, query.UserID, query.Roles)
 
 		// TODO: optimize this
 		q := `SELECT
@@ -449,24 +449,24 @@ func (*AccessControlStore) userRolesFilter(orgID, userID int64, roles []string) 
 
 func (ac *AccessControlStore) AddTeamRole(cmd *accesscontrol.AddTeamRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if res, err := sess.Query("SELECT 1 from team_role WHERE org_id=? and team_id=? and role_id=?", cmd.OrgId, cmd.TeamId, cmd.RoleId); err != nil {
+		if res, err := sess.Query("SELECT 1 from team_role WHERE org_id=? and team_id=? and role_id=?", cmd.OrgID, cmd.TeamID, cmd.RoleID); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return accesscontrol.ErrTeamRoleAlreadyAdded
 		}
 
-		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
+		if _, err := teamExists(cmd.OrgID, cmd.TeamID, sess); err != nil {
 			return err
 		}
 
-		if _, err := roleExists(cmd.OrgId, cmd.RoleId, sess); err != nil {
+		if _, err := roleExists(cmd.OrgID, cmd.RoleID, sess); err != nil {
 			return err
 		}
 
 		teamRole := &accesscontrol.TeamRole{
-			OrgId:   cmd.OrgId,
-			TeamId:  cmd.TeamId,
-			RoleId:  cmd.RoleId,
+			OrgID:   cmd.OrgID,
+			TeamID:  cmd.TeamID,
+			RoleID:  cmd.RoleID,
 			Created: TimeNow(),
 		}
 
@@ -477,16 +477,16 @@ func (ac *AccessControlStore) AddTeamRole(cmd *accesscontrol.AddTeamRoleCommand)
 
 func (ac *AccessControlStore) RemoveTeamRole(cmd *accesscontrol.RemoveTeamRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
+		if _, err := teamExists(cmd.OrgID, cmd.TeamID, sess); err != nil {
 			return err
 		}
 
-		if _, err := roleExists(cmd.OrgId, cmd.RoleId, sess); err != nil {
+		if _, err := roleExists(cmd.OrgID, cmd.RoleID, sess); err != nil {
 			return err
 		}
 
 		q := "DELETE FROM team_role WHERE org_id=? and team_id=? and role_id=?"
-		res, err := sess.Exec(q, cmd.OrgId, cmd.TeamId, cmd.RoleId)
+		res, err := sess.Exec(q, cmd.OrgID, cmd.TeamID, cmd.RoleID)
 		if err != nil {
 			return err
 		}
@@ -501,20 +501,20 @@ func (ac *AccessControlStore) RemoveTeamRole(cmd *accesscontrol.RemoveTeamRoleCo
 
 func (ac *AccessControlStore) AddUserRole(cmd *accesscontrol.AddUserRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if res, err := sess.Query("SELECT 1 from user_role WHERE org_id=? and user_id=? and role_id=?", cmd.OrgId, cmd.UserId, cmd.RoleId); err != nil {
+		if res, err := sess.Query("SELECT 1 from user_role WHERE org_id=? and user_id=? and role_id=?", cmd.OrgID, cmd.UserID, cmd.RoleID); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return accesscontrol.ErrUserRoleAlreadyAdded
 		}
 
-		if _, err := roleExists(cmd.OrgId, cmd.RoleId, sess); err != nil {
+		if _, err := roleExists(cmd.OrgID, cmd.RoleID, sess); err != nil {
 			return err
 		}
 
 		userRole := &accesscontrol.UserRole{
-			OrgId:   cmd.OrgId,
-			UserId:  cmd.UserId,
-			RoleId:  cmd.RoleId,
+			OrgID:   cmd.OrgID,
+			UserID:  cmd.UserID,
+			RoleID:  cmd.RoleID,
 			Created: TimeNow(),
 		}
 
@@ -525,12 +525,12 @@ func (ac *AccessControlStore) AddUserRole(cmd *accesscontrol.AddUserRoleCommand)
 
 func (ac *AccessControlStore) RemoveUserRole(cmd *accesscontrol.RemoveUserRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if _, err := roleExists(cmd.OrgId, cmd.RoleId, sess); err != nil {
+		if _, err := roleExists(cmd.OrgID, cmd.RoleID, sess); err != nil {
 			return err
 		}
 
 		q := "DELETE FROM user_role WHERE org_id=? and user_id=? and role_id=?"
-		res, err := sess.Exec(q, cmd.OrgId, cmd.UserId, cmd.RoleId)
+		res, err := sess.Exec(q, cmd.OrgID, cmd.UserID, cmd.RoleID)
 		if err != nil {
 			return err
 		}
@@ -572,7 +572,7 @@ func (ac *AccessControlStore) AddBuiltinRole(ctx context.Context, orgID, roleID 
 }
 
 func getRoleById(sess *sqlstore.DBSession, roleId int64, orgId int64) (*accesscontrol.RoleDTO, error) {
-	role := accesscontrol.Role{OrgId: orgId, Id: roleId}
+	role := accesscontrol.Role{OrgID: orgId, ID: roleId}
 	has, err := sess.Get(&role)
 	if !has {
 		return nil, accesscontrol.ErrRoleNotFound
@@ -582,8 +582,8 @@ func getRoleById(sess *sqlstore.DBSession, roleId int64, orgId int64) (*accessco
 	}
 
 	roleDTO := accesscontrol.RoleDTO{
-		Id:          roleId,
-		OrgId:       role.OrgId,
+		ID:          roleId,
+		OrgID:       role.OrgID,
 		Name:        role.Name,
 		Description: role.Description,
 		Permissions: nil,
@@ -595,7 +595,7 @@ func getRoleById(sess *sqlstore.DBSession, roleId int64, orgId int64) (*accessco
 }
 
 func getRoleByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*accesscontrol.RoleDTO, error) {
-	role := accesscontrol.Role{OrgId: orgId, UID: uid}
+	role := accesscontrol.Role{OrgID: orgId, UID: uid}
 	has, err := sess.Get(&role)
 	if !has {
 		return nil, accesscontrol.ErrRoleNotFound
@@ -605,10 +605,10 @@ func getRoleByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*accesscon
 	}
 
 	roleDTO := accesscontrol.RoleDTO{
-		Id:          role.Id,
+		ID:          role.ID,
 		UID:         role.UID,
 		Version:     role.Version,
-		OrgId:       role.OrgId,
+		OrgID:       role.OrgID,
 		Name:        role.Name,
 		Description: role.Description,
 		Permissions: nil,
@@ -631,7 +631,7 @@ func getRolePermissions(sess *sqlstore.DBSession, roleId int64) ([]accesscontrol
 
 func createPermission(sess *sqlstore.DBSession, cmd accesscontrol.CreatePermissionCommand) (*accesscontrol.Permission, error) {
 	permission := &accesscontrol.Permission{
-		RoleId:     cmd.RoleId,
+		RoleID:     cmd.RoleID,
 		Permission: cmd.Permission,
 		Scope:      cmd.Scope,
 		Created:    TimeNow(),

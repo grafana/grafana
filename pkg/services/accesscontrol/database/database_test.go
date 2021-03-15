@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -13,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // accessControlStoreTestImpl is a test store implementation which additionally executes a database migrations
@@ -329,8 +330,8 @@ func TestUserRole(t *testing.T) {
 			require.NoError(t, err)
 
 			userRolesQuery := accesscontrol.GetUserRolesQuery{
-				OrgId:  1,
-				UserId: userQuery.Result.Id,
+				OrgID:  1,
+				UserID: userQuery.Result.Id,
 			}
 
 			res, err := store.GetUserRoles(context.Background(), userRolesQuery)
@@ -421,8 +422,8 @@ func TestUserPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			userPermissionsQuery := accesscontrol.GetUserPermissionsQuery{
-				OrgId:  1,
-				UserId: userId,
+				OrgID:  1,
+				UserID: userId,
 			}
 
 			getUserTeamsQuery := models.GetTeamsByUserQuery{

@@ -66,7 +66,7 @@ func (s *seeder) seed(ctx context.Context, orgID int64, roles []accesscontrol.Ro
 	}
 
 	for _, role := range roles {
-		role.OrgId = orgID
+		role.OrgID = orgID
 
 		current, exists := roleSet[role.Name]
 		if exists {
@@ -106,7 +106,7 @@ func (s *seeder) createOrUpdateRole(ctx context.Context, role accesscontrol.Role
 
 	if old == nil {
 		p, err := s.Store.CreateRoleWithPermissions(ctx, accesscontrol.CreateRoleWithPermissionsCommand{
-			OrgId:       role.OrgId,
+			OrgID:       role.OrgID,
 			Version:     role.Version,
 			Name:        role.Name,
 			Description: role.Description,
@@ -115,7 +115,7 @@ func (s *seeder) createOrUpdateRole(ctx context.Context, role accesscontrol.Role
 		if err != nil {
 			return 0, err
 		}
-		return p.Id, nil
+		return p.ID, nil
 	}
 
 	_, err := s.Store.UpdateRole(ctx, accesscontrol.UpdateRoleCommand{
@@ -126,21 +126,21 @@ func (s *seeder) createOrUpdateRole(ctx context.Context, role accesscontrol.Role
 	})
 	if err != nil {
 		if errors.Is(err, accesscontrol.ErrVersionLE) {
-			return old.Id, nil
+			return old.ID, nil
 		}
 		return 0, err
 	}
 
-	existingPermissions, err := s.Store.GetRolePermissions(ctx, old.Id)
+	existingPermissions, err := s.Store.GetRolePermissions(ctx, old.ID)
 	if err != nil {
 		s.log.Info("failed to get current permissions for role", "name", role.Name, "err", err)
 	}
 
-	err = s.idempotentUpdatePermissions(ctx, old.Id, role.Permissions, existingPermissions)
+	err = s.idempotentUpdatePermissions(ctx, old.ID, role.Permissions, existingPermissions)
 	if err != nil {
 		s.log.Error("failed to update role permissions", "name", role.Name, "err", err)
 	}
-	return old.Id, nil
+	return old.ID, nil
 }
 
 func (s *seeder) idempotentUpdatePermissions(ctx context.Context, roleID int64, new []accesscontrol.Permission, old []accesscontrol.Permission) error {
@@ -152,7 +152,7 @@ func (s *seeder) idempotentUpdatePermissions(ctx context.Context, roleID int64, 
 
 	for _, p := range added {
 		_, err := s.Store.CreatePermission(ctx, accesscontrol.CreatePermissionCommand{
-			RoleId:     roleID,
+			RoleID:     roleID,
 			Permission: p.Permission,
 			Scope:      p.Scope,
 		})
@@ -163,7 +163,7 @@ func (s *seeder) idempotentUpdatePermissions(ctx context.Context, roleID int64, 
 
 	for _, p := range removed {
 		err := s.Store.DeletePermission(ctx, &accesscontrol.DeletePermissionCommand{
-			Id: p.Id,
+			ID: p.ID,
 		})
 		if err != nil {
 			return fmt.Errorf("could not delete permission %s (%s): %w", p.Permission, p.Scope, err)

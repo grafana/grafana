@@ -19,8 +19,8 @@ var (
 
 // Role is the model for Role in RBAC.
 type Role struct {
-	Id          int64  `json:"id"`
-	OrgId       int64  `json:"orgId"`
+	ID          int64  `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID       int64  `json:"orgId" xorm:"org_id"`
 	Version     int64  `json:"version"`
 	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
@@ -31,8 +31,8 @@ type Role struct {
 }
 
 type RoleDTO struct {
-	Id          int64        `json:"id"`
-	OrgId       int64        `json:"orgId"`
+	ID          int64        `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID       int64        `json:"orgId" xorm:"org_id"`
 	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
 	Name        string       `json:"name"`
@@ -45,8 +45,8 @@ type RoleDTO struct {
 
 // Permission is the model for Permission in RBAC.
 type Permission struct {
-	Id         int64  `json:"id"`
-	RoleId     int64  `json:"-"`
+	ID         int64  `json:"id" xorm:"pk autoincr 'id'"`
+	RoleID     int64  `json:"-" xorm:"role_id"`
 	Permission string `json:"permission"`
 	Scope      string `json:"scope"`
 
@@ -55,26 +55,26 @@ type Permission struct {
 }
 
 type TeamRole struct {
-	Id     int64
-	OrgId  int64
-	RoleId int64
-	TeamId int64
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	TeamID int64 `json:"teamId" xorm:"team_id"`
 
 	Created time.Time
 }
 
 type UserRole struct {
-	Id     int64
-	OrgId  int64
-	RoleId int64
-	UserId int64
+	ID     int64 `json:"id" xorm:"pk autoincr 'id'"`
+	OrgID  int64 `json:"orgId" xorm:"org_id"`
+	RoleID int64 `json:"roleId" xorm:"role_id"`
+	UserID int64 `json:"userId" xorm:"user_id"`
 
 	Created time.Time
 }
 
 type BuiltinRole struct {
-	ID     *int64 `xorm:"id"`
-	RoleID int64  `xorm:"role_id"`
+	ID     *int64 `json:"id" xorm:"pk autoincr 'id'"`
+	RoleID int64  `json:"roleId" xorm:"role_id"`
 	Role   string
 
 	Updated time.Time
@@ -82,40 +82,40 @@ type BuiltinRole struct {
 }
 
 type GetTeamRolesQuery struct {
-	OrgId  int64 `json:"-"`
-	TeamId int64
+	OrgID  int64 `json:"-"`
+	TeamID int64 `json:"teamId"`
 }
 
 type GetUserRolesQuery struct {
-	OrgId  int64 `json:"-"`
-	UserId int64
+	OrgID  int64 `json:"-"`
+	UserID int64 `json:"userId"`
 	Roles  []string
 }
 
 type GetUserPermissionsQuery struct {
-	OrgId  int64 `json:"-"`
-	UserId int64
+	OrgID  int64 `json:"-"`
+	UserID int64 `json:"userId"`
 	Roles  []string
 }
 
 type CreatePermissionCommand struct {
-	RoleId     int64
+	RoleID     int64 `json:"roleId"`
 	Permission string
 	Scope      string
 }
 
 type UpdatePermissionCommand struct {
-	Id         int64
+	ID         int64 `json:"id"`
 	Permission string
 	Scope      string
 }
 
 type DeletePermissionCommand struct {
-	Id int64
+	ID int64 `json:"id"`
 }
 
 type CreateRoleCommand struct {
-	OrgId       int64  `json:"-"`
+	OrgID       int64  `json:"-"`
 	UID         string `json:"uid"`
 	Version     int64  `json:"version"`
 	Name        string `json:"name"`
@@ -123,7 +123,7 @@ type CreateRoleCommand struct {
 }
 
 type CreateRoleWithPermissionsCommand struct {
-	OrgId       int64        `json:"orgId"`
+	OrgID       int64        `json:"orgId"`
 	UID         string       `json:"uid"`
 	Version     int64        `json:"version"`
 	Name        string       `json:"name"`
@@ -132,8 +132,8 @@ type CreateRoleWithPermissionsCommand struct {
 }
 
 type UpdateRoleCommand struct {
-	Id          int64        `json:"id"`
-	OrgId       int64        `json:"orgId"`
+	ID          int64        `json:"id"`
+	OrgID       int64        `json:"orgId"`
 	Version     int64        `json:"version"`
 	UID         string       `json:"uid"`
 	Name        string       `json:"name"`
@@ -142,33 +142,33 @@ type UpdateRoleCommand struct {
 }
 
 type DeleteRoleCommand struct {
-	Id    int64
+	ID    int64  `json:"id"`
 	UID   string `json:"uid"`
-	OrgId int64
+	OrgID int64  `json:"org_id"`
 }
 
 type AddTeamRoleCommand struct {
-	OrgId  int64
-	RoleId int64
-	TeamId int64
+	OrgID  int64 `json:"org_id"`
+	RoleID int64 `json:"role_id"`
+	TeamID int64 `json:"team_id"`
 }
 
 type RemoveTeamRoleCommand struct {
-	OrgId  int64
-	RoleId int64
-	TeamId int64
+	OrgID  int64 `json:"org_id"`
+	RoleID int64 `json:"role_id"`
+	TeamID int64 `json:"team_id"`
 }
 
 type AddUserRoleCommand struct {
-	OrgId  int64
-	RoleId int64
-	UserId int64
+	OrgID  int64 `json:"org_id"`
+	RoleID int64 `json:"role_id"`
+	UserID int64 `json:"user_id"`
 }
 
 type RemoveUserRoleCommand struct {
-	OrgId  int64
-	RoleId int64
-	UserId int64
+	OrgID  int64 `json:"org_id"`
+	RoleID int64 `json:"role_id"`
+	UserID int64 `json:"user_id"`
 }
 
 type EvaluationResult struct {
@@ -178,8 +178,8 @@ type EvaluationResult struct {
 
 func (p RoleDTO) Role() Role {
 	return Role{
-		Id:          p.Id,
-		OrgId:       p.OrgId,
+		ID:          p.ID,
+		OrgID:       p.OrgID,
 		Name:        p.Name,
 		Description: p.Description,
 		Updated:     p.Updated,

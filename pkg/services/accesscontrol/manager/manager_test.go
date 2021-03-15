@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -13,8 +16,6 @@ import (
 	actesting "github.com/grafana/grafana/pkg/services/accesscontrol/testing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func overrideAccessControlInRegistry(cfg *setting.Cfg) AccessControlService {
@@ -95,8 +96,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			userRolesQuery := accesscontrol.GetUserRolesQuery{
-				OrgId:  1,
-				UserId: userQuery.Result.Id,
+				OrgID:  1,
+				UserID: userQuery.Result.Id,
 			}
 
 			res, err := ac.GetUserRoles(context.Background(), userRolesQuery)
@@ -104,8 +105,8 @@ func TestEvaluatingPermissions(t *testing.T) {
 			assert.Len(t, res, len(tc.roles))
 
 			userPermissionsQuery := accesscontrol.GetUserPermissionsQuery{
-				OrgId:  1,
-				UserId: userQuery.Result.Id,
+				OrgID:  1,
+				UserID: userQuery.Result.Id,
 			}
 
 			permissions, err := ac.GetUserPermissions(context.Background(), userPermissionsQuery)

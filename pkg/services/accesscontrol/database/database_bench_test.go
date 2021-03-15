@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	actesting "github.com/grafana/grafana/pkg/services/accesscontrol/testing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func setup(b *testing.B, rolesPerUser, users int) *accessControlStoreTestImpl {
@@ -28,7 +29,7 @@ func getRoles(b *testing.B, ac accesscontrol.Store, rolesPerUser, users int) {
 	require.NoError(b, err)
 	userId := userQuery.Result.Id
 
-	userPermissionsQuery := accesscontrol.GetUserPermissionsQuery{OrgId: 1, UserId: userId}
+	userPermissionsQuery := accesscontrol.GetUserPermissionsQuery{OrgID: 1, UserID: userId}
 	res, err := ac.GetUserPermissions(context.Background(), userPermissionsQuery)
 	require.NoError(b, err)
 	expectedPermissions := actesting.PermissionsPerRole * rolesPerUser

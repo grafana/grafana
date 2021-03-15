@@ -19,8 +19,8 @@ func (ac *AccessControlService) Evaluate(ctx context.Context, user *models.Signe
 	}
 
 	res, err := ac.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgId:  user.OrgId,
-		UserId: user.UserId,
+		OrgID:  user.OrgId,
+		UserID: user.UserId,
 		Roles:  roles,
 	})
 	if err != nil {
