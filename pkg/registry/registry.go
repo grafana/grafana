@@ -114,7 +114,8 @@ func IsDisabled(srv Service) bool {
 type Priority int
 
 const (
-	High   Priority = 100
-	Medium Priority = 50
-	Low    Priority = 0
+	High       Priority = 100
+	MediumHigh Priority = 75
+	Medium     Priority = 50
+	Low        Priority = 0
 )
