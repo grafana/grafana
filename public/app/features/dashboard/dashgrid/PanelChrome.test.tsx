@@ -37,6 +37,7 @@ function setupTestContext(options: Partial<Props>) {
       events: { subscribe: jest.fn() },
       getQueryRunner: () => panelQueryRunner,
       getOptions: jest.fn(),
+      getDisplayTitle: jest.fn(),
     } as unknown) as PanelModel,
     dashboard: ({
       panelInitialized: jest.fn(),

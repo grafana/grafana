@@ -300,7 +300,7 @@ Filters syntax:
 Example `ec2_instance_attribute()` query
 
 ```javascript
-ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": ["production"] });
+ec2_instance_attribute(us - east - 1, InstanceId, { 'tag:Environment': ['production'] });
 ```
 
 ### Selecting attributes
@@ -341,7 +341,7 @@ Tags can be selected by prepending the tag name with `Tags.`
 Example `ec2_instance_attribute()` query
 
 ```javascript
-ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": ["sysops"] });
+ec2_instance_attribute(us - east - 1, Tags.Name, { 'tag:Team': ['sysops'] });
 ```
 
 ## Using json format template variables
@@ -372,6 +372,22 @@ AWS defines quotas, or limits, for resources, actions, and items in your AWS acc
 To request a quota increase, visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212).
 
 Please see the AWS documentation for [Service Quotas](https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html) and [CloudWatch limits](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html) for more information.
+
+## Configure the data source with grafana.ini
+
+In the [Grafana configuration](https://grafana.com/docs/grafana/latest/administration/configuration/#aws) there's an `AWS` section that allows you to customize the data source.
+
+### allowed_auth_providers
+
+Specify which authentication providers are allowed for the CloudWatch data source. The following providers are enabled by default in OSS Grafana: `default` (AWS SDK default), keys (Access and secret key), credentials (Credentials file), ec2_IAM_role (EC2 IAM role).
+
+### assume_role_enabled
+
+Allows you to disable `assume role (ARN)` in the CloudWatch data source. By default, assume role (ARN) is enabled for OSS Grafana.
+
+### list_metrics_page_limit
+
+When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) is used to populate the _Metrics_ field and the _Dimension_ fields. The API is paginated and returns up to 500 results per page. The CloudWatch data source also limits the number of pages to 500. However, you can change this limit using the `list_metrics_page_limit` variable in the [grafana configuration file](https://grafana.com/docs/grafana/latest/administration/configuration/#aws).
 
 ## Configure the data source with provisioning
 
