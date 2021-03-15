@@ -23,7 +23,7 @@ import {
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { registerEchoBackend, setEchoSrv, setPanelRenderer } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -39,6 +39,7 @@ import { configureStore } from './store/configureStore';
 import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { AngularApp } from './angular/AngularApp';
+import { PanelRenderer } from './features/panel/PanelRenderer';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -65,6 +66,7 @@ export class GrafanaApp {
     initEchoSrv();
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
+    setPanelRenderer(PanelRenderer);
     setTimeZoneResolver(() => config.bootData.user.timezone);
     // Important that extensions are initialized before store
     initExtensions();
