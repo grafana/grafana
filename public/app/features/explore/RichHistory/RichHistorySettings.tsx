@@ -1,9 +1,12 @@
 import React from 'react';
 import { css } from 'emotion';
 import { stylesFactory, useTheme, Select, Button, Switch, Field } from '@grafana/ui';
-import { GrafanaTheme, AppEvents } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { ShowConfirmModalEvent } from '../../../types/events';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 
 export interface RichHistorySettingsProps {
   retentionPeriod: number;
@@ -67,7 +70,7 @@ export function RichHistorySettings(props: RichHistorySettingsProps) {
         icon: 'trash-alt',
         onConfirm: () => {
           deleteRichHistory();
-          appEvents.emit(AppEvents.alertSuccess, ['Query history deleted']);
+          dispatch(notifyApp(createSuccessNotification('Query history deleted')));
         },
       })
     );
