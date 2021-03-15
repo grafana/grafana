@@ -49,7 +49,10 @@ export class StreamingDataFrame implements DataFrame {
   }
 
   /**
-   * returns true if the operation was an append
+   * apply the new message to the existing data.  This will replace the existing schema
+   * if a new schema is included in the message, or append data matching the current schema
+   *
+   * @returns true if the value was already broadcast ¯\_(ツ)_/¯
    */
   update(msg: DataFrameJSON): boolean {
     const { schema, data } = msg;
