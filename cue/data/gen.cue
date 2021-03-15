@@ -26,7 +26,7 @@ dashboardFamily: #SchemaFamily & {
                     // 0 for no shared crosshair or tooltip (default).
                     // 1 for shared crosshair.
                     // 2 for shared crosshair AND shared tooltip.
-                    graphTooltip: int >= 0 <= 2 | *0
+                    graphTooltip: int & >=0 & <=2 | *0
                     // Time range for dashboard, e.g. last 6 hours, last 7 days, etc
                     time?: {
                         from: string | *"now-6h"
@@ -61,7 +61,7 @@ dashboardFamily: #SchemaFamily & {
                         // Query for annotation data.
                         rawQuery: string
                         showIn:   int | *0
-                    }] | *[]
+                    }]
                     // Auto-refresh interval.
                     refresh: string
                     // Version of the JSON schema, incremented each time a Grafana update brings
@@ -74,8 +74,9 @@ dashboardFamily: #SchemaFamily & {
                 // Dashboard panels. Panels are canonically defined inline
                 // because they share a version timeline with the dashboard
                 // schema; they do not vary independently. We create a separate,
-                // synthetic Family to represent them in Go.
-                Panel: {
+                // synthetic Family to represent them in Go, for ease of generating
+                // e.g. JSON Schema.
+                Panel: _discriminatedPanel.result & {
                     // The panel plugin type id. 
                     type: !=""
 
@@ -88,7 +89,18 @@ dashboardFamily: #SchemaFamily & {
                     // Name of default datasource.
                     datasource?: string
                     // Grid position.
-                    gridPos?: PanelGridPos
+                    gridPos?: {
+                        // Panel
+                        h: int & >0 | *9
+                        // Panel
+                        w: int & >0 & <=24 | *12
+                        // Panel x
+                        x: int & >=0 & <24 | *0
+                        // Panel y
+                        y: int & >=0 | *0
+                        // true if fixed
+                        static?: bool
+                    }
                     // Panel links.
                     // links?: [..._panelLink]
                     // Name of template variable to repeat for.
@@ -108,22 +120,115 @@ dashboardFamily: #SchemaFamily & {
                     // The values depend on panel type
                     options: {}
 
-                    // TODO This references a type defined outside the Family
-                    // decl. This probably isn't OK at all, because it means we
-                    // won't have snapshots of the historical versions of
-                    // FieldConfig, which makes it impossible to guarantee
-                    // immutability of historical schema.
-                    //
-                    // But it miiiiiight be something we could slide by with if
-                    // we maintain the invariant that the referenced type may
-                    // never change in a backwards-incompatible way. (That's
-                    // gonna be absolutely necessary in any referencing
-                    // scenario.)
-                    fieldConfig: FieldConfigSource
+                    fieldConfig: {
+                        defaults: {
+                            // The display value for this field.  This supports template variables blank is auto
+                            displayName?: string
+
+                            // This can be used by data sources that return and explicit naming structure for values and labels
+                            // When this property is configured, this value is used rather than the default naming strategy.
+                            displayNameFromDS?: string
+
+                            // Human readable field metadata
+                            description?: string
+
+                            // An explict path to the field in the datasource.  When the frame meta includes a path,
+                            // This will default to `${frame.meta.path}/${field.name}
+                            //
+                            // When defined, this value can be used as an identifier within the datasource scope, and
+                            // may be used to update the results
+                            path?: string
+
+                            // True if data source can write a value to the path.  Auth/authz are supported separately
+                            writeable?: bool
+
+                            // True if data source field supports ad-hoc filters
+                            filterable?: bool
+
+                            // Numeric Options
+                            unit?: string
+
+                            // Significant digits (for display)
+                            decimals?: number | *null
+
+                            min?: number | null
+                            max?: number | null
+
+                            //   // Convert input values into a display string
+                            //   mappings?: ValueMapping[];
+
+                            //   // Map numeric values to states
+                            //   thresholds?: ThresholdsConfig;
+
+                            //   // Map values to a display color
+                            //   color?: FieldColor;
+
+                            //   // Used when reducing field values
+                            //   nullValueMode?: NullValueMode;
+
+                            //   // The behavior when clicking on a result
+                            //   links?: DataLink[];
+
+                            // Alternative to empty string
+                            noValue?: string
+
+                            // Can always exist. Valid fields within this are
+                            // defined by the panel plugin - that's the
+                            // PanelFieldConfig that comes from the plugin.
+                            custom?: {...}
+                        }
+                        overrides: [...{
+                            matcher: {
+                                id: string | *""
+                                options?: {...}
+                            }
+                            properties: [...{
+                                id: string | *""
+                                value?: {...}
+                            }]
+                        }]
+                    }
                 }
             }
 		]
 	]
+}
+
+// Stub to be unified with a model from a panel plugin.
+//
+// This directly replicates the form of the current schema, which isn't good for
+// versioning. Need some indirection.
+_discriminatedPanel: {
+    _in: {
+        model: #PanelModel
+        type: string
+    }
+    result: {
+        type: _in.type
+        options: _in.model.PanelOptions
+        fieldConfig: defaults: custom: _in.model.PanelFieldConfig
+    }
+}
+
+// An individual schema governing a panel plugin's persistable configuration.
+//
+// These keys do not appear directly in any real JSON artifact; rather, they are
+// composed into panel structures as they are defined within the larger
+// Dashboard schema.
+#PanelModel: {
+    PanelOptions: {...}
+    PanelFieldConfig: {...}
+}
+
+// Schema sequence of panel model schema
+#PanelModelSeq: [#PanelModel, ...#PanelModel]
+
+// Panel plugin-specific SchemaFamily
+#PanelModelFamily: {
+    seqs: [#PanelModelSeq, ...#PanelModelSeq]
+	let lseq = seqs[len(seqs)-1]
+	latest: #LastSchema & { _p: lseq }
+    migrations: [...#Migration]
 }
 
 #Latest: {
@@ -154,109 +259,34 @@ dashboardFamily: #SchemaFamily & {
 	seqs: [#SchemaLineage, ...#SchemaLineage]
 	let lseq = seqs[len(seqs)-1]
 	latest: #LastSchema & { _p: lseq }
-
-    // TODO add migration structures, once defined
+    migrations: [...#Migration]
 }
 
-//  Every property is optional
-//  Plugins may extend this with additional  Something like series overrides
-FieldConfig: {
-	// The display value for this   This supports template variables blank is auto
-	displayName?: string
-
-	// This can be used by data sources that return and explicit naming structure for values and labels
-	// When this property is configured, this value is used rather than the default naming 
-	displayNameFromDS?: string
-
-	// Human readable field metadata
-	description?: string
-
-	// An explict path to the field in the   When the frame meta includes a path,
-	// This will default to `${metapath}/${name}
-	//
-	// When defined, this value can be used as an identifier within the datasource scope, and
-	// may be used to update the results
-	path?: string
-
-	// True if data source can write a value to the   Auth/authz are supported separately
-	writeable?: bool
-
-	// True if data source field supports ad-hoc filters
-	filterable?: bool
-
-	// Numeric Options
-	unit?: string
-
-	// Significant digits (for display)
-	decimals?: number | *null
-	min?:      number | null
-	max?:      number | null
-
-	// Alternative to empty string
-	noValue?: string
-
-	// Panel Specific Values
-	custom?: {}
-} @cuetsy(targetType="interface")
-
-// Defines 
-FieldConfigSource: {
-	// Defaults applied to all numeric fields
-	defaults: FieldConfig
-
-	// Rules to override individual values
-	overrides: [ConfigOverrideRule]
-} @cuetsy(targetType="interface")
-DynamicConfigValue: {
-	id: string | *""
-	value?: {}
-} @cuetsy(targetType="interface")
-MatcherConfig: {
-	id: string | *""
-	options?: {}
-} @cuetsy(targetType="interface")
-PanelGridPos: {
-	// Panel 
-	h: int > 0 | *9
-	// Panel 
-	w: int > 0 <= 24 | *12
-	// Panel x 
-	x: int >= 0 < 24 | *0
-	// Panel y 
-	y: int >= 0 | *0
-	// true if fixed
-	static?: bool
-}
-
-ConfigOverrideRule: {
-	matcher: MatcherConfig
-	properties: [DynamicConfigValue]
-} @cuetsy(targetType="interface")
-#Panel: {
-	// The panel plugin type  
-	type: string | *""
-
-	// Panel 
-	title?: string
-	// 
-	description?: string
-	// Whether to display the panel without a 
-	transparent: bool | *false
-	// Name of default 
-	datasource?: string
-	// Grid 
-	gridPos?: PanelGridPos
-	// Panel 
-	// links?: [_panelLink]
-	// Name of template variable to repeat 
-	repeat?: string
-	// Direction to repeat in if 'repeat' is 
-	// "h" for horizontal, "v" for 
-	repeatDirection: *"h" | "v"
-	// Panel targets - specific values depend on the datasource
-	targets?: [{}]
-
-	// The values depend on panel type
-	options: {}
-	fieldConfig: FieldConfigSource
+// A Migration defines a relation between two schemata, "_from" and "_to". The
+// relation expresses any complex mappings that must be performed to
+// transform an input artifact valid with respect to the _from schema, into
+// an artifact valid with respect to the _to schema. This is accomplished
+// in two stages:
+//   1. A Migration is initially defined by passing in schemata for _from and _to,
+//      and mappings that translate _from to _to are defined in _rel. 
+//   2. A concrete object may then be unified with _to, resulting in its values
+//      being mapped onto "output" by way of _rel.
+//
+// This is the absolute simplest possible definition of a Migration. It's
+// incumbent on the implementor to manually ensure the correctness and
+// completeness of the mapping. The primary value in defining a generic
+// structure for this is to allow similarly generic logic for pushing
+// concrete artifacts through schema changes.
+//
+// If _to isn't backwards compatible (accretion-only) with _from, then _rel must
+// explicitly enumerate every field in _from and map it to a field in _to, even
+// if they're identical. This is laborious for anything outside trivially tiny
+// schema. We'll want to eventually add helpers for whitelisting or blacklisting
+// of paths in _from, so that migrations of larger schema can focus narrowly on
+// the points of actual change.
+#Migration: {
+    _from: {...}
+    _to: {...}
+    _rel: {...}
+    output: _to & _rel
 }

@@ -73,16 +73,28 @@ type CueSchema interface {
 	// given in the schema.
 	TrimDefaults(Resource) (Resource, error)
 
-	// Migrate transforms an Resource into a new Resource that is correct with
-	// respect to its Successor schema.
-	Migrate(Resource) (Resource, bool, error)
+	// Migrate transforms a Resource into a new Resource that is correct with
+	// respect to its Successor schema. It returns the transformed resource,
+	// the schema to which the resource now conforms, and any errors that
+	// may have occurred during the migration.
+	//
+	// No migration occurs and the input Resource is returned in two cases:
+	//
+	//   - The migration encountered an error; the third return is non-nil.
+	//   - There exists no schema to migrate to; the second and third return are nil.
+	//
+	// Note that the returned schema is always a VersionedCueSchema. This
+	// reflects a key design invariant of the system: all migrations, whether
+	// they begin from a schema inside or outside of the Family, must land
+	// somewhere on a Family's sequence of schemata.
+	Migrate(Resource) (Resource, VersionedCueSchema, error)
 
-	// Successor returns the CueSchema to which this CueSchema knows how to
-	// migrate, if any.
-	Successor() CueSchema
+	// Successor returns the CueSchema to which this CueSchema can migrate a
+	// Resource. Returns nil if no such schema exists.
+	Successor() VersionedCueSchema
 
-	// Actual returns the cue.Value representing the actual schema.
-	Actual() cue.Value
+	// CUE returns the cue.Value representing the actual schema.
+	CUE() cue.Value
 }
 
 // VersionedCueSchema are CueSchema that are part of a backwards-compatible
@@ -92,17 +104,15 @@ type VersionedCueSchema interface {
 
 	// Version reports the major and minor versions of the schema.
 	Version() (major, minor int)
-
-	// Returns the next VersionedCueSchema
-	Next() VersionedCueSchema
 }
 
 // Validate checks the provided Resource against all CueSchema known
 // to the Family, stopping as soon as one succeeds. The first schema
 // that successfully validates is returned.
 //
-// For resource artifacts that contain proper schema version information,
-// this operation is essentially O(1) - we can sniff the schema to
+// For resource artifacts that contain proper schema version information, this
+// operation is essentially O(1) - we can sniff schema version information from
+// the artifact to determine the exact schema to check against.
 //
 // TODO we need a general CUE definition of versioning schema, and a pattern for
 // how it must appear in a resource. This is especially important/difficult for
@@ -113,19 +123,24 @@ func (f *Family) Validate(r Resource, s ...CueSchema) (CueSchema, error) {
 	return nil, nil
 }
 
-// A Resource represents a concrete configuration object - e.g., JSON
+// A Resource represents a concrete data object - e.g., JSON
 // representing a dashboard.
 //
-// This type mostly exists to improve readability for users - having a type that
-// differentiates schema cue.Value from resource cue.Value is handy. It also
-// gives us a working type for a resource that can be reused across multiple
-// calls, so that re-parsing isn't necessary.
+// This type mostly exists to improve readability for users. Having a type that
+// differentiates cue.Value that represent a schema from cue.Value that
+// represent a concrete object is quite helpful. It also gives us a working type
+// for a resource that can be reused across multiple calls, so that re-parsing
+// isn't necessary.
 type Resource struct {
 	Value cue.Value
 }
 
-// Indicates that an resource has indicated it is created from a schema version
-// that is newer than what the Family is aware of.
+// TooNewError indicates that a resource was created from a newer schema version
+// than the Family is aware.
+//
+// This situation is only really a problem if the resource contains fields that
+// were defined in the newer version of the schema, causing it to fail validation
+// against a strict/closed interpretation of earlier schema.
 type TooNewError struct {
 }
 

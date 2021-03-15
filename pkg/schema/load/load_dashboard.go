@@ -205,27 +205,22 @@ func (cs DashboardVersionedCueSchema) TrimDefaults(input schema.Resource) (schem
 
 // Migrate transforms an Resource into a new Resource that is correct with
 // respect to its Successor schema.
-func (cs DashboardVersionedCueSchema) Migrate(input schema.Resource) (schema.Resource, bool, error) {
-	return input, true, nil
+func (cs DashboardVersionedCueSchema) Migrate(input schema.Resource) (schema.Resource, schema.VersionedCueSchema, error) {
+	return input, nil, nil
 }
 
 // Successor returns the CueSchema to which this CueSchema knows how to
 // migrate, if any.
-func (cs DashboardVersionedCueSchema) Successor() schema.CueSchema {
-	return cs
+func (cs DashboardVersionedCueSchema) Successor() schema.VersionedCueSchema {
+	return cs.nextVersionedCueSchema
 }
 
-// Actual returns the cue.Value representing the actual schema.
-func (cs DashboardVersionedCueSchema) Actual() cue.Value {
+// CUE returns the cue.Value representing the actual schema.
+func (cs DashboardVersionedCueSchema) CUE() cue.Value {
 	return cs.ActualSchema
 }
 
 // Version reports the major and minor versions of the schema.
 func (cs DashboardVersionedCueSchema) Version() (int, int) {
 	return cs.major, cs.minor
-}
-
-// Next Returns the next VersionedCueSchema
-func (cs DashboardVersionedCueSchema) Next() schema.VersionedCueSchema {
-	return *cs.nextVersionedCueSchema
 }

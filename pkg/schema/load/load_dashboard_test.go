@@ -3,6 +3,7 @@ package load
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -51,4 +52,18 @@ func mockBuildDashboardFamily() {
 
 func resetBuildDashboardFamily() {
 	buildFamilyFunc = BuildDashboardFamily
+}
+
+func TestLoadDistPanels(t *testing.T) {
+	currentpath, _ := os.Getwd()
+	p := BaseLoadPaths{
+		BaseCueFS:       filepath.Join(currentpath, "../../../cue"),
+		DistPluginCueFS: filepath.Join(currentpath, "../../../public/app/plugins"),
+	}
+
+	t.Run("Test run it", func(t *testing.T) {
+		_, err := DistPanels(p)
+		require.NoError(t, err)
+		t.Fail()
+	})
 }
