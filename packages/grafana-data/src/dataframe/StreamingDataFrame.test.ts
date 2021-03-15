@@ -1,5 +1,5 @@
 import { FieldType } from '../types/dataFrame';
-import { DataFrameJSON, dataFrameFromJSON } from './DataFrameJSON';
+import { DataFrameJSON } from './DataFrameJSON';
 import { StreamingDataFrame } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
@@ -22,7 +22,7 @@ describe('Streaming JSON', () => {
         },
       };
 
-      const stream = new StreamingDataFrame(dataFrameFromJSON(json));
+      const stream = new StreamingDataFrame(json);
       expect(stream.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
         Array [
           Object {
