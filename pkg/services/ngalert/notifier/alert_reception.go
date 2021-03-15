@@ -22,8 +22,14 @@ type PostableAlert struct {
 
 type AlertProvider struct {
 	provider.Alerts
-	stage  notify.Stage
 	logger log.Logger
+
+	// TODO(codesome): This stage is temporary to get code out quickly.
+	// Eventually, the alerts meant directly for recievers and not routing
+	// will be stored in memory and provided via an iterator, for example
+	// GetPendingLegacy() AlertIterator, and the external code will use this
+	// iterator to send to the stage.
+	stage notify.Stage
 }
 
 func NewAlertProvider(s notify.Stage, m types.Marker, l log.Logger) (*AlertProvider, error) {
