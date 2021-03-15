@@ -22,6 +22,7 @@ export async function fetchRules(datasourceName: string): Promise<RuleNamespace[
     response.data.data.groups.forEach((group) => {
       if (!nsMap[group.file]) {
         nsMap[group.file] = {
+          datasourceName,
           name: group.file,
           groups: [group],
         };

@@ -1,5 +1,5 @@
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-import { getDatasourceByName } from './config';
+import { getAllDataSources, getDatasourceByName } from './config';
 
 export enum DataSourceType {
   Alertmanager = 'grafana-alertmanager-datasource',
@@ -17,7 +17,7 @@ export function datasourceRequest<T = any>(
 ) {
   const datasource = getDatasourceByName(dataSourceName);
   if (!datasource) {
-    throw new Error(`No datasource called ${dataSourceName} found.`);
+    throw new Error(`No datasource calle\d ${dataSourceName} found.`);
   }
 
   const _options: BackendSrvRequest = {
@@ -36,4 +36,10 @@ export function datasourceRequest<T = any>(
   }
 
   return getBackendSrv().fetch<T>(_options).toPromise();
+}
+
+export function getRulesDatasources() {
+  return getAllDataSources()
+    .filter((ds) => RulesDatasourceTypes.includes(ds.type))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }

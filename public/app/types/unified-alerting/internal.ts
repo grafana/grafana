@@ -50,6 +50,7 @@ export interface RuleGroup {
 }
 
 export interface RuleNamespace {
+  datasourceName: string;
   name: string;
   groups: RuleGroup[];
 }
