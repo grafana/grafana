@@ -1,4 +1,4 @@
-package alertmanager
+package notifier
 
 import (
 	"context"
@@ -9,8 +9,6 @@ import (
 
 	"github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/prometheus/pkg/labels"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -35,7 +33,7 @@ type Alertmanager struct {
 	// silences keeps the track of which notifications we should not fire due to user configuration.
 	silences   *silence.Silences
 	marker     types.Marker
-	alerts     *notifier.AlertProvider
+	alerts     *AlertProvider
 	dispatcher *dispatch.Dispatcher
 
 	wg sync.WaitGroup
@@ -68,7 +66,7 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 	am.marker = types.NewMarker(prometheus.DefaultRegisterer)
 
 	var err error
-	am.alerts, err = notifier.NewAlertProvider(&WithReceiverStage{}, am.marker, gokit_log.NewNopLogger())
+	am.alerts, err = NewAlertProvider(&WithReceiverStage{}, am.marker, gokit_log.NewNopLogger())
 	if err != nil {
 		return errors.Wrap(err, "failed to initialize alerting storage component")
 	}
@@ -110,7 +108,7 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 }
 
 // CreateAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
-func (am *Alertmanager) CreateAlerts(alerts ...*notifier.PostableAlert) error {
+func (am *Alertmanager) CreateAlerts(alerts ...*PostableAlert) error {
 	return am.alerts.PutPostableAlert(alerts...)
 }
 
@@ -169,6 +167,7 @@ func (am *Alertmanager) ListSilences(matchers []*labels.Matcher) ([]types.Silenc
 
 	return silences, nil
 }
+
 func (am *Alertmanager) GetSilence(silence *types.Silence)
 func (am *Alertmanager) CreateSilence(silence *types.Silence)
 func (am *Alertmanager) DeleteSilence(silence *types.Silence)
