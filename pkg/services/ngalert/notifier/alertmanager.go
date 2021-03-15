@@ -7,22 +7,22 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/alertmanager/silence/silencepb"
-	"github.com/prometheus/prometheus/pkg/labels"
-
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/nflog"
 	"github.com/prometheus/alertmanager/nflog/nflogpb"
 	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/silence"
+	"github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Alertmanager struct {
@@ -43,7 +43,7 @@ type WithReceiverStage struct {
 }
 
 func (s *WithReceiverStage) Exec(ctx context.Context, l gokit_log.Logger, alerts ...*types.Alert) (context.Context, []*types.Alert, error) {
-	//TODO: Alerts with a receiver shoudl be handled here.
+	//TODO: Alerts with a receiver should be handled here.
 	return ctx, nil, nil
 }
 
@@ -168,9 +168,9 @@ func (am *Alertmanager) ListSilences(matchers []*labels.Matcher) ([]types.Silenc
 	return silences, nil
 }
 
-func (am *Alertmanager) GetSilence(silence *types.Silence)
-func (am *Alertmanager) CreateSilence(silence *types.Silence)
-func (am *Alertmanager) DeleteSilence(silence *types.Silence)
+func (am *Alertmanager) GetSilence(silence *types.Silence)    {}
+func (am *Alertmanager) CreateSilence(silence *types.Silence) {}
+func (am *Alertmanager) DeleteSilence(silence *types.Silence) {}
 
 // createReceiverStage creates a pipeline of stages for a receiver.
 func createReceiverStage(name string, integrations []notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
@@ -252,17 +252,17 @@ func matchFilterLabels(matchers []*labels.Matcher, sms map[string]string) bool {
 		v, prs := sms[m.Name]
 		switch m.Type {
 		case labels.MatchNotRegexp, labels.MatchNotEqual:
-			if string(m.Value) == "" && prs {
+			if m.Value == "" && prs {
 				continue
 			}
-			if !m.Matches(string(v)) {
+			if !m.Matches(v) {
 				return false
 			}
 		default:
-			if string(m.Value) == "" && !prs {
+			if m.Value == "" && !prs {
 				continue
 			}
-			if !m.Matches(string(v)) {
+			if !m.Matches(v) {
 				return false
 			}
 		}
