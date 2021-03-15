@@ -3,6 +3,7 @@ import { GraphNGLegendEventMode, XYFieldMatchers } from '../GraphNG/types';
 import {
   DataFrame,
   FieldConfig,
+  formattedValueToString,
   getFieldDisplayName,
   GrafanaTheme,
   outerJoinDataFrames,
@@ -16,6 +17,7 @@ import { AxisPlacement, GraphGradientMode, ScaleDirection, ScaleOrientation } fr
 
 import { TimelineFieldConfig } from '../..';
 import { TimelineMode } from './types';
+import { format } from 'd3-format';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -65,7 +67,7 @@ export function preparePlotConfigBuilder(
     align: 0,
     size: [0.9, 100],
 
-    label: (seriesIdx) => 'Device ' + seriesIdx,
+    label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
 
     // hardcoded color mappings for states 0,1,2,3,<other>
     fill: (seriesIdx, valueIdx, value) =>
@@ -75,7 +77,7 @@ export function preparePlotConfigBuilder(
       value === 0 ? 'red' : value === 1 ? 'orange' : value === 2 ? 'yellow' : value === 3 ? 'green' : 'black',
 
     // hardcoded formatter for state values
-    formatValue: (seriesIdx, value) => 'S' + value,
+    formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
 
     // TODO: unimplemeted for now
     onHover: (seriesIdx: number, valueIdx: number) => {
