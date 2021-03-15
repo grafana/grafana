@@ -46,7 +46,7 @@ export class StreamingDataFrame implements DataFrame {
   /**
    * returns true if the operation was an append
    */
-  update(msg: DataFrameJSON): boolean {
+  update(msg: DataFrameJSON) {
     const { schema, data } = msg;
     if (schema) {
       if (this.fields.length > 0) {
@@ -112,6 +112,5 @@ export class StreamingDataFrame implements DataFrame {
         this.lastUpdateTime = now;
       }
     }
-    return false;
   }
 }
