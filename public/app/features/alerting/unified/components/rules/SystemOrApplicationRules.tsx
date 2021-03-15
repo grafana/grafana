@@ -1,6 +1,6 @@
 import { css } from 'emotion';
 import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
-import { Alert, LoadingPlaceholder, useStyles } from '@grafana/ui';
+import { Icon, InfoBox, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import React, { FC, useEffect, useMemo } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { useDispatch } from 'react-redux';
@@ -18,15 +18,7 @@ export const SystemOrApplicationAlerts: FC = () => {
   const rulesDatasources = useMemo(getRulesDatasources, []);
 
   // trigger fetch for any rules sources that dont have results and are not currently loading
-  useEffect(() => {
-    rulesDatasources.forEach((ds) => {
-      const { dispatched } = rules[ds.name] || {};
-      if (!dispatched) {
-        console.log('fetchin', rules[ds.name]);
-        dispatch(fetchRulesAction(ds.name));
-      }
-    });
-  }, [rulesDatasources, rules]);
+  useEffect(() => getRulesDatasources().forEach((ds) => dispatch(fetchRulesAction(ds.name))), []);
 
   const namespaces = useMemo(
     (): Array<{ namespace: RuleNamespace; datasource: DataSourceInstanceSettings }> =>
@@ -59,20 +51,33 @@ export const SystemOrApplicationAlerts: FC = () => {
 
   return (
     <section className={styles.wrapper}>
-      <h5>System or application</h5>
-      {!!datasourcesLoading.length && (
-        <LoadingPlaceholder
-          text={`Loading rules from ${datasourcesLoading.length} ${pluralize('source', datasourcesLoading.length)}`}
-        />
-      )}
+      <div className={styles.sectionHeader}>
+        <h5>System or application</h5>
+        {datasourcesLoading.length ? (
+          <LoadingPlaceholder
+            className={styles.loader}
+            text={`Loading rules from ${datasourcesLoading.length} ${pluralize('source', datasourcesLoading.length)}`}
+          />
+        ) : (
+          <div />
+        )}
+      </div>
       {errors && (
-        <Alert title="Errors loading rules">
+        <InfoBox
+          title={
+            <h4>
+              <Icon className={styles.iconError} name="exclamation-triangle" size="xl" />
+              Errors loading rules
+            </h4>
+          }
+          severity="error"
+        >
           {errors.map(({ datasource, error }) => (
             <div key={datasource.name}>
               Failed to load rules from &quot;{datasource.name}&quot;: {error.message || 'Unknown error.'}
             </div>
           ))}
-        </Alert>
+        </InfoBox>
       )}
       {namespaces?.map(({ datasource, namespace }) =>
         namespace.groups.map((group) => (
@@ -84,12 +89,24 @@ export const SystemOrApplicationAlerts: FC = () => {
           />
         ))
       )}
-      {namespaces?.length === 0 && !datasourcesLoading.length && <p>No rules found.</p>}
+      {namespaces?.length === 0 && !datasourcesLoading.length && !!rulesDatasources.length && <p>No rules found.</p>}
+      {!rulesDatasources.length && <p>There are no Prometheus or Loki datasources configured.</p>}
     </section>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
+  loader: css`
+    margin-bottom: 0;
+  `,
+  sectionHeader: css`
+    display: flex;
+    justify-content: space-between;
+  `,
+  iconError: css`
+    color: ${theme.palette.red};
+    margin-right: ${theme.spacing.md};
+  `,
   wrapper: css`
     margin-bottom: ${theme.spacing.xl};
   `,

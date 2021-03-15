@@ -1,6 +1,6 @@
 import { RuleGroup } from 'app/types/unified-alerting/internal';
-import React, { FC, useMemo, useState } from 'react';
-import { Icon, useStyles } from '@grafana/ui';
+import React, { FC, useMemo, useState, Fragment } from 'react';
+import { Icon, Tooltip, useStyles } from '@grafana/ui';
 import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { isAlertingRule } from '../../utils/rules';
@@ -36,6 +36,22 @@ export const RulesGroup: FC<Props> = ({ group, namespace, datasource }) => {
     [group]
   );
 
+  const statsComponents: React.ReactNode[] = [];
+  if (stats[PromAlertingRuleState.Firing]) {
+    statsComponents.push(
+      <StatusColoredText key="firing" status={PromAlertingRuleState.Firing}>
+        {stats[PromAlertingRuleState.Firing]} firing
+      </StatusColoredText>
+    );
+  }
+  if (stats[PromAlertingRuleState.Pending]) {
+    statsComponents.push(
+      <StatusColoredText key="firing" status={PromAlertingRuleState.Pending}>
+        {stats[PromAlertingRuleState.Pending]} pending
+      </StatusColoredText>
+    );
+  }
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
@@ -43,24 +59,26 @@ export const RulesGroup: FC<Props> = ({ group, namespace, datasource }) => {
           <Icon size="xl" name={isExpanded ? 'angle-down' : 'angle-right'} />
         </button>
         <Icon name={isExpanded ? 'folder-open' : 'folder'} />
+        {datasource && (
+          <Tooltip content={datasource.name} placement="top">
+            <img className={styles.datasourceIcon} src={datasource.meta.info.logos.small} />
+          </Tooltip>
+        )}
         <h6 className={styles.heading}>
           {namespace} &gt; {group.name}
         </h6>
         <div className={styles.spacer} />
-        {datasource && (
-          <div className={styles.datasourceOrigin}>
-            <img className={styles.datasourceIcon} src={datasource.meta.info.logos.small} /> {datasource?.name}
-          </div>
-        )}
-        <div>
-          {group.rules.length} rules:{' '}
-          <StatusColoredText status={PromAlertingRuleState.Firing}>
-            {stats[PromAlertingRuleState.Firing]} firing
-          </StatusColoredText>
-          ,{' '}
-          <StatusColoredText status={PromAlertingRuleState.Pending}>
-            {stats[PromAlertingRuleState.Pending]} pending
-          </StatusColoredText>
+        <div className={styles.headerStats}>
+          {group.rules.length} rules
+          {!!statsComponents.length && (
+            <>
+              :{' '}
+              {statsComponents.reduce<React.ReactNode[]>(
+                (prev, curr, idx) => (prev.length ? [<Fragment key={idx}>, </Fragment>, curr] : [curr]),
+                []
+              )}
+            </>
+          )}
         </div>
       </div>
       {isExpanded && (
@@ -87,8 +105,13 @@ export const getStyles = (theme: GrafanaTheme) => ({
     padding: ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} 0;
     background-color: ${theme.colors.bg2};
   `,
+  headerStats: css`
+    span {
+      vertical-align: middle;
+    }
+  `,
   heading: css`
-    margin-left: ${theme.spacing.xs};
+    margin-left: ${theme.spacing.sm};
     margin-bottom: 0;
   `,
   spacer: css`
@@ -107,6 +130,7 @@ export const getStyles = (theme: GrafanaTheme) => ({
   datasourceIcon: css`
     width: ${theme.spacing.md};
     height: ${theme.spacing.md};
+    margin-left: ${theme.spacing.sm};
   `,
   datasourceOrigin: css`
     margin-right: 1em;
