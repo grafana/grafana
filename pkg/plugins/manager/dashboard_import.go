@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/tsdb/tsdbifaces"
 )
 
 var varRegex = regexp.MustCompile(`(\$\{.+?\})`)
@@ -31,7 +30,7 @@ func (e DashboardInputMissingError) Error() string {
 
 func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 	overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser,
-	requestHandler tsdbifaces.RequestHandler) (plugins.PluginDashboardInfoDTO, error) {
+	requestHandler plugins.DataRequestHandler) (plugins.PluginDashboardInfoDTO, error) {
 	var dashboard *models.Dashboard
 	if pluginID != "" {
 		var err error
@@ -68,7 +67,7 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 		User:      user,
 	}
 
-	savedDash, err := dashboards.NewService(requestHandler).ImportDashboard(dto)
+	savedDash, err := dashboards.NewService().ImportDashboard(dto)
 	if err != nil {
 		return plugins.PluginDashboardInfoDTO{}, err
 	}

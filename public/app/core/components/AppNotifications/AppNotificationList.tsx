@@ -2,8 +2,7 @@ import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import AppNotificationItem from './AppNotificationItem';
 import { notifyApp, clearAppNotification } from 'app/core/actions';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
-import { AppNotification, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 
 import {
   createErrorNotification,
@@ -11,14 +10,24 @@ import {
   createWarningNotification,
 } from '../../copy/appNotification';
 import { AppEvents } from '@grafana/data';
+import { connect, ConnectedProps } from 'react-redux';
 
-export interface Props {
-  appNotifications: AppNotification[];
-  notifyApp: typeof notifyApp;
-  clearAppNotification: typeof clearAppNotification;
-}
+export interface OwnProps {}
 
-export class AppNotificationList extends PureComponent<Props> {
+const mapStateToProps = (state: StoreState, props: OwnProps) => ({
+  appNotifications: state.appNotifications.appNotifications,
+});
+
+const mapDispatchToProps = {
+  notifyApp,
+  clearAppNotification,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export class AppNotificationListUnConnected extends PureComponent<Props> {
   componentDidMount() {
     const { notifyApp } = this.props;
 
@@ -35,7 +44,7 @@ export class AppNotificationList extends PureComponent<Props> {
     const { appNotifications } = this.props;
 
     return (
-      <div>
+      <div className="page-alert-list">
         {appNotifications.map((appNotification, index) => {
           return (
             <AppNotificationItem
@@ -50,13 +59,4 @@ export class AppNotificationList extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  appNotifications: state.appNotifications.appNotifications,
-});
-
-const mapDispatchToProps = {
-  notifyApp,
-  clearAppNotification,
-};
-
-export default connectWithStore(AppNotificationList, mapStateToProps, mapDispatchToProps);
+export const AppNotificationList = connector(AppNotificationListUnConnected);
