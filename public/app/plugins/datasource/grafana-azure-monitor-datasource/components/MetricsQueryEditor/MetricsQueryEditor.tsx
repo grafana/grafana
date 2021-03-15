@@ -22,7 +22,7 @@ interface MetricsQueryEditorProps {
   subscriptionId: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
-  onError: (err: Error) => void;
+  setError: (source: string, err: Error | undefined) => void;
 }
 
 const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
@@ -31,7 +31,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   subscriptionId,
   variableOptionGroup,
   onChange,
-  onError,
+  setError,
 }) => {
   const metricsMetadata = useMetricsMetadata(datasource, query, subscriptionId, onChange);
 
@@ -44,7 +44,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           subscriptionId={subscriptionId}
           variableOptionGroup={variableOptionGroup}
           onQueryChange={onChange}
-          onError={onError}
+          setError={setError}
         />
 
         <ResourceGroupsField
@@ -53,7 +53,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           subscriptionId={subscriptionId}
           variableOptionGroup={variableOptionGroup}
           onQueryChange={onChange}
-          onError={onError}
+          setError={setError}
         />
       </InlineFieldRow>
 
@@ -64,7 +64,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           subscriptionId={subscriptionId}
           variableOptionGroup={variableOptionGroup}
           onQueryChange={onChange}
-          onError={onError}
+          setError={setError}
         />
         <ResourceNameField
           query={query}
@@ -72,7 +72,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           subscriptionId={subscriptionId}
           variableOptionGroup={variableOptionGroup}
           onQueryChange={onChange}
-          onError={onError}
+          setError={setError}
         />
       </InlineFieldRow>
 
@@ -83,7 +83,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           subscriptionId={subscriptionId}
           variableOptionGroup={variableOptionGroup}
           onQueryChange={onChange}
-          onError={onError}
+          setError={setError}
         />
         <MetricNameField
           query={query}
@@ -91,7 +91,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           subscriptionId={subscriptionId}
           variableOptionGroup={variableOptionGroup}
           onQueryChange={onChange}
-          onError={onError}
+          setError={setError}
         />
       </InlineFieldRow>
       <InlineFieldRow>
@@ -101,7 +101,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           subscriptionId={subscriptionId}
           variableOptionGroup={variableOptionGroup}
           onQueryChange={onChange}
-          onError={onError}
+          setError={setError}
           aggregationOptions={metricsMetadata?.aggOptions ?? []}
         />
         <TimeGrainField
@@ -110,7 +110,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
           subscriptionId={subscriptionId}
           variableOptionGroup={variableOptionGroup}
           onQueryChange={onChange}
-          onError={onError}
+          setError={setError}
           timeGrainOptions={metricsMetadata?.timeGrains ?? []}
         />
       </InlineFieldRow>
@@ -120,7 +120,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         subscriptionId={subscriptionId}
         variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
-        onError={onError}
+        setError={setError}
         dimensionOptions={metricsMetadata?.dimensions ?? []}
       />
       <TopField
@@ -129,7 +129,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         subscriptionId={subscriptionId}
         variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
-        onError={onError}
+        setError={setError}
       />
       <LegendFormatField
         query={query}
@@ -137,7 +137,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         subscriptionId={subscriptionId}
         variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
-        onError={onError}
+        setError={setError}
       />
     </div>
   );

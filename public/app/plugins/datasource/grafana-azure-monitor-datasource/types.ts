@@ -91,7 +91,7 @@ export interface InsightsAnalyticsQuery {
 }
 
 export interface AzureMonitorUIError {
-  message?: string;
+  message?: string | undefined;
 }
 
 // Azure Monitor API Types
@@ -195,5 +195,5 @@ export interface AzureQueryEditorFieldProps {
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
-  onError: (err: Error) => void;
+  setError: (source: string, err: Error | undefined) => void;
 }

@@ -1,10 +1,10 @@
 import { Alert, VerticalGroup } from '@grafana/ui';
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureQueryType, AzureMonitorOption } from '../../types';
 import MetricsQueryEditor from '../MetricsQueryEditor';
-import { messageFromError } from './messageFromError';
 import QueryTypeField from './QueryTypeField';
+import useLastError from './useLastError';
 
 interface BaseQueryEditorProps {
   query: AzureMonitorQuery;
@@ -14,47 +14,30 @@ interface BaseQueryEditorProps {
 }
 
 const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChange }) => {
-  const [error, setError] = useState<{ message: string | undefined } | undefined>();
-
+  const [errorMessage, setError] = useLastError();
   const subscriptionId = query.subscription || datasource.azureMonitorDatasource.subscriptionId;
   const variableOptionGroup = {
     label: 'Template Variables',
     options: datasource.getVariables().map((v) => ({ label: v, value: v })),
   };
 
-  // Handles errors from any child components that request data to display their options
-  const handleError = useCallback((err: unknown) => {
-    console.error('Error from child', err);
-    const msg = messageFromError(err);
-    console.log(msg);
-    setError({ message: msg });
-  }, []);
-
   return (
     <div data-testid="azure-monitor-query-editor">
-      <p>
-        {`The Resource 'Microsoft.Compute/virtualMachines/grafanadev' under resource group 'grafanadev' was not found.
-      For more details please go to https://aka.ms/ARMResourceNotFoundFix The Resource
-      'Microsoft.Compute/virtualMachines/grafanadev' under resource group 'grafanadev' was not found. For more
-      details please go to https://aka.ms/ARMResourceNotFoundFix`}
-      </p>
+      <QueryTypeField query={query} onQueryChange={onChange} />
 
       <VerticalGroup>
-        <div>
-          <QueryTypeField query={query} onQueryChange={onChange} />
-          <EditorForQueryType
-            subscriptionId={subscriptionId}
-            query={query}
-            datasource={datasource}
-            onChange={onChange}
-            variableOptionGroup={variableOptionGroup}
-            onError={handleError}
-          />
-        </div>
+        <EditorForQueryType
+          subscriptionId={subscriptionId}
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          variableOptionGroup={variableOptionGroup}
+          setError={setError}
+        />
 
-        {error && (
-          <Alert severity="error" title="An error occurred while requesting data from Azure Monitor">
-            {error.message}
+        {errorMessage && (
+          <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
+            {errorMessage}
           </Alert>
         )}
       </VerticalGroup>
@@ -64,7 +47,7 @@ const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChan
 
 interface EditorForQueryTypeProps extends BaseQueryEditorProps {
   subscriptionId: string;
-  onError: (err: Error) => void;
+  setError: (source: string, err: Error | undefined) => void;
 }
 
 const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
@@ -73,7 +56,7 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
   datasource,
   variableOptionGroup,
   onChange,
-  onError,
+  setError,
 }) => {
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
@@ -84,7 +67,7 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
           datasource={datasource}
           onChange={onChange}
           variableOptionGroup={variableOptionGroup}
-          onError={onError}
+          setError={setError}
         />
       );
   }

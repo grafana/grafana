@@ -10,12 +10,13 @@ interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }
 
+const ERROR_SOURCE = 'metrics-subscription';
 const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   datasource,
   query,
   variableOptionGroup,
   onQueryChange,
-  onError,
+  setError,
 }) => {
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
 
@@ -29,6 +30,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       .then((results) => {
         const newSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
         setSubscriptions(newSubscriptions);
+        setError(ERROR_SOURCE, undefined);
 
         // Set a default subscription ID, if we can
         let newSubscription = query.subscription;
@@ -51,7 +53,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
             subscription: newSubscription,
           });
       })
-      .catch((err) => onError(err));
+      .catch((err) => setError(ERROR_SOURCE, err));
   }, []);
 
   const handleChange = useCallback(
@@ -66,6 +68,8 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       };
 
       if (query.queryType === AzureQueryType.AzureMonitor) {
+        // TODO: set the fields to undefined so we don't
+        // get "resource group select could not be found" errors
         newQuery.azureMonitor = {
           ...newQuery.azureMonitor,
           resourceGroup: undefined,
