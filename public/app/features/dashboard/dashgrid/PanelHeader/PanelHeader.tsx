@@ -28,7 +28,7 @@ export interface Props {
 
 export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, data, alertState, dashboard }) => {
   const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
-  const title = panel.replaceVariables(panel.title, {}, 'text');
+  const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
 
   return (
