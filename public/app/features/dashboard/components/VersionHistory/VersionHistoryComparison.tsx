@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 
 import { Button, ModalsController, CollapsableSection, HorizontalGroup, useStyles } from '@grafana/ui';
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
@@ -22,60 +22,63 @@ export const VersionHistoryComparison: React.FC<DiffViewProps> = ({ baseInfo, ne
 
   return (
     <div>
-      <HorizontalGroup justify="space-between" align="center">
-        <div>
-          <p className="small muted">
-            <strong>Version {newInfo.version}</strong> updated by
-            <span>{newInfo.createdBy} </span>
-            <span>{newInfo.ageString}</span>
-            <span> - {newInfo.message}</span>
-          </p>
-          <p className="small muted">
-            <strong>Version {baseInfo.version}</strong> updated by
-            <span>{baseInfo.createdBy} </span>
-            <span>{baseInfo.ageString}</span>
-            <span> - {baseInfo.message}</span>
-          </p>
-        </div>
-        {isNewLatest && (
-          <ModalsController>
-            {({ showModal, hideModal }) => (
-              <Button
-                variant="destructive"
-                icon="history"
-                onClick={() => {
-                  showModal(RevertDashboardModal, {
-                    version: baseInfo.version,
-                    hideModal,
-                  });
-                }}
-              >
-                Restore to version {baseInfo.version}
-              </Button>
-            )}
-          </ModalsController>
-        )}
-      </HorizontalGroup>
-
+      <div className={styles.spacer}>
+        <HorizontalGroup justify="space-between" align="center">
+          <div>
+            <p className={styles.versionInfo}>
+              <strong>Version {newInfo.version}</strong> updated by
+              <span>{newInfo.createdBy} </span>
+              <span>{newInfo.ageString}</span>
+              <span> - {newInfo.message}</span>
+            </p>
+            <p className={cx(styles.versionInfo, styles.noMarginBottom)}>
+              <strong>Version {baseInfo.version}</strong> updated by
+              <span>{baseInfo.createdBy} </span>
+              <span>{baseInfo.ageString}</span>
+              <span> - {baseInfo.message}</span>
+            </p>
+          </div>
+          {isNewLatest && (
+            <ModalsController>
+              {({ showModal, hideModal }) => (
+                <Button
+                  variant="destructive"
+                  icon="history"
+                  onClick={() => {
+                    showModal(RevertDashboardModal, {
+                      version: baseInfo.version,
+                      hideModal,
+                    });
+                  }}
+                >
+                  Restore to version {baseInfo.version}
+                </Button>
+              )}
+            </ModalsController>
+          )}
+        </HorizontalGroup>
+      </div>
       <div className={styles.spacer}>
         {Object.entries(diff).map(([key, diffs]) => (
           <DiffGroup diffs={diffs} key={key} title={key} />
         ))}
       </div>
-      <div className={styles.spacer}>
-        <CollapsableSection isOpen={false} label="JSON Diff">
-          <DiffViewer
-            oldValue={JSON.stringify(diffData.lhs, null, 2)}
-            newValue={JSON.stringify(diffData.rhs, null, 2)}
-          />
-        </CollapsableSection>
-      </div>
+      <CollapsableSection isOpen={false} label="View JSON Diff">
+        <DiffViewer oldValue={JSON.stringify(diffData.lhs, null, 2)} newValue={JSON.stringify(diffData.rhs, null, 2)} />
+      </CollapsableSection>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
   spacer: css`
-    padding-top: ${theme.spacing.lg};
+    margin-bottom: ${theme.spacing.xl};
+  `,
+  versionInfo: css`
+    color: ${theme.colors.textWeak};
+    font-size: ${theme.typography.size.sm};
+  `,
+  noMarginBottom: css`
+    margin-bottom: 0;
   `,
 });
