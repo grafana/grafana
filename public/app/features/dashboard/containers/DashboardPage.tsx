@@ -82,7 +82,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.initDashboard();
-    this.forceRouteReloadCounter = (this.props.history.location.state as any)?.forceRouteReload || 0;
+    this.forceRouteReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter || 0;
   }
 
   componentWillUnmount() {
@@ -117,7 +117,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     const { dashboard, match, queryParams, templateVarsChangedInUrl } = this.props;
     const { editPanel, viewPanel } = this.state;
 
-    const forceReload = (this.props.history.location.state as any)?.forceRouteReload;
+    const routeReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter;
 
     if (!dashboard) {
       return;
@@ -130,10 +130,10 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     if (
       prevProps.match.params.uid !== match.params.uid ||
-      (forceReload && this.forceRouteReloadCounter !== forceReload)
+      (routeReloadCounter !== undefined && this.forceRouteReloadCounter !== routeReloadCounter)
     ) {
       this.initDashboard();
-      this.forceRouteReloadCounter = forceReload;
+      this.forceRouteReloadCounter = routeReloadCounter;
       return;
     }
 
