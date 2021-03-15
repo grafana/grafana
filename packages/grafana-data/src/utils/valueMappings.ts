@@ -97,11 +97,8 @@ const isNullValueMap = (mapping: ValueMap): boolean => {
   return mapping.value.toLowerCase() === 'null';
 };
 
-// Ref https://stackoverflow.com/a/42356340
-export function isNumeric(num: any) {
-  if (num === true) {
-    return false;
-  }
+// Ref https://stackoverflow.com/a/58550111
 
-  return Boolean(Number(num));
+export function isNumeric(num: any) {
+  return (typeof num === 'number' || (typeof num === 'string' && num.trim() !== '')) && !isNaN(num as number);
 }
