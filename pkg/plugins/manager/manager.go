@@ -199,7 +199,7 @@ func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
 	return rslt
 }
 
-func (pm *PluginManager) NumDataSources() int {
+func (pm *PluginManager) DataSourceCount() int {
 	return len(pm.dataSources)
 }
 

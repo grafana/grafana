@@ -17,8 +17,8 @@ type Manager interface {
 	GetDataPlugin(id string) DataPlugin
 	// GetPlugin gets a plugin with a certain ID.
 	GetPlugin(id string) *PluginBase
-	// NumDataSources gets the number of data sources.
-	NumDataSources() int
+	// DataSourceCount gets the number of data sources.
+	DataSourceCount() int
 	// DataSources gets all data sources.
 	DataSources() []*DataSourcePlugin
 	// GetEnabledPlugins gets enabled plugins.
