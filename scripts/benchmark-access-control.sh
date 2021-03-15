@@ -6,16 +6,16 @@ BENCH_FILE="tmp/bench_${COMMIT_HASH}.txt"
 BENCH_GRAPH="tmp/bench_${COMMIT_HASH}.html"
 
 # Run benchmark
-go test -benchmem -run=^$ -bench . github.com/grafana/grafana/pkg/services/accesscontrol/database | tee ${BENCH_FILE}
+go test -benchmem -run=^$ -bench . github.com/grafana/grafana/pkg/services/accesscontrol/database | tee "${BENCH_FILE}"
 
-CHART_DATA_USERS=$(cat ${BENCH_FILE} |
+CHART_DATA_USERS=$(cat "${BENCH_FILE}" |
   grep -oP "^BenchmarkPoliciesUsers([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+[0-9]+" |
   sed -E 's/Benchmark([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+([0-9]+)/\1 \2/' |
   sed -E 's/^[[:alpha:]]+([0-9]+)_([0-9]+)-[0-9]+[[:blank:]]+(.*)/\2 \3/' |
   sed -E 's/([^[:blank:]]+)[[:blank:]]+([^[:blank:]]+)/\[\1, \2],\n/'
 )
 
-CHART_DATA_POLICIES=$(cat ${BENCH_FILE} |
+CHART_DATA_POLICIES=$(cat "${BENCH_FILE}" |
   grep -oP "^BenchmarkPoliciesPerUser([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+[0-9]+" |
   sed -E 's/Benchmark([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+([0-9]+)/\1 \2/' |
   sed -E 's/^[[:alpha:]]+([0-9]+)_([0-9]+)-[0-9]+[[:blank:]]+(.*)/\1 \3/' |
@@ -83,4 +83,4 @@ HTML_CHART="<html>
 </html>
 "
 
-echo ${HTML_CHART} | tee ${BENCH_GRAPH}
+echo "${HTML_CHART}" | tee "${BENCH_GRAPH}"
