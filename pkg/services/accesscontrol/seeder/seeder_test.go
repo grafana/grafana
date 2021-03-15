@@ -34,10 +34,10 @@ func (ac *accessControlStoreTestImpl) AddMigration(mg *migrator.Migrator) {
 }
 
 func setupTestEnv(t testing.TB) *accessControlStoreTestImpl {
+	t.Helper()
+
 	cfg := setting.NewCfg()
-
-	store := overrideDatabaseInRegistry(cfg)
-
+	store := overrideDatabaseInRegistry(t, cfg)
 	sqlStore := sqlstore.InitTestDB(t)
 	store.SQLStore = sqlStore
 
@@ -46,7 +46,8 @@ func setupTestEnv(t testing.TB) *accessControlStoreTestImpl {
 	return &store
 }
 
-func overrideDatabaseInRegistry(cfg *setting.Cfg) accessControlStoreTestImpl {
+func overrideDatabaseInRegistry(t testing.TB, cfg *setting.Cfg) accessControlStoreTestImpl {
+	t.Helper()
 	store := accessControlStoreTestImpl{
 		AccessControlStore: database.AccessControlStore{
 			SQLStore: nil,

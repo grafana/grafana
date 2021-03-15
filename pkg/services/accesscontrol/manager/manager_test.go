@@ -18,7 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func overrideAccessControlInRegistry(cfg *setting.Cfg) AccessControlService {
+func overrideAccessControlInRegistry(t testing.TB, cfg *setting.Cfg) AccessControlService {
+	t.Helper()
+
 	ac := AccessControlService{
 		Cfg:           cfg,
 		RouteRegister: routing.NewRouteRegister(),
@@ -45,10 +47,12 @@ func overrideAccessControlInRegistry(cfg *setting.Cfg) AccessControlService {
 }
 
 func setupTestEnv(t testing.TB) *AccessControlService {
+	t.Helper()
+
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
-	ac := overrideAccessControlInRegistry(cfg)
+	ac := overrideAccessControlInRegistry(t, cfg)
 
 	sqlStore := sqlstore.InitTestDB(t)
 	ac.AccessControlStore.SQLStore = sqlStore
@@ -66,7 +70,7 @@ type evaluatingPermissionsTestCase struct {
 
 func TestEvaluatingPermissions(t *testing.T) {
 	database.MockTimeNow()
-	defer database.ResetTimeNow()
+	t.Cleanup(database.ResetTimeNow)
 
 	testCases := []evaluatingPermissionsTestCase{
 		{

@@ -36,10 +36,10 @@ func (ac *accessControlStoreTestImpl) AddMigration(mg *migrator.Migrator) {
 }
 
 func setupTestEnv(t testing.TB) *accessControlStoreTestImpl {
+	t.Helper()
+
 	cfg := setting.NewCfg()
-
-	store := OverrideDatabaseInRegistry(cfg)
-
+	store := overrideDatabaseInRegistry(cfg)
 	sqlStore := sqlstore.InitTestDB(t)
 	store.SQLStore = sqlStore
 
@@ -48,7 +48,7 @@ func setupTestEnv(t testing.TB) *accessControlStoreTestImpl {
 	return &store
 }
 
-func OverrideDatabaseInRegistry(cfg *setting.Cfg) accessControlStoreTestImpl {
+func overrideDatabaseInRegistry(cfg *setting.Cfg) accessControlStoreTestImpl {
 	store := accessControlStoreTestImpl{
 		AccessControlStore: AccessControlStore{
 			SQLStore: nil,
@@ -73,7 +73,7 @@ func OverrideDatabaseInRegistry(cfg *setting.Cfg) accessControlStoreTestImpl {
 
 func TestCreatingRole(t *testing.T) {
 	MockTimeNow()
-	defer ResetTimeNow()
+	t.Cleanup(ResetTimeNow)
 
 	testCases := []struct {
 		desc        string
@@ -121,7 +121,6 @@ func TestCreatingRole(t *testing.T) {
 
 			res, err := store.GetRoleByUID(context.Background(), 1, createRoleRes.UID)
 			role := res
-
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedUpdated, role.Updated)
 
@@ -132,7 +131,7 @@ func TestCreatingRole(t *testing.T) {
 			if tc.role.Permissions == nil {
 				assert.Empty(t, role.Permissions)
 			} else {
-				assert.Equal(t, len(tc.role.Permissions), len(role.Permissions))
+				assert.Len(t, tc.role.Permissions, len(role.Permissions))
 				for i, p := range role.Permissions {
 					assert.Equal(t, tc.role.Permissions[i].Permission, p.Permission)
 					assert.Equal(t, tc.role.Permissions[i].Scope, p.Scope)
@@ -144,7 +143,7 @@ func TestCreatingRole(t *testing.T) {
 
 func TestUpdatingRole(t *testing.T) {
 	MockTimeNow()
-	defer ResetTimeNow()
+	t.Cleanup(ResetTimeNow)
 
 	testCases := []struct {
 		desc    string
@@ -210,7 +209,6 @@ func TestUpdatingRole(t *testing.T) {
 			require.NoError(t, err)
 
 			updatedRole, err := store.GetRoleByUID(context.Background(), 1, role.UID)
-
 			require.NoError(t, err)
 			assert.Equal(t, tc.newRole.Name, updatedRole.Name)
 			assert.True(t, updatedRole.Updated.After(updated))
@@ -236,7 +234,7 @@ type userRoleTestCase struct {
 
 func TestUserRole(t *testing.T) {
 	MockTimeNow()
-	defer ResetTimeNow()
+	t.Cleanup(ResetTimeNow)
 
 	testCases := []userRoleTestCase{
 		{
@@ -351,7 +349,7 @@ type userTeamRoleTestCase struct {
 
 func TestUserPermissions(t *testing.T) {
 	MockTimeNow()
-	defer ResetTimeNow()
+	t.Cleanup(ResetTimeNow)
 
 	testCases := []userTeamRoleTestCase{
 		{
@@ -444,7 +442,7 @@ func TestUserPermissions(t *testing.T) {
 
 			res, err := store.GetUserPermissions(context.Background(), userPermissionsQuery)
 			require.NoError(t, err)
-			assert.Equal(t, len(expectedPermissions), len(res))
+			assert.Len(t, res, len(expectedPermissions))
 			assert.Contains(t, expectedPermissions, actesting.PermissionTestCase{Scope: "datasources", Permission: "datasources:create"})
 			assert.NotContains(t, expectedPermissions, actesting.PermissionTestCase{Scope: "/api/restricted", Permission: "restricted:read"})
 		})
