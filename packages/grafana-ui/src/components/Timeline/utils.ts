@@ -17,7 +17,6 @@ import { AxisPlacement, GraphGradientMode, ScaleDirection, ScaleOrientation } fr
 
 import { TimelineFieldConfig } from '../..';
 import { TimelineMode } from './types';
-import { format } from 'd3-format';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
