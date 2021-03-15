@@ -12,7 +12,7 @@ export interface ContextMenuProps {
   /** Callback for closing the menu */
   onClose?: () => void;
   /** RenderProp function that returns menu items to display */
-  renderMenu: () => React.ReactElement<any>;
+  renderMenu?: () => React.ReactNode;
   /** A function that returns header element */
   renderHeader?: () => React.ReactNode;
 }
@@ -45,7 +45,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
     }
   });
   const header = renderHeader && renderHeader();
-  const menu = renderMenu();
+  const menu = renderMenu && renderMenu();
 
   return (
     <Portal>
