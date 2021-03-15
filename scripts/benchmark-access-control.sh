@@ -8,15 +8,13 @@ BENCH_GRAPH="tmp/bench_${COMMIT_HASH}.html"
 # Run benchmark
 go test -benchmem -run=^$ -bench . github.com/grafana/grafana/pkg/services/accesscontrol/database | tee "${BENCH_FILE}"
 
-CHART_DATA_USERS=$(cat "${BENCH_FILE}" |
-  grep -oP "^BenchmarkPoliciesUsers([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+[0-9]+" |
+CHART_DATA_USERS=$(grep -oP "^BenchmarkRolesUsers([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+[0-9]+" "${BENCH_FILE}" |
   sed -E 's/Benchmark([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+([0-9]+)/\1 \2/' |
   sed -E 's/^[[:alpha:]]+([0-9]+)_([0-9]+)-[0-9]+[[:blank:]]+(.*)/\2 \3/' |
   sed -E 's/([^[:blank:]]+)[[:blank:]]+([^[:blank:]]+)/\[\1, \2],\n/'
 )
 
-CHART_DATA_POLICIES=$(cat "${BENCH_FILE}" |
-  grep -oP "^BenchmarkPoliciesPerUser([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+[0-9]+" |
+CHART_DATA_ROLES=$(grep -oP "^BenchmarkRolesPerUser([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+[0-9]+" "${BENCH_FILE}" |
   sed -E 's/Benchmark([^[:blank:]]+)[[:blank:]]+[0-9]+[[:blank:]]+([0-9]+)/\1 \2/' |
   sed -E 's/^[[:alpha:]]+([0-9]+)_([0-9]+)-[0-9]+[[:blank:]]+(.*)/\1 \3/' |
   sed -E 's/([^[:blank:]]+)[[:blank:]]+([^[:blank:]]+)/\[\1, \2],\n/'
@@ -37,11 +35,11 @@ HTML_CHART="<html>
 
         var dataPolicies = google.visualization.arrayToDataTable([
           ['case', 'time'],
-          ${CHART_DATA_POLICIES}
+          ${CHART_DATA_ROLES}
         ]);
 
         var options = {
-          title: 'Policies Performance (commit ${COMMIT_HASH})',
+          title: 'Roles Performance (commit ${COMMIT_HASH})',
           legend: 'none',
           vAxis: {
             title: 'Execution time (ns)',
