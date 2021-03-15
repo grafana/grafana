@@ -112,6 +112,8 @@ export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
 export { FeatureBadge, FeatureInfoBox } from './InfoBox/FeatureInfoBox';
+export { InspectSubtitle } from './Inspector/InspectSubtitle';
+export { InspectTab } from './Inspector/types';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelPlugin } from '@grafana/data';
+import { InspectTab } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
 
 import { StoreState } from 'app/types';
@@ -10,7 +11,6 @@ import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
 import { useLocation } from 'react-router-dom';
-import { InspectTab } from './types';
 
 interface OwnProps {
   dashboard: DashboardModel;
