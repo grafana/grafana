@@ -9,6 +9,7 @@ import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
+import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 
 interface DispatchProps {
   runQueries: typeof runQueries;
@@ -22,7 +23,7 @@ interface Props extends DispatchProps {
 }
 
 export function ExploreQueryInspector(props: Props) {
-  const { /*loading,*/ width, onClose, queryResponse } = props;
+  const { loading, width, onClose, queryResponse } = props;
 
   const statsTab: TabConfig = {
     label: 'Stats',
@@ -31,11 +32,24 @@ export function ExploreQueryInspector(props: Props) {
     content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone as TimeZone} />,
   };
 
-  const dataTab: TabConfig = {
+  const jsonTab: TabConfig = {
     label: 'JSON',
     value: 'json',
     icon: 'brackets-curly',
     content: <InspectJSONTab data={queryResponse} onClose={onClose} />,
+  };
+
+  const dataTab: TabConfig = {
+    label: 'Data',
+    value: 'data',
+    icon: 'database',
+    content: (
+      <InspectDataTab
+        data={queryResponse?.series || []}
+        isLoading={loading}
+        options={{ withTransforms: false, withFieldConfig: false }}
+      />
+    ),
   };
 
   const inspectorTab: TabConfig = {
@@ -47,7 +61,7 @@ export function ExploreQueryInspector(props: Props) {
     ),
   };
 
-  const tabs = [statsTab, inspectorTab, dataTab];
+  const tabs = [statsTab, inspectorTab, jsonTab, dataTab];
   return (
     <ExploreDrawer width={width} onResize={() => {}}>
       <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
