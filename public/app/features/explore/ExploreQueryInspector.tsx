@@ -6,9 +6,9 @@ import { StoreState, ExploreItemState, ExploreId } from 'app/types';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
-import { InspectStatsTab } from '../dashboard/components/Inspector/InspectStatsTab';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
+import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 
 interface DispatchProps {
   runQueries: typeof runQueries;
