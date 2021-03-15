@@ -78,6 +78,13 @@ func Auth(options *AuthOptions) macaron.Handler {
 		forceLogin := false
 		if c.AllowAnonymous {
 			forceLogin = shouldForceLogin(c)
+			if !forceLogin {
+				orgIDValue := c.Req.URL.Query().Get("orgId")
+				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
+				if err == nil && orgID > 0 && orgID != c.OrgId {
+					forceLogin = true
+				}
+			}
 		}
 
 		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
@@ -138,21 +145,12 @@ func NoAuth() macaron.Handler {
 }
 
 // shouldForceLogin checks if user should be enforced to login.
-// Returns true if forceLogin parameter is set or if org id of request
-// query string doesn't equal org id of request context.
+// Returns true if forceLogin parameter is set.
 func shouldForceLogin(c *models.ReqContext) bool {
 	forceLogin := false
 	forceLoginParam, err := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin"))
 	if err == nil {
 		forceLogin = forceLoginParam
-	}
-
-	if !forceLogin {
-		orgIDValue := c.Req.URL.Query().Get("orgId")
-		orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
-		if err == nil && orgID > 0 && orgID != c.OrgId {
-			forceLogin = true
-		}
 	}
 
 	return forceLogin
