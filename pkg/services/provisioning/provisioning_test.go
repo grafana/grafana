@@ -93,8 +93,7 @@ func setup() *serviceTestStruct {
 	}
 
 	serviceTest.service = newProvisioningServiceImpl(
-		func(string, dboards.Validator, dboards.ProvisionedDashboardGetter,
-			plugifaces.DataRequestHandler) (dashboards.DashboardProvisioner, error) {
+		func(string, dboards.Store, plugifaces.DataRequestHandler) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
 		nil,

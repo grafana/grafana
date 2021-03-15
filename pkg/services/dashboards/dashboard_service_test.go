@@ -18,12 +18,10 @@ func TestDashboardService(t *testing.T) {
 	Convey("Dashboard service tests", t, func() {
 		bus.ClearBusHandlers()
 
-		fakeValidator := fakeDashboardValidator{}
-		fakeGetter := fakeDashboardGetter{}
+		fakeStore := fakeDashboardStore{}
 		service := &dashboardServiceImpl{
-			log:                        log.New("test.logger"),
-			dashboardValidator:         &fakeValidator,
-			provisionedDashboardGetter: &fakeGetter,
+			log:            log.New("test.logger"),
+			dashboardStore: &fakeStore,
 		}
 
 		origNewDashboardGuardian := guardian.New
@@ -89,9 +87,9 @@ func TestDashboardService(t *testing.T) {
 
 			Convey("Should return validation error if dashboard is provisioned", func() {
 				t.Cleanup(func() {
-					fakeGetter.provisionedData = nil
+					fakeStore.provisionedData = nil
 				})
-				fakeGetter.provisionedData = &models.DashboardProvisioning{}
+				fakeStore.provisionedData = &models.DashboardProvisioning{}
 
 				origValidateAlerts := validateAlerts
 				t.Cleanup(func() {
@@ -236,9 +234,9 @@ func TestDashboardService(t *testing.T) {
 
 			Convey("Should return validation error if dashboard is provisioned", func() {
 				t.Cleanup(func() {
-					fakeGetter.provisionedData = nil
+					fakeStore.provisionedData = nil
 				})
-				fakeGetter.provisionedData = &models.DashboardProvisioning{}
+				fakeStore.provisionedData = &models.DashboardProvisioning{}
 
 				origValidateAlerts := validateAlerts
 				t.Cleanup(func() {
@@ -269,7 +267,7 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		Convey("Given provisioned dashboard", func() {
-			result := setupDeleteHandlers(t, &fakeGetter, true)
+			result := setupDeleteHandlers(t, &fakeStore, true)
 
 			Convey("DeleteProvisionedDashboard should delete it", func() {
 				err := service.DeleteProvisionedDashboard(1, 1)
@@ -285,7 +283,7 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		Convey("Given non provisioned dashboard", func() {
-			result := setupDeleteHandlers(t, &fakeGetter, false)
+			result := setupDeleteHandlers(t, &fakeStore, false)
 
 			Convey("DeleteProvisionedDashboard should delete it", func() {
 				err := service.DeleteProvisionedDashboard(1, 1)
@@ -310,14 +308,14 @@ type Result struct {
 	deleteWasCalled bool
 }
 
-func setupDeleteHandlers(t *testing.T, fakeGetter *fakeDashboardGetter, provisioned bool) *Result {
+func setupDeleteHandlers(t *testing.T, fakeStore *fakeDashboardStore, provisioned bool) *Result {
 	t.Helper()
 
 	t.Cleanup(func() {
-		fakeGetter.provisionedData = nil
+		fakeStore.provisionedData = nil
 	})
 	if provisioned {
-		fakeGetter.provisionedData = &models.DashboardProvisioning{}
+		fakeStore.provisionedData = &models.DashboardProvisioning{}
 	}
 
 	result := &Result{}
@@ -331,23 +329,23 @@ func setupDeleteHandlers(t *testing.T, fakeGetter *fakeDashboardGetter, provisio
 	return result
 }
 
-type fakeDashboardValidator struct {
-	dashboards.Validator
+type fakeDashboardStore struct {
+	dashboards.Store
 
 	validationError error
-}
-
-func (v *fakeDashboardValidator) ValidateDashboardBeforeSave(orgID int64, dashboard *models.Dashboard, overwrite bool) (
-	bool, error) {
-	return false, v.validationError
-}
-
-type fakeDashboardGetter struct {
-	dashboards.ProvisionedDashboardGetter
-
 	provisionedData *models.DashboardProvisioning
 }
 
-func (g *fakeDashboardGetter) GetProvisionedDataByDashboardID(int64) (*models.DashboardProvisioning, error) {
-	return g.provisionedData, nil
+func (s *fakeDashboardStore) ValidateDashboardBeforeSave(orgID int64, dashboard *models.Dashboard, overwrite bool) (
+	bool, error) {
+	return false, s.validationError
+}
+
+func (s *fakeDashboardStore) GetProvisionedDataByDashboardID(int64) (*models.DashboardProvisioning, error) {
+	return s.provisionedData, nil
+}
+
+func (s *fakeDashboardStore) SaveProvisionedDashboard(models.SaveDashboardCommand,
+	*models.DashboardProvisioning) (*models.Dashboard, error) {
+	return nil, nil
 }

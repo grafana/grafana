@@ -15,9 +15,9 @@ import (
 func TestFolderService(t *testing.T) {
 	Convey("Folder service tests", t, func() {
 		service := dashboardServiceImpl{
-			orgId:              1,
-			user:               &models.SignedInUser{UserId: 1},
-			dashboardValidator: &fakeDashboardValidator{},
+			orgId:          1,
+			user:           &models.SignedInUser{UserId: 1},
+			dashboardStore: &fakeDashboardStore{},
 		}
 
 		Convey("Given user has no permissions", func() {
@@ -29,11 +29,11 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			origValidator := service.dashboardValidator
+			origStore := service.dashboardStore
 			t.Cleanup(func() {
-				service.dashboardValidator = origValidator
+				service.dashboardStore = origStore
 			})
-			service.dashboardValidator = &fakeDashboardValidator{
+			service.dashboardStore = &fakeDashboardStore{
 				validationError: models.ErrDashboardUpdateAccessDenied,
 			}
 

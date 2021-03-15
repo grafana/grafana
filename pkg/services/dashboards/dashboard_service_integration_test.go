@@ -962,7 +962,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 	t.Helper()
 
 	dto := toSaveDashboardDto(cmd)
-	res, err := NewService(sqlStore, sqlStore).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore).SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -970,7 +970,7 @@ func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore 
 
 func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) error {
 	dto := toSaveDashboardDto(cmd)
-	_, err := NewService(sqlStore, sqlStore).SaveDashboard(&dto, false)
+	_, err := NewService(sqlStore).SaveDashboard(&dto, false)
 	return err
 }
 
@@ -996,7 +996,7 @@ func saveTestDashboard(t *testing.T, title string, orgId int64, folderId int64, 
 		},
 	}
 
-	res, err := NewService(sqlStore, sqlStore).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore).SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res
@@ -1023,7 +1023,7 @@ func saveTestFolder(t *testing.T, title string, orgId int64, sqlStore *sqlstore.
 		},
 	}
 
-	res, err := NewService(sqlStore, sqlStore).SaveDashboard(&dto, false)
+	res, err := NewService(sqlStore).SaveDashboard(&dto, false)
 	require.NoError(t, err)
 
 	return res

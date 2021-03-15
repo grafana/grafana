@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-// FolderService service for operating on folders
+// FolderService is a service for operating on folders.
 type FolderService interface {
 	GetFolders(limit int64) ([]*models.Folder, error)
 	GetFolderByID(id int64) (*models.Folder, error)
@@ -20,12 +20,12 @@ type FolderService interface {
 	DeleteFolder(uid string) (*models.Folder, error)
 }
 
-// NewFolderService factory for creating a new folder service
-var NewFolderService = func(orgId int64, user *models.SignedInUser, dashboardValidator dashboards.Validator) FolderService {
+// NewFolderService is a factory for creating a new folder service.
+var NewFolderService = func(orgID int64, user *models.SignedInUser, store dashboards.Store) FolderService {
 	return &dashboardServiceImpl{
-		orgId:              orgId,
-		user:               user,
-		dashboardValidator: dashboardValidator,
+		orgId:          orgID,
+		user:           user,
+		dashboardStore: store,
 	}
 }
 

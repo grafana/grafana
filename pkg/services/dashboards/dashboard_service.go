@@ -36,17 +36,16 @@ type DashboardProvisioningService interface {
 }
 
 // NewService is a factory for creating a new dashboard service.
-var NewService = func(validator dashboards.Validator, getter dashboards.ProvisionedDashboardGetter) DashboardService {
+var NewService = func(store dashboards.Store) DashboardService {
 	return &dashboardServiceImpl{
-		dashboardValidator:         validator,
-		provisionedDashboardGetter: getter,
-		log:                        log.New("dashboard-service"),
+		dashboardStore: store,
+		log:            log.New("dashboard-service"),
 	}
 }
 
 // NewProvisioningService is a factory for creating a new dashboard provisioning service.
-var NewProvisioningService = func(validator dashboards.Validator, getter dashboards.ProvisionedDashboardGetter) DashboardProvisioningService {
-	return NewService(validator, getter).(*dashboardServiceImpl)
+var NewProvisioningService = func(store dashboards.Store) DashboardProvisioningService {
+	return NewService(store).(*dashboardServiceImpl)
 }
 
 type SaveDashboardDTO struct {
@@ -59,33 +58,25 @@ type SaveDashboardDTO struct {
 }
 
 type dashboardServiceImpl struct {
-	provisionedDashboardGetter dashboards.ProvisionedDashboardGetter
-	dashboardValidator         dashboards.Validator
-	orgId                      int64
-	user                       *models.SignedInUser
-	log                        log.Logger
+	dashboardStore dashboards.Store
+	orgId          int64
+	user           *models.SignedInUser
+	log            log.Logger
 }
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
-	cmd := &models.GetProvisionedDashboardDataQuery{Name: name}
-	err := bus.Dispatch(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	return cmd.Result, nil
+	return dr.dashboardStore.GetProvisionedDashboardData(name)
 }
 
 // GetProvisionedData gets provisioned dashboard data.
 //
 // Stubbable by tests.
-var GetProvisionedData = func(getter dashboards.ProvisionedDashboardGetter,
-	dashboardID int64) (*models.DashboardProvisioning, error) {
-	return getter.GetProvisionedDataByDashboardID(dashboardID)
+var GetProvisionedData = func(store dashboards.Store, dashboardID int64) (*models.DashboardProvisioning, error) {
+	return store.GetProvisionedDataByDashboardID(dashboardID)
 }
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error) {
-	return GetProvisionedData(dr.provisionedDashboardGetter, dashboardID)
+	return GetProvisionedData(dr.dashboardStore, dashboardID)
 }
 
 func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO, shouldValidateAlerts bool,
@@ -124,7 +115,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		}
 	}
 
-	isParentFolderChanged, err := dr.dashboardValidator.ValidateDashboardBeforeSave(dto.OrgId, dash, dto.Overwrite)
+	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(dto.OrgId, dash, dto.Overwrite)
 	if err != nil {
 		return nil, err
 	}
@@ -247,24 +238,18 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO,
 		return nil, err
 	}
 
-	saveCmd := &models.SaveProvisionedDashboardCommand{
-		DashboardCmd:          cmd,
-		DashboardProvisioning: provisioning,
-	}
-
 	// dashboard
-	err = bus.Dispatch(saveCmd)
+	dash, err := dr.dashboardStore.SaveProvisionedDashboard(*cmd, provisioning)
 	if err != nil {
 		return nil, err
 	}
 
 	// alerts
-	err = UpdateAlerting(dto.OrgId, cmd.Result, dto.User)
-	if err != nil {
+	if err := UpdateAlerting(dto.OrgId, dash, dto.User); err != nil {
 		return nil, err
 	}
 
-	return cmd.Result, nil
+	return dash, nil
 }
 
 func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDashboardDTO) (*models.Dashboard, error) {
@@ -407,7 +392,7 @@ func (s *FakeDashboardService) GetProvisionedDashboardDataByDashboardID(id int64
 }
 
 func MockDashboardService(mock *FakeDashboardService) {
-	NewService = func(dashboards.Validator, dashboards.ProvisionedDashboardGetter) DashboardService {
+	NewService = func(dashboards.Store) DashboardService {
 		return mock
 	}
 }

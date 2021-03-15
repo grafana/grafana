@@ -1006,8 +1006,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			t.Cleanup(func() {
 				dashboards.GetProvisionedData = origGetProvisionedData
 			})
-			dashboards.GetProvisionedData = func(dboards.ProvisionedDashboardGetter,
-				int64) (*models.DashboardProvisioning, error) {
+			dashboards.GetProvisionedData = func(dboards.Store, int64) (*models.DashboardProvisioning, error) {
 				return &models.DashboardProvisioning{ExternalId: "/tmp/grafana/dashboards/test/dashboard1.json"}, nil
 			}
 
@@ -1195,8 +1194,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			dashboards.NewProvisioningService = origProvisioningService
 		})
 		dashboards.MockDashboardService(mock)
-		dashboards.NewProvisioningService = func(dboards.Validator,
-			dboards.ProvisionedDashboardGetter) dashboards.DashboardProvisioningService {
+		dashboards.NewProvisioningService = func(dboards.Store) dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
 
@@ -1260,8 +1258,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			dashboards.NewService = origNewDashboardService
 			dashboards.NewProvisioningService = origProvisioningService
 		})
-		dashboards.NewProvisioningService = func(dboards.Validator,
-			dboards.ProvisionedDashboardGetter) dashboards.DashboardProvisioningService {
+		dashboards.NewProvisioningService = func(dboards.Store) dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
 		dashboards.MockDashboardService(mock)

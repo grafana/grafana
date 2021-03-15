@@ -761,14 +761,14 @@ func createDashboard(t *testing.T, user models.SignedInUser, title string, folde
 		return nil
 	}
 
-	dashboard, err := dashboards.NewService(&fakeDashboardValidator{}, nil).SaveDashboard(dashItem, true)
+	dashboard, err := dashboards.NewService(&fakeDashboardStore{}).SaveDashboard(dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
 }
 
 func createFolderWithACL(t *testing.T, title string, user models.SignedInUser, items []folderACLItem) *models.Folder {
-	s := dashboards.NewFolderService(user.OrgId, &user, &fakeDashboardValidator{})
+	s := dashboards.NewFolderService(user.OrgId, &user, &fakeDashboardStore{})
 	folderCmd := models.CreateFolderCommand{
 		Uid:   title,
 		Title: title,
@@ -895,10 +895,10 @@ func getCompareOptions() []cmp.Option {
 	}
 }
 
-type fakeDashboardValidator struct {
-	dboards.Validator
+type fakeDashboardStore struct {
+	dboards.Store
 }
 
-func (v *fakeDashboardValidator) ValidateDashboardBeforeSave(int64, *models.Dashboard, bool) (bool, error) {
+func (v *fakeDashboardStore) ValidateDashboardBeforeSave(int64, *models.Dashboard, bool) (bool, error) {
 	return false, nil
 }

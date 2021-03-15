@@ -244,7 +244,7 @@ func (s *fakeFolderService) DeleteFolder(uid string) (*models.Folder, error) {
 
 func mockFolderService(mock *fakeFolderService) {
 	dashboards.NewFolderService = func(orgId int64, user *models.SignedInUser,
-		dashboardValidator dboards.Validator) dashboards.FolderService {
+		dashboardStore dboards.Store) dashboards.FolderService {
 		return mock
 	}
 }

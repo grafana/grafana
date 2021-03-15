@@ -36,8 +36,7 @@ type FileReader struct {
 }
 
 // NewDashboardFileReader returns a new filereader based on `config`
-func NewDashboardFileReader(cfg *config, log log.Logger, validator dboards.Validator,
-	getter dboards.ProvisionedDashboardGetter) (*FileReader, error) {
+func NewDashboardFileReader(cfg *config, log log.Logger, store dboards.Store) (*FileReader, error) {
 	var path string
 	path, ok := cfg.Options["path"].(string)
 	if !ok {
@@ -58,7 +57,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger, validator dboards.Valid
 		Cfg:                          cfg,
 		Path:                         path,
 		log:                          log,
-		dashboardProvisioningService: dashboards.NewProvisioningService(validator, getter),
+		dashboardProvisioningService: dashboards.NewProvisioningService(store),
 		FoldersFromFilesStructure:    foldersFromFilesStructure,
 	}, nil
 }
