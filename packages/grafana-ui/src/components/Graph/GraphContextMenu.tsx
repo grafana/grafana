@@ -29,7 +29,7 @@ export type GraphContextMenuProps = ContextMenuProps & {
 export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   getContextMenuSource,
   timeZone,
-  items,
+  itemsGroup,
   dimensions,
   contextDimensions,
   ...otherProps
@@ -37,8 +37,8 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   const source = getContextMenuSource();
 
   //  Do not render items that do not have label specified
-  const itemsToRender = items
-    ? items.map((group) => ({
+  const itemsToRender = itemsGroup
+    ? itemsGroup.map((group) => ({
         ...group,
         items: group.items.filter((item) => item.label),
       }))
@@ -81,7 +81,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
     );
   };
 
-  return <ContextMenu {...otherProps} items={itemsToRender} renderHeader={renderHeader} />;
+  return <ContextMenu {...otherProps} itemsGroup={itemsToRender} renderHeader={renderHeader} />;
 };
 
 /** @internal */
