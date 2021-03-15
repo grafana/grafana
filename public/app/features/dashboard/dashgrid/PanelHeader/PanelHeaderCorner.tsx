@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 
 import { renderMarkdown, LinkModelSupplier, ScopedVars } from '@grafana/data';
-import { Tooltip, PopoverContent, InspectTab } from '@grafana/ui';
+import { Tooltip, PopoverContent } from '@grafana/ui';
 import { getLocationSrv, getTemplateSrv } from '@grafana/runtime';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { InspectTab } from 'app/features/inspector/types';
 import { selectors } from '@grafana/e2e-selectors';
 
 enum InfoMode {

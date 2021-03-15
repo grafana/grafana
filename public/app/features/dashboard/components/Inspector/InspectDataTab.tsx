@@ -22,7 +22,7 @@ import { css } from 'emotion';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
-import { DetailText } from './DetailText';
+import { DetailText } from 'app/features/inspector/DetailText';
 
 interface Props {
   panel: PanelModel;

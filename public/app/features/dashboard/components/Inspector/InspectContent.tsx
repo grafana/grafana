@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { CustomScrollbar, Drawer, TabContent, InspectSubtitle, InspectTab } from '@grafana/ui';
+import { CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
 import { getPanelInspectorStyles } from './styles';
 import { InspectDataTab } from './InspectDataTab';
-import { InspectMetadataTab } from './InspectMetadataTab';
 import { InspectJSONTab } from './InspectJSONTab';
 import { InspectErrorTab } from './InspectErrorTab';
 import { InspectStatsTab } from './InspectStatsTab';
 import { QueryInspector } from './QueryInspector';
 import { DashboardModel, PanelModel } from '../../state';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
+import { InspectMetadataTab } from 'app/features/inspector/InspectMetadataTab';
+import { InspectSubtitle } from 'app/features/inspector/InspectSubtitle';
+import { InspectTab } from 'app/features/inspector/types';
 
 interface Props {
   dashboard: DashboardModel;
