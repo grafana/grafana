@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ContextMenu } from '../ContextMenu/ContextMenu';
-import { MenuItemsGroup } from '../Menu/Menu';
+import { MenuItemsGroup } from '../Menu/MenuGroup';
 
 interface WithContextMenuProps {
   /** Menu item trigger that accepts openMenu prop */
@@ -30,7 +30,7 @@ export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, getC
           onClose={() => setIsMenuOpen(false)}
           x={menuPosition.x}
           y={menuPosition.y}
-          items={getContextMenuItems()}
+          itemsGroup={getContextMenuItems()}
         />
       )}
     </>

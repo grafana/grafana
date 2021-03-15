@@ -6,9 +6,8 @@ import {
   DataSourceApi,
   dateMath,
 } from '@grafana/data';
-import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { config, getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
-import { updateLocation } from 'app/core/actions';
 import store from 'app/core/store';
 import {
   ALERT_DEFINITION_UI_STATE_STORAGE_KEY,
@@ -52,9 +51,9 @@ export function getAlertRulesAsync(options: { state: string }): ThunkResult<void
 }
 
 export function togglePauseAlertRule(id: number, options: { paused: boolean }): ThunkResult<void> {
-  return async (dispatch, getState) => {
+  return async (dispatch) => {
     await getBackendSrv().post(`/api/alerts/${id}/pause`, options);
-    const stateFilter = getState().location.query.state || 'all';
+    const stateFilter = locationService.getSearchObject().state || 'all';
     dispatch(getAlertRulesAsync({ state: stateFilter.toString() }));
   };
 }
@@ -64,7 +63,7 @@ export function createNotificationChannel(data: any): ThunkResult<void> {
     try {
       await getBackendSrv().post(`/api/alert-notifications`, data);
       appEvents.emit(AppEvents.alertSuccess, ['Notification created']);
-      dispatch(updateLocation({ path: 'alerting/notifications' }));
+      locationService.push('/alerting/notifications');
     } catch (error) {
       appEvents.emit(AppEvents.alertError, [error.data.error]);
     }
@@ -76,7 +75,6 @@ export function updateNotificationChannel(data: any): ThunkResult<void> {
     try {
       await getBackendSrv().put(`/api/alert-notifications/${data.id}`, data);
       appEvents.emit(AppEvents.alertSuccess, ['Notification updated']);
-      dispatch(updateLocation({ path: 'alerting/notifications' }));
     } catch (error) {
       appEvents.emit(AppEvents.alertError, [error.data.error]);
     }
@@ -123,10 +121,9 @@ export function getAlertDefinition(id: string): ThunkResult<void> {
 export function createAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const alertDefinition = await buildAlertDefinition(getStore().alertDefinition);
-
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
-    dispatch(updateLocation({ path: 'alerting/list' }));
+    locationService.push('/alerting/list');
   };
 }
 
