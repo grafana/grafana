@@ -245,9 +245,10 @@ export const processVariable = (
     const variable = getVariable(identifier.id, getState());
     await processVariableDependencies(variable, getState());
 
-    const urlValue = ensureStringValues(queryParams['var-' + variable.name]);
+    const urlValue = queryParams['var-' + variable.name];
     if (urlValue !== void 0) {
-      await variableAdapters.get(variable.type).setValueFromUrl(variable, urlValue ?? '');
+      const stringUrlValue = ensureStringValues(urlValue);
+      await variableAdapters.get(variable.type).setValueFromUrl(variable, stringUrlValue);
       return;
     }
 
