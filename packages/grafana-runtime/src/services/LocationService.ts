@@ -127,10 +127,18 @@ export class HistoryWrapper implements LocationService {
   update(options: LocationUpdate) {
     if (options.partial && options.query) {
       this.partial(options.query, options.partial);
-    } else if (options.replace) {
-      this.replace(options.path!);
     } else {
-      this.push(options.path!);
+      const newLocation: H.LocationDescriptor = {
+        pathname: options.path,
+      };
+      if (options.query) {
+        newLocation.search = urlUtil.toUrlParams(options.query);
+      }
+      if (options.replace) {
+        this.replace(newLocation);
+      } else {
+        this.push(newLocation);
+      }
     }
   }
 }
