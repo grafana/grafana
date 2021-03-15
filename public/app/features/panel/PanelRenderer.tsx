@@ -1,5 +1,5 @@
 import { applyFieldOverrides, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
-import { PanelRendererProps } from '@grafana/runtime';
+import { PanelRendererProps, PanelRendererType } from '@grafana/runtime';
 import { config } from 'app/core/config';
 import { appEvents, contextSrv } from 'app/core/core';
 import React, { Component, useMemo } from 'react';
@@ -7,38 +7,31 @@ import { useAsync } from 'react-use';
 import { getPanelOptionsWithDefaults } from '../dashboard/state/getPanelOptionsWithDefaults';
 import { importPanelPlugin } from '../plugins/plugin_loader';
 
-interface State {
-  plugin?: PanelPlugin;
-  processedData?: PanelData;
-  options: Record<string, any>;
-  fieldConfig?: FieldConfigSource;
-}
-
-export const PanelRenderer = <T,>(props: PanelRendererProps<T>) => {
+export function PanelRenderer<T = {}>(props: PanelRendererProps<T>) {
   const { pluginId, options = {}, data, width, height, title, fieldConfig = { defaults: {}, overrides: [] } } = props;
-  const importState = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
+  const state = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
 
-  if (importState.error) {
+  if (state.error) {
     return <div>Failed to load plugin</div>;
   }
 
-  if (importState.loading) {
+  if (state.loading) {
     return <div>Loading plugin panel</div>;
   }
 
-  if (!importState.value) {
+  if (!state.value) {
     return <div>Failed to load plugin</div>;
   }
 
-  const plugin = importState.value;
+  const plugin = state.value;
 
   if (!plugin.panel) {
-    return <div>Seems like the plugin you are trying to load doesnt have a panel</div>;
+    return <div>Seems like the plugin you are trying to load doesnt have a panel component.</div>;
   }
 
   const pluginOptions = getPanelOptionsWithDefaults({
     plugin,
-    currentOptions: options ?? {},
+    currentOptions: options,
     currentFieldConfig: fieldConfig,
     isAfterPluginChange: false,
   });
@@ -77,11 +70,7 @@ export const PanelRenderer = <T,>(props: PanelRendererProps<T>) => {
       eventBus={appEvents}
     />
   );
-};
-
-const useFieldConfig = (fieldConfig?: FieldConfigSource): FieldConfigSource => {
-  return fieldConfig || { defaults: {}, overrides: [] };
-};
+}
 
 // export class PanelRenderer<T = {}> extends Component<PanelRendererProps<T>, State> {
 //   state: State = {
