@@ -80,6 +80,11 @@ export const RulesGroup: FC<Props> = ({ group, namespace, datasource }) => {
             </>
           )}
         </div>
+        <div className={styles.actionsSeparator}>|</div>
+        <div className={styles.actionIcons}>
+          <Icon title="edit" name="pen" />
+          <Icon title="manage permissions" name="lock" />
+        </div>
       </div>
       {isExpanded && (
         <div>
@@ -135,5 +140,13 @@ export const getStyles = (theme: GrafanaTheme) => ({
   datasourceOrigin: css`
     margin-right: 1em;
     color: ${theme.colors.textFaint};
+  `,
+  actionsSeparator: css`
+    margin: 0 ${theme.spacing.sm};
+  `,
+  actionIcons: css`
+    & > * + * {
+      margin-left: ${theme.spacing.sm};
+    }
   `,
 });
