@@ -1,5 +1,5 @@
 import { ApplyFieldOverrideOptions, DataTransformerConfig, dateMath, FieldColorModeId, PanelData } from '@grafana/data';
-import { GraphNG, LegendDisplayMode, Table } from '@grafana/ui';
+import { Button, LegendDisplayMode, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
@@ -7,6 +7,7 @@ import { QueryGroup } from '../query/components/QueryGroup';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 import { QueryGroupOptions } from 'app/types';
 import { PanelRenderer } from '../panel/PanelRenderer';
+import { Options } from 'app/plugins/panel/timeseries/types';
 
 interface State {
   queryRunner: PanelQueryRunner;
@@ -40,11 +41,23 @@ export const TestStuffPage: FC = () => {
    */
   const observable = useMemo(() => queryRunner.getData({ withFieldConfig: false, withTransforms: false }), []);
   const data = useObservable(observable);
+  const options: Options = {
+    legend: {
+      displayMode: LegendDisplayMode.List,
+      placement: 'bottom',
+      calcs: [],
+    },
+    graph: {},
+    tooltipOptions: {
+      mode: 'single',
+    },
+  };
 
   return (
     <div style={{ padding: '30px 50px' }} className="page-scrollbar-wrapper">
       <h3>New page</h3>
       <div>
+        <Button onClick={onRunQueries}>RUN</Button>
         <QueryGroup
           options={queryOptions}
           queryRunner={queryRunner}
@@ -55,7 +68,15 @@ export const TestStuffPage: FC = () => {
 
       {data && (
         <div style={{ padding: '16px' }}>
-          <PanelRenderer pluginId="timeseries" width={1200} height={300} data={data} />
+          <PanelRenderer<Options>
+            title="test"
+            onOptionsChange={() => {}}
+            pluginId="timeseries"
+            width={1200}
+            height={300}
+            data={data}
+            options={options}
+          />
           <hr></hr>
           <Table data={data.series[0]} width={1200} height={300} />
         </div>

@@ -1,14 +1,25 @@
-import { applyFieldOverrides, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
-import { PanelRendererProps, PanelRendererType } from '@grafana/runtime';
+import React from 'react';
+import { applyFieldOverrides, getTimeZone } from '@grafana/data';
+import { PanelRendererProps } from '@grafana/runtime';
 import { config } from 'app/core/config';
-import { appEvents, contextSrv } from 'app/core/core';
-import React, { Component, useMemo } from 'react';
+import { appEvents } from 'app/core/core';
 import { useAsync } from 'react-use';
 import { getPanelOptionsWithDefaults } from '../dashboard/state/getPanelOptionsWithDefaults';
 import { importPanelPlugin } from '../plugins/plugin_loader';
 
 export function PanelRenderer<T = {}>(props: PanelRendererProps<T>) {
-  const { pluginId, options = {}, data, width, height, title, fieldConfig = { defaults: {}, overrides: [] } } = props;
+  const {
+    pluginId,
+    options = {},
+    data,
+    width,
+    height,
+    title,
+    fieldConfig = { defaults: {}, overrides: [] },
+    onOptionsChange,
+  } = props;
+
+  const timeZone = getTimeZone();
   const state = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
 
   if (state.error) {
@@ -26,7 +37,7 @@ export function PanelRenderer<T = {}>(props: PanelRendererProps<T>) {
   const plugin = state.value;
 
   if (!plugin.panel) {
-    return <div>Seems like the plugin you are trying to load doesnt have a panel component.</div>;
+    return <div>Seems like the plugin you are trying to load does not have a panel component.</div>;
   }
 
   const pluginOptions = getPanelOptionsWithDefaults({
@@ -40,9 +51,9 @@ export function PanelRenderer<T = {}>(props: PanelRendererProps<T>) {
     data: data.series,
     fieldConfig: pluginOptions.fieldConfig,
     fieldConfigRegistry: plugin.fieldConfigRegistry,
-    replaceVariables: (str: string) => str,
+    replaceVariables: (str: string) => str, // panelmodel impl.
     theme: config.theme,
-    timeZone: contextSrv.user.timezone,
+    timeZone,
   });
 
   const PanelComponent = plugin.panel;
@@ -56,7 +67,7 @@ export function PanelRenderer<T = {}>(props: PanelRendererProps<T>) {
       }}
       title={title}
       timeRange={data?.timeRange}
-      timeZone={contextSrv.user.timezone}
+      timeZone={timeZone}
       options={options}
       fieldConfig={fieldConfig}
       transparent={false}
@@ -64,13 +75,36 @@ export function PanelRenderer<T = {}>(props: PanelRendererProps<T>) {
       height={height}
       renderCounter={0}
       replaceVariables={(str: string) => str}
-      onOptionsChange={() => {}}
+      onOptionsChange={onOptionsChange}
       onFieldConfigChange={() => {}}
       onChangeTimeRange={() => {}}
       eventBus={appEvents}
     />
   );
 }
+
+// type UsePluginOptionsParams<T> = {
+//   plugin: PanelPlugin | undefined;
+//   options: Record<string, any>;
+//   fieldConfig: FieldConfigSource<T>;
+// };
+
+// const usePluginOptions = <T,>(params: UsePluginOptionsParams<T>): OptionDefaults | undefined => {
+//   const { plugin, fieldConfig, options } = params;
+
+//   return useMemo(() => {
+//     if (!plugin) {
+//       return;
+//     }
+
+//     return getPanelOptionsWithDefaults({
+//       plugin,
+//       currentOptions: options,
+//       currentFieldConfig: fieldConfig,
+//       isAfterPluginChange: false,
+//     });
+//   }, [plugin, fieldConfig, options]);
+// };
 
 // export class PanelRenderer<T = {}> extends Component<PanelRendererProps<T>, State> {
 //   state: State = {

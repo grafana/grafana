@@ -6,7 +6,8 @@ export interface PanelRendererProps<T = {}> {
   pluginId: string;
   title: string;
   fieldConfig?: FieldConfigSource<T>;
-  options?: Record<string, any>;
+  options?: T;
+  onOptionsChange: (options: T) => void;
   width: number;
   height: number;
 }
