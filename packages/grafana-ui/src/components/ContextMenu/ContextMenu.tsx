@@ -2,9 +2,7 @@ import React, { useRef, useState, useLayoutEffect } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { useClickAway } from 'react-use';
 import { Portal } from '../Portal/Portal';
-import { Menu } from '../Menu/Menu';
-import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
-import { MenuItem } from '../Menu/MenuItem';
+import { Menu, MenuProps } from '../Menu/Menu';
 
 export interface ContextMenuProps {
   /** Starting horizontal position for the menu */
@@ -13,13 +11,13 @@ export interface ContextMenuProps {
   y: number;
   /** Callback for closing the menu */
   onClose?: () => void;
-  /** List of the menu items to display */
-  itemsGroup?: MenuItemsGroup[];
+  /** RenderProp function that returns menu items to display */
+  renderMenu: () => React.ReactElement<MenuProps>;
   /** A function that returns header element */
   renderHeader?: () => React.ReactNode;
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, itemsGroup, renderHeader }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, renderMenu, renderHeader }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const [positionStyles, setPositionStyles] = useState({});
 
@@ -46,8 +44,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
       onClose();
     }
   });
-
+  // console.log(renderMenu);
   const header = renderHeader && renderHeader();
+  const menu = renderMenu();
+
   return (
     <Portal>
       <Menu
@@ -57,22 +57,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
         ariaLabel={selectors.components.Menu.MenuComponent('Context')}
         onClick={onClose}
       >
-        {itemsGroup?.map((group, index) => (
-          <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
-            {(group.items || []).map((item) => (
-              <MenuItem
-                key={`${item.label}`}
-                url={item.url}
-                label={item.label}
-                ariaLabel={item.label}
-                target={item.target}
-                icon={item.icon}
-                active={item.active}
-                onClick={item.onClick}
-              />
-            ))}
-          </MenuGroup>
-        ))}
+        {menu}
       </Menu>
     </Portal>
   );
