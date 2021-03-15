@@ -280,7 +280,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       selector = EMPTY_SELECTOR;
     }
 
-    if (!isValueStart && selector === EMPTY_SELECTOR) {
+    if (!labelKey && selector === EMPTY_SELECTOR) {
       // start task gets all labels
       await this.start();
       const allLabels = this.getLabelKeys();
