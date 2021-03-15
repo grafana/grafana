@@ -2,7 +2,8 @@ import { applyFieldOverrides, FieldConfigSource, PanelData, PanelPlugin } from '
 import { PanelRendererProps } from '@grafana/runtime';
 import { config } from 'app/core/config';
 import { appEvents, contextSrv } from 'app/core/core';
-import React, { Component } from 'react';
+import React, { Component, useMemo } from 'react';
+import { useAsync } from 'react-use';
 import { getPanelOptionsWithDefaults } from '../dashboard/state/getPanelOptionsWithDefaults';
 import { importPanelPlugin } from '../plugins/plugin_loader';
 
@@ -13,86 +14,155 @@ interface State {
   fieldConfig?: FieldConfigSource;
 }
 
-export class PanelRenderer<T = {}> extends Component<PanelRendererProps<T>, State> {
-  state: State = {
-    options: {},
-  };
+export const PanelRenderer = <T,>(props: PanelRendererProps<T>) => {
+  const { pluginId, options = {}, data, width, height, title, fieldConfig = { defaults: {}, overrides: [] } } = props;
+  const importState = useAsync(() => importPanelPlugin(pluginId), [pluginId]);
 
-  async componentDidMount() {
-    this.processOptionsAndData();
+  if (importState.error) {
+    return <div>Failed to load plugin</div>;
   }
 
-  componentDidUpdate(prevProps: PanelRendererProps) {
-    if (this.props.data !== prevProps.data) {
-      this.processOptionsAndData();
-    }
+  if (importState.loading) {
+    return <div>Loading plugin panel</div>;
   }
 
-  async processOptionsAndData() {
-    const { pluginId, options, fieldConfig, data } = this.props;
-    const plugin = await importPanelPlugin(pluginId);
+  if (!importState.value) {
+    return <div>Failed to load plugin</div>;
+  }
 
-    const pluginOptions = getPanelOptionsWithDefaults({
-      plugin,
-      currentOptions: options ?? {},
-      currentFieldConfig: fieldConfig ?? { defaults: {}, overrides: [] },
-      isAfterPluginChange: false,
-    });
+  const plugin = importState.value;
 
-    const processedFrames = applyFieldOverrides({
-      data: data.series,
-      fieldConfig: pluginOptions.fieldConfig,
-      fieldConfigRegistry: plugin.fieldConfigRegistry,
-      replaceVariables: (str: string) => str,
-      theme: config.theme,
-      timeZone: contextSrv.user.timezone,
-    });
+  if (!plugin.panel) {
+    return <div>Seems like the plugin you are trying to load doesnt have a panel</div>;
+  }
 
-    this.setState({
-      plugin,
-      options: pluginOptions.options,
-      fieldConfig: pluginOptions.fieldConfig,
-      processedData: {
+  const pluginOptions = getPanelOptionsWithDefaults({
+    plugin,
+    currentOptions: options ?? {},
+    currentFieldConfig: fieldConfig,
+    isAfterPluginChange: false,
+  });
+
+  const processedFrames = applyFieldOverrides({
+    data: data.series,
+    fieldConfig: pluginOptions.fieldConfig,
+    fieldConfigRegistry: plugin.fieldConfigRegistry,
+    replaceVariables: (str: string) => str,
+    theme: config.theme,
+    timeZone: contextSrv.user.timezone,
+  });
+
+  const PanelComponent = plugin.panel;
+
+  return (
+    <PanelComponent
+      id={1}
+      data={{
         ...data,
         series: processedFrames,
-      },
-    });
-  }
+      }}
+      title={title}
+      timeRange={data?.timeRange}
+      timeZone={contextSrv.user.timezone}
+      options={options}
+      fieldConfig={fieldConfig}
+      transparent={false}
+      width={width}
+      height={height}
+      renderCounter={0}
+      replaceVariables={(str: string) => str}
+      onOptionsChange={() => {}}
+      onFieldConfigChange={() => {}}
+      onChangeTimeRange={() => {}}
+      eventBus={appEvents}
+    />
+  );
+};
 
-  render() {
-    const { plugin, processedData, options, fieldConfig } = this.state;
-    const { width, height } = this.props;
+const useFieldConfig = (fieldConfig?: FieldConfigSource): FieldConfigSource => {
+  return fieldConfig || { defaults: {}, overrides: [] };
+};
 
-    if (!plugin || !processedData || !fieldConfig) {
-      return null;
-    }
+// export class PanelRenderer<T = {}> extends Component<PanelRendererProps<T>, State> {
+//   state: State = {
+//     options: {},
+//   };
 
-    const PanelComponent = plugin.panel;
-    const dummyFunc = (() => {}) as any;
+//   async componentDidMount() {
+//     this.processOptionsAndData();
+//   }
 
-    if (!PanelComponent) {
-      return null;
-    }
+//   componentDidUpdate(prevProps: PanelRendererProps) {
+//     if (this.props.data !== prevProps.data) {
+//       this.processOptionsAndData();
+//     }
+//   }
 
-    return (
-      <PanelComponent
-        id={1}
-        data={processedData}
-        title={''}
-        timeRange={processedData?.timeRange}
-        timeZone={contextSrv.user.timezone}
-        options={options}
-        fieldConfig={fieldConfig}
-        transparent={false}
-        width={width}
-        height={height}
-        renderCounter={0}
-        replaceVariables={(str: string) => str}
-        onOptionsChange={dummyFunc}
-        onFieldConfigChange={dummyFunc}
-        onChangeTimeRange={dummyFunc}
-        eventBus={appEvents}
-      />
-    );
-  }
-}
+//   async processOptionsAndData() {
+//     const { pluginId, options, fieldConfig, data } = this.props;
+//     const plugin = await importPanelPlugin(pluginId);
+
+//     const pluginOptions = getPanelOptionsWithDefaults({
+//       plugin,
+//       currentOptions: options ?? {},
+//       currentFieldConfig: fieldConfig ?? { defaults: {}, overrides: [] },
+//       isAfterPluginChange: false,
+//     });
+
+//     const processedFrames = applyFieldOverrides({
+//       data: data.series,
+//       fieldConfig: pluginOptions.fieldConfig,
+//       fieldConfigRegistry: plugin.fieldConfigRegistry,
+//       replaceVariables: (str: string) => str,
+//       theme: config.theme,
+//       timeZone: contextSrv.user.timezone,
+//     });
+
+//     this.setState({
+//       plugin,
+//       options: pluginOptions.options,
+//       fieldConfig: pluginOptions.fieldConfig,
+//       processedData: {
+//         ...data,
+//         series: processedFrames,
+//       },
+//     });
+//   }
+
+//   render() {
+//     const { plugin, processedData, options, fieldConfig } = this.state;
+//     const { width, height } = this.props;
+
+//     if (!plugin || !processedData || !fieldConfig) {
+//       return null;
+//     }
+
+//     const PanelComponent = plugin.panel;
+//     const dummyFunc = (() => {}) as any;
+
+//     if (!PanelComponent) {
+//       return null;
+//     }
+
+//     return (
+//       <PanelComponent
+//         id={1}
+//         data={processedData}
+//         title={''}
+//         timeRange={processedData?.timeRange}
+//         timeZone={contextSrv.user.timezone}
+//         options={options}
+//         fieldConfig={fieldConfig}
+//         transparent={false}
+//         width={width}
+//         height={height}
+//         renderCounter={0}
+//         replaceVariables={(str: string) => str}
+//         onOptionsChange={dummyFunc}
+//         onFieldConfigChange={dummyFunc}
+//         onChangeTimeRange={dummyFunc}
+//         eventBus={appEvents}
+//       />
+//     );
+//   }
+// }
