@@ -3,6 +3,8 @@ package notifier
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/notify"
@@ -11,7 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestAlertProvider_PutPostableAlert(t *testing.T) {

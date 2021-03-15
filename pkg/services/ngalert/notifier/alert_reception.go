@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"github.com/prometheus/common/model"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -11,6 +10,7 @@ import (
 	"github.com/prometheus/alertmanager/provider"
 	"github.com/prometheus/alertmanager/provider/mem"
 	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 )
 
 type PostableAlert struct {
@@ -25,7 +25,7 @@ type AlertProvider struct {
 	logger log.Logger
 
 	// TODO(codesome): This stage is temporary to get code out quickly.
-	// Eventually, the alerts meant directly for recievers and not routing
+	// Eventually, the alerts meant directly for receivers and not routing
 	// will be stored in memory and provided via an iterator, for example
 	// GetPendingLegacy() AlertIterator, and the external code will use this
 	// iterator to send to the stage.

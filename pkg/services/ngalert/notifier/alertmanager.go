@@ -99,7 +99,6 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 			routingStage[name] = notify.MultiStage{silencingStage, stage}
 		}
 		am.dispatcher = dispatch.NewDispatcher(am.alerts, BuildRoutingConfiguration(), routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), nil)
-
 	}
 
 	am.wg.Add(1)
@@ -115,13 +114,13 @@ func (am *Alertmanager) CreateAlerts(alerts ...*PostableAlert) error {
 func (am *Alertmanager) ListSilences(matchers []*labels.Matcher) ([]types.Silence, error) {
 	pbsilences, _, err := am.silences.Query()
 	if err != nil {
-		errors.Wrap(err, "unable to query for the list of silences")
+		return nil, errors.Wrap(err, "unable to query for the list of silences")
 	}
 	r := []types.Silence{}
 	for _, pbs := range pbsilences {
 		s, err := silenceFromProto(pbs)
 		if err != nil {
-			errors.Wrap(err, "unable to marshal silence")
+			return nil, errors.Wrap(err, "unable to marshal silence")
 		}
 
 		sms := make(map[string]string)
@@ -235,6 +234,10 @@ func silenceFromProto(s *silencepb.Silence) (*types.Silence, error) {
 			t = labels.MatchEqual
 		case silencepb.Matcher_REGEXP:
 			t = labels.MatchRegexp
+		case silencepb.Matcher_NOT_EQUAL:
+			t = labels.MatchNotEqual
+		case silencepb.Matcher_NOT_REGEXP:
+			t = labels.MatchNotRegexp
 		}
 		matcher, err := labels.NewMatcher(t, m.Name, m.Pattern)
 		if err != nil {
