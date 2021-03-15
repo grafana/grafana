@@ -7,9 +7,8 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectStatsTab } from '../dashboard/components/Inspector/InspectStatsTab';
-// import { InspectDataTab } from '../dashboard/components/Inspector/InspectDataTab';
-import { QueryInspector } from '../dashboard/components/Inspector/QueryInspector';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
+import { QueryInspector } from 'app/features/inspector/QueryInspector';
 
 interface DispatchProps {
   runQueries: typeof runQueries;
