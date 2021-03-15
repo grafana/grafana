@@ -96,7 +96,8 @@ export class HistoryWrapper implements LocationService {
   }
 
   replace(location: H.Path | H.LocationDescriptor, forceRouteReload?: boolean) {
-    const state = forceRouteReload ? { forceRouteReload: true } : undefined;
+    const prevState = (this.history.location.state as any)?.forceRouteReload;
+    const state = forceRouteReload ? { forceRouteReload: prevState ? prevState + 1 : 1 } : undefined;
 
     if (typeof location === 'string') {
       this.history.replace(location, state);
@@ -109,9 +110,10 @@ export class HistoryWrapper implements LocationService {
   }
 
   reload() {
+    const prevState = (this.history.location.state as any)?.forceRouteReload;
     this.history.replace({
       ...this.history.location,
-      state: { forceRouteReload: true },
+      state: { forceRouteReload: prevState ? prevState + 1 : 1 },
     });
   }
 
