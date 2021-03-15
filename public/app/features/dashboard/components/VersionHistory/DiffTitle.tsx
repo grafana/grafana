@@ -1,37 +1,31 @@
 import React from 'react';
-import { useStyles, Icon, Button } from '@grafana/ui';
+import { useStyles, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
-import { Change } from './DiffGroup';
+import { Diff, getChangeText } from './utils';
 import { DiffValues } from './DiffValues';
-import { getChangeText } from './DiffSummary';
 
 type DiffTitleProps = {
-  diff?: Change;
+  diff?: Diff;
   title: string;
 };
 
 export const DiffTitle: React.FC<DiffTitleProps> = ({ diff, title }) => {
   const styles = useStyles(getDiffTitleStyles);
   return diff ? (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <div>
-        <Icon type="mono" name="circle" className={styles[diff.op]} /> <span className={styles.embolden}>{title}</span>{' '}
-        <span>{getChangeText(diff.op)}</span> <DiffValues change={diff} />
-      </div>
-      <Button size="sm" variant="secondary">
-        Go to ln:{diff.startLineNumber}
-      </Button>
-    </div>
+    <>
+      <Icon type="mono" name="circle" className={styles[diff.op]} /> <span className={styles.embolden}>{title}</span>{' '}
+      <span>{getChangeText(diff.op)}</span> <DiffValues diff={diff} />
+    </>
   ) : (
-    <div style={{ marginBottom: 16 }}>
+    <div className={styles.withoutDiff}>
       <Icon type="mono" name="circle" className={styles.replace} /> <span className={styles.embolden}>{title}</span>{' '}
       <span>{getChangeText('replace')}</span>
     </div>
   );
 };
 
-export const getDiffTitleStyles = (theme: GrafanaTheme) => ({
+const getDiffTitleStyles = (theme: GrafanaTheme) => ({
   embolden: css`
     font-weight: ${theme.typography.weight.bold};
   `,
@@ -41,7 +35,22 @@ export const getDiffTitleStyles = (theme: GrafanaTheme) => ({
   replace: css`
     color: ${theme.palette.warn};
   `,
+  move: css`
+    color: ${theme.palette.warn};
+  `,
+  copy: css`
+    color: ${theme.palette.warn};
+  `,
+  _get: css`
+    color: ${theme.palette.warn};
+  `,
+  test: css`
+    color: ${theme.palette.warn};
+  `,
   remove: css`
     color: ${theme.palette.critical};
+  `,
+  withoutDiff: css`
+    margin-bottom: ${theme.spacing.md};
   `,
 });
