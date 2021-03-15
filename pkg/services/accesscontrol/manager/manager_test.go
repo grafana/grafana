@@ -101,7 +101,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 
 			res, err := ac.GetUserRoles(context.Background(), userRolesQuery)
 			require.NoError(t, err)
-			assert.Equal(t, len(tc.roles), len(res))
+			assert.Len(t, res, len(tc.roles))
 
 			userPermissionsQuery := accesscontrol.GetUserPermissionsQuery{
 				OrgId:  1,
@@ -110,7 +110,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 
 			permissions, err := ac.GetUserPermissions(context.Background(), userPermissionsQuery)
 			require.NoError(t, err)
-			assert.Equal(t, len(tc.roles[0].Permissions), len(permissions))
+			assert.Len(t, permissions, len(tc.roles[0].Permissions))
 		})
 	}
 }

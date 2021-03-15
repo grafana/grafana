@@ -21,10 +21,12 @@ func Middleware(ac accesscontrol.AccessControl) func(string, ...string) macaron.
 				tmpl, err := template.New("scope").Parse(scope)
 				if err != nil {
 					c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
+					return
 				}
 				err = tmpl.Execute(&buf, c.AllParams())
 				if err != nil {
 					c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
+					return
 				}
 				scopes[i] = buf.String()
 			}

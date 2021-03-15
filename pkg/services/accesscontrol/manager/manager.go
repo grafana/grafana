@@ -24,7 +24,7 @@ func init() {
 	registry.RegisterService(&AccessControlService{})
 }
 
-// Init initializes the AlertingService.
+// Init initializes the AccessControlService.
 func (ac *AccessControlService) Init() error {
 	ac.Log = log.New("accesscontrol")
 

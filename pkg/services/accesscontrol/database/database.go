@@ -214,7 +214,6 @@ func (ac *AccessControlStore) UpdateRole(ctx context.Context, cmd accesscontrol.
 		}
 
 		affectedRows, err := sess.ID(existingRole.Id).Update(role)
-
 		if err != nil {
 			return err
 		}
@@ -326,7 +325,6 @@ func (ac *AccessControlStore) UpdatePermission(cmd *accesscontrol.UpdatePermissi
 		}
 
 		affectedRows, err := sess.ID(cmd.Id).Update(permission)
-
 		if err != nil {
 			return err
 		}
