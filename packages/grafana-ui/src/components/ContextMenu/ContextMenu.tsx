@@ -2,7 +2,7 @@ import React, { useRef, useState, useLayoutEffect } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { useClickAway } from 'react-use';
 import { Portal } from '../Portal/Portal';
-import { Menu, MenuProps } from '../Menu/Menu';
+import { Menu } from '../Menu/Menu';
 
 export interface ContextMenuProps {
   /** Starting horizontal position for the menu */
@@ -12,7 +12,7 @@ export interface ContextMenuProps {
   /** Callback for closing the menu */
   onClose?: () => void;
   /** RenderProp function that returns menu items to display */
-  renderMenu: () => React.ReactElement<MenuProps>;
+  renderMenu?: () => React.ReactNode;
   /** A function that returns header element */
   renderHeader?: () => React.ReactNode;
 }
@@ -44,9 +44,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
       onClose();
     }
   });
-  // console.log(renderMenu);
   const header = renderHeader && renderHeader();
-  const menu = renderMenu();
+  const menu = renderMenu && renderMenu();
 
   return (
     <Portal>
