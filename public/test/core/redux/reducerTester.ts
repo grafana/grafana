@@ -18,6 +18,7 @@ export interface When<State> {
 export interface Then<State> {
   thenStateShouldEqual: (state: State) => When<State>;
   thenStatePredicateShouldEqual: (predicate: (resultingState: State) => boolean) => When<State>;
+  whenActionIsDispatched: (action: PayloadAction<any> | Action<any>) => Then<State>;
 }
 
 interface ObjectType extends Object {

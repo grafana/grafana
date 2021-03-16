@@ -83,7 +83,7 @@ export interface DataFrameSchema {
   /**
    * Field definition without any metadata
    */
-  fields?: FieldSchema[];
+  fields: FieldSchema[];
 }
 
 /**
