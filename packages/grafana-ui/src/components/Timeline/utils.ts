@@ -14,6 +14,8 @@ import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { TimelineCoreOptions, getConfig } from './timeline';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import { AxisPlacement, GraphGradientMode, ScaleDirection, ScaleOrientation } from '../uPlot/config';
+//import { classicColors } from '@grafana/data/src/utils/namedColorsPalette';
+import { classicColors } from '../../../../grafana-data/src/utils/namedColorsPalette';
 
 import { TimelineFieldConfig } from '../..';
 import { TimelineMode } from './types';
@@ -69,11 +71,9 @@ export function preparePlotConfigBuilder(
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
 
     // hardcoded color mappings for states 0,1,2,3,<other>
-    fill: (seriesIdx, valueIdx, value) =>
-      value === 0 ? 'red' : value === 1 ? 'orange' : value === 2 ? 'yellow' : value === 3 ? 'green' : 'black',
+    fill: (seriesIdx, valueIdx, value) => classicColors[Math.floor(value % classicColors.length)],
 
-    stroke: (seriesIdx, valueIdx, value) =>
-      value === 0 ? 'red' : value === 1 ? 'orange' : value === 2 ? 'yellow' : value === 3 ? 'green' : 'black',
+    stroke: (seriesIdx, valueIdx, value) => classicColors[Math.floor(value % classicColors.length)],
 
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
