@@ -42,7 +42,6 @@ type API struct {
 func (api *API) RegisterAPIEndpoints() {
 	logger := log.New("ngalert.api")
 	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiMock{log: logger})
-	api.RegisterPermissionsApiEndpoints(PermissionsApiBase{log: logger})
 	api.RegisterPrometheusApiEndpoints(PrometheusApiBase{log: logger})
 	api.RegisterRulerApiEndpoints(RulerApiMock{log: logger})
 	api.RegisterTestingApiEndpoints(TestingApiBase{log: logger})
