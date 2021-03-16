@@ -1,4 +1,4 @@
-package notifiers
+package channels
 
 import (
 	"context"
@@ -71,6 +71,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) error {
 			Subject: "TODO",
 			Data: map[string]interface{}{
 				"Title":             "TODO",
+				"Subject":           "TODO",
 				"Receiver":          data.Receiver,
 				"Status":            data.Status,
 				"Alerts":            data.Alerts,
@@ -78,6 +79,8 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) error {
 				"CommonLabels":      data.CommonLabels,
 				"CommonAnnotations": data.CommonAnnotations,
 				"ExternalURL":       data.ExternalURL,
+				"RuleUrl":           "TODO",
+				"AlertPageUrl":      "TODO",
 			},
 			To:          en.Addresses,
 			SingleEmail: en.SingleEmail,

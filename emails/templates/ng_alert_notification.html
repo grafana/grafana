@@ -1,12 +1,21 @@
 [[Subject .Subject "[[.Title]]"]]
 
+<style>
+  .alert.alert-warning {
+    background-color: #E6522C;
+  }
+  .alert.alert-good {
+    background-color: #68B90F;
+  }
+</style>
+
 <table class="row">
   <tr>
     <td class="wrapper last">
       <table class="twelve columns">
         <tr>
           <td class="center">
-            <h3 style="/*text-align:center*/;color: [[.SeverityColor]]; font-weight: bold; font-style: italic;">[[.Title]]</h3>
+            <h3 style="[[ if gt (len .Alerts.Firing) 0 ]]color: #E6522C;[[end]] font-weight: bold; font-style: italic;">[[.Title]]</h3>
           </td>
         </tr>
       </table>
@@ -14,13 +23,72 @@
   </tr>
 </table>
 
-<table class="row" >
+<table class="row">
   <tr>
     <td class="last">
-      <table class="twelve columns">
+      <table>
         <tr>
-          <td class="center">
-            <p style="/*text-align:center*/">[[.Message]]</p>
+          [[ if gt (len .Alerts.Firing) 0 ]]
+          <td class="alert alert-warning">
+            [[ else ]]
+          <td class="alert alert-good">
+            [[ end ]].
+            [[ .Alerts | len ]] alert[[ if gt (len .Alerts) 1 ]]s[[ end ]] for
+            [[ range .GroupLabels.SortedPairs ]]
+              [[ .Name ]]=[[ .Value ]]
+            [[ end ]]
+          </td>
+        </tr>
+        <tr>
+          <td class="">
+            <table>
+              [[ if gt (len .Alerts.Firing) 0 ]]
+                <tr>
+                  <td class="">
+                    <strong>([[ .Alerts.Firing | len ]]) Firing</strong>
+                  </td>
+                </tr>
+              [[ end ]]
+              [[ range .Alerts.Firing ]]
+                <tr>
+                  <td class="">
+                    <strong>Labels</strong><br />
+                    [[ range .Labels.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+                    [[ if gt (len .Annotations) 0 ]]<strong>Annotations</strong><br />[[ end ]]
+                    [[ range .Annotations.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+                    <a href="[[ .GeneratorURL ]]">Source</a><br />
+                  </td>
+                </tr>
+              [[ end ]]
+
+              [[ if gt (len .Alerts.Resolved) 0 ]]
+                [[ if gt (len .Alerts.Firing) 0 ]]
+                  <tr>
+                    <td class="">
+                      <br />
+                      <hr />
+                      <br />
+                    </td>
+                  </tr>
+                [[ end ]]
+                <tr>
+                  <td class="">
+                    <strong>([[ .Alerts.Resolved | len ]]) Resolved</strong>
+                  </td>
+                </tr>
+              [[ end ]]
+              [[ range .Alerts.Resolved ]]
+                <tr>
+                  <td class="">
+                    <strong>Labels</strong><br />
+                    [[ range .Labels.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+                    [[ if gt (len .Annotations) 0 ]]<strong>Annotations</strong><br />[[ end ]]
+                    [[ range .Annotations.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+                    <a href="[[ .GeneratorURL ]]">Source</a><br />
+                  </td>
+                </tr>
+              [[ end ]]
+            </table>
           </td>
         </tr>
       </table>
@@ -28,78 +96,6 @@
   </tr>
 </table>
 
-[[if ne .Error "" ]]
-<table class="row" >
-  <tr>
-    <td class="last">
-      <center>
-      <table class="twelve columns" >
-        <tr>
-          <td class="twelve last">
-            <h5 style="font-weight: bold;">Error message</h5>
-          </td>
-        </tr>
-        <tr>
-          <td class="twelve last">
-            <p>[[.Error]]</p>
-          </td>
-        </tr>
-      </table>
-      </center>
-    </td>
-  </tr>
-</table>
-[[end]]
-
-[[if ne .State "ok" ]]
-<table class="row" >
-  <tr>
-    <td class="last">
-      <center>
-      <table class="twelve columns" >
-        <tr>
-          <td class="six">
-            <h5 style="font-weight: bold;">Metric name</h5>
-          </td>
-          <td class="six last" style="text-align: right; width:100px;">
-            <h5 style="font-weight: bold;text-align: right;">Value</h5>
-          </td>
-        </tr>
-        [[range .EvalMatches]]
-        <tr>
-          <td class="six">
-            <h5 class="data">[[.Metric]]</h5>
-          </td>
-          <td class="six last" style="text-align: right; width:100px;">
-            <h5 class="data" style="text-align: right;">[[.Value]]</h5>
-          </td>
-        </tr>
-        [[end]]
-      </table>
-      </center>
-    </td>
-  </tr>
-</table>
-[[end]]
-
-<table class="row" >
-    <tr>
-    <td class="wrapper last">
-      <table class="twelve columns">
-        <tr>
-          <td class="center">
-            [[if ne .ImageLink "" ]]
-              <img src="[[.ImageLink]]" alt="Alerting Panel"/>
-            [[end]]
-            [[if ne .EmbeddedImage "" ]]
-              <img src="cid:[[.EmbeddedImage]]" alt="Alerting Panel"/>
-            [[end]]
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
 
 
 <table class="row">
