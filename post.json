@@ -536,6 +536,7 @@
    "x-go-package": "github.com/prometheus/client_golang/api/prometheus/v1"
   },
   "EvalAlertConditionCommand": {
+   "description": "EvalAlertConditionCommand is the command for evaluating a condition",
    "properties": {
     "condition": {
      "type": "string",
@@ -555,7 +556,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
   "ExtendedReceiver": {
    "properties": {
@@ -2140,7 +2141,6 @@
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2173,9 +2173,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
-   "x-go-package": "net/url"
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "UpdateAlertDefinitionCommand": {
    "properties": {
@@ -3392,7 +3392,7 @@
    }
   },
   "/api/v1/receiver/test": {
-   "get": {
+   "post": {
     "consumes": [
      "application/json"
     ],
@@ -3436,7 +3436,7 @@
    }
   },
   "/api/v1/rule/test": {
-   "get": {
+   "post": {
     "consumes": [
      "application/json"
     ],

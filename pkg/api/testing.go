@@ -1,14 +1,12 @@
 package api
 
 import (
-	"time"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/prometheus/promql"
 )
 
-// swagger:route Get /api/v1/receiver/test testing RouteTestReceiverConfig
+// swagger:route Post /api/v1/receiver/test testing RouteTestReceiverConfig
 //
 // Test receiver
 //
@@ -23,7 +21,7 @@ import (
 //		 412: SmtpNotEnabled
 //		 500: Failure
 
-// swagger:route Get /api/v1/rule/test testing RouteTestRuleConfig
+// swagger:route Post /api/v1/rule/test testing RouteTestRuleConfig
 //
 // Test rule
 //
@@ -52,7 +50,7 @@ type TestRuleRequest struct {
 type TestRulePayload struct {
 	Expr LotexQuery `json:"expr,omitempty"`
 	// GrafanaManagedCondition for grafana alerts
-	GrafanaManagedCondition EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
+	GrafanaManagedCondition models.EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
 }
 
 // swagger:model
@@ -61,13 +59,6 @@ type LotexQuery struct {
 	Expr string
 	// DatasourceUID is required if the query will be sent to grafana to be executed
 	DatasourceUID string `json:"datasourceUid,omitempty"`
-}
-
-// swagger:model
-type EvalAlertConditionCommand struct {
-	Condition string              `json:"condition"`
-	Data      []models.AlertQuery `json:"data"`
-	Now       time.Time           `json:"now"`
 }
 
 // swagger:model
