@@ -36,7 +36,8 @@ export const TokenRevokedModal = (props: Props) => {
             </p>
             <p>
               <strong>To resume your session, sign in again.</strong>
-              Contact your administrator or visit the license page to review your quota if you are repeatedly signed out automatically.
+              Contact your administrator or visit the license page to review your quota if you are repeatedly signed out
+              automatically.
             </p>
           </div>
           <Button size="md" variant="primary" onClick={redirectToLogin}>
