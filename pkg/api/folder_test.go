@@ -200,6 +200,8 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 }
 
 type fakeFolderService struct {
+	dashboards.FolderService
+
 	GetFoldersResult     []*models.Folder
 	GetFoldersError      error
 	GetFolderByUIDResult *models.Folder

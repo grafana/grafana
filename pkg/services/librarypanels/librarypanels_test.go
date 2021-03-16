@@ -13,9 +13,7 @@ import (
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -751,10 +749,6 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 		User:      &user,
 		Overwrite: false,
 	}
-	bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
-		cmd.Result = nil
-		return nil
-	})
 	origUpdateAlerting := dashboards.UpdateAlerting
 	t.Cleanup(func() {
 		dashboards.UpdateAlerting = origUpdateAlerting
@@ -763,7 +757,6 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 		return nil
 	}
 
-	fmt.Printf("Saving dashboard with store %p, org ID %d, folder ID %d\n", sqlStore, dash.OrgId, dash.FolderId)
 	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(dashItem, true)
 	require.NoError(t, err)
 
@@ -901,20 +894,4 @@ func getCompareOptions() []cmp.Option {
 			return in.UTC().Unix()
 		}),
 	}
-}
-
-type fakeDashboardStore struct {
-	dboards.Store
-}
-
-func (s *fakeDashboardStore) ValidateDashboardBeforeSave(*models.Dashboard, bool) (bool, error) {
-	return false, nil
-}
-
-func (s *fakeDashboardStore) CreateFolder(title, uid string) (*models.Folder, error) {
-	return &models.Folder{}, nil
-}
-
-func (s *fakeDashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
-	return &models.Dashboard{}, nil
 }

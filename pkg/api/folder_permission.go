@@ -110,7 +110,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if err := hs.SQLStore.UpdateDashboardACL(folder.Id, items); err != nil {
+	if err := updateDashboardACL(hs, folder.Id, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) {
 			err = models.ErrFolderAclInfoMissing
 		}

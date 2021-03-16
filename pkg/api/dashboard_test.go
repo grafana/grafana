@@ -1275,3 +1275,12 @@ func (sc *scenarioContext) ToJSON() *simplejson.Json {
 	require.NoError(sc.t, err)
 	return result
 }
+
+type mockDashboardProvisioningService struct {
+	dashboards.DashboardProvisioningService
+}
+
+func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (
+	*models.DashboardProvisioning, error) {
+	return nil, nil
+}

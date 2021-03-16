@@ -31,9 +31,9 @@ type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
 	GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error)
-	GetProvisionedDashboardDataByDashboardID(DashboardId int64) (*models.DashboardProvisioning, error)
-	UnprovisionDashboard(dashboardId int64) error
-	DeleteProvisionedDashboard(dashboardId int64, orgId int64) error
+	GetProvisionedDashboardDataByDashboardID(dashboardID int64) (*models.DashboardProvisioning, error)
+	UnprovisionDashboard(dashboardID int64) error
+	DeleteProvisionedDashboard(dashboardID int64, orgID int64) error
 }
 
 // NewService is a factory for creating a new dashboard service.
