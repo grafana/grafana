@@ -487,7 +487,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   app: CoreApp | string;
 
   cacheTimeout?: string;
-  exploreMode?: ExploreMode;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
@@ -499,11 +498,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Explore state used by various datasources
   liveStreaming?: boolean;
-  /**
-   * @deprecated showingGraph and showingTable are always set to true
-   */
-  showingGraph?: boolean;
-  showingTable?: boolean;
 }
 
 export interface DataQueryTimings {
@@ -549,6 +543,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   name: string;
   typeLogoUrl: string;
   type: string;
+  typeName: string;
   access: string;
   url: string;
   password: string;

@@ -14,8 +14,8 @@
 # Documentation owner: Diana Payton
 /docs/ @grafana/docs-squad
 /contribute/ @marcusolsson @grafana/docs-squad
-/docs/sources/developers/plugins/ @marcusolsson
-/docs/sources/enterprise/ @osg-grafana
+/docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad
+/docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
 
 # Backend code
 *.go @grafana/backend-platform
@@ -27,9 +27,13 @@ go.sum @grafana/backend-platform
 /pkg/tsdb/azuremonitor @grafana/cloud-datasources
 /pkg/tsdb/cloudmonitoring @grafana/cloud-datasources
 
+# Database migrations
+/pkg/services/sqlstore/migrations @grafana/backend-platform @grafana/hosted-grafana-team
+*_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
+/contribute/architecture/backend @grafana/backend-platform
 
 /e2e @grafana/grafana-frontend-platform
 /packages @grafana/grafana-frontend-platform

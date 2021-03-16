@@ -13,6 +13,11 @@ export const Components = {
       },
     },
   },
+  Menu: {
+    MenuComponent: (title: string) => `${title} menu`,
+    MenuGroup: (title: string) => `${title} menu group`,
+    MenuItem: (title: string) => `${title} menu item`,
+  },
   Panels: {
     Panel: {
       title: (title: string) => `Panel header title item ${title}`,
@@ -179,5 +184,14 @@ export const Components = {
     container: 'Dashboard link container',
     dropDown: 'Dashboard link dropdown',
     link: 'Dashboard link',
+  },
+  LoadingIndicator: {
+    icon: 'Loading indicator',
+  },
+  CallToActionCard: {
+    button: (name: string) => `Call to action button ${name}`,
+  },
+  DataLinksContextMenu: {
+    singleLink: 'Data link',
   },
 };

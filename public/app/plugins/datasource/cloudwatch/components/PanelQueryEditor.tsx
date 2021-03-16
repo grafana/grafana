@@ -2,13 +2,13 @@ import React, { PureComponent } from 'react';
 import pick from 'lodash/pick';
 import { ExploreQueryFieldProps, ExploreMode } from '@grafana/data';
 import { Segment } from '@grafana/ui';
-import { CloudWatchQuery } from '../types';
+import { CloudWatchJsonData, CloudWatchQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { QueryInlineField } from './';
 import { MetricsQueryEditor } from './MetricsQueryEditor';
 import LogsQueryEditor from './LogsQueryEditor';
 
-export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
+export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 
 const apiModes = {
   Metrics: { label: 'CloudWatch Metrics', value: 'Metrics' },

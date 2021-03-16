@@ -7,6 +7,7 @@ import { ElasticDatasource } from '../../datasource';
 
 const query: ElasticsearchQuery = {
   refId: 'A',
+  query: '',
   metrics: [{ id: '1', type: 'count' }],
   bucketAggs: [{ type: 'date_histogram', id: '2' }],
 };
