@@ -260,20 +260,19 @@ describe('DashboardModel', () => {
     });
   });
 
-  describe('updateSubmenuVisibility with empty lists', () => {
+  describe('isSubMenuVisible with empty lists', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({});
-      model.updateSubmenuVisibility();
     });
 
-    it('should not enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(false);
+    it('should not show submenu', () => {
+      expect(model.isSubMenuVisible()).toBe(false);
     });
   });
 
-  describe('updateSubmenuVisibility with annotation', () => {
+  describe('isSubMenuVisible with annotation', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -282,15 +281,14 @@ describe('DashboardModel', () => {
           list: [{}],
         },
       });
-      model.updateSubmenuVisibility();
     });
 
-    it('should enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(true);
+    it('should show submmenu', () => {
+      expect(model.isSubMenuVisible()).toBe(true);
     });
   });
 
-  describe('updateSubmenuVisibility with template var', () => {
+  describe('isSubMenuVisible with template var', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -299,15 +297,14 @@ describe('DashboardModel', () => {
           list: [{}],
         },
       });
-      model.updateSubmenuVisibility();
     });
 
     it('should enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(true);
+      expect(model.isSubMenuVisible()).toBe(true);
     });
   });
 
-  describe('updateSubmenuVisibility with hidden template var', () => {
+  describe('isSubMenuVisible with hidden template var', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -316,15 +313,14 @@ describe('DashboardModel', () => {
           list: [{ hide: 2 }],
         },
       });
-      model.updateSubmenuVisibility();
     });
 
     it('should not enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(false);
+      expect(model.isSubMenuVisible()).toBe(false);
     });
   });
 
-  describe('updateSubmenuVisibility with hidden annotation toggle', () => {
+  describe('isSubMenuVisible with hidden annotation toggle', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
@@ -333,11 +329,10 @@ describe('DashboardModel', () => {
           list: [{ hide: true }],
         },
       });
-      dashboard.updateSubmenuVisibility();
     });
 
     it('should not enable submmenu', () => {
-      expect(dashboard.meta.submenuEnabled).toBe(false);
+      expect(dashboard.isSubMenuVisible()).toBe(false);
     });
   });
 

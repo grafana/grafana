@@ -21,6 +21,7 @@ const getCallToActionCardStyles = stylesFactory((theme: GrafanaTheme) => ({
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    flex-grow: 1;
   `,
   message: css`
     margin-bottom: ${theme.spacing.lg};

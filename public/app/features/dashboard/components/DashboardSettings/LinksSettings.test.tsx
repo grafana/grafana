@@ -53,7 +53,6 @@ describe('LinksSettings', () => {
       id: 74,
       version: 7,
       links: [...links],
-      updateSubmenuVisibility: () => {},
     };
   });
 

@@ -33,7 +33,7 @@ export const AngularEditorLoader: React.FC<Props> = React.memo(({ annotation, da
 
       const component = loader.load(ref.current, scopeProps, template);
       component.digest();
-      component.getScope().$watch('ctrl.currentAnnotation', () => {
+      component.getScope().$watch(() => {
         onChange({
           ...annotation,
         });
