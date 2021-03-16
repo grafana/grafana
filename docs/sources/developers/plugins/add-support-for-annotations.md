@@ -14,7 +14,7 @@ This guide assumes that you're already familiar with how to [Build a data source
 
 To enable annotation support for your data source, add the following two lines of code. Grafana uses your default query editor for editing annotation queries.
 
-1. Add `"annotations": true` to the [plugin.json]({{< relref "metadata.md" >}}) file.
+1. Add `"annotations": true` to the [plugin.json]({{< relref "metadata.md" >}}) file to let Grafana know that your plugin supports annotations.
 
    **plugin.json**
 
@@ -24,7 +24,7 @@ To enable annotation support for your data source, add the following two lines o
    }
    ```
 
-2. In `datasource.ts`, override the `annotations` method from `DataSourceApi`. For the default behavior, you can set `annotations` to an empty object.
+2. In `datasource.ts`, override the `annotations` property from `DataSourceApi`. For the default behavior, you can set `annotations` to an empty object.
 
    **datasource.ts**
 
