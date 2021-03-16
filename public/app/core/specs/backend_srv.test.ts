@@ -8,7 +8,7 @@ import { ContextSrv, User } from '../services/context_srv';
 import { describe, expect } from '../../../test/lib/common';
 import { BackendSrvRequest, FetchError } from '@grafana/runtime';
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
-import { ShowModalReactEvent } from '../../types/events';
+import { CoreEvents } from '../../types';
 
 const getTestContext = (overides?: object) => {
   const defaults = {
@@ -39,7 +39,6 @@ const getTestContext = (overides?: object) => {
 
   const appEventsMock: EventBusExtended = ({
     emit: jest.fn(),
-    publish: jest.fn(),
   } as any) as EventBusExtended;
 
   const user: User = ({
@@ -202,15 +201,13 @@ describe('backendSrv', () => {
         backendSrv.loginPing = jest.fn();
 
         await backendSrv.request({ url, method: 'GET', retry: 0 }).catch(() => {
-          expect(appEventsMock.publish).toHaveBeenCalledTimes(1);
-          expect(appEventsMock.publish).toHaveBeenCalledWith(
-            new ShowModalReactEvent({
-              component: TokenRevokedModal,
-              props: {
-                maxConcurrentSessions: 3,
-              },
-            })
-          );
+          expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
+          expect(appEventsMock.emit).toHaveBeenCalledWith(CoreEvents.showModalReact, {
+            component: TokenRevokedModal,
+            props: {
+              maxConcurrentSessions: 3,
+            },
+          });
           expect(backendSrv.loginPing).not.toHaveBeenCalled();
           expect(logoutMock).not.toHaveBeenCalled();
           expectRequestCallChain({ url, method: 'GET', retry: 0 });
@@ -440,16 +437,14 @@ describe('backendSrv', () => {
 
         const url = '/api/dashboard/';
 
-        await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch((error) => {
-          expect(appEventsMock.publish).toHaveBeenCalledTimes(1);
-          expect(appEventsMock.publish).toHaveBeenCalledWith(
-            new ShowModalReactEvent({
-              component: TokenRevokedModal,
-              props: {
-                maxConcurrentSessions: 3,
-              },
-            })
-          );
+        await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch(() => {
+          expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
+          expect(appEventsMock.emit).toHaveBeenCalledWith(CoreEvents.showModalReact, {
+            component: TokenRevokedModal,
+            props: {
+              maxConcurrentSessions: 3,
+            },
+          });
           expect(backendSrv.loginPing).not.toHaveBeenCalled();
           expect(logoutMock).not.toHaveBeenCalled();
           expectRequestCallChain({ url, method: 'GET', retry: 0 });
