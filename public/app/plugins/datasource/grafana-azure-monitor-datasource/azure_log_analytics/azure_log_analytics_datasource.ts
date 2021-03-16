@@ -231,7 +231,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
    * And some of the azure internal data sources return null in this function, which the
    * external interface does not support
    */
-  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
+  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     const resourcesQuery = query.match(/^resources\(\)/i);
     if (workspacesQuery || resourcesQuery) {
@@ -248,8 +248,18 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return this.getWorkspacesOrResources((resourcesQueryWithSub[1] || '').trim());
     }
 
-    return this.getDefaultOrFirst().then((workspace: any) => {
-      const queries: any[] = this.buildQuery(query, null, workspace);
+    // If the query type does not match, return null.
+    const resourceQuery = query.match(/^resource\(["']?([^\)]+?)["']?\)/i);
+    const workspaceQuery = query.match(/^workspace\(["']?([^\)]+?)["']?\)/i);
+    if (
+      (workspaceQuery && this.configs.queryType === AzureQueryType.ResourceLogAnalytics) ||
+      (resourceQuery && this.configs.queryType === AzureQueryType.LogAnalytics)
+    ) {
+      return null;
+    }
+
+    return this.getDefaultOrFirst().then((id: any) => {
+      const queries: any[] = this.buildQuery(query, null, id);
 
       const promises = this.doQueries(queries);
 
@@ -273,14 +283,17 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }) as Promise<MetricFindValue[]>;
   }
 
-  private buildQuery(query: string, options: any, workspace: any) {
+  private buildQuery(query: string, options: any, id: any) {
     const querystringBuilder = new LogAnalyticsQuerystringBuilder(
       getTemplateSrv().replace(query, {}, this.interpolateVariable),
       options,
       'TimeGenerated'
     );
     const querystring = querystringBuilder.generate().uriString;
-    const url = `${this.baseUrl}/${workspace}/query?${querystring}`;
+    const url =
+      this.configs.queryType === AzureQueryType.LogAnalytics
+        ? `${this.baseUrl}/${id}/query?${querystring}`
+        : `${this.baseUrl}${id}/query?${querystring}`;
     const queries: any[] = [];
     queries.push({
       datasourceId: this.id,

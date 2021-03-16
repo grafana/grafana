@@ -284,6 +284,8 @@ Example variable queries:
 | `workspace("$workspace").Heartbeat \| distinct Computer`                                | Returns a list of Virtual Machines with template variable |
 | `workspace("$workspace").Perf \| distinct ObjectName`                                   | Returns a list of objects from the Perf table             |
 | `workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName` | Returns a list of metric names from the Perf table        |
+| `resource("myResource").Heartbeat \| distinct Computer`                                 | Returns a list of Virtual Machines                        |
+| `resource("$resource").Heartbeat \| distinct Computer`                                  | Returns a list of Virtual Machines with template variable |
 
 <!-- prettier-ignore-end -->
 
