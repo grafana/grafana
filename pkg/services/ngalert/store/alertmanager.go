@@ -13,7 +13,7 @@ var (
 	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an alert configuration")
 )
 
-// GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuraiton.
+// GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
 // It returns ErrNoAlertmanagerConfiguration if no configuration is found.
 func (st DBstore) GetLatestAlertmanagerConfiguration(cmd *models.GetLatestAlertmanagerConfigurationQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
