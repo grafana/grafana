@@ -18,6 +18,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
+import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -38,7 +39,9 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
-    this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '1.1';
+    // graphiteVersion is set when a datasource is created but it hadn't been set in the past so we're
+    // still falling back to the default behavior here for backwards compatibility (see also #17429)
+    this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || DEFAULT_GRAPHITE_VERSION;
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
@@ -449,7 +452,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     });
   }
 
-  getTagsAutoComplete(expressions: any[], tagPrefix: any, optionalOptions: any) {
+  getTagsAutoComplete(expressions: any[], tagPrefix: any, optionalOptions?: any) {
     const options = optionalOptions || {};
 
     const httpOptions: any = {
