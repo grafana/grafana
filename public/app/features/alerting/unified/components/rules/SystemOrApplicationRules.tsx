@@ -74,7 +74,8 @@ export const SystemOrApplicationAlerts: FC = () => {
         >
           {errors.map(({ datasource, error }) => (
             <div key={datasource.name}>
-              Failed to load rules from &quot;{datasource.name}&quot;: {error.message || 'Unknown error.'}
+              Failed to load rules from <a href={`datasources/edit/${datasource.id}`}>{datasource.name}</a>:{' '}
+              {error.message || 'Unknown error.'}
             </div>
           ))}
         </InfoBox>

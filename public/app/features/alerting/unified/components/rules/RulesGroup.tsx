@@ -6,6 +6,8 @@ import { css } from 'emotion';
 import { isAlertingRule } from '../../utils/rules';
 import { PromAlertingRuleState } from 'app/types/unified-alerting/dto';
 import { StatusColoredText } from '../StatusColoredText';
+import { ExpandedToggle } from '../ExpandedToggle';
+import { RulesTable } from './RulesTable';
 
 interface Props {
   namespace: string;
@@ -55,9 +57,7 @@ export const RulesGroup: FC<Props> = ({ group, namespace, datasource }) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <button className={styles.expandButton} onClick={() => setIsExpanded(!isExpanded)}>
-          <Icon size="xl" name={isExpanded ? 'angle-down' : 'angle-right'} />
-        </button>
+        <ExpandedToggle className={styles.expandButton} isExpanded={isExpanded} onToggle={setIsExpanded} />
         <Icon name={isExpanded ? 'folder-open' : 'folder'} />
         {datasource && (
           <Tooltip content={datasource.name} placement="top">
@@ -86,13 +86,7 @@ export const RulesGroup: FC<Props> = ({ group, namespace, datasource }) => {
           <Icon title="manage permissions" name="lock" />
         </div>
       </div>
-      {isExpanded && (
-        <div>
-          {group.rules.map((rule, index) => (
-            <p key={index}>{JSON.stringify(rule, null, 2)}</p>
-          ))}
-        </div>
-      )}
+      {isExpanded && <RulesTable namespace={namespace} group={group} />}
     </div>
   );
 };
