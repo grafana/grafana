@@ -650,9 +650,9 @@ describe('optionsPickerReducer', () => {
     });
   });
 
-  describe('when updateOptionsAndFilter is dispatched and searchFilter exists', () => {
+  describe('when updateOptionsAndFilter is dispatched and queryValue exists', () => {
     it('then state should be correct', () => {
-      const searchQuery = 'A';
+      const queryValue = 'A';
 
       const options = [
         { text: 'All', value: '$__all', selected: true },
@@ -660,9 +660,7 @@ describe('optionsPickerReducer', () => {
         { text: 'B', value: 'B', selected: false },
       ];
 
-      const { initialState } = getVariableTestContext({
-        queryValue: searchQuery,
-      });
+      const { initialState } = getVariableTestContext({ queryValue });
 
       reducerTester<OptionsPickerState>()
         .givenReducer(optionsPickerReducer, cloneDeep(initialState))
@@ -674,23 +672,46 @@ describe('optionsPickerReducer', () => {
             { text: 'A', value: 'A', selected: false },
           ],
           selectedValues: [{ text: 'All', value: '$__all', selected: true }],
-          queryValue: searchQuery,
+          queryValue: 'A',
           highlightIndex: 0,
         });
     });
 
+    describe('but option is null', () => {
+      it('then state should be correct', () => {
+        const queryValue = 'A';
+
+        const options: any = [
+          { text: 'All', value: '$__all', selected: true },
+          { text: null, value: null, selected: false },
+          { text: [null], value: [null], selected: false },
+        ];
+
+        const { initialState } = getVariableTestContext({ queryValue });
+
+        reducerTester<OptionsPickerState>()
+          .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+          .whenActionIsDispatched(updateOptionsAndFilter(options))
+          .thenStateShouldEqual({
+            ...initialState,
+            options: [{ text: 'All', value: '$__all', selected: true }],
+            selectedValues: [{ text: 'All', value: '$__all', selected: true }],
+            queryValue: 'A',
+            highlightIndex: 0,
+          });
+      });
+    });
+
     describe('and option count is are greater then OPTIONS_LIMIT', () => {
       it('then state should be correct', () => {
-        const searchQuery = 'option:1337';
+        const queryValue = 'option:1337';
 
         const options = [];
         for (let index = 0; index <= OPTIONS_LIMIT + 337; index++) {
           options.push({ text: `option:${index}`, value: `option:${index}`, selected: false });
         }
 
-        const { initialState } = getVariableTestContext({
-          queryValue: searchQuery,
-        });
+        const { initialState } = getVariableTestContext({ queryValue });
 
         reducerTester<OptionsPickerState>()
           .givenReducer(optionsPickerReducer, cloneDeep(initialState))
@@ -708,7 +729,7 @@ describe('optionsPickerReducer', () => {
 
   describe('when value is selected and filter is applied but then removed', () => {
     it('then state should be correct', () => {
-      const searchQuery = 'A';
+      const queryValue = 'A';
 
       const options: VariableOption[] = [
         { text: 'All', value: '$__all', selected: false },
@@ -732,7 +753,7 @@ describe('optionsPickerReducer', () => {
           ],
           selectedValues: [{ text: 'B', value: 'B', selected: true }],
         })
-        .whenActionIsDispatched(updateSearchQuery(searchQuery))
+        .whenActionIsDispatched(updateSearchQuery(queryValue))
         .thenStateShouldEqual({
           ...initialState,
           options: [
@@ -741,7 +762,7 @@ describe('optionsPickerReducer', () => {
             { text: 'B', value: 'B', selected: true },
           ],
           selectedValues: [{ text: 'B', value: 'B', selected: true }],
-          queryValue: searchQuery,
+          queryValue: 'A',
         })
         .whenActionIsDispatched(updateOptionsAndFilter(options))
         .thenStateShouldEqual({
@@ -751,7 +772,7 @@ describe('optionsPickerReducer', () => {
             { text: 'A', value: 'A', selected: false },
           ],
           selectedValues: [{ text: 'B', value: 'B', selected: true }],
-          queryValue: searchQuery,
+          queryValue: 'A',
           highlightIndex: 0,
         })
         .whenActionIsDispatched(updateSearchQuery(''))

@@ -1,13 +1,12 @@
 import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
 import {
+  DataLinkBuiltInVars,
   FieldConfigProperty,
+  PanelData,
   PanelProps,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
-  PanelData,
-  DataLinkBuiltInVars,
-  VariableModel,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
@@ -17,6 +16,7 @@ import { setTemplateSrv } from '@grafana/runtime';
 import { variableAdapters } from '../../variables/adapters';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
 import { mockStandardFieldConfigOptions } from '../../../../test/helpers/fieldConfig';
+import { queryBuilder } from 'app/features/variables/shared/testing/builders';
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
 standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
@@ -28,16 +28,15 @@ setTimeSrv({
   }),
 } as any);
 
+const getVariables = () => variablesMock;
+const getVariableWithName = (name: string) => variablesMock.filter((v) => v.name === name)[0];
+const getFilteredVariables = jest.fn();
+
 setTemplateSrv(
   new TemplateSrv({
-    // @ts-ignore
-    getVariables: () => {
-      return variablesMock;
-    },
-    // @ts-ignore
-    getVariableWithName: (name: string) => {
-      return variablesMock.filter((v) => v.name === name)[0];
-    },
+    getVariables,
+    getVariableWithName,
+    getFilteredVariables,
   })
 );
 
@@ -223,7 +222,7 @@ describe('PanelModel', () => {
 
       it('should interpolate $__all_variables variable', () => {
         const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.includeVars}`);
-        expect(out).toBe('/d/1?var-test1=val1&var-test2=val2');
+        expect(out).toBe('/d/1?var-test1=val1&var-test2=val2&var-test3=Value%203&var-test4=A&var-test4=B');
       });
 
       it('should prefer the local variable value', () => {
@@ -328,7 +327,7 @@ describe('PanelModel', () => {
         expect(model.showColumns).toBe(true);
       });
 
-      it('should restore custom field config to what it was and preseve standard options', () => {
+      it('should restore custom field config to what it was and preserve standard options', () => {
         model.changePlugin(tablePlugin);
         expect(model.fieldConfig.defaults.custom.customProp).toBe(true);
       });
@@ -438,30 +437,32 @@ describe('PanelModel', () => {
         expect(model.getQueryRunner().getLastResult()).toBeDefined();
       });
     });
+
+    describe('getDisplayTitle', () => {
+      it('when called then it should interpolate singe value variables in title', () => {
+        const model = new PanelModel({
+          title: 'Single value variable [[test3]] ${test3} ${test3:percentencode}',
+        });
+        const title = model.getDisplayTitle();
+
+        expect(title).toEqual('Single value variable Value 3 Value 3 Value%203');
+      });
+
+      it('when called then it should interpolate multi value variables in title', () => {
+        const model = new PanelModel({
+          title: 'Multi value variable [[test4]] ${test4} ${test4:percentencode}',
+        });
+        const title = model.getDisplayTitle();
+
+        expect(title).toEqual('Multi value variable A + B A + B %7BA%2CB%7D');
+      });
+    });
   });
 });
 
 const variablesMock = [
-  {
-    type: 'query',
-    name: 'test1',
-    label: 'Test1',
-    hide: false,
-    current: { value: 'val1' },
-    skipUrlSync: false,
-    getValueForUrl: function () {
-      return 'val1';
-    },
-  } as VariableModel,
-  {
-    type: 'query',
-    name: 'test2',
-    label: 'Test2',
-    hide: false,
-    current: { value: 'val2' },
-    skipUrlSync: false,
-    getValueForUrl: function () {
-      return 'val2';
-    },
-  } as VariableModel,
+  queryBuilder().withId('test1').withName('test1').withCurrent('val1').build(),
+  queryBuilder().withId('test2').withName('test2').withCurrent('val2').build(),
+  queryBuilder().withId('test3').withName('test3').withCurrent('Value 3').build(),
+  queryBuilder().withId('test4').withName('test4').withCurrent(['A', 'B']).build(),
 ];
