@@ -3,6 +3,8 @@ package translate
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -17,17 +19,17 @@ func TestDashboardAlertConditions(t *testing.T) {
 	registerGetDsInfoHandler()
 	var tests = []struct {
 		name string
-		// rawJSON, at least for now, is as "conditions" will appear within the alert table
+		// inputJSONFName, at least for now, is as "conditions" will appear within the alert table
 		// settings column JSON. Which means it has already run through the dashboard
 		// alerting Extractor. It is the input.
-		rawJSON string
+		inputJSONFName string
 
 		// Condition is quite large (and unexported things), so check misc attributes.
 		spotCheckFn func(t *testing.T, cond *ngmodels.Condition)
 	}{
 		{
-			name:    "two conditions one query but different time ranges",
-			rawJSON: twoCondOneQueryDiffTime,
+			name:           "two conditions one query but different time ranges",
+			inputJSONFName: `sameQueryDifferentTimeRange.json`,
 			spotCheckFn: func(t *testing.T, cond *ngmodels.Condition) {
 				require.Equal(t, "C", cond.RefID, "unexpected refId for condition")
 				require.Equal(t, 3, len(cond.QueriesAndExpressions), "unexpected query/expression array length")
@@ -73,293 +75,26 @@ func TestDashboardAlertConditions(t *testing.T) {
 			},
 		},
 		{
-			name:    "something",
-			rawJSON: mixedSharedUnsharedTimeRange,
+			name:           "something",
+			inputJSONFName: `mixedSharedUnsharedTimeRange.json`,
 			spotCheckFn: func(t *testing.T, cond *ngmodels.Condition) {
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cond, err := DashboardAlertConditions([]byte(tt.rawJSON), 1)
+			jsonFile := filepath.Join("testdata", tt.inputJSONFName)
+			b, err := ioutil.ReadFile(jsonFile)
+
+			require.NoError(t, err)
+
+			cond, err := DashboardAlertConditions(b, 1)
 			require.NoError(t, err)
 
 			tt.spotCheckFn(t, cond)
 		})
 	}
 }
-
-var twoCondOneQueryDiffTime = `{ 
-	"conditions": [
-	{
-	  "evaluator": {
-		"params": [
-		  0
-		],
-		"type": "eq"
-	  },
-	  "operator": {
-		"type": ""
-	  },
-	  "query": {
-		"datasourceId": 2,
-		"model": {
-		  "expr": "avg_over_time(sum by (instance) (up)[1h:5m])",
-		  "interval": "",
-		  "legendFormat": "",
-		  "refId": "A"
-		},
-		"params": [
-		  "A",
-		  "5m",
-		  "now"
-		]
-	  },
-	  "reducer": {
-		"params": [],
-		"type": "avg"
-	  },
-	  "type": "query"
-	},
-	{
-	  "evaluator": {
-		"params": [
-		  0
-		],
-		"type": "gt"
-	  },
-	  "operator": {
-		"type": "and"
-	  },
-	  "query": {
-		"datasourceId": 2,
-		"model": {
-		  "expr": "avg_over_time(sum by (instance) (up)[1h:5m])",
-		  "interval": "",
-		  "legendFormat": "",
-		  "refId": "A"
-		},
-		"params": [
-		  "A",
-		  "10m",
-		  "now-5m"
-		]
-	  },
-	  "reducer": {
-		"params": [],
-		"type": "avg"
-	  },
-	  "type": "query"
-	}
-  ]}`
-
-var mixedSharedUnsharedTimeRange = `{
-	"conditions": [
-	  {
-		"evaluator": {
-		  "params": [
-			3
-		  ],
-		  "type": "gt"
-		},
-		"operator": {
-		  "type": "and"
-		},
-		"query": {
-		  "datasourceId": 4,
-		  "model": {
-			"alias": "",
-			"csvWave": {
-			  "timeStep": 60,
-			  "valuesCSV": "0,0,2,2,1,1"
-			},
-			"hide": false,
-			"lines": 10,
-			"points": [],
-			"pulseWave": {
-			  "offCount": 3,
-			  "offValue": 1,
-			  "onCount": 3,
-			  "onValue": 2,
-			  "timeStep": 60
-			},
-			"refId": "B",
-			"scenarioId": "predictable_pulse",
-			"stream": {
-			  "bands": 1,
-			  "noise": 2.2,
-			  "speed": 250,
-			  "spread": 3.5,
-			  "type": "signal"
-			},
-			"stringInput": ""
-		  },
-		  "params": [
-			"B",
-			"5m",
-			"now"
-		  ]
-		},
-		"reducer": {
-		  "params": [],
-		  "type": "avg"
-		},
-		"type": "query"
-	  },
-	  {
-		"evaluator": {
-		  "params": [
-			2,
-			5
-		  ],
-		  "type": "within_range"
-		},
-		"operator": {
-		  "type": "and"
-		},
-		"query": {
-		  "datasourceId": 4,
-		  "model": {
-			"alias": "",
-			"csvWave": {
-			  "timeStep": 60,
-			  "valuesCSV": "0,0,2,2,1,1"
-			},
-			"hide": false,
-			"lines": 10,
-			"points": [],
-			"pulseWave": {
-			  "offCount": 3,
-			  "offValue": 1,
-			  "onCount": 3,
-			  "onValue": 2,
-			  "timeStep": 60
-			},
-			"refId": "B",
-			"scenarioId": "predictable_pulse",
-			"stream": {
-			  "bands": 1,
-			  "noise": 2.2,
-			  "speed": 250,
-			  "spread": 3.5,
-			  "type": "signal"
-			},
-			"stringInput": ""
-		  },
-		  "params": [
-			"B",
-			"10m",
-			"now-5m"
-		  ]
-		},
-		"reducer": {
-		  "params": [],
-		  "type": "max"
-		},
-		"type": "query"
-	  },
-	  {
-		"evaluator": {
-		  "params": [
-			6
-		  ],
-		  "type": "gt"
-		},
-		"operator": {
-		  "type": "and"
-		},
-		"query": {
-		  "datasourceId": 4,
-		  "model": {
-			"alias": "",
-			"csvWave": {
-			  "timeStep": 60,
-			  "valuesCSV": "0,0,2,2,1,1"
-			},
-			"lines": 10,
-			"points": [],
-			"pulseWave": {
-			  "offCount": 3,
-			  "offValue": 1,
-			  "onCount": 3,
-			  "onValue": 2,
-			  "timeStep": 60
-			},
-			"refId": "A",
-			"scenarioId": "predictable_csv_wave",
-			"stream": {
-			  "bands": 1,
-			  "noise": 2.2,
-			  "speed": 250,
-			  "spread": 3.5,
-			  "type": "signal"
-			},
-			"stringInput": ""
-		  },
-		  "params": [
-			"A",
-			"5m",
-			"now"
-		  ]
-		},
-		"reducer": {
-		  "params": [],
-		  "type": "sum"
-		},
-		"type": "query"
-	  },
-	  {
-		"evaluator": {
-		  "params": [
-			7
-		  ],
-		  "type": "gt"
-		},
-		"operator": {
-		  "type": "and"
-		},
-		"query": {
-		  "datasourceId": 4,
-		  "model": {
-			"alias": "",
-			"csvWave": {
-			  "timeStep": 60,
-			  "valuesCSV": "0,0,2,2,1,1"
-			},
-			"lines": 10,
-			"points": [],
-			"pulseWave": {
-			  "offCount": 3,
-			  "offValue": 1,
-			  "onCount": 3,
-			  "onValue": 2,
-			  "timeStep": 60
-			},
-			"refId": "A",
-			"scenarioId": "predictable_csv_wave",
-			"stream": {
-			  "bands": 1,
-			  "noise": 2.2,
-			  "speed": 250,
-			  "spread": 3.5,
-			  "type": "signal"
-			},
-			"stringInput": ""
-		  },
-		  "params": [
-			"A",
-			"5m",
-			"now"
-		  ]
-		},
-		"reducer": {
-		  "params": [],
-		  "type": "last"
-		},
-		"type": "query"
-	  }
-	]
-}`
 
 func registerGetDsInfoHandler() {
 	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {

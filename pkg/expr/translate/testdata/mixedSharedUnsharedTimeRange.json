@@ -1,0 +1,207 @@
+{
+	"conditions": [
+	  {
+		"evaluator": {
+		  "params": [
+			3
+		  ],
+		  "type": "gt"
+		},
+		"operator": {
+		  "type": "and"
+		},
+		"query": {
+		  "datasourceId": 4,
+		  "model": {
+			"alias": "",
+			"csvWave": {
+			  "timeStep": 60,
+			  "valuesCSV": "0,0,2,2,1,1"
+			},
+			"hide": false,
+			"lines": 10,
+			"points": [],
+			"pulseWave": {
+			  "offCount": 3,
+			  "offValue": 1,
+			  "onCount": 3,
+			  "onValue": 2,
+			  "timeStep": 60
+			},
+			"refId": "B",
+			"scenarioId": "predictable_pulse",
+			"stream": {
+			  "bands": 1,
+			  "noise": 2.2,
+			  "speed": 250,
+			  "spread": 3.5,
+			  "type": "signal"
+			},
+			"stringInput": ""
+		  },
+		  "params": [
+			"B",
+			"5m",
+			"now"
+		  ]
+		},
+		"reducer": {
+		  "params": [],
+		  "type": "avg"
+		},
+		"type": "query"
+	  },
+	  {
+		"evaluator": {
+		  "params": [
+			2,
+			5
+		  ],
+		  "type": "within_range"
+		},
+		"operator": {
+		  "type": "and"
+		},
+		"query": {
+		  "datasourceId": 4,
+		  "model": {
+			"alias": "",
+			"csvWave": {
+			  "timeStep": 60,
+			  "valuesCSV": "0,0,2,2,1,1"
+			},
+			"hide": false,
+			"lines": 10,
+			"points": [],
+			"pulseWave": {
+			  "offCount": 3,
+			  "offValue": 1,
+			  "onCount": 3,
+			  "onValue": 2,
+			  "timeStep": 60
+			},
+			"refId": "B",
+			"scenarioId": "predictable_pulse",
+			"stream": {
+			  "bands": 1,
+			  "noise": 2.2,
+			  "speed": 250,
+			  "spread": 3.5,
+			  "type": "signal"
+			},
+			"stringInput": ""
+		  },
+		  "params": [
+			"B",
+			"10m",
+			"now-5m"
+		  ]
+		},
+		"reducer": {
+		  "params": [],
+		  "type": "max"
+		},
+		"type": "query"
+	  },
+	  {
+		"evaluator": {
+		  "params": [
+			6
+		  ],
+		  "type": "gt"
+		},
+		"operator": {
+		  "type": "and"
+		},
+		"query": {
+		  "datasourceId": 4,
+		  "model": {
+			"alias": "",
+			"csvWave": {
+			  "timeStep": 60,
+			  "valuesCSV": "0,0,2,2,1,1"
+			},
+			"lines": 10,
+			"points": [],
+			"pulseWave": {
+			  "offCount": 3,
+			  "offValue": 1,
+			  "onCount": 3,
+			  "onValue": 2,
+			  "timeStep": 60
+			},
+			"refId": "A",
+			"scenarioId": "predictable_csv_wave",
+			"stream": {
+			  "bands": 1,
+			  "noise": 2.2,
+			  "speed": 250,
+			  "spread": 3.5,
+			  "type": "signal"
+			},
+			"stringInput": ""
+		  },
+		  "params": [
+			"A",
+			"5m",
+			"now"
+		  ]
+		},
+		"reducer": {
+		  "params": [],
+		  "type": "sum"
+		},
+		"type": "query"
+	  },
+	  {
+		"evaluator": {
+		  "params": [
+			7
+		  ],
+		  "type": "gt"
+		},
+		"operator": {
+		  "type": "and"
+		},
+		"query": {
+		  "datasourceId": 4,
+		  "model": {
+			"alias": "",
+			"csvWave": {
+			  "timeStep": 60,
+			  "valuesCSV": "0,0,2,2,1,1"
+			},
+			"lines": 10,
+			"points": [],
+			"pulseWave": {
+			  "offCount": 3,
+			  "offValue": 1,
+			  "onCount": 3,
+			  "onValue": 2,
+			  "timeStep": 60
+			},
+			"refId": "A",
+			"scenarioId": "predictable_csv_wave",
+			"stream": {
+			  "bands": 1,
+			  "noise": 2.2,
+			  "speed": 250,
+			  "spread": 3.5,
+			  "type": "signal"
+			},
+			"stringInput": ""
+		  },
+		  "params": [
+			"A",
+			"5m",
+			"now"
+		  ]
+		},
+		"reducer": {
+		  "params": [],
+		  "type": "last"
+		},
+		"type": "query"
+	  }
+	]
+}
