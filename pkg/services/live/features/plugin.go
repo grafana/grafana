@@ -97,7 +97,7 @@ func (r *PluginPathRunner) OnSubscribe(client *centrifuge.Client, e centrifuge.S
 	err = r.streamManager.SubmitStream(e.Channel, r.path, pCtx, r.handler)
 	if err != nil {
 		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
+		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 	}
 	return centrifuge.SubscribeReply{
 		Options: centrifuge.SubscribeOptions{

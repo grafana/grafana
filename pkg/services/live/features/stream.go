@@ -9,11 +9,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-type cancelFunc func()
-
 type StreamManager struct {
 	mu               sync.RWMutex
-	streams          map[string]cancelFunc
+	streams          map[string]struct{}
 	presenceGetter   presenceGetter
 	channelPublisher channelPublisher
 	registerCh       chan streamRequest
@@ -22,7 +20,7 @@ type StreamManager struct {
 
 func NewStreamManager(channelPublisher channelPublisher, presenceGetter presenceGetter) *StreamManager {
 	return &StreamManager{
-		streams:          make(map[string]cancelFunc),
+		streams:          make(map[string]struct{}),
 		channelPublisher: channelPublisher,
 		presenceGetter:   presenceGetter,
 		registerCh:       make(chan streamRequest),
@@ -96,7 +94,7 @@ func (s *StreamManager) registerStream(ctx context.Context, sr streamRequest) {
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	s.streams[sr.Channel] = cancelFunc(cancel)
+	s.streams[sr.Channel] = struct{}{}
 	s.mu.Unlock()
 
 	go s.watchStream(ctx, cancel, sr)
