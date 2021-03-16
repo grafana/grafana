@@ -351,3 +351,13 @@ The default TTL (time to live) if no other TTL is available.
 ### gc_interval
 
 When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
+
+## [caching.redis]
+
+### url
+
+The full Redis URL of your Redis server. Example: `redis://localhost:6739/0`.
+
+### prefix
+
+A string that prefixes all Redis keys. This value must be set if using a shared database in Redis. If `prefix` is empty, then one will not be used.
