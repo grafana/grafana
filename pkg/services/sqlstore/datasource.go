@@ -81,7 +81,7 @@ func GetDataSources(query *models.GetDataSourcesQuery) error {
 // GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
 func GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) error {
 	if query.Type == "" {
-		return fmt.Errorf("Datasource type cannot be empty")
+		return fmt.Errorf("datasource type cannot be empty")
 	}
 
 	query.Result = make([]*models.DataSource, 0)
