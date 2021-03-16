@@ -89,7 +89,7 @@ type conditionEvalJSON struct {
 }
 
 func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
-	refIDtoCondIdx := make(map[string][]int)
+	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range dc.Conditions {
 		if len(cond.Query.Params) != 3 {
 			return nil, fmt.Errorf("unexpected number of query parameters in cond %v, want 3 got %v", i+1, len(cond.Query.Params))
@@ -98,25 +98,27 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 		refIDtoCondIdx[refID] = append(refIDtoCondIdx[refID], i)
 	}
 
-	newRefIDstoCondIdx := make(map[string][]int)
-	newRefIDsToTimeRanges := make(map[string][2]string)
+	newRefIDstoCondIdx := make(map[string][]int) // a map of the new refIds to their coresponding condition index
 
-	refIDs := make([]string, 0, len(refIDtoCondIdx))
+	refIDs := make([]string, 0, len(refIDtoCondIdx)) // a unique sorted list of the original refIDs
 	for refID := range refIDtoCondIdx {
 		refIDs = append(refIDs, refID)
 	}
 	sort.Strings(refIDs)
 
+	newRefIDsToTimeRanges := make(map[string][2]string) //a map of new RefIDs to their time range string tuple representation
 	for _, refID := range refIDs {
 		condIdxes := refIDtoCondIdx[refID]
+
 		if len(condIdxes) == 1 {
+			// If the refID is used in only condition, keep the letter a new refID
 			newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[0])
 			newRefIDsToTimeRanges[refID] = [2]string{dc.Conditions[condIdxes[0]].Query.Params[1], dc.Conditions[condIdxes[0]].Query.Params[2]}
 			continue
 		}
 
-		// track unique time ranges within the same refId
-		timeRangesToCondIdx := make(map[[2]string][]int)
+		// track unique time ranges within the same refID
+		timeRangesToCondIdx := make(map[[2]string][]int) // a map of the time range tuple to the condition index
 		for _, idx := range condIdxes {
 			timeParamFrom := dc.Conditions[idx].Query.Params[1]
 			timeParamTo := dc.Conditions[idx].Query.Params[2]
@@ -125,7 +127,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 		}
 
 		if len(timeRangesToCondIdx) == 1 {
-			// all shared time range, no need to create refIds
+			// if all shared time range, no need to create a new query with a new RefID
 			for i := range condIdxes {
 				newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[i])
 				newRefIDsToTimeRanges[refID] = [2]string{dc.Conditions[condIdxes[i]].Query.Params[1], dc.Conditions[condIdxes[i]].Query.Params[2]}
@@ -133,7 +135,9 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 			continue
 		}
 
-		timeRanges := make([][2]string, 0, len(timeRangesToCondIdx))
+		// This referenced query/refID has different time ranges, so new queries are needed for each unique time range.
+
+		timeRanges := make([][2]string, 0, len(timeRangesToCondIdx)) // a sorted list of unique time ranges for the query
 		for tr := range timeRangesToCondIdx {
 			timeRanges = append(timeRanges, tr)
 		}
@@ -146,7 +150,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 		for _, tr := range timeRanges {
 			idxes := timeRangesToCondIdx[tr]
 			for i := 0; i < len(idxes); i++ {
-				newLetter, err := getLetter(newRefIDstoCondIdx)
+				newLetter, err := getNewRefID(newRefIDstoCondIdx)
 				if err != nil {
 					return nil, err
 				}
@@ -156,23 +160,26 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 		}
 	}
 
-	newRefIDs := make([]string, 0, len(newRefIDstoCondIdx))
+	newRefIDs := make([]string, 0, len(newRefIDstoCondIdx)) // newRefIds is a sorted list of the unique refIds of new queries
 	for refID := range newRefIDstoCondIdx {
 		newRefIDs = append(newRefIDs, refID)
 	}
 	sort.Strings(newRefIDs)
 
 	ngCond := &ngmodels.Condition{}
-	// will need to sort for stable output
-	condIdxToNewRefID := make(map[int]string)
+	condIdxToNewRefID := make(map[int]string) // a map of condition indices to the RefIDs of new queries
+
+	// build the new data source queries
 	for _, refID := range newRefIDs {
 		condIdxes := newRefIDstoCondIdx[refID]
 		for i, condIdx := range condIdxes {
 			condIdxToNewRefID[condIdx] = refID
 			if i > 0 {
+				// only create each unique query once
 				continue
 			}
-			var queryObj map[string]interface{}
+
+			var queryObj map[string]interface{} // copy the model
 			err := json.Unmarshal(dc.Conditions[condIdx].Query.Model, &queryObj)
 			if err != nil {
 				return nil, err
@@ -187,7 +194,6 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 				return nil, fmt.Errorf("could not find datasource: %w", err)
 			}
 
-			//queryObj["datasourceId"] = getDsInfo.Result.Id
 			queryObj["datasource"] = getDsInfo.Result.Name
 			queryObj["datasourceUid"] = getDsInfo.Result.Uid
 			queryObj["refId"] = refID
@@ -222,6 +228,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 		}
 	}
 
+	// build the new classic condition pointing our new equivalent queries
 	conditions := make([]classic.ClassicConditionJSON, len(dc.Conditions))
 	for i, cond := range dc.Conditions {
 		newCond := classic.ClassicConditionJSON{}
@@ -236,11 +243,11 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 		conditions[i] = newCond
 	}
 
-	ccRefID, err := getLetter(newRefIDstoCondIdx)
+	ccRefID, err := getNewRefID(newRefIDstoCondIdx) // get refID for the classic condition
 	if err != nil {
 		return nil, err
 	}
-	ngCond.RefID = ccRefID
+	ngCond.RefID = ccRefID // set the alert condition to point to the classic condition
 	ngCond.OrgID = orgID
 
 	exprModel := struct {
@@ -274,11 +281,11 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 		}
 	}
 
-	b, err := json.MarshalIndent(ngCond, "", " ")
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println(string(b))
+	// b, err := json.MarshalIndent(ngCond, "", " ")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// fmt.Println(string(b))
 
 	sort.Slice(ngCond.QueriesAndExpressions, func(i, j int) bool {
 		return ngCond.QueriesAndExpressions[i].RefID < ngCond.QueriesAndExpressions[j].RefID
@@ -289,7 +296,9 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 
 const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-func getLetter(refIDs map[string][]int) (string, error) {
+// getNewRefID finds first capital letter in the alphabet not in use
+// to use for a new RefID.
+func getNewRefID(refIDs map[string][]int) (string, error) {
 	for _, r := range alpha {
 		sR := string(r)
 		if _, ok := refIDs[sR]; ok {
@@ -300,6 +309,8 @@ func getLetter(refIDs map[string][]int) (string, error) {
 	return "", fmt.Errorf("ran out of letters when creating expression")
 }
 
+// getRelativeDuration turns the alerting durations for dashboard conditions
+// into a relative time range.
 func getRelativeDuration(rawFrom, rawTo string) (*ngmodels.RelativeTimeRange, error) {
 	fromD, err := getFrom(rawFrom)
 	if err != nil {
