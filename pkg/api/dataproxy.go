@@ -41,11 +41,7 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 		return
 	}
 
-	proxyPath := getProxyPath(c.Req.URL.EscapedPath())
-
-	// macaron does not include trailing slashes when resolving a wildcard path
-	proxyPath = ensureProxyPathTrailingSlash(c.Req.URL.Path, proxyPath)
-
+	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, hs.Cfg)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
@@ -72,6 +68,12 @@ func ensureProxyPathTrailingSlash(originalPath, proxyPath string) string {
 
 var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/[\d]+\/?`)
 
-func getProxyPath(originalRawPath string) string {
+func extractProxyPath(originalRawPath string) string {
 	return proxyPathRegexp.ReplaceAllString(originalRawPath, "")
+}
+
+func getProxyPath(c *models.ReqContext) string {
+	proxyPath := extractProxyPath(c.Req.URL.EscapedPath())
+	// macaron does not include trailing slashes when resolving a wildcard path
+	return ensureProxyPathTrailingSlash(c.Req.URL.Path, proxyPath)
 }

@@ -34,7 +34,7 @@ func TestDataProxy(t *testing.T) {
 		}
 	})
 
-	t.Run("getProxyPath", func(t *testing.T) {
+	t.Run("extractProxyPath", func(t *testing.T) {
 		testCases := []struct {
 			originalRawPath string
 			exp             string
@@ -53,8 +53,8 @@ func TestDataProxy(t *testing.T) {
 			},
 		}
 		for _, tc := range testCases {
-			t.Run("Given raw path, should produce expected proxy path", func(t *testing.T) {
-				assert.Equal(t, tc.exp, getProxyPath(tc.originalRawPath))
+			t.Run("Given raw path, should extract expected proxy path", func(t *testing.T) {
+				assert.Equal(t, tc.exp, extractProxyPath(tc.originalRawPath))
 			})
 		}
 	})
