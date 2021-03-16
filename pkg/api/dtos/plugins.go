@@ -3,6 +3,7 @@ package dtos
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 )
 
 type PluginSetting struct {
@@ -19,25 +20,29 @@ type PluginSetting struct {
 	JsonData      map[string]interface{}      `json:"jsonData"`
 	DefaultNavUrl string                      `json:"defaultNavUrl"`
 
-	LatestVersion string                  `json:"latestVersion"`
-	HasUpdate     bool                    `json:"hasUpdate"`
-	State         plugins.PluginState     `json:"state"`
-	Signature     plugins.PluginSignature `json:"signature"`
+	LatestVersion string                        `json:"latestVersion"`
+	HasUpdate     bool                          `json:"hasUpdate"`
+	State         plugins.PluginState           `json:"state"`
+	Signature     plugins.PluginSignatureStatus `json:"signature"`
+	SignatureType plugins.PluginSignatureType   `json:"signatureType"`
+	SignatureOrg  string                        `json:"signatureOrg"`
 }
 
 type PluginListItem struct {
-	Name          string                  `json:"name"`
-	Type          string                  `json:"type"`
-	Id            string                  `json:"id"`
-	Enabled       bool                    `json:"enabled"`
-	Pinned        bool                    `json:"pinned"`
-	Info          *plugins.PluginInfo     `json:"info"`
-	LatestVersion string                  `json:"latestVersion"`
-	HasUpdate     bool                    `json:"hasUpdate"`
-	DefaultNavUrl string                  `json:"defaultNavUrl"`
-	Category      string                  `json:"category"`
-	State         plugins.PluginState     `json:"state"`
-	Signature     plugins.PluginSignature `json:"signature"`
+	Name          string                        `json:"name"`
+	Type          string                        `json:"type"`
+	Id            string                        `json:"id"`
+	Enabled       bool                          `json:"enabled"`
+	Pinned        bool                          `json:"pinned"`
+	Info          *plugins.PluginInfo           `json:"info"`
+	LatestVersion string                        `json:"latestVersion"`
+	HasUpdate     bool                          `json:"hasUpdate"`
+	DefaultNavUrl string                        `json:"defaultNavUrl"`
+	Category      string                        `json:"category"`
+	State         plugins.PluginState           `json:"state"`
+	Signature     plugins.PluginSignatureStatus `json:"signature"`
+	SignatureType plugins.PluginSignatureType   `json:"signatureType"`
+	SignatureOrg  string                        `json:"signatureOrg"`
 }
 
 type PluginList []PluginListItem
@@ -59,6 +64,6 @@ type ImportDashboardCommand struct {
 	Path      string                         `json:"path"`
 	Overwrite bool                           `json:"overwrite"`
 	Dashboard *simplejson.Json               `json:"dashboard"`
-	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
+	Inputs    []manager.ImportDashboardInput `json:"inputs"`
 	FolderId  int64                          `json:"folderId"`
 }

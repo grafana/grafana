@@ -9,7 +9,7 @@ weight = 200
 
 Grafana alerting allows you to attach rules to your dashboard panels. When you save the dashboard, Grafana extracts the alert rules into a separate alert rule storage and schedules them for evaluation.
 
-{{< imgbox max-width="1000px" img="/img/docs/alerting/drag_handles_gif.gif" caption="Alerting overview" >}}
+![Alerting overview](/img/docs/alerting/drag_handles_gif.gif)
 
 In the Alert tab of the graph panel you can configure how often the alert rule should be evaluated and the conditions that need to be met for the alert to change state and trigger its [notifications]({{< relref "notifications.md" >}}).
 
@@ -33,7 +33,7 @@ This section describes the fields you fill out to create an alert.
 
 ### Rule
 
-- **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list.
+- **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list. This field supports [templating]({{< relref "./add-notification-template.md" >}}).
 - **Evaluate every -** Specify how often the scheduler should evaluate the alert rule. This is referred to as the _evaluation interval_.
 - **For -** Specify how long the query needs to violate the configured thresholds before the alert notification triggers.
 
@@ -117,11 +117,10 @@ The actual notifications are configured and shared between multiple alerts. Read
 [Alert notifications]({{< relref "notifications.md" >}}) for information on how to configure and set up notifications.
 
 - **Send to -** Select an alert notification channel if you have one set up.
-- **Message -** Enter a text message to be sent on the notification channel. Some alert notifiers support transforming the text to HTML or other rich formats.
+- **Message -** Enter a text message to be sent on the notification channel. Some alert notifiers support transforming the text to HTML or other rich formats. This field supports [templating]({{< relref "./add-notification-template.md" >}}).
 - **Tags -** Specify a list of tags (key/value) to be included in the notification. It is only supported by [some notifiers]({{< relref "notifications/#all-supported-notifiers" >}}).
 
 ## Alert state history and annotations
 
 Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes are visualized as annotations in the alert rule's graph panel. You can also go into the `State history` submenu in the alert tab to view and clear state history.
 
-<!-- BEGIN Optimal Workshop Intercept Snippet --><div id='owInviteSnippet' style='position:fixed;right:20px;bottom:20px;width:280px;padding:20px;margin:0;border-radius:6px;background:#1857B8;color:#F7F8FA;text-align:left;z-index:2200000000;opacity:0;transition:opacity 500ms;-webkit-transition:opacity 500ms;display:none;'><div id='owInviteMessage' style='padding:0;margin:0 0 20px 0;font-size:16px;'>Got a spare two and a half minutes to help us improve the docs?</div><a id='owInviteOk' href='https://Grafana.optimalworkshop.com/questions/grafana-docs?tag=docs&utm_medium=intercept' onclick='this.parentNode.style.display="none";' target='_blank' style='color:#F7FAFF;font-size:16px;font-weight:bold;text-decoration:underline;'>Yes, I&#x27;ll help</a><a id='owInviteCancel' href='javascript:void(0)' onclick='this.parentNode.style.display="none";' style='color:#F7F8FA;font-size:14px;text-decoration:underline;float:right;'>Close</a></div><script>var owOnload=function(){if(-1==document.cookie.indexOf('ow-intercept-quiz-4ior230e')){var o=new XMLHttpRequest;o.onloadend=function(){try{var o=document.getElementById('owInviteSnippet');var date=new Date();date.setMonth(date.getMonth()+1);this.response&&JSON.parse(this.response).active===!0&&(document.cookie='ow-intercept-quiz-4ior230e=Done;path=/;expires='+date.toUTCString()+';',setTimeout(function(){o.style.display='block',o.style.opacity=1},2e3))}catch(e){}},o.open('POST','https://app.optimalworkshop.com/survey_status/questions/4ior230e/active'),o.send()}};if(window.addEventListener){window.addEventListener('load',function(){owOnload();});}else if(window.attachEvent){window.attachEvent('onload',function(){owOnload();});}</script><!-- END Optimal Workshop snippet -->

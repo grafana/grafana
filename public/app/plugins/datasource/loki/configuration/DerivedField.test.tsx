@@ -1,7 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { DerivedField } from './DerivedField';
-import DataSourcePicker from '../../../../core/components/Select/DataSourcePicker';
+import { DataSourcePicker } from '../../../../core/components/Select/DataSourcePicker';
 import { DataSourceInstanceSettings } from '@grafana/data';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
@@ -41,12 +41,7 @@ describe('DerivedField', () => {
     };
     const wrapper = shallow(<DerivedField value={value} onChange={() => {}} onDelete={() => {}} suggestions={[]} />);
 
-    expect(
-      wrapper
-        .find('DataSourceSection')
-        .dive()
-        .find(DataSourcePicker).length
-    ).toBe(1);
+    expect(wrapper.find(DataSourcePicker).length).toBe(1);
   });
 
   it('shows url link if uid is not set', () => {
@@ -56,7 +51,7 @@ describe('DerivedField', () => {
       url: 'test',
     };
     const wrapper = shallow(<DerivedField value={value} onChange={() => {}} onDelete={() => {}} suggestions={[]} />);
-    expect(wrapper.find('DataSourceSection').length).toBe(0);
+    expect(wrapper.find(DataSourcePicker).length).toBe(0);
   });
 
   it('shows only tracing datasources for internal link', () => {
@@ -66,13 +61,6 @@ describe('DerivedField', () => {
       datasourceUid: 'test',
     };
     const wrapper = shallow(<DerivedField value={value} onChange={() => {}} onDelete={() => {}} suggestions={[]} />);
-    const dsSection = wrapper.find('DataSourceSection').dive();
-    expect(dsSection.find(DataSourcePicker).props().datasources).toEqual([
-      {
-        meta: { tracing: true },
-        name: 'tracing_ds',
-        value: 'tracing',
-      },
-    ]);
+    expect(wrapper.find(DataSourcePicker).props().tracing).toEqual(true);
   });
 });

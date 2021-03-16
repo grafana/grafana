@@ -50,19 +50,19 @@ describe('ResponseQueue', () => {
         expect(setInProgressMock.mock.calls).toEqual([['id']]);
       });
 
-      it('then a response entry with correct id should be published', done => {
+      it('then a response entry with correct id should be published', (done) => {
         const { id, options, responseQueue } = getTestContext();
 
         subscribeTester({
           observable: responseQueue.getResponses(id).pipe(first()),
-          expectCallback: data => expect(data.id).toEqual(id),
+          expectCallback: (data) => expect(data.id).toEqual(id),
           doneCallback: done,
         });
 
         responseQueue.add(id, options);
       });
 
-      it('then fetch is called with correct options', done => {
+      it('then fetch is called with correct options', (done) => {
         const { id, options, responseQueue, fetchMock } = getTestContext();
 
         subscribeTester({
@@ -78,12 +78,12 @@ describe('ResponseQueue', () => {
       });
 
       describe('and when the fetch Observable is completed', () => {
-        it('then the matching fetchQueue entry should be set to Done', done => {
+        it('then the matching fetchQueue entry should be set to Done', (done) => {
           const { id, options, responseQueue, setInProgressMock } = getTestContext();
 
           subscribeTester({
             observable: responseQueue.getResponses(id).pipe(first()),
-            expectCallback: data => {
+            expectCallback: (data) => {
               data.observable.subscribe().unsubscribe();
               expect(setInProgressMock.mock.calls).toEqual([['id']]);
             },

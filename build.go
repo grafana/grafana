@@ -30,13 +30,13 @@ const (
 
 var (
 	//versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
-	goarch  string
-	goos    string
-	gocc    string
-	cgo     bool
-	libc    string
-	pkgArch string
-	version string = "v1"
+	goarch    string
+	goos      string
+	gocc      string
+	cgo       bool
+	libc      string
+	pkgArch   string
+	version   string = "v1"
 	buildTags []string
 	// deb & rpm does not support semver so have to handle their version a little differently
 	linuxPackageVersion   string = "v1"
@@ -125,34 +125,7 @@ func main() {
 			}
 
 		case "build-frontend":
-			grunt(gruntBuildArg("build")...)
-
-		case "test":
-			test("./pkg/...")
-			grunt("test")
-
-		case "package":
-			grunt(gruntBuildArg("build")...)
-			grunt(gruntBuildArg("package")...)
-			if goos == linux {
-				createLinuxPackages()
-			}
-
-		case "package-only":
-			grunt(gruntBuildArg("package")...)
-			if goos == linux {
-				createLinuxPackages()
-			}
-		case "pkg-archive":
-			grunt(gruntBuildArg("package")...)
-
-		case "pkg-rpm":
-			grunt(gruntBuildArg("release")...)
-			createRpmPackages()
-
-		case "pkg-deb":
-			grunt(gruntBuildArg("release")...)
-			createDebPackages()
+			yarn("build")
 
 		case "sha-dist":
 			shaFilesInDist()
@@ -233,202 +206,8 @@ func readVersionFromPackageJson() {
 	}
 }
 
-type linuxPackageOptions struct {
-	packageType            string
-	packageArch            string
-	homeDir                string
-	homeBinDir             string
-	binPath                string
-	serverBinPath          string
-	cliBinPath             string
-	configDir              string
-	ldapFilePath           string
-	etcDefaultPath         string
-	etcDefaultFilePath     string
-	initdScriptFilePath    string
-	systemdServiceFilePath string
-
-	postinstSrc         string
-	initdScriptSrc      string
-	defaultFileSrc      string
-	systemdFileSrc      string
-	cliBinaryWrapperSrc string
-
-	depends []string
-}
-
-func createDebPackages() {
-	debPkgArch := pkgArch
-	if pkgArch == "armv7" || pkgArch == "armv6" {
-		debPkgArch = "armhf"
-	}
-
-	createPackage(linuxPackageOptions{
-		packageType:            "deb",
-		packageArch:            debPkgArch,
-		homeDir:                "/usr/share/grafana",
-		homeBinDir:             "/usr/share/grafana/bin",
-		binPath:                "/usr/sbin",
-		configDir:              "/etc/grafana",
-		etcDefaultPath:         "/etc/default",
-		etcDefaultFilePath:     "/etc/default/grafana-server",
-		initdScriptFilePath:    "/etc/init.d/grafana-server",
-		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
-
-		postinstSrc:         "packaging/deb/control/postinst",
-		initdScriptSrc:      "packaging/deb/init.d/grafana-server",
-		defaultFileSrc:      "packaging/deb/default/grafana-server",
-		systemdFileSrc:      "packaging/deb/systemd/grafana-server.service",
-		cliBinaryWrapperSrc: "packaging/wrappers/grafana-cli",
-
-		depends: []string{"adduser", "libfontconfig1"},
-	})
-}
-
-func createRpmPackages() {
-	rpmPkgArch := pkgArch
-	switch {
-	case pkgArch == "armv7":
-		rpmPkgArch = "armhfp"
-	case pkgArch == "arm64":
-		rpmPkgArch = "aarch64"
-	}
-	createPackage(linuxPackageOptions{
-		packageType:            "rpm",
-		packageArch:            rpmPkgArch,
-		homeDir:                "/usr/share/grafana",
-		homeBinDir:             "/usr/share/grafana/bin",
-		binPath:                "/usr/sbin",
-		configDir:              "/etc/grafana",
-		etcDefaultPath:         "/etc/sysconfig",
-		etcDefaultFilePath:     "/etc/sysconfig/grafana-server",
-		initdScriptFilePath:    "/etc/init.d/grafana-server",
-		systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
-
-		postinstSrc:         "packaging/rpm/control/postinst",
-		initdScriptSrc:      "packaging/rpm/init.d/grafana-server",
-		defaultFileSrc:      "packaging/rpm/sysconfig/grafana-server",
-		systemdFileSrc:      "packaging/rpm/systemd/grafana-server.service",
-		cliBinaryWrapperSrc: "packaging/wrappers/grafana-cli",
-
-		depends: []string{"/sbin/service", "fontconfig", "freetype", "urw-fonts"},
-	})
-}
-
-func createLinuxPackages() {
-	if !skipDebGen {
-		createDebPackages()
-	}
-
-	if !skipRpmGen {
-		createRpmPackages()
-	}
-}
-
-func createPackage(options linuxPackageOptions) {
-	packageRoot, _ := ioutil.TempDir("", "grafana-linux-pack")
-
-	// create directories
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.homeDir))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.configDir))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/etc/init.d"))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.etcDefaultPath))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/sbin"))
-
-	// copy grafana-cli wrapper
-	runPrint("cp", "-p", options.cliBinaryWrapperSrc, filepath.Join(packageRoot, "/usr/sbin/"+cliBinary))
-
-	// copy grafana-server binary
-	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+serverBinary), filepath.Join(packageRoot, "/usr/sbin/"+serverBinary))
-
-	// copy init.d script
-	runPrint("cp", "-p", options.initdScriptSrc, filepath.Join(packageRoot, options.initdScriptFilePath))
-	// copy environment var file
-	runPrint("cp", "-p", options.defaultFileSrc, filepath.Join(packageRoot, options.etcDefaultFilePath))
-	// copy systemd file
-	runPrint("cp", "-p", options.systemdFileSrc, filepath.Join(packageRoot, options.systemdServiceFilePath))
-	// copy release files
-	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
-	// remove bin path
-	runPrint("rm", "-rf", filepath.Join(packageRoot, options.homeDir, "bin"))
-
-	// create /bin within home
-	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.homeBinDir))
-	// The grafana-cli binary is exposed through a wrapper to ensure a proper
-	// configuration is in place. To enable that, we need to store the original
-	// binary in a separate location to avoid conflicts.
-	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+cliBinary), filepath.Join(packageRoot, options.homeBinDir, cliBinary))
-
-	args := []string{
-		"-s", "dir",
-		"--description", "Grafana",
-		"-C", packageRoot,
-		"--url", "https://grafana.com",
-		"--maintainer", "contact@grafana.com",
-		"--config-files", options.initdScriptFilePath,
-		"--config-files", options.etcDefaultFilePath,
-		"--config-files", options.systemdServiceFilePath,
-		"--after-install", options.postinstSrc,
-
-		"--version", linuxPackageVersion,
-		"-p", "./dist",
-	}
-
-	name := "grafana"
-	if enterprise {
-		name += "-enterprise"
-		args = append(args, "--replaces", "grafana")
-	}
-	fmt.Printf("pkgArch is set to '%s', generated arch is '%s'\n", pkgArch, options.packageArch)
-	if pkgArch == "armv6" {
-		name += "-rpi"
-		args = append(args, "--replaces", "grafana")
-	}
-	args = append(args, "--name", name)
-
-	description := "Grafana"
-	if enterprise {
-		description += " Enterprise"
-	}
-
-	if !enterprise {
-		args = append(args, "--license", "\"Apache 2.0\"")
-	}
-
-	if options.packageType == "rpm" {
-		args = append(args, "--rpm-posttrans", "packaging/rpm/control/posttrans")
-	}
-
-	if options.packageType == "deb" {
-		args = append(args, "--deb-no-default-config-files")
-	}
-
-	if options.packageArch != "" {
-		args = append(args, "-a", options.packageArch)
-	}
-
-	if linuxPackageIteration != "" {
-		args = append(args, "--iteration", linuxPackageIteration)
-	}
-
-	// add dependencies
-	for _, dep := range options.depends {
-		args = append(args, "--depends", dep)
-	}
-
-	args = append(args, ".")
-
-	fmt.Println("Creating package: ", options.packageType)
-	runPrint("fpm", append([]string{"-t", options.packageType}, args...)...)
-}
-
-func grunt(params ...string) {
-	if runtime.GOOS == windows {
-		runPrint(`.\node_modules\.bin\grunt`, params...)
-	} else {
-		runPrint("./node_modules/.bin/grunt", params...)
-	}
+func yarn(params ...string) {
+	runPrint(`yarn run`, params...)
 }
 
 func genPackageVersion() string {
@@ -437,24 +216,6 @@ func genPackageVersion() string {
 	} else {
 		return version
 	}
-}
-
-func gruntBuildArg(task string) []string {
-	args := []string{task}
-	args = append(args, fmt.Sprintf("--pkgVer=%v", genPackageVersion()))
-	if pkgArch != "" {
-		args = append(args, fmt.Sprintf("--arch=%v", pkgArch))
-	}
-	if libc != "" {
-		args = append(args, fmt.Sprintf("--libc=%s", libc))
-	}
-	if enterprise {
-		args = append(args, "--enterprise")
-	}
-
-	args = append(args, fmt.Sprintf("--platform=%v", goos))
-
-	return args
 }
 
 func setup() {

@@ -95,6 +95,8 @@ func (server *Server) Dial() error {
 	if server.Config.RootCACert != "" {
 		certPool = x509.NewCertPool()
 		for _, caCertFile := range strings.Split(server.Config.RootCACert, " ") {
+			// nolint:gosec
+			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
 			pem, err := ioutil.ReadFile(caCertFile)
 			if err != nil {
 				return err
@@ -112,6 +114,8 @@ func (server *Server) Dial() error {
 		}
 	}
 	for _, host := range strings.Split(server.Config.Host, " ") {
+		// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
+		host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
 		address := net.JoinHostPort(host, strconv.Itoa(server.Config.Port))
 		if server.Config.UseSSL {
 			tlsCfg := &tls.Config{

@@ -78,6 +78,8 @@ demo.robustperception.io:9100
 
 ## Filter and modify using named text and value capture groups
 
+> **Note:** This feature is available in Grafana 7.4+.
+
 Using named capture groups, you can capture separate 'text' and 'value' parts from the options returned by the variable query. This allows the variable drop-down list to contain a friendly name for each value that can be selected.
 
 For example, when querying the `node_hwmon_chip_names` Prometheus metric, the `chip_name` is a lot friendlier that the `chip` value. So the following variable query result:

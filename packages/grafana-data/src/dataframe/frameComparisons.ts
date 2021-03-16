@@ -6,7 +6,7 @@ import { DataFrame } from '../types/dataFrame';
  *
  * To compare multiple frames use:
  * ```
- * areArraysEqual(a, b, framesHaveSameStructure);
+ * compareArrayValues(a, b, framesHaveSameStructure);
  * ```
  * NOTE: this does a shallow check on the FieldConfig properties, when using the query
  * editor, this should be sufficient, however if applicaitons are mutating properties
@@ -35,8 +35,8 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipPrope
     let bKeys = Object.keys(cfgB);
 
     if (skipProperties) {
-      aKeys = aKeys.filter(k => skipProperties.indexOf(k) < 0);
-      bKeys = aKeys.filter(k => skipProperties.indexOf(k) < 0);
+      aKeys = aKeys.filter((k) => skipProperties.indexOf(k) < 0);
+      bKeys = aKeys.filter((k) => skipProperties.indexOf(k) < 0);
     }
     if (aKeys.length !== bKeys.length) {
       return false;

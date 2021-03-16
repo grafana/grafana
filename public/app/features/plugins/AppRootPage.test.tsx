@@ -1,13 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import React, { Component } from 'react';
-import { StoreState } from 'app/types';
-import { Provider } from 'react-redux';
-import configureStore from 'redux-mock-store';
 import AppRootPage from './AppRootPage';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
 import { getMockPlugin } from './__mocks__/pluginMocks';
 import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';
+import { Route, Router } from 'react-router-dom';
+import { locationService } from '@grafana/runtime';
+import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 
 jest.mock('./PluginSettingsCache', () => ({
   getPluginSettings: jest.fn(),
@@ -26,28 +26,15 @@ const getPluginSettingsMock = getPluginSettings as jest.Mock<
   Parameters<typeof getPluginSettings>
 >;
 
-const initialState: Partial<StoreState> = {
-  location: {
-    routeParams: {
-      pluginId: 'my-awesome-plugin',
-      slug: 'my-awesome-plugin',
-    },
-    query: {},
-    path: '/a/my-awesome-plugin',
-    url: '',
-    replace: false,
-    lastUpdated: 1,
-  },
-};
+function rendeUnderRouter() {
+  const route = { component: AppRootPage };
+  locationService.push('/a/my-awesome-plugin');
 
-function renderWithStore(soreState: Partial<StoreState> = initialState) {
-  const store = configureStore<StoreState>()(soreState as StoreState);
   render(
-    <Provider store={store}>
-      <AppRootPage />
-    </Provider>
+    <Router history={locationService.getHistory()}>
+      <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+    </Router>
   );
-  return store;
 }
 
 describe('AppRootPage', () => {
@@ -102,12 +89,53 @@ describe('AppRootPage', () => {
 
     importAppPluginMock.mockResolvedValue(plugin);
 
-    renderWithStore();
+    rendeUnderRouter();
 
     // check that plugin and nav links were rendered, and plugin is mounted only once
     await screen.findByText('my great plugin');
     await screen.findAllByRole('link', { name: /A page/ });
     await screen.findAllByRole('link', { name: /Another page/ });
     expect(timesMounted).toEqual(1);
+  });
+
+  it('should not render component if not at plugin path', async () => {
+    getPluginSettingsMock.mockResolvedValue(
+      getMockPlugin({
+        type: PluginType.app,
+        enabled: true,
+      })
+    );
+
+    let timesRendered = 0;
+    class RootComponent extends Component<AppRootProps> {
+      render() {
+        timesRendered += 1;
+        return <p>my great component</p>;
+      }
+    }
+
+    const plugin = new AppPlugin();
+    plugin.root = RootComponent;
+
+    importAppPluginMock.mockResolvedValue(plugin);
+
+    rendeUnderRouter();
+
+    await screen.findByText('my great component');
+
+    // renders the first time
+    expect(timesRendered).toEqual(1);
+
+    await act(async () => {
+      locationService.push('/foo');
+    });
+
+    expect(timesRendered).toEqual(1);
+
+    await act(async () => {
+      locationService.push('/a/my-awesome-plugin');
+    });
+
+    expect(timesRendered).toEqual(2);
   });
 });

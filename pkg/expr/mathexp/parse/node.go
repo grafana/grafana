@@ -88,7 +88,7 @@ func (t NodeType) String() string {
 type VarNode struct {
 	NodeType
 	Pos
-	Name string // Without the $
+	Name string // Without the $ or {}
 	Text string // Raw
 }
 

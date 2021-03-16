@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
+import React, { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
@@ -30,21 +30,21 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
-  async componentDidMount() {
-    await this.props.initDataSourceVariableEditor();
+  componentDidMount() {
+    this.props.initDataSourceVariableEditor();
   }
 
-  onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onRegExChange = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'regex',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
     });
   };
 
-  onRegExBlur = (event: FocusEvent<HTMLInputElement>) => {
+  onRegExBlur = (event: FormEvent<HTMLInputElement>) => {
     this.props.onPropChange({
       propName: 'regex',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };
@@ -57,7 +57,7 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
     if (!this.props.editor.extended?.dataSourceTypes?.length) {
       return '';
     }
-    const foundItem = this.props.editor.extended?.dataSourceTypes.find(ds => ds.value === this.props.variable.query);
+    const foundItem = this.props.editor.extended?.dataSourceTypes.find((ds) => ds.value === this.props.variable.query);
     const value = foundItem ? foundItem.value : this.props.editor.extended?.dataSourceTypes[0].value;
     return value ?? '';
   };
@@ -68,9 +68,9 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
 
   render() {
     const typeOptions = this.props.editor.extended?.dataSourceTypes?.length
-      ? this.props.editor.extended?.dataSourceTypes?.map(ds => ({ value: ds.value ?? '', label: ds.text }))
+      ? this.props.editor.extended?.dataSourceTypes?.map((ds) => ({ value: ds.value ?? '', label: ds.text }))
       : [];
-    const typeValue = typeOptions.find(o => o.value === this.props.variable.query) ?? typeOptions[0];
+    const typeValue = typeOptions.find((o) => o.value === this.props.variable.query) ?? typeOptions[0];
 
     return (
       <VerticalGroup spacing="xs">

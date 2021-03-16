@@ -16,7 +16,7 @@ export interface Props {
   templateVariableOptions: Array<SelectableValue<string>>;
 }
 
-export const Aggregations: FC<Props> = props => {
+export const Aggregations: FC<Props> = (props) => {
   const [displayAdvancedOptions, setDisplayAdvancedOptions] = useState(false);
   const aggOptions = useAggregationOptionsByMetric(props);
   const selected = useSelectedFromOptions(aggOptions, props);
@@ -65,7 +65,7 @@ const useAggregationOptionsByMetric = ({ metricDescriptor }: Props): Array<Selec
     return getAggregationOptionsByMetric(
       metricDescriptor.valueType as ValueTypes,
       metricDescriptor.metricKind as MetricKind
-    ).map(a => ({
+    ).map((a) => ({
       ...a,
       label: a.text,
     }));
@@ -75,6 +75,6 @@ const useAggregationOptionsByMetric = ({ metricDescriptor }: Props): Array<Selec
 const useSelectedFromOptions = (aggOptions: Array<SelectableValue<string>>, props: Props) => {
   return useMemo(() => {
     const allOptions = [...aggOptions, ...props.templateVariableOptions];
-    return allOptions.find(s => s.value === props.crossSeriesReducer);
+    return allOptions.find((s) => s.value === props.crossSeriesReducer);
   }, [aggOptions, props.crossSeriesReducer, props.templateVariableOptions]);
 };

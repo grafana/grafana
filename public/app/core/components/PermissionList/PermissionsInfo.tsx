@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 
-export default () => (
+const PermissionsInfo = () => (
   <div>
     <h5>What are Permissions?</h5>
     <p>
@@ -9,3 +9,5 @@ export default () => (
     </p>
   </div>
 );
+
+export default PermissionsInfo;

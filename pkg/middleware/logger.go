@@ -16,19 +16,17 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/uber/jaeger-client-go"
+	cw "github.com/weaveworks/common/middleware"
 	"gopkg.in/macaron.v1"
 )
 
-func Logger() macaron.Handler {
+func Logger(cfg *setting.Cfg) macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
 		c.Data["perfmon.start"] = start
@@ -45,7 +43,7 @@ func Logger() macaron.Handler {
 
 		status := rw.Status()
 		if status == 200 || status == 304 {
-			if !setting.RouterLogging {
+			if !cfg.RouterLogging {
 				return
 			}
 		}
@@ -63,7 +61,7 @@ func Logger() macaron.Handler {
 				"referer", req.Referer(),
 			}
 
-			traceID, exist := extractTraceID(ctxTyped.Req.Request.Context())
+			traceID, exist := cw.ExtractTraceID(ctxTyped.Req.Request.Context())
 			if exist {
 				logParams = append(logParams, "traceID", traceID)
 			}
@@ -75,17 +73,4 @@ func Logger() macaron.Handler {
 			}
 		}
 	}
-}
-
-func extractTraceID(ctx context.Context) (string, bool) {
-	sp := opentracing.SpanFromContext(ctx)
-	if sp == nil {
-		return "", false
-	}
-	sctx, ok := sp.Context().(jaeger.SpanContext)
-	if !ok {
-		return "", false
-	}
-
-	return sctx.TraceID().String(), true
 }

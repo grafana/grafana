@@ -18,6 +18,7 @@ export interface When<State> {
 export interface Then<State> {
   thenStateShouldEqual: (state: State) => When<State>;
   thenStatePredicateShouldEqual: (predicate: (resultingState: State) => boolean) => When<State>;
+  whenActionIsDispatched: (action: PayloadAction<any> | Action<any>) => Then<State>;
 }
 
 interface ObjectType extends Object {
@@ -35,7 +36,7 @@ export const deepFreeze = <T>(obj: T): T => {
 
   if (obj && obj instanceof Object) {
     const object: ObjectType = obj;
-    Object.getOwnPropertyNames(object).forEach(propertyName => {
+    Object.getOwnPropertyNames(object).forEach((propertyName) => {
       const objectProperty: any = object[propertyName];
       if (
         hasOwnProp.call(object, propertyName) &&

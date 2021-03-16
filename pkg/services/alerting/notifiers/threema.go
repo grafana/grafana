@@ -127,6 +127,8 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 		stateEmoji = "\u2753\uFE0F " // Question Mark
 	case models.AlertStateAlerting:
 		stateEmoji = "\u26A0\uFE0F " // Warning sign
+	default:
+		// Handle other cases?
 	}
 
 	// Build message

@@ -22,17 +22,14 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
-        getDataSourceSettingsByUid(): any {},
-        getExternal(): DataSourceInstanceSettings[] {
+        getList(): DataSourceInstanceSettings[] {
           return [];
         },
-        getAll(): DataSourceInstanceSettings[] {
-          return [];
-        },
+        getInstanceSettings: (() => {}) as any,
       };
       const targets: ElasticsearchQuery[] = [
-        { refId: 'A', query: '@hostname:$hostname', isLogsQuery: false },
-        { refId: 'B', query: '@instance:instance', isLogsQuery: false },
+        { refId: 'A', query: '@hostname:$hostname' },
+        { refId: 'B', query: '@instance:instance' },
       ];
       const transformations: DataTransformerConfig[] = [];
 
@@ -65,11 +62,8 @@ describe('getAlertingValidationMessage', () => {
 
           return Promise.resolve(alertingDatasource);
         },
-        getDataSourceSettingsByUid(): any {},
-        getExternal(): DataSourceInstanceSettings[] {
-          return [];
-        },
-        getAll(): DataSourceInstanceSettings[] {
+        getInstanceSettings: (() => {}) as any,
+        getList(): DataSourceInstanceSettings[] {
           return [];
         },
       };
@@ -95,17 +89,14 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
-        getDataSourceSettingsByUid(): any {},
-        getExternal(): DataSourceInstanceSettings[] {
-          return [];
-        },
-        getAll(): DataSourceInstanceSettings[] {
+        getInstanceSettings: (() => {}) as any,
+        getList(): DataSourceInstanceSettings[] {
           return [];
         },
       };
       const targets: ElasticsearchQuery[] = [
-        { refId: 'A', query: '@hostname:$hostname', isLogsQuery: false },
-        { refId: 'B', query: '@instance:$instance', isLogsQuery: false },
+        { refId: 'A', query: '@hostname:$hostname' },
+        { refId: 'B', query: '@instance:$instance' },
       ];
       const transformations: DataTransformerConfig[] = [];
 
@@ -127,17 +118,14 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
-        getDataSourceSettingsByUid(): any {},
-        getExternal(): DataSourceInstanceSettings[] {
-          return [];
-        },
-        getAll(): DataSourceInstanceSettings[] {
+        getInstanceSettings: (() => {}) as any,
+        getList(): DataSourceInstanceSettings[] {
           return [];
         },
       };
       const targets: ElasticsearchQuery[] = [
-        { refId: 'A', query: '@hostname:hostname', isLogsQuery: false },
-        { refId: 'B', query: '@instance:instance', isLogsQuery: false },
+        { refId: 'A', query: '@hostname:hostname' },
+        { refId: 'B', query: '@instance:instance' },
       ];
       const transformations: DataTransformerConfig[] = [];
 
@@ -159,17 +147,14 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
-        getDataSourceSettingsByUid(): any {},
-        getExternal(): DataSourceInstanceSettings[] {
-          return [];
-        },
-        getAll(): DataSourceInstanceSettings[] {
+        getInstanceSettings: (() => {}) as any,
+        getList(): DataSourceInstanceSettings[] {
           return [];
         },
       };
       const targets: ElasticsearchQuery[] = [
-        { refId: 'A', query: '@hostname:hostname', isLogsQuery: false },
-        { refId: 'B', query: '@instance:instance', isLogsQuery: false },
+        { refId: 'A', query: '@hostname:hostname' },
+        { refId: 'B', query: '@instance:instance' },
       ];
       const transformations: DataTransformerConfig[] = [{ id: 'A', options: null }];
 

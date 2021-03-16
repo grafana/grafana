@@ -1,4 +1,3 @@
-import angular from 'angular';
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import _ from 'lodash';
 import $ from 'jquery';
@@ -6,22 +5,13 @@ import kbn from 'app/core/utils/kbn';
 import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';
 import impressionSrv from 'app/core/services/impression_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { DashboardSrv } from './DashboardSrv';
-import DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { getDashboardSrv } from './DashboardSrv';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getBackendSrv, locationService } from '@grafana/runtime';
+import { appEvents } from '../../../core/core';
 
 export class DashboardLoaderSrv {
-  /** @ngInject */
-  constructor(
-    private dashboardSrv: DashboardSrv,
-    private datasourceSrv: DatasourceSrv,
-    private $http: any,
-    private $timeout: any,
-    contextSrv: any,
-    private $routeParams: any,
-    private $rootScope: GrafanaRootScope
-  ) {}
-
+  constructor() {}
   _dashboardLoadFailed(title: string, snapshot?: boolean) {
     snapshot = snapshot || false;
     return {
@@ -51,7 +41,7 @@ export class DashboardLoaderSrv {
         .getDashboardByUid(uid)
         .then((result: any) => {
           if (result.meta.isFolder) {
-            this.$rootScope.appEvent(AppEvents.alertError, ['Dashboard not found']);
+            appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
             throw new Error('Dashboard not found');
           }
           return result;
@@ -75,7 +65,8 @@ export class DashboardLoaderSrv {
   _loadScriptedDashboard(file: string) {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
-    return this.$http({ url: url, method: 'GET' })
+    return getBackendSrv()
+      .get(url)
       .then(this._executeScript.bind(this))
       .then(
         (result: any) => {
@@ -91,7 +82,7 @@ export class DashboardLoaderSrv {
         },
         (err: any) => {
           console.error('Script dashboard error ' + err);
-          this.$rootScope.appEvent(AppEvents.alertError, [
+          appEvents.emit(AppEvents.alertError, [
             'Script Error',
             'Please make sure it exists and returns a valid dashboard',
           ]);
@@ -102,10 +93,9 @@ export class DashboardLoaderSrv {
 
   _executeScript(result: any) {
     const services = {
-      dashboardSrv: this.dashboardSrv,
-      datasourceSrv: this.datasourceSrv,
+      dashboardSrv: getDashboardSrv(),
+      datasourceSrv: getDatasourceSrv(),
     };
-
     const scriptFunc = new Function(
       'ARGS',
       'kbn',
@@ -117,17 +107,26 @@ export class DashboardLoaderSrv {
       '$',
       'jQuery',
       'services',
-      result.data
+      result
     );
-    const scriptResult = scriptFunc(this.$routeParams, kbn, dateMath, _, moment, window, document, $, $, services);
+    const scriptResult = scriptFunc(
+      locationService.getSearchObject(),
+      kbn,
+      dateMath,
+      _,
+      moment,
+      window,
+      document,
+      $,
+      $,
+      services
+    );
 
     // Handle async dashboard scripts
     if (_.isFunction(scriptResult)) {
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         scriptResult((dashboard: any) => {
-          this.$timeout(() => {
-            resolve({ data: dashboard });
-          });
+          resolve({ data: dashboard });
         });
       });
     }
@@ -136,4 +135,15 @@ export class DashboardLoaderSrv {
   }
 }
 
-angular.module('grafana.services').service('dashboardLoaderSrv', DashboardLoaderSrv);
+let dashboardLoaderSrv = new DashboardLoaderSrv();
+export { dashboardLoaderSrv };
+
+/** @internal
+ * Used for tests only
+ */
+export const setDashboardLoaderSrv = (srv: DashboardLoaderSrv) => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('dashboardLoaderSrv can be only overriden in test environment');
+  }
+  dashboardLoaderSrv = srv;
+};

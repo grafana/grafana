@@ -13,7 +13,7 @@ interface DemoBoxProps {
 const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
   const style = cx(
     css`
-      padding: 16px 32px;
+      padding: 32px 32px 16px 32px;
       background: ${bg};
       width: 100%;
     `,
@@ -24,18 +24,7 @@ const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
       : null
   );
 
-  return (
-    <div className={style}>
-      <div
-        className={css`
-          padding-bottom: 16px;
-        `}
-      >
-        {name}
-      </div>
-      {children}
-    </div>
-  );
+  return <div className={style}>{children}</div>;
 };
 
 const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color, bold, size, children }) => {

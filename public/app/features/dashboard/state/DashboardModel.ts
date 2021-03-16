@@ -14,20 +14,19 @@ import {
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   DateTimeInput,
-  PanelEvents,
+  EventBusExtended,
+  EventBusSrv,
   TimeRange,
   TimeZone,
   UrlQueryValue,
-  EventBusSrv,
-  EventBusExtended,
 } from '@grafana/data';
-import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
+import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
-import { DashboardPanelsChangedEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent } from 'app/types/events';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -35,7 +34,7 @@ export interface CloneOptions {
   message?: string;
 }
 
-type DashboardLinkType = 'link' | 'dashboards';
+export type DashboardLinkType = 'link' | 'dashboards';
 
 export interface DashboardLink {
   icon: string;
@@ -47,6 +46,8 @@ export interface DashboardLink {
   tags: any[];
   searchHits?: any[];
   targetBlank: boolean;
+  keepTime: boolean;
+  includeVars: boolean;
 }
 
 export class DashboardModel {
@@ -93,9 +94,11 @@ export class DashboardModel {
     templating: true, // needs special handling
     originalTime: true,
     originalTemplating: true,
+    originalLibraryPanels: true,
     panelInEdit: true,
     panelInView: true,
     getVariablesFromState: true,
+    formatDate: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -126,6 +129,7 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], (panelData: any) => new PanelModel(panelData));
+    this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
     this.resetOriginalTime();
@@ -170,6 +174,7 @@ export class DashboardModel {
     meta.canEdit = meta.canEdit !== false;
     meta.showSettings = meta.canEdit;
     meta.canMakeEditable = meta.canSave && !this.editable;
+    meta.hasUnsavedFolderChange = false;
 
     if (!this.editable) {
       meta.canEdit = false;
@@ -236,7 +241,9 @@ export class DashboardModel {
     const currentVariables = this.getVariablesFromState();
 
     copy.templating = {
-      list: currentVariables.map(variable => variableAdapters.get(variable.type).getSaveModel(variable)),
+      list: currentVariables.map((variable) =>
+        variableAdapters.get(variable.type).getSaveModel(variable, defaults.saveVariables)
+      ),
     };
 
     if (!defaults.saveVariables) {
@@ -263,7 +270,7 @@ export class DashboardModel {
   }
 
   startRefresh() {
-    this.events.emit(PanelEvents.refresh);
+    this.events.publish(new RefreshEvent());
 
     if (this.panelInEdit) {
       this.panelInEdit.refresh();
@@ -278,8 +285,7 @@ export class DashboardModel {
   }
 
   render() {
-    this.events.emit(PanelEvents.render);
-
+    this.events.publish(new RenderEvent());
     for (const panel of this.panels) {
       panel.render();
     }
@@ -417,7 +423,7 @@ export class DashboardModel {
 
     // remove panels
     _.pull(this.panels, ...panelsToRemove);
-    panelsToRemove.map(p => p.destroy());
+    panelsToRemove.map((p) => p.destroy());
     this.sortPanelsByGridPos();
     this.events.publish(new DashboardPanelsChangedEvent());
   }
@@ -678,7 +684,7 @@ export class DashboardModel {
   }
 
   removePanel(panel: PanelModel) {
-    this.panels = this.panels.filter(item => item !== panel);
+    this.panels = this.panels.filter((item) => item !== panel);
     this.events.publish(new DashboardPanelsChangedEvent());
   }
 
@@ -881,11 +887,15 @@ export class DashboardModel {
     return rowPanels;
   }
 
+  /** @deprecated */
   on<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
+    console.log('DashboardModel.on is deprecated use events.subscribe');
     this.events.on(event, callback);
   }
 
+  /** @deprecated */
   off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
+    console.log('DashboardModel.off is deprecated');
     this.events.off(event, callback);
   }
 
@@ -943,7 +953,7 @@ export class DashboardModel {
 
   autoFitPanels(viewHeight: number, kioskMode?: UrlQueryValue) {
     const currentGridHeight = Math.max(
-      ...this.panels.map(panel => {
+      ...this.panels.map((panel) => {
         return panel.gridPos.h + panel.gridPos.y;
       })
     );
@@ -960,7 +970,7 @@ export class DashboardModel {
     }
 
     // add back navbar height
-    if (kioskMode && kioskMode !== KIOSK_MODE_TV) {
+    if (kioskMode && kioskMode !== KioskMode.TV) {
       visibleHeight += navbarHeight;
     }
 
@@ -992,12 +1002,12 @@ export class DashboardModel {
   }
 
   toggleLegendsForAll() {
-    const panelsWithLegends = this.panels.filter(panel => {
+    const panelsWithLegends = this.panels.filter((panel) => {
       return panel.legend !== undefined && panel.legend !== null;
     });
 
     // determine if more panels are displaying legends or not
-    const onCount = panelsWithLegends.filter(panel => panel.legend!.show).length;
+    const onCount = panelsWithLegends.filter((panel) => panel.legend!.show).length;
     const offCount = panelsWithLegends.length - onCount;
     const panelLegendsOn = onCount >= offCount;
 
@@ -1011,8 +1021,12 @@ export class DashboardModel {
     return this.getVariablesFromState();
   };
 
+  canAddAnnotations() {
+    return this.meta.canEdit || this.meta.canMakeEditable;
+  }
+
   private getPanelRepeatVariable(panel: PanelModel) {
-    return this.getVariablesFromState().find(variable => variable.name === panel.repeat);
+    return this.getVariablesFromState().find((variable) => variable.name === panel.repeat);
   }
 
   private isSnapshotTruthy() {
@@ -1041,7 +1055,7 @@ export class DashboardModel {
   }
 
   private cloneVariablesFrom(variables: any[]): any[] {
-    return variables.map(variable => {
+    return variables.map((variable) => {
       return {
         name: variable.name,
         type: variable.type,

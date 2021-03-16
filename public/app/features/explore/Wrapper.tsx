@@ -1,17 +1,13 @@
 import React, { Component } from 'react';
-import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-
-import { StoreState } from 'app/types';
-import { ExploreId } from 'app/types/explore';
-
+import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 import { CustomScrollbar, ErrorBoundaryAlert } from '@grafana/ui';
-import { resetExploreAction, richHistoryUpdatedAction } from './state/main';
-import Explore from './Explore';
+import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
 import { getRichHistory } from '../../core/utils/richHistory';
+import { ExplorePaneContainer } from './ExplorePaneContainer';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-interface WrapperProps {
-  split: boolean;
+interface WrapperProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {
   resetExploreAction: typeof resetExploreAction;
   richHistoryUpdatedAction: typeof richHistoryUpdatedAction;
 }
@@ -22,23 +18,27 @@ export class Wrapper extends Component<WrapperProps> {
   }
 
   componentDidMount() {
+    lastSavedUrl.left = undefined;
+    lastSavedUrl.right = undefined;
+
     const richHistory = getRichHistory();
     this.props.richHistoryUpdatedAction({ richHistory });
   }
 
   render() {
-    const { split } = this.props;
+    const { left, right } = this.props.queryParams;
+    const hasSplit = Boolean(left) && Boolean(right);
 
     return (
       <div className="page-scrollbar-wrapper">
-        <CustomScrollbar autoHeightMin={'100%'} autoHeightMax={''} className="custom-scrollbar--page">
+        <CustomScrollbar autoHeightMin={'100%'}>
           <div className="explore-wrapper">
             <ErrorBoundaryAlert style="page">
-              <Explore exploreId={ExploreId.left} />
+              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
             </ErrorBoundaryAlert>
-            {split && (
+            {hasSplit && (
               <ErrorBoundaryAlert style="page">
-                <Explore exploreId={ExploreId.right} />
+                <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
               </ErrorBoundaryAlert>
             )}
           </div>
@@ -48,14 +48,9 @@ export class Wrapper extends Component<WrapperProps> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => {
-  const { split } = state.explore;
-  return { split };
-};
-
 const mapDispatchToProps = {
   resetExploreAction,
   richHistoryUpdatedAction,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Wrapper));
+export default connect(null, mapDispatchToProps)(Wrapper);

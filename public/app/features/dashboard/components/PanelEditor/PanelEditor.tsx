@@ -1,12 +1,19 @@
 import React, { PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css, cx } from 'emotion';
 import { Subscription } from 'rxjs';
 
-import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
+import {
+  HorizontalGroup,
+  ModalsController,
+  PageToolbar,
+  RadioButtonGroup,
+  stylesFactory,
+  ToolbarButton,
+} from '@grafana/ui';
 
 import config from 'app/core/config';
 import { appEvents } from 'app/core/core';
@@ -15,54 +22,75 @@ import { calculatePanelSize } from './utils';
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
 import { OptionsPaneContent } from './OptionsPaneContent';
-import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
-import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
-import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
+import {
+  exitPanelEditor,
+  initPanelEditor,
+  panelEditorCleanUp,
+  updatePanelEditorUIState,
+  updateSourcePanel,
+} from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { updateLocation } from 'app/core/reducers/location';
-import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
+import { setDiscardChanges } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { getVariables } from 'app/features/variables/state/selectors';
 
-import { CoreEvents, LocationState, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
-import { VariableModel } from 'app/features/variables/types';
 import { DashboardModel, PanelModel } from '../../state';
-import { PanelOptionsChangedEvent } from 'app/types/events';
+import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
+import { locationService } from '@grafana/runtime';
+import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
+import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
+import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
+import { getLibraryPanelConnectedDashboards } from '../../../library-panels/state/api';
+import {
+  createPanelLibraryErrorNotification,
+  createPanelLibrarySuccessNotification,
+  saveAndRefreshLibraryPanel,
+} from '../../../library-panels/utils';
+import { notifyApp } from '../../../../core/actions';
 
 interface OwnProps {
   dashboard: DashboardModel;
   sourcePanel: PanelModel;
+  tab?: string;
 }
 
-interface ConnectedProps {
-  location: LocationState;
-  plugin?: PanelPlugin;
-  panel: PanelModel;
-  initDone: boolean;
-  tabs: PanelEditorTab[];
-  uiState: PanelEditorUIState;
-  variables: VariableModel[];
-}
+const mapStateToProps = (state: StoreState) => {
+  const panel = state.panelEditor.getPanel();
+  const { plugin } = getPanelStateById(state.dashboard, panel.id);
 
-interface DispatchProps {
-  updateLocation: typeof updateLocation;
-  initPanelEditor: typeof initPanelEditor;
-  panelEditorCleanUp: typeof panelEditorCleanUp;
-  setDiscardChanges: typeof setDiscardChanges;
-  updatePanelEditorUIState: typeof updatePanelEditorUIState;
-  updateTimeZoneForSession: typeof updateTimeZoneForSession;
-}
+  return {
+    plugin: plugin,
+    panel,
+    initDone: state.panelEditor.initDone,
+    uiState: state.panelEditor.ui,
+    variables: getVariables(state),
+  };
+};
 
-type Props = OwnProps & ConnectedProps & DispatchProps;
+const mapDispatchToProps = {
+  initPanelEditor,
+  exitPanelEditor,
+  updateSourcePanel,
+  panelEditorCleanUp,
+  setDiscardChanges,
+  updatePanelEditorUIState,
+  updateTimeZoneForSession,
+  notifyApp,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class PanelEditorUnconnected extends PureComponent<Props> {
   private eventSubs?: Subscription;
@@ -89,43 +117,82 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onPanelExit = () => {
-    this.props.updateLocation({
-      query: { editPanel: null, tab: null },
-      partial: true,
-    });
-  };
-
   onDiscard = () => {
     this.props.setDiscardChanges(true);
-    this.props.updateLocation({
-      query: { editPanel: null, tab: null },
-      partial: true,
+
+    locationService.partial({
+      editPanel: null,
+      tab: null,
     });
   };
 
   onOpenDashboardSettings = () => {
-    this.props.updateLocation({ query: { editview: 'settings' }, partial: true });
+    locationService.partial({
+      editview: 'settings',
+    });
   };
 
   onSaveDashboard = () => {
-    appEvents.emit(CoreEvents.showModalReact, {
-      component: SaveDashboardModalProxy,
-      props: { dashboard: this.props.dashboard },
-    });
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: SaveDashboardModalProxy,
+        props: { dashboard: this.props.dashboard },
+      })
+    );
+  };
+
+  onSaveLibraryPanel = async () => {
+    if (!isPanelModelLibraryPanel(this.props.panel)) {
+      // New library panel, no need to display modal
+      return;
+    }
+
+    if (this.props.panel.libraryPanel.meta.connectedDashboards === 0) {
+      return;
+    }
+
+    const connectedDashboards = await getLibraryPanelConnectedDashboards(this.props.panel.libraryPanel.uid);
+    if (connectedDashboards.length === 1 && connectedDashboards.indexOf(this.props.dashboard.id) !== -1) {
+      try {
+        await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
+        this.props.updateSourcePanel(this.props.panel);
+        this.props.notifyApp(createPanelLibrarySuccessNotification('Library panel saved'));
+      } catch (err) {
+        this.props.notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${err.statusText}"`));
+      }
+      return;
+    }
+
+    appEvents.publish(
+      new ShowModalReactEvent({
+        component: SaveLibraryPanelModal,
+        props: {
+          panel: this.props.panel,
+          folderId: this.props.dashboard.meta.folderId,
+          isOpen: true,
+          onConfirm: () => {
+            // need to update the source panel here so that when
+            // the user exits the panel editor they aren't prompted to save again
+            this.props.updateSourcePanel(this.props.panel);
+          },
+          onDiscard: this.onDiscard,
+        },
+      })
+    );
   };
 
   onChangeTab = (tab: PanelEditorTab) => {
-    this.props.updateLocation({ query: { tab: tab.id }, partial: true });
+    locationService.partial({
+      tab: tab.id,
+    });
   };
 
   onFieldConfigChange = (config: FieldConfigSource) => {
-    const { panel } = this.props;
-
-    panel.updateFieldConfig({
+    // we do not need to trigger force update here as the function call below
+    // fires PanelOptionsChangedEvent which we subscribe to above
+    this.props.panel.updateFieldConfig({
       ...config,
     });
-    this.forceUpdate();
   };
 
   onPanelOptionsChanged = (options: any) => {
@@ -134,14 +201,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.panel.updateOptions(options);
   };
 
-  onPanelConfigChanged = (configKey: string, value: any) => {
-    // @ts-ignore
-    this.props.panel[configKey] = value;
+  onPanelConfigChanged = (configKey: keyof PanelModel, value: any) => {
+    this.props.panel.setProperty(configKey, value);
     this.props.panel.render();
     this.forceUpdate();
   };
 
-  onDisplayModeChange = (mode: DisplayMode) => {
+  onDisplayModeChange = (mode?: DisplayMode) => {
     const { updatePanelEditorUIState } = this.props;
     updatePanelEditorUIState({
       mode: mode,
@@ -154,7 +220,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanel = (styles: EditorStyles) => {
-    const { dashboard, panel, tabs, uiState } = this.props;
+    const { dashboard, panel, uiState, plugin, tab } = this.props;
+    const tabs = getPanelEditorTabs(tab, plugin);
+
     return (
       <div className={cx(styles.mainPaneWrapper, tabs.length === 0 && styles.mainPaneWrapperNoTabs)} key="panel">
         {this.renderPanelToolbar(styles)}
@@ -185,7 +253,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanelAndEditor(styles: EditorStyles) {
-    const { panel, dashboard, tabs } = this.props;
+    const { panel, dashboard, plugin, tab } = this.props;
+    const tabs = getPanelEditorTabs(tab, plugin);
 
     if (tabs.length > 0) {
       return [
@@ -217,7 +286,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, location, uiState, variables, updateTimeZoneForSession } = this.props;
+    const { dashboard, uiState, variables, updateTimeZoneForSession } = this.props;
     return (
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
@@ -225,19 +294,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
           <HorizontalGroup>
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
-            <DashNavTimeControls
-              dashboard={dashboard}
-              location={location}
-              onChangeTimeZone={updateTimeZoneForSession}
-            />
+            <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
             {!uiState.isPanelOptionsVisible && (
-              <DashNavButton
-                onClick={this.onTogglePanelOptions}
-                tooltip="Open options pane"
-                classSuffix="close-options"
-              >
-                <Icon name="angle-left" /> <span style={{ paddingLeft: '6px' }}>Show options</span>
-              </DashNavButton>
+              <ToolbarButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" icon="angle-left">
+                Show options
+              </ToolbarButton>
             )}
           </HorizontalGroup>
         </HorizontalGroup>
@@ -245,41 +306,75 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  editorToolbar(styles: EditorStyles) {
-    const { dashboard } = this.props;
+  renderEditorActions() {
+    let editorActions = [
+      <ToolbarButton
+        icon="cog"
+        onClick={this.onOpenDashboardSettings}
+        title="Open dashboard settings"
+        key="settings"
+      />,
+      <ToolbarButton onClick={this.onDiscard} title="Undo all changes" key="discard">
+        Discard
+      </ToolbarButton>,
+      this.props.panel.libraryPanel ? (
+        <ToolbarButton
+          onClick={this.onSaveLibraryPanel}
+          variant="primary"
+          title="Apply changes and save library panel"
+          key="save-panel"
+        >
+          Save library panel
+        </ToolbarButton>
+      ) : (
+        <ToolbarButton onClick={this.onSaveDashboard} title="Apply changes and save dashboard" key="save">
+          Save
+        </ToolbarButton>
+      ),
+      <ToolbarButton
+        onClick={this.props.exitPanelEditor}
+        variant="primary"
+        title="Apply changes and go back to dashboard"
+        key="apply"
+      >
+        Apply
+      </ToolbarButton>,
+    ];
 
-    return (
-      <div className={styles.editorToolbar}>
-        <HorizontalGroup justify="space-between" align="center">
-          <div className={styles.toolbarLeft}>
-            <HorizontalGroup spacing="none">
-              <BackButton onClick={this.onPanelExit} surface="panel" />
-              <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
-            </HorizontalGroup>
-          </div>
+    if (this.props.panel.libraryPanel) {
+      editorActions.splice(
+        1,
+        0,
+        <ModalsController key="unlink-controller">
+          {({ showModal, hideModal }) => {
+            return (
+              <ToolbarButton
+                onClick={() => {
+                  showModal(UnlinkModal, {
+                    onConfirm: () => {
+                      delete this.props.panel.libraryPanel;
+                      this.props.panel.render();
+                      this.forceUpdate();
+                    },
+                    onDismiss: hideModal,
+                    isOpen: true,
+                  });
+                }}
+                title="Disconnects this panel from the reusable panel so that you can edit it regularly."
+                key="unlink"
+              >
+                Unlink
+              </ToolbarButton>
+            );
+          }}
+        </ModalsController>
+      );
 
-          <HorizontalGroup>
-            <HorizontalGroup spacing="sm" align="center">
-              <Button
-                icon="cog"
-                onClick={this.onOpenDashboardSettings}
-                variant="secondary"
-                title="Open dashboard settings"
-              />
-              <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes">
-                Discard
-              </Button>
-              <Button onClick={this.onSaveDashboard} variant="secondary" title="Apply changes and save dashboard">
-                Save
-              </Button>
-              <Button onClick={this.onPanelExit} title="Apply changes and go back to dashboard">
-                Apply
-              </Button>
-            </HorizontalGroup>
-          </HorizontalGroup>
-        </HorizontalGroup>
-      </div>
-    );
+      // Remove "Apply" button
+      editorActions.pop();
+    }
+
+    return editorActions;
   }
 
   renderOptionsPane() {
@@ -309,7 +404,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const { initDone, updatePanelEditorUIState, uiState } = this.props;
+    const { dashboard, initDone, updatePanelEditorUIState, uiState, exitPanelEditor } = this.props;
     const styles = getStyles(config.theme, this.props);
 
     if (!initDone) {
@@ -318,7 +413,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        {this.editorToolbar(styles)}
+        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={exitPanelEditor}>
+          {this.renderEditorActions()}
+        </PageToolbar>
         <div className={styles.verticalSplitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={this.renderPanelAndEditor(styles)}
@@ -333,31 +430,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
-  const panel = state.panelEditor.getPanel();
-  const { plugin } = getPanelStateById(state.dashboard, panel.id);
-
-  return {
-    location: state.location,
-    plugin: plugin,
-    panel,
-    initDone: state.panelEditor.initDone,
-    tabs: getPanelEditorTabs(state.location, plugin),
-    uiState: state.panelEditor.ui,
-    variables: getVariables(state),
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  updateLocation,
-  initPanelEditor,
-  panelEditorCleanUp,
-  setDiscardChanges,
-  updatePanelEditorUIState,
-  updateTimeZoneForSession,
-};
-
-export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);
+export const PanelEditor = connector(PanelEditorUnconnected);
 
 /*
  * Styles
@@ -413,13 +486,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       height: 100%;
       width: 100%;
     `,
-    editorToolbar: css`
-      display: flex;
-      padding: ${theme.spacing.sm};
-      background: ${theme.colors.panelBg};
-      justify-content: space-between;
-      border-bottom: 1px solid ${theme.colors.panelBorder};
-    `,
     panelToolbar: css`
       display: flex;
       padding: ${paneSpacing} 0 ${paneSpacing} ${paneSpacing};
@@ -433,10 +499,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       display: flex;
       justify-content: center;
       align-items: center;
-    `,
-    editorTitle: css`
-      font-size: ${theme.typography.size.lg};
-      padding-left: ${theme.spacing.md};
     `,
   };
 });

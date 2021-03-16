@@ -13,6 +13,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
 import { CoreEvents } from 'app/types';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
+import { ShowConfirmModalEvent } from '../../types/events';
 
 export class AlertTabCtrl {
   panel: PanelModel;
@@ -94,7 +95,7 @@ export class AlertTabCtrl {
       getBackendSrv()
         .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
         .then((res: any) => {
-          this.alertHistory = _.map(res, ah => {
+          this.alertHistory = _.map(res, (ah) => {
             ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
             ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
             ah.info = alertDef.getAlertAnnotationInfo(ah);
@@ -154,7 +155,7 @@ export class AlertTabCtrl {
     });
 
     // avoid duplicates using both id and uid to be backwards compatible.
-    if (!_.find(this.alert.notifications, n => n.id === model.id || n.uid === model.uid)) {
+    if (!_.find(this.alert.notifications, (n) => n.id === model.id || n.uid === model.uid)) {
       this.alert.notifications.push({ uid: model.uid });
     }
 
@@ -165,10 +166,10 @@ export class AlertTabCtrl {
   }
 
   removeNotification(an: any) {
-    // remove notifiers refeered to by id and uid to support notifiers added
+    // remove notifiers referred to by id and uid to support notifiers added
     // before and after we added support for uid
-    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid);
-    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid);
+    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid || n.id === an.id);
+    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
   }
 
   addAlertRuleTag() {
@@ -219,16 +220,21 @@ export class AlertTabCtrl {
     ThresholdMapper.alertToGraphThresholds(this.panel);
 
     for (const addedNotification of alert.notifications) {
+      let identifier = addedNotification.uid;
       // lookup notifier type by uid
-      let model: any = _.find(this.notifications, { uid: addedNotification.uid });
+      let model: any = _.find(this.notifications, { uid: identifier });
 
-      // fallback to using id if uid is missing
+      // fallback using id if uid is missing
+      if (!model && addedNotification.id) {
+        identifier = addedNotification.id;
+        model = _.find(this.notifications, { id: identifier });
+      }
+
       if (!model) {
-        model = _.find(this.notifications, { id: addedNotification.id });
-        if (!model) {
-          appEvents.emit(CoreEvents.showConfirmModal, {
-            title: 'Notifier with invalid ID is detected',
-            text: `Do you want to delete notifier with invalid ID: ${addedNotification.id} from the dashboard JSON?`,
+        appEvents.publish(
+          new ShowConfirmModalEvent({
+            title: 'Notifier with invalid identifier is detected',
+            text: `Do you want to delete notifier with invalid identifier: ${identifier} from the dashboard JSON?`,
             text2: 'After successful deletion, make sure to save the dashboard for storing the update JSON.',
             icon: 'trash-alt',
             confirmText: 'Delete',
@@ -236,8 +242,8 @@ export class AlertTabCtrl {
             onConfirm: async () => {
               this.removeNotification(addedNotification);
             },
-          });
-        }
+          })
+        );
       }
 
       if (model && model.isDefault === false) {
@@ -325,7 +331,7 @@ export class AlertTabCtrl {
       const datasourceName = foundTarget.datasource || this.panel.datasource;
       promises.push(
         this.datasourceSrv.get(datasourceName).then(
-          (foundTarget => (ds: DataSourceApi) => {
+          ((foundTarget) => (ds: DataSourceApi) => {
             if (!ds.meta.alerting) {
               return Promise.reject('The datasource does not support alerting queries');
             } else if (ds.targetContainsTemplate && ds.targetContainsTemplate(foundTarget)) {
@@ -341,7 +347,7 @@ export class AlertTabCtrl {
         this.error = '';
         this.$scope.$apply();
       },
-      e => {
+      (e) => {
         this.error = e;
         this.$scope.$apply();
       }
@@ -371,7 +377,7 @@ export class AlertTabCtrl {
         this.validateModel();
       }
       case 'get-param-options': {
-        const result = this.panel.targets.map(target => {
+        const result = this.panel.targets.map((target) => {
           return this.uiSegmentSrv.newSegment({ value: target.refId });
         });
 
@@ -390,6 +396,7 @@ export class AlertTabCtrl {
       case 'action': {
         conditionModel.source.reducer.type = evt.action.value;
         conditionModel.reducerPart = alertDef.createReducerPart(conditionModel.source.reducer);
+        this.evaluatorParamsChanged();
         break;
       }
       case 'get-part-actions': {
@@ -420,21 +427,23 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete Alert',
-      text: 'Are you sure you want to delete this alert rule?',
-      text2: 'You need to save dashboard for the delete to take effect',
-      icon: 'trash-alt',
-      yesText: 'Delete',
-      onConfirm: () => {
-        delete this.panel.alert;
-        this.alert = null;
-        this.panel.thresholds = [];
-        this.conditionModels = [];
-        this.panelCtrl.alertState = null;
-        this.panelCtrl.render();
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete Alert',
+        text: 'Are you sure you want to delete this alert rule?',
+        text2: 'You need to save dashboard for the delete to take effect',
+        icon: 'trash-alt',
+        yesText: 'Delete',
+        onConfirm: () => {
+          delete this.panel.alert;
+          this.alert = null;
+          this.panel.thresholds = [];
+          this.conditionModels = [];
+          this.panelCtrl.alertState = null;
+          this.panelCtrl.render();
+        },
+      })
+    );
   }
 
   enable = () => {
@@ -470,25 +479,27 @@ export class AlertTabCtrl {
   }
 
   clearHistory() {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete Alert History',
-      text: 'Are you sure you want to remove all history & annotations for this alert?',
-      icon: 'trash-alt',
-      yesText: 'Yes',
-      onConfirm: () => {
-        promiseToDigest(this.$scope)(
-          getBackendSrv()
-            .post('/api/annotations/mass-delete', {
-              dashboardId: this.panelCtrl.dashboard.id,
-              panelId: this.panel.id,
-            })
-            .then(() => {
-              this.alertHistory = [];
-              this.panelCtrl.refresh();
-            })
-        );
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete Alert History',
+        text: 'Are you sure you want to remove all history & annotations for this alert?',
+        icon: 'trash-alt',
+        yesText: 'Yes',
+        onConfirm: () => {
+          promiseToDigest(this.$scope)(
+            getBackendSrv()
+              .post('/api/annotations/mass-delete', {
+                dashboardId: this.panelCtrl.dashboard.id,
+                panelId: this.panel.id,
+              })
+              .then(() => {
+                this.alertHistory = [];
+                this.panelCtrl.refresh();
+              })
+          );
+        },
+      })
+    );
   }
 }
 

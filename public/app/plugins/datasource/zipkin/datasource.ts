@@ -1,16 +1,16 @@
 import {
-  MutableDataFrame,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataQuery,
+  DataSourceApi,
+  DataSourceInstanceSettings,
   FieldType,
+  MutableDataFrame,
 } from '@grafana/data';
-import { from, Observable, of } from 'rxjs';
-import { serializeParams } from '../../../core/utils/fetch';
-import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { serializeParams } from '../../../core/utils/fetch';
 import { apiPrefix } from './constants';
 import { ZipkinSpan } from './types';
 import { transformResponse } from './utils/transforms';
@@ -40,47 +40,34 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
     return res.data;
   }
 
-  async testDatasource(): Promise<any> {
+  async testDatasource(): Promise<{ status: string; message: string }> {
     await this.metadataRequest(`${apiPrefix}/services`);
-    return true;
+    return { status: 'success', message: 'Data source is working' };
   }
 
-  getQueryDisplayText(query: ZipkinQuery) {
+  getQueryDisplayText(query: ZipkinQuery): string {
     return query.query;
   }
 
-  private request<T = any>(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<{ data: T }> {
-    // Hack for proxying metadata requests
-    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
+  private request<T = any>(
+    apiUrl: string,
+    data?: any,
+    options?: Partial<BackendSrvRequest>
+  ): Observable<FetchResponse<T>> {
     const params = data ? serializeParams(data) : '';
-    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
       ...options,
       url,
     };
 
-    return from(getBackendSrv().datasourceRequest(req));
+    return getBackendSrv().fetch<T>(req);
   }
 }
 
 function responseToDataQueryResponse(response: { data: ZipkinSpan[] }): DataQueryResponse {
   return {
-    data: [
-      new MutableDataFrame({
-        fields: [
-          {
-            name: 'trace',
-            type: FieldType.trace,
-            // There is probably better mapping than just putting everything in as a single value but that's how
-            // we do it with jaeger and is the simplest right now.
-            values: response?.data ? [transformResponse(response?.data)] : [],
-          },
-        ],
-        meta: {
-          preferredVisualisationType: 'trace',
-        },
-      }),
-    ],
+    data: response?.data ? [transformResponse(response?.data)] : [],
   };
 }
 

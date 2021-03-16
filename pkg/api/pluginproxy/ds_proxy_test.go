@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -390,9 +390,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{})
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
-		req.Header.Add("Origin", "grafana.com")
-		req.Header.Add("Referer", "grafana.com")
-		req.Header.Add("X-Canary", "stillthere")
+		req.Header.Set("Origin", "grafana.com")
+		req.Header.Set("Referer", "grafana.com")
+		req.Header.Set("X-Canary", "stillthere")
 		require.NoError(t, err)
 
 		proxy.director(req)

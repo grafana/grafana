@@ -26,9 +26,9 @@ type grpcPlugin struct {
 	mutex         sync.RWMutex
 }
 
-// New allocates and returns a new gRPC (external) backendplugin.Plugin.
-func New(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
-	return backendplugin.PluginFactoryFunc(func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+// newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
+func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
+	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
 		return &grpcPlugin{
 			descriptor: descriptor,
 			logger:     logger,
@@ -36,7 +36,11 @@ func New(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 				return plugin.NewClient(newClientConfig(descriptor.executablePath, env, logger, descriptor.versionedPlugins))
 			},
 		}, nil
-	})
+	}
+}
+
+func (p *grpcPlugin) CanHandleDataQueries() bool {
+	return false
 }
 
 func (p *grpcPlugin) PluginID() string {

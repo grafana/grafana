@@ -3,18 +3,19 @@ import React, { memo } from 'react';
 
 // Types
 import { LokiQuery } from '../types';
-import { useLokiSyntaxAndLabels } from './useLokiSyntaxAndLabels';
 import { LokiQueryFieldForm } from './LokiQueryFieldForm';
 import LokiDatasource from '../datasource';
 
 interface Props {
   expr: string;
+  maxLines?: number;
+  instant?: boolean;
   datasource: LokiDatasource;
-  onChange: (expr: string) => void;
+  onChange: (query: LokiQuery) => void;
 }
 
 export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEditor(props: Props) {
-  const { expr, datasource, onChange } = props;
+  const { expr, maxLines, instant, datasource, onChange } = props;
 
   // Timerange to get existing labels from. Hard coding like this seems to be good enough right now.
   const absolute = {
@@ -22,30 +23,21 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
     to: Date.now(),
   };
 
-  const { isSyntaxReady, setActiveOption, refreshLabels, syntax, logLabelOptions } = useLokiSyntaxAndLabels(
-    datasource.languageProvider,
-    absolute
-  );
-
-  const query: LokiQuery = {
+  const queryWithRefId: LokiQuery = {
     refId: '',
     expr,
+    maxLines,
+    instant,
   };
-
   return (
     <div className="gf-form-group">
       <LokiQueryFieldForm
         datasource={datasource}
-        query={query}
-        onChange={(query: LokiQuery) => onChange(query.expr)}
+        query={queryWithRefId}
+        onChange={onChange}
         onRunQuery={() => {}}
         history={[]}
-        onLoadOptions={setActiveOption}
-        onLabelsRefresh={refreshLabels}
         absoluteRange={absolute}
-        syntax={syntax}
-        syntaxLoaded={isSyntaxReady}
-        logLabelOptions={logLabelOptions}
       />
     </div>
   );

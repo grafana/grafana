@@ -38,6 +38,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         height={height}
         orientation={orientation}
         field={field}
+        text={options.text}
         display={processor}
         theme={config.theme}
         itemSpacing={this.getItemSpacing()}
@@ -56,14 +57,13 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks}>
-          {api => {
+        <DataLinksContextMenu links={getLinks} config={value.field}>
+          {(api) => {
             return this.renderComponent(valueProps, api);
           }}
         </DataLinksContextMenu>
       );
     }
-
     return this.renderComponent(valueProps, {});
   };
 
@@ -75,7 +75,6 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
-      autoMinMax: true,
       timeZone,
     });
   };

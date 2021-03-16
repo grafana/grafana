@@ -25,12 +25,12 @@ var (
 var loginLogger = log.New("login")
 
 func Init() {
-	bus.AddHandler("auth", AuthenticateUser)
+	bus.AddHandler("auth", authenticateUser)
 }
 
-// AuthenticateUser authenticates the user via username & password
-func AuthenticateUser(query *models.LoginUserQuery) error {
-	if err := validateLoginAttempts(query.Username); err != nil {
+// authenticateUser authenticates the user via username & password
+func authenticateUser(query *models.LoginUserQuery) error {
+	if err := validateLoginAttempts(query); err != nil {
 		return err
 	}
 

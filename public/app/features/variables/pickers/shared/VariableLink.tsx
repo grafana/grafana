@@ -56,7 +56,7 @@ const VariableLinkText: FC<Pick<Props, 'tags' | 'text'>> = ({ tags, text }) => {
   return (
     <span className={styles.textAndTags}>
       {text}
-      {tags.map(tag => {
+      {tags.map((tag) => {
         const { color, borderColor } = getTagColorsFromName(tag.text.toString());
         return (
           <span key={`${tag.text}`}>
@@ -83,7 +83,13 @@ const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {
 
   return (
     <Tooltip content="Cancel query">
-      <Icon className="spin-clockwise" name="sync" size="xs" onClick={onClick} />
+      <Icon
+        className="spin-clockwise"
+        name="sync"
+        size="xs"
+        onClick={onClick}
+        aria-label={selectors.components.LoadingIndicator.icon}
+      />
     </Tooltip>
   );
 };

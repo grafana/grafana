@@ -11,7 +11,7 @@ func Sum(v *data.Field) *float64 {
 	var sum float64
 	for i := 0; i < v.Len(); i++ {
 		if f, ok := v.At(i).(*float64); ok {
-			if f == nil {
+			if f == nil || math.IsNaN(*f) {
 				nan := math.NaN()
 				return &nan
 			}
@@ -35,7 +35,7 @@ func Min(fv *data.Field) *float64 {
 	}
 	for i := 0; i < fv.Len(); i++ {
 		if v, ok := fv.At(i).(*float64); ok {
-			if v == nil {
+			if v == nil || math.IsNaN(*v) {
 				nan := math.NaN()
 				return &nan
 			}
@@ -55,7 +55,7 @@ func Max(fv *data.Field) *float64 {
 	}
 	for i := 0; i < fv.Len(); i++ {
 		if v, ok := fv.At(i).(*float64); ok {
-			if v == nil {
+			if v == nil || math.IsNaN(*v) {
 				nan := math.NaN()
 				return &nan
 			}
@@ -73,12 +73,12 @@ func Count(fv *data.Field) *float64 {
 }
 
 // Reduce turns the Series into a Number based on the given reduction function
-func (s Series) Reduce(rFunc string) (Number, error) {
+func (s Series) Reduce(refID, rFunc string) (Number, error) {
 	var l data.Labels
 	if s.GetLabels() != nil {
 		l = s.GetLabels().Copy()
 	}
-	number := NewNumber(fmt.Sprintf("%v_%v", rFunc, s.GetName()), l)
+	number := NewNumber(refID, l)
 	var f *float64
 	fVec := s.Frame.Fields[1]
 	switch rFunc {

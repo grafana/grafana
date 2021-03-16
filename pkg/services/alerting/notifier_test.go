@@ -5,10 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/validations"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/stretchr/testify/require"
@@ -18,106 +20,141 @@ import (
 )
 
 func TestNotificationService(t *testing.T) {
-	testRule := &Rule{
-		ID:            1,
-		DashboardID:   1,
-		PanelID:       1,
-		OrgID:         1,
-		Name:          "Test",
-		Message:       "Something is bad",
-		State:         models.AlertStateAlerting,
-		Notifications: []string{"1"},
-	}
-	evalCtx := NewEvalContext(context.Background(), testRule)
+	testRule := &Rule{Name: "Test", Message: "Something is bad"}
+	evalCtx := NewEvalContext(context.Background(), testRule, &validations.OSSPluginRequestValidator{})
 
-	notificationServiceScenario(t, "Given alert rule with upload image enabled should render and upload image and send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
-		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
-		require.NoError(t, err)
+	testRuleTemplated := &Rule{Name: "Test latency ${quantile}", Message: "Something is bad on instance ${instance}"}
+	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{})
+	evalCtxWithMatch.EvalMatches = []*EvalMatch{{
+		Tags: map[string]string{
+			"instance": "localhost:3000",
+			"quantile": "0.99",
+		},
+	}}
+	evalCtxWithoutMatch := NewEvalContext(context.Background(), testRuleTemplated, &validations.OSSPluginRequestValidator{})
 
-		require.Equalf(t, 1, scenarioCtx.renderCount, "expected render to be called, but wasn't")
-		require.Equalf(t, 1, scenarioCtx.imageUploadCount, "expected image to be uploaded, but wasn't")
-		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
-	})
+	notificationServiceScenario(t, "Given alert rule with upload image enabled should render and upload image and send notification",
+		evalCtx, true, func(sc *scenarioContext) {
+			err := sc.notificationService.SendIfNeeded(evalCtx)
+			require.NoError(sc.t, err)
 
-	notificationServiceScenario(t, "Given alert rule with upload image enabled but no renderer available should render and upload unavailable image and send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
-		scenarioCtx.rendererAvailable = false
-		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
-		require.NoError(t, err)
+			require.Equalf(sc.t, 1, sc.renderCount, "expected render to be called, but wasn't")
+			require.Equalf(sc.t, 1, sc.imageUploadCount, "expected image to be uploaded, but wasn't")
+			require.Truef(sc.t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+		})
 
-		require.Equalf(t, 1, scenarioCtx.renderCount, "expected render to be called, but it wasn't")
-		require.Equalf(t, 1, scenarioCtx.imageUploadCount, "expected image to be uploaded, but it wasn't")
-		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
-	})
+	notificationServiceScenario(t,
+		"Given alert rule with upload image enabled but no renderer available should render and upload unavailable image and send notification",
+		evalCtx, true, func(sc *scenarioContext) {
+			sc.rendererAvailable = false
+			err := sc.notificationService.SendIfNeeded(evalCtx)
+			require.NoError(sc.t, err)
 
-	notificationServiceScenario(t, "Given alert rule with upload image disabled should not render and upload image, but send notification", evalCtx, false, func(scenarioCtx *scenarioContext) {
-		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
-		require.NoError(t, err)
+			require.Equalf(sc.t, 1, sc.renderCount, "expected render to be called, but it wasn't")
+			require.Equalf(sc.t, 1, sc.imageUploadCount, "expected image to be uploaded, but it wasn't")
+			require.Truef(sc.t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+		})
 
-		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render not to be called, but it was")
-		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image not to be uploaded, but it was")
-		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
-	})
+	notificationServiceScenario(
+		t, "Given alert rule with upload image disabled should not render and upload image, but send notification",
+		evalCtx, false, func(sc *scenarioContext) {
+			err := sc.notificationService.SendIfNeeded(evalCtx)
+			require.NoError(t, err)
 
-	notificationServiceScenario(t, "Given alert rule with upload image enabled and render times out should send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
-		setting.AlertingNotificationTimeout = 200 * time.Millisecond
-		scenarioCtx.renderProvider = func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
-			wait := make(chan bool)
+			require.Equalf(sc.t, 0, sc.renderCount, "expected render not to be called, but it was")
+			require.Equalf(sc.t, 0, sc.imageUploadCount, "expected image not to be uploaded, but it was")
+			require.Truef(sc.t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+		})
 
-			go func() {
-				time.Sleep(1 * time.Second)
-				wait <- true
-			}()
+	notificationServiceScenario(t, "Given alert rule with upload image enabled and render times out should send notification",
+		evalCtx, true, func(sc *scenarioContext) {
+			setting.AlertingNotificationTimeout = 200 * time.Millisecond
+			sc.renderProvider = func(ctx context.Context, opts rendering.Opts) (*rendering.RenderResult, error) {
+				wait := make(chan bool)
 
-			select {
-			case <-ctx.Done():
-				if err := ctx.Err(); err != nil {
-					return nil, err
+				go func() {
+					time.Sleep(1 * time.Second)
+					wait <- true
+				}()
+
+				select {
+				case <-ctx.Done():
+					if err := ctx.Err(); err != nil {
+						return nil, err
+					}
+					break
+				case <-wait:
 				}
-				break
-			case <-wait:
+
+				return nil, nil
 			}
+			err := sc.notificationService.SendIfNeeded(evalCtx)
+			require.NoError(sc.t, err)
 
-			return nil, nil
-		}
-		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
-		require.NoError(t, err)
+			require.Equalf(sc.t, 0, sc.renderCount, "expected render not to be called, but it was")
+			require.Equalf(sc.t, 0, sc.imageUploadCount, "expected image not to be uploaded, but it was")
+			require.Truef(sc.t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+		})
 
-		require.Equalf(t, 0, scenarioCtx.renderCount, "expected render not to be called, but it was")
-		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image not to be uploaded, but it was")
-		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
-	})
+	notificationServiceScenario(t, "Given alert rule with upload image enabled and upload times out should send notification",
+		evalCtx, true, func(sc *scenarioContext) {
+			setting.AlertingNotificationTimeout = 200 * time.Millisecond
+			sc.uploadProvider = func(ctx context.Context, path string) (string, error) {
+				wait := make(chan bool)
 
-	notificationServiceScenario(t, "Given alert rule with upload image enabled and upload times out should send notification", evalCtx, true, func(scenarioCtx *scenarioContext) {
-		setting.AlertingNotificationTimeout = 200 * time.Millisecond
-		scenarioCtx.uploadProvider = func(ctx context.Context, path string) (string, error) {
-			wait := make(chan bool)
+				go func() {
+					time.Sleep(1 * time.Second)
+					wait <- true
+				}()
 
-			go func() {
-				time.Sleep(1 * time.Second)
-				wait <- true
-			}()
-
-			select {
-			case <-ctx.Done():
-				if err := ctx.Err(); err != nil {
-					return "", err
+				select {
+				case <-ctx.Done():
+					if err := ctx.Err(); err != nil {
+						return "", err
+					}
+					break
+				case <-wait:
 				}
-				break
-			case <-wait:
+
+				return "", nil
 			}
+			err := sc.notificationService.SendIfNeeded(evalCtx)
+			require.NoError(sc.t, err)
 
-			return "", nil
-		}
-		err := scenarioCtx.notificationService.SendIfNeeded(evalCtx)
-		require.NoError(t, err)
+			require.Equalf(sc.t, 1, sc.renderCount, "expected render to be called, but wasn't")
+			require.Equalf(sc.t, 0, sc.imageUploadCount, "expected image not to be uploaded, but it was")
+			require.Truef(sc.t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+		})
 
-		require.Equalf(t, 1, scenarioCtx.renderCount, "expected render to be called, but wasn't")
-		require.Equalf(t, 0, scenarioCtx.imageUploadCount, "expected image not to be uploaded, but it was")
-		require.Truef(t, evalCtx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
-	})
+	notificationServiceScenario(t, "Given matched alert rule with templated notification fields",
+		evalCtxWithMatch, true, func(sc *scenarioContext) {
+			err := sc.notificationService.SendIfNeeded(evalCtxWithMatch)
+			require.NoError(sc.t, err)
+
+			ctx := evalCtxWithMatch
+			require.Equalf(sc.t, 1, sc.renderCount, "expected render to be called, but wasn't")
+			require.Equalf(sc.t, 1, sc.imageUploadCount, "expected image to be uploaded, but wasn't")
+			require.Truef(sc.t, ctx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+			assert.Equal(t, "Test latency 0.99", ctx.Rule.Name)
+			assert.Equal(t, "Something is bad on instance localhost:3000", ctx.Rule.Message)
+		})
+
+	notificationServiceScenario(t, "Given unmatched alert rule with templated notification fields",
+		evalCtxWithoutMatch, true, func(sc *scenarioContext) {
+			err := sc.notificationService.SendIfNeeded(evalCtxWithMatch)
+			require.NoError(sc.t, err)
+
+			ctx := evalCtxWithMatch
+			require.Equalf(sc.t, 1, sc.renderCount, "expected render to be called, but wasn't")
+			require.Equalf(sc.t, 1, sc.imageUploadCount, "expected image to be uploaded, but wasn't")
+			require.Truef(sc.t, ctx.Ctx.Value(notificationSent{}).(bool), "expected notification to be sent, but wasn't")
+			assert.Equal(t, evalCtxWithoutMatch.Rule.Name, ctx.Rule.Name)
+			assert.Equal(t, evalCtxWithoutMatch.Rule.Message, ctx.Rule.Message)
+		})
 }
 
 type scenarioContext struct {
+	t                   *testing.T
 	evalCtx             *EvalContext
 	notificationService *notificationService
 	imageUploadCount    int
@@ -175,6 +212,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 		setting.AlertingNotificationTimeout = 30 * time.Second
 
 		scenarioCtx := &scenarioContext{
+			t:       t,
 			evalCtx: evalCtx,
 		}
 

@@ -66,9 +66,7 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
 });
 
 locationUtil.initialize({
-  getConfig: () => {
-    return { appSubUrl: '/subUrl' } as any;
-  },
+  config: { appSubUrl: '/subUrl' } as any,
   // @ts-ignore
   buildParamsFromVariables: () => {},
   // @ts-ignore
@@ -183,7 +181,6 @@ describe('applyFieldOverrides', () => {
           overrides: [],
         },
         replaceVariables: (value: any) => value,
-        getDataSourceSettingsByUid: undefined as any,
         theme: getTestTheme(),
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
@@ -245,8 +242,7 @@ describe('applyFieldOverrides', () => {
         overrides: [],
       },
       fieldConfigRegistry: customFieldRegistry,
-      getDataSourceSettingsByUid: undefined as any,
-      replaceVariables: v => v,
+      replaceVariables: (v) => v,
       theme: getTestTheme(),
     })[0];
 
@@ -263,7 +259,6 @@ describe('applyFieldOverrides', () => {
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
-      getDataSourceSettingsByUid: undefined as any,
       theme: getTestTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
@@ -291,18 +286,16 @@ describe('applyFieldOverrides', () => {
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
-      getDataSourceSettingsByUid: undefined as any,
       theme: getTestTheme(),
-      autoMinMax: true,
     })[0];
     const valueColumn = data.fields[1];
-    const config = valueColumn.config;
+    const range = valueColumn.state!.range!;
 
     // Keep max from the original setting
-    expect(config.max).toEqual(0);
+    expect(range.max).toEqual(0);
 
     // Don't Automatically pick the min value
-    expect(config.min).toEqual(-20);
+    expect(range.min).toEqual(-20);
   });
 
   it('getLinks should use applied field config', () => {
@@ -315,9 +308,7 @@ describe('applyFieldOverrides', () => {
         replaceVariablesCalls.push(variables);
         return value;
       }) as InterpolateFunction,
-      getDataSourceSettingsByUid: undefined as any,
       theme: getTestTheme(),
-      autoMinMax: true,
       fieldConfigRegistry: customFieldRegistry,
     })[0];
 
@@ -536,7 +527,7 @@ describe('setDynamicConfigValue', () => {
 describe('getLinksSupplier', () => {
   it('will replace variables in url and title of the data link', () => {
     locationUtil.initialize({
-      getConfig: () => ({} as any),
+      config: {} as any,
       buildParamsFromVariables: (() => {}) as any,
       getTimeRangeForUrl: (() => {}) as any,
     });
@@ -567,7 +558,6 @@ describe('getLinksSupplier', () => {
       {},
       replaceSpy,
       // this is used only for internal links so isn't needed here
-      () => ({} as any),
       {
         theme: getTestTheme(),
       }
@@ -581,7 +571,7 @@ describe('getLinksSupplier', () => {
 
   it('handles internal links', () => {
     locationUtil.initialize({
-      getConfig: () => ({ appSubUrl: '' } as any),
+      config: { appSubUrl: '' } as any,
       buildParamsFromVariables: (() => {}) as any,
       getTimeRangeForUrl: (() => {}) as any,
     });
@@ -600,6 +590,7 @@ describe('getLinksSupplier', () => {
                 title: '',
                 internal: {
                   datasourceUid: '0',
+                  datasourceName: 'testDS',
                   query: '12345',
                 },
               },
@@ -615,7 +606,6 @@ describe('getLinksSupplier', () => {
       {},
       // We do not need to interpolate anything for this test
       (value, vars, format) => value,
-      uid => ({ name: 'testDS' } as any),
       { theme: getTestTheme() }
     );
     const links = supplier({ valueRowIndex: 0 });

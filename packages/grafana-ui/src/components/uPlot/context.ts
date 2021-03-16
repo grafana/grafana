@@ -1,7 +1,6 @@
-import React, { useCallback, useContext } from 'react';
-import uPlot, { Series } from 'uplot';
-import { PlotPlugin, AlignedFrameWithGapTest } from './types';
-import { DataFrame, Field, FieldConfig } from '@grafana/data';
+import React, { useContext } from 'react';
+import uPlot, { AlignedData, Series } from 'uplot';
+import { PlotPlugin } from './types';
 
 interface PlotCanvasContextType {
   // canvas size css pxs
@@ -22,11 +21,11 @@ interface PlotPluginsContextType {
 
 interface PlotContextType extends PlotPluginsContextType {
   isPlotReady: boolean;
-  getPlotInstance: () => uPlot;
+  getPlotInstance: () => uPlot | undefined;
   getSeries: () => Series[];
   getCanvas: () => PlotCanvasContextType;
   canvasRef: any;
-  data: AlignedFrameWithGapTest;
+  data: AlignedData;
 }
 
 export const PlotContext = React.createContext<PlotContextType>({} as PlotContextType);
@@ -51,87 +50,12 @@ export const usePlotPluginContext = (): PlotPluginsContextType => {
   };
 };
 
-// Exposes API for building uPlot config
-
-interface PlotDataAPI {
-  /** Data frame passed to graph, x-axis aligned */
-  data: DataFrame;
-  /** Returns field by index */
-  getField: (idx: number) => Field;
-  /** Returns x-axis fields */
-  getXAxisFields: () => Field[];
-  /** Returns x-axis fields */
-  getYAxisFields: () => Field[];
-  /** Returns field value by field and value index */
-  getFieldValue: (fieldIdx: number, rowIdx: number) => any;
-  /** Returns field config by field index */
-  getFieldConfig: (fieldIdx: number) => FieldConfig;
-}
-
-export const usePlotData = (): PlotDataAPI => {
-  const ctx = usePlotContext();
-
-  const getField = useCallback(
-    (idx: number) => {
-      if (!ctx) {
-        throwWhenNoContext('usePlotData');
-      }
-      return ctx!.data.frame.fields[idx];
-    },
-    [ctx]
-  );
-
-  const getFieldConfig = useCallback(
-    (idx: number) => {
-      const field: Field = getField(idx);
-      return field.config;
-    },
-    [ctx]
-  );
-
-  const getFieldValue = useCallback(
-    (fieldIdx: number, rowIdx: number) => {
-      const field: Field = getField(fieldIdx);
-      return field.values.get(rowIdx);
-    },
-    [ctx]
-  );
-
-  const getXAxisFields = useCallback(() => {
-    // by uPlot convention x-axis is always first field
-    // this may change when we introduce non-time x-axis and multiple x-axes (https://leeoniya.github.io/uPlot/demos/time-periods.html)
-    return [getField(0)];
-  }, [ctx]);
-
-  const getYAxisFields = useCallback(() => {
-    if (!ctx) {
-      throwWhenNoContext('usePlotData');
-    }
-    // by uPlot convention x-axis is always first field
-    // this may change when we introduce non-time x-axis and multiple x-axes (https://leeoniya.github.io/uPlot/demos/time-periods.html)
-    return ctx!.data.frame.fields.slice(1);
-  }, [ctx]);
-
-  if (!ctx) {
-    throwWhenNoContext('usePlotData');
-  }
-
-  return {
-    data: ctx.data.frame,
-    getField,
-    getFieldValue,
-    getFieldConfig,
-    getXAxisFields,
-    getYAxisFields,
-  };
-};
-
 export const buildPlotContext = (
   isPlotReady: boolean,
   canvasRef: any,
-  data: AlignedFrameWithGapTest,
+  data: AlignedData,
   registerPlugin: any,
-  getPlotInstance: () => uPlot
+  getPlotInstance: () => uPlot | undefined
 ): PlotContextType => {
   return {
     isPlotReady,
@@ -139,16 +63,21 @@ export const buildPlotContext = (
     data,
     registerPlugin,
     getPlotInstance,
-    getSeries: () => getPlotInstance().series,
-    getCanvas: () => ({
-      width: getPlotInstance().width,
-      height: getPlotInstance().height,
-      plot: {
-        width: getPlotInstance().bbox.width / window.devicePixelRatio,
-        height: getPlotInstance().bbox.height / window.devicePixelRatio,
-        top: getPlotInstance().bbox.top / window.devicePixelRatio,
-        left: getPlotInstance().bbox.left / window.devicePixelRatio,
-      },
-    }),
+    getSeries: () => getPlotInstance()!.series,
+    getCanvas: () => {
+      const plotInstance = getPlotInstance()!;
+      const bbox = plotInstance.bbox;
+      const pxRatio = window.devicePixelRatio;
+      return {
+        width: plotInstance.width,
+        height: plotInstance.height,
+        plot: {
+          width: bbox.width / pxRatio,
+          height: bbox.height / pxRatio,
+          top: bbox.top / pxRatio,
+          left: bbox.left / pxRatio,
+        },
+      };
+    },
   };
 };

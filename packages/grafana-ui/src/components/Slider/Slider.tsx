@@ -5,6 +5,7 @@ import { Global } from '@emotion/core';
 import { useTheme } from '../../themes/ThemeContext';
 import { getStyles } from './styles';
 import { SliderProps } from './types';
+import { Input } from '../Input/Input';
 
 /**
  * @public
@@ -23,32 +24,46 @@ export const Slider: FunctionComponent<SliderProps> = ({
   const theme = useTheme();
   const styles = getStyles(theme, isHorizontal);
   const SliderWithTooltip = SliderComponent;
-  const [slidervalue, setSliderValue] = useState<number>(value || min);
-  const onSliderChange = useCallback((v: number) => {
-    setSliderValue(v);
+  const [sliderValue, setSliderValue] = useState<number>(value || min);
 
-    if (onChange) {
-      onChange(v);
-    }
-  }, []);
-  const onSliderInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    let v = +e.target.value;
+  const onSliderChange = useCallback(
+    (v: number) => {
+      setSliderValue(v);
 
-    v > max && (v = max);
-    v < min && (v = min);
+      if (onChange) {
+        onChange(v);
+      }
+    },
+    [setSliderValue, onChange]
+  );
 
-    setSliderValue(v);
+  const onSliderInputChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      let v = +e.target.value;
 
-    if (onChange) {
-      onChange(v);
-    }
+      if (Number.isNaN(v)) {
+        v = 0;
+      }
 
-    if (onAfterChange) {
-      onAfterChange(v);
-    }
-  }, []);
+      v > max && (v = max);
+      v < min && (v = min);
+
+      setSliderValue(v);
+
+      if (onChange) {
+        onChange(v);
+      }
+
+      if (onAfterChange) {
+        onAfterChange(v);
+      }
+    },
+    [max, min, onChange, onAfterChange]
+  );
+
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
   const sliderInputFieldClassNames = !isHorizontal ? [styles.sliderInputFieldVertical] : [];
+
   return (
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
@@ -59,16 +74,17 @@ export const Slider: FunctionComponent<SliderProps> = ({
           max={max}
           step={step}
           defaultValue={value}
-          value={slidervalue}
+          value={sliderValue}
           onChange={onSliderChange}
           onAfterChange={onAfterChange}
           vertical={!isHorizontal}
           reverse={reverse}
         />
-        <input
+        {/* Uses text input so that the number spinners are not shown */}
+        <Input
+          type="text"
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
-          type="number"
-          value={`${slidervalue}`} // to fix the react leading zero issue
+          value={`${sliderValue}`} // to fix the react leading zero issue
           onChange={onSliderInputChange}
           min={min}
           max={max}

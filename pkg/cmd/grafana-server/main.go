@@ -27,10 +27,12 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
 	_ "github.com/grafana/grafana/pkg/tsdb/influxdb"
+	_ "github.com/grafana/grafana/pkg/tsdb/loki"
 	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
 	_ "github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
+	_ "github.com/grafana/grafana/pkg/tsdb/tempo"
 	_ "github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
@@ -108,7 +110,11 @@ func main() {
 }
 
 func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnostics *tracingDiagnostics) error {
-	defer log.Close()
+	defer func() {
+		if err := log.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+		}
+	}()
 
 	if traceDiagnostics.enabled {
 		fmt.Println("diagnostics: tracing enabled", "file", traceDiagnostics.file)
@@ -116,7 +122,11 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		if err != nil {
 			panic(err)
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Error("Failed to write trace diagnostics", "path", traceDiagnostics.file, "err", err)
+			}
+		}()
 
 		if err := trace.Start(f); err != nil {
 			panic(err)
@@ -179,7 +189,9 @@ func listenToSystemSignals(s *server.Server) {
 	for {
 		select {
 		case <-sighupChan:
-			log.Reload()
+			if err := log.Reload(); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
+			}
 		case sig := <-signalChan:
 			s.Shutdown(fmt.Sprintf("System signal: %s", sig))
 		}

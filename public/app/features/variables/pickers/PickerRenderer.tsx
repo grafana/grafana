@@ -8,11 +8,11 @@ interface Props {
   variable: VariableModel;
 }
 
-export const PickerRenderer: FunctionComponent<Props> = props => {
+export const PickerRenderer: FunctionComponent<Props> = (props) => {
   const PickerToRender = useMemo(() => variableAdapters.get(props.variable.type).picker, [props.variable]);
 
   if (!props.variable) {
-    return <div>Couldn't load variable</div>;
+    return <div>Couldn&apos;t load variable</div>;
   }
 
   return (

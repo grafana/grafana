@@ -1,16 +1,37 @@
 package ngalert
 
 import (
+	"context"
+	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/api"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	maxAttempts int64 = 3
+	// scheduler interval
+	// changing this value is discouraged
+	// because this could cause existing alert definition
+	// with intervals that are not exactly divided by this number
+	// not to be evaluated
+	baseIntervalSeconds = 10
+	// default alert definiiton interval
+	defaultIntervalSeconds int64 = 6 * baseIntervalSeconds
 )
 
 // AlertNG is the service for evaluating the condition of an alert definition.
@@ -19,7 +40,9 @@ type AlertNG struct {
 	DatasourceCache datasources.CacheService `inject:""`
 	RouteRegister   routing.RouteRegister    `inject:""`
 	SQLStore        *sqlstore.SQLStore       `inject:""`
-	log             log.Logger
+	DataService     *tsdb.Service            `inject:""`
+	Log             log.Logger
+	schedule        schedule.ScheduleService
 }
 
 func init() {
@@ -28,17 +51,44 @@ func init() {
 
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
-	ng.log = log.New("ngalert")
+	ng.Log = log.New("ngalert")
 
-	ng.registerAPIEndpoints()
+	baseInterval := baseIntervalSeconds * time.Second
+
+	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
+
+	schedCfg := schedule.SchedulerCfg{
+		C:            clock.New(),
+		BaseInterval: baseInterval,
+		Logger:       ng.Log,
+		MaxAttempts:  maxAttempts,
+		Evaluator:    eval.Evaluator{Cfg: ng.Cfg},
+		Store:        store,
+	}
+	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
+
+	api := api.API{
+		Cfg:             ng.Cfg,
+		DatasourceCache: ng.DatasourceCache,
+		RouteRegister:   ng.RouteRegister,
+		DataService:     ng.DataService,
+		Schedule:        ng.schedule,
+		Store:           store}
+	api.RegisterAPIEndpoints()
 
 	return nil
+}
+
+// Run starts the scheduler
+func (ng *AlertNG) Run(ctx context.Context) error {
+	ng.Log.Debug("ngalert starting")
+	return ng.schedule.Ticker(ctx)
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
 func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
-		return false
+		return true
 	}
 	// Check also about expressions?
 	return !ng.Cfg.IsNgAlertEnabled()
@@ -50,42 +100,8 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	if ng.IsDisabled() {
 		return
 	}
-
-	alertDefinition := migrator.Table{
-		Name: "alert_definition",
-		Columns: []*migrator.Column{
-			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "condition", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "data", Type: migrator.DB_Text, Nullable: false},
-		},
-		Indices: []*migrator.Index{
-			{Cols: []string{"org_id"}, Type: migrator.IndexType},
-		},
-	}
-	// create table
-	mg.AddMigration("create alert_definition table", migrator.NewAddTableMigration(alertDefinition))
-
-	// create indices
-	mg.AddMigration("add index alert_definition org_id", migrator.NewAddIndexMigration(alertDefinition, alertDefinition.Indices[0]))
-}
-
-// LoadAlertCondition returns a Condition object for the given alertDefinitionID.
-func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *models.SignedInUser, skipCache bool) (*eval.Condition, error) {
-	getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: alertDefinitionID}
-	if err := ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery); err != nil {
-		return nil, err
-	}
-	alertDefinition := getAlertDefinitionByIDQuery.Result
-
-	err := ng.validateAlertDefinition(alertDefinition, signedInUser, skipCache)
-	if err != nil {
-		return nil, err
-	}
-
-	return &eval.Condition{
-		RefID:                 alertDefinition.Condition,
-		QueriesAndExpressions: alertDefinition.Data,
-	}, nil
+	addAlertDefinitionMigrations(mg)
+	addAlertDefinitionVersionMigrations(mg)
+	// Create alert_instance table
+	alertInstanceMigration(mg)
 }

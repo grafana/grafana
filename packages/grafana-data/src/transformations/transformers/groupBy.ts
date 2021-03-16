@@ -35,11 +35,11 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         const hasValidConfig = Object.keys(options.fields).find(
-          name => options.fields[name].operation === GroupByOperationID.groupBy
+          (name) => options.fields[name].operation === GroupByOperationID.groupBy
         );
 
         if (!hasValidConfig) {
@@ -65,7 +65,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           // group for a given field.
           const valuesByGroupKey: Record<string, Record<string, MutableField>> = {};
           for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
-            const groupKey = String(groupByFields.map(field => field.values.get(rowIndex)));
+            const groupKey = String(groupByFields.map((field) => field.values.get(rowIndex)));
             const valuesByField = valuesByGroupKey[groupKey] ?? {};
 
             if (!valuesByGroupKey[groupKey]) {

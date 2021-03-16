@@ -47,8 +47,8 @@ describe('<KeyValuesSummary>', () => {
   });
 
   it('renders the data as text', () => {
-    const texts = wrapper.find('li').map(node => node.text());
-    const expectedTexts = tags.map(tag => `${tag.key}=${tag.value}`);
+    const texts = wrapper.find('li').map((node) => node.text());
+    const expectedTexts = tags.map((tag) => `${tag.key}=${tag.value}`);
     expect(texts).toEqual(expectedTexts);
   });
 });

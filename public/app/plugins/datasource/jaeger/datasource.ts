@@ -1,20 +1,20 @@
 import {
-  dateMath,
-  DateTime,
-  MutableDataFrame,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataQuery,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  dateMath,
+  DateTime,
   FieldType,
+  MutableDataFrame,
 } from '@grafana/data';
-import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
-import { Observable, from, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { createTraceFrame } from './responseTransform';
 
 export type JaegerQuery = {
   query: string;
@@ -34,52 +34,24 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const id = options.targets[0]?.query;
-    if (id) {
-      // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
-      return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
-        map(response => {
-          return {
-            data: [
-              new MutableDataFrame({
-                fields: [
-                  {
-                    name: 'trace',
-                    type: FieldType.trace,
-                    values: response?.data?.data || [],
-                  },
-                ],
-                meta: {
-                  preferredVisualisationType: 'trace',
-                },
-              }),
-            ],
-          };
-        })
-      );
-    } else {
-      return of({
-        data: [
-          new MutableDataFrame({
-            fields: [
-              {
-                name: 'trace',
-                type: FieldType.trace,
-                values: [],
-              },
-            ],
-            meta: {
-              preferredVisualisationType: 'trace',
-            },
-          }),
-        ],
-      });
+    if (!id) {
+      return of({ data: [emptyTraceDataFrame] });
     }
+
+    // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
+    return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
+      map((response) => {
+        return {
+          data: [createTraceFrame(response?.data?.data?.[0] || [])],
+        };
+      })
+    );
   }
 
   async testDatasource(): Promise<any> {
     return this._request('/api/services')
       .pipe(
-        map(res => {
+        map((res) => {
           const values: any[] = res?.data?.data || [];
           const testResult =
             values.length > 0
@@ -127,16 +99,14 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
-    // Hack for proxying metadata requests
-    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
     const params = data ? serializeParams(data) : '';
-    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
       ...options,
       url,
     };
 
-    return from(getBackendSrv().datasourceRequest(req));
+    return getBackendSrv().fetch(req);
   }
 }
 
@@ -146,3 +116,16 @@ function getTime(date: string | DateTime, roundUp: boolean) {
   }
   return date.valueOf() * 1000;
 }
+
+const emptyTraceDataFrame = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      type: FieldType.trace,
+      values: [],
+    },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});

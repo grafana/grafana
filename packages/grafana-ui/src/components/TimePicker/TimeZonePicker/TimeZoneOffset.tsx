@@ -10,7 +10,7 @@ interface Props {
   className?: string;
 }
 
-export const TimeZoneOffset: React.FC<PropsWithChildren<Props>> = props => {
+export const TimeZoneOffset: React.FC<PropsWithChildren<Props>> = (props) => {
   const theme = useTheme();
   const { timestamp, timeZone, className } = props;
   const styles = getStyles(theme);

@@ -28,7 +28,7 @@ import SpanBar from './SpanBar';
 import Ticks from './Ticks';
 
 import { TNil } from '../types';
-import { TraceSpan } from '@grafana/data';
+import { TraceSpan } from '../types/trace';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
 const getStyles = createStyle((theme: Theme) => {
@@ -453,7 +453,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                     rel="noopener noreferrer"
                     onClick={
                       link.onClick
-                        ? event => {
+                        ? (event) => {
                             if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
                               event.preventDefault();
                               link.onClick(event);
@@ -504,6 +504,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             rpc={rpc}
             viewStart={viewStart}
             viewEnd={viewEnd}
+            theme={theme}
             getViewedBounds={getViewedBounds}
             color={color}
             shortLabel={label}

@@ -20,16 +20,16 @@ export const renameFieldsTransformer: DataTransformerInfo<RenameFieldsTransforme
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         const renamer = createRenamer(options.renameByName);
 
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
 
-        return data.map(frame => ({
+        return data.map((frame) => ({
           ...frame,
           fields: renamer(frame),
         }));
@@ -42,7 +42,7 @@ const createRenamer = (renameByName: Record<string, string>) => (frame: DataFram
     return frame.fields;
   }
 
-  return frame.fields.map(field => {
+  return frame.fields.map((field) => {
     const displayName = getFieldDisplayName(field, frame);
     const renameTo = renameByName[displayName];
 

@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Global, css as cssCore } from '@emotion/core';
+import React, { useCallback, useEffect, useState } from 'react';
+import { css as cssCore, Global } from '@emotion/core';
+import { CartesianCoords2D } from '@grafana/data';
 
 import { PlotPluginProps } from '../types';
 import { usePlotPluginContext } from '../context';
@@ -10,22 +11,20 @@ interface ClickPluginAPI {
   point: { seriesIdx: number | null; dataIdx: number | null };
   coords: {
     // coords relative to plot canvas, css px
-    plotCanvas: Coords;
+    plotCanvas: CartesianCoords2D;
     // coords relative to viewport , css px
-    viewport: Coords;
+    viewport: CartesianCoords2D;
   };
   // coords relative to plot canvas, css px
   clearSelection: () => void;
 }
 
+/**
+ * @alpha
+ */
 interface ClickPluginProps extends PlotPluginProps {
   onClick: (e: { seriesIdx: number | null; dataIdx: number | null }) => void;
   children: (api: ClickPluginAPI) => React.ReactElement | null;
-}
-
-interface Coords {
-  x: number;
-  y: number;
 }
 
 // Exposes API for Graph click interactions
@@ -44,7 +43,7 @@ export const ClickPlugin: React.FC<ClickPluginProps> = ({ id, onClick, children 
     const unregister = pluginsApi.registerPlugin({
       id: pluginId,
       hooks: {
-        init: u => {
+        init: (u) => {
           pluginLog(pluginId, false, 'init');
 
           // for naive click&drag check
@@ -80,7 +79,7 @@ export const ClickPlugin: React.FC<ClickPluginProps> = ({ id, onClick, children 
           if (pts.length > 0) {
             pts.forEach((pt, i) => {
               // TODO: remove listeners on unmount
-              pt.addEventListener('click', e => {
+              pt.addEventListener('click', (e) => {
                 const seriesIdx = i + 1;
                 const dataIdx = u.cursor.idx;
 

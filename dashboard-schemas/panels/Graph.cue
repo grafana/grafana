@@ -20,10 +20,10 @@ package panels
 		overrides: [..._override]
 	}
 	// Amount of color fill for a series. Expects a value between 0 and 1.
-	fill: number & >=0 & <=1 | *1
+	fill: number >= 0 <= 1 | *1
 	// Degree of gradient on the area fill. 0 is no gradient, 10 is a steep
 	// gradient.
-	fillGradient: int & >=0 & <=10 | *0
+	fillGradient: int >= 0 <= 10 | *0
 	// Hide the series.
 	hiddenSeries: bool | *false
 	// Lengend options.
@@ -133,7 +133,7 @@ package panels
 		// and in increasing order, with the lowest value at the top of the list.
 		// * 2 (decreasing) - The series in the hover tooltip are sorted by value
 		// and in decreasing order, with the highest value at the top of the list.
-		sort: int & >=0 & <=2 | *2
+		sort: int >= 0 <= 2 | *2
 		// Value type.
 		value_type: string | *"individual"
 	}

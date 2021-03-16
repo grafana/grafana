@@ -1,9 +1,7 @@
 import { ThunkAction, ThunkDispatch as GenericThunkDispatch } from 'redux-thunk';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { NavIndex } from '@grafana/data';
-
-import { LocationState } from './location';
-import { AlertRulesState, NotificationChannelState } from './alerting';
+import { AlertDefinitionState, AlertRulesState, NotificationChannelState } from './alerting';
 import { TeamsState, TeamState } from './teams';
 import { FolderState } from './folders';
 import { DashboardState } from './dashboard';
@@ -22,7 +20,6 @@ import { ImportDashboardState } from '../features/manage-dashboards/state/reduce
 
 export interface StoreState {
   navIndex: NavIndex;
-  location: LocationState;
   alertRules: AlertRulesState;
   teams: TeamsState;
   team: TeamState;
@@ -45,6 +42,7 @@ export interface StoreState {
   templating: TemplatingState;
   importDashboard: ImportDashboardState;
   notificationChannel: NotificationChannelState;
+  alertDefinition: AlertDefinitionState;
 }
 
 /*

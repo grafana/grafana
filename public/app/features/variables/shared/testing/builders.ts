@@ -11,11 +11,12 @@ import { initialCustomVariableModelState } from '../../custom/reducer';
 import { MultiVariableBuilder } from './multiVariableBuilder';
 import { initialConstantVariableModelState } from '../../constant/reducer';
 import { QueryVariableBuilder } from './queryVariableBuilder';
+import { TextBoxVariableBuilder } from './textboxVariableBuilder';
 
 export const adHocBuilder = () => new AdHocVariableBuilder(initialAdHocVariableModelState);
 export const intervalBuilder = () => new IntervalVariableBuilder(initialIntervalVariableModelState);
 export const datasourceBuilder = () => new DatasourceVariableBuilder(initialDataSourceVariableModelState);
 export const queryBuilder = () => new QueryVariableBuilder(initialQueryVariableModelState);
-export const textboxBuilder = () => new OptionsVariableBuilder(initialTextBoxVariableModelState);
+export const textboxBuilder = () => new TextBoxVariableBuilder(initialTextBoxVariableModelState);
 export const customBuilder = () => new MultiVariableBuilder(initialCustomVariableModelState);
 export const constantBuilder = () => new OptionsVariableBuilder(initialConstantVariableModelState);

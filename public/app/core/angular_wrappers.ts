@@ -5,9 +5,7 @@ import { AnnotationQueryEditor as CloudWatchAnnotationQueryEditor } from 'app/pl
 import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import { TagFilter } from './components/TagFilter/TagFilter';
-import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
-import AppNotificationList from './components/AppNotifications/AppNotificationList';
 import {
   ColorPicker,
   DataLinksInlineEditor,
@@ -24,13 +22,9 @@ import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/component
 import { HelpModal } from './components/help/HelpModal';
 import { Footer } from './components/Footer/Footer';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import {
-  SaveDashboardAsButtonConnected,
-  SaveDashboardButtonConnected,
-} from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
-import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
-import { SearchField, SearchResults, SearchResultsFilter, SearchWrapper } from '../features/search';
+import { SearchField, SearchResults, SearchResultsFilter } from '../features/search';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
+import QueryEditor from 'app/plugins/datasource/grafana-azure-monitor-datasource/components/QueryEditor/QueryEditor';
 
 const { SecretFormField } = LegacyForms;
 
@@ -44,9 +38,7 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('spinner', Spinner, ['inline']);
   react2AngularDirective('helpModal', HelpModal, []);
-  react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
-  react2AngularDirective('appNotificationsList', AppNotificationList, []);
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
   react2AngularDirective('emptyListCta', EmptyListCTA, [
     'title',
@@ -90,7 +82,6 @@ export function registerAngularDirectives() {
     ['onStarredFilterChange', { watchDepth: 'reference' }],
     ['onTagFilterChange', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('searchWrapper', SearchWrapper, []);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
     ['onChange', { watchDepth: 'reference' }],
@@ -150,7 +141,7 @@ export function registerAngularDirectives() {
   react2AngularDirective('graphContextMenu', GraphContextMenu, [
     'x',
     'y',
-    'items',
+    'itemsGroup',
     ['onClose', { watchDepth: 'reference', wrapApply: true }],
     ['getContextMenuSource', { watchDepth: 'reference', wrapApply: true }],
     ['timeZone', { watchDepth: 'reference', wrapApply: true }],
@@ -167,6 +158,8 @@ export function registerAngularDirectives() {
 
   react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
     'expr',
+    'maxLines',
+    'instant',
     'onChange',
     ['datasource', { watchDepth: 'reference' }],
   ]);
@@ -190,17 +183,7 @@ export function registerAngularDirectives() {
     ['onLoad', { watchDepth: 'reference', wrapApply: true }],
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('saveDashboardButton', SaveDashboardButtonConnected, [
-    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
-    ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
-    ['dashboard', { watchDepth: 'reference', wrapApply: true }],
-  ]);
-  react2AngularDirective('saveDashboardAsButton', SaveDashboardAsButtonConnected, [
-    'variant',
-    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
-    ['onSaveSuccess', { watchDepth: 'reference', wrapApply: true }],
-  ]);
-  react2AngularDirective('variableEditorContainer', VariableEditorContainer, []);
+
   react2AngularDirective('timePickerSettings', TimePickerSettings, [
     'renderCount',
     'refreshIntervals',
@@ -211,5 +194,11 @@ export function registerAngularDirectives() {
     ['onRefreshIntervalChange', { watchDepth: 'reference', wrapApply: true }],
     ['onNowDelayChange', { watchDepth: 'reference', wrapApply: true }],
     ['onHideTimePickerChange', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+
+  react2AngularDirective('azureMonitorQueryEditor', QueryEditor, [
+    'query',
+    ['datasource', { watchDepth: 'reference' }],
+    'onChange',
   ]);
 }

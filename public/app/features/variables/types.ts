@@ -86,7 +86,9 @@ export interface QueryVariableModel extends DataSourceVariableModel {
   query: any;
 }
 
-export interface TextBoxVariableModel extends VariableWithOptions {}
+export interface TextBoxVariableModel extends VariableWithOptions {
+  originalQuery: string | null;
+}
 
 export interface ConstantVariableModel extends VariableWithOptions {}
 

@@ -1,4 +1,4 @@
-import { getGrafanaLiveSrv, getLegacyAngularInjector } from '@grafana/runtime';
+import { getGrafanaLiveSrv, getLegacyAngularInjector, locationService } from '@grafana/runtime';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { appEvents } from 'app/core/core';
 import {
@@ -11,11 +11,11 @@ import {
   isLiveChannelStatusEvent,
   isLiveChannelMessageEvent,
 } from '@grafana/data';
-import { CoreEvents } from 'app/types';
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
 import { CoreGrafanaLiveFeature } from '../scopes';
 import { sessionId } from '../live';
+import { ShowModalReactEvent } from '../../../types/events';
 
 class DashboardWatcher {
   channel?: LiveChannel<DashboardEvent>;
@@ -61,13 +61,11 @@ class DashboardWatcher {
       this.channel = live.getChannel({
         scope: LiveChannelScope.Grafana,
         namespace: 'dashboard',
-        path: uid,
+        path: `uid/${uid}`,
       });
       this.channel.getStream().subscribe(this.observer);
       this.uid = uid;
     }
-
-    console.log('Watch', uid);
   }
 
   leave() {
@@ -123,10 +121,12 @@ class DashboardWatcher {
 
             if (action === DashboardEventAction.Saved) {
               if (showPopup) {
-                appEvents.emit(CoreEvents.showModalReact, {
-                  component: DashboardChangedModal,
-                  props: { event },
-                });
+                appEvents.publish(
+                  new ShowModalReactEvent({
+                    component: DashboardChangedModal,
+                    props: { event },
+                  })
+                );
               } else {
                 appEvents.emit(AppEvents.alertSuccess, ['Dashboard updated']);
                 this.reloadPage();
@@ -153,12 +153,7 @@ class DashboardWatcher {
   };
 
   reloadPage() {
-    const $route = getLegacyAngularInjector().get<any>('$route');
-    if ($route) {
-      $route.reload();
-    } else {
-      location.reload();
-    }
+    locationService.reload();
   }
 }
 

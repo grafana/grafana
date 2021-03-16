@@ -22,10 +22,6 @@ describe('usePlotConfig', () => {
 //         "focus": Object {
 //           "alpha": 1,
 //         },
-//         "gutters": Object {
-//           "x": 8,
-//           "y": 8,
-//         },
 //         "height": 0,
 //         "hooks": Object {},
 //         "legend": Object {
@@ -65,10 +61,6 @@ describe('usePlotConfig', () => {
 //           },
 //           "focus": Object {
 //             "alpha": 1,
-//           },
-//           "gutters": Object {
-//             "x": 8,
-//             "y": 8,
 //           },
 //           "height": 0,
 //           "hooks": Object {},

@@ -77,6 +77,8 @@
 }
 
 .alert-body {
+  overflow-wrap: break-word;
+  word-break: break-word;
   flex-grow: 1;
 }
 

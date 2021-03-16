@@ -1,5 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 
+/**
+ * @alpha
+ */
 export enum AxisPlacement {
   Auto = 'auto', // First axis on the left, the rest on the right
   Top = 'top',
@@ -9,59 +12,205 @@ export enum AxisPlacement {
   Hidden = 'hidden',
 }
 
-export enum PointMode {
+/**
+ * @alpha
+ */
+export enum PointVisibility {
   Auto = 'auto', // will show points when the density is low or line is hidden
-  Always = 'always',
   Never = 'never',
+  Always = 'always',
 }
 
-export enum GraphMode {
+/**
+ * @alpha
+ */
+export enum DrawStyle {
   Line = 'line', // default
-  Bar = 'bar', // will also have a gap percent
+  Bars = 'bars', // will also have a gap percent
   Points = 'points', // Only show points
 }
 
+/**
+ * @alpha
+ */
 export enum LineInterpolation {
   Linear = 'linear',
-  Staircase = 'staircase', // https://leeoniya.github.io/uPlot/demos/line-stepped.html
-  Smooth = 'smooth', // https://leeoniya.github.io/uPlot/demos/line-smoothing.html
+  Smooth = 'smooth',
+  StepBefore = 'stepBefore',
+  StepAfter = 'stepAfter',
 }
 
-export interface GraphFieldConfig {
-  mode: GraphMode;
+/**
+ * @alpha
+ */
+export enum BarAlignment {
+  Before = -1,
+  Center = 0,
+  After = 1,
+}
 
-  lineMode?: LineInterpolation;
-  lineWidth?: number; // pixels
-  fillAlpha?: number; // 0-1
+/**
+ * @alpha
+ */
+export enum ScaleDistribution {
+  Linear = 'linear',
+  Logarithmic = 'log',
+  Ordinal = 'ordinal',
+}
 
-  points?: PointMode;
-  pointRadius?: number; // pixels
-  symbol?: string; // eventually dot,star, etc
+/**
+ * @alpha
+ */
+export enum ScaleOrientation {
+  Horizontal = 0,
+  Vertical = 1,
+}
 
-  // Axis is actually unique based on the unit... not each field!
+/**
+ * @alpha
+ */
+
+export enum ScaleDirection {
+  Up = 1,
+  Right = 1,
+  Down = -1,
+  Left = -1,
+}
+
+/**
+ * @alpha
+ */
+export interface LineStyle {
+  fill?: 'solid' | 'dash' | 'dot' | 'square';
+  dash?: number[];
+}
+
+/**
+ * @alpha
+ */
+export interface LineConfig {
+  lineColor?: string;
+  lineWidth?: number;
+  lineInterpolation?: LineInterpolation;
+  lineStyle?: LineStyle;
+  spanNulls?: boolean;
+}
+
+/**
+ * @alpha
+ */
+export interface BarConfig {
+  barAlignment?: BarAlignment;
+}
+
+/**
+ * @alpha
+ */
+export interface FillConfig {
+  fillColor?: string;
+  fillOpacity?: number;
+  fillBelowTo?: string; // name of the field
+}
+
+/**
+ * @alpha
+ */
+export enum GraphGradientMode {
+  None = 'none',
+  Opacity = 'opacity',
+  Hue = 'hue',
+  Scheme = 'scheme',
+}
+
+/**
+ * @alpha
+ */
+export interface PointsConfig {
+  showPoints?: PointVisibility;
+  pointSize?: number;
+  pointColor?: string;
+  pointSymbol?: string; // eventually dot,star, etc
+}
+
+/**
+ * @alpha
+ */
+export interface ScaleDistributionConfig {
+  type: ScaleDistribution;
+  log?: number;
+}
+
+/**
+ * @alpha
+ * Axis is actually unique based on the unit... not each field!
+ */
+export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
+  axisSoftMin?: number;
+  axisSoftMax?: number;
+  scaleDistribution?: ScaleDistributionConfig;
 }
 
-export const graphFieldOptions = {
-  mode: [
-    { label: 'Lines', value: GraphMode.Line },
-    { label: 'Bars', value: GraphMode.Bar },
-    { label: 'Points', value: GraphMode.Points },
-  ] as Array<SelectableValue<GraphMode>>,
+/**
+ * @alpha
+ */
+export interface HideSeriesConfig {
+  tooltip: boolean;
+  legend: boolean;
+  graph: boolean;
+}
 
-  lineMode: [
-    { label: 'Linear', value: LineInterpolation.Linear },
-    { label: 'Staircase', value: LineInterpolation.Staircase },
-    { label: 'Smooth', value: LineInterpolation.Smooth },
+/**
+ * @alpha
+ */
+export interface HideableFieldConfig {
+  hideFrom?: HideSeriesConfig;
+}
+
+/**
+ * @alpha
+ */
+export interface GraphFieldConfig
+  extends LineConfig,
+    FillConfig,
+    PointsConfig,
+    AxisConfig,
+    BarConfig,
+    HideableFieldConfig {
+  drawStyle?: DrawStyle;
+  gradientMode?: GraphGradientMode;
+}
+
+/**
+ * @alpha
+ */
+export const graphFieldOptions = {
+  drawStyle: [
+    { label: 'Lines', value: DrawStyle.Line },
+    { label: 'Bars', value: DrawStyle.Bars },
+    { label: 'Points', value: DrawStyle.Points },
+  ] as Array<SelectableValue<DrawStyle>>,
+
+  lineInterpolation: [
+    { description: 'Linear', value: LineInterpolation.Linear, icon: 'gf-interpolation-linear' },
+    { description: 'Smooth', value: LineInterpolation.Smooth, icon: 'gf-interpolation-smooth' },
+    { description: 'Step before', value: LineInterpolation.StepBefore, icon: 'gf-interpolation-step-before' },
+    { description: 'Step after', value: LineInterpolation.StepAfter, icon: 'gf-interpolation-step-after' },
   ] as Array<SelectableValue<LineInterpolation>>,
 
-  points: [
-    { label: 'Auto', value: PointMode.Auto, description: 'Show points when the density is low' },
-    { label: 'Always', value: PointMode.Always },
-    { label: 'Never', value: PointMode.Never },
-  ] as Array<SelectableValue<PointMode>>,
+  barAlignment: [
+    { description: 'Before', value: BarAlignment.Before, icon: 'gf-bar-alignment-before' },
+    { description: 'Center', value: BarAlignment.Center, icon: 'gf-bar-alignment-center' },
+    { description: 'After', value: BarAlignment.After, icon: 'gf-bar-alignment-after' },
+  ] as Array<SelectableValue<BarAlignment>>,
+
+  showPoints: [
+    { label: 'Auto', value: PointVisibility.Auto, description: 'Show points when the density is low' },
+    { label: 'Always', value: PointVisibility.Always },
+    { label: 'Never', value: PointVisibility.Never },
+  ] as Array<SelectableValue<PointVisibility>>,
 
   axisPlacement: [
     { label: 'Auto', value: AxisPlacement.Auto, description: 'First field on the left, everything else on the right' },
@@ -69,4 +218,11 @@ export const graphFieldOptions = {
     { label: 'Right', value: AxisPlacement.Right },
     { label: 'Hidden', value: AxisPlacement.Hidden },
   ] as Array<SelectableValue<AxisPlacement>>,
+
+  fillGradient: [
+    { label: 'None', value: GraphGradientMode.None },
+    { label: 'Opacity', value: GraphGradientMode.Opacity },
+    { label: 'Hue', value: GraphGradientMode.Hue },
+    //  { label: 'Color scheme', value: GraphGradientMode.Scheme },
+  ] as Array<SelectableValue<GraphGradientMode>>,
 };

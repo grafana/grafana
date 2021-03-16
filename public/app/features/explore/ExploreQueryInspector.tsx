@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Button, JSONFormatter, LoadingPlaceholder, TabbedContainer, TabConfig } from '@grafana/ui';
-import { AppEvents, PanelData, TimeZone } from '@grafana/data';
+import { PanelData, TimeZone } from '@grafana/data';
 
-import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { StoreState, ExploreItemState, ExploreId } from 'app/types';
 import { hot } from 'react-hot-loader';
@@ -12,6 +11,9 @@ import { useEffectOnce } from 'react-use';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { InspectStatsTab } from '../dashboard/components/Inspector/InspectStatsTab';
 import { getPanelInspectorStyles } from '../dashboard/components/Inspector/styles';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 
 function stripPropsFromResponse(response: any) {
   // ignore silent requests and return early
@@ -73,7 +75,7 @@ export function ExploreQueryInspector(props: Props) {
   };
 
   const onClipboardSuccess = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
+    dispatch(notifyApp(createSuccessNotification('Content copied to clipboard')));
   };
 
   const [allNodesExpanded, setAllNodesExpanded] = useState(false);
@@ -96,7 +98,7 @@ export function ExploreQueryInspector(props: Props) {
   useEffectOnce(() => {
     const inspectorStreamSub = getBackendSrv()
       .getInspectorStream()
-      .subscribe(resp => {
+      .subscribe((resp) => {
         const strippedResponse = stripPropsFromResponse(resp);
         if (strippedResponse) {
           setResponse(strippedResponse);
@@ -172,7 +174,7 @@ export function ExploreQueryInspector(props: Props) {
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  const item: ExploreItemState = explore[exploreId];
+  const item: ExploreItemState = explore[exploreId]!;
   const { loading, queryResponse } = item;
 
   return {

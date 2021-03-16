@@ -32,11 +32,7 @@ describe('<SpanDetail>', () => {
 
   // use `transformTraceData` on a fake trace to get a fully processed span
   const span = transformTraceData(traceGenerator.trace({ numberOfSpans: 1 })).spans[0];
-  const detailState = new DetailState()
-    .toggleLogs()
-    .toggleProcess()
-    .toggleReferences()
-    .toggleTags();
+  const detailState = new DetailState().toggleLogs().toggleProcess().toggleReferences().toggleTags();
   const traceStartTime = 5;
   const props = {
     detailState,
@@ -133,7 +129,7 @@ describe('<SpanDetail>', () => {
     expect(
       overview
         .prop('items')
-        .map(item => item.label)
+        .map((item) => item.label)
         .sort()
     ).toEqual(words);
   });
@@ -185,11 +181,6 @@ describe('<SpanDetail>', () => {
   });
 
   it('renders CopyIcon with deep link URL', () => {
-    expect(
-      wrapper
-        .find(CopyIcon)
-        .prop('copyText')
-        .includes(`?uiFind=${props.span.spanID}`)
-    ).toBe(true);
+    expect(wrapper.find(CopyIcon).prop('copyText').includes(`?uiFind=${props.span.spanID}`)).toBe(true);
   });
 });

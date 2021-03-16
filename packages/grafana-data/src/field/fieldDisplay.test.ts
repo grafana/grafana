@@ -35,7 +35,7 @@ describe('FieldDisplay', () => {
       },
     });
     const display = getFieldDisplayValues(options);
-    expect(display.map(v => v.display.text)).toEqual(['1', '2']);
+    expect(display.map((v) => v.display.text)).toEqual(['1', '2']);
   });
 
   it('show last numeric values', () => {
@@ -45,7 +45,7 @@ describe('FieldDisplay', () => {
       },
     });
     const display = getFieldDisplayValues(options);
-    expect(display.map(v => v.display.numeric)).toEqual([5, 6]);
+    expect(display.map((v) => v.display.numeric)).toEqual([5, 6]);
   });
 
   it('show all numeric values', () => {
@@ -57,7 +57,7 @@ describe('FieldDisplay', () => {
       },
     });
     const display = getFieldDisplayValues(options);
-    expect(display.map(v => v.display.numeric)).toEqual([1, 3, 5, 2, 4, 6]);
+    expect(display.map((v) => v.display.numeric)).toEqual([1, 3, 5, 2, 4, 6]);
   });
 
   it('show 2 numeric values (limit)', () => {
@@ -69,7 +69,7 @@ describe('FieldDisplay', () => {
       },
     });
     const display = getFieldDisplayValues(options);
-    expect(display.map(v => v.display.numeric)).toEqual([1, 3]); // First 2 are from the first field
+    expect(display.map((v) => v.display.numeric)).toEqual([1, 3]); // First 2 are from the first field
   });
 
   it('Should return field thresholds when there is no data', () => {
@@ -201,6 +201,100 @@ describe('FieldDisplay', () => {
       expect(result[0].display.text).toEqual(mappedValue);
       expect(result[2].display.text).toEqual('5');
       expect(result[3].display.text).toEqual(mappedValue);
+    });
+  });
+
+  describe('auto option', () => {
+    it('No string fields, single value', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            name: 'Series Name',
+            fields: [{ name: 'A', values: [10] }],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('A');
+      expect(result[0].display.text).toEqual('10');
+    });
+
+    it('Single other string field', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Name', values: ['A', 'B'] },
+              { name: 'Value', values: [10, 20] },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('A');
+      expect(result[0].display.text).toEqual('10');
+      expect(result[1].display.title).toEqual('B');
+      expect(result[1].display.text).toEqual('20');
+    });
+
+    it('Single string field multiple value fields', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Name', values: ['A', 'B'] },
+              { name: 'SensorA', values: [10, 20] },
+              { name: 'SensorB', values: [10, 20] },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('A SensorA');
+      expect(result[0].display.text).toEqual('10');
+      expect(result[1].display.title).toEqual('B SensorA');
+      expect(result[1].display.text).toEqual('20');
+      expect(result[2].display.title).toEqual('A SensorB');
+      expect(result[3].display.title).toEqual('B SensorB');
+    });
+
+    it('Multiple other string fields', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Country', values: ['Sweden', 'Norway'] },
+              { name: 'City', values: ['Stockholm', 'Oslo'] },
+              { name: 'Value', values: [10, 20] },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('Sweden Stockholm');
+      expect(result[0].display.text).toEqual('10');
+      expect(result[1].display.title).toEqual('Norway Oslo');
+      expect(result[1].display.text).toEqual('20');
     });
   });
 });

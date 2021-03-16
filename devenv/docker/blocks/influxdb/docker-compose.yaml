@@ -8,6 +8,7 @@
     environment:
       INFLUXDB_ADMIN_USER: grafana
       INFLUXDB_ADMIN_PASSWORD: grafana
+      INFLUXDB_DB: site
     volumes:
       - ./docker/blocks/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf
 

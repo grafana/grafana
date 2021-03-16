@@ -1,20 +1,20 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { css, cx } from 'emotion';
 import {
   DataTransformerID,
-  standardTransformers,
-  TransformerRegistyItem,
-  TransformerUIProps,
   ReducerID,
   SelectableValue,
+  standardTransformers,
+  TransformerRegistryItem,
+  TransformerUIProps,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, StatsPicker, stylesFactory } from '@grafana/ui';
 
 import {
-  GroupByTransformerOptions,
-  GroupByOperationID,
   GroupByFieldOptions,
+  GroupByOperationID,
+  GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
 
 interface FieldProps {
@@ -90,7 +90,6 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
             placeholder="Ignored"
             onChange={onChange}
             isClearable
-            menuPlacement="bottom"
           />
         </div>
       </div>
@@ -102,10 +101,9 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
             placeholder="Select Stats"
             allowMultiple
             stats={config.aggregations}
-            onChange={stats => {
+            onChange={(stats) => {
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
-            menuPlacement="bottom"
           />
         </div>
       )}
@@ -138,7 +136,7 @@ const getStyling = stylesFactory(() => {
   };
 });
 
-export const groupByTransformRegistryItem: TransformerRegistyItem<GroupByTransformerOptions> = {
+export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
   id: DataTransformerID.groupBy,
   editor: GroupByTransformerEditor,
   transformation: standardTransformers.groupByTransformer,

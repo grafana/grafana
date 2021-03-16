@@ -11,6 +11,7 @@ import (
 	"html/template"
 	"io"
 	"net"
+	"net/mail"
 	"strconv"
 	"strings"
 
@@ -175,10 +176,11 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		subject = subjectBuffer.String()
 	}
 
+	addr := mail.Address{Name: ns.Cfg.Smtp.FromName, Address: ns.Cfg.Smtp.FromAddress}
 	return &Message{
 		To:            cmd.To,
 		SingleEmail:   cmd.SingleEmail,
-		From:          fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
+		From:          addr.String(),
 		Subject:       subject,
 		Body:          buffer.String(),
 		EmbeddedFiles: cmd.EmbeddedFiles,

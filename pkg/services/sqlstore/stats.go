@@ -14,7 +14,6 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetDataSourceAccessStats)
 	bus.AddHandler("sql", GetAdminStats)
-	bus.AddHandlerCtx("sql", GetUserStats)
 	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
 	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
 }
@@ -47,7 +46,6 @@ func GetSystemStats(query *models.GetSystemStatsQuery) error {
 	sb.Write("SELECT ")
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + `) AS users,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
-	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard") + `) AS dashboards,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("playlist") + `) AS playlists,`)
@@ -56,6 +54,7 @@ func GetSystemStats(query *models.GetSystemStatsQuery) error {
 	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
 	sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE last_seen_at > ?) AS active_users,`, activeUserDeadlineDate)
 
+	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
 	sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
 
 	sb.Write(`(
@@ -120,7 +119,7 @@ func GetAdminStats(query *models.GetAdminStatsQuery) error {
 		) AS orgs,
 		(
 			SELECT COUNT(*)
-			FROM ` + dialect.Quote("dashboard") + `
+			FROM ` + dialect.Quote("dashboard") + `WHERE is_folder=` + dialect.BooleanStr(false) + `
 		) AS dashboards,
 		(
 			SELECT COUNT(*)
@@ -183,21 +182,6 @@ func GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCou
 
 		return nil
 	})
-}
-
-func GetUserStats(ctx context.Context, query *models.GetUserStatsQuery) error {
-	err := updateUserRoleCountsIfNecessary(ctx, query.MustUpdate)
-	if err != nil {
-		return err
-	}
-
-	if query.Active {
-		query.Result = userStatsCache.active
-	} else {
-		query.Result = userStatsCache.total
-	}
-
-	return nil
 }
 
 func updateUserRoleCountsIfNecessary(ctx context.Context, forced bool) error {

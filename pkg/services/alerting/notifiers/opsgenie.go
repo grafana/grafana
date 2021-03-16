@@ -99,6 +99,8 @@ func (on *OpsGenieNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	case models.AlertStateAlerting:
 		err = on.createAlert(evalContext)
+	default:
+		// Handle other cases?
 	}
 	return err
 }

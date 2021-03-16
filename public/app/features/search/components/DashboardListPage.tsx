@@ -2,36 +2,42 @@ import React, { FC, memo } from 'react';
 import { useAsync } from 'react-use';
 import { connect, MapStateToProps } from 'react-redux';
 import { NavModel, locationUtil } from '@grafana/data';
-import { getLocationSrv } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { FolderDTO, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getRouteParams, getUrl } from 'app/core/selectors/location';
 import Page from 'app/core/components/Page/Page';
 import { loadFolderPage } from '../loaders';
 import ManageDashboards from './ManageDashboards';
+import { GrafanaRouteComponentProps } from '../../../core/navigation/types';
 
-interface Props {
-  navModel: NavModel;
+export interface DashboardListPageRouteParams {
   uid?: string;
-  url: string;
+  slug?: string;
 }
 
-export const DashboardListPage: FC<Props> = memo(({ navModel, uid, url }) => {
+interface DashboardListPageConnectedProps {
+  navModel: NavModel;
+}
+interface Props extends GrafanaRouteComponentProps<DashboardListPageRouteParams>, DashboardListPageConnectedProps {}
+
+export const DashboardListPage: FC<Props> = memo(({ navModel, match, location }) => {
   const { loading, value } = useAsync<{ folder?: FolderDTO; pageNavModel: NavModel }>(() => {
+    const uid = match.params.uid;
+    const url = location.pathname;
     if (!uid || !url.startsWith('/dashboards')) {
       return Promise.resolve({ pageNavModel: navModel });
     }
 
-    return loadFolderPage(uid!, 'manage-folder-dashboards').then(({ folder, model }) => {
+    return loadFolderPage(uid!).then(({ folder, folderNav }) => {
       const path = locationUtil.stripBaseFromUrl(folder.url);
 
       if (path !== location.pathname) {
-        getLocationSrv().update({ path });
+        locationService.push(path);
       }
 
-      return { folder, pageNavModel: { ...navModel, ...model } };
+      return { folder, pageNavModel: { ...navModel, main: folderNav } };
     });
-  }, [uid]);
+  }, [match.params.uid]);
 
   return (
     <Page navModel={value?.pageNavModel ?? navModel}>
@@ -42,11 +48,11 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, uid, url }) => {
   );
 });
 
-const mapStateToProps: MapStateToProps<Props, {}, StoreState> = state => {
+DashboardListPage.displayName = 'DashboardListPage';
+
+const mapStateToProps: MapStateToProps<DashboardListPageConnectedProps, {}, StoreState> = (state) => {
   return {
     navModel: getNavModel(state.navIndex, 'manage-dashboards'),
-    uid: getRouteParams(state.location).uid as string | undefined,
-    url: getUrl(state.location),
   };
 };
 

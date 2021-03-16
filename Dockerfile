@@ -1,22 +1,23 @@
-FROM node:12.19.0-alpine3.12 as js-builder
+FROM node:15.11.0-alpine3.13 as js-builder
 
 WORKDIR /usr/src/app/
 
 COPY package.json yarn.lock ./
 COPY packages packages
 
+RUN apk --no-cache add git
 RUN yarn install --pure-lockfile --no-progress
 
-COPY Gruntfile.js tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
 COPY tools tools
 COPY scripts scripts
 COPY emails emails
 
 ENV NODE_ENV production
-RUN ./node_modules/.bin/grunt build
+RUN yarn build
 
-FROM golang:1.15.1-alpine3.12 as go-builder
+FROM golang:1.16.1-alpine3.13 as go-builder
 
 RUN apk add --no-cache gcc g++
 
@@ -32,7 +33,7 @@ COPY build.go package.json ./
 RUN go run build.go build
 
 # Final stage
-FROM alpine:3.12
+FROM alpine:3.13
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
@@ -64,6 +65,7 @@ RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
+             "$GF_PATHS_PROVISIONING/plugins" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \

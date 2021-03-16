@@ -1,10 +1,7 @@
-import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
-import { toDataQueryError } from '@grafana/runtime';
-
+import { toDataQueryError, getDataSourceSrv } from '@grafana/runtime';
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
@@ -24,16 +21,14 @@ export const updateQueryVariableOptions = (
       if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
-      const datasource = await getDatasourceSrv().get(variableInState.datasource ?? '');
+      const datasource = await getDataSourceSrv().get(variableInState.datasource ?? '');
 
       // we need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
       // variable will have the wrong current value as input
       await new Promise((resolve, reject) => {
         const subscription: Subscription = new Subscription();
         const observer = variableQueryObserver(resolve, reject, subscription);
-        const responseSubscription = getVariableQueryRunner()
-          .getResponse(identifier)
-          .subscribe(observer);
+        const responseSubscription = getVariableQueryRunner().getResponse(identifier).subscribe(observer);
         subscription.add(responseSubscription);
 
         getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });
@@ -53,18 +48,7 @@ export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkRe
   dispatch,
   getState
 ) => {
-  const dataSources: DataSourceSelectItem[] = getDatasourceSrv()
-    .getMetricSources()
-    .filter(ds => !ds.meta.mixed && ds.value !== null);
-
-  const defaultDatasource: DataSourceSelectItem = { name: '', value: '', meta: {} as DataSourcePluginMeta, sort: '' };
-  const allDataSources = [defaultDatasource].concat(dataSources);
-  dispatch(changeVariableEditorExtended({ propName: 'dataSources', propValue: allDataSources }));
-
   const variable = getVariable<QueryVariableModel>(identifier.id, getState());
-  if (!variable.datasource) {
-    return;
-  }
   await dispatch(changeQueryVariableDataSource(toVariableIdentifier(variable), variable.datasource));
 };
 
@@ -74,7 +58,7 @@ export const changeQueryVariableDataSource = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
-      const dataSource = await getDatasourceSrv().get(name ?? '');
+      const dataSource = await getDataSourceSrv().get(name ?? '');
       dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
 
       const VariableQueryEditor = await getVariableQueryEditor(dataSource);

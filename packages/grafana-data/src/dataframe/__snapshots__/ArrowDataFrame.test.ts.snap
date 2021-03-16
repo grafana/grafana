@@ -265,7 +265,7 @@ Object {
       "labels": undefined,
       "name": "float32_values",
       "type": "number",
-      "values": Array [
+      "values": Float32Array [
         1.401298464324817e-45,
         1.401298464324817e-45,
         1,

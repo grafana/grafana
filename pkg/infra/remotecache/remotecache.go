@@ -23,8 +23,17 @@ var (
 	defaultMaxCacheExpiration = time.Hour * 24
 )
 
+const (
+	ServiceName = "RemoteCache"
+)
+
 func init() {
-	registry.RegisterService(&RemoteCache{})
+	rc := &RemoteCache{}
+	registry.Register(&registry.Descriptor{
+		Name:         ServiceName,
+		Instance:     rc,
+		InitPriority: registry.Medium,
+	})
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.

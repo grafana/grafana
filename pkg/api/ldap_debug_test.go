@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -58,7 +60,7 @@ func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 
 	hs := &HTTPServer{Cfg: setting.NewCfg()}
 
-	sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
 		return hs.GetUserFromLDAP(c)
 	})
@@ -74,7 +76,7 @@ func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 }
 
 func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
-	getLDAPConfig = func() (*ldap.Config, error) {
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
@@ -131,7 +133,7 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		return nil
 	})
 
-	getLDAPConfig = func() (*ldap.Config, error) {
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
@@ -193,7 +195,7 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		return nil
 	})
 
-	getLDAPConfig = func() (*ldap.Config, error) {
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
@@ -273,7 +275,7 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		return nil
 	})
 
-	getLDAPConfig = func() (*ldap.Config, error) {
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
@@ -327,7 +329,7 @@ func getLDAPStatusContext(t *testing.T) *scenarioContext {
 
 	hs := &HTTPServer{Cfg: setting.NewCfg()}
 
-	sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
 		return hs.GetLDAPStatus(c)
 	})
@@ -349,7 +351,7 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 		{Host: "10.0.0.5", Port: 361, Available: false, Error: errors.New("something is awfully wrong")},
 	}
 
-	getLDAPConfig = func() (*ldap.Config, error) {
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
@@ -375,7 +377,7 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 // PostSyncUserWithLDAP tests
 // ***
 
-func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(t *testing.T)) *scenarioContext {
+func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*testing.T, *scenarioContext)) *scenarioContext {
 	t.Helper()
 
 	sc := setupScenarioContext(t, requestURL)
@@ -387,11 +389,11 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(t
 	setting.LDAPEnabled = true
 
 	hs := &HTTPServer{
-		Cfg:              setting.NewCfg(),
+		Cfg:              sc.cfg,
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 	}
 
-	sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
 		return hs.PostSyncUserWithLDAP(c)
 	})
@@ -402,7 +404,7 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(t
 	req, err := http.NewRequest(http.MethodPost, requestURL, nil)
 	require.NoError(t, err)
 
-	preHook(t)
+	preHook(t, sc)
 
 	sc.req = req
 	sc.exec()
@@ -411,8 +413,8 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(t
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
-	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T) {
-		getLDAPConfig = func() (*ldap.Config, error) {
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
 		}
 
@@ -456,8 +458,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
-	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T) {
-		getLDAPConfig = func() (*ldap.Config, error) {
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
 		}
 
@@ -484,8 +486,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
-	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T) {
-		getLDAPConfig = func() (*ldap.Config, error) {
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
 		}
 
@@ -495,9 +497,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 
 		userSearchError = multildap.ErrDidNotFindUser
 
-		admin := setting.AdminUser
-		t.Cleanup(func() { setting.AdminUser = admin })
-		setting.AdminUser = "ldap-daniel"
+		sc.cfg.AdminUser = "ldap-daniel"
 
 		bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
 			require.Equal(t, q.Id, int64(34))
@@ -527,8 +527,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
-	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T) {
-		getLDAPConfig = func() (*ldap.Config, error) {
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
 		}
 

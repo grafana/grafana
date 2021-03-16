@@ -4,6 +4,8 @@ import baron from 'baron';
 import { PanelEvents } from '@grafana/data';
 import { PanelModel } from '../dashboard/state';
 import { PanelCtrl } from './panel_ctrl';
+import { Subscription } from 'rxjs';
+import { RefreshEvent, RenderEvent } from 'app/types/events';
 
 const module = angular.module('grafana.directives');
 
@@ -20,6 +22,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
     link: (scope: any, elem) => {
       const ctrl: PanelCtrl = scope.ctrl;
       const panel: PanelModel = scope.ctrl.panel;
+      const subs = new Subscription();
 
       let panelScrollbar: any;
 
@@ -58,32 +61,55 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }
       });
 
-      function onPanelSizeChanged() {
-        $timeout(() => {
-          resizeScrollableContent();
-          ctrl.render();
-        });
-      }
-
-      function onPanelModelRender(payload?: any) {
+      function updateDimensionsFromParentScope() {
         ctrl.height = scope.$parent.$parent.size.height;
         ctrl.width = scope.$parent.$parent.size.width;
       }
 
-      function onPanelModelRefresh() {
-        ctrl.height = scope.$parent.$parent.size.height;
-        ctrl.width = scope.$parent.$parent.size.width;
-      }
+      updateDimensionsFromParentScope();
 
-      panel.events.on(PanelEvents.refresh, onPanelModelRefresh);
-      panel.events.on(PanelEvents.render, onPanelModelRender);
-      panel.events.on(PanelEvents.panelSizeChanged, onPanelSizeChanged);
+      // Pass PanelModel events down to angular controller event emitter
+      subs.add(
+        panel.events.subscribe(RefreshEvent, () => {
+          updateDimensionsFromParentScope();
+          ctrl.events.emit('refresh');
+        })
+      );
+
+      subs.add(
+        panel.events.subscribe(RenderEvent, (event) => {
+          // this event originated from angular so no need to bubble it back
+          if (event.payload?.fromAngular) {
+            return;
+          }
+
+          updateDimensionsFromParentScope();
+
+          $timeout(() => {
+            resizeScrollableContent();
+            ctrl.events.emit('render');
+          });
+        })
+      );
+
+      subs.add(
+        ctrl.events.subscribe(RenderEvent, (event) => {
+          // this event originated from angular so bubble it to react so the PanelChromeAngular can update the panel header alert state
+          if (event.payload) {
+            event.payload.fromAngular = true;
+            panel.events.publish(event);
+          }
+        })
+      );
 
       scope.$on('$destroy', () => {
         elem.off();
 
-        panel.events.emit(PanelEvents.panelTeardown);
-        panel.events.removeAllListeners();
+        // Remove PanelModel.event subs
+        subs.unsubscribe();
+        // Remove Angular controller event subs
+        ctrl.events.emit(PanelEvents.panelTeardown);
+        ctrl.events.removeAllListeners();
 
         if (panelScrollbar) {
           panelScrollbar.dispose();

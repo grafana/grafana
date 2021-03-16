@@ -1,7 +1,7 @@
 import PluginPrism from 'app/features/explore/slate-plugins/prism';
 import { BracesPlugin, ClearPlugin, RunnerPlugin, NewlinePlugin } from '@grafana/ui';
 import Typeahead from './typeahead';
-import { getKeybindingSrv, KeybindingSrv } from 'app/core/services/keybindingSrv';
+import { keybindingSrv } from 'app/core/services/keybindingSrv';
 
 import { Block, Document, Text, Value, Editor as CoreEditor } from 'slate';
 import { Editor } from '@grafana/slate-react';
@@ -54,7 +54,6 @@ class QueryField extends React.Component<any, any> {
   menuEl: any;
   plugins: any;
   resetTimer: any;
-  keybindingSrv: KeybindingSrv = getKeybindingSrv();
 
   constructor(props: any, context: any) {
     super(props, context);
@@ -227,11 +226,11 @@ class QueryField extends React.Component<any, any> {
   };
 
   removeEscapeKeyBinding() {
-    this.keybindingSrv.unbind('esc', 'keydown');
+    keybindingSrv.unbind('esc', 'keydown');
   }
 
   restoreEscapeKeyBinding() {
-    this.keybindingSrv.setupGlobal();
+    keybindingSrv.initGlobals();
   }
 
   onClickItem = (item: any) => {
@@ -305,7 +304,7 @@ class QueryField extends React.Component<any, any> {
     const selectedKeys = (typeaheadIndex !== null && flattenedSuggestions.length > 0
       ? [flattenedSuggestions[selectedIndex]]
       : []
-    ).map(i => (typeof i === 'object' ? i.text : i));
+    ).map((i) => (typeof i === 'object' ? i.text : i));
 
     // Create typeahead in DOM root so we can later position it absolutely
     return (

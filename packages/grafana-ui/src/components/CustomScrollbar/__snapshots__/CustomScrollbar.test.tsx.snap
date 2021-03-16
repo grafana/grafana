@@ -2,7 +2,7 @@
 
 exports[`CustomScrollbar renders correctly 1`] = `
 <div
-  className="custom-scrollbar"
+  className="css-1fb8j9z"
   style={
     Object {
       "height": "auto",
@@ -15,7 +15,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
   }
 >
   <div
-    className="view"
+    className="scrollbar-view"
     style={
       Object {
         "WebkitOverflowScrolling": "touch",

@@ -81,7 +81,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
             <div>This dashboard has been modifed by another session</div>
           )}
           <br />
-          {options.map(opt => {
+          {options.map((opt) => {
             return (
               <div key={opt.label} onClick={opt.action} className={styles.radioItem}>
                 <h3>{opt.label}</h3>

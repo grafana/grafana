@@ -28,15 +28,25 @@ export const createTextBoxVariableAdapter = (): VariableAdapter<TextBoxVariableM
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setTextBoxVariableOptionsFromUrl(toVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async variable => {
+    updateOptions: async (variable) => {
       await dispatch(updateTextBoxVariableOptions(toVariableIdentifier(variable)));
     },
-    getSaveModel: variable => {
-      const { index, id, state, global, ...rest } = cloneDeep(variable);
+    getSaveModel: (variable, saveCurrentAsDefault) => {
+      const { index, id, state, global, originalQuery, ...rest } = cloneDeep(variable);
+
+      if (variable.query !== originalQuery && !saveCurrentAsDefault) {
+        const origQuery = originalQuery ?? '';
+        const current = { selected: false, text: origQuery, value: origQuery };
+        return { ...rest, query: origQuery, current, options: [current] };
+      }
+
       return rest;
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       return variable.current.value;
+    },
+    beforeAdding: (model) => {
+      return { ...cloneDeep(model), originalQuery: model.query };
     },
   };
 };

@@ -6,62 +6,23 @@ import {
   SelectFieldConfigSettings,
   StringFieldConfigSettings,
 } from '../field';
+import { OptionEditorConfig } from './options';
 
 /**
  * Option editor registry item
  */
-export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue> extends RegistryItem {
-  /**
-   * Path of the options property to control.
-   *
-   * @example
-   * Given options object of a type:
-   * ```ts
-   * interface CustomOptions {
-   *   a: {
-   *     b: string;
-   *   }
-   * }
-   * ```
-   *
-   * path can be either 'a' or 'a.b'.
-   */
-  path: (keyof TOptions & string) | string;
+export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>
+  extends RegistryItem,
+    OptionEditorConfig<TOptions, TSettings, TValue> {
   /**
    * React component used to edit the options property
    */
   editor: ComponentType<TEditorProps>;
-  /**
-   * Custom settings of the editor.
-   */
-  settings?: TSettings;
-  /**
-   * Array of strings representing category of the options property.
-   */
-  category?: string[];
-  defaultValue?: TValue;
-  /**
-   * Function that enables configuration of when option editor should be shown based on current options properties.
-   *
-   * @param currentConfig Current options values
-   */
-  showIf?: (currentConfig: TOptions) => boolean | undefined;
-  /**
-   * Function that returns number of items if given option represents a collection, i.e. array of items.
+
+  /*
    * @param value
    */
   getItemsCount?: (value?: TValue) => number;
-}
-
-/**
- * Configuration of option editor registry item
- */
-interface OptionEditorConfig<TOptions, TSettings, TValue = any> {
-  id: keyof TOptions & string;
-  name: string;
-  description?: string;
-  settings?: TSettings;
-  defaultValue?: TValue;
 }
 
 /**

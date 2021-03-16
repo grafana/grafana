@@ -63,7 +63,7 @@ After lots of testing and user feedback, we removed the beta label from the conf
 
 ### Added table column filters
 
-You can now dynamically apply value filters to any table column. This option is can be enabled for all columns or one specific column using an override rule.
+You can now dynamically apply value filters to any table column. This option can be enabled for all columns or one specific column using an override rule.
 
 {{< docs-imagebox img="/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
 
@@ -95,7 +95,7 @@ The [Queries]({{< relref "../panels/queries.md" >}}) topic has been updated as a
 
 ## Inspect queries in Explore
 
-You can enjoy all the details query inspector gave you in dashboards now in Explore as well. You can open query inspector tab with the button next to query history. See [Query inspector in Explore]({{< relref "../explore/index.md#query-inspector" >}}) for more details.
+You can enjoy all the details query inspector gave you in dashboards now in Explore as well. You can open query inspector tab with the button next to query history. See [Query inspector in Explore]({{< relref "../explore/_index.md#query-inspector" >}}) for more details.
 
 ## \$\_\_rate_interval for Prometheus
 
@@ -107,7 +107,7 @@ With this awesome contribution from one of our community members, you can now to
 
 {{< docs-imagebox img="/img/docs/v72/explore-toggle-parsed-fields.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
 
-The [Toggle parsed fields]({{< relref "../explore/index.md#toggle-detected-fields" >}}) section has been added to [Explore]({{< relref "../explore/index.md" >}}) as a result of this feature.
+The [Toggle parsed fields]({{< relref "../explore/_index.md#toggle-detected-fields" >}}) section has been added to [Explore]({{< relref "../explore/_index.md" >}}) as a result of this feature.
 
 ## Sensitive alert channel settings are now encrypted
 

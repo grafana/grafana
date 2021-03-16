@@ -12,6 +12,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
@@ -21,9 +24,21 @@ func TestService(t *testing.T) {
 		data.NewField("time", nil, []*time.Time{utp(1)}),
 		data.NewField("value", nil, []*float64{fp(2)}))
 
-	registerEndPoint(dsDF)
-
-	s := Service{}
+	dataSvc := tsdb.NewService()
+	dataSvc.PluginManager = &manager.PluginManager{
+		BackendPluginManager: fakeBackendPM{},
+	}
+	s := Service{DataService: &dataSvc}
+	me := &mockEndpoint{
+		Frames: []*data.Frame{dsDF},
+	}
+	s.DataService.RegisterQueryHandler("test", func(*models.DataSource) (plugins.DataPlugin, error) {
+		return me, nil
+	})
+	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
+		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
+		return nil
+	})
 
 	queries := []backend.DataQuery{
 		{
@@ -36,7 +51,9 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	pl, err := s.BuildPipeline(queries)
+	req := &backend.QueryDataRequest{Queries: queries}
+
+	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), pl)
@@ -44,7 +61,7 @@ func TestService(t *testing.T) {
 
 	bDF := data.NewFrame("",
 		data.NewField("Time", nil, []*time.Time{utp(1)}),
-		data.NewField("", nil, []*float64{fp(4)}))
+		data.NewField("B", nil, []*float64{fp(4)}))
 	bDF.RefID = "B"
 
 	expect := &backend.QueryDataResponse{
@@ -85,27 +102,21 @@ type mockEndpoint struct {
 	Frames data.Frames
 }
 
-func (me *mockEndpoint) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	return &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
+func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
+	plugins.DataResponse, error) {
+	return plugins.DataResponse{
+		Results: map[string]plugins.DataQueryResult{
 			"A": {
-				Dataframes: tsdb.NewDecodedDataFrames(me.Frames),
+				Dataframes: plugins.NewDecodedDataFrames(me.Frames),
 			},
 		},
 	}, nil
 }
 
-func registerEndPoint(df ...*data.Frame) {
-	me := &mockEndpoint{
-		Frames: df,
-	}
-	endpoint := func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return me, nil
-	}
+type fakeBackendPM struct {
+	backendplugin.Manager
+}
 
-	tsdb.RegisterTsdbQueryEndpoint("test", endpoint)
-	bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
-		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
-		return nil
-	})
+func (pm fakeBackendPM) GetDataPlugin(string) interface{} {
+	return nil
 }

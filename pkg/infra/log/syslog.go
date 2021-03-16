@@ -77,8 +77,8 @@ func (sw *SysLogHandler) Log(r *log15.Record) error {
 	return err
 }
 
-func (sw *SysLogHandler) Close() {
-	sw.syslog.Close()
+func (sw *SysLogHandler) Close() error {
+	return sw.syslog.Close()
 }
 
 var facilities = map[string]syslog.Priority{

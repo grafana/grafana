@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
+import { getEditorVariables, getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -15,9 +15,11 @@ import { VariableType } from '@grafana/data';
 import { addVariable, removeVariable } from '../state/sharedReducer';
 import { updateOptions } from '../state/actions';
 import { VariableModel } from '../types';
+import { initInspect } from '../inspect/reducer';
+import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(variableEditorMounted({ name: getVariable(identifier.id).name }));
   };
 };
@@ -29,7 +31,7 @@ export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResu
 };
 
 export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async dispatch => {
+  return async (dispatch) => {
     await dispatch(updateOptions(identifier));
     dispatch(switchToListMode());
   };
@@ -47,7 +49,7 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
     }
 
     const variables = getVariables(getState());
-    const foundVariables = variables.filter(v => v.name === newName && v.id !== identifier.id);
+    const foundVariables = variables.filter((v) => v.name === newName && v.id !== identifier.id);
 
     if (foundVariables.length) {
       errorText = 'Variable with the same name already exists';
@@ -98,19 +100,28 @@ export const switchToNewMode = (type: VariableType = 'query'): ThunkResult<void>
   dispatch(setIdInEditor({ id: identifier.id }));
 };
 
-export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<void> => dispatch => {
+export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<void> => (dispatch) => {
   dispatch(setIdInEditor({ id: identifier.id }));
 };
 
-export const switchToListMode = (): ThunkResult<void> => dispatch => {
+export const switchToListMode = (): ThunkResult<void> => (dispatch, getState) => {
   dispatch(clearIdInEditor());
+  const state = getState();
+  const variables = getEditorVariables(state);
+  const dashboard = state.dashboard.getModel();
+  const { unknown, usages } = createUsagesNetwork(variables, dashboard);
+  const unknownsNetwork = transformUsagesToNetwork(unknown);
+  const unknownExits = Object.keys(unknown).length > 0;
+  const usagesNetwork = transformUsagesToNetwork(usages);
+
+  dispatch(initInspect({ unknown, usages, usagesNetwork, unknownsNetwork, unknownExits }));
 };
 
 export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {
   let counter = 0;
   let nextId = `${type}${counter}`;
 
-  while (variables.find(variable => variable.id === nextId)) {
+  while (variables.find((variable) => variable.id === nextId)) {
     nextId = `${type}${++counter}`;
   }
 

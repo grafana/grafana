@@ -32,7 +32,6 @@ import {
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 
-import { deduplicateLogRowsById } from 'app/core/utils/explore';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
@@ -187,7 +186,7 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
 }
 
 function isLogsData(series: DataFrame) {
-  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+  return series.fields.some((f) => f.type === FieldType.time) && series.fields.some((f) => f.type === FieldType.string);
 }
 
 /**
@@ -309,10 +308,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
   // We are sometimes passing data frames with no fields because we want to calculate correct meta stats.
   // Therefore we need to filter out series with no fields. These series are used only for meta stats calculation.
-  const seriesWithFields = logSeries.filter(series => series.fields.length);
+  const seriesWithFields = logSeries.filter((series) => series.fields.length);
 
   if (seriesWithFields.length) {
-    allSeries = seriesWithFields.map(series => {
+    allSeries = seriesWithFields.map((series) => {
       const fieldCache = new FieldCache(series);
       const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
 
@@ -362,6 +361,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const message: string = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
 
       const hasAnsi = textUtil.hasAnsiCodes(message);
+
+      const hasUnescapedContent = !!message.match(/\\n|\\t|\\r/);
+
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       let logLevel = LogLevel.unknown;
@@ -384,6 +386,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
         uniqueLabels,
         hasAnsi,
+        hasUnescapedContent,
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
@@ -392,8 +395,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       });
     }
   }
-
-  const deduplicatedLogRows = deduplicateLogRowsById(rows);
 
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
@@ -405,7 +406,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     });
   }
 
-  const limits = logSeries.filter(series => series.meta && series.meta.limit);
+  const limits = logSeries.filter((series) => series.meta && series.meta.limit);
   const limitValue = Object.values(
     limits.reduce((acc: any, elem: any) => {
       acc[elem.refId] = elem.meta.limit;
@@ -416,7 +417,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limitValue} (${deduplicatedLogRows.length} returned)`,
+      value: `${limitValue} (${rows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }
@@ -442,7 +443,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
     if (refId && !queriesVisited[refId]) {
       if (totalBytesKey && series.meta?.stats) {
-        const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
+        const byteStat = series.meta.stats.find((stat) => stat.displayName === totalBytesKey);
         if (byteStat) {
           totalBytes += byteStat.value;
         }
@@ -464,7 +465,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   return {
     hasUniqueLabels,
     meta,
-    rows: deduplicatedLogRows,
+    rows,
   };
 }
 

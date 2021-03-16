@@ -1,11 +1,9 @@
 import React, { FunctionComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Labels } from '@grafana/data';
+import { GrafanaTheme, Labels } from '@grafana/data';
 
 import { stylesFactory } from '../../themes';
 import { Themeable } from '../../types/theme';
-import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/ThemeContext';
 
 // Levels are already encoded in color, filename is a Loki-ism
@@ -22,7 +20,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: logs-label;
       display: flex;
       padding: 0 2px;
-      background-color: ${selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark6 }, theme.type)};
+      background-color: ${theme.colors.bg2};
       border-radius: ${theme.border.radius};
       margin: 1px 4px 0 0;
       text-overflow: ellipsis;
@@ -45,7 +43,7 @@ interface Props extends Themeable {
 
 export const UnThemedLogLabels: FunctionComponent<Props> = ({ labels, theme }) => {
   const styles = getStyles(theme);
-  const displayLabels = Object.keys(labels).filter(label => !label.startsWith('_') && !HIDDEN_LABELS.includes(label));
+  const displayLabels = Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label));
 
   if (displayLabels.length === 0) {
     return (
@@ -57,8 +55,11 @@ export const UnThemedLogLabels: FunctionComponent<Props> = ({ labels, theme }) =
 
   return (
     <span className={cx([styles.logsLabels])}>
-      {displayLabels.sort().map(label => {
+      {displayLabels.sort().map((label) => {
         const value = labels[label];
+        if (!value) {
+          return;
+        }
         const tooltip = `${label}: ${value}`;
         return (
           <span key={label} className={cx([styles.logsLabel])}>

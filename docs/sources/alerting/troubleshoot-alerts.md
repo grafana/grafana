@@ -9,7 +9,7 @@ weight = 500
 
 If alerts are not behaving as you expect, here are some steps you can take to troubleshoot and figure out what is going wrong.
 
-{{< imgbox max-width="1000px" img="/img/docs/v4/alert_test_rule.png" caption="Test Rule" >}}
+![Test Rule](/img/docs/v4/alert_test_rule.png)
 
 The first level of troubleshooting you can do is click **Test Rule**. You will get result back that you can expand to the point where you can see the raw data that was returned from your query.
 

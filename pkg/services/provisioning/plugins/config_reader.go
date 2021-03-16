@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"gopkg.in/yaml.v2"
 )
 
@@ -69,6 +69,8 @@ func (cr *configReaderImpl) parsePluginConfig(path string, file os.FileInfo) (*p
 		return nil, err
 	}
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -110,7 +112,7 @@ func validatePluginsConfig(apps []*pluginsAsConfig) error {
 		}
 
 		for _, app := range apps[i].Apps {
-			if !plugins.IsAppInstalled(app.PluginID) {
+			if !manager.IsAppInstalled(app.PluginID) {
 				return fmt.Errorf("app plugin not installed: %s", app.PluginID)
 			}
 		}

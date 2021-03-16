@@ -10,11 +10,12 @@ import { stylesFactory } from '../../themes/stylesFactory';
 //Components
 import { LogLabelStats } from './LogLabelStats';
 import { IconButton } from '../IconButton/IconButton';
-import { Tag } from '..';
+import { DataLinkButton } from '../DataLinks/DataLinkButton';
 
 export interface Props extends Themeable {
   parsedValue: string;
   parsedKey: string;
+  wrapLogMessage?: boolean;
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -49,6 +50,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     showingField: css`
       color: ${theme.palette.blue95};
+    `,
+    wrapLine: css`
+      label: wrapLine;
+      white-space: pre-wrap;
     `,
   };
 });
@@ -99,7 +104,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   toggleFieldsStats() {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         showFieldsStats: !state.showFieldsStats,
       };
@@ -107,7 +112,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { theme, parsedKey, parsedValue, isLabel, links, showDetectedFields } = this.props;
+    const { theme, parsedKey, parsedValue, isLabel, links, showDetectedFields, wrapLogMessage } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
@@ -146,14 +151,14 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
         {/* Key - value columns */}
         <td className={style.logDetailsLabel}>{parsedKey}</td>
-        <td className={styles.wordBreakAll}>
+        <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
           {parsedValue}
           {links &&
-            links.map(link => {
+            links.map((link) => {
               return (
                 <>
                   &nbsp;
-                  <FieldLink link={link} />
+                  <DataLinkButton link={link} />
                 </>
               );
             })}
@@ -170,42 +175,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       </tr>
     );
   }
-}
-
-const getLinkStyles = stylesFactory(() => {
-  return {
-    tag: css`
-      margin-left: 6px;
-      font-size: 11px;
-      padding: 2px 6px;
-    `,
-  };
-});
-
-type FieldLinkProps = {
-  link: LinkModel<Field>;
-};
-function FieldLink({ link }: FieldLinkProps) {
-  const styles = getLinkStyles();
-  return (
-    <a
-      href={link.href}
-      target={'_blank'}
-      rel="noreferrer"
-      onClick={
-        link.onClick
-          ? event => {
-              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
-                event.preventDefault();
-                link.onClick(event);
-              }
-            }
-          : undefined
-      }
-    >
-      <Tag name={link.title} className={styles.tag} colorIndex={6} />
-    </a>
-  );
 }
 
 export const LogDetailsRow = withTheme(UnThemedLogDetailsRow);

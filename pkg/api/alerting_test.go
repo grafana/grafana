@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -109,8 +112,8 @@ func TestAlertingAPIEndpoint(t *testing.T) {
 			bus.AddHandler("test", func(query *search.Query) error {
 				searchQuery = query
 				query.Result = search.HitList{
-					&search.Hit{Id: 1},
-					&search.Hit{Id: 2},
+					&search.Hit{ID: 1},
+					&search.Hit{ID: 2},
 				}
 				return nil
 			})
@@ -162,7 +165,7 @@ func postAlertScenario(t *testing.T, desc string, url string, routePattern strin
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
