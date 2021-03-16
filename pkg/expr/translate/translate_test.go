@@ -75,9 +75,11 @@ func TestDashboardAlertConditions(t *testing.T) {
 			},
 		},
 		{
-			name:           "something",
+			name:           "mixed shared and unshared time ranges",
 			inputJSONFName: `mixedSharedUnsharedTimeRange.json`,
 			spotCheckFn: func(t *testing.T, cond *ngmodels.Condition) {
+				require.Equal(t, "G", cond.RefID, "unexpected refId for condition")
+				require.Equal(t, 7, len(cond.QueriesAndExpressions), "unexpected query/expression array length")
 			},
 		},
 	}

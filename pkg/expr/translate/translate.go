@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/models"
@@ -162,15 +161,17 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 		newRefIDs = append(newRefIDs, refID)
 	}
 	sort.Strings(newRefIDs)
-	spew.Dump(newRefIDs, newRefIDstoCondIdx)
 
 	ngCond := &ngmodels.Condition{}
 	// will need to sort for stable output
 	condIdxToNewRefID := make(map[int]string)
 	for _, refID := range newRefIDs {
 		condIdxes := newRefIDstoCondIdx[refID]
-		for _, condIdx := range condIdxes {
+		for i, condIdx := range condIdxes {
 			condIdxToNewRefID[condIdx] = refID
+			if i > 0 {
+				continue
+			}
 			var queryObj map[string]interface{}
 			err := json.Unmarshal(dc.Conditions[condIdx].Query.Model, &queryObj)
 			if err != nil {
