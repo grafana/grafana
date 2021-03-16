@@ -345,6 +345,13 @@ func (c *baseClientImpl) GetIndexMapping() (*IndexMappingResponse, error) {
 	}
 
 	res, err := c.executeRequest(http.MethodGet, index+"/_mapping", "", nil)
+
+	defer func() {
+		if err := res.httpResponse.Body.Close(); err != nil {
+			clientLog.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
 	if err != nil {
 		return nil, err
 	}
@@ -353,12 +360,6 @@ func (c *baseClientImpl) GetIndexMapping() (*IndexMappingResponse, error) {
 
 	start := time.Now()
 	clientLog.Debug("Decoding index mapping json response")
-
-	defer func() {
-		if err := res.httpResponse.Body.Close(); err != nil {
-			clientLog.Warn("Failed to close response body", "err", err)
-		}
-	}()
 
 	var objmap map[string]interface{}
 	dec := json.NewDecoder(res.httpResponse.Body)
