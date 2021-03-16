@@ -434,76 +434,6 @@
         }
       }
     },
-    "/api/v1/namespace/{Namespace}/permissions": {
-      "get": {
-        "description": "sets an Alerting config",
-        "tags": [
-          "permissions"
-        ],
-        "operationId": "RouteGetNamespacePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Namespace name",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Permissions",
-            "schema": {
-              "$ref": "#/definitions/Permissions"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "gets an Alerting config",
-        "tags": [
-          "permissions"
-        ],
-        "operationId": "RouteSetNamespacePermissions",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Namespace name to apply perms to",
-            "name": "Namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "description": "New namespace permissions",
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/Permissions"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
-    },
     "/api/v1/receiver/test": {
       "get": {
         "description": "Test receiver",
@@ -1289,28 +1219,6 @@
         }
       },
       "x-go-package": "github.com/grafana/grafana/pkg/models"
-    },
-    "DashboardAclUpdateItem": {
-      "type": "object",
-      "properties": {
-        "permission": {
-          "$ref": "#/definitions/PermissionType"
-        },
-        "role": {
-          "$ref": "#/definitions/RoleType"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "TeamID"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64",
-          "x-go-name": "UserID"
-        }
-      },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
     },
     "DateTime": {
       "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -2149,18 +2057,6 @@
       },
       "x-go-package": "github.com/prometheus/alertmanager/config"
     },
-    "PermissionType": {
-      "type": "integer",
-      "format": "int64",
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
-    },
-    "Permissions": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/UpdateDashboardAclCommand"
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-    },
     "Point": {
       "type": "object",
       "title": "Point represents a single data point for a given timestamp.",
@@ -2465,10 +2361,6 @@
         }
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-    },
-    "RoleType": {
-      "type": "string",
-      "x-go-package": "github.com/grafana/grafana/pkg/models"
     },
     "Route": {
       "type": "object",
@@ -3080,18 +2972,21 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
     },
-    "UpdateDashboardAclCommand": {
+    "UserConfig": {
       "type": "object",
       "properties": {
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DashboardAclUpdateItem"
+        "alertmanager_config": {
+          "$ref": "#/definitions/ApiAlertingConfig"
+        },
+        "template_files": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
           },
-          "x-go-name": "Items"
+          "x-go-name": "TemplateFiles"
         }
       },
-      "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
