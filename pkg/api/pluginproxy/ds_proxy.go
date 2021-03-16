@@ -193,12 +193,13 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 	}
 
-	if unescapedPath, err := url.PathUnescape(req.URL.RawPath); err != nil {
+	unescapedPath, err := url.PathUnescape(req.URL.RawPath)
+	if err != nil {
 		logger.Error("Failed to unescape raw path", "rawPath", req.URL.RawPath, "error", err)
 		return
-	} else {
-		req.URL.Path = unescapedPath
 	}
+
+	req.URL.Path = unescapedPath
 
 	if proxy.ds.BasicAuth {
 		req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.BasicAuthUser,
