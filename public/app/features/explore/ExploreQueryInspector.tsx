@@ -10,7 +10,6 @@ import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
-import { processDataFramesForTable } from './utils/decorators';
 
 interface DispatchProps {
   runQueries: typeof runQueries;
@@ -25,6 +24,7 @@ interface Props extends DispatchProps {
 
 export function ExploreQueryInspector(props: Props) {
   const { loading, width, onClose, queryResponse } = props;
+  const dataFrames = queryResponse?.series || [];
 
   const statsTab: TabConfig = {
     label: 'Stats',
@@ -46,7 +46,7 @@ export function ExploreQueryInspector(props: Props) {
     icon: 'database',
     content: (
       <InspectDataTab
-        data={processDataFramesForTable(queryResponse)}
+        data={dataFrames}
         isLoading={loading}
         options={{ withTransforms: false, withFieldConfig: false }}
       />
@@ -57,9 +57,7 @@ export function ExploreQueryInspector(props: Props) {
     label: 'Query Inspector',
     value: 'query_inspector',
     icon: 'info-circle',
-    content: (
-      <QueryInspector data={queryResponse?.series || []} onRefreshQuery={() => props.runQueries(props.exploreId)} />
-    ),
+    content: <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries(props.exploreId)} />,
   };
 
   const tabs = [statsTab, queryInspectorTab, jsonTab, dataTab];

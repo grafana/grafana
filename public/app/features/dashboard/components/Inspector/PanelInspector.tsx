@@ -8,9 +8,9 @@ import { StoreState } from 'app/types';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 import { InspectContent } from './InspectContent';
-import { InspectTab } from 'app/features/inspector/types';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
 import { useLocation } from 'react-router-dom';
+import { InspectTab } from 'app/features/inspector/types';
 
 interface OwnProps {
   dashboard: DashboardModel;

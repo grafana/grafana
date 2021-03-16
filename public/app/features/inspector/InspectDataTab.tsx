@@ -25,10 +25,10 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from 'app/features/inspector/DetailText';
 
 interface Props {
-  panel?: PanelModel;
-  data?: DataFrame[];
   isLoading: boolean;
   options: GetDataOptions;
+  data?: DataFrame[];
+  panel?: PanelModel;
   onOptionsChange?: (options: GetDataOptions) => void;
 }
 
@@ -110,12 +110,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   getProcessedData(): DataFrame[] {
     const { options, panel } = this.props;
-    if (!panel) {
-      return this.props.data || [];
-    }
     const data = this.state.transformedData;
 
-    if (!options.withFieldConfig) {
+    if (!options.withFieldConfig || !panel) {
       return applyRawFieldOverrides(data);
     }
 

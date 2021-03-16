@@ -33,10 +33,10 @@ const options: Array<SelectableValue<ShowContent>> = [
 ];
 
 interface Props {
+  onClose: () => void;
   dashboard?: DashboardModel;
   panel?: PanelModel;
   data?: PanelData;
-  onClose: () => void;
 }
 
 interface State {
@@ -140,7 +140,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           )}
         </div>
         <div className={styles.content}>
-          <AutoSizer disableWidth defaultHeight={200}>
+          <AutoSizer disableWidth>
             {({ height }) => (
               <CodeEditor
                 width="100%"
