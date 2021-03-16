@@ -42,7 +42,7 @@ require (
 	github.com/grafana/alerting-api v0.0.0-20210311171115-b0eb4577f38c
 	github.com/grafana/grafana-aws-sdk v0.2.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.88.0
+	github.com/grafana/grafana-plugin-sdk-go v0.88.1-0.20210316010403-be8d0c26d32a
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-hclog v0.15.0
@@ -65,7 +65,7 @@ require (
 	github.com/prometheus/alertmanager v0.21.1-0.20210315141118-bf9c43b57df6
 	github.com/prometheus/client_golang v1.9.0
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.18.1-0.20210305175002-2a23014b3b39
+	github.com/prometheus/common v0.19.0
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.0

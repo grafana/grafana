@@ -1,4 +1,4 @@
-import { DataFrame, StreamingDataFrame, StreamingFrameOptions, dataFrameFromJSON } from '@grafana/data';
+import { DataFrame, DataFrameJSON, StreamingDataFrame, StreamingFrameOptions } from '@grafana/data';
 import { MeasurementBatch, LiveMeasurements, MeasurementsQuery } from './types';
 
 /**
@@ -63,6 +63,13 @@ export class MeasurementCollector implements LiveMeasurements {
   //------------------------------------------------------
 
   addBatch = (msg: MeasurementBatch) => {
+    // HACK!  sending one message from the backend, not a batch
+    if (!msg.batch) {
+      const df: DataFrameJSON = msg as any;
+      msg = { batch: [df] };
+      console.log('NOTE converting message to batch');
+    }
+
     for (const measure of msg.batch) {
       const key = measure.key ?? measure.schema?.name ?? '';
 
@@ -70,8 +77,7 @@ export class MeasurementCollector implements LiveMeasurements {
       if (s) {
         s.update(measure);
       } else {
-        const f = dataFrameFromJSON(measure);
-        s = new StreamingDataFrame(f, this.config); //
+        s = new StreamingDataFrame(measure, this.config); //
         this.measurements.set(key, s);
       }
     }

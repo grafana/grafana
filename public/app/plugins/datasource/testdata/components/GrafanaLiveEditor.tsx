@@ -10,6 +10,11 @@ const liveTestDataChannels = [
     description: 'Random stream with points every 2s',
   },
   {
+    label: 'random-20hz-stream',
+    value: 'random-20hz-stream',
+    description: 'Random stream with 20 points sent every second',
+  },
+  {
     label: 'random-flakey-stream',
     value: 'random-flakey-stream',
     description: 'Stream that returns data in random intervals',

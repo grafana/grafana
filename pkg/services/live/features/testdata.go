@@ -1,12 +1,12 @@
 package features
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"time"
 
 	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -35,6 +35,17 @@ func (s *TestDataSupplier) GetHandlerForPath(path string) (models.ChannelHandler
 			publisher:   s.Publisher,
 			running:     false,
 			speedMillis: 2000,
+			dropPercent: 0,
+			channel:     channel,
+			name:        path,
+		}, nil
+	}
+
+	if path == "random-20hz-stream" {
+		return &testDataRunner{
+			publisher:   s.Publisher,
+			running:     false,
+			speedMillis: 50,
 			dropPercent: 0,
 			channel:     channel,
 			name:        path,
@@ -78,14 +89,11 @@ func (r *testDataRunner) runRandomCSV() {
 	walker := rand.Float64() * 100
 	ticker := time.NewTicker(time.Duration(r.speedMillis) * time.Millisecond)
 
-	measurement := models.Measurement{
-		Name:   r.name,
-		Time:   0,
-		Values: make(map[string]interface{}, 5),
-	}
-	msg := models.MeasurementBatch{
-		Measurements: []models.Measurement{measurement}, // always a single measurement
-	}
+	frame := data.NewFrame(r.name,
+		data.NewField("Time", nil, make([]time.Time, 1)),
+		data.NewField("Value", nil, make([]float64, 1)),
+		data.NewField("Min", nil, make([]float64, 1)),
+		data.NewField("Max", nil, make([]float64, 1)))
 
 	for t := range ticker.C {
 		if rand.Float64() <= r.dropPercent {
@@ -94,12 +102,13 @@ func (r *testDataRunner) runRandomCSV() {
 		delta := rand.Float64() - 0.5
 		walker += delta
 
-		measurement.Time = t.UnixNano() / int64(time.Millisecond)
-		measurement.Values["value"] = walker
-		measurement.Values["min"] = walker - ((rand.Float64() * spread) + 0.01)
-		measurement.Values["max"] = walker + ((rand.Float64() * spread) + 0.01)
+		frame.Fields[0].Set(0, t)
+		frame.Fields[1].Set(0, walker)                                // Value
+		frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
+		frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
 
-		bytes, err := json.Marshal(&msg)
+		// write both the schema and data
+		bytes, err := data.FrameToJSON(frame, true, true)
 		if err != nil {
 			logger.Warn("unable to marshal line", "error", err)
 			continue
@@ -107,7 +116,7 @@ func (r *testDataRunner) runRandomCSV() {
 
 		err = r.publisher(r.channel, bytes)
 		if err != nil {
-			logger.Warn("write", "channel", r.channel, "measurement", measurement)
+			logger.Warn("write", "channel", r.channel, "measurement", frame.Name)
 		}
 	}
 }
