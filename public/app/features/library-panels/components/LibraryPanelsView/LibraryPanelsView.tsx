@@ -1,12 +1,12 @@
 import React, { FormEvent, useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 import { css, cx } from 'emotion';
-import { Button, Icon, Input, stylesFactory, useStyles } from '@grafana/ui';
+import { Button, Icon, Input, Pagination, stylesFactory, useStyles } from '@grafana/ui';
 import { DateTimeInput, GrafanaTheme, LoadingState } from '@grafana/data';
 
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
 import { LibraryPanelDTO } from '../../types';
-import { initialLibraryPanelsViewState, libraryPanelsViewReducer, setSearchString } from './reducer';
+import { initialLibraryPanelsViewState, libraryPanelsViewReducer, setPage, setSearchString } from './reducer';
 import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './actions';
 
 interface LibraryPanelViewProps {
@@ -29,22 +29,25 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   currentPanelId: currentPanel,
 }) => {
   const styles = useStyles(getPanelViewStyles);
-  const [{ libraryPanels, searchString, page, perPage, loadingState }, dispatch] = useReducer(
+  const [{ libraryPanels, searchString, page, perPage, totalCount, loadingState }, dispatch] = useReducer(
     libraryPanelsViewReducer,
     {
       ...initialLibraryPanelsViewState,
       currentPanelId: currentPanel,
     }
   );
+  const numberOfPages = Math.ceil(totalCount / perPage);
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
   useDebounce(() => asyncDispatch(searchForLibraryPanels({ searchString, page, perPage })), 300, [
     searchString,
+    page,
     asyncDispatch,
   ]);
   const onSearchChange = (event: FormEvent<HTMLInputElement>) =>
     asyncDispatch(setSearchString({ searchString: event.currentTarget.value }));
   const onDelete = ({ uid }: LibraryPanelDTO) =>
     asyncDispatch(deleteLibraryPanel(uid, { searchString, page, perPage }));
+  const onPageChange = (page: number) => asyncDispatch(setPage({ page }));
 
   return (
     <div className={cx(styles.container, className)}>
@@ -78,6 +81,17 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
           ))
         )}
       </div>
+      {libraryPanels.length ? (
+        <div className={styles.pagination}>
+          <Pagination
+            currentPage={page}
+            numberOfPages={numberOfPages}
+            onNavigate={onPageChange}
+            hideWhenSinglePage={true}
+          />
+        </div>
+      ) : null}
+
       {onCreateNewPanel && (
         <Button icon="plus" className={styles.newPanelButton} onClick={onCreateNewPanel}>
           Create a new reusable panel
@@ -95,6 +109,7 @@ const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-wrap: nowrap;
       gap: ${theme.spacing.sm};
       height: 100%;
+      overflow-y: auto;
     `,
     libraryPanelList: css`
       display: flex;
@@ -107,6 +122,9 @@ const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
     newPanelButton: css`
       margin-top: 10px;
       align-self: flex-start;
+    `,
+    pagination: css`
+      align-self: center;
     `,
   };
 });

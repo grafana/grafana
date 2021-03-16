@@ -18,7 +18,7 @@ export const initialLibraryPanelsViewState: LibraryPanelsViewState = {
   libraryPanels: [],
   searchString: '',
   totalCount: 0,
-  perPage: 100,
+  perPage: 10,
   page: 1,
   currentPanelId: undefined,
 };
@@ -44,8 +44,11 @@ const libraryPanelsViewSlice = createSlice({
     setSearchString: (state, action: PayloadAction<Pick<LibraryPanelsViewState, 'searchString'>>) => {
       state.searchString = action.payload.searchString;
     },
+    setPage: (state, action: PayloadAction<Pick<LibraryPanelsViewState, 'page'>>) => {
+      state.page = action.payload.page;
+    },
   },
 });
 
 export const libraryPanelsViewReducer = libraryPanelsViewSlice.reducer;
-export const { initSearch, searchCompleted, setSearchString } = libraryPanelsViewSlice.actions;
+export const { initSearch, searchCompleted, setSearchString, setPage } = libraryPanelsViewSlice.actions;
