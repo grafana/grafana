@@ -527,7 +527,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 	type setUpCfg struct {
 		headers map[string]string
-		writeCb func(w http.ResponseWriter)
+		writeCb func(w http.ResponseWriter, r *http.Request)
 	}
 
 	setUp := func(t *testing.T, cfgs ...setUpCfg) (*models.ReqContext, *models.DataSource) {
@@ -539,7 +539,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 			for _, cfg := range cfgs {
 				if cfg.writeCb != nil {
 					t.Log("Writing response via callback")
-					cfg.writeCb(w)
+					cfg.writeCb(w, r)
 					written = true
 				}
 			}
@@ -607,7 +607,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 	t.Run("Data source returns status code 401", func(t *testing.T) {
 		ctx, ds := setUp(t, setUpCfg{
-			writeCb: func(w http.ResponseWriter) {
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(401)
 				w.Header().Set("www-authenticate", `Basic realm="Access to the server"`)
 				_, err := w.Write([]byte("Not authenticated"))
@@ -623,6 +623,28 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		require.NoError(t, writeErr)
 		assert.Equal(t, 400, proxy.ctx.Resp.Status(), "Status code 401 should be converted to 400")
 		assert.Empty(t, proxy.ctx.Resp.Header().Get("www-authenticate"))
+	})
+
+	t.Run("Data source should handle proxy path url encoding correctly", func(t *testing.T) {
+		var req *http.Request
+		ctx, ds := setUp(t, setUpCfg{
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
+				req = r
+				w.WriteHeader(200)
+				_, err := w.Write([]byte("OK"))
+				require.NoError(t, err)
+			},
+		})
+
+		ctx.Req.Request = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
+		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{})
+		require.NoError(t, err)
+
+		proxy.HandleRequest()
+
+		require.NoError(t, writeErr)
+		require.NotNil(t, req)
+		require.Equal(t, "/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", req.RequestURI)
 	})
 }
 

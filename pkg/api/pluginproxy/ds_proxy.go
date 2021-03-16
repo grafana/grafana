@@ -179,18 +179,25 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	switch proxy.ds.Type {
 	case models.DS_INFLUXDB_08:
-		req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
+		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
 		reqQueryVals.Add("u", proxy.ds.User)
 		reqQueryVals.Add("p", proxy.ds.DecryptedPassword())
 		req.URL.RawQuery = reqQueryVals.Encode()
 	case models.DS_INFLUXDB:
-		req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
+		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
 		req.URL.RawQuery = reqQueryVals.Encode()
 		if !proxy.ds.BasicAuth {
 			req.Header.Set("Authorization", util.GetBasicAuthHeader(proxy.ds.User, proxy.ds.DecryptedPassword()))
 		}
 	default:
-		req.URL.Path = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
+		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, proxy.proxyPath)
+	}
+
+	if unescapedPath, err := url.PathUnescape(req.URL.RawPath); err != nil {
+		logger.Error("Failed to unescape raw path", "rawPath", req.URL.RawPath, "error", err)
+		return
+	} else {
+		req.URL.Path = unescapedPath
 	}
 
 	if proxy.ds.BasicAuth {
@@ -231,6 +238,8 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 		}
 	}
+
+	proxy.ctx.Logger.Info("Director done", "requestUri", req.RequestURI)
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
