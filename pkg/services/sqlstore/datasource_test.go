@@ -326,7 +326,7 @@ func TestDataAccess(t *testing.T) {
 		t.Run("Returns an error if no type specified", func(t *testing.T) {
 			query := models.GetDataSourcesByTypeQuery{}
 
-			err = GetDataSourcesByType(&query)
+			err := GetDataSourcesByType(&query)
 
 			require.Error(t, err)
 		})
