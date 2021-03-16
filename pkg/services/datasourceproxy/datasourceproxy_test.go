@@ -1,9 +1,8 @@
-package api
+package datasourceproxy
 
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,7 +28,7 @@ func TestDataProxy(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			assert.Equal(t, tc.exp, datasourceproxy.EnsureProxyPathTrailingSlash(tc.origPath, tc.proxyPath))
+			assert.Equal(t, tc.exp, ensureProxyPathTrailingSlash(tc.origPath, tc.proxyPath))
 		})
 	}
 }
