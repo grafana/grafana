@@ -76,13 +76,8 @@ func RoleAuth(roles ...models.RoleType) macaron.Handler {
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *models.ReqContext) {
 		forceLogin := false
-
 		if c.AllowAnonymous {
-			forceLoginParam, err := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin"))
-			if err == nil {
-				forceLogin = forceLoginParam
-			}
-
+			forceLogin = shouldForceLogin(c)
 			if !forceLogin {
 				orgIDValue := c.Req.URL.Query().Get("orgId")
 				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
@@ -136,4 +131,27 @@ func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
 			return
 		}
 	}
+}
+
+// NoAuth creates a middleware that doesn't require any authentication.
+// If forceLogin param is set it will redirect the user to the login page.
+func NoAuth() macaron.Handler {
+	return func(c *models.ReqContext) {
+		if shouldForceLogin(c) {
+			notAuthorized(c)
+			return
+		}
+	}
+}
+
+// shouldForceLogin checks if user should be enforced to login.
+// Returns true if forceLogin parameter is set.
+func shouldForceLogin(c *models.ReqContext) bool {
+	forceLogin := false
+	forceLoginParam, err := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin"))
+	if err == nil {
+		forceLogin = forceLoginParam
+	}
+
+	return forceLogin
 }
