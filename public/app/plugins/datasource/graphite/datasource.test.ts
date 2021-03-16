@@ -1,10 +1,12 @@
-import { GraphiteDatasource } from '../datasource';
+import { GraphiteDatasource } from './datasource';
 import _ from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime, getFrameDisplayName } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { DEFAULT_GRAPHITE_VERSION } from '../versions';
+import { of } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -17,7 +19,7 @@ interface Context {
 }
 
 describe('graphiteDatasource', () => {
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   let ctx = {} as Context;
 
@@ -114,14 +116,14 @@ describe('graphiteDatasource', () => {
       maxDataPoints: 500,
     };
 
-    let results: any;
+    let response: any;
     let requestOptions: any;
 
-    beforeEach(async () => {
-      datasourceRequestMock.mockImplementation((options: any) => {
+    beforeEach(() => {
+      fetchMock.mockImplementation((options: any) => {
         requestOptions = options;
-        return Promise.resolve({
-          data: [
+        return of(
+          createFetchResponse([
             {
               target: 'prod1.count',
               datapoints: [
@@ -129,13 +131,11 @@ describe('graphiteDatasource', () => {
                 [12, 1],
               ],
             },
-          ],
-        });
+          ])
+        );
       });
 
-      await ctx.ds.query(query as any).then((data: any) => {
-        results = data;
-      });
+      response = ctx.ds.query(query as any);
     });
 
     it('X-Dashboard and X-Panel headers to be set!', () => {
@@ -164,13 +164,19 @@ describe('graphiteDatasource', () => {
       expect(params).not.toContain('cacheTimeout=undefined');
     });
 
-    it('should return series list', () => {
-      expect(results.data.length).toBe(1);
-      expect(results.data[0].name).toBe('prod1.count');
+    it('should return series list', async () => {
+      await expect(response).toEmitValuesWith((values: any) => {
+        const results = values[0];
+        expect(results.data.length).toBe(1);
+        expect(results.data[0].name).toBe('prod1.count');
+      });
     });
 
-    it('should convert to millisecond resolution', () => {
-      expect(results.data[0].fields[1].values.get(0)).toBe(10);
+    it('should convert to millisecond resolution', async () => {
+      await expect(response).toEmitValuesWith((values: any) => {
+        const results = values[0];
+        expect(results.data[0].fields[1].values.get(0)).toBe(10);
+      });
     });
   });
 
@@ -189,21 +195,19 @@ describe('graphiteDatasource', () => {
     };
 
     describe('and tags are returned as string', () => {
-      const response = {
-        data: [
-          {
-            when: 1507222850,
-            tags: 'tag1 tag2',
-            data: 'some text',
-            id: 2,
-            what: 'Event - deploy',
-          },
-        ],
-      };
+      const response = [
+        {
+          when: 1507222850,
+          tags: 'tag1 tag2',
+          data: 'some text',
+          id: 2,
+          what: 'Event - deploy',
+        },
+      ];
 
       beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((options: any) => {
-          return Promise.resolve(response);
+        fetchMock.mockImplementation((options: any) => {
+          return of(createFetchResponse(response));
         });
         await ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
@@ -219,20 +223,19 @@ describe('graphiteDatasource', () => {
     });
 
     describe('and tags are returned as an array', () => {
-      const response = {
-        data: [
-          {
-            when: 1507222850,
-            tags: ['tag1', 'tag2'],
-            data: 'some text',
-            id: 2,
-            what: 'Event - deploy',
-          },
-        ],
-      };
+      const response = [
+        {
+          when: 1507222850,
+          tags: ['tag1', 'tag2'],
+          data: 'some text',
+          id: 2,
+          what: 'Event - deploy',
+        },
+      ];
+
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: any) => {
-          return Promise.resolve(response);
+        fetchMock.mockImplementation((options: any) => {
+          return of(createFetchResponse(response));
         });
 
         ctx.ds.annotationQuery(options).then((data: any) => {
@@ -350,11 +353,9 @@ describe('graphiteDatasource', () => {
     let requestOptions: any;
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: any) => {
+      fetchMock.mockImplementation((options: any) => {
         requestOptions = options;
-        return Promise.resolve({
-          data: ['backend_01', 'backend_02'],
-        });
+        return of(createFetchResponse(['backend_01', 'backend_02']));
       });
     });
 
