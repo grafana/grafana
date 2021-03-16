@@ -279,8 +279,8 @@ func (hs *HTTPServer) registerRoutes() {
 		}, reqOrgAdmin)
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
-		apiRoute.Any("/datasources/proxy/:id/*", reqSignedIn, hs.DataProxy.ProxyDataSourceRequest)
-		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.DataProxy.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/:id/resources", hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/resources/*", hs.CallDatasourceResource)
 		apiRoute.Any("/datasources/:id/health", routing.Wrap(hs.CheckDatasourceHealth))
