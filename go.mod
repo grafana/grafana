@@ -66,7 +66,6 @@ require (
 	github.com/prometheus/client_golang v1.9.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.18.1-0.20210305175002-2a23014b3b39
-	github.com/prometheus/prometheus v1.8.2-0.20210217141258-a6be548dbc17 // indirect
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.0
