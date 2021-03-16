@@ -156,3 +156,24 @@ function isTimeSeries(frame: DataFrame): boolean {
     Object.keys(grouped).length === 2 && grouped[FieldType.time]?.length === 1 && grouped[FieldType.number]
   );
 }
+
+export function processDataFramesForTable(data?: PanelData) {
+  if (!data) {
+    return [];
+  }
+
+  const tableDataFrames = data.series.map((frame) => {
+    for (const field of frame.fields) {
+      field.display =
+        field.display ??
+        getDisplayProcessor({
+          field,
+          theme: config.theme,
+          timeZone: data.request?.timezone ?? 'browser',
+        });
+    }
+    return frame;
+  });
+
+  return tableDataFrames;
+}

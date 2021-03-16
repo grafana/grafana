@@ -10,6 +10,7 @@ import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
+import { processDataFramesForTable } from './utils/decorators';
 
 interface DispatchProps {
   runQueries: typeof runQueries;
@@ -45,14 +46,14 @@ export function ExploreQueryInspector(props: Props) {
     icon: 'database',
     content: (
       <InspectDataTab
-        data={queryResponse?.series || []}
+        data={processDataFramesForTable(queryResponse)}
         isLoading={loading}
         options={{ withTransforms: false, withFieldConfig: false }}
       />
     ),
   };
 
-  const inspectorTab: TabConfig = {
+  const queryInspectorTab: TabConfig = {
     label: 'Query Inspector',
     value: 'query_inspector',
     icon: 'info-circle',
@@ -61,7 +62,7 @@ export function ExploreQueryInspector(props: Props) {
     ),
   };
 
-  const tabs = [statsTab, inspectorTab, jsonTab, dataTab];
+  const tabs = [statsTab, queryInspectorTab, jsonTab, dataTab];
   return (
     <ExploreDrawer width={width} onResize={() => {}}>
       <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
