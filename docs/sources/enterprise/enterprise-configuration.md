@@ -360,4 +360,4 @@ The full Redis URL of your Redis server. Example: `redis://localhost:6739/0`.
 
 ### prefix
 
-A string that prefixes all redis keys. This value must be set if using a shared database in Redis. If `prefix` is empty, then one will not be used.
+A string that prefixes all Redis keys. This value must be set if using a shared database in Redis. If `prefix` is empty, then one will not be used.
