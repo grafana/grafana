@@ -9,7 +9,7 @@ import { PageContents } from './PageContents';
 import { CustomScrollbar, useStyles } from '@grafana/ui';
 import { GrafanaTheme, NavModel } from '@grafana/data';
 import { Branding } from '../Branding/Branding';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export interface PageType extends FC<Props> {
   Contents: typeof PageContents;
 }
 
-export const Page: PageType = ({ navModel, children, ...otherProps }) => {
+export const Page: PageType = ({ navModel, children, className, ...otherProps }) => {
   const styles = useStyles(getStyles);
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export const Page: PageType = ({ navModel, children, ...otherProps }) => {
   }, [navModel]);
 
   return (
-    <div {...otherProps} className={styles.wrapper}>
+    <div {...otherProps} className={cx(styles.wrapper, className)}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className="page-scrollbar-content">
           <PageHeader model={navModel} />

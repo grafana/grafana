@@ -3,6 +3,8 @@ import Page from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
+import { useStyles } from '@grafana/ui';
+import { css } from 'emotion';
 
 interface Props {
   isLoading?: boolean;
@@ -14,9 +16,19 @@ export const AlertingPageWrapper: FC<Props> = ({ children, isLoading }) => {
     'alert-list'
   );
 
+  const styles = useStyles(getStyles);
+
   return (
-    <Page navModel={navModel}>
+    <Page navModel={navModel} className={styles.page}>
       <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
     </Page>
   );
 };
+
+export const getStyles = () => ({
+  page: css`
+    .page-container {
+      max-width: 1400px;
+    }
+  `,
+});

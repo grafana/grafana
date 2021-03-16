@@ -5,7 +5,7 @@ import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { isAlertingRule } from '../../utils/rules';
 import { PromAlertingRuleState } from 'app/types/unified-alerting/dto';
-import { StatusColoredText } from '../StatusColoredText';
+import { StateColoredText } from '../StateColoredText';
 import { ExpandedToggle } from '../ExpandedToggle';
 import { RulesTable } from './RulesTable';
 
@@ -41,16 +41,16 @@ export const RulesGroup: FC<Props> = ({ group, namespace, datasource }) => {
   const statsComponents: React.ReactNode[] = [];
   if (stats[PromAlertingRuleState.Firing]) {
     statsComponents.push(
-      <StatusColoredText key="firing" status={PromAlertingRuleState.Firing}>
+      <StateColoredText key="firing" status={PromAlertingRuleState.Firing}>
         {stats[PromAlertingRuleState.Firing]} firing
-      </StatusColoredText>
+      </StateColoredText>
     );
   }
   if (stats[PromAlertingRuleState.Pending]) {
     statsComponents.push(
-      <StatusColoredText key="firing" status={PromAlertingRuleState.Pending}>
+      <StateColoredText key="firing" status={PromAlertingRuleState.Pending}>
         {stats[PromAlertingRuleState.Pending]} pending
-      </StatusColoredText>
+      </StateColoredText>
     );
   }
 
@@ -129,7 +129,7 @@ export const getStyles = (theme: GrafanaTheme) => ({
   datasourceIcon: css`
     width: ${theme.spacing.md};
     height: ${theme.spacing.md};
-    margin-left: ${theme.spacing.sm};
+    margin-left: ${theme.spacing.md};
   `,
   datasourceOrigin: css`
     margin-right: 1em;

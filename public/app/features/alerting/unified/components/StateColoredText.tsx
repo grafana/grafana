@@ -20,8 +20,8 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-export const StatusColoredText: FC<Props> = ({ children, status }) => {
+export const StateColoredText: FC<Props> = ({ children, status }) => {
   const styles = useStyles(getStyles);
 
-  return <span className={styles[status]}>{children}</span>;
+  return <span className={styles[status]}>{children || status}</span>;
 };
