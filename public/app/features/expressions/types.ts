@@ -46,4 +46,37 @@ export interface ExpressionQuery extends DataQuery {
   window?: string;
   downsampler?: string;
   upsampler?: string;
+  conditions?: ClassicCondition[];
 }
+
+interface ClassicCondition {
+  evaluator: {
+    params: number[];
+    type: string;
+  };
+  operator?: {
+    type: 'and' | 'or';
+  };
+  query: {
+    params: string[];
+  };
+  reducer: {
+    params: [];
+    type: ReducerType;
+  };
+  type: 'query';
+}
+
+type ReducerType =
+  | 'avg'
+  | 'min'
+  | 'max'
+  | 'sum'
+  | 'count'
+  | 'last'
+  | 'median'
+  | 'diff'
+  | 'diff_abs'
+  | 'percent_diff'
+  | 'percent_diff_abs'
+  | 'count_non_null';

@@ -1,4 +1,4 @@
-import React, { PureComponent, ChangeEvent } from 'react';
+import React, { PureComponent } from 'react';
 import { SelectableValue, QueryEditorProps } from '@grafana/data';
 import { InlineField, Select } from '@grafana/ui';
 import { ExpressionDatasourceApi } from './ExpressionDatasource';
@@ -19,14 +19,6 @@ export class ExpressionQueryEditor extends PureComponent<Props> {
     onChange(getDefaults({ ...query, type: item.value! }));
   };
 
-  onExpressionChange = (evt: ChangeEvent<any>) => {
-    const { query, onChange } = this.props;
-    onChange({
-      ...query,
-      expression: evt.target.value,
-    });
-  };
-
   renderExpressionType() {
     const { onChange, query, queries } = this.props;
     const refIds = queries!.filter((q) => query.refId !== q.refId).map((q) => ({ value: q.refId, label: q.refId }));
@@ -42,7 +34,7 @@ export class ExpressionQueryEditor extends PureComponent<Props> {
         return <Resample query={query} labelWidth={labelWidth} onChange={onChange} refIds={refIds} />;
 
       case ExpressionQueryType.classic:
-        return <ClassicConditions />;
+        return <ClassicConditions query={query} />;
     }
   }
 
