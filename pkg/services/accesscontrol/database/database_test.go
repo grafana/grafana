@@ -23,14 +23,6 @@ type accessControlStoreTestImpl struct {
 	AccessControlStore
 }
 
-func init() {
-	registry.RegisterService(&accessControlStoreTestImpl{})
-}
-
-func (ac *accessControlStoreTestImpl) Init() error {
-	return nil
-}
-
 func (ac *accessControlStoreTestImpl) AddMigration(mg *migrator.Migrator) {
 	AddAccessControlMigrations(mg)
 }

@@ -18,6 +18,22 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+func setupTestEnv(t testing.TB) *AccessControlService {
+	t.Helper()
+
+	cfg := setting.NewCfg()
+	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+
+	ac := overrideAccessControlInRegistry(t, cfg)
+
+	sqlStore := sqlstore.InitTestDB(t)
+	ac.AccessControlStore.SQLStore = sqlStore
+
+	err := ac.Init()
+	require.NoError(t, err)
+	return &ac
+}
+
 func overrideAccessControlInRegistry(t testing.TB, cfg *setting.Cfg) AccessControlService {
 	t.Helper()
 
@@ -46,22 +62,6 @@ func overrideAccessControlInRegistry(t testing.TB, cfg *setting.Cfg) AccessContr
 	return ac
 }
 
-func setupTestEnv(t testing.TB) *AccessControlService {
-	t.Helper()
-
-	cfg := setting.NewCfg()
-	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
-
-	ac := overrideAccessControlInRegistry(t, cfg)
-
-	sqlStore := sqlstore.InitTestDB(t)
-	ac.AccessControlStore.SQLStore = sqlStore
-
-	err := ac.Init()
-	require.NoError(t, err)
-	return &ac
-}
-
 type evaluatingPermissionsTestCase struct {
 	desc     string
 	userName string
@@ -69,9 +69,6 @@ type evaluatingPermissionsTestCase struct {
 }
 
 func TestEvaluatingPermissions(t *testing.T) {
-	database.MockTimeNow()
-	t.Cleanup(database.ResetTimeNow)
-
 	testCases := []evaluatingPermissionsTestCase{
 		{
 			desc:     "should successfully evaluate access to the endpoint",
