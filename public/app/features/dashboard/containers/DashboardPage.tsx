@@ -25,7 +25,6 @@ import { findTemplateVarChanges } from '../../variables/utils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
-import { shouldReloadPage } from 'app/core/navigation/utils';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { UrlQueryValue } from '@grafana/data';
 
@@ -68,6 +67,7 @@ export interface State {
 }
 
 export class DashboardPage extends PureComponent<Props, State> {
+  private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
 
   getCleanState(): State {
@@ -82,6 +82,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.initDashboard();
+    this.forceRouteReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter || 0;
   }
 
   componentWillUnmount() {
@@ -116,6 +117,8 @@ export class DashboardPage extends PureComponent<Props, State> {
     const { dashboard, match, queryParams, templateVarsChangedInUrl } = this.props;
     const { editPanel, viewPanel } = this.state;
 
+    const routeReloadCounter = (this.props.history.location.state as any)?.routeReloadCounter;
+
     if (!dashboard) {
       return;
     }
@@ -125,8 +128,12 @@ export class DashboardPage extends PureComponent<Props, State> {
       document.title = dashboard.title + ' - ' + Branding.AppTitle;
     }
 
-    if (prevProps.match.params.uid !== match.params.uid || shouldReloadPage(this.props.location)) {
+    if (
+      prevProps.match.params.uid !== match.params.uid ||
+      (routeReloadCounter !== undefined && this.forceRouteReloadCounter !== routeReloadCounter)
+    ) {
       this.initDashboard();
+      this.forceRouteReloadCounter = routeReloadCounter;
       return;
     }
 
