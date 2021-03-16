@@ -238,8 +238,6 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 		}
 	}
-
-	proxy.ctx.Logger.Info("Director done", "requestUri", req.RequestURI)
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
