@@ -18,6 +18,7 @@ var plog = log.New("api")
 
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
+	reqNoAuth := middleware.NoAuth()
 	reqSignedIn := middleware.ReqSignedIn
 	reqSignedInNoAnonymous := middleware.ReqSignedInNoAnonymous
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
@@ -118,7 +119,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/api/user/password/reset", bind(dtos.ResetUserPasswordForm{}), routing.Wrap(ResetPassword))
 
 	// dashboard snapshots
-	r.Get("/dashboard/snapshot/*", hs.Index)
+	r.Get("/dashboard/snapshot/*", reqNoAuth, hs.Index)
 	r.Get("/dashboard/snapshots/", reqSignedIn, hs.Index)
 
 	// api renew session based on cookie
@@ -266,14 +267,14 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
 		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(GetPluginSettingByID))
-		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(GetPluginMarkdown))
+		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(hs.GetPluginMarkdown))
 		apiRoute.Get("/plugins/:pluginId/health", routing.Wrap(hs.CheckHealth))
 		apiRoute.Any("/plugins/:pluginId/resources", hs.CallResource)
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
 		apiRoute.Any("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-			pluginRoute.Get("/:pluginId/dashboards/", routing.Wrap(GetPluginDashboards))
+			pluginRoute.Get("/:pluginId/dashboards/", routing.Wrap(hs.GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", bind(models.UpdatePluginSettingCmd{}), routing.Wrap(UpdatePluginSetting))
 			pluginRoute.Get("/:pluginId/metrics", routing.Wrap(hs.CollectPluginMetrics))
 		}, reqOrgAdmin)
@@ -316,7 +317,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Post("/db", bind(models.SaveDashboardCommand{}), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
-			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), routing.Wrap(ImportDashboard))
+			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), routing.Wrap(hs.ImportDashboard))
 
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
 				dashIdRoute.Get("/versions", routing.Wrap(GetDashboardVersions))
@@ -353,13 +354,13 @@ func (hs *HTTPServer) registerRoutes() {
 		// metrics
 		apiRoute.Post("/tsdb/query", bind(dtos.MetricRequest{}), routing.Wrap(hs.QueryMetrics))
 		apiRoute.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, routing.Wrap(GenerateSQLTestData))
-		apiRoute.Get("/tsdb/testdata/random-walk", routing.Wrap(GetTestDataRandomWalk))
+		apiRoute.Get("/tsdb/testdata/random-walk", routing.Wrap(hs.GetTestDataRandomWalk))
 
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", bind(dtos.MetricRequest{}), routing.Wrap(hs.QueryMetricsV2))
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
-			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), routing.Wrap(AlertTest))
+			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), routing.Wrap(hs.AlertTest))
 			alertsRoute.Post("/:alertId/pause", reqEditorRole, bind(dtos.PauseAlertCommand{}), routing.Wrap(PauseAlert))
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, routing.Wrap(GetAlert))
 			alertsRoute.Get("/", routing.Wrap(GetAlerts))
@@ -435,7 +436,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
 
 	// Gravatar service.
-	avatarCacheServer := avatar.NewCacheServer()
+	avatarCacheServer := avatar.NewCacheServer(hs.Cfg)
 	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
 	// Snapshots

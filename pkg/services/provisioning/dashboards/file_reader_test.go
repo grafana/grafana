@@ -90,6 +90,9 @@ func TestDashboardFileReader(t *testing.T) {
 	Convey("Dashboard file reader", t, func() {
 		bus.ClearBusHandlers()
 		origNewDashboardProvisioningService := dashboards.NewProvisioningService
+		Reset(func() {
+			dashboards.NewProvisioningService = origNewDashboardProvisioningService
+		})
 		fakeService = mockDashboardProvisioningService()
 
 		bus.AddHandler("test", mockGetDashboardQuery)
@@ -356,10 +359,6 @@ func TestDashboardFileReader(t *testing.T) {
 				So(fakeService.inserted[0].Dashboard.Id, ShouldEqual, 1)
 			})
 		})
-
-		Reset(func() {
-			dashboards.NewProvisioningService = origNewDashboardProvisioningService
-		})
 	})
 }
 
@@ -403,6 +402,8 @@ func mockDashboardProvisioningService() *fakeDashboardProvisioningService {
 }
 
 type fakeDashboardProvisioningService struct {
+	dashboards.DashboardProvisioningService
+
 	inserted     []*dashboards.SaveDashboardDTO
 	provisioned  map[string][]*models.DashboardProvisioning
 	getDashboard []*models.Dashboard
@@ -416,7 +417,8 @@ func (s *fakeDashboardProvisioningService) GetProvisionedDashboardData(name stri
 	return s.provisioned[name], nil
 }
 
-func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+func (s *fakeDashboardProvisioningService) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO,
+	provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
 	// Copy the structs as we need to change them but do not want to alter outside world.
 	var copyProvisioning = &models.DashboardProvisioning{}
 	*copyProvisioning = *provisioning

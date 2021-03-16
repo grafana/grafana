@@ -4,11 +4,11 @@ import isEmpty from 'lodash/isEmpty';
 import { ExploreQueryFieldProps } from '@grafana/data';
 import { LegacyForms, ValidationEvents, EventsWithValidation, Icon } from '@grafana/ui';
 const { Input, Switch } = LegacyForms;
-import { CloudWatchQuery, CloudWatchMetricsQuery } from '../types';
+import { CloudWatchQuery, CloudWatchMetricsQuery, CloudWatchJsonData } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { QueryField, Alias, MetricsQueryFieldsEditor } from './';
 
-export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery>;
+export type Props = ExploreQueryFieldProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>;
 
 interface State {
   showMeta: boolean;

@@ -3,7 +3,7 @@ import { LokiQueryFieldForm, LokiQueryFieldFormProps } from './LokiQueryFieldFor
 
 type LokiQueryFieldProps = Omit<
   LokiQueryFieldFormProps,
-  'labelsLoaded' | 'onLoadOptions' | 'onLabelsRefresh' | 'logLabelOptions' | 'absoluteRange'
+  'labelsLoaded' | 'onLoadOptions' | 'onLabelsRefresh' | 'absoluteRange'
 >;
 
 export const LokiQueryField: FunctionComponent<LokiQueryFieldProps> = (props) => {

@@ -28,27 +28,12 @@ export class StreamingDataFrame implements DataFrame {
   private lastUpdateTime = 0;
   private timeFieldIndex = -1;
 
-  constructor(frame: DataFrame, opts?: StreamingFrameOptions) {
-    this.name = frame.name;
-    this.refId = frame.refId;
-    this.meta = frame.meta;
+  constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
       maxLength: 1000,
       ...opts,
     };
-
-    // Keep the existing fields
-    this.fields = frame.fields.map((f) => {
-      if (f.values instanceof ArrayVector) {
-        return f as Field<any, ArrayVector<any>>;
-      }
-      return {
-        ...f,
-        values: new ArrayVector(f.values.toArray()),
-      };
-    });
-
-    this.timeFieldIndex = this.fields.findIndex((f) => f.type === FieldType.time);
+    this.update(frame);
   }
 
   get length() {
@@ -58,14 +43,40 @@ export class StreamingDataFrame implements DataFrame {
     return this.fields[0].values.length;
   }
 
+  /**
+   * apply the new message to the existing data.  This will replace the existing schema
+   * if a new schema is included in the message, or append data matching the current schema
+   */
   update(msg: DataFrameJSON) {
-    if (msg.schema) {
-      // TODO, replace the existing fields
+    const { schema, data } = msg;
+    if (schema) {
+      if (this.fields.length > 0) {
+        // ?? keep existing data?
+      }
+
+      this.name = schema.name;
+      this.refId = schema.refId;
+      this.meta = schema.meta;
+
+      // Create new fields from the schema
+      this.fields = schema.fields.map((f) => {
+        return {
+          config: f.config ?? {},
+          name: f.name,
+          labels: f.labels,
+          type: f.type ?? FieldType.other,
+          values: new ArrayVector(),
+        };
+      });
+
+      this.timeFieldIndex = this.fields.findIndex((f) => f.type === FieldType.time);
     }
 
-    if (msg.data) {
-      const data = msg.data;
+    if (data && data.values.length && data.values[0].length) {
       const { values, entities } = data;
+      if (values.length !== this.fields.length) {
+        throw new Error('update message mismatch');
+      }
 
       if (entities) {
         entities.forEach((ents, i) => {
@@ -81,11 +92,14 @@ export class StreamingDataFrame implements DataFrame {
       });
 
       // Shorten the array less frequently than we append
-      const elapsed = Date.now() - this.lastUpdateTime;
-
+      const now = Date.now();
+      const elapsed = now - this.lastUpdateTime;
       if (elapsed > 5000) {
-        if (this.options.maxSeconds && this.timeFieldIndex >= 0) {
+        if (this.options.maxSeconds && this.timeFieldIndex >= 0 && this.length > 2) {
           // TODO -- check time length
+          const tf = this.fields[this.timeFieldIndex].values.buffer;
+          const elapsed = tf[tf.length - 1] - tf[0];
+          console.log('Check elapsed time: ', elapsed);
         }
         if (this.options.maxLength) {
           const delta = this.length - this.options.maxLength;
@@ -96,9 +110,8 @@ export class StreamingDataFrame implements DataFrame {
             });
           }
         }
+        this.lastUpdateTime = now;
       }
-
-      this.lastUpdateTime = Date.now();
     }
   }
 }
