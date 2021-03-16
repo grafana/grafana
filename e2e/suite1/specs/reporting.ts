@@ -9,5 +9,6 @@ e2e.scenario({
   scenario: () => {
     e2e.pages.NewReport.visit();
     e2e.components.Reporting.pageHeader().should('be.visible');
+    e2e().get('input[name="name"]').should('be.visible').type('Test report');
   },
 });
