@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/prometheus/common/model"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
@@ -147,7 +146,7 @@ func TestPrometheus(t *testing.T) {
 func TestParseResponse(t *testing.T) {
 	t.Run("value is not of type matrix", func(t *testing.T) {
 		queryRes := plugins.DataQueryResult{}
-		value := model.Vector{}
+		value := p.Vector{}
 		res, err := parseResponse(value, nil)
 
 		require.Equal(t, queryRes, res)
@@ -155,16 +154,16 @@ func TestParseResponse(t *testing.T) {
 	})
 
 	t.Run("response should be parsed normally", func(t *testing.T) {
-		values := []model.SamplePair{
+		values := []p.SamplePair{
 			{Value: 1, Timestamp: 1000},
 			{Value: 2, Timestamp: 2000},
 			{Value: 3, Timestamp: 3000},
 			{Value: 4, Timestamp: 4000},
 			{Value: 5, Timestamp: 5000},
 		}
-		value := model.Matrix{
-			&model.SampleStream{
-				Metric: model.Metric{"app": "Application", "tag2": "tag2"},
+		value := p.Matrix{
+			&p.SampleStream{
+				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
 				Values: values,
 			},
 		}
