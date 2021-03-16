@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime, getFrameDisplayName } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { DEFAULT_GRAPHITE_VERSION } from '../versions';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -33,6 +34,10 @@ describe('graphiteDatasource', () => {
     const templateSrv = new TemplateSrv();
     const ds = new GraphiteDatasource(instanceSettings, templateSrv);
     ctx = { templateSrv, ds };
+  });
+
+  it('uses default Graphite version when no graphiteVersion is provided', () => {
+    expect(ctx.ds.graphiteVersion).toBe(DEFAULT_GRAPHITE_VERSION);
   });
 
   describe('convertResponseToDataFrames', () => {
