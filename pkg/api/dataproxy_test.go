@@ -53,7 +53,7 @@ func TestDataProxy(t *testing.T) {
 			},
 		}
 		for _, tc := range testCases {
-			t.Run("Given raw path should equal expected proxy path", func(t *testing.T) {
+			t.Run("Given raw path, should produce expected proxy path", func(t *testing.T) {
 				assert.Equal(t, tc.exp, getProxyPath(tc.originalRawPath))
 			})
 		}
