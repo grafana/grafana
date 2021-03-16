@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { Prompt } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css, cx } from 'emotion';
 import { Subscription } from 'rxjs';
@@ -117,13 +118,18 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onDiscard = () => {
-    this.props.setDiscardChanges(true);
-
+  onBack = () => {
     locationService.partial({
       editPanel: null,
       tab: null,
     });
+  };
+
+  onDiscard = () => {
+    this.props.setDiscardChanges(true);
+    this.props.panel.hasChanged = false;
+
+    this.onBack();
   };
 
   onOpenDashboardSettings = () => {
@@ -152,7 +158,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     const connectedDashboards = await getLibraryPanelConnectedDashboards(this.props.panel.libraryPanel.uid);
-    if (connectedDashboards.length === 1 && connectedDashboards.indexOf(this.props.dashboard.id) !== -1) {
+    if (connectedDashboards.length === 1 && connectedDashboards.includes(this.props.dashboard.id)) {
       try {
         await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
         this.props.updateSourcePanel(this.props.panel);
@@ -331,12 +337,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           Save
         </ToolbarButton>
       ),
-      <ToolbarButton
-        onClick={this.props.exitPanelEditor}
-        variant="primary"
-        title="Apply changes and go back to dashboard"
-        key="apply"
-      >
+      <ToolbarButton onClick={this.onBack} variant="primary" title="Apply changes and go back to dashboard" key="apply">
         Apply
       </ToolbarButton>,
     ];
@@ -413,6 +414,17 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
+        <Prompt
+          when={true}
+          message={() => {
+            if (!this.props.panel.hasChanged) {
+              return true;
+            }
+
+            exitPanelEditor();
+            return false;
+          }}
+        />
         <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={exitPanelEditor}>
           {this.renderEditorActions()}
         </PageToolbar>

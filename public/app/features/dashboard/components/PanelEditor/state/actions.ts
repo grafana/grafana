@@ -48,12 +48,12 @@ export function exitPanelEditor(): ThunkResult<void> {
     const { getPanel, shouldDiscardChanges } = getStore().panelEditor;
     const onConfirm = () => locationService.partial({ editPanel: null, tab: null });
 
+    const panel = getPanel();
     const onDiscard = () => {
       dispatch(setDiscardChanges(true));
+      panel.hasChanged = false;
       onConfirm();
     };
-
-    const panel = getPanel();
 
     if (shouldDiscardChanges || !panel.libraryPanel) {
       onConfirm();
