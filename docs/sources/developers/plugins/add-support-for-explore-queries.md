@@ -91,7 +91,7 @@ Explore should by default select a reasonable visualization for your data so use
 
 If this does not work for you or you want to show some data in a specific visualization, add a hint to your returned data frame using the `preferredVisualisationType` meta attribute.
 
-You can construct data frame with specific metadata like this:
+You can construct a data frame with specific metadata:
 ```
 const firstResult = new MutableDataFrame({
     fields: [...],
