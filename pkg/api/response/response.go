@@ -70,7 +70,7 @@ func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	}
 }
 
-func (r *NormalResponse) Header(key, value string) *NormalResponse {
+func (r *NormalResponse) SetHeader(key, value string) *NormalResponse {
 	r.header.Set(key, value)
 	return r
 }
@@ -137,7 +137,7 @@ func (r *RedirectResponse) Body() []byte {
 
 // JSON creates a JSON response.
 func JSON(status int, body interface{}) *NormalResponse {
-	return Respond(status, body).Header("Content-Type", "application/json")
+	return Respond(status, body).SetHeader("Content-Type", "application/json")
 }
 
 // JSONStreaming creates a streaming JSON response.
