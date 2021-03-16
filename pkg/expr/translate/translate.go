@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -44,20 +46,18 @@ func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*ngmodels.Condi
 		return nil, err
 	}
 
+	backendReq, err := eval.GetQueryDataRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, ngCond, time.Unix(500, 0))
+
+	if err != nil {
+		return nil, err
+	}
+
+	svc := &expr.Service{}
+	_, err = svc.BuildPipeline(backendReq)
+	if err != nil {
+		return nil, err
+	}
 	return ngCond, nil
-
-	// backendReq, err := ngCond.GetQueryDataRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, time.Unix(500, 0))
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// svc := &expr.Service{}
-	// _, err = svc.BuildPipeline(backendReq)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	//return nil, nil
 }
 
 type dashConditionsJSON struct {

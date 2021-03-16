@@ -5,7 +5,7 @@
 		"params": [
 		  0
 		],
-		"type": "eq"
+		"type": "lt"
 	  },
 	  "operator": {
 		"type": ""

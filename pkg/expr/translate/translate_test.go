@@ -66,7 +66,7 @@ func TestDashboardAlertConditions(t *testing.T) {
 				// but a bit odd that it creates B then A, can look into changing that
 				// later.
 				firstCond := c.Conditions[0]
-				require.Equal(t, "eq", firstCond.Evaluator.Type, "expected first cond to use eq")
+				require.Equal(t, "lt", firstCond.Evaluator.Type, "expected first cond to use lt")
 				require.Equal(t, "B", firstCond.Query.Params[0], "expected first cond to reference B")
 
 				secondCond := c.Conditions[1]
@@ -80,12 +80,36 @@ func TestDashboardAlertConditions(t *testing.T) {
 			spotCheckFn: func(t *testing.T, cond *ngmodels.Condition) {
 				require.Equal(t, "G", cond.RefID, "unexpected refId for condition")
 				require.Equal(t, 7, len(cond.QueriesAndExpressions), "unexpected query/expression array length")
+
+				condQuery := cond.QueriesAndExpressions[6]
+				isExpr, err := condQuery.IsExpression()
+				require.NoError(t, err)
+				require.Equal(t, true, isExpr, "expected last query to be an expression")
+
+				c := struct {
+					Conditions []classic.ClassicConditionJSON `json:"conditions"`
+				}{}
+				err = json.Unmarshal(condQuery.Model, &c)
+				require.NoError(t, err)
+
+				require.Equal(t, 8, len(c.Conditions), "expected 8 conditions in classic condition")
+
+				firstCond := c.Conditions[0]
+				require.Equal(t, "gt", firstCond.Evaluator.Type, "expected first cond to use gt")
+				require.Equal(t, "avg", firstCond.Reducer.Type, "expected first cond to use reducer avg")
+				firstCondRefID := firstCond.Query.Params[0]
+
+				aq, err := alertRuleByRefId(cond, firstCondRefID)
+				require.NoError(t, err)
+				require.Equal(t, ngmodels.Duration(300*time.Second), aq.RelativeTimeRange.From,
+					"expected first condition to reference a query with a from of 300 seconds")
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			jsonFile := filepath.Join("testdata", tt.inputJSONFName)
+			//nolint:GOSEC
 			b, err := ioutil.ReadFile(jsonFile)
 
 			require.NoError(t, err)
@@ -96,6 +120,15 @@ func TestDashboardAlertConditions(t *testing.T) {
 			tt.spotCheckFn(t, cond)
 		})
 	}
+}
+
+func alertRuleByRefId(cond *ngmodels.Condition, refID string) (ngmodels.AlertQuery, error) {
+	for _, aq := range cond.QueriesAndExpressions {
+		if aq.RefID == refID {
+			return aq, nil
+		}
+	}
+	return ngmodels.AlertQuery{}, fmt.Errorf("query with refId %v not found", refID)
 }
 
 func registerGetDsInfoHandler() {
