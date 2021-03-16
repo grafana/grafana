@@ -114,7 +114,6 @@ func transform(indexMapping *es.IndexMappingResponse, fieldTypeFilter, refID str
 	// from extractedFields we get only those fields that match the provided type alias
 	filteredFields := fieldsMap{}
 	for fieldName := range extractedFields {
-		// FIXME: geo_point doesn't work
 		if fieldTypeMatchesAlias(extractedFields[fieldName], fieldTypeFilter) {
 			filteredFields[fieldName] = extractedFields[fieldName]
 		}
@@ -170,7 +169,7 @@ func isMetadataField(fieldName string) bool {
 }
 
 // Given a `fieldType` and a `typeAlias`, returns true if the field type matches the given alias, false otherwise
-// eg. a "string" type alias will return `true` for fields of type "text" and "sring"
+// eg. a "string" type alias will return `true` for fields of type "text" and "string"
 func fieldTypeMatchesAlias(fieldType string, typeAlias string) bool {
 	typeMap := map[string]string{
 		"float":        "number",
@@ -179,12 +178,10 @@ func fieldTypeMatchesAlias(fieldType string, typeAlias string) bool {
 		"long":         "number",
 		"scaled_float": "number",
 		"histogram":    "number",
-		"date":         "date",
 		"date_nanos":   "date",
-		"string":       "string",
 		"text":         "string",
 		"nested":       "nested",
 	}
 
-	return typeMap[fieldType] == typeAlias
+	return typeMap[fieldType] == typeAlias || fieldType == typeAlias
 }
