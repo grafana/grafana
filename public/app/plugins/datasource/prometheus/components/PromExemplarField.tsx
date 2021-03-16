@@ -39,6 +39,7 @@ export function PromExemplarField(props: Props) {
           Exemplars
           <IconButton
             name="eye"
+            tooltip={!!props.query.exemplar ? 'Disable query with exemplars' : 'Enable query with exemplars'}
             disabled={!!error}
             className={iconButtonStyles}
             onClick={() => {
