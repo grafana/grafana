@@ -138,7 +138,16 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     if (prevProps.location.search !== this.props.location.search) {
-      getTimeSrv().updateTimeRangeFromUrl();
+      const prevUrlParams = new URLSearchParams(prevProps.location.search);
+      const urlParams = new URLSearchParams(this.props.location.search);
+
+      if (urlParams.get('from') !== prevUrlParams.get('from') && urlParams.get('to') !== prevUrlParams.get('to')) {
+        getTimeSrv().updateTimeRangeFromUrl();
+      }
+
+      if (!prevUrlParams.get('refresh') && urlParams.get('refresh')) {
+        getTimeSrv().setAutoRefresh(urlParams.get('refresh'));
+      }
 
       const templateVarChanges = findTemplateVarChanges(this.props.queryParams, prevProps.queryParams);
       if (templateVarChanges) {
