@@ -646,11 +646,11 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
-			var result libraryPanelsResult
+			var result libraryPanelsSearch
 			err := json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
 			require.NotNil(t, result.Result)
-			require.Equal(t, 1, len(result.Result))
+			require.Equal(t, 1, len(result.Result.LibraryPanels))
 
 			err = sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder.Uid)
 			require.NoError(t, err)
@@ -659,7 +659,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
 			require.NotNil(t, result.Result)
-			require.Equal(t, 0, len(result.Result))
+			require.Equal(t, 0, len(result.Result.LibraryPanels))
 		})
 }
 
@@ -678,8 +678,15 @@ type libraryPanelResult struct {
 	Result libraryPanel `json:"result"`
 }
 
-type libraryPanelsResult struct {
-	Result []libraryPanel `json:"result"`
+type libraryPanelsSearch struct {
+	Result libraryPanelsSearchResult `json:"result"`
+}
+
+type libraryPanelsSearchResult struct {
+	TotalCount    int64          `json:"totalCount"`
+	LibraryPanels []libraryPanel `json:"libraryPanels"`
+	Page          int            `json:"page"`
+	PerPage       int            `json:"perPage"`
 }
 
 type libraryPanelDashboardsResult struct {
