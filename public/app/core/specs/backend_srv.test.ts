@@ -7,6 +7,8 @@ import { BackendSrv } from '../services/backend_srv';
 import { ContextSrv, User } from '../services/context_srv';
 import { describe, expect } from '../../../test/lib/common';
 import { BackendSrvRequest, FetchError } from '@grafana/runtime';
+import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
+import { ShowModalReactEvent } from '../../types/events';
 
 const getTestContext = (overides?: object) => {
   const defaults = {
@@ -37,6 +39,7 @@ const getTestContext = (overides?: object) => {
 
   const appEventsMock: EventBusExtended = ({
     emit: jest.fn(),
+    publish: jest.fn(),
   } as any) as EventBusExtended;
 
   const user: User = ({
@@ -182,6 +185,36 @@ describe('backendSrv', () => {
             expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
             expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['UnAuthorized', '']);
           });
+      });
+    });
+
+    describe('when making an unsuccessful call because of soft token revocation', () => {
+      it('then it should dispatch show Token Revoked modal event', async () => {
+        const url = '/api/dashboard/';
+        const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
+          ok: false,
+          status: 401,
+          statusText: 'UnAuthorized',
+          data: { message: 'Token revoked', error: { id: 'ERR_TOKEN_REVOKED', maxConcurrentSessions: 3 } },
+          url,
+        });
+
+        backendSrv.loginPing = jest.fn();
+
+        await backendSrv.request({ url, method: 'GET', retry: 0 }).catch(() => {
+          expect(appEventsMock.publish).toHaveBeenCalledTimes(1);
+          expect(appEventsMock.publish).toHaveBeenCalledWith(
+            new ShowModalReactEvent({
+              component: TokenRevokedModal,
+              props: {
+                maxConcurrentSessions: 3,
+              },
+            })
+          );
+          expect(backendSrv.loginPing).not.toHaveBeenCalled();
+          expect(logoutMock).not.toHaveBeenCalled();
+          expectRequestCallChain({ url, method: 'GET', retry: 0 });
+        });
       });
     });
 
@@ -388,6 +421,36 @@ describe('backendSrv', () => {
           expect(error.data).toEqual({ message: 'UnAuthorized' });
           expect(inspectorPacket).toBe(error);
           expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
+          expect(logoutMock).not.toHaveBeenCalled();
+          expectRequestCallChain({ url, method: 'GET', retry: 0 });
+        });
+      });
+    });
+
+    describe('when making an unsuccessful call because of soft token revocation', () => {
+      it('then it should dispatch show Token Revoked modal event', async () => {
+        const { backendSrv, logoutMock, appEventsMock, expectRequestCallChain } = getTestContext({
+          ok: false,
+          status: 401,
+          statusText: 'UnAuthorized',
+          data: { message: 'Token revoked', error: { id: 'ERR_TOKEN_REVOKED', maxConcurrentSessions: 3 } },
+        });
+
+        backendSrv.loginPing = jest.fn();
+
+        const url = '/api/dashboard/';
+
+        await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch((error) => {
+          expect(appEventsMock.publish).toHaveBeenCalledTimes(1);
+          expect(appEventsMock.publish).toHaveBeenCalledWith(
+            new ShowModalReactEvent({
+              component: TokenRevokedModal,
+              props: {
+                maxConcurrentSessions: 3,
+              },
+            })
+          );
+          expect(backendSrv.loginPing).not.toHaveBeenCalled();
           expect(logoutMock).not.toHaveBeenCalled();
           expectRequestCallChain({ url, method: 'GET', retry: 0 });
         });
