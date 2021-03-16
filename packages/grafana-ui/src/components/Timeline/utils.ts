@@ -71,9 +71,13 @@ export function preparePlotConfigBuilder(
     return classicColors[Math.floor(value % classicColors.length)];
   };
 
-  const yAxisWidth = frame.fields.reduce((maxWidth, field) => {
-    return Math.max(maxWidth, measureText(getFieldDisplayName(field, frame), 10 * devicePixelRatio).width) + 16;
-  }, 0);
+  const yAxisWidth =
+    frame.fields.reduce((maxWidth, field) => {
+      return Math.max(
+        maxWidth,
+        measureText(getFieldDisplayName(field, frame), Math.round(10 * devicePixelRatio)).width
+      );
+    }, 0) + 24;
 
   const opts: TimelineCoreOptions = {
     count: frame.fields.length - 1, // number of series/lanes

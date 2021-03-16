@@ -10,7 +10,7 @@ const pxRatio = devicePixelRatio;
 
 const laneDistr = SPACE_BETWEEN;
 
-const font = Math.round(10 * pxRatio) + 'px Arial';
+const font = Math.round(10 * pxRatio) + 'px Roboto';
 
 type WalkCb = (idx: number, offPx: number, dimPx: number) => void;
 
