@@ -2,6 +2,7 @@ import React from 'react';
 import { GraphNGLegendEventMode, XYFieldMatchers } from '../GraphNG/types';
 import {
   DataFrame,
+  FieldColorModeId,
   FieldConfig,
   formattedValueToString,
   getFieldDisplayName,
@@ -57,6 +58,18 @@ export function preparePlotConfigBuilder(
 ): UPlotConfigBuilder {
   const builder = new UPlotConfigBuilder(getTimeZone);
 
+  const colorLookup = (seriesIdx: number, valueIdx: number, value: any) => {
+    const field = frame.fields[seriesIdx];
+    const mode = field.config?.color?.mode;
+    if (mode && field.display && (mode === FieldColorModeId.Thresholds || mode?.startsWith('continuous-'))) {
+      const disp = field.display(value); // will apply color modes
+      if (disp.color) {
+        return disp.color;
+      }
+    }
+    return classicColors[Math.floor(value % classicColors.length)];
+  };
+
   const opts: TimelineCoreOptions = {
     count: frame.fields.length - 1, // number of series/lanes
 
@@ -70,10 +83,9 @@ export function preparePlotConfigBuilder(
 
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
 
-    // hardcoded color mappings for states 0,1,2,3,<other>
-    fill: (seriesIdx, valueIdx, value) => classicColors[Math.floor(value % classicColors.length)],
+    fill: colorLookup,
 
-    stroke: (seriesIdx, valueIdx, value) => classicColors[Math.floor(value % classicColors.length)],
+    stroke: colorLookup,
 
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),

@@ -10,7 +10,7 @@ export const plugin = new PanelPlugin<Options, TimelineFieldConfig>(TimelinePane
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
-          byValueSupport: false,
+          byValueSupport: true,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
