@@ -25,13 +25,13 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			}),
 		}
 
-		err := sqlStore.SaveDashboard(folderCmd)
+		dash, err := sqlStore.SaveDashboard(folderCmd)
 		So(err, ShouldBeNil)
 
 		saveDashboardCmd := models.SaveDashboardCommand{
 			OrgId:    1,
 			IsFolder: false,
-			FolderId: folderCmd.Result.Id,
+			FolderId: dash.Id,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"id":    nil,
 				"title": "test dashboard",
@@ -47,7 +47,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				Updated:    now.Unix(),
 			}
 
-			dash, err := sqlStore.SaveProvisionedDashboard(*saveDashboardCmd, provisioning)
+			dash, err := sqlStore.SaveProvisionedDashboard(saveDashboardCmd, provisioning)
 			So(err, ShouldBeNil)
 			So(dash, ShouldNotBeNil)
 			So(dash.Id, ShouldNotEqual, 0)
@@ -57,7 +57,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				saveCmd := models.SaveDashboardCommand{
 					OrgId:    1,
 					IsFolder: false,
-					FolderId: folderCmd.Result.Id,
+					FolderId: dash.Id,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    nil,
 						"title": "another_dashboard",
@@ -112,7 +112,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 
 			Convey("Deleting folder should delete provision meta data", func() {
 				deleteCmd := &models.DeleteDashboardCommand{
-					Id:    folderCmd.Result.Id,
+					Id:    dash.Id,
 					OrgId: 1,
 				}
 

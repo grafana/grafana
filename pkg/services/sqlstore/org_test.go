@@ -16,7 +16,7 @@ import (
 
 func TestAccountDataAccess(t *testing.T) {
 	Convey("Testing Account DB Access", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
 
 		Convey("Given we have organizations, we can query them by IDs", func() {
 			var err error
@@ -285,14 +285,14 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 3)
 
-					dash1 := insertTestDashboard(t, "1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
-					dash2 := insertTestDashboard(t, "2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
+					dash1 := insertTestDashboard(t, sqlStore, "1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
+					dash2 := insertTestDashboard(t, sqlStore, "2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
 
-					testHelperUpdateDashboardAcl(t, dash1.Id, models.DashboardAcl{
+					testHelperUpdateDashboardAcl(t, sqlStore, dash1.Id, models.DashboardAcl{
 						DashboardID: dash1.Id, OrgID: ac1.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT,
 					})
 
-					testHelperUpdateDashboardAcl(t, dash2.Id, models.DashboardAcl{
+					testHelperUpdateDashboardAcl(t, sqlStore, dash2.Id, models.DashboardAcl{
 						DashboardID: dash2.Id, OrgID: ac3.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT,
 					})
 
@@ -325,7 +325,8 @@ func TestAccountDataAccess(t *testing.T) {
 	})
 }
 
-func testHelperUpdateDashboardAcl(t *testing.T, dashboardId int64, items ...models.DashboardAcl) error {
+func testHelperUpdateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID int64,
+	items ...models.DashboardAcl) {
 	t.Helper()
 
 	var itemPtrs []*models.DashboardAcl
@@ -335,6 +336,6 @@ func testHelperUpdateDashboardAcl(t *testing.T, dashboardId int64, items ...mode
 		item.Updated = time.Now()
 		itemPtrs = append(itemPtrs, &item)
 	}
-	err := sqlStore.UpdateDashboardAcl(dashboardID, itemPtrs)
+	err := sqlStore.UpdateDashboardACL(dashboardID, itemPtrs)
 	require.NoError(t, err)
 }

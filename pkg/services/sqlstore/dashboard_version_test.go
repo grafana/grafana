@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func updateTestDashboard(t *testing.T, sqlStore SQLStore, dashboard *models.Dashboard, data map[string]interface{}) {
+func updateTestDashboard(t *testing.T, sqlStore *SQLStore, dashboard *models.Dashboard, data map[string]interface{}) {
 	t.Helper()
 
 	data["id"] = dashboard.Id
@@ -23,16 +23,16 @@ func updateTestDashboard(t *testing.T, sqlStore SQLStore, dashboard *models.Dash
 		Overwrite: true,
 		Dashboard: simplejson.NewFromAny(data),
 	}
-	err := sqlStore.SaveDashboard(saveCmd)
+	_, err := sqlStore.SaveDashboard(saveCmd)
 	So(err, ShouldBeNil)
 }
 
 func TestGetDashboardVersion(t *testing.T) {
 	Convey("Testing dashboard version retrieval", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
 
 		Convey("Get a Dashboard ID and version ID", func() {
-			savedDash := insertTestDashboard(t, "test dash 26", 1, 0, false, "diff")
+			savedDash := insertTestDashboard(t, sqlStore, "test dash 26", 1, 0, false, "diff")
 
 			query := models.GetDashboardVersionQuery{
 				DashboardId: savedDash.Id,
@@ -72,8 +72,8 @@ func TestGetDashboardVersion(t *testing.T) {
 
 func TestGetDashboardVersions(t *testing.T) {
 	Convey("Testing dashboard versions retrieval", t, func() {
-		InitTestDB(t)
-		savedDash := insertTestDashboard(t, "test dash 43", 1, 0, false, "diff-all")
+		sqlStore := InitTestDB(t)
+		savedDash := insertTestDashboard(t, sqlStore, "test dash 43", 1, 0, false, "diff-all")
 
 		Convey("Get all versions for a given Dashboard ID", func() {
 			query := models.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
@@ -108,12 +108,12 @@ func TestGetDashboardVersions(t *testing.T) {
 
 func TestDeleteExpiredVersions(t *testing.T) {
 	Convey("Testing dashboard versions clean up", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
 		versionsToKeep := 5
 		versionsToWrite := 10
 		setting.DashboardVersionsToKeep = versionsToKeep
 
-		savedDash := insertTestDashboard(t, "test dash 53", 1, 0, false, "diff-all")
+		savedDash := insertTestDashboard(t, sqlStore, "test dash 53", 1, 0, false, "diff-all")
 		for i := 0; i < versionsToWrite-1; i++ {
 			updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
 				"tags": "different-tag",

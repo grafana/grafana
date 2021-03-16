@@ -11,19 +11,19 @@ import (
 
 func TestDashboardAclDataAccess(t *testing.T) {
 	Convey("Testing DB", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
+
 		Convey("Given a dashboard folder and a user", func() {
 			currentUser := createUser(t, "viewer", "Viewer", false)
-			savedFolder := insertTestDashboard(t, "1 test dash folder", 1, 0, true, "prod", "webapp")
-			childDash := insertTestDashboard(t, "2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
+			savedFolder := insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
+			childDash := insertTestDashboard(t, sqlStore, "2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
 
 			Convey("When adding dashboard permission with userId and teamId set to 0", func() {
-				err := testHelperUpdateDashboardAcl(savedFolder.Id, models.DashboardAcl{
+				testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
 					OrgID:       1,
 					DashboardID: savedFolder.Id,
 					Permission:  models.PERMISSION_EDIT,
 				})
-				So(err, ShouldEqual, models.ErrDashboardAclInfoMissing)
 			})
 
 			Convey("Given dashboard folder with default permissions", func() {
@@ -75,13 +75,12 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			})
 
 			Convey("Given dashboard folder permission", func() {
-				err := testHelperUpdateDashboardAcl(savedFolder.Id, models.DashboardAcl{
+				testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
 					OrgID:       1,
 					UserID:      currentUser.Id,
 					DashboardID: savedFolder.Id,
 					Permission:  models.PERMISSION_EDIT,
 				})
-				So(err, ShouldBeNil)
 
 				Convey("When reading dashboard acl should include acl for parent folder", func() {
 					query := models.GetDashboardAclInfoListQuery{DashboardID: childDash.Id, OrgID: 1}
@@ -94,13 +93,12 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				})
 
 				Convey("Given child dashboard permission", func() {
-					err := testHelperUpdateDashboardAcl(childDash.Id, models.DashboardAcl{
+					testHelperUpdateDashboardAcl(t, sqlStore, childDash.Id, models.DashboardAcl{
 						OrgID:       1,
 						UserID:      currentUser.Id,
 						DashboardID: childDash.Id,
 						Permission:  models.PERMISSION_EDIT,
 					})
-					So(err, ShouldBeNil)
 
 					Convey("When reading dashboard acl should include acl for parent folder and child", func() {
 						query := models.GetDashboardAclInfoListQuery{OrgID: 1, DashboardID: childDash.Id}
@@ -118,13 +116,12 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			})
 
 			Convey("Given child dashboard permission in folder with no permissions", func() {
-				err := testHelperUpdateDashboardAcl(childDash.Id, models.DashboardAcl{
+				testHelperUpdateDashboardAcl(t, sqlStore, childDash.Id, models.DashboardAcl{
 					OrgID:       1,
 					UserID:      currentUser.Id,
 					DashboardID: childDash.Id,
 					Permission:  models.PERMISSION_EDIT,
 				})
-				So(err, ShouldBeNil)
 
 				Convey("When reading dashboard acl should include default acl for parent folder and the child acl", func() {
 					query := models.GetDashboardAclInfoListQuery{OrgID: 1, DashboardID: childDash.Id}
@@ -146,16 +143,15 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to add dashboard permission", func() {
-				err := testHelperUpdateDashboardAcl(savedFolder.Id, models.DashboardAcl{
+				testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
 					OrgID:       1,
 					UserID:      currentUser.Id,
 					DashboardID: savedFolder.Id,
 					Permission:  models.PERMISSION_EDIT,
 				})
-				So(err, ShouldBeNil)
 
 				q1 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-				err = GetDashboardAclInfoList(q1)
+				err := GetDashboardAclInfoList(q1)
 				So(err, ShouldBeNil)
 
 				So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
@@ -166,11 +162,10 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				So(q1.Result[0].UserEmail, ShouldEqual, currentUser.Email)
 
 				Convey("Should be able to delete an existing permission", func() {
-					err := testHelperUpdateDashboardAcl(savedFolder.Id)
-					So(err, ShouldBeNil)
+					testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id)
 
 					q3 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
-					err = GetDashboardAclInfoList(q3)
+					err := GetDashboardAclInfoList(q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 0)
 				})
@@ -182,13 +177,12 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("Should be able to add a user permission for a team", func() {
-					err := testHelperUpdateDashboardAcl(savedFolder.Id, models.DashboardAcl{
+					testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
 						OrgID:       1,
 						TeamID:      group1.Result.Id,
 						DashboardID: savedFolder.Id,
 						Permission:  models.PERMISSION_EDIT,
 					})
-					So(err, ShouldBeNil)
 
 					q1 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
 					err = GetDashboardAclInfoList(q1)
@@ -199,13 +193,12 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to update an existing permission for a team", func() {
-					err := testHelperUpdateDashboardAcl(savedFolder.Id, models.DashboardAcl{
+					testHelperUpdateDashboardAcl(t, sqlStore, savedFolder.Id, models.DashboardAcl{
 						OrgID:       1,
 						TeamID:      group1.Result.Id,
 						DashboardID: savedFolder.Id,
 						Permission:  models.PERMISSION_ADMIN,
 					})
-					So(err, ShouldBeNil)
 
 					q3 := &models.GetDashboardAclInfoListQuery{DashboardID: savedFolder.Id, OrgID: 1}
 					err = GetDashboardAclInfoList(q3)

@@ -286,11 +286,10 @@ func TestUserDataAccess(t *testing.T) {
 				})
 				So(err, ShouldBeNil)
 
-				err = testHelperUpdateDashboardAcl(1, models.DashboardAcl{
+				testHelperUpdateDashboardAcl(t, ss, 1, models.DashboardAcl{
 					DashboardID: 1, OrgID: users[0].OrgId, UserID: users[1].Id,
 					Permission: models.PERMISSION_EDIT,
 				})
-				So(err, ShouldBeNil)
 
 				err = SavePreferences(&models.SavePreferencesCommand{
 					UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark",

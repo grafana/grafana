@@ -14,7 +14,7 @@ import (
 
 func TestTeamCommandsAndQueries(t *testing.T) {
 	Convey("Testing Team commands & queries", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
 
 		Convey("Given saved users and two teams", func() {
 			var userIds []int64
@@ -257,8 +257,9 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(err, ShouldBeNil)
 				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[2]})
 				So(err, ShouldBeNil)
-				err = testHelperUpdateDashboardAcl(1, models.DashboardAcl{DashboardID: 1, OrgID: testOrgId, Permission: models.PERMISSION_EDIT, TeamID: groupId})
-				So(err, ShouldBeNil)
+				testHelperUpdateDashboardAcl(t, sqlStore, 1, models.DashboardAcl{
+					DashboardID: 1, OrgID: testOrgId, Permission: models.PERMISSION_EDIT, TeamID: groupId,
+				})
 				err = DeleteTeam(&models.DeleteTeamCommand{OrgId: testOrgId, Id: groupId})
 				So(err, ShouldBeNil)
 
