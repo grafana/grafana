@@ -70,7 +70,7 @@ func ensureProxyPathTrailingSlash(originalPath, proxyPath string) string {
 	return proxyPath
 }
 
-var proxyPathRegexp = regexp.MustCompile("^\\/api\\/datasources\\/proxy\\/[\\d]+\\/?")
+var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/[\d]+\/?`)
 
 func getProxyPath(originalRawPath string) string {
 	return proxyPathRegexp.ReplaceAllString(originalRawPath, "")
