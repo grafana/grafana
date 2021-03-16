@@ -23,7 +23,7 @@ export const TokenRevokedModal = (props: Props) => {
   return (
     <Portal>
       <div className={modalStyles.modal}>
-        <InfoBox title="You have been automatically logged out" severity="warning" className={styles.infobox}>
+        <InfoBox title="You have been automatically signed out" severity="warning" className={styles.infobox}>
           <div className={styles.text}>
             <p>
               Your session token was automatically revoked because you have reached
@@ -35,8 +35,8 @@ export const TokenRevokedModal = (props: Props) => {
               for your account.
             </p>
             <p>
-              <strong>You can sign in again to resume your session. </strong>
-              Contact your administrator or visit license page to review your quota if you are logged out repeatedly.
+              <strong>To resume your session, sign in again.</strong>
+              Contact your administrator or visit the license page to review your quota if you are repeatedly signed out automatically.
             </p>
           </div>
           <Button size="md" variant="primary" onClick={redirectToLogin}>
