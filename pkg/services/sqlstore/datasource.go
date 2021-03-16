@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -77,17 +78,14 @@ func GetDataSources(query *models.GetDataSourcesQuery) error {
 	return sess.Find(&query.Result)
 }
 
-// GetDataSourcesByType returns all datasources for a given type
+// GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
 func GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) error {
-	var sess *xorm.Session
-	sess = x.Asc("id")
-
-	if query.Type != "" {
-		sess = sess.Where("type=?", query.Type)
+	if query.Type == "" {
+		return fmt.Errorf("Datasource type cannot be empty")
 	}
 
 	query.Result = make([]*models.DataSource, 0)
-	return sess.Find(&query.Result)
+	return x.Where("type=?", query.Type).Asc("id").Find(&query.Result)
 }
 
 // GetDefaultDataSource is used to get the default datasource of organization

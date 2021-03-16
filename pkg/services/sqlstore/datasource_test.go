@@ -323,37 +323,12 @@ func TestDataAccess(t *testing.T) {
 			require.Equal(t, 1, len(query.Result))
 		})
 
-		t.Run("Returns all datasources if no type specified", func(t *testing.T) {
-			InitTestDB(t)
-
-			err := AddDataSource(&models.AddDataSourceCommand{
-				OrgId:    10,
-				Name:     "Elasticsearch",
-				Type:     models.DS_ES,
-				Access:   models.DS_ACCESS_DIRECT,
-				Url:      "http://test",
-				Database: "site",
-				ReadOnly: true,
-			})
-			require.NoError(t, err)
-
-			err = AddDataSource(&models.AddDataSourceCommand{
-				OrgId:    10,
-				Name:     "Graphite",
-				Type:     models.DS_GRAPHITE,
-				Access:   models.DS_ACCESS_DIRECT,
-				Url:      "http://test",
-				Database: "site",
-				ReadOnly: true,
-			})
-			require.NoError(t, err)
-
+		t.Run("Returns an error if no type specified", func(t *testing.T) {
 			query := models.GetDataSourcesByTypeQuery{}
 
 			err = GetDataSourcesByType(&query)
 
-			require.NoError(t, err)
-			require.Equal(t, 2, len(query.Result))
+			require.Error(t, err)
 		})
 	})
 }
