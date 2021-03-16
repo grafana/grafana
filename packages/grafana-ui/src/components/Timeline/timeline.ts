@@ -314,7 +314,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       walk(laneWidth, null, count, u.bbox.height, (iy, y0, hgt) => {
         // vertical midpoints of each series' timeline (stored relative to .u-over)
         yMids[iy] = round(y0 + hgt / 2);
-        ySplits[iy] = u.posToVal(yMids[iy], FIXED_UNIT);
+        ySplits[iy] = u.posToVal(yMids[iy] / pxRatio, FIXED_UNIT);
       });
 
       return ySplits;
