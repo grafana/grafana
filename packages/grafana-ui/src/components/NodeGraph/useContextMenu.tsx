@@ -51,7 +51,7 @@ export function useContextMenu(
       MenuComponent = (
         <ContextMenu
           renderHeader={() => <NodeHeader node={openedNode.node} nodes={nodes} />}
-          renderMenu={renderMenuGroupItems}
+          renderMenuItems={renderMenuGroupItems}
           onClose={() => setOpenedNode(undefined)}
           x={openedNode.event.pageX}
           y={openedNode.event.pageY}
@@ -81,7 +81,7 @@ export function useContextMenu(
       MenuComponent = (
         <ContextMenu
           renderHeader={() => <EdgeHeader edge={openedEdge.edge} edges={edges} />}
-          renderMenu={renderMenuGroupItems}
+          renderMenuItems={renderMenuGroupItems}
           onClose={() => setOpenedEdge(undefined)}
           x={openedEdge.event.pageX}
           y={openedEdge.event.pageY}

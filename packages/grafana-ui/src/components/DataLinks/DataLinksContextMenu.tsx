@@ -47,7 +47,7 @@ export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ chil
 
   if (linksCounter > 1) {
     return (
-      <WithContextMenu renderMenu={renderMenuGroupItems}>
+      <WithContextMenu renderMenuItems={renderMenuGroupItems}>
         {({ openMenu }) => {
           return children({ openMenu, targetClassName });
         }}

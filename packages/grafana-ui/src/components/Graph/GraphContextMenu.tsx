@@ -102,7 +102,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
     ));
   };
 
-  return <ContextMenu {...otherProps} renderMenu={renderMenuGroupItems} renderHeader={renderHeader} />;
+  return <ContextMenu {...otherProps} renderMenuItems={renderMenuGroupItems} renderHeader={renderHeader} />;
 };
 
 /** @internal */

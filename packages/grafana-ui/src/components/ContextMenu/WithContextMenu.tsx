@@ -5,10 +5,10 @@ interface WithContextMenuProps {
   /** Menu item trigger that accepts openMenu prop */
   children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
   /** A function that returns an array of menu items */
-  renderMenu: () => React.ReactNode;
+  renderMenuItems: () => React.ReactNode;
 }
 
-export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, renderMenu }) => {
+export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, renderMenuItems }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   return (
@@ -28,7 +28,7 @@ export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, rend
           onClose={() => setIsMenuOpen(false)}
           x={menuPosition.x}
           y={menuPosition.y}
-          renderMenu={renderMenu}
+          renderMenuItems={renderMenuItems}
         />
       )}
     </>

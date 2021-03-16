@@ -28,7 +28,7 @@ const menuItems = [
   },
 ];
 
-const renderMenu = () => {
+const renderMenuItems = () => {
   return menuItems?.map((group, index) => (
     <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
       {(group.items || []).map((item) => (
@@ -39,12 +39,12 @@ const renderMenu = () => {
 };
 
 export const Basic = () => {
-  return <ContextMenu x={10} y={11} onClose={() => {}} renderMenu={renderMenu} />;
+  return <ContextMenu x={10} y={11} onClose={() => {}} renderMenuItems={renderMenuItems} />;
 };
 
 export const WithState = () => {
   return (
-    <WithContextMenu renderMenu={renderMenu}>
+    <WithContextMenu renderMenuItems={renderMenuItems}>
       {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} />}
     </WithContextMenu>
   );

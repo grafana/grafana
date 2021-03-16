@@ -182,7 +182,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
 
   return (
     <ContextMenu
-      renderMenu={renderMenuGroupItems}
+      renderMenuItems={renderMenuGroupItems}
       renderHeader={renderHeader}
       x={selection.coords.viewport.x}
       y={selection.coords.viewport.y}
