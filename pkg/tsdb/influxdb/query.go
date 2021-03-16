@@ -91,8 +91,13 @@ func isTimeRangeNumeric(tr *plugins.DataTimeRange) bool {
 func (query *Query) renderTimeFilter(queryContext plugins.DataQuery) string {
 	// If from expressions
 	if isTimeRangeNumeric(queryContext.TimeRange) {
-		from, to, _ := epochMStoInfluxTime(queryContext.TimeRange)
-		return fmt.Sprintf(" time > %s and time < %s ", from, to)
+		from, to, err := epochMStoInfluxTime(queryContext.TimeRange)
+		if err == nil {
+			return fmt.Sprintf(" time > %s and time < %s ", from, to)
+		}
+
+		// on error fallback to original time range processing.
+		glog.Warn("failed to parse expected time range in query, falling back to non-expression time range processing", "error", err)
 	}
 
 	// else from dashboard alerting
