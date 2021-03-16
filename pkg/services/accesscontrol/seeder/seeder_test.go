@@ -21,14 +21,6 @@ type accessControlStoreTestImpl struct {
 	database.AccessControlStore
 }
 
-func init() {
-	registry.RegisterService(&accessControlStoreTestImpl{})
-}
-
-func (ac *accessControlStoreTestImpl) Init() error {
-	return nil
-}
-
 func (ac *accessControlStoreTestImpl) AddMigration(mg *migrator.Migrator) {
 	database.AddAccessControlMigrations(mg)
 }
@@ -48,6 +40,7 @@ func setupTestEnv(t testing.TB) *accessControlStoreTestImpl {
 
 func overrideDatabaseInRegistry(t testing.TB, cfg *setting.Cfg) accessControlStoreTestImpl {
 	t.Helper()
+
 	store := accessControlStoreTestImpl{
 		AccessControlStore: database.AccessControlStore{
 			SQLStore: nil,
@@ -71,9 +64,6 @@ func overrideDatabaseInRegistry(t testing.TB, cfg *setting.Cfg) accessControlSto
 }
 
 func TestSeeder(t *testing.T) {
-	database.MockTimeNow()
-	t.Cleanup(database.ResetTimeNow)
-
 	ac := setupTestEnv(t)
 
 	s := &seeder{
