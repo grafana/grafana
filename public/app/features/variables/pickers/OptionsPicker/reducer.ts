@@ -242,7 +242,8 @@ const optionsPickerSlice = createSlice({
       const searchQuery = trim((state.queryValue ?? '').toLowerCase());
 
       state.options = action.payload.filter((option) => {
-        const text = Array.isArray(option.text) ? option.text.toString() : option.text;
+        const optionsText = option.text ?? '';
+        const text = Array.isArray(optionsText) ? optionsText.toString() : optionsText;
         return text.toLowerCase().indexOf(searchQuery) !== -1;
       });
 

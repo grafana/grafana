@@ -280,11 +280,17 @@ const Tags: FC<ChildProps> = ({ children, styles }) => {
 };
 Tags.displayName = 'Tags';
 
-const Figure: FC<ChildProps & { align?: 'top' | 'center' }> = ({ children, styles, align = 'top' }) => {
+const Figure: FC<ChildProps & { align?: 'top' | 'center'; className?: string }> = ({
+  children,
+  styles,
+  align = 'top',
+  className,
+}) => {
   return (
     <div
       className={cx(
         styles?.media,
+        className,
         align === 'center' &&
           css`
             display: flex;
