@@ -42,6 +42,9 @@ type DashboardPageRouteSearchParams = {
   editview?: string;
   inspect?: string;
   kiosk?: UrlQueryValue;
+  from?: string;
+  to?: string;
+  refresh?: string;
 };
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
@@ -138,18 +141,19 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     if (prevProps.location.search !== this.props.location.search) {
-      const prevUrlParams = new URLSearchParams(prevProps.location.search);
-      const urlParams = new URLSearchParams(this.props.location.search);
+      const prevUrlParams = prevProps.queryParams;
+      const urlParams = this.props.queryParams;
 
-      if (urlParams.get('from') !== prevUrlParams.get('from') && urlParams.get('to') !== prevUrlParams.get('to')) {
+      if (urlParams?.from !== prevUrlParams?.from && urlParams?.to !== prevUrlParams?.to) {
         getTimeSrv().updateTimeRangeFromUrl();
       }
 
-      if (!prevUrlParams.get('refresh') && urlParams.get('refresh')) {
-        getTimeSrv().setAutoRefresh(urlParams.get('refresh'));
+      if (!prevUrlParams?.refresh && urlParams?.refresh) {
+        getTimeSrv().setAutoRefresh(urlParams.refresh);
       }
 
       const templateVarChanges = findTemplateVarChanges(this.props.queryParams, prevProps.queryParams);
+
       if (templateVarChanges) {
         templateVarsChangedInUrl(templateVarChanges);
       }
