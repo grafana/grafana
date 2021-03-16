@@ -4,7 +4,7 @@ import { RuleGroup } from 'app/types/unified-alerting/internal';
 import React, { FC, Fragment, useState } from 'react';
 import { isAlertingRule, ruleKey } from '../../utils/rules';
 import { ExpandedToggle } from '../ExpandedToggle';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { TimeToNow } from '../TimeToNow';
 import { formatDuration } from '../../utils/formatting';
 import { StateTag } from '../StateTag';
@@ -43,7 +43,9 @@ export const RulesTable: FC<Props> = ({ group }) => {
         </colgroup>
         <thead>
           <tr>
-            <th></th>
+            <th className={styles.relative}>
+              <div className={cx(styles.headerGuideline, styles.guideline)} />
+            </th>
             <th>State</th>
             <th>Name</th>
             <th>Status</th>
@@ -58,8 +60,11 @@ export const RulesTable: FC<Props> = ({ group }) => {
             return (
               <Fragment key={key}>
                 <tr className={idx % 2 === 0 ? styles.evenRow : undefined}>
-                  <td className={styles.expandCell}>
-                    <div className={styles.ruleGuideline} />
+                  <td className={styles.relative}>
+                    <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
+                    {!(idx === rules.length - 1) && (
+                      <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
+                    )}
                     <ExpandedToggle isExpanded={isExpanded} onToggle={() => toggleExpandedState(key)} />
                   </td>
                   <td>{isAlertingRule(rule) ? <StateTag status={rule.state} /> : 'n/a'}</td>
@@ -85,7 +90,9 @@ export const RulesTable: FC<Props> = ({ group }) => {
                 </tr>
                 {isExpanded && (
                   <tr className={idx % 2 === 0 ? styles.evenRow : undefined}>
-                    <td></td>
+                    <td className={styles.relative}>
+                      <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
+                    </td>
                     <td colSpan={5}>{JSON.stringify(rule, null, 2)}</td>
                   </tr>
                 )}
@@ -134,17 +141,31 @@ export const getStyles = (theme: GrafanaTheme) => ({
   colExpand: css`
     width: 36px;
   `,
-  expandCell: css`
+  relative: css`
     position: relative;
   `,
-  ruleGuideline: css`
-    width: 23px;
-    position: absolute;
-    height: 19px;
-    border-bottom: 1px solid ${theme.colors.border3};
+  guideline: css`
+    left: -27px;
     border-left: 1px solid ${theme.colors.border3};
+    position: absolute;
+  `,
+  ruleTopGuideline: css`
+    width: 18px;
+    border-bottom: 1px solid ${theme.colors.border3};
     top: 0;
-    left: -32px;
+    bottom: 50%;
+  `,
+  ruleBottomGuideline: css`
+    top: 50%;
+    bottom: 0;
+  `,
+  ruleContentGuideline: css`
+    top: 0;
+    bottom: 0;
+  `,
+  headerGuideline: css`
+    top: -24px;
+    bottom: 0;
   `,
   actionsCell: css`
     text-align: right;
