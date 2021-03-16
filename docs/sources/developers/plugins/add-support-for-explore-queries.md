@@ -101,4 +101,4 @@ const firstResult = new MutableDataFrame({
 });
 ```
 
-See [PreferredVisualisationType](https://grafana.com/docs/grafana/latest/packages_api/data/preferredvisualisationtype/) for possible options. 
+For possible options, refer to [PreferredVisualisationType](https://grafana.com/docs/grafana/latest/packages_api/data/preferredvisualisationtype/). 
