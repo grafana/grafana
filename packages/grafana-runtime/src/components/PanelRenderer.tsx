@@ -23,3 +23,7 @@ export let PanelRenderer: PanelRendererType = () => {
 export function setPanelRenderer(renderer: PanelRendererType) {
   PanelRenderer = renderer;
 }
+
+export function usePanelRenderer<T extends object = any>(): PanelRendererType<T> {
+  return PanelRenderer as PanelRendererType<T>;
+}
