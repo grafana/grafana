@@ -1,7 +1,7 @@
 import { Alert, VerticalGroup } from '@grafana/ui';
 import React from 'react';
 import Datasource from '../../datasource';
-import { AzureMonitorQuery, AzureQueryType, AzureMonitorOption } from '../../types';
+import { AzureMonitorQuery, AzureQueryType, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
 import MetricsQueryEditor from '../MetricsQueryEditor';
 import QueryTypeField from './QueryTypeField';
 import useLastError from './useLastError';
@@ -47,7 +47,7 @@ const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChan
 
 interface EditorForQueryTypeProps extends BaseQueryEditorProps {
   subscriptionId: string;
-  setError: (source: string, err: Error | undefined) => void;
+  setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
 
 const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({

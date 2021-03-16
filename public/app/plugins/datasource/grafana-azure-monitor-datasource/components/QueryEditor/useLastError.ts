@@ -1,14 +1,14 @@
 import { useState, useCallback, useMemo } from 'react';
-import { AzureMonitorUIError } from '../../types';
+import { AzureMonitorErrorish } from '../../types';
 import { messageFromError } from './messageFromError';
 
-type SourcedError = [string, AzureMonitorUIError];
+type SourcedError = [string, AzureMonitorErrorish];
 
 export default function useLastError() {
   const [errors, setErrors] = useState<SourcedError[]>([]);
 
   // Handles errors from any child components that request data to display their options
-  const handleError = useCallback((errorSource: string, error: Error | undefined) => {
+  const handleError = useCallback((errorSource: string, error: AzureMonitorErrorish | undefined) => {
     setErrors((errors) => {
       const errorsCopy = [...errors];
       const index = errors.findIndex(([vSource]) => vSource === errorSource);
