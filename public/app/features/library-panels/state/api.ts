@@ -1,8 +1,23 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { LibraryPanelDTO, PanelModelWithLibraryPanel } from '../types';
+import { LibraryPanelDTO, LibraryPanelSearchResult, PanelModelWithLibraryPanel } from '../types';
 
-export async function getLibraryPanels(): Promise<LibraryPanelDTO[]> {
-  const { result } = await getBackendSrv().get(`/api/library-panels`);
+export interface GetLibraryPanelsOptions {
+  name?: string;
+  perPage?: number;
+  page?: number;
+}
+
+export async function getLibraryPanels({
+  name = '',
+  perPage = 100,
+  page = 1,
+}: GetLibraryPanelsOptions = {}): Promise<LibraryPanelSearchResult> {
+  const params = new URLSearchParams();
+  params.append('name', name);
+  params.append('perPage', perPage.toString(10));
+  params.append('page', page.toString(10));
+
+  const { result } = await getBackendSrv().get(`/api/library-panels?${params.toString()}`);
   return result;
 }
 
