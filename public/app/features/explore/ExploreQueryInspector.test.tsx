@@ -7,7 +7,7 @@ import { ExploreQueryInspector } from './ExploreQueryInspector';
 
 type ExploreQueryInspectorProps = ComponentProps<typeof ExploreQueryInspector>;
 
-jest.mock('../dashboard/components/Inspector/styles', () => ({
+jest.mock('../inspector/styles', () => ({
   getPanelInspectorStyles: () => ({}),
 }));
 

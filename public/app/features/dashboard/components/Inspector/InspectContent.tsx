@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
-import { getPanelInspectorStyles } from './styles';
+import { getPanelInspectorStyles } from 'app/features/inspector/styles';
 import { InspectMetadataTab } from 'app/features/inspector/InspectMetadataTab';
 import { InspectSubtitle } from 'app/features/inspector/InspectSubtitle';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
