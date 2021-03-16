@@ -67,7 +67,7 @@ export function useContextMenu(
         <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
           {(group.items || []).map((item) => (
             <MenuItem
-              key={`${item.label}`}
+              key={item.label}
               url={item.url}
               label={item.label}
               ariaLabel={item.label}

@@ -24,13 +24,20 @@ import { getFieldLinksSupplier } from '../../../../features/panel/panellinks/lin
 
 interface ContextMenuPluginProps {
   data: DataFrame[];
+  defaultItems?: MenuItemsGroup[];
   timeZone: TimeZone;
   onOpen?: () => void;
   onClose?: () => void;
   replaceVariables?: InterpolateFunction;
 }
 
-export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({ data, onClose, timeZone, replaceVariables }) => {
+export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
+  data,
+  defaultItems,
+  onClose,
+  timeZone,
+  replaceVariables,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onClick = useCallback(() => {
@@ -44,6 +51,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({ data, onCl
           <Portal>
             <ContextMenuView
               data={data}
+              defaultItems={defaultItems}
               timeZone={timeZone}
               selection={{ point, coords }}
               replaceVariables={replaceVariables}
@@ -63,6 +71,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({ data, onCl
 
 interface ContextMenuProps {
   data: DataFrame[];
+  defaultItems?: MenuItemsGroup[];
   timeZone: TimeZone;
   onClose?: () => void;
   selection: {
@@ -75,6 +84,7 @@ interface ContextMenuProps {
 export const ContextMenuView: React.FC<ContextMenuProps> = ({
   selection,
   timeZone,
+  defaultItems,
   replaceVariables,
   data,
   ...otherProps
@@ -97,8 +107,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
   if (!xField) {
     return null;
   }
-
-  const items: MenuItemsGroup[] = [];
+  const items = defaultItems ? [...defaultItems] : [];
   let renderHeader: () => JSX.Element | null = () => null;
 
   const { seriesIdx, dataIdx } = selection.point;
@@ -157,7 +166,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
       <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
         {(group.items || []).map((item) => (
           <MenuItem
-            key={`${item.label}`}
+            key={item.label}
             url={item.url}
             label={item.label}
             ariaLabel={item.label}
