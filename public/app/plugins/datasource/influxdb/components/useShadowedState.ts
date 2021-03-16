@@ -5,9 +5,11 @@ export function useShadowedState<T>(outsideVal: T): [T, (newVal: T) => void] {
   const prevOutsideVal = useRef(outsideVal);
 
   useEffect(() => {
+    const isOutsideValChanged = prevOutsideVal.current !== outsideVal;
+    // the prevOutsideVal must always be updated to the "new" prev-value
+    prevOutsideVal.current = outsideVal;
     // if the value changes from the outside, we accept it
-    if (prevOutsideVal.current !== outsideVal && currentVal !== outsideVal) {
-      prevOutsideVal.current = outsideVal;
+    if (isOutsideValChanged && currentVal !== outsideVal) {
       setCurrentVal(outsideVal);
     }
   }, [outsideVal, currentVal]);
