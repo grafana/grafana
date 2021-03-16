@@ -54,18 +54,6 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 	proxy.HandleRequest()
 }
 
-// ensureProxyPathTrailingSlash Check for a trailing slash in original path and makes
-// sure that a trailing slash is added to proxy path, if not already exists.
-func ensureProxyPathTrailingSlash(originalPath, proxyPath string) string {
-	if len(proxyPath) > 1 {
-		if originalPath[len(originalPath)-1] == '/' && proxyPath[len(proxyPath)-1] != '/' {
-			return proxyPath + "/"
-		}
-	}
-
-	return proxyPath
-}
-
 var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/[\d]+\/?`)
 
 func extractProxyPath(originalRawPath string) string {
@@ -73,7 +61,5 @@ func extractProxyPath(originalRawPath string) string {
 }
 
 func getProxyPath(c *models.ReqContext) string {
-	proxyPath := extractProxyPath(c.Req.URL.EscapedPath())
-	// macaron does not include trailing slashes when resolving a wildcard path
-	return ensureProxyPathTrailingSlash(c.Req.URL.Path, proxyPath)
+	return extractProxyPath(c.Req.URL.EscapedPath())
 }
