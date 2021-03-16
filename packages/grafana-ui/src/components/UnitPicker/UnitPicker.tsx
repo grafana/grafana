@@ -56,6 +56,7 @@ export class UnitPicker extends PureComponent<Props> {
         width={width}
         initialValue={current && current.label}
         allowCustomValue
+        changeOnSelect={false}
         formatCreateLabel={formatCreateLabel}
         options={groupOptions as CascaderOption[]}
         placeholder="Choose"

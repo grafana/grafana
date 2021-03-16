@@ -3,6 +3,8 @@ package alerting
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 
@@ -81,9 +83,10 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 		Name:        "Test notification",
 		Message:     "Someone is testing the alert notification within Grafana.",
 		State:       models.AlertStateAlerting,
+		ID:          rand.Int63(),
 	}
 
-	ctx := NewEvalContext(context.Background(), testRule)
+	ctx := NewEvalContext(context.Background(), testRule, fakeRequestValidator{})
 	if cmd.Settings.Get("uploadImage").MustBool(true) {
 		ctx.ImagePublicURL = "https://grafana.com/assets/img/blog/mixed_styles.png"
 	}
@@ -108,4 +111,10 @@ func evalMatchesBasedOnState() []*EvalMatch {
 	})
 
 	return matches
+}
+
+type fakeRequestValidator struct{}
+
+func (fakeRequestValidator) Validate(_ string, _ *http.Request) error {
+	return nil
 }

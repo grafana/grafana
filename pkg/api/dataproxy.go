@@ -3,13 +3,14 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 )
 
 // ProxyDataSourceRequest proxies datasource requests
@@ -20,17 +21,23 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 	ds, err := hs.DatasourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceAccessDenied) {
-			c.JsonApiErr(403, "Access denied to datasource", err)
+			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
 			return
 		}
-		c.JsonApiErr(500, "Unable to load datasource meta data", err)
+		c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
+		return
+	}
+
+	err = hs.PluginRequestValidator.Validate(ds.Url, c.Req.Request)
+	if err != nil {
+		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
 	}
 
 	// find plugin
-	plugin, ok := plugins.DataSources[ds.Type]
+	plugin, ok := manager.DataSources[ds.Type]
 	if !ok {
-		c.JsonApiErr(500, "Unable to find datasource plugin", err)
+		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
 		return
 	}
 
@@ -42,9 +49,9 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, hs.Cfg)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
-			c.JsonApiErr(400, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)
+			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)
 		} else {
-			c.JsonApiErr(500, "Failed creating data source proxy", err)
+			c.JsonApiErr(http.StatusInternalServerError, "Failed creating data source proxy", err)
 		}
 		return
 	}

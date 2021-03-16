@@ -5,32 +5,16 @@ const PAGE_UNDER_TEST = 'AejrN1AMz';
 describe('TextBox - load options scenarios', function () {
   it('default options should be correct', function () {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
-    e2e().server();
-    e2e()
-      .route({
-        method: 'GET',
-        url: `/api/dashboards/uid/${PAGE_UNDER_TEST}`,
-      })
-      .as('dash');
-
-    e2e().wait('@dash');
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}/templating-textbox-e2e-scenarios?orgId=1` });
 
     validateTextboxAndMarkup('default value');
   });
 
   it('loading variable from url should be correct', function () {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?var-text=not default value` });
-    e2e().server();
-    e2e()
-      .route({
-        method: 'GET',
-        url: `/api/dashboards/uid/${PAGE_UNDER_TEST}`,
-      })
-      .as('dash');
-
-    e2e().wait('@dash');
+    e2e.flows.openDashboard({
+      uid: `${PAGE_UNDER_TEST}/templating-textbox-e2e-scenarios?orgId=1&var-text=not default value`,
+    });
 
     validateTextboxAndMarkup('not default value');
   });
@@ -159,7 +143,7 @@ function copyExistingDashboard() {
       url: /\/api\/dashboards\/uid\/(?!AejrN1AMz)\w+/,
     })
     .as('load-dash');
-  e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?editview=settings&orgId=1` });
+  e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}/templating-textbox-e2e-scenarios?orgId=1&editview=settings` });
 
   e2e().wait('@dash-settings');
 
@@ -185,7 +169,7 @@ function copyExistingDashboard() {
 }
 
 function saveDashboard(saveVariables: boolean) {
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Save dashboard').should('be.visible').click();
+  e2e.components.PageToolbar.item('Save dashboard').should('be.visible').click();
 
   if (saveVariables) {
     e2e.pages.SaveDashboardModal.saveVariables().should('exist').click({ force: true });
@@ -212,7 +196,7 @@ function validateTextboxAndMarkup(value: string) {
 }
 
 function validateVariable(value: string) {
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').should('be.visible').click();
+  e2e.components.PageToolbar.item('Dashboard settings').should('be.visible').click();
 
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').should('be.visible').click();
 
@@ -245,7 +229,7 @@ function changeTextBoxInput() {
 }
 
 function changeQueryInput() {
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').should('be.visible').click();
+  e2e.components.PageToolbar.item('Dashboard settings').should('be.visible').click();
 
   e2e.pages.Dashboard.Settings.General.sectionItems('Variables').should('be.visible').click();
 

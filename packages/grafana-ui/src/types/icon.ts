@@ -3,250 +3,268 @@ export type IconType = 'mono' | 'default';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
 export type IconName =
-  | 'fa fa-spinner'
-  | 'grafana'
-  | 'question-circle'
-  | 'angle-up'
-  | 'history'
+  | 'angle-double-down'
+  | 'angle-double-right'
   | 'angle-down'
-  | 'filter'
   | 'angle-left'
   | 'angle-right'
-  | 'angle-double-right'
-  | 'angle-double-down'
-  | 'pen'
-  | 'envelope'
-  | 'percentage'
-  | 'rocket'
-  | 'power'
-  | 'trash-alt'
-  | 'slack'
-  | 'download-alt'
-  | 'mobile-android'
-  | 'plus-square'
-  | 'folder-plus'
-  | 'folder-open'
-  | 'folder'
-  | 'file-copy-alt'
-  | 'file-alt'
-  | 'exchange-alt'
-  | 'import'
-  | 'exclamation-triangle'
-  | 'times'
-  | 'signin'
-  | 'signout'
-  | 'cloud-upload'
-  | 'step-backward'
-  | 'square-shape'
-  | 'share-alt'
-  | 'tag-alt'
-  | 'forward'
-  | 'check'
-  | 'check-circle'
-  | 'copy'
-  | 'lock'
-  | 'unlock'
-  | 'panel-add'
-  | 'arrow-random'
-  | 'arrow-down'
-  | 'arrows-h'
-  | 'comment-alt'
-  | 'code-branch'
-  | 'arrow-right'
-  | 'circle'
-  | 'arrow-up'
-  | 'arrow-from-right'
-  | 'keyboard'
-  | 'search'
-  | 'chart-line'
-  | 'search-minus'
-  | 'clock-nine'
-  | 'sync'
-  | 'sign-in-alt'
-  | 'cloud-download'
-  | 'cog'
-  | 'bars'
-  | 'save'
+  | 'angle-up'
   | 'apps'
-  | 'link'
-  | 'upload'
-  | 'columns'
-  | 'home-alt'
-  | 'channel-add'
-  | 'calendar-alt'
-  | 'play'
-  | 'pause'
-  | 'calculator-alt'
-  | 'compass'
-  | 'sliders-v-alt'
-  | 'bell'
-  | 'bell-slash'
-  | 'database'
-  | 'user'
-  | 'camera'
-  | 'plug'
-  | 'shield'
-  | 'key-skeleton-alt'
-  | 'users-alt'
-  | 'graph-bar'
-  | 'book'
-  | 'bolt'
-  | 'comments-alt'
-  | 'document-info'
-  | 'info-circle'
-  | 'bug'
-  | 'cube'
-  | 'star'
-  | 'list-ul'
-  | 'edit'
-  | 'eye'
-  | 'eye-slash'
-  | 'monitor'
-  | 'plus-circle'
+  | 'arrow-down'
+  | 'arrow-from-right'
   | 'arrow-left'
-  | 'repeat'
-  | 'external-link-alt'
-  | 'minus'
-  | 'signal'
-  | 'search-plus'
-  | 'minus-circle'
-  | 'table'
+  | 'arrow-random'
+  | 'arrow-right'
+  | 'arrow-up'
   | 'arrow'
-  | 'plus'
-  | 'heart'
-  | 'heart-break'
-  | 'ellipsis-v'
-  | 'favorite'
-  | 'line-alt'
-  | 'sort-amount-down'
+  | 'arrows-h'
+  | 'bars'
+  | 'bell-slash'
+  | 'bell'
+  | 'bolt'
+  | 'book-open'
+  | 'book'
+  | 'bug'
+  | 'calculator-alt'
+  | 'calendar-alt'
+  | 'camera'
+  | 'channel-add'
+  | 'chart-line'
+  | 'check-circle'
+  | 'check'
+  | 'circle'
+  | 'clipboard-alt'
+  | 'clock-nine'
+  | 'cloud-download'
+  | 'cloud-upload'
   | 'cloud'
+  | 'code-branch'
+  | 'cog'
+  | 'columns'
+  | 'comment-alt'
+  | 'comments-alt'
+  | 'compass'
+  | 'copy'
+  | 'cube'
+  | 'database'
+  | 'document-info'
+  | 'download-alt'
   | 'draggabledots'
+  | 'edit'
+  | 'ellipsis-v'
+  | 'envelope'
+  | 'exchange-alt'
+  | 'exclamation-triangle'
+  | 'external-link-alt'
+  | 'eye-slash'
+  | 'eye'
+  | 'fa fa-spinner'
+  | 'favorite'
+  | 'file-alt'
+  | 'file-blank'
+  | 'file-copy-alt'
+  | 'filter'
+  | 'folder-open'
+  | 'folder-plus'
   | 'folder-upload'
+  | 'folder'
+  | 'forward'
   | 'gf-interpolation-linear'
   | 'gf-interpolation-smooth'
+  | 'gf-interpolation-step-after'
   | 'gf-interpolation-step-before'
-  | 'gf-interpolation-step-after';
+  | 'gf-logs'
+  | 'grafana'
+  | 'graph-bar'
+  | 'heart-break'
+  | 'heart'
+  | 'history'
+  | 'home-alt'
+  | 'import'
+  | 'info-circle'
+  | 'key-skeleton-alt'
+  | 'keyboard'
+  | 'line-alt'
+  | 'link'
+  | 'list-ul'
+  | 'lock'
+  | 'minus-circle'
+  | 'minus'
+  | 'mobile-android'
+  | 'monitor'
+  | 'palette'
+  | 'panel-add'
+  | 'pause'
+  | 'pen'
+  | 'percentage'
+  | 'play'
+  | 'plug'
+  | 'plus-circle'
+  | 'plus-square'
+  | 'plus'
+  | 'power'
+  | 'question-circle'
+  | 'repeat'
+  | 'reusable-panel'
+  | 'rocket'
+  | 'save'
+  | 'search-minus'
+  | 'search-plus'
+  | 'search'
+  | 'share-alt'
+  | 'shield'
+  | 'sign-in-alt'
+  | 'signal'
+  | 'signin'
+  | 'signout'
+  | 'slack'
+  | 'sliders-v-alt'
+  | 'sort-amount-down'
+  | 'square-shape'
+  | 'star'
+  | 'step-backward'
+  | 'sync'
+  | 'table'
+  | 'tag-alt'
+  | 'times'
+  | 'trash-alt'
+  | 'unlock'
+  | 'upload'
+  | 'user'
+  | 'users-alt'
+  | 'wrap-text'
+  | 'x';
 
 export const getAvailableIcons = (): IconName[] => [
-  'fa fa-spinner',
-  'grafana',
-  'question-circle',
-  'angle-up',
-  'history',
+  'angle-double-down',
+  'angle-double-right',
   'angle-down',
-  'filter',
   'angle-left',
   'angle-right',
-  'angle-double-right',
-  'angle-double-down',
-  'pen',
-  'envelope',
-  'percentage',
-  'rocket',
-  'power',
-  'trash-alt',
-  'slack',
-  'download-alt',
-  'mobile-android',
-  'plus-square',
-  'folder-plus',
-  'folder-open',
-  'folder',
-  'file-copy-alt',
-  'file-alt',
-  'exchange-alt',
-  'import',
-  'exclamation-triangle',
-  'times',
-  'signin',
-  'cloud-upload',
-  'step-backward',
-  'square-shape',
-  'share-alt',
-  'tag-alt',
-  'forward',
-  'check',
-  'check-circle',
-  'copy',
-  'lock',
-  'unlock',
-  'panel-add',
-  'arrow-random',
-  'arrow-down',
-  'arrows-h',
-  'comment-alt',
-  'code-branch',
-  'arrow-right',
-  'circle',
-  'arrow-up',
-  'arrow-from-right',
-  'keyboard',
-  'search',
-  'chart-line',
-  'search-minus',
-  'clock-nine',
-  'sync',
-  'sign-in-alt',
-  'cloud-download',
-  'cog',
-  'bars',
-  'save',
+  'angle-up',
   'apps',
-  'link',
-  'upload',
-  'columns',
-  'home-alt',
-  'channel-add',
-  'calendar-alt',
-  'play',
-  'pause',
-  'calculator-alt',
-  'compass',
-  'sliders-v-alt',
-  'bell',
-  'bell-slash',
-  'database',
-  'user',
-  'camera',
-  'plug',
-  'shield',
-  'key-skeleton-alt',
-  'users-alt',
-  'graph-bar',
-  'book',
-  'bolt',
-  'comments-alt',
-  'document-info',
-  'info-circle',
-  'bug',
-  'cube',
-  'star',
-  'list-ul',
-  'edit',
-  'eye',
-  'eye-slash',
-  'monitor',
-  'plus-circle',
+  'arrow-down',
+  'arrow-from-right',
   'arrow-left',
-  'repeat',
-  'external-link-alt',
-  'minus',
-  'signal',
-  'search-plus',
-  'minus-circle',
+  'arrow-random',
+  'arrow-right',
+  'arrow-up',
   'arrow',
-  'table',
-  'plus',
-  'heart',
-  'heart-break',
-  'ellipsis-v',
-  'favorite',
-  'sort-amount-down',
+  'arrows-h',
+  'bars',
+  'bell-slash',
+  'bell',
+  'bolt',
+  'book-open',
+  'book',
+  'bug',
+  'calculator-alt',
+  'calendar-alt',
+  'camera',
+  'channel-add',
+  'chart-line',
+  'check-circle',
+  'check',
+  'circle',
+  'clipboard-alt',
+  'clock-nine',
+  'cloud-download',
+  'cloud-upload',
   'cloud',
+  'code-branch',
+  'cog',
+  'columns',
+  'comment-alt',
+  'comments-alt',
+  'compass',
+  'copy',
+  'cube',
+  'database',
+  'document-info',
+  'download-alt',
   'draggabledots',
+  'edit',
+  'ellipsis-v',
+  'envelope',
+  'exchange-alt',
+  'exclamation-triangle',
+  'external-link-alt',
+  'eye-slash',
+  'eye',
+  'fa fa-spinner',
+  'favorite',
+  'file-alt',
+  'file-blank',
+  'file-copy-alt',
+  'filter',
+  'folder-open',
+  'folder-plus',
   'folder-upload',
+  'folder',
+  'forward',
   'gf-interpolation-linear',
   'gf-interpolation-smooth',
-  'gf-interpolation-step-before',
   'gf-interpolation-step-after',
+  'gf-interpolation-step-before',
+  'gf-logs',
+  'grafana',
+  'graph-bar',
+  'heart-break',
+  'heart',
+  'history',
+  'home-alt',
+  'import',
+  'info-circle',
+  'key-skeleton-alt',
+  'keyboard',
+  'line-alt',
+  'link',
+  'list-ul',
+  'lock',
+  'minus-circle',
+  'minus',
+  'mobile-android',
+  'monitor',
+  'palette',
+  'panel-add',
+  'pause',
+  'pen',
+  'percentage',
+  'play',
+  'plug',
+  'plus-circle',
+  'plus-square',
+  'plus',
+  'power',
+  'question-circle',
+  'repeat',
+  'reusable-panel',
+  'rocket',
+  'save',
+  'search-minus',
+  'search-plus',
+  'search',
+  'share-alt',
+  'shield',
+  'sign-in-alt',
+  'signal',
+  'signin',
+  'signout',
+  'slack',
+  'sliders-v-alt',
+  'sort-amount-down',
+  'square-shape',
+  'star',
+  'step-backward',
+  'sync',
+  'table',
+  'tag-alt',
+  'times',
+  'trash-alt',
+  'unlock',
+  'upload',
+  'user',
+  'users-alt',
+  'wrap-text',
+  'x',
 ];

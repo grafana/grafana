@@ -15,14 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-// DashboardService service for operating on dashboards
+// DashboardService is a service for operating on dashboards.
 type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	DeleteDashboard(dashboardId int64, orgId int64) error
 }
 
-// DashboardProvisioningService service for operating on provisioned dashboards
+// DashboardProvisioningService is a service for operating on provisioned dashboards.
 type DashboardProvisioningService interface {
 	SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveFolderForProvisionedDashboards(*SaveDashboardDTO) (*models.Dashboard, error)
@@ -32,18 +32,16 @@ type DashboardProvisioningService interface {
 	DeleteProvisionedDashboard(dashboardId int64, orgId int64) error
 }
 
-// NewService factory for creating a new dashboard service
+// NewService is a factory for creating a new dashboard service.
 var NewService = func() DashboardService {
 	return &dashboardServiceImpl{
 		log: log.New("dashboard-service"),
 	}
 }
 
-// NewProvisioningService factory for creating a new dashboard provisioning service
+// NewProvisioningService is a factory for creating a new dashboard provisioning service.
 var NewProvisioningService = func() DashboardProvisioningService {
-	return &dashboardServiceImpl{
-		log: log.New("dashboard-provisioning-service"),
-	}
+	return NewService().(*dashboardServiceImpl)
 }
 
 type SaveDashboardDTO struct {
@@ -356,6 +354,8 @@ func (dr *dashboardServiceImpl) UnprovisionDashboard(dashboardId int64) error {
 }
 
 type FakeDashboardService struct {
+	DashboardService
+
 	SaveDashboardResult *models.Dashboard
 	SaveDashboardError  error
 	SavedDashboards     []*SaveDashboardDTO

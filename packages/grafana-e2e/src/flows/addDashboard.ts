@@ -37,7 +37,6 @@ interface AddVariableRequired {
 export type PartialAddVariableConfig = Partial<AddVariableDefault> & AddVariableOptional & AddVariableRequired;
 export type AddVariableConfig = AddVariableDefault & AddVariableOptional & AddVariableRequired;
 
-// @todo this actually returns type `Cypress.Chainable<AddDashboardConfig>`
 export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   const fullConfig: AddDashboardConfig = {
     annotations: [],
@@ -59,17 +58,17 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   e2e.pages.AddDashboard.visit();
 
   if (annotations.length > 0 || variables.length > 0) {
-    e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
+    e2e.components.PageToolbar.item('Dashboard settings').click();
     addAnnotations(annotations);
 
     fullConfig.variables = addVariables(variables);
 
-    e2e.components.BackButton.backArrow().click();
+    e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
   }
 
   setDashboardTimeRange(timeRange);
 
-  e2e.pages.Dashboard.Toolbar.toolbarItems('Save dashboard').click();
+  e2e.components.PageToolbar.item('Save dashboard').click();
   e2e.pages.SaveDashboardAsModal.newName().clear().type(title);
   e2e.pages.SaveDashboardAsModal.save().click();
   e2e.flows.assertSuccessNotification();
@@ -152,29 +151,32 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
   }
 
-  const { constantValue, dataSource, hide, label, name, query, regex, type } = fullConfig;
+  const { constantValue, dataSource, label, name, query, regex, type } = fullConfig;
 
   // This field is key to many reactive changes
   if (type !== VARIABLE_TYPE_QUERY) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect().select(type);
-  }
-
-  // Avoid '', which is an accepted value
-  if (hide !== undefined) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select(hide);
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect()
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Select.singleValue().should('have.text', 'Query').click().type(`${type}{enter}`);
+      });
   }
 
   if (label) {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
   }
 
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().type(name);
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().clear().type(name);
 
   if (
     dataSource &&
     (type === VARIABLE_TYPE_AD_HOC_FILTERS || type === VARIABLE_TYPE_DATASOURCE || type === VARIABLE_TYPE_QUERY)
   ) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().select(dataSource);
+    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Select.input().should('be.visible').type(`${dataSource}{enter}`);
+      });
   }
 
   if (constantValue && type === VARIABLE_TYPE_CONSTANT) {
@@ -193,13 +195,12 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
 
   // Avoid flakiness
   e2e().focused().blur();
-  e2e()
-    .contains('.gf-form-group', 'Preview of values')
-    .within(() => {
+
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption()
+    .should('exist')
+    .within((previewOfValues) => {
       if (type === VARIABLE_TYPE_CONSTANT) {
-        e2e()
-          .root()
-          .contains(constantValue as string);
+        expect(previewOfValues.text()).equals(constantValue);
       }
     });
 

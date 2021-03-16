@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, isString, trim } from 'lodash';
-import { VariableOption, VariableTag, VariableWithMultiSupport } from '../../types';
+import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../types';
 import { ALL_VARIABLE_VALUE } from '../../state/types';
-import { isQuery } from '../../guard';
+import { isMulti, isQuery } from '../../guard';
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { containsSearchFilter } from '../../utils';
 
@@ -119,15 +119,19 @@ const optionsPickerSlice = createSlice({
   name: 'templating/optionsPicker',
   initialState,
   reducers: {
-    showOptions: (state, action: PayloadAction<VariableWithMultiSupport>): OptionsPickerState => {
-      const { query, options, multi } = action.payload;
+    showOptions: (state, action: PayloadAction<VariableWithOptions>): OptionsPickerState => {
+      const { query, options } = action.payload;
 
       state.highlightIndex = -1;
       state.options = cloneDeep(options);
-      state.tags = getTags(action.payload);
-      state.multi = multi ?? false;
       state.id = action.payload.id;
       state.queryValue = '';
+      state.multi = false;
+
+      if (isMulti(action.payload)) {
+        state.tags = getTags(action.payload);
+        state.multi = action.payload.multi ?? false;
+      }
 
       if (isQuery(action.payload)) {
         const { queryValue } = action.payload;
@@ -238,7 +242,8 @@ const optionsPickerSlice = createSlice({
       const searchQuery = trim((state.queryValue ?? '').toLowerCase());
 
       state.options = action.payload.filter((option) => {
-        const text = Array.isArray(option.text) ? option.text.toString() : option.text;
+        const optionsText = option.text ?? '';
+        const text = Array.isArray(optionsText) ? optionsText.toString() : optionsText;
         return text.toLowerCase().indexOf(searchQuery) !== -1;
       });
 
@@ -252,6 +257,7 @@ const optionsPickerSlice = createSlice({
 
       return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
+    cleanPickerState: () => initialState,
   },
 });
 
@@ -265,6 +271,7 @@ export const {
   updateSearchQuery,
   updateOptionsAndFilter,
   updateOptionsFromSearch,
+  cleanPickerState,
 } = optionsPickerSlice.actions;
 
 export const optionsPickerReducer = optionsPickerSlice.reducer;

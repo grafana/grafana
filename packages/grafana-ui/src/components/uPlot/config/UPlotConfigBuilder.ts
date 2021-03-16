@@ -1,10 +1,13 @@
-import { PlotSeriesConfig } from '../types';
+import { PlotConfig } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
-import { Cursor, Band } from 'uplot';
+import uPlot, { Cursor, Band, Hooks, BBox } from 'uplot';
 import { defaultsDeep } from 'lodash';
+import { DefaultTimeZone, getTimeZoneInfo } from '@grafana/data';
+
+type valueof<T> = T[keyof T];
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -12,8 +15,24 @@ export class UPlotConfigBuilder {
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
   private cursor: Cursor | undefined;
+  // uPlot types don't export the Select interface prior to 1.6.4
+  private select: Partial<BBox> | undefined;
   private hasLeftAxis = false;
   private hasBottomAxis = false;
+  private hooks: Hooks.Arrays = {};
+  private tz: string | undefined = undefined;
+
+  constructor(getTimeZone = () => DefaultTimeZone) {
+    this.tz = getTimeZoneInfo(getTimeZone(), Date.now())?.ianaName;
+  }
+
+  addHook(type: keyof Hooks.Defs, hook: valueof<Hooks.Defs>) {
+    if (!this.hooks[type]) {
+      this.hooks[type] = [];
+    }
+
+    this.hooks[type]!.push(hook as any);
+  }
 
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
@@ -54,6 +73,11 @@ export class UPlotConfigBuilder {
     this.cursor = cursor;
   }
 
+  // uPlot types don't export the Select interface prior to 1.6.4
+  setSelect(select: Partial<BBox>) {
+    this.select = select;
+  }
+
   addSeries(props: SeriesProps) {
     this.series.push(new UPlotSeriesBuilder(props));
   }
@@ -77,14 +101,22 @@ export class UPlotConfigBuilder {
   }
 
   getConfig() {
-    const config: PlotSeriesConfig = { series: [{}] };
+    const config: PlotConfig = { series: [{}] };
     config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map((a) => a.getConfig());
     config.series = [...config.series, ...this.series.map((s) => s.getConfig())];
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});
 
+    config.hooks = this.hooks;
+
+    /* @ts-ignore */
+    // uPlot types don't export the Select interface prior to 1.6.4
+    config.select = this.select;
+
     config.cursor = this.cursor || {};
+
+    config.tzDate = this.tzDate;
 
     // When bands exist, only keep fill when defined
     if (this.bands?.length) {
@@ -135,4 +167,10 @@ export class UPlotConfigBuilder {
 
     return axes;
   }
+
+  private tzDate = (ts: number) => {
+    let date = new Date(ts);
+
+    return this.tz ? uPlot.tzDate(date, this.tz) : date;
+  };
 }

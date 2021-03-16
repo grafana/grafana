@@ -20,12 +20,6 @@
   background: $panel-bg;
 }
 
-.dashboard-settings__scroll {
-  flex-grow: 1;
-  min-width: 0;
-  height: 100%;
-}
-
 .dashboard-settings__content {
   flex-grow: 1;
   min-width: 0;
@@ -58,8 +52,7 @@
 
 .dashboard-settings__header {
   font-size: $font-size-h3;
-  margin-bottom: $space-xl;
-  line-height: 36px;
+  margin-bottom: $space-md;
 }
 
 .dashboard-settings__subheader {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DataFrame, DataTransformerConfig, TransformerRegistyItem } from '@grafana/data';
+import { DataFrame, DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
 import { HorizontalGroup } from '@grafana/ui';
 
 import { TransformationEditor } from './TransformationEditor';
@@ -14,7 +14,7 @@ interface TransformationOperationRowProps {
   id: string;
   index: number;
   data: DataFrame[];
-  uiConfig: TransformerRegistyItem<any>;
+  uiConfig: TransformerRegistryItem<any>;
   configs: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
   onChange: (index: number, config: DataTransformerConfig) => void;

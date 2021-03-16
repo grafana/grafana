@@ -82,7 +82,7 @@ export const DerivedFields = (props: Props) => {
           </Button>
 
           {value && value.length > 0 && (
-            <Button variant="secondary" onClick={() => setShowDebug(!showDebug)}>
+            <Button variant="secondary" type="button" onClick={() => setShowDebug(!showDebug)}>
               {showDebug ? 'Hide example log message' : 'Show example log message'}
             </Button>
           )}

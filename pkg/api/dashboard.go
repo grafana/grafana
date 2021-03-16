@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -122,7 +122,8 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
+	svc := dashboards.NewProvisioningService()
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -149,7 +150,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 
 	if hs.Cfg.IsPanelLibraryEnabled() {
 		// load library panels JSON for this dashboard
-		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(dash)
+		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c, dash)
 		if err != nil {
 			return response.Error(500, "Error while loading library panels", err)
 		}
@@ -220,13 +221,14 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 
 	if hs.Cfg.IsPanelLibraryEnabled() {
 		// disconnect all library panels for this dashboard
-		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(dash)
+		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(c, dash)
 		if err != nil {
 			hs.log.Error("Failed to disconnect library panels", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 		}
 	}
 
-	err := dashboards.NewService().DeleteDashboard(dash.Id, c.OrgId)
+	svc := dashboards.NewService()
+	err := svc.DeleteDashboard(dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -262,7 +264,8 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
+	svc := dashboards.NewProvisioningService()
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -288,7 +291,8 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := dashboards.NewService().SaveDashboard(dashItem, allowUiUpdate)
+	dashSvc := dashboards.NewService()
+	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
 	if err != nil {
 		return dashboardSaveErrorToApiResponse(err)
 	}
@@ -356,7 +360,7 @@ func dashboardSaveErrorToApiResponse(err error) response.Response {
 	if ok := errors.As(err, &pluginErr); ok {
 		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name
-		if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
+		if pluginDef, exist := manager.Plugins[pluginErr.PluginId]; exist {
 			message = fmt.Sprintf("The dashboard belongs to plugin %s.", pluginDef.Name)
 		}
 		return response.JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})

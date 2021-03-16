@@ -6,16 +6,17 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
   DataConfigSource,
+  DataFrameDTO,
   DataLink,
+  DataLinkBuiltInVars,
   DataQuery,
   DataTransformerConfig,
+  EventBus,
+  EventBusSrv,
   FieldConfigSource,
   PanelPlugin,
   ScopedVars,
-  EventBusSrv,
-  DataFrameDTO,
   urlUtil,
-  DataLinkBuiltInVars,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
@@ -35,6 +36,8 @@ import {
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from './getPanelOptionsWithDefaults';
+import { QueryGroupOptions } from 'app/types';
+import { PanelModelLibraryPanel } from '../../library-panels/types';
 
 export interface GridPos {
   x: number;
@@ -55,6 +58,8 @@ const notPersistedProperties: { [str: string]: boolean } = {
   queryRunner: true,
   replaceVariables: true,
   editSourceId: true,
+  hasChanged: true,
+  getDisplayTitle: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -97,6 +102,8 @@ const mustKeepProps: { [str: string]: boolean } = {
   maxDataPoints: true,
   interval: true,
   replaceVariables: true,
+  libraryPanel: true,
+  getDisplayTitle: true,
 };
 
 const defaults: any = {
@@ -106,15 +113,16 @@ const defaults: any = {
   transparent: false,
   options: {},
   datasource: null,
+  title: '',
 };
 
 export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
-  id: number;
-  editSourceId: number;
-  gridPos: GridPos;
-  type: string;
-  title: string;
+  id!: number;
+  editSourceId?: number;
+  gridPos!: GridPos;
+  type!: string;
+  title!: string;
   alert?: any;
   scopedVars?: ScopedVars;
   repeat?: string;
@@ -147,13 +155,16 @@ export class PanelModel implements DataConfigSource {
   links?: DataLink[];
   transparent: boolean;
 
+  libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
+
   // non persisted
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+  hasChanged: boolean;
 
   hasRefreshed: boolean;
-  events: EventBusSrv;
+  events: EventBus;
   cacheTimeout?: any;
   cachedPluginOptions: Record<string, PanelOptionsCache>;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -222,12 +233,14 @@ export class PanelModel implements DataConfigSource {
 
   updateOptions(options: object) {
     this.options = options;
+    this.hasChanged = true;
     this.events.publish(new PanelOptionsChangedEvent());
     this.render();
   }
 
   updateFieldConfig(config: FieldConfigSource) {
     this.fieldConfig = config;
+    this.hasChanged = true;
     this.events.publish(new PanelOptionsChangedEvent());
 
     this.resendLastResult();
@@ -312,11 +325,12 @@ export class PanelModel implements DataConfigSource {
     this.fieldConfig = restoreCustomOverrideRules(this.fieldConfig, prevOptions.fieldConfig);
   }
 
-  applyPluginOptionDefaults(plugin: PanelPlugin) {
+  applyPluginOptionDefaults(plugin: PanelPlugin, isAfterPluginChange: boolean) {
     const options = getPanelOptionsWithDefaults({
       plugin,
       currentOptions: this.options,
       currentFieldConfig: this.fieldConfig,
+      isAfterPluginChange: isAfterPluginChange,
     });
 
     this.fieldConfig = options.fieldConfig;
@@ -335,7 +349,7 @@ export class PanelModel implements DataConfigSource {
       }
     }
 
-    this.applyPluginOptionDefaults(plugin);
+    this.applyPluginOptionDefaults(plugin, false);
     this.resendLastResult();
   }
 
@@ -385,30 +399,41 @@ export class PanelModel implements DataConfigSource {
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
+    this.hasChanged = true;
 
     // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
     this.replaceVariables = this.replaceVariables.bind(this);
-    this.applyPluginOptionDefaults(newPlugin);
+    this.applyPluginOptionDefaults(newPlugin, true);
 
     if (newPlugin.onPanelMigration) {
       this.pluginVersion = getPluginVersion(newPlugin);
     }
   }
 
-  updateQueries(queries: DataQuery[]) {
+  updateQueries(options: QueryGroupOptions) {
+    this.datasource = options.dataSource.default ? null : options.dataSource.name!;
+    this.timeFrom = options.timeRange?.from;
+    this.timeShift = options.timeRange?.shift;
+    this.hideTimeOverride = options.timeRange?.hide;
+    this.interval = options.minInterval;
+    this.maxDataPoints = options.maxDataPoints;
+    this.targets = options.queries;
+    this.hasChanged = true;
+
     this.events.publish(new PanelQueriesChangedEvent());
-    this.targets = queries;
   }
 
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = getNextRefIdChar(this.targets);
     this.targets.push(query as DataQuery);
+    this.hasChanged = true;
   }
 
   changeQuery(query: DataQuery, index: number) {
     // ensure refId is maintained
     query.refId = this.targets[index].refId;
+    this.hasChanged = true;
 
     // update query in array
     this.targets = this.targets.map((item, itemIndex) => {
@@ -479,7 +504,13 @@ export class PanelModel implements DataConfigSource {
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.resendLastResult();
+    this.hasChanged = true;
     this.events.publish(new PanelTransformationsChangedEvent());
+  }
+
+  setProperty(key: keyof this, value: any) {
+    this[key] = value;
+    this.hasChanged = true;
   }
 
   replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
@@ -522,10 +553,22 @@ export class PanelModel implements DataConfigSource {
   getSavedId(): number {
     return this.editSourceId ?? this.id;
   }
+
+  /*
+   * This is the title used when displaying the title in the UI so it will include any interpolated variables.
+   * If you need the raw title without interpolation use title property instead.
+   * */
+  getDisplayTitle(): string {
+    return this.replaceVariables(this.title, {}, 'text');
+  }
 }
 
 function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
+}
+
+export function isLibraryPanel(panel: PanelModel): panel is PanelModel & Required<Pick<PanelModel, 'libraryPanel'>> {
+  return panel.libraryPanel !== undefined;
 }
 
 interface PanelOptionsCache {

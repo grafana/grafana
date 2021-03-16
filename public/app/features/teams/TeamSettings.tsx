@@ -4,8 +4,6 @@ import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui
 
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';
-import { getRouteParamsId } from 'app/core/selectors/location';
-import { getTeam } from './state/selectors';
 import { Team } from 'app/types';
 
 export interface Props {
@@ -45,16 +43,8 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   );
 };
 
-function mapStateToProps(state: any) {
-  const teamId = getRouteParamsId(state.location);
-
-  return {
-    team: getTeam(state.team, teamId),
-  };
-}
-
 const mapDispatchToProps = {
   updateTeam,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamSettings);
+export default connect(null, mapDispatchToProps)(TeamSettings);

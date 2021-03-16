@@ -88,7 +88,9 @@ Content-Type: application/json
 
 Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional.
 If they are not specified then a global annotation is created and can be queried in any dashboard that adds
-the Grafana annotations data source. When creating a region annotation include the timeEnd property.
+the Grafana annotations data source. When creating a region annotation include the timeEnd property. 
+
+The format for `time` and `timeEnd` should be epoch numbers in millisecond resolution. 
 
 `POST /api/annotations`
 

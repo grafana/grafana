@@ -2,7 +2,15 @@
 
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { GrafanaTheme } from '@grafana/data';
-import { GraphGradientMode, AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
+import {
+  GraphGradientMode,
+  AxisPlacement,
+  DrawStyle,
+  PointVisibility,
+  ScaleDistribution,
+  ScaleOrientation,
+  ScaleDirection,
+} from '../config';
 import darkTheme from '../../../themes/dark';
 
 describe('UPlotConfigBuilder', () => {
@@ -26,10 +34,13 @@ describe('UPlotConfigBuilder', () => {
               "width": [Function],
             },
           },
+          "hooks": Object {},
           "scales": Object {},
+          "select": undefined,
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
         }
       `);
     });
@@ -41,11 +52,15 @@ describe('UPlotConfigBuilder', () => {
 
       builder.addScale({
         scaleKey: 'scale-x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
         isTime: true,
       });
 
       builder.addScale({
         scaleKey: 'scale-y',
+        orientation: ScaleOrientation.Vertical,
+        direction: ScaleDirection.Up,
         isTime: false,
       });
 
@@ -66,23 +81,30 @@ describe('UPlotConfigBuilder', () => {
               "width": [Function],
             },
           },
+          "hooks": Object {},
           "scales": Object {
             "scale-x": Object {
               "auto": false,
+              "dir": 1,
+              "ori": 0,
               "range": [Function],
               "time": true,
             },
             "scale-y": Object {
               "auto": true,
+              "dir": 1,
               "distr": 1,
               "log": undefined,
+              "ori": 1,
               "range": [Function],
               "time": false,
             },
           },
+          "select": undefined,
           "series": Array [
             Object {},
           ],
+          "tzDate": [Function],
         }
       `);
     });
@@ -92,11 +114,15 @@ describe('UPlotConfigBuilder', () => {
 
       builder.addScale({
         scaleKey: 'scale-x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
         isTime: true,
       });
 
       builder.addScale({
         scaleKey: 'scale-x',
+        orientation: ScaleOrientation.Horizontal,
+        direction: ScaleDirection.Right,
         isTime: false,
       });
 
@@ -109,6 +135,8 @@ describe('UPlotConfigBuilder', () => {
 
         builder.addScale({
           scaleKey: 'scale-y',
+          orientation: ScaleOrientation.Vertical,
+          direction: ScaleDirection.Up,
           isTime: false,
           distribution: ScaleDistribution.Linear,
         });
@@ -129,18 +157,23 @@ describe('UPlotConfigBuilder', () => {
                 "width": [Function],
               },
             },
+            "hooks": Object {},
             "scales": Object {
               "scale-y": Object {
                 "auto": true,
+                "dir": 1,
                 "distr": 1,
                 "log": undefined,
+                "ori": 1,
                 "range": [Function],
                 "time": false,
               },
             },
+            "select": undefined,
             "series": Array [
               Object {},
             ],
+            "tzDate": [Function],
           }
         `);
       });
@@ -150,6 +183,8 @@ describe('UPlotConfigBuilder', () => {
 
           builder.addScale({
             scaleKey: 'scale-y',
+            orientation: ScaleOrientation.Vertical,
+            direction: ScaleDirection.Up,
             isTime: false,
             distribution: ScaleDistribution.Linear,
           });
@@ -171,18 +206,23 @@ describe('UPlotConfigBuilder', () => {
                   "width": [Function],
                 },
               },
+              "hooks": Object {},
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
+                  "dir": 1,
                   "distr": 1,
                   "log": undefined,
+                  "ori": 1,
                   "range": [Function],
                   "time": false,
                 },
               },
+              "select": undefined,
               "series": Array [
                 Object {},
               ],
+              "tzDate": [Function],
             }
           `);
         });
@@ -192,6 +232,8 @@ describe('UPlotConfigBuilder', () => {
 
           builder.addScale({
             scaleKey: 'scale-y',
+            orientation: ScaleOrientation.Vertical,
+            direction: ScaleDirection.Up,
             isTime: false,
             distribution: ScaleDistribution.Linear,
             log: 10,
@@ -214,18 +256,23 @@ describe('UPlotConfigBuilder', () => {
                   "width": [Function],
                 },
               },
+              "hooks": Object {},
               "scales": Object {
                 "scale-y": Object {
                   "auto": true,
+                  "dir": 1,
                   "distr": 1,
                   "log": undefined,
+                  "ori": 1,
                   "range": [Function],
                   "time": false,
                 },
               },
+              "select": undefined,
               "series": Array [
                 Object {},
               ],
+              "tzDate": [Function],
             }
           `);
         });
@@ -254,6 +301,7 @@ describe('UPlotConfigBuilder', () => {
         "axes": Array [
           Object {
             "font": "12px 'Roboto'",
+            "gap": 5,
             "grid": Object {
               "show": false,
               "stroke": "#ffffff",
@@ -267,6 +315,7 @@ describe('UPlotConfigBuilder', () => {
             "side": 2,
             "size": [Function],
             "space": [Function],
+            "splits": undefined,
             "stroke": "gray",
             "ticks": Object {
               "show": true,
@@ -291,10 +340,13 @@ describe('UPlotConfigBuilder', () => {
             "width": [Function],
           },
         },
+        "hooks": Object {},
         "scales": Object {},
+        "select": undefined,
         "series": Array [
           Object {},
         ],
+        "tzDate": [Function],
       }
     `);
   });
@@ -410,7 +462,9 @@ describe('UPlotConfigBuilder', () => {
             "width": [Function],
           },
         },
+        "hooks": Object {},
         "scales": Object {},
+        "select": undefined,
         "series": Array [
           Object {},
           Object {
@@ -421,6 +475,7 @@ describe('UPlotConfigBuilder', () => {
               "size": 5,
               "stroke": "#00ff00",
             },
+            "pxAlign": undefined,
             "scale": "scale-x",
             "show": true,
             "spanGaps": false,
@@ -428,6 +483,7 @@ describe('UPlotConfigBuilder', () => {
             "width": 1,
           },
         ],
+        "tzDate": [Function],
       }
     `);
   });

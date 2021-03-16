@@ -46,6 +46,10 @@ func addAlertDefinitionMigrations(mg *migrator.Migrator) {
 	}
 	mg.AddMigration("add unique index in alert_definition on org_id and title columns", migrator.NewAddIndexMigration(alertDefinition, uniqueIndices[0]))
 	mg.AddMigration("add unique index in alert_definition on org_id and uid columns", migrator.NewAddIndexMigration(alertDefinition, uniqueIndices[1]))
+
+	mg.AddMigration("Add column paused in alert_definition", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
+		Name: "paused", Type: migrator.DB_Bool, Nullable: false, Default: "0",
+	}))
 }
 
 func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {

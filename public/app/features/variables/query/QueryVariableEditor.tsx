@@ -1,4 +1,5 @@
-import React, { ChangeEvent, PureComponent } from 'react';
+import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
+import { css } from 'emotion';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -91,34 +92,34 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     }
   };
 
-  onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ regex: event.target.value });
+  onRegExChange = (event: FormEvent<HTMLInputElement>) => {
+    this.setState({ regex: event.currentTarget.value });
   };
 
-  onRegExBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    const regex = event.target.value;
+  onRegExBlur = async (event: FormEvent<HTMLInputElement>) => {
+    const regex = event.currentTarget.value;
     if (this.props.variable.regex !== regex) {
       this.props.onPropChange({ propName: 'regex', propValue: regex, updateOptions: true });
     }
   };
 
-  onTagsQueryChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ tagsQuery: event.target.value });
+  onTagsQueryChange = async (event: FormEvent<HTMLInputElement>) => {
+    this.setState({ tagsQuery: event.currentTarget.value });
   };
 
-  onTagsQueryBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    const tagsQuery = event.target.value;
+  onTagsQueryBlur = async (event: FormEvent<HTMLInputElement>) => {
+    const tagsQuery = event.currentTarget.value;
     if (this.props.variable.tagsQuery !== tagsQuery) {
       this.props.onPropChange({ propName: 'tagsQuery', propValue: tagsQuery, updateOptions: true });
     }
   };
 
-  onTagValuesQueryChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ tagValuesQuery: event.target.value });
+  onTagValuesQueryChange = async (event: FormEvent<HTMLInputElement>) => {
+    this.setState({ tagValuesQuery: event.currentTarget.value });
   };
 
-  onTagValuesQueryBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    const tagValuesQuery = event.target.value;
+  onTagValuesQueryBlur = async (event: FormEvent<HTMLInputElement>) => {
+    const tagValuesQuery = event.currentTarget.value;
     if (this.props.variable.tagValuesQuery !== tagValuesQuery) {
       this.props.onPropChange({ propName: 'tagValuesQuery', propValue: tagValuesQuery, updateOptions: true });
     }
@@ -197,7 +198,14 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
               </InlineField>
               <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
             </InlineFieldRow>
-            <div style={{ flexDirection: 'column' }}>{this.renderQueryEditor()}</div>
+            <div
+              className={css`
+                flex-direction: column;
+                width: 100%;
+              `}
+            >
+              {this.renderQueryEditor()}
+            </div>
             <VariableTextField
               value={this.state.regex ?? this.props.variable.regex}
               name="Regex"

@@ -45,7 +45,14 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         id: 'folderId',
         defaultValue: null,
         editor: function RenderFolderPicker(props) {
-          return <FolderPicker initialTitle="All" enableReset={true} onChange={({ id }) => props.onChange(id)} />;
+          return (
+            <FolderPicker
+              initialFolderId={props.value}
+              initialTitle="All"
+              enableReset={true}
+              onChange={({ id }) => props.onChange(id)}
+            />
+          );
         },
       })
       .addCustomEditor({

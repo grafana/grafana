@@ -9,9 +9,9 @@ import {
   DataFrame,
   getFieldDisplayValuesProxy,
 } from '@grafana/data';
-import { getLinkSrv } from '../../panel/panellinks/link_srv';
 import { config, getTemplateSrv } from '@grafana/runtime';
-import { splitOpen } from '../state/main';
+import { SplitOpen } from 'app/types/explore';
+import { getLinkSrv } from '../../panel/panellinks/link_srv';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -23,7 +23,7 @@ import { splitOpen } from '../state/main';
 export const getFieldLinksForExplore = (options: {
   field: Field;
   rowIndex: number;
-  splitOpenFn?: typeof splitOpen;
+  splitOpenFn?: SplitOpen;
   range: TimeRange;
   vars?: ScopedVars;
   dataFrame?: DataFrame;
@@ -99,7 +99,7 @@ function getTitleFromHref(href: string): string {
  * all the fields so is useful for visualisation where the whole row is represented as single clickable item like a
  * service map.
  */
-export function useLinks(range: TimeRange, splitOpenFn?: typeof splitOpen) {
+export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
   return useCallback(
     (dataFrame: DataFrame, rowIndex: number) => {
       return dataFrame.fields.flatMap((f) => {

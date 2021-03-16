@@ -286,6 +286,7 @@ export class LinkSrv implements LinkService {
     const info: any = {};
     info.href = this.getLinkUrl(link);
     info.title = this.templateSrv.replace(link.title || '');
+    info.tooltip = this.templateSrv.replace(link.tooltip || '');
     return info;
   }
 
@@ -323,7 +324,7 @@ export class LinkSrv implements LinkService {
     const info: LinkModel<T> = {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
       title: replaceVariables ? replaceVariables(link.title || '') : link.title,
-      target: link.targetBlank ? '_blank' : '_self',
+      target: link.targetBlank ? '_blank' : undefined,
       origin,
       onClick,
     };

@@ -1,85 +1,41 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { AlertRuleList, Props } from './AlertRuleList';
+import { AlertRuleListUnconnected, Props } from './AlertRuleList';
 import { AlertRule } from '../../types';
 import appEvents from '../../core/app_events';
 import { NavModel } from '@grafana/data';
-import { CoreEvents } from 'app/types';
-import { updateLocation } from '../../core/actions';
 import { setSearchQuery } from './state/reducers';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { locationService } from '@grafana/runtime';
+import { ShowModalEvent } from '../../types/events';
 
 jest.mock('../../core/app_events', () => ({
-  emit: jest.fn(),
+  publish: jest.fn(),
 }));
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
+    ...getRouteComponentProps({}),
     navModel: {} as NavModel,
     alertRules: [] as AlertRule[],
-    updateLocation: mockToolkitActionCreator(updateLocation),
     getAlertRulesAsync: jest.fn(),
     setSearchQuery: mockToolkitActionCreator(setSearchQuery),
     togglePauseAlertRule: jest.fn(),
-    stateFilter: '',
     search: '',
     isLoading: false,
+    ngAlertDefinitions: [],
   };
 
   Object.assign(props, propOverrides);
 
-  const wrapper = shallow(<AlertRuleList {...props} />);
+  const wrapper = shallow(<AlertRuleListUnconnected {...props} />);
 
   return {
     wrapper,
-    instance: wrapper.instance() as AlertRuleList,
+    instance: wrapper.instance() as AlertRuleListUnconnected,
   };
 };
-
-describe('Render', () => {
-  it('should render component', () => {
-    const { wrapper } = setup();
-
-    expect(wrapper).toMatchSnapshot();
-  });
-
-  it('should render alert rules', () => {
-    const { wrapper } = setup({
-      alertRules: [
-        {
-          id: 1,
-          dashboardId: 7,
-          dashboardUid: 'ggHbN42mk',
-          dashboardSlug: 'alerting-with-testdata',
-          panelId: 3,
-          name: 'TestData - Always OK',
-          state: 'ok',
-          newStateDate: '2018-09-04T10:01:01+02:00',
-          evalDate: '0001-01-01T00:00:00Z',
-          evalData: {},
-          executionError: '',
-          url: '/d/ggHbN42mk/alerting-with-testdata',
-        },
-        {
-          id: 3,
-          dashboardId: 7,
-          dashboardUid: 'ggHbN42mk',
-          dashboardSlug: 'alerting-with-testdata',
-          panelId: 3,
-          name: 'TestData - ok',
-          state: 'ok',
-          newStateDate: '2018-09-04T10:01:01+02:00',
-          evalDate: '0001-01-01T00:00:00Z',
-          evalData: {},
-          executionError: 'error',
-          url: '/d/ggHbN42mk/alerting-with-testdata',
-        },
-      ],
-    });
-
-    expect(wrapper).toMatchSnapshot();
-  });
-});
 
 describe('Life cycle', () => {
   describe('component did mount', () => {
@@ -96,7 +52,7 @@ describe('Life cycle', () => {
       const { instance } = setup();
       instance.fetchRules = jest.fn();
 
-      instance.componentDidUpdate({ stateFilter: 'ok' } as Props);
+      instance.componentDidUpdate({ queryParams: { state: 'ok' } } as any);
 
       expect(instance.fetchRules).toHaveBeenCalled();
     });
@@ -107,19 +63,16 @@ describe('Functions', () => {
   describe('Get state filter', () => {
     it('should get all if prop is not set', () => {
       const { instance } = setup();
-
       const stateFilter = instance.getStateFilter();
-
       expect(stateFilter).toEqual('all');
     });
 
     it('should return state filter if set', () => {
       const { instance } = setup({
-        stateFilter: 'ok',
+        queryParams: { state: 'ok' },
       });
 
       const stateFilter = instance.getStateFilter();
-
       expect(stateFilter).toEqual('ok');
     });
   });
@@ -128,10 +81,8 @@ describe('Functions', () => {
     it('should update location', () => {
       const { instance } = setup();
       const mockEvent = { value: 'alerting' };
-
       instance.onStateFilterChanged(mockEvent);
-
-      expect(instance.props.updateLocation).toHaveBeenCalledWith({ query: { state: 'alerting' } });
+      expect(locationService.getSearchObject().state).toBe('alerting');
     });
   });
 
@@ -141,20 +92,20 @@ describe('Functions', () => {
 
       instance.onOpenHowTo();
 
-      expect(appEvents.emit).toHaveBeenCalledWith(CoreEvents.showModal, {
-        src: 'public/app/features/alerting/partials/alert_howto.html',
-        modalClass: 'confirm-modal',
-        model: {},
-      });
+      expect(appEvents.publish).toHaveBeenCalledWith(
+        new ShowModalEvent({
+          src: 'public/app/features/alerting/partials/alert_howto.html',
+          modalClass: 'confirm-modal',
+          model: {},
+        })
+      );
     });
   });
 
   describe('Search query change', () => {
     it('should set search query', () => {
       const { instance } = setup();
-
       instance.onSearchQueryChange('dashboard');
-
       expect(instance.props.setSearchQuery).toHaveBeenCalledWith('dashboard');
     });
   });

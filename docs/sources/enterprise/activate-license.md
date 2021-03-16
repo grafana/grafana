@@ -2,7 +2,7 @@
 title = "Activate an Enterprise license"
 description = "Activate an Enterprise license"
 keywords = ["grafana", "licensing", "enterprise"]
-weight = 7
+weight = 100
 +++
 
 # Activate an Enterprise license
@@ -80,7 +80,6 @@ GF_SERVER_ROOT_URL=https://grafana.blah.com/
 ## Step 4. Restart Grafana
 
 To finalize the installation of Grafana Enterprise, restart Grafana to
-enable all Grafana Enterprise features.
+enable all Grafana Enterprise features. Refer to [restart Grafana]({{< relref "../installation/restart-grafana.md" >}})
+topic for more information.
 
-On Linux, when installed as a Systemd service you can restart Grafana
-by running `sudo systemctl restart grafana-server.service`.

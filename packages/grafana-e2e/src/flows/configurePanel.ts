@@ -34,6 +34,7 @@ interface ConfigurePanelOptional {
   panelTitle?: string;
   timeRange?: TimeRangeConfig;
   visualizationName?: string;
+  matchExploreTable?: boolean;
 }
 
 interface ConfigurePanelRequired {
@@ -75,6 +76,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       dataSourceName,
       isEdit,
       isExplore,
+      matchExploreTable,
       matchScreenshot,
       panelTitle,
       queriesForm,
@@ -99,7 +101,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
         e2e.components.Panels.Panel.title(panelTitle).click();
         e2e.components.Panels.Panel.headerItems('Edit').click();
       } else {
-        e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
+        e2e.components.PageToolbar.item('Add panel').click();
         e2e.pages.AddDashboard.addNewPanel().click();
       }
     }
@@ -189,7 +191,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     }
 
     // Avoid annotations flakiness
-    e2e().get('.refresh-picker-buttons .btn').first().click();
+    e2e.components.RefreshPicker.runButton().should('be.visible').click();
 
     e2e().wait('@chartData');
 
@@ -200,7 +202,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       let visualization;
 
       if (isExplore) {
-        visualization = e2e.pages.Explore.General.graph();
+        visualization = matchExploreTable ? e2e.pages.Explore.General.table() : e2e.pages.Explore.General.graph();
       } else {
         visualization = e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content');
       }

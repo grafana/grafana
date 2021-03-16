@@ -11,6 +11,7 @@ import {
   DataFrame,
   MetricFindValue,
   FieldType,
+  DataQuery,
 } from '@grafana/data';
 
 interface DataResponse {
@@ -24,56 +25,84 @@ interface DataResponse {
 /**
  * Parse the results from /api/ds/query into a DataQueryResponse
  *
+ * @param res - the HTTP response data.
+ * @param queries - optional DataQuery array that will order the response based on the order of query refId's.
+ *
  * @public
  */
-export function toDataQueryResponse(res: any): DataQueryResponse {
+export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
   if (res.data?.results) {
     const results: KeyValue = res.data.results;
-    for (const refId of Object.keys(results)) {
+    const resultIDs = Object.keys(results);
+    const refIDs = queries ? queries.map((q) => q.refId) : resultIDs;
+    const usedResultIDs = new Set<string>(resultIDs);
+    const data: DataResponse[] = [];
+
+    for (const refId of refIDs) {
       const dr = results[refId] as DataResponse;
-      if (dr) {
-        if (dr.error) {
-          if (!rsp.error) {
-            rsp.error = {
-              refId,
-              message: dr.error,
-            };
+      if (!dr) {
+        continue;
+      }
+      dr.refId = refId;
+      usedResultIDs.delete(refId);
+      data.push(dr);
+    }
+
+    // Add any refIds that do not match the query targets
+    if (usedResultIDs.size) {
+      for (const refId of usedResultIDs) {
+        const dr = results[refId] as DataResponse;
+        if (!dr) {
+          continue;
+        }
+        dr.refId = refId;
+        usedResultIDs.delete(refId);
+        data.push(dr);
+      }
+    }
+
+    for (const dr of data) {
+      if (dr.error) {
+        if (!rsp.error) {
+          rsp.error = {
+            refId: dr.refId,
+            message: dr.error,
+          };
+          rsp.state = LoadingState.Error;
+        }
+      }
+
+      if (dr.series?.length) {
+        for (const s of dr.series) {
+          if (!s.refId) {
+            s.refId = dr.refId;
+          }
+          rsp.data.push(toDataFrame(s));
+        }
+      }
+
+      if (dr.tables?.length) {
+        for (const s of dr.tables) {
+          if (!s.refId) {
+            s.refId = dr.refId;
+          }
+          rsp.data.push(toDataFrame(s));
+        }
+      }
+
+      if (dr.dataframes) {
+        for (const b64 of dr.dataframes) {
+          try {
+            const t = base64StringToArrowTable(b64);
+            const f = arrowTableToDataFrame(t);
+            if (!f.refId) {
+              f.refId = dr.refId;
+            }
+            rsp.data.push(f);
+          } catch (err) {
             rsp.state = LoadingState.Error;
-          }
-        }
-
-        if (dr.series && dr.series.length) {
-          for (const s of dr.series) {
-            if (!s.refId) {
-              s.refId = refId;
-            }
-            rsp.data.push(toDataFrame(s));
-          }
-        }
-
-        if (dr.tables && dr.tables.length) {
-          for (const s of dr.tables) {
-            if (!s.refId) {
-              s.refId = refId;
-            }
-            rsp.data.push(toDataFrame(s));
-          }
-        }
-
-        if (dr.dataframes) {
-          for (const b64 of dr.dataframes) {
-            try {
-              const t = base64StringToArrowTable(b64);
-              const f = arrowTableToDataFrame(t);
-              if (!f.refId) {
-                f.refId = refId;
-              }
-              rsp.data.push(f);
-            } catch (err) {
-              rsp.state = LoadingState.Error;
-              rsp.error = toDataQueryError(err);
-            }
+            rsp.error = toDataQueryError(err);
           }
         }
       }

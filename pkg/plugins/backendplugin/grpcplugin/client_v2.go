@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/hashicorp/go-plugin"
@@ -170,7 +171,7 @@ func instrumentDataClient(plugin grpcplugin.DataClient) grpcplugin.DataClient {
 
 	return dataClientQueryDataFunc(func(ctx context.Context, req *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
 		var resp *pluginv2.QueryDataResponse
-		err := backendplugin.InstrumentQueryDataRequest(req.PluginContext.PluginId, func() (innerErr error) {
+		err := instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginId, func() (innerErr error) {
 			resp, innerErr = plugin.QueryData(ctx, req)
 			return
 		})

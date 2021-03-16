@@ -73,9 +73,16 @@ export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>>
         value={value?.fill || 'solid'}
         options={lineFillOptions}
         onChange={(v) => {
+          let dash: number[] | undefined = undefined;
+          if (v === 'dot') {
+            dash = parseText(dotOptions[0].value!);
+          } else if (v === 'dash') {
+            dash = parseText(dashOptions[0].value!);
+          }
           onChange({
             ...value,
             fill: v!,
+            dash,
           });
         }}
       />

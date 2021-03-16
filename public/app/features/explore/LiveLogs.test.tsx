@@ -44,7 +44,7 @@ describe('LiveLogs', () => {
     expect(wrapper.contains('log message 2')).toBeTruthy();
     expect(wrapper.contains('log message 3')).toBeTruthy();
 
-    (wrapper.find('LiveLogs').instance() as any).liveEndDiv.scrollIntoView = () => {};
+    (wrapper.find('LiveLogs').instance() as any).scrollContainerRef.current.scrollTo = () => {};
 
     wrapper.setProps({
       ...wrapper.props(),
@@ -93,6 +93,7 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     logLevel: LogLevel.debug,
     entry,
     hasAnsi: false,
+    hasUnescapedContent: false,
     labels: {},
     raw: entry,
     timeFromNow: '',

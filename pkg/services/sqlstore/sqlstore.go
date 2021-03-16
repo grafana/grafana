@@ -105,7 +105,7 @@ func (ss *SQLStore) Init() error {
 
 	// Init repo instances
 	annotations.SetRepository(&SQLAnnotationRepo{})
-	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: 100, log: log.New("annotationcleaner")})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner")})
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
@@ -117,8 +117,10 @@ func (ss *SQLStore) Init() error {
 		return err
 	}
 	// Make sure the changes are synced, so they get shared with eventual other DB connections
-	if err := ss.Sync(); err != nil {
-		return err
+	if !ss.dbCfg.SkipMigrations {
+		if err := ss.Sync(); err != nil {
+			return err
+		}
 	}
 
 	return nil
