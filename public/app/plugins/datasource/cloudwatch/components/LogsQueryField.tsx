@@ -21,14 +21,16 @@ import { Editor, Node, Plugin } from 'slate';
 import syntax from '../syntax';
 
 // Types
-import { AbsoluteTimeRange, AppEvents, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { AbsoluteTimeRange, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { CloudWatchLanguageProvider } from '../language_provider';
 import { css } from 'emotion';
 import { ExploreId } from 'app/types';
-import { appEvents } from 'app/core/core';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 import { InputActionMeta } from '@grafana/ui/src/components/Select/types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
@@ -119,7 +121,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
         label: logGroup,
       }));
     } catch (err) {
-      appEvents.emit(AppEvents.alertError, [err]);
+      dispatch(notifyApp(createErrorNotification(err)));
       return [];
     }
   };

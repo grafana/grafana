@@ -45,7 +45,7 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, newTestConfig())
+		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -102,7 +102,7 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, newTestConfig())
+		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -164,7 +164,7 @@ func TestQuery_Regions(t *testing.T) {
 		cli = fakeEC2Client{
 			regions: []string{regionName},
 		}
-		executor := newExecutor(nil, newTestConfig())
+		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -246,7 +246,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, newTestConfig())
+		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -349,7 +349,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, newTestConfig())
+		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -449,7 +449,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, newTestConfig())
+		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -528,7 +528,7 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 
 	t.Run("List Metrics and page limit is reached", func(t *testing.T) {
 		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
-		executor := newExecutor(nil, &setting.Cfg{AWSListMetricsPageLimit: 3, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true})
+		executor := newExecutor(nil, &setting.Cfg{AWSListMetricsPageLimit: 3, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, fakeSessionCache{})
 		executor.DataSource = fakeDataSource()
 		response, err := executor.listMetrics("default", &cloudwatch.ListMetricsInput{})
 		require.NoError(t, err)
@@ -539,7 +539,7 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 
 	t.Run("List Metrics and page limit is not reached", func(t *testing.T) {
 		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
-		executor := newExecutor(nil, &setting.Cfg{AWSListMetricsPageLimit: 1000, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true})
+		executor := newExecutor(nil, &setting.Cfg{AWSListMetricsPageLimit: 1000, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, fakeSessionCache{})
 		executor.DataSource = fakeDataSource()
 		response, err := executor.listMetrics("default", &cloudwatch.ListMetricsInput{})
 		require.NoError(t, err)

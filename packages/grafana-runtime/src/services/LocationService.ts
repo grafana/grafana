@@ -1,4 +1,4 @@
-import { UrlQueryMap, urlUtil } from '@grafana/data';
+import { deprecationWarning, UrlQueryMap, urlUtil } from '@grafana/data';
 import * as H from 'history';
 import { LocationUpdate } from './LocationSrv';
 import { createLogger } from '@grafana/ui';
@@ -11,7 +11,7 @@ import { config } from '../config';
 export interface LocationService {
   partial: (query: Record<string, any>, replace?: boolean) => void;
   push: (location: H.Path | H.LocationDescriptor<any>) => void;
-  replace: (location: H.Path | H.LocationDescriptor<any>, forceRouteReload?: boolean) => void;
+  replace: (location: H.Path | H.LocationDescriptor<any>) => void;
   reload: () => void;
   getLocation: () => H.Location;
   getHistory: () => H.History;
@@ -95,23 +95,15 @@ export class HistoryWrapper implements LocationService {
     this.history.push(location);
   }
 
-  replace(location: H.Path | H.LocationDescriptor, forceRouteReload?: boolean) {
-    const state = forceRouteReload ? { forceRouteReload: true } : undefined;
-
-    if (typeof location === 'string') {
-      this.history.replace(location, state);
-    } else {
-      this.history.replace({
-        ...location,
-        state,
-      });
-    }
+  replace(location: H.Path | H.LocationDescriptor) {
+    this.history.replace(location);
   }
 
   reload() {
+    const prevState = (this.history.location.state as any)?.routeReloadCounter;
     this.history.replace({
       ...this.history.location,
-      state: { forceRouteReload: true },
+      state: { routeReloadCounter: prevState ? prevState + 1 : 1 },
     });
   }
 
@@ -123,14 +115,23 @@ export class HistoryWrapper implements LocationService {
     return locationSearchToObject(this.history.location.search);
   }
 
-  /** @depecreated */
+  /** @deprecated use partial, push or replace instead */
   update(options: LocationUpdate) {
+    deprecationWarning('LocationSrv', 'update', 'partial, push or replace');
     if (options.partial && options.query) {
       this.partial(options.query, options.partial);
-    } else if (options.replace) {
-      this.replace(options.path!);
     } else {
-      this.push(options.path!);
+      const newLocation: H.LocationDescriptor = {
+        pathname: options.path,
+      };
+      if (options.query) {
+        newLocation.search = urlUtil.toUrlParams(options.query);
+      }
+      if (options.replace) {
+        this.replace(newLocation);
+      } else {
+        this.push(newLocation);
+      }
     }
   }
 }

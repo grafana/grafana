@@ -47,7 +47,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			},
 		}
 
-		executor := newExecutor(nil, newTestConfig())
+		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -100,7 +100,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			},
 		}
 
-		executor := newExecutor(nil, newTestConfig())
+		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			Queries: []plugins.DataSubQuery{
 				{
@@ -170,7 +170,7 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 
 	const refID = "A"
 
-	executor := newExecutor(nil, newTestConfig())
+	executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 	resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 		Queries: []plugins.DataSubQuery{
 			{
@@ -249,7 +249,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			To:   "1584700643000",
 		}
 
-		executor := newExecutor(nil, newTestConfig())
+		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 		_, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			TimeRange: &timeRange,
 			Queries: []plugins.DataSubQuery{
@@ -295,7 +295,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			To:   "1584873443000",
 		}
 
-		executor := newExecutor(nil, newTestConfig())
+		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 			TimeRange: &timeRange,
 			Queries: []plugins.DataSubQuery{
@@ -371,7 +371,7 @@ func TestQuery_StopQuery(t *testing.T) {
 		To:   "1584700643000",
 	}
 
-	executor := newExecutor(nil, newTestConfig())
+	executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 	resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 		TimeRange: &timeRange,
 		Queries: []plugins.DataSubQuery{
@@ -458,7 +458,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		},
 	}
 
-	executor := newExecutor(nil, newTestConfig())
+	executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
 	resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
 		Queries: []plugins.DataSubQuery{
 			{
