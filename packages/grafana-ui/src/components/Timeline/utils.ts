@@ -17,6 +17,7 @@ import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import { AxisPlacement, GraphGradientMode, ScaleDirection, ScaleOrientation } from '../uPlot/config';
 //import { classicColors } from '@grafana/data/src/utils/namedColorsPalette';
 import { classicColors } from '../../../../grafana-data/src/utils/namedColorsPalette';
+import { measureText } from '../../utils/measureText';
 
 import { TimelineFieldConfig } from '../..';
 import { TimelineMode } from './types';
@@ -69,6 +70,10 @@ export function preparePlotConfigBuilder(
     }
     return classicColors[Math.floor(value % classicColors.length)];
   };
+
+  const yAxisWidth = frame.fields.reduce((maxWidth, field) => {
+    return Math.max(maxWidth, measureText(getFieldDisplayName(field, frame), 10 * devicePixelRatio).width) + 16;
+  }, 0);
 
   const opts: TimelineCoreOptions = {
     count: frame.fields.length - 1, // number of series/lanes
@@ -142,8 +147,8 @@ export function preparePlotConfigBuilder(
     values: coreConfig.yValues,
     grid: false,
     ticks: false,
-    gap: 15,
-    size: 70, // should compute from series label measureText length
+    size: yAxisWidth,
+    gap: 16,
     theme,
   });
 
