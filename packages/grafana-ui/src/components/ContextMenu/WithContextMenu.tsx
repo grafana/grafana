@@ -11,7 +11,6 @@ interface WithContextMenuProps {
 export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, renderMenu }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  console.log(isMenuOpen);
   return (
     <>
       {children({
