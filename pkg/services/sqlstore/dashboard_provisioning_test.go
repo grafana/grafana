@@ -15,7 +15,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 	Convey("Testing Dashboard provisioning", t, func() {
 		sqlStore := InitTestDB(t)
 
-		folderCmd := &models.SaveDashboardCommand{
+		folderCmd := models.SaveDashboardCommand{
 			OrgId:    1,
 			FolderId: 0,
 			IsFolder: true,
@@ -25,10 +25,10 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			}),
 		}
 
-		err := SaveDashboard(folderCmd)
+		err := sqlStore.SaveDashboard(folderCmd)
 		So(err, ShouldBeNil)
 
-		saveDashboardCmd := &models.SaveDashboardCommand{
+		saveDashboardCmd := models.SaveDashboardCommand{
 			OrgId:    1,
 			IsFolder: false,
 			FolderId: folderCmd.Result.Id,

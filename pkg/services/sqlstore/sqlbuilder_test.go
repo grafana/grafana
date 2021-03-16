@@ -306,11 +306,7 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 		acl.Role = &dashboardPermission.Role
 	}
 
-	updateAclCmd := &models.UpdateDashboardAclCommand{
-		DashboardID: dashboardId,
-		Items:       []*models.DashboardAcl{acl},
-	}
-	err = UpdateDashboardAcl(updateAclCmd)
+	err = sqlStore.UpdateDashboardAcl(dashboardID, []*models.DashboardAcl{acl})
 	if user != nil {
 		return user.Id, err
 	}

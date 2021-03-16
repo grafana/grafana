@@ -227,9 +227,8 @@ func (s *fakeFolderService) GetFolderByUID(uid string) (*models.Folder, error) {
 	return s.GetFolderByUIDResult, s.GetFolderByUIDError
 }
 
-func (s *fakeFolderService) CreateFolder(cmd *models.CreateFolderCommand) error {
-	cmd.Result = s.CreateFolderResult
-	return s.CreateFolderError
+func (s *fakeFolderService) CreateFolder(title, uid string) (*models.Folder, error) {
+	return s.CreateFolderResult, s.CreateFolderError
 }
 
 func (s *fakeFolderService) UpdateFolder(existingUID string, cmd *models.UpdateFolderCommand) error {

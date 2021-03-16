@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccountDataAccess(t *testing.T) {
@@ -287,11 +288,13 @@ func TestAccountDataAccess(t *testing.T) {
 					dash1 := insertTestDashboard(t, "1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
 					dash2 := insertTestDashboard(t, "2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
 
-					err = testHelperUpdateDashboardAcl(dash1.Id, models.DashboardAcl{DashboardID: dash1.Id, OrgID: ac1.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT})
-					So(err, ShouldBeNil)
+					testHelperUpdateDashboardAcl(t, dash1.Id, models.DashboardAcl{
+						DashboardID: dash1.Id, OrgID: ac1.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT,
+					})
 
-					err = testHelperUpdateDashboardAcl(dash2.Id, models.DashboardAcl{DashboardID: dash2.Id, OrgID: ac3.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT})
-					So(err, ShouldBeNil)
+					testHelperUpdateDashboardAcl(t, dash2.Id, models.DashboardAcl{
+						DashboardID: dash2.Id, OrgID: ac3.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT,
+					})
 
 					Convey("When org user is deleted", func() {
 						cmdRemove := models.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac3.Id}
@@ -322,13 +325,16 @@ func TestAccountDataAccess(t *testing.T) {
 	})
 }
 
-func testHelperUpdateDashboardAcl(dashboardId int64, items ...models.DashboardAcl) error {
-	cmd := models.UpdateDashboardAclCommand{DashboardID: dashboardId}
-	for _, i := range items {
-		item := i
+func testHelperUpdateDashboardAcl(t *testing.T, dashboardId int64, items ...models.DashboardAcl) error {
+	t.Helper()
+
+	var itemPtrs []*models.DashboardAcl
+	for _, it := range items {
+		item := it
 		item.Created = time.Now()
 		item.Updated = time.Now()
-		cmd.Items = append(cmd.Items, &item)
+		itemPtrs = append(itemPtrs, &item)
 	}
-	return UpdateDashboardAcl(&cmd)
+	err := sqlStore.UpdateDashboardAcl(dashboardID, itemPtrs)
+	require.NoError(t, err)
 }

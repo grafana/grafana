@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func updateTestDashboard(dashboard *models.Dashboard, data map[string]interface{}) {
+func updateTestDashboard(t *testing.T, sqlStore SQLStore, dashboard *models.Dashboard, data map[string]interface{}) {
+	t.Helper()
+
 	data["id"] = dashboard.Id
 
 	saveCmd := models.SaveDashboardCommand{
@@ -21,8 +23,7 @@ func updateTestDashboard(dashboard *models.Dashboard, data map[string]interface{
 		Overwrite: true,
 		Dashboard: simplejson.NewFromAny(data),
 	}
-
-	err := SaveDashboard(&saveCmd)
+	err := sqlStore.SaveDashboard(saveCmd)
 	So(err, ShouldBeNil)
 }
 
@@ -92,7 +93,7 @@ func TestGetDashboardVersions(t *testing.T) {
 		})
 
 		Convey("Get all versions for an updated dashboard", func() {
-			updateTestDashboard(savedDash, map[string]interface{}{
+			updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
 				"tags": "different-tag",
 			})
 
@@ -114,7 +115,7 @@ func TestDeleteExpiredVersions(t *testing.T) {
 
 		savedDash := insertTestDashboard(t, "test dash 53", 1, 0, false, "diff-all")
 		for i := 0; i < versionsToWrite-1; i++ {
-			updateTestDashboard(savedDash, map[string]interface{}{
+			updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
 				"tags": "different-tag",
 			})
 		}
@@ -152,7 +153,7 @@ func TestDeleteExpiredVersions(t *testing.T) {
 
 			versionsToWriteBigNumber := perBatch*maxBatches + versionsToWrite
 			for i := 0; i < versionsToWriteBigNumber-versionsToWrite; i++ {
-				updateTestDashboard(savedDash, map[string]interface{}{
+				updateTestDashboard(t, sqlStore, savedDash, map[string]interface{}{
 					"tags": "different-tag",
 				})
 			}

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -24,7 +25,6 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 )
 
 func init() {
-	bus.AddHandler("sql", SaveDashboard)
 	bus.AddHandler("sql", GetDashboard)
 	bus.AddHandler("sql", GetDashboards)
 	bus.AddHandler("sql", DeleteDashboard)
@@ -43,10 +43,11 @@ func init() {
 
 var generateNewUid func() string = util.GenerateShortUID
 
-func SaveDashboard(cmd *models.SaveDashboardCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		return saveDashboard(sess, cmd)
+func (ss *SQLStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
+	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		return saveDashboard(sess, &cmd)
 	})
+	return cmd.Result, err
 }
 
 func saveDashboard(sess *DBSession, cmd *models.SaveDashboardCommand) error {
@@ -161,7 +162,7 @@ func saveDashboard(sess *DBSession, cmd *models.SaveDashboardCommand) error {
 
 	cmd.Result = dash
 
-	return err
+	return nil
 }
 
 func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
@@ -572,8 +573,7 @@ func GetDashboardUIDById(query *models.GetDashboardRefByIdQuery) error {
 	return nil
 }
 
-func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, orgID int64, dash *models.Dashboard,
-	overwrite bool) (bool, error) {
+func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, dash *models.Dashboard, overwrite bool) (bool, error) {
 	dashWithIdExists := false
 	isParentFolderChanged := false
 	var existingById models.Dashboard
@@ -699,11 +699,11 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, dash *models.Dashboar
 	return isParentFolderChanged, nil
 }
 
-func (ss *SQLStore) ValidateDashboardBeforeSave(orgID int64, dashboard *models.Dashboard, overwrite bool) (bool, error) {
+func (ss *SQLStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (bool, error) {
 	isParentFolderChanged := false
-	err := inTransaction(func(sess *DBSession) error {
+	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		var err error
-		isParentFolderChanged, err = getExistingDashboardByIdOrUidForUpdate(sess, orgID, dashboard, overwrite)
+		isParentFolderChanged, err = getExistingDashboardByIdOrUidForUpdate(sess, dashboard, overwrite)
 		if err != nil {
 			return err
 		}

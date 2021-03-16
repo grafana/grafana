@@ -59,19 +59,20 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
-	err := s.CreateFolder(&cmd)
+	folder, err := s.CreateFolder(cmd.Title, cmd.Uid)
 	if err != nil {
 		return toFolderError(err)
 	}
 
 	if hs.Cfg.EditorsCanAdmin {
-		if err := dashboards.MakeUserAdmin(hs.Bus, c.OrgId, c.SignedInUser.UserId, cmd.Result.Id, true); err != nil {
-			hs.log.Error("Could not make user admin", "folder", cmd.Result.Title, "user", c.SignedInUser.UserId, "error", err)
+		if err := s.MakeUserAdmin(c.OrgId, c.SignedInUser.UserId, folder.Id, true); err != nil {
+			hs.log.Error("Could not make user admin", "folder", folder.Title, "user",
+				c.SignedInUser.UserId, "error", err)
 		}
 	}
 
-	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, cmd.Result))
+	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
+	return response.JSON(200, toFolderDto(g, folder))
 }
 
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {

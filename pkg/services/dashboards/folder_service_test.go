@@ -48,9 +48,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			Convey("When creating folder should return access denied error", func() {
-				err := service.CreateFolder(&models.CreateFolderCommand{
-					Title: "Folder",
-				})
+				_, err := service.CreateFolder("Folder", "")
 				So(err, ShouldEqual, models.ErrFolderAccessDenied)
 			})
 
@@ -111,9 +109,7 @@ func TestFolderService(t *testing.T) {
 			})
 
 			Convey("When creating folder should not return access denied error", func() {
-				err := service.CreateFolder(&models.CreateFolderCommand{
-					Title: "Folder",
-				})
+				_, err := service.CreateFolder("Folder", "")
 				So(err, ShouldBeNil)
 				So(provisioningValidated, ShouldBeFalse)
 			})

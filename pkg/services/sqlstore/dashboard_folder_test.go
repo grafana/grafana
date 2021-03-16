@@ -7,6 +7,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
@@ -186,7 +187,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("and a dashboard is moved from folder without acl to the folder with an acl", func() {
-					moveDashboard(1, childDash2.Data, folder1.Id)
+					moveDashboard(t, sqlStore, 1, childDash2.Data, folder1.Id)
 
 					Convey("should not return folder with acl or its children", func() {
 						query := &search.FindPersistedDashboardsQuery{
@@ -201,7 +202,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					})
 				})
 				Convey("and a dashboard is moved from folder with acl to the folder without an acl", func() {
-					moveDashboard(1, childDash1.Data, folder2.Id)
+					moveDashboard(t, sqlStore, 1, childDash1.Data, folder2.Id)
 
 					Convey("should return folder without acl and its children", func() {
 						query := &search.FindPersistedDashboardsQuery{
@@ -225,7 +226,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					})
 					So(err, ShouldBeNil)
 
-					moveDashboard(1, childDash1.Data, folder2.Id)
+					moveDashboard(t, sqlStore, 1, childDash1.Data, folder2.Id)
 
 					Convey("should return folder without acl but not the dashboard with acl", func() {
 						query := &search.FindPersistedDashboardsQuery{
@@ -471,4 +472,20 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 			})
 		})
 	})
+}
+
+func moveDashboard(t *testing.T, sqlStore *SQLStore, orgId int64, dashboard *simplejson.Json,
+	newFolderId int64) *models.Dashboard {
+	t.Helper()
+
+	cmd := models.SaveDashboardCommand{
+		OrgId:     orgId,
+		FolderId:  newFolderId,
+		Dashboard: dashboard,
+		Overwrite: true,
+	}
+	dash, err := sqlStore.SaveDashboard(cmd)
+	So(err, ShouldBeNil)
+
+	return dash
 }

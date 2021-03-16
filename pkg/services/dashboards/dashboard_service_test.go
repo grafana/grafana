@@ -336,7 +336,7 @@ type fakeDashboardStore struct {
 	provisionedData *models.DashboardProvisioning
 }
 
-func (s *fakeDashboardStore) ValidateDashboardBeforeSave(orgID int64, dashboard *models.Dashboard, overwrite bool) (
+func (s *fakeDashboardStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, overwrite bool) (
 	bool, error) {
 	return false, s.validationError
 }
@@ -348,4 +348,8 @@ func (s *fakeDashboardStore) GetProvisionedDataByDashboardID(int64) (*models.Das
 func (s *fakeDashboardStore) SaveProvisionedDashboard(models.SaveDashboardCommand,
 	*models.DashboardProvisioning) (*models.Dashboard, error) {
 	return nil, nil
+}
+
+func (s *fakeDashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
+	return cmd.GetDashboardModel(), nil
 }

@@ -129,8 +129,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						"tags":  []interface{}{},
 					}),
 				}
-
-				err := SaveDashboard(&cmd)
+				_, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
 
 				generateNewUid = util.GenerateShortUID
@@ -145,8 +144,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 					UserId: 100,
 				}
-
-				err := SaveDashboard(&cmd)
+				_, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
 				So(cmd.Result.CreatedBy, ShouldEqual, 100)
 				So(cmd.Result.Created.IsZero(), ShouldBeFalse)
@@ -166,10 +164,9 @@ func TestDashboardDataAccess(t *testing.T) {
 					FolderId:  2,
 					UserId:    100,
 				}
-
-				err := SaveDashboard(&cmd)
+				dash, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
-				So(cmd.Result.FolderId, ShouldEqual, 2)
+				So(dash.FolderId, ShouldEqual, 2)
 
 				cmd = models.SaveDashboardCommand{
 					OrgId: 1,
@@ -182,8 +179,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					Overwrite: true,
 					UserId:    100,
 				}
-
-				err = SaveDashboard(&cmd)
+				_, err = sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
 
 				query := models.GetDashboardQuery{
@@ -236,7 +232,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 				}
 
-				err := SaveDashboard(&cmd)
+				_, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldEqual, models.ErrDashboardNotFound)
 			})
 
@@ -250,8 +246,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						"tags":  []interface{}{},
 					}),
 				}
-
-				err := SaveDashboard(&cmd)
+				_, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
 			})
 
@@ -454,14 +449,13 @@ func insertTestDashboard(t *testing.T, title string, orgId int64, folderId int64
 			"tags":  tags,
 		}),
 	}
-
-	err := SaveDashboard(&cmd)
+	dash, err := sqlStore.SaveDashboard(cmd)
 	require.NoError(t, err)
 
-	cmd.Result.Data.Set("id", cmd.Result.Id)
-	cmd.Result.Data.Set("uid", cmd.Result.Uid)
+	dash.Data.Set("id", cmd.Result.Id)
+	dash.Data.Set("uid", cmd.Result.Uid)
 
-	return cmd.Result
+	return dash
 }
 
 func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isFolder bool, pluginId string) *models.Dashboard {
@@ -476,10 +470,10 @@ func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isF
 		PluginId: pluginId,
 	}
 
-	err := SaveDashboard(&cmd)
+	dash, err := sqlStore.SaveDashboard(cmd)
 	So(err, ShouldBeNil)
 
-	return cmd.Result
+	return dash
 }
 
 func createUser(t *testing.T, name string, role string, isAdmin bool) models.User {
@@ -499,18 +493,4 @@ func createUser(t *testing.T, name string, role string, isAdmin bool) models.Use
 	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
 
 	return currentUserCmd.Result
-}
-
-func moveDashboard(orgId int64, dashboard *simplejson.Json, newFolderId int64) *models.Dashboard {
-	cmd := models.SaveDashboardCommand{
-		OrgId:     orgId,
-		FolderId:  newFolderId,
-		Dashboard: dashboard,
-		Overwrite: true,
-	}
-
-	err := SaveDashboard(&cmd)
-	So(err, ShouldBeNil)
-
-	return cmd.Result
 }

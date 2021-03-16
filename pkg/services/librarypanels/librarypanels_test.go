@@ -732,6 +732,7 @@ type scenarioContext struct {
 	user          models.SignedInUser
 	folder        *models.Folder
 	initialResult libraryPanelResult
+	sqlStore      *sqlstore.SQLStore
 }
 
 type folderACLItem struct {
@@ -739,7 +740,8 @@ type folderACLItem struct {
 	permission models.PermissionType
 }
 
-func createDashboard(t *testing.T, user models.SignedInUser, title string, folderID int64) *models.Dashboard {
+func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.SignedInUser, title string,
+	folderID int64) *models.Dashboard {
 	dash := models.NewDashboard(title)
 	dash.FolderId = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
@@ -761,38 +763,39 @@ func createDashboard(t *testing.T, user models.SignedInUser, title string, folde
 		return nil
 	}
 
-	dashboard, err := dashboards.NewService(&fakeDashboardStore{}).SaveDashboard(dashItem, true)
+	fmt.Printf("Saving dashboard with store %p, org ID %d, folder ID %d\n", sqlStore, dash.OrgId, dash.FolderId)
+	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
 }
 
-func createFolderWithACL(t *testing.T, title string, user models.SignedInUser, items []folderACLItem) *models.Folder {
-	s := dashboards.NewFolderService(user.OrgId, &user, &fakeDashboardStore{})
-	folderCmd := models.CreateFolderCommand{
-		Uid:   title,
-		Title: title,
-	}
-	err := s.CreateFolder(&folderCmd)
+func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user models.SignedInUser,
+	items []folderACLItem) *models.Folder {
+	t.Helper()
+
+	s := dashboards.NewFolderService(user.OrgId, &user, sqlStore)
+	t.Logf("Creating folder with title and UID %q", title)
+	folder, err := s.CreateFolder(title, title)
 	require.NoError(t, err)
 
-	updateFolderACL(t, folderCmd.Result.Id, items)
+	updateFolderACL(t, sqlStore, folder.Id, items)
 
-	return folderCmd.Result
+	return folder
 }
 
-func updateFolderACL(t *testing.T, folderID int64, items []folderACLItem) {
+func updateFolderACL(t *testing.T, sqlStore *sqlstore.SQLStore, folderID int64, items []folderACLItem) {
+	t.Helper()
+
 	if len(items) == 0 {
 		return
 	}
 
-	cmd := models.UpdateDashboardAclCommand{
-		DashboardID: folderID,
-	}
+	var aclItems []*models.DashboardAcl
 	for _, item := range items {
 		role := item.roleType
 		permission := item.permission
-		cmd.Items = append(cmd.Items, &models.DashboardAcl{
+		aclItems = append(aclItems, &models.DashboardAcl{
 			DashboardID: folderID,
 			Role:        &role,
 			Permission:  permission,
@@ -801,11 +804,13 @@ func updateFolderACL(t *testing.T, folderID int64, items []folderACLItem) {
 		})
 	}
 
-	err := bus.Dispatch(&cmd)
+	err := sqlStore.UpdateDashboardACL(folderID, aclItems)
 	require.NoError(t, err)
 }
 
 func validateAndUnMarshalResponse(t *testing.T, resp response.Response) libraryPanelResult {
+	t.Helper()
+
 	require.Equal(t, 200, resp.Status())
 
 	var result = libraryPanelResult{}
@@ -816,6 +821,8 @@ func validateAndUnMarshalResponse(t *testing.T, resp response.Response) libraryP
 }
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
+	t.Helper()
+
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 		resp := sc.service.createHandler(sc.reqContext, command)
@@ -872,16 +879,17 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 
 		sc := scenarioContext{
-			user:    user,
-			ctx:     &ctx,
-			service: &service,
+			user:     user,
+			ctx:      &ctx,
+			service:  &service,
+			sqlStore: sqlStore,
 			reqContext: &models.ReqContext{
 				Context:      &ctx,
 				SignedInUser: &user,
 			},
 		}
 
-		sc.folder = createFolderWithACL(t, "ScenarioFolder", sc.user, []folderACLItem{})
+		sc.folder = createFolderWithACL(t, sc.sqlStore, "ScenarioFolder", sc.user, []folderACLItem{})
 
 		fn(t, sc)
 	})
@@ -899,6 +907,14 @@ type fakeDashboardStore struct {
 	dboards.Store
 }
 
-func (v *fakeDashboardStore) ValidateDashboardBeforeSave(int64, *models.Dashboard, bool) (bool, error) {
+func (s *fakeDashboardStore) ValidateDashboardBeforeSave(*models.Dashboard, bool) (bool, error) {
 	return false, nil
+}
+
+func (s *fakeDashboardStore) CreateFolder(title, uid string) (*models.Folder, error) {
+	return &models.Folder{}, nil
+}
+
+func (s *fakeDashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
+	return &models.Dashboard{}, nil
 }

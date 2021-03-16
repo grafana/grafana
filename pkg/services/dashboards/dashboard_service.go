@@ -23,6 +23,7 @@ type DashboardService interface {
 	SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error)
 	ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error)
 	DeleteDashboard(dashboardId int64, orgId int64) error
+	MakeUserAdmin(orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 }
 
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
@@ -83,6 +84,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 	validateProvisionedDashboard bool) (*models.SaveDashboardCommand, error) {
 	dash := dto.Dashboard
 
+	dash.OrgId = dto.OrgId
 	dash.Title = strings.TrimSpace(dash.Title)
 	dash.Data.Set("title", dash.Title)
 	dash.SetUid(strings.TrimSpace(dash.Uid))
@@ -115,7 +117,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		}
 	}
 
-	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(dto.OrgId, dash, dto.Overwrite)
+	isParentFolderChanged, err := dr.dashboardStore.ValidateDashboardBeforeSave(dash, dto.Overwrite)
 	if err != nil {
 		return nil, err
 	}
@@ -262,17 +264,17 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 		return nil, err
 	}
 
-	err = bus.Dispatch(cmd)
+	dash, err := dr.dashboardStore.SaveDashboard(*cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	err = UpdateAlerting(dto.OrgId, cmd.Result, dto.User)
+	err = UpdateAlerting(dto.OrgId, dash, dto.User)
 	if err != nil {
 		return nil, err
 	}
 
-	return cmd.Result, nil
+	return dash, nil
 }
 
 func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO, allowUiUpdate bool) (*models.Dashboard, error) {
@@ -288,15 +290,16 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO, allowUiUpda
 		return nil, err
 	}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	dash, err := dr.dashboardStore.SaveDashboard(*cmd)
+	if err != nil {
 		return nil, fmt.Errorf("saving dashboard failed: %w", err)
 	}
 
-	if err := UpdateAlerting(dto.OrgId, cmd.Result, dto.User); err != nil {
+	if err := UpdateAlerting(dto.OrgId, dash, dto.User); err != nil {
 		return nil, err
 	}
 
-	return cmd.Result, nil
+	return dash, nil
 }
 
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for

@@ -298,7 +298,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 
 	if hs.Cfg.EditorsCanAdmin && newDashboard {
 		inFolder := cmd.FolderId > 0
-		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		err := dashSvc.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}

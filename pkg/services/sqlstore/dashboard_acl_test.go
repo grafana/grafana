@@ -61,10 +61,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			})
 
 			Convey("Given dashboard folder with removed default permissions", func() {
-				err := UpdateDashboardAcl(&models.UpdateDashboardAclCommand{
-					DashboardID: savedFolder.Id,
-					Items:       []*models.DashboardAcl{},
-				})
+				err := sqlStore.UpdateDashboardACL(savedFolder.Id, nil)
 				So(err, ShouldBeNil)
 
 				Convey("When reading dashboard acl should return no acl items", func() {

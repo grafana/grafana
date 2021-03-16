@@ -62,7 +62,6 @@ func TestIntegratedDashboardService(t *testing.T) {
 						"title": "Expect error",
 					}),
 				}
-
 				err := callSaveWithError(cmd, sqlStore)
 
 				Convey("It should result in not found error", func() {
