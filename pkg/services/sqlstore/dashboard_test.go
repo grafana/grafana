@@ -144,12 +144,12 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 					UserId: 100,
 				}
-				_, err := sqlStore.SaveDashboard(cmd)
+				dashboard, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
-				So(cmd.Result.CreatedBy, ShouldEqual, 100)
-				So(cmd.Result.Created.IsZero(), ShouldBeFalse)
-				So(cmd.Result.UpdatedBy, ShouldEqual, 100)
-				So(cmd.Result.Updated.IsZero(), ShouldBeFalse)
+				So(dashboard.CreatedBy, ShouldEqual, 100)
+				So(dashboard.Created.IsZero(), ShouldBeFalse)
+				So(dashboard.UpdatedBy, ShouldEqual, 100)
+				So(dashboard.Updated.IsZero(), ShouldBeFalse)
 			})
 
 			Convey("Should be able to update dashboard by id and remove folderId", func() {
@@ -452,9 +452,10 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 	}
 	dash, err := sqlStore.SaveDashboard(cmd)
 	require.NoError(t, err)
+	require.NotNil(t, dash)
 
-	dash.Data.Set("id", cmd.Result.Id)
-	dash.Data.Set("uid", cmd.Result.Uid)
+	dash.Data.Set("id", dash.Id)
+	dash.Data.Set("uid", dash.Uid)
 
 	return dash
 }
@@ -480,7 +481,7 @@ func insertTestDashboardForPlugin(t *testing.T, sqlStore *SQLStore, title string
 	return dash
 }
 
-func createUser(t *testing.T, name string, role string, isAdmin bool) models.User {
+func createUser(t *testing.T, sqlStore *SQLStore, name string, role string, isAdmin bool) models.User {
 	t.Helper()
 
 	setting.AutoAssignOrg = true
@@ -488,13 +489,13 @@ func createUser(t *testing.T, name string, role string, isAdmin bool) models.Use
 	setting.AutoAssignOrgRole = role
 
 	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	err := CreateUser(context.Background(), &currentUserCmd)
+	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
 	require.NoError(t, err)
 
-	q1 := models.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
+	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
 	err = GetUserOrgList(&q1)
 	require.NoError(t, err)
 	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
 
-	return currentUserCmd.Result
+	return *currentUser
 }

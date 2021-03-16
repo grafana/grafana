@@ -863,12 +863,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		// deliberate difference between signed in user and user in db to make it crystal clear
 		// what to expect in the tests
 		// In the real world these are identical
-		cmd := &models.CreateUserCommand{
+		cmd := models.CreateUserCommand{
 			Email: "user.in.db@test.com",
 			Name:  "User In DB",
 			Login: UserInDbName,
 		}
-		err := sqlstore.CreateUser(context.Background(), cmd)
+		_, err := sqlStore.CreateUser(context.Background(), cmd)
 		require.NoError(t, err)
 
 		sc := scenarioContext{

@@ -139,8 +139,8 @@ func TestSQLBuilder(t *testing.T) {
 	})
 }
 
-var shouldFind = true
-var shouldNotFind = false
+const shouldFind = true
+const shouldNotFind = false
 
 type DashboardProps struct {
 	OrgId int64
@@ -172,15 +172,16 @@ func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *Dash
 
 	dashboard := createDummyDashboard(t, sqlStore, dashboardProps)
 
-	var aclUserId int64
+	var aclUserID int64
 	if dashboardPermission != nil {
-		aclUserId = createDummyAcl(t, sqlStore, dashboardPermission, search, dashboard.Id)
+		aclUserID = createDummyAcl(t, sqlStore, dashboardPermission, search, dashboard.Id)
+		t.Logf("Created ACL with user ID %d\n", aclUserID)
 	}
-	dashboards := getDashboards(t, sqlStore, search, aclUserId)
+	dashboards := getDashboards(t, sqlStore, search, aclUserID)
 
 	if shouldFind {
-		assert.Len(t, dashboards, 1, "Should return one dashboard")
-		assert.Equal(t, dashboards[0].Id, dashboard.Id, "Should return created dashboard")
+		require.Len(t, dashboards, 1, "Should return one dashboard")
+		assert.Equal(t, dashboard.Id, dashboards[0].Id, "Should return created dashboard")
 	} else {
 		assert.Empty(t, dashboards, "Should not return any dashboard")
 	}
@@ -190,7 +191,7 @@ func createDummyUser(t *testing.T, sqlStore *SQLStore) *models.User {
 	t.Helper()
 
 	uid := strconv.Itoa(rand.Intn(9999999))
-	createUserCmd := &models.CreateUserCommand{
+	createUserCmd := models.CreateUserCommand{
 		Email:          uid + "@example.com",
 		Login:          uid,
 		Name:           uid,
@@ -202,25 +203,19 @@ func createDummyUser(t *testing.T, sqlStore *SQLStore) *models.User {
 		SkipOrgSetup:   false,
 		DefaultOrgRole: string(models.ROLE_VIEWER),
 	}
-	err := CreateUser(context.Background(), createUserCmd)
+	user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
 	require.NoError(t, err)
 
-	return &createUserCmd.Result
+	return user
 }
 
-func createDummyTeam(t *testing.T, sqlStore *SQLStore) *models.Team {
+func createDummyTeam(t *testing.T, sqlStore *SQLStore) models.Team {
 	t.Helper()
 
-	cmd := &models.CreateTeamCommand{
-		// Does not matter in this tests actually
-		OrgId: 1,
-		Name:  "test",
-		Email: "test@example.com",
-	}
-	err := CreateTeam(cmd)
+	team, err := sqlStore.CreateTeam("test", "test@example.com", 1)
 	require.NoError(t, err)
 
-	return &cmd.Result
+	return team
 }
 
 func createDummyDashboard(t *testing.T, sqlStore *SQLStore, dashboardProps DashboardProps) *models.Dashboard {
@@ -249,6 +244,7 @@ func createDummyDashboard(t *testing.T, sqlStore *SQLStore, dashboardProps Dashb
 	dash, err := sqlStore.SaveDashboard(saveDashboardCmd)
 	require.NoError(t, err)
 
+	t.Logf("Created dashboard with ID %d and org ID %d\n", dash.Id, dash.OrgId)
 	return dash
 }
 
@@ -265,12 +261,14 @@ func createDummyAcl(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 
 	var user *models.User
 	if dashboardPermission.User {
+		t.Logf("Creating user")
 		user = createDummyUser(t, sqlStore)
 
 		acl.UserID = user.Id
 	}
 
 	if dashboardPermission.Team {
+		t.Logf("Creating team")
 		team := createDummyTeam(t, sqlStore)
 		if search.UserFromACL {
 			user := createDummyUser(t, sqlStore)
@@ -298,7 +296,7 @@ func createDummyAcl(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 	return 0
 }
 
-func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserId int64) []*dashboardResponse {
+func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserID int64) []*dashboardResponse {
 	t.Helper()
 
 	builder := &SQLBuilder{}
@@ -318,12 +316,13 @@ func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserId in
 		signedInUser.OrgRole = models.ROLE_VIEWER
 	}
 	if search.UserFromACL {
-		signedInUser.UserId = aclUserId
+		signedInUser.UserId = aclUserID
 	}
 
 	var res []*dashboardResponse
 	builder.Write("SELECT * FROM dashboard WHERE true")
 	builder.WriteDashboardPermissionFilter(signedInUser, search.RequiredPermission)
+	t.Logf("Searching for dashboards, SQL: %q\n", builder.GetSQLString())
 	err := sqlStore.engine.SQL(builder.GetSQLString(), builder.params...).Find(&res)
 	require.NoError(t, err)
 	return res

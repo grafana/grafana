@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -11,7 +12,6 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", CreateTeam)
 	bus.AddHandler("sql", UpdateTeam)
 	bus.AddHandler("sql", DeleteTeam)
 	bus.AddHandler("sql", SearchTeams)
@@ -43,7 +43,7 @@ func getFilteredUsers(signedInUser *models.SignedInUser, hiddenUsers map[string]
 
 func getTeamMemberCount(filteredUsers []string) string {
 	if len(filteredUsers) > 0 {
-		return `(SELECT COUNT(*) FROM team_member 
+		return `(SELECT COUNT(*) FROM team_member
 			INNER JOIN ` + dialect.Quote("user") + ` ON team_member.user_id = ` + dialect.Quote("user") + `.id
 			WHERE team_member.team_id = team.id AND ` + dialect.Quote("user") + `.login NOT IN (?` +
 			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
@@ -75,28 +75,26 @@ func getTeamSelectSQLBase(filteredUsers []string) string {
 		` FROM team as team `
 }
 
-func CreateTeam(cmd *models.CreateTeamCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		if isNameTaken, err := isTeamNameTaken(cmd.OrgId, cmd.Name, 0, sess); err != nil {
+func (ss *SQLStore) CreateTeam(name, email string, orgID int64) (models.Team, error) {
+	team := models.Team{
+		Name:    name,
+		Email:   email,
+		OrgId:   orgID,
+		Created: time.Now(),
+		Updated: time.Now(),
+	}
+	err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		if isNameTaken, err := isTeamNameTaken(orgID, name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
 			return models.ErrTeamNameTaken
 		}
 
-		team := models.Team{
-			Name:    cmd.Name,
-			Email:   cmd.Email,
-			OrgId:   cmd.OrgId,
-			Created: time.Now(),
-			Updated: time.Now(),
-		}
-
 		_, err := sess.Insert(&team)
-
-		cmd.Result = team
 
 		return err
 	})
+	return team, err
 }
 
 func UpdateTeam(cmd *models.UpdateTeamCommand) error {

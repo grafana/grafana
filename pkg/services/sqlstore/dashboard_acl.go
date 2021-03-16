@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -16,7 +17,7 @@ func (ss *SQLStore) UpdateDashboardACL(dashboardID int64, items []*models.Dashbo
 		// delete existing items
 		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
 		if err != nil {
-			return err
+			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
 		}
 
 		for _, item := range items {
