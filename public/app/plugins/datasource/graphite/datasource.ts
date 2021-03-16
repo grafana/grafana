@@ -9,6 +9,7 @@ import {
   ScopedVars,
   toDataFrame,
   TimeRange,
+  MetricFindValue,
 } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
@@ -336,7 +337,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     return date.unix();
   }
 
-  metricFindQuery(query: string, optionalOptions?: any) {
+  metricFindQuery(query: string, optionalOptions?: any): Promise<MetricFindValue[]> {
     const options: any = optionalOptions || {};
     let interpolatedQuery = this.templateSrv.replace(
       query,
