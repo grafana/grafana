@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import mdx from './Form.mdx';
 import { ValidateResult } from 'react-hook-form';
-import { boolean } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 import {
   Field,
   Legend,
@@ -25,6 +25,9 @@ export default {
   parameters: {
     docs: {
       page: mdx,
+    },
+    knobs: {
+      disable: true,
     },
   },
 };
@@ -145,25 +148,11 @@ export const DefaultValues = () => {
       switch: false,
     },
   ];
-  const [defaultsIdx, setDefaultsIdx] = useState(0);
 
-  return (
-    <>
-      {renderForm(defaultValues[defaultsIdx])}
-      <Button
-        onClick={() => {
-          setDefaultsIdx((s) => (s + 1) % 2);
-        }}
-        variant="secondary"
-      >
-        Change default values
-      </Button>
-    </>
-  );
+  return <>{renderForm(defaultValues[0])}</>;
 };
 
-export const AsyncValidation = () => {
-  const passAsyncValidation = boolean('Pass username validation', true);
+export const AsyncValidation: Story = ({ passAsyncValidation }) => {
   return (
     <>
       <Form
@@ -193,6 +182,9 @@ export const AsyncValidation = () => {
       </Form>
     </>
   );
+};
+AsyncValidation.args = {
+  passAsyncValidation: true,
 };
 
 const validateAsync = (shouldPass: boolean) => async () => {
