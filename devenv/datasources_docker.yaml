@@ -58,7 +58,7 @@ datasources:
     access: proxy
     database: telegraf
     user: grafana
-    url: http://telegraf:8086
+    url: http://influxdb:8086
     secureJsonData:
       password: grafana
 
