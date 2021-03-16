@@ -4,7 +4,7 @@ import {
   ContextMenu,
   GraphContextMenuHeader,
   IconName,
-  MenuItem,
+  MenuItemProps,
   MenuItemsGroup,
   Portal,
   useGraphNGContext,
@@ -135,9 +135,10 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
 
       if (linksSupplier) {
         items.push({
-          items: linksSupplier.getLinks(replaceVariables).map<MenuItem>((link) => {
+          items: linksSupplier.getLinks(replaceVariables).map<MenuItemProps>((link) => {
             return {
               label: link.title,
+              ariaLabel: link.title,
               url: link.href,
               target: link.target,
               icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
@@ -161,7 +162,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
 
   return (
     <ContextMenu
-      items={items}
+      itemsGroup={items}
       renderHeader={renderHeader}
       x={selection.coords.viewport.x}
       y={selection.coords.viewport.y}
