@@ -1755,7 +1755,6 @@ describe('PrometheusDatasource with Thanos flavour', () => {
 });
 
 describe('PrometheusDatasource for POST', () => {
-  //   const ctx = new helpers.ServiceTestContext();
   const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',

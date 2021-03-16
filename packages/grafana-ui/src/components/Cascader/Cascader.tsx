@@ -7,6 +7,7 @@ import { Input } from '../Input/Input';
 import { SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 import { onChangeCascader } from './optionMappings';
+import memoizeOne from 'memoize-one';
 
 export interface CascaderProps {
   /** The separator between levels in the search */
@@ -27,7 +28,6 @@ export interface CascaderProps {
 
 interface CascaderState {
   isSearching: boolean;
-  searchableOptions: Array<SelectableValue<string[]>>;
   focusCascade: boolean;
   //Array for cascade navigation
   rcValue: SelectableValue<string[]>;
@@ -63,12 +63,11 @@ const DEFAULT_SEPARATOR = '/';
 export class Cascader extends React.PureComponent<CascaderProps, CascaderState> {
   constructor(props: CascaderProps) {
     super(props);
-    const searchableOptions = this.flattenOptions(props.options);
+    const searchableOptions = this.getSearchableOptions(props.options);
     const { rcValue, activeLabel } = this.setInitialValue(searchableOptions, props.initialValue);
     this.state = {
       isSearching: false,
       focusCascade: false,
-      searchableOptions,
       rcValue,
       activeLabel,
     };
@@ -94,6 +93,8 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
     return selectOptions;
   };
 
+  getSearchableOptions = memoizeOne((options: CascaderOption[]) => this.flattenOptions(options));
+
   setInitialValue(searchableOptions: Array<SelectableValue<string[]>>, initValue?: string) {
     if (!initValue) {
       return { rcValue: [], activeLabel: '' };
@@ -104,7 +105,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       if (optionPath.indexOf(initValue) === optionPath.length - 1) {
         return {
           rcValue: optionPath,
-          activeLabel: option.singleLabel || '',
+          activeLabel: this.props.displayAllSelectedLevels ? option.label : option.singleLabel || '',
         };
       }
     }
@@ -131,7 +132,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   onSelect = (obj: SelectableValue<string[]>) => {
     const valueArray = obj.value || [];
     this.setState({
-      activeLabel: obj.singleLabel || '',
+      activeLabel: this.props.displayAllSelectedLevels ? obj.label : obj.singleLabel || '',
       rcValue: valueArray,
       isSearching: false,
     });
@@ -183,8 +184,10 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   };
 
   render() {
-    const { allowCustomValue, placeholder, width, changeOnSelect } = this.props;
-    const { focusCascade, isSearching, searchableOptions, rcValue, activeLabel } = this.state;
+    const { allowCustomValue, placeholder, width, changeOnSelect, options } = this.props;
+    const { focusCascade, isSearching, rcValue, activeLabel } = this.state;
+
+    const searchableOptions = this.getSearchableOptions(options);
 
     return (
       <div>

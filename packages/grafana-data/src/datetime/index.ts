@@ -7,4 +7,4 @@ export * from './formats';
 export * from './formatter';
 export * from './parser';
 export { dateMath, rangeUtil };
-export { DateTimeOptions, setTimeZoneResolver, TimeZoneResolver } from './common';
+export { DateTimeOptions, setTimeZoneResolver, TimeZoneResolver, getTimeZone } from './common';

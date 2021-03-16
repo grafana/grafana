@@ -20,7 +20,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import cloneDeep from 'lodash/cloneDeep';
 import defaults from 'lodash/defaults';
 import LRU from 'lru-cache';
-import { forkJoin, merge, Observable, of, pipe, throwError } from 'rxjs';
+import { forkJoin, merge, Observable, of, pipe, Subject, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
@@ -63,6 +63,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
+  exemplarErrors: Subject<FetchError> = new Subject();
   flavourProvider: PrometheusFlavourProvider;
 
   constructor(
@@ -314,7 +315,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
 
       if (query.exemplar) {
-        return this.getExemplars(query).pipe(filterAndMapResponse);
+        return this.getExemplars(query).pipe(
+          catchError((err: FetchError) => {
+            this.exemplarErrors.next(err);
+            return of({
+              data: [],
+              state: LoadingState.Done,
+            });
+          }),
+          filterAndMapResponse
+        );
       }
 
       return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
@@ -352,7 +362,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
 
       if (query.exemplar) {
-        return this.getExemplars(query).pipe(filterAndMapResponse);
+        return this.getExemplars(query).pipe(
+          catchError((err: FetchError) => {
+            this.exemplarErrors.next(err);
+            return of({
+              data: [],
+              state: LoadingState.Done,
+            });
+          }),
+          filterAndMapResponse
+        );
       }
 
       return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
