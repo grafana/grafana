@@ -115,6 +115,25 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	}
 	metrics["stats.ds.other.count"] = dsOtherCount
 
+	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
+	if err := uss.Bus.Dispatch(&esDataSourcesQuery); err != nil {
+		metricsLogger.Error("Failed to get elasticsearch json data", "error", err)
+		return report, err
+	}
+
+	for _, data := range esDataSourcesQuery.Result {
+		esVersion, err := data.JsonData.Get("esVersion").Int()
+		if err != nil {
+			continue
+		}
+
+		statName := fmt.Sprintf("stats.ds.elasticsearch.v%d.count", esVersion)
+
+		count, _ := metrics[statName].(int64)
+
+		metrics[statName] = count + 1
+	}
+
 	metrics["stats.packaging."+uss.Cfg.Packaging+".count"] = 1
 	metrics["stats.distributor."+uss.Cfg.ReportingDistributor+".count"] = 1
 
