@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
@@ -60,12 +61,21 @@ func (ccc *ConditionsCmd) NeedsVars() []string {
 	return vars
 }
 
+// EvalMatch represents the series violating the threshold.
+type EvalMatch struct {
+	Value  *float64    `json:"value"`
+	Metric string      `json:"metric"`
+	Labels data.Labels `json:"tags"`
+}
+
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
 func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
 	firing := true
 	newRes := mathexp.Results{}
 	noDataFound := true
+
+	matches := []EvalMatch{}
 
 	for i, c := range ccc.Conditions {
 		querySeriesSet := vars[c.QueryRefID]
@@ -80,6 +90,15 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 			thisCondNoDataFound := reducedNum.GetFloat64Value() == nil
 
 			evalRes := c.Evaluator.Eval(reducedNum)
+
+			if thisCondNoDataFound || evalRes {
+				match := EvalMatch{
+					Value:  reducedNum.GetFloat64Value(),
+					Labels: reducedNum.GetLabels().Copy(),
+					Metric: series.GetName(),
+				}
+				matches = append(matches, match)
+			}
 
 			if i == 0 {
 				firing = evalRes
@@ -97,6 +116,8 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 	}
 
 	num := mathexp.NewNumber("", nil)
+
+	num.SetMeta(matches)
 
 	var v float64
 	switch {
