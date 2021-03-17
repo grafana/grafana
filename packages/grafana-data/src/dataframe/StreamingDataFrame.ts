@@ -3,6 +3,28 @@ import { QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities } from './DataFrameJSON';
 
+// circular push
+function circPush(buf: any[], v: any) {
+  let blen = buf.length;
+  let bend = blen - 1;
+
+  if (Array.isArray(v)) {
+    let vlen = v.length;
+
+    buf.copyWithin(0, vlen);
+
+    let j = 0;
+    let i = blen - vlen;
+
+    while (i < blen) {
+      buf[i++] = v[j++];
+    }
+  } else {
+    buf.copyWithin(0, 1);
+    buf[bend] = v;
+  }
+}
+
 /**
  * @alpha
  */
@@ -25,8 +47,6 @@ export class StreamingDataFrame implements DataFrame {
   fields: Array<Field<any, ArrayVector<any>>> = [];
 
   options: StreamingFrameOptions;
-  private lastUpdateTime = 0;
-  private timeFieldIndex = -1;
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
@@ -80,8 +100,6 @@ export class StreamingDataFrame implements DataFrame {
           values: oldValues ? oldValues[idx] : new ArrayVector(),
         };
       });
-
-      this.timeFieldIndex = this.fields.findIndex((f) => f.type === FieldType.time);
     }
 
     if (data && data.values.length && data.values[0].length) {
@@ -100,30 +118,8 @@ export class StreamingDataFrame implements DataFrame {
       }
 
       this.fields.forEach((f, i) => {
-        f.values.buffer.push(...values[i]);
+        circPush(f.values.buffer, values[i]);
       });
-
-      // Shorten the array less frequently than we append
-      const now = Date.now();
-      const elapsed = now - this.lastUpdateTime;
-      if (elapsed > 5000) {
-        if (this.options.maxSeconds && this.timeFieldIndex >= 0 && this.length > 2) {
-          // TODO -- check time length
-          const tf = this.fields[this.timeFieldIndex].values.buffer;
-          const elapsed = tf[tf.length - 1] - tf[0];
-          console.log('Check elapsed time: ', elapsed);
-        }
-        if (this.options.maxLength) {
-          const delta = this.length - this.options.maxLength;
-
-          if (delta > 0) {
-            this.fields.forEach((f) => {
-              f.values.buffer = f.values.buffer.slice(delta);
-            });
-          }
-        }
-        this.lastUpdateTime = now;
-      }
     }
   }
 }
