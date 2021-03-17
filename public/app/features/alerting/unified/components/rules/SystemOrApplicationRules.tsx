@@ -84,7 +84,7 @@ export const SystemOrApplicationAlerts: FC = () => {
         namespace.groups.map((group) => (
           <RulesGroup
             group={group}
-            key={`${namespace.name}-${group.name}`}
+            key={`${datasource.name}-${namespace.name}-${group.name}`}
             namespace={namespace.name}
             datasource={datasource}
           />

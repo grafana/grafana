@@ -1,3 +1,4 @@
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { getAllDataSources, getDatasourceByName } from './config';
 
@@ -42,4 +43,15 @@ export function getRulesDatasources() {
   return getAllDataSources()
     .filter((ds) => RulesDatasourceTypes.includes(ds.type))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function getLotexDatasourceByName(datasourceName: string): DataSourceInstanceSettings {
+  const datasource = getDatasourceByName(datasourceName);
+  if (!datasource) {
+    throw new Error(`Datasource ${datasourceName} not found`);
+  }
+  if (datasource.type !== DataSourceType.Loki && datasource.type !== DataSourceType.Prometheus) {
+    throw new Error(`Unexpected datasource type ${datasource.type}`);
+  }
+  return datasource;
 }

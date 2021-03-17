@@ -1,6 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { RuleNamespace } from 'app/types/unified-alerting/internal';
-import { fetchRules } from '../api/rules';
+import { fetchRules } from '../api/prometheus';
 import { withSerializedError } from '../utils/redux';
 
 /*

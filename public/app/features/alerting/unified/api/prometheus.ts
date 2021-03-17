@@ -1,19 +1,12 @@
 import { RuleNamespace } from 'app/types/unified-alerting/internal';
 import { PromRulesResponse } from 'app/types/unified-alerting/dto';
-import { getDatasourceByName } from '../utils/config';
-import { datasourceRequest, DataSourceType } from '../utils/datasource';
+import { datasourceRequest, DataSourceType, getLotexDatasourceByName } from '../utils/datasource';
 
 // @TODO currently uses datasource proxy. Will need rework when unified alerting API is operational
 export async function fetchRules(datasourceName: string): Promise<RuleNamespace[]> {
-  const datasource = getDatasourceByName(datasourceName);
-  if (!datasource) {
-    throw new Error(`Datasource ${datasourceName} not found`);
-  }
-  if (datasource.type !== DataSourceType.Loki && datasource.type !== DataSourceType.Prometheus) {
-    throw new Error(`Unexpected datasource type ${datasource.type}`);
-  }
+  const datasource = getLotexDatasourceByName(datasourceName);
   const response = await datasourceRequest<PromRulesResponse>(
-    datasource.name,
+    datasourceName,
     datasource.type === DataSourceType.Loki ? '/prometheus/api/v1/rules' : '/api/v1/rules'
   );
 

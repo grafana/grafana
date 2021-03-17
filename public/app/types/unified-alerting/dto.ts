@@ -67,3 +67,30 @@ export interface PromResponse<T> {
 }
 
 export type PromRulesResponse = PromResponse<{ groups: PromRuleGroupDTO[] }>;
+
+// Ruler rule DTOs
+
+interface RulerRuleBaseDTO {
+  expr: string;
+  labels?: Labels;
+}
+
+export interface RulerRecordingRuleDTO extends RulerRuleBaseDTO {
+  record: string;
+}
+
+export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
+  alert: string;
+  for?: string;
+  annotations?: Annotations;
+}
+
+export type RulerRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO;
+
+export type RulerRuleGroupDTO = {
+  name: string;
+  interval?: string;
+  rules: RulerRuleDTO[];
+};
+
+export type RulerRulesConfigDTO = { [namespace: string]: RulerRuleGroupDTO[] };
