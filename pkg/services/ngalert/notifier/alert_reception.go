@@ -32,6 +32,9 @@ type AlertProvider struct {
 	stage notify.Stage
 }
 
+// NewAlertProvider returns AlertProvider that also supports legacy alerts via PutPostableAlert.
+// The notify.Stage should be of the type notify.RoutingStage or something similar that takes
+// notification channel name from the context.
 func NewAlertProvider(s notify.Stage, m types.Marker, l log.Logger) (*AlertProvider, error) {
 	alerts, err := mem.NewAlerts(context.Background(), m, 30*time.Minute, l)
 	if err != nil {
