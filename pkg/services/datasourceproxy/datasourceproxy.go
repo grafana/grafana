@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,6 +23,7 @@ func init() {
 type DatasourceProxyService struct {
 	DatasourceCache        datasources.CacheService      `inject:""`
 	PluginRequestValidator models.PluginRequestValidator `inject:""`
+	PluginManager          plugins.Manager               `inject:""`
 	Cfg                    *setting.Cfg                  `inject:""`
 }
 
@@ -54,8 +55,8 @@ func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	}
 
 	// find plugin
-	plugin, ok := manager.DataSources[ds.Type]
-	if !ok {
+	plugin := p.PluginManager.GetDataSource(ds.Type)
+	if plugin == nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
 		return
 	}

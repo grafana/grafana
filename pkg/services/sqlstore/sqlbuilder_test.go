@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSQLBuilder(t *testing.T) {
@@ -138,8 +139,8 @@ func TestSQLBuilder(t *testing.T) {
 	})
 }
 
-var shouldFind = true
-var shouldNotFind = false
+const shouldFind = true
+const shouldNotFind = false
 
 type DashboardProps struct {
 	OrgId int64
@@ -164,38 +165,35 @@ type dashboardResponse struct {
 }
 
 func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *DashboardPermission, search Search, shouldFind bool) {
-	// Will also cleanup the db
-	sqlStore := InitTestDB(t)
+	t.Helper()
 
-	dashboard, err := createDummyDashboard(dashboardProps)
-	if !assert.Equal(t, nil, err) {
-		return
-	}
+	t.Run("", func(t *testing.T) {
+		// Will also cleanup the db
+		sqlStore := InitTestDB(t)
 
-	var aclUserId int64
-	if dashboardPermission != nil {
-		aclUserId, err = createDummyAcl(dashboardPermission, search, dashboard.Id)
-		if !assert.Equal(t, nil, err) {
-			return
+		dashboard := createDummyDashboard(t, sqlStore, dashboardProps)
+
+		var aclUserID int64
+		if dashboardPermission != nil {
+			aclUserID = createDummyACL(t, sqlStore, dashboardPermission, search, dashboard.Id)
+			t.Logf("Created ACL with user ID %d\n", aclUserID)
 		}
-	}
-	dashboards, err := getDashboards(sqlStore, search, aclUserId)
-	if !assert.Equal(t, nil, err) {
-		return
-	}
+		dashboards := getDashboards(t, sqlStore, search, aclUserID)
 
-	if shouldFind {
-		if assert.Equal(t, 1, len(dashboards), "Should return one dashboard") {
-			assert.Equal(t, dashboards[0].Id, dashboard.Id, "Should return created dashboard")
+		if shouldFind {
+			require.Len(t, dashboards, 1, "Should return one dashboard")
+			assert.Equal(t, dashboard.Id, dashboards[0].Id, "Should return created dashboard")
+		} else {
+			assert.Empty(t, dashboards, "Should not return any dashboard")
 		}
-	} else {
-		assert.Equal(t, 0, len(dashboards), "Should node return any dashboard")
-	}
+	})
 }
 
-func createDummyUser() (*models.User, error) {
+func createDummyUser(t *testing.T, sqlStore *SQLStore) *models.User {
+	t.Helper()
+
 	uid := strconv.Itoa(rand.Intn(9999999))
-	createUserCmd := &models.CreateUserCommand{
+	createUserCmd := models.CreateUserCommand{
 		Email:          uid + "@example.com",
 		Login:          uid,
 		Name:           uid,
@@ -207,33 +205,28 @@ func createDummyUser() (*models.User, error) {
 		SkipOrgSetup:   false,
 		DefaultOrgRole: string(models.ROLE_VIEWER),
 	}
-	err := CreateUser(context.Background(), createUserCmd)
-	if err != nil {
-		return nil, err
-	}
+	user, err := sqlStore.CreateUser(context.Background(), createUserCmd)
+	require.NoError(t, err)
 
-	return &createUserCmd.Result, nil
+	return user
 }
 
-func createDummyTeam() (*models.Team, error) {
-	cmd := &models.CreateTeamCommand{
-		// Does not matter in this tests actually
-		OrgId: 1,
-		Name:  "test",
-		Email: "test@example.com",
-	}
-	err := CreateTeam(cmd)
-	if err != nil {
-		return nil, err
-	}
+func createDummyTeam(t *testing.T, sqlStore *SQLStore) models.Team {
+	t.Helper()
 
-	return &cmd.Result, nil
+	team, err := sqlStore.CreateTeam("test", "test@example.com", 1)
+	require.NoError(t, err)
+
+	return team
 }
 
-func createDummyDashboard(dashboardProps DashboardProps) (*models.Dashboard, error) {
-	json, _ := simplejson.NewJson([]byte(`{"schemaVersion":17,"title":"gdev dashboards","uid":"","version":1}`))
+func createDummyDashboard(t *testing.T, sqlStore *SQLStore, dashboardProps DashboardProps) *models.Dashboard {
+	t.Helper()
 
-	saveDashboardCmd := &models.SaveDashboardCommand{
+	json, err := simplejson.NewJson([]byte(`{"schemaVersion":17,"title":"gdev dashboards","uid":"","version":1}`))
+	require.NoError(t, err)
+
+	saveDashboardCmd := models.SaveDashboardCommand{
 		Dashboard:    json,
 		UserId:       0,
 		Overwrite:    false,
@@ -250,53 +243,40 @@ func createDummyDashboard(dashboardProps DashboardProps) (*models.Dashboard, err
 		saveDashboardCmd.OrgId = 1
 	}
 
-	err := SaveDashboard(saveDashboardCmd)
-	if err != nil {
-		return nil, err
-	}
+	dash, err := sqlStore.SaveDashboard(saveDashboardCmd)
+	require.NoError(t, err)
 
-	return saveDashboardCmd.Result, nil
+	t.Logf("Created dashboard with ID %d and org ID %d\n", dash.Id, dash.OrgId)
+	return dash
 }
 
-func createDummyAcl(dashboardPermission *DashboardPermission, search Search, dashboardId int64) (int64, error) {
+func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *DashboardPermission, search Search, dashboardID int64) int64 {
+	t.Helper()
+
 	acl := &models.DashboardAcl{
 		OrgID:       1,
 		Created:     time.Now(),
 		Updated:     time.Now(),
 		Permission:  dashboardPermission.Permission,
-		DashboardID: dashboardId,
+		DashboardID: dashboardID,
 	}
 
 	var user *models.User
-	var err error
 	if dashboardPermission.User {
-		user, err = createDummyUser()
-		if err != nil {
-			return 0, err
-		}
+		t.Logf("Creating user")
+		user = createDummyUser(t, sqlStore)
 
 		acl.UserID = user.Id
 	}
 
 	if dashboardPermission.Team {
-		team, err := createDummyTeam()
-		if err != nil {
-			return 0, err
-		}
+		t.Logf("Creating team")
+		team := createDummyTeam(t, sqlStore)
 		if search.UserFromACL {
-			user, err = createDummyUser()
-			if err != nil {
-				return 0, err
-			}
-			addTeamMemberCmd := &models.AddTeamMemberCommand{
-				UserId: user.Id,
-				OrgId:  1,
-				TeamId: team.Id,
-			}
-			err = AddTeamMember(addTeamMemberCmd)
-			if err != nil {
-				return 0, err
-			}
+			user = createDummyUser(t, sqlStore)
+			err := sqlStore.AddTeamMember(user.Id, 1, team.Id, false, 0)
+			require.NoError(t, err)
+			t.Logf("Created team member with ID %d", user.Id)
 		}
 
 		acl.TeamID = team.Id
@@ -306,18 +286,17 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 		acl.Role = &dashboardPermission.Role
 	}
 
-	updateAclCmd := &models.UpdateDashboardAclCommand{
-		DashboardID: dashboardId,
-		Items:       []*models.DashboardAcl{acl},
-	}
-	err = UpdateDashboardAcl(updateAclCmd)
+	err := sqlStore.UpdateDashboardACL(dashboardID, []*models.DashboardAcl{acl})
+	require.NoError(t, err)
 	if user != nil {
-		return user.Id, err
+		return user.Id
 	}
-	return 0, err
+	return 0
 }
 
-func getDashboards(sqlStore *SQLStore, search Search, aclUserId int64) ([]*dashboardResponse, error) {
+func getDashboards(t *testing.T, sqlStore *SQLStore, search Search, aclUserID int64) []*dashboardResponse {
+	t.Helper()
+
 	builder := &SQLBuilder{}
 	signedInUser := &models.SignedInUser{
 		UserId: 9999999999,
@@ -335,12 +314,14 @@ func getDashboards(sqlStore *SQLStore, search Search, aclUserId int64) ([]*dashb
 		signedInUser.OrgRole = models.ROLE_VIEWER
 	}
 	if search.UserFromACL {
-		signedInUser.UserId = aclUserId
+		signedInUser.UserId = aclUserID
 	}
 
 	var res []*dashboardResponse
 	builder.Write("SELECT * FROM dashboard WHERE true")
 	builder.WriteDashboardPermissionFilter(signedInUser, search.RequiredPermission)
+	t.Logf("Searching for dashboards, SQL: %q\n", builder.GetSQLString())
 	err := sqlStore.engine.SQL(builder.GetSQLString(), builder.params...).Find(&res)
-	return res, err
+	require.NoError(t, err)
+	return res
 }
