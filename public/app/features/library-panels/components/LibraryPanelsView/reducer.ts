@@ -39,13 +39,12 @@ const libraryPanelsViewSlice = createSlice({
       >
     ) => {
       const { libraryPanels, page, perPage, totalCount } = action.payload;
-      const filteredTotalCount = state.currentPanelId ? totalCount - 1 : totalCount;
-      state.libraryPanels = libraryPanels?.filter((l) => l.uid !== state.currentPanelId);
-      state.page = page;
+      state.libraryPanels = libraryPanels;
       state.perPage = perPage;
-      state.totalCount = filteredTotalCount;
+      state.totalCount = totalCount;
       state.loadingState = LoadingState.Done;
-      state.numberOfPages = Math.ceil(filteredTotalCount / perPage);
+      state.numberOfPages = Math.ceil(totalCount / perPage);
+      state.page = page > state.numberOfPages ? page - 1 : page;
     },
     changeSearchString: (state, action: PayloadAction<Pick<LibraryPanelsViewState, 'searchString'>>) => {
       state.searchString = action.payload.searchString;

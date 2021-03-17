@@ -7,7 +7,7 @@ import { deleteLibraryPanel as apiDeleteLibraryPanel, getLibraryPanels } from '.
 import { initialLibraryPanelsViewState, initSearch, LibraryPanelsViewState, searchCompleted } from './reducer';
 
 type DispatchResult = (dispatch: Dispatch<AnyAction>) => void;
-type SearchArgs = Pick<LibraryPanelsViewState, 'searchString' | 'perPage' | 'page'>;
+type SearchArgs = Pick<LibraryPanelsViewState, 'searchString' | 'perPage' | 'page' | 'currentPanelId'>;
 
 export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
   return function (dispatch) {

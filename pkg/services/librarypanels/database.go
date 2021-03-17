@@ -366,7 +366,7 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 }
 
 // getAllLibraryPanels gets all library panels.
-func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPage int, page int, name string) (LibraryPanelSearchResult, error) {
+func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPage int, page int, name string, excludeUID string) (LibraryPanelSearchResult, error) {
 	libraryPanels := make([]LibraryPanelWithMeta, 0)
 	result := LibraryPanelSearchResult{}
 	if perPage <= 0 {
@@ -383,12 +383,18 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPag
 		if len(strings.TrimSpace(name)) > 0 {
 			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+name+"%")
 		}
+		if len(strings.TrimSpace(excludeUID)) > 0 {
+			builder.Write(" AND lp.uid <> ?", excludeUID)
+		}
 		builder.Write(" UNION ")
 		builder.Write(sqlStatmentLibrayPanelDTOWithMeta)
 		builder.Write(" INNER JOIN dashboard AS dashboard on lp.folder_id = dashboard.id AND lp.folder_id<>0")
 		builder.Write(` WHERE lp.org_id=?`, c.SignedInUser.OrgId)
 		if len(strings.TrimSpace(name)) > 0 {
 			builder.Write(" AND lp.name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+name+"%")
+		}
+		if len(strings.TrimSpace(excludeUID)) > 0 {
+			builder.Write(" AND lp.uid <> ?", excludeUID)
 		}
 		if c.SignedInUser.OrgRole != models.ROLE_ADMIN {
 			builder.WriteDashboardPermissionFilter(c.SignedInUser, models.PERMISSION_VIEW)
@@ -430,19 +436,22 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPag
 			})
 		}
 
-		panels := LibraryPanel{}
-		countSess := session.Table("library_panel")
-		countSess.Where("org_id=?", c.SignedInUser.OrgId)
+		var panels []LibraryPanel
+		countBuilder := sqlstore.SQLBuilder{}
+		countBuilder.Write("SELECT * FROM library_panel")
+		countBuilder.Write(` WHERE org_id=?`, c.SignedInUser.OrgId)
 		if len(strings.TrimSpace(name)) > 0 {
-			countSess.Where("org_id=? AND name "+lps.SQLStore.Dialect.LikeStr()+" ?", c.SignedInUser.OrgId, "%"+name+"%")
+			countBuilder.Write(" AND name "+lps.SQLStore.Dialect.LikeStr()+" ?", "%"+name+"%")
 		}
-		count, err := countSess.Count(&panels)
-		if err != nil {
+		if len(strings.TrimSpace(excludeUID)) > 0 {
+			countBuilder.Write(" AND uid <> ?", excludeUID)
+		}
+		if err := session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&panels); err != nil {
 			return err
 		}
 
 		result = LibraryPanelSearchResult{
-			TotalCount:    count,
+			TotalCount:    int64(len(panels)),
 			LibraryPanels: retDTOs,
 			Page:          page,
 			PerPage:       perPage,

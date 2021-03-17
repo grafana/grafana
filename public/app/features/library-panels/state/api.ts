@@ -5,15 +5,18 @@ export interface GetLibraryPanelsOptions {
   name?: string;
   perPage?: number;
   page?: number;
+  excludeUid?: string;
 }
 
 export async function getLibraryPanels({
   name = '',
   perPage = 100,
   page = 1,
+  excludeUid = '',
 }: GetLibraryPanelsOptions = {}): Promise<LibraryPanelSearchResult> {
   const params = new URLSearchParams();
   params.append('name', name);
+  params.append('excludeUid', excludeUid);
   params.append('perPage', perPage.toString(10));
   params.append('page', page.toString(10));
 

@@ -48,30 +48,26 @@ describe('libraryPanelsViewReducer', () => {
         });
     });
 
-    describe('and currentPanelId is set', () => {
-      it('then current panel should be filtered out and the state should be correct', () => {
+    describe('and page is greater than the current number of pages', () => {
+      it('then the state should be correct', () => {
         const payload = {
           perPage: 10,
-          page: 3,
+          page: 21,
           libraryPanels: getLibraryPanelMocks(2),
           totalCount: 200,
         };
 
         reducerTester<LibraryPanelsViewState>()
-          .givenReducer(libraryPanelsViewReducer, {
-            ...initialLibraryPanelsViewState,
-            currentPanelId: payload.libraryPanels[0].uid,
-          })
+          .givenReducer(libraryPanelsViewReducer, { ...initialLibraryPanelsViewState })
           .whenActionIsDispatched(searchCompleted(payload))
           .thenStateShouldEqual({
             ...initialLibraryPanelsViewState,
             perPage: 10,
-            page: 3,
-            libraryPanels: [payload.libraryPanels[1]],
-            totalCount: 199,
+            page: 20,
+            libraryPanels: payload.libraryPanels,
+            totalCount: 200,
             loadingState: LoadingState.Done,
             numberOfPages: 20,
-            currentPanelId: payload.libraryPanels[0].uid,
           });
       });
     });

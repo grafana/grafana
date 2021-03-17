@@ -29,15 +29,15 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   currentPanelId: currentPanel,
 }) => {
   const styles = useStyles(getPanelViewStyles);
-  const [{ libraryPanels, searchString, page, perPage, numberOfPages, loadingState }, dispatch] = useReducer(
-    libraryPanelsViewReducer,
-    {
-      ...initialLibraryPanelsViewState,
-      currentPanelId: currentPanel,
-    }
-  );
+  const [
+    { libraryPanels, searchString, page, perPage, numberOfPages, loadingState, currentPanelId },
+    dispatch,
+  ] = useReducer(libraryPanelsViewReducer, {
+    ...initialLibraryPanelsViewState,
+    currentPanelId: currentPanel,
+  });
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
-  useDebounce(() => asyncDispatch(searchForLibraryPanels({ searchString, page, perPage })), 300, [
+  useDebounce(() => asyncDispatch(searchForLibraryPanels({ searchString, page, perPage, currentPanelId })), 300, [
     searchString,
     page,
     asyncDispatch,
