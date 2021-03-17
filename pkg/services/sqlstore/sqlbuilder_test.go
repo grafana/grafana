@@ -167,24 +167,26 @@ type dashboardResponse struct {
 func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *DashboardPermission, search Search, shouldFind bool) {
 	t.Helper()
 
-	// Will also cleanup the db
-	sqlStore := InitTestDB(t)
+	t.Run("", func(t *testing.T) {
+		// Will also cleanup the db
+		sqlStore := InitTestDB(t)
 
-	dashboard := createDummyDashboard(t, sqlStore, dashboardProps)
+		dashboard := createDummyDashboard(t, sqlStore, dashboardProps)
 
-	var aclUserID int64
-	if dashboardPermission != nil {
-		aclUserID = createDummyAcl(t, sqlStore, dashboardPermission, search, dashboard.Id)
-		t.Logf("Created ACL with user ID %d\n", aclUserID)
-	}
-	dashboards := getDashboards(t, sqlStore, search, aclUserID)
+		var aclUserID int64
+		if dashboardPermission != nil {
+			aclUserID = createDummyACL(t, sqlStore, dashboardPermission, search, dashboard.Id)
+			t.Logf("Created ACL with user ID %d\n", aclUserID)
+		}
+		dashboards := getDashboards(t, sqlStore, search, aclUserID)
 
-	if shouldFind {
-		require.Len(t, dashboards, 1, "Should return one dashboard")
-		assert.Equal(t, dashboard.Id, dashboards[0].Id, "Should return created dashboard")
-	} else {
-		assert.Empty(t, dashboards, "Should not return any dashboard")
-	}
+		if shouldFind {
+			require.Len(t, dashboards, 1, "Should return one dashboard")
+			assert.Equal(t, dashboard.Id, dashboards[0].Id, "Should return created dashboard")
+		} else {
+			assert.Empty(t, dashboards, "Should not return any dashboard")
+		}
+	})
 }
 
 func createDummyUser(t *testing.T, sqlStore *SQLStore) *models.User {
@@ -248,7 +250,7 @@ func createDummyDashboard(t *testing.T, sqlStore *SQLStore, dashboardProps Dashb
 	return dash
 }
 
-func createDummyAcl(t *testing.T, sqlStore *SQLStore, dashboardPermission *DashboardPermission, search Search, dashboardID int64) int64 {
+func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *DashboardPermission, search Search, dashboardID int64) int64 {
 	t.Helper()
 
 	acl := &models.DashboardAcl{
@@ -271,14 +273,10 @@ func createDummyAcl(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 		t.Logf("Creating team")
 		team := createDummyTeam(t, sqlStore)
 		if search.UserFromACL {
-			user := createDummyUser(t, sqlStore)
-			addTeamMemberCmd := &models.AddTeamMemberCommand{
-				UserId: user.Id,
-				OrgId:  1,
-				TeamId: team.Id,
-			}
-			err := AddTeamMember(addTeamMemberCmd)
+			user = createDummyUser(t, sqlStore)
+			err := sqlStore.AddTeamMember(user.Id, 1, team.Id, false, 0)
 			require.NoError(t, err)
+			t.Logf("Creating team member with ID %d", user.Id)
 		}
 
 		acl.TeamID = team.Id

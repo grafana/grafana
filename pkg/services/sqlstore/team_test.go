@@ -47,9 +47,9 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(team1.OrgId, ShouldEqual, testOrgID)
 				So(team1.MemberCount, ShouldEqual, 0)
 
-				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0]})
+				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
 				So(err, ShouldBeNil)
-				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[1], External: true})
+				err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, true, 0)
 				So(err, ShouldBeNil)
 
 				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id}
@@ -100,7 +100,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 				team1 := teamQuery.Result.Teams[0]
 
-				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userId, External: true})
+				err = sqlStore.AddTeamMember(userId, testOrgID, team1.Id, true, 0)
 				So(err, ShouldBeNil)
 
 				memberQuery := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true}
@@ -117,8 +117,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			Convey("Should be able to update users in a team", func() {
 				userId := userIds[0]
 				team := team1
-				addMemberCmd := models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: team.Id, UserId: userId}
-				err = AddTeamMember(&addMemberCmd)
+				err = sqlStore.AddTeamMember(userId, testOrgID, team.Id, false, 0)
 				So(err, ShouldBeNil)
 
 				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
@@ -144,8 +143,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			Convey("Should default to member permission level when updating a user with invalid permission level", func() {
 				userID := userIds[0]
 				team := team1
-				addMemberCmd := models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: team.Id, UserId: userID}
-				err = AddTeamMember(&addMemberCmd)
+				err = sqlStore.AddTeamMember(userID, testOrgID, team.Id, false, 0)
 				So(err, ShouldBeNil)
 
 				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
@@ -195,7 +193,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 			Convey("Should be able to return all teams a user is member of", func() {
 				groupId := team2.Id
-				err := AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: groupId, UserId: userIds[0]})
+				err := sqlStore.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
 				So(err, ShouldBeNil)
 
 				query := &models.GetTeamsByUserQuery{OrgId: testOrgID, UserId: userIds[0]}
@@ -207,7 +205,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able to remove users from a group", func() {
-				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0]})
+				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
 				So(err, ShouldBeNil)
 
 				err = RemoveTeamMember(&models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0]})
@@ -220,7 +218,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("When ProtectLastAdmin is set to true", func() {
-				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], Permission: models.PERMISSION_ADMIN})
+				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 				So(err, ShouldBeNil)
 
 				Convey("A user should not be able to remove the last admin", func() {
@@ -229,7 +227,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				})
 
 				Convey("A user should be able to remove an admin if there are other admins", func() {
-					err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[1], Permission: models.PERMISSION_ADMIN})
+					err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 					So(err, ShouldBeNil)
 					err = RemoveTeamMember(&models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], ProtectLastAdmin: true})
 					So(err, ShouldBeNil)
@@ -241,7 +239,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				})
 
 				Convey("A user should be able to remove the admin permission if there are other admins", func() {
-					err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[1], Permission: models.PERMISSION_ADMIN})
+					err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
 					So(err, ShouldBeNil)
 					err = UpdateTeamMember(&models.UpdateTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], Permission: 0, ProtectLastAdmin: true})
 					So(err, ShouldBeNil)
@@ -250,9 +248,9 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 			Convey("Should be able to remove a group with users and permissions", func() {
 				groupId := team2.Id
-				err := AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: groupId, UserId: userIds[1]})
+				err := sqlStore.AddTeamMember(userIds[1], testOrgID, groupId, false, 0)
 				So(err, ShouldBeNil)
-				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: groupId, UserId: userIds[2]})
+				err = sqlStore.AddTeamMember(userIds[2], testOrgID, groupId, false, 0)
 				So(err, ShouldBeNil)
 				err = testHelperUpdateDashboardAcl(t, sqlStore, 1, models.DashboardAcl{
 					DashboardID: 1, OrgID: testOrgID, Permission: models.PERMISSION_EDIT, TeamID: groupId,
@@ -274,9 +272,9 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 			Convey("Should be able to return if user is admin of teams or not", func() {
 				groupId := team2.Id
-				err := AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: groupId, UserId: userIds[0]})
+				err := sqlStore.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
 				So(err, ShouldBeNil)
-				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: groupId, UserId: userIds[1], Permission: models.PERMISSION_ADMIN})
+				err = sqlStore.AddTeamMember(userIds[1], testOrgID, groupId, false, models.PERMISSION_ADMIN)
 				So(err, ShouldBeNil)
 
 				query := &models.IsAdminOfTeamsQuery{SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: userIds[0]}}
@@ -295,11 +293,11 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				hiddenUsers := map[string]struct{}{"loginuser0": {}, "loginuser1": {}}
 
 				teamId := team1.Id
-				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: teamId, UserId: userIds[0]})
+				err = sqlStore.AddTeamMember(userIds[0], testOrgID, teamId, false, 0)
 				So(err, ShouldBeNil)
-				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: teamId, UserId: userIds[1]})
+				err = sqlStore.AddTeamMember(userIds[1], testOrgID, teamId, false, 0)
 				So(err, ShouldBeNil)
-				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgID, TeamId: teamId, UserId: userIds[2]})
+				err = sqlStore.AddTeamMember(userIds[2], testOrgID, teamId, false, 0)
 				So(err, ShouldBeNil)
 
 				searchQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Page: 1, Limit: 10, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}

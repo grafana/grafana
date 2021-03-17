@@ -18,7 +18,6 @@ func init() {
 	bus.AddHandler("sql", GetTeamById)
 	bus.AddHandler("sql", GetTeamsByUser)
 
-	bus.AddHandler("sql", AddTeamMember)
 	bus.AddHandler("sql", UpdateTeamMember)
 	bus.AddHandler("sql", RemoveTeamMember)
 	bus.AddHandler("sql", GetTeamMembers)
@@ -91,7 +90,6 @@ func (ss *SQLStore) CreateTeam(name, email string, orgID int64) (models.Team, er
 		}
 
 		_, err := sess.Insert(&team)
-
 		return err
 	})
 	return team, err
@@ -150,8 +148,8 @@ func DeleteTeam(cmd *models.DeleteTeamCommand) error {
 	})
 }
 
-func teamExists(orgId int64, teamId int64, sess *DBSession) (bool, error) {
-	if res, err := sess.Query("SELECT 1 from team WHERE org_id=? and id=?", orgId, teamId); err != nil {
+func teamExists(orgID int64, teamID int64, sess *DBSession) (bool, error) {
+	if res, err := sess.Query("SELECT 1 from team WHERE org_id=? and id=?", orgID, teamID); err != nil {
 		return false, err
 	} else if len(res) != 1 {
 		return false, models.ErrTeamNotFound
@@ -163,7 +161,6 @@ func teamExists(orgId int64, teamId int64, sess *DBSession) (bool, error) {
 func isTeamNameTaken(orgId int64, name string, existingId int64, sess *DBSession) (bool, error) {
 	var team models.Team
 	exists, err := sess.Where("org_id=? and name=?", orgId, name).Get(&team)
-
 	if err != nil {
 		return false, nil
 	}
@@ -281,26 +278,27 @@ func GetTeamsByUser(query *models.GetTeamsByUserQuery) error {
 }
 
 // AddTeamMember adds a user to a team
-func AddTeamMember(cmd *models.AddTeamMemberCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		if res, err := sess.Query("SELECT 1 from team_member WHERE org_id=? and team_id=? and user_id=?", cmd.OrgId, cmd.TeamId, cmd.UserId); err != nil {
+func (ss *SQLStore) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
+	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		if res, err := sess.Query("SELECT 1 from team_member WHERE org_id=? and team_id=? and user_id=?",
+			orgID, teamID, userID); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return models.ErrTeamMemberAlreadyAdded
 		}
 
-		if _, err := teamExists(cmd.OrgId, cmd.TeamId, sess); err != nil {
+		if _, err := teamExists(orgID, teamID, sess); err != nil {
 			return err
 		}
 
 		entity := models.TeamMember{
-			OrgId:      cmd.OrgId,
-			TeamId:     cmd.TeamId,
-			UserId:     cmd.UserId,
-			External:   cmd.External,
+			OrgId:      orgID,
+			TeamId:     teamID,
+			UserId:     userID,
+			External:   isExternal,
 			Created:    time.Now(),
 			Updated:    time.Now(),
-			Permission: cmd.Permission,
+			Permission: permission,
 		}
 
 		_, err := sess.Insert(&entity)

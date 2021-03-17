@@ -159,7 +159,7 @@ func setupTestEnvironment(t *testing.T) *sqlstore.SQLStore {
 func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, orgID int64) {
 	t.Helper()
 
-	require.Less(t, endID, startID)
+	require.GreaterOrEqual(t, endID, startID)
 
 	for i := startID; i < endID; i++ {
 		dashboard, err := simplejson.NewJson([]byte(`{
