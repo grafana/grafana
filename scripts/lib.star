@@ -757,7 +757,6 @@ def postgres_integration_tests_step():
         'image': build_image,
         'depends_on': [
             'test-backend',
-            'test-frontend',
         ],
         'environment': {
             'PGPASSWORD': 'grafanatest',
@@ -782,7 +781,6 @@ def mysql_integration_tests_step():
         'image': build_image,
         'depends_on': [
             'test-backend',
-            'test-frontend',
         ],
         'environment': {
             'GRAFANA_TEST_DB': 'mysql',
