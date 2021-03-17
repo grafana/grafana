@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
 
@@ -87,7 +88,8 @@ func TestFolderService(t *testing.T) {
 			t.Cleanup(func() {
 				UpdateAlerting = origUpdateAlerting
 			})
-			UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+			UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+				user *models.SignedInUser) error {
 				return nil
 			}
 

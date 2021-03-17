@@ -187,11 +187,11 @@ func validateDashboardRefreshInterval(dash *models.Dashboard) error {
 
 	minRefreshInterval, err := gtime.ParseDuration(setting.MinRefreshInterval)
 	if err != nil {
-		return err
+		return fmt.Errorf("parsing min refresh interval %q failed: %w", setting.MinRefreshInterval, err)
 	}
 	d, err := gtime.ParseDuration(refresh)
 	if err != nil {
-		return err
+		return fmt.Errorf("parsing refresh duration %q failed: %w", refresh, err)
 	}
 
 	if d < minRefreshInterval {
@@ -204,21 +204,14 @@ func validateDashboardRefreshInterval(dash *models.Dashboard) error {
 // UpdateAlerting updates alerting.
 //
 // Stubbable by tests.
-var UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+var UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
 	extractor := alerting.NewDashAlertExtractor(dashboard, orgID, user)
 	alerts, err := extractor.GetAlerts()
 	if err != nil {
 		return err
 	}
 
-	saveAlerts := models.SaveAlertsCommand{
-		OrgId:       orgID,
-		UserId:      user.UserId,
-		DashboardId: dashboard.Id,
-	}
-	saveAlerts.Alerts = alerts
-
-	return bus.Dispatch(&saveAlerts)
+	return store.SaveAlerts(dashboard.Id, alerts)
 }
 
 func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO,
@@ -247,7 +240,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO,
 	}
 
 	// alerts
-	if err := UpdateAlerting(dto.OrgId, dash, dto.User); err != nil {
+	if err := UpdateAlerting(dr.dashboardStore, dto.OrgId, dash, dto.User); err != nil {
 		return nil, err
 	}
 
@@ -269,8 +262,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 		return nil, err
 	}
 
-	err = UpdateAlerting(dto.OrgId, dash, dto.User)
-	if err != nil {
+	if err := UpdateAlerting(dr.dashboardStore, dto.OrgId, dash, dto.User); err != nil {
 		return nil, err
 	}
 
@@ -295,7 +287,7 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO, allowUiUpda
 		return nil, fmt.Errorf("saving dashboard failed: %w", err)
 	}
 
-	if err := UpdateAlerting(dto.OrgId, dash, dto.User); err != nil {
+	if err := UpdateAlerting(dr.dashboardStore, dto.OrgId, dash, dto.User); err != nil {
 		return nil, err
 	}
 
