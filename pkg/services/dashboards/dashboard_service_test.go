@@ -127,7 +127,7 @@ func TestDashboardService(t *testing.T) {
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.SaveDashboard(dto, true)
 				So(provisioningValidated, ShouldBeFalse)
-				So(err, ShouldNotBeNil)
+				So(err, ShouldBeNil)
 			})
 
 			Convey("Should return validation error if alert data is invalid", func() {
@@ -165,7 +165,8 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
 				})
-				UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+				UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+					user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -215,7 +216,8 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
 				})
-				UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+				UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+					user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -254,7 +256,8 @@ func TestDashboardService(t *testing.T) {
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
 				})
-				UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+				UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard,
+					user *models.SignedInUser) error {
 					return nil
 				}
 
@@ -352,4 +355,8 @@ func (s *fakeDashboardStore) SaveProvisionedDashboard(models.SaveDashboardComman
 
 func (s *fakeDashboardStore) SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error) {
 	return cmd.GetDashboardModel(), nil
+}
+
+func (s *fakeDashboardStore) SaveAlerts(dashID int64, alerts []*models.Alert) error {
+	return nil
 }

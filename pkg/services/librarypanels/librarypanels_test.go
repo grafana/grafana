@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -753,7 +754,8 @@ func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.Sign
 	t.Cleanup(func() {
 		dashboards.UpdateAlerting = origUpdateAlerting
 	})
-	dashboards.UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+	dashboards.UpdateAlerting = func(store dboards.Store, orgID int64, dashboard *models.Dashboard,
+		user *models.SignedInUser) error {
 		return nil
 	}
 

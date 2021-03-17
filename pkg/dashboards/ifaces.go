@@ -11,4 +11,6 @@ type Store interface {
 	SaveProvisionedDashboard(cmd models.SaveDashboardCommand, provisioning *models.DashboardProvisioning) (*models.Dashboard, error)
 	SaveDashboard(cmd models.SaveDashboardCommand) (*models.Dashboard, error)
 	UpdateDashboardACL(uid int64, items []*models.DashboardAcl) error
+	// SaveAlerts saves dashboard alerts.
+	SaveAlerts(dashID int64, alerts []*models.Alert) error
 }

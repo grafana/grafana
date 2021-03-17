@@ -6,55 +6,31 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
+const testOrgID int64 = 1
+
 func TestIntegratedDashboardService(t *testing.T) {
-	Convey("Dashboard service integration tests", t, func() {
-		sqlStore := sqlstore.InitTestDB(t)
-		const testOrgID int64 = 1
+	t.Run("Given saved folders and dashboards in organization A", func(t *testing.T) {
+		origUpdateAlerting := UpdateAlerting
+		t.Cleanup(func() {
+			UpdateAlerting = origUpdateAlerting
+		})
+		UpdateAlerting = func(store dashboards.Store, orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
+			return nil
+		}
 
-		Convey("Given saved folders and dashboards in organization A", func() {
-			origUpdateAlerting := UpdateAlerting
-			t.Cleanup(func() {
-				UpdateAlerting = origUpdateAlerting
-			})
-			UpdateAlerting = func(orgID int64, dashboard *models.Dashboard, user *models.SignedInUser) error {
-				return nil
-			}
+		// Basic validation tests
 
-			savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
-			savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.Id, sqlStore)
-			saveTestDashboard(t, "Other saved dash in folder", testOrgID, savedFolder.Id, sqlStore)
-			savedDashInGeneralFolder := saveTestDashboard(t, "Saved dashboard in general folder", testOrgID, 0, sqlStore)
-			otherSavedFolder := saveTestFolder(t, "Other saved folder", testOrgID, sqlStore)
-
-			Convey("Should return dashboard model", func() {
-				So(savedFolder.Title, ShouldEqual, "Saved folder")
-				So(savedFolder.Slug, ShouldEqual, "saved-folder")
-				So(savedFolder.Id, ShouldNotEqual, 0)
-				So(savedFolder.IsFolder, ShouldBeTrue)
-				So(savedFolder.FolderId, ShouldEqual, 0)
-				So(len(savedFolder.Uid), ShouldBeGreaterThan, 0)
-
-				So(savedDashInFolder.Title, ShouldEqual, "Saved dash in folder")
-				So(savedDashInFolder.Slug, ShouldEqual, "saved-dash-in-folder")
-				So(savedDashInFolder.Id, ShouldNotEqual, 0)
-				So(savedDashInFolder.IsFolder, ShouldBeFalse)
-				So(savedDashInFolder.FolderId, ShouldEqual, savedFolder.Id)
-				So(len(savedDashInFolder.Uid), ShouldBeGreaterThan, 0)
-			})
-
-			// Basic validation tests
-
-			Convey("When saving a dashboard with non-existing id", func() {
+		permissionScenario(t, "When saving a dashboard with non-existing id", true,
+			func(t *testing.T, sc *permissionScenarioContext) {
 				cmd := models.SaveDashboardCommand{
 					OrgId: testOrgID,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -62,71 +38,62 @@ func TestIntegratedDashboardService(t *testing.T) {
 						"title": "Expect error",
 					}),
 				}
-				err := callSaveWithError(cmd, sqlStore)
 
-				Convey("It should result in not found error", func() {
-					So(err, ShouldNotBeNil)
-					So(err, ShouldEqual, models.ErrDashboardNotFound)
-				})
+				err := callSaveWithError(cmd, sc.sqlStore)
+				assert.Equal(t, models.ErrDashboardNotFound, err)
 			})
 
-			// Given other organization
+		// Given other organization
 
-			Convey("Given organization B", func() {
-				var otherOrgId int64 = 2
+		t.Run("Given organization B", func(t *testing.T) {
+			const otherOrgId int64 = 2
 
-				Convey("When creating a dashboard with same id as dashboard in organization A", func() {
+			permissionScenario(t, "When creating a dashboard with same id as dashboard in organization A",
+				true, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: otherOrgId,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
-							"id":    savedDashInFolder.Id,
+							"id":    sc.savedDashInFolder.Id,
 							"title": "Expect error",
 						}),
 						Overwrite: false,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
-
-					Convey("It should result in not found error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardNotFound)
-					})
+					err := callSaveWithError(cmd, sc.sqlStore)
+					assert.Equal(t, models.ErrDashboardNotFound, err)
 				})
 
-				permissionScenario("Given user has permission to save", true, func(sc *dashboardPermissionScenarioContext) {
-					Convey("When creating a dashboard with same uid as dashboard in organization A", func() {
-						var otherOrgId int64 = 2
-						cmd := models.SaveDashboardCommand{
-							OrgId: otherOrgId,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"uid":   savedDashInFolder.Uid,
-								"title": "Dash with existing uid in other org",
-							}),
-							Overwrite: false,
-						}
+			permissionScenario(t, "When creating a dashboard with same uid as dashboard in organization A, it should create a new dashboard in org B",
+				true, func(t *testing.T, sc *permissionScenarioContext) {
+					const otherOrgId int64 = 2
+					cmd := models.SaveDashboardCommand{
+						OrgId: otherOrgId,
+						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							"uid":   sc.savedDashInFolder.Uid,
+							"title": "Dash with existing uid in other org",
+						}),
+						Overwrite: false,
+					}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
+					res := callSaveWithResult(t, cmd, sc.sqlStore)
+					require.NotNil(t, res)
 
-						Convey("It should create a new dashboard in organization B", func() {
-							So(res, ShouldNotBeNil)
+					dash, err := sc.sqlStore.GetDashboard(0, otherOrgId, sc.savedDashInFolder.Uid, "")
+					require.NoError(t, err)
 
-							query := models.GetDashboardQuery{OrgId: otherOrgId, Uid: savedDashInFolder.Uid}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Id, ShouldNotEqual, savedDashInFolder.Id)
-							So(query.Result.Id, ShouldEqual, res.Id)
-							So(query.Result.OrgId, ShouldEqual, otherOrgId)
-							So(query.Result.Uid, ShouldEqual, savedDashInFolder.Uid)
-						})
-					})
+					assert.NotEqual(t, sc.savedDashInFolder.Id, dash.Id)
+					assert.Equal(t, res.Id, dash.Id)
+					assert.Equal(t, otherOrgId, dash.OrgId)
+					assert.Equal(t, sc.savedDashInFolder.Uid, dash.Uid)
 				})
-			})
+		})
 
-			// Given user has no permission to save
+		t.Run("Given user has no permission to save", func(t *testing.T) {
+			const canSave = false
 
-			permissionScenario("Given user has no permission to save", false, func(sc *dashboardPermissionScenarioContext) {
-				Convey("When creating a new dashboard in the General folder", func() {
+			permissionScenario(t, "When creating a new dashboard in the General folder", canSave,
+				func(t *testing.T, sc *permissionScenarioContext) {
+					sqlStore := sqlstore.InitTestDB(t)
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -137,164 +104,143 @@ func TestIntegratedDashboardService(t *testing.T) {
 					}
 
 					err := callSaveWithError(cmd, sqlStore)
+					assert.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					Convey("It should create dashboard guardian for General Folder with correct arguments and result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
-
-						So(sc.dashboardGuardianMock.DashId, ShouldEqual, 0)
-						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
-					})
+					assert.Equal(t, int64(0), sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-				Convey("When creating a new dashboard in other folder", func() {
+			permissionScenario(t, "When creating a new dashboard in other folder, it should create dashboard guardian for other folder with correct arguments and rsult in access denied error",
+				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
 							"title": "Dash",
 						}),
-						FolderId:  otherSavedFolder.Id,
+						FolderId:  sc.otherSavedFolder.Id,
 						UserId:    10000,
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
+					err := callSaveWithError(cmd, sc.sqlStore)
+					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					Convey("It should create dashboard guardian for other folder with correct arguments and rsult in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
-
-						So(sc.dashboardGuardianMock.DashId, ShouldEqual, otherSavedFolder.Id)
-						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
-					})
+					assert.Equal(t, sc.otherSavedFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-				Convey("When creating a new dashboard by existing title in folder", func() {
+			permissionScenario(t, "When creating a new dashboard by existing title in folder, it should create dashboard guardian for folder with correct arguments and result in access denied error",
+				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
-							"title": savedDashInFolder.Title,
+							"title": sc.savedDashInFolder.Title,
 						}),
-						FolderId:  savedFolder.Id,
+						FolderId:  sc.savedFolder.Id,
 						UserId:    10000,
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
+					err := callSaveWithError(cmd, sc.sqlStore)
+					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					Convey("It should create dashboard guardian for folder with correct arguments and result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
-
-						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedFolder.Id)
-						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
-					})
+					assert.Equal(t, sc.savedFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-				Convey("When creating a new dashboard by existing uid in folder", func() {
+			permissionScenario(t, "When creating a new dashboard by existing UID in folder, it should create dashboard guardian for folder with correct arguments and result in access denied error",
+				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
-							"uid":   savedDashInFolder.Uid,
+							"uid":   sc.savedDashInFolder.Uid,
 							"title": "New dash",
 						}),
-						FolderId:  savedFolder.Id,
+						FolderId:  sc.savedFolder.Id,
 						UserId:    10000,
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
+					err := callSaveWithError(cmd, sc.sqlStore)
+					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					Convey("It should create dashboard guardian for folder with correct arguments and result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
-
-						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedFolder.Id)
-						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
-					})
+					assert.Equal(t, sc.savedFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-				Convey("When updating a dashboard by existing id in the General folder", func() {
+			permissionScenario(t, "When updating a dashboard by existing id in the General folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
+				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
-							"id":    savedDashInGeneralFolder.Id,
+							"id":    sc.savedDashInGeneralFolder.Id,
 							"title": "Dash",
 						}),
-						FolderId:  savedDashInGeneralFolder.FolderId,
+						FolderId:  sc.savedDashInGeneralFolder.FolderId,
 						UserId:    10000,
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
+					err := callSaveWithError(cmd, sc.sqlStore)
+					assert.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					Convey("It should create dashboard guardian for dashboard with correct arguments and result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
-
-						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedDashInGeneralFolder.Id)
-						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
-					})
+					assert.Equal(t, sc.savedDashInGeneralFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-				Convey("When updating a dashboard by existing id in other folder", func() {
+			permissionScenario(t, "When updating a dashboard by existing id in other folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
+				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
-							"id":    savedDashInFolder.Id,
+							"id":    sc.savedDashInFolder.Id,
 							"title": "Dash",
 						}),
-						FolderId:  savedDashInFolder.FolderId,
+						FolderId:  sc.savedDashInFolder.FolderId,
 						UserId:    10000,
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
+					err := callSaveWithError(cmd, sc.sqlStore)
+					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					Convey("It should create dashboard guardian for dashboard with correct arguments and result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
-
-						So(sc.dashboardGuardianMock.DashId, ShouldEqual, savedDashInFolder.Id)
-						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
-					})
+					assert.Equal(t, sc.savedDashInFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-				Convey("When moving a dashboard by existing id to other folder from General folder", func() {
+			permissionScenario(t, "When moving a dashboard by existing ID to other folder from General folder, it should create dashboard guardian for other folder with correct arguments and result in access denied error",
+				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
-							"id":    savedDashInGeneralFolder.Id,
+							"id":    sc.savedDashInGeneralFolder.Id,
 							"title": "Dash",
 						}),
-						FolderId:  otherSavedFolder.Id,
+						FolderId:  sc.otherSavedFolder.Id,
 						UserId:    10000,
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
+					err := callSaveWithError(cmd, sc.sqlStore)
+					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					Convey("It should create dashboard guardian for other folder with correct arguments and result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
-
-						So(sc.dashboardGuardianMock.DashId, ShouldEqual, otherSavedFolder.Id)
-						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
-					})
+					assert.Equal(t, sc.otherSavedFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-				Convey("When moving a dashboard by existing id to the General folder from other folder", func() {
+			permissionScenario(t, "When moving a dashboard by existing id to the General folder from other folder, it should create dashboard guardian for General folder with correct arguments and result in access denied error",
+				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
-							"id":    savedDashInFolder.Id,
+							"id":    sc.savedDashInFolder.Id,
 							"title": "Dash",
 						}),
 						FolderId:  0,
@@ -302,47 +248,41 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
+					err := callSaveWithError(cmd, sc.sqlStore)
+					assert.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					Convey("It should create dashboard guardian for General folder with correct arguments and result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
-
-						So(sc.dashboardGuardianMock.DashId, ShouldEqual, 0)
-						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
-					})
+					assert.Equal(t, int64(0), sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-				Convey("When moving a dashboard by existing uid to other folder from General folder", func() {
+			permissionScenario(t, "When moving a dashboard by existing uid to other folder from General folder, it should create dashboard guardian for other folder with correct arguments and result in access denied error",
+				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
-							"uid":   savedDashInGeneralFolder.Uid,
+							"uid":   sc.savedDashInGeneralFolder.Uid,
 							"title": "Dash",
 						}),
-						FolderId:  otherSavedFolder.Id,
+						FolderId:  sc.otherSavedFolder.Id,
 						UserId:    10000,
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
+					err := callSaveWithError(cmd, sc.sqlStore)
+					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					Convey("It should create dashboard guardian for other folder with correct arguments and result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
-
-						So(sc.dashboardGuardianMock.DashId, ShouldEqual, otherSavedFolder.Id)
-						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
-					})
+					assert.Equal(t, sc.otherSavedFolder.Id, sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
 
-				Convey("When moving a dashboard by existing uid to the General folder from other folder", func() {
+			permissionScenario(t, "When moving a dashboard by existing UID to the General folder from other folder, it should create dashboard guardian for General folder with correct arguments and result in access denied error",
+				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]interface{}{
-							"uid":   savedDashInFolder.Uid,
+							"uid":   sc.savedDashInFolder.Uid,
 							"title": "Dash",
 						}),
 						FolderId:  0,
@@ -350,102 +290,90 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Overwrite: true,
 					}
 
-					err := callSaveWithError(cmd, sqlStore)
+					err := callSaveWithError(cmd, sc.sqlStore)
+					require.Equal(t, models.ErrDashboardUpdateAccessDenied, err)
 
-					Convey("It should create dashboard guardian for General folder with correct arguments and result in access denied error", func() {
-						So(err, ShouldNotBeNil)
-						So(err, ShouldEqual, models.ErrDashboardUpdateAccessDenied)
-
-						So(sc.dashboardGuardianMock.DashId, ShouldEqual, 0)
-						So(sc.dashboardGuardianMock.OrgId, ShouldEqual, cmd.OrgId)
-						So(sc.dashboardGuardianMock.User.UserId, ShouldEqual, cmd.UserId)
-					})
+					assert.Equal(t, int64(0), sc.dashboardGuardianMock.DashId)
+					assert.Equal(t, cmd.OrgId, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.UserId, sc.dashboardGuardianMock.User.UserId)
 				})
-			})
+		})
 
-			// Given user has permission to save
+		t.Run("Given user has permission to save", func(t *testing.T) {
+			const canSave = true
 
-			permissionScenario("Given user has permission to save", true, func(sc *dashboardPermissionScenarioContext) {
-				Convey("and overwrite flag is set to false", func() {
-					shouldOverwrite := false
+			t.Run("and overwrite flag is set to false", func(t *testing.T) {
+				const shouldOverwrite = false
 
-					Convey("When creating a dashboard in General folder with same name as dashboard in other folder", func() {
+				permissionScenario(t, "When creating a dashboard in General folder with same name as dashboard in other folder",
+					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
-								"title": savedDashInFolder.Title,
+								"title": sc.savedDashInFolder.Title,
 							}),
 							FolderId:  0,
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
-						So(res, ShouldNotBeNil)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
 
-						Convey("It should create a new dashboard", func() {
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Id, ShouldEqual, res.Id)
-							So(query.Result.FolderId, ShouldEqual, 0)
-						})
+						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, res.Id, dash.Id)
+						assert.Equal(t, int64(0), dash.FolderId)
 					})
 
-					Convey("When creating a dashboard in other folder with same name as dashboard in General folder", func() {
+				permissionScenario(t, "When creating a dashboard in other folder with same name as dashboard in General folder",
+					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
-								"title": savedDashInGeneralFolder.Title,
+								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderId:  savedFolder.Id,
+							FolderId:  sc.savedFolder.Id,
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
-						So(res, ShouldNotBeNil)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
 
-						Convey("It should create a new dashboard", func() {
-							So(res.Id, ShouldNotEqual, savedDashInGeneralFolder.Id)
+						assert.NotEqual(t, sc.savedDashInGeneralFolder.Id, res.Id)
 
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.FolderId, ShouldEqual, savedFolder.Id)
-						})
+						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, sc.savedFolder.Id, dash.FolderId)
 					})
 
-					Convey("When creating a folder with same name as dashboard in other folder", func() {
+				permissionScenario(t, "When creating a folder with same name as dashboard in other folder",
+					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
-								"title": savedDashInFolder.Title,
+								"title": sc.savedDashInFolder.Title,
 							}),
 							IsFolder:  true,
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
-						So(res, ShouldNotBeNil)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
 
-						Convey("It should create a new folder", func() {
-							So(res.Id, ShouldNotEqual, savedDashInGeneralFolder.Id)
-							So(res.IsFolder, ShouldBeTrue)
+						assert.NotEqual(t, sc.savedDashInGeneralFolder.Id, res.Id)
+						assert.True(t, res.IsFolder)
 
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.FolderId, ShouldEqual, 0)
-							So(query.Result.IsFolder, ShouldBeTrue)
-						})
+						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, int64(0), dash.FolderId)
+						assert.True(t, dash.IsFolder)
 					})
 
-					Convey("When saving a dashboard without id and uid and unique title in folder", func() {
+				permissionScenario(t, "When saving a dashboard without id and uid and unique title in folder",
+					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -454,22 +382,19 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
-						So(res, ShouldNotBeNil)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
 
-						Convey("It should create a new dashboard", func() {
-							So(res.Id, ShouldBeGreaterThan, 0)
-							So(len(res.Uid), ShouldBeGreaterThan, 0)
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Id, ShouldEqual, res.Id)
-							So(query.Result.Uid, ShouldEqual, res.Uid)
-						})
+						assert.Greater(t, res.Id, int64(0))
+						assert.NotEmpty(t, res.Uid)
+						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, res.Id, dash.Id)
+						assert.Equal(t, res.Uid, dash.Uid)
 					})
 
-					Convey("When saving a dashboard when dashboard id is zero ", func() {
+				permissionScenario(t, "When saving a dashboard when dashboard id is zero ", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -479,19 +404,16 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
-						So(res, ShouldNotBeNil)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
 
-						Convey("It should create a new dashboard", func() {
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Id, ShouldEqual, res.Id)
-						})
+						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, res.Id, dash.Id)
 					})
 
-					Convey("When saving a dashboard in non-existing folder", func() {
+				permissionScenario(t, "When saving a dashboard in non-existing folder", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -501,460 +423,425 @@ func TestIntegratedDashboardService(t *testing.T) {
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in folder not found error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardFolderNotFound)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardFolderNotFound, err)
 					})
 
-					Convey("When updating an existing dashboard by id without current version", func() {
+				permissionScenario(t, "When updating an existing dashboard by id without current version", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"id":    savedDashInGeneralFolder.Id,
+								"id":    sc.savedDashInGeneralFolder.Id,
 								"title": "test dash 23",
 							}),
-							FolderId:  savedFolder.Id,
+							FolderId:  sc.savedFolder.Id,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in version mismatch error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardVersionMismatch)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardVersionMismatch, err)
 					})
 
-					Convey("When updating an existing dashboard by id with current version", func() {
+				permissionScenario(t, "When updating an existing dashboard by id with current version", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"id":      savedDashInGeneralFolder.Id,
+								"id":      sc.savedDashInGeneralFolder.Id,
 								"title":   "Updated title",
-								"version": savedDashInGeneralFolder.Version,
+								"version": sc.savedDashInGeneralFolder.Version,
 							}),
-							FolderId:  savedFolder.Id,
+							FolderId:  sc.savedFolder.Id,
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
-						So(res, ShouldNotBeNil)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
 
-						Convey("It should update dashboard", func() {
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: savedDashInGeneralFolder.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Title, ShouldEqual, "Updated title")
-							So(query.Result.FolderId, ShouldEqual, savedFolder.Id)
-							So(query.Result.Version, ShouldBeGreaterThan, savedDashInGeneralFolder.Version)
-						})
+						dash, err := sc.sqlStore.GetDashboard(sc.savedDashInGeneralFolder.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, "Updated title", dash.Title)
+						assert.Equal(t, sc.savedFolder.Id, dash.FolderId)
+						assert.Greater(t, dash.Version, sc.savedDashInGeneralFolder.Version)
 					})
 
-					Convey("When updating an existing dashboard by uid without current version", func() {
+				permissionScenario(t, "When updating an existing dashboard by uid without current version", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"uid":   savedDashInFolder.Uid,
+								"uid":   sc.savedDashInFolder.Uid,
 								"title": "test dash 23",
 							}),
 							FolderId:  0,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in version mismatch error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardVersionMismatch)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardVersionMismatch, err)
 					})
 
-					Convey("When updating an existing dashboard by uid with current version", func() {
+				permissionScenario(t, "When updating an existing dashboard by uid with current version", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"uid":     savedDashInFolder.Uid,
+								"uid":     sc.savedDashInFolder.Uid,
 								"title":   "Updated title",
-								"version": savedDashInFolder.Version,
+								"version": sc.savedDashInFolder.Version,
 							}),
 							FolderId:  0,
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
-						So(res, ShouldNotBeNil)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
 
-						Convey("It should update dashboard", func() {
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: savedDashInFolder.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Title, ShouldEqual, "Updated title")
-							So(query.Result.FolderId, ShouldEqual, 0)
-							So(query.Result.Version, ShouldBeGreaterThan, savedDashInFolder.Version)
-						})
+						dash, err := sc.sqlStore.GetDashboard(sc.savedDashInFolder.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, "Updated title", dash.Title)
+						assert.Equal(t, int64(0), dash.FolderId)
+						assert.Greater(t, dash.Version, sc.savedDashInFolder.Version)
 					})
 
-					Convey("When creating a dashboard with same name as dashboard in other folder", func() {
+				permissionScenario(t, "When creating a dashboard with same name as dashboard in other folder",
+					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
-								"title": savedDashInFolder.Title,
+								"title": sc.savedDashInFolder.Title,
 							}),
-							FolderId:  savedDashInFolder.FolderId,
+							FolderId:  sc.savedDashInFolder.FolderId,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in dashboard with same name in folder error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardWithSameNameInFolderExists)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardWithSameNameInFolderExists, err)
 					})
 
-					Convey("When creating a dashboard with same name as dashboard in General folder", func() {
+				permissionScenario(t, "When creating a dashboard with same name as dashboard in General folder",
+					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
-								"title": savedDashInGeneralFolder.Title,
+								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderId:  savedDashInGeneralFolder.FolderId,
+							FolderId:  sc.savedDashInGeneralFolder.FolderId,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in dashboard with same name in folder error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardWithSameNameInFolderExists)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardWithSameNameInFolderExists, err)
 					})
 
-					Convey("When creating a folder with same name as existing folder", func() {
+				permissionScenario(t, "When creating a folder with same name as existing folder", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
-								"title": savedFolder.Title,
+								"title": sc.savedFolder.Title,
 							}),
 							IsFolder:  true,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in dashboard with same name in folder error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardWithSameNameInFolderExists)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardWithSameNameInFolderExists, err)
 					})
-				})
+			})
 
-				Convey("and overwrite flag is set to true", func() {
-					shouldOverwrite := true
+			t.Run("and overwrite flag is set to true", func(t *testing.T) {
+				const shouldOverwrite = true
 
-					Convey("When updating an existing dashboard by id without current version", func() {
+				permissionScenario(t, "When updating an existing dashboard by id without current version", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"id":    savedDashInGeneralFolder.Id,
+								"id":    sc.savedDashInGeneralFolder.Id,
 								"title": "Updated title",
 							}),
-							FolderId:  savedFolder.Id,
+							FolderId:  sc.savedFolder.Id,
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
-						So(res, ShouldNotBeNil)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
 
-						Convey("It should update dashboard", func() {
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: savedDashInGeneralFolder.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Title, ShouldEqual, "Updated title")
-							So(query.Result.FolderId, ShouldEqual, savedFolder.Id)
-							So(query.Result.Version, ShouldBeGreaterThan, savedDashInGeneralFolder.Version)
-						})
+						dash, err := sc.sqlStore.GetDashboard(sc.savedDashInGeneralFolder.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, "Updated title", dash.Title)
+						assert.Equal(t, sc.savedFolder.Id, dash.FolderId)
+						assert.Greater(t, dash.Version, sc.savedDashInGeneralFolder.Version)
 					})
 
-					Convey("When updating an existing dashboard by uid without current version", func() {
+				permissionScenario(t, "When updating an existing dashboard by uid without current version", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"uid":   savedDashInFolder.Uid,
+								"uid":   sc.savedDashInFolder.Uid,
 								"title": "Updated title",
 							}),
 							FolderId:  0,
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
-						So(res, ShouldNotBeNil)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
 
-						Convey("It should update dashboard", func() {
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: savedDashInFolder.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Title, ShouldEqual, "Updated title")
-							So(query.Result.FolderId, ShouldEqual, 0)
-							So(query.Result.Version, ShouldBeGreaterThan, savedDashInFolder.Version)
-						})
+						dash, err := sc.sqlStore.GetDashboard(sc.savedDashInFolder.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, "Updated title", dash.Title)
+						assert.Equal(t, int64(0), dash.FolderId)
+						assert.Greater(t, dash.Version, sc.savedDashInFolder.Version)
 					})
 
-					Convey("When updating uid for existing dashboard using id", func() {
+				permissionScenario(t, "When updating uid for existing dashboard using id", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"id":    savedDashInFolder.Id,
+								"id":    sc.savedDashInFolder.Id,
 								"uid":   "new-uid",
-								"title": savedDashInFolder.Title,
+								"title": sc.savedDashInFolder.Title,
 							}),
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
+						assert.Equal(t, sc.savedDashInFolder.Id, res.Id)
+						assert.Equal(t, "new-uid", res.Uid)
 
-						Convey("It should update dashboard", func() {
-							So(res, ShouldNotBeNil)
-							So(res.Id, ShouldEqual, savedDashInFolder.Id)
-							So(res.Uid, ShouldEqual, "new-uid")
-
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: savedDashInFolder.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Uid, ShouldEqual, "new-uid")
-							So(query.Result.Version, ShouldBeGreaterThan, savedDashInFolder.Version)
-						})
+						dash, err := sc.sqlStore.GetDashboard(sc.savedDashInFolder.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, "new-uid", dash.Uid)
+						assert.Greater(t, dash.Version, sc.savedDashInFolder.Version)
 					})
 
-					Convey("When updating uid to an existing uid for existing dashboard using id", func() {
+				permissionScenario(t, "When updating uid to an existing uid for existing dashboard using id", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"id":    savedDashInFolder.Id,
-								"uid":   savedDashInGeneralFolder.Uid,
-								"title": savedDashInFolder.Title,
+								"id":    sc.savedDashInFolder.Id,
+								"uid":   sc.savedDashInGeneralFolder.Uid,
+								"title": sc.savedDashInFolder.Title,
 							}),
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in same uid exists error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardWithSameUIDExists)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardWithSameUIDExists, err)
 					})
 
-					Convey("When creating a dashboard with same name as dashboard in other folder", func() {
+				permissionScenario(t, "When creating a dashboard with same name as dashboard in other folder", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
-								"title": savedDashInFolder.Title,
+								"title": sc.savedDashInFolder.Title,
 							}),
-							FolderId:  savedDashInFolder.FolderId,
+							FolderId:  sc.savedDashInFolder.FolderId,
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
+						assert.Equal(t, sc.savedDashInFolder.Id, res.Id)
+						assert.Equal(t, sc.savedDashInFolder.Uid, res.Uid)
 
-						Convey("It should overwrite existing dashboard", func() {
-							So(res, ShouldNotBeNil)
-							So(res.Id, ShouldEqual, savedDashInFolder.Id)
-							So(res.Uid, ShouldEqual, savedDashInFolder.Uid)
-
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Id, ShouldEqual, res.Id)
-							So(query.Result.Uid, ShouldEqual, res.Uid)
-						})
+						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, res.Id, dash.Id)
+						assert.Equal(t, res.Uid, dash.Uid)
 					})
 
-					Convey("When creating a dashboard with same name as dashboard in General folder", func() {
+				permissionScenario(t, "When creating a dashboard with same name as dashboard in General folder", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
 								"id":    nil,
-								"title": savedDashInGeneralFolder.Title,
+								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderId:  savedDashInGeneralFolder.FolderId,
+							FolderId:  sc.savedDashInGeneralFolder.FolderId,
 							Overwrite: shouldOverwrite,
 						}
 
-						res := callSaveWithResult(t, cmd, sqlStore)
+						res := callSaveWithResult(t, cmd, sc.sqlStore)
+						require.NotNil(t, res)
+						assert.Equal(t, sc.savedDashInGeneralFolder.Id, res.Id)
+						assert.Equal(t, sc.savedDashInGeneralFolder.Uid, res.Uid)
 
-						Convey("It should overwrite existing dashboard", func() {
-							So(res, ShouldNotBeNil)
-							So(res.Id, ShouldEqual, savedDashInGeneralFolder.Id)
-							So(res.Uid, ShouldEqual, savedDashInGeneralFolder.Uid)
-
-							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
-
-							err := bus.Dispatch(&query)
-							So(err, ShouldBeNil)
-							So(query.Result.Id, ShouldEqual, res.Id)
-							So(query.Result.Uid, ShouldEqual, res.Uid)
-						})
+						dash, err := sc.sqlStore.GetDashboard(res.Id, cmd.OrgId, "", "")
+						require.NoError(t, err)
+						assert.Equal(t, res.Id, dash.Id)
+						assert.Equal(t, res.Uid, dash.Uid)
 					})
 
-					Convey("When updating existing folder to a dashboard using id", func() {
+				permissionScenario(t, "When updating existing folder to a dashboard using id", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"id":    savedFolder.Id,
+								"id":    sc.savedFolder.Id,
 								"title": "new title",
 							}),
 							IsFolder:  false,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in type mismatch error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardTypeMismatch)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardTypeMismatch, err)
 					})
 
-					Convey("When updating existing dashboard to a folder using id", func() {
+				permissionScenario(t, "When updating existing dashboard to a folder using id", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"id":    savedDashInFolder.Id,
+								"id":    sc.savedDashInFolder.Id,
 								"title": "new folder title",
 							}),
 							IsFolder:  true,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in type mismatch error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardTypeMismatch)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardTypeMismatch, err)
 					})
 
-					Convey("When updating existing folder to a dashboard using uid", func() {
+				permissionScenario(t, "When updating existing folder to a dashboard using uid", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"uid":   savedFolder.Uid,
+								"uid":   sc.savedFolder.Uid,
 								"title": "new title",
 							}),
 							IsFolder:  false,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in type mismatch error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardTypeMismatch)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardTypeMismatch, err)
 					})
 
-					Convey("When updating existing dashboard to a folder using uid", func() {
+				permissionScenario(t, "When updating existing dashboard to a folder using uid", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"uid":   savedDashInFolder.Uid,
+								"uid":   sc.savedDashInFolder.Uid,
 								"title": "new folder title",
 							}),
 							IsFolder:  true,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in type mismatch error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardTypeMismatch)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardTypeMismatch, err)
 					})
 
-					Convey("When updating existing folder to a dashboard using title", func() {
+				permissionScenario(t, "When updating existing folder to a dashboard using title", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"title": savedFolder.Title,
+								"title": sc.savedFolder.Title,
 							}),
 							IsFolder:  false,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in dashboard with same name as folder error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardWithSameNameAsFolder)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardWithSameNameAsFolder, err)
 					})
 
-					Convey("When updating existing dashboard to a folder using title", func() {
+				permissionScenario(t, "When updating existing dashboard to a folder using title", canSave,
+					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := models.SaveDashboardCommand{
 							OrgId: 1,
 							Dashboard: simplejson.NewFromAny(map[string]interface{}{
-								"title": savedDashInGeneralFolder.Title,
+								"title": sc.savedDashInGeneralFolder.Title,
 							}),
 							IsFolder:  true,
 							Overwrite: shouldOverwrite,
 						}
 
-						err := callSaveWithError(cmd, sqlStore)
-
-						Convey("It should result in folder with same name as dashboard error", func() {
-							So(err, ShouldNotBeNil)
-							So(err, ShouldEqual, models.ErrDashboardFolderWithSameNameAsDashboard)
-						})
+						err := callSaveWithError(cmd, sc.sqlStore)
+						assert.Equal(t, models.ErrDashboardFolderWithSameNameAsDashboard, err)
 					})
-				})
 			})
 		})
 	})
 }
 
-type dashboardPermissionScenarioContext struct {
-	dashboardGuardianMock *guardian.FakeDashboardGuardian
+type permissionScenarioContext struct {
+	dashboardGuardianMock    *guardian.FakeDashboardGuardian
+	sqlStore                 *sqlstore.SQLStore
+	savedFolder              *models.Dashboard
+	savedDashInFolder        *models.Dashboard
+	otherSavedFolder         *models.Dashboard
+	savedDashInGeneralFolder *models.Dashboard
 }
 
-type dashboardPermissionScenarioFunc func(sc *dashboardPermissionScenarioContext)
+type permissionScenarioFunc func(t *testing.T, sc *permissionScenarioContext)
 
-func dashboardPermissionScenario(desc string, mock *guardian.FakeDashboardGuardian, fn dashboardPermissionScenarioFunc) {
-	Convey(desc, func() {
-		origNewDashboardGuardian := guardian.New
-		guardian.MockDashboardGuardian(mock)
+func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionScenarioFunc) {
+	t.Helper()
 
-		sc := &dashboardPermissionScenarioContext{
-			dashboardGuardianMock: mock,
-		}
-
-		defer func() {
-			guardian.New = origNewDashboardGuardian
-		}()
-
-		fn(sc)
-	})
-}
-
-func permissionScenario(desc string, canSave bool, fn dashboardPermissionScenarioFunc) {
 	mock := &guardian.FakeDashboardGuardian{
 		CanSaveValue: canSave,
 	}
-	dashboardPermissionScenario(desc, mock, fn)
+
+	t.Run(desc, func(t *testing.T) {
+		sqlStore := sqlstore.InitTestDB(t)
+
+		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
+		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.Id, sqlStore)
+		saveTestDashboard(t, "Other saved dash in folder", testOrgID, savedFolder.Id, sqlStore)
+		savedDashInGeneralFolder := saveTestDashboard(t, "Saved dashboard in general folder", testOrgID, 0, sqlStore)
+		otherSavedFolder := saveTestFolder(t, "Other saved folder", testOrgID, sqlStore)
+
+		require.Equal(t, "Saved folder", savedFolder.Title)
+		require.Equal(t, "saved-folder", savedFolder.Slug)
+		require.NotEqual(t, int64(0), savedFolder.Id)
+		require.True(t, savedFolder.IsFolder)
+		require.Equal(t, int64(0), savedFolder.FolderId)
+		require.NotEmpty(t, savedFolder.Uid)
+
+		require.Equal(t, "Saved dash in folder", savedDashInFolder.Title)
+		require.Equal(t, "saved-dash-in-folder", savedDashInFolder.Slug)
+		require.NotEqual(t, int64(0), savedDashInFolder.Id)
+		require.False(t, savedDashInFolder.IsFolder)
+		require.Equal(t, savedFolder.Id, savedDashInFolder.FolderId)
+		require.NotEmpty(t, savedDashInFolder.Uid)
+
+		origNewDashboardGuardian := guardian.New
+		t.Cleanup(func() {
+			guardian.New = origNewDashboardGuardian
+		})
+		guardian.MockDashboardGuardian(mock)
+
+		sc := &permissionScenarioContext{
+			dashboardGuardianMock:    mock,
+			sqlStore:                 sqlStore,
+			savedDashInFolder:        savedDashInFolder,
+			otherSavedFolder:         otherSavedFolder,
+			savedDashInGeneralFolder: savedDashInGeneralFolder,
+			savedFolder:              savedFolder,
+		}
+
+		fn(t, sc)
+	})
 }
 
 func callSaveWithResult(t *testing.T, cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLStore) *models.Dashboard {
@@ -973,12 +860,12 @@ func callSaveWithError(cmd models.SaveDashboardCommand, sqlStore *sqlstore.SQLSt
 	return err
 }
 
-func saveTestDashboard(t *testing.T, title string, orgId int64, folderId int64, sqlStore *sqlstore.SQLStore) *models.Dashboard {
+func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlStore *sqlstore.SQLStore) *models.Dashboard {
 	t.Helper()
 
 	cmd := models.SaveDashboardCommand{
-		OrgId:    orgId,
-		FolderId: folderId,
+		OrgId:    orgID,
+		FolderId: folderID,
 		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
@@ -987,7 +874,7 @@ func saveTestDashboard(t *testing.T, title string, orgId int64, folderId int64, 
 	}
 
 	dto := SaveDashboardDTO{
-		OrgId:     orgId,
+		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
 			UserId:  1,
@@ -1001,10 +888,10 @@ func saveTestDashboard(t *testing.T, title string, orgId int64, folderId int64, 
 	return res
 }
 
-func saveTestFolder(t *testing.T, title string, orgId int64, sqlStore *sqlstore.SQLStore) *models.Dashboard {
+func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore *sqlstore.SQLStore) *models.Dashboard {
 	t.Helper()
 	cmd := models.SaveDashboardCommand{
-		OrgId:    orgId,
+		OrgId:    orgID,
 		FolderId: 0,
 		IsFolder: true,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -1014,7 +901,7 @@ func saveTestFolder(t *testing.T, title string, orgId int64, sqlStore *sqlstore.
 	}
 
 	dto := SaveDashboardDTO{
-		OrgId:     orgId,
+		OrgId:     orgID,
 		Dashboard: cmd.GetDashboardModel(),
 		User: &models.SignedInUser{
 			UserId:  1,

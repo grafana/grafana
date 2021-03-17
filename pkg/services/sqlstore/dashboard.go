@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -182,6 +183,26 @@ func generateNewDashboardUid(sess *DBSession, orgId int64) (string, error) {
 	return "", models.ErrDashboardFailedGenerateUniqueUid
 }
 
+// GetDashboard gets a dashboard.
+func (ss *SQLStore) GetDashboard(id, orgID int64, uid, slug string) (*models.Dashboard, error) {
+	if id == 0 && slug == "" && uid == "" {
+		return nil, models.ErrDashboardIdentifierNotSet
+	}
+
+	dashboard := models.Dashboard{Slug: slug, OrgId: orgID, Id: id, Uid: uid}
+	has, err := ss.engine.Get(&dashboard)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, models.ErrDashboardNotFound
+	}
+
+	dashboard.SetId(dashboard.Id)
+	dashboard.SetUid(dashboard.Uid)
+	return &dashboard, nil
+}
+
+// TODO: Remove me
 func GetDashboard(query *models.GetDashboardQuery) error {
 	if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
 		return models.ErrDashboardIdentifierNotSet
@@ -582,7 +603,7 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, dash *models.Dashbo
 		var err error
 		dashWithIdExists, err = sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existingById)
 		if err != nil {
-			return isParentFolderChanged, err
+			return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by ID failed: %w", err)
 		}
 
 		if !dashWithIdExists {
@@ -601,16 +622,16 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, dash *models.Dashbo
 		var err error
 		dashWithUidExists, err = sess.Where("org_id=? AND uid=?", dash.OrgId, dash.Uid).Get(&existingByUid)
 		if err != nil {
-			return isParentFolderChanged, err
+			return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by UID failed: %w", err)
 		}
 	}
 
 	if dash.FolderId > 0 {
 		var existingFolder models.Dashboard
-		folderExists, folderErr := sess.Where("org_id=? AND id=? AND is_folder=?", dash.OrgId, dash.FolderId,
+		folderExists, err := sess.Where("org_id=? AND id=? AND is_folder=?", dash.OrgId, dash.FolderId,
 			dialect.BooleanStr(true)).Get(&existingFolder)
-		if folderErr != nil {
-			return isParentFolderChanged, folderErr
+		if err != nil {
+			return isParentFolderChanged, fmt.Errorf("SQL query for folder failed: %w", err)
 		}
 
 		if !folderExists {
@@ -667,11 +688,10 @@ func getExistingDashboardByIdOrUidForUpdate(sess *DBSession, dash *models.Dashbo
 func getExistingDashboardByTitleAndFolder(sess *DBSession, dash *models.Dashboard, overwrite,
 	isParentFolderChanged bool) (bool, error) {
 	var existing models.Dashboard
-
 	exists, err := sess.Where("org_id=? AND slug=? AND (is_folder=? OR folder_id=?)", dash.OrgId, dash.Slug,
 		dialect.BooleanStr(true), dash.FolderId).Get(&existing)
 	if err != nil {
-		return isParentFolderChanged, err
+		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
 	}
 
 	if exists && dash.Id != existing.Id {
@@ -717,7 +737,7 @@ func (ss *SQLStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, ove
 		return nil
 	})
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("transactional SQL session failed: %w", err)
 	}
 
 	return isParentFolderChanged, nil
