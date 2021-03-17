@@ -39,9 +39,6 @@
         "go.sum",
         "/contribute/style-guides/backend.md",
         "/contribute/architecture/backend",
-        "/contribute/architecture/communication.md",
-        "/contribute/architecture/database.md",
-        "/contribute/architecture/services.md",
         "/scripts/go/"
     ],
     "action": "updateLabel",
