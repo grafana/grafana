@@ -51,7 +51,7 @@ That's all you need to start returning log data from your data source. Go ahead 
 
 Congratulations, you just wrote your first logs data source plugin! Next, let's look at a couple of features that can further improve the experience for the user.
 
-### (Optional) Encourage Grafana to treat the data as logs
+### (Optional) Add preferred visualisation type hint to the data frame
 
 By default Grafana might not realize you're returning logs and so won't show the log view in Explore. It can be told to show that view by setting `meta.preferredVisualisationType` to `'logs'`.
 
