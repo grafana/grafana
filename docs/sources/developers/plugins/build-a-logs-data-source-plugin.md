@@ -53,7 +53,7 @@ Congratulations, you just wrote your first logs data source plugin! Next, let's 
 
 ### (Optional) Add preferred visualisation type hint to the data frame
 
-By default Grafana might not realize you're returning logs and so won't show the log view in Explore. It can be told to show that view by setting `meta.preferredVisualisationType` to `'logs'`.
+To make sure Grafana recognizes data as logs and shows logs visualization automatically in Explore you have do set `meta.preferredVisualisationType` to `'logs'` in the returned data frame. See [Selecting preferred visualisation section]({{< relref "add-support-for-explore-queries.md#selecting-preferred-visualisation" >}})
 
 **Example:**
 
