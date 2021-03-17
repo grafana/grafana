@@ -2,10 +2,10 @@
 # It is meant to run daily based on a cronjob.
 name: go tidy
 
+# Go tidy is meant to run daily at midnight
 on:
-  push:
-    branches:
-      - test-go-tidy-github-action
+  schedule:
+    - cron: '0 0 * * *'
 
 env:
   GITHUB_TOKEN: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
@@ -19,7 +19,6 @@ jobs:
       -
         name: Checkout
         uses: actions/checkout@v2
-        with: { ref: test-go-tidy-github-action }
       -
         name: Set up Git
         run: |
