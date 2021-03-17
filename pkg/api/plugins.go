@@ -243,7 +243,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 	}
 
 	resp := response.Respond(200, content)
-	resp.Header("Content-Type", "text/plain; charset=utf-8")
+	resp.SetHeader("Content-Type", "text/plain; charset=utf-8")
 	return resp
 }
 

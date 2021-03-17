@@ -561,10 +561,10 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 	}
 
 	if options.DiffType == dashdiffs.DiffDelta {
-		return response.Respond(200, result.Delta).Header("Content-Type", "application/json")
+		return response.Respond(200, result.Delta).SetHeader("Content-Type", "application/json")
 	}
 
-	return response.Respond(200, result.Delta).Header("Content-Type", "text/html")
+	return response.Respond(200, result.Delta).SetHeader("Content-Type", "text/html")
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.
