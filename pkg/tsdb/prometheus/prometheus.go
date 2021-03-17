@@ -211,7 +211,7 @@ func parseResponse(value model.Value, query *PrometheusQuery) (plugins.DataQuery
 		}
 
 		for _, k := range v.Values {
-			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0))
+			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
 			values = append(values, float64(k.Value))
 		}
 		frames = append(frames, data.NewFrame(name,
