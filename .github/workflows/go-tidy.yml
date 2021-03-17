@@ -1,0 +1,41 @@
+# This action is responsible for running `go mod tidy` to sync go dependencies.
+# It is meant to run daily based on a cronjob.
+name: go tidy
+
+on:
+  push:
+    branches:
+      - test-go-tidy-github-action
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+  USERNAME: grafanabot
+  EMAIL: bot@grafana.com
+
+jobs:
+  tidy:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+        with: { ref: test-go-tidy-github-action }
+      -
+        name: Set up Git
+        run: |
+          git config user.name ${USERNAME}
+          git config user.email ${EMAIL}
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/grafana/grafana.git
+      -
+        name: Run go mod tidy
+        run: |
+          rm -f go.sum
+          go mod tidy
+      -
+        name: Commit and push go.sum
+        run: |
+          git add .
+          if output=$(git status --porcelain) && [ ! -z "$output" ]; then
+            git commit -m 'Update go module dependencies'
+            git push
+          fi
