@@ -1,6 +1,6 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { css } from 'emotion';
-import { stylesFactory, useTheme } from '../../themes';
+import { useStyles, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 
 /**
@@ -32,7 +32,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   leftItems = [],
 }) => {
   const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
   const headerHeight = getHeaderHeight(theme, title, leftItems);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
@@ -57,7 +57,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
       label: panel-container;
@@ -92,7 +92,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding-right: ${theme.panelPadding}px;
     `,
   };
-});
+};
 
 const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
   const toRender = React.Children.toArray(items).filter(Boolean);
