@@ -6,7 +6,7 @@ import { DateTimeInput, GrafanaTheme, LoadingState } from '@grafana/data';
 
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
 import { LibraryPanelDTO } from '../../types';
-import { initialLibraryPanelsViewState, libraryPanelsViewReducer, setPage, setSearchString } from './reducer';
+import { changePage, changeSearchString, initialLibraryPanelsViewState, libraryPanelsViewReducer } from './reducer';
 import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './actions';
 
 interface LibraryPanelViewProps {
@@ -29,14 +29,13 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   currentPanelId: currentPanel,
 }) => {
   const styles = useStyles(getPanelViewStyles);
-  const [{ libraryPanels, searchString, page, perPage, totalCount, loadingState }, dispatch] = useReducer(
+  const [{ libraryPanels, searchString, page, perPage, numberOfPages, loadingState }, dispatch] = useReducer(
     libraryPanelsViewReducer,
     {
       ...initialLibraryPanelsViewState,
       currentPanelId: currentPanel,
     }
   );
-  const numberOfPages = Math.ceil(totalCount / perPage);
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
   useDebounce(() => asyncDispatch(searchForLibraryPanels({ searchString, page, perPage })), 300, [
     searchString,
@@ -44,10 +43,10 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
     asyncDispatch,
   ]);
   const onSearchChange = (event: FormEvent<HTMLInputElement>) =>
-    asyncDispatch(setSearchString({ searchString: event.currentTarget.value }));
+    asyncDispatch(changeSearchString({ searchString: event.currentTarget.value }));
   const onDelete = ({ uid }: LibraryPanelDTO) =>
     asyncDispatch(deleteLibraryPanel(uid, { searchString, page, perPage }));
-  const onPageChange = (page: number) => asyncDispatch(setPage({ page }));
+  const onPageChange = (page: number) => asyncDispatch(changePage({ page }));
 
   return (
     <div className={cx(styles.container, className)}>

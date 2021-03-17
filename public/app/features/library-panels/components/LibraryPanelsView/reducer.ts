@@ -10,6 +10,7 @@ export interface LibraryPanelsViewState {
   totalCount: number;
   perPage: number;
   page: number;
+  numberOfPages: number;
   currentPanelId?: string;
 }
 
@@ -20,6 +21,7 @@ export const initialLibraryPanelsViewState: LibraryPanelsViewState = {
   totalCount: 0,
   perPage: 10,
   page: 1,
+  numberOfPages: 0,
   currentPanelId: undefined,
 };
 
@@ -32,7 +34,9 @@ const libraryPanelsViewSlice = createSlice({
     },
     searchCompleted: (
       state,
-      action: PayloadAction<Omit<LibraryPanelsViewState, 'currentPanelId' | 'searchString' | 'loadingState'>>
+      action: PayloadAction<
+        Omit<LibraryPanelsViewState, 'currentPanelId' | 'searchString' | 'loadingState' | 'numberOfPages'>
+      >
     ) => {
       const { libraryPanels, page, perPage, totalCount } = action.payload;
       state.libraryPanels = libraryPanels?.filter((l) => l.uid !== state.currentPanelId);
@@ -40,15 +44,16 @@ const libraryPanelsViewSlice = createSlice({
       state.perPage = perPage;
       state.totalCount = totalCount;
       state.loadingState = LoadingState.Done;
+      state.numberOfPages = Math.ceil(totalCount / perPage);
     },
-    setSearchString: (state, action: PayloadAction<Pick<LibraryPanelsViewState, 'searchString'>>) => {
+    changeSearchString: (state, action: PayloadAction<Pick<LibraryPanelsViewState, 'searchString'>>) => {
       state.searchString = action.payload.searchString;
     },
-    setPage: (state, action: PayloadAction<Pick<LibraryPanelsViewState, 'page'>>) => {
+    changePage: (state, action: PayloadAction<Pick<LibraryPanelsViewState, 'page'>>) => {
       state.page = action.payload.page;
     },
   },
 });
 
 export const libraryPanelsViewReducer = libraryPanelsViewSlice.reducer;
-export const { initSearch, searchCompleted, setSearchString, setPage } = libraryPanelsViewSlice.actions;
+export const { initSearch, searchCompleted, changeSearchString, changePage } = libraryPanelsViewSlice.actions;
