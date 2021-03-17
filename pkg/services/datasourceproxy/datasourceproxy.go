@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -59,9 +60,7 @@ func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 		return
 	}
 
-	// macaron does not include trailing slashes when resolving a wildcard path
-	proxyPath := ensureProxyPathTrailingSlash(c.Req.URL.Path, c.Params("*"))
-
+	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, p.Cfg)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
@@ -74,14 +73,12 @@ func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	proxy.HandleRequest()
 }
 
-// ensureProxyPathTrailingSlash Check for a trailing slash in original path and makes
-// sure that a trailing slash is added to proxy path, if not already exists.
-func ensureProxyPathTrailingSlash(originalPath, proxyPath string) string {
-	if len(proxyPath) > 1 {
-		if originalPath[len(originalPath)-1] == '/' && proxyPath[len(proxyPath)-1] != '/' {
-			return proxyPath + "/"
-		}
-	}
+var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/[\d]+\/?`)
 
-	return proxyPath
+func extractProxyPath(originalRawPath string) string {
+	return proxyPathRegexp.ReplaceAllString(originalRawPath, "")
+}
+
+func getProxyPath(c *models.ReqContext) string {
+	return extractProxyPath(c.Req.URL.EscapedPath())
 }
