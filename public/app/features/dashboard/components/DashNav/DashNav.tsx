@@ -197,14 +197,19 @@ class DashNav extends PureComponent<Props> {
     const tvButton = (
       <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
     );
-    const timeControls = (
-      <DashNavTimeControls
-        dashboard={dashboard}
-        location={location}
-        onChangeTimeZone={updateTimeZoneForSession}
-        key="time-controls"
-      />
-    );
+
+    let timeControls: React.ReactNode | null;
+
+    if (!dashboard.timepicker.hidden) {
+      timeControls = (
+        <DashNavTimeControls
+          dashboard={dashboard}
+          location={location}
+          onChangeTimeZone={updateTimeZoneForSession}
+          key="time-controls"
+        />
+      );
+    }
 
     if (this.isPlaylistRunning()) {
       return [this.renderPlaylistControls(), timeControls];
@@ -252,11 +257,7 @@ class DashNav extends PureComponent<Props> {
     }
 
     this.addCustomContent(customRightActions, buttons);
-
-    if (!dashboard.timepicker.hidden) {
-      buttons.push(timeControls);
-    }
-
+    buttons.push(timeControls);
     buttons.push(tvButton);
     return buttons;
   }
