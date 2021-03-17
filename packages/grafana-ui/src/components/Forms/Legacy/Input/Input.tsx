@@ -8,7 +8,7 @@ export enum LegacyInputStatus {
   Valid = 'valid',
 }
 
-interface Props extends React.HTMLProps<HTMLInputElement> {
+export interface Props extends React.HTMLProps<HTMLInputElement> {
   validationEvents?: ValidationEvents;
   hideErrorMessage?: boolean;
   inputRef?: React.LegacyRef<HTMLInputElement>;

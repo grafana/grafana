@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
@@ -68,11 +67,9 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 		return dashboardGuardianResponse(err)
 	}
 
-	cmd := models.UpdateDashboardAclCommand{}
-	cmd.DashboardID = dashID
-
+	var items []*models.DashboardAcl
 	for _, item := range apiCmd.Items {
-		cmd.Items = append(cmd.Items, &models.DashboardAcl{
+		items = append(items, &models.DashboardAcl{
 			OrgID:       c.OrgId,
 			DashboardID: dashID,
 			UserID:      item.UserID,
@@ -88,9 +85,9 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 	if err != nil {
 		return response.Error(500, "Error while retrieving hidden permissions", err)
 	}
-	cmd.Items = append(cmd.Items, hiddenACL...)
+	items = append(items, hiddenACL...)
 
-	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
+	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
 		if err != nil {
 			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
 				return response.Error(400, err.Error(), err)
@@ -102,7 +99,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := updateDashboardACL(hs, dashID, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
 			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			return response.Error(409, err.Error(), err)
