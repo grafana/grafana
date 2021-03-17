@@ -276,7 +276,7 @@ func createDummyACL(t *testing.T, sqlStore *SQLStore, dashboardPermission *Dashb
 			user = createDummyUser(t, sqlStore)
 			err := sqlStore.AddTeamMember(user.Id, 1, team.Id, false, 0)
 			require.NoError(t, err)
-			t.Logf("Creating team member with ID %d", user.Id)
+			t.Logf("Created team member with ID %d", user.Id)
 		}
 
 		acl.TeamID = team.Id
