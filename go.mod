@@ -30,6 +30,7 @@ require (
 	github.com/go-kit/kit v0.10.0
 	github.com/go-macaron/binding v0.0.0-20190806013118-0b4f37bab25b
 	github.com/go-macaron/gzip v0.0.0-20160222043647-cad1c6580a07
+	github.com/go-openapi/strfmt v0.20.0
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/go-stack/stack v1.8.0
@@ -39,7 +40,7 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
-	github.com/grafana/alerting-api v0.0.0-20210311171115-b0eb4577f38c
+	github.com/grafana/alerting-api v0.0.0-20210316151414-4987b85e57ee
 	github.com/grafana/grafana-aws-sdk v0.2.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.88.0
