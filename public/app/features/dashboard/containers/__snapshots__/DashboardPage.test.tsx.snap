@@ -103,6 +103,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         }
       }
       isFullscreen={false}
+      kioskMode="off"
       onAddPanel={[Function]}
     />
   </div>
@@ -482,6 +483,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         }
       }
       isFullscreen={false}
+      kioskMode="off"
       onAddPanel={[Function]}
     />
   </div>
