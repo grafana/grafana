@@ -14,7 +14,7 @@ To add logs support to an existing data source, you need to:
 
 - Enable logs support
 - Construct the log data
-- (Optional) Encourage Grafana to treat the data as logs
+- (Optional) Add preferred visualisation type hint to the data frame
 
 ### Enable logs support
 
