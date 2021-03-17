@@ -91,6 +91,29 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
+		var getESDatasSourcesQuery *models.GetDataSourcesByTypeQuery
+		uss.Bus.AddHandler(func(query *models.GetDataSourcesByTypeQuery) error {
+			query.Result = []*models.DataSource{
+				{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"esVersion": 2,
+					}),
+				},
+				{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"esVersion": 2,
+					}),
+				},
+				{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"esVersion": 70,
+					}),
+				},
+			}
+			getESDatasSourcesQuery = query
+			return nil
+		})
+
 		var getDataSourceAccessStatsQuery *models.GetDataSourceAccessStatsQuery
 		uss.Bus.AddHandler(func(query *models.GetDataSourceAccessStatsQuery) error {
 			query.Result = []*models.DataSourceAccessStats{
@@ -190,6 +213,7 @@ func TestMetrics(t *testing.T) {
 			assert.Nil(t, getSystemStatsQuery)
 			assert.Nil(t, getDataSourceStatsQuery)
 			assert.Nil(t, getDataSourceAccessStatsQuery)
+			assert.Nil(t, getESDatasSourcesQuery)
 		})
 
 		t.Run("Given reporting enabled, stats should be gathered and sent to HTTP endpoint", func(t *testing.T) {
@@ -248,6 +272,7 @@ func TestMetrics(t *testing.T) {
 
 			assert.NotNil(t, getSystemStatsQuery)
 			assert.NotNil(t, getDataSourceStatsQuery)
+			assert.NotNil(t, getESDatasSourcesQuery)
 			assert.NotNil(t, getDataSourceAccessStatsQuery)
 			assert.NotNil(t, getAlertNotifierUsageStatsQuery)
 			assert.NotNil(t, resp.req)
@@ -289,6 +314,10 @@ func TestMetrics(t *testing.T) {
 
 			assert.Equal(t, 9, metrics.Get("stats.ds."+models.DS_ES+".count").MustInt())
 			assert.Equal(t, 10, metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt())
+
+			assert.Equal(t, 2, metrics.Get("stats.ds."+models.DS_ES+".v2.count").MustInt())
+			assert.Equal(t, 1, metrics.Get("stats.ds."+models.DS_ES+".v70.count").MustInt())
+
 			assert.Equal(t, 11+12, metrics.Get("stats.ds.other.count").MustInt())
 
 			assert.Equal(t, 1, metrics.Get("stats.ds_access."+models.DS_ES+".direct.count").MustInt())
@@ -418,6 +447,11 @@ func TestMetrics(t *testing.T) {
 
 		uss.Bus.AddHandler(func(query *models.GetDataSourceStatsQuery) error {
 			query.Result = []*models.DataSourceStats{}
+			return nil
+		})
+
+		uss.Bus.AddHandler(func(query *models.GetDataSourcesByTypeQuery) error {
+			query.Result = []*models.DataSource{}
 			return nil
 		})
 
