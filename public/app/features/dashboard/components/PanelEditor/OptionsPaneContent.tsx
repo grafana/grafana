@@ -1,17 +1,17 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, stylesFactory, useTheme } from '@grafana/ui';
-import { OverrideFieldConfigEditor } from './OverrideFieldConfigEditor';
-import { DefaultFieldConfigEditor } from './DefaultFieldConfigEditor';
+import { CustomScrollbar, Field, stylesFactory, useTheme } from '@grafana/ui';
 import { css } from 'emotion';
-import { PanelOptionsTab } from './PanelOptionsTab';
 import { usePanelLatestData } from './usePanelLatestData';
 import { selectors } from '@grafana/e2e-selectors';
 import { VisualizationButton } from './VisualizationButton';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { OptionsBox } from './OptionsBox';
-import { PanelOptionsEditor } from './PanelOptionsEditor';
+import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
+import { getPanelFrameOptions } from './getPanelFrameOptions';
+import { OptionsGroup } from './OptionsGroup';
+import { getVizualizationSettings } from './PanelOptionsEditor';
 
 interface Props {
   plugin: PanelPlugin;
@@ -36,49 +36,19 @@ export const OptionsPaneContent: React.FC<Props> = ({
 }: Props) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const { data, hasSeries } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
+  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
+  const topGroups: OptionsPaneGroup[] = [];
+  const optionProps: OptionPaneRenderProps = {
+    panel,
+    onPanelOptionsChanged,
+    onPanelConfigChange,
+    plugin,
+    data,
+    eventBus: dashboard.events,
+  };
 
-  const renderFieldOptions = useCallback(
-    (plugin: PanelPlugin) => {
-      const fieldConfig = panel.getFieldConfig();
-
-      if (!fieldConfig || !hasSeries) {
-        return null;
-      }
-
-      return (
-        <DefaultFieldConfigEditor
-          config={fieldConfig}
-          plugin={plugin}
-          onChange={onFieldConfigsChange}
-          /* hasSeries makes sure current data is there */
-          data={data!.series}
-        />
-      );
-    },
-    [data, plugin, panel, onFieldConfigsChange]
-  );
-
-  const renderFieldOverrideOptions = useCallback(
-    (plugin: PanelPlugin) => {
-      const fieldConfig = panel.getFieldConfig();
-
-      if (!fieldConfig || !hasSeries) {
-        return null;
-      }
-
-      return (
-        <OverrideFieldConfigEditor
-          config={fieldConfig}
-          plugin={plugin}
-          onChange={onFieldConfigsChange}
-          /* hasSeries makes sure current data is there */
-          data={data!.series}
-        />
-      );
-    },
-    [data, plugin, panel, onFieldConfigsChange]
-  );
+  topGroups.push(getPanelFrameOptions(optionProps));
+  topGroups.push(getVizualizationSettings(optionProps));
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
@@ -91,18 +61,32 @@ export const OptionsPaneContent: React.FC<Props> = ({
             <FilterInput width={0} value={''} onChange={() => {}} placeholder={'Search options'} />
           </div>
 
-          <OptionsBox>
-            <PanelOptionsTab
-              panel={panel}
-              plugin={plugin}
-              dashboard={dashboard}
-              data={data}
-              onPanelConfigChange={onPanelConfigChange}
-              onPanelOptionsChanged={onPanelOptionsChanged}
-            />
-          </OptionsBox>
+          {topGroups.map((topGroup) => (
+            <OptionsBox key={topGroup.title} title={topGroup.title}>
+              {topGroup.items?.map((child1) => (
+                <Field label={child1.title} description={child1.description} key={child1.title}>
+                  {child1.reactNode!}
+                </Field>
+              ))}
+              {topGroup.groups?.map((childGroup) => (
+                <OptionsGroup id={childGroup.title} key={childGroup.title} title={childGroup.title} defaultToClosed>
+                  {childGroup.items?.map((child2) => (
+                    <Field label={child2.title} description={child2.description} key={child2.title}>
+                      {child2.reactNode!}
+                    </Field>
+                  ))}
+                </OptionsGroup>
+              ))}
+            </OptionsBox>
+          ))}
+        </div>
+      </CustomScrollbar>
+    </div>
+  );
+};
 
-          <OptionsBox>
+{
+  /* <OptionsBox>
             {plugin.optionEditors && (
               <PanelOptionsEditor
                 key="panel options"
@@ -115,14 +99,50 @@ export const OptionsPaneContent: React.FC<Props> = ({
               />
             )}
             {renderFieldOptions(plugin)}
-          </OptionsBox>
+          </OptionsBox> */
+}
 
-          {renderFieldOverrideOptions(plugin)}
-        </div>
-      </CustomScrollbar>
-    </div>
-  );
-};
+// const renderFieldOptions = useCallback(
+//   (plugin: PanelPlugin) => {
+//     const fieldConfig = panel.getFieldConfig();
+
+//     if (!fieldConfig || !hasSeries) {
+//       return null;
+//     }
+
+//     return (
+//       <DefaultFieldConfigEditor
+//         config={fieldConfig}
+//         plugin={plugin}
+//         onChange={onFieldConfigsChange}
+//         /* hasSeries makes sure current data is there */
+//         data={data!.series}
+//       />
+//     );
+//   },
+//   [data, plugin, panel, onFieldConfigsChange]
+// );
+
+// const renderFieldOverrideOptions = useCallback(
+//   (plugin: PanelPlugin) => {
+//     const fieldConfig = panel.getFieldConfig();
+
+//     if (!fieldConfig || !hasSeries) {
+//       return null;
+//     }
+
+//     return (
+//       <OverrideFieldConfigEditor
+//         config={fieldConfig}
+//         plugin={plugin}
+//         onChange={onFieldConfigsChange}
+//         /* hasSeries makes sure current data is there */
+//         data={data!.series}
+//       />
+//     );
+//   },
+//   [data, plugin, panel, onFieldConfigsChange]
+// );
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -153,6 +173,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     searchRemoveIcon: css`
       cursor: pointer;
+    `,
+    itemsPadding: css`
+      padding: ${theme.spacing.md};
     `,
     searchBox: css`
       margin-bottom: ${theme.spacing.md};

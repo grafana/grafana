@@ -29,7 +29,7 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelConfigChange,
   onPanelOptionsChanged,
 }) => {
-  //const makeDummyEdit = useCallback(() => onPanelConfigChange('isEditing', true), []);
+  const makeDummyEdit = useCallback(() => onPanelConfigChange('isEditing', true), []);
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
     onPanelConfigChange,
@@ -55,9 +55,9 @@ export const PanelOptionsTab: FC<Props> = ({
   }
 
   // First common panel settings Title, description
-  return (
-    <OptionsGroup title="Panel" id="Panel settings" key="Panel settings">
-      <Field label="Title">
+  elements.push(
+    <OptionsGroup title="Settings" id="Panel settings" key="Panel settings">
+      <Field label="Panel title">
         <Input defaultValue={panel.title} onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)} />
       </Field>
       <Field label="Description" description="Panel description supports markdown and links.">
@@ -66,92 +66,99 @@ export const PanelOptionsTab: FC<Props> = ({
           onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
         />
       </Field>
-      <Field label="Transparent background">
+      <Field label="Transparent" description="Display panel without a background.">
         <Switch
           value={panel.transparent}
           onChange={(e) => onPanelConfigChange('transparent', e.currentTarget.checked)}
         />
       </Field>
-      <OptionsGroup
-        renderTitle={(isExpanded) => (
-          <>Links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
-        )}
-        id="panel links"
-        key="panel links"
-        defaultToClosed
-        nested
-      >
-        <DataLinksInlineEditor
-          links={panel.links}
-          onChange={(links) => onPanelConfigChange('links', links)}
-          suggestions={linkVariablesSuggestions}
-          data={[]}
-        />
-      </OptionsGroup>
-      <OptionsGroup title="Repeat options" id="panel repeats" key="panel repeats" defaultToClosed nested>
-        <Field
-          label="Repeat by variable"
-          description="Repeat this panel for each value in the selected variable.
-          This is not visible while in edit mode. You need to go back to dashboard and then update the variable or
-          reload the dashboard."
-        >
-          <RepeatRowSelect repeat={panel.repeat} onChange={onRepeatRowSelectChange} />
-        </Field>
-        {panel.repeat && (
-          <Field label="Repeat direction">
-            <RadioButtonGroup
-              options={directionOptions}
-              value={panel.repeatDirection || 'h'}
-              onChange={(value) => onPanelConfigChange('repeatDirection', value)}
-            />
-          </Field>
-        )}
-
-        {panel.repeat && panel.repeatDirection === 'h' && (
-          <Field label="Max per row">
-            <Select
-              options={maxPerRowOptions}
-              value={panel.maxPerRow}
-              onChange={(value) => onPanelConfigChange('maxPerRow', value.value)}
-            />
-          </Field>
-        )}
-      </OptionsGroup>
     </OptionsGroup>
   );
 
   // Old legacy react editor
-  // if (plugin.editor && panel && !plugin.optionEditors) {
-  //   elements.push(
-  //     <OptionsGroup title="Options" id="legacy react editor" key="legacy react editor">
-  //       <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={onPanelOptionsChanged} />
-  //     </OptionsGroup>
-  //   );
-  // }
+  if (plugin.editor && panel && !plugin.optionEditors) {
+    elements.push(
+      <OptionsGroup title="Options" id="legacy react editor" key="legacy react editor">
+        <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={onPanelOptionsChanged} />
+      </OptionsGroup>
+    );
+  }
 
-  // if (plugin.optionEditors && panel) {
-  //   elements.push(
-  //     <PanelOptionsEditor
-  //       key="panel options"
-  //       options={panel.getOptions()}
-  //       onChange={onPanelOptionsChanged}
-  //       replaceVariables={panel.replaceVariables}
-  //       plugin={plugin}
-  //       data={data?.series}
-  //       eventBus={dashboard.events}
-  //     />
-  //   );
-  // }
+  if (plugin.optionEditors && panel) {
+    elements.push(
+      <PanelOptionsEditor
+        key="panel options"
+        options={panel.getOptions()}
+        onChange={onPanelOptionsChanged}
+        replaceVariables={panel.replaceVariables}
+        plugin={plugin}
+        data={data?.series}
+        eventBus={dashboard.events}
+      />
+    );
+  }
 
-  // if (plugin.angularPanelCtrl) {
-  //   elements.push(
-  //     <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} key="angular panel options" />
-  //   );
-  // }
+  if (plugin.angularPanelCtrl) {
+    elements.push(
+      <AngularPanelOptions panel={panel} dashboard={dashboard} plugin={plugin} key="angular panel options" />
+    );
+  }
 
-  // if (config.featureToggles.panelLibrary) {
-  //   elements.push(
-  //     <PanelLibraryOptionsGroup panel={panel} dashboard={dashboard} onChange={makeDummyEdit} key="Panel Library" />
-  //   );
-  // }
+  elements.push(
+    <OptionsGroup
+      renderTitle={(isExpanded) => (
+        <>Links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
+      )}
+      id="panel links"
+      key="panel links"
+      defaultToClosed
+    >
+      <DataLinksInlineEditor
+        links={panel.links}
+        onChange={(links) => onPanelConfigChange('links', links)}
+        suggestions={linkVariablesSuggestions}
+        data={[]}
+      />
+    </OptionsGroup>
+  );
+
+  elements.push(
+    <OptionsGroup title="Repeat options" id="panel repeats" key="panel repeats" defaultToClosed>
+      <Field
+        label="Repeat by variable"
+        description="Repeat this panel for each value in the selected variable.
+          This is not visible while in edit mode. You need to go back to dashboard and then update the variable or
+          reload the dashboard."
+      >
+        <RepeatRowSelect repeat={panel.repeat} onChange={onRepeatRowSelectChange} />
+      </Field>
+      {panel.repeat && (
+        <Field label="Repeat direction">
+          <RadioButtonGroup
+            options={directionOptions}
+            value={panel.repeatDirection || 'h'}
+            onChange={(value) => onPanelConfigChange('repeatDirection', value)}
+          />
+        </Field>
+      )}
+
+      {panel.repeat && panel.repeatDirection === 'h' && (
+        <Field label="Max per row">
+          <Select
+            options={maxPerRowOptions}
+            value={panel.maxPerRow}
+            onChange={(value) => onPanelConfigChange('maxPerRow', value.value)}
+          />
+        </Field>
+      )}
+    </OptionsGroup>
+  );
+
+  if (config.featureToggles.panelLibrary) {
+    elements.push(
+      <PanelLibraryOptionsGroup panel={panel} dashboard={dashboard} onChange={makeDummyEdit} key="Panel Library" />
+    );
+  }
+
+  return <>{elements}</>;
 };

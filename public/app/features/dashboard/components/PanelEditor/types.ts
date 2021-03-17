@@ -1,4 +1,6 @@
-import { DataFrame, FieldConfigSource, PanelPlugin } from '@grafana/data';
+import { DataFrame, EventBus, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
+import React from '@visx/shape/node_modules/@types/react';
+import { PanelModel } from '../../state';
 
 export interface PanelEditorTab {
   id: string;
@@ -33,4 +35,28 @@ export interface Props {
   onChange: (config: FieldConfigSource) => void;
   /* Helpful for IntelliSense */
   data: DataFrame[];
+}
+
+export interface OptionPaneRenderProps {
+  panel: PanelModel;
+  plugin: PanelPlugin;
+  data?: PanelData;
+  eventBus: EventBus;
+  onPanelConfigChange: (configKey: string, value: any) => void;
+  onPanelOptionsChanged: (options: any) => void;
+}
+
+export interface OptionsPaneItemDescriptor {
+  title: string;
+  description?: string;
+  value?: any;
+  reactNode?: React.ReactElement;
+  children?: OptionsPaneItemDescriptor[];
+}
+
+export interface OptionsPaneGroup {
+  title: string;
+  count?: number;
+  items?: OptionsPaneItemDescriptor[];
+  groups?: OptionsPaneGroup[];
 }

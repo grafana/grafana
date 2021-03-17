@@ -82,7 +82,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = (props) => {
             icon="plus"
             label="Add an override"
             variant="secondary"
-            size="md"
+            size="sm"
             options={fieldMatchersUI
               .list()
               .filter((o) => !o.excludeFromPicker)

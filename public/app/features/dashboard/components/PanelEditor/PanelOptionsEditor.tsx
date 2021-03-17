@@ -13,6 +13,7 @@ import { Field, Label } from '@grafana/ui';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
 import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
 
 interface PanelOptionsEditorProps<TOptions> {
   plugin: PanelPlugin;
@@ -91,3 +92,65 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
     </>
   );
 };
+
+export function getVizualizationSettings(props: OptionPaneRenderProps): OptionsPaneGroup {
+  const { plugin, panel, onPanelOptionsChanged, data, eventBus } = props;
+  const currentOptions = panel.getOptions();
+  const mainCategory: OptionsPaneGroup = {
+    title: plugin.meta.name + ' options',
+    items: [],
+    groups: [],
+  };
+
+  const categories: Record<string, OptionsPaneGroup> = {};
+
+  const onOptionChange = (key: string, value: any) => {
+    const newOptions = lodashSet({ ...currentOptions }, key, value);
+    onPanelOptionsChanged(newOptions);
+  };
+
+  const context: StandardEditorContext<any> = {
+    data: data?.series || [],
+    replaceVariables: panel.replaceVariables,
+    options: currentOptions,
+    eventBus,
+    getSuggestions: (scope?: VariableSuggestionsScope) => {
+      return getPanelOptionsVariableSuggestions(plugin, data?.series);
+    },
+  };
+
+  for (const pluginOption of plugin.optionEditors.list()) {
+    let optionCategory = mainCategory;
+    const categoryNames = pluginOption.category;
+    const categoryName = categoryNames && categoryNames.length && categoryNames[0];
+
+    if (categoryName) {
+      optionCategory = categories[categoryName];
+
+      if (!optionCategory) {
+        optionCategory = categories[categoryName] = {
+          title: categoryName,
+          items: [],
+        };
+        mainCategory.groups!.push(optionCategory);
+      }
+    }
+
+    const Editor = pluginOption.editor;
+
+    optionCategory.items!.push({
+      title: pluginOption.name,
+      description: pluginOption.description,
+      reactNode: (
+        <Editor
+          value={lodashGet(currentOptions, pluginOption.path)}
+          onChange={(value) => onOptionChange(pluginOption.path, value)}
+          item={pluginOption}
+          context={context}
+        />
+      ),
+    });
+  }
+
+  return mainCategory;
+}
