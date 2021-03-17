@@ -7,6 +7,7 @@ export interface Props {
   placeholder?: string;
   labelClassName?: string;
   inputClassName?: string;
+  width?: number;
   onChange: (value: string) => void;
 }
 
@@ -15,7 +16,7 @@ export const FilterInput: FC<Props> = (props) => (
     // Replaces the usage of ref
     autoFocus
     prefix={<Icon name="search" />}
-    width={40}
+    width={props.width ?? 40}
     type="text"
     value={props.value ? unEscapeStringFromRegex(props.value) : ''}
     onChange={(event) => props.onChange(escapeStringForRegex(event.currentTarget.value))}

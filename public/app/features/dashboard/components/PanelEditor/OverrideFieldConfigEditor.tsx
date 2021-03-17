@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { css } from 'emotion';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { Props } from './types';
+import { OptionsBox } from './OptionsBox';
 
 /**
  * Expects the container div to have size set and will fill it 100%
@@ -54,40 +55,43 @@ export const OverrideFieldConfigEditor: React.FC<Props> = (props) => {
     }
 
     return (
-      <div>
+      <>
         {config.overrides.map((o, i) => {
-          // TODO:  apply matcher to retrieve fields
           return (
-            <OverrideEditor
-              name={`Override ${i + 1}`}
-              key={`${o.matcher.id}/${i}`}
-              data={data}
-              override={o}
-              onChange={(value) => onOverrideChange(i, value)}
-              onRemove={() => onOverrideRemove(i)}
-              registry={fieldConfigRegistry}
-            />
+            <OptionsBox key={`${o.matcher.id}/${i}`}>
+              <OverrideEditor
+                name={`Override ${i + 1}`}
+                data={data}
+                override={o}
+                onChange={(value) => onOverrideChange(i, value)}
+                onRemove={() => onOverrideRemove(i)}
+                registry={fieldConfigRegistry}
+              />
+            </OptionsBox>
           );
         })}
-      </div>
+      </>
     );
   };
 
   const renderAddOverride = () => {
     return (
-      <Container padding="md">
-        <ValuePicker
-          icon="plus"
-          label="Add an override for"
-          variant="secondary"
-          options={fieldMatchersUI
-            .list()
-            .filter((o) => !o.excludeFromPicker)
-            .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }))}
-          onChange={(value) => onOverrideAdd(value)}
-          isFullWidth={false}
-        />
-      </Container>
+      <OptionsBox>
+        <Container padding="md">
+          <ValuePicker
+            icon="plus"
+            label="Add an override"
+            variant="secondary"
+            size="md"
+            options={fieldMatchersUI
+              .list()
+              .filter((o) => !o.excludeFromPicker)
+              .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }))}
+            onChange={(value) => onOverrideAdd(value)}
+            isFullWidth={true}
+          />
+        </Container>
+      </OptionsBox>
     );
   };
 

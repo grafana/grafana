@@ -121,6 +121,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNes
       !isNested &&
         css`
           border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
+          &:last-child {
+            border-bottom: none;
+          }
         `,
       isNested &&
         isExpanded &&

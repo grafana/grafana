@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelPlugin, SelectableValue } from '@grafana/data';
+import React, { useCallback } from 'react';
+import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, Select, stylesFactory, Tab, TabContent, TabsBar, useTheme } from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, useTheme } from '@grafana/ui';
 import { OverrideFieldConfigEditor } from './OverrideFieldConfigEditor';
 import { DefaultFieldConfigEditor } from './DefaultFieldConfigEditor';
 import { css } from 'emotion';
@@ -9,6 +9,9 @@ import { PanelOptionsTab } from './PanelOptionsTab';
 import { usePanelLatestData } from './usePanelLatestData';
 import { selectors } from '@grafana/e2e-selectors';
 import { VisualizationButton } from './VisualizationButton';
+import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { OptionsBox } from './OptionsBox';
+import { PanelOptionsEditor } from './PanelOptionsEditor';
 
 interface Props {
   plugin: PanelPlugin;
@@ -33,7 +36,6 @@ export const OptionsPaneContent: React.FC<Props> = ({
 }: Props) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const [activeTab, setActiveTab] = useState('options');
   const { data, hasSeries } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
 
   const renderFieldOptions = useCallback(
@@ -78,135 +80,67 @@ export const OptionsPaneContent: React.FC<Props> = ({
     [data, plugin, panel, onFieldConfigsChange]
   );
 
-  // When the panel has no query only show the main tab
-  const showMainTab = activeTab === 'options' || plugin.meta.skipDataQuery;
-
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
-      <div className={styles.panelOptionsPane}>
-        <div className={styles.vizButtonWrapper}>
-          <VisualizationButton panel={panel} />
-        </div>
-        <TabsBar className={styles.tabsBar}>
-          <TabsBarContent
-            width={width}
-            plugin={plugin}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            panel={panel}
-          />
-        </TabsBar>
-        <TabContent className={styles.tabContent}>
-          <CustomScrollbar autoHeightMin="100%">
-            {showMainTab ? (
-              <PanelOptionsTab
-                panel={panel}
+      <CustomScrollbar autoHeightMin="100%">
+        <div className={styles.panelOptionsPane}>
+          <div className={styles.vizButtonWrapper}>
+            <VisualizationButton panel={panel} />
+          </div>
+          <div className={styles.searchBox}>
+            <FilterInput width={0} value={''} onChange={() => {}} placeholder={'Search options'} />
+          </div>
+
+          <OptionsBox>
+            <PanelOptionsTab
+              panel={panel}
+              plugin={plugin}
+              dashboard={dashboard}
+              data={data}
+              onPanelConfigChange={onPanelConfigChange}
+              onPanelOptionsChanged={onPanelOptionsChanged}
+            />
+          </OptionsBox>
+
+          <OptionsBox>
+            {plugin.optionEditors && (
+              <PanelOptionsEditor
+                key="panel options"
+                options={panel.getOptions()}
+                onChange={onPanelOptionsChanged}
+                replaceVariables={panel.replaceVariables}
                 plugin={plugin}
-                dashboard={dashboard}
-                data={data}
-                onPanelConfigChange={onPanelConfigChange}
-                onPanelOptionsChanged={onPanelOptionsChanged}
+                data={data?.series}
+                eventBus={dashboard.events}
               />
-            ) : (
-              <>
-                {activeTab === 'defaults' && renderFieldOptions(plugin)}
-                {activeTab === 'overrides' && renderFieldOverrideOptions(plugin)}
-              </>
             )}
-          </CustomScrollbar>
-        </TabContent>
-      </div>
+            {renderFieldOptions(plugin)}
+          </OptionsBox>
+
+          {renderFieldOverrideOptions(plugin)}
+        </div>
+      </CustomScrollbar>
     </div>
   );
 };
-
-export const TabsBarContent: React.FC<{
-  width: number;
-  plugin: PanelPlugin;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  panel: PanelModel;
-}> = ({ width, plugin, activeTab, setActiveTab, panel }) => {
-  const overridesCount =
-    panel.getFieldConfig().overrides.length === 0 ? undefined : panel.getFieldConfig().overrides.length;
-
-  // Show the appropriate tabs
-  let tabs = tabSelections;
-  let active = tabs.find((v) => v.value === activeTab)!;
-
-  // If no field configs hide Fields & Override tab
-  if (plugin.fieldConfigRegistry.isEmpty()) {
-    active = tabSelections[0];
-    tabs = [active];
-  }
-
-  return (
-    <>
-      {width < 352 ? (
-        <div className="flex-grow-1" aria-label={selectors.components.PanelEditor.OptionsPane.select}>
-          <Select
-            options={tabs}
-            value={active}
-            onChange={(v) => {
-              setActiveTab(v.value!);
-            }}
-          />
-        </div>
-      ) : (
-        <>
-          {tabs.map((item) => (
-            <Tab
-              key={item.value}
-              label={item.label!}
-              counter={item.value === 'overrides' ? overridesCount : undefined}
-              active={active.value === item.value}
-              onChangeTab={() => setActiveTab(item.value!)}
-              title={item.tooltip}
-              aria-label={selectors.components.PanelEditor.OptionsPane.tab(item.label!)}
-            />
-          ))}
-          <div className="flex-grow-1" />
-        </>
-      )}
-    </>
-  );
-};
-
-const tabSelections: Array<SelectableValue<string>> = [
-  {
-    label: 'Panel',
-    value: 'options',
-    tooltip: 'Configure panel display options',
-  },
-  {
-    label: 'Field',
-    value: 'defaults',
-    tooltip: 'Configure field options',
-  },
-  {
-    label: 'Overrides',
-    value: 'overrides',
-    tooltip: 'Configure field option overrides',
-  },
-];
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       height: 100%;
       width: 100%;
+      padding-right: ${theme.spacing.sm};
     `,
     panelOptionsPane: css`
       display: flex;
       flex-direction: column;
-      height: 100%;
       padding-top: ${theme.spacing.md};
     `,
     tabsBar: css`
       padding-right: ${theme.spacing.sm};
     `,
     vizButtonWrapper: css`
-      padding: 0 ${theme.spacing.md} ${theme.spacing.md} 0;
+      padding: 0 0 ${theme.spacing.md} 0;
     `,
     searchWrapper: css`
       display: flex;
@@ -220,14 +154,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     searchRemoveIcon: css`
       cursor: pointer;
     `,
-    tabContent: css`
+    searchBox: css`
+      margin-bottom: ${theme.spacing.md};
       padding: 0;
       display: flex;
       flex-direction: column;
-      flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.bodyBg};
-      border-left: 1px solid ${theme.colors.pageHeaderBorder};
     `,
     legacyOptions: css`
       label: legacy-options;

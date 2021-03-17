@@ -22,7 +22,7 @@ interface PanelOptionsEditorProps<TOptions> {
   options: TOptions;
   onChange: (options: TOptions) => void;
 }
-const DISPLAY_OPTIONS_CATEGORY = 'Display';
+const DISPLAY_OPTIONS_CATEGORY = 'Visualization settings';
 export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
   plugin,
   options,
