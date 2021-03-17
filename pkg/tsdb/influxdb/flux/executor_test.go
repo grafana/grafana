@@ -267,3 +267,35 @@ func TestMaxDataPointsExceededWithAggregate(t *testing.T) {
 	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2.")
 	assertDataResponseDimensions(t, dr, 2, 21)
 }
+
+func TestMultivalue(t *testing.T) {
+	// we await a non-labeled _time column
+	// and two value-columns named _value and _value2
+	dr := verifyGoldenResponse(t, "multivalue")
+	require.Len(t, dr.Frames, 4)
+	frame := dr.Frames[0]
+	require.Len(t, frame.Fields, 3)
+	require.Equal(t, frame.Fields[0].Name, "_time")
+	require.Equal(t, frame.Fields[0].Len(), 2)
+	require.Len(t, frame.Fields[0].Labels, 0)
+	require.Equal(t, frame.Fields[1].Name, "_value")
+	require.Len(t, frame.Fields[1].Labels, 5)
+	require.Equal(t, frame.Fields[2].Name, "_value2")
+	require.Len(t, frame.Fields[2].Labels, 5)
+}
+
+func TestMultiTime(t *testing.T) {
+	// we await three columns, _time, _time2, _value
+	// all have all labels
+	dr := verifyGoldenResponse(t, "multitime")
+	require.Len(t, dr.Frames, 4)
+	frame := dr.Frames[0]
+	require.Len(t, frame.Fields, 3)
+	require.Equal(t, frame.Fields[0].Name, "_time")
+	require.Equal(t, frame.Fields[0].Len(), 1)
+	require.Len(t, frame.Fields[0].Labels, 5)
+	require.Equal(t, frame.Fields[1].Name, "_time2")
+	require.Len(t, frame.Fields[1].Labels, 5)
+	require.Equal(t, frame.Fields[2].Name, "_value")
+	require.Len(t, frame.Fields[2].Labels, 5)
+}
