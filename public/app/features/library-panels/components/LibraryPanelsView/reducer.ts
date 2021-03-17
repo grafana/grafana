@@ -19,7 +19,7 @@ export const initialLibraryPanelsViewState: LibraryPanelsViewState = {
   libraryPanels: [],
   searchString: '',
   totalCount: 0,
-  perPage: 10,
+  perPage: 4,
   page: 1,
   numberOfPages: 0,
   currentPanelId: undefined,
@@ -39,12 +39,13 @@ const libraryPanelsViewSlice = createSlice({
       >
     ) => {
       const { libraryPanels, page, perPage, totalCount } = action.payload;
+      const filteredTotalCount = state.currentPanelId ? totalCount - 1 : totalCount;
       state.libraryPanels = libraryPanels?.filter((l) => l.uid !== state.currentPanelId);
       state.page = page;
       state.perPage = perPage;
-      state.totalCount = totalCount;
+      state.totalCount = filteredTotalCount;
       state.loadingState = LoadingState.Done;
-      state.numberOfPages = Math.ceil(totalCount / perPage);
+      state.numberOfPages = Math.ceil(filteredTotalCount / perPage);
     },
     changeSearchString: (state, action: PayloadAction<Pick<LibraryPanelsViewState, 'searchString'>>) => {
       state.searchString = action.payload.searchString;

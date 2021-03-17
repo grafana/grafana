@@ -68,7 +68,7 @@ describe('libraryPanelsViewReducer', () => {
             perPage: 10,
             page: 3,
             libraryPanels: [payload.libraryPanels[1]],
-            totalCount: 200,
+            totalCount: 199,
             loadingState: LoadingState.Done,
             numberOfPages: 20,
             currentPanelId: payload.libraryPanels[0].uid,
