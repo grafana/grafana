@@ -25,7 +25,16 @@ export const SystemOrApplicationAlerts: FC = () => {
       rulesDatasources
         .map((datasource) => rules[datasource.name]?.result?.map((namespace) => ({ namespace, datasource })) || [])
         .flat()
-        .sort((a, b) => b.namespace.name.localeCompare(a.namespace.name)),
+        // sort groups within namespace
+        .map(({ namespace, datasource }) => ({
+          namespace: {
+            ...namespace,
+            groups: namespace.groups.slice().sort((a, b) => a.name.localeCompare(b.name)),
+          },
+          datasource,
+        }))
+        // sort namespaces
+        .sort((a, b) => a.namespace.name.localeCompare(b.namespace.name)),
     [rules, rulesDatasources]
   );
 
