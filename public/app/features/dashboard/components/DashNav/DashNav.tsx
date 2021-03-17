@@ -106,21 +106,16 @@ class DashNav extends PureComponent<Props> {
     });
   }
 
-  isInKioskMode() {
-    // TODO fix this
-    return false;
-  }
-
   isPlaylistRunning() {
     return playlistSrv.isPlaying;
   }
 
   renderLeftActionsButton() {
-    const { dashboard } = this.props;
+    const { dashboard, kioskMode } = this.props;
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
-    if (this.isInKioskMode() || this.isPlaylistRunning()) {
+    if (kioskMode !== KioskMode.Off || this.isPlaylistRunning()) {
       return [];
     }
 
@@ -184,7 +179,7 @@ class DashNav extends PureComponent<Props> {
   }
 
   renderRightActionsButton() {
-    const { dashboard, onAddPanel, isFullscreen } = this.props;
+    const { dashboard, onAddPanel, isFullscreen, kioskMode } = this.props;
     const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -197,7 +192,7 @@ class DashNav extends PureComponent<Props> {
       return [this.renderPlaylistControls(), this.renderTimeControls()];
     }
 
-    if (this.isInKioskMode()) {
+    if (kioskMode === KioskMode.TV) {
       return [this.renderTimeControls(), tvButton];
     }
 
