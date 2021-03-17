@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -65,31 +66,32 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
-	RouteRegister          routing.RouteRegister              `inject:""`
-	Bus                    bus.Bus                            `inject:""`
-	RenderService          rendering.Service                  `inject:""`
-	Cfg                    *setting.Cfg                       `inject:""`
-	HooksService           *hooks.HooksService                `inject:""`
-	CacheService           *localcache.CacheService           `inject:""`
-	DatasourceCache        datasources.CacheService           `inject:""`
-	AuthTokenService       models.UserTokenService            `inject:""`
-	QuotaService           *quota.QuotaService                `inject:""`
-	RemoteCacheService     *remotecache.RemoteCache           `inject:""`
-	ProvisioningService    provisioning.ProvisioningService   `inject:""`
-	Login                  *login.LoginService                `inject:""`
-	License                models.Licensing                   `inject:""`
-	BackendPluginManager   backendplugin.Manager              `inject:""`
-	PluginRequestValidator models.PluginRequestValidator      `inject:""`
-	PluginManager          plugins.Manager                    `inject:""`
-	SearchService          *search.SearchService              `inject:""`
-	ShortURLService        *shorturls.ShortURLService         `inject:""`
-	Live                   *live.GrafanaLive                  `inject:""`
-	ContextHandler         *contexthandler.ContextHandler     `inject:""`
-	SQLStore               *sqlstore.SQLStore                 `inject:""`
-	LibraryPanelService    *librarypanels.LibraryPanelService `inject:""`
-	DataService            *tsdb.Service                      `inject:""`
-	PluginDashboardService *plugindashboards.Service          `inject:""`
-	AlertEngine            *alerting.AlertEngine              `inject:""`
+	RouteRegister          routing.RouteRegister                   `inject:""`
+	Bus                    bus.Bus                                 `inject:""`
+	RenderService          rendering.Service                       `inject:""`
+	Cfg                    *setting.Cfg                            `inject:""`
+	HooksService           *hooks.HooksService                     `inject:""`
+	CacheService           *localcache.CacheService                `inject:""`
+	DatasourceCache        datasources.CacheService                `inject:""`
+	AuthTokenService       models.UserTokenService                 `inject:""`
+	QuotaService           *quota.QuotaService                     `inject:""`
+	RemoteCacheService     *remotecache.RemoteCache                `inject:""`
+	ProvisioningService    provisioning.ProvisioningService        `inject:""`
+	Login                  *login.LoginService                     `inject:""`
+	License                models.Licensing                        `inject:""`
+	BackendPluginManager   backendplugin.Manager                   `inject:""`
+	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
+	PluginRequestValidator models.PluginRequestValidator           `inject:""`
+	PluginManager          plugins.Manager                         `inject:""`
+	SearchService          *search.SearchService                   `inject:""`
+	ShortURLService        *shorturls.ShortURLService              `inject:""`
+	Live                   *live.GrafanaLive                       `inject:""`
+	ContextHandler         *contexthandler.ContextHandler          `inject:""`
+	SQLStore               *sqlstore.SQLStore                      `inject:""`
+	LibraryPanelService    *librarypanels.LibraryPanelService      `inject:""`
+	DataService            *tsdb.Service                           `inject:""`
+	PluginDashboardService *plugindashboards.Service               `inject:""`
+	AlertEngine            *alerting.AlertEngine                   `inject:""`
 	Listener               net.Listener
 }
 
