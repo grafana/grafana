@@ -4,13 +4,13 @@ exports[`Render should render children 1`] = `
 <div
   className="sidemenu-item dropdown dropup"
 >
-  <a
+  <Link
     className="sidemenu-link"
   >
     <span
       className="icon-circle sidemenu-icon"
     />
-  </a>
+  </Link>
   <ul
     className="dropdown-menu dropdown-menu--sidemenu"
     role="menu"
@@ -58,13 +58,13 @@ exports[`Render should render component 1`] = `
 <div
   className="sidemenu-item dropdown dropup"
 >
-  <a
+  <Link
     className="sidemenu-link"
   >
     <span
       className="icon-circle sidemenu-icon"
     />
-  </a>
+  </Link>
   <ul
     className="dropdown-menu dropdown-menu--sidemenu"
     role="menu"
@@ -86,13 +86,13 @@ exports[`Render should render organization switcher 1`] = `
 <div
   className="sidemenu-item dropdown dropup"
 >
-  <a
+  <Link
     className="sidemenu-link"
   >
     <span
       className="icon-circle sidemenu-icon"
     />
-  </a>
+  </Link>
   <ul
     className="dropdown-menu dropdown-menu--sidemenu"
     role="menu"
@@ -144,13 +144,13 @@ exports[`Render should render subtitle 1`] = `
 <div
   className="sidemenu-item dropdown dropup"
 >
-  <a
+  <Link
     className="sidemenu-link"
   >
     <span
       className="icon-circle sidemenu-icon"
     />
-  </a>
+  </Link>
   <ul
     className="dropdown-menu dropdown-menu--sidemenu"
     role="menu"

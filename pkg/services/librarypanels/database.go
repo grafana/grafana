@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -67,7 +66,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 	}
 
 	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		if err := requirePermissionsOnFolder(c.SignedInUser, cmd.FolderID); err != nil {
+		if err := lps.requirePermissionsOnFolder(c.SignedInUser, cmd.FolderID); err != nil {
 			return err
 		}
 		if _, err := session.Insert(&libraryPanel); err != nil {
@@ -108,12 +107,22 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 	return dto, err
 }
 
-func connectDashboard(session *sqlstore.DBSession, dialect migrator.Dialect, user *models.SignedInUser, uid string, dashboardID int64) error {
+// connectDashboard adds a connection between a Library Panel and a Dashboard.
+func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid string, dashboardID int64) error {
+	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		return lps.implConnectDashboard(session, c.SignedInUser, uid, dashboardID)
+	})
+
+	return err
+}
+
+func (lps *LibraryPanelService) implConnectDashboard(session *sqlstore.DBSession, user *models.SignedInUser,
+	uid string, dashboardID int64) error {
 	panel, err := getLibraryPanel(session, uid, user.OrgId)
 	if err != nil {
 		return err
 	}
-	if err := requirePermissionsOnFolder(user, panel.FolderID); err != nil {
+	if err := lps.requirePermissionsOnFolder(user, panel.FolderID); err != nil {
 		return err
 	}
 
@@ -126,21 +135,12 @@ func connectDashboard(session *sqlstore.DBSession, dialect migrator.Dialect, use
 		CreatedBy:      user.UserId,
 	}
 	if _, err := session.Insert(&libraryPanelDashboard); err != nil {
-		if dialect.IsUniqueConstraintViolation(err) {
+		if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 			return nil
 		}
 		return err
 	}
 	return nil
-}
-
-// connectDashboard adds a connection between a Library Panel and a Dashboard.
-func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid string, dashboardID int64) error {
-	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		return connectDashboard(session, lps.SQLStore.Dialect, c.SignedInUser, uid, dashboardID)
-	})
-
-	return err
 }
 
 // connectLibraryPanelsForDashboard adds connections for all Library Panels in a Dashboard.
@@ -151,7 +151,7 @@ func (lps *LibraryPanelService) connectLibraryPanelsForDashboard(c *models.ReqCo
 			return err
 		}
 		for _, uid := range uids {
-			err := connectDashboard(session, lps.SQLStore.Dialect, c.SignedInUser, uid, dashboardID)
+			err := lps.implConnectDashboard(session, c.SignedInUser, uid, dashboardID)
 			if err != nil {
 				return err
 			}
@@ -169,7 +169,7 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid str
 		if err != nil {
 			return err
 		}
-		if err := requirePermissionsOnFolder(c.SignedInUser, panel.FolderID); err != nil {
+		if err := lps.requirePermissionsOnFolder(c.SignedInUser, panel.FolderID); err != nil {
 			return err
 		}
 		if _, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=?", panel.ID); err != nil {
@@ -197,7 +197,7 @@ func (lps *LibraryPanelService) disconnectDashboard(c *models.ReqContext, uid st
 		if err != nil {
 			return err
 		}
-		if err := requirePermissionsOnFolder(c.SignedInUser, panel.FolderID); err != nil {
+		if err := lps.requirePermissionsOnFolder(c.SignedInUser, panel.FolderID); err != nil {
 			return err
 		}
 
@@ -248,7 +248,7 @@ func (lps *LibraryPanelService) deleteLibraryPanelsInFolder(c *models.ReqContext
 		}
 		folderID := folderUIDs[0].ID
 
-		if err := requirePermissionsOnFolder(c.SignedInUser, folderID); err != nil {
+		if err := lps.requirePermissionsOnFolder(c.SignedInUser, folderID); err != nil {
 			return err
 		}
 		var dashIDs []struct {
@@ -496,7 +496,8 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 	return libraryPanelMap, err
 }
 
-func handleFolderIDPatches(panelToPatch *LibraryPanel, fromFolderID int64, toFolderID int64, user *models.SignedInUser) error {
+func (lps *LibraryPanelService) handleFolderIDPatches(panelToPatch *LibraryPanel, fromFolderID int64,
+	toFolderID int64, user *models.SignedInUser) error {
 	// FolderID was not provided in the PATCH request
 	if toFolderID == -1 {
 		toFolderID = fromFolderID
@@ -504,13 +505,13 @@ func handleFolderIDPatches(panelToPatch *LibraryPanel, fromFolderID int64, toFol
 
 	// FolderID was provided in the PATCH request
 	if toFolderID != -1 && toFolderID != fromFolderID {
-		if err := requirePermissionsOnFolder(user, toFolderID); err != nil {
+		if err := lps.requirePermissionsOnFolder(user, toFolderID); err != nil {
 			return err
 		}
 	}
 
 	// Always check permissions for the folder where library panel resides
-	if err := requirePermissionsOnFolder(user, fromFolderID); err != nil {
+	if err := lps.requirePermissionsOnFolder(user, fromFolderID); err != nil {
 		return err
 	}
 
@@ -551,7 +552,7 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		if cmd.Model == nil {
 			libraryPanel.Model = panelInDB.Model
 		}
-		if err := handleFolderIDPatches(&libraryPanel, panelInDB.FolderID, cmd.FolderID, c.SignedInUser); err != nil {
+		if err := lps.handleFolderIDPatches(&libraryPanel, panelInDB.FolderID, cmd.FolderID, c.SignedInUser); err != nil {
 			return err
 		}
 		if err := syncTitleWithName(&libraryPanel); err != nil {

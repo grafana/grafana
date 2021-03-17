@@ -27,12 +27,11 @@ UPlotConfigBuilder {
             "panelBg": "#000000",
           },
         },
-        "timeZone": "browser",
+        "timeZone": "utc",
       },
     },
   },
   "bands": Array [],
-  "getTimeZone": [Function],
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {},
@@ -148,6 +147,7 @@ UPlotConfigBuilder {
       },
     },
   ],
+  "tz": "UTC",
   "tzDate": [Function],
 }
 `;

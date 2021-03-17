@@ -8,13 +8,15 @@ import EmptyListCTA from '../../../core/components/EmptyListCTA/EmptyListCTA';
 import { QueryVariableModel, VariableModel } from '../types';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 import { DashboardModel } from '../../dashboard/state';
-import { getVariableUsages } from '../inspect/utils';
+import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { isAdHoc } from '../guard';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
 
 export interface Props {
   variables: VariableModel[];
   dashboard: DashboardModel | null;
+  usages: VariableUsageTree[];
+  usagesNetwork: UsagesToNetwork[];
   onAddClick: (event: MouseEvent) => void;
   onEditClick: (identifier: VariableIdentifier) => void;
   onChangeVariableOrder: (identifier: VariableIdentifier, fromIndex: number, toIndex: number) => void;
@@ -97,7 +99,7 @@ export class VariableEditorList extends PureComponent<Props> {
                       : typeof variable.query === 'string'
                       ? variable.query
                       : '';
-                    const usages = getVariableUsages(variable.id, this.props.variables, this.props.dashboard);
+                    const usages = getVariableUsages(variable.id, this.props.usages);
                     const passed = usages > 0 || isAdHoc(variable);
                     return (
                       <tr key={`${variable.name}-${index}`}>
@@ -129,9 +131,9 @@ export class VariableEditorList extends PureComponent<Props> {
 
                         <td style={{ width: '1%' }}>
                           <VariableUsagesButton
-                            variable={variable}
-                            variables={this.props.variables}
-                            dashboard={this.props.dashboard}
+                            id={variable.id}
+                            isAdhoc={isAdHoc(variable)}
+                            usages={this.props.usagesNetwork}
                           />
                         </td>
 

@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
-	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
@@ -105,7 +104,7 @@ func (ss *SQLStore) Init() error {
 
 	// Init repo instances
 	annotations.SetRepository(&SQLAnnotationRepo{})
-	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: 100, log: log.New("annotationcleaner")})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner")})
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers

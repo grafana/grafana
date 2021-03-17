@@ -102,7 +102,9 @@ export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuProps } from './ContextMenu/ContextMenu';
-export { Menu, MenuItem, MenuItemsGroup } from './Menu/Menu';
+export { Menu, MenuProps } from './Menu/Menu';
+export { MenuGroup, MenuItemsGroup, MenuGroupProps } from './Menu/MenuGroup';
+export { MenuItem, MenuItemProps } from './Menu/MenuItem';
 export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
@@ -144,6 +146,7 @@ export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarB
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
+export { Link } from './Link/Link';
 
 export { Label } from './Forms/Label';
 export { Field } from './Forms/Field';

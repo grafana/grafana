@@ -16,14 +16,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"golang.org/x/oauth2/google"
 )
 
@@ -62,35 +63,53 @@ const (
 	mqlEditorMode     string = "mql"
 )
 
-// CloudMonitoringExecutor executes queries for the CloudMonitoring datasource
-type CloudMonitoringExecutor struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
+func init() {
+	registry.Register(&registry.Descriptor{
+		Name:         "CloudMonitoringService",
+		InitPriority: registry.Low,
+		Instance:     &Service{},
+	})
 }
 
-// NewCloudMonitoringExecutor initializes a http client
-func NewCloudMonitoringExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+type Service struct {
+	PluginManager plugins.Manager `inject:""`
+}
+
+func (s *Service) Init() error {
+	return nil
+}
+
+// Executor executes queries for the CloudMonitoring datasource.
+type Executor struct {
+	httpClient    *http.Client
+	dsInfo        *models.DataSource
+	pluginManager plugins.Manager
+}
+
+// NewExecutor returns an Executor.
+func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		return nil, err
 	}
 
-	return &CloudMonitoringExecutor{
-		httpClient: httpClient,
-		dsInfo:     dsInfo,
+	return &Executor{
+		httpClient:    httpClient,
+		dsInfo:        dsInfo,
+		pluginManager: s.PluginManager,
 	}, nil
 }
 
 func init() {
 	slog = log.New("tsdb.cloudMonitoring")
-	tsdb.RegisterTsdbQueryEndpoint("stackdriver", NewCloudMonitoringExecutor)
 }
 
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into
 // the time series or table format
-func (e *CloudMonitoringExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	var result *tsdb.Response
+func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
+	plugins.DataResponse, error) {
+	var result plugins.DataResponse
 	var err error
 	queryType := tsdbQuery.Queries[0].Model.Get("type").MustString("")
 
@@ -108,32 +127,34 @@ func (e *CloudMonitoringExecutor) Query(ctx context.Context, dsInfo *models.Data
 	return result, err
 }
 
-func (e *CloudMonitoringExecutor) getGCEDefaultProject(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
-	refId := tsdbQuery.Queries[0].RefId
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: refId}
+	refID := tsdbQuery.Queries[0].RefID
+	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: refID}
 
 	gceDefaultProject, err := e.getDefaultProject(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve default project from GCE metadata server, error: %w", err)
+		return plugins.DataResponse{}, fmt.Errorf(
+			"failed to retrieve default project from GCE metadata server, error: %w", err)
 	}
 
 	queryResult.Meta.Set("defaultProject", gceDefaultProject)
-	result.Results[refId] = queryResult
+	result.Results[refID] = queryResult
 
 	return result, nil
 }
 
-func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery plugins.DataQuery) (
+	plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
 
 	queryExecutors, err := e.buildQueryExecutors(tsdbQuery)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	unit := e.resolvePanelUnitFromQueries(queryExecutors)
@@ -141,9 +162,9 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 	for _, queryExecutor := range queryExecutors {
 		queryRes, resp, executedQueryString, err := queryExecutor.run(ctx, tsdbQuery, e)
 		if err != nil {
-			return nil, err
+			return plugins.DataResponse{}, err
 		}
-		err = queryExecutor.parseResponse(queryRes, resp, executedQueryString)
+		err = queryExecutor.parseResponse(&queryRes, resp, executedQueryString)
 		if err != nil {
 			queryRes.Error = err
 		}
@@ -158,7 +179,7 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 				}
 				frames[i].Fields[1].Config.Unit = unit
 			}
-			queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
+			queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
 		}
 		result.Results[queryExecutor.getRefID()] = queryRes
 	}
@@ -166,7 +187,7 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 	return result, nil
 }
 
-func (e *CloudMonitoringExecutor) resolvePanelUnitFromQueries(executors []cloudMonitoringQueryExecutor) string {
+func (e *Executor) resolvePanelUnitFromQueries(executors []cloudMonitoringQueryExecutor) string {
 	if len(executors) == 0 {
 		return ""
 	}
@@ -186,7 +207,7 @@ func (e *CloudMonitoringExecutor) resolvePanelUnitFromQueries(executors []cloudM
 	return ""
 }
 
-func (e *CloudMonitoringExecutor) buildQueryExecutors(tsdbQuery *tsdb.TsdbQuery) ([]cloudMonitoringQueryExecutor, error) {
+func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMonitoringQueryExecutor, error) {
 	cloudMonitoringQueryExecutors := []cloudMonitoringQueryExecutor{}
 
 	startTime, err := tsdbQuery.TimeRange.ParseFrom()
@@ -201,10 +222,14 @@ func (e *CloudMonitoringExecutor) buildQueryExecutors(tsdbQuery *tsdb.TsdbQuery)
 
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
 
-	for _, query := range tsdbQuery.Queries {
-		migrateLegacyQueryModel(query)
+	for i := range tsdbQuery.Queries {
+		migrateLegacyQueryModel(&tsdbQuery.Queries[i])
+		query := tsdbQuery.Queries[i]
 		q := grafanaQuery{}
-		model, _ := query.Model.MarshalJSON()
+		model, err := query.Model.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
 		if err := json.Unmarshal(model, &q); err != nil {
 			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
 		}
@@ -215,20 +240,19 @@ func (e *CloudMonitoringExecutor) buildQueryExecutors(tsdbQuery *tsdb.TsdbQuery)
 
 		var queryInterface cloudMonitoringQueryExecutor
 		cmtsf := &cloudMonitoringTimeSeriesFilter{
-			RefID:    query.RefId,
+			RefID:    query.RefID,
 			GroupBys: []string{},
 		}
-
 		switch q.QueryType {
 		case metricQueryType:
 			if q.MetricQuery.EditorMode == mqlEditorMode {
 				queryInterface = &cloudMonitoringTimeSeriesQuery{
-					RefID:       query.RefId,
+					RefID:       query.RefID,
 					ProjectName: q.MetricQuery.ProjectName,
 					Query:       q.MetricQuery.Query,
-					IntervalMS:  query.IntervalMs,
+					IntervalMS:  query.IntervalMS,
 					AliasBy:     q.MetricQuery.AliasBy,
-					timeRange:   tsdbQuery.TimeRange,
+					timeRange:   *tsdbQuery.TimeRange,
 				}
 			} else {
 				cmtsf.AliasBy = q.MetricQuery.AliasBy
@@ -239,7 +263,7 @@ func (e *CloudMonitoringExecutor) buildQueryExecutors(tsdbQuery *tsdb.TsdbQuery)
 				}
 				params.Add("filter", buildFilterString(q.MetricQuery.MetricType, q.MetricQuery.Filters))
 				params.Add("view", q.MetricQuery.View)
-				setMetricAggParams(&params, &q.MetricQuery, durationSeconds, query.IntervalMs)
+				setMetricAggParams(&params, &q.MetricQuery, durationSeconds, query.IntervalMS)
 				queryInterface = cmtsf
 			}
 		case sloQueryType:
@@ -249,8 +273,10 @@ func (e *CloudMonitoringExecutor) buildQueryExecutors(tsdbQuery *tsdb.TsdbQuery)
 			cmtsf.Service = q.SloQuery.ServiceId
 			cmtsf.Slo = q.SloQuery.SloId
 			params.Add("filter", buildSLOFilterExpression(q.SloQuery))
-			setSloAggParams(&params, &q.SloQuery, durationSeconds, query.IntervalMs)
+			setSloAggParams(&params, &q.SloQuery, durationSeconds, query.IntervalMS)
 			queryInterface = cmtsf
+		default:
+			panic(fmt.Sprintf("Unrecognized query type %q", q.QueryType))
 		}
 
 		target = params.Encode()
@@ -268,7 +294,7 @@ func (e *CloudMonitoringExecutor) buildQueryExecutors(tsdbQuery *tsdb.TsdbQuery)
 	return cloudMonitoringQueryExecutors, nil
 }
 
-func migrateLegacyQueryModel(query *tsdb.Query) {
+func migrateLegacyQueryModel(query *plugins.DataSubQuery) {
 	mq := query.Model.Get("metricQuery").MustMap()
 	if mq == nil {
 		migratedModel := simplejson.NewFromAny(map[string]interface{}{
@@ -402,7 +428,8 @@ func containsLabel(labels []string, newLabel string) bool {
 	return false
 }
 
-func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string, additionalLabels map[string]string, query *cloudMonitoringTimeSeriesFilter) string {
+func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string,
+	additionalLabels map[string]string, query *cloudMonitoringTimeSeriesFilter) string {
 	if query.AliasBy == "" {
 		return defaultMetricName
 	}
@@ -488,7 +515,7 @@ func calcBucketBound(bucketOptions cloudMonitoringBucketOptions, n int) string {
 	return bucketBound
 }
 
-func (e *CloudMonitoringExecutor) createRequest(ctx context.Context, dsInfo *models.DataSource, proxyPass string, body io.Reader) (*http.Request, error) {
+func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource, proxyPass string, body io.Reader) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err
@@ -509,8 +536,8 @@ func (e *CloudMonitoringExecutor) createRequest(ctx context.Context, dsInfo *mod
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	// find plugin
-	plugin, ok := plugins.DataSources[dsInfo.Type]
-	if !ok {
+	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
 
@@ -527,7 +554,7 @@ func (e *CloudMonitoringExecutor) createRequest(ctx context.Context, dsInfo *mod
 	return req, nil
 }
 
-func (e *CloudMonitoringExecutor) getDefaultProject(ctx context.Context) (string, error) {
+func (e *Executor) getDefaultProject(ctx context.Context) (string, error) {
 	authenticationType := e.dsInfo.JsonData.Get("authenticationType").MustString(jwtAuthentication)
 	if authenticationType == gceAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")

@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // ProxyDataSourceRequest proxies datasource requests
@@ -34,15 +34,13 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 	}
 
 	// find plugin
-	plugin, ok := plugins.DataSources[ds.Type]
-	if !ok {
+	plugin := hs.PluginManager.GetDataSource(ds.Type)
+	if plugin == nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
 		return
 	}
 
-	// macaron does not include trailing slashes when resolving a wildcard path
-	proxyPath := ensureProxyPathTrailingSlash(c.Req.URL.Path, c.Params("*"))
-
+	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, hs.Cfg)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
@@ -55,14 +53,12 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 	proxy.HandleRequest()
 }
 
-// ensureProxyPathTrailingSlash Check for a trailing slash in original path and makes
-// sure that a trailing slash is added to proxy path, if not already exists.
-func ensureProxyPathTrailingSlash(originalPath, proxyPath string) string {
-	if len(proxyPath) > 1 {
-		if originalPath[len(originalPath)-1] == '/' && proxyPath[len(proxyPath)-1] != '/' {
-			return proxyPath + "/"
-		}
-	}
+var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/[\d]+\/?`)
 
-	return proxyPath
+func extractProxyPath(originalRawPath string) string {
+	return proxyPathRegexp.ReplaceAllString(originalRawPath, "")
+}
+
+func getProxyPath(c *models.ReqContext) string {
+	return extractProxyPath(c.Req.URL.EscapedPath())
 }

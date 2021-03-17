@@ -8,19 +8,19 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 )
 
-func TestSqlEngine(t *testing.T) {
+func TestSQLEngine(t *testing.T) {
 	dt := time.Date(2018, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 	earlyDt := time.Date(1970, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 
 	t.Run("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func(t *testing.T) {
 		from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 		to := from.Add(5 * time.Minute)
-		timeRange := tsdb.NewFakeTimeRange("5m", "now", to)
-		query := &tsdb.Query{DataSource: &models.DataSource{}, Model: simplejson.New()}
+		timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: to}
+		query := plugins.DataSubQuery{DataSource: &models.DataSource{}, Model: simplejson.New()}
 
 		t.Run("interpolate $__interval", func(t *testing.T) {
 			sql, err := Interpolate(query, timeRange, "select $__interval ")
