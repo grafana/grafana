@@ -223,3 +223,4 @@ export { BarChart } from './BarChart/BarChart';
 export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';
+export { PanelChrome } from './PanelChrome';

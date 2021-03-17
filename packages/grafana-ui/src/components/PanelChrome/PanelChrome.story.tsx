@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { PanelChrome, useTheme } from '@grafana/ui';
-import { Props } from './PanelChrome';
+import { PanelChromeProps } from './PanelChrome';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { merge } from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
@@ -15,8 +15,8 @@ export default {
   },
 };
 
-function renderPanel(name: string, overrides: Partial<Props>, theme: GrafanaTheme) {
-  const props: Props = {
+function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: GrafanaTheme) {
+  const props: PanelChromeProps = {
     width: 400,
     height: 130,
     title: 'Default title',
