@@ -208,6 +208,11 @@ type GetDataSourcesQuery struct {
 	Result          []*DataSource
 }
 
+type GetDataSourcesByTypeQuery struct {
+	Type   string
+	Result []*DataSource
+}
+
 type GetDefaultDataSourceQuery struct {
 	OrgId  int64
 	User   *SignedInUser
