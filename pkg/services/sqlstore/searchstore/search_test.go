@@ -120,8 +120,7 @@ func TestBuilder_Permissions(t *testing.T) {
 	}
 
 	db := setupTestEnvironment(t)
-	err := createDashboards(0, 1, user.OrgId)
-	require.NoError(t, err)
+	createDashboards(t, db, 0, 1, user.OrgId)
 
 	level := models.PERMISSION_EDIT
 
@@ -141,7 +140,7 @@ func TestBuilder_Permissions(t *testing.T) {
 	}
 
 	res := []sqlstore.DashboardSearchProjection{}
-	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)
 	})
@@ -173,7 +172,7 @@ func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, o
 			"version": 0
 		}`))
 		require.NoError(t, err)
-		err = db.SaveDashboard(models.SaveDashboardCommand{
+		_, err = db.SaveDashboard(models.SaveDashboardCommand{
 			Dashboard: dashboard,
 			UserId:    1,
 			OrgId:     orgID,

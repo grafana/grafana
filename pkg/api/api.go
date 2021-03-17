@@ -18,6 +18,7 @@ var plog = log.New("api")
 
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
+	reqNoAuth := middleware.NoAuth()
 	reqSignedIn := middleware.ReqSignedIn
 	reqSignedInNoAnonymous := middleware.ReqSignedInNoAnonymous
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
@@ -118,7 +119,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/api/user/password/reset", bind(dtos.ResetUserPasswordForm{}), routing.Wrap(ResetPassword))
 
 	// dashboard snapshots
-	r.Get("/dashboard/snapshot/*", hs.Index)
+	r.Get("/dashboard/snapshot/*", reqNoAuth, hs.Index)
 	r.Get("/dashboard/snapshots/", reqSignedIn, hs.Index)
 
 	// api renew session based on cookie
