@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -34,6 +35,27 @@ func notAuthorized(c *models.ReqContext) {
 		return
 	}
 
+	writeRedirectCookie(c)
+	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func tokenRevoked(c *models.ReqContext, err *models.TokenRevokedError) {
+	if c.IsApiRequest() {
+		c.JSON(401, map[string]interface{}{
+			"message": "Token revoked",
+			"error": map[string]interface{}{
+				"id":                    "ERR_TOKEN_REVOKED",
+				"maxConcurrentSessions": err.MaxConcurrentSessions,
+			},
+		})
+		return
+	}
+
+	writeRedirectCookie(c)
+	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func writeRedirectCookie(c *models.ReqContext) {
 	redirectTo := c.Req.RequestURI
 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
@@ -43,7 +65,6 @@ func notAuthorized(c *models.ReqContext) {
 	redirectTo = removeForceLoginParams(redirectTo)
 
 	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
-	c.Redirect(setting.AppSubUrl + "/login")
 }
 
 var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
@@ -90,6 +111,13 @@ func Auth(options *AuthOptions) macaron.Handler {
 		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
 
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
+			lookupTokenErr, hasTokenErr := c.Data["lookupTokenErr"].(error)
+			var revokedErr *models.TokenRevokedError
+			if hasTokenErr && errors.As(lookupTokenErr, &revokedErr) {
+				tokenRevoked(c, revokedErr)
+				return
+			}
+
 			notAuthorized(c)
 			return
 		}
