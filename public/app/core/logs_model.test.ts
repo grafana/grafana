@@ -679,7 +679,7 @@ describe('logSeriesToLogsModel', () => {
     ]);
   });
 
-  it('should return cempty string if message field is undefined', () => {
+  it('should return empty string if message field is undefined', () => {
     const logSeries: DataFrame[] = [
       toDataFrame({
         fields: [
