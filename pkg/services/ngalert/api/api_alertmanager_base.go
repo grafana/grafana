@@ -26,7 +26,7 @@ type AlertmanagerApiService interface {
 	RouteGetAmAlerts(*models.ReqContext) response.Response
 	RouteGetSilence(*models.ReqContext) response.Response
 	RouteGetSilences(*models.ReqContext) response.Response
-	RoutePostAlertingConfig(*models.ReqContext, apimodels.UserConfig) response.Response
+	RoutePostAlertingConfig(*models.ReqContext, apimodels.PostableUserConfig) response.Response
 	RoutePostAmAlerts(*models.ReqContext, apimodels.PostableAlerts) response.Response
 }
 
@@ -44,7 +44,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 		group.Get(toMacaronPath("/alertmanager/{DatasourceId}/api/v2/alerts"), routing.Wrap(srv.RouteGetAmAlerts))
 		group.Get(toMacaronPath("/alertmanager/{DatasourceId}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteGetSilence))
 		group.Get(toMacaronPath("/alertmanager/{DatasourceId}/api/v2/silences"), routing.Wrap(srv.RouteGetSilences))
-		group.Post(toMacaronPath("/alertmanager/{DatasourceId}/config/api/v1/alerts"), binding.Bind(apimodels.UserConfig{}), routing.Wrap(srv.RoutePostAlertingConfig))
+		group.Post(toMacaronPath("/alertmanager/{DatasourceId}/config/api/v1/alerts"), binding.Bind(apimodels.PostableUserConfig{}), routing.Wrap(srv.RoutePostAlertingConfig))
 		group.Post(toMacaronPath("/alertmanager/{DatasourceId}/api/v2/alerts"), binding.Bind(apimodels.PostableAlerts{}), routing.Wrap(srv.RoutePostAmAlerts))
 	})
 }
@@ -102,7 +102,7 @@ func (base AlertmanagerApiBase) RouteGetSilences(c *models.ReqContext) response.
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
-func (base AlertmanagerApiBase) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.UserConfig) response.Response {
+func (base AlertmanagerApiBase) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
 	datasourceId := c.Params(":DatasourceId")
 	base.log.Info("RoutePostAlertingConfig: ", "DatasourceId", datasourceId)
 	base.log.Info("RoutePostAlertingConfig: ", "body", body)

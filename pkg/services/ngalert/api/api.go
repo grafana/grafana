@@ -41,11 +41,10 @@ type API struct {
 // RegisterAPIEndpoints registers API handlers
 func (api *API) RegisterAPIEndpoints() {
 	logger := log.New("ngalert.api")
-	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiBase{log: logger})
-	api.RegisterPermissionsApiEndpoints(PermissionsApiBase{log: logger})
-	api.RegisterPrometheusApiEndpoints(PrometheusApiBase{log: logger})
+	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiMock{log: logger})
+	api.RegisterPrometheusApiEndpoints(PrometheusApiMock{log: logger})
 	api.RegisterRulerApiEndpoints(RulerApiMock{log: logger})
-	api.RegisterTestingApiEndpoints(TestingApiBase{log: logger})
+	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
 
 	// Legacy routes; they will be removed in v8
 	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
