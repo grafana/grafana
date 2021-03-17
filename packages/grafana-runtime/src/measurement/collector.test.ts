@@ -40,7 +40,7 @@ describe('MeasurementCollector', () => {
         "fields": Array [
           Object {
             "config": Object {},
-            "entities": Object {},
+            "labels": undefined,
             "name": "time",
             "type": "time",
             "values": Array [
@@ -52,7 +52,7 @@ describe('MeasurementCollector', () => {
           },
           Object {
             "config": Object {},
-            "entities": Object {},
+            "labels": undefined,
             "name": "value",
             "type": "number",
             "values": Array [
