@@ -5,7 +5,7 @@ import { useStyles } from '@grafana/ui';
 import { getStyles } from './Table.styles';
 import { TableProps, PaginatedTableInstance, PaginatedTableOptions, PaginatedTableState } from './Table.types';
 import { Pagination } from './Pagination';
-import { PAGE_SIZES } from './Pagination/Pagination.constants';
+import { PAGE_SIZES } from './Pagination';
 import { TableContent } from './TableContent';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
 
