@@ -3,6 +3,9 @@ import { css } from 'emotion';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 
+/**
+ * @internal
+ */
 export interface PanelChromeProps {
   width: number;
   height: number;
@@ -12,8 +15,14 @@ export interface PanelChromeProps {
   children: (innerWidth: number, innerHeight: number) => React.ReactNode;
 }
 
+/**
+ * @internal
+ */
 export type PanelPadding = 'none' | 'md';
 
+/**
+ * @internal
+ */
 export const PanelChrome: React.FC<PanelChromeProps> = ({
   title = '',
   children,

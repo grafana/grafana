@@ -8,6 +8,9 @@ type LoadingIndicatorProps = {
   onCancel: () => void;
 };
 
+/**
+ * @internal
+ */
 export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ onCancel, loading }) => {
   if (!loading) {
     return null;
