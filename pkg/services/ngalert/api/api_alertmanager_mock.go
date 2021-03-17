@@ -38,7 +38,7 @@ var alertmanagerReceiver = models.AlertNotification{
 	Type:                  "prometheus-alertmanager",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -64,7 +64,7 @@ var dingdingReceiver = models.AlertNotification{
 	Type:                  "dingding",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -88,7 +88,7 @@ var discordReceiver = models.AlertNotification{
 	Type:                  "discord",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -112,7 +112,7 @@ var emailReceiver = models.AlertNotification{
 	Type:                  "email",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "addresses": "<email>",
@@ -136,7 +136,7 @@ var googlechatReceiver = models.AlertNotification{
 	Type:                  "googlechat",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -159,7 +159,7 @@ var hipchatReceiver = models.AlertNotification{
 	Type:                  "hipchat",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "apiKey": "<apikey>",
@@ -184,7 +184,7 @@ var kafkaReceiver = models.AlertNotification{
 	Type:                  "kafka",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -208,7 +208,7 @@ var lineReceiver = models.AlertNotification{
 	Type:                  "line",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`    "settings": {
         "autoResolve": true,
@@ -232,7 +232,7 @@ var opsgenieReceiver = models.AlertNotification{
 	Type:                  "opsgenie",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`    "settings": {
         "apiUrl": "https://api.opsgenie.com/v2/alerts",
@@ -259,7 +259,7 @@ var pagerdutyReceiver = models.AlertNotification{
 	Type:                  "pagerduty",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -283,7 +283,7 @@ var pushoverReceiver = models.AlertNotification{
 	Type:                  "pushover",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
 		"apiToken": "",
@@ -317,7 +317,7 @@ var sensuReceiver = models.AlertNotification{
 	Type:                  "sensu",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -343,7 +343,7 @@ var sensugoReceiver = models.AlertNotification{
 	Type:                  "sensugo",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -372,7 +372,7 @@ var slackReceiver = models.AlertNotification{
 	Type:                  "slack",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -403,7 +403,7 @@ var teamsReceiver = models.AlertNotification{
 	Type:                  "teams",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -426,7 +426,7 @@ var telegramReceiver = models.AlertNotification{
 	Type:                  "telegram",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -451,7 +451,7 @@ var threemaReceiver = models.AlertNotification{
 	Type:                  "threema",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -477,7 +477,7 @@ var victoropsReceiver = models.AlertNotification{
 	Type:                  "victorops",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`{
         "autoResolve": true,
@@ -500,7 +500,7 @@ var webhookReceiver = models.AlertNotification{
 	Type:                  "webhook",
 	SendReminder:          false,
 	DisableResolveMessage: false,
-	Frequency:             time.Duration(5 * time.Minute),
+	Frequency:             5 * time.Minute,
 	IsDefault:             false,
 	Settings: toSimpleJSON(`x{
         "autoResolve": true,
@@ -564,7 +564,7 @@ func (mock AlertmanagerApiMock) RouteGetAlertingConfig(c *models.ReqContext) res
 			Receivers: []*apimodels.GettableApiReceiver{
 				{
 					GettableGrafanaReceivers: apimodels.GettableGrafanaReceivers{
-						[]*apimodels.GettableGrafanaReceiver{
+						GrafanaManagedReceivers: []*apimodels.GettableGrafanaReceiver{
 							&alertmanagerReceiverDTO,
 							&dingdingReceiverDTO,
 							&discordReceiverDTO,
