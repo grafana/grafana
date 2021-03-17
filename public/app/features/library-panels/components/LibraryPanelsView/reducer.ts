@@ -19,7 +19,7 @@ export const initialLibraryPanelsViewState: LibraryPanelsViewState = {
   libraryPanels: [],
   searchString: '',
   totalCount: 0,
-  perPage: 4,
+  perPage: 10,
   page: 1,
   numberOfPages: 0,
   currentPanelId: undefined,
