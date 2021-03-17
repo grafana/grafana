@@ -43,10 +43,10 @@ func ReadSourceMapFromFS(dir string, path string) ([]byte, error) {
 }
 
 type SourceMapStore struct {
+	sync.Mutex
 	cache         map[string]*sourceMap
 	cfg           *setting.Cfg
 	readSourceMap ReadSourceMapFn
-	sync.Mutex
 }
 
 func NewSourceMapStore(cfg *setting.Cfg, readSourceMap ReadSourceMapFn) *SourceMapStore {
