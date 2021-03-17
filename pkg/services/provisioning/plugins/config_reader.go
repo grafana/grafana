@@ -55,7 +55,7 @@ func (cr *configReaderImpl) readConfig(path string) ([]*pluginsAsConfig, error) 
 
 	checkOrgIDAndOrgName(apps)
 
-	err = validatePluginsConfig(apps)
+	err = cr.validatePluginsConfig(apps)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func validateRequiredField(apps []*pluginsAsConfig) error {
 	return nil
 }
 
-func validatePluginsConfig(apps []*pluginsAsConfig) error {
+func (cr *configReaderImpl) validatePluginsConfig(apps []*pluginsAsConfig) error {
 	for i := range apps {
 		if apps[i].Apps == nil {
 			continue

@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -46,7 +45,7 @@ type Service struct {
 	PostgresService        *postgres.PostgresService     `inject:""`
 	CloudMonitoringService *cloudmonitoring.Service      `inject:""`
 	AzureMonitorService    *azuremonitor.Service         `inject:""`
-	PluginManager          *manager.PluginManager        `inject:""`
+	PluginManager          plugins.Manager               `inject:""`
 
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }

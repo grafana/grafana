@@ -30,9 +30,9 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Empty(t, pm.scanningErrors)
-		assert.Greater(t, len(DataSources), 1)
+		assert.Greater(t, len(pm.dataSources), 1)
 		assert.Greater(t, len(Panels), 1)
-		assert.Equal(t, "app/plugins/datasource/graphite/module", DataSources["graphite"].Module)
+		assert.Equal(t, "app/plugins/datasource/graphite/module", pm.dataSources["graphite"].Module)
 		assert.NotEmpty(t, Apps)
 		assert.Equal(t, "public/plugins/test-app/img/logo_large.png", Apps["test-app"].Info.Logos.Large)
 		assert.Equal(t, "public/plugins/test-app/img/screenshot2.png", Apps["test-app"].Info.Screenshots[1].Path)
@@ -114,15 +114,15 @@ func TestPluginManager_Init(t *testing.T) {
 		require.Empty(t, pm.scanningErrors)
 
 		const pluginID = "test"
-		assert.NotNil(t, Plugins[pluginID])
-		assert.Equal(t, "datasource", Plugins[pluginID].Type)
-		assert.Equal(t, "Test", Plugins[pluginID].Name)
-		assert.Equal(t, pluginID, Plugins[pluginID].Id)
-		assert.Equal(t, "1.0.0", Plugins[pluginID].Info.Version)
-		assert.Equal(t, plugins.PluginSignatureValid, Plugins[pluginID].Signature)
-		assert.Equal(t, plugins.GrafanaType, Plugins[pluginID].SignatureType)
-		assert.Equal(t, "Grafana Labs", Plugins[pluginID].SignatureOrg)
-		assert.False(t, Plugins[pluginID].IsCorePlugin)
+		assert.NotNil(t, pm.plugins[pluginID])
+		assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
+		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
+		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
+		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
+		assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
+		assert.Equal(t, plugins.GrafanaType, pm.plugins[pluginID].SignatureType)
+		assert.Equal(t, "Grafana Labs", pm.plugins[pluginID].SignatureOrg)
+		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
 	})
 
 	t.Run("With back-end plugin with invalid v2 private signature (mismatched root URL)", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, []error{fmt.Errorf(`plugin "test" has an invalid signature`)}, pm.scanningErrors)
-		assert.Nil(t, Plugins[("test")])
+		assert.Nil(t, pm.plugins[("test")])
 	})
 
 	t.Run("With back-end plugin with valid v2 private signature", func(t *testing.T) {
@@ -157,15 +157,15 @@ func TestPluginManager_Init(t *testing.T) {
 		require.Empty(t, pm.scanningErrors)
 
 		const pluginID = "test"
-		assert.NotNil(t, Plugins[pluginID])
-		assert.Equal(t, "datasource", Plugins[pluginID].Type)
-		assert.Equal(t, "Test", Plugins[pluginID].Name)
-		assert.Equal(t, pluginID, Plugins[pluginID].Id)
-		assert.Equal(t, "1.0.0", Plugins[pluginID].Info.Version)
-		assert.Equal(t, plugins.PluginSignatureValid, Plugins[pluginID].Signature)
-		assert.Equal(t, plugins.PrivateType, Plugins[pluginID].SignatureType)
-		assert.Equal(t, "Will Browne", Plugins[pluginID].SignatureOrg)
-		assert.False(t, Plugins[pluginID].IsCorePlugin)
+		assert.NotNil(t, pm.plugins[pluginID])
+		assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
+		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
+		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
+		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
+		assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
+		assert.Equal(t, plugins.PrivateType, pm.plugins[pluginID].SignatureType)
+		assert.Equal(t, "Will Browne", pm.plugins[pluginID].SignatureOrg)
+		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
 	})
 
 	t.Run("With back-end plugin with modified v2 signature (missing file from plugin dir)", func(t *testing.T) {
@@ -181,7 +181,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
-		assert.Nil(t, Plugins[("test")])
+		assert.Nil(t, pm.plugins[("test")])
 	})
 
 	t.Run("With back-end plugin with modified v2 signature (unaccounted file in plugin dir)", func(t *testing.T) {
@@ -197,7 +197,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
-		assert.Nil(t, Plugins[("test")])
+		assert.Nil(t, pm.plugins[("test")])
 	})
 }
 
@@ -260,6 +260,7 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 			StaticRootPath: staticRootPath,
 		},
 		BackendPluginManager: &fakeBackendPluginManager{},
+		dataSources:          map[string]*plugins.DataSourcePlugin{},
 	}
 	for _, cb := range cbs {
 		cb(pm)

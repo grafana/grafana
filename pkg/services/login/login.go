@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func init() {
@@ -21,6 +22,7 @@ var (
 type TeamSyncFunc func(user *models.User, externalUser *models.ExternalUserInfo) error
 
 type LoginService struct {
+	SQLStore     *sqlstore.SQLStore  `inject:""`
 	Bus          bus.Bus             `inject:""`
 	QuotaService *quota.QuotaService `inject:""`
 	TeamSync     TeamSyncFunc
@@ -107,7 +109,7 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 
 	// Sync isGrafanaAdmin permission
 	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
-		if err := ls.Bus.Dispatch(&models.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
+		if err := ls.SQLStore.UpdateUserPermissions(cmd.Result.Id, *extUser.IsGrafanaAdmin); err != nil {
 			return err
 		}
 	}

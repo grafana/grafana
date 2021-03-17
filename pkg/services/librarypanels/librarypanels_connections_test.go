@@ -74,11 +74,11 @@ func TestGetConnectedDashboards(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "When an admin tries to get connected dashboards for a library panel that exists and has connections, it should return connected dashboard IDs",
 		func(t *testing.T, sc scenarioContext) {
-			firstDash := createDashboard(t, sc.user, "Dash 1", 0)
+			firstDash := createDashboard(t, sc.sqlStore, sc.user, "Dash 1", 0)
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": strconv.FormatInt(firstDash.Id, 10)})
 			resp := sc.service.connectHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
-			secondDash := createDashboard(t, sc.user, "Dash 2", 0)
+			secondDash := createDashboard(t, sc.sqlStore, sc.user, "Dash 2", 0)
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID, ":dashboardId": strconv.FormatInt(secondDash.Id, 10)})
 			resp = sc.service.connectHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())

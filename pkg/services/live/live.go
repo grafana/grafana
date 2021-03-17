@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/setting"
@@ -43,6 +43,7 @@ type GrafanaLive struct {
 	Cfg           *setting.Cfg            `inject:""`
 	RouteRegister routing.RouteRegister   `inject:""`
 	LogsService   *cloudwatch.LogsService `inject:""`
+	PluginManager plugins.Manager         `inject:""`
 	node          *centrifuge.Node
 
 	// The websocket handler
@@ -222,8 +223,8 @@ func (g *GrafanaLive) GetChannelHandlerFactory(scope string, name string) (model
 			}, nil
 		}
 
-		p, ok := manager.Plugins[name]
-		if ok {
+		p := g.PluginManager.GetPlugin(name)
+		if p != nil {
 			h := &PluginHandler{
 				Plugin: p,
 			}

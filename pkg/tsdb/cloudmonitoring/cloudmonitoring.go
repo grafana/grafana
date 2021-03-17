@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -73,6 +72,7 @@ func init() {
 }
 
 type Service struct {
+	PluginManager plugins.Manager `inject:""`
 }
 
 func (s *Service) Init() error {
@@ -81,8 +81,9 @@ func (s *Service) Init() error {
 
 // Executor executes queries for the CloudMonitoring datasource.
 type Executor struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
+	httpClient    *http.Client
+	dsInfo        *models.DataSource
+	pluginManager plugins.Manager
 }
 
 // NewExecutor returns an Executor.
@@ -93,8 +94,9 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 	}
 
 	return &Executor{
-		httpClient: httpClient,
-		dsInfo:     dsInfo,
+		httpClient:    httpClient,
+		dsInfo:        dsInfo,
+		pluginManager: s.PluginManager,
 	}, nil
 }
 
@@ -534,8 +536,8 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	// find plugin
-	plugin, ok := manager.DataSources[dsInfo.Type]
-	if !ok {
+	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
 

@@ -16,19 +16,19 @@ var (
 	httpClient = http.Client{Timeout: 10 * time.Second}
 )
 
-type GrafanaNetPlugin struct {
+type grafanaNetPlugin struct {
 	Slug    string `json:"slug"`
 	Version string `json:"version"`
 }
 
-type GithubLatest struct {
+type gitHubLatest struct {
 	Stable  string `json:"stable"`
 	Testing string `json:"testing"`
 }
 
-func getAllExternalPluginSlugs() string {
+func (pm *PluginManager) getAllExternalPluginSlugs() string {
 	var result []string
-	for _, plug := range Plugins {
+	for _, plug := range pm.plugins {
 		if plug.IsCorePlugin {
 			continue
 		}
@@ -46,7 +46,7 @@ func (pm *PluginManager) checkForUpdates() {
 
 	pm.log.Debug("Checking for updates")
 
-	pluginSlugs := getAllExternalPluginSlugs()
+	pluginSlugs := pm.getAllExternalPluginSlugs()
 	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
 	if err != nil {
 		log.Tracef("Failed to get plugins repo from grafana.com, %v", err.Error())
@@ -64,14 +64,14 @@ func (pm *PluginManager) checkForUpdates() {
 		return
 	}
 
-	gNetPlugins := []GrafanaNetPlugin{}
+	gNetPlugins := []grafanaNetPlugin{}
 	err = json.Unmarshal(body, &gNetPlugins)
 	if err != nil {
 		log.Tracef("Failed to unmarshal plugin repo, reading response from grafana.com, %v", err.Error())
 		return
 	}
 
-	for _, plug := range Plugins {
+	for _, plug := range pm.plugins {
 		for _, gplug := range gNetPlugins {
 			if gplug.Slug == plug.Id {
 				plug.GrafanaNetVersion = gplug.Version
@@ -104,24 +104,24 @@ func (pm *PluginManager) checkForUpdates() {
 		return
 	}
 
-	var githubLatest GithubLatest
-	err = json.Unmarshal(body, &githubLatest)
+	var latest gitHubLatest
+	err = json.Unmarshal(body, &latest)
 	if err != nil {
 		log.Tracef("Failed to unmarshal github.com latest, reading response from github.com: %v", err.Error())
 		return
 	}
 
 	if strings.Contains(setting.BuildVersion, "-") {
-		pm.GrafanaLatestVersion = githubLatest.Testing
-		pm.GrafanaHasUpdate = !strings.HasPrefix(setting.BuildVersion, githubLatest.Testing)
+		pm.grafanaLatestVersion = latest.Testing
+		pm.grafanaHasUpdate = !strings.HasPrefix(setting.BuildVersion, latest.Testing)
 	} else {
-		pm.GrafanaLatestVersion = githubLatest.Stable
-		pm.GrafanaHasUpdate = githubLatest.Stable != setting.BuildVersion
+		pm.grafanaLatestVersion = latest.Stable
+		pm.grafanaHasUpdate = latest.Stable != setting.BuildVersion
 	}
 
 	currVersion, err1 := version.NewVersion(setting.BuildVersion)
-	latestVersion, err2 := version.NewVersion(pm.GrafanaLatestVersion)
+	latestVersion, err2 := version.NewVersion(pm.grafanaLatestVersion)
 	if err1 == nil && err2 == nil {
-		pm.GrafanaHasUpdate = currVersion.LessThan(latestVersion)
+		pm.grafanaHasUpdate = currVersion.LessThan(latestVersion)
 	}
 }
