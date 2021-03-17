@@ -138,15 +138,6 @@ export const DefaultValues = () => {
       select: 'option1',
       switch: true,
     },
-    {
-      name: 'John Waters',
-      nested: {
-        path: 'Nested path default value updated',
-      },
-      radio: 'option1',
-      select: 'option2',
-      switch: false,
-    },
   ];
 
   return <>{renderForm(defaultValues[0])}</>;
