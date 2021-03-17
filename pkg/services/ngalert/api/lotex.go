@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 )
 
+const legacyRulerPrefix = "/api/prom/rules"
+
 type LotexRuler struct {
 	DataProxy *datasourceproxy.DatasourceProxyService
 }
@@ -32,13 +34,6 @@ func withBufferedRW(ctx *models.ReqContext) (*models.ReqContext, response.Respon
 	return &cpy, resp
 }
 
-// unmodofiedProxy passes a request to a datasource unaltered.
-func (r *LotexRuler) unmodifiedProxy(ctx *models.ReqContext) response.Response {
-	newCtx, resp := withBufferedRW(ctx)
-	r.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64("DatasourceId"))
-	return resp
-}
-
 // withReq proxies a different request
 func (r *LotexRuler) withReq(ctx *models.ReqContext, req *http.Request) response.Response {
 	newCtx, resp := withBufferedRW(ctx)
@@ -48,23 +43,62 @@ func (r *LotexRuler) withReq(ctx *models.ReqContext, req *http.Request) response
 }
 
 func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	return r.unmodifiedProxy(ctx)
+	return r.withReq(ctx, &http.Request{
+		URL: withPath(
+			*ctx.Req.URL,
+			fmt.Sprintf("/api/prom/rules/%s", ctx.Params("Namespace")),
+		),
+	})
 }
 
 func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	return r.unmodifiedProxy(ctx)
+	return r.withReq(ctx, &http.Request{
+		URL: withPath(
+			*ctx.Req.URL,
+			fmt.Sprintf(
+				"%s/%s/%s",
+				legacyRulerPrefix,
+				ctx.Params("Namespace"),
+				ctx.Params("Groupname"),
+			),
+		),
+	})
 }
 
 func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	return r.unmodifiedProxy(ctx)
+	return r.withReq(ctx, &http.Request{
+		URL: withPath(
+			*ctx.Req.URL,
+			fmt.Sprintf(
+				"%s/%s",
+				legacyRulerPrefix,
+				ctx.Params("Namespace"),
+			),
+		),
+	})
 }
 
 func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
-	return r.unmodifiedProxy(ctx)
+	return r.withReq(ctx, &http.Request{
+		URL: withPath(
+			*ctx.Req.URL,
+			fmt.Sprintf(
+				"%s/%s/%s",
+				legacyRulerPrefix,
+				ctx.Params("Namespace"),
+				ctx.Params("Groupname"),
+			),
+		),
+	})
 }
 
 func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
-	return r.unmodifiedProxy(ctx)
+	return r.withReq(ctx, &http.Request{
+		URL: withPath(
+			*ctx.Req.URL,
+			legacyRulerPrefix,
+		),
+	})
 }
 
 func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.RuleGroupConfig) response.Response {
@@ -77,20 +111,23 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 
 	ns := ctx.Params("Namespace")
 
-	// use the legacy rule path as it's the same for cortex & loki
-	u := *ctx.Req.URL
-	u.Path = fmt.Sprintf("/api/prom/rules/%s", ns)
-	if escaped := url.PathEscape(u.Path); escaped != u.Path {
-		u.RawPath = escaped
-	}
-
+	u := withPath(*ctx.Req.URL, fmt.Sprintf("%s/%s", legacyRulerPrefix, ns))
 	req := &http.Request{
 		Method:        "POST",
-		URL:           &u,
+		URL:           u,
 		Body:          body,
 		ContentLength: ln,
 	}
 	return r.withReq(ctx, req)
+}
+
+func withPath(u url.URL, newPath string) *url.URL {
+	u.Path = newPath
+	if escaped := url.PathEscape(u.Path); escaped != u.Path {
+		u.RawPath = escaped
+	}
+
+	return &u
 }
 
 func payload(b []byte) (io.ReadCloser, int64) {
