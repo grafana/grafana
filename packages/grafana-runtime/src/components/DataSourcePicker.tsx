@@ -10,7 +10,7 @@ import { getDataSourceSrv } from '../services/dataSourceSrv';
 /**
  * Component props description for the {@link DataSourcePicker}
  *
- * @alpha
+ * @internal
  */
 export interface DataSourcePickerProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
@@ -33,7 +33,7 @@ export interface DataSourcePickerProps {
 /**
  * Component state description for the {@link DataSourcePicker}
  *
- * @alpha
+ * @internal
  */
 export interface DataSourcePickerState {
   error?: string;
@@ -43,7 +43,7 @@ export interface DataSourcePickerState {
  * Component to be able to select a datasource from the list of installed and enabled
  * datasources in the current Grafana instance.
  *
- * @alpha
+ * @internal
  */
 export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataSourcePickerState> {
   dataSourceSrv = getDataSourceSrv();
