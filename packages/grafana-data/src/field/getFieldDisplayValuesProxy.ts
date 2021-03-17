@@ -28,8 +28,12 @@ export function getFieldDisplayValuesProxy(
         field = frame.fields[k];
       }
       if (!field) {
-        // 3. Match the title
+        // 3. Match the config displayName
         field = frame.fields.find((f) => key === f.config.displayName);
+      }
+      if (!field) {
+        // 4. Match the state displayName
+        field = frame.fields.find((f) => key === f.state?.displayName);
       }
       if (!field) {
         return undefined;
