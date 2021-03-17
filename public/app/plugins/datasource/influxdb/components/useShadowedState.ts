@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { usePrevious } from 'react-use';
 
 export function useShadowedState<T>(outsideVal: T): [T, (newVal: T) => void] {
   const [currentVal, setCurrentVal] = useState(outsideVal);
-  const prevOutsideVal = useRef(outsideVal);
+  const prevOutsideVal = usePrevious(outsideVal);
 
   useEffect(() => {
-    const isOutsideValChanged = prevOutsideVal.current !== outsideVal;
-    // the prevOutsideVal must always be updated to the "new" prev-value
-    prevOutsideVal.current = outsideVal;
-    // if the value changes from the outside, we accept it
+    const isOutsideValChanged = prevOutsideVal !== outsideVal;
+    // if the value changes from the outside, we accept it into the state
+    // (we only set it if it is different from the current value)
     if (isOutsideValChanged && currentVal !== outsideVal) {
       setCurrentVal(outsideVal);
     }
