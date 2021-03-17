@@ -26,7 +26,7 @@
         ".babelrc",
         ".prettierrc.js",
         ".eslintrc",
-        "*.mdx"
+        "**/*.mdx"
     ],
     "action": "updateLabel",
     "addLabel": "area/frontend"
@@ -34,7 +34,7 @@
   {
     "type": "changedfiles",
     "matches": [
-        "*.go",
+        "**/*.go",
         "go.mod",
         "go.sum",
         "contribute/style-guides/backend.md",
@@ -48,7 +48,7 @@
     "type": "changedfiles",
     "matches": [
         "pkg/services/sqlstore/migrations/**/*",
-        "*_mig.go"
+        "**/*_mig.go"
     ],
     "action": "updateLabel",
     "addLabel": "area/backend/db/migration"
@@ -162,7 +162,7 @@
   },
   {
     "type": "changedfiles",
-    "matches": [ "public/app/plugins/datasource/zipkin"],
+    "matches": [ "public/app/plugins/datasource/zipkin/**/*"],
     "action": "updateLabel",
     "addLabel": "datasource/Zipkin"
   }
