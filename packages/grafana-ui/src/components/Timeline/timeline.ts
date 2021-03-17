@@ -3,8 +3,9 @@ import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import { Quadtree, Rect, pointWithin } from '../BarChart/quadtree';
 import { distribute, SPACE_BETWEEN } from '../BarChart/distribute';
 import { TimelineMode } from './types';
+import { TimeRange } from '@grafana/data';
 
-const { round, min } = Math;
+const { round, min, ceil } = Math;
 
 const pxRatio = devicePixelRatio;
 
@@ -38,6 +39,7 @@ export interface TimelineCoreOptions {
   label: (seriesIdx: number) => string;
   fill: (seriesIdx: number, valueIdx: number, value: any) => CanvasRenderingContext2D['fillStyle'];
   stroke: (seriesIdx: number, valueIdx: number, value: any) => CanvasRenderingContext2D['strokeStyle'];
+  getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
@@ -57,6 +59,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     fill,
     stroke,
     formatValue,
+    getTimeRange,
     // onHover,
     // onLeave,
   } = opts;
@@ -309,6 +312,50 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   return {
     cursor,
+
+    xSplits:
+      mode === TimelineMode.Grid
+        ? (u: uPlot, axisIdx: number, scaleMin: number, scaleMax: number, foundIncr: number, foundSpace: number) => {
+            let splits = [];
+
+            let dataIncr = u.data[0][1] - u.data[0][0];
+            let skipFactor = ceil(foundIncr / dataIncr);
+
+            for (let i = 0; i < u.data[0].length; i += skipFactor) {
+              let v = u.data[0][i];
+
+              if (v >= scaleMin && v <= scaleMax) {
+                splits.push(v);
+              }
+            }
+
+            return splits;
+          }
+        : null,
+
+    xRange: (u: uPlot) => {
+      const r = getTimeRange();
+
+      let min = r.from.valueOf();
+      let max = r.to.valueOf();
+
+      if (mode === TimelineMode.Grid) {
+        let colWid = u.data[0][1] - u.data[0][0];
+        let scalePad = colWid / 2;
+
+        if (min <= u.data[0][0]) {
+          min = u.data[0][0] - scalePad;
+        }
+
+        let lastIdx = u.data[0].length - 1;
+
+        if (max >= u.data[0][lastIdx]) {
+          max = u.data[0][lastIdx] + scalePad;
+        }
+      }
+
+      return [min, max] as uPlot.Range.MinMax;
+    },
 
     ySplits: (u: uPlot) => {
       walk(laneWidth, null, count, u.bbox.height, (iy, y0, hgt) => {

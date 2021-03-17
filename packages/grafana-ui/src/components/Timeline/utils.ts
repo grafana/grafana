@@ -96,6 +96,8 @@ export function preparePlotConfigBuilder(
 
     stroke: colorLookup,
 
+    getTimeRange,
+
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
 
@@ -121,10 +123,7 @@ export function preparePlotConfigBuilder(
     isTime: true,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: () => {
-      const r = getTimeRange();
-      return [r.from.valueOf(), r.to.valueOf()];
-    },
+    range: coreConfig.xRange,
   });
 
   builder.addScale({
@@ -138,6 +137,7 @@ export function preparePlotConfigBuilder(
   builder.addAxis({
     scaleKey: 'x',
     isTime: true,
+    splits: coreConfig.xSplits!,
     placement: AxisPlacement.Bottom,
     timeZone: getTimeZone(),
     theme,

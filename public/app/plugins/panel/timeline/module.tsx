@@ -4,6 +4,7 @@ import { TimelineFieldConfig, BarValueVisibility, graphFieldOptions } from '@gra
 import { addHideFrom, addLegendOptions } from '../timeseries/config';
 import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
 import { Options } from './types';
+import { TimelineMode } from '@grafana/ui/src/components/Timeline/types';
 
 export const plugin = new PanelPlugin<Options, TimelineFieldConfig>(TimelinePanel)
   .useFieldConfig({
@@ -56,6 +57,17 @@ export const plugin = new PanelPlugin<Options, TimelineFieldConfig>(TimelinePane
   })
   .setPanelOptions((builder) => {
     builder
+      .addRadio({
+        path: 'mode',
+        name: 'Mode',
+        defaultValue: TimelineMode.Spans,
+        settings: {
+          options: [
+            { label: 'Spans', value: TimelineMode.Spans },
+            { label: 'Grid', value: TimelineMode.Grid },
+          ],
+        },
+      })
       .addRadio({
         path: 'showValue',
         name: 'Show values',
