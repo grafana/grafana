@@ -98,7 +98,7 @@
     "type": "changedfiles",
     "matches": [ "public/app/plugins/datasource/elasticsearch/**/*", "pkg/tsdb/elasticsearch/**/*"],
     "action": "updateLabel",
-    "addLabel": "datasource/Prometheus"
+    "addLabel": "datasource/Elasticsearch"
   },
   {
     "type": "changedfiles",
