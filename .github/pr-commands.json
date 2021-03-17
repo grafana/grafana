@@ -38,7 +38,11 @@
         "go.mod",
         "go.sum",
         "/contribute/style-guides/backend.md",
-        "/contribute/architecture/backend"
+        "/contribute/architecture/backend",
+        "/contribute/architecture/communication.md",
+        "/contribute/architecture/database.md",
+        "/contribute/architecture/services.md",
+        "/scripts/go/"
     ],
     "action": "updateLabel",
     "addLabel": "area/backend"
@@ -57,6 +61,23 @@
     "matches": [ "/public/app/features/explore"],
     "action": "updateLabel",
     "addLabel": "area/explore"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "/.circleci",
+      "/packaging",
+      "/scripts/build",
+      "/scripts/*.sh",
+      "/scripts/*.star",
+      "/.drone.star",
+      "/.drone.yml",
+      "/Makefile",
+      "/Dockerfile",
+      "/Dockerfile.ubuntu"
+    ],
+    "action": "updateLabel",
+    "addLabel": "type/build-packaging"
   },
   {
     "type": "changedfiles",
