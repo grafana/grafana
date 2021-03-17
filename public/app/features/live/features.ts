@@ -15,12 +15,6 @@ export function registerLiveFeatures() {
       processMessage: random2s.addBatch,
     },
     {
-      path: 'random-20hz-stream',
-      description: 'Random stream with points every 2s',
-      getController: () => random2s,
-      processMessage: random2s.addBatch,
-    },
-    {
       path: 'random-flakey-stream',
       description: 'Random stream with flakey data points',
       getController: () => randomFlakey,
