@@ -737,7 +737,7 @@ func (ss *SQLStore) ValidateDashboardBeforeSave(dashboard *models.Dashboard, ove
 		return nil
 	})
 	if err != nil {
-		return false, fmt.Errorf("transactional SQL session failed: %w", err)
+		return false, err
 	}
 
 	return isParentFolderChanged, nil
