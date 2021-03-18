@@ -84,7 +84,11 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
-	return g.streamManager.Run(ctx)
+	if g.streamManager != nil {
+		// Only run stream manager if GrafanaLive properly initialized.
+		return g.streamManager.Run(ctx)
+	}
+	return nil
 }
 
 // Init initializes Live service.
