@@ -418,11 +418,6 @@ type GetDashboardSlugByIdQuery struct {
 	Result string
 }
 
-type GetProvisionedDashboardDataByIdQuery struct {
-	DashboardId int64
-	Result      *DashboardProvisioning
-}
-
 type GetDashboardsBySlugQuery struct {
 	OrgId int64
 	Slug  string
