@@ -1,9 +1,8 @@
 // Libraries
 import React, { PureComponent } from 'react';
 // Components
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { Button, CustomScrollbar, HorizontalGroup, Icon, Modal, stylesFactory, Tooltip } from '@grafana/ui';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { backendSrv } from 'app/core/services/backend_srv';

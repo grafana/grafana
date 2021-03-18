@@ -22,13 +22,13 @@ import (
 
 func TestDashboardDataAccess(t *testing.T) {
 	Convey("Testing DB", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
 
 		Convey("Given saved dashboard", func() {
-			savedFolder := insertTestDashboard(t, "1 test dash folder", 1, 0, true, "prod", "webapp")
-			savedDash := insertTestDashboard(t, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-			insertTestDashboard(t, "test dash 45", 1, savedFolder.Id, false, "prod")
-			insertTestDashboard(t, "test dash 67", 1, 0, false, "prod", "webapp")
+			savedFolder := insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
+			savedDash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
+			insertTestDashboard(t, sqlStore, "test dash 45", 1, savedFolder.Id, false, "prod")
+			insertTestDashboard(t, sqlStore, "test dash 67", 1, 0, false, "prod", "webapp")
 
 			Convey("Should return dashboard model", func() {
 				So(savedDash.Title, ShouldEqual, "test dash 23")
@@ -104,7 +104,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to delete dashboard", func() {
-				dash := insertTestDashboard(t, "delete me", 1, 0, false, "delete this")
+				dash := insertTestDashboard(t, sqlStore, "delete me", 1, 0, false, "delete this")
 
 				err := DeleteDashboard(&models.DeleteDashboardCommand{
 					Id:    dash.Id,
@@ -129,8 +129,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						"tags":  []interface{}{},
 					}),
 				}
-
-				err := SaveDashboard(&cmd)
+				_, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
 
 				generateNewUid = util.GenerateShortUID
@@ -145,13 +144,12 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 					UserId: 100,
 				}
-
-				err := SaveDashboard(&cmd)
+				dashboard, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
-				So(cmd.Result.CreatedBy, ShouldEqual, 100)
-				So(cmd.Result.Created.IsZero(), ShouldBeFalse)
-				So(cmd.Result.UpdatedBy, ShouldEqual, 100)
-				So(cmd.Result.Updated.IsZero(), ShouldBeFalse)
+				So(dashboard.CreatedBy, ShouldEqual, 100)
+				So(dashboard.Created.IsZero(), ShouldBeFalse)
+				So(dashboard.UpdatedBy, ShouldEqual, 100)
+				So(dashboard.Updated.IsZero(), ShouldBeFalse)
 			})
 
 			Convey("Should be able to update dashboard by id and remove folderId", func() {
@@ -166,10 +164,9 @@ func TestDashboardDataAccess(t *testing.T) {
 					FolderId:  2,
 					UserId:    100,
 				}
-
-				err := SaveDashboard(&cmd)
+				dash, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
-				So(cmd.Result.FolderId, ShouldEqual, 2)
+				So(dash.FolderId, ShouldEqual, 2)
 
 				cmd = models.SaveDashboardCommand{
 					OrgId: 1,
@@ -182,8 +179,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					Overwrite: true,
 					UserId:    100,
 				}
-
-				err = SaveDashboard(&cmd)
+				_, err = sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
 
 				query := models.GetDashboardQuery{
@@ -201,7 +197,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to delete empty folder", func() {
-				emptyFolder := insertTestDashboard(t, "2 test dash folder", 1, 0, true, "prod", "webapp")
+				emptyFolder := insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
 
 				deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
 				err := DeleteDashboard(deleteCmd)
@@ -236,7 +232,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 				}
 
-				err := SaveDashboard(&cmd)
+				_, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldEqual, models.ErrDashboardNotFound)
 			})
 
@@ -250,8 +246,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						"tags":  []interface{}{},
 					}),
 				}
-
-				err := SaveDashboard(&cmd)
+				_, err := sqlStore.SaveDashboard(cmd)
 				So(err, ShouldBeNil)
 			})
 
@@ -366,7 +361,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
-				starredDash := insertTestDashboard(t, "starred dash", 1, 0, false)
+				starredDash := insertTestDashboard(t, sqlStore, "starred dash", 1, 0, false)
 				err := StarDashboard(&models.StarDashboardCommand{
 					DashboardId: starredDash.Id,
 					UserId:      10,
@@ -396,9 +391,9 @@ func TestDashboardDataAccess(t *testing.T) {
 		Convey("Given a plugin with imported dashboards", func() {
 			pluginId := "test-app"
 
-			appFolder := insertTestDashboardForPlugin("app-test", 1, 0, true, pluginId)
-			insertTestDashboardForPlugin("app-dash1", 1, appFolder.Id, false, pluginId)
-			insertTestDashboardForPlugin("app-dash2", 1, appFolder.Id, false, pluginId)
+			appFolder := insertTestDashboardForPlugin(t, sqlStore, "app-test", 1, 0, true, pluginId)
+			insertTestDashboardForPlugin(t, sqlStore, "app-dash1", 1, appFolder.Id, false, pluginId)
+			insertTestDashboardForPlugin(t, sqlStore, "app-dash2", 1, appFolder.Id, false, pluginId)
 
 			Convey("Should return imported dashboard", func() {
 				query := models.GetDashboardsByPluginIdQuery{
@@ -417,9 +412,9 @@ func TestDashboardDataAccess(t *testing.T) {
 func TestDashboard_SortingOptions(t *testing.T) {
 	// insertTestDashboard uses GoConvey's assertions. Workaround.
 	Convey("test with multiple sorting options", t, func() {
-		InitTestDB(t)
-		dashB := insertTestDashboard(t, "Beta", 1, 0, false)
-		dashA := insertTestDashboard(t, "Alfa", 1, 0, false)
+		sqlStore := InitTestDB(t)
+		dashB := insertTestDashboard(t, sqlStore, "Beta", 1, 0, false)
+		dashA := insertTestDashboard(t, sqlStore, "Alfa", 1, 0, false)
 
 		assert.NotZero(t, dashA.Id)
 		assert.Less(t, dashB.Id, dashA.Id)
@@ -441,7 +436,8 @@ func TestDashboard_SortingOptions(t *testing.T) {
 	})
 }
 
-func insertTestDashboard(t *testing.T, title string, orgId int64, folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId int64,
+	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
 	t.Helper()
 
 	cmd := models.SaveDashboardCommand{
@@ -454,17 +450,20 @@ func insertTestDashboard(t *testing.T, title string, orgId int64, folderId int64
 			"tags":  tags,
 		}),
 	}
-
-	err := SaveDashboard(&cmd)
+	dash, err := sqlStore.SaveDashboard(cmd)
 	require.NoError(t, err)
+	require.NotNil(t, dash)
 
-	cmd.Result.Data.Set("id", cmd.Result.Id)
-	cmd.Result.Data.Set("uid", cmd.Result.Uid)
+	dash.Data.Set("id", dash.Id)
+	dash.Data.Set("uid", dash.Uid)
 
-	return cmd.Result
+	return dash
 }
 
-func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isFolder bool, pluginId string) *models.Dashboard {
+func insertTestDashboardForPlugin(t *testing.T, sqlStore *SQLStore, title string, orgId int64,
+	folderId int64, isFolder bool, pluginId string) *models.Dashboard {
+	t.Helper()
+
 	cmd := models.SaveDashboardCommand{
 		OrgId:    orgId,
 		FolderId: folderId,
@@ -476,13 +475,13 @@ func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isF
 		PluginId: pluginId,
 	}
 
-	err := SaveDashboard(&cmd)
+	dash, err := sqlStore.SaveDashboard(cmd)
 	So(err, ShouldBeNil)
 
-	return cmd.Result
+	return dash
 }
 
-func createUser(t *testing.T, name string, role string, isAdmin bool) models.User {
+func createUser(t *testing.T, sqlStore *SQLStore, name string, role string, isAdmin bool) models.User {
 	t.Helper()
 
 	setting.AutoAssignOrg = true
@@ -490,27 +489,13 @@ func createUser(t *testing.T, name string, role string, isAdmin bool) models.Use
 	setting.AutoAssignOrgRole = role
 
 	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	err := CreateUser(context.Background(), &currentUserCmd)
+	currentUser, err := sqlStore.CreateUser(context.Background(), currentUserCmd)
 	require.NoError(t, err)
 
-	q1 := models.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
+	q1 := models.GetUserOrgListQuery{UserId: currentUser.Id}
 	err = GetUserOrgList(&q1)
 	require.NoError(t, err)
 	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
 
-	return currentUserCmd.Result
-}
-
-func moveDashboard(orgId int64, dashboard *simplejson.Json, newFolderId int64) *models.Dashboard {
-	cmd := models.SaveDashboardCommand{
-		OrgId:     orgId,
-		FolderId:  newFolderId,
-		Dashboard: dashboard,
-		Overwrite: true,
-	}
-
-	err := SaveDashboard(&cmd)
-	So(err, ShouldBeNil)
-
-	return cmd.Result
+	return *currentUser
 }

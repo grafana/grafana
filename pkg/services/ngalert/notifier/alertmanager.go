@@ -39,14 +39,6 @@ type Alertmanager struct {
 	wg sync.WaitGroup
 }
 
-type WithReceiverStage struct {
-}
-
-func (s *WithReceiverStage) Exec(ctx context.Context, l gokit_log.Logger, alerts ...*types.Alert) (context.Context, []*types.Alert, error) {
-	//TODO: Alerts with a receiver should be handled here.
-	return ctx, nil, nil
-}
-
 func init() {
 	registry.RegisterService(&Alertmanager{})
 }
@@ -66,11 +58,6 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 	am.marker = types.NewMarker(prometheus.DefaultRegisterer)
 
 	var err error
-	am.alerts, err = NewAlertProvider(&WithReceiverStage{}, am.marker, gokit_log.NewNopLogger())
-	if err != nil {
-		return errors.Wrap(err, "failed to initialize alerting storage component")
-	}
-
 	am.silences, err = silence.New(silence.Options{
 		SnapshotFile: filepath.Join("dir", "silences"), //TODO: This is a setting
 		Retention:    time.Hour * 24,                   //TODO: This is also a setting
@@ -98,6 +85,12 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 			stage := createReceiverStage(name, receivers[name], waitFunc, am.notificationLog)
 			routingStage[name] = notify.MultiStage{silencingStage, stage}
 		}
+
+		am.alerts, err = NewAlertProvider(routingStage, am.marker, gokit_log.NewNopLogger())
+		if err != nil {
+			return errors.Wrap(err, "failed to initialize alerting storage component")
+		}
+
 		am.dispatcher = dispatch.NewDispatcher(am.alerts, BuildRoutingConfiguration(), routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), nil)
 	}
 

@@ -26,6 +26,7 @@ func init() {
 }
 
 type Service struct {
+	PluginManager plugins.Manager `inject:""`
 }
 
 func (s *Service) Init() error {
@@ -34,8 +35,9 @@ func (s *Service) Init() error {
 
 // AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
 type AzureMonitorExecutor struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
+	httpClient    *http.Client
+	dsInfo        *models.DataSource
+	pluginManager plugins.Manager
 }
 
 // NewAzureMonitorExecutor initializes a http client
@@ -46,8 +48,9 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 	}
 
 	return &AzureMonitorExecutor{
-		httpClient: httpClient,
-		dsInfo:     dsInfo,
+		httpClient:    httpClient,
+		dsInfo:        dsInfo,
+		pluginManager: s.PluginManager,
 	}, nil
 }
 
@@ -82,23 +85,27 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 	}
 
 	azDatasource := &AzureMonitorDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
+		httpClient:    e.httpClient,
+		dsInfo:        e.dsInfo,
+		pluginManager: e.pluginManager,
 	}
 
 	aiDatasource := &ApplicationInsightsDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
+		httpClient:    e.httpClient,
+		dsInfo:        e.dsInfo,
+		pluginManager: e.pluginManager,
 	}
 
 	alaDatasource := &AzureLogAnalyticsDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
+		httpClient:    e.httpClient,
+		dsInfo:        e.dsInfo,
+		pluginManager: e.pluginManager,
 	}
 
 	iaDatasource := &InsightsAnalyticsDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
+		httpClient:    e.httpClient,
+		dsInfo:        e.dsInfo,
+		pluginManager: e.pluginManager,
 	}
 
 	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, *tsdbQuery.TimeRange)

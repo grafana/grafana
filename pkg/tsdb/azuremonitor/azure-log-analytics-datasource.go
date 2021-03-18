@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
@@ -26,8 +25,9 @@ import (
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
 type AzureLogAnalyticsDatasource struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
+	httpClient    *http.Client
+	dsInfo        *models.DataSource
+	pluginManager plugins.Manager
 }
 
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
@@ -217,8 +217,8 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	// find plugin
-	plugin, ok := manager.DataSources[dsInfo.Type]
-	if !ok {
+	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
