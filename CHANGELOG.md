@@ -332,6 +332,17 @@ This option to group query variable values into groups by tags has been an exper
 
 <!-- 7.4.0-beta1 END -->
 
+<!-- 7.3.10 START -->
+
+# 7.3.10 (2021-03-18)
+
+### Bug fixes
+
+* **Security**: Fix API permissions issues related to team-sync CVE-2021-28146, CVE-2021-28147. (Enterprise)
+* **Security**: Usage insights requires signed in users CVE-2021-28148. (Enterprise)
+
+<!-- 7.3.10 END -->
+
 <!-- 7.3.7 START -->
 
 # 7.3.7 (2021-01-14)
@@ -1324,6 +1335,17 @@ We have also extended the time zone options so you can select any of the standar
 - **Logs**: Fix error when non-string log level supplied. [#23654](https://github.com/grafana/grafana/pull/23654), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Rich history**: Fix create url and run query for various datasources. [#23627](https://github.com/grafana/grafana/pull/23627), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Security**: Fix XSS vulnerability in table panel. [#23816](https://github.com/grafana/grafana/pull/23816), [@torkelo](https://github.com/torkelo)
+
+<!-- 6.7.6 START -->
+
+# 6.7.6 (2021-03-18)
+
+### Bug fixes
+
+* **Security**: Fix API permissions issues related to team-sync CVE-2021-28147. (Enterprise)
+* **Security**: Usage insights requires signed in users CVE-2021-28148. (Enterprise)
+
+<!-- 6.7.6 END -->
 
 <!-- 6.7.5 START -->
 
