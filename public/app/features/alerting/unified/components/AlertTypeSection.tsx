@@ -1,12 +1,13 @@
-import React, { FC, useState } from 'react';
-import { FieldSet, Field, Input, stylesFactory, Select } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import React, { FC, useState, useEffect } from 'react';
+import { FieldSet, Field, Input, InputControl, stylesFactory, Select, FormAPI } from '@grafana/ui';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
+import { fetchRulerRules } from '../api/ruler';
 
 import { getAllDataSources, getPromAndLokiDataSources } from '../api/datasources';
 
-type Props = {};
+interface Props extends FormAPI<{}> {}
 
 enum ALERT_TYPE {
   THRESHOLD = 'threshold',
@@ -14,7 +15,7 @@ enum ALERT_TYPE {
   HOST = 'host',
 }
 
-const alertTypeOptions = [
+const alertTypeOptions: SelectableValue[] = [
   {
     label: 'Threshold',
     value: ALERT_TYPE.THRESHOLD,
@@ -32,45 +33,62 @@ const alertTypeOptions = [
   },
 ];
 
-const AlertTypeSection: FC<Props> = (props) => {
+const AlertTypeSection: FC<Props> = ({ register, control, watch }) => {
   const styles = getStyles(config.theme);
 
-  const alertType = useSelect();
-  const datasource = useSelect();
+  const alertType = watch('type') as SelectableValue;
+  const datasource = watch('datasource') as SelectableValue;
+  const dataSourceOptions = useDatasourceSelectOptions(alertType);
 
-  const getDatasourceSelectOptions = () => {
-    let thresholdOptions = [] as ReturnType<typeof getAllDataSources>;
-    if (alertType.value === ALERT_TYPE.THRESHOLD) {
-      thresholdOptions = getAllDataSources().filter(({ type }) => type !== 'datasource');
-    } else if (alertType.value === ALERT_TYPE.SYSTEM) {
-      thresholdOptions = getPromAndLokiDataSources();
+  console.log({ alertType, datasource });
+
+  useEffect(() => {
+    if (datasource?.value) {
+      fetchRulerRules(datasource?.value as string).then((ruleGroups) => {
+        console.log(ruleGroups);
+      });
     }
-    return thresholdOptions.map(({ name, type }) => {
-      return {
-        label: name,
-        value: name,
-        description: type,
-      };
-    });
-  };
-
-  const dataSourceOptions = getDatasourceSelectOptions();
+  }, [datasource?.value]);
 
   return (
     <FieldSet label="Alert type">
       <Field className={styles.formInput} label="Alert name">
-        <Input name="name" />
+        <Input ref={register({ required: true })} name="name" />
       </Field>
       <div className={styles.flexRow}>
         <Field label="Alert type" className={styles.formInput}>
-          <Select {...alertType} options={alertTypeOptions} />
+          <InputControl as={Select} name="type" options={alertTypeOptions} control={control} />
         </Field>
         <Field className={styles.formInput} label="Select data source">
-          <Select {...datasource} options={dataSourceOptions} />
+          <InputControl as={Select} name="datasource" options={dataSourceOptions} control={control} />
         </Field>
       </div>
     </FieldSet>
   );
+};
+
+const useDatasourceSelectOptions = (alertType: SelectableValue) => {
+  const [datasourceOptions, setDataSourceOptions] = useState<SelectableValue[]>([]);
+
+  useEffect(() => {
+    let options = [] as ReturnType<typeof getAllDataSources>;
+    if (alertType?.value === ALERT_TYPE.THRESHOLD) {
+      options = getAllDataSources().filter(({ type }) => type !== 'datasource');
+    } else if (alertType?.value === ALERT_TYPE.SYSTEM) {
+      options = getPromAndLokiDataSources();
+    }
+    setDataSourceOptions(
+      options.map(({ name, type }) => {
+        return {
+          label: name,
+          value: name,
+          description: type,
+        };
+      })
+    );
+  }, [alertType?.value]);
+
+  return datasourceOptions;
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -88,14 +106,5 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
-
-const useSelect = (initialValue?: string) => {
-  const [value, setValue] = useState(initialValue);
-  const handleChange = (option: { value: string; label: string; description?: string }) => {
-    setValue(option.value);
-  };
-
-  return { value, onChange: handleChange };
-};
 
 export default AlertTypeSection;

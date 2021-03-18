@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { PageToolbar, ToolbarButton, stylesFactory } from '@grafana/ui';
+import { PageToolbar, ToolbarButton, stylesFactory, Form } from '@grafana/ui';
 
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
@@ -39,9 +39,15 @@ const AlertEditor: FC<Props> = () => {
         <ToolbarButton variant="destructive">Cancel</ToolbarButton>
       </PageToolbar>
       <div className={styles.formWrapper}>
-        <AlertTypeSection />
-        <AlertConditionsSection />
-        <AlertDetails />
+        <Form onSubmit={() => {}}>
+          {(formApi) => (
+            <>
+              <AlertTypeSection {...formApi} />
+              <AlertConditionsSection {...formApi} />
+              <AlertDetails {...formApi} />
+            </>
+          )}
+        </Form>
       </div>
     </div>
   );

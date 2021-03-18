@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { FieldSet, Field, Label, Select, TextArea, stylesFactory, Input, Button } from '@grafana/ui';
+import React, { FC, useState } from 'react';
+import { FieldSet, Field, Label, Select, TextArea, stylesFactory, Button, FormAPI } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 import AlertLabels from './AlertLabels';
 
-interface Props {}
+interface Props extends FormAPI<{}> {}
 
-const AlertDetails = (props: Props) => {
+const AlertDetails: FC<Props> = ({ register, formState }) => {
   const annotationKey = useSelect();
   const styles = getStyles(config.theme);
   const annotationOptions = ['Summary', 'Description'].map((value) => ({ value, label: value }));
