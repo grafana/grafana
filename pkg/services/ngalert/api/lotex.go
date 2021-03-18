@@ -10,7 +10,7 @@ import (
 
 	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"gopkg.in/macaron.v1"
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
