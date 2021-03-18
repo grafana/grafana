@@ -30,5 +30,5 @@ export * from './legacyEvents';
 export * from './live';
 export * from './variables';
 export * from './geometry';
-
+export { isUnsignedPluginSignature } from './pluginSignature';
 export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo } from './config';
