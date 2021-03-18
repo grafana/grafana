@@ -764,7 +764,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// Fix for missing IANA db on Windows
 	_, zoneInfoSet := os.LookupEnv(zoneInfo)
 	if runtime.GOOS == "windows" && !zoneInfoSet {
-		if err := os.Setenv(zoneInfo, HomePath+"/tools/zoneinfo.zip"); err != nil {
+		if err := os.Setenv(zoneInfo, filepath.Join(HomePath, "tools", "zoneinfo.zip")); err != nil {
 			cfg.Logger.Error("Can't set ZONEINFO environment variable", "err", err)
 		}
 	}
