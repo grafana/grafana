@@ -3,6 +3,7 @@ package alerting
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -82,6 +83,7 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 		Name:        "Test notification",
 		Message:     "Someone is testing the alert notification within Grafana.",
 		State:       models.AlertStateAlerting,
+		ID:          rand.Int63(),
 	}
 
 	ctx := NewEvalContext(context.Background(), testRule, fakeRequestValidator{})

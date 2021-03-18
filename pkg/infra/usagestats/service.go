@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
@@ -27,7 +28,6 @@ func init() {
 
 type UsageStats interface {
 	GetUsageReport(ctx context.Context) (UsageReport, error)
-
 	RegisterMetric(name string, fn MetricFunc)
 }
 
@@ -39,6 +39,7 @@ type UsageStatsService struct {
 	SQLStore           *sqlstore.SQLStore         `inject:""`
 	AlertingUsageStats alerting.UsageStatsQuerier `inject:""`
 	License            models.Licensing           `inject:""`
+	PluginManager      plugins.Manager            `inject:""`
 
 	log log.Logger
 

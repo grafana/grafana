@@ -25,7 +25,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 			resp = sc.service.connectHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
-			newFolder := createFolderWithACL(t, "NewFolder", sc.user, []folderACLItem{})
+			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
 			cmd := patchLibraryPanelCommand{
 				FolderID: newFolder.Id,
 				Name:     "Panel - New name",
@@ -82,7 +82,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolderWithACL(t, "NewFolder", sc.user, []folderACLItem{})
+			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
 			cmd := patchLibraryPanelCommand{
 				FolderID: newFolder.Id,
 				Version:  1,
@@ -174,7 +174,7 @@ func TestPatchLibraryPanel(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			newFolder := createFolderWithACL(t, "NewFolder", sc.user, []folderACLItem{})
+			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
 			command := getCreateCommand(newFolder.Id, "Text - Library Panel")
 			resp := sc.service.createHandler(sc.reqContext, command)
 			var result = validateAndUnMarshalResponse(t, resp)

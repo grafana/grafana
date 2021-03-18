@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -50,6 +49,7 @@ type RenderingService struct {
 
 	Cfg                *setting.Cfg             `inject:""`
 	RemoteCacheService *remotecache.RemoteCache `inject:""`
+	PluginManager      plugins.Manager          `inject:""`
 }
 
 func (rs *RenderingService) Init() error {
@@ -67,8 +67,8 @@ func (rs *RenderingService) Init() error {
 		// RendererCallbackUrl has already been passed, it won't generate an error.
 		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
 		rs.domain = u.Hostname()
-	case setting.HttpAddr != setting.DefaultHTTPAddr:
-		rs.domain = setting.HttpAddr
+	case rs.Cfg.HTTPAddr != setting.DefaultHTTPAddr:
+		rs.domain = rs.Cfg.HTTPAddr
 	default:
 		rs.domain = "localhost"
 	}
@@ -87,7 +87,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 
 	if rs.pluginAvailable() {
 		rs.log = rs.log.New("renderer", "plugin")
-		rs.pluginInfo = manager.Renderer
+		rs.pluginInfo = rs.PluginManager.Renderer()
 
 		if err := rs.startPlugin(ctx); err != nil {
 			return err
@@ -107,7 +107,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) pluginAvailable() bool {
-	return manager.Renderer != nil
+	return rs.PluginManager.Renderer() != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
@@ -244,7 +244,7 @@ func (rs *RenderingService) getURL(path string) string {
 	}
 
 	// &render=1 signals to the legacy redirect layer to
-	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, setting.HttpPort, subPath, path)
+	return fmt.Sprintf("%s://%s:%s%s/%s&render=1", protocol, rs.domain, rs.Cfg.HTTPPort, subPath, path)
 }
 
 func (rs *RenderingService) generateAndStoreRenderKey(orgId, userId int64, orgRole models.RoleType) (string, error) {

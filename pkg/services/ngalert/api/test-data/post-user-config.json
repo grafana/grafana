@@ -1,0 +1,375 @@
+{
+    "template_files": {
+        "tmpl1": "val1",
+        "tmpl2": "val2"
+    },
+    "alertmanager_config": {
+        "global": {
+            "resolve_timeout": "1s",
+            "smtp_smarthost": ""
+        },
+        "route": {},
+        "templates": [],
+        "receivers": [
+            {
+                "name": "",
+                "grafana_managed_receiver_configs": [
+                    {
+                        "uid": "alertmanager UID",
+                        "name": "an alert manager receiver",
+                        "type": "prometheus-alertmanager",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "basicAuthUser": "user",
+                            "httpMethod": "POST",
+                            "severity": "critical",
+                            "uploadImage": false,
+                            "url": "http://localhost:9093"
+                        },
+                        "secureSettings": {
+                            "basicAuthPassword": "<basicAuthPassword>"
+                        }
+                    },
+                    {
+                        "uid": "dingding UID",
+                        "name": "a dingding receiver",
+                        "type": "dingding",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "httpMethod": "POST",
+                            "msgType": "link",
+                            "severity": "critical",
+                            "uploadImage": false,
+                            "url": "https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx"
+                        },
+                        "secureSettings": {}
+                    },
+                    {
+                        "uid": "discord UID",
+                        "name": "a discord receiver",
+                        "type": "discord",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "content": "@user",
+                            "httpMethod": "POST",
+                            "severity": "critical",
+                            "uploadImage": false,
+                            "url": "http://"
+                        },
+                        "secureSettings": {}
+                    },
+                    {
+                        "uid": "email UID",
+                        "name": "an email receiver",
+                        "type": "email",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "addresses": "<email>",
+                            "autoResolve": true,
+                            "httpMethod": "POST",
+                            "severity": "critical",
+                            "singleEmail": true,
+                            "uploadImage": false
+                        },
+                        "secureSettings": {}
+                    },
+                    {
+                        "uid": "googlechatReceiver UID",
+                        "name": "a googlechat receiver",
+                        "type": "googlechat",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "httpMethod": "POST",
+                            "severity": "critical",
+                            "uploadImage": false,
+                            "url": "http://"
+                        },
+                        "secureSettings": {}
+                    },
+                    {
+                        "uid": "hipchat UID",
+                        "name": "a hipchat receiver",
+                        "type": "hipchat",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "apiKey": "<apikey>",
+                            "autoResolve": true,
+                            "httpMethod": "POST",
+                            "roomid": "12345",
+                            "severity": "critical",
+                            "uploadImage": false,
+                            "url": "http://"
+                        },
+                        "secureSettings": {}
+                    },
+                    {
+                        "uid": "kafka UID",
+                        "name": "a kafka receiver",
+                        "type": "kafka",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "httpMethod": "POST",
+                            "kafkaRestProxy": "http://localhost:8082",
+                            "kafkaTopic": "topic1",
+                            "severity": "critical",
+                            "uploadImage": false
+                        },
+                        "secureSettings": {}
+                    },
+                    {
+                        "uid": "line UID",
+                        "name": "a line receiver",
+                        "type": "line",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": "settings",
+                        "secureSettings": {
+                            "token": "<token>"
+                        }
+                    },
+                    {
+                        "uid": "opsgenie UID",
+                        "name": "a opsgenie receiver",
+                        "type": "opsgenie",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": "settings",
+                        "secureSettings": {
+                            "apiKey": "<apiKey>"
+                        }
+                    },
+                    {
+                        "uid": "pagerduty UID",
+                        "name": "a pagerduty receiver",
+                        "type": "pagerduty",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "httpMethod": "POST",
+                            "severity": "critic* Connection #0 to host localhost left intact\nal",
+                            "uploadImage": true
+                        },
+                        "secureSettings": {
+                            "integrationKey": "<integrationKey>"
+                        }
+                    },
+                    {
+                        "uid": "pushover UID",
+                        "name": "a pushover receiver",
+                        "type": "pushover",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "apiToken": "",
+                            "autoResolve": true,
+                            "device": "",
+                            "expire": "",
+                            "httpMethod": "POST",
+                            "okPriority": "0",
+                            "okSound": "cosmic",
+                            "priority": "1",
+                            "retry": "30",
+                            "severity": "critical",
+                            "sound": "pushover",
+                            "uploadImage": true,
+                            "userKey": ""
+                        },
+                        "secureSettings": {
+                            "apiToken": "<apiToken>",
+                            "userKey": "<userKey>"
+                        }
+                    },
+                    {
+                        "uid": "sensu UID",
+                        "name": "a sensu receiver",
+                        "type": "sensu",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "handler": "",
+                            "httpMethod": "POST",
+                            "severity": "critical",
+                            "source": "",
+                            "uploadImage": false,
+                            "url": "http://sensu-api.local:4567/results",
+                            "username": ""
+                        },
+                        "secureSettings": {}
+                    },
+                    {
+                        "uid": "sensugo UID",
+                        "name": "a sensugo receiver",
+                        "type": "sensugo",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "check": "",
+                            "entity": "",
+                            "handler": "",
+                            "httpMethod": "POST",
+                            "namespace": "",
+                            "severity": "critical",
+                            "uploadImage": false,
+                            "url": "http://sensu-api.local:8080"
+                        },
+                        "secureSettings": {
+                            "apikey": "<apikey>"
+                        }
+                    },
+                    {
+                        "uid": "slack UID",
+                        "name": "a slack receiver",
+                        "type": "slack",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "httpMethod": "POST",
+                            "iconEmoji": "",
+                            "iconUrl": "",
+                            "mentionGroups": "",
+                            "mentionUsers": "",
+                            "recipient": "",
+                            "severity": "critical",
+                            "uploadImage": false,
+                            "username": ""
+                        },
+                        "secureSettings": {
+                            "token": "<token>",
+                            "url": "<url>"
+                        }
+                    },
+                    {
+                        "uid": "teams UID",
+                        "name": "a teams receiver",
+                        "type": "teams",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "httpMethod": "POST",
+                            "severity": "critical",
+                            "uploadImage": false,
+                            "url": "http://"
+                        },
+                        "secureSettings": {}
+                    },
+                    {
+                        "uid": "telegram UID",
+                        "name": "a telegram receiver",
+                        "type": "telegram",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "chatid": "12345",
+                            "httpMethod": "POST",
+                            "severity": "critical",
+                            "uploadImage": false
+                        },
+                        "secureSettings": {
+                            "bottoken": "<bottoken>"
+                        }
+                    },
+                    {
+                        "uid": "threema UID",
+                        "name": "a threema receiver",
+                        "type": "threema",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "gateway_id": "*3MAGWID",
+                            "httpMethod": "POST",
+                            "recipient_id": "YOUR3MID",
+                            "severity": "critical",
+                            "uploadImage": false
+                        },
+                        "secureSettings": {
+                            "api_secret": "<api_secret>"
+                        }
+                    },
+                    {
+                        "uid": "victorops UID",
+                        "name": "a victorops receiver",
+                        "type": "victorops",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": {
+                            "autoResolve": true,
+                            "httpMethod": "POST",
+                            "severity": "critical",
+                            "uploadImage": false,
+                            "url": "http://"
+                        },
+                        "secureSettings": {}
+                    },
+                    {
+                        "uid": "webhook UID",
+                        "name": "a webhook receiver",
+                        "type": "webhook",
+                        "isDefault": false,
+                        "sendReminder": false,
+                        "disableResolveMessage": false,
+                        "frequency": "5m",
+                        "settings": null,
+                        "secureSettings": {
+                            "password": "<password>"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}
