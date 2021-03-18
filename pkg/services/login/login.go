@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -63,7 +64,7 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 			return ErrUsersQuotaReached
 		}
 
-		cmd.Result, err = createUser(extUser)
+		cmd.Result, err = ls.createUser(extUser)
 		if err != nil {
 			return err
 		}
@@ -124,19 +125,15 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 	return nil
 }
 
-func createUser(extUser *models.ExternalUserInfo) (*models.User, error) {
-	cmd := &models.CreateUserCommand{
+func (ls *LoginService) createUser(extUser *models.ExternalUserInfo) (*models.User, error) {
+	cmd := models.CreateUserCommand{
 		Login:        extUser.Login,
 		Email:        extUser.Email,
 		Name:         extUser.Name,
 		SkipOrgSetup: len(extUser.OrgRoles) > 0,
 	}
 
-	if err := bus.Dispatch(cmd); err != nil {
-		return nil, err
-	}
-
-	return &cmd.Result, nil
+	return ls.SQLStore.CreateUser(context.Background(), cmd)
 }
 
 func updateUser(user *models.User, extUser *models.ExternalUserInfo) error {
