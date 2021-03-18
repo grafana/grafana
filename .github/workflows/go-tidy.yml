@@ -4,8 +4,7 @@ name: go tidy
 on:
   push:
     branches:
-    - master
-    - v[0-9]+.[0-9]+.[0-9]+
+    - test-go-tidy-github-action
 
 env:
   GITHUB_TOKEN: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
@@ -17,22 +16,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
+        name: Checkout OSS repo
         uses: actions/checkout@v2
+        with:
+          repository: grafana/grafana
+          path: grafana
+      -
+        name: Checkout enterprise
+        uses: actions/checkout@v2
+        with:
+          repository: grafana/grafana-enterprise
+          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+          path: grafana-enterprise
+      -
+        name: Copy enterprise bits into OSS repo
+        run: |
+          cd grafana-enterprise
+          git fetch && git checkout $(echo $GITHUB_REF | cut -d'/' -f 3)
+          git branch --show-current
+          ./dev.sh >/dev/null
       -
         name: Set up Git
         run: |
+          cd ../grafana/grafana
           git config user.name ${USERNAME}
           git config user.email ${EMAIL}
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/grafana/grafana.git
       -
         name: Run go mod tidy
         run: |
+          cd grafana
           rm -f go.sum
           go mod tidy
       -
         name: Commit and push go.sum
         run: |
+          cd grafana
           git add .
           if output=$(git status --porcelain) && [ ! -z "$output" ]; then
             git commit -m 'Update go module dependencies'
