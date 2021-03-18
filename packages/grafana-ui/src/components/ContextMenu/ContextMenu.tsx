@@ -46,7 +46,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(
       }
     });
     const header = renderHeader && renderHeader();
-    const menu = renderMenuItems && renderMenuItems();
+    const menuItems = renderMenuItems && renderMenuItems();
 
     return (
       <Portal>
@@ -57,7 +57,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(
           ariaLabel={selectors.components.Menu.MenuComponent('Context')}
           onClick={onClose}
         >
-          {menu}
+          {menuItems}
         </Menu>
       </Portal>
     );
