@@ -63,6 +63,18 @@
 
 <!-- 7.5.0-beta1 END -->
 
+<!-- 7.4.5 START -->
+
+# 7.4.5 (2021-03-18)
+
+### Bug fixes
+
+* **Security**: Fix API permissions issues related to team-sync CVE-2021-28146, CVE-2021-28147. (Enterprise)
+* **Security**: Usage insights requires signed in users CVE-2021-28148. (Enterprise)
+* **Security**: Do not allow editors to incorrectly bypass permissions on the default data source. CVE-2021-27962. (Enterprise)
+
+<!-- 7.4.5 END -->
+
 <!-- 7.4.3 START -->
 
 # 7.4.3 (2021-02-24)
