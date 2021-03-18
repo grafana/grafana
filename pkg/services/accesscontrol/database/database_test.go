@@ -278,8 +278,8 @@ func TestUserRole(t *testing.T) {
 			store := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			actesting.CreateUserWithRole(t, store, tc.userName, tc.userRoles)
-			actesting.CreateTeamWithRole(t, store, tc.teamName, tc.teamRoles)
+			actesting.CreateUserWithRole(t, store.SQLStore, store, tc.userName, tc.userRoles)
+			actesting.CreateTeamWithRole(t, store.SQLStore, store, tc.teamName, tc.teamRoles)
 
 			// Create more teams
 			for i := 0; i < 10; i++ {
@@ -292,7 +292,7 @@ func TestUserRole(t *testing.T) {
 						},
 					},
 				}
-				actesting.CreateTeamWithRole(t, store, teamName, roles)
+				actesting.CreateTeamWithRole(t, store.SQLStore, store, teamName, roles)
 			}
 
 			userQuery := models.GetUserByLoginQuery{
@@ -311,12 +311,7 @@ func TestUserRole(t *testing.T) {
 			require.Len(t, teamQuery.Result.Teams, 1)
 			teamId := teamQuery.Result.Teams[0].Id
 
-			addTeamMemberCmd := models.AddTeamMemberCommand{
-				OrgId:  1,
-				UserId: userId,
-				TeamId: teamId,
-			}
-			err = sqlstore.AddTeamMember(&addTeamMemberCmd)
+			err = store.SQLStore.AddTeamMember(userId, 1, teamId, false, 1)
 			require.NoError(t, err)
 
 			userRolesQuery := accesscontrol.GetUserRolesQuery{
@@ -370,8 +365,8 @@ func TestUserPermissions(t *testing.T) {
 			store := setupTestEnv(t)
 			t.Cleanup(registry.ClearOverrides)
 
-			actesting.CreateUserWithRole(t, store, tc.userName, tc.userRoles)
-			actesting.CreateTeamWithRole(t, store, tc.teamName, tc.teamRoles)
+			actesting.CreateUserWithRole(t, store.SQLStore, store, tc.userName, tc.userRoles)
+			actesting.CreateTeamWithRole(t, store.SQLStore, store, tc.teamName, tc.teamRoles)
 
 			// Create more teams
 			for i := 0; i < 10; i++ {
@@ -384,7 +379,7 @@ func TestUserPermissions(t *testing.T) {
 						},
 					},
 				}
-				actesting.CreateTeamWithRole(t, store, teamName, roles)
+				actesting.CreateTeamWithRole(t, store.SQLStore, store, teamName, roles)
 			}
 
 			userQuery := models.GetUserByLoginQuery{
@@ -403,12 +398,7 @@ func TestUserPermissions(t *testing.T) {
 			require.Len(t, teamQuery.Result.Teams, 1)
 			teamId := teamQuery.Result.Teams[0].Id
 
-			addTeamMemberCmd := models.AddTeamMemberCommand{
-				OrgId:  1,
-				UserId: userId,
-				TeamId: teamId,
-			}
-			err = sqlstore.AddTeamMember(&addTeamMemberCmd)
+			err = store.SQLStore.AddTeamMember(userId, 1, teamId, false, 1)
 			require.NoError(t, err)
 
 			userPermissionsQuery := accesscontrol.GetUserPermissionsQuery{

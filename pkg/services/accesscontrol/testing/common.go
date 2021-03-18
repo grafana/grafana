@@ -42,7 +42,7 @@ func CreateRole(t *testing.T, ac accesscontrol.Store, p RoleTestCase) *accesscon
 	return res
 }
 
-func CreateUserWithRole(t *testing.T, ac accesscontrol.Store, user string, roles []RoleTestCase) {
+func CreateUserWithRole(t *testing.T, db *sqlstore.SQLStore, ac accesscontrol.Store, user string, roles []RoleTestCase) {
 	createUserCmd := models.CreateUserCommand{
 		Email: user + "@test.com",
 		Name:  user,
@@ -50,9 +50,9 @@ func CreateUserWithRole(t *testing.T, ac accesscontrol.Store, user string, roles
 		OrgId: 1,
 	}
 
-	err := sqlstore.CreateUser(context.Background(), &createUserCmd)
+	u, err := db.CreateUser(context.Background(), createUserCmd)
 	require.NoError(t, err)
-	userId := createUserCmd.Result.Id
+	userId := u.Id
 
 	for _, p := range roles {
 		createRoleCmd := accesscontrol.CreateRoleCommand{
@@ -84,15 +84,15 @@ func CreateUserWithRole(t *testing.T, ac accesscontrol.Store, user string, roles
 	}
 }
 
-func CreateTeamWithRole(t *testing.T, ac accesscontrol.Store, team string, roles []RoleTestCase) {
-	createTeamCmd := models.CreateTeamCommand{OrgId: 1, Name: team, Email: team + "@test.com"}
-	err := sqlstore.CreateTeam(&createTeamCmd)
+func CreateTeamWithRole(t *testing.T, db *sqlstore.SQLStore, ac accesscontrol.Store, teamname string, roles []RoleTestCase) {
+	email, orgID := teamname+"@test.com", int64(1)
+	team, err := db.CreateTeam(teamname, email, orgID)
 	require.NoError(t, err)
-	teamId := createTeamCmd.Result.Id
+	teamId := team.Id
 
 	for _, p := range roles {
 		createRoleCmd := accesscontrol.CreateRoleCommand{
-			OrgID: 1,
+			OrgID: orgID,
 			Name:  p.Name,
 		}
 		res, err := ac.CreateRole(context.Background(), createRoleCmd)

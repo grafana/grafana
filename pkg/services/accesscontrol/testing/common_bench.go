@@ -20,17 +20,16 @@ const (
 	UsersPerTeam       = 10
 )
 
-func GenerateRoles(b *testing.B, ac accesscontrol.Store, rolesPerUser, users int) {
+func GenerateRoles(b *testing.B, db *sqlstore.SQLStore, ac accesscontrol.Store, rolesPerUser, users int) {
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
 	for i := 0; i < numberOfTeams; i++ {
 		// Create team
 		teamName := fmt.Sprintf("%s%v", teamPrefix, i)
 		teamEmail := fmt.Sprintf("%s@test.com", teamName)
-		createTeamCmd := models.CreateTeamCommand{OrgId: 1, Name: teamName, Email: teamEmail}
-		err := sqlstore.CreateTeam(&createTeamCmd)
+		team, err := db.CreateTeam(teamName, teamEmail, 1)
 		require.NoError(b, err)
-		teamId := createTeamCmd.Result.Id
+		teamId := team.Id
 
 		// Create team roles
 		for j := 0; j < rolesPerUser; j++ {
@@ -68,9 +67,9 @@ func GenerateRoles(b *testing.B, ac accesscontrol.Store, rolesPerUser, users int
 			userEmail := fmt.Sprintf("%s@test.com", userName)
 			createUserCmd := models.CreateUserCommand{Email: userEmail, Name: userName, Login: userName, OrgId: 1}
 
-			err := sqlstore.CreateUser(context.Background(), &createUserCmd)
+			user, err := db.CreateUser(context.Background(), createUserCmd)
 			require.NoError(b, err)
-			userId := createUserCmd.Result.Id
+			userId := user.Id
 			globalUserId++
 
 			// Create user roles
@@ -103,12 +102,7 @@ func GenerateRoles(b *testing.B, ac accesscontrol.Store, rolesPerUser, users int
 				require.NoError(b, err)
 			}
 
-			addTeamMemberCmd := models.AddTeamMemberCommand{
-				OrgId:  1,
-				UserId: userId,
-				TeamId: teamId,
-			}
-			err = sqlstore.AddTeamMember(&addTeamMemberCmd)
+			err = db.AddTeamMember(userId, 1, teamId, false, 1)
 			require.NoError(b, err)
 		}
 	}

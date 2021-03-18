@@ -17,7 +17,7 @@ import (
 func setup(b *testing.B, rolesPerUser, users int) *accessControlStoreTestImpl {
 	ac := setupTestEnv(b)
 	b.Cleanup(registry.ClearOverrides)
-	actesting.GenerateRoles(b, ac, rolesPerUser, users)
+	actesting.GenerateRoles(b, ac.SQLStore, ac, rolesPerUser, users)
 	return ac
 }
 
