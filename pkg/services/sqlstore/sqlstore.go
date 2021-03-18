@@ -141,21 +141,15 @@ func (ss *SQLStore) Reset() error {
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
-	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
+	ctx := context.Background()
+	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		ss.log.Debug("Ensuring main org and admin user exist")
 		var stats models.SystemUserCountStats
-		err := ss.WithDbSession(ctx, func(sess *DBSession) error {
-			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
-			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-			rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
-			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
-				return fmt.Errorf("could not determine if admin user exists: %w", err)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return err
+		// TODO: Should be able to rename "Count" to "count", for more standard SQL style
+		// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
+		rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+		if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
+			return fmt.Errorf("could not determine if admin user exists: %w", err)
 		}
 
 		if stats.Count > 0 {
@@ -166,7 +160,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		if !ss.Cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
 			ss.log.Debug("Creating default admin user")
-			if _, err := ss.createUser(ctx, userCreationArgs{
+			if _, err := ss.createUser(ctx, sess, userCreationArgs{
 				Login:    ss.Cfg.AdminUser,
 				Email:    ss.Cfg.AdminUser + "@localhost",
 				Password: ss.Cfg.AdminPassword,
@@ -181,11 +175,8 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 			// return nil
 		}
 
-		if err := inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
-			ss.log.Debug("Creating default org", "name", MainOrgName)
-			_, err := ss.getOrCreateOrg(sess, MainOrgName)
-			return err
-		}, 0); err != nil {
+		ss.log.Debug("Creating default org", "name", MainOrgName)
+		if _, err := ss.getOrCreateOrg(sess, MainOrgName); err != nil {
 			return fmt.Errorf("failed to create default organization: %w", err)
 		}
 
