@@ -3,6 +3,8 @@ package manager
 import (
 	"fmt"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type pluginSettings map[string]string
@@ -18,13 +20,12 @@ func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
 	return env
 }
 
-func (m *manager) extractPluginSettings() {
-	if m.pluginSettings != nil {
-		return
-	}
+func getPluginSettings(plugID string, cfg *setting.Cfg) pluginSettings {
+	for id, settings := range cfg.PluginSettings {
+		if id != plugID {
+			continue
+		}
 
-	psMap := map[string]pluginSettings{}
-	for pluginID, settings := range m.Cfg.PluginSettings {
 		ps := pluginSettings{}
 		for k, v := range settings {
 			if k == "path" || strings.ToLower(k) == "id" {
@@ -34,8 +35,8 @@ func (m *manager) extractPluginSettings() {
 			ps[k] = v
 		}
 
-		psMap[pluginID] = ps
+		return ps
 	}
 
-	m.pluginSettings = psMap
+	return nil
 }

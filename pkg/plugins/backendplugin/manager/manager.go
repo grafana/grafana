@@ -56,19 +56,12 @@ func (m *manager) Run(ctx context.Context) error {
 
 // Register registers a backend plugin
 func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
-	m.extractPluginSettings()
-
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
 
 	if _, exists := m.plugins[pluginID]; exists {
 		return fmt.Errorf("backend plugin %s already registered", pluginID)
-	}
-
-	pluginSettings := pluginSettings{}
-	if ps, exists := m.pluginSettings[pluginID]; exists {
-		pluginSettings = ps
 	}
 
 	hostEnv := []string{
@@ -90,7 +83,7 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	}
 
 	hostEnv = append(hostEnv, m.getAWSEnvironmentVariables()...)
-
+	pluginSettings := getPluginSettings(pluginID, m.Cfg)
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
 
 	pluginLogger := m.logger.New("pluginId", pluginID)
