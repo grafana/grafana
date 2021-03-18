@@ -74,7 +74,7 @@ func (s *StreamManager) runStream(ctx context.Context, sr streamRequest) {
 			newStreamSender(sr.Channel, s.channelPublisher),
 		)
 		if err != nil {
-			if ctx.Err() == context.Canceled {
+			if errors.Is(ctx.Err(), context.Canceled) {
 				logger.Info("Stream cleanly finished", "path", sr.Path)
 				return
 			}

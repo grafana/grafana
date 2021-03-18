@@ -3,7 +3,6 @@ package features
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -66,7 +65,6 @@ func (m *PluginRunner) GetHandlerForPath(path string) (models.ChannelHandler, er
 }
 
 type PluginPathRunner struct {
-	mu                  sync.RWMutex
 	path                string
 	pluginID            string
 	datasourceUID       string
