@@ -46,7 +46,6 @@ export class QueryRunner implements QueryRunnerSrv {
       minInterval,
     } = options;
 
-    console.log('subs', this.subscription);
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
@@ -103,11 +102,6 @@ export class QueryRunner implements QueryRunnerSrv {
               this.lastResult = preProcessPanelData(data, this.lastResult);
               // Store preprocessed query results for applying overrides later on in the pipeline
               this.subject.next(this.lastResult);
-            },
-            complete: () => {
-              if (this.subscription) {
-                this.subscription.unsubscribe();
-              }
             },
           });
         },
