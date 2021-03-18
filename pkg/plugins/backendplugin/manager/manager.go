@@ -40,7 +40,6 @@ type manager struct {
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
-	pluginSettings         map[string]pluginSettings
 }
 
 func (m *manager) Init() error {
