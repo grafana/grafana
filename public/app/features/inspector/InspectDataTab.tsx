@@ -19,17 +19,17 @@ import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
 import { css } from 'emotion';
-import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
+import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
-import { DetailText } from './DetailText';
+import { DetailText } from 'app/features/inspector/DetailText';
 
 interface Props {
-  panel: PanelModel;
-  data?: DataFrame[];
   isLoading: boolean;
   options: GetDataOptions;
-  onOptionsChange: (options: GetDataOptions) => void;
+  data?: DataFrame[];
+  panel?: PanelModel;
+  onOptionsChange?: (options: GetDataOptions) => void;
 }
 
 interface State {
@@ -93,8 +93,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
       type: 'text/csv;charset=utf-8',
     });
+    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
     const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
-    const fileName = `${panel.getDisplayTitle()}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
+    const fileName = `${displayTitle}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
     saveAs(blob, fileName);
   };
 
@@ -108,10 +109,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
   };
 
   getProcessedData(): DataFrame[] {
-    const { options } = this.props;
+    const { options, panel } = this.props;
     const data = this.state.transformedData;
 
-    if (!options.withFieldConfig) {
+    if (!options.withFieldConfig || !panel) {
       return applyRawFieldOverrides(data);
     }
 
@@ -120,7 +121,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     return applyFieldOverrides({
       data,
       theme: config.theme,
-      fieldConfig: this.props.panel.fieldConfig,
+      fieldConfig: panel.fieldConfig,
       replaceVariables: (value: string) => {
         return value;
       },
@@ -166,6 +167,9 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   renderDataOptions(dataFrames: DataFrame[]) {
     const { options, onOptionsChange, panel, data } = this.props;
+    if (!panel || !onOptionsChange) {
+      return null;
+    }
     const { transformId, transformationOptions, selectedDataFrame } = this.state;
 
     const styles = getPanelInspectorStyles();

@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
-import { stylesFactory, Tab, TabsBar, useTheme } from '@grafana/ui';
+import { stylesFactory, useTheme, Tab, TabsBar } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue, PanelData, getValueFormat, formattedValueToString } from '@grafana/data';
-import { InspectTab } from './types';
+import { InspectTab } from '../inspector/types';
 
 interface Props {
   tab: InspectTab;

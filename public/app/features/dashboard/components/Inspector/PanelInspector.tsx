@@ -9,8 +9,8 @@ import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
-import { InspectTab } from './types';
 import { updateLocation } from 'app/core/actions';
+import { InspectTab } from 'app/features/inspector/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
