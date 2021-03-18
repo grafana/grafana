@@ -208,62 +208,29 @@ func getAttributeVal(attr pdata.AttributeValue) interface{} {
 }
 
 func getSpanTags(span pdata.Span, instrumentationLibrary pdata.InstrumentationLibrary) []*KeyValue {
-	var spanKindTag, statusCodeTag, errorTag, statusMsgTag *KeyValue
+	var tags []*KeyValue
 
 	libraryTags := getTagsFromInstrumentationLibrary(instrumentationLibrary)
-
-	tagsCount := span.Attributes().Len() + len(libraryTags)
-
-	spanKindTag = getTagFromSpanKind(span.Kind())
-	if spanKindTag != nil {
-		tagsCount++
-	}
-	status := span.Status()
-	statusCodeTag = getTagFromStatusCode(status.Code())
-	if statusCodeTag != nil {
-		tagsCount++
-	}
-
-	errorTag = getErrorTagFromStatusCode(status.Code())
-	if errorTag != nil {
-		tagsCount++
-	}
-
-	statusMsgTag = getTagFromStatusMsg(status.Message())
-	if statusMsgTag != nil {
-		tagsCount++
-	}
-
-	traceStateTag := getTagFromTraceState(span.TraceState())
-	if traceStateTag != nil {
-		tagsCount++
-	}
-
-	if tagsCount == 0 {
-		return nil
-	}
-
-	tags := make([]*KeyValue, 0, tagsCount)
 	if libraryTags != nil {
 		tags = append(tags, libraryTags...)
 	}
 	span.Attributes().ForEach(func(key string, attr pdata.AttributeValue) {
 		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 	})
-	if spanKindTag != nil {
-		tags = append(tags, spanKindTag)
+
+	status := span.Status()
+	possibleNilTags := []*KeyValue{
+		getTagFromSpanKind(span.Kind()),
+		getTagFromStatusCode(status.Code()),
+		getErrorTagFromStatusCode(status.Code()),
+		getTagFromStatusMsg(status.Message()),
+		getTagFromTraceState(span.TraceState()),
 	}
-	if statusCodeTag != nil {
-		tags = append(tags, statusCodeTag)
-	}
-	if errorTag != nil {
-		tags = append(tags, errorTag)
-	}
-	if statusMsgTag != nil {
-		tags = append(tags, statusMsgTag)
-	}
-	if traceStateTag != nil {
-		tags = append(tags, traceStateTag)
+
+	for _, tag := range possibleNilTags {
+		if tag != nil {
+			tags = append(tags, tag)
+		}
 	}
 	return tags
 }
