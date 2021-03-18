@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
@@ -86,15 +88,11 @@ func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPass
 }
 
 // PUT /api/admin/users/:id/permissions
-func AdminUpdateUserPermissions(c *models.ReqContext, form dtos.AdminUpdateUserPermissionsForm) response.Response {
+func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext, form dtos.AdminUpdateUserPermissionsForm) response.Response {
 	userID := c.ParamsInt64(":id")
 
-	cmd := models.UpdateUserPermissionsCommand{
-		UserId:         userID,
-		IsGrafanaAdmin: form.IsGrafanaAdmin,
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
+	err := updateUserPermissions(hs.SQLStore, userID, form.IsGrafanaAdmin)
+	if err != nil {
 		if errors.Is(err, models.ErrLastGrafanaAdmin) {
 			return response.Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
 		}
@@ -188,4 +186,11 @@ func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Resp
 func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext, cmd models.RevokeAuthTokenCmd) response.Response {
 	userID := c.ParamsInt64(":id")
 	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
+}
+
+// updateUserPermissions updates the user's permissions.
+//
+// Stubbable by tests.
+var updateUserPermissions = func(sqlStore *sqlstore.SQLStore, userID int64, isAdmin bool) error {
+	return sqlStore.UpdateUserPermissions(userID, isAdmin)
 }

@@ -406,7 +406,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/settings", routing.Wrap(AdminGetSettings))
 		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), routing.Wrap(hs.AdminCreateUser))
 		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
-		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(AdminUpdateUserPermissions))
+		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(hs.AdminUpdateUserPermissions))
 		adminRoute.Delete("/users/:id", routing.Wrap(AdminDeleteUser))
 		adminRoute.Post("/users/:id/disable", routing.Wrap(hs.AdminDisableUser))
 		adminRoute.Post("/users/:id/enable", routing.Wrap(AdminEnableUser))
