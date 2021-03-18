@@ -59,10 +59,10 @@ func newPluginContextGetter(bus bus.Bus, pluginManager plugins.Manager, cache *l
 	}
 }
 
-func (g *pluginContextGetter) GetPluginContext(ctx context.Context, pluginID string, datasourceID int64) (backend.PluginContext, bool, error) {
+func (g *pluginContextGetter) GetPluginContext(ctx context.Context, pluginID string, datasourceUID string) (backend.PluginContext, bool, error) {
 	user, ok := getContextSignedUser(ctx)
 	if !ok {
 		return backend.PluginContext{}, false, fmt.Errorf("no signed user found in context")
 	}
-	return plugincontext.Get(pluginID, datasourceID, g.PluginManager, user, g.Cache, g.Bus, g.DatasourceCache)
+	return plugincontext.Get(pluginID, datasourceUID, g.PluginManager, user, g.Cache, g.Bus, g.DatasourceCache)
 }

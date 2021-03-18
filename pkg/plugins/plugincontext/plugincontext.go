@@ -25,10 +25,10 @@ type busDispatcher interface {
 }
 
 type datasourceGetter interface {
-	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	GetDatasourceByUID(datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 }
 
-func Get(pluginID string, datasourceID int64, pluginManager plugins.Manager, user *models.SignedInUser, cacheService cacheService, busDispatcher busDispatcher, datasourceGetter datasourceGetter) (backend.PluginContext, bool, error) {
+func Get(pluginID string, datasourceUID string, pluginManager plugins.Manager, user *models.SignedInUser, cacheService cacheService, busDispatcher busDispatcher, datasourceGetter datasourceGetter) (backend.PluginContext, bool, error) {
 	pc := backend.PluginContext{}
 	plugin := pluginManager.GetPlugin(pluginID)
 	if plugin == nil {
@@ -66,8 +66,8 @@ func Get(pluginID string, datasourceID int64, pluginManager plugins.Manager, use
 		},
 	}
 
-	if datasourceID > 0 {
-		ds, err := datasourceGetter.GetDatasource(datasourceID, user, false)
+	if datasourceUID != "" {
+		ds, err := datasourceGetter.GetDatasourceByUID(datasourceUID, user, false)
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to get datasource", err)
 		}
