@@ -87,10 +87,10 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 			resultFormat = "time_series"
 		}
 
-		urlComponents := map[string]string{}
-		urlComponents["workspace"] = azureLogAnalyticsTarget.Workspace
-		apiURL := fmt.Sprintf("%s/query", urlComponents["workspace"])
-
+		apiURL := fmt.Sprintf("%s/query", azureLogAnalyticsTarget.Resource)
+		if query.QueryType == "Azure Log Analytics" {
+			apiURL = fmt.Sprintf("%s/query", azureLogAnalyticsTarget.Workspace)
+		}
 		params := url.Values{}
 		rawQuery, err := KqlInterpolate(query, timeRange, azureLogAnalyticsTarget.Query, "TimeGenerated")
 		if err != nil {
@@ -129,7 +129,8 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return queryResult
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	queryType := query.Model.Get("queryType").MustString("")
+	req, err := e.createRequest(ctx, e.dsInfo, queryType)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult
@@ -200,14 +201,17 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	return queryResult
 }
 
-func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource, queryType string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err
 	}
 	u.Path = path.Join(u.Path, "render")
 
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	var req *http.Request
+
+	req, err = http.NewRequest(http.MethodGet, u.String(), nil)
+
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("failed to create request", err)
@@ -223,7 +227,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	}
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 
-	logAnalyticsRoute, proxypass, err := e.getPluginRoute(plugin, cloudName)
+	logAnalyticsRoute, proxypass, err := e.getPluginRoute(plugin, cloudName, queryType)
 	if err != nil {
 		return nil, err
 	}
@@ -232,15 +236,28 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	return req, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (
+func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string, queryType string) (
 	*plugins.AppPluginRoute, string, error) {
-	pluginRouteName := "loganalyticsazure"
+	var pluginRouteName string
 
-	switch cloudName {
-	case "chinaazuremonitor":
-		pluginRouteName = "chinaloganalyticsazure"
-	case "govazuremonitor":
-		pluginRouteName = "govloganalyticsazure"
+	if queryType == "Azure Log Analytics" {
+		pluginRouteName = "loganalyticsazure"
+
+		switch cloudName {
+		case "chinaazuremonitor":
+			pluginRouteName = "chinaloganalyticsazure"
+		case "govazuremonitor":
+			pluginRouteName = "govloganalyticsazure"
+		}
+	} else {
+		pluginRouteName = "resourceloganalyticsazure"
+
+		switch cloudName {
+		case "chinaazuremonitor":
+			pluginRouteName = "resourcechinaloganalyticsazure"
+		case "govazuremonitor":
+			pluginRouteName = "resourcegovloganalyticsazure"
+		}
 	}
 
 	var logAnalyticsRoute *plugins.AppPluginRoute
@@ -298,6 +315,7 @@ type LogAnalyticsMeta struct {
 	ColumnTypes  []string `json:"azureColumnTypes"`
 	Subscription string   `json:"subscription"`
 	Workspace    string   `json:"workspace"`
+	Resource     string   `json:"resource"`
 	EncodedQuery []byte   `json:"encodedQuery"` // EncodedQuery is used for deep links.
 }
 

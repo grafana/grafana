@@ -165,6 +165,15 @@ describe('AzureLogAnalyticsDatasource', () => {
       ],
     };
 
+    const resourcesResponse = {
+      data: {
+        rows: [
+          ['resource id 1', 'resource name 1'],
+          ['resource id 2', 'resource name 2'],
+        ],
+      },
+    };
+
     describe('and is the workspaces() macro', () => {
       beforeEach(async () => {
         datasourceRequestMock.mockImplementation((options: { url: string }) => {
@@ -219,6 +228,69 @@ describe('AzureLogAnalyticsDatasource', () => {
         expect(queryResults[0].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa1');
         expect(queryResults[1].text).toBe('workspace2');
         expect(queryResults[1].value).toBe('eeee4fde-1aaa-4d60-9974-eeee562ffaa2');
+      });
+    });
+
+    describe('and is the resources() macro', () => {
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          expect(options.url).toBe(
+            'http://azureloganalyticsapi/azuremonitor/providers/Microsoft.ResourceGraph/resources?api-version=2019-04-01'
+          );
+          return Promise.resolve({ data: resourcesResponse, status: 200 });
+        });
+
+        queryResults = await ctx.ds.metricFindQuery('resources()');
+      });
+
+      it('should return a list of resources', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('resource name 1');
+        expect(queryResults[0].value).toBe('resource id 1');
+        expect(queryResults[1].text).toBe('resource name 2');
+        expect(queryResults[1].value).toBe('resource id 2');
+      });
+    });
+
+    describe('and is the resources() macro with the subscription parameter', () => {
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          expect(options.url).toBe(
+            'http://azureloganalyticsapi/azuremonitor/providers/Microsoft.ResourceGraph/resources?api-version=2019-04-01'
+          );
+          return Promise.resolve({ data: resourcesResponse, status: 200 });
+        });
+
+        queryResults = await ctx.ds.metricFindQuery('resources(11112222-eeee-4949-9b2d-9106972f9123)');
+      });
+
+      it('should return a list of resources', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('resource name 1');
+        expect(queryResults[0].value).toBe('resource id 1');
+        expect(queryResults[1].text).toBe('resource name 2');
+        expect(queryResults[1].value).toBe('resource id 2');
+      });
+    });
+
+    describe('and is the resources() macro with the subscription parameter quoted', () => {
+      beforeEach(async () => {
+        datasourceRequestMock.mockImplementation((options: { url: string }) => {
+          expect(options.url).toBe(
+            'http://azureloganalyticsapi/azuremonitor/providers/Microsoft.ResourceGraph/resources?api-version=2019-04-01'
+          );
+          return Promise.resolve({ data: resourcesResponse, status: 200 });
+        });
+
+        queryResults = await ctx.ds.metricFindQuery('resources("11112222-eeee-4949-9b2d-9106972f9123")');
+      });
+
+      it('should return a list of resources', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('resource name 1');
+        expect(queryResults[0].value).toBe('resource id 1');
+        expect(queryResults[1].text).toBe('resource name 2');
+        expect(queryResults[1].value).toBe('resource id 2');
       });
     });
 

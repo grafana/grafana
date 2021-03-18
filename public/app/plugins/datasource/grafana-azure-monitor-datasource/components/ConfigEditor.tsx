@@ -14,15 +14,19 @@ import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
 import { makePromiseCancelable, CancelablePromise } from 'app/core/utils/CancelablePromise';
+import AnalyticsResourceConfig from './AnalyticsResourceConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
 export interface State {
   subscriptions: SelectableValue[];
   logAnalyticsSubscriptions: SelectableValue[];
+  resourceLogAnalyticsSubscriptions: SelectableValue[];
   logAnalyticsWorkspaces: SelectableValue[];
+  logAnalyticsResources: SelectableValue[];
   subscriptionId: string;
   logAnalyticsSubscriptionId: string;
+  resourceLogAnalyticsSubscriptionId: string;
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
@@ -35,9 +39,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.state = {
       subscriptions: [],
       logAnalyticsSubscriptions: [],
+      resourceLogAnalyticsSubscriptions: [],
       logAnalyticsWorkspaces: [],
+      logAnalyticsResources: [],
       subscriptionId: '',
       logAnalyticsSubscriptionId: '',
+      resourceLogAnalyticsSubscriptionId: '',
     };
 
     if (this.props.options.id) {
@@ -63,6 +70,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     if (!this.props.options.jsonData.azureLogAnalyticsSameAs) {
       await this.getLogAnalyticsSubscriptions();
+    }
+
+    if (!this.props.options.jsonData.azureResourceLogAnalyticsSameAs) {
+      await this.getResourceLogAnalyticsSubscriptions();
     }
   };
 
@@ -188,6 +199,22 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return ResponseParser.parseWorkspacesForSelect(result);
   };
 
+  loadResources = async (subscription: string) => {
+    const { cloudName } = this.props.options.jsonData;
+
+    const subscriptionId = this.templateSrv.replace(subscription || this.props.options.jsonData.subscriptionId);
+    const azureCloud = cloudName || 'azuremonitor';
+
+    const result = await getBackendSrv().datasourceRequest({
+      url: `${this.props.options.url}/${azureCloud}/providers/Microsoft.ResourceGraph/resources?api-version=2019-04-01`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: { subscriptions: [subscriptionId], query: 'project id, name' },
+    });
+
+    return result.data.data.rows.map((row: number[]) => ({ label: row[1], value: row[0] }));
+  };
+
   getSubscriptions = async () => {
     if (!this.hasNecessaryCredentials()) {
       return;
@@ -203,6 +230,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     if (this.props.options.jsonData.subscriptionId && this.props.options.jsonData.azureLogAnalyticsSameAs) {
       await this.getWorkspaces();
+    }
+
+    if (this.props.options.jsonData.subscriptionId && this.props.options.jsonData.azureResourceLogAnalyticsSameAs) {
+      await this.getResources();
     }
   };
 
@@ -228,6 +259,28 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   };
 
+  getResourceLogAnalyticsSubscriptions = async () => {
+    if (!this.logAnalyticsHasNecessaryCredentials()) {
+      return;
+    }
+
+    const resourceLogAnalyticsSubscriptions = ((await this.loadSubscriptions('workspacesloganalytics')) ||
+      []) as SelectableValue[];
+
+    if (resourceLogAnalyticsSubscriptions && resourceLogAnalyticsSubscriptions.length > 0) {
+      this.setState({ resourceLogAnalyticsSubscriptions });
+
+      this.updateJsonDataOption(
+        'resourceLogAnalyticsSubscriptionId',
+        this.props.options.jsonData.resourceLogAnalyticsSubscriptionId || resourceLogAnalyticsSubscriptions[0].value
+      );
+    }
+
+    if (this.props.options.jsonData.logAnalyticsSubscriptionId) {
+      await this.getResources();
+    }
+  };
+
   getWorkspaces = async () => {
     const { subscriptionId, azureLogAnalyticsSameAs, logAnalyticsSubscriptionId } = this.props.options.jsonData;
     const subscriptionIdToUse = azureLogAnalyticsSameAs ? subscriptionId : logAnalyticsSubscriptionId;
@@ -248,8 +301,31 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   };
 
+  getResources = async () => {
+    const { subscriptionId, azureLogAnalyticsSameAs, logAnalyticsSubscriptionId } = this.props.options.jsonData;
+    const subscriptionIdToUse = azureLogAnalyticsSameAs ? subscriptionId : logAnalyticsSubscriptionId;
+
+    if (!subscriptionIdToUse) {
+      return;
+    }
+
+    const logAnalyticsResources = await this.loadResources(subscriptionIdToUse);
+
+    if (logAnalyticsResources.length > 0) {
+      this.setState({ logAnalyticsResources });
+
+      this.updateJsonDataOption('logAnalyticsDefaultResource', logAnalyticsResources[0].value);
+    }
+  };
+
   render() {
-    const { subscriptions, logAnalyticsSubscriptions, logAnalyticsWorkspaces } = this.state;
+    const {
+      subscriptions,
+      logAnalyticsSubscriptions,
+      resourceLogAnalyticsSubscriptions,
+      logAnalyticsWorkspaces,
+      logAnalyticsResources,
+    } = this.state;
     const { options } = this.props;
 
     options.jsonData.cloudName = options.jsonData.cloudName || 'azuremonitor';
@@ -279,6 +355,19 @@ export class ConfigEditor extends PureComponent<Props, State> {
           onResetOptionKey={this.resetSecureKey}
           onLoadSubscriptions={this.onLoadSubscriptions}
           onLoadWorkspaces={this.getWorkspaces}
+        />
+
+        <AnalyticsResourceConfig
+          options={options}
+          resources={logAnalyticsResources}
+          subscriptions={resourceLogAnalyticsSubscriptions}
+          makeSameAs={this.makeSameAs}
+          onUpdateDatasourceOptions={this.props.onOptionsChange}
+          onUpdateJsonDataOption={this.updateJsonDataOption}
+          onUpdateSecureJsonDataOption={this.updateSecureJsonDataOption}
+          onResetOptionKey={this.resetSecureKey}
+          onLoadSubscriptions={this.onLoadSubscriptions}
+          onLoadResources={this.getResources}
         />
 
         <InsightsConfig

@@ -134,6 +134,7 @@ type logJSONQuery struct {
 		Query        string `json:"query"`
 		ResultFormat string `json:"resultFormat"`
 		Workspace    string `json:"workspace"`
+		Resource     string `json:"resource"`
 	} `json:"azureLogAnalytics"`
 }
 

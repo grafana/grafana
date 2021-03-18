@@ -8,6 +8,7 @@ export enum AzureQueryType {
   ApplicationInsights = 'Application Insights',
   InsightsAnalytics = 'Insights Analytics',
   LogAnalytics = 'Azure Log Analytics',
+  ResourceLogAnalytics = 'Azure Resource Log Analytics',
 }
 
 export interface AzureMonitorQuery extends DataQuery {
@@ -31,10 +32,13 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 
   // logs
   logAnalyticsSubscriptionId?: string;
+  resourceLogAnalyticsSubscriptionId?: string;
   logAnalyticsTenantId?: string;
   logAnalyticsClientId?: string;
   azureLogAnalyticsSameAs?: boolean;
+  azureResourceLogAnalyticsSameAs?: boolean;
   logAnalyticsDefaultWorkspace?: string;
+  logAnalyticsDefaultResource?: string;
 
   // App Insights
   appInsightsAppId?: string;
@@ -71,6 +75,7 @@ export interface AzureLogsQuery {
   query: string;
   resultFormat: string;
   workspace: string;
+  resource: string;
 }
 
 export interface ApplicationInsightsQuery {

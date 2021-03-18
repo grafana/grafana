@@ -77,6 +77,8 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 			applicationInsightsQueries = append(applicationInsightsQueries, query)
 		case "Azure Log Analytics":
 			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, query)
+		case "Azure Resource Log Analytics":
+			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, query)
 		case "Insights Analytics":
 			insightsAnalyticsQueries = append(insightsAnalyticsQueries, query)
 		default:

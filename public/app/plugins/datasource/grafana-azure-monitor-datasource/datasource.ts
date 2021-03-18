@@ -2,7 +2,13 @@ import _ from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, InsightsAnalyticsQuery } from './types';
+import {
+  AzureDataSourceJsonData,
+  AzureLogsVariable,
+  AzureMonitorQuery,
+  AzureQueryType,
+  InsightsAnalyticsQuery,
+} from './types';
 import {
   DataFrame,
   DataQueryRequest,
@@ -13,15 +19,26 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { forkJoin, Observable, of } from 'rxjs';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+// import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 import { migrateMetricsDimensionFilters } from './query_ctrl';
 import { map } from 'rxjs/operators';
+
+export interface LogConfigs {
+  subscriptionId?: string;
+  queryType: string;
+  postfix: string;
+  azureMonitorPostfix: string;
+  sameAsAzureMonitor?: boolean;
+  getWorkspacesOrResources: (subscription: string, url: string) => Promise<AzureLogsVariable[]>;
+}
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
+  azureResourceLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
   insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
 
   pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
@@ -32,9 +49,51 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    const workspaceLogConfigs: LogConfigs = {
+      subscriptionId: instanceSettings.jsonData.logAnalyticsSubscriptionId,
+      queryType: AzureQueryType.LogAnalytics,
+      postfix: 'loganalyticsazure',
+      azureMonitorPostfix: 'workspacesloganalytics',
+      sameAsAzureMonitor: instanceSettings.jsonData.azureLogAnalyticsSameAs,
+      getWorkspacesOrResources: async (subscription: string, url: string) => {
+        const response = await getBackendSrv().datasourceRequest({
+          url:
+            url +
+            `/azuremonitor/subscriptions/${subscription}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`,
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        return (
+          _.map(response.data.value, (val: any) => {
+            return { text: val.name, value: val.properties.customerId };
+          }) || []
+        );
+      },
+    };
+    const resourceLogConfigs: LogConfigs = {
+      subscriptionId: instanceSettings.jsonData.resourceLogAnalyticsSubscriptionId,
+      queryType: AzureQueryType.ResourceLogAnalytics,
+      postfix: 'resourceloganalyticsazure',
+      azureMonitorPostfix: 'resourcesloganalytics',
+      sameAsAzureMonitor: instanceSettings.jsonData.azureResourceLogAnalyticsSameAs,
+      getWorkspacesOrResources: async (subscription: string, url: string) => {
+        const result = await getBackendSrv().datasourceRequest({
+          url: url + `/azuremonitor/providers/Microsoft.ResourceGraph/resources?api-version=2019-04-01`,
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          data: { subscriptions: [subscription], query: 'project id, name' },
+        });
+        return (
+          _.map(result.data.data.rows, (val: any) => {
+            return { text: val[1], value: val[0] };
+          }) || []
+        );
+      },
+    };
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
-    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
+    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings, workspaceLogConfigs);
+    this.azureResourceLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings, resourceLogConfigs);
     this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
 
     const pseudoDatasource: any = {};
@@ -42,6 +101,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     pseudoDatasource[AzureQueryType.AzureMonitor] = this.azureMonitorDatasource;
     pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
     pseudoDatasource[AzureQueryType.LogAnalytics] = this.azureLogAnalyticsDatasource;
+    pseudoDatasource[AzureQueryType.ResourceLogAnalytics] = this.azureResourceLogAnalyticsDatasource;
     this.pseudoDatasource = pseudoDatasource;
 
     const optionsKey: any = {};
@@ -49,6 +109,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     optionsKey[AzureQueryType.AzureMonitor] = 'azureMonitor';
     optionsKey[AzureQueryType.InsightsAnalytics] = 'insightsAnalytics';
     optionsKey[AzureQueryType.LogAnalytics] = 'azureLogAnalytics';
+    optionsKey[AzureQueryType.ResourceLogAnalytics] = 'azureLogAnalytics';
     this.optionsKey = optionsKey;
   }
 
@@ -141,6 +202,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return amResult;
     }
 
+    const arlaResult = this.azureResourceLogAnalyticsDatasource.metricFindQueryInternal(query);
+    if (arlaResult) {
+      return arlaResult;
+    }
+
     const alaResult = this.azureLogAnalyticsDatasource.metricFindQueryInternal(query);
     if (alaResult) {
       return alaResult;
@@ -162,6 +228,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
     if (this.azureLogAnalyticsDatasource.isConfigured()) {
       promises.push(this.azureLogAnalyticsDatasource.testDatasource());
+    }
+
+    if (this.azureResourceLogAnalyticsDatasource.isConfigured()) {
+      promises.push(this.azureResourceLogAnalyticsDatasource.testDatasource());
     }
 
     if (promises.length === 0) {
@@ -269,7 +339,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   /*Azure Log Analytics */
   getAzureLogAnalyticsWorkspaces(subscriptionId: string) {
-    return this.azureLogAnalyticsDatasource.getWorkspaces(subscriptionId);
+    return this.azureLogAnalyticsDatasource.getWorkspacesOrResources(subscriptionId);
   }
 
   getSubscriptions() {
