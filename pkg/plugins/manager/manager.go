@@ -28,8 +28,7 @@ import (
 )
 
 var (
-	StaticRoutes []*plugins.PluginStaticRoute
-	PluginTypes  map[string]interface{}
+	PluginTypes map[string]interface{}
 
 	plog log.Logger
 )
@@ -61,11 +60,12 @@ type PluginManager struct {
 	grafanaHasUpdate              bool
 	pluginScanningErrors          map[string]plugins.PluginError
 
-	renderer    *plugins.RendererPlugin
-	dataSources map[string]*plugins.DataSourcePlugin
-	plugins     map[string]*plugins.PluginBase
-	panels      map[string]*plugins.PanelPlugin
-	apps        map[string]*plugins.AppPlugin
+	renderer     *plugins.RendererPlugin
+	dataSources  map[string]*plugins.DataSourcePlugin
+	plugins      map[string]*plugins.PluginBase
+	panels       map[string]*plugins.PanelPlugin
+	apps         map[string]*plugins.AppPlugin
+	staticRoutes []*plugins.PluginStaticRoute
 }
 
 func init() {
@@ -77,11 +77,12 @@ func init() {
 
 func newManager(cfg *setting.Cfg) *PluginManager {
 	return &PluginManager{
-		Cfg:         cfg,
-		dataSources: map[string]*plugins.DataSourcePlugin{},
-		plugins:     map[string]*plugins.PluginBase{},
-		panels:      map[string]*plugins.PanelPlugin{},
-		apps:        map[string]*plugins.AppPlugin{},
+		Cfg:          cfg,
+		dataSources:  map[string]*plugins.DataSourcePlugin{},
+		plugins:      map[string]*plugins.PluginBase{},
+		panels:       map[string]*plugins.PanelPlugin{},
+		apps:         map[string]*plugins.AppPlugin{},
+		staticRoutes: []*plugins.PluginStaticRoute{},
 	}
 }
 
@@ -89,7 +90,6 @@ func (pm *PluginManager) Init() error {
 	pm.log = log.New("plugins")
 	plog = log.New("plugins")
 
-	StaticRoutes = []*plugins.PluginStaticRoute{}
 	PluginTypes = map[string]interface{}{
 		"panel":      plugins.PanelPlugin{},
 		"datasource": plugins.DataSourcePlugin{},
@@ -143,22 +143,22 @@ func (pm *PluginManager) Init() error {
 
 	for _, panel := range pm.panels {
 		staticRoutes := panel.InitFrontendPlugin(pm.Cfg)
-		StaticRoutes = append(StaticRoutes, staticRoutes...)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
 	}
 
 	for _, ds := range pm.dataSources {
 		staticRoutes := ds.InitFrontendPlugin(pm.Cfg)
-		StaticRoutes = append(StaticRoutes, staticRoutes...)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
 	}
 
 	for _, app := range pm.apps {
 		staticRoutes := app.InitApp(pm.panels, pm.dataSources, pm.Cfg)
-		StaticRoutes = append(StaticRoutes, staticRoutes...)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
 	}
 
 	if pm.renderer != nil {
 		staticRoutes := pm.renderer.InitFrontendPlugin(pm.Cfg)
-		StaticRoutes = append(StaticRoutes, staticRoutes...)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
 	}
 
 	for _, p := range pm.plugins {
@@ -679,4 +679,13 @@ func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
 	}
 
 	return nil
+}
+
+func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
+	var rslt []*plugins.PluginStaticRoute
+	for _, p := range pm.staticRoutes {
+		rslt = append(rslt, p)
+	}
+
+	return rslt
 }

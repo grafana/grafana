@@ -38,6 +38,8 @@ type Manager interface {
 	GrafanaHasUpdate() bool
 	// Plugins gets all plugins.
 	Plugins() []*PluginBase
+	// StaticRoutes gets all static routes.
+	StaticRoutes() []*PluginStaticRoute
 	// GetPluginSettings gets settings for a certain plugin.
 	GetPluginSettings(orgID int64) (map[string]*models.PluginSettingInfoDTO, error)
 	// GetPluginDashboards gets dashboards for a certain org/plugin.
