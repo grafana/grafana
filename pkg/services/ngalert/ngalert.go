@@ -104,4 +104,5 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	addAlertDefinitionVersionMigrations(mg)
 	// Create alert_instance table
 	alertInstanceMigration(mg)
+	alertmanagerConfigurationMigration(mg)
 }
