@@ -7,6 +7,7 @@ import {
   ScopedVars,
   QueryRunnerOptions,
   QueryRunner as QueryRunnerSrv,
+  LoadingState,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -14,6 +15,7 @@ import { cloneDeep } from 'lodash';
 import { Observable, ReplaySubject, Unsubscribable } from 'rxjs';
 import { getNextRequestId } from './PanelQueryRunner';
 import { preProcessPanelData, runRequest } from './runRequest';
+
 export class QueryRunner implements QueryRunnerSrv {
   private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
@@ -100,6 +102,33 @@ export class QueryRunner implements QueryRunnerSrv {
       });
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
+    }
+  }
+
+  cancel(): void {
+    if (!this.subscription) {
+      return;
+    }
+
+    this.subscription.unsubscribe();
+
+    // If we have an old result with loading state, send it with done state
+    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+      this.subject.next({
+        ...this.lastResult,
+        state: LoadingState.Done,
+      });
+    }
+  }
+
+  destroy(): void {
+    // Tell anyone listening that we are done
+    if (this.subject) {
+      this.subject.complete();
+    }
+
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
   }
 }

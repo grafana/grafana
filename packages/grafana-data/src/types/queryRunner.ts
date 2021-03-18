@@ -33,4 +33,6 @@ export interface QueryRunnerOptions {
 export interface QueryRunner {
   get(): Observable<PanelData>;
   run(options: QueryRunnerOptions): Promise<void>;
+  cancel(): void;
+  destroy(): void;
 }
