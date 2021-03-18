@@ -114,7 +114,6 @@ func alertmanagerConfigurationMigration(mg *migrator.Migrator) {
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "alertmanager_configuration", Type: migrator.DB_Text, Nullable: false},
-			{Name: "alertmanager_templates", Type: migrator.DB_Text, Nullable: true},
 			{Name: "configuration_version", Type: migrator.DB_NVarchar, Length: 3}, // In a format of vXX e.g. v1, v2, v10, etc
 			{Name: "created_at", Type: migrator.DB_Int, Nullable: false},
 			{Name: "updated_at", Type: migrator.DB_Int, Nullable: false},

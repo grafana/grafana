@@ -7,7 +7,6 @@ type AlertConfiguration struct {
 	ID int64 `xorm:"pk autoincr 'id'"`
 
 	AlertmanagerConfiguration string
-	AlertmanagerTemplates     string
 	ConfigurationVersion      string
 	CreatedAt                 time.Time `xorm:"created"`
 	UpdatedAt                 time.Time `xorm:"updated"`
