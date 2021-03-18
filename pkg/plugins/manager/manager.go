@@ -68,8 +68,9 @@ type PluginManager struct {
 
 func init() {
 	registry.Register(&registry.Descriptor{
-		Name:     "PluginManager",
-		Instance: newManager(nil),
+		Name:         "PluginManager",
+		Instance:     newManager(nil),
+		InitPriority: registry.MediumHigh,
 	})
 }
 
