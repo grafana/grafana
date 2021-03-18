@@ -44,6 +44,7 @@ export interface OptionPaneRenderProps {
   eventBus: EventBus;
   onPanelConfigChange: (configKey: string, value: any) => void;
   onPanelOptionsChanged: (options: any) => void;
+  onFieldConfigsChange: (config: FieldConfigSource) => void;
 }
 
 export interface OptionsPaneItemDescriptor {

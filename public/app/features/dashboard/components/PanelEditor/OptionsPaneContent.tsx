@@ -11,7 +11,7 @@ import { OptionsBox } from './OptionsBox';
 import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
 import { getPanelFrameOptions } from './getPanelFrameOptions';
 import { OptionsGroup } from './OptionsGroup';
-import { getVizualizationSettings } from './PanelOptionsEditor';
+import { getVizualizationOptions } from './getVizualizationOptions';
 
 interface Props {
   plugin: PanelPlugin;
@@ -42,13 +42,14 @@ export const OptionsPaneContent: React.FC<Props> = ({
     panel,
     onPanelOptionsChanged,
     onPanelConfigChange,
+    onFieldConfigsChange,
     plugin,
     data,
     eventBus: dashboard.events,
   };
 
   topGroups.push(getPanelFrameOptions(optionProps));
-  topGroups.push(getVizualizationSettings(optionProps));
+  topGroups.push(getVizualizationOptions(optionProps));
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
