@@ -51,13 +51,13 @@ async function fetchDashboards(options: DashListOptions, replaceVars: Interpolat
   // We deliberately deal with recent dashboards first so that the order of dash IDs is preserved
   let dashMap = new Map<number, Dashboard>();
   for (const dashId of dashIds) {
-    const dash = recent.find(d => d.id === dashId);
+    const dash = recent.find((d) => d.id === dashId);
     if (dash) {
       dashMap.set(dashId, { ...dash, isRecent: true });
     }
   }
 
-  searched.forEach(dash => {
+  searched.forEach((dash) => {
     if (dashMap.has(dash.id)) {
       dashMap.get(dash.id)!.isSearchResult = true;
     } else {
@@ -65,7 +65,7 @@ async function fetchDashboards(options: DashListOptions, replaceVars: Interpolat
     }
   });
 
-  starred.forEach(dash => {
+  starred.forEach((dash) => {
     if (dashMap.has(dash.id)) {
       dashMap.get(dash.id)!.isStarred = true;
     } else {
@@ -79,7 +79,7 @@ async function fetchDashboards(options: DashListOptions, replaceVars: Interpolat
 export function DashList(props: PanelProps<DashListOptions>) {
   const [dashboards, setDashboards] = useState(new Map<number, Dashboard>());
   useEffect(() => {
-    fetchDashboards(props.options, props.replaceVariables).then(dashes => {
+    fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
       setDashboards(dashes);
     });
   }, [
@@ -107,9 +107,9 @@ export function DashList(props: PanelProps<DashListOptions>) {
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
     const dashboardList = [...dashboards.values()];
     return [
-      dashboardList.filter(dash => dash.isStarred).sort((a, b) => a.title.localeCompare(b.title)),
-      dashboardList.filter(dash => dash.isRecent),
-      dashboardList.filter(dash => dash.isSearchResult).sort((a, b) => a.title.localeCompare(b.title)),
+      dashboardList.filter((dash) => dash.isStarred).sort((a, b) => a.title.localeCompare(b.title)),
+      dashboardList.filter((dash) => dash.isRecent),
+      dashboardList.filter((dash) => dash.isSearchResult).sort((a, b) => a.title.localeCompare(b.title)),
     ];
   }, [dashboards]);
 
@@ -142,7 +142,7 @@ export function DashList(props: PanelProps<DashListOptions>) {
             <div className={css.dashlistSection} key={`dash-group-${i}`}>
               {showHeadings && <h6 className={css.dashlistSectionHeader}>{header}</h6>}
               <ul>
-                {dashboards.map(dash => (
+                {dashboards.map((dash) => (
                   <li className={css.dashlistItem} key={`dash-${dash.id}`}>
                     <div className={css.dashlistLink}>
                       <div className={css.dashlistLinkBody}>
@@ -151,7 +151,7 @@ export function DashList(props: PanelProps<DashListOptions>) {
                         </a>
                         {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
                       </div>
-                      <span className={css.dashlistStar} onClick={e => toggleDashboardStar(e, dash)}>
+                      <span className={css.dashlistStar} onClick={(e) => toggleDashboardStar(e, dash)}>
                         <Icon name={dash.isStarred ? 'favorite' : 'star'} type={dash.isStarred ? 'mono' : 'default'} />
                       </span>
                     </div>
