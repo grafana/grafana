@@ -28,8 +28,6 @@ import (
 )
 
 var (
-	PluginTypes map[string]interface{}
-
 	plog log.Logger
 )
 
@@ -77,25 +75,17 @@ func init() {
 
 func newManager(cfg *setting.Cfg) *PluginManager {
 	return &PluginManager{
-		Cfg:          cfg,
-		dataSources:  map[string]*plugins.DataSourcePlugin{},
-		plugins:      map[string]*plugins.PluginBase{},
-		panels:       map[string]*plugins.PanelPlugin{},
-		apps:         map[string]*plugins.AppPlugin{},
-		staticRoutes: []*plugins.PluginStaticRoute{},
+		Cfg:         cfg,
+		dataSources: map[string]*plugins.DataSourcePlugin{},
+		plugins:     map[string]*plugins.PluginBase{},
+		panels:      map[string]*plugins.PanelPlugin{},
+		apps:        map[string]*plugins.AppPlugin{},
 	}
 }
 
 func (pm *PluginManager) Init() error {
 	pm.log = log.New("plugins")
 	plog = log.New("plugins")
-
-	PluginTypes = map[string]interface{}{
-		"panel":      plugins.PanelPlugin{},
-		"datasource": plugins.DataSourcePlugin{},
-		"app":        plugins.AppPlugin{},
-		"renderer":   plugins.RendererPlugin{},
-	}
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
 
 	pm.log.Info("Starting plugin search")
@@ -299,6 +289,13 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 	pm.log.Debug("Initial plugin loading done")
 
+	pluginTypes := map[string]interface{}{
+		"panel":      plugins.PanelPlugin{},
+		"datasource": plugins.DataSourcePlugin{},
+		"app":        plugins.AppPlugin{},
+		"renderer":   plugins.RendererPlugin{},
+	}
+
 	// 2nd pass: Validate and register plugins
 	for dpath, plugin := range scanner.plugins {
 		// Try to find any root plugin
@@ -327,7 +324,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 		pm.log.Debug("Attempting to add plugin", "id", plugin.Id)
 
-		pluginGoType, exists := PluginTypes[plugin.Type]
+		pluginGoType, exists := pluginTypes[plugin.Type]
 		if !exists {
 			return fmt.Errorf("unknown plugin type %q", plugin.Type)
 		}
