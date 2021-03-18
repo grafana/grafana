@@ -1,12 +1,18 @@
 import React, { HTMLAttributes } from 'react';
-import { Badge, BadgeProps } from '@grafana/ui';
-import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus } from '@grafana/data';
+import { Badge, BadgeProps } from '../Badge/Badge';
 
-interface Props extends HTMLAttributes<HTMLDivElement> {
+/**
+ * @public
+ */
+export interface PluginSignatureBadgeProps extends HTMLAttributes<HTMLDivElement> {
   status?: PluginSignatureStatus;
 }
 
-export const PluginSignatureBadge: React.FC<Props> = ({ status, ...otherProps }) => {
+/**
+ * @public
+ */
+export const PluginSignatureBadge: React.FC<PluginSignatureBadgeProps> = ({ status, ...otherProps }) => {
   const display = getSignatureDisplayModel(status);
   return (
     <Badge
@@ -19,22 +25,7 @@ export const PluginSignatureBadge: React.FC<Props> = ({ status, ...otherProps })
   );
 };
 
-export function isUnsignedPluginSignature(signature?: PluginSignatureStatus) {
-  return signature && signature !== PluginSignatureStatus.valid && signature !== PluginSignatureStatus.internal;
-}
-
-export function mapPluginErrorCodeToSignatureStatus(code: PluginErrorCode) {
-  switch (code) {
-    case PluginErrorCode.invalidSignature:
-      return PluginSignatureStatus.invalid;
-    case PluginErrorCode.missingSignature:
-      return PluginSignatureStatus.missing;
-    case PluginErrorCode.modifiedSignature:
-      return PluginSignatureStatus.modified;
-    default:
-      return PluginSignatureStatus.missing;
-  }
-}
+PluginSignatureBadge.displayName = 'PluginSignatureBadge';
 
 function getSignatureDisplayModel(signature?: PluginSignatureStatus): BadgeProps {
   if (!signature) {
@@ -67,9 +58,12 @@ function getSignatureDisplayModel(signature?: PluginSignatureStatus): BadgeProps
         color: 'red',
         tooltip: 'Missing plugin signature',
       };
+    default:
+      return {
+        text: 'Unsigned',
+        icon: 'exclamation-triangle',
+        color: 'red',
+        tooltip: 'Unsigned external plugin',
+      };
   }
-
-  return { text: 'Unsigned', icon: 'exclamation-triangle', color: 'red', tooltip: 'Unsigned external plugin' };
 }
-
-PluginSignatureBadge.displayName = 'PluginSignatureBadge';
