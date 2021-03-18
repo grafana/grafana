@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,7 @@ func TestDashboardImport(t *testing.T) {
 		dashboards.MockDashboardService(mock)
 
 		info, err := pm.ImportDashboard("test-app", "dashboards/connections.json", 1, 0, nil, false,
-			[]ImportDashboardInput{
+			[]plugins.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "graphite"},
 			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN}, nil)
 		require.NoError(t, err)
@@ -58,7 +59,7 @@ func TestDashboardImport(t *testing.T) {
 
 		evaluator := &DashTemplateEvaluator{
 			template: template,
-			inputs: []ImportDashboardInput{
+			inputs: []plugins.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "my-server"},
 			},
 		}
