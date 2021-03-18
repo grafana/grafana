@@ -26,7 +26,7 @@ export class QueryRunner implements QueryRunnerSrv {
   }
 
   get(): Observable<PanelData> {
-    return this.subject;
+    return this.subject.asObservable();
   }
 
   async run(options: QueryRunnerOptions): Promise<void> {
