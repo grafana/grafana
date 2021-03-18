@@ -8,7 +8,7 @@ import { GrafanaTheme } from '@grafana/data';
 interface Props {
   icon?: IconName;
   tooltip: string;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement) => void;
   href?: string;
   children?: React.ReactNode;
   iconType?: IconType;
