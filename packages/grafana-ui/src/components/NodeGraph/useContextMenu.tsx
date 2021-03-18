@@ -6,6 +6,8 @@ import { useTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { getEdgeFields, getNodeFields } from './utils';
 import { css } from 'emotion';
+import { MenuGroup } from '../Menu/MenuGroup';
+import { MenuItem } from '../Menu/MenuItem';
 
 /**
  * Hook that contains state of the context menu, both for edges and nodes and provides appropriate component when
@@ -30,11 +32,26 @@ export function useContextMenu(
 
   if (openedNode) {
     const items = getItems(getLinks(nodes, openedNode.node.dataFrameRowIndex));
+    const renderMenuGroupItems = () => {
+      return items?.map((group, index) => (
+        <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+          {(group.items || []).map((item) => (
+            <MenuItem
+              key={`${item.label}`}
+              url={item.url}
+              label={item.label}
+              ariaLabel={item.label}
+              onClick={item.onClick}
+            />
+          ))}
+        </MenuGroup>
+      ));
+    };
     if (items.length) {
       MenuComponent = (
         <ContextMenu
           renderHeader={() => <NodeHeader node={openedNode.node} nodes={nodes} />}
-          itemsGroup={items}
+          renderMenuItems={renderMenuGroupItems}
           onClose={() => setOpenedNode(undefined)}
           x={openedNode.event.pageX}
           y={openedNode.event.pageY}
@@ -45,11 +62,26 @@ export function useContextMenu(
 
   if (openedEdge) {
     const items = getItems(getLinks(edges, openedEdge.edge.dataFrameRowIndex));
+    const renderMenuGroupItems = () => {
+      return items?.map((group, index) => (
+        <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+          {(group.items || []).map((item) => (
+            <MenuItem
+              key={item.label}
+              url={item.url}
+              label={item.label}
+              ariaLabel={item.label}
+              onClick={item.onClick}
+            />
+          ))}
+        </MenuGroup>
+      ));
+    };
     if (items.length) {
       MenuComponent = (
         <ContextMenu
           renderHeader={() => <EdgeHeader edge={openedEdge.edge} edges={edges} />}
-          itemsGroup={items}
+          renderMenuItems={renderMenuGroupItems}
           onClose={() => setOpenedEdge(undefined)}
           x={openedEdge.event.pageX}
           y={openedEdge.event.pageY}
