@@ -10,16 +10,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func (pm *PluginManager) GetPluginDashboards(orgId int64, pluginId string) ([]*plugins.PluginDashboardInfoDTO, error) {
-	plugin, exists := pm.plugins[pluginId]
+func (pm *PluginManager) GetPluginDashboards(orgID int64, pluginID string) ([]*plugins.PluginDashboardInfoDTO, error) {
+	plugin, exists := pm.plugins[pluginID]
 	if !exists {
-		return nil, plugins.PluginNotFoundError{PluginID: pluginId}
+		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
 	}
 
 	result := make([]*plugins.PluginDashboardInfoDTO, 0)
 
 	// load current dashboards
-	query := models.GetDashboardsByPluginIdQuery{OrgId: orgId, PluginId: pluginId}
+	query := models.GetDashboardsByPluginIdQuery{OrgId: orgID, PluginId: pluginID}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
@@ -70,10 +70,10 @@ func (pm *PluginManager) GetPluginDashboards(orgId int64, pluginId string) ([]*p
 	return result, nil
 }
 
-func (pm *PluginManager) LoadPluginDashboard(pluginId, path string) (*models.Dashboard, error) {
-	plugin, exists := pm.plugins[pluginId]
+func (pm *PluginManager) LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error) {
+	plugin, exists := pm.plugins[pluginID]
 	if !exists {
-		return nil, plugins.PluginNotFoundError{PluginID: pluginId}
+		return nil, plugins.PluginNotFoundError{PluginID: pluginID}
 	}
 
 	dashboardFilePath := filepath.Join(plugin.PluginDir, path)

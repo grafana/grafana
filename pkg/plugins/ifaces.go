@@ -41,6 +41,8 @@ type Manager interface {
 		requestHandler DataRequestHandler) (PluginDashboardInfoDTO, error)
 	// ScanningErrors returns plugin scanning errors encountered.
 	ScanningErrors() []PluginError
+	// LoadPluginDashboard loads a plugin dashboard.
+	LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error)
 }
 
 type ImportDashboardInput struct {
