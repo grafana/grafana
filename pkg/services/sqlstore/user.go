@@ -31,12 +31,10 @@ func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandler("sql", DisableUser)
 	bus.AddHandler("sql", BatchDisableUsers)
 	bus.AddHandler("sql", DeleteUser)
-	bus.AddHandler("sql", UpdateUserPermissions)
 	bus.AddHandler("sql", SetUserHelpFlag)
-	bus.AddHandlerCtx("sql", CreateUser)
 }
 
-func getOrgIdForNewUser(sess *DBSession, cmd *models.CreateUserCommand) (int64, error) {
+func getOrgIdForNewUser(sess *DBSession, cmd models.CreateUserCommand) (int64, error) {
 	if cmd.SkipOrgSetup {
 		return -1, nil
 	}
@@ -191,8 +189,9 @@ func (ss *SQLStore) createUser(ctx context.Context, args userCreationArgs, skipO
 	return user, nil
 }
 
-func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
-	return inTransactionCtx(ctx, func(sess *DBSession) error {
+func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand) (*models.User, error) {
+	var user *models.User
+	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		orgId, err := getOrgIdForNewUser(sess, cmd)
 		if err != nil {
 			return err
@@ -202,13 +201,16 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 			cmd.Email = cmd.Login
 		}
 
-		exists, _ := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&models.User{})
+		exists, err := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&models.User{})
+		if err != nil {
+			return err
+		}
 		if exists {
 			return models.ErrUserAlreadyExists
 		}
 
 		// create user
-		user := models.User{
+		user = &models.User{
 			Email:         cmd.Email,
 			Name:          cmd.Name,
 			Login:         cmd.Login,
@@ -243,7 +245,7 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 
 		sess.UseBool("is_admin")
 
-		if _, err := sess.Insert(&user); err != nil {
+		if _, err := sess.Insert(user); err != nil {
 			return err
 		}
 
@@ -254,8 +256,6 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 			Login:     user.Login,
 			Email:     user.Email,
 		})
-
-		cmd.Result = user
 
 		// create org user link
 		if !cmd.SkipOrgSetup {
@@ -282,6 +282,8 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 
 		return nil
 	})
+
+	return user, err
 }
 
 func GetUserById(query *models.GetUserByIdQuery) error {
@@ -729,14 +731,14 @@ func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) err
 	return nil
 }
 
-func UpdateUserPermissions(cmd *models.UpdateUserPermissionsCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		user := models.User{}
-		if _, err := sess.ID(cmd.UserId).Get(&user); err != nil {
+func (ss *SQLStore) UpdateUserPermissions(userID int64, isAdmin bool) error {
+	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		var user models.User
+		if _, err := sess.ID(userID).Get(&user); err != nil {
 			return err
 		}
 
-		user.IsAdmin = cmd.IsGrafanaAdmin
+		user.IsAdmin = isAdmin
 		sess.UseBool("is_admin")
 
 		_, err := sess.ID(user.Id).Update(&user)
