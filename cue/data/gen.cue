@@ -13,6 +13,8 @@ dashboardFamily: #SchemaFamily & {
                 title?: string
                 // Description of dashboard.
                 description?: string
+
+                gnetId?: string
                 // Tags associated with dashboard.
                 tags?: [...string]
                 // Theme of dashboard.
@@ -84,7 +86,7 @@ dashboardFamily: #SchemaFamily & {
                     // expected to be filled with panel plugin schema versions so that it's
                     // possible to figure out which schema version matched on a successful
                     // unification.
-                    _pv: { maj: int, min: int }
+                    // _pv: { maj: int, min: int }
                     // The major and minor versions of the panel plugin for this schema.
                     // TODO 2-tuple list instead of struct?
                     panelSchema: { maj: number, min: number }
@@ -211,12 +213,13 @@ discriminatedPanel: {
     arg: {
         model: #PanelModel
         type: string
-        v: { maj: int, min: int}
+        v: { maj: int, min: int }
     }
     result: {
         type: arg.type
-        panelSchema: maj: arg.v.maj
-        panelSchema: min: arg.v.min
+        // Yay floating point silliness https://github.com/cuelang/cue/issues/253
+        panelSchema: maj: arg.v.maj / 1.0
+        panelSchema: min: arg.v.min / 1.0
         options: arg.model.PanelOptions
         fieldConfig: defaults: custom: arg.model.PanelFieldConfig
     }

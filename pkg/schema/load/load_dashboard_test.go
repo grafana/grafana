@@ -2,8 +2,10 @@ package load
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 
+	cuerr "cuelang.org/go/cue/errors"
 	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/schema"
 	"github.com/stretchr/testify/require"
@@ -20,7 +22,8 @@ func TestLoadDistPanels(t *testing.T) {
 	}
 
 	jmap := make(map[string]interface{})
-	json.Unmarshal(testdash, &jmap)
+	err := json.Unmarshal(testdash, &jmap)
+	require.NoError(t, err)
 
 	dashr := schema.Resource{
 		Value: jmap,
@@ -31,6 +34,9 @@ func TestLoadDistPanels(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = fam.Validate(dashr)
+		if err != nil {
+			cuerr.Print(os.Stderr, err, nil)
+		}
 		require.NoError(t, err)
 	})
 }
@@ -76,42 +82,27 @@ var testdash = []byte(`
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "rawQuery": "wtf",
+        "showIn": 0,
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
+  "id": 42,
   "links": [],
   "panels": [
     {
       "datasource": "${DS_GDEV-TESTDATA}",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
           "custom": {
             "align": "right",
             "filterable": false
           },
           "decimals": 3,
           "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
           "unit": "watt"
         },
         "overrides": [
@@ -182,7 +173,11 @@ var testdash = []byte(`
         }
       ],
       "title": "Panel Title",
-      "type": "table"
+      "type": "table",
+      "panelSchema": {
+        "maj": 0,
+        "min": 0
+      }
     }
   ],
   "schemaVersion": 27,
@@ -195,7 +190,6 @@ var testdash = []byte(`
     "from": "now-6h",
     "to": "now"
   },
-  "timepicker": {},
   "timezone": "browser",
   "title": "with table",
   "uid": "emal8gQMz",

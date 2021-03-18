@@ -7,12 +7,10 @@ import (
 	"io"
 	"io/fs"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"reflect"
 
 	"cuelang.org/go/cue"
-	cuerr "cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
 )
@@ -55,15 +53,7 @@ type compositeDashboardSchema struct {
 
 // Validate checks that the resource is correct with respect to the schema.
 func (cds *compositeDashboardSchema) Validate(r schema.Resource) error {
-	rv := cds.scratch.Fill(r.Value)
-	// fmt.Printf("%v\n", rv)
-	// fmt.Printf("%v\n", cds.actual)
-	// return cds.actual.Subsume(rv)
-	v := cds.actual.Unify(rv)
-	// fmt.Printf("%v\n", v)
-	errs := v.Validate(cue.Concrete(true))
-	cuerr.Print(os.Stderr, errs, nil)
-	return errs
+	return cds.actual.Unify(cds.scratch.Fill(r.Value)).Validate(cue.Concrete(true))
 }
 
 // ApplyDefaults returns a new, concrete copy of the Resource with all paths
@@ -193,8 +183,6 @@ func DistDashboardFamily(p BaseLoadPaths) (*schema.Family, error) {
 				Fill(mjv, "arg", "v", "maj").
 				Fill(miv, "arg", "v", "min")
 
-			fmt.Printf("%v\n", pv)
-
 			inst, err = inst.Fill(pv, "allPanels", fmt.Sprintf("%s%v%v", id, mjv, miv))
 			if err != nil {
 				return nil, err
@@ -207,7 +195,6 @@ func DistDashboardFamily(p BaseLoadPaths) (*schema.Family, error) {
 	if !allp.Exists() {
 		return nil, errors.New("allPanels did not exist")
 	}
-	fmt.Printf("%v\n", allp)
 
 	parts := inst.Lookup("parts")
 	if !parts.Exists() {
@@ -517,10 +504,7 @@ func rawDistPanels(p BaseLoadPaths) (map[string]panelFamily, error) {
 		}
 
 		// Ensure the declared value is subsumed by/correct wrt #PanelModelFamily
-		// if err := pmf.Subsume(pmod); err != nil {
-		// 	return err
-		// }
-		if err := pmf.Unify(pmod).Validate(cue.Concrete(true)); err != nil {
+		if err := pmf.Subsume(pmod); err != nil {
 			return err
 		}
 

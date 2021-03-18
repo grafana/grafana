@@ -5,14 +5,15 @@ import ui "github.com/grafana/grafana/cue/ui:grafanaschema"
 // TODO remove "Model: " - expect that models.cue has the #PanelModelFamily
 // form at the level of the file struct. (An "emit value", in CUE parlance)
 
-Model: #PanelModelFamily & {
+// Model: #PanelModelFamily & {
+Model: {
     seqs: [
         [
             { // v0.0
                 PanelOptions: {
                     frameIndex: number | *0
                     showHeader: bool | *true
-                    sortBy?: ui.TableSortByFieldState
+                    sortBy?: [...ui.TableSortByFieldState]
                 }
                 PanelFieldConfig: {
                     width?: int
@@ -30,7 +31,7 @@ Model: #PanelModelFamily & {
                 PanelOptions: {
                     frameIndex: number | *0
                     includeHeader: bool | *true
-                    sortBy?: ui.TableSortByFieldState
+                    sortBy?: [...ui.TableSortByFieldState]
                 }
                 PanelFieldConfig: {
                     width?: int
@@ -60,6 +61,7 @@ Model: #PanelModelFamily & {
                 }
                 PanelFieldConfig: _from.PanelFieldConfig
             }
+            output: _rel & _to
         }
     ]
 }

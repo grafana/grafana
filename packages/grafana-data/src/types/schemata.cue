@@ -12,50 +12,27 @@ package grafanaschema
 }
 
 #SchemaFamily: {
-    // Kind is the canonical name of the object that all schemata in the Family
-    // describe.
-    Kind?: string
-
-    // TODO This encodes the idea that schemata are organized into a series of
-    // (backwards compatible) lineage sequences, with major and minor versions
-    // corresponding to their position in the series of arrays. (i.e. the
-    // first schema in the first lineage is 0.0.)
-    // This approach can, and probably should, change. However, any approach 
-    // will need to maintain certain properties: 
-    //  - Specific versions of a schema can be extracted by querying the family
-    //    with version number
-    //  - (Probably) individual schema do not internally define
-    //    version fields, but instead rely on this SchemaFamily meta-structure to do it
 	seqs: [#Seq, ...#Seq]
-	let lseq = seqs[len(seqs)-1]
-	latest: #LastSchema & { _p: lseq }
-
-    // Enforce that schemata within a seq are backwards compatible.
-    _bccheck: {
-        for ov, seq in seqs {
-            for iv, schema in seq if iv > 0 {
-                // Key the check on the schema being checked
-                "\(ov).\(iv)": seq[iv-1] & close(schema)
-                // TODO either here or in another loop, automatically create migrations
-                // for in-seq objects
-            }
-        }
-    }
     migrations: [...#Migration]
 }
 
 // Individual schema governing a panel plugin.
+//
+// These keys do not appear directly in any real JSON artifact; rather, they are
+// composed into panel structures as they are defined within the larger
+// Dashboard schema.
 #PanelModel: {
-    PanelOptions: {}
-    PanelFieldConfig: {}
+    PanelOptions: {...}
+    PanelFieldConfig: {...}
 }
+
 // Schema sequence of panel model schema
 #PanelModelSeq: [#PanelModel, ...#PanelModel]
 
 // Panel plugin-specific SchemaFamily
 #PanelModelFamily: {
-    #SchemaFamily
-    #SchemaFamily: seqs: #PanelModelSeq
+    seqs: [#PanelModelSeq, ...#PanelModelSeq]
+    migrations: [...#Migration]
 }
 
 // A Migration defines a relation between two schemata, "_from" and "_to". The

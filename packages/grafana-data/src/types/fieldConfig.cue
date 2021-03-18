@@ -70,7 +70,7 @@ FieldConfig: {
   // - that's the FieldConfig that comes from the plugin.
   custom?: {} // Can cuetsy make this generic? <T = any>
 
-} @cuetsy(targetType="interface") 
+} @cuetsy(targetType="interface")
 
 // Defines 
 FieldConfigSource: {

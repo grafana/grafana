@@ -4,7 +4,6 @@ package grafanaschema
 // IT DEAD WITH BETTER FILE ORGANIZATION!
 
 // A Seq is a series of schemas that all describe a single kind of object.
-// TODO use #Schema
 // TODO different type for v0 that doesn't entail backwards compatibility?
 #Seq: [{...}, ...{...}]
 #LastSchema: {
@@ -13,25 +12,8 @@ package grafanaschema
 }
 
 #SchemaFamily: {
-    // Kind is the canonical name of the object that all schemata in the Family
-    // describe.
-    Kind?: string
-
 	seqs: [#Seq, ...#Seq]
-	let lseq = seqs[len(seqs)-1]
-	latest: #LastSchema & { _p: lseq }
-
-    // Enforce that schemata within a seq are backwards compatible.
-    _bccheck: {
-        for ov, seq in seqs {
-            for iv, schema in seq if iv > 0 {
-                // Key the check on the schema being checked
-                "\(ov).\(iv)": seq[iv-1] & close(schema)
-                // TODO either here or in another loop, automatically create migrations
-                // for 
-            }
-        }
-    }
+    migrations: [...#Migration]
 }
 
 // An individual schema governing a panel plugin's persistable configuration.
@@ -50,8 +32,6 @@ package grafanaschema
 // Panel plugin-specific SchemaFamily
 #PanelModelFamily: {
     seqs: [#PanelModelSeq, ...#PanelModelSeq]
-	let lseq = seqs[len(seqs)-1]
-	latest: #LastSchema & { _p: lseq }
     migrations: [...#Migration]
 }
 
