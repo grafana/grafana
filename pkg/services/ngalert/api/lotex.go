@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 )
@@ -21,6 +22,19 @@ const legacyRulerPrefix = "/api/prom/rules"
 
 type LotexRuler struct {
 	DataProxy *datasourceproxy.DatasourceProxyService
+	log       log.Logger
+}
+
+// macaron unsafely asserts the http.ResponseWriter is an http.CloseNotifier, which will panic.
+// Here we impl it, which will ensure this no longer happens, but neither will we take
+// advantage cancelling upstream requests when the downstream has closed.
+// NB: http.CloseNotifier is a deprecated ifc from before the context pkg.
+type safeMacaronWrapper struct {
+	http.ResponseWriter
+}
+
+func (w *safeMacaronWrapper) CloseNotify() <-chan bool {
+	return make(chan bool)
 }
 
 // withBufferedRW is a hack to work around the type signature exposed by the datasource proxy
@@ -30,7 +44,7 @@ func withBufferedRW(ctx *models.ReqContext) (*models.ReqContext, response.Respon
 	resp := response.CreateNormalResponse(make(http.Header), nil, 0)
 	cpy := *ctx
 
-	cpy.Resp = macaron.NewResponseWriter(ctx.Req.Method, resp)
+	cpy.Resp = macaron.NewResponseWriter(ctx.Req.Method, &safeMacaronWrapper{resp})
 	return &cpy, resp
 }
 
