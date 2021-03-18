@@ -1,52 +1,42 @@
+import { FieldType } from '@grafana/data';
 import { MeasurementCollector } from './collector';
-import { MeasurementAction } from './types';
 
 describe('MeasurementCollector', () => {
   it('should collect values', () => {
     const collector = new MeasurementCollector();
     collector.addBatch({
-      measurements: [
+      batch: [
         {
-          name: 'test',
-          labels: { host: 'a' },
-          time: 100,
-          values: {
-            f0: 0,
-            f1: 1,
-            f2: 'hello',
+          key: 'aaa',
+          schema: {
+            fields: [
+              { name: 'time', type: FieldType.time },
+              { name: 'value', type: FieldType.number },
+            ],
+          },
+          data: {
+            values: [
+              [100, 200],
+              [1, 2],
+            ],
           },
         },
         {
-          name: 'test',
-          labels: { host: 'b' },
-          time: 101,
-          values: {
-            f0: 0,
-            f1: 1,
-            f2: 'hello',
-          },
-          config: {
-            f2: {
-              unit: 'mph',
-            },
-          },
+          key: 'aaa',
+          data: { values: [[300], [3]] },
         },
         {
-          name: 'test',
-          time: 102,
-          labels: { host: 'a' }, // should append to first value
-          values: {
-            // note the missing values for f0/1
-            f2: 'world',
-          },
+          key: 'aaa',
+          data: { values: [[400], [4]] },
         },
       ],
     });
 
     const frames = collector.getData();
-    expect(frames.length).toEqual(2);
+    expect(frames.length).toEqual(1);
+    (frames[0] as any).lastUpdateTime = 0;
     expect(frames[0]).toMatchInlineSnapshot(`
-      Object {
+      StreamingDataFrame {
         "fields": Array [
           Object {
             "config": Object {},
@@ -55,196 +45,33 @@ describe('MeasurementCollector', () => {
             "type": "time",
             "values": Array [
               100,
-              102,
+              200,
+              300,
+              400,
             ],
           },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "host": "a",
-            },
-            "name": "f0",
-            "type": "number",
-            "values": Array [
-              0,
-              undefined,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "host": "a",
-            },
-            "name": "f1",
-            "type": "number",
-            "values": Array [
-              1,
-              undefined,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "host": "a",
-            },
-            "name": "f2",
-            "type": "string",
-            "values": Array [
-              "hello",
-              "world",
-            ],
-          },
-        ],
-        "meta": Object {
-          "custom": Object {
-            "labels": Object {
-              "host": "a",
-            },
-          },
-        },
-        "name": "test",
-        "refId": undefined,
-      }
-    `);
-    expect(frames[1]).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
           Object {
             "config": Object {},
             "labels": undefined,
-            "name": "time",
-            "type": "time",
-            "values": Array [
-              101,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "host": "b",
-            },
-            "name": "f0",
-            "type": "number",
-            "values": Array [
-              0,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "host": "b",
-            },
-            "name": "f1",
+            "name": "value",
             "type": "number",
             "values": Array [
               1,
-            ],
-          },
-          Object {
-            "config": Object {
-              "unit": "mph",
-            },
-            "labels": Object {
-              "host": "b",
-            },
-            "name": "f2",
-            "type": "string",
-            "values": Array [
-              "hello",
+              2,
+              3,
+              4,
             ],
           },
         ],
-        "meta": Object {
-          "custom": Object {
-            "labels": Object {
-              "host": "b",
-            },
-          },
+        "lastUpdateTime": 0,
+        "meta": undefined,
+        "name": undefined,
+        "options": Object {
+          "maxLength": 600,
         },
-        "name": "test",
         "refId": undefined,
+        "timeFieldIndex": 0,
       }
     `);
-
-    collector.addBatch({
-      action: MeasurementAction.Replace,
-      measurements: [
-        {
-          name: 'test',
-          time: 105,
-          labels: { host: 'a' },
-          values: {
-            f1: 10,
-          },
-        },
-      ],
-    });
-
-    const frames2 = collector.getData();
-    expect(frames2.length).toEqual(2);
-    expect(frames2[0].length).toEqual(1); // not three!
-    expect(frames2[0]).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
-            "labels": undefined,
-            "name": "time",
-            "type": "time",
-            "values": Array [
-              105,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "host": "a",
-            },
-            "name": "f0",
-            "type": "number",
-            "values": Array [
-              undefined,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "host": "a",
-            },
-            "name": "f1",
-            "type": "number",
-            "values": Array [
-              10,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {
-              "host": "a",
-            },
-            "name": "f2",
-            "type": "string",
-            "values": Array [
-              undefined,
-            ],
-          },
-        ],
-        "meta": Object {
-          "custom": Object {
-            "labels": Object {
-              "host": "a",
-            },
-          },
-        },
-        "name": "test",
-        "refId": undefined,
-      }
-    `);
-
-    collector.addBatch({
-      action: MeasurementAction.Clear,
-      measurements: [],
-    });
-    expect(collector.getData().length).toEqual(0);
   });
 });
