@@ -127,7 +127,7 @@ func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition 
 		return tsdb.TimePoint{}, err
 	}
 
-	return tsdb.NewTimePoint(value, timestamp), nil
+	return tsdb.NewTimePoint(value, timestamp*1000), nil
 }
 
 func (rp *ResponseParser) parseValue(value interface{}) null.Float {
