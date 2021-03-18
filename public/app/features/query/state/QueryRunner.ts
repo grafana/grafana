@@ -12,7 +12,8 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { cloneDeep } from 'lodash';
-import { Observable, ReplaySubject, Unsubscribable } from 'rxjs';
+import { from, Observable, ReplaySubject, Unsubscribable } from 'rxjs';
+import { first } from 'rxjs/operators';
 import { getNextRequestId } from './PanelQueryRunner';
 import { preProcessPanelData, runRequest } from './runRequest';
 
@@ -29,7 +30,7 @@ export class QueryRunner implements QueryRunnerSrv {
     return this.subject.asObservable();
   }
 
-  async run(options: QueryRunnerOptions): Promise<void> {
+  run(options: QueryRunnerOptions): void {
     const {
       queries,
       timezone,
@@ -45,6 +46,7 @@ export class QueryRunner implements QueryRunnerSrv {
       minInterval,
     } = options;
 
+    console.log('subs', this.subscription);
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
@@ -69,41 +71,48 @@ export class QueryRunner implements QueryRunnerSrv {
     // Add deprecated property
     (request as any).rangeRaw = timeRange.raw;
 
-    try {
-      const ds = await getDataSource(datasource, request.scopedVars);
+    from(getDataSource(datasource, request.scopedVars))
+      .pipe(first())
+      .subscribe({
+        next: (ds) => {
+          // Attach the datasource name to each query
+          request.targets = request.targets.map((query) => {
+            if (!query.datasource) {
+              query.datasource = ds.name;
+            }
+            return query;
+          });
 
-      // Attach the datasource name to each query
-      request.targets = request.targets.map((query) => {
-        if (!query.datasource) {
-          query.datasource = ds.name;
-        }
-        return query;
-      });
+          const lowerIntervalLimit = minInterval
+            ? getTemplateSrv().replace(minInterval, request.scopedVars)
+            : ds.interval;
+          const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
-      const lowerIntervalLimit = minInterval ? getTemplateSrv().replace(minInterval, request.scopedVars) : ds.interval;
-      const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
+          // make shallow copy of scoped vars,
+          // and add built in variables interval and interval_ms
+          request.scopedVars = Object.assign({}, request.scopedVars, {
+            __interval: { text: norm.interval, value: norm.interval },
+            __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
+          });
 
-      // make shallow copy of scoped vars,
-      // and add built in variables interval and interval_ms
-      request.scopedVars = Object.assign({}, request.scopedVars, {
-        __interval: { text: norm.interval, value: norm.interval },
-        __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
-      });
+          request.interval = norm.interval;
+          request.intervalMs = norm.intervalMs;
 
-      request.interval = norm.interval;
-      request.intervalMs = norm.intervalMs;
-
-      this.subscription = runRequest(ds, request).subscribe({
-        next: (data) => {
-          this.lastResult = preProcessPanelData(data, this.lastResult);
-          // Store preprocessed query results for applying overrides later on in the pipeline
-          this.subject.next(this.lastResult);
+          this.subscription = runRequest(ds, request).subscribe({
+            next: (data) => {
+              this.lastResult = preProcessPanelData(data, this.lastResult);
+              // Store preprocessed query results for applying overrides later on in the pipeline
+              this.subject.next(this.lastResult);
+            },
+            complete: () => {
+              if (this.subscription) {
+                this.subscription.unsubscribe();
+              }
+            },
+          });
         },
-        error: (error) => console.error('QueryRunner Error', error),
+        error: (error) => console.error('PanelQueryRunner Error', error),
       });
-    } catch (err) {
-      console.error('PanelQueryRunner Error', err);
-    }
   }
 
   cancel(): void {
