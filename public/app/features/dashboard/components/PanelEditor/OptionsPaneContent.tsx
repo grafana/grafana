@@ -11,7 +11,7 @@ import { OptionsBox } from './OptionsBox';
 import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
 import { getPanelFrameOptions } from './getPanelFrameOptions';
 import { OptionsGroup } from './OptionsGroup';
-import { getVizualizationOptions } from './getVizualizationOptions';
+import { getFieldOverrides, getVizualizationOptions } from './getVizualizationOptions';
 
 interface Props {
   plugin: PanelPlugin;
@@ -50,6 +50,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
 
   topGroups.push(getPanelFrameOptions(optionProps));
   topGroups.push(getVizualizationOptions(optionProps));
+  topGroups.push(getFieldOverrides(optionProps));
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
@@ -58,28 +59,31 @@ export const OptionsPaneContent: React.FC<Props> = ({
           <div className={styles.vizButtonWrapper}>
             <VisualizationButton panel={panel} />
           </div>
-          <div className={styles.searchBox}>
-            <FilterInput width={0} value={''} onChange={() => {}} placeholder={'Search options'} />
-          </div>
 
-          {topGroups.map((topGroup) => (
-            <OptionsBox key={topGroup.title} title={topGroup.title}>
-              {topGroup.items?.map((child1) => (
-                <Field label={child1.title} description={child1.description} key={child1.title}>
-                  {child1.reactNode!}
-                </Field>
-              ))}
-              {topGroup.groups?.map((childGroup) => (
-                <OptionsGroup id={childGroup.title} key={childGroup.title} title={childGroup.title} defaultToClosed>
-                  {childGroup.items?.map((child2) => (
-                    <Field label={child2.title} description={child2.description} key={child2.title}>
-                      {child2.reactNode!}
-                    </Field>
-                  ))}
-                </OptionsGroup>
-              ))}
-            </OptionsBox>
-          ))}
+          <div className={styles.paneBg}>
+            <div className={styles.searchBox}>
+              <FilterInput width={0} value={''} onChange={() => {}} placeholder={'Search options'} />
+            </div>
+
+            {topGroups.map((topGroup) => (
+              <OptionsBox key={topGroup.title} title={topGroup.title}>
+                {topGroup.items?.map((child1) => (
+                  <Field label={child1.title} description={child1.description} key={child1.title}>
+                    {child1.reactNode!}
+                  </Field>
+                ))}
+                {topGroup.groups?.map((childGroup) => (
+                  <OptionsGroup id={childGroup.title} key={childGroup.title} title={childGroup.title} defaultToClosed>
+                    {childGroup.items?.map((child2) => (
+                      <Field label={child2.title} description={child2.description} key={child2.title}>
+                        {child2.reactNode!}
+                      </Field>
+                    ))}
+                  </OptionsGroup>
+                ))}
+              </OptionsBox>
+            ))}
+          </div>
         </div>
       </CustomScrollbar>
     </div>
@@ -157,6 +161,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: column;
       padding-top: ${theme.spacing.md};
     `,
+    paneBg: css`
+      background: ${theme.colors.bg1};
+      border: ${theme.colors.border1};
+    `,
     tabsBar: css`
       padding-right: ${theme.spacing.sm};
     `,
@@ -179,8 +187,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.md};
     `,
     searchBox: css`
-      margin-bottom: ${theme.spacing.md};
-      padding: 0;
+      padding: ${theme.spacing.sm};
       display: flex;
       flex-direction: column;
       min-height: 0;

@@ -10,7 +10,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
   const currentOptions = panel.getOptions();
   const currentFieldConfig = panel.fieldConfig;
   const mainCategory: OptionsPaneGroup = {
-    title: plugin.meta.name + ' options',
+    title: 'Visualization options',
     items: [],
     groups: [],
   };
@@ -42,26 +42,28 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     },
   };
 
+  const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneGroup => {
+    const categoryName = (categoryNames && categoryNames[0]) ?? `${plugin.meta.name} options`;
+    const category = categories[categoryName];
+
+    if (category) {
+      return category;
+    }
+
+    const newCategory = (categories[categoryName] = {
+      title: categoryName,
+      items: [],
+    });
+
+    mainCategory.groups!.push(newCategory);
+    return newCategory;
+  };
+
   /**
    * Panel options
    */
   for (const pluginOption of plugin.optionEditors.list()) {
-    let optionCategory = mainCategory;
-    const categoryNames = pluginOption.category;
-    const categoryName = categoryNames && categoryNames.length && categoryNames[0];
-
-    if (categoryName) {
-      optionCategory = categories[categoryName];
-
-      if (!optionCategory) {
-        optionCategory = categories[categoryName] = {
-          title: categoryName,
-          items: [],
-        };
-        mainCategory.groups!.push(optionCategory);
-      }
-    }
-
+    const optionCategory = getOptionsPaneCategory(pluginOption.category);
     const Editor = pluginOption.editor;
 
     optionCategory.items!.push({
@@ -94,22 +96,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       continue;
     }
 
-    let optionCategory = mainCategory;
-    const categoryNames = fieldOption.category;
-    const categoryName = categoryNames && categoryNames.length && categoryNames[0];
-
-    if (categoryName) {
-      optionCategory = categories[categoryName];
-
-      if (!optionCategory) {
-        optionCategory = categories[categoryName] = {
-          title: categoryName,
-          items: [],
-        };
-        mainCategory.groups!.push(optionCategory);
-      }
-    }
-
+    const optionCategory = getOptionsPaneCategory(fieldOption.category);
     const Editor = fieldOption.editor;
 
     const defaults = currentFieldConfig.defaults;
@@ -132,6 +119,25 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       ),
     });
   }
+
+  return mainCategory;
+}
+
+export function getFieldOverrides(props: OptionPaneRenderProps): OptionsPaneGroup {
+  const mainCategory: OptionsPaneGroup = {
+    title: 'Override rules',
+    items: [],
+    groups: [
+      {
+        title: 'Override 1',
+        items: [],
+      },
+      {
+        title: 'Override 2',
+        items: [],
+      },
+    ],
+  };
 
   return mainCategory;
 }

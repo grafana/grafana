@@ -32,11 +32,11 @@ export const OptionsBox: FC<Props> = ({ title, children, className }) => {
 const getStyles = (theme: GrafanaTheme) => {
   return {
     box: css`
-      margin-bottom: ${theme.spacing.md};
       padding: 0;
       display: flex;
       flex-direction: column;
       min-height: 0;
+      margin-bottom: ${theme.spacing.sm};
     `,
     toggle: css`
       color: ${theme.colors.textWeak};
@@ -50,9 +50,10 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       cursor: pointer;
       align-items: baseline;
-      padding: ${theme.spacing.xs} ${theme.spacing.md} ${theme.spacing.xs} ${theme.spacing.sm};
+      padding: ${theme.spacing.xs} ${theme.spacing.sm};
       color: ${theme.colors.formLabel};
       font-weight: ${theme.typography.weight.semibold};
+      //background: ${theme.colors.bg2};
 
       &:hover {
         color: ${theme.colors.text};
@@ -65,8 +66,7 @@ const getStyles = (theme: GrafanaTheme) => {
     body: css`
       position: relative;
       background: ${theme.colors.bodyBg};
-      padding: ${theme.spacing.md} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.md};
-      border: 1px solid ${theme.colors.pageHeaderBorder};
+      padding: ${theme.spacing.sm} ${theme.spacing.md} 0 ${theme.spacing.md};
     `,
   };
 };

@@ -41,7 +41,7 @@ export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
   /**
    * Array of strings representing category of the option. First element in the array will make option render as collapsible section.
    */
-  category?: Array<string | undefined>;
+  category?: string[];
 
   /**
    * Set this value if undefined

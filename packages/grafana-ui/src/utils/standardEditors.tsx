@@ -221,7 +221,7 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, decimals, displayName, noValue, color, thresholds, mappings, links];
+  return [unit, color, min, max, decimals, displayName, noValue, thresholds, mappings, links];
 };
 
 /**

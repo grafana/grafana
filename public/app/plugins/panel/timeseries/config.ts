@@ -41,6 +41,8 @@ export const defaultGraphConfig: GraphFieldConfig = {
 };
 
 export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
+  const categoryStyles = ['Graph styles'];
+
   return {
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -59,6 +61,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'drawStyle',
           name: 'Style',
+          category: categoryStyles,
           defaultValue: cfg.drawStyle,
           settings: {
             options: graphFieldOptions.drawStyle,
@@ -67,6 +70,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'lineInterpolation',
           name: 'Line interpolation',
+          category: categoryStyles,
           defaultValue: cfg.lineInterpolation,
           settings: {
             options: graphFieldOptions.lineInterpolation,
@@ -76,6 +80,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'barAlignment',
           name: 'Bar alignment',
+          category: categoryStyles,
           defaultValue: cfg.barAlignment,
           settings: {
             options: graphFieldOptions.barAlignment,
@@ -85,6 +90,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
+          category: categoryStyles,
           defaultValue: cfg.lineWidth,
           settings: {
             min: 0,
@@ -96,6 +102,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill opacity',
+          category: categoryStyles,
           defaultValue: cfg.fillOpacity,
           settings: {
             min: 0,
@@ -107,6 +114,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'gradientMode',
           name: 'Gradient mode',
+          category: categoryStyles,
           defaultValue: graphFieldOptions.fillGradient[0].value,
           settings: {
             options: graphFieldOptions.fillGradient,
@@ -117,6 +125,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           id: 'fillBelowTo',
           path: 'fillBelowTo',
           name: 'Fill below to',
+          category: categoryStyles,
           editor: FillBellowToEditor,
           override: FillBellowToEditor,
           process: stringOverrideProcessor,
@@ -127,6 +136,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           id: 'lineStyle',
           path: 'lineStyle',
           name: 'Line style',
+          category: categoryStyles,
           showIf: (c) => c.drawStyle === DrawStyle.Line,
           editor: LineStyleEditor,
           override: LineStyleEditor,
@@ -136,6 +146,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'spanNulls',
           name: 'Null values',
+          category: categoryStyles,
           defaultValue: false,
           settings: {
             options: [
@@ -148,6 +159,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addRadio({
           path: 'showPoints',
           name: 'Show points',
+          category: categoryStyles,
           defaultValue: graphFieldOptions.showPoints[0].value,
           settings: {
             options: graphFieldOptions.showPoints,
@@ -157,6 +169,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addSliderInput({
           path: 'pointSize',
           name: 'Point size',
+          category: categoryStyles,
           defaultValue: 5,
           settings: {
             min: 1,
@@ -266,6 +279,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOpti
     .addRadio({
       path: 'legend.displayMode',
       name: 'Legend mode',
+      category: ['Legend'],
       description: '',
       defaultValue: LegendDisplayMode.List,
       settings: {
@@ -279,6 +293,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOpti
     .addRadio({
       path: 'legend.placement',
       name: 'Legend placement',
+      category: ['Legend'],
       description: '',
       defaultValue: 'bottom',
       settings: {
@@ -293,6 +308,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOpti
       id: 'legend.calcs',
       path: 'legend.calcs',
       name: 'Legend calculations',
+      category: ['Legend'],
       description: 'Choose a reducer functions / calculations to include in legend',
       editor: standardEditorsRegistry.get('stats-picker').editor as any,
       defaultValue: [],
