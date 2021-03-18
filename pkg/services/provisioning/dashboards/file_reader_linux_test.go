@@ -24,7 +24,7 @@ func TestProvisionedSymlinkedFolder(t *testing.T) {
 		Options: map[string]interface{}{"path": symlinkedFolder},
 	}
 
-	reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+	reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil)
 	require.NoError(t, err)
 
 	want, err := filepath.Abs(containingID)
