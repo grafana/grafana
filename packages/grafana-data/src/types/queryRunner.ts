@@ -26,7 +26,7 @@ export interface QueryRunnerOptions {
 
 /**
  * Describes the QueryRunner that can used to exectue queries in e.g. app plugins.
- * QueryRunner instances can be created via the {@link @grafana/runtime/createQueryRunner | createQueryRunner}.
+ * QueryRunner instances can be created via the {@link @grafana/runtime#createQueryRunner | createQueryRunner}.
  *
  * @internal
  */

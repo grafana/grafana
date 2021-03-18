@@ -99,6 +99,7 @@ export class QueryRunner implements QueryRunnerSrv {
           // Store preprocessed query results for applying overrides later on in the pipeline
           this.subject.next(this.lastResult);
         },
+        error: (error) => console.error('QueryRunner Error', error),
       });
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
