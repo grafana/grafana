@@ -3,6 +3,7 @@ export default class SupportedNamespaces {
     azuremonitor: [
       'Microsoft.AnalysisServices/servers',
       'Microsoft.ApiManagement/service',
+      'Microsoft.AppConfiguration/configurationStores',
       'Microsoft.Automation/automationAccounts',
       'Microsoft.Batch/batchAccounts',
       'Microsoft.Cache/redis',
