@@ -28,7 +28,6 @@ import (
 )
 
 var (
-	Panels       map[string]*plugins.PanelPlugin
 	StaticRoutes []*plugins.PluginStaticRoute
 	Apps         map[string]*plugins.AppPlugin
 	PluginTypes  map[string]interface{}
@@ -66,12 +65,23 @@ type PluginManager struct {
 	renderer    *plugins.RendererPlugin
 	dataSources map[string]*plugins.DataSourcePlugin
 	plugins     map[string]*plugins.PluginBase
+	panels      map[string]*plugins.PanelPlugin
 }
 
 func init() {
-	registry.RegisterService(&PluginManager{
-		dataSources: map[string]*plugins.DataSourcePlugin{},
+	registry.Register(&registry.Descriptor{
+		Name:     "PluginManager",
+		Instance: newManager(nil),
 	})
+}
+
+func newManager(cfg *setting.Cfg) *PluginManager {
+	return &PluginManager{
+		Cfg:         cfg,
+		dataSources: map[string]*plugins.DataSourcePlugin{},
+		plugins:     map[string]*plugins.PluginBase{},
+		panels:      map[string]*plugins.PanelPlugin{},
+	}
 }
 
 func (pm *PluginManager) Init() error {
@@ -79,9 +89,7 @@ func (pm *PluginManager) Init() error {
 	plog = log.New("plugins")
 
 	StaticRoutes = []*plugins.PluginStaticRoute{}
-	Panels = map[string]*plugins.PanelPlugin{}
 	Apps = map[string]*plugins.AppPlugin{}
-	pm.plugins = map[string]*plugins.PluginBase{}
 	PluginTypes = map[string]interface{}{
 		"panel":      plugins.PanelPlugin{},
 		"datasource": plugins.DataSourcePlugin{},
@@ -133,7 +141,7 @@ func (pm *PluginManager) Init() error {
 		return err
 	}
 
-	for _, panel := range Panels {
+	for _, panel := range pm.panels {
 		staticRoutes := panel.InitFrontendPlugin(pm.Cfg)
 		StaticRoutes = append(StaticRoutes, staticRoutes...)
 	}
@@ -144,7 +152,7 @@ func (pm *PluginManager) Init() error {
 	}
 
 	for _, app := range Apps {
-		staticRoutes := app.InitApp(Panels, pm.dataSources, pm.Cfg)
+		staticRoutes := app.InitApp(pm.panels, pm.dataSources, pm.Cfg)
 		StaticRoutes = append(StaticRoutes, staticRoutes...)
 	}
 
@@ -201,6 +209,10 @@ func (pm *PluginManager) DataSources() []*plugins.DataSourcePlugin {
 
 func (pm *PluginManager) DataSourceCount() int {
 	return len(pm.dataSources)
+}
+
+func (pm *PluginManager) PanelCount() int {
+	return len(pm.panels)
 }
 
 func (pm *PluginManager) Plugins() []*plugins.PluginBase {
@@ -364,7 +376,7 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 		pm.dataSources[p.Id] = p
 		pb = &p.PluginBase
 	case *plugins.PanelPlugin:
-		Panels[p.Id] = p
+		pm.panels[p.Id] = p
 		pb = &p.PluginBase
 	case *plugins.RendererPlugin:
 		pm.renderer = p

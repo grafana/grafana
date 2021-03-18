@@ -77,7 +77,7 @@ func (pm *PluginManager) GetEnabledPlugins(orgID int64) (*plugins.EnabledPlugins
 		}
 	}
 
-	for _, panel := range Panels {
+	for _, panel := range pm.panels {
 		if _, exists := pluginSettingMap[panel.Id]; exists {
 			enabledPlugins.Panels = append(enabledPlugins.Panels, panel)
 		}

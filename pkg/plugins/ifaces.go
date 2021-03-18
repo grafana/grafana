@@ -21,6 +21,8 @@ type Manager interface {
 	DataSourceCount() int
 	// DataSources gets all data sources.
 	DataSources() []*DataSourcePlugin
+	// PanelCount gets the number of panels.
+	PanelCount() int
 	// GetEnabledPlugins gets enabled plugins.
 	GetEnabledPlugins(orgID int64) (*EnabledPlugins, error)
 	// GrafanaLatestVersion gets the latest Grafana version.
