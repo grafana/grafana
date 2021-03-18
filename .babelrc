@@ -8,6 +8,7 @@
         },
         "useBuiltIns": "entry",
         "modules": "false",
+        "corejs": "3.6"
       }
     ]
   ]
