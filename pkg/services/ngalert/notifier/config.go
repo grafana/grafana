@@ -20,11 +20,11 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	var templatesChanged bool
 	paths := make([]string, 0, len(cfg.TemplateFiles))
 	for name, content := range cfg.TemplateFiles {
-		if name != filepath.Base(name) {
+		if name != filepath.Base(filepath.Clean(name)) {
 			return nil, false, fmt.Errorf("template file name '%s' is  not valid", name)
 		}
 
-		err := os.MkdirAll(path, 0755)
+		err := os.MkdirAll(path, 0750)
 		if err != nil {
 			return nil, false, fmt.Errorf("unable to create template directory %q: %s", path, err)
 		}
@@ -33,6 +33,8 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 		paths = append(paths, file)
 
 		// Check if the template file already exists and if it has changed
+		// We can safeily ignore gosec here and we've previously checked the filename is clean
+		// nolint:gosec
 		if tmpl, err := ioutil.ReadFile(file); err == nil && string(tmpl) == content {
 			// Templates file is the same we have, no-op and continue.
 			continue
@@ -43,6 +45,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 		if err := ioutil.WriteFile(file, []byte(content), 0644); err != nil {
 			return nil, false, fmt.Errorf("unable to create Alertmanager template file %q: %s", file, err)
 		}
+		// nolint:gosec
 
 		templatesChanged = true
 	}

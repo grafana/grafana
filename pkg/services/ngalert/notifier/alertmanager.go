@@ -252,7 +252,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiRecei
 		}
 	)
 
-	for _ = range receiver.GrafanaManagedReceivers {
+	for range receiver.GrafanaManagedReceivers {
 		//TODO: How do we turn Grafana receivers into an individual set of receivers?
 	}
 

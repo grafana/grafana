@@ -37,7 +37,7 @@ type Store interface {
 	UpdateAlertDefinitionPaused(*models.UpdateAlertDefinitionPausedCommand) error
 }
 
-// Store is the database interface used by the alert notification service.
+// AlertingStore is the database interface used by the alert notification service.
 type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(cmd *models.GetLatestAlertmanagerConfigurationQuery) error
 }
