@@ -166,4 +166,13 @@
     "action": "updateLabel",
     "addLabel": "datasource/Zipkin"
   }
+    {
+    "type": "changedfiles",
+    "matches": [
+        "public/app/features/variables/**/*",
+        "public/app/features/templating/**/*"
+    ],
+    "action": "updateLabel",
+    "addLabel": "area/dashboard/templating"
+  },
 ]
