@@ -1,8 +1,6 @@
 package setting
 
 import (
-	"os"
-	"runtime"
 	"time"
 
 	"gopkg.in/ini.v1"
@@ -25,9 +23,6 @@ type DateFormatIntervals struct {
 }
 
 const localBrowserTimezone = "browser"
-
-// zoneInfo is the key for setting the path to look for the timezone database in go
-const zoneInfo = "ZONEINFO"
 
 func valueAsTimezone(section *ini.Section, keyName string) (string, error) {
 	timezone := section.Key(keyName).MustString(localBrowserTimezone)
@@ -54,23 +49,9 @@ func (cfg *Cfg) readDateFormats() {
 	cfg.DateFormats.Interval.Year = "YYYY"
 	cfg.DateFormats.UseBrowserLocale = dateFormats.Key("date_format_use_browser_locale").MustBool(false)
 
-	if err := setZoneInfo(); err != nil {
-		cfg.Logger.Error("Can't set ZONEINFO environment variable", "err", err)
-	}
 	timezone, err := valueAsTimezone(dateFormats, "default_timezone")
 	if err != nil {
 		cfg.Logger.Warn("Unknown timezone as default_timezone", "err", err)
 	}
 	cfg.DateFormats.DefaultTimezone = timezone
-}
-
-func setZoneInfo() error {
-	// Fix for missing IANA db on Windows
-	_, zoneInfoSet := os.LookupEnv(zoneInfo)
-	if runtime.GOOS == "windows" && !zoneInfoSet {
-		if err := os.Setenv(zoneInfo, HomePath+"/tools/zoneinfo.zip"); err != nil {
-			return err
-		}
-	}
-	return nil
 }
