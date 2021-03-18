@@ -1,14 +1,8 @@
 package schema
 
-import "cuelang.org/go/cue"
-
-// Shared cue.Runtime that all relevant operations reuse.
-//
-// CUE requires that instances and values come from the same Runtime if they are
-// to interact with each others' methods. Failure to do so leads to panics.
-//
-// TODO figure out how we keep everything using the same cue.Runtime
-var rt *cue.Runtime
+import (
+	"cuelang.org/go/cue"
+)
 
 // A Family is the identifier for a group of related schemas that all specify a
 // single kind of object - e.g., a dashboard.
@@ -32,17 +26,6 @@ type Family struct {
 // It is incumbent on the creator of the Seq to ensure that this invariant is
 // maintained at the time the Seq is created.
 type Seq []VersionedCueSchema
-
-// Validate checks that each member of the Seq is (backwards) compatible with
-// its predecessor.
-func (s Seq) Validate() error {
-	// TODO Check that each schema in the sequence unifies with its predecessor,
-	// when the successor schema is closed and
-
-	// TODO semver-style thinking would entail that something can sit on v0
-	// through breaking changes
-	return nil
-}
 
 // CueSchema represents a single, complete CUE-based schema that can perform
 // operations on Resources.
@@ -120,7 +103,17 @@ type VersionedCueSchema interface {
 //
 // Additional CueSchema may be provided to check for validation.
 func (f *Family) Validate(r Resource, s ...CueSchema) (CueSchema, error) {
-	return nil, nil
+	// Work from latest to earliest
+	var err error
+	for o := len(f.Seqs) - 1; o >= 0; o-- {
+		for i := len(f.Seqs[o]) - 1; i >= 0; i-- {
+			if err = f.Seqs[o][i].Validate(r); err == nil {
+				return f.Seqs[o][i], nil
+			}
+		}
+	}
+	// TODO sloppy, return more than last error
+	return nil, err
 }
 
 // A Resource represents a concrete data object - e.g., JSON
@@ -132,7 +125,7 @@ func (f *Family) Validate(r Resource, s ...CueSchema) (CueSchema, error) {
 // for a resource that can be reused across multiple calls, so that re-parsing
 // isn't necessary.
 type Resource struct {
-	Value cue.Value
+	Value interface{}
 }
 
 // TooNewError indicates that a resource was created from a newer schema version

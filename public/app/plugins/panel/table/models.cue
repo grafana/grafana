@@ -10,15 +10,15 @@ Model: #PanelModelFamily & {
         [
             { // v0.0
                 PanelOptions: {
-                    frameIndex: number
+                    frameIndex: number | *0
                     showHeader: bool | *true
                     sortBy?: ui.TableSortByFieldState
-                } @cuetsy(targetType="interface")
+                }
                 PanelFieldConfig: {
                     width?: int
                     align?: string
                     displayMode?: string
-                } @cuetsy(targetType="interface")
+                }
             },
             { // v0.1
                 seqs[0][0]
@@ -28,7 +28,7 @@ Model: #PanelModelFamily & {
         [
             { // v1.0
                 PanelOptions: {
-                    frameIndex: number
+                    frameIndex: number | *0
                     includeHeader: bool | *true
                     sortBy?: ui.TableSortByFieldState
                 }
@@ -54,8 +54,8 @@ Model: #PanelModelFamily & {
                     frameIndex: _from.PanelOptions.frameIndex
                     includeHeader: _from.PanelOptions.showHeader
                     // TODO how to deal with optional fields in the rel?
-                    if (_from.PanelOptions.sortBy) {
-                        sortBy: _from.PanelOptions.sortBy 
+                    if _from.PanelOptions.sortBy != _|_ {
+                        sortBy: _from.PanelOptions.sortBy | *null
                     }
                 }
                 PanelFieldConfig: _from.PanelFieldConfig

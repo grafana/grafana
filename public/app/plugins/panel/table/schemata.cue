@@ -17,16 +17,6 @@ package grafanaschema
     // describe.
     Kind?: string
 
-    // TODO This encodes the idea that schemata are organized into a series of
-    // (backwards compatible) lineage sequences, with major and minor versions
-    // corresponding to their position in the series of arrays. (i.e. the
-    // first schema in the first lineage is 0.0.)
-    // This approach can, and probably should, change. However, any approach 
-    // will need to maintain certain properties: 
-    //  - Specific versions of a schema can be extracted by querying the family
-    //    with version number
-    //  - (Probably) individual schema do not internally define
-    //    version fields, but instead rely on this SchemaFamily meta-structure to do it
 	seqs: [#Seq, ...#Seq]
 	let lseq = seqs[len(seqs)-1]
 	latest: #LastSchema & { _p: lseq }
@@ -62,20 +52,7 @@ package grafanaschema
     seqs: [#PanelModelSeq, ...#PanelModelSeq]
 	let lseq = seqs[len(seqs)-1]
 	latest: #LastSchema & { _p: lseq }
-}
-
-// This helper properly belongs being declared with dashboards,
-// as the output is tied to the particular structure of dashboards.
-_discriminatedPanel: {
-    _in: {
-        model: #PanelModel
-        type: string
-    }
-    result: {
-        type: _in.type
-        options: _in.model.PanelOptions
-        fieldConfig: defaults: custom: _in.model.PanelFieldConfig
-    }
+    migrations: [...#Migration]
 }
 
 // A Migration defines a relation between two schemata, "_from" and "_to". The

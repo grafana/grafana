@@ -1,24 +1,30 @@
 package grafanaschema
 
+TableCellDisplayMode: {
+  Auto: "auto",
+  ColorText: "color-text",
+  ColorBackground: "color-background",
+  GradientGauge: "gradient-gauge",
+  LcdGauge: "lcd-gauge",
+  JSONView: "json-view",
+  BasicGauge: "basic",
+  Image: "image",
+} @cuetsy(targetType="enum")
 
+TableFieldOptions: {
+  width?: number
+  align: FieldTextAlignment | *"auto"
+  displayMode: TableCellDisplayMode | *"auto"
+  hidden?: bool  // ?? default is missing or false ??
+} @cuetsy(targetType="interface")
 
-@cuetsy(targetType="enum")
+TableSortByFieldState: {
+  displayName: string;
+  desc?: bool;
+} @cuetsy(targetType="interface")
 
-// NOTE: enum should make upper case and remove '-'
-//
-// export enum TableCellDisplayMode {
-//   Auto = 'auto',
-//   ColorText = 'color-text',
-//   ColorBackground = 'color-background',
-//   GradientGauge = '',
-//   LcdGauge = '',
-//   JSONView = '',
-//   BasicGauge = 'basic',
-//   Image = 'image',
-// }
 TooltipMode:          "single" | "multi" | "none"          @cuetsy(targetType="type")
 FieldTextAlignment:   "auto" | "left" | "right" | "center" @cuetsy(targetType="type")
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image"
 AxisPlacement:        "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(targetType="enum")
 PointVisibility:      "auto" | "never" | "always"                             @cuetsy(targetType="enum")
 DrawStyle:            "line" | "bars" | "points"                              @cuetsy(targetType="enum")
