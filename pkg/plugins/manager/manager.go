@@ -29,7 +29,6 @@ import (
 
 var (
 	StaticRoutes []*plugins.PluginStaticRoute
-	Apps         map[string]*plugins.AppPlugin
 	PluginTypes  map[string]interface{}
 
 	plog log.Logger
@@ -66,6 +65,7 @@ type PluginManager struct {
 	dataSources map[string]*plugins.DataSourcePlugin
 	plugins     map[string]*plugins.PluginBase
 	panels      map[string]*plugins.PanelPlugin
+	apps        map[string]*plugins.AppPlugin
 }
 
 func init() {
@@ -81,6 +81,7 @@ func newManager(cfg *setting.Cfg) *PluginManager {
 		dataSources: map[string]*plugins.DataSourcePlugin{},
 		plugins:     map[string]*plugins.PluginBase{},
 		panels:      map[string]*plugins.PanelPlugin{},
+		apps:        map[string]*plugins.AppPlugin{},
 	}
 }
 
@@ -89,7 +90,6 @@ func (pm *PluginManager) Init() error {
 	plog = log.New("plugins")
 
 	StaticRoutes = []*plugins.PluginStaticRoute{}
-	Apps = map[string]*plugins.AppPlugin{}
 	PluginTypes = map[string]interface{}{
 		"panel":      plugins.PanelPlugin{},
 		"datasource": plugins.DataSourcePlugin{},
@@ -151,7 +151,7 @@ func (pm *PluginManager) Init() error {
 		StaticRoutes = append(StaticRoutes, staticRoutes...)
 	}
 
-	for _, app := range Apps {
+	for _, app := range pm.apps {
 		staticRoutes := app.InitApp(pm.panels, pm.dataSources, pm.Cfg)
 		StaticRoutes = append(StaticRoutes, staticRoutes...)
 	}
@@ -215,6 +215,10 @@ func (pm *PluginManager) PanelCount() int {
 	return len(pm.panels)
 }
 
+func (pm *PluginManager) AppCount() int {
+	return len(pm.apps)
+}
+
 func (pm *PluginManager) Plugins() []*plugins.PluginBase {
 	var rslt []*plugins.PluginBase
 	for _, p := range pm.plugins {
@@ -224,8 +228,21 @@ func (pm *PluginManager) Plugins() []*plugins.PluginBase {
 	return rslt
 }
 
+func (pm *PluginManager) Apps() []*plugins.AppPlugin {
+	var rslt []*plugins.AppPlugin
+	for _, p := range pm.apps {
+		rslt = append(rslt, p)
+	}
+
+	return rslt
+}
+
 func (pm *PluginManager) GetPlugin(id string) *plugins.PluginBase {
 	return pm.plugins[id]
+}
+
+func (pm *PluginManager) GetApp(id string) *plugins.AppPlugin {
+	return pm.apps[id]
 }
 
 func (pm *PluginManager) GrafanaLatestVersion() string {
@@ -382,7 +399,7 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 		pm.renderer = p
 		pb = &p.PluginBase
 	case *plugins.AppPlugin:
-		Apps[p.Id] = p
+		pm.apps[p.Id] = p
 		pb = &p.PluginBase
 	default:
 		panic(fmt.Sprintf("Unrecognized plugin type %T", plug))

@@ -17,12 +17,19 @@ type Manager interface {
 	GetDataPlugin(id string) DataPlugin
 	// GetPlugin gets a plugin with a certain ID.
 	GetPlugin(id string) *PluginBase
+	// GetApp gets an app plugin with a certain ID.
+	GetApp(id string) *AppPlugin
 	// DataSourceCount gets the number of data sources.
 	DataSourceCount() int
 	// DataSources gets all data sources.
 	DataSources() []*DataSourcePlugin
+	// Apps gets all app plugins.
+	Apps() []*AppPlugin
 	// PanelCount gets the number of panels.
 	PanelCount() int
+	// AppCount gets the number of apps.
+	AppCount() int
+	// GetEnabledPlugins gets enabled plugins.
 	// GetEnabledPlugins gets enabled plugins.
 	GetEnabledPlugins(orgID int64) (*EnabledPlugins, error)
 	// GrafanaLatestVersion gets the latest Grafana version.
@@ -45,6 +52,8 @@ type Manager interface {
 	ScanningErrors() []PluginError
 	// LoadPluginDashboard loads a plugin dashboard.
 	LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error)
+	// IsAppInstalled returns whether an app is installed.
+	IsAppInstalled(id string) bool
 }
 
 type ImportDashboardInput struct {

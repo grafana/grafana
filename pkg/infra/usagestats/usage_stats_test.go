@@ -294,7 +294,7 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
-			assert.Len(t, manager.Apps, metrics.Get("stats.plugins.apps.count").MustInt())
+			assert.Equal(t, uss.PluginManager.AppCount(), metrics.Get("stats.plugins.apps.count").MustInt())
 			assert.Equal(t, uss.PluginManager.PanelCount(), metrics.Get("stats.plugins.panels.count").MustInt())
 			assert.Equal(t, uss.PluginManager.DataSourceCount(), metrics.Get("stats.plugins.datasources.count").MustInt())
 			assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())

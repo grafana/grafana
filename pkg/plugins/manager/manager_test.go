@@ -33,9 +33,9 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Greater(t, len(pm.dataSources), 1)
 		assert.Greater(t, len(pm.panels), 1)
 		assert.Equal(t, "app/plugins/datasource/graphite/module", pm.dataSources["graphite"].Module)
-		assert.NotEmpty(t, Apps)
-		assert.Equal(t, "public/plugins/test-app/img/logo_large.png", Apps["test-app"].Info.Logos.Large)
-		assert.Equal(t, "public/plugins/test-app/img/screenshot2.png", Apps["test-app"].Info.Screenshots[1].Path)
+		assert.NotEmpty(t, pm.apps)
+		assert.Equal(t, "public/plugins/test-app/img/logo_large.png", pm.apps["test-app"].Info.Logos.Large)
+		assert.Equal(t, "public/plugins/test-app/img/screenshot2.png", pm.apps["test-app"].Info.Screenshots[1].Path)
 	})
 
 	t.Run("With external back-end plugin lacking signature", func(t *testing.T) {
