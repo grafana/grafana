@@ -679,10 +679,5 @@ func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
 }
 
 func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
-	var rslt []*plugins.PluginStaticRoute
-	for _, p := range pm.staticRoutes {
-		rslt = append(rslt, p)
-	}
-
-	return rslt
+	return pm.staticRoutes
 }
