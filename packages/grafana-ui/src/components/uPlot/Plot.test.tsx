@@ -7,6 +7,7 @@ import uPlot from 'uplot';
 import createMockRaf from 'mock-raf';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { preparePlotData } from './utils';
+import { SeriesProps } from './config/UPlotSeriesBuilder';
 
 const mockRaf = createMockRaf();
 const setDataMock = jest.fn();
@@ -53,7 +54,7 @@ const mockData = () => {
   };
 
   const config = new UPlotConfigBuilder();
-  config.addSeries({});
+  config.addSeries({} as SeriesProps);
   return { data, timeRange, config };
 };
 
@@ -162,7 +163,7 @@ describe('UPlotChart', () => {
       expect(uPlot).toBeCalledTimes(1);
 
       const nextConfig = new UPlotConfigBuilder();
-      nextConfig.addSeries({});
+      nextConfig.addSeries({} as SeriesProps);
 
       rerender(
         <UPlotChart data={preparePlotData(data)} config={nextConfig} timeRange={timeRange} width={100} height={100} />
@@ -190,7 +191,7 @@ describe('UPlotChart', () => {
         mockRaf.step({ count: 1 });
       });
       const nextConfig = new UPlotConfigBuilder();
-      nextConfig.addSeries({});
+      nextConfig.addSeries({} as SeriesProps);
 
       rerender(
         <UPlotChart
@@ -211,7 +212,7 @@ describe('UPlotChart', () => {
       const { data, timeRange, config } = mockData();
 
       // 1 series in data, 2 series in config
-      config.addSeries({});
+      config.addSeries({} as SeriesProps);
 
       render(
         <UPlotChart
@@ -252,8 +253,8 @@ describe('UPlotChart', () => {
       });
 
       const nextConfig = new UPlotConfigBuilder();
-      nextConfig.addSeries({});
-      nextConfig.addSeries({});
+      nextConfig.addSeries({} as SeriesProps);
+      nextConfig.addSeries({} as SeriesProps);
 
       // 1 series in data, 2 series in config
       rerender(
