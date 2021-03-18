@@ -158,10 +158,6 @@ func TestDashboardService(t *testing.T) {
 					return nil
 				}
 
-				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
-					return nil
-				})
-
 				dto.Dashboard = models.NewDashboard("Dash")
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
@@ -181,10 +177,6 @@ func TestDashboardService(t *testing.T) {
 				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
-
-				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
-					return nil
-				})
 
 				origUpdateAlerting := UpdateAlerting
 				t.Cleanup(func() {
@@ -221,10 +213,6 @@ func TestDashboardService(t *testing.T) {
 				validateAlerts = func(dash *models.Dashboard, user *models.SignedInUser) error {
 					return nil
 				}
-
-				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
-					return nil
-				})
 
 				origUpdateAlerting := UpdateAlerting
 				t.Cleanup(func() {
