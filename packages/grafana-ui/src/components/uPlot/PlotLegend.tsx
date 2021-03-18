@@ -55,6 +55,11 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
       }
 
       const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+
+      if (!field) {
+        return undefined;
+      }
+
       const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!);
 
       return {
