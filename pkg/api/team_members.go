@@ -3,6 +3,8 @@ package api
 import (
 	"errors"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
@@ -48,7 +50,8 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext, cmd models.AddTeamMemb
 		return response.Error(403, "Not allowed to add team member", err)
 	}
 
-	if err := hs.Bus.Dispatch(&cmd); err != nil {
+	err := addTeamMember(hs.SQLStore, cmd.UserId, cmd.OrgId, cmd.TeamId, cmd.External, cmd.Permission)
+	if err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}
@@ -118,4 +121,12 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to remove Member from Team", err)
 	}
 	return response.Success("Team Member removed")
+}
+
+// addTeamMember adds a team member.
+//
+// Stubbable by tests.
+var addTeamMember = func(sqlStore *sqlstore.SQLStore, userID, orgID, teamID int64, isExternal bool,
+	permission models.PermissionType) error {
+	return sqlStore.AddTeamMember(userID, orgID, teamID, isExternal, permission)
 }
