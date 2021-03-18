@@ -114,7 +114,7 @@ func (g *GrafanaLive) Init() error {
 	}
 	g.node = node
 
-	g.contextGetter = newPluginContextGetter(g.Bus, g.CacheService, g.DatasourceCache)
+	g.contextGetter = newPluginContextGetter(g.Bus, g.PluginManager, g.CacheService, g.DatasourceCache)
 
 	channelPublisher := newPluginChannelPublisher(node)
 	presenceGetter := newPluginPresenceGetter(node)

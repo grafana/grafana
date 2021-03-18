@@ -5,12 +5,13 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins"
+
 	"github.com/grafana/grafana/pkg/bus"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -27,10 +28,10 @@ type datasourceGetter interface {
 	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 }
 
-func Get(pluginID string, datasourceID int64, user *models.SignedInUser, cacheService cacheService, busDispatcher busDispatcher, datasourceGetter datasourceGetter) (backend.PluginContext, bool, error) {
+func Get(pluginID string, datasourceID int64, pluginManager plugins.Manager, user *models.SignedInUser, cacheService cacheService, busDispatcher busDispatcher, datasourceGetter datasourceGetter) (backend.PluginContext, bool, error) {
 	pc := backend.PluginContext{}
-	plugin, exists := manager.Plugins[pluginID]
-	if !exists {
+	plugin := pluginManager.GetPlugin(pluginID)
+	if plugin == nil {
 		return pc, false, nil
 	}
 

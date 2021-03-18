@@ -243,7 +243,7 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 	pluginID := c.Params("pluginId")
 
-	pCtx, found, err := plugincontext.Get(pluginID, 0, c.SignedInUser, hs.CacheService, hs.Bus, hs.DatasourceCache)
+	pCtx, found, err := plugincontext.Get(pluginID, 0, hs.PluginManager, c.SignedInUser, hs.CacheService, hs.Bus, hs.DatasourceCache)
 	if err != nil {
 		return response.Error(500, "Failed to get plugin settings", err)
 	}
@@ -285,7 +285,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 
-	pCtx, found, err := plugincontext.Get(pluginID, 0, c.SignedInUser, hs.CacheService, hs.Bus, hs.DatasourceCache)
+	pCtx, found, err := plugincontext.Get(pluginID, 0, hs.PluginManager, c.SignedInUser, hs.CacheService, hs.Bus, hs.DatasourceCache)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return
@@ -297,7 +297,7 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	hs.BackendPluginManager.CallResource(pCtx, c, c.Params("*"))
 }
 
-func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
 	return response.JSON(200, hs.PluginManager.ScanningErrors())
 }
 
