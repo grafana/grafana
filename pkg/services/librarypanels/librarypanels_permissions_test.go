@@ -343,10 +343,10 @@ func TestLibraryPanelPermissions(t *testing.T) {
 
 				resp := sc.service.getAllHandler(sc.reqContext)
 				require.Equal(t, 200, resp.Status())
-				var actual libraryPanelsResult
+				var actual libraryPanelsSearch
 				err := json.Unmarshal(resp.Body(), &actual)
 				require.NoError(t, err)
-				require.Equal(t, testCase.panels, len(actual.Result))
+				require.Equal(t, testCase.panels, len(actual.Result.LibraryPanels))
 				for _, folderIndex := range testCase.folderIndexes {
 					var folderID = int64(folderIndex + 2) // testScenario creates one folder and general folder doesn't count
 					var foundResult libraryPanel
@@ -359,7 +359,7 @@ func TestLibraryPanelPermissions(t *testing.T) {
 					}
 					require.NotEmpty(t, foundResult)
 
-					for _, result := range actual.Result {
+					for _, result := range actual.Result.LibraryPanels {
 						if result.FolderID == folderID {
 							actualResult = result
 							break
@@ -386,11 +386,11 @@ func TestLibraryPanelPermissions(t *testing.T) {
 
 				resp = sc.service.getAllHandler(sc.reqContext)
 				require.Equal(t, 200, resp.Status())
-				var actual libraryPanelsResult
+				var actual libraryPanelsSearch
 				err := json.Unmarshal(resp.Body(), &actual)
 				require.NoError(t, err)
-				require.Equal(t, 1, len(actual.Result))
-				if diff := cmp.Diff(result.Result, actual.Result[0], getCompareOptions()...); diff != "" {
+				require.Equal(t, 1, len(actual.Result.LibraryPanels))
+				if diff := cmp.Diff(result.Result, actual.Result.LibraryPanels[0], getCompareOptions()...); diff != "" {
 					t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 				}
 			})
