@@ -76,7 +76,7 @@ type HTTPServer struct {
 	QuotaService           *quota.QuotaService                     `inject:""`
 	RemoteCacheService     *remotecache.RemoteCache                `inject:""`
 	ProvisioningService    provisioning.ProvisioningService        `inject:""`
-	Login                  *login.LoginService                     `inject:""`
+	Login                  login.Service                           `inject:""`
 	License                models.Licensing                        `inject:""`
 	BackendPluginManager   backendplugin.Manager                   `inject:""`
 	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`

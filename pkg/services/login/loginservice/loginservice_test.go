@@ -1,4 +1,4 @@
-package login
+package loginservice
 
 import (
 	"errors"
@@ -77,7 +77,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 }
 
 func Test_teamSync(t *testing.T) {
-	login := LoginService{
+	login := Implementation{
 		Bus:          bus.New(),
 		QuotaService: &quota.QuotaService{},
 	}
