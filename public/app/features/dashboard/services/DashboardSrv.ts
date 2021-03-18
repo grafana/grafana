@@ -2,18 +2,19 @@ import coreModule from 'app/core/core_module';
 import { appEvents } from 'app/core/app_events';
 import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
-import { CoreEvents, DashboardMeta } from 'app/types';
+import { DashboardMeta } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { promiseToDigest } from '../../../core/utils/promiseToDigest';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
+import { RemovePanelEvent } from '../../../types/events';
 
 export class DashboardSrv {
   dashboard: DashboardModel;
 
   /** @ngInject */
   constructor(private $rootScope: GrafanaRootScope) {
-    appEvents.on(CoreEvents.removePanel, this.onRemovePanel);
+    appEvents.subscribe(RemovePanelEvent, (e) => this.onRemovePanel(e.payload));
   }
 
   create(dashboard: any, meta: DashboardMeta) {

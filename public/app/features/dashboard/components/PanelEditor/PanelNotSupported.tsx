@@ -5,7 +5,7 @@ import { Button, VerticalGroup } from '@grafana/ui';
 
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { PanelEditorTabId } from './types';
-import { updateLocation } from '../../../../core/actions';
+import { locationService } from '@grafana/runtime';
 
 export interface Props {
   message: string;
@@ -15,7 +15,7 @@ export interface Props {
 export const PanelNotSupported: FC<Props> = ({ message, dispatch: propsDispatch }) => {
   const dispatch = propsDispatch ? propsDispatch : useDispatch();
   const onBackToQueries = useCallback(() => {
-    dispatch(updateLocation({ query: { tab: PanelEditorTabId.Query }, partial: true }));
+    locationService.partial({ tab: PanelEditorTabId.Query });
   }, [dispatch]);
 
   return (
