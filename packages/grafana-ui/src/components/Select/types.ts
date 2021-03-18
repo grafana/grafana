@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import React from 'react';
 
-export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
+export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>> | null;
 export type InputActionMeta = {
   action: 'set-value' | 'input-change' | 'input-blur' | 'menu-close';
 };
