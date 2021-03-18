@@ -144,7 +144,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNes
         display: flex;
         cursor: pointer;
         align-items: baseline;
-        padding: ${theme.spacing.sm} 0;
+        padding: ${theme.spacing.sm};
         color: ${isExpanded ? theme.colors.text : theme.colors.formLabel};
         font-weight: ${theme.typography.weight.semibold};
 
@@ -165,7 +165,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNes
     ),
     body: cx(
       css`
-        padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.lg};
+        padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.xl};
       `,
       isNested &&
         css`

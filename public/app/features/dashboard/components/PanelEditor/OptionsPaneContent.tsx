@@ -7,7 +7,6 @@ import { usePanelLatestData } from './usePanelLatestData';
 import { selectors } from '@grafana/e2e-selectors';
 import { VisualizationButton } from './VisualizationButton';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { OptionsBox } from './OptionsBox';
 import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
 import { getPanelFrameOptions } from './getPanelFrameOptions';
 import { OptionsGroup } from './OptionsGroup';
@@ -49,8 +48,8 @@ export const OptionsPaneContent: React.FC<Props> = ({
   };
 
   topGroups.push(getPanelFrameOptions(optionProps));
-  topGroups.push(getVizualizationOptions(optionProps));
-  topGroups.push(getFieldOverrides(optionProps));
+  topGroups.push(...getVizualizationOptions(optionProps));
+  topGroups.push(...getFieldOverrides(optionProps));
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
@@ -66,7 +65,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
             </div>
 
             {topGroups.map((topGroup) => (
-              <OptionsBox key={topGroup.title} title={topGroup.title}>
+              <OptionsGroup key={topGroup.title} title={topGroup.title} id={topGroup.title}>
                 {topGroup.items?.map((child1) => (
                   <Field label={child1.title} description={child1.description} key={child1.title}>
                     {child1.reactNode!}
@@ -81,7 +80,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
                     ))}
                   </OptionsGroup>
                 ))}
-              </OptionsBox>
+              </OptionsGroup>
             ))}
           </div>
         </div>
@@ -163,7 +162,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     paneBg: css`
       background: ${theme.colors.bg1};
-      border: ${theme.colors.border1};
+      border: 1px solid ${theme.colors.border1};
     `,
     tabsBar: css`
       padding-right: ${theme.spacing.sm};

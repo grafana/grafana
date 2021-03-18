@@ -5,16 +5,11 @@ import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellink
 import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
 import { updateDefaultFieldConfigValue } from './utils';
 
-export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPaneGroup {
+export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPaneGroup[] {
   const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, eventBus } = props;
   const currentOptions = panel.getOptions();
   const currentFieldConfig = panel.fieldConfig;
-  const mainCategory: OptionsPaneGroup = {
-    title: 'Visualization options',
-    items: [],
-    groups: [],
-  };
-
+  const groups: OptionsPaneGroup[] = [];
   const categories: Record<string, OptionsPaneGroup> = {};
 
   const onOptionChange = useCallback(
@@ -55,7 +50,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       items: [],
     });
 
-    mainCategory.groups!.push(newCategory);
+    groups.push(newCategory);
     return newCategory;
   };
 
@@ -120,24 +115,20 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     });
   }
 
-  return mainCategory;
+  return groups;
 }
 
-export function getFieldOverrides(props: OptionPaneRenderProps): OptionsPaneGroup {
-  const mainCategory: OptionsPaneGroup = {
-    title: 'Override rules',
+export function getFieldOverrides(props: OptionPaneRenderProps): OptionsPaneGroup[] {
+  const overrides: OptionsPaneGroup[] = [];
+  overrides.push({
+    title: 'Override 1',
     items: [],
-    groups: [
-      {
-        title: 'Override 1',
-        items: [],
-      },
-      {
-        title: 'Override 2',
-        items: [],
-      },
-    ],
-  };
+  });
 
-  return mainCategory;
+  overrides.push({
+    title: 'Override 2',
+    items: [],
+  });
+
+  return overrides;
 }
