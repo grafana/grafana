@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) response.Response {
+func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) response.Response {
 	cmd := models.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
@@ -32,7 +32,8 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) respon
 		return response.Error(400, "Password is missing or too short", nil)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	user, err := hs.Login.CreateUser(cmd)
+	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return response.Error(400, err.Error(), nil)
 		}
@@ -45,8 +46,6 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) respon
 	}
 
 	metrics.MApiAdminUserCreate.Inc()
-
-	user := cmd.Result
 
 	result := models.UserIdDTO{
 		Message: "User created",
