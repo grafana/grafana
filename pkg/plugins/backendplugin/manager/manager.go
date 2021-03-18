@@ -27,7 +27,10 @@ import (
 )
 
 func init() {
-	registry.RegisterServiceWithPriority(&manager{}, registry.MediumHigh)
+	registry.RegisterServiceWithPriority(&manager{
+		logger:  log.New("plugins.backend"),
+		plugins: map[string]backendplugin.Plugin{},
+	}, registry.MediumHigh)
 }
 
 type manager struct {
@@ -41,10 +44,6 @@ type manager struct {
 }
 
 func (m *manager) Init() error {
-	m.plugins = make(map[string]backendplugin.Plugin)
-	m.logger = log.New("plugins.backend")
-	m.pluginSettings = extractPluginSettings(m.Cfg)
-
 	return nil
 }
 
@@ -57,6 +56,8 @@ func (m *manager) Run(ctx context.Context) error {
 
 // Register registers a backend plugin
 func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	m.extractPluginSettings()
+
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
