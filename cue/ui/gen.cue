@@ -19,8 +19,8 @@ TableFieldOptions: {
 } @cuetsy(targetType="interface")
 
 TableSortByFieldState: {
-  displayName: string;
-  desc?: bool;
+  displayName: string
+  desc?: bool
 } @cuetsy(targetType="interface")
 
 TooltipMode:          "single" | "multi" | "none"          @cuetsy(targetType="type")
