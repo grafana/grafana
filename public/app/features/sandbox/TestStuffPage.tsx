@@ -1,5 +1,5 @@
 import { dateMath, PanelData } from '@grafana/data';
-import { Button, LegendDisplayMode, Table } from '@grafana/ui';
+import { Button, GraphFieldConfig, LegendDisplayMode, Table } from '@grafana/ui';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { QueryGroup } from '../query/components/QueryGroup';
@@ -7,8 +7,9 @@ import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 import { QueryGroupOptions } from 'app/types';
 import { Options } from 'app/plugins/panel/timeseries/types';
 import { QueryRunner } from '../query/state/QueryRunner';
-import { usePanelRenderer } from '@grafana/runtime';
+import { PanelRenderer, PanelRendererType } from '@grafana/runtime';
 
+const TypedPanelRenderer = PanelRenderer as PanelRendererType<Options, GraphFieldConfig>;
 interface State {
   queryRunner: QueryRunner;
   queryOptions: QueryGroupOptions;
@@ -18,7 +19,6 @@ interface State {
 export const TestStuffPage: FC = () => {
   const [state, setState] = useState<State>(getDefaultState());
   const { queryOptions, queryRunner } = state;
-  const PanelRenderer = usePanelRenderer<Options>();
 
   const onRunQueries = () => {
     const timeRange = { from: 'now-1h', to: 'now' };
@@ -77,7 +77,7 @@ export const TestStuffPage: FC = () => {
 
       {data && (
         <div style={{ padding: '16px' }}>
-          <PanelRenderer
+          <TypedPanelRenderer
             title="test"
             onOptionsChange={() => {}}
             pluginId="timeseries"
