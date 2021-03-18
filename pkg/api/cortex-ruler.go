@@ -156,7 +156,7 @@ const (
 )
 
 type ExtendedRuleNode struct {
-	*ApiRuleNode
+	*ApiRuleNode `yaml:",inline"`
 	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
 	GrafanaManagedAlert *ExtendedUpsertAlertDefinitionCommand `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
