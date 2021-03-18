@@ -11,17 +11,16 @@ import (
 
 func TestTraceToFrame(t *testing.T) {
 	t.Run("should transform tempo protobuf response into dataframe", func(t *testing.T) {
-
 		// For what ever reason you cannot easily create pdata.Traces for the TraceToFrame from something more readable
 		// like json. You could tediously create the structures manually using all the setters for everything or use
 		// https://github.com/grafana/tempo/tree/master/pkg/tempopb to create the protobuf structs from something like
-		// json. At the moment jsut saving some real tempo proto response into file and loading was the easiest and
+		// json. At the moment just saving some real tempo proto response into file and loading was the easiest and
 		// as my patience was diminished trying to figure this out, I say it's good enough.
-		data, err := ioutil.ReadFile("testData/tempo_proto_response")
+		proto, err := ioutil.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
 		otTrace := ot_pdata.NewTraces()
-		err = otTrace.FromOtlpProtoBytes(data)
+		err = otTrace.FromOtlpProtoBytes(proto)
 		require.NoError(t, err)
 
 		frame, err := TraceToFrame(otTrace)

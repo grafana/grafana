@@ -12,13 +12,13 @@ import (
 
 type KeyValue struct {
 	Value interface{} `json:"value"`
-	Key string `json:"key"`
+	Key   string      `json:"key"`
 }
 
 type TraceLog struct {
 	// Millisecond epoch time
-	Timestamp float64 `json:"timestamp"`
-	Fields []*KeyValue `json:"fields"`
+	Timestamp float64     `json:"timestamp"`
+	Fields    []*KeyValue `json:"fields"`
 }
 
 func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
@@ -51,7 +51,6 @@ func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 		},
 	}
 
-
 	for i := 0; i < resourceSpans.Len(); i++ {
 		rs := resourceSpans.At(i)
 		rows, err := resourceSpansToRows(rs)
@@ -69,7 +68,6 @@ func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 
 // resourceSpansToRows processes all the spans for a particular resource/service
 func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
-
 	resource := rs.Resource()
 	ilss := rs.InstrumentationLibrarySpans()
 
@@ -103,7 +101,6 @@ func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
 }
 
 func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, resource pdata.Resource) ([]interface{}, error) {
-
 	traceID, err := traceIDToString(span.TraceID())
 	if err != nil {
 		return nil, err
@@ -142,7 +139,7 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 		serviceName,
 		toJSONString(serviceTagsJson),
 		startTime,
-		float64(span.EndTime() - span.StartTime()) / 1_000_000,
+		float64(span.EndTime()-span.StartTime()) / 1_000_000,
 		toJSONString(logs),
 		toJSONString(spanTags),
 	}, nil
@@ -170,7 +167,7 @@ func spanIDToString(spanID pdata.SpanID) (string, error) {
 	if uSpanID == 0 {
 		return "", fmt.Errorf("OC span has an all zeros span ID")
 	}
-	return fmt.Sprintf("%d",uSpanID), nil
+	return fmt.Sprintf("%d", uSpanID), nil
 }
 
 func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
@@ -180,7 +177,7 @@ func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
 		return serviceName, nil
 	}
 
-	tags := make([]*KeyValue, 0, attrs.Len() - 1)
+	tags := make([]*KeyValue, 0, attrs.Len()-1)
 	attrs.ForEach(func(key string, attr pdata.AttributeValue) {
 		if key == conventions.AttributeServiceName {
 			serviceName = attr.StringVal()
@@ -203,8 +200,9 @@ func getAttributeVal(attr pdata.AttributeValue) interface{} {
 		return attr.DoubleVal()
 	case pdata.AttributeValueMAP, pdata.AttributeValueARRAY:
 		return tracetranslator.AttributeValueToString(attr, false)
+	default:
+		return nil
 	}
-	return nil
 }
 
 func getSpanTags(span pdata.Span, instrumentationLibrary pdata.InstrumentationLibrary) []*KeyValue {
@@ -240,14 +238,14 @@ func getTagsFromInstrumentationLibrary(il pdata.InstrumentationLibrary) []*KeyVa
 	if ilName := il.Name(); ilName != "" {
 		kv := &KeyValue{
 			Key:   conventions.InstrumentationLibraryName,
-			Value:  ilName,
+			Value: ilName,
 		}
 		keyValues = append(keyValues, kv)
 	}
 	if ilVersion := il.Version(); ilVersion != "" {
 		kv := &KeyValue{
 			Key:   conventions.InstrumentationLibraryVersion,
-			Value:  ilVersion,
+			Value: ilVersion,
 		}
 		keyValues = append(keyValues, kv)
 	}
@@ -280,8 +278,8 @@ func getTagFromSpanKind(spanKind pdata.SpanKind) *KeyValue {
 
 func getTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
 	return &KeyValue{
-		Key:    tracetranslator.TagStatusCode,
-		Value:  int64(statusCode),
+		Key:   tracetranslator.TagStatusCode,
+		Value: int64(statusCode),
 	}
 }
 
@@ -293,7 +291,6 @@ func getErrorTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
 		}
 	}
 	return nil
-
 }
 
 func getTagFromStatusMsg(statusMsg string) *KeyValue {
@@ -302,7 +299,7 @@ func getTagFromStatusMsg(statusMsg string) *KeyValue {
 	}
 	return &KeyValue{
 		Key:   tracetranslator.TagStatusMsg,
-		Value:  statusMsg,
+		Value: statusMsg,
 	}
 }
 
@@ -310,7 +307,7 @@ func getTagFromTraceState(traceState pdata.TraceState) *KeyValue {
 	if traceState != pdata.TraceStateEmpty {
 		return &KeyValue{
 			Key:   tracetranslator.TagW3CTraceState,
-			Value:  string(traceState),
+			Value: string(traceState),
 		}
 	}
 	return nil
