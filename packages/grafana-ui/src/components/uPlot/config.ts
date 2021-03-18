@@ -93,7 +93,7 @@ export interface LineConfig {
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
   lineStyle?: LineStyle;
-  spanNulls?: boolean;
+  spanNulls?: boolean | number;
 }
 
 /**
