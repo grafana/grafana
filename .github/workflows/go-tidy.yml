@@ -12,7 +12,7 @@ env:
   EMAIL: bot@grafana.com
 
 jobs:
-  tidy-master:
+  go-tidy:
     runs-on: ubuntu-latest
     steps:
       -
@@ -33,7 +33,6 @@ jobs:
         run: |
           cd grafana-enterprise
           git fetch && git checkout $(echo $GITHUB_REF | cut -d'/' -f 3)
-          git branch --show-current
           ./dev.sh >/dev/null
       -
         name: Set up Git
