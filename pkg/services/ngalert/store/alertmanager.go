@@ -13,15 +13,9 @@ var (
 	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an alert configuration")
 )
 
-<<<<<<< HEAD
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.
 // It returns ErrNoAlertmanagerConfiguration if no configuration is found.
 func (st DBstore) GetLatestAlertmanagerConfiguration(query *models.GetLatestAlertmanagerConfigurationQuery) error {
-=======
-// GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuraiton.
-// It returns ErrNoAlertmanagerConfiguration if no configuration is found.
-func (st DBstore) GetLatestAlertmanagerConfiguration(cmd *models.GetLatestAlertmanagerConfigurationQuery) error {
->>>>>>> 1afc8cd47b (Alerting: Add database table for persisting alerting configuration)
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		c := &models.AlertConfiguration{}
 		// The ID is already an auto incremental column, using the ID as an order should guarantee the latest.
@@ -34,11 +28,7 @@ func (st DBstore) GetLatestAlertmanagerConfiguration(cmd *models.GetLatestAlertm
 			return ErrNoAlertmanagerConfiguration
 		}
 
-<<<<<<< HEAD
 		query.Result = c
-=======
-		cmd.Result = c
->>>>>>> 1afc8cd47b (Alerting: Add database table for persisting alerting configuration)
 		return nil
 	})
 }

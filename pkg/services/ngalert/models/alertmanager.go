@@ -7,10 +7,6 @@ type AlertConfiguration struct {
 	ID int64 `xorm:"pk autoincr 'id'"`
 
 	AlertmanagerConfiguration string
-<<<<<<< HEAD
-=======
-	AlertmanagerTemplates     string
->>>>>>> 1afc8cd47b (Alerting: Add database table for persisting alerting configuration)
 	ConfigurationVersion      string
 	CreatedAt                 time.Time `xorm:"created"`
 	UpdatedAt                 time.Time `xorm:"updated"`
