@@ -12,7 +12,7 @@ import (
 
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -193,32 +193,32 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 
 func parseResponse(value model.Value, query *PrometheusQuery) (plugins.DataQueryResult, error) {
 	var queryRes plugins.DataQueryResult
+	frames := data.Frames{}
 
-	data, ok := value.(model.Matrix)
+	matrix, ok := value.(model.Matrix)
 	if !ok {
 		return queryRes, fmt.Errorf("unsupported result format: %q", value.Type().String())
 	}
 
-	for _, v := range data {
-		series := plugins.DataTimeSeries{
-			Name:   formatLegend(v.Metric, query),
-			Tags:   make(map[string]string, len(v.Metric)),
-			Points: make([]plugins.DataTimePoint, 0, len(v.Values)),
-		}
+	for _, v := range matrix {
+		name := formatLegend(v.Metric, query)
+		tags := make(map[string]string, len(v.Metric))
+		timeVector := make([]time.Time, 0, len(v.Values))
+		values := make([]float64, 0, len(v.Values))
 
 		for k, v := range v.Metric {
-			series.Tags[string(k)] = string(v)
+			tags[string(k)] = string(v)
 		}
 
 		for _, k := range v.Values {
-			series.Points = append(series.Points, plugins.DataTimePoint{
-				null.FloatFrom(float64(k.Value)),
-				null.FloatFrom(float64(k.Timestamp.Unix() * 1000)),
-			})
+			timeVector = append(timeVector, time.Unix(k.Timestamp.Unix(), 0).UTC())
+			values = append(values, float64(k.Value))
 		}
-
-		queryRes.Series = append(queryRes.Series, series)
+		frames = append(frames, data.NewFrame(name,
+			data.NewField("time", nil, timeVector),
+			data.NewField("value", tags, values)))
 	}
+	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
 
 	return queryRes, nil
 }
