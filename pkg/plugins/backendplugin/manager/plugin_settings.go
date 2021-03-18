@@ -21,22 +21,14 @@ func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
 }
 
 func getPluginSettings(plugID string, cfg *setting.Cfg) pluginSettings {
-	for id, settings := range cfg.PluginSettings {
-		if id != plugID {
+	ps := pluginSettings{}
+	for k, v := range cfg.PluginSettings[plugID] {
+		if k == "path" || strings.ToLower(k) == "id" {
 			continue
 		}
 
-		ps := pluginSettings{}
-		for k, v := range settings {
-			if k == "path" || strings.ToLower(k) == "id" {
-				continue
-			}
-
-			ps[k] = v
-		}
-
-		return ps
+		ps[k] = v
 	}
 
-	return nil
+	return ps
 }
