@@ -2,13 +2,17 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { HorizontalGroup, Select } from '@grafana/ui';
-import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
+import { DataSourceInstanceSettings, isUnsignedPluginSignature, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../../features/plugins/PluginSignatureBadge';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '../services/dataSourceSrv';
 
-export interface Props {
+/**
+ * Component props description for the {@link DataSourcePicker}
+ *
+ * @internal
+ */
+export interface DataSourcePickerProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: string | null;
   hideTextValue?: boolean;
@@ -26,22 +30,33 @@ export interface Props {
   noDefault?: boolean;
 }
 
-export interface State {
+/**
+ * Component state description for the {@link DataSourcePicker}
+ *
+ * @internal
+ */
+export interface DataSourcePickerState {
   error?: string;
 }
 
-export class DataSourcePicker extends PureComponent<Props, State> {
+/**
+ * Component to be able to select a datasource from the list of installed and enabled
+ * datasources in the current Grafana instance.
+ *
+ * @internal
+ */
+export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataSourcePickerState> {
   dataSourceSrv = getDataSourceSrv();
 
-  static defaultProps: Partial<Props> = {
+  static defaultProps: Partial<DataSourcePickerProps> = {
     autoFocus: false,
     openMenuOnFocus: false,
     placeholder: 'Select datasource',
   };
 
-  state: State = {};
+  state: DataSourcePickerState = {};
 
-  constructor(props: Props) {
+  constructor(props: DataSourcePickerProps) {
     super(props);
   }
 
@@ -62,11 +77,11 @@ export class DataSourcePicker extends PureComponent<Props, State> {
     }
   };
 
-  private getCurrentValue() {
+  private getCurrentValue(): SelectableValue<string> | undefined {
     const { current, hideTextValue, noDefault } = this.props;
 
     if (!current && noDefault) {
-      return null;
+      return;
     }
 
     const ds = this.dataSourceSrv.getInstanceSettings(current);
@@ -83,7 +98,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
 
     return {
       label: (current ?? 'no name') + ' - not found',
-      value: current,
+      value: current === null ? undefined : current,
       imgUrl: '',
       hideText: hideTextValue,
     };

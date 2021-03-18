@@ -1,5 +1,5 @@
 import { Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
+import { DataSourcePicker } from '@grafana/runtime';
 import { css } from 'emotion';
 import React, { useState } from 'react';
 import { ExemplarTraceIdDestination } from '../types';
