@@ -232,8 +232,18 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
    * external interface does not support
    */
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
+    // If the query type does not match, return null.
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     const resourcesQuery = query.match(/^resources\(\)/i);
+    const resourceQuery = query.match(/^resource?\(["']?([^\)]+?)["']?\)/i);
+    const workspaceQuery = query.match(/^workspace?\(["']?([^\)]+?)["']?\)/i);
+    if (
+      ((workspaceQuery || workspacesQuery) && this.configs.queryType === AzureQueryType.ResourceLogAnalytics) ||
+      ((resourceQuery || resourcesQuery) && this.configs.queryType === AzureQueryType.LogAnalytics)
+    ) {
+      return null;
+    }
+
     if (workspacesQuery || resourcesQuery) {
       return this.getWorkspacesOrResources(this.subscriptionId);
     }
@@ -246,16 +256,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const resourcesQueryWithSub = query.match(/^resources\(["']?([^\)]+?)["']?\)/i);
     if (resourcesQueryWithSub) {
       return this.getWorkspacesOrResources((resourcesQueryWithSub[1] || '').trim());
-    }
-
-    // If the query type does not match, return null.
-    const resourceQuery = query.match(/^resource\(["']?([^\)]+?)["']?\)/i);
-    const workspaceQuery = query.match(/^workspace\(["']?([^\)]+?)["']?\)/i);
-    if (
-      (workspaceQuery && this.configs.queryType === AzureQueryType.ResourceLogAnalytics) ||
-      (resourceQuery && this.configs.queryType === AzureQueryType.LogAnalytics)
-    ) {
-      return null;
     }
 
     return this.getDefaultOrFirst().then((id: any) => {
