@@ -141,18 +141,6 @@ func (g *GrafanaLive) Init() error {
 		signalStreamHandler,
 	)
 
-	// TODO: testdata should operate in `plugin` scope to work automatically.
-	testDataStreamHandler, err := g.getStreamPlugin("testdata")
-	if err != nil {
-		return err
-	}
-	g.GrafanaScope.Features["testdata"] = features.NewPluginRunner(
-		"testdata",
-		g.streamManager,
-		g.contextGetter,
-		testDataStreamHandler,
-	)
-
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
 	// different goroutines (belonging to different client connections). This is also
