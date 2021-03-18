@@ -4,7 +4,7 @@ import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureQueryType, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
 import MetricsQueryEditor from '../MetricsQueryEditor';
 import QueryTypeField from './QueryTypeField';
-import useLastError from './useLastError';
+import useLastError from '../../utils/useLastError';
 
 interface BaseQueryEditorProps {
   query: AzureMonitorQuery;
