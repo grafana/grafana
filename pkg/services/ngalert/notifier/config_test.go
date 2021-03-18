@@ -49,7 +49,10 @@ func Test_PersistTemplates(t *testing.T) {
 				if f.IsDir() || f.Name() == "" {
 					continue
 				}
+				// Safe to disable, this is a test.
+				// nolint:gosec
 				content, err := ioutil.ReadFile(filepath.Join(dir, f.Name()))
+				// nolint:gosec
 				require.NoError(t, err)
 				files[f.Name()] = string(content)
 			}
