@@ -2,6 +2,7 @@ package load
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 
@@ -11,16 +12,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var p BaseLoadPaths = BaseLoadPaths{
+	BaseCueFS:       grafana.CoreSchema,
+	DistPluginCueFS: grafana.PluginSchema,
+}
+
+func TestScuemataExists(t *testing.T) {
+	rawmap, err := rawDistPanels(p)
+	require.NoError(t, err, "error while loading raw dist panels")
+
+	for id, plug := range rawmap {
+		t.Run(id, func(t *testing.T) {
+			require.Greater(t, len(plug.fam.Seqs), 0, "no schema in scuemata")
+
+			for maj, seq := range plug.fam.Seqs {
+				for min, sch := range seq {
+					t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
+						cv := sch.CUE()
+						require.True(t, cv.Exists(), "cue value for schema does not exist")
+					})
+				}
+			}
+		})
+	}
+}
+
 func TestDashboardValidity(t *testing.T) {
 
 }
 
 func TestLoadDistPanels(t *testing.T) {
-	p := BaseLoadPaths{
-		BaseCueFS:       grafana.CoreSchema,
-		DistPluginCueFS: grafana.PluginSchema,
-	}
-
 	jmap := make(map[string]interface{})
 	err := json.Unmarshal(testdash, &jmap)
 	require.NoError(t, err)

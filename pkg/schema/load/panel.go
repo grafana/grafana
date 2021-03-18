@@ -431,7 +431,16 @@ func rawDistPanels(p BaseLoadPaths) (map[string]panelFamily, error) {
 		return nil, err
 	}
 
-	// TODO sync.Map?
+	cfg := &load.Config{
+		Overlay: overlay,
+		Package: "scuemata",
+	}
+
+	pmf := cue.Build(load.Instances([]string{"/cue/scuemata/scuemata.cue"}, cfg))[0].LookupDef("#PanelModelFamily")
+	if !pmf.Exists() {
+		return nil, errors.New("could not locate #PanelModelFamily definition")
+	}
+
 	all := make(map[string]panelFamily)
 	err := fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -470,16 +479,11 @@ func rawDistPanels(p BaseLoadPaths) (map[string]panelFamily, error) {
 		id := iid.(string)
 
 		cfg := &load.Config{
-			// Dir:     filepath.Dir(filepath.Join(plugindir, path)),
 			Package: "grafanaschema",
 			Overlay: overlay,
 		}
-		// TODO rely on schemata.cue defined in central location
-		paths := []string{"models.cue", "schemata.cue"}
-		for k, p := range paths {
-			paths[k] = filepath.Join("/", dpath, p)
-		}
-		li := load.Instances(paths, cfg)
+
+		li := load.Instances([]string{filepath.Join("/", dpath, "models.cue")}, cfg)
 		built := cue.Build(li)
 		// TODO this is a silly check...right?
 		if len(built) != 1 {
@@ -493,14 +497,6 @@ func rawDistPanels(p BaseLoadPaths) (map[string]panelFamily, error) {
 		pmod := imod.Lookup("Model")
 		if !pmod.Exists() {
 			return fmt.Errorf("%s does not contain a declaration of its models at path 'Model'", path)
-		}
-
-		// TODO this has to come from a generic/central location - but what does
-		// that mean for being able to specify it in the models.cue file? Do we want
-		// that to be part of the ergonomics of models.cue?
-		pmf := imod.LookupDef("#PanelModelFamily")
-		if !pmf.Exists() {
-			return errors.New("could not locate #PanelModelFamily definition")
 		}
 
 		// Ensure the declared value is subsumed by/correct wrt #PanelModelFamily

@@ -1,11 +1,13 @@
 package grafanaschema
 
-import ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+import (
+    ui "github.com/grafana/grafana/cue/ui:grafanaschema"
+)
+
 
 // TODO remove "Model: " - expect that models.cue has the #PanelModelFamily
 // form at the level of the file struct. (An "emit value", in CUE parlance)
 
-// Model: #PanelModelFamily & {
 Model: {
     seqs: [
         [
@@ -48,20 +50,19 @@ Model: {
             // But NOT having it also means CUE can't actually tell if the
             // _rel definition makes any sense at all. UGHHH. Would it be
             // better to put these directly on the #Seq?
-            _from: seqs[0][1],
-            _to: seqs[1][0],
-            _rel: {
+            from: seqs[0][1]
+            to: seqs[1][0]
+            rel: {
                 PanelOptions: {
-                    frameIndex: _from.PanelOptions.frameIndex
-                    includeHeader: _from.PanelOptions.showHeader
-                    // TODO how to deal with optional fields in the rel?
-                    if _from.PanelOptions.sortBy != _|_ {
-                        sortBy: _from.PanelOptions.sortBy | *null
+                    frameIndex: from.PanelOptions.frameIndex
+                    includeHeader: from.PanelOptions.showHeader
+                    if from.PanelOptions.sortBy != _|_ {
+                        sortBy: from.PanelOptions.sortBy | *null
                     }
                 }
-                PanelFieldConfig: _from.PanelFieldConfig
+                PanelFieldConfig: from.PanelFieldConfig
             }
-            output: _rel & _to
+            result: rel & to
         }
     ]
 }
