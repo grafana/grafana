@@ -63,6 +63,18 @@
 
 <!-- 7.5.0-beta1 END -->
 
+<!-- 7.4.5 START -->
+
+# 7.4.5 (2021-03-18)
+
+### Bug fixes
+
+* **Security**: Fix API permissions issues related to team-sync CVE-2021-28146, CVE-2021-28147. (Enterprise)
+* **Security**: Usage insights requires signed in users CVE-2021-28148. (Enterprise)
+* **Security**: Do not allow editors to incorrectly bypass permissions on the default data source. CVE-2021-27962. (Enterprise)
+
+<!-- 7.4.5 END -->
+
 <!-- 7.4.3 START -->
 
 # 7.4.3 (2021-02-24)
@@ -319,6 +331,17 @@ This option to group query variable values into groups by tags has been an exper
 * **MutableDataFrame**: Remove unique field name constraint and values field index and unused/seldom used stuff. [#27573](https://github.com/grafana/grafana/pull/27573), [@torkelo](https://github.com/torkelo)
 
 <!-- 7.4.0-beta1 END -->
+
+<!-- 7.3.10 START -->
+
+# 7.3.10 (2021-03-18)
+
+### Bug fixes
+
+* **Security**: Fix API permissions issues related to team-sync CVE-2021-28146, CVE-2021-28147. (Enterprise)
+* **Security**: Usage insights requires signed in users CVE-2021-28148. (Enterprise)
+
+<!-- 7.3.10 END -->
 
 <!-- 7.3.7 START -->
 
@@ -1312,6 +1335,17 @@ We have also extended the time zone options so you can select any of the standar
 - **Logs**: Fix error when non-string log level supplied. [#23654](https://github.com/grafana/grafana/pull/23654), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Rich history**: Fix create url and run query for various datasources. [#23627](https://github.com/grafana/grafana/pull/23627), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Security**: Fix XSS vulnerability in table panel. [#23816](https://github.com/grafana/grafana/pull/23816), [@torkelo](https://github.com/torkelo)
+
+<!-- 6.7.6 START -->
+
+# 6.7.6 (2021-03-18)
+
+### Bug fixes
+
+* **Security**: Fix API permissions issues related to team-sync CVE-2021-28147. (Enterprise)
+* **Security**: Usage insights requires signed in users CVE-2021-28148. (Enterprise)
+
+<!-- 6.7.6 END -->
 
 <!-- 6.7.5 START -->
 
