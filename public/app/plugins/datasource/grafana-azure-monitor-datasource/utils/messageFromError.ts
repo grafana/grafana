@@ -1,4 +1,4 @@
-export function messageFromError(error: any): string | undefined {
+export default function messageFromError(error: any): string | undefined {
   if (!error || typeof error !== 'object') {
     return undefined;
   }
