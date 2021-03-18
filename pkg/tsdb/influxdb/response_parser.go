@@ -127,7 +127,7 @@ func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition 
 		return plugins.DataTimePoint{}, err
 	}
 
-	return plugins.DataTimePoint{value, null.FloatFrom(timestamp)}, nil
+	return plugins.DataTimePoint{value, null.FloatFrom(timestamp * 1000)}, nil
 }
 
 func (rp *ResponseParser) parseValue(value interface{}) null.Float {
