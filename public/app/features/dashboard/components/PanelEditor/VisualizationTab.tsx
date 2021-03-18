@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
-import { useTheme, stylesFactory, Icon, Input } from '@grafana/ui';
+import { useTheme, stylesFactory, Icon, Input, RadioButtonGroup } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
@@ -64,6 +64,12 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
       return null;
     }
 
+    const radioOptions = [
+      { label: 'Visualization', value: 'types' },
+      { label: 'Library', value: 'libs' },
+      { label: 'Suggestion', value: 'sug' },
+    ];
+
     return (
       <div className={styles.wrapper}>
         <Field>
@@ -71,11 +77,15 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.currentTarget.value)}
             onKeyPress={onKeyPress}
-            prefix={<Icon name="filter" className={styles.icon} />}
+            prefix={<Icon name="search" />}
             suffix={suffix}
-            placeholder="Filter visualizations"
+            autoFocus
+            placeholder="Search for..."
             ref={ref}
           />
+        </Field>
+        <Field>
+          <RadioButtonGroup options={radioOptions} value="types" fullWidth />
         </Field>
 
         <VizTypePicker
@@ -93,12 +103,10 @@ VisualizationTabUnconnected.displayName = 'VisualizationTabUnconnected';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    icon: css`
-      color: ${theme.palette.gray33};
-    `,
     wrapper: css`
       display: flex;
       flex-direction: column;
+      padding: ${theme.spacing.sm};
     `,
     searchClear: css`
       color: ${theme.palette.gray60};

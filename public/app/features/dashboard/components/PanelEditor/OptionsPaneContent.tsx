@@ -1,16 +1,14 @@
 import React from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, Field, stylesFactory, useTheme } from '@grafana/ui';
+import { CustomScrollbar, useStyles } from '@grafana/ui';
 import { css } from 'emotion';
-import { usePanelLatestData } from './usePanelLatestData';
 import { selectors } from '@grafana/e2e-selectors';
 import { VisualizationButton } from './VisualizationButton';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
-import { getPanelFrameOptions } from './getPanelFrameOptions';
-import { OptionsGroup } from './OptionsGroup';
-import { getFieldOverrides, getVizualizationOptions } from './getVizualizationOptions';
+import { OptionsPaneOptions } from './OptionsPaneOptions';
+import { VisualizationTab } from './VisualizationTab';
+import { useSelector } from 'react-redux';
+import { StoreState } from 'app/types';
 
 interface Props {
   plugin: PanelPlugin;
@@ -33,23 +31,8 @@ export const OptionsPaneContent: React.FC<Props> = ({
   onClose,
   dashboard,
 }: Props) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
-  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
-  const topGroups: OptionsPaneGroup[] = [];
-  const optionProps: OptionPaneRenderProps = {
-    panel,
-    onPanelOptionsChanged,
-    onPanelConfigChange,
-    onFieldConfigsChange,
-    plugin,
-    data,
-    eventBus: dashboard.events,
-  };
-
-  topGroups.push(getPanelFrameOptions(optionProps));
-  topGroups.push(...getVizualizationOptions(optionProps));
-  topGroups.push(...getFieldOverrides(optionProps));
+  const styles = useStyles(getStyles);
+  const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
@@ -60,28 +43,19 @@ export const OptionsPaneContent: React.FC<Props> = ({
           </div>
 
           <div className={styles.paneBg}>
-            <div className={styles.searchBox}>
-              <FilterInput width={0} value={''} onChange={() => {}} placeholder={'Search options'} />
-            </div>
+            {isVizPickerOpen && <VisualizationTab panel={panel} onToggleOptionGroup={() => {}} />}
 
-            {topGroups.map((topGroup) => (
-              <OptionsGroup key={topGroup.title} title={topGroup.title} id={topGroup.title}>
-                {topGroup.items?.map((child1) => (
-                  <Field label={child1.title} description={child1.description} key={child1.title}>
-                    {child1.reactNode!}
-                  </Field>
-                ))}
-                {topGroup.groups?.map((childGroup) => (
-                  <OptionsGroup id={childGroup.title} key={childGroup.title} title={childGroup.title} defaultToClosed>
-                    {childGroup.items?.map((child2) => (
-                      <Field label={child2.title} description={child2.description} key={child2.title}>
-                        {child2.reactNode!}
-                      </Field>
-                    ))}
-                  </OptionsGroup>
-                ))}
-              </OptionsGroup>
-            ))}
+            {!isVizPickerOpen && (
+              <OptionsPaneOptions
+                panel={panel}
+                dashboard={dashboard}
+                plugin={plugin}
+                onClose={onClose}
+                onFieldConfigsChange={onFieldConfigsChange}
+                onPanelOptionsChanged={onPanelOptionsChanged}
+                onPanelConfigChange={onPanelConfigChange}
+              />
+            )}
           </div>
         </div>
       </CustomScrollbar>
@@ -89,66 +63,7 @@ export const OptionsPaneContent: React.FC<Props> = ({
   );
 };
 
-{
-  /* <OptionsBox>
-            {plugin.optionEditors && (
-              <PanelOptionsEditor
-                key="panel options"
-                options={panel.getOptions()}
-                onChange={onPanelOptionsChanged}
-                replaceVariables={panel.replaceVariables}
-                plugin={plugin}
-                data={data?.series}
-                eventBus={dashboard.events}
-              />
-            )}
-            {renderFieldOptions(plugin)}
-          </OptionsBox> */
-}
-
-// const renderFieldOptions = useCallback(
-//   (plugin: PanelPlugin) => {
-//     const fieldConfig = panel.getFieldConfig();
-
-//     if (!fieldConfig || !hasSeries) {
-//       return null;
-//     }
-
-//     return (
-//       <DefaultFieldConfigEditor
-//         config={fieldConfig}
-//         plugin={plugin}
-//         onChange={onFieldConfigsChange}
-//         /* hasSeries makes sure current data is there */
-//         data={data!.series}
-//       />
-//     );
-//   },
-//   [data, plugin, panel, onFieldConfigsChange]
-// );
-
-// const renderFieldOverrideOptions = useCallback(
-//   (plugin: PanelPlugin) => {
-//     const fieldConfig = panel.getFieldConfig();
-
-//     if (!fieldConfig || !hasSeries) {
-//       return null;
-//     }
-
-//     return (
-//       <OverrideFieldConfigEditor
-//         config={fieldConfig}
-//         plugin={plugin}
-//         onChange={onFieldConfigsChange}
-//         /* hasSeries makes sure current data is there */
-//         data={data!.series}
-//       />
-//     );
-//   },
-//   [data, plugin, panel, onFieldConfigsChange]
-// );
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     wrapper: css`
       height: 100%;
@@ -165,32 +80,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       border: 1px solid ${theme.colors.border1};
       flex-grow: 1;
     `,
-    tabsBar: css`
-      padding-right: ${theme.spacing.sm};
-    `,
     vizButtonWrapper: css`
       padding: 0 ${theme.spacing.md} ${theme.spacing.md} 0;
-    `,
-    searchWrapper: css`
-      display: flex;
-      flex-grow: 1;
-      flex-direction: row-reverse;
-    `,
-    searchInput: css`
-      color: ${theme.colors.textWeak};
-      flex-grow: 1;
-    `,
-    searchRemoveIcon: css`
-      cursor: pointer;
-    `,
-    itemsPadding: css`
-      padding: ${theme.spacing.md};
-    `,
-    searchBox: css`
-      padding: ${theme.spacing.sm};
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
     `,
     legacyOptions: css`
       label: legacy-options;
@@ -215,4 +106,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
   };
-});
+};

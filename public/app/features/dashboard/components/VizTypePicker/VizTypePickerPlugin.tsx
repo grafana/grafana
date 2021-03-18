@@ -54,8 +54,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: column;
       text-align: center;
       cursor: pointer;
-      background: ${theme.colors.panelBg};
-      border: 1px solid ${theme.colors.panelBorder};
+      background: ${theme.colors.bg2};
+      border: 1px solid ${theme.colors.border2};
       border-radius: ${theme.border.radius.sm};
       margin-right: 10px;
       align-items: center;
