@@ -42,6 +42,13 @@ export function updateSourcePanel(sourcePanel: PanelModel): ThunkResult<void> {
   };
 }
 
+export function discardPanelChanges(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const { getPanel } = getStore().panelEditor;
+    getPanel().hasChanged = false;
+    dispatch(setDiscardChanges(true));
+  };
+}
 export function exitPanelEditor(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
@@ -50,8 +57,7 @@ export function exitPanelEditor(): ThunkResult<void> {
 
     const panel = getPanel();
     const onDiscard = () => {
-      dispatch(setDiscardChanges(true));
-      panel.hasChanged = false;
+      dispatch(discardPanelChanges());
       onConfirm();
     };
 

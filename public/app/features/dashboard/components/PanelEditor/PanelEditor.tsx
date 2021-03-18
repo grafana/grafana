@@ -30,6 +30,7 @@ import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
 import {
   exitPanelEditor,
+  discardPanelChanges,
   initPanelEditor,
   panelEditorCleanUp,
   updatePanelEditorUIState,
@@ -37,7 +38,6 @@ import {
 } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { setDiscardChanges } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
@@ -83,7 +83,7 @@ const mapDispatchToProps = {
   exitPanelEditor,
   updateSourcePanel,
   panelEditorCleanUp,
-  setDiscardChanges,
+  discardPanelChanges,
   updatePanelEditorUIState,
   updateTimeZoneForSession,
   notifyApp,
@@ -126,9 +126,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onDiscard = () => {
-    this.props.setDiscardChanges(true);
-    this.props.panel.hasChanged = false;
-
+    this.props.discardPanelChanges();
     this.onBack();
   };
 
@@ -153,12 +151,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       return;
     }
 
-    if (this.props.panel.libraryPanel.meta.connectedDashboards === 0) {
-      return;
-    }
-
     const connectedDashboards = await getLibraryPanelConnectedDashboards(this.props.panel.libraryPanel.uid);
-    if (connectedDashboards.length === 1 && connectedDashboards.includes(this.props.dashboard.id)) {
+    if (
+      connectedDashboards.length === 0 ||
+      (connectedDashboards.length === 1 && connectedDashboards.includes(this.props.dashboard.id))
+    ) {
       try {
         await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
         this.props.updateSourcePanel(this.props.panel);
