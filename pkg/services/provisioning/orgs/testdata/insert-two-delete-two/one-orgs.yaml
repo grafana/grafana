@@ -1,0 +1,5 @@
+orgs:
+  - id: 1
+    name: New First Org
+deleteOrgs:
+  - id: 3

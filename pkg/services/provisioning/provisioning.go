@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
+	"github.com/grafana/grafana/pkg/services/provisioning/orgs"
 	"github.com/grafana/grafana/pkg/services/provisioning/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,6 +23,7 @@ type ProvisioningService interface {
 	ProvisionPlugins() error
 	ProvisionNotifications() error
 	ProvisionDashboards() error
+	ProvisionOrgs() error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
 }
@@ -34,6 +36,7 @@ func init() {
 			notifiers.Provision,
 			datasources.Provision,
 			plugins.Provision,
+			orgs.Provision,
 		),
 		InitPriority: registry.Low,
 	})
@@ -44,6 +47,7 @@ func newProvisioningServiceImpl(
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
 	provisionPlugins func(string) error,
+	provisionOrgs func(string) error,
 ) *provisioningServiceImpl {
 	return &provisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -51,6 +55,7 @@ func newProvisioningServiceImpl(
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
+		provisionOrgs:           provisionOrgs,
 	}
 }
 
@@ -65,11 +70,17 @@ type provisioningServiceImpl struct {
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
 	provisionPlugins        func(string) error
+	provisionOrgs           func(string) error
 	mutex                   sync.Mutex
 }
 
 func (ps *provisioningServiceImpl) Init() error {
-	err := ps.ProvisionDatasources()
+	err := ps.ProvisionOrgs()
+	if err != nil {
+		return err
+	}
+
+	err = ps.ProvisionDatasources()
 	if err != nil {
 		return err
 	}
@@ -114,6 +125,12 @@ func (ps *provisioningServiceImpl) Run(ctx context.Context) error {
 			return ctx.Err()
 		}
 	}
+}
+
+func (ps *provisioningServiceImpl) ProvisionOrgs() error {
+	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "orgs")
+	err := ps.provisionOrgs(datasourcePath)
+	return errutil.Wrap("Org provisioning error", err)
 }
 
 func (ps *provisioningServiceImpl) ProvisionDatasources() error {
