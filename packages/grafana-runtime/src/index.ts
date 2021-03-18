@@ -14,3 +14,4 @@ export { DataSourceWithBackend, HealthCheckResult, HealthStatus } from './utils/
 export { toDataQueryError, toDataQueryResponse, frameToMetricFindValue } from './utils/queryResponse';
 export * from './components/PanelRenderer';
 export { setQueryRunnerFactory, createQueryRunner, QueryRunnerFactory } from './services/QueryRunner';
+export { DataSourcePicker, DataSourcePickerProps, DataSourcePickerState } from './components/DataSourcePicker';

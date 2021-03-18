@@ -10,8 +10,8 @@ import {
   InputControl,
   Legend,
 } from '@grafana/ui';
+import { DataSourcePicker } from '@grafana/runtime';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
 

@@ -7,19 +7,19 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // POST /api/teams
 func (hs *HTTPServer) CreateTeam(c *models.ReqContext, cmd models.CreateTeamCommand) response.Response {
-	cmd.OrgId = c.OrgId
-
 	if c.OrgRole == models.ROLE_VIEWER {
 		return response.Error(403, "Not allowed to create team.", nil)
 	}
 
-	if err := hs.Bus.Dispatch(&cmd); err != nil {
+	team, err := createTeam(hs.SQLStore, cmd.Name, cmd.Email, c.OrgId)
+	if err != nil {
 		if errors.Is(err, models.ErrTeamNameTaken) {
 			return response.Error(409, "Team name taken", err)
 		}
@@ -31,23 +31,17 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext, cmd models.CreateTeamComm
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
 		if c.SignedInUser.IsRealUser() {
-			addMemberCmd := models.AddTeamMemberCommand{
-				UserId:     c.SignedInUser.UserId,
-				OrgId:      cmd.OrgId,
-				TeamId:     cmd.Result.Id,
-				Permission: models.PERMISSION_ADMIN,
-			}
-
-			if err := hs.Bus.Dispatch(&addMemberCmd); err != nil {
-				c.Logger.Error("Could not add creator to team.", "error", err)
+			if err := addTeamMember(hs.SQLStore, c.SignedInUser.UserId, c.OrgId, team.Id, false,
+				models.PERMISSION_ADMIN); err != nil {
+				c.Logger.Error("Could not add creator to team", "error", err)
 			}
 		} else {
-			c.Logger.Warn("Could not add creator to team because is not a real user.")
+			c.Logger.Warn("Could not add creator to team because is not a real user")
 		}
 	}
 
 	return response.JSON(200, &util.DynMap{
-		"teamId":  cmd.Result.Id,
+		"teamId":  team.Id,
 		"message": "Team created",
 	})
 }
@@ -174,4 +168,19 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext, dtoCmd dtos.Up
 	}
 
 	return updatePreferencesFor(orgId, 0, teamId, &dtoCmd)
+}
+
+// createTeam creates a team.
+//
+// Stubbable by tests.
+var createTeam = func(sqlStore *sqlstore.SQLStore, name, email string, orgID int64) (models.Team, error) {
+	return sqlStore.CreateTeam(name, email, orgID)
+}
+
+// addTeamMember adds a team member.
+//
+// Stubbable by tests.
+var addTeamMember = func(sqlStore *sqlstore.SQLStore, userID, orgID, teamID int64, isExternal bool,
+	permission models.PermissionType) error {
+	return sqlStore.AddTeamMember(userID, orgID, teamID, isExternal, permission)
 }
