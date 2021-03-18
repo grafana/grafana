@@ -1,11 +1,11 @@
 # This action is responsible for running `go mod tidy` to sync go dependencies.
-# It is meant to run daily based on a cronjob.
 name: go tidy
 
-# Go tidy is meant to run daily at midnight
 on:
-  schedule:
-    - cron: '0 0 * * *'
+  push:
+    branches:
+    - master
+    - v[0-9]+.[0-9]+.[0-9]+
 
 env:
   GITHUB_TOKEN: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
@@ -13,7 +13,7 @@ env:
   EMAIL: bot@grafana.com
 
 jobs:
-  tidy:
+  tidy-master:
     runs-on: ubuntu-latest
     steps:
       -
