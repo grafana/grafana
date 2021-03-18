@@ -153,22 +153,23 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     wrapper: css`
       height: 100%;
       width: 100%;
-      padding-right: ${theme.spacing.sm};
     `,
     panelOptionsPane: css`
       display: flex;
       flex-direction: column;
       padding-top: ${theme.spacing.md};
+      flex-grow: 1;
     `,
     paneBg: css`
       background: ${theme.colors.bg1};
       border: 1px solid ${theme.colors.border1};
+      flex-grow: 1;
     `,
     tabsBar: css`
       padding-right: ${theme.spacing.sm};
     `,
     vizButtonWrapper: css`
-      padding: 0 0 ${theme.spacing.md} 0;
+      padding: 0 ${theme.spacing.md} ${theme.spacing.md} 0;
     `,
     searchWrapper: css`
       display: flex;
