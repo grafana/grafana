@@ -133,12 +133,12 @@ func (s *seeder) createOrUpdateRole(ctx context.Context, role accesscontrol.Role
 
 	existingPermissions, err := s.Store.GetRolePermissions(ctx, old.ID)
 	if err != nil {
-		s.log.Info("failed to get current permissions for role", "name", role.Name, "err", err)
+		return 0, fmt.Errorf("failed to get current permissions for role '%s': %w", role.Name, err)
 	}
 
 	err = s.idempotentUpdatePermissions(ctx, old.ID, role.Permissions, existingPermissions)
 	if err != nil {
-		s.log.Error("failed to update role permissions", "name", role.Name, "err", err)
+		return 0, fmt.Errorf("failed to update role permissions for role '%s': %w", role.Name, err)
 	}
 	return old.ID, nil
 }
