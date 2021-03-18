@@ -4,7 +4,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { useMemo } from 'react';
 import { supportsDataQuery } from '../PanelEditor/utils';
-import { InspectTab } from './types';
+import { InspectTab } from 'app/features/inspector/types';
 
 /**
  * Given PanelData return first data source supporting metadata inspector

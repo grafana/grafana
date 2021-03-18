@@ -24,6 +24,7 @@ export const getPanelInspectorStyles = stylesFactory(() => {
     `,
     content: css`
       flex-grow: 1;
+      height: 100%;
       padding-bottom: 16px;
     `,
     contentQueryInspector: css`

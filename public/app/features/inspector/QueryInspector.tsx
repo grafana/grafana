@@ -7,7 +7,7 @@ import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
-import { supportsDataQuery } from '../PanelEditor/utils';
+import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { config } from '@grafana/runtime';
 import { css } from 'emotion';
 import { Subscription } from 'rxjs';
@@ -27,8 +27,9 @@ interface ExecutedQueryInfo {
 }
 
 interface Props {
-  panel: PanelModel;
   data: DataFrame[];
+  onRefreshQuery: () => void;
+  panel?: PanelModel;
 }
 
 interface State {
@@ -66,8 +67,10 @@ export class QueryInspector extends PureComponent<Props, State> {
       })
     );
 
-    this.subs.add(panel.events.subscribe(RefreshEvent, this.onPanelRefresh));
-    this.updateQueryList();
+    if (panel) {
+      this.subs.add(panel.events.subscribe(RefreshEvent, this.onPanelRefresh));
+      this.updateQueryList();
+    }
   }
 
   componentDidUpdate(oldProps: Props) {
@@ -110,10 +113,6 @@ export class QueryInspector extends PureComponent<Props, State> {
 
     this.setState({ executedQueries });
   }
-
-  onIssueNewQuery = () => {
-    this.props.panel.refresh();
-  };
 
   componentWillUnmount() {
     this.subs.unsubscribe();
@@ -255,12 +254,13 @@ export class QueryInspector extends PureComponent<Props, State> {
 
   render() {
     const { allNodesExpanded, executedQueries } = this.state;
+    const { panel, onRefreshQuery } = this.props;
     const { response, isLoading } = this.state.dsQuery;
     const openNodes = this.getNrOfOpenNodes();
     const styles = getPanelInspectorStyles();
     const haveData = Object.keys(response).length > 0;
 
-    if (!supportsDataQuery(this.props.panel.plugin)) {
+    if (panel && !supportsDataQuery(panel.plugin)) {
       return null;
     }
 
@@ -277,7 +277,7 @@ export class QueryInspector extends PureComponent<Props, State> {
         <div className={styles.toolbar}>
           <Button
             icon="sync"
-            onClick={this.onIssueNewQuery}
+            onClick={onRefreshQuery}
             aria-label={selectors.components.PanelInspector.Query.refreshButton}
           >
             Refresh
