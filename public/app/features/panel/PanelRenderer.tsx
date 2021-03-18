@@ -7,7 +7,7 @@ import { useAsync } from 'react-use';
 import { getPanelOptionsWithDefaults, OptionDefaults } from '../dashboard/state/getPanelOptionsWithDefaults';
 import { importPanelPlugin } from '../plugins/plugin_loader';
 
-export function PanelRenderer<T extends object = any>(props: PanelRendererProps<T>) {
+export function PanelRenderer<P extends object = any, F extends object = any>(props: PanelRendererProps<P, F>) {
   const {
     pluginId,
     data,
@@ -66,10 +66,10 @@ export function PanelRenderer<T extends object = any>(props: PanelRendererProps<
   );
 }
 
-const useOptionDefaults = <T extends object = any>(
+const useOptionDefaults = <P extends object = any, F extends object = any>(
   plugin: PanelPlugin | undefined,
-  options: T,
-  fieldConfig: FieldConfigSource<T>
+  options: P,
+  fieldConfig: FieldConfigSource<F>
 ): OptionDefaults | undefined => {
   return useMemo(() => {
     if (!plugin) {

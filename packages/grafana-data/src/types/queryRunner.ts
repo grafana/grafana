@@ -4,6 +4,11 @@ import { PanelData } from './panel';
 import { ScopedVars } from './ScopedVars';
 import { TimeRange, TimeZone } from './time';
 
+/**
+ * Describes the options used when triggering a query via the {@link QueryRunner}.
+ *
+ * @internal
+ */
 export interface QueryRunnerOptions {
   datasource: string | DataSourceApi | null;
   queries: DataQuery[];
@@ -19,6 +24,12 @@ export interface QueryRunnerOptions {
   app?: string;
 }
 
+/**
+ * Describes the QueryRunner that can used to exectue queries in e.g. app plugins.
+ * QueryRunner instances can be created via the {@link @grafana/runtime/createQueryRunner | createQueryRunner}.
+ *
+ * @internal
+ */
 export interface QueryRunner {
   get(): Observable<PanelData>;
   run(options: QueryRunnerOptions): Promise<void>;
