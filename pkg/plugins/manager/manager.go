@@ -28,11 +28,6 @@ import (
 )
 
 var (
-	Panels       map[string]*plugins.PanelPlugin
-	StaticRoutes []*plugins.PluginStaticRoute
-	Apps         map[string]*plugins.AppPlugin
-	PluginTypes  map[string]interface{}
-
 	plog log.Logger
 )
 
@@ -63,31 +58,34 @@ type PluginManager struct {
 	grafanaHasUpdate              bool
 	pluginScanningErrors          map[string]plugins.PluginError
 
-	renderer    *plugins.RendererPlugin
-	dataSources map[string]*plugins.DataSourcePlugin
-	plugins     map[string]*plugins.PluginBase
+	renderer     *plugins.RendererPlugin
+	dataSources  map[string]*plugins.DataSourcePlugin
+	plugins      map[string]*plugins.PluginBase
+	panels       map[string]*plugins.PanelPlugin
+	apps         map[string]*plugins.AppPlugin
+	staticRoutes []*plugins.PluginStaticRoute
 }
 
 func init() {
-	registry.RegisterService(&PluginManager{
-		dataSources: map[string]*plugins.DataSourcePlugin{},
+	registry.Register(&registry.Descriptor{
+		Name:     "PluginManager",
+		Instance: newManager(nil),
 	})
+}
+
+func newManager(cfg *setting.Cfg) *PluginManager {
+	return &PluginManager{
+		Cfg:         cfg,
+		dataSources: map[string]*plugins.DataSourcePlugin{},
+		plugins:     map[string]*plugins.PluginBase{},
+		panels:      map[string]*plugins.PanelPlugin{},
+		apps:        map[string]*plugins.AppPlugin{},
+	}
 }
 
 func (pm *PluginManager) Init() error {
 	pm.log = log.New("plugins")
 	plog = log.New("plugins")
-
-	StaticRoutes = []*plugins.PluginStaticRoute{}
-	Panels = map[string]*plugins.PanelPlugin{}
-	Apps = map[string]*plugins.AppPlugin{}
-	pm.plugins = map[string]*plugins.PluginBase{}
-	PluginTypes = map[string]interface{}{
-		"panel":      plugins.PanelPlugin{},
-		"datasource": plugins.DataSourcePlugin{},
-		"app":        plugins.AppPlugin{},
-		"renderer":   plugins.RendererPlugin{},
-	}
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
 
 	pm.log.Info("Starting plugin search")
@@ -133,24 +131,24 @@ func (pm *PluginManager) Init() error {
 		return err
 	}
 
-	for _, panel := range Panels {
+	for _, panel := range pm.panels {
 		staticRoutes := panel.InitFrontendPlugin(pm.Cfg)
-		StaticRoutes = append(StaticRoutes, staticRoutes...)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
 	}
 
 	for _, ds := range pm.dataSources {
 		staticRoutes := ds.InitFrontendPlugin(pm.Cfg)
-		StaticRoutes = append(StaticRoutes, staticRoutes...)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
 	}
 
-	for _, app := range Apps {
-		staticRoutes := app.InitApp(Panels, pm.dataSources, pm.Cfg)
-		StaticRoutes = append(StaticRoutes, staticRoutes...)
+	for _, app := range pm.apps {
+		staticRoutes := app.InitApp(pm.panels, pm.dataSources, pm.Cfg)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
 	}
 
 	if pm.renderer != nil {
 		staticRoutes := pm.renderer.InitFrontendPlugin(pm.Cfg)
-		StaticRoutes = append(StaticRoutes, staticRoutes...)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
 	}
 
 	for _, p := range pm.plugins {
@@ -203,6 +201,14 @@ func (pm *PluginManager) DataSourceCount() int {
 	return len(pm.dataSources)
 }
 
+func (pm *PluginManager) PanelCount() int {
+	return len(pm.panels)
+}
+
+func (pm *PluginManager) AppCount() int {
+	return len(pm.apps)
+}
+
 func (pm *PluginManager) Plugins() []*plugins.PluginBase {
 	var rslt []*plugins.PluginBase
 	for _, p := range pm.plugins {
@@ -212,8 +218,21 @@ func (pm *PluginManager) Plugins() []*plugins.PluginBase {
 	return rslt
 }
 
+func (pm *PluginManager) Apps() []*plugins.AppPlugin {
+	var rslt []*plugins.AppPlugin
+	for _, p := range pm.apps {
+		rslt = append(rslt, p)
+	}
+
+	return rslt
+}
+
 func (pm *PluginManager) GetPlugin(id string) *plugins.PluginBase {
 	return pm.plugins[id]
+}
+
+func (pm *PluginManager) GetApp(id string) *plugins.AppPlugin {
+	return pm.apps[id]
 }
 
 func (pm *PluginManager) GrafanaLatestVersion() string {
@@ -270,6 +289,13 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 	pm.log.Debug("Initial plugin loading done")
 
+	pluginTypes := map[string]interface{}{
+		"panel":      plugins.PanelPlugin{},
+		"datasource": plugins.DataSourcePlugin{},
+		"app":        plugins.AppPlugin{},
+		"renderer":   plugins.RendererPlugin{},
+	}
+
 	// 2nd pass: Validate and register plugins
 	for dpath, plugin := range scanner.plugins {
 		// Try to find any root plugin
@@ -298,7 +324,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 		pm.log.Debug("Attempting to add plugin", "id", plugin.Id)
 
-		pluginGoType, exists := PluginTypes[plugin.Type]
+		pluginGoType, exists := pluginTypes[plugin.Type]
 		if !exists {
 			return fmt.Errorf("unknown plugin type %q", plugin.Type)
 		}
@@ -364,13 +390,13 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 		pm.dataSources[p.Id] = p
 		pb = &p.PluginBase
 	case *plugins.PanelPlugin:
-		Panels[p.Id] = p
+		pm.panels[p.Id] = p
 		pb = &p.PluginBase
 	case *plugins.RendererPlugin:
 		pm.renderer = p
 		pb = &p.PluginBase
 	case *plugins.AppPlugin:
-		Apps[p.Id] = p
+		pm.apps[p.Id] = p
 		pb = &p.PluginBase
 	default:
 		panic(fmt.Sprintf("Unrecognized plugin type %T", plug))
@@ -650,4 +676,8 @@ func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
 	}
 
 	return nil
+}
+
+func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
+	return pm.staticRoutes
 }

@@ -31,11 +31,11 @@ func TestPluginManager_Init(t *testing.T) {
 
 		assert.Empty(t, pm.scanningErrors)
 		assert.Greater(t, len(pm.dataSources), 1)
-		assert.Greater(t, len(Panels), 1)
+		assert.Greater(t, len(pm.panels), 1)
 		assert.Equal(t, "app/plugins/datasource/graphite/module", pm.dataSources["graphite"].Module)
-		assert.NotEmpty(t, Apps)
-		assert.Equal(t, "public/plugins/test-app/img/logo_large.png", Apps["test-app"].Info.Logos.Large)
-		assert.Equal(t, "public/plugins/test-app/img/screenshot2.png", Apps["test-app"].Info.Screenshots[1].Path)
+		assert.NotEmpty(t, pm.apps)
+		assert.Equal(t, "public/plugins/test-app/img/logo_large.png", pm.apps["test-app"].Info.Logos.Large)
+		assert.Equal(t, "public/plugins/test-app/img/screenshot2.png", pm.apps["test-app"].Info.Screenshots[1].Path)
 	})
 
 	t.Run("With external back-end plugin lacking signature", func(t *testing.T) {
@@ -253,15 +253,12 @@ func createManager(t *testing.T, cbs ...func(*PluginManager)) *PluginManager {
 	staticRootPath, err := filepath.Abs("../../../public/")
 	require.NoError(t, err)
 
-	pm := &PluginManager{
-		Cfg: &setting.Cfg{
-			Raw:            ini.Empty(),
-			Env:            setting.Prod,
-			StaticRootPath: staticRootPath,
-		},
-		BackendPluginManager: &fakeBackendPluginManager{},
-		dataSources:          map[string]*plugins.DataSourcePlugin{},
-	}
+	pm := newManager(&setting.Cfg{
+		Raw:            ini.Empty(),
+		Env:            setting.Prod,
+		StaticRootPath: staticRootPath,
+	})
+	pm.BackendPluginManager = &fakeBackendPluginManager{}
 	for _, cb := range cbs {
 		cb(pm)
 	}

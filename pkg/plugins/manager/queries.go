@@ -30,7 +30,7 @@ func (pm *PluginManager) GetPluginSettings(orgID int64) (map[string]*models.Plug
 		}
 
 		// apps are disabled by default unless autoEnabled: true
-		if app, exists := Apps[pluginDef.Id]; exists {
+		if app, exists := pm.apps[pluginDef.Id]; exists {
 			opt.Enabled = app.AutoEnabled
 			opt.Pinned = app.AutoEnabled
 		}
@@ -63,7 +63,7 @@ func (pm *PluginManager) GetEnabledPlugins(orgID int64) (*plugins.EnabledPlugins
 		return enabledPlugins, err
 	}
 
-	for pluginID, app := range Apps {
+	for pluginID, app := range pm.apps {
 		if b, ok := pluginSettingMap[pluginID]; ok {
 			app.Pinned = b.Pinned
 			enabledPlugins.Apps = append(enabledPlugins.Apps, app)
@@ -77,7 +77,7 @@ func (pm *PluginManager) GetEnabledPlugins(orgID int64) (*plugins.EnabledPlugins
 		}
 	}
 
-	for _, panel := range Panels {
+	for _, panel := range pm.panels {
 		if _, exists := pluginSettingMap[panel.Id]; exists {
 			enabledPlugins.Panels = append(enabledPlugins.Panels, panel)
 		}
@@ -87,7 +87,7 @@ func (pm *PluginManager) GetEnabledPlugins(orgID int64) (*plugins.EnabledPlugins
 }
 
 // IsAppInstalled checks if an app plugin with provided plugin ID is installed.
-func IsAppInstalled(pluginID string) bool {
-	_, exists := Apps[pluginID]
+func (pm *PluginManager) IsAppInstalled(pluginID string) bool {
+	_, exists := pm.apps[pluginID]
 	return exists
 }

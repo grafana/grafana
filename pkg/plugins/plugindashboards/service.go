@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -21,9 +20,9 @@ func init() {
 }
 
 type Service struct {
-	DataService   *tsdb.Service          `inject:""`
-	PluginManager *manager.PluginManager `inject:""`
-	SQLStore      *sqlstore.SQLStore     `inject:""`
+	DataService   *tsdb.Service      `inject:""`
+	PluginManager plugins.Manager    `inject:""`
+	SQLStore      *sqlstore.SQLStore `inject:""`
 
 	logger log.Logger
 }

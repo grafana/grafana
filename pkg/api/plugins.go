@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -168,7 +167,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		SignatureOrg:  def.SignatureOrg,
 	}
 
-	if app, ok := manager.Apps[def.Id]; ok {
+	if app := hs.PluginManager.GetApp(def.Id); app != nil {
 		dto.Enabled = app.AutoEnabled
 		dto.Pinned = app.AutoEnabled
 	}
@@ -187,16 +186,15 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	return response.JSON(200, dto)
 }
 
-func UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) response.Response {
+func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext, cmd models.UpdatePluginSettingCmd) response.Response {
 	pluginID := c.Params(":pluginId")
+
+	if app := hs.PluginManager.GetApp(pluginID); app == nil {
+		return response.Error(404, "Plugin not installed", nil)
+	}
 
 	cmd.OrgId = c.OrgId
 	cmd.PluginId = pluginID
-
-	if _, ok := manager.Apps[cmd.PluginId]; !ok {
-		return response.Error(404, "Plugin not installed.", nil)
-	}
-
 	if err := bus.Dispatch(&cmd); err != nil {
 		return response.Error(500, "Failed to update plugin setting", err)
 	}

@@ -294,8 +294,8 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
-			assert.Equal(t, len(manager.Apps), metrics.Get("stats.plugins.apps.count").MustInt())
-			assert.Equal(t, len(manager.Panels), metrics.Get("stats.plugins.panels.count").MustInt())
+			assert.Equal(t, uss.PluginManager.AppCount(), metrics.Get("stats.plugins.apps.count").MustInt())
+			assert.Equal(t, uss.PluginManager.PanelCount(), metrics.Get("stats.plugins.panels.count").MustInt())
 			assert.Equal(t, uss.PluginManager.DataSourceCount(), metrics.Get("stats.plugins.datasources.count").MustInt())
 			assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())
 			assert.Equal(t, getSystemStatsQuery.Result.ActiveUsers, metrics.Get("stats.active_users.count").MustInt64())
@@ -546,6 +546,7 @@ type fakePluginManager struct {
 	manager.PluginManager
 
 	dataSources map[string]*plugins.DataSourcePlugin
+	panels      map[string]*plugins.PanelPlugin
 }
 
 func (pm fakePluginManager) DataSourceCount() int {
@@ -554,6 +555,10 @@ func (pm fakePluginManager) DataSourceCount() int {
 
 func (pm fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
 	return pm.dataSources[id]
+}
+
+func (pm fakePluginManager) PanelCount() int {
+	return len(pm.panels)
 }
 
 func setupSomeDataSourcePlugins(t *testing.T, uss *UsageStatsService) {

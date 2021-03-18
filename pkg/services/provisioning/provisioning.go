@@ -43,7 +43,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
-	provisionPlugins func(string) error,
+	provisionPlugins func(string, plugifaces.Manager) error,
 ) *provisioningServiceImpl {
 	return &provisioningServiceImpl{
 		log:                     log.New("provisioning"),
@@ -58,13 +58,14 @@ type provisioningServiceImpl struct {
 	Cfg                     *setting.Cfg                  `inject:""`
 	RequestHandler          plugifaces.DataRequestHandler `inject:""`
 	SQLStore                *sqlstore.SQLStore            `inject:""`
+	PluginManager           plugifaces.Manager            `inject:""`
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
 	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
-	provisionPlugins        func(string) error
+	provisionPlugins        func(string, plugifaces.Manager) error
 	mutex                   sync.Mutex
 }
 
@@ -124,7 +125,7 @@ func (ps *provisioningServiceImpl) ProvisionDatasources() error {
 
 func (ps *provisioningServiceImpl) ProvisionPlugins() error {
 	appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
-	err := ps.provisionPlugins(appPath)
+	err := ps.provisionPlugins(appPath, ps.PluginManager)
 	return errutil.Wrap("app provisioning error", err)
 }
 
