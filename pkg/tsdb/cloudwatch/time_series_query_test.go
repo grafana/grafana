@@ -11,7 +11,7 @@ import (
 )
 
 func TestTimeSeriesQuery(t *testing.T) {
-	executor := newExecutor(nil, nil, newTestConfig())
+	executor := newExecutor(nil, nil, newTestConfig(), fakeSessionCache{})
 	now := time.Now()
 
 	t.Run("End time before start time should result in error", func(t *testing.T) {

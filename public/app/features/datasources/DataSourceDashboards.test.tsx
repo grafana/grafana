@@ -3,13 +3,15 @@ import { shallow } from 'enzyme';
 import { DataSourceDashboards, Props } from './DataSourceDashboards';
 import { DataSourceSettings, NavModel } from '@grafana/data';
 import { PluginDashboard } from 'app/types';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
+    ...getRouteComponentProps(),
     navModel: {} as NavModel,
     dashboards: [] as PluginDashboard[],
     dataSource: {} as DataSourceSettings,
-    pageId: 1,
+    dataSourceId: 1,
     importDashboard: jest.fn(),
     loadDataSource: jest.fn(),
     loadPluginDashboards: jest.fn(),

@@ -15,7 +15,6 @@ import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 import { LokiQuery } from './types';
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
-import { RATE_RANGES } from '../prometheus/promql';
 
 import LokiDatasource from './datasource';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
@@ -26,6 +25,19 @@ const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 10;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 const NS_IN_MS = 1000000;
+
+// When changing RATE_RANGES, check if Prometheus/PromQL ranges should be changed too
+// @see public/app/plugins/datasource/prometheus/promql.ts
+const RATE_RANGES: CompletionItem[] = [
+  { label: '$__interval', sortText: '$__interval' },
+  { label: '1m', sortText: '00:01:00' },
+  { label: '5m', sortText: '00:05:00' },
+  { label: '10m', sortText: '00:10:00' },
+  { label: '30m', sortText: '00:30:00' },
+  { label: '1h', sortText: '01:00:00' },
+  { label: '1d', sortText: '24:00:00' },
+];
+
 export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
 
 const wrapLabel = (label: string) => ({ label, filterText: `\"${label}\"` });
@@ -56,7 +68,6 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
 
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
-  logLabelOptions: any[];
   logLabelFetchTs: number;
   started: boolean;
   datasource: LokiDatasource;
@@ -269,7 +280,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       selector = EMPTY_SELECTOR;
     }
 
-    if (!isValueStart && selector === EMPTY_SELECTOR) {
+    if (!labelKey && selector === EMPTY_SELECTOR) {
       // start task gets all labels
       await this.start();
       const allLabels = this.getLabelKeys();
@@ -402,15 +413,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   async fetchLogLabels(): Promise<any> {
     const url = '/loki/api/v1/label';
-    try {
-      this.logLabelFetchTs = Date.now().valueOf();
-      const rangeParams = this.datasource.getTimeRangeParams();
-      const res = await this.request(url, rangeParams);
+    const timeRange = this.datasource.getTimeRangeParams();
+    this.logLabelFetchTs = Date.now().valueOf();
+
+    const res = await this.request(url, timeRange);
+    if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
-      this.logLabelOptions = this.labelKeys.map((key: string) => ({ label: key, value: key, isLeaf: false }));
-    } catch (e) {
-      console.error(e);
     }
+
     return [];
   }
 
@@ -473,41 +483,23 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   async fetchLabelValues(key: string): Promise<string[]> {
     const url = `/loki/api/v1/label/${key}/values`;
-    let values: string[] = [];
     const rangeParams = this.datasource.getTimeRangeParams();
     const { from: start, to: end } = rangeParams;
 
     const cacheKey = this.generateCacheKey(url, start, end, key);
     const params = { start, end };
 
-    let value = this.labelsCache.get(cacheKey);
-    if (!value) {
-      try {
-        // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
-        this.labelsCache.set(cacheKey, []);
-        const res = await this.request(url, params);
-        values = res.slice().sort();
-        value = values;
-        this.labelsCache.set(cacheKey, value);
-
-        this.logLabelOptions = this.addLabelValuesToOptions(key, values);
-      } catch (e) {
-        console.error(e);
+    let labelValue = this.labelsCache.get(cacheKey);
+    if (!labelValue) {
+      // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
+      this.labelsCache.set(cacheKey, []);
+      const res = await this.request(url, params);
+      if (Array.isArray(res)) {
+        labelValue = res.slice().sort();
+        this.labelsCache.set(cacheKey, labelValue);
       }
-    } else {
-      this.logLabelOptions = this.addLabelValuesToOptions(key, value);
     }
-    return value ?? [];
-  }
 
-  private addLabelValuesToOptions = (labelKey: string, values: string[]) => {
-    return this.logLabelOptions.map((keyOption) =>
-      keyOption.value === labelKey
-        ? {
-            ...keyOption,
-            children: values.map((value) => ({ label: value, value })),
-          }
-        : keyOption
-    );
-  };
+    return labelValue ?? [];
+  }
 }

@@ -20,7 +20,7 @@ const buildCjsPackage = ({ env }) => {
         globals: {},
       },
     ],
-    external: ['lodash', '@grafana/ui', '@grafana/data'], // Use Lodash from grafana
+    external: ['lodash', 'react', '@grafana/ui', '@grafana/data', '@grafana/e2e-selectors'], // Use Lodash from grafana
     plugins: [
       commonjs({
         include: /node_modules/,

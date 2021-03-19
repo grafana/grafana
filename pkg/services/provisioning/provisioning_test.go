@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	dboards "github.com/grafana/grafana/pkg/dashboards"
+	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -90,8 +92,8 @@ func setup() *serviceTestStruct {
 		pollChangesChannel <- ctx
 	}
 
-	serviceTest.service = NewProvisioningServiceImpl(
-		func(path string) (dashboards.DashboardProvisioner, error) {
+	serviceTest.service = newProvisioningServiceImpl(
+		func(string, dboards.Store, plugifaces.DataRequestHandler) (dashboards.DashboardProvisioner, error) {
 			return serviceTest.mock, nil
 		},
 		nil,

@@ -169,7 +169,7 @@ export class FormDropdownCtrl {
     this.linkMode = true;
     this.inputElement.hide();
     this.linkElement.show();
-    this.updateValue(this.inputElement.val());
+    this.updateValue(this.inputElement.val() as string);
   }
 
   inputBlur() {

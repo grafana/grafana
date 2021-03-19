@@ -167,6 +167,25 @@ describe('Language completion provider', () => {
         },
       ]);
     });
+    it('returns label values suggestions from Loki when re-editing', async () => {
+      const datasource = makeMockLokiDatasource({ label1: ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const input = createTypeaheadInput('{label1="label1_v"}', 'label1_v', 'label1', 17, [
+        'attr-value',
+        'context-labels',
+      ]);
+      let result = await provider.provideCompletionItems(input);
+      expect(result.context).toBe('context-label-values');
+      expect(result.suggestions).toEqual([
+        {
+          items: [
+            { label: 'label1_val1', filterText: '"label1_val1"' },
+            { label: 'label1_val2', filterText: '"label1_val2"' },
+          ],
+          label: 'Label values for "label1"',
+        },
+      ]);
+    });
   });
 
   describe('label values', () => {

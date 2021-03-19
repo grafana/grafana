@@ -10,14 +10,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -377,7 +376,6 @@ func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 	if customNamespaces != "" {
 		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
-
 	sort.Strings(keys)
 
 	result := make([]suggestData, 0)

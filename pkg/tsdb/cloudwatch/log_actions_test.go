@@ -53,7 +53,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(nil, im, newTestConfig())
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -112,7 +112,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(nil, im, newTestConfig())
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -190,7 +190,7 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 		return datasourceInfo{}, nil
 	})
 
-	executor := newExecutor(nil, im, newTestConfig())
+	executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
 	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -274,7 +274,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(nil, im, newTestConfig())
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -327,7 +327,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			return datasourceInfo{}, nil
 		})
 
-		executor := newExecutor(nil, im, newTestConfig())
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -408,7 +408,7 @@ func TestQuery_StopQuery(t *testing.T) {
 		To:   time.Unix(1584700643, 0),
 	}
 
-	executor := newExecutor(nil, im, newTestConfig())
+	executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
 	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -501,7 +501,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		return datasourceInfo{}, nil
 	})
 
-	executor := newExecutor(nil, im, newTestConfig())
+	executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
 	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},

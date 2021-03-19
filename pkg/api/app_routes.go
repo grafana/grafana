@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/util"
 	macaron "gopkg.in/macaron.v1"
 )
@@ -32,7 +31,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	for _, plugin := range manager.Apps {
+	for _, plugin := range hs.PluginManager.Apps() {
 		for _, route := range plugin.Routes {
 			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
 			handlers := make([]macaron.Handler, 0)

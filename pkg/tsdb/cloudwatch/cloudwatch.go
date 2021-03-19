@@ -5,20 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"strings"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -29,8 +18,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -38,7 +34,7 @@ import (
 type datasourceInfo struct {
 	profile       string
 	region        string
-	authType      authType
+	authType      awsds.AuthType
 	assumeRoleARN string
 	externalID    string
 	namespace     string
@@ -80,7 +76,7 @@ func (s *CloudWatchService) Init() error {
 	im := datasource.NewInstanceManager(NewInstanceSettings())
 
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(s.LogsService, im, s.Cfg),
+		QueryDataHandler: newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache()),
 	})
 
 	if err := s.BackendPluginManager.Register("cloudwatch", factory); err != nil {
@@ -89,11 +85,16 @@ func (s *CloudWatchService) Init() error {
 	return nil
 }
 
-func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager, cfg *setting.Cfg) *cloudWatchExecutor {
+type SessionCache interface {
+	GetSession(region string, s awsds.AWSDatasourceSettings) (*session.Session, error)
+}
+
+func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
 		logsService: logsService,
 		im:          im,
 		cfg:         cfg,
+		sessions:    sessions,
 	}
 }
 
@@ -117,18 +118,18 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 		}
 
 		atStr := jsonData["authType"]
-		at := authTypeDefault
+		at := awsds.AuthTypeDefault
 		switch atStr {
 		case "credentials":
-			at = authTypeSharedCreds
+			at = awsds.AuthTypeSharedCreds
 		case "keys":
-			at = authTypeKeys
+			at = awsds.AuthTypeKeys
 		case "default":
-			at = authTypeDefault
+			at = awsds.AuthTypeDefault
 		case "ec2_iam_role":
-			at = authTypeEC2IAMRole
+			at = awsds.AuthTypeEC2IAMRole
 		case "arn":
-			at = authTypeDefault
+			at = awsds.AuthTypeDefault
 			plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
 		default:
 			plog.Warn("Unrecognized AWS authentication type", "type", atStr)
@@ -155,6 +156,7 @@ type cloudWatchExecutor struct {
 	logsService *LogsService
 	im          instancemgmt.InstanceManager
 	cfg         *setting.Cfg
+	sessions    SessionCache
 }
 
 func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginContext) (*session.Session, error) {
@@ -163,130 +165,21 @@ func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginC
 		return nil, err
 	}
 
-	authTypeAllowed := false
-	for _, provider := range e.cfg.AWSAllowedAuthProviders {
-		if provider == dsInfo.authType.String() {
-			authTypeAllowed = true
-			break
-		}
-	}
-	if !authTypeAllowed {
-		return nil, fmt.Errorf("attempting to use an auth type that is not allowed: %q", dsInfo.authType.String())
+	if region == defaultRegion {
+		region = dsInfo.region
 	}
 
-	if dsInfo.assumeRoleARN != "" && !e.cfg.AWSAssumeRoleEnabled {
-		return nil, fmt.Errorf("attempting to use assume role (ARN) which is disabled in grafana.ini")
-	}
-
-	bldr := strings.Builder{}
-	for i, s := range []string{
-		dsInfo.authType.String(), dsInfo.accessKey, dsInfo.profile, dsInfo.assumeRoleARN, region, dsInfo.endpoint,
-	} {
-		if i != 0 {
-			bldr.WriteString(":")
-		}
-		bldr.WriteString(strings.ReplaceAll(s, ":", `\:`))
-	}
-	cacheKey := bldr.String()
-
-	sessCacheLock.RLock()
-	if env, ok := sessCache[cacheKey]; ok {
-		if env.expiration.After(time.Now().UTC()) {
-			sessCacheLock.RUnlock()
-			return env.session, nil
-		}
-	}
-	sessCacheLock.RUnlock()
-
-	cfgs := []*aws.Config{
-		{
-			CredentialsChainVerboseErrors: aws.Bool(true),
-		},
-	}
-
-	var regionCfg *aws.Config
-	if dsInfo.region == defaultRegion {
-		plog.Warn("Region is set to \"default\", which is unsupported")
-		dsInfo.region = ""
-	}
-	if dsInfo.region != "" {
-		regionCfg = &aws.Config{Region: aws.String(dsInfo.region)}
-		cfgs = append(cfgs, regionCfg)
-	}
-
-	if dsInfo.endpoint != "" {
-		cfgs = append(cfgs, &aws.Config{Endpoint: aws.String(dsInfo.endpoint)})
-	}
-
-	switch dsInfo.authType {
-	case authTypeSharedCreds:
-		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.profile,
-			"region", dsInfo.region)
-		cfgs = append(cfgs, &aws.Config{
-			Credentials: credentials.NewSharedCredentials("", dsInfo.profile),
-		})
-	case authTypeKeys:
-		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.region)
-		cfgs = append(cfgs, &aws.Config{
-			Credentials: credentials.NewStaticCredentials(dsInfo.accessKey, dsInfo.secretKey, ""),
-		})
-	case authTypeDefault:
-		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.region)
-	case authTypeEC2IAMRole:
-		plog.Debug("Authenticating towards AWS with IAM Role", "region", dsInfo.region)
-		sess, err := newSession(cfgs...)
-		if err != nil {
-			return nil, err
-		}
-		cfgs = append(cfgs, &aws.Config{Credentials: newEC2RoleCredentials(sess)})
-	default:
-		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.authType))
-	}
-	sess, err := newSession(cfgs...)
-	if err != nil {
-		return nil, err
-	}
-
-	duration := stscreds.DefaultDuration
-	expiration := time.Now().UTC().Add(duration)
-	if dsInfo.assumeRoleARN != "" && e.cfg.AWSAssumeRoleEnabled {
-		// We should assume a role in AWS
-		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.assumeRoleARN)
-
-		cfgs := []*aws.Config{
-			{
-				CredentialsChainVerboseErrors: aws.Bool(true),
-			},
-			{
-				Credentials: newSTSCredentials(sess, dsInfo.assumeRoleARN, func(p *stscreds.AssumeRoleProvider) {
-					// Not sure if this is necessary, overlaps with p.Duration and is undocumented
-					p.Expiry.SetExpiration(expiration, 0)
-					p.Duration = duration
-					if dsInfo.externalID != "" {
-						p.ExternalID = aws.String(dsInfo.externalID)
-					}
-				}),
-			},
-		}
-		if regionCfg != nil {
-			cfgs = append(cfgs, regionCfg)
-		}
-		sess, err = newSession(cfgs...)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	plog.Debug("Successfully created AWS session")
-
-	sessCacheLock.Lock()
-	sessCache[cacheKey] = envelope{
-		session:    sess,
-		expiration: expiration,
-	}
-	sessCacheLock.Unlock()
-
-	return sess, nil
+	return e.sessions.GetSession(region, awsds.AWSDatasourceSettings{
+		Profile:       dsInfo.profile,
+		Region:        region,
+		AuthType:      dsInfo.authType,
+		AssumeRoleARN: dsInfo.assumeRoleARN,
+		ExternalID:    dsInfo.externalID,
+		Endpoint:      dsInfo.endpoint,
+		DefaultRegion: dsInfo.region,
+		AccessKey:     dsInfo.accessKey,
+		SecretKey:     dsInfo.secretKey,
+	})
 }
 
 func (e *cloudWatchExecutor) getCWClient(region string, pluginCtx backend.PluginContext) (cloudwatchiface.CloudWatchAPI, error) {
@@ -477,30 +370,6 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 	}
 
 	return resp, nil
-}
-
-type authType int
-
-const (
-	authTypeDefault authType = iota
-	authTypeSharedCreds
-	authTypeKeys
-	authTypeEC2IAMRole
-)
-
-func (at authType) String() string {
-	switch at {
-	case authTypeDefault:
-		return "default"
-	case authTypeSharedCreds:
-		return "credentials"
-	case authTypeKeys:
-		return "keys"
-	case authTypeEC2IAMRole:
-		return "ec2_iam_role"
-	default:
-		panic(fmt.Sprintf("Unrecognized auth type %d", at))
-	}
 }
 
 func (e *cloudWatchExecutor) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
