@@ -42,11 +42,9 @@ jobs:
           git config user.email ${EMAIL}
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/grafana/grafana.git
       -
-        name: Checkout OSS repo
-        uses: actions/checkout@v2
-      -
         name: Run go mod tidy
         run: |
+          cd grafana
           rm -f go.sum
           go mod tidy
       -
@@ -56,6 +54,7 @@ jobs:
           token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
           branch: pr-creator
           commit-message: Update go modules
+          path: grafana
           title: 'Chore(deps): Update go modules'
           author: grafanabot <bot@grafana.com>
           body: >
