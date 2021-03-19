@@ -179,7 +179,7 @@ export function grafanaDataFrameToArrowTable(data: DataFrame, keepOriginalNames?
 
 export function arrowTableToBase64String(table: Table): string {
   const binstring = Array.prototype.map
-    .call(table.serialize() as Uint8Array, (ch) => {
+    .call(table.serialize() as Uint8Array, (ch: number) => {
       return String.fromCharCode(ch);
     })
     .join('');

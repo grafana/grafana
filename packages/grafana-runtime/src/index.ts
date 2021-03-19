@@ -11,4 +11,10 @@ export { loadPluginCss, SystemJS, PluginCssOptions } from './utils/plugin';
 export { reportMetaAnalytics } from './utils/analytics';
 export { logInfo, logDebug, logWarning, logError } from './utils/logging';
 export { DataSourceWithBackend, HealthCheckResult, HealthStatus } from './utils/DataSourceWithBackend';
-export { toDataQueryError, toDataQueryResponse, frameToMetricFindValue } from './utils/queryResponse';
+export {
+  toDataQueryError,
+  toDataQueryResponse,
+  frameToMetricFindValue,
+  BackendDataSourceResponse,
+  DataResponse,
+} from './utils/queryResponse';

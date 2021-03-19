@@ -2,7 +2,6 @@ import {
   arrowTableToBase64String,
   DataFrame,
   DataSourceInstanceSettings,
-  FieldType,
   grafanaDataFrameToArrowTable,
   MutableDataFrame,
   PluginType,
@@ -10,8 +9,7 @@ import {
 import { Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
-import { FetchResponse, setBackendSrv } from '@grafana/runtime';
-import { BackendDataSourceResponse } from '@grafana/runtime/src/utils/queryResponse';
+import { FetchResponse, setBackendSrv, BackendDataSourceResponse } from '@grafana/runtime';
 
 describe('Tempo data source', () => {
   it('parses json fields from backend', async () => {

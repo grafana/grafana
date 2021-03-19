@@ -13,13 +13,22 @@ import {
   FieldType,
   DataQuery,
 } from '@grafana/data';
+import { FetchResponse } from '../services';
 
-interface DataResponse {
+export interface DataResponse {
   error?: string;
   refId?: string;
+  // base64 encoded arrow tables
   dataframes?: string[];
   series?: TimeSeries[];
   tables?: TableData[];
+}
+
+/**
+ * This is the type of response expected form backend datasource.
+ */
+export interface BackendDataSourceResponse {
+  results: KeyValue<DataResponse>;
 }
 
 /**
@@ -30,17 +39,21 @@ interface DataResponse {
  *
  * @public
  */
-export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryResponse {
+export function toDataQueryResponse(
+  res: FetchResponse<BackendDataSourceResponse | undefined>,
+  queries?: DataQuery[]
+): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
+  // If the response isn't in a correct shape we just ignore the data and pass empty DataQueryResponse.
   if (res.data?.results) {
-    const results: KeyValue = res.data.results;
+    const results = res.data.results;
     const resultIDs = Object.keys(results);
     const refIDs = queries ? queries.map((q) => q.refId) : resultIDs;
     const usedResultIDs = new Set<string>(resultIDs);
     const data: DataResponse[] = [];
 
     for (const refId of refIDs) {
-      const dr = results[refId] as DataResponse;
+      const dr = results[refId];
       if (!dr) {
         continue;
       }
@@ -52,7 +65,7 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
     // Add any refIds that do not match the query targets
     if (usedResultIDs.size) {
       for (const refId of usedResultIDs) {
-        const dr = results[refId] as DataResponse;
+        const dr = results[refId];
         if (!dr) {
           continue;
         }
