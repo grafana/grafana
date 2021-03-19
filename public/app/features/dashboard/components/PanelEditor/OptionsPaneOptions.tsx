@@ -59,6 +59,9 @@ export const OptionsPaneOptions: React.FC<Props> = ({
   ];
 
   const isSearching = searchQuery.length > 0;
+  const showAllDefaults = !isSearching && listMode === 'all';
+  const showOverrides = !isSearching && (listMode === 'all' || listMode === 'overrides');
+  const showPopular = listMode === 'popular';
 
   return (
     <div className={styles.wrapper}>
@@ -71,7 +74,14 @@ export const OptionsPaneOptions: React.FC<Props> = ({
         </Field>
       </div>
       <CustomScrollbar autoHeightMin="100%">
-        {!isSearching && listMode === 'all' && <div className={styles.optionsBox}>{allDefaults}</div>}
+        {showAllDefaults && <div className={styles.optionsBox}>{allDefaults}</div>}
+        {showPopular && (
+          <div className={styles.optionsBox}>
+            <OptionsPaneCategory id="Popular options" title="Popular options">
+              No poular options, try again later
+            </OptionsPaneCategory>
+          </div>
+        )}
         {isSearching && (
           <div className={styles.optionsBox}>
             <OptionsPaneCategory id="Found options" title="Found options">
@@ -79,7 +89,7 @@ export const OptionsPaneOptions: React.FC<Props> = ({
             </OptionsPaneCategory>
           </div>
         )}
-        {!isSearching && <div className={styles.optionsBox}>{searchQuery.length === 0 && justOverrides}</div>}
+        {showOverrides && <div className={styles.optionsBox}>{searchQuery.length === 0 && justOverrides}</div>}
       </CustomScrollbar>
     </div>
   );
