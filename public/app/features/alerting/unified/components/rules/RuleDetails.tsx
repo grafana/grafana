@@ -21,51 +21,53 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
   const annotations = Object.entries((isAlertingRule(rule) && rule.annotations) || {});
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.leftSide}>
-        {!!rule.labels && !!Object.keys(rule.labels).length && (
-          <div className={cx(styles.field, styles.fieldHorizontal)}>
-            <div>Labels</div>
+    <div>
+      <div className={styles.wrapper}>
+        <div className={styles.leftSide}>
+          {!!rule.labels && !!Object.keys(rule.labels).length && (
+            <div className={cx(styles.field, styles.fieldHorizontal)}>
+              <div>Labels</div>
+              <div>
+                <AlertLabels labels={rule.labels} />
+              </div>
+            </div>
+          )}
+          <div className={cx(styles.field, { [styles.exprRow]: !!annotations.length })}>
+            <div>Expression</div>
             <div>
-              <AlertLabels labels={rule.labels} />
+              <RuleQuery rule={rule} rulesSource={rulesSource} />
             </div>
           </div>
-        )}
-        <div className={cx(styles.field, { [styles.exprRow]: !!annotations.length })}>
-          <div>Expression</div>
-          <div>
-            <RuleQuery rule={rule} rulesSource={rulesSource} />
-          </div>
+          {annotations.map(([key, value]) => (
+            <div key={key} className={cx(styles.field, styles.fieldHorizontal)}>
+              <div>{key}</div>
+              <div className={styles.annotationValue}>
+                <Annotation annotationKey={key} value={value} />
+              </div>
+            </div>
+          ))}
         </div>
-        {annotations.map(([key, value]) => (
-          <div key={key} className={cx(styles.field, styles.fieldHorizontal)}>
-            <div>{key}</div>
-            <div className={styles.annotationValue}>
-              <Annotation annotationKey={key} value={value} />
-            </div>
-          </div>
-        ))}
-        {isAlertingRule(rule) && !!rule.alerts?.length && (
-          <div className={cx(styles.field, styles.fieldHorizontal)}>
-            <div>Matching instances</div>
+        <div className={styles.rightSide}>
+          <div className={cx(styles.field, styles.fieldVertical)}>
+            <div>Data source</div>
             <div>
-              <AlertInstancesTable instances={rule.alerts} />
+              {isCloudRulesSource(rulesSource) && (
+                <>
+                  <img className={styles.datasourceIcon} src={rulesSource.meta.info.logos.small} /> {rulesSource.name}
+                </>
+              )}
             </div>
-          </div>
-        )}
-      </div>
-      <div className={styles.rightSide}>
-        <div className={cx(styles.field, styles.fieldVertical)}>
-          <div>Data source</div>
-          <div>
-            {isCloudRulesSource(rulesSource) && (
-              <>
-                <img className={styles.datasourceIcon} src={rulesSource.meta.info.logos.small} /> {rulesSource.name}
-              </>
-            )}
           </div>
         </div>
       </div>
+      {isAlertingRule(rule) && !!rule.alerts?.length && (
+        <div className={cx(styles.field, styles.fieldHorizontal)}>
+          <div>Matching instances</div>
+          <div>
+            <AlertInstancesTable instances={rule.alerts} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
