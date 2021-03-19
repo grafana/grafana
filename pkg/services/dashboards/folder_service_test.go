@@ -102,18 +102,9 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			provisioningValidated := false
-
-			bus.AddHandler("test", func(query *models.GetProvisionedDashboardDataByIdQuery) error {
-				provisioningValidated = true
-				query.Result = nil
-				return nil
-			})
-
 			Convey("When creating folder should not return access denied error", func() {
 				_, err := service.CreateFolder("Folder", "")
 				So(err, ShouldBeNil)
-				So(provisioningValidated, ShouldBeFalse)
 			})
 
 			Convey("When updating folder should not return access denied error", func() {
@@ -122,7 +113,6 @@ func TestFolderService(t *testing.T) {
 					Title: "Folder",
 				})
 				So(err, ShouldBeNil)
-				So(provisioningValidated, ShouldBeFalse)
 			})
 
 			Convey("When deleting folder by uid should not return access denied error", func() {
