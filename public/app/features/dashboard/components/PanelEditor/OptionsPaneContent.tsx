@@ -1,12 +1,11 @@
 import React from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, useStyles } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { css } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
 import { VisualizationButton } from './VisualizationButton';
 import { OptionsPaneOptions } from './OptionsPaneOptions';
-import { VisualizationTab } from './VisualizationTab';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
 
@@ -36,29 +35,23 @@ export const OptionsPaneContent: React.FC<Props> = ({
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
-      <CustomScrollbar autoHeightMin="100%">
-        <div className={styles.panelOptionsPane}>
-          <div className={styles.vizButtonWrapper}>
-            <VisualizationButton panel={panel} />
-          </div>
-
-          <div className={styles.paneBg}>
-            {isVizPickerOpen && <VisualizationTab panel={panel} onToggleOptionGroup={() => {}} />}
-
-            {!isVizPickerOpen && (
-              <OptionsPaneOptions
-                panel={panel}
-                dashboard={dashboard}
-                plugin={plugin}
-                onClose={onClose}
-                onFieldConfigsChange={onFieldConfigsChange}
-                onPanelOptionsChanged={onPanelOptionsChanged}
-                onPanelConfigChange={onPanelConfigChange}
-              />
-            )}
-          </div>
+      <div className={styles.panelOptionsPane}>
+        <div className={styles.vizButtonWrapper}>
+          <VisualizationButton panel={panel} />
         </div>
-      </CustomScrollbar>
+
+        {!isVizPickerOpen && (
+          <OptionsPaneOptions
+            panel={panel}
+            dashboard={dashboard}
+            plugin={plugin}
+            onClose={onClose}
+            onFieldConfigsChange={onFieldConfigsChange}
+            onPanelOptionsChanged={onPanelOptionsChanged}
+            onPanelConfigChange={onPanelConfigChange}
+          />
+        )}
+      </div>
     </div>
   );
 };
@@ -68,11 +61,12 @@ const getStyles = (theme: GrafanaTheme) => {
     wrapper: css`
       height: 100%;
       width: 100%;
+      display: flex;
     `,
     panelOptionsPane: css`
       display: flex;
       flex-direction: column;
-      padding-top: ${theme.spacing.md};
+      padding: ${theme.spacing.md} ${theme.spacing.sm} 0 0;
       flex-grow: 1;
     `,
     paneBg: css`
@@ -81,7 +75,7 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-grow: 1;
     `,
     vizButtonWrapper: css`
-      padding: 0 ${theme.spacing.md} ${theme.spacing.md} 0;
+      padding: 0 0 ${theme.spacing.md} 0;
     `,
     legacyOptions: css`
       label: legacy-options;

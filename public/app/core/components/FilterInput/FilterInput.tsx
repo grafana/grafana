@@ -9,12 +9,13 @@ export interface Props {
   inputClassName?: string;
   width?: number;
   onChange: (value: string) => void;
+  autoFocus?: boolean;
 }
 
 export const FilterInput: FC<Props> = (props) => (
   <Input
     // Replaces the usage of ref
-    autoFocus
+    autoFocus={props.autoFocus ?? false}
     prefix={<Icon name="search" />}
     width={props.width ?? 40}
     type="text"

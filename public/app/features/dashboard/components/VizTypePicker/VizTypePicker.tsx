@@ -108,7 +108,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       max-width: 100%;
       display: grid;
       grid-gap: ${theme.spacing.sm};
-      grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
     `,
   };
 });
