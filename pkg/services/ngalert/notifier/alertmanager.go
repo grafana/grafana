@@ -80,56 +80,12 @@ func (am *Alertmanager) Init() (err error) {
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize the silencing component of alerting")
 	}
-
-	err = am.Setup()
-	if err != nil {
-		return errors.Wrap(err, "unable to start the Alertmanager")
-	}
-
-	return nil
-}
-
-// Setup takes care of initializing the various configuration we need to run an Alertmanager.
-func (am *Alertmanager) Setup() error {
-	// First, let's get the configuration we need from the database and settings.
-	q := &models.GetLatestAlertmanagerConfigurationQuery{}
-	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
-		return err
-	}
-
-	// Next, let's parse the alertmanager configuration.
-	cfg, err := Load(q.Result.AlertmanagerConfiguration)
-	if err != nil {
-		return err
-	}
-
-	// With that, we need to make sure we persist the templates to disk.
-	paths, _, err := PersistTemplates(cfg, am.WorkingDirPath())
-	if err != nil {
-		return err
-	}
-
-	// With the templates persisted, create the template list using the paths.
-	tmpl, err := template.FromGlobs(paths...)
-	if err != nil {
-		return err
-	}
-
-	// Finally, build the integrations map using the receiver configuration and templates.
-	am.integrationsMap, err = am.buildIntegrationsMap(cfg.AlertmanagerConfig.Receivers, tmpl)
-	if err != nil {
-		return err
-	}
-
-	//TODO: DO I need to set this to the grafana URL?
-	//tmpl.ExternalURL = url.URL{}
-
 	return nil
 }
 
 func (am *Alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
-	if err := am.ReloadConfigFromDatabase(); err != nil {
+	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
 		return err
 	}
 	for {
@@ -153,28 +109,55 @@ func (am *Alertmanager) StopAndWait() {
 	am.dispatcherWG.Wait()
 }
 
-// ReloadConfigFromDatabase picks the latest config from database and restarts
+// SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
 // the components with the new config.
-func (am *Alertmanager) ReloadConfigFromDatabase() error {
+func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
 	// TODO: check if config is same as before using hashes and skip reload in case they are same.
-	cfg, err := getConfigFromDatabase()
+	cfg, err := am.getConfigFromDatabase()
 	if err != nil {
 		return errors.Wrap(err, "get config from database")
 	}
 	return errors.Wrap(am.ApplyConfig(cfg), "reload from config")
 }
 
-func getConfigFromDatabase() (*api.PostableApiAlertingConfig, error) {
-	// TODO: get configs from the database.
-	return &api.PostableApiAlertingConfig{}, nil
+func (am *Alertmanager) getConfigFromDatabase() (*api.PostableUserConfig, error) {
+	// First, let's get the configuration we need from the database and settings.
+	q := &models.GetLatestAlertmanagerConfigurationQuery{}
+	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
+		return nil, err
+	}
+
+	// Next, let's parse the alertmanager configuration.
+	return Load(q.Result.AlertmanagerConfiguration)
 }
 
 // ApplyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
-func (am *Alertmanager) ApplyConfig(cfg *api.PostableApiAlertingConfig) error {
+func (am *Alertmanager) ApplyConfig(cfg *api.PostableUserConfig) error {
+	// With that, we need to make sure we persist the templates to disk.
+	paths, _, err := PersistTemplates(cfg, am.WorkingDirPath())
+	if err != nil {
+		return err
+	}
+
+	// With the templates persisted, create the template list using the paths.
+	tmpl, err := template.FromGlobs(paths...)
+	if err != nil {
+		return err
+	}
+
+	// Finally, build the integrations map using the receiver configuration and templates.
+	am.integrationsMap, err = am.buildIntegrationsMap(cfg.AlertmanagerConfig.Receivers, tmpl)
+	if err != nil {
+		return err
+	}
+
+	//TODO: DO I need to set this to the grafana URL?
+	//tmpl.ExternalURL = url.URL{}
+
 	// Now, let's put together our notification pipeline
 	routingStage := make(notify.RoutingStage, len(am.integrationsMap))
 
