@@ -205,6 +205,9 @@ type Cfg struct {
 	RouterLogging    bool
 	Domain           string
 	CDNRootURL       *url.URL
+	ReadTimeout      time.Duration
+	EnableGzip       bool
+	EnforceDomain    bool
 
 	// build
 	BuildVersion string
@@ -1360,6 +1363,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 			return err
 		}
 	}
+
+	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(0)
 
 	return nil
 }
