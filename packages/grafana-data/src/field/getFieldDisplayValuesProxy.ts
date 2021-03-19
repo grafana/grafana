@@ -28,8 +28,17 @@ export function getFieldDisplayValuesProxy(
         field = frame.fields[k];
       }
       if (!field) {
-        // 3. Match the title
+        // 3. Match the config displayName
         field = frame.fields.find((f) => key === f.config.displayName);
+      }
+      if (!field) {
+        // 4. Match the name label
+        field = frame.fields.find((f) => {
+          if (f.labels) {
+            return key === f.labels.name;
+          }
+          return false;
+        });
       }
       if (!field) {
         return undefined;
