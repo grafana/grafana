@@ -7,14 +7,20 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-macaron/binding"
+	"github.com/go-openapi/strfmt"
 	apimodels "github.com/grafana/alerting-api/pkg/api"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 type AlertmanagerApiService interface {
@@ -108,6 +114,32 @@ func (base AlertmanagerApiBase) RoutePostAlertingConfig(c *models.ReqContext, bo
 	if err != nil {
 		return response.Error(400, "Unable to apply config to the Alertmanager", err)
 	}
+
+	go func() {
+		<-time.After(10 * time.Second)
+		fmt.Println("Sending alert")
+		err := base.Alertmanager.CreateAlerts(&notifier.PostableAlert{
+			PostableAlert: amv2.PostableAlert{
+				Annotations: amv2.LabelSet{
+					"foo_annotation": "asdf",
+				},
+				EndsAt:   strfmt.DateTime(time.Now().Add(15 * time.Minute)),
+				StartsAt: strfmt.DateTime(time.Now()),
+				Alert: amv2.Alert{
+					GeneratorURL: "https://example.com",
+					Labels: amv2.LabelSet{
+						"alertname": "DemoAlert",
+					},
+				},
+			},
+			Receivers: []string{"demo_receiver"},
+		})
+		if err == nil {
+			fmt.Println("ALERT SENT! WOHOOO!")
+		} else {
+			fmt.Println("SENDING ALERT FAILED", err)
+		}
+	}()
 
 	return response.Success("Configuration applied successfully")
 }

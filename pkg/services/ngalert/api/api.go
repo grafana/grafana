@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
@@ -32,6 +33,7 @@ var timeNow = time.Now
 
 type Alertmanager interface {
 	ApplyConfig(cfg *api.PostableUserConfig) error
+	CreateAlerts(alerts ...*notifier.PostableAlert) error
 }
 
 // API handlers.

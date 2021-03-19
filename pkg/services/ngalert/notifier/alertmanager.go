@@ -2,19 +2,14 @@ package notifier
 
 import (
 	"context"
-	"fmt"
-	"math/rand"
 	"path/filepath"
 	"sort"
 	"sync"
 	"time"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/go-openapi/strfmt"
 	"github.com/grafana/alerting-api/pkg/api"
 	"github.com/pkg/errors"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/nflog"
 	"github.com/prometheus/alertmanager/nflog/nflogpb"
@@ -26,7 +21,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	pkgmodels "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -106,39 +100,38 @@ func (am *Alertmanager) Init() (err error) {
 }
 
 func (am *Alertmanager) Run(ctx context.Context) error {
-
-	go func() {
-		// TODO: ONLY FOR DEMO.
-		// TODO: move this goroutine to the config API POST and initiate it there.
-		<-time.After(4 * time.Second)
-		fmt.Println("Sending alert")
-		err := am.CreateAlerts(&PostableAlert{
-			PostableAlert: amv2.PostableAlert{
-				Annotations: amv2.LabelSet{
-					"foo_annotation": "asdf",
-				},
-				EndsAt:   strfmt.DateTime(time.Now().Add(15 * time.Minute)),
-				StartsAt: strfmt.DateTime(time.Now()),
-				Alert: amv2.Alert{
-					GeneratorURL: "https://example.com",
-					Labels: amv2.LabelSet{
-						"alertname": "DemoAlert",
-					},
-				},
-			},
-			Receivers: []string{"demo_receiver"},
-		})
-		if err == nil {
-			fmt.Println("ALERT SENT! WOHOOO!")
-		} else {
-			fmt.Println("SENDING ALERT FAILED", err)
-		}
-	}()
-
 	// Make sure dispatcher starts. We can tolerate future reload failures.
-	if err := am.SyncAndApplyConfigFromDatabase(); err != nil && err != store.ErrNoAlertmanagerConfiguration {
-		return err
-	}
+	//if err := am.SyncAndApplyConfigFromDatabase(); err != nil && err != store.ErrNoAlertmanagerConfiguration {
+	//	return err
+	//}
+
+	//go func() {
+	//	// TODO: ONLY FOR DEMO.
+	//	// TODO: move this goroutine to the config API POST and initiate it there.
+	//	<-time.After(4 * time.Second)
+	//	fmt.Println("Sending alert")
+	//	err := am.CreateAlerts(&PostableAlert{
+	//		PostableAlert: amv2.PostableAlert{
+	//			Annotations: amv2.LabelSet{
+	//				"foo_annotation": "asdf",
+	//			},
+	//			EndsAt:   strfmt.DateTime(time.Now().Add(15 * time.Minute)),
+	//			StartsAt: strfmt.DateTime(time.Now()),
+	//			Alert: amv2.Alert{
+	//				GeneratorURL: "https://example.com",
+	//				Labels: amv2.LabelSet{
+	//					"alertname": "DemoAlert",
+	//				},
+	//			},
+	//		},
+	//		Receivers: []string{"demo_receiver"},
+	//	})
+	//	if err == nil {
+	//		fmt.Println("ALERT SENT! WOHOOO!")
+	//	} else {
+	//		fmt.Println("SENDING ALERT FAILED", err)
+	//	}
+	//}()
 
 	for {
 		select {
@@ -186,44 +179,47 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 }
 
 func (am *Alertmanager) getConfigFromDatabase() (cfg *api.PostableUserConfig, rerr error) {
-	defer func() {
-		// TODO: THIS IS ONLY FOR DEMO.
-		// TODO: use this config while POSTing and remove it from here.
-		if cfg == nil {
-			cfg = &api.PostableUserConfig{
-				TemplateFiles: nil,
-				AlertmanagerConfig: api.PostableApiAlertingConfig{
-					Config: config.Config{
-						Route: &config.Route{},
-					},
-					Receivers: nil,
-				},
-			}
-			rerr = nil
-		}
-
-		settings, err := simplejson.NewJson([]byte(`{"addresses": "ganesh@grafana.com"}`))
-		if err != nil {
-			rerr = err
-			return
-		}
-
-		cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &api.PostableApiReceiver{
-			Receiver: config.Receiver{
-				Name: "demo_receiver",
-			},
-			PostableGrafanaReceivers: api.PostableGrafanaReceivers{
-				GrafanaManagedReceivers: []*api.PostableGrafanaReceiver{
-					{
-						Uid:      "",
-						Name:     fmt.Sprintf("\"demo_email_\"%d", rand.Int()),
-						Type:     "email",
-						Settings: settings,
-					},
-				},
-			},
-		})
-	}()
+	//defer func() {
+	//	// TODO: THIS IS ONLY FOR DEMO.
+	//	// TODO: use this config while POSTing and remove it from here.
+	//	if cfg == nil {
+	//		cfg = &api.PostableUserConfig{
+	//			TemplateFiles: nil,
+	//			AlertmanagerConfig: api.PostableApiAlertingConfig{
+	//				Config: config.Config{
+	//					Route: &config.Route{},
+	//				},
+	//				Receivers: nil,
+	//			},
+	//		}
+	//		rerr = nil
+	//	}
+	//
+	//	settings, err := simplejson.NewJson([]byte(`{"addresses": "ganesh@grafana.com"}`))
+	//	if err != nil {
+	//		rerr = err
+	//		return
+	//	}
+	//
+	//	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &api.PostableApiReceiver{
+	//		Receiver: config.Receiver{
+	//			Name: "demo_receiver",
+	//		},
+	//		PostableGrafanaReceivers: api.PostableGrafanaReceivers{
+	//			GrafanaManagedReceivers: []*api.PostableGrafanaReceiver{
+	//				{
+	//					Uid:      "",
+	//					Name:     fmt.Sprintf("demo_email_%d", rand.Int()),
+	//					Type:     "email",
+	//					Settings: settings,
+	//				},
+	//			},
+	//		},
+	//	})
+	//
+	//	b, _ := json.Marshal(cfg)
+	//	fmt.Print(string(b))
+	//}()
 
 	// First, let's get the configuration we need from the database and settings.
 	q := &models.GetLatestAlertmanagerConfigurationQuery{}
@@ -411,7 +407,7 @@ func createReceiverStage(name string, integrations []notify.Integration, wait fu
 		s = append(s, notify.NewWaitStage(wait))
 		s = append(s, notify.NewDedupStage(&integrations[i], notificationLog, recv))
 		//TODO: This probably won't work w/o the metrics
-		s = append(s, notify.NewRetryStage(integrations[i], name, nil))
+		s = append(s, notify.NewRetryStage(integrations[i], name, notify.NewMetrics(prometheus.DefaultRegisterer)))
 		s = append(s, notify.NewSetNotifiesStage(notificationLog, recv))
 
 		fs = append(fs, s)

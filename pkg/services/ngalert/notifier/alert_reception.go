@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -83,7 +82,6 @@ func (ap *AlertProvider) PutPostableAlert(alerts ...*PostableAlert) error {
 	for recv, alerts := range groupedAlerts {
 		ap.stageMtx.Lock()
 		sendctx := notify.WithReceiverName(ctx, recv)
-		fmt.Println("Actually sending alert")
 		_, _, err := ap.stage.Exec(sendctx, gokitlog.NewNopLogger(), alerts...)
 		ap.stageMtx.Unlock()
 		if err != nil {
