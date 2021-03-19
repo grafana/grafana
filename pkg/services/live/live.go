@@ -3,7 +3,6 @@ package live
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -85,7 +84,11 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
-	return g.streamManager.Run(ctx)
+	if g.streamManager != nil {
+		// Only run stream manager if GrafanaLive properly initialized.
+		return g.streamManager.Run(ctx)
+	}
+	return nil
 }
 
 // Init initializes Live service.
@@ -114,7 +117,7 @@ func (g *GrafanaLive) Init() error {
 	}
 	g.node = node
 
-	g.contextGetter = newPluginContextGetter(g.Bus, g.CacheService, g.DatasourceCache)
+	g.contextGetter = newPluginContextGetter(g.Bus, g.PluginManager, g.CacheService, g.DatasourceCache)
 
 	channelPublisher := newPluginChannelPublisher(node)
 	presenceGetter := newPluginPresenceGetter(node)
@@ -127,31 +130,7 @@ func (g *GrafanaLive) Init() error {
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
-	//g.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
-
-	// TODO: grafana-signal-datasource should operate in `ds` scope to work automatically.
-	signalStreamHandler, err := g.getStreamPlugin("grafana-signal-datasource")
-	if err != nil {
-		return err
-	}
-	g.GrafanaScope.Features["measurements"] = features.NewPluginRunner(
-		"grafana-signal-datasource",
-		g.streamManager,
-		g.contextGetter,
-		signalStreamHandler,
-	)
-
-	// TODO: testdata should operate in `plugin` scope to work automatically.
-	testDataStreamHandler, err := g.getStreamPlugin("testdata")
-	if err != nil {
-		return err
-	}
-	g.GrafanaScope.Features["testdata"] = features.NewPluginRunner(
-		"testdata",
-		g.streamManager,
-		g.contextGetter,
-		testDataStreamHandler,
-	)
+	g.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -163,7 +142,7 @@ func (g *GrafanaLive) Init() error {
 
 		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
 			logger.Debug("Client wants to subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			handler, err := g.GetChannelHandler(e.Channel)
+			handler, err := g.GetChannelHandler(client.Context(), e.Channel)
 			if err != nil {
 				logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 				cb(centrifuge.SubscribeReply{}, err)
@@ -177,7 +156,7 @@ func (g *GrafanaLive) Init() error {
 		// allows some simple prototypes to work quickly.
 		client.OnPublish(func(e centrifuge.PublishEvent, cb centrifuge.PublishCallback) {
 			logger.Debug("Client wants to publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			handler, err := g.GetChannelHandler(e.Channel)
+			handler, err := g.GetChannelHandler(client.Context(), e.Channel)
 			if err != nil {
 				logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 				cb(centrifuge.PublishReply{}, err)
@@ -228,7 +207,7 @@ func (g *GrafanaLive) Init() error {
 }
 
 // GetChannelHandler gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, error) {
+func (g *GrafanaLive) GetChannelHandler(ctx context.Context, channel string) (models.ChannelHandler, error) {
 	g.channelsMu.RLock()
 	c, ok := g.channels[channel]
 	g.channelsMu.RUnlock() // defer? but then you can't lock further down
@@ -251,7 +230,7 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 		return c, nil
 	}
 
-	getter, err := g.GetChannelHandlerFactory(addr.Scope, addr.Namespace)
+	getter, err := g.GetChannelHandlerFactory(ctx, addr.Scope, addr.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("error getting channel handler factory: %w", err)
 	}
@@ -269,27 +248,27 @@ func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, 
 
 // GetChannelHandlerFactory gets a ChannelHandlerFactory for a namespace.
 // It gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandlerFactory(scope string, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, scope string, namespace string) (models.ChannelHandlerFactory, error) {
 	switch scope {
 	case ScopeGrafana:
-		return g.handleGrafanaScope(namespace)
+		return g.handleGrafanaScope(ctx, namespace)
 	case ScopePlugin:
-		return g.handlePluginScope(namespace)
+		return g.handlePluginScope(ctx, namespace)
 	case ScopeDatasource:
-		return g.handleDatasourceScope(namespace)
+		return g.handleDatasourceScope(ctx, namespace)
 	default:
 		return nil, fmt.Errorf("invalid scope: %q", scope)
 	}
 }
 
-func (g *GrafanaLive) handleGrafanaScope(namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handleGrafanaScope(_ context.Context, namespace string) (models.ChannelHandlerFactory, error) {
 	if p, ok := g.GrafanaScope.Features[namespace]; ok {
 		return p, nil
 	}
 	return nil, fmt.Errorf("unknown feature: %q", namespace)
 }
 
-func (g *GrafanaLive) handlePluginScope(namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handlePluginScope(_ context.Context, namespace string) (models.ChannelHandlerFactory, error) {
 	// Temporary hack until we have a more generic solution later on
 	if namespace == "cloudwatch" {
 		return &cloudwatch.LogQueryRunnerSupplier{
@@ -303,18 +282,19 @@ func (g *GrafanaLive) handlePluginScope(namespace string) (models.ChannelHandler
 	}
 	return features.NewPluginRunner(
 		namespace,
+		"",
 		g.streamManager,
 		g.contextGetter,
 		streamHandler,
 	), nil
 }
 
-func (g *GrafanaLive) handleDatasourceScope(namespace string) (models.ChannelHandlerFactory, error) {
-	datasourceID, err := strconv.ParseInt(namespace, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("namespace must be a valid datasource ID")
+func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, namespace string) (models.ChannelHandlerFactory, error) {
+	user, ok := getContextSignedUser(ctx)
+	if !ok {
+		return nil, fmt.Errorf("no signed user found in context")
 	}
-	ds, err := g.DatasourceCache.GetDatasource(datasourceID, nil, false)
+	ds, err := g.DatasourceCache.GetDatasourceByUID(namespace, user, false)
 	if err != nil {
 		return nil, fmt.Errorf("error getting datasource: %w", err)
 	}
@@ -323,7 +303,8 @@ func (g *GrafanaLive) handleDatasourceScope(namespace string) (models.ChannelHan
 		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
 	}
 	return features.NewPluginRunner(
-		namespace,
+		ds.Type,
+		ds.Uid,
 		g.streamManager,
 		g.contextGetter,
 		streamHandler,

@@ -2,16 +2,15 @@ package testdatasource
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 type testStreamHandler struct {
@@ -36,12 +35,15 @@ func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunS
 	case "random-2s-stream":
 		conf = testStreamConfig{
 			Interval: 200 * time.Millisecond,
-			Drop:     0,
 		}
 	case "random-flakey-stream":
 		conf = testStreamConfig{
 			Interval: 200 * time.Millisecond,
 			Drop:     0.6,
+		}
+	case "random-20Hz-stream":
+		conf = testStreamConfig{
+			Interval: 50 * time.Millisecond,
 		}
 	default:
 		return fmt.Errorf("testdata plugin does not support path: %s", request.Path)
@@ -61,33 +63,31 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 	ticker := time.NewTicker(conf.Interval)
 	defer ticker.Stop()
 
-	measurement := models.Measurement{
-		Name:   "testdata",
-		Time:   0,
-		Values: make(map[string]interface{}, 5),
-	}
-	msg := models.MeasurementBatch{
-		Measurements: []models.Measurement{measurement}, // always a single measurement
-	}
+	frame := data.NewFrame("testdata",
+		data.NewField("Time", nil, make([]time.Time, 1)),
+		data.NewField("Value", nil, make([]float64, 1)),
+		data.NewField("Min", nil, make([]float64, 1)),
+		data.NewField("Max", nil, make([]float64, 1)),
+	)
 
 	for {
 		select {
 		case <-ctx.Done():
 			p.logger.Debug("Stop streaming data for path", "path", path)
 			return ctx.Err()
-		case <-ticker.C:
+		case t := <-ticker.C:
 			if rand.Float64() < conf.Drop {
 				continue
 			}
 			delta := rand.Float64() - 0.5
 			walker += delta
 
-			measurement.Time = time.Now().UnixNano() / int64(time.Millisecond)
-			measurement.Values["value"] = walker
-			measurement.Values["min"] = walker - ((rand.Float64() * spread) + 0.01)
-			measurement.Values["max"] = walker + ((rand.Float64() * spread) + 0.01)
+			frame.Fields[0].Set(0, t)
+			frame.Fields[1].Set(0, walker)                                // Value
+			frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
+			frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
 
-			bytes, err := json.Marshal(&msg)
+			bytes, err := data.FrameToJSON(frame, true, true)
 			if err != nil {
 				logger.Warn("unable to marshal line", "error", err)
 				continue

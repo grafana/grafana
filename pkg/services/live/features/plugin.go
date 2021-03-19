@@ -3,7 +3,6 @@ package features
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -25,13 +24,14 @@ func (p *streamSender) Send(packet *backend.StreamPacket) error {
 
 type PluginRunner struct {
 	pluginID            string
+	datasourceUID       string
 	pluginContextGetter pluginContextGetter
 	handler             backend.StreamHandler
 	streamManager       *StreamManager
 }
 
 type pluginContextGetter interface {
-	GetPluginContext(ctx context.Context, pluginID string, datasourceID int64) (backend.PluginContext, bool, error)
+	GetPluginContext(ctx context.Context, pluginID string, datasourceUID string) (backend.PluginContext, bool, error)
 }
 
 type channelPublisher interface {
@@ -42,9 +42,10 @@ type presenceGetter interface {
 	GetNumSubscribers(channel string) (int, error)
 }
 
-func NewPluginRunner(pluginID string, streamManager *StreamManager, pluginContextGetter pluginContextGetter, handler backend.StreamHandler) *PluginRunner {
+func NewPluginRunner(pluginID string, datasourceUID string, streamManager *StreamManager, pluginContextGetter pluginContextGetter, handler backend.StreamHandler) *PluginRunner {
 	return &PluginRunner{
 		pluginID:            pluginID,
+		datasourceUID:       datasourceUID,
 		pluginContextGetter: pluginContextGetter,
 		handler:             handler,
 		streamManager:       streamManager,
@@ -56,6 +57,7 @@ func (m *PluginRunner) GetHandlerForPath(path string) (models.ChannelHandler, er
 	return &PluginPathRunner{
 		path:                path,
 		pluginID:            m.pluginID,
+		datasourceUID:       m.datasourceUID,
 		pluginContextGetter: m.pluginContextGetter,
 		handler:             m.handler,
 		streamManager:       m.streamManager,
@@ -63,9 +65,9 @@ func (m *PluginRunner) GetHandlerForPath(path string) (models.ChannelHandler, er
 }
 
 type PluginPathRunner struct {
-	mu                  sync.RWMutex
 	path                string
 	pluginID            string
+	datasourceUID       string
 	pluginContextGetter pluginContextGetter
 	handler             backend.StreamHandler
 	streamManager       *StreamManager
@@ -73,8 +75,7 @@ type PluginPathRunner struct {
 
 // OnSubscribe ...
 func (r *PluginPathRunner) OnSubscribe(client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-	// TODO: tmp hardcoded datasource ID!
-	pCtx, found, err := r.pluginContextGetter.GetPluginContext(client.Context(), r.pluginID, 2)
+	pCtx, found, err := r.pluginContextGetter.GetPluginContext(client.Context(), r.pluginID, r.datasourceUID)
 	if err != nil {
 		logger.Error("Get plugin context error", "error", err, "path", r.path)
 		return centrifuge.SubscribeReply{}, err

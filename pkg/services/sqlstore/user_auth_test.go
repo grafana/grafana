@@ -15,18 +15,16 @@ import (
 
 //nolint:goconst
 func TestUserAuth(t *testing.T) {
-	InitTestDB(t)
+	sqlStore := InitTestDB(t)
 
 	Convey("Given 5 users", t, func() {
-		var err error
-		var cmd *models.CreateUserCommand
 		for i := 0; i < 5; i++ {
-			cmd = &models.CreateUserCommand{
+			cmd := models.CreateUserCommand{
 				Email: fmt.Sprint("user", i, "@test.com"),
 				Name:  fmt.Sprint("user", i),
 				Login: fmt.Sprint("loginuser", i),
 			}
-			err = CreateUser(context.Background(), cmd)
+			_, err := sqlStore.CreateUser(context.Background(), cmd)
 			So(err, ShouldBeNil)
 		}
 
@@ -46,7 +44,7 @@ func TestUserAuth(t *testing.T) {
 			login := "loginuser0"
 
 			query := &models.GetUserByAuthInfoQuery{Login: login}
-			err = GetUserByAuthInfo(query)
+			err := GetUserByAuthInfo(query)
 
 			So(err, ShouldBeNil)
 			So(query.Result.Login, ShouldEqual, login)
@@ -82,7 +80,7 @@ func TestUserAuth(t *testing.T) {
 		Convey("Can set & locate by AuthModule and AuthId", func() {
 			// get nonexistent user_auth entry
 			query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			err = GetUserByAuthInfo(query)
+			err := GetUserByAuthInfo(query)
 
 			So(err, ShouldEqual, models.ErrUserNotFound)
 			So(query.Result, ShouldBeNil)
@@ -144,7 +142,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
 			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test", AuthId: "test"}
-			err = GetUserByAuthInfo(query)
+			err := GetUserByAuthInfo(query)
 
 			So(err, ShouldBeNil)
 			So(query.Result.Login, ShouldEqual, login)
@@ -179,7 +177,7 @@ func TestUserAuth(t *testing.T) {
 			// Make the first log-in during the past
 			getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
 			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
-			err = GetUserByAuthInfo(query)
+			err := GetUserByAuthInfo(query)
 			getTime = time.Now
 
 			So(err, ShouldBeNil)

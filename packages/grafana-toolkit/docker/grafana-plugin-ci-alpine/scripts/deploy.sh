@@ -18,8 +18,8 @@ apk add --no-cache curl 'nodejs-current=14.5.0-r0' npm yarn build-base openssh g
 # apk add --no-cache xvfb glib nss nspr gdk-pixbuf "gtk+3.0" pango atk cairo dbus-libs libxcomposite libxrender libxi libxtst libxrandr libxscrnsaver alsa-lib at-spi2-atk at-spi2-core cups-libs gcompat libc6-compat
 
 # Install Go
-filename="go1.16.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "013a489ebb3e24ef3d915abe5b94c3286c070dfe0818d5bca8108f1d6e8440d2"
+filename="go1.16.1.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "3edc22f8332231c3ba8be246f184b736b8d28f06ce24f08168d8ecf052549769"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint

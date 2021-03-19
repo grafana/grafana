@@ -29,7 +29,7 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
     );
   }
 
-  const getItemKey = (item: VizLegendItem) => `${item.label}`;
+  const getItemKey = (item: VizLegendItem) => `${item.getItemKey ? item.getItemKey() : item.label}`;
 
   switch (placement) {
     case 'right': {
