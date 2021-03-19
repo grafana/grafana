@@ -1,0 +1,15 @@
+# invalid recipient
+GET http://admin:admin@localhost:3000/alertmanager/42/config/api/v1/alerts
+content-type: application/json
+
+###
+# create AM configuration
+POST http://admin:admin@localhost:3000/alertmanager/grafana/config/api/v1/alerts
+content-type: application/json
+
+< ./post-user-config.json
+
+###
+# get latest AM configuration
+GET http://admin:admin@localhost:3000/alertmanager/grafana/config/api/v1/alerts
+content-type: application/json
