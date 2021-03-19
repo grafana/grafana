@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 
@@ -42,6 +44,7 @@ type AlertNG struct {
 	RouteRegister   routing.RouteRegister                   `inject:""`
 	SQLStore        *sqlstore.SQLStore                      `inject:""`
 	DataService     *tsdb.Service                           `inject:""`
+	Alertmanager    *notifier.Alertmanager                  `inject:""`
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
 	Log             log.Logger
 	schedule        schedule.ScheduleService
@@ -76,7 +79,9 @@ func (ng *AlertNG) Init() error {
 		DataService:     ng.DataService,
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
-		Store:           store}
+		Store:           store,
+		Alertmanager:    ng.Alertmanager,
+	}
 	api.RegisterAPIEndpoints()
 
 	return nil
@@ -107,5 +112,4 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	addAlertDefinitionVersionMigrations(mg)
 	// Create alert_instance table
 	alertInstanceMigration(mg)
-	alertmanagerConfigurationMigration(mg)
 }

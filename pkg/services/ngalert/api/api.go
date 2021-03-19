@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/alerting-api/pkg/api"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -31,6 +33,10 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
+type Alertmanager interface {
+	ApplyConfig(config *api.PostableUserConfig) error
+}
+
 // API handlers.
 type API struct {
 	Cfg             *setting.Cfg
@@ -40,6 +46,7 @@ type API struct {
 	Schedule        schedule.ScheduleService
 	Store           store.Store
 	DataProxy       *datasourceproxy.DatasourceProxyService
+	Alertmanager    Alertmanager
 }
 
 // RegisterAPIEndpoints registers API handlers
