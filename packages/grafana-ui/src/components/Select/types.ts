@@ -45,7 +45,7 @@ export interface SelectCommonProps<T> {
   /** The message to display when no options could be found */
   noOptionsMessage?: string;
   onBlur?: () => void;
-  onChange: (value: SelectableValue<T>) => {} | void;
+  onChange: (value: SelectableValue<T> | null) => {} | void;
   onCloseMenu?: () => void;
   /** allowCustomValue must be enabled. Function decides what to do with that custom value. */
   onCreateOption?: (value: string) => void;

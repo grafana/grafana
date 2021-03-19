@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { mount, ReactWrapper } from 'enzyme';
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import { SelectBase } from './SelectBase';
@@ -59,8 +59,7 @@ describe('SelectBase', () => {
 
     render(<Test />);
     expect(screen.queryByText('Test label')).toBeInTheDocument();
-
-    await act(() => userEvent.click(screen.getByText('clear value')));
+    userEvent.click(screen.getByText('clear value'));
     expect(screen.queryByText('Test label')).not.toBeInTheDocument();
   });
 
