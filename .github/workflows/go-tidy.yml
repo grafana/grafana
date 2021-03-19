@@ -37,7 +37,7 @@ jobs:
       -
         name: Set up Git
         run: |
-          cd ../grafana/grafana
+          cd grafana
           git config user.name ${USERNAME}
           git config user.email ${EMAIL}
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/grafana/grafana.git
@@ -48,11 +48,17 @@ jobs:
           rm -f go.sum
           go mod tidy
       -
-        name: Commit and push go.sum
-        run: |
-          cd grafana
-          git add .
-          if output=$(git status --porcelain) && [ ! -z "$output" ]; then
-            git commit -m 'Update go module dependencies'
-            git push
-          fi
+        name: Checkout OSS repo
+        uses: actions/checkout@v2
+      -
+        name: Create Pull Request
+        uses: dsotirakis/create-pull-request@v3
+        with:
+          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+          branch: pr-creator
+          commit-message: Update go modules
+          title: 'Chore(deps): Update go modules'
+          author: grafanabot <bot@grafana.com>
+          body: >
+            Auto-generated PR to update go modules.
+          labels: type/chore
