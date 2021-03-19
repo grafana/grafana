@@ -1,23 +1,23 @@
-import { DataLinksInlineEditor, Field, Input, Switch, TextArea } from '@grafana/ui';
+import { DataLinksInlineEditor, Input, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, ReactElement } from 'react';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
-import { OptionsGroup } from './OptionsGroup';
-import { OptionsPaneCategory, OptionsPaneCategoryProps, OptionsPaneItem } from './OptionsPaneItems';
-import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
+import { OptionsPaneCategory, OptionsPaneCategoryProps } from './OptionsPaneCategory';
+import { OptionsPaneItem } from './OptionsPaneItem';
+import { OptionPaneRenderProps } from './types';
 
-export function getPanelFrameOptions(props: OptionPaneRenderProps): React.ReactElement<OptionsPaneCategoryProps> {
+export function getPanelFrameOptions(props: OptionPaneRenderProps): ReactElement<OptionsPaneCategoryProps> {
   const { panel, onPanelConfigChange } = props;
 
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
-  const panelLinksCount = panel && panel.links ? panel.links.length : 0;
+  //const panelLinksCount = panel && panel.links ? panel.links.length : 0;
 
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
     onPanelConfigChange,
   ]);
 
   return (
-    <OptionsPaneCategory title="Panel frame">
+    <OptionsPaneCategory title="Panel frame" key="Panel frame" id="Panel frame">
       <OptionsPaneItem title="Title" value={panel.title}>
         <Input defaultValue={panel.title} onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)} />
       </OptionsPaneItem>
@@ -37,7 +37,7 @@ export function getPanelFrameOptions(props: OptionPaneRenderProps): React.ReactE
           onChange={(e) => onPanelConfigChange('transparent', e.currentTarget.checked)}
         />
       </OptionsPaneItem>
-      <OptionsPaneCategory title="Panel links">
+      <OptionsPaneCategory title="Panel links" id="Panel links" defaultToClosed nested>
         <OptionsPaneItem title="Links">
           <DataLinksInlineEditor
             links={panel.links}
@@ -47,7 +47,7 @@ export function getPanelFrameOptions(props: OptionPaneRenderProps): React.ReactE
           />
         </OptionsPaneItem>
       </OptionsPaneCategory>
-      <OptionsPaneCategory title="Repeat options">
+      <OptionsPaneCategory title="Repeat options" id="Repeat options" defaultToClosed nested>
         <OptionsPaneItem
           title="Repeat by variable"
           description="Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard."

@@ -14,7 +14,7 @@ import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { css } from 'emotion';
-import { OptionsGroup } from './OptionsGroup';
+import { OptionsPaneCategory } from './OptionsPaneCategory';
 
 interface OverrideEditorProps {
   name: string;
@@ -131,7 +131,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   const isSystemOverride = isSystemOverrideGuard(override);
 
   return (
-    <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
+    <OptionsPaneCategory renderTitle={renderOverrideTitle} id={name} key={name}>
       <Field label={matcherLabel}>
         <matcherUi.component
           matcher={matcherUi.matcher}
@@ -183,7 +183,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
           </div>
         )}
       </>
-    </OptionsGroup>
+    </OptionsPaneCategory>
   );
 };
 

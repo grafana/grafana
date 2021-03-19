@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { updateDefaultFieldConfigValue } from './utils';
 import { FieldConfigPropertyItem, FieldConfigSource, VariableSuggestionsScope } from '@grafana/data';
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
-import { OptionsGroup } from './OptionsGroup';
+import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { Props } from './types';
 
 export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, config, plugin }) => {
@@ -87,7 +87,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
         }
 
         return (
-          <OptionsGroup
+          <OptionsPaneCategory
             renderTitle={(isExpanded) => {
               return (
                 <>
@@ -101,7 +101,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
             {group.map((c) => {
               return renderEditor(c, group.length);
             })}
-          </OptionsGroup>
+          </OptionsPaneCategory>
         );
       })}
     </div>

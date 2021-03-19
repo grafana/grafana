@@ -8,13 +8,8 @@ import { getPanelFrameOptions } from './getPanelFrameOptions';
 import { getFieldOverrides, getVizualizationOptions } from './getVizualizationOptions';
 import { css } from 'emotion';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import {
-  OptionsPaneCategory,
-  OptionsPaneCategoryProps,
-  OptionsPaneItem,
-  OptionsPaneItemProps,
-} from './OptionsPaneItems';
-import { OptionsGroup } from './OptionsGroup';
+import { OptionsPaneItem, OptionsPaneItemProps } from './OptionsPaneItem';
+import { OptionsPaneCategory, OptionsPaneCategoryProps } from './OptionsPaneCategory';
 
 interface Props {
   plugin: PanelPlugin;
@@ -51,8 +46,7 @@ export const OptionsPaneOptions: React.FC<Props> = ({
   };
 
   groupElements.push(getPanelFrameOptions(optionProps));
-
-  //topGroups.push(...getVizualizationOptions(optionProps));
+  groupElements.push(...getVizualizationOptions(optionProps));
   //topGroups.push(...getFieldOverrides(optionProps));
 
   const radioOptions = [
@@ -75,9 +69,9 @@ export const OptionsPaneOptions: React.FC<Props> = ({
         <div className={styles.optionsBox}>
           {searchQuery.length === 0 && groupElements}
           {searchQuery.length > 0 && (
-            <OptionsGroup id="Search results" title="Search results">
+            <OptionsPaneCategory id="Found options" title="Found options">
               {getSearchHits(groupElements, searchRegex)}
-            </OptionsGroup>
+            </OptionsPaneCategory>
           )}
         </div>
       </CustomScrollbar>

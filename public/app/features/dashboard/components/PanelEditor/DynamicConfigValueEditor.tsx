@@ -2,7 +2,7 @@ import { DynamicConfigValue, FieldConfigOptionsRegistry, FieldOverrideContext, G
 import React from 'react';
 import { Counter, Field, HorizontalGroup, IconButton, Label, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
-import { OptionsGroup } from './OptionsGroup';
+import { OptionsPaneCategory } from './OptionsPaneCategory';
 
 interface DynamicConfigValueEditorProps {
   property: DynamicConfigValue;
@@ -52,7 +52,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
 
   if (isCollapsible) {
     editor = (
-      <OptionsGroup
+      <OptionsPaneCategory
         id={item.name}
         renderTitle={renderLabel(false, true)}
         className={css`
@@ -70,7 +70,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
           item={item}
           context={context}
         />
-      </OptionsGroup>
+      </OptionsPaneCategory>
     );
   } else {
     editor = (

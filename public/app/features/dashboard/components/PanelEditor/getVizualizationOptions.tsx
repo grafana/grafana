@@ -1,16 +1,17 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, ReactElement } from 'react';
 import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet, set as lodashSet } from 'lodash';
 import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
 import { updateDefaultFieldConfigValue } from './utils';
+import { OptionsPaneItem } from './OptionsPaneItem';
+import { OptionsPaneCategory, OptionsPaneCategoryProps } from './OptionsPaneCategory';
 
-export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPaneGroup[] {
+export function getVizualizationOptions(props: OptionPaneRenderProps): Array<ReactElement<OptionsPaneCategoryProps>> {
   const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, eventBus } = props;
   const currentOptions = panel.getOptions();
   const currentFieldConfig = panel.fieldConfig;
-  const groups: OptionsPaneGroup[] = [];
-  const categories: Record<string, OptionsPaneGroup> = {};
+  const categoryIndex: Record<string, ReactElement[]> = {};
 
   const onOptionChange = useCallback(
     (key: string, value: any) => {
@@ -37,42 +38,34 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
     },
   };
 
-  const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneGroup => {
+  const getOptionsPaneCategory = (categoryNames?: string[]): ReactElement[] => {
     const categoryName = (categoryNames && categoryNames[0]) ?? `${plugin.meta.name} options`;
-    const category = categories[categoryName];
+    const categoryItems = categoryIndex[categoryName];
 
-    if (category) {
-      return category;
+    if (categoryItems) {
+      return categoryItems;
     }
 
-    const newCategory = (categories[categoryName] = {
-      title: categoryName,
-      items: [],
-    });
-
-    groups.push(newCategory);
-    return newCategory;
+    return (categoryIndex[categoryName] = []);
   };
 
   /**
    * Panel options
    */
   for (const pluginOption of plugin.optionEditors.list()) {
-    const optionCategory = getOptionsPaneCategory(pluginOption.category);
+    const categoryItems = getOptionsPaneCategory(pluginOption.category);
     const Editor = pluginOption.editor;
 
-    optionCategory.items!.push({
-      title: pluginOption.name,
-      description: pluginOption.description,
-      reactNode: (
+    categoryItems.push(
+      <OptionsPaneItem title={pluginOption.name} description={pluginOption.description} key={pluginOption.name}>
         <Editor
           value={lodashGet(currentOptions, pluginOption.path)}
           onChange={(value) => onOptionChange(pluginOption.path, value)}
           item={pluginOption}
           context={context}
         />
-      ),
-    });
+      </OptionsPaneItem>
+    );
   }
 
   /**
@@ -91,7 +84,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       continue;
     }
 
-    const optionCategory = getOptionsPaneCategory(fieldOption.category);
+    const categoryItems = getOptionsPaneCategory(fieldOption.category);
     const Editor = fieldOption.editor;
 
     const defaults = currentFieldConfig.defaults;
@@ -101,21 +94,23 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
         : undefined
       : lodashGet(defaults, fieldOption.path);
 
-    optionCategory.items!.push({
-      title: fieldOption.name,
-      description: fieldOption.description,
-      reactNode: (
+    categoryItems.push(
+      <OptionsPaneItem title={fieldOption.name} description={fieldOption.description} key={fieldOption.name}>
         <Editor
           value={value}
           onChange={(v) => onDefaultValueChange(fieldOption.path, v, fieldOption.isCustom)}
           item={fieldOption}
           context={context}
         />
-      ),
-    });
+      </OptionsPaneItem>
+    );
   }
 
-  return groups;
+  return Object.keys(categoryIndex).map((name) => (
+    <OptionsPaneCategory id={name} key={name} title={name}>
+      {categoryIndex[name]}
+    </OptionsPaneCategory>
+  ));
 }
 
 export function getFieldOverrides(props: OptionPaneRenderProps): OptionsPaneGroup[] {

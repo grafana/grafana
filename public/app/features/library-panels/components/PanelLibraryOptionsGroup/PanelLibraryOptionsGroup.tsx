@@ -5,7 +5,7 @@ import omit from 'lodash/omit';
 import { GrafanaTheme } from '@grafana/data';
 import { Button, stylesFactory, useStyles } from '@grafana/ui';
 
-import { OptionsGroup } from 'app/features/dashboard/components/PanelEditor/OptionsGroup';
+import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
@@ -56,7 +56,7 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard, on
   };
 
   return (
-    <OptionsGroup
+    <OptionsPaneCategory
       renderTitle={(isExpanded) => {
         return isExpanded && !panel.libraryPanel ? (
           <div className={styles.panelLibraryTitle}>
@@ -92,7 +92,7 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard, on
           isOpen={showingAddPanelModal}
         />
       )}
-    </OptionsGroup>
+    </OptionsPaneCategory>
   );
 };
 

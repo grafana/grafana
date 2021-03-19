@@ -3,9 +3,8 @@ import { DashboardModel, PanelModel } from '../../state';
 import { PanelData, PanelPlugin } from '@grafana/data';
 import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
-import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
-import { OptionsGroup } from './OptionsGroup';
+import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 import config from 'app/core/config';
 import { LibraryPanelInformation } from 'app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo';
@@ -56,7 +55,7 @@ export const PanelOptionsTab: FC<Props> = ({
 
   // First common panel settings Title, description
   elements.push(
-    <OptionsGroup title="Settings" id="Panel settings" key="Panel settings">
+    <OptionsPaneCategory title="Settings" id="Panel settings" key="Panel settings">
       <Field label="Panel title">
         <Input defaultValue={panel.title} onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)} />
       </Field>
@@ -72,29 +71,15 @@ export const PanelOptionsTab: FC<Props> = ({
           onChange={(e) => onPanelConfigChange('transparent', e.currentTarget.checked)}
         />
       </Field>
-    </OptionsGroup>
+    </OptionsPaneCategory>
   );
 
   // Old legacy react editor
   if (plugin.editor && panel && !plugin.optionEditors) {
     elements.push(
-      <OptionsGroup title="Options" id="legacy react editor" key="legacy react editor">
+      <OptionsPaneCategory title="Options" id="legacy react editor" key="legacy react editor">
         <plugin.editor data={data} options={panel.getOptions()} onOptionsChange={onPanelOptionsChanged} />
-      </OptionsGroup>
-    );
-  }
-
-  if (plugin.optionEditors && panel) {
-    elements.push(
-      <PanelOptionsEditor
-        key="panel options"
-        options={panel.getOptions()}
-        onChange={onPanelOptionsChanged}
-        replaceVariables={panel.replaceVariables}
-        plugin={plugin}
-        data={data?.series}
-        eventBus={dashboard.events}
-      />
+      </OptionsPaneCategory>
     );
   }
 
@@ -105,7 +90,7 @@ export const PanelOptionsTab: FC<Props> = ({
   }
 
   elements.push(
-    <OptionsGroup
+    <OptionsPaneCategory
       renderTitle={(isExpanded) => (
         <>Links {!isExpanded && panelLinksCount > 0 && <Counter value={panelLinksCount} />}</>
       )}
@@ -119,11 +104,11 @@ export const PanelOptionsTab: FC<Props> = ({
         suggestions={linkVariablesSuggestions}
         data={[]}
       />
-    </OptionsGroup>
+    </OptionsPaneCategory>
   );
 
   elements.push(
-    <OptionsGroup title="Repeat options" id="panel repeats" key="panel repeats" defaultToClosed>
+    <OptionsPaneCategory title="Repeat options" id="panel repeats" key="panel repeats" defaultToClosed>
       <Field
         label="Repeat by variable"
         description="Repeat this panel for each value in the selected variable.
@@ -151,7 +136,7 @@ export const PanelOptionsTab: FC<Props> = ({
           />
         </Field>
       )}
-    </OptionsGroup>
+    </OptionsPaneCategory>
   );
 
   if (config.featureToggles.panelLibrary) {
