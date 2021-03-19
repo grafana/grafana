@@ -1171,7 +1171,7 @@
           "x-go-name": "Templates"
         }
       },
-      "x-go-package": "github.com/prometheus/alertmanager/config"
+      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "CreateAlertNotificationCommand": {
       "type": "object",

@@ -407,7 +407,7 @@
    },
    "title": "Config is the top-level configuration for Alertmanager's config files.",
    "type": "object",
-   "x-go-package": "github.com/prometheus/alertmanager/config"
+   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "CreateAlertNotificationCommand": {
    "properties": {

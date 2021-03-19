@@ -184,7 +184,7 @@ type GettableUserConfig struct {
 	AlertmanagerConfig GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 }
 type GettableApiAlertingConfig struct {
-	config.Config
+	Config `yaml:",inline"`
 
 	// Override with our superset receiver type
 	Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
@@ -241,8 +241,17 @@ func (c *GettableApiAlertingConfig) Type() (backend Backend) {
 	return
 }
 
+// Config is the top-level configuration for Alertmanager's config files.
+type Config struct {
+	Global       *config.GlobalConfig  `yaml:"global,omitempty" json:"global,omitempty"`
+	Route        *config.Route         `yaml:"route,omitempty" json:"route,omitempty"`
+	InhibitRules []*config.InhibitRule `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
+	Receivers    []*config.Receiver    `yaml:"-" json:"receivers,omitempty"`
+	Templates    []string              `yaml:"templates" json:"templates"`
+}
+
 type PostableApiAlertingConfig struct {
-	config.Config
+	Config `yaml:",inline"`
 
 	// Override with our superset receiver type
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
@@ -320,8 +329,8 @@ const (
 )
 
 type GettableApiReceiver struct {
-	config.Receiver
-	GettableGrafanaReceivers
+	config.Receiver          `yaml:",inline"`
+	GettableGrafanaReceivers `yaml:",inline"`
 }
 
 func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
@@ -372,8 +381,31 @@ func (r *GettableApiReceiver) Type() ReceiverType {
 }
 
 type PostableApiReceiver struct {
-	config.Receiver
-	PostableGrafanaReceivers
+	config.Receiver          `yaml:",inline"`
+	PostableGrafanaReceivers `yaml:",inline"`
+}
+
+func (r *PostableApiReceiver) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var grafanaReceivers PostableGrafanaReceivers
+	if err := unmarshal(&grafanaReceivers); err != nil {
+		return err
+	}
+	r.PostableGrafanaReceivers = grafanaReceivers
+
+	var cfg config.Receiver
+	if err := unmarshal(&cfg); err != nil {
+		return err
+	}
+	r.Name = cfg.Name
+	r.EmailConfigs = cfg.EmailConfigs
+	r.PagerdutyConfigs = cfg.PagerdutyConfigs
+	r.SlackConfigs = cfg.SlackConfigs
+	r.WebhookConfigs = cfg.WebhookConfigs
+	r.OpsGenieConfigs = cfg.OpsGenieConfigs
+	r.WechatConfigs = cfg.WechatConfigs
+	r.PushoverConfigs = cfg.PushoverConfigs
+	r.VictorOpsConfigs = cfg.VictorOpsConfigs
+	return nil
 }
 
 func (r *PostableApiReceiver) UnmarshalJSON(b []byte) error {
