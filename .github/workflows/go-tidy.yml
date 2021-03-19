@@ -42,14 +42,13 @@ jobs:
           git config user.email ${EMAIL}
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/grafana/grafana.git
       -
-        name: Run go mod tidy
-        run: |
-          cd grafana
-          rm -f go.sum
-          go mod tidy
-      -
         name: Checkout OSS repo
         uses: actions/checkout@v2
+      -
+        name: Run go mod tidy
+        run: |
+          rm -f go.sum
+          go mod tidy
       -
         name: Create Pull Request
         uses: dsotirakis/create-pull-request@v3
