@@ -12,7 +12,7 @@ import 'jquery';
 import _ from 'lodash';
 import ReactDOM from 'react-dom';
 import React from 'react';
-import config from 'app/core/config';
+
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
   setLocale,
@@ -20,10 +20,11 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
+  locationUtil,
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { registerEchoBackend, setEchoSrv, config, locationService } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -79,6 +80,14 @@ export class GrafanaApp {
 
     // intercept anchor clicks and forward it to custom history instead of relying on browser's history
     document.addEventListener('click', interceptLinkClicks);
+    const homePage: string = config.homePage;
+    const isHomePage: Boolean = locationUtil.stripBaseFromUrl(window.location.pathname) === '/';
+
+    // if config has a homePage specified redirect there
+    if (Boolean(homePage) && isHomePage) {
+      const newUrl = locationUtil.stripBaseFromUrl(homePage);
+      locationService.replace(newUrl);
+    }
 
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;

@@ -112,6 +112,7 @@ export interface GrafanaConfig {
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
+  homePage: string;
   oauth: any;
   disableUserSignUp: boolean;
   loginHint: any;
