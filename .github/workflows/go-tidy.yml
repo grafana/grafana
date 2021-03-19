@@ -22,6 +22,11 @@ jobs:
           repository: grafana/grafana
           path: grafana
       -
+        name: Get current branch name
+        id: triggered_branch
+        run: |
+          echo ::set-output name=branch_name::$(echo $GITHUB_REF | cut -d'/' -f 3)
+      -
         name: Checkout enterprise
         uses: actions/checkout@v2
         with:
@@ -53,6 +58,7 @@ jobs:
         with:
           token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
           branch: update-go-modules
+          base: ${{ steps.triggered_branch.outputs.branch_name }}
           commit-message: Update go modules
           path: grafana
           title: 'Chore(deps): Update go modules'
