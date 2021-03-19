@@ -36,7 +36,8 @@ export const OptionsPaneOptions: React.FC<Props> = ({
   dashboard,
 }: Props) => {
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
-  const [searchString, setSearchString] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchRegex = new RegExp(searchQuery, 'i');
   const styles = useStyles(getStyles);
   const groupElements: Array<ReactElement<OptionsPaneCategoryProps>> = [];
   const optionProps: OptionPaneRenderProps = {
@@ -64,7 +65,7 @@ export const OptionsPaneOptions: React.FC<Props> = ({
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
         <Field className={styles.customFieldMargin}>
-          <FilterInput width={0} value={searchString} onChange={setSearchString} placeholder={'Search options'} />
+          <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </Field>
         <Field className={styles.customFieldMargin}>
           <RadioButtonGroup options={radioOptions} value="all" fullWidth />
@@ -72,10 +73,10 @@ export const OptionsPaneOptions: React.FC<Props> = ({
       </div>
       <CustomScrollbar autoHeightMin="100%">
         <div className={styles.optionsBox}>
-          {searchString.length === 0 && groupElements}
-          {searchString.length > 0 && (
+          {searchQuery.length === 0 && groupElements}
+          {searchQuery.length > 0 && (
             <OptionsGroup id="Search results" title="Search results">
-              {getSearchHits(groupElements, searchString)}
+              {getSearchHits(groupElements, searchRegex)}
             </OptionsGroup>
           )}
         </div>
@@ -84,7 +85,7 @@ export const OptionsPaneOptions: React.FC<Props> = ({
   );
 };
 
-function getSearchHits(items: Array<ReactElement<OptionsPaneCategoryProps>>, searchString: string) {
+function getSearchHits(items: Array<ReactElement<OptionsPaneCategoryProps>>, searchRegex: RegExp) {
   const filteredItems: React.ReactElement[] = [];
 
   React.Children.forEach(items, (topGroup) => {
@@ -94,11 +95,11 @@ function getSearchHits(items: Array<ReactElement<OptionsPaneCategoryProps>>, sea
 
       if (displayName === OptionsPaneItem.displayName) {
         const props = item.props as OptionsPaneItemProps;
-        if (props.title.indexOf(searchString) >= 0) {
+        if (searchRegex.test(props.title)) {
           filteredItems.push(item);
         }
       } else if (displayName === OptionsPaneCategory.displayName) {
-        filteredItems.push(...getSearchHits(item.props.children as any, searchString));
+        filteredItems.push(...getSearchHits(item.props.children as any, searchRegex));
       }
     });
   });
