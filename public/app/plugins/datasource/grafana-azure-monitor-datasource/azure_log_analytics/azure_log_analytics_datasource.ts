@@ -197,8 +197,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       `https://portal.azure.com/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
       `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
       `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2F${subscription}` +
-      `%2Fresourcegroups%2F${details.resourceGroup}%2Fproviders%2Fmicrosoft.operationalinsights%2Fworkspaces%2F${details.workspace}` +
-      `%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true/timespanInIsoFormat/P1D`
+      `%2Fresourcegroups%2F${details.resourceGroup}%2Fproviders%2Fmicrosoft.operationalinsights%2Fworkspaces%2F` +
+      `${details.workspace}%22%7D%5D%7D/query/${base64Enc}/isQueryBase64Compressed/true`
     );
   }
 
