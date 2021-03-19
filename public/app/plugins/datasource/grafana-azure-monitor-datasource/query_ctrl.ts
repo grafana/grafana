@@ -100,8 +100,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     azureLogAnalytics: {
       query: defaultQuery,
       resultFormat: 'time_series',
-      workspace: this.datasource?.azureLogAnalyticsDatasource.defaultOrFirstWorkspace ?? '',
-      resource: this.datasource?.azureResourceLogAnalyticsDatasource.defaultOrFirstResource ?? '',
+      workspace: this.datasource?.azureLogAnalyticsDatasource?.defaultOrFirstWorkspace ?? '',
+      resource: this.datasource?.azureResourceLogAnalyticsDatasource?.defaultOrFirstResource ?? '',
     },
     appInsights: {
       metricName: this.defaultDropdownValue,

@@ -237,9 +237,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const resourcesQuery = query.match(/^resources\(\)/i);
     const resourceQuery = query.match(/^resource?\(["']?([^\)]+?)["']?\)/i);
     const workspaceQuery = query.match(/^workspace?\(["']?([^\)]+?)["']?\)/i);
+    const workspacesQueryWithSub = query.match(/^workspaces\(["']?([^\)]+?)["']?\)/i);
+    const resourcesQueryWithSub = query.match(/^resources\(["']?([^\)]+?)["']?\)/i);
+
     if (
-      ((workspaceQuery || workspacesQuery) && this.configs.queryType === AzureQueryType.ResourceLogAnalytics) ||
-      ((resourceQuery || resourcesQuery) && this.configs.queryType === AzureQueryType.LogAnalytics)
+      ((workspaceQuery || workspacesQuery || workspacesQueryWithSub) &&
+        this.configs.queryType === AzureQueryType.ResourceLogAnalytics) ||
+      ((resourceQuery || resourcesQuery || resourcesQueryWithSub) &&
+        this.configs.queryType === AzureQueryType.LogAnalytics)
     ) {
       return null;
     }
@@ -248,12 +253,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return this.getWorkspacesOrResources(this.subscriptionId);
     }
 
-    const workspacesQueryWithSub = query.match(/^workspaces\(["']?([^\)]+?)["']?\)/i);
     if (workspacesQueryWithSub) {
       return this.getWorkspacesOrResources((workspacesQueryWithSub[1] || '').trim());
     }
 
-    const resourcesQueryWithSub = query.match(/^resources\(["']?([^\)]+?)["']?\)/i);
     if (resourcesQueryWithSub) {
       return this.getWorkspacesOrResources((resourcesQueryWithSub[1] || '').trim());
     }
