@@ -7,9 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/alerting-api/pkg/api"
-
 	gokit_log "github.com/go-kit/kit/log"
+	"github.com/grafana/alerting-api/pkg/api"
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
@@ -45,10 +44,11 @@ type Alertmanager struct {
 	silences        *silence.Silences
 	marker          types.Marker
 	alerts          *AlertProvider
-	dispatcher      *dispatch.Dispatcher
 	integrationsMap map[string][]notify.Integration
+	dispatcher      *dispatch.Dispatcher
+	dispatcherWG    sync.WaitGroup
 
-	wg sync.WaitGroup
+	reloadConfigMtx sync.Mutex
 }
 
 func init() {
@@ -59,11 +59,29 @@ func (am *Alertmanager) IsDisabled() bool {
 	return !setting.AlertingEnabled || !setting.ExecuteAlerts
 }
 
-func (am *Alertmanager) Init() error {
+func (am *Alertmanager) Init() (err error) {
 	am.logger = log.New("alertmanager")
 	am.Store = store.DBstore{} //TODO: Is this right?
 
-	err := am.Setup()
+	//TODO: Speak with David Parrot wrt to the marker, we'll probably need our own.
+	am.marker = types.NewMarker(prometheus.DefaultRegisterer)
+
+	am.notificationLog, err = nflog.New(
+		nflog.WithRetention(time.Hour*24),                         //TODO: This is a setting.
+		nflog.WithSnapshot(filepath.Join("dir", "notifications")), //TODO: This should be a setting
+	)
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize the notification log component of alerting")
+	}
+	am.silences, err = silence.New(silence.Options{
+		SnapshotFile: filepath.Join("dir", "silences"), //TODO: This is a setting
+		Retention:    time.Hour * 24,                   //TODO: This is also a setting
+	})
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize the silencing component of alerting")
+	}
+
+	err = am.Setup()
 	if err != nil {
 		return errors.Wrap(err, "unable to start the Alertmanager")
 	}
@@ -110,47 +128,74 @@ func (am *Alertmanager) Setup() error {
 }
 
 func (am *Alertmanager) Run(ctx context.Context) error {
-	//TODO: Speak with David Parrot wrt to the marker, we'll probably need our own.
-	am.marker = types.NewMarker(prometheus.DefaultRegisterer)
-
-	var err error
-	am.silences, err = silence.New(silence.Options{
-		SnapshotFile: filepath.Join("dir", "silences"), //TODO: This is a setting
-		Retention:    time.Hour * 24,                   //TODO: This is also a setting
-	})
-	if err != nil {
-		return errors.Wrap(err, "unable to initialize the silencing component of alerting")
+	// Make sure dispatcher starts. We can tolerate future reload failures.
+	if err := am.ReloadConfigFromDatabase(); err != nil {
+		return err
 	}
-
-	am.notificationLog, err = nflog.New(
-		nflog.WithRetention(time.Hour*24),                         //TODO: This is a setting.
-		nflog.WithSnapshot(filepath.Join("dir", "notifications")), //TODO: This should be a setting
-	)
-	if err != nil {
-		return errors.Wrap(err, "unable to initialize the notification log component of alerting")
-	}
-
-	{
-		// Now, let's put together our notification pipeline
-		routingStage := make(notify.RoutingStage, len(am.integrationsMap))
-
-		silencingStage := notify.NewMuteStage(silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger()))
-		//TODO: We need to unify these receivers
-		for name := range am.integrationsMap {
-			stage := createReceiverStage(name, am.integrationsMap[name], waitFunc, am.notificationLog)
-			routingStage[name] = notify.MultiStage{silencingStage, stage}
+	for {
+		select {
+		case <-ctx.Done():
+			am.StopAndWait()
+			return nil
+		case <-time.After(1 * time.Minute):
+			// TODO: once we have a check to skip reload on same config, uncomment this.
+			//if err := am.ReloadConfigFromDatabase(); err != nil {
+			//	am.logger.Error("failed to sync config from database", "error", err)
+			//}
 		}
+	}
+}
 
-		am.alerts, err = NewAlertProvider(routingStage, am.marker, gokit_log.NewNopLogger())
-		if err != nil {
-			return errors.Wrap(err, "failed to initialize alerting storage component")
-		}
+func (am *Alertmanager) StopAndWait() {
+	if am.dispatcher != nil {
+		am.dispatcher.Stop()
+	}
+	am.dispatcherWG.Wait()
+}
 
-		am.dispatcher = dispatch.NewDispatcher(am.alerts, BuildRoutingConfiguration(), routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), nil)
+// ReloadConfigFromDatabase picks the latest config from database and restarts
+// the components with the new config.
+func (am *Alertmanager) ReloadConfigFromDatabase() error {
+	am.reloadConfigMtx.Lock()
+	defer am.reloadConfigMtx.Unlock()
+
+	// TODO: check if config is same as before using hashes and skip reload in case they are same.
+	cfg, err := getConfigFromDatabase()
+	if err != nil {
+		return errors.Wrap(err, "get config from database")
+	}
+	return errors.Wrap(am.ApplyConfig(cfg), "reload from config")
+}
+
+func getConfigFromDatabase() (*api.PostableApiAlertingConfig, error) {
+	// TODO: get configs from the database.
+	return &api.PostableApiAlertingConfig{}, nil
+}
+
+// ApplyConfig applies a new configuration by re-initializing all components using the configuration provided.
+// It is not safe to call concurrently.
+func (am *Alertmanager) ApplyConfig(cfg *api.PostableApiAlertingConfig) error {
+	// Now, let's put together our notification pipeline
+	routingStage := make(notify.RoutingStage, len(am.integrationsMap))
+
+	silencingStage := notify.NewMuteStage(silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger()))
+	//TODO: We need to unify these receivers
+	for name := range am.integrationsMap {
+		stage := createReceiverStage(name, am.integrationsMap[name], waitFunc, am.notificationLog)
+		routingStage[name] = notify.MultiStage{silencingStage, stage}
 	}
 
-	am.wg.Add(1)
-	go am.dispatcher.Run()
+	am.alerts.SetStage(routingStage)
+
+	am.StopAndWait()
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, BuildRoutingConfiguration(), routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), nil)
+
+	am.dispatcherWG.Add(1)
+	go func() {
+		defer am.dispatcherWG.Done()
+		am.dispatcher.Run()
+	}()
+
 	return nil
 }
 
