@@ -115,30 +115,30 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
           </ToolbarButton>
           <ToolbarButton
             tooltip={isPanelOptionsVisible ? 'Close options pane' : 'Show options pane'}
-            icon="sliders-v-alt"
+            icon="angle-right"
             onClick={onToggleOptionsPane}
-            isOpen={isPanelOptionsVisible}
             aria-label={selectors.components.PanelEditor.toggleVizOptions}
           />
         </ButtonGroup>
       )}
       {isVizPickerOpen && (
         <div className={styles.openWrapper}>
-          <Field>
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.currentTarget.value)}
-              onKeyPress={onKeyPress}
-              prefix={<Icon name="search" />}
-              suffix={suffix}
-              autoFocus
-              placeholder="Search for..."
-            />
-          </Field>
-
-          <Field>
-            <RadioButtonGroup options={radioOptions} value="types" fullWidth />
-          </Field>
+          <div className={styles.formBox}>
+            <Field className={styles.customFieldMargin}>
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                onKeyPress={onKeyPress}
+                prefix={<Icon name="search" />}
+                suffix={suffix}
+                autoFocus
+                placeholder="Search for..."
+              />
+            </Field>
+            <Field className={styles.customFieldMargin}>
+              <RadioButtonGroup options={radioOptions} value="types" fullWidth />
+            </Field>
+          </div>
 
           <VizTypePicker
             current={plugin.meta}
@@ -168,6 +168,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     openWrapper: css`
       flex-grow: 1;
+    `,
+    customFieldMargin: css`
+      margin-bottom: ${theme.spacing.sm};
+    `,
+    formBox: css`
+      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
+      background: ${theme.colors.bg1};
+      border: 1px solid ${theme.colors.border1};
+      margin-bottom: ${theme.spacing.md};
     `,
   };
 });

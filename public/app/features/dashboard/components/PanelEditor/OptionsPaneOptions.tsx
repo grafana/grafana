@@ -49,20 +49,22 @@ export const OptionsPaneOptions: React.FC<Props> = ({
 
   const radioOptions = [
     { label: 'All', value: 'all' },
-    { label: 'Popular', value: 'popular' },
+    { label: 'Recent', value: 'popular' },
     { label: 'Overrides', value: 'overrides' },
   ];
 
   return (
-    <>
-      <Field>
-        <FilterInput width={0} value={searchString} onChange={setSearchString} placeholder={'Search options'} />
-      </Field>
-      <Field>
-        <RadioButtonGroup options={radioOptions} value="all" fullWidth />
-      </Field>
-      <div className={styles.optionsBox}>
-        <CustomScrollbar autoHeightMin="100%">
+    <div className={styles.wrapper}>
+      <div className={styles.formBox}>
+        <Field className={styles.customFieldMargin}>
+          <FilterInput width={0} value={searchString} onChange={setSearchString} placeholder={'Search options'} />
+        </Field>
+        <Field className={styles.customFieldMargin}>
+          <RadioButtonGroup options={radioOptions} value="all" fullWidth />
+        </Field>
+      </div>
+      <CustomScrollbar autoHeightMin="100%">
+        <div className={styles.optionsBox}>
           {topGroups.map((topGroup) => (
             <OptionsGroup key={topGroup.title} title={topGroup.title} id={topGroup.title}>
               {topGroup.items?.map((child1) => (
@@ -81,9 +83,9 @@ export const OptionsPaneOptions: React.FC<Props> = ({
               ))}
             </OptionsGroup>
           ))}
-        </CustomScrollbar>
-      </div>
-    </>
+        </div>
+      </CustomScrollbar>
+    </div>
   );
 };
 
@@ -93,10 +95,22 @@ const getStyles = (theme: GrafanaTheme) => ({
     flex-direction: column;
     min-height: 0;
   `,
-  optionsBox: css`
+  customFieldMargin: css`
+    margin-bottom: ${theme.spacing.sm};
+  `,
+  formBox: css`
+    padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
     background: ${theme.colors.bg1};
     border: 1px solid ${theme.colors.border1};
+    margin-bottom: ${theme.spacing.md};
+  `,
+  wrapper: css`
     flex-grow: 1;
     min-height: 0;
+  `,
+  optionsBox: css`
+    min-height: 0;
+    background: ${theme.colors.bg1};
+    border: 1px solid ${theme.colors.border1};
   `,
 });
