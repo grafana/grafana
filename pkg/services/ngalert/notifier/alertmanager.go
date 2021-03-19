@@ -2,16 +2,18 @@ package notifier
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"path/filepath"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-
 	gokit_log "github.com/go-kit/kit/log"
+	"github.com/go-openapi/strfmt"
 	"github.com/grafana/alerting-api/pkg/api"
 	"github.com/pkg/errors"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/nflog"
@@ -24,11 +26,15 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	pkgmodels "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -45,12 +51,13 @@ type Alertmanager struct {
 	// notificationLog keeps tracks of which notifications we've fired already.
 	notificationLog *nflog.Log
 	// silences keeps the track of which notifications we should not fire due to user configuration.
-	silences        *silence.Silences
-	marker          types.Marker
-	alerts          *AlertProvider
-	integrationsMap map[string][]notify.Integration
-	dispatcher      *dispatch.Dispatcher
-	dispatcherWG    sync.WaitGroup
+	silences          *silence.Silences
+	marker            types.Marker
+	alerts            *AlertProvider
+	integrationsMap   map[string][]notify.Integration
+	dispatcher        *dispatch.Dispatcher
+	dispatcherMetrics *dispatch.DispatcherMetrics
+	dispatcherWG      sync.WaitGroup
 
 	reloadConfigMtx sync.Mutex
 }
@@ -60,7 +67,11 @@ func init() {
 }
 
 func (am *Alertmanager) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts
+	if am.Settings == nil {
+		return true
+	}
+	// Check also about expressions?
+	return !am.Settings.IsNgAlertEnabled()
 }
 
 func (am *Alertmanager) Init() (err error) {
@@ -84,10 +95,46 @@ func (am *Alertmanager) Init() (err error) {
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize the silencing component of alerting")
 	}
+	am.alerts, err = NewAlertProvider(nil, am.marker)
+	if err != nil {
+		return errors.Wrap(err, "unable to initialize the alert provider component of alerting")
+	}
+
+	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(prometheus.DefaultRegisterer)
+
 	return nil
 }
 
 func (am *Alertmanager) Run(ctx context.Context) error {
+
+	go func() {
+		// TODO: ONLY FOR DEMO.
+		// TODO: move this goroutine to the config API POST and initiate it there.
+		<-time.After(4 * time.Second)
+		fmt.Println("Sending alert")
+		err := am.CreateAlerts(&PostableAlert{
+			PostableAlert: amv2.PostableAlert{
+				Annotations: amv2.LabelSet{
+					"foo_annotation": "asdf",
+				},
+				EndsAt:   strfmt.DateTime(time.Now().Add(15 * time.Minute)),
+				StartsAt: strfmt.DateTime(time.Now()),
+				Alert: amv2.Alert{
+					GeneratorURL: "https://example.com",
+					Labels: amv2.LabelSet{
+						"alertname": "DemoAlert",
+					},
+				},
+			},
+			Receivers: []string{"demo_receiver"},
+		})
+		if err == nil {
+			fmt.Println("ALERT SENT! WOHOOO!")
+		} else {
+			fmt.Println("SENDING ALERT FAILED", err)
+		}
+	}()
+
 	// Make sure dispatcher starts. We can tolerate future reload failures.
 	if err := am.SyncAndApplyConfigFromDatabase(); err != nil && err != store.ErrNoAlertmanagerConfiguration {
 		return err
@@ -100,12 +147,11 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 			return nil
 		case <-time.After(1 * time.Minute):
 			// TODO: Skip if we have the same configuration
-			if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
-				if err == store.ErrNoAlertmanagerConfiguration {
-					am.logger.Warn(errors.Wrap(err, "unable to sync configuration").Error())
-				}
-				am.logger.Error(errors.Wrap(err, "unable to sync configuration").Error())
-			}
+			//if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+			//	if err != store.ErrNoAlertmanagerConfiguration {
+			//		am.logger.Warn(errors.Wrap(err, "unable to sync configuration").Error())
+			//	}
+			//}
 		}
 	}
 }
@@ -139,7 +185,46 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	return errors.Wrap(am.ApplyConfig(cfg), "reload from config")
 }
 
-func (am *Alertmanager) getConfigFromDatabase() (*api.PostableUserConfig, error) {
+func (am *Alertmanager) getConfigFromDatabase() (cfg *api.PostableUserConfig, rerr error) {
+	defer func() {
+		// TODO: THIS IS ONLY FOR DEMO.
+		// TODO: use this config while POSTing and remove it from here.
+		if cfg == nil {
+			cfg = &api.PostableUserConfig{
+				TemplateFiles: nil,
+				AlertmanagerConfig: api.PostableApiAlertingConfig{
+					Config: config.Config{
+						Route: &config.Route{},
+					},
+					Receivers: nil,
+				},
+			}
+			rerr = nil
+		}
+
+		settings, err := simplejson.NewJson([]byte(`{"addresses": "ganesh@grafana.com"}`))
+		if err != nil {
+			rerr = err
+			return
+		}
+
+		cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, &api.PostableApiReceiver{
+			Receiver: config.Receiver{
+				Name: "demo_receiver",
+			},
+			PostableGrafanaReceivers: api.PostableGrafanaReceivers{
+				GrafanaManagedReceivers: []*api.PostableGrafanaReceiver{
+					{
+						Uid:      "",
+						Name:     fmt.Sprintf("\"demo_email_\"%d", rand.Int()),
+						Type:     "email",
+						Settings: settings,
+					},
+				},
+			},
+		})
+	}()
+
 	// First, let's get the configuration we need from the database and settings.
 	q := &models.GetLatestAlertmanagerConfigurationQuery{}
 	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
@@ -187,7 +272,15 @@ func (am *Alertmanager) ApplyConfig(cfg *api.PostableUserConfig) error {
 	am.alerts.SetStage(routingStage)
 
 	am.StopAndWait()
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, BuildRoutingConfiguration(), routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), nil)
+	am.dispatcher = dispatch.NewDispatcher(
+		am.alerts,
+		dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil),
+		routingStage,
+		am.marker,
+		timeoutFunc,
+		gokit_log.NewNopLogger(),
+		am.dispatcherMetrics,
+	)
 
 	am.dispatcherWG.Add(1)
 	go func() {
@@ -283,26 +376,25 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*api.PostableApiReceive
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
 func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiReceiver, templates *template.Template) ([]notify.Integration, error) {
-	var (
-		errs         types.MultiError
-		integrations []notify.Integration
-		_            = func(name string, i int, rs notify.ResolvedSender, f func(l gokit_log.Logger) (notify.Notifier, error)) {
-			n, err := f(gokit_log.NewNopLogger())
-			if err != nil {
-				errs.Add(err)
-				return
+	var integrations []notify.Integration
+
+	for i, r := range receiver.GrafanaManagedReceivers {
+		switch r.Type {
+		case "email":
+			// TODO: this may not be the right way. Verify that new entry is not added to database always. (UID should be same to avoid it?).
+			if err := sqlstore.CreateAlertNotificationCommand((*pkgmodels.CreateAlertNotificationCommand)(r)); err != nil {
+				return nil, err
 			}
-			integrations = append(integrations, notify.NewIntegration(n, rs, name, i))
+
+			n, err := channels.NewEmailNotifier(r.Result)
+			if err != nil {
+				return nil, err
+			}
+
+			integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
 		}
-	)
-
-	for range receiver.GrafanaManagedReceivers {
-		//TODO: How do we turn Grafana receivers into an individual set of receivers?
 	}
 
-	if errs.Len() > 0 {
-		return nil, &errs
-	}
 	return integrations, nil
 }
 
@@ -325,12 +417,6 @@ func createReceiverStage(name string, integrations []notify.Integration, wait fu
 		fs = append(fs, s)
 	}
 	return fs
-}
-
-// BuildRoutingConfiguration produces an alertmanager-based routing configuration.
-func BuildRoutingConfiguration() *dispatch.Route {
-	var cfg *config.Config
-	return dispatch.NewRoute(cfg.Route, nil)
 }
 
 func waitFunc() time.Duration {

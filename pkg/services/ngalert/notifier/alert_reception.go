@@ -2,10 +2,11 @@ package notifier
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
-	"github.com/go-kit/kit/log"
+	gokitlog "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/provider"
@@ -23,7 +24,6 @@ type PostableAlert struct {
 
 type AlertProvider struct {
 	provider.Alerts
-	logger log.Logger
 
 	// TODO(codesome): This stage is temporary to get code out quickly.
 	// Eventually, the alerts meant directly for receivers and not routing
@@ -37,8 +37,8 @@ type AlertProvider struct {
 // NewAlertProvider returns AlertProvider that also supports legacy alerts via PutPostableAlert.
 // The notify.Stage should be of the type notify.RoutingStage or something similar that takes
 // notification channel name from the context.
-func NewAlertProvider(s notify.Stage, m types.Marker, l log.Logger) (*AlertProvider, error) {
-	alerts, err := mem.NewAlerts(context.Background(), m, 30*time.Minute, l)
+func NewAlertProvider(s notify.Stage, m types.Marker) (*AlertProvider, error) {
+	alerts, err := mem.NewAlerts(context.Background(), m, 30*time.Minute, gokitlog.NewNopLogger())
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,6 @@ func NewAlertProvider(s notify.Stage, m types.Marker, l log.Logger) (*AlertProvi
 	return &AlertProvider{
 		Alerts: alerts,
 		stage:  s,
-		logger: l,
 	}, nil
 }
 
@@ -66,7 +65,7 @@ func (ap *AlertProvider) PutPostableAlert(alerts ...*PostableAlert) error {
 		return err
 	}
 
-	if len(alertsWithReceivers) == 0 {
+	if len(alertsWithReceivers) == 0 || ap.stage == nil {
 		return nil
 	}
 
@@ -78,10 +77,14 @@ func (ap *AlertProvider) PutPostableAlert(alerts ...*PostableAlert) error {
 		}
 	}
 
+	ctx := notify.WithGroupKey(context.Background(), "alertname") // TODO
+	ctx = notify.WithRepeatInterval(ctx, 5*time.Minute)           // TODO
+
 	for recv, alerts := range groupedAlerts {
 		ap.stageMtx.Lock()
-		ctx := notify.WithReceiverName(context.Background(), recv)
-		_, _, err := ap.stage.Exec(ctx, ap.logger, alerts...)
+		sendctx := notify.WithReceiverName(ctx, recv)
+		fmt.Println("Actually sending alert")
+		_, _, err := ap.stage.Exec(sendctx, gokitlog.NewNopLogger(), alerts...)
 		ap.stageMtx.Unlock()
 		if err != nil {
 			return err

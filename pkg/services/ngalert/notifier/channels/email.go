@@ -57,9 +57,9 @@ func NewEmailNotifier(model *models.AlertNotification) (*EmailNotifier, error) {
 }
 
 // Notify sends the alert notification.
-func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) error {
+func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	// TODO(codesome): make sure the receiver name is added in the ctx before calling this.
-	ctx = notify.WithReceiverName(ctx, "email-notification-channel") // Dummy.
+	//ctx = notify.WithReceiverName(ctx, "email-notification-channel") // Dummy.
 	// TODO(codesome): make sure the group labels is added in the ctx before calling this.
 	ctx = notify.WithGroupLabels(ctx, model.LabelSet{}) // Dummy.
 
@@ -88,5 +88,14 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) error {
 		},
 	}
 
-	return bus.DispatchCtx(ctx, cmd)
+	err := bus.DispatchCtx(ctx, cmd)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (en *EmailNotifier) SendResolved() bool {
+	// TODO: implement this.
+	return true
 }
