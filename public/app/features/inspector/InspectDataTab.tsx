@@ -210,6 +210,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   value={selectedDataFrame}
                   onChange={this.onDataFrameChange}
                   width={30}
+                  aria-label="Select dataframe"
                 />
               </Field>
             )}
