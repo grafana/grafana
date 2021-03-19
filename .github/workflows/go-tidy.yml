@@ -52,7 +52,7 @@ jobs:
         uses: dsotirakis/create-pull-request@v3
         with:
           token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
-          branch: pr-creator
+          branch: update-go-modules
           commit-message: Update go modules
           path: grafana
           title: 'Chore(deps): Update go modules'
@@ -60,3 +60,4 @@ jobs:
           body: >
             Auto-generated PR to update go modules.
           labels: type/chore
+          delete-branch: true
