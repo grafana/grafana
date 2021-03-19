@@ -27,7 +27,10 @@ import (
 )
 
 func init() {
-	registry.RegisterServiceWithPriority(&manager{}, registry.MediumHigh)
+	registry.RegisterServiceWithPriority(&manager{
+		logger:  log.New("plugins.backend"),
+		plugins: map[string]backendplugin.Plugin{},
+	}, registry.MediumHigh)
 }
 
 type manager struct {
@@ -37,14 +40,9 @@ type manager struct {
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
-	pluginSettings         map[string]pluginSettings
 }
 
 func (m *manager) Init() error {
-	m.plugins = make(map[string]backendplugin.Plugin)
-	m.logger = log.New("plugins.backend")
-	m.pluginSettings = extractPluginSettings(m.Cfg)
-
 	return nil
 }
 
@@ -63,11 +61,6 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 
 	if _, exists := m.plugins[pluginID]; exists {
 		return fmt.Errorf("backend plugin %s already registered", pluginID)
-	}
-
-	pluginSettings := pluginSettings{}
-	if ps, exists := m.pluginSettings[pluginID]; exists {
-		pluginSettings = ps
 	}
 
 	hostEnv := []string{
@@ -89,7 +82,7 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	}
 
 	hostEnv = append(hostEnv, m.getAWSEnvironmentVariables()...)
-
+	pluginSettings := getPluginSettings(pluginID, m.Cfg)
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
 
 	pluginLogger := m.logger.New("pluginId", pluginID)
