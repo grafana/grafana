@@ -211,6 +211,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
 		"disableUserSignUp":          !setting.AllowUserSignUp,
+		"homePage":                   hs.Cfg.HomePage,
 		"loginHint":                  setting.LoginHint,
 		"passwordHint":               setting.PasswordHint,
 		"externalUserMngInfo":        setting.ExternalUserMngInfo,
