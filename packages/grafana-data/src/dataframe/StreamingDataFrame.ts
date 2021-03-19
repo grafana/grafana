@@ -28,12 +28,12 @@ function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
 }
 
 // mutable circular push
-function circPush(data: number[][], newData: number[][], maxDelta = Infinity, maxLength = Infinity) {
+function circPush(data: number[][], newData: number[][], deltaIdx = 0, maxDelta = Infinity, maxLength = Infinity) {
   for (let i = 0; i < data.length; i++) {
     data[i] = data[i].concat(newData[i]);
   }
 
-  let nlen = data[0].length;
+  let nlen = data[deltaIdx].length;
 
   let sliceIdx = 0;
 
@@ -42,11 +42,13 @@ function circPush(data: number[][], newData: number[][], maxDelta = Infinity, ma
   }
 
   if (maxDelta !== Infinity) {
-    let low = data[0][sliceIdx];
-    let high = data[0][nlen - 1];
+    let deltaLookup = data[deltaIdx];
+
+    let low = deltaLookup[sliceIdx];
+    let high = deltaLookup[nlen - 1];
 
     if (high - low > maxDelta) {
-      sliceIdx = closestIdx(high - maxDelta, data[0], sliceIdx);
+      sliceIdx = closestIdx(high - maxDelta, deltaLookup, sliceIdx);
     }
   }
 
@@ -81,12 +83,14 @@ export class StreamingDataFrame implements DataFrame {
   fields: Array<Field<any, ArrayVector<any>>> = [];
 
   options: StreamingFrameOptions;
+  private timeFieldIndex = -1;
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
       maxLength: 1000,
       ...opts,
     };
+
     this.update(frame);
   }
 
@@ -134,6 +138,8 @@ export class StreamingDataFrame implements DataFrame {
           values: oldValues ? oldValues[idx] : new ArrayVector(),
         };
       });
+
+      this.timeFieldIndex = this.fields.findIndex((f) => f.type === FieldType.time);
     }
 
     if (data && data.values.length && data.values[0].length) {
@@ -155,7 +161,7 @@ export class StreamingDataFrame implements DataFrame {
 
       let maxMillis = (this.options.maxSeconds || Infinity) * 1e3;
 
-      let appended = circPush(curValues, values, maxMillis, this.options.maxLength);
+      let appended = circPush(curValues, values, this.timeFieldIndex, maxMillis, this.options.maxLength);
 
       appended.forEach((v, i) => {
         this.fields[i].values.buffer = v;

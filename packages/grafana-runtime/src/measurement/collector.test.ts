@@ -34,7 +34,6 @@ describe('MeasurementCollector', () => {
 
     const frames = collector.getData();
     expect(frames.length).toEqual(1);
-    (frames[0] as any).lastUpdateTime = 0;
     expect(frames[0]).toMatchInlineSnapshot(`
       StreamingDataFrame {
         "fields": Array [
@@ -63,7 +62,6 @@ describe('MeasurementCollector', () => {
             ],
           },
         ],
-        "lastUpdateTime": 0,
         "meta": undefined,
         "name": undefined,
         "options": Object {
