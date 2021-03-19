@@ -88,7 +88,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 		}
 
 		apiURL := fmt.Sprintf("%s/query", azureLogAnalyticsTarget.Resource)
-		if query.QueryType == "Azure Log Analytics" {
+		if query.Model.Get("queryType").MustString("") == "Azure Log Analytics" {
 			apiURL = fmt.Sprintf("%s/query", azureLogAnalyticsTarget.Workspace)
 		}
 		params := url.Values{}
