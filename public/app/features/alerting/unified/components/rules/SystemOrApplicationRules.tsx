@@ -95,7 +95,7 @@ export const SystemOrApplicationAlerts: FC = () => {
             group={group}
             key={`${datasource.name}-${namespace.name}-${group.name}`}
             namespace={namespace.name}
-            datasource={datasource}
+            rulesSource={datasource}
           />
         ))
       )}

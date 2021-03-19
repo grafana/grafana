@@ -3,18 +3,18 @@ import { css, cx } from 'emotion';
 import { IconSize, useStyles, Icon } from '@grafana/ui';
 
 interface Props {
-  isExpanded: boolean;
-  onToggle: (isExpanded: boolean) => void;
+  isCollapsed: boolean;
+  onToggle: (isCollapsed: boolean) => void;
   size?: IconSize;
   className?: string;
 }
 
-export const ExpandedToggle: FC<Props> = ({ isExpanded, onToggle, className, size = 'xl' }) => {
+export const CollapseToggle: FC<Props> = ({ isCollapsed, onToggle, className, size = 'xl' }) => {
   const styles = useStyles(getStyles);
 
   return (
-    <button className={cx(styles.expandButton, className)} onClick={() => onToggle(!isExpanded)}>
-      <Icon size={size} name={isExpanded ? 'angle-down' : 'angle-right'} />
+    <button className={cx(styles.expandButton, className)} onClick={() => onToggle(!isCollapsed)}>
+      <Icon size={size} name={isCollapsed ? 'angle-right' : 'angle-down'} />
     </button>
   );
 };

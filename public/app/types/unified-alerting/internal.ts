@@ -1,5 +1,6 @@
 /* Prometheus internal models */
 
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { PromAlertingRuleState, PromRuleType } from './dto';
 
 export type Alert = {
@@ -60,3 +61,5 @@ export interface RulesSourceResult {
   error?: unknown;
   namespaces?: RuleNamespace[];
 }
+
+export type RulesSource = DataSourceInstanceSettings | 'grafana';

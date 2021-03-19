@@ -1,24 +1,25 @@
-import { RuleGroup } from 'app/types/unified-alerting/internal';
+import { RuleGroup, RulesSource } from 'app/types/unified-alerting/internal';
 import React, { FC, useMemo, useState, Fragment } from 'react';
 import { Icon, Tooltip, useStyles } from '@grafana/ui';
-import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import { isAlertingRule } from '../../utils/rules';
 import { PromAlertingRuleState } from 'app/types/unified-alerting/dto';
 import { StateColoredText } from '../StateColoredText';
-import { ExpandedToggle } from '../ExpandedToggle';
+import { CollapseToggle } from '../CollapseToggle';
 import { RulesTable } from './RulesTable';
+import { isCloudRulesSource } from '../../utils/datasource';
 
 interface Props {
   namespace: string;
-  datasource?: DataSourceInstanceSettings;
+  rulesSource: RulesSource;
   group: RuleGroup;
 }
 
-export const RulesGroup: FC<Props> = ({ group, namespace, datasource }) => {
+export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
   const styles = useStyles(getStyles);
 
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const stats = useMemo(
     (): Record<PromAlertingRuleState, number> =>
@@ -57,11 +58,11 @@ export const RulesGroup: FC<Props> = ({ group, namespace, datasource }) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <ExpandedToggle className={styles.expandButton} isExpanded={isExpanded} onToggle={setIsExpanded} />
-        <Icon name={isExpanded ? 'folder-open' : 'folder'} />
-        {datasource && (
-          <Tooltip content={datasource.name} placement="top">
-            <img className={styles.datasourceIcon} src={datasource.meta.info.logos.small} />
+        <CollapseToggle className={styles.collapseToggle} isCollapsed={isCollapsed} onToggle={setIsCollapsed} />
+        <Icon name={isCollapsed ? 'folder-open' : 'folder'} />
+        {isCloudRulesSource(rulesSource) && (
+          <Tooltip content={rulesSource.name} placement="top">
+            <img className={styles.datasourceIcon} src={rulesSource.meta.info.logos.small} />
           </Tooltip>
         )}
         <h6 className={styles.heading}>
@@ -86,7 +87,7 @@ export const RulesGroup: FC<Props> = ({ group, namespace, datasource }) => {
           <Icon title="manage permissions" name="lock" />
         </div>
       </div>
-      {isExpanded && <RulesTable namespace={namespace} group={group} />}
+      {!isCollapsed && <RulesTable rulesSource={rulesSource} namespace={namespace} group={group} />}
     </div>
   );
 };
@@ -116,7 +117,7 @@ export const getStyles = (theme: GrafanaTheme) => ({
   spacer: css`
     flex: 1;
   `,
-  expandButton: css`
+  collapseToggle: css`
     background: none;
     border: none;
     margin-top: -${theme.spacing.sm};

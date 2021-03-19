@@ -1,5 +1,6 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { RulesSource } from 'app/types/unified-alerting/internal';
 import { getAllDataSources, getDatasourceByName } from './config';
 
 export enum DataSourceType {
@@ -54,4 +55,8 @@ export function getLotexDatasourceByName(datasourceName: string): DataSourceInst
     throw new Error(`Unexpected datasource type ${datasource.type}`);
   }
   return datasource;
+}
+
+export function isCloudRulesSource(rulesSource: RulesSource): rulesSource is DataSourceInstanceSettings {
+  return rulesSource !== 'grafana';
 }

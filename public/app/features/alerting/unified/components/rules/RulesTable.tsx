@@ -1,23 +1,27 @@
 import { GrafanaTheme } from '@grafana/data';
 import { Button, Icon, useStyles } from '@grafana/ui';
-import { RuleGroup } from 'app/types/unified-alerting/internal';
+import { RuleGroup, RulesSource } from 'app/types/unified-alerting/internal';
 import React, { FC, Fragment, useState } from 'react';
 import { isAlertingRule, ruleKey } from '../../utils/rules';
-import { ExpandedToggle } from '../ExpandedToggle';
+import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from 'emotion';
 import { TimeToNow } from '../TimeToNow';
 import { formatDuration } from '../../utils/formatting';
 import { StateTag } from '../StateTag';
+import { RuleDetails } from './RuleDetails';
+import { getAlertTableStyles } from '../../styles/table';
 
 interface Props {
   namespace: string;
   group: RuleGroup;
+  rulesSource: RulesSource;
 }
 
-export const RulesTable: FC<Props> = ({ group }) => {
+export const RulesTable: FC<Props> = ({ group, rulesSource }) => {
   const { rules } = group;
 
   const styles = useStyles(getStyles);
+  const tableStyles = useStyles(getAlertTableStyles);
 
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
@@ -32,10 +36,10 @@ export const RulesTable: FC<Props> = ({ group }) => {
 
   return (
     <div className={styles.wrapper}>
-      <table className={styles.table}>
+      <table className={tableStyles.table}>
         <colgroup>
           <col className={styles.colExpand} />
-          <col />
+          <col className={styles.colState} />
           <col />
           <col />
           <col />
@@ -59,13 +63,13 @@ export const RulesTable: FC<Props> = ({ group }) => {
             const isExpanded = expandedKeys.includes(key);
             return (
               <Fragment key={key}>
-                <tr className={idx % 2 === 0 ? styles.evenRow : undefined}>
+                <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                   <td className={styles.relative}>
                     <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
                     {!(idx === rules.length - 1) && (
                       <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
                     )}
-                    <ExpandedToggle isExpanded={isExpanded} onToggle={() => toggleExpandedState(key)} />
+                    <CollapseToggle isCollapsed={!isExpanded} onToggle={() => toggleExpandedState(key)} />
                   </td>
                   <td>{isAlertingRule(rule) ? <StateTag status={rule.state} /> : 'n/a'}</td>
                   <td>{rule.name}</td>
@@ -89,11 +93,15 @@ export const RulesTable: FC<Props> = ({ group }) => {
                   </td>
                 </tr>
                 {isExpanded && (
-                  <tr className={idx % 2 === 0 ? styles.evenRow : undefined}>
+                  <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                     <td className={styles.relative}>
-                      <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
+                      {!(idx === rules.length - 1) && (
+                        <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
+                      )}
                     </td>
-                    <td colSpan={5}>{JSON.stringify(rule, null, 2)}</td>
+                    <td colSpan={5}>
+                      <RuleDetails rulesSource={rulesSource} rule={rule} />
+                    </td>
                   </tr>
                 )}
               </Fragment>
@@ -140,6 +148,9 @@ export const getStyles = (theme: GrafanaTheme) => ({
   `,
   colExpand: css`
     width: 36px;
+  `,
+  colState: css`
+    width: 110px;
   `,
   relative: css`
     position: relative;

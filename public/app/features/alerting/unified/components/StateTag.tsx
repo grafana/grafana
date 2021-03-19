@@ -10,6 +10,7 @@ type Props = {
 
 const getStyles = (theme: GrafanaTheme) => ({
   common: css`
+    display: inline-block;
     color: white;
     border-radius: 2px;
     padding: ${theme.spacing.xs} ${theme.spacing.sm};
