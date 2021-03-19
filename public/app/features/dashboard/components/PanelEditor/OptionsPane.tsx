@@ -20,7 +20,7 @@ interface Props {
   onPanelConfigChange: (configKey: string, value: any) => void;
 }
 
-export const OptionsPaneContent: React.FC<Props> = ({
+export const OptionsPane: React.FC<Props> = ({
   plugin,
   panel,
   width,

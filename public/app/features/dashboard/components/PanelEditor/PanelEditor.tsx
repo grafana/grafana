@@ -21,7 +21,7 @@ import { calculatePanelSize } from './utils';
 
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { OptionsPaneContent } from './OptionsPaneContent';
+import { OptionsPane } from './OptionsPane';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
@@ -386,7 +386,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <OptionsPaneContent
+      <OptionsPane
         plugin={plugin}
         dashboard={dashboard}
         panel={panel}
