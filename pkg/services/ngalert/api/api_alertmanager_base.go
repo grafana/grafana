@@ -31,7 +31,8 @@ type AlertmanagerApiService interface {
 }
 
 type AlertmanagerApiBase struct {
-	log log.Logger
+	log          log.Logger
+	Alertmanager Alertmanager
 }
 
 func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
@@ -103,6 +104,13 @@ func (base AlertmanagerApiBase) RouteGetSilences(c *models.ReqContext) response.
 }
 
 func (base AlertmanagerApiBase) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
+	err := base.Alertmanager.ApplyConfig(&body)
+	if err != nil {
+		return response.Error(400, "Unable to apply config to the Alertmanager", err)
+	}
+
+	return response.Success("Configuration applied sucessfully")
+
 	datasourceId := c.Params(":DatasourceId")
 	base.log.Info("RoutePostAlertingConfig: ", "DatasourceId", datasourceId)
 	base.log.Info("RoutePostAlertingConfig: ", "body", body)

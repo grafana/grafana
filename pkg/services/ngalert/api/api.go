@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/alerting-api/pkg/api"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -28,6 +30,10 @@ import (
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
 
+type Alertmanager interface {
+	ApplyConfig(cfg *api.PostableUserConfig) error
+}
+
 // API handlers.
 type API struct {
 	Cfg             *setting.Cfg
@@ -36,12 +42,13 @@ type API struct {
 	DataService     *tsdb.Service
 	Schedule        schedule.ScheduleService
 	Store           store.Store
+	Alertmanager    Alertmanager
 }
 
 // RegisterAPIEndpoints registers API handlers
 func (api *API) RegisterAPIEndpoints() {
 	logger := log.New("ngalert.api")
-	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiMock{log: logger})
+	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiBase{log: logger, Alertmanager: api.Alertmanager})
 	api.RegisterPrometheusApiEndpoints(PrometheusApiMock{log: logger})
 	api.RegisterRulerApiEndpoints(RulerApiMock{log: logger})
 	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})

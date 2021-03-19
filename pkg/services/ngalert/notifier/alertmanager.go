@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/alerting-api/pkg/api"
 	"github.com/pkg/errors"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,8 +38,9 @@ const (
 
 type Alertmanager struct {
 	logger   log.Logger
+	Settings *setting.Cfg       `inject:""`
+	SQLStore *sqlstore.SQLStore `inject:""`
 	Store    store.AlertingStore
-	Settings *setting.Cfg `inject:""`
 
 	// notificationLog keeps tracks of which notifications we've fired already.
 	notificationLog *nflog.Log
@@ -61,7 +65,7 @@ func (am *Alertmanager) IsDisabled() bool {
 
 func (am *Alertmanager) Init() (err error) {
 	am.logger = log.New("alertmanager")
-	am.Store = store.DBstore{} //TODO: Is this right?
+	am.Store = store.DBstore{SQLStore: am.SQLStore}
 
 	//TODO: Speak with David Parrot wrt to the marker, we'll probably need our own.
 	am.marker = types.NewMarker(prometheus.DefaultRegisterer)
@@ -85,19 +89,23 @@ func (am *Alertmanager) Init() (err error) {
 
 func (am *Alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
-	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+	if err := am.SyncAndApplyConfigFromDatabase(); err != nil && err != store.ErrNoAlertmanagerConfiguration {
 		return err
 	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			am.StopAndWait()
 			return nil
 		case <-time.After(1 * time.Minute):
-			// TODO: once we have a check to skip reload on same config, uncomment this.
-			//if err := am.ReloadConfigFromDatabase(); err != nil {
-			//	am.logger.Error("failed to sync config from database", "error", err)
-			//}
+			// TODO: Skip if we have the same configuration
+			if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+				if err == store.ErrNoAlertmanagerConfiguration {
+					am.logger.Warn(errors.Wrap(err, "unable to sync configuration").Error())
+				}
+				am.logger.Error(errors.Wrap(err, "unable to sync configuration").Error())
+			}
 		}
 	}
 }
@@ -109,6 +117,14 @@ func (am *Alertmanager) StopAndWait() {
 	am.dispatcherWG.Wait()
 }
 
+func (am *Alertmanager) AddMigration(mg *migrator.Migrator) {
+	if am.IsDisabled() {
+		return
+	}
+
+	alertmanagerConfigurationMigration(mg)
+}
+
 // SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
 // the components with the new config.
 func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
@@ -118,7 +134,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	// TODO: check if config is same as before using hashes and skip reload in case they are same.
 	cfg, err := am.getConfigFromDatabase()
 	if err != nil {
-		return errors.Wrap(err, "get config from database")
+		return err
 	}
 	return errors.Wrap(am.ApplyConfig(cfg), "reload from config")
 }
