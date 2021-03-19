@@ -1,10 +1,12 @@
-import { AppEvents, ExploreQueryFieldProps } from '@grafana/data';
+import { ExploreQueryFieldProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 import React from 'react';
-import { appEvents } from '../../../core/core';
 import { JaegerDatasource, JaegerQuery } from './datasource';
 import { Span, TraceResponse } from './types';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 
 const ALL_OPERATIONS_KEY = '__ALL__';
 const NO_TRACES_KEY = '__NO_TRACES__';
@@ -64,7 +66,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
         this.setState({ serviceOptions });
       }
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, ['Failed to load services from Jaeger', error]);
+      dispatch(notifyApp(createErrorNotification('Failed to load services from Jaeger', error)));
     }
   }
 
@@ -153,7 +155,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
     try {
       return await datasource.metadataRequest(url);
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, ['Failed to load operations from Jaeger', error]);
+      dispatch(notifyApp(createErrorNotification('Failed to load operations from Jaeger', error)));
     }
     return [];
   };
@@ -176,7 +178,7 @@ export class JaegerQueryField extends React.PureComponent<Props, State> {
     try {
       return await datasource.metadataRequest(url, traceSearch);
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, ['Failed to load traces from Jaeger', error]);
+      dispatch(notifyApp(createErrorNotification('Failed to load traces from Jaeger', error)));
     }
     return [];
   };

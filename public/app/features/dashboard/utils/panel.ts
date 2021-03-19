@@ -16,9 +16,9 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 // Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
-import { CoreEvents } from 'app/types';
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
+import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -26,15 +26,17 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
     const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : undefined;
     const confirmText = panel.alert ? 'YES' : undefined;
 
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Remove Panel',
-      text: 'Are you sure you want to remove this panel?',
-      text2: text2,
-      icon: 'trash-alt',
-      confirmText: confirmText,
-      yesText: 'Remove',
-      onConfirm: () => removePanel(dashboard, panel, false),
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Remove Panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'trash-alt',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => removePanel(dashboard, panel, false),
+      })
+    );
     return;
   }
 
@@ -56,13 +58,15 @@ export const copyPanel = (panel: PanelModel) => {
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
-  appEvents.emit(CoreEvents.showModalReact, {
-    component: ShareModal,
-    props: {
-      dashboard: dashboard,
-      panel: panel,
-    },
-  });
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: ShareModal,
+      props: {
+        dashboard: dashboard,
+        panel: panel,
+      },
+    })
+  );
 };
 
 export const refreshPanel = (panel: PanelModel) => {
