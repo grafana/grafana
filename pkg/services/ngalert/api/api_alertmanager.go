@@ -51,11 +51,13 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "failed to get latest configuration", err)
 	}
 
-	templateFiles := make(map[string]string)
-	err = yaml.Unmarshal([]byte(query.Result.AlertmanagerTemplates), &templateFiles)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to unmarshal template files", err)
-	}
+	/*
+		templateFiles := make(map[string]string)
+		err = yaml.Unmarshal([]byte(query.Result.AlertmanagerTemplates), &templateFiles)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "failed to unmarshal template files", err)
+		}
+	*/
 
 	cfg := apimodels.PostableApiAlertingConfig{}
 	err = yaml.Unmarshal([]byte(query.Result.AlertmanagerConfiguration), &cfg)
@@ -84,7 +86,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 	}
 
 	result := apimodels.GettableUserConfig{
-		TemplateFiles: templateFiles,
+		// TemplateFiles: templateFiles,
 		AlertmanagerConfig: apimodels.GettableApiAlertingConfig{
 			Config: cfg.Config,
 			Receivers: []*apimodels.GettableApiReceiver{

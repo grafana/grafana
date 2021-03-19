@@ -73,8 +73,8 @@ func (st DBstore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerConf
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		config := models.AlertConfiguration{
 			AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
-			AlertmanagerTemplates:     cmd.AlertmanagerTemplates,
-			ConfigurationVersion:      cmd.ConfigurationVersion,
+			// AlertmanagerTemplates:     cmd.AlertmanagerTemplates,
+			ConfigurationVersion: cmd.ConfigurationVersion,
 		}
 		if _, err := sess.Insert(config); err != nil {
 			return err
