@@ -1,15 +1,17 @@
 import React, { FC } from 'react';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { Button, Icon, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import alertDef from '../../alerting/state/alertDef';
 import { ExpressionQuery } from '../types';
 
-const conditionFunctions = alertDef.reducerTypes;
+const conditionFunctions = alertDef.reducerTypes.map((rt) => ({ label: rt.text, value: rt.value }));
 
 interface Props {
   query: ExpressionQuery;
+  refIds: Array<SelectableValue<string>>;
 }
 
-export const ClassicConditions: FC<Props> = ({ query }) => {
+export const ClassicConditions: FC<Props> = ({ query, refIds }) => {
   return (
     <div>
       <InlineFieldRow>
@@ -17,14 +19,31 @@ export const ClassicConditions: FC<Props> = ({ query }) => {
           <div>
             {query.conditions?.map((condition, index) => {
               return (
-                <InlineFieldRow label="When" key={index}>
-                  <Select onChange={(event) => console.log(event)} options={conditionFunctions} />
+                <InlineFieldRow key={index}>
+                  {index === 0 ? (
+                    <InlineField label="WHEN">
+                      <Select onChange={(event) => console.log(event)} options={conditionFunctions} width={20} />
+                    </InlineField>
+                  ) : (
+                    <InlineField label="WHEN">
+                      <Select onChange={(event) => console.log(event)} options={conditionFunctions} width={20} />
+                    </InlineField>
+                  )}
+                  <InlineField label="OF">
+                    <Select onChange={(event) => console.log(event)} options={refIds} />
+                  </InlineField>
+                  <InlineField label="IS ABOVE">
+                    <Input />
+                  </InlineField>
                 </InlineFieldRow>
               );
             })}
           </div>
         </InlineField>
       </InlineFieldRow>
+      <Button variant="secondary">
+        <Icon name="plus-circle" />
+      </Button>
     </div>
   );
 };

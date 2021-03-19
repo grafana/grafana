@@ -34,7 +34,7 @@ export class ExpressionQueryEditor extends PureComponent<Props> {
         return <Resample query={query} labelWidth={labelWidth} onChange={onChange} refIds={refIds} />;
 
       case ExpressionQueryType.classic:
-        return <ClassicConditions query={query} />;
+        return <ClassicConditions query={query} refIds={refIds} />;
     }
   }
 
