@@ -42,6 +42,10 @@ function parseOptionalMeta(str?: string): any {
   return undefined;
 }
 
+/**
+ * Parse arrow table to basically a standard dataFrame. Use together with base64StringToArrowTable to get data frame
+ * from backend data source response.
+ */
 export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
   const fields: Field[] = [];
 
@@ -171,6 +175,15 @@ export function grafanaDataFrameToArrowTable(data: DataFrame, keepOriginalNames?
     metadata.set('meta', JSON.stringify(data.meta));
   }
   return table;
+}
+
+export function arrowTableToBase64String(table: Table): string {
+  const binstring = Array.prototype.map
+    .call(table.serialize() as Uint8Array, (ch) => {
+      return String.fromCharCode(ch);
+    })
+    .join('');
+  return btoa(binstring);
 }
 
 function updateArrowTableNames(table: Table, frame: DataFrame): Table | undefined {
