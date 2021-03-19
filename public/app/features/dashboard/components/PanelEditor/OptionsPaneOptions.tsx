@@ -33,9 +33,10 @@ export const OptionsPaneOptions: React.FC<Props> = ({
 }: Props) => {
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
   const [searchQuery, setSearchQuery] = useState('');
+  const [listMode, setListMode] = useState('all');
   const searchRegex = new RegExp(searchQuery, 'i');
   const styles = useStyles(getStyles);
-  const groupElements: Array<ReactElement<OptionsPaneCategoryProps>> = [];
+
   const optionProps: OptionPaneRenderProps = {
     panel,
     onPanelOptionsChanged,
@@ -46,15 +47,18 @@ export const OptionsPaneOptions: React.FC<Props> = ({
     eventBus: dashboard.events,
   };
 
-  groupElements.push(getPanelFrameOptions(optionProps));
-  groupElements.push(...getVizualizationOptions(optionProps));
-  groupElements.push(...getFieldOverrideElements(optionProps));
+  const allDefaults = [getPanelFrameOptions(optionProps), ...getVizualizationOptions(optionProps)];
+
+  const justOverrides = getFieldOverrideElements(optionProps);
+  const allOptions = allDefaults.concat(justOverrides);
 
   const radioOptions = [
     { label: 'All', value: 'all' },
-    { label: 'Recent', value: 'popular' },
-    { label: 'Overrides', value: 'overrides' },
+    { label: 'Popular', value: 'popular' },
+    { label: `Overrides`, value: 'overrides' },
   ];
+
+  const isSearching = searchQuery.length > 0;
 
   return (
     <div className={styles.wrapper}>
@@ -63,18 +67,19 @@ export const OptionsPaneOptions: React.FC<Props> = ({
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </Field>
         <Field className={styles.customFieldMargin}>
-          <RadioButtonGroup options={radioOptions} value="all" fullWidth />
+          <RadioButtonGroup options={radioOptions} value={listMode} fullWidth onChange={setListMode} />
         </Field>
       </div>
       <CustomScrollbar autoHeightMin="100%">
-        <div className={styles.optionsBox}>
-          {searchQuery.length === 0 && groupElements}
-          {searchQuery.length > 0 && (
+        {!isSearching && listMode === 'all' && <div className={styles.optionsBox}>{allDefaults}</div>}
+        {isSearching && (
+          <div className={styles.optionsBox}>
             <OptionsPaneCategory id="Found options" title="Found options">
-              {getSearchHits(groupElements, searchRegex)}
+              {getSearchHits(allOptions, searchRegex)}
             </OptionsPaneCategory>
-          )}
-        </div>
+          </div>
+        )}
+        {!isSearching && <div className={styles.optionsBox}>{searchQuery.length === 0 && justOverrides}</div>}
       </CustomScrollbar>
     </div>
   );
@@ -128,8 +133,8 @@ const getStyles = (theme: GrafanaTheme) => ({
     min-height: 0;
   `,
   optionsBox: css`
-    min-height: 0;
     background: ${theme.colors.bg1};
     border: 1px solid ${theme.colors.border1};
+    margin-bottom: ${theme.spacing.md};
   `,
 });
