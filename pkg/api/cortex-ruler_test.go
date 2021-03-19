@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func Test_Rule_Marshaling(t *testing.T) {
@@ -164,4 +165,29 @@ func Test_Rule_Group_Type(t *testing.T) {
 			require.Equal(t, tc.expected, tc.input.Type())
 		})
 	}
+}
+
+func TestNamespaceMarshalling(t *testing.T) {
+	var data = `copy:
+    - name: loki_alerts
+      rules:
+        - alert: logs_exist
+          expr: rate({cluster="us-central1", job="loki-prod/loki-canary"}[1m]) > 0
+          for: 1m
+simple_rules:
+    - name: loki_alerts
+      rules:
+        - alert: logs_exist
+          expr: rate({cluster="us-central1", job="loki-prod/loki-canary"}[1m]) > 0
+          for: 1m
+`
+
+	var res NamespaceConfigResponse
+
+	err := yaml.Unmarshal([]byte(data), &res)
+	require.Nil(t, err)
+	b, err := yaml.Marshal(res)
+	require.Nil(t, err)
+	require.Equal(t, data, string(b))
+
 }

@@ -156,6 +156,7 @@ const (
 )
 
 type ExtendedRuleNode struct {
+	// note: this works with yaml v3 but not v2 (the inline tag isn't accepted on pointers in v2)
 	*ApiRuleNode `yaml:",inline"`
 	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
 	GrafanaManagedAlert *ExtendedUpsertAlertDefinitionCommand `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
