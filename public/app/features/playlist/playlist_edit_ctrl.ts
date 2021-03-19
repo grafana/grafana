@@ -10,8 +10,9 @@ import { promiseToDigest } from '../../core/utils/promiseToDigest';
 export interface PlaylistItem {
   value: any;
   id: any;
-  type: string;
+  type: 'dashboard_by_id' | 'dashboard_by_tag';
   order: any;
+  title: string;
 }
 export class PlaylistEditCtrl {
   filteredDashboards: any = [];
