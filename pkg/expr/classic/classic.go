@@ -79,6 +79,7 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 
 	for i, c := range ccc.Conditions {
 		querySeriesSet := vars[c.QueryRefID]
+		nilReducedCount := 0
 		for _, val := range querySeriesSet.Values {
 			series, ok := val.(mathexp.Series)
 			if !ok {
@@ -89,9 +90,13 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 			// TODO handle error / no data signals
 			thisCondNoDataFound := reducedNum.GetFloat64Value() == nil
 
+			if thisCondNoDataFound {
+				nilReducedCount++
+			}
+
 			evalRes := c.Evaluator.Eval(reducedNum)
 
-			if thisCondNoDataFound || evalRes {
+			if evalRes {
 				match := EvalMatch{
 					Value:  reducedNum.GetFloat64Value(),
 					Labels: reducedNum.GetLabels().Copy(),
@@ -112,6 +117,11 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 				firing = firing && evalRes
 				noDataFound = noDataFound && thisCondNoDataFound
 			}
+		}
+		if len(querySeriesSet.Values) == nilReducedCount {
+			matches = append(matches, EvalMatch{
+				Metric: "NoData",
+			})
 		}
 	}
 
