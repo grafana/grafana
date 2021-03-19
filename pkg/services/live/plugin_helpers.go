@@ -24,7 +24,10 @@ func newPluginChannelPublisher(node *centrifuge.Node) *pluginChannelPublisher {
 
 func (p *pluginChannelPublisher) Publish(channel string, data []byte) error {
 	_, err := p.node.Publish(channel, data)
-	return err
+	if err != nil {
+		return fmt.Errorf("error publishing %s: %w", string(data), err)
+	}
+	return nil
 }
 
 type pluginPresenceGetter struct {

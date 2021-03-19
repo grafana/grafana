@@ -2,7 +2,7 @@ module github.com/grafana/grafana
 
 go 1.15
 
-//replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
+replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
 
 // Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
 // We need a more current go-mssqldb so we get rid of a version of apache/thrift with vulnerabilities.

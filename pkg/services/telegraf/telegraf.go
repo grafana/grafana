@@ -27,7 +27,7 @@ func init() {
 	registry.RegisterServiceWithPriority(&LiveProxy{}, registry.Low)
 }
 
-// LiveProxy pretends to be the server
+// LiveProxy proxies metric stream from Telegraf to Grafana Live system.
 type LiveProxy struct {
 	Cfg             *setting.Cfg             `inject:""`
 	RouteRegister   routing.RouteRegister    `inject:""`
@@ -38,6 +38,7 @@ type LiveProxy struct {
 	GrafanaLive     *live.GrafanaLive        `inject:""`
 }
 
+// Init LiveProxy.
 func (t *LiveProxy) Init() error {
 	logger.Info("Telegraf LiveProxy proxy initialization")
 
@@ -46,10 +47,11 @@ func (t *LiveProxy) Init() error {
 		return nil
 	}
 
-	var allStreams = make(map[uint64]MetricFrameStream, 5)
+	var allStreams = make(map[uint64]MetricFrameStream)
+	parser := NewInfluxParser()
 
 	handler := func(ctx *models.ReqContext) {
-		parser := NewInfluxParser()
+		path := ctx.Params("path")
 
 		body, err := ctx.Req.Body().Bytes()
 		if err != nil {
@@ -57,6 +59,7 @@ func (t *LiveProxy) Init() error {
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		logger.Info("Telegraf body", "body", string(body))
 
 		metrics, err := parser.Parse(body)
 		if err != nil {
@@ -65,10 +68,11 @@ func (t *LiveProxy) Init() error {
 			return
 		}
 
-		created := make(map[uint64]bool, 5)
-		batch := make(map[uint64]MetricFrameStream, 5)
+		created := make(map[uint64]bool)
+		batch := make(map[uint64]MetricFrameStream)
 
 		for _, m := range metrics {
+			println(m.Name())
 			id := m.HashID()
 			stream, ok := batch[id]
 			if ok {
@@ -100,7 +104,7 @@ func (t *LiveProxy) Init() error {
 				ctx.Resp.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			channel := fmt.Sprintf("grafana/telegraf/%s", v.Key)
+			channel := fmt.Sprintf("telegraf/%s/%s", path, v.Key)
 			logger.Debug("publish data to channel", "channel", channel, "data", string(frameData))
 			err = t.GrafanaLive.Publish(channel, frameData)
 			if err != nil {
@@ -111,10 +115,11 @@ func (t *LiveProxy) Init() error {
 		}
 	}
 
-	t.RouteRegister.Post("/telegraf/live", handler)
+	t.RouteRegister.Post("/telegraf/live/:path", handler)
 	return nil
 }
 
+// Run LiveProxy.
 func (t *LiveProxy) Run(ctx context.Context) error {
 	if !t.IsEnabled() {
 		logger.Debug("GrafanaLive feature not enabled, skipping initialization")
