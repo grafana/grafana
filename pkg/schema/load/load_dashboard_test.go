@@ -47,7 +47,8 @@ func TestLoadDistPanels(t *testing.T) {
 	require.NoError(t, err)
 
 	dashr := schema.Resource{
-		Value: jmap,
+		Value: testdash,
+		// Value: jmap,
 	}
 
 	t.Run("Validate dashboard", func(t *testing.T) {

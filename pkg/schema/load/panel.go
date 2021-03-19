@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/schema"
 )
 
+var rt = &cue.Runtime{}
+
 // Families can have variants, where more typing information narrows the
 // possible values for certain keys in schemas. These are a meta-property
 // of the schema, effectively encoded in these loaders.
@@ -53,7 +55,11 @@ type compositeDashboardSchema struct {
 
 // Validate checks that the resource is correct with respect to the schema.
 func (cds *compositeDashboardSchema) Validate(r schema.Resource) error {
-	return cds.actual.Unify(cds.scratch.Fill(r.Value)).Validate(cue.Concrete(true))
+	rv, err := rt.Compile("resource", r.Value)
+	if err != nil {
+		return err
+	}
+	return cds.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
 }
 
 // ApplyDefaults returns a new, concrete copy of the Resource with all paths
@@ -201,20 +207,15 @@ func DistDashboardFamily(p BaseLoadPaths) (*schema.Family, error) {
 		return nil, errors.New("parts did not exist")
 	}
 
-	scratch := inst.Lookup("scratch")
-	if !scratch.Exists() {
-		return nil, errors.New("scratch did not exist")
-	}
-
 	famval := inst.Lookup("dashboardFamily")
 	if !famval.Exists() {
 		return nil, errors.New("dashboard schema family did not exist at expected path in expected file")
 	}
 
-	return buildDistDashboardFamily(famval, parts, scratch)
+	return buildDistDashboardFamily(famval, parts)
 }
 
-func buildDistDashboardFamily(famval, parts, scratch cue.Value) (*schema.Family, error) {
+func buildDistDashboardFamily(famval, parts cue.Value) (*schema.Family, error) {
 	// TODO verify subsumption by #SchemaFamily; renders many
 	// error checks below unnecessary
 	majiter, err := famval.Lookup("seqs").List()
@@ -232,10 +233,9 @@ func buildDistDashboardFamily(famval, parts, scratch cue.Value) (*schema.Family,
 		var seq schema.Seq
 		for miniter.Next() {
 			cds := &compositeDashboardSchema{
-				actual:  miniter.Value(),
-				scratch: scratch,
-				major:   major,
-				minor:   minor,
+				actual: miniter.Value(),
+				major:  major,
+				minor:  minor,
 				// This gets overwritten on all but the very final schema
 				migration: terminalMigrationFunc,
 			}

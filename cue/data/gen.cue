@@ -160,10 +160,10 @@ dashboardFamily: #SchemaFamily & {
                             unit?: string
 
                             // Significant digits (for display)
-                            decimals?: number | *null
+                            decimals?: number
 
-                            min?: number | null
-                            max?: number | null
+                            min?: number
+                            max?: number
 
                             //   // Convert input values into a display string
                             //   mappings?: ValueMapping[];
@@ -218,8 +218,8 @@ discriminatedPanel: {
     result: {
         type: arg.type
         // Yay floating point silliness https://github.com/cuelang/cue/issues/253
-        panelSchema: maj: arg.v.maj / 1.0
-        panelSchema: min: arg.v.min / 1.0
+        panelSchema: maj: arg.v.maj
+        panelSchema: min: arg.v.min
         options: arg.model.PanelOptions
         fieldConfig: defaults: custom: arg.model.PanelFieldConfig
     }
