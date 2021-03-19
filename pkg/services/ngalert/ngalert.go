@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -36,11 +37,12 @@ const (
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
-	Cfg             *setting.Cfg             `inject:""`
-	DatasourceCache datasources.CacheService `inject:""`
-	RouteRegister   routing.RouteRegister    `inject:""`
-	SQLStore        *sqlstore.SQLStore       `inject:""`
-	DataService     *tsdb.Service            `inject:""`
+	Cfg             *setting.Cfg                            `inject:""`
+	DatasourceCache datasources.CacheService                `inject:""`
+	RouteRegister   routing.RouteRegister                   `inject:""`
+	SQLStore        *sqlstore.SQLStore                      `inject:""`
+	DataService     *tsdb.Service                           `inject:""`
+	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
 	Log             log.Logger
 	schedule        schedule.ScheduleService
 }
@@ -73,6 +75,7 @@ func (ng *AlertNG) Init() error {
 		RouteRegister:   ng.RouteRegister,
 		DataService:     ng.DataService,
 		Schedule:        ng.schedule,
+		DataProxy:       ng.DataProxy,
 		Store:           store}
 	api.RegisterAPIEndpoints()
 

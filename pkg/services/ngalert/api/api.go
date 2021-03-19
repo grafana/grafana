@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -36,6 +37,7 @@ type API struct {
 	DataService     *tsdb.Service
 	Schedule        schedule.ScheduleService
 	Store           store.Store
+	DataProxy       *datasourceproxy.DatasourceProxyService
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -43,7 +45,10 @@ func (api *API) RegisterAPIEndpoints() {
 	logger := log.New("ngalert.api")
 	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiMock{log: logger})
 	api.RegisterPrometheusApiEndpoints(PrometheusApiMock{log: logger})
-	api.RegisterRulerApiEndpoints(RulerApiMock{log: logger})
+	api.RegisterRulerApiEndpoints(NewForkedRuler(
+		&LotexRuler{DataProxy: api.DataProxy, log: logger},
+		RulerApiMock{log: logger},
+	))
 	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
 
 	// Legacy routes; they will be removed in v8
