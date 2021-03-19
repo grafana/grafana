@@ -40,13 +40,16 @@ export interface BackendDataSourceResponse {
  * @public
  */
 export function toDataQueryResponse(
-  res: FetchResponse<BackendDataSourceResponse | undefined>,
+  res:
+    | { data: BackendDataSourceResponse | undefined }
+    | FetchResponse<BackendDataSourceResponse | undefined>
+    | DataQueryError,
   queries?: DataQuery[]
 ): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
   // If the response isn't in a correct shape we just ignore the data and pass empty DataQueryResponse.
-  if (res.data?.results) {
-    const results = res.data.results;
+  if ((res as FetchResponse).data?.results) {
+    const results = (res as FetchResponse).data.results;
     const resultIDs = Object.keys(results);
     const refIDs = queries ? queries.map((q) => q.refId) : resultIDs;
     const usedResultIDs = new Set<string>(resultIDs);
@@ -123,12 +126,12 @@ export function toDataQueryResponse(
   }
 
   // When it is not an OK response, make sure the error gets added
-  if (res.status && res.status !== 200) {
+  if ((res as FetchResponse).status && (res as FetchResponse).status !== 200) {
     if (rsp.state !== LoadingState.Error) {
       rsp.state = LoadingState.Error;
     }
     if (!rsp.error) {
-      rsp.error = toDataQueryError(res);
+      rsp.error = toDataQueryError(res as DataQueryError);
     }
   }
 
@@ -141,7 +144,7 @@ export function toDataQueryResponse(
  *
  * @public
  */
-export function toDataQueryError(err: any): DataQueryError {
+export function toDataQueryError(err: DataQueryError | string | Object): DataQueryError {
   const error = (err || {}) as DataQueryError;
 
   if (!error.message) {
