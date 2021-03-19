@@ -13,12 +13,12 @@
 * **DataLinks**: Bring back single click links for Stat, Gauge and BarGauge panel. [#31692](https://github.com/grafana/grafana/pull/31692), [@dprokop](https://github.com/dprokop)
 * **Docker**: Support pre-installed plugins from other sources in custom Dockerfiles. [#31234](https://github.com/grafana/grafana/pull/31234), [@sgnsys3](https://github.com/sgnsys3)
 * **Elasticseach**: Add support for histogram fields. [#29079](https://github.com/grafana/grafana/pull/29079), [@simianhacker](https://github.com/simianhacker)
-* **Exemplars**: always query exemplars. [#31673](https://github.com/grafana/grafana/pull/31673), [@zoltanbedi](https://github.com/zoltanbedi)
+* **Exemplars**: Always query exemplars. [#31673](https://github.com/grafana/grafana/pull/31673), [@zoltanbedi](https://github.com/zoltanbedi)
 * **Explore**: Support full inspect drawer. [#32005](https://github.com/grafana/grafana/pull/32005), [@ivanahuckova](https://github.com/ivanahuckova)
 * **HttpServer**: Make read timeout configurable but disabled by default. [#31575](https://github.com/grafana/grafana/pull/31575), [@bergquist](https://github.com/bergquist)
 * **SQLStore**: Close session in withDbSession. [#31775](https://github.com/grafana/grafana/pull/31775), [@aknuds1](https://github.com/aknuds1)
-* **Templating**: use dashboard timerange when variables are set to refresh 'On Dashboard Load'. [#31721](https://github.com/grafana/grafana/pull/31721), [@Elfo404](https://github.com/Elfo404)
-* **Tempo**: convert to backend data source. [#31618](https://github.com/grafana/grafana/pull/31618), [@zoltanbedi](https://github.com/zoltanbedi)
+* **Templating**: Use dashboard timerange when variables are set to refresh 'On Dashboard Load'. [#31721](https://github.com/grafana/grafana/pull/31721), [@Elfo404](https://github.com/Elfo404)
+* **Tempo**: Convert to backend data source. [#31618](https://github.com/grafana/grafana/pull/31618), [@zoltanbedi](https://github.com/zoltanbedi)
 
 ### Bug fixes
 
@@ -26,7 +26,7 @@
 * **Data proxy**: Fix encoded characters in URL path should be proxied as encoded. [#30597](https://github.com/grafana/grafana/pull/30597), [@marefr](https://github.com/marefr)
 * **Explore/Logs**: Fix escaping in ANSI logs. [#31731](https://github.com/grafana/grafana/pull/31731), [@ivanahuckova](https://github.com/ivanahuckova)
 * **GraphNG**: Fix tooltip series color for multi data frame scenario. [#32098](https://github.com/grafana/grafana/pull/32098), [@dprokop](https://github.com/dprokop)
-* **GraphNG**: make sure data set and config are in sync when initializing and re-initializing uPlot. [#32106](https://github.com/grafana/grafana/pull/32106), [@dprokop](https://github.com/dprokop)
+* **GraphNG**: Make sure data set and config are in sync when initializing and re-initializing uPlot. [#32106](https://github.com/grafana/grafana/pull/32106), [@dprokop](https://github.com/dprokop)
 * **Loki**: Fix autocomplete when re-editing Loki label values. [#31828](https://github.com/grafana/grafana/pull/31828), [@ivanahuckova](https://github.com/ivanahuckova)
 * **MixedDataSource**: Name is updated when data source variables change. [#32090](https://github.com/grafana/grafana/pull/32090), [@hugohaggmark](https://github.com/hugohaggmark)
 * **PanelInspect**: Interpolates variables in CSV file name. [#31936](https://github.com/grafana/grafana/pull/31936), [@hugohaggmark](https://github.com/hugohaggmark)
