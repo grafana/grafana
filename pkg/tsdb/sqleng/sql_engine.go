@@ -12,6 +12,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -40,6 +43,8 @@ type SqlQueryResultTransformer interface {
 	TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error)
 	// TransformQueryError transforms a query error.
 	TransformQueryError(err error) error
+
+	GetConverterList() []sqlutil.StringConverter
 }
 
 type engineCacheType struct {
@@ -219,63 +224,18 @@ var Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string)
 }
 
 func (e *sqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult, tsdbQuery *tsdb.TsdbQuery) error {
-	columnNames, err := rows.Columns()
-	columnCount := len(columnNames)
+	frames := data.Frames{}
+	myCs := e.queryResultTransformer.GetConverterList()
+	frame, foo, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
 
 	if err != nil {
 		return err
 	}
-
-	rowCount := 0
-	timeIndex := -1
-	timeEndIndex := -1
-
-	table := &tsdb.Table{
-		Columns: make([]tsdb.TableColumn, columnCount),
-		Rows:    make([]tsdb.RowValues, 0),
-	}
-
-	for i, name := range columnNames {
-		table.Columns[i].Text = name
-
-		for _, tc := range e.timeColumnNames {
-			if name == tc {
-				timeIndex = i
-				break
-			}
-
-			if timeIndex >= 0 && name == timeEndColumnName {
-				timeEndIndex = i
-				break
-			}
-		}
-	}
-
-	columnTypes, err := rows.ColumnTypes()
-	if err != nil {
-		return err
-	}
-
-	for ; rows.Next(); rowCount++ {
-		if rowCount > rowLimit {
-			return fmt.Errorf("query row limit exceeded, limit %d", rowLimit)
-		}
-
-		values, err := e.queryResultTransformer.TransformQueryResult(columnTypes, rows)
-		if err != nil {
-			return err
-		}
-
-		// converts column named time and timeend to unix timestamp in milliseconds
-		// to make native mssql datetime types and epoch dates work in
-		// annotation and table queries.
-		ConvertSqlTimeColumnToEpochMs(values, timeIndex)
-		ConvertSqlTimeColumnToEpochMs(values, timeEndIndex)
-		table.Rows = append(table.Rows, values)
-	}
-
-	result.Tables = append(result.Tables, table)
-	result.Meta.Set("rowCount", rowCount)
+	frames = append(frames, frame)
+	result.Dataframes = tsdb.NewDecodedDataFrames(frames)
+	content, _ := frame.StringTable(-1, -1)
+	spew.Dump(foo)
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<", content)
 	return nil
 }
 

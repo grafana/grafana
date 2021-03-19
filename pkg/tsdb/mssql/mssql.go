@@ -4,9 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"reflect"
 	"regexp"
 	"strconv"
 
+	"github.com/davecgh/go-spew/spew"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -149,4 +153,31 @@ func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.Co
 
 func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
 	return err
+}
+
+var converterList = []sqlutil.StringConverter{
+	{
+		Name:           "handle float",
+		InputScanKind:  reflect.Struct,
+		InputTypeName:  "DOUBLE",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableFloat64,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				v, err := strconv.ParseFloat(*in, 64)
+				if err != nil {
+					return nil, err
+				}
+				return &v, nil
+			},
+		},
+	},
+}
+
+func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
+	return converterList
 }

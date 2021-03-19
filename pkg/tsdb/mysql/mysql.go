@@ -8,8 +8,12 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/VividCortex/mysqlerr"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
@@ -80,6 +84,7 @@ type mysqlQueryResultTransformer struct {
 	log log.Logger
 }
 
+// converter map to be implemented here
 func (t *mysqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 
@@ -153,3 +158,121 @@ func (t *mysqlQueryResultTransformer) TransformQueryError(err error) error {
 }
 
 var errQueryFailed = errors.New("query failed - please inspect Grafana server log for details")
+
+// For Driver mysql, we have the list of possible data type:
+// https://www.w3schools.com/sql/sql_datatypes.asp#:~:text=In%20MySQL%20there%20are%20three,numeric%2C%20and%20date%20and%20time.
+// Since by default, we convert all into String, we need only to handle the Numeric data types
+var converterList = []sqlutil.StringConverter{
+	{
+		Name:           "handle DOUBLE",
+		InputScanKind:  reflect.Struct,
+		InputTypeName:  "DOUBLE",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableFloat64,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				v, err := strconv.ParseFloat(*in, 64)
+				if err != nil {
+					return nil, err
+				}
+				return &v, nil
+			},
+		},
+	},
+	{
+		Name:           "handle BIGINT",
+		InputScanKind:  reflect.Struct,
+		InputTypeName:  "BIGINT",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableInt64,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				v, err := strconv.ParseInt(*in, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				return &v, nil
+			},
+		},
+	},
+	{
+		Name:           "handle DECIMAL",
+		InputScanKind:  reflect.Slice,
+		InputTypeName:  "DECIMAL",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableFloat64,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				v, err := strconv.ParseFloat(*in, 64)
+				if err != nil {
+					return nil, err
+				}
+				return &v, nil
+			},
+		},
+	},
+	{
+		Name:           "handle DATETIME",
+		InputScanKind:  reflect.Struct,
+		InputTypeName:  "DATETIME",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableTime,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				var layouts = [...]string{
+					"2006-01-02 15:04:05",
+					"2006-01-02 15:04:05.123456",
+				}
+				var err error
+				var v time.Time
+				for _, layout := range layouts {
+					v, err = time.Parse(layout, *in)
+					if err == nil {
+						return &v, nil
+					}
+				}
+				return nil, err
+			},
+		},
+	},
+	{
+		Name:           "handle YEAR",
+		InputScanKind:  reflect.Struct,
+		InputTypeName:  "YEAR",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableInt64,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				v, err := strconv.ParseInt(*in, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				return &v, nil
+			},
+		},
+	},
+}
+
+func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
+	return converterList
+}
