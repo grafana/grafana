@@ -20,6 +20,7 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
@@ -80,17 +81,18 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			am.stopDispatcher()
+			am.StopAndWait()
 			return nil
 		case <-time.After(1 * time.Minute):
-			if err := am.ReloadConfigFromDatabase(); err != nil {
-				am.logger.Error("failed to sync config from database", "error", err)
-			}
+			// TODO: once we have a check to skip reload on same config, uncomment this.
+			//if err := am.ReloadConfigFromDatabase(); err != nil {
+			//	am.logger.Error("failed to sync config from database", "error", err)
+			//}
 		}
 	}
 }
 
-func (am *Alertmanager) stopDispatcher() {
+func (am *Alertmanager) StopAndWait() {
 	if am.dispatcher != nil {
 		am.dispatcher.Stop()
 	}
@@ -104,21 +106,21 @@ func (am *Alertmanager) ReloadConfigFromDatabase() error {
 	defer am.reloadConfigMtx.Unlock()
 
 	// TODO: check if config is same as before using hashes and skip reload in case they are same.
-	cfg1, cfg2, err := getConfigFromDatabase()
+	cfg, err := getConfigFromDatabase()
 	if err != nil {
 		return errors.Wrap(err, "get config from database")
 	}
-	return errors.Wrap(am.reloadFromConfig(cfg1, cfg2), "reload from config")
+	return errors.Wrap(am.ApplyConfig(cfg), "reload from config")
 }
 
-func getConfigFromDatabase() (interface{}, interface{}, error) {
+func getConfigFromDatabase() (*api.PostableApiAlertingConfig, error) {
 	// TODO: get configs from the database.
-	return nil, nil, nil
+	return &api.PostableApiAlertingConfig{}, nil
 }
 
-// reloadFromConfig re-initialises all components using the config provided and restarts dispatcher.
-// TODO: replace these dummy configs with actual ones and use them.
-func (am *Alertmanager) reloadFromConfig(cfg1 interface{}, cfg2 interface{}) error {
+// ApplyConfig applies a new configuration by re-initializing all components using the configuration provided.
+// It is not safe to call concurrently.
+func (am *Alertmanager) ApplyConfig(cfg *api.PostableApiAlertingConfig) error {
 	// Now, let's put together our notification pipeline
 	receivers := buildIntegrationsMap()
 	routingStage := make(notify.RoutingStage, len(receivers))
@@ -132,7 +134,7 @@ func (am *Alertmanager) reloadFromConfig(cfg1 interface{}, cfg2 interface{}) err
 
 	am.alerts.SetStage(routingStage)
 
-	am.stopDispatcher()
+	am.StopAndWait()
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, BuildRoutingConfiguration(), routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), nil)
 
 	am.dispatcherWG.Add(1)
