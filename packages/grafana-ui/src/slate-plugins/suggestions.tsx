@@ -7,8 +7,9 @@ import { Plugin as SlatePlugin } from '@grafana/slate-react';
 
 import TOKEN_MARK from './slate-prism/TOKEN_MARK';
 import { Typeahead } from '../components/Typeahead/Typeahead';
-import { CompletionItem, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../types/completion';
+import { CompletionItem, MatchType, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types/completion';
 import { makeFragment } from '../utils/slate';
+import fuzzySearch from './fuzzy';
 
 export const TYPEAHEAD_DEBOUNCE = 250;
 
@@ -295,8 +296,10 @@ const handleTypeahead = async (
         // Filter groups based on prefix
         if (!group.skipFilter) {
           newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).length >= prefix.length);
-          if (group.prefixMatch) {
+          if (group.matchType === MatchType.Prefix) {
             newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).startsWith(prefix));
+          } else if (group.matchType === MatchType.Fuzzy) {
+            newGroup.items = fuzzySearch(newGroup.items, prefix);
           } else {
             newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).includes(prefix));
           }
@@ -309,7 +312,11 @@ const handleTypeahead = async (
       }
 
       if (!group.skipSort) {
-        newGroup.items = sortBy(newGroup.items, (item: CompletionItem) => item.sortText || item.label);
+        if (newGroup.matchType === MatchType.Fuzzy) {
+          newGroup.items = sortBy(newGroup.items, (item: CompletionItem) => item.matching?.score);
+        } else {
+          newGroup.items = sortBy(newGroup.items, (item: CompletionItem) => item.sortText || item.label);
+        }
       }
 
       return newGroup;

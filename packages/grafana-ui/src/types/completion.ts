@@ -1,5 +1,14 @@
 import { Value, Editor as CoreEditor } from 'slate';
 
+export enum MatchType {
+  // match for mid-word
+  Word = 'WordMatch',
+  // match only by prefix (and not mid-word)
+  Prefix = 'PrefixMatch',
+  // match with any letters in-between
+  Fuzzy = 'FuzzyMatch',
+}
+
 export interface CompletionItemGroup {
   /**
    * Label that will be displayed for all entries of this group.
@@ -11,10 +20,7 @@ export interface CompletionItemGroup {
    */
   items: CompletionItem[];
 
-  /**
-   * If true, match only by prefix (and not mid-word).
-   */
-  prefixMatch?: boolean;
+  matchType?: MatchType;
 
   /**
    * If true, do not filter items in this group based on the search.
@@ -30,6 +36,18 @@ export interface CompletionItemGroup {
 export enum CompletionItemKind {
   GroupTitle = 'GroupTitle',
 }
+
+type MatchingRange = {
+  start: number;
+  end: number;
+};
+
+type Matching = {
+  // used for sorting
+  score: number;
+  // used for highlighting
+  ranges: MatchingRange[];
+};
 
 export interface CompletionItem {
   /**
@@ -61,6 +79,8 @@ export interface CompletionItem {
    * with other items. When `falsy` the `label` is used.
    */
   sortText?: string;
+
+  matching?: Matching;
 
   /**
    * A string that should be used when filtering a set of
