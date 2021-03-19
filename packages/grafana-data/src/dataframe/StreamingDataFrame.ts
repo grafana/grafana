@@ -3,26 +3,60 @@ import { QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities } from './DataFrameJSON';
 
-// circular push
-function circPush(buf: any[], v: any) {
-  let blen = buf.length;
-  let bend = blen - 1;
+// binary search for index of closest value
+function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
+  let mid;
+  lo = lo || 0;
+  hi = hi || arr.length - 1;
+  let bitwise = hi <= 2147483647;
 
-  if (Array.isArray(v)) {
-    let vlen = v.length;
+  while (hi - lo > 1) {
+    mid = bitwise ? (lo + hi) >> 1 : Math.floor((lo + hi) / 2);
 
-    buf.copyWithin(0, vlen);
-
-    let j = 0;
-    let i = blen - vlen;
-
-    while (i < blen) {
-      buf[i++] = v[j++];
+    if (arr[mid] < num) {
+      lo = mid;
+    } else {
+      hi = mid;
     }
-  } else {
-    buf.copyWithin(0, 1);
-    buf[bend] = v;
   }
+
+  if (num - arr[lo] <= arr[hi] - num) {
+    return lo;
+  }
+
+  return hi;
+}
+
+// mutable circular push
+function circPush(data: number[][], newData: number[][], maxDelta = Infinity, maxLength = Infinity) {
+  for (let i = 0; i < data.length; i++) {
+    data[i] = data[i].concat(newData[i]);
+  }
+
+  let nlen = data[0].length;
+
+  let sliceIdx = 0;
+
+  if (nlen > maxLength) {
+    sliceIdx = nlen - maxLength;
+  }
+
+  if (maxDelta !== Infinity) {
+    let low = data[0][sliceIdx];
+    let high = data[0][nlen - 1];
+
+    if (high - low > maxDelta) {
+      sliceIdx = closestIdx(high - maxDelta, data[0], sliceIdx);
+    }
+  }
+
+  if (sliceIdx) {
+    for (let i = 0; i < data.length; i++) {
+      data[i] = data[i].slice(sliceIdx);
+    }
+  }
+
+  return data;
 }
 
 /**
@@ -117,8 +151,14 @@ export class StreamingDataFrame implements DataFrame {
         });
       }
 
-      this.fields.forEach((f, i) => {
-        circPush(f.values.buffer, values[i]);
+      let curValues = this.fields.map((f) => f.values.buffer);
+
+      let maxMillis = (this.options.maxSeconds || Infinity) * 1e3;
+
+      let appended = circPush(curValues, values, maxMillis, this.options.maxLength);
+
+      appended.forEach((v, i) => {
+        this.fields[i].values.buffer = v;
       });
     }
   }
