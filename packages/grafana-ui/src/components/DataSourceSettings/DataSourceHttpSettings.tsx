@@ -96,7 +96,9 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
       width={20}
       options={ACCESS_OPTIONS}
       value={ACCESS_OPTIONS.filter((o) => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
-      onChange={(selectedValue) => onSettingsChange({ access: selectedValue.value })}
+      onChange={(selectedValue) => {
+        selectedValue && onSettingsChange({ access: selectedValue.value });
+      }}
     />
   );
 

@@ -230,7 +230,9 @@ export function RichHistoryQueriesTab(props: Props) {
               value={sortOrderOptions.filter((order) => order.value === sortOrder)}
               options={sortOrderOptions}
               placeholder="Sort queries by"
-              onChange={(e) => onChangeSortOrder(e.value as SortOrder)}
+              onChange={(e) => {
+                e && onChangeSortOrder(e.value as SortOrder);
+              }}
             />
           </div>
         </div>

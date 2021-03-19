@@ -50,7 +50,9 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, onRunQueries, width }
         </div>
         <div className={styles.selectWrapper}>
           <Select
-            onChange={(selectedValue) => setSeries(selectedValue.value!)}
+            onChange={(selectedValue) => {
+              selectedValue && setSeries(selectedValue.value!);
+            }}
             options={series}
             value={currentSeries}
           />

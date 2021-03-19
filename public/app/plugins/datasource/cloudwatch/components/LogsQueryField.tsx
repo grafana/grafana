@@ -321,7 +321,9 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               <Select
                 options={regions}
                 value={selectedRegion}
-                onChange={(v) => this.setSelectedRegion(v)}
+                onChange={(v) => {
+                  v && this.setSelectedRegion(v);
+                }}
                 width={18}
                 placeholder="Choose Region"
                 maxMenuHeight={500}

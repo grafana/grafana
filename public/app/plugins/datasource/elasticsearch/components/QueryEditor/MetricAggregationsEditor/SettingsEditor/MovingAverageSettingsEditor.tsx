@@ -17,7 +17,9 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
     <>
       <InlineField label="Model">
         <Select
-          onChange={(value) => dispatch(changeMetricSetting(metric, 'model', value.value!))}
+          onChange={(value) => {
+            value && dispatch(changeMetricSetting(metric, 'model', value.value!));
+          }}
           options={movingAvgModelOptions}
           value={metric.settings?.model}
         />

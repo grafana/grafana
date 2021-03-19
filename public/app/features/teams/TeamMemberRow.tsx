@@ -51,7 +51,9 @@ export class TeamMemberRow extends PureComponent<Props> {
               <Select
                 isSearchable={false}
                 options={teamsPermissionLevels}
-                onChange={(item) => this.onPermissionChange(item, member)}
+                onChange={(item) => {
+                  item && this.onPermissionChange(item, member);
+                }}
                 className="gf-form-select-box__control--menu-right"
                 value={value}
               />

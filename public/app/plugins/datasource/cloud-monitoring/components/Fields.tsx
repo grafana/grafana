@@ -49,7 +49,9 @@ export const VariableQueryField: FunctionComponent<VariableQueryFieldProps> = ({
         width={25}
         allowCustomValue={allowCustomValue}
         value={value}
-        onChange={({ value }) => onChange(value!)}
+        onChange={(change) => {
+          change && onChange(change.value!);
+        }}
         options={options}
       />
     </InlineField>

@@ -35,7 +35,7 @@ export const FilterByValueFilterEditor: React.FC<Props> = (props) => {
   }
 
   const onChangeField = useCallback(
-    (selectable?: SelectableValue<string>) => {
+    (selectable?: SelectableValue<string> | null) => {
       if (!selectable?.value) {
         return;
       }
@@ -48,7 +48,7 @@ export const FilterByValueFilterEditor: React.FC<Props> = (props) => {
   );
 
   const onChangeMatcher = useCallback(
-    (selectable?: SelectableValue<string>) => {
+    (selectable?: SelectableValue<string> | null) => {
       if (!selectable?.value) {
         return;
       }

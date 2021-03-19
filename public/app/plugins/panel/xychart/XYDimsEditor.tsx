@@ -93,10 +93,11 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
         options={frameNames}
         value={frameNames.find((v) => v.value === value?.frame) ?? frameNames[0]}
         onChange={(v) => {
-          onChange({
-            ...value,
-            frame: v.value!,
-          });
+          v &&
+            onChange({
+              ...value,
+              frame: v.value!,
+            });
         }}
       />
       <br />
@@ -105,10 +106,11 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
         options={info.numberFields}
         value={info.xAxis}
         onChange={(v) => {
-          onChange({
-            ...value,
-            x: v.value,
-          });
+          v &&
+            onChange({
+              ...value,
+              x: v.value,
+            });
         }}
       />
       <br />

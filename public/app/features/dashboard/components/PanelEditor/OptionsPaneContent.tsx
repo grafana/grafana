@@ -202,7 +202,7 @@ export const TabsBarContent: React.FC<{
             options={tabs}
             value={active}
             onChange={(v) => {
-              setActiveTab(v.value!);
+              v && setActiveTab(v.value!);
             }}
           />
         </div>

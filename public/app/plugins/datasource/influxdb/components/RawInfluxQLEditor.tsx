@@ -55,6 +55,9 @@ export const RawInfluxQLEditor: FC<Props> = ({ query, onChange, onRunQuery }) =>
         <Select
           inputId={selectElementId}
           onChange={(v) => {
+            if (!v) {
+              return;
+            }
             onChange({ ...query, resultFormat: v.value });
             onRunQuery();
           }}

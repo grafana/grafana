@@ -62,6 +62,9 @@ export function ValuePicker<T>({
             onCloseMenu={() => setIsPicking(false)}
             autoFocus={true}
             onChange={(value) => {
+              if (!value) {
+                return;
+              }
               setIsPicking(false);
               onChange(value);
             }}
