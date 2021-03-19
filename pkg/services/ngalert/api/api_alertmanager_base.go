@@ -46,7 +46,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 		group.Get(toMacaronPath("/alertmanager/{DatasourceId}/api/v2/silences"), routing.Wrap(srv.RouteGetSilences))
 		group.Post(toMacaronPath("/alertmanager/{DatasourceId}/config/api/v1/alerts"), binding.Bind(apimodels.PostableUserConfig{}), routing.Wrap(srv.RoutePostAlertingConfig))
 		group.Post(toMacaronPath("/alertmanager/{DatasourceId}/api/v2/alerts"), binding.Bind(apimodels.PostableAlerts{}), routing.Wrap(srv.RoutePostAmAlerts))
-	})
+	}, api.validateGrafanaIsRecipient)
 }
 
 func (base AlertmanagerApiBase) RouteCreateSilence(c *models.ReqContext, body apimodels.SilenceBody) response.Response {

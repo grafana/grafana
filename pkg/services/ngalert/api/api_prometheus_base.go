@@ -28,7 +28,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(toMacaronPath("/prometheus/{DatasourceId}/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertStatuses))
 		group.Get(toMacaronPath("/prometheus/{DatasourceId}/api/v1/rules"), routing.Wrap(srv.RouteGetRuleStatuses))
-	})
+	}, api.validateGrafanaIsRecipient)
 }
 
 func (base PrometheusApiBase) RouteGetAlertStatuses(c *models.ReqContext) response.Response {

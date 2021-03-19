@@ -6,6 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+const grafanaRecipient = "grafana"
+
 func (api *API) validateOrgAlertDefinition(c *models.ReqContext) {
 	uid := c.ParamsEscape(":alertDefinitionUID")
 
@@ -18,6 +20,14 @@ func (api *API) validateOrgAlertDefinition(c *models.ReqContext) {
 
 	if err := api.Store.GetAlertDefinitionByUID(&query); err != nil {
 		c.JsonApiErr(404, "Alert definition not found", nil)
+		return
+	}
+}
+
+func (api *API) validateGrafanaIsRecipient(c *models.ReqContext) {
+	datasourceID := c.Params(":DatasourceId")
+	if datasourceID != grafanaRecipient {
+		c.JsonApiErr(400, "Bad request: grafana is not the recipient", nil)
 		return
 	}
 }

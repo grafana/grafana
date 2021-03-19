@@ -38,7 +38,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiService) {
 		group.Get(toMacaronPath("/ruler/{DatasourceId}/api/v1/rules/{Namespace}/{Groupname}"), routing.Wrap(srv.RouteGetRulegGroupConfig))
 		group.Get(toMacaronPath("/ruler/{DatasourceId}/api/v1/rules"), routing.Wrap(srv.RouteGetRulesConfig))
 		group.Post(toMacaronPath("/ruler/{DatasourceId}/api/v1/rules/{Namespace}"), binding.Bind(apimodels.RuleGroupConfig{}), routing.Wrap(srv.RoutePostNameRulesConfig))
-	})
+	}, api.validateGrafanaIsRecipient)
 }
 
 func (base RulerApiBase) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
