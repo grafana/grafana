@@ -35,12 +35,15 @@ func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunS
 	case "random-2s-stream":
 		conf = testStreamConfig{
 			Interval: 200 * time.Millisecond,
-			Drop:     0,
 		}
 	case "random-flakey-stream":
 		conf = testStreamConfig{
 			Interval: 200 * time.Millisecond,
 			Drop:     0.6,
+		}
+	case "random-20Hz-stream":
+		conf = testStreamConfig{
+			Interval: 50 * time.Millisecond,
 		}
 	default:
 		return fmt.Errorf("testdata plugin does not support path: %s", request.Path)
