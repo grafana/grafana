@@ -1,13 +1,13 @@
 import React, { FC, useState, useEffect } from 'react';
-import { FieldSet, Field, Input, InputControl, stylesFactory, Select, FormAPI } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { FieldSet, Field, Input, InputControl, stylesFactory, Select, FormAPI } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
+
+import { getAllDataSources, getPromAndLokiDataSources } from '../utils/config';
 import { fetchRulerRules } from '../api/ruler';
 
-import { getAllDataSources, getPromAndLokiDataSources } from '../api/datasources';
-
-interface Props extends FormAPI<{}> {}
+interface Props extends FormAPI<any> {}
 
 enum ALERT_TYPE {
   THRESHOLD = 'threshold',
@@ -39,16 +39,7 @@ const AlertTypeSection: FC<Props> = ({ register, control, watch }) => {
   const alertType = watch('type') as SelectableValue;
   const datasource = watch('datasource') as SelectableValue;
   const dataSourceOptions = useDatasourceSelectOptions(alertType);
-
-  console.log({ alertType, datasource });
-
-  useEffect(() => {
-    if (datasource?.value) {
-      fetchRulerRules(datasource?.value as string).then((ruleGroups) => {
-        console.log(ruleGroups);
-      });
-    }
-  }, [datasource?.value]);
+  const folderOptions = useFolderSelectOptions(datasource);
 
   return (
     <FieldSet label="Alert type">
@@ -63,6 +54,9 @@ const AlertTypeSection: FC<Props> = ({ register, control, watch }) => {
           <InputControl as={Select} name="datasource" options={dataSourceOptions} control={control} />
         </Field>
       </div>
+      <Field className={styles.formInput}>
+        <InputControl as={Select} name="folder" options={folderOptions} control={control} />
+      </Field>
     </FieldSet>
   );
 };
@@ -89,6 +83,26 @@ const useDatasourceSelectOptions = (alertType: SelectableValue) => {
   }, [alertType?.value]);
 
   return datasourceOptions;
+};
+
+const useFolderSelectOptions = (datasource: SelectableValue) => {
+  const [folderOptions, setFolderOptions] = useState<SelectableValue[]>([]);
+
+  useEffect(() => {
+    if (datasource?.value) {
+      fetchRulerRules(datasource?.value).then((namespaces) => {
+        console.log(namespaces);
+        const options = Object.entries(namespaces).flatMap(([namespace, group]) => {
+          return group.map(({ name }) => {
+            return { label: `${namespace} > ${name}`, value: [namespace, name] };
+          });
+        });
+        setFolderOptions(options);
+      });
+    }
+  }, [datasource?.value]);
+
+  return folderOptions;
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

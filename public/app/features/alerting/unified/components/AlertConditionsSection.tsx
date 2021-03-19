@@ -1,9 +1,9 @@
-import React, { FC, useState } from 'react';
-import { Field, FieldSet, Input, Select, useStyles, Label } from '@grafana/ui';
+import React, { FC } from 'react';
+import { Field, FieldSet, Input, Select, useStyles, Label, FormAPI, InputControl } from '@grafana/ui';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
-type Props = {};
+type Props = FormAPI<any>;
 
 enum TIME_OPTIONS {
   seconds = 's',
@@ -32,18 +32,17 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-const AlertConditionsSection: FC<Props> = (props) => {
+const AlertConditionsSection: FC<Props> = ({ register, control }) => {
   const styles = useStyles(getStyles);
-  const [timeValue, setTimeValue] = useState<string>();
   return (
     <FieldSet label="Define alert conditions">
       <Label description="Required time for which the expression has to happen">For</Label>
       <div className={styles.flexRow}>
         <Field className={styles.numberInput}>
-          <Input name="for" />
+          <Input ref={register()} name="forTime" />
         </Field>
         <Field className={styles.numberInput}>
-          <Select value={timeValue} onChange={({ value }) => setTimeValue(value)} options={timeOptions} />
+          <InputControl name="timeUnit" as={Select} options={timeOptions} control={control} />
         </Field>
       </div>
     </FieldSet>
