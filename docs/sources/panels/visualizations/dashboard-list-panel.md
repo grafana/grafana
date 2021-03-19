@@ -21,7 +21,7 @@ Use these options to refine your visualization.
 
 - **Starred -** Display starred dashboards in alphabetical order.
 - **Recently viewed -** Display recently viewed dashboards in alphabetical order.
-- **Search -** Display dashboards by search query or tags. Requires you to enter at least one value in **Query** or **Tags**.
+- **Search -** Display dashboards by search query or tags. You must enter at least one value in **Query** or **Tags**. For the **Query** and **Tags** fields. Variable interpolation is supported, for example,`$my_var` or `${my_var}`.
 - **Show headings -** The chosen list selection (Starred, Recently viewed, Search) is shown as a heading.
 - **Max items -** Sets the maximum number of items to list per section. For example, if you left this at the default value of 10 and displayed Starred and Recently viewed dashboards, then the panel would display up to 20 total dashboards, ten in each section.
 

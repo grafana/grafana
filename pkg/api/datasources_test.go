@@ -35,7 +35,11 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		})
 
 		// handler func being tested
-		hs := &HTTPServer{Bus: bus.GetBus(), Cfg: setting.NewCfg()}
+		hs := &HTTPServer{
+			Bus:           bus.GetBus(),
+			Cfg:           setting.NewCfg(),
+			PluginManager: &fakePluginManager{},
+		}
 		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
 

@@ -20,20 +20,15 @@ func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
 	return env
 }
 
-func extractPluginSettings(cfg *setting.Cfg) map[string]pluginSettings {
-	psMap := map[string]pluginSettings{}
-	for pluginID, settings := range cfg.PluginSettings {
-		ps := pluginSettings{}
-		for k, v := range settings {
-			if k == "path" || strings.ToLower(k) == "id" {
-				continue
-			}
-
-			ps[k] = v
+func getPluginSettings(plugID string, cfg *setting.Cfg) pluginSettings {
+	ps := pluginSettings{}
+	for k, v := range cfg.PluginSettings[plugID] {
+		if k == "path" || strings.ToLower(k) == "id" {
+			continue
 		}
 
-		psMap[pluginID] = ps
+		ps[k] = v
 	}
 
-	return psMap
+	return ps
 }
