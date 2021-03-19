@@ -2,7 +2,7 @@ import React, { useCallback, ReactElement } from 'react';
 import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet, set as lodashSet } from 'lodash';
 import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
-import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
+import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue } from './utils';
 import { OptionsPaneItem } from './OptionsPaneItem';
 import { OptionsPaneCategory, OptionsPaneCategoryProps } from './OptionsPaneCategory';
@@ -111,19 +111,4 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): Array<Rea
       {categoryIndex[name]}
     </OptionsPaneCategory>
   ));
-}
-
-export function getFieldOverrides(props: OptionPaneRenderProps): OptionsPaneGroup[] {
-  const overrides: OptionsPaneGroup[] = [];
-  overrides.push({
-    title: 'Override 1',
-    items: [],
-  });
-
-  overrides.push({
-    title: 'Override 2',
-    items: [],
-  });
-
-  return overrides;
 }

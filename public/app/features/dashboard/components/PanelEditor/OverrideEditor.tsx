@@ -168,12 +168,14 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             />
           );
         })}
+
         {!isSystemOverride && override.matcher.options && (
           <div className={styles.propertyPickerWrapper}>
             <ValuePicker
               label="Add override property"
               variant="secondary"
               icon="plus"
+              menuPlacement="auto"
               options={configPropertiesOptions}
               onChange={(o) => {
                 onDynamicConfigValueAdd(o.value!);

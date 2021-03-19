@@ -5,11 +5,12 @@ import { CustomScrollbar, Field, RadioButtonGroup, useStyles } from '@grafana/ui
 import { usePanelLatestData } from './usePanelLatestData';
 import { OptionPaneRenderProps } from './types';
 import { getPanelFrameOptions } from './getPanelFrameOptions';
-import { getFieldOverrides, getVizualizationOptions } from './getVizualizationOptions';
+import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from 'emotion';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { OptionsPaneItem, OptionsPaneItemProps } from './OptionsPaneItem';
 import { OptionsPaneCategory, OptionsPaneCategoryProps } from './OptionsPaneCategory';
+import { getFieldOverrideElements } from './getFieldOverrideElements';
 
 interface Props {
   plugin: PanelPlugin;
@@ -47,7 +48,7 @@ export const OptionsPaneOptions: React.FC<Props> = ({
 
   groupElements.push(getPanelFrameOptions(optionProps));
   groupElements.push(...getVizualizationOptions(optionProps));
-  //topGroups.push(...getFieldOverrides(optionProps));
+  groupElements.push(...getFieldOverrideElements(optionProps));
 
   const radioOptions = [
     { label: 'All', value: 'all' },
@@ -92,7 +93,10 @@ function getSearchHits(items: Array<ReactElement<OptionsPaneCategoryProps>>, sea
         if (searchRegex.test(props.title)) {
           filteredItems.push(item);
         }
-      } else if (displayName === OptionsPaneCategory.displayName) {
+        return;
+      }
+
+      if (item.props.children) {
         filteredItems.push(...getSearchHits(item.props.children as any, searchRegex));
       }
     });
