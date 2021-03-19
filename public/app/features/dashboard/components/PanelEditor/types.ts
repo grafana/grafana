@@ -1,5 +1,4 @@
 import { DataFrame, EventBus, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
-import React from '@visx/shape/node_modules/@types/react';
 import { PanelModel } from '../../state';
 
 export interface PanelEditorTab {

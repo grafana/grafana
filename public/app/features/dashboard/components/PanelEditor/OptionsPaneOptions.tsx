@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
+import React, { ReactElement, useState } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, Field, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { usePanelLatestData } from './usePanelLatestData';
-import { OptionPaneRenderProps, OptionsPaneGroup } from './types';
+import { OptionPaneRenderProps } from './types';
 import { getPanelFrameOptions } from './getPanelFrameOptions';
-import { OptionsGroup } from './OptionsGroup';
 import { getFieldOverrides, getVizualizationOptions } from './getVizualizationOptions';
 import { css } from 'emotion';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import {
+  OptionsPaneCategory,
+  OptionsPaneCategoryProps,
+  OptionsPaneItem,
+  OptionsPaneItemProps,
+} from './OptionsPaneItems';
+import { OptionsGroup } from './OptionsGroup';
 
 interface Props {
   plugin: PanelPlugin;
@@ -32,7 +38,7 @@ export const OptionsPaneOptions: React.FC<Props> = ({
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
   const [searchString, setSearchString] = useState('');
   const styles = useStyles(getStyles);
-  const topGroups: OptionsPaneGroup[] = [];
+  const groupElements: Array<ReactElement<OptionsPaneCategoryProps>> = [];
   const optionProps: OptionPaneRenderProps = {
     panel,
     onPanelOptionsChanged,
@@ -43,9 +49,10 @@ export const OptionsPaneOptions: React.FC<Props> = ({
     eventBus: dashboard.events,
   };
 
-  topGroups.push(getPanelFrameOptions(optionProps));
-  topGroups.push(...getVizualizationOptions(optionProps));
-  topGroups.push(...getFieldOverrides(optionProps));
+  groupElements.push(getPanelFrameOptions(optionProps));
+
+  //topGroups.push(...getVizualizationOptions(optionProps));
+  //topGroups.push(...getFieldOverrides(optionProps));
 
   const radioOptions = [
     { label: 'All', value: 'all' },
@@ -65,29 +72,39 @@ export const OptionsPaneOptions: React.FC<Props> = ({
       </div>
       <CustomScrollbar autoHeightMin="100%">
         <div className={styles.optionsBox}>
-          {topGroups.map((topGroup) => (
-            <OptionsGroup key={topGroup.title} title={topGroup.title} id={topGroup.title}>
-              {topGroup.items?.map((child1) => (
-                <Field label={child1.title} description={child1.description} key={child1.title}>
-                  {child1.reactNode!}
-                </Field>
-              ))}
-              {topGroup.groups?.map((childGroup) => (
-                <OptionsGroup id={childGroup.title} key={childGroup.title} title={childGroup.title} defaultToClosed>
-                  {childGroup.items?.map((child2) => (
-                    <Field label={child2.title} description={child2.description} key={child2.title}>
-                      {child2.reactNode!}
-                    </Field>
-                  ))}
-                </OptionsGroup>
-              ))}
+          {searchString.length === 0 && groupElements}
+          {searchString.length > 0 && (
+            <OptionsGroup id="Search results" title="Search results">
+              {getSearchHits(groupElements, searchString)}
             </OptionsGroup>
-          ))}
+          )}
         </div>
       </CustomScrollbar>
     </div>
   );
 };
+
+function getSearchHits(items: Array<ReactElement<OptionsPaneCategoryProps>>, searchString: string) {
+  const filteredItems: React.ReactElement[] = [];
+
+  React.Children.forEach(items, (topGroup) => {
+    React.Children.forEach(topGroup, (item) => {
+      const displayName = (item.type as any).displayName;
+      console.log('item', item);
+
+      if (displayName === OptionsPaneItem.displayName) {
+        const props = item.props as OptionsPaneItemProps;
+        if (props.title.indexOf(searchString) >= 0) {
+          filteredItems.push(item);
+        }
+      } else if (displayName === OptionsPaneCategory.displayName) {
+        filteredItems.push(...getSearchHits(item.props.children as any, searchString));
+      }
+    });
+  });
+
+  return filteredItems;
+}
 
 const getStyles = (theme: GrafanaTheme) => ({
   searchBox: css`
@@ -103,6 +120,9 @@ const getStyles = (theme: GrafanaTheme) => ({
     background: ${theme.colors.bg1};
     border: 1px solid ${theme.colors.border1};
     margin-bottom: ${theme.spacing.md};
+  `,
+  searchHits: css`
+    padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
   `,
   wrapper: css`
     flex-grow: 1;
