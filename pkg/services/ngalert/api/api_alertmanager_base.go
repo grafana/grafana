@@ -109,12 +109,7 @@ func (base AlertmanagerApiBase) RoutePostAlertingConfig(c *models.ReqContext, bo
 		return response.Error(400, "Unable to apply config to the Alertmanager", err)
 	}
 
-	return response.Success("Configuration applied sucessfully")
-
-	datasourceId := c.Params(":DatasourceId")
-	base.log.Info("RoutePostAlertingConfig: ", "DatasourceId", datasourceId)
-	base.log.Info("RoutePostAlertingConfig: ", "body", body)
-	return response.Error(http.StatusNotImplemented, "", nil)
+	return response.Success("Configuration applied successfully")
 }
 
 func (base AlertmanagerApiBase) RoutePostAmAlerts(c *models.ReqContext, body apimodels.PostableAlerts) response.Response {

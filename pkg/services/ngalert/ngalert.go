@@ -93,6 +93,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 // IsDisabled returns true if the alerting service is disable for this instance.
 func (ng *AlertNG) IsDisabled() bool {
+	return false
 	if ng.Cfg == nil {
 		return true
 	}
