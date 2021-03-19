@@ -88,6 +88,16 @@ func yamlExtractor(v interface{}) func([]byte) (interface{}, error) {
 	}
 }
 
+func jsonExtractor(v interface{}) func([]byte) (interface{}, error) {
+	if v == nil {
+		// json unmarshal expects a pointer
+		v = &map[string]interface{}{}
+	}
+	return func(b []byte) (interface{}, error) {
+		return v, json.Unmarshal(b, v)
+	}
+}
+
 func messageExtractor(b []byte) (interface{}, error) {
 	return map[string]string{"message": string(b)}, nil
 }
@@ -189,7 +199,7 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 		Body:          body,
 		ContentLength: ln,
 	}
-	return r.withReq(ctx, req, messageExtractor)
+	return r.withReq(ctx, req, jsonExtractor(nil))
 }
 
 func withPath(u url.URL, newPath string) *url.URL {
