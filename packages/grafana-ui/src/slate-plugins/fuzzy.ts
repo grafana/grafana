@@ -14,7 +14,15 @@ export default function fuzzySearch(items: CompletionItem[], text: string): Comp
 
 function fuzzyMatch(stack: string, needleText: string) {
   let distance = 0;
-  let index = -1;
+  let index = stack.indexOf(needleText);
+
+  if (index !== -1) {
+    return {
+      score: 0,
+      ranges: [{ start: index, end: index + needleText.length }],
+    };
+  }
+
   let needle: string[] = needleText.split('');
   const ranges: Array<{ start: number; end: number }> = [];
   while (needle.length) {

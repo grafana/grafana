@@ -1,12 +1,8 @@
 import { Value, Editor as CoreEditor } from 'slate';
 
-export enum MatchType {
-  // match for mid-word
-  Word = 'WordMatch',
-  // match only by prefix (and not mid-word)
-  Prefix = 'PrefixMatch',
-  // match with any letters in-between
-  Fuzzy = 'FuzzyMatch',
+export interface CompletionMode {
+  filterFunction: (items: CompletionItem[], prefix: string) => CompletionItem[];
+  sortFunction: (item: CompletionItem) => number | string;
 }
 
 export interface CompletionItemGroup {
@@ -20,7 +16,7 @@ export interface CompletionItemGroup {
    */
   items: CompletionItem[];
 
-  matchType?: MatchType;
+  completionMode?: CompletionMode;
 
   /**
    * If true, do not filter items in this group based on the search.

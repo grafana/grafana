@@ -3,7 +3,14 @@ import LRU from 'lru-cache';
 import { Value } from 'slate';
 
 import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
-import { CompletionItem, CompletionItemGroup, MatchType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+import {
+  CompletionItem,
+  CompletionItemGroup,
+  TypeaheadInput,
+  TypeaheadOutput,
+  FuzzyCompletionMode,
+  PrefixCompletionMode,
+} from '@grafana/ui';
 
 import {
   addLimitInfo,
@@ -214,7 +221,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         .value();
 
       suggestions.push({
-        matchType: MatchType.Prefix,
+        completionMode: PrefixCompletionMode,
         skipSort: true,
         label: 'History',
         items: historyItems,
@@ -229,7 +236,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suggestions: CompletionItemGroup[] = [];
 
     suggestions.push({
-      matchType: MatchType.Prefix,
+      completionMode: PrefixCompletionMode,
       label: 'Functions',
       items: FUNCTIONS.map(setFunctionKind),
     });
@@ -239,7 +246,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions.push({
         label: `Metrics${limitInfo}`,
         items: limitSuggestions(metrics).map((m) => addMetricsMetadata(m, metricsMetadata)),
-        matchType: MatchType.Fuzzy,
+        completionMode: FuzzyCompletionMode,
       });
     }
 

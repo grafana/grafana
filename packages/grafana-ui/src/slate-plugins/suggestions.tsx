@@ -7,9 +7,8 @@ import { Plugin as SlatePlugin } from '@grafana/slate-react';
 
 import TOKEN_MARK from './slate-prism/TOKEN_MARK';
 import { Typeahead } from '../components/Typeahead/Typeahead';
-import { CompletionItem, MatchType, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types/completion';
-import { makeFragment } from '../utils/slate';
-import fuzzySearch from './fuzzy';
+import { CompletionItem, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types';
+import { makeFragment, WordCompletionMode } from '../utils';
 
 export const TYPEAHEAD_DEBOUNCE = 250;
 
@@ -290,19 +289,13 @@ const handleTypeahead = async (
       if (!group.items) {
         return group;
       }
-
+      const completionMode = group.completionMode || WordCompletionMode;
       let newGroup = { ...group };
       if (prefix) {
         // Filter groups based on prefix
         if (!group.skipFilter) {
           newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).length >= prefix.length);
-          if (group.matchType === MatchType.Prefix) {
-            newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).startsWith(prefix));
-          } else if (group.matchType === MatchType.Fuzzy) {
-            newGroup.items = fuzzySearch(newGroup.items, prefix);
-          } else {
-            newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).includes(prefix));
-          }
+          newGroup.items = completionMode.filterFunction(newGroup.items, prefix);
         }
 
         // Filter out the already typed value (prefix) unless it inserts custom text not matching the prefix
@@ -312,11 +305,7 @@ const handleTypeahead = async (
       }
 
       if (!group.skipSort) {
-        if (newGroup.matchType === MatchType.Fuzzy) {
-          newGroup.items = sortBy(newGroup.items, (item: CompletionItem) => item.matching?.score);
-        } else {
-          newGroup.items = sortBy(newGroup.items, (item: CompletionItem) => item.sortText || item.label);
-        }
+        newGroup.items = sortBy(newGroup.items, completionMode.sortFunction);
       }
 
       return newGroup;
