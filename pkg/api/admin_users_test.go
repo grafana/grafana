@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,9 +36,15 @@ func TestAdminAPIEndpoint(t *testing.T) {
 
 		putAdminScenario(t, "When calling PUT on", "/api/admin/users/1/permissions",
 			"/api/admin/users/:id/permissions", role, updateCmd, func(sc *scenarioContext) {
-				bus.AddHandler("test", func(cmd *models.UpdateUserPermissionsCommand) error {
-					return models.ErrLastGrafanaAdmin
+				// TODO: Use a fake SQLStore when it's represented by an interface
+				origUpdateUserPermissions := updateUserPermissions
+				t.Cleanup(func() {
+					updateUserPermissions = origUpdateUserPermissions
 				})
+
+				updateUserPermissions = func(sqlStore *sqlstore.SQLStore, userID int64, isAdmin bool) error {
+					return models.ErrLastGrafanaAdmin
+				}
 
 				sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
@@ -300,6 +308,10 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
+		hs := &HTTPServer{
+			Cfg: setting.NewCfg(),
+		}
+
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
@@ -307,7 +319,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return AdminUpdateUserPermissions(c, cmd)
+			return hs.AdminUpdateUserPermissions(c, cmd)
 		})
 
 		sc.m.Put(routePattern, sc.defaultHandler)
