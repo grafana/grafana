@@ -1,6 +1,6 @@
 import React from 'react';
 import { GrafanaTheme, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
-import { Badge, BadgeProps, PluginSignatureBadge, styleMixins, stylesFactory, useTheme } from '@grafana/ui';
+import { Badge, BadgeProps, PluginSignatureBadge, styleMixins, useStyles } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -12,8 +12,7 @@ interface Props {
 }
 
 const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disabled }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
   const cssClass = cx({
     [styles.item]: true,
     [styles.disabled]: disabled || plugin.state === PluginState.deprecated,
@@ -21,17 +20,17 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
   });
 
   return (
-    <div className={styles.wrapper} aria-label={selectors.components.PluginVisualization.item(plugin.name)}>
-      <div
-        className={cssClass}
-        onClick={disabled ? () => {} : onClick}
-        title={isCurrent ? 'Click again to close this section' : plugin.name}
-      >
-        <div className={styles.itemContent}>
-          <div className={styles.name} title={plugin.name}>
-            {plugin.name}
-          </div>
-          <img className={styles.img} src={plugin.info.logos.small} />
+    <div
+      className={cssClass}
+      aria-label={selectors.components.PluginVisualization.item(plugin.name)}
+      onClick={disabled ? undefined : onClick}
+      title={isCurrent ? 'Click again to close this section' : plugin.name}
+    >
+      <img className={styles.img} src={plugin.info.logos.small} />
+
+      <div className={styles.itemContent}>
+        <div className={styles.name} title={plugin.name}>
+          {plugin.name}
         </div>
       </div>
       <div className={cx(styles.badge, disabled && styles.disabled)}>
@@ -43,27 +42,21 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
 
 VizTypePickerPlugin.displayName = 'VizTypePickerPlugin';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
-    wrapper: css`
-      position: relative;
-    `,
     item: css`
+      position: relative;
       display: flex;
       flex-shrink: 0;
-      flex-direction: column;
-      text-align: center;
       cursor: pointer;
       background: ${theme.colors.bg2};
-      border: 1px solid ${theme.colors.border1};
+      border: 1px solid ${theme.colors.border2};
       border-radius: ${theme.border.radius.sm};
-      margin-right: 10px;
       align-items: center;
-      justify-content: center;
-      padding-bottom: 6px;
-      height: 100px;
+      padding: 8px;
       width: 100%;
       position: relative;
+      overflow: hidden;
 
       &:hover {
         background: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
@@ -92,24 +85,21 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       overflow: hidden;
       white-space: nowrap;
       font-size: ${theme.typography.size.sm};
-      text-align: center;
-      height: 23px;
       font-weight: ${theme.typography.weight.semibold};
       padding: 0 10px;
       width: 100%;
     `,
     img: css`
-      height: 55px;
+      max-height: 38px;
+      width: 38px;
+      display: flex;
+      align-items: center;
     `,
     badge: css`
-      position: absolute;
       background: ${theme.colors.bg1};
-      bottom: ${theme.spacing.xs};
-      right: ${theme.spacing.xs};
-      z-index: 1;
     `,
   };
-});
+};
 
 export default VizTypePickerPlugin;
 
