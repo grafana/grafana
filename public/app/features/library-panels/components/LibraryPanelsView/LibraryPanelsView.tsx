@@ -1,7 +1,7 @@
 import React, { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 import { css, cx } from 'emotion';
-import { Button, Pagination, stylesFactory, useStyles } from '@grafana/ui';
+import { Pagination, stylesFactory, useStyles } from '@grafana/ui';
 import { DateTimeInput, GrafanaTheme, LoadingState } from '@grafana/data';
 
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
@@ -11,9 +11,7 @@ import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './a
 
 interface LibraryPanelViewProps {
   className?: string;
-  onCreateNewPanel?: () => void;
-  children?: (panel: LibraryPanelDTO, i: number) => JSX.Element | JSX.Element[];
-  onClickCard?: (panel: LibraryPanelDTO) => void;
+  onClickCard: (panel: LibraryPanelDTO) => void;
   formatDate?: (dateString: DateTimeInput, format?: string) => string;
   showSecondaryActions?: boolean;
   currentPanelId?: string;
@@ -21,9 +19,7 @@ interface LibraryPanelViewProps {
 }
 
 export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
-  children,
   className,
-  onCreateNewPanel,
   onClickCard,
   formatDate,
   searchString,
@@ -64,9 +60,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
               onClick={onClickCard}
               formatDate={formatDate}
               showSecondaryActions={showSecondaryActions}
-            >
-              {children?.(item, i)}
-            </LibraryPanelCard>
+            />
           ))
         )}
       </div>
@@ -80,12 +74,6 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
           />
         </div>
       ) : null}
-
-      {onCreateNewPanel && (
-        <Button icon="plus" className={styles.newPanelButton} onClick={onCreateNewPanel}>
-          Create a new reusable panel
-        </Button>
-      )}
     </div>
   );
 };

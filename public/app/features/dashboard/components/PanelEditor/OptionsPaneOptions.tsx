@@ -72,24 +72,25 @@ export const OptionsPaneOptions: React.FC<Props> = ({
           <RadioButtonGroup options={radioOptions} value={listMode} fullWidth onChange={setListMode} />
         </Field>
       </div>
-      <CustomScrollbar autoHeightMin="100%">
-        <div className={styles.mainBox}>
-          {showAllDefaults && allDefaults}
-          {showOnlyOverrides && justOverrides}
-          {showPopular && (
-            <OptionsPaneCategory id="Popular options" title="Popular options">
-              No poular options, try again later
-            </OptionsPaneCategory>
-          )}
-          {isSearching && (
-            <OptionsPaneCategory id="Found options" title="Found options">
-              {getSearchHits(allOptions, searchRegex)}
-            </OptionsPaneCategory>
-          )}
-        </div>
-
-        {showOverridesInSeparateBox && <div className={styles.overridesBox}>{justOverrides}</div>}
-      </CustomScrollbar>
+      <div className={styles.scrollWrapper}>
+        <CustomScrollbar autoHeightMin="100%">
+          <div className={styles.mainBox}>
+            {showAllDefaults && allDefaults}
+            {showOnlyOverrides && justOverrides}
+            {showPopular && (
+              <OptionsPaneCategory id="Popular options" title="Popular options">
+                No poular options, try again later
+              </OptionsPaneCategory>
+            )}
+            {isSearching && (
+              <OptionsPaneCategory id="Found options" title="Found options">
+                {getSearchHits(allOptions, searchRegex)}
+              </OptionsPaneCategory>
+            )}
+          </div>
+          {showOverridesInSeparateBox && <div className={styles.overridesBox}>{justOverrides}</div>}
+        </CustomScrollbar>
+      </div>
     </div>
   );
 };
@@ -119,6 +120,12 @@ function getSearchHits(items: Array<ReactElement<OptionsPaneCategoryProps>>, sea
 }
 
 const getStyles = (theme: GrafanaTheme) => ({
+  wrapper: css`
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+  `,
   searchBox: css`
     display: flex;
     flex-direction: column;
@@ -139,7 +146,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   searchHits: css`
     padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
   `,
-  wrapper: css`
+  scrollWrapper: css`
     flex-grow: 1;
     min-height: 0;
   `,

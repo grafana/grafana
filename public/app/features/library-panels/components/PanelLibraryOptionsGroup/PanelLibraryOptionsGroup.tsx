@@ -64,14 +64,9 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, searchQuery }
         formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}
         currentPanelId={panel.libraryPanel?.uid}
         searchString={searchQuery}
+        onClickCard={useLibraryPanel}
         showSecondaryActions
-      >
-        {(panel) => (
-          <Button variant="secondary" onClick={() => useLibraryPanel(panel)}>
-            Use instead of current panel
-          </Button>
-        )}
-      </LibraryPanelsView>
+      />
 
       {showingAddPanelModal && (
         <AddLibraryPanelModal

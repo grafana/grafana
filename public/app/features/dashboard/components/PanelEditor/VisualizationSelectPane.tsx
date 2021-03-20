@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { Icon, Input, RadioButtonGroup, CustomScrollbar, useStyles } from '@grafana/ui';
+import { Icon, Input, RadioButtonGroup, CustomScrollbar, useStyles, Button } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
@@ -47,10 +47,9 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
   const suffix =
     searchQuery !== '' ? (
-      <span className={styles.searchClear} onClick={() => setSearchQuery('')}>
-        <Icon name="times" />
-        Clear filter
-      </span>
+      <Button icon="times" variant="link" size="sm" onClick={() => setSearchQuery('')}>
+        Clear
+      </Button>
     ) : null;
 
   if (!plugin) {
@@ -110,15 +109,21 @@ const getStyles = (theme: GrafanaTheme) => {
     wrapper: css`
       display: flex;
       flex-direction: column;
+      flex: 1 1 0;
+      height: 100%;
     `,
     vizButton: css`
       text-align: left;
     `,
     scrollWrapper: css`
       flex-grow: 1;
+      min-height: 0;
     `,
     openWrapper: css`
-      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 0;
+      height: 100%;
       background: ${theme.colors.bg1};
       border: 1px solid ${theme.colors.border1};
       padding: ${theme.spacing.sm};
@@ -128,10 +133,6 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     formBox: css`
       margin-bottom: ${theme.spacing.md};
-    `,
-    searchClear: css`
-      color: ${theme.palette.gray60};
-      cursor: pointer;
     `,
   };
 };

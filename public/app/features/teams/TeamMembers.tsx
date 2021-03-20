@@ -75,13 +75,7 @@ export class TeamMembers extends PureComponent<Props, State> {
       <div>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <FilterInput
-              labelClassName="gf-form--has-input-icon gf-form--grow"
-              inputClassName="gf-form-input"
-              placeholder="Search members"
-              value={searchMemberQuery}
-              onChange={this.onSearchQueryChange}
-            />
+            <FilterInput placeholder="Search members" value={searchMemberQuery} onChange={this.onSearchQueryChange} />
           </div>
 
           <div className="page-action-bar__spacer" />

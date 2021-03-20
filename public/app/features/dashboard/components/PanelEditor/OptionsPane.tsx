@@ -34,12 +34,12 @@ export const OptionsPane: React.FC<Props> = ({
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
-      <div className={styles.panelOptionsPane}>
-        {!isVizPickerOpen && (
-          <>
-            <div className={styles.vizButtonWrapper}>
-              <VisualizationButton panel={panel} />
-            </div>
+      {!isVizPickerOpen && (
+        <>
+          <div className={styles.vizButtonWrapper}>
+            <VisualizationButton panel={panel} />
+          </div>
+          <div className={styles.optionsWrapper}>
             <OptionsPaneOptions
               panel={panel}
               dashboard={dashboard}
@@ -48,10 +48,10 @@ export const OptionsPane: React.FC<Props> = ({
               onPanelOptionsChanged={onPanelOptionsChanged}
               onPanelConfigChange={onPanelConfigChange}
             />
-          </>
-        )}
-        {isVizPickerOpen && <VisualizationSelectPane panel={panel} />}
-      </div>
+          </div>
+        </>
+      )}
+      {isVizPickerOpen && <VisualizationSelectPane panel={panel} />}
     </div>
   );
 };
@@ -62,12 +62,13 @@ const getStyles = (theme: GrafanaTheme) => {
       height: 100%;
       width: 100%;
       display: flex;
-    `,
-    panelOptionsPane: css`
-      display: flex;
+      flex: 1 1 0;
       flex-direction: column;
       padding: ${theme.spacing.md} ${theme.spacing.sm} 0 0;
+    `,
+    optionsWrapper: css`
       flex-grow: 1;
+      min-height: 0;
     `,
     paneBg: css`
       background: ${theme.colors.bg1};

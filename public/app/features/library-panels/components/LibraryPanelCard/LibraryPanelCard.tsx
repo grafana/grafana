@@ -6,7 +6,7 @@ import { LibraryPanelDTO } from '../../types';
 
 export interface LibraryPanelCardProps {
   libraryPanel: LibraryPanelDTO;
-  onClick?: (panel: LibraryPanelDTO) => void;
+  onClick: (panel: LibraryPanelDTO) => void;
   onDelete?: (panel: LibraryPanelDTO) => void;
   showSecondaryActions?: boolean;
   formatDate?: (dateString: string) => string;
@@ -30,7 +30,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
 
   return (
     <>
-      <Card heading={libraryPanel.name} onClick={onClick ? () => onClick(libraryPanel) : undefined}>
+      <Card heading={libraryPanel.name} onClick={() => onClick(libraryPanel)}>
         <Card.Figure>
           <Icon className={styles.panelIcon} name="book-open" size="xl" />
         </Card.Figure>
@@ -46,11 +46,6 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
             {libraryPanel.meta.updatedBy.name}
           </span>
         </Card.Meta>
-        {/*
-        Commenting this out as tagging isn't implemented yet.
-        <Card.Tags>
-          <TagList className={styles.tagList} tags={['associated panel tag']} />
-        </Card.Tags> */}
         {children && <Card.Actions>{children}</Card.Actions>}
         {showSecondaryActions && (
           <Card.SecondaryActions>
@@ -60,10 +55,6 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
               tooltipPlacement="bottom"
               onClick={() => setShowDeletionModal(true)}
             />
-            {/*
-          Commenting this out as panel favoriting hasn't been implemented yet.
-          <IconButton name="star" tooltip="Favorite panel" tooltipPlacement="bottom" />
-          */}
           </Card.SecondaryActions>
         )}
       </Card>
