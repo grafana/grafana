@@ -8,6 +8,7 @@ import { VisualizationButton } from './VisualizationButton';
 import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
+import { VisualizationSelectPane } from './VisualizationSelectPane';
 
 interface Props {
   plugin: PanelPlugin;
@@ -34,20 +35,22 @@ export const OptionsPane: React.FC<Props> = ({
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
       <div className={styles.panelOptionsPane}>
-        <div className={styles.vizButtonWrapper}>
-          <VisualizationButton panel={panel} />
-        </div>
-
         {!isVizPickerOpen && (
-          <OptionsPaneOptions
-            panel={panel}
-            dashboard={dashboard}
-            plugin={plugin}
-            onFieldConfigsChange={onFieldConfigsChange}
-            onPanelOptionsChanged={onPanelOptionsChanged}
-            onPanelConfigChange={onPanelConfigChange}
-          />
+          <>
+            <div className={styles.vizButtonWrapper}>
+              <VisualizationButton panel={panel} />
+            </div>
+            <OptionsPaneOptions
+              panel={panel}
+              dashboard={dashboard}
+              plugin={plugin}
+              onFieldConfigsChange={onFieldConfigsChange}
+              onPanelOptionsChanged={onPanelOptionsChanged}
+              onPanelConfigChange={onPanelConfigChange}
+            />
+          </>
         )}
+        {isVizPickerOpen && <VisualizationSelectPane panel={panel} />}
       </div>
     </div>
   );
