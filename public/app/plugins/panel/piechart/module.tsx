@@ -20,7 +20,7 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
     },
   })
   .setPanelOptions((builder) => {
-    addStandardDataReduceOptions(builder, false);
+    addStandardDataReduceOptions(builder);
 
     builder
       .addRadio({

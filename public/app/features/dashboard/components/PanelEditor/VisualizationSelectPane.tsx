@@ -27,7 +27,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
     if (meta.id === plugin.meta.id) {
       dispatch(toggleVizPicker(false));
     } else {
-      changePanelPlugin(panel, meta.id);
+      dispatch(changePanelPlugin(panel, meta.id));
     }
   };
 

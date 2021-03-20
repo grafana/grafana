@@ -39,7 +39,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): Array<Rea
   };
 
   const getOptionsPaneCategory = (categoryNames?: string[]): ReactElement[] => {
-    const categoryName = (categoryNames && categoryNames[0]) ?? `${plugin.meta.name} options`;
+    const categoryName = (categoryNames && categoryNames[0]) ?? `${plugin.meta.name}`;
     const categoryItems = categoryIndex[categoryName];
 
     if (categoryItems) {
