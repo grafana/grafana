@@ -96,15 +96,6 @@ func (dto *DashboardAclInfoDTO) IsDuplicateOf(other *DashboardAclInfoDTO) bool {
 }
 
 //
-// COMMANDS
-//
-
-type UpdateDashboardAclCommand struct {
-	DashboardID int64
-	Items       []*DashboardAcl
-}
-
-//
 // QUERIES
 //
 type GetDashboardAclInfoListQuery struct {

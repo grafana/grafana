@@ -61,7 +61,7 @@ func findPanelQueryByRefID(panel *simplejson.Json, refID string) *simplejson.Jso
 func copyJSON(in json.Marshaler) (*simplejson.Json, error) {
 	rawJSON, err := in.MarshalJSON()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("JSON marshaling failed: %w", err)
 	}
 
 	return simplejson.NewJson(rawJSON)
@@ -242,6 +242,8 @@ func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert
 // ValidateAlerts validates alerts in the dashboard json but does not require a valid dashboard id
 // in the first validation pass.
 func (e *DashAlertExtractor) ValidateAlerts() error {
-	_, err := e.extractAlerts(func(alert *models.Alert) bool { return alert.OrgId != 0 && alert.PanelId != 0 }, false)
+	_, err := e.extractAlerts(func(alert *models.Alert) bool {
+		return alert.OrgId != 0 && alert.PanelId != 0
+	}, false)
 	return err
 }

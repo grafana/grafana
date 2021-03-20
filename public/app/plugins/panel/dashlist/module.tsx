@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { PanelModel, PanelPlugin } from '@grafana/data';
 import { DashList } from './DashList';
 import { DashListOptions } from './types';

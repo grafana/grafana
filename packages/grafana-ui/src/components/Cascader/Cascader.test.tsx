@@ -88,6 +88,17 @@ describe('Cascader', () => {
     expect(screen.getByText('First / Third')).toBeInTheDocument();
   });
 
+  it('displays selected value with all levels when displayAllSelectedLevels is true and selecting a value from the search', () => {
+    render(
+      <Cascader displayAllSelectedLevels={true} placeholder={placeholder} options={options} onSelect={jest.fn()} />
+    );
+
+    userEvent.type(screen.getByPlaceholderText(placeholder), 'Third');
+    userEvent.click(screen.getByText('First / Third'));
+
+    expect(screen.getByDisplayValue('First / Third')).toBeInTheDocument();
+  });
+
   it('displays all levels selected with default separator when displayAllSelectedLevels is true', () => {
     render(
       <Cascader displayAllSelectedLevels={true} placeholder={placeholder} options={options} onSelect={() => {}} />
