@@ -1,5 +1,5 @@
 // Libraries
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, MouseEvent } from 'react';
 import { css } from 'emotion';
 // Components
 import { IconName, IconType, IconSize, IconButton, useTheme, stylesFactory } from '@grafana/ui';
@@ -8,7 +8,7 @@ import { GrafanaTheme } from '@grafana/data';
 interface Props {
   icon?: IconName;
   tooltip: string;
-  onClick?: () => void;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   href?: string;
   children?: React.ReactNode;
   iconType?: IconType;

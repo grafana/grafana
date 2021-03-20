@@ -11,7 +11,7 @@ export default {
   decorators: [withCenteredStory],
   parameters: {
     knobs: {
-      disabled: true,
+      disable: true,
     },
   },
   args: {

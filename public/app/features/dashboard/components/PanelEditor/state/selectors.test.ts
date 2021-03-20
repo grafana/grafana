@@ -1,16 +1,34 @@
 import { getPanelEditorTabs } from './selectors';
-import { LocationState } from 'app/types';
 import { PanelPlugin } from '@grafana/data';
 import { PanelEditorTabId } from '../types';
 import { updateConfig } from '../../../../../core/config';
 
 describe('getPanelEditorTabs selector', () => {
   it('return no tabs when no plugin provided', () => {
-    expect(getPanelEditorTabs({} as LocationState)).toEqual([]);
+    expect(getPanelEditorTabs()).toEqual([]);
   });
 
   it('return no tabs when plugin do not support queries', () => {
-    expect(getPanelEditorTabs({} as LocationState, { meta: { skipDataQuery: true } } as PanelPlugin)).toEqual([]);
+    expect(getPanelEditorTabs(undefined, { meta: { skipDataQuery: true } } as PanelPlugin)).toEqual([]);
+  });
+
+  it('marks tab as active when tab param provided', () => {
+    expect(getPanelEditorTabs('transform', { meta: { skipDataQuery: false } } as PanelPlugin)).toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "active": false,
+          "icon": "database",
+          "id": "query",
+          "text": "Query",
+        },
+        Object {
+          "active": true,
+          "icon": "process",
+          "id": "transform",
+          "text": "Transform",
+        },
+      ]
+    `);
   });
 
   describe('alerts tab', () => {
@@ -22,28 +40,22 @@ describe('getPanelEditorTabs selector', () => {
       });
 
       it('returns Alerts tab for graph panel', () => {
-        const tabs = getPanelEditorTabs(
-          { query: {} } as LocationState,
-          {
-            meta: {
-              id: 'graph',
-            },
-          } as PanelPlugin
-        );
+        const tabs = getPanelEditorTabs(undefined, {
+          meta: {
+            id: 'graph',
+          },
+        } as PanelPlugin);
 
         expect(tabs.length).toEqual(3);
         expect(tabs[2].id).toEqual(PanelEditorTabId.Alert);
       });
 
       it('does not returns tab for panel other than graph', () => {
-        const tabs = getPanelEditorTabs(
-          { query: {} } as LocationState,
-          {
-            meta: {
-              id: 'table',
-            },
-          } as PanelPlugin
-        );
+        const tabs = getPanelEditorTabs(undefined, {
+          meta: {
+            id: 'table',
+          },
+        } as PanelPlugin);
         expect(tabs.length).toEqual(2);
         expect(tabs[1].id).toEqual(PanelEditorTabId.Transform);
       });
@@ -57,14 +69,11 @@ describe('getPanelEditorTabs selector', () => {
       });
 
       it('does not return Alerts tab', () => {
-        const tabs = getPanelEditorTabs(
-          { query: {} } as LocationState,
-          {
-            meta: {
-              id: 'graph',
-            },
-          } as PanelPlugin
-        );
+        const tabs = getPanelEditorTabs(undefined, {
+          meta: {
+            id: 'graph',
+          },
+        } as PanelPlugin);
 
         expect(tabs.length).toEqual(2);
         expect(tabs[1].id).toEqual(PanelEditorTabId.Transform);

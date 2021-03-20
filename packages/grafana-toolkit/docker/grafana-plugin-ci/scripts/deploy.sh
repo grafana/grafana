@@ -2,8 +2,8 @@
 source "./deploy-common.sh"
 
 # Install Go
-filename="go1.15.7.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "0d142143794721bb63ce6c8a6180c4062bcf8ef4715e7d6d6609f3a8282629b3"
+filename="go1.16.1.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "3edc22f8332231c3ba8be246f184b736b8d28f06ce24f08168d8ecf052549769"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
