@@ -68,7 +68,7 @@ Sensu | `sensu` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
-VictorOps | `victorops` | yes, external only | no
+VictorOps | `victorops` | yes, external only | yes
 [Webhook](#webhook) | `webhook` | yes, external only | yes
 [Zenduty](#zenduty) | `webhook` | yes, external only | yes
 
@@ -129,8 +129,15 @@ This might break custom event rules in your PagerDuty rules if you rely on the f
 Move any existing rules using `custom_details.myMetric` to `custom_details.queries.myMetric`.
 This behavior will become the default in a future version of Grafana.
 
-> Using `dedup_key` tag will override Grafana generated `dedup_key` with a custom key.
+> **Note:** The `dedup_key` tag overrides the Grafana-generated `dedup_key` with a custom key.
 
+> **Note:** The `state` tag overrides the current alert state inside the `custom_details` payload.
+
+### VictorOps
+
+To configure VictorOps, provide the URL from the Grafana Integration and substitute `$routing_key` with a valid key.
+
+> **Note:** The tag `Severity` has special meaning in the [VictorOps Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this key, then it replaces the `message_type` in the root of the event sent to VictorOps.
 ### Pushover
 
 To set up Pushover, you must provide a user key and an API token. Refer to [What is Pushover and how do I use it](https://support.pushover.net/i7-what-is-pushover-and-how-do-i-use-it) for instructions on how to generate them.

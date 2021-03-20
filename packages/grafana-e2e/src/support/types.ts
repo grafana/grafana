@@ -5,10 +5,12 @@ import { fromBaseUrl } from './url';
 
 export type VisitFunction = (args?: string) => Cypress.Chainable<Window>;
 export type E2EVisit = { visit: VisitFunction };
-export type E2EFunction = (text?: string) => Cypress.Chainable<JQuery<HTMLElement>>;
+export type E2EFunction = ((text?: string, options?: CypressOptions) => Cypress.Chainable<JQuery<HTMLElement>>) &
+  E2EFunctionWithOnlyOptions;
+export type E2EFunctionWithOnlyOptions = (options?: CypressOptions) => Cypress.Chainable<JQuery<HTMLElement>>;
 
 export type TypeSelectors<S> = S extends StringSelector
-  ? E2EFunction
+  ? E2EFunctionWithOnlyOptions
   : S extends FunctionSelector
   ? E2EFunction
   : S extends CssSelector
@@ -26,6 +28,8 @@ export type E2EFunctions<S extends Selectors> = {
 export type E2EObjects<S extends Selectors> = E2EFunctions<S>;
 
 export type E2EFactoryArgs<S extends Selectors> = { selectors: S };
+
+export type CypressOptions = Partial<Cypress.Loggable & Cypress.Timeoutable & Cypress.Withinable & Cypress.Shadow>;
 
 const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, selectors: S): E2EFunctions<S> => {
   const logOutput = (data: any) => e2e().logToConsole('Retrieving Selector:', data);
@@ -55,9 +59,9 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
 
     if (typeof value === 'string') {
       // @ts-ignore
-      e2eObjects[key] = () => {
+      e2eObjects[key] = (options?: CypressOptions) => {
         logOutput(value);
-        return e2e().get(Selector.fromAriaLabel(value));
+        return e2e().get(Selector.fromAriaLabel(value), options);
       };
 
       continue;
@@ -65,18 +69,38 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
 
     if (typeof value === 'function') {
       // @ts-ignore
-      e2eObjects[key] = (text?: string) => {
-        if (!text) {
+      e2eObjects[key] = function (textOrOptions?: string | CypressOptions, options?: CypressOptions) {
+        // the input can only be ()
+        if (arguments.length === 0) {
           const selector = value((undefined as unknown) as string);
 
           logOutput(selector);
           return e2e().get(selector);
         }
 
-        const selector = value(text);
+        // the input can be (text) or (options)
+        if (arguments.length === 1) {
+          if (typeof textOrOptions === 'string') {
+            const ariaText = value(textOrOptions);
+            const selector = Selector.fromAriaLabel(ariaText);
 
-        logOutput(selector);
-        return e2e().get(Selector.fromAriaLabel(selector));
+            logOutput(selector);
+            return e2e().get(selector);
+          }
+          const selector = value((undefined as unknown) as string);
+
+          logOutput(selector);
+          return e2e().get(selector, textOrOptions);
+        }
+
+        // the input can only be (text, options)
+        if (arguments.length === 2) {
+          const ariaText = value(textOrOptions as string);
+          const selector = Selector.fromAriaLabel(ariaText);
+
+          logOutput(selector);
+          return e2e().get(selector, options);
+        }
       };
 
       continue;

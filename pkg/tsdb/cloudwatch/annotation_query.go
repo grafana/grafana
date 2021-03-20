@@ -8,16 +8,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryContext plugins.DataQuery) (
+	plugins.DataResponse, error) {
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
 	firstQuery := queryContext.Queries[0]
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: firstQuery.RefId}
+	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: firstQuery.RefID}
 
 	parameters := firstQuery.Model
 	usePrefixMatch := parameters.Get("prefixMatching").MustBool(false)
@@ -27,7 +28,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	dimensions := parameters.Get("dimensions").MustMap()
 	statistics, err := parseStatistics(parameters)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 	period := int64(parameters.Get("period").MustInt(0))
 	if period == 0 && !usePrefixMatch {
@@ -38,7 +39,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 
 	cli, err := e.getCWClient(region)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	var alarmNames []*string
@@ -50,7 +51,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 		}
 		resp, err := cli.DescribeAlarms(params)
 		if err != nil {
-			return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarms", err)
+			return plugins.DataResponse{}, errutil.Wrap("failed to call cloudwatch:DescribeAlarms", err)
 		}
 		alarmNames = filterAlarms(resp, namespace, metricName, dimensions, statistics, period)
 	} else {
@@ -81,7 +82,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 			}
 			resp, err := cli.DescribeAlarmsForMetric(params)
 			if err != nil {
-				return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarmsForMetric", err)
+				return plugins.DataResponse{}, errutil.Wrap("failed to call cloudwatch:DescribeAlarmsForMetric", err)
 			}
 			for _, alarm := range resp.MetricAlarms {
 				alarmNames = append(alarmNames, alarm.AlarmName)
@@ -91,11 +92,11 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 
 	startTime, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 	endTime, err := queryContext.TimeRange.ParseTo()
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	annotations := make([]map[string]string, 0)
@@ -108,7 +109,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 		}
 		resp, err := cli.DescribeAlarmHistory(params)
 		if err != nil {
-			return nil, errutil.Wrap("failed to call cloudwatch:DescribeAlarmHistory", err)
+			return plugins.DataResponse{}, errutil.Wrap("failed to call cloudwatch:DescribeAlarmHistory", err)
 		}
 		for _, history := range resp.AlarmHistoryItems {
 			annotation := make(map[string]string)
@@ -120,15 +121,15 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 		}
 	}
 
-	transformAnnotationToTable(annotations, queryResult)
-	result.Results[firstQuery.RefId] = queryResult
-	return result, err
+	transformAnnotationToTable(annotations, &queryResult)
+	result.Results[firstQuery.RefID] = queryResult
+	return result, nil
 }
 
-func transformAnnotationToTable(data []map[string]string, result *tsdb.QueryResult) {
-	table := &tsdb.Table{
-		Columns: make([]tsdb.TableColumn, 4),
-		Rows:    make([]tsdb.RowValues, 0),
+func transformAnnotationToTable(data []map[string]string, result *plugins.DataQueryResult) {
+	table := plugins.DataTable{
+		Columns: make([]plugins.DataTableColumn, 4),
+		Rows:    make([]plugins.DataRowValues, 0),
 	}
 	table.Columns[0].Text = "time"
 	table.Columns[1].Text = "title"
@@ -147,7 +148,8 @@ func transformAnnotationToTable(data []map[string]string, result *tsdb.QueryResu
 	result.Meta.Set("rowCount", len(data))
 }
 
-func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, metricName string, dimensions map[string]interface{}, statistics []string, period int64) []*string {
+func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, metricName string,
+	dimensions map[string]interface{}, statistics []string, period int64) []*string {
 	alarmNames := make([]*string, 0)
 
 	for _, alarm := range alarms.MetricAlarms {

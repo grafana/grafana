@@ -79,6 +79,11 @@ function mockDataFrame() {
   });
 }
 
+jest.mock('@grafana/data', () => ({
+  ...(jest.requireActual('@grafana/data') as any),
+  DefaultTimeZone: 'utc',
+}));
+
 describe('GraphNG utils', () => {
   test('preparePlotConfigBuilder', () => {
     const frame = mockDataFrame();

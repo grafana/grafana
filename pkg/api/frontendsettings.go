@@ -109,12 +109,12 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
 	// the datasource table)
-	for _, ds := range plugins.DataSources {
+	for _, ds := range hs.PluginManager.DataSources() {
 		if ds.BuiltIn {
 			dataSources[ds.Name] = map[string]interface{}{
 				"type": ds.Type,
 				"name": ds.Name,
-				"meta": plugins.DataSources[ds.Id],
+				"meta": hs.PluginManager.GetDataSource(ds.Id),
 			}
 		}
 	}
@@ -124,10 +124,11 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
-	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+	enabledPlugins, err := hs.PluginManager.GetEnabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
 	}
+
 	pluginsToPreload := []string{}
 	for _, app := range enabledPlugins.Apps {
 		if app.Preload {
@@ -224,8 +225,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"commit":        commit,
 			"buildstamp":    buildstamp,
 			"edition":       hs.License.Edition(),
-			"latestVersion": hs.PluginManager.GrafanaLatestVersion,
-			"hasUpdate":     hs.PluginManager.GrafanaHasUpdate,
+			"latestVersion": hs.PluginManager.GrafanaLatestVersion(),
+			"hasUpdate":     hs.PluginManager.GrafanaHasUpdate(),
 			"env":           setting.Env,
 			"isEnterprise":  hs.License.HasValidLicense(),
 		},

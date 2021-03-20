@@ -87,11 +87,6 @@ type ChangeUserPasswordCommand struct {
 	UserId int64 `json:"-"`
 }
 
-type UpdateUserPermissionsCommand struct {
-	IsGrafanaAdmin bool
-	UserId         int64 `json:"-"`
-}
-
 type DisableUserCommand struct {
 	UserId     int64
 	IsDisabled bool

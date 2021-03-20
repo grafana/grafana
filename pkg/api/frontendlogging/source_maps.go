@@ -43,16 +43,18 @@ func ReadSourceMapFromFS(dir string, path string) ([]byte, error) {
 }
 
 type SourceMapStore struct {
+	sync.Mutex
 	cache         map[string]*sourceMap
 	cfg           *setting.Cfg
 	readSourceMap ReadSourceMapFn
-	sync.Mutex
+	pluginManager plugins.Manager
 }
 
-func NewSourceMapStore(cfg *setting.Cfg, readSourceMap ReadSourceMapFn) *SourceMapStore {
+func NewSourceMapStore(cfg *setting.Cfg, pluginManager plugins.Manager, readSourceMap ReadSourceMapFn) *SourceMapStore {
 	return &SourceMapStore{
 		cache:         make(map[string]*sourceMap),
 		cfg:           cfg,
+		pluginManager: pluginManager,
 		readSourceMap: readSourceMap,
 	}
 }
@@ -69,7 +71,8 @@ func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMa
 	}
 
 	// determine if source comes from grafana core, locally or CDN, look in public build dir on fs
-	if strings.HasPrefix(u.Path, "/public/build/") || (store.cfg.CDNRootURL != nil && strings.HasPrefix(sourceURL, store.cfg.CDNRootURL.String()) && strings.Contains(u.Path, "/public/build/")) {
+	if strings.HasPrefix(u.Path, "/public/build/") || (store.cfg.CDNRootURL != nil &&
+		strings.HasPrefix(sourceURL, store.cfg.CDNRootURL.String()) && strings.Contains(u.Path, "/public/build/")) {
 		pathParts := strings.SplitN(u.Path, "/public/build/", 2)
 		if len(pathParts) == 2 {
 			return &sourceMapLocation{
@@ -80,7 +83,7 @@ func (store *SourceMapStore) guessSourceMapLocation(sourceURL string) (*sourceMa
 		}
 		// if source comes from a plugin, look in plugin dir
 	} else if strings.HasPrefix(u.Path, "/public/plugins/") {
-		for _, route := range plugins.StaticRoutes {
+		for _, route := range store.pluginManager.StaticRoutes() {
 			pluginPrefix := filepath.Join("/public/plugins/", route.PluginId)
 			if strings.HasPrefix(u.Path, pluginPrefix) {
 				return &sourceMapLocation{

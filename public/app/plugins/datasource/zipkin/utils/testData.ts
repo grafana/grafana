@@ -1,4 +1,4 @@
-import { TraceSpanData, TraceData } from '@grafana/data';
+import { ArrayVector } from '@grafana/data';
 import { ZipkinSpan } from '../types';
 
 export const zipkinResponse: ZipkinSpan[] = [
@@ -59,128 +59,65 @@ export const zipkinResponse: ZipkinSpan[] = [
   },
 ];
 
-export const jaegerTrace: TraceData & { spans: TraceSpanData[] } = {
-  processes: {
-    'service 1': {
-      serviceName: 'service 1',
-      tags: [
-        {
-          key: 'ipv4',
-          type: 'string',
-          value: '1.0.0.1',
-        },
-        {
-          key: 'port',
-          type: 'number',
-          value: 42,
-        },
+export const traceFrameFields = [
+  { name: 'traceID', values: ['trace_id', 'trace_id', 'trace_id'] },
+  { name: 'spanID', values: ['span 1 id', 'span 2 id', 'span 3 id'] },
+  { name: 'parentSpanID', values: [undefined, 'span 1 id', 'span 1 id'] },
+  { name: 'operationName', values: ['span 1', 'span 2', 'span 3'] },
+  { name: 'serviceName', values: ['service 1', 'service 2', 'spanstore-jdbc'] },
+  {
+    name: 'serviceTags',
+    values: [
+      [
+        { key: 'ipv4', value: '1.0.0.1' },
+        { key: 'port', value: 42 },
       ],
-    },
-    'service 2': {
-      serviceName: 'service 2',
-      tags: [
-        {
-          key: 'ipv4',
-          type: 'string',
-          value: '1.0.0.1',
-        },
-      ],
-    },
-    'spanstore-jdbc': {
-      serviceName: 'spanstore-jdbc',
-      tags: [
-        {
-          key: 'ipv6',
-          type: 'string',
-          value: '127.0.0.1',
-        },
-      ],
-    },
+      [{ key: 'ipv4', value: '1.0.0.1' }],
+      [{ key: 'ipv6', value: '127.0.0.1' }],
+    ],
   },
-  traceID: 'trace_id',
-  warnings: null,
-  spans: [
-    {
-      duration: 10,
-      flags: 1,
-      logs: [
+  { name: 'startTime', values: [0.001, 0.004, 0.006] },
+  { name: 'duration', values: [0.01, 0.005, 0.007] },
+  {
+    name: 'logs',
+    values: [
+      [
         {
           timestamp: 2,
-          fields: [{ key: 'annotation', type: 'string', value: 'annotation text' }],
+          fields: [
+            {
+              key: 'annotation',
+              value: 'annotation text',
+            },
+          ],
         },
         {
           timestamp: 6,
-          fields: [{ key: 'annotation', type: 'string', value: 'annotation text 3' }],
+          fields: [
+            {
+              key: 'annotation',
+              value: 'annotation text 3',
+            },
+          ],
         },
       ],
-      operationName: 'span 1',
-      processID: 'service 1',
-      startTime: 1,
-      spanID: 'span 1 id',
-      traceID: 'trace_id',
-      warnings: null as any,
-      tags: [
-        {
-          key: 'kind',
-          type: 'string',
-          value: 'CLIENT',
-        },
-        {
-          key: 'tag1',
-          type: 'string',
-          value: 'val1',
-        },
-        {
-          key: 'tag2',
-          type: 'string',
-          value: 'val2',
-        },
+      [],
+      [],
+    ],
+  },
+  {
+    name: 'tags',
+    values: [
+      [
+        { key: 'kind', value: 'CLIENT' },
+        { key: 'tag1', value: 'val1' },
+        { key: 'tag2', value: 'val2' },
       ],
-      references: [],
-    },
-    {
-      duration: 5,
-      flags: 1,
-      logs: [],
-      operationName: 'span 2',
-      processID: 'service 2',
-      startTime: 4,
-      spanID: 'span 2 id',
-      traceID: 'trace_id',
-      warnings: null as any,
-      tags: [
-        {
-          key: 'error',
-          type: 'bool',
-          value: true,
-        },
+      [
+        { key: 'error', value: true },
+        { key: 'errorValue', value: '404' },
       ],
-      references: [
-        {
-          refType: 'CHILD_OF',
-          spanID: 'span 1 id',
-          traceID: 'trace_id',
-        },
-      ],
-    },
-    {
-      duration: 7,
-      flags: 1,
-      logs: [],
-      operationName: 'span 3',
-      processID: 'spanstore-jdbc',
-      startTime: 6,
-      tags: [],
-      spanID: 'span 3 id',
-      traceID: 'trace_id',
-      warnings: null as any,
-      references: [
-        {
-          refType: 'CHILD_OF',
-          spanID: 'span 1 id',
-          traceID: 'trace_id',
-        },
-      ],
-    },
-  ],
-};
+      [],
+    ],
+  },
+].map((f) => ({ ...f, values: new ArrayVector<any>(f.values) }));
