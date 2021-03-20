@@ -391,7 +391,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         dashboard={dashboard}
         panel={panel}
         width={rightPaneSize}
-        onClose={this.onTogglePanelOptions}
         onFieldConfigsChange={this.onFieldConfigChange}
         onPanelOptionsChanged={this.onPanelOptionsChanged}
         onPanelConfigChange={this.onPanelConfigChanged}

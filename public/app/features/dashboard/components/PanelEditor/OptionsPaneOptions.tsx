@@ -16,7 +16,6 @@ interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
   dashboard: DashboardModel;
-  onClose: () => void;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
   onPanelConfigChange: (configKey: string, value: any) => void;
@@ -28,7 +27,6 @@ export const OptionsPaneOptions: React.FC<Props> = ({
   onFieldConfigsChange,
   onPanelOptionsChanged,
   onPanelConfigChange,
-  onClose,
   dashboard,
 }: Props) => {
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
@@ -60,7 +58,8 @@ export const OptionsPaneOptions: React.FC<Props> = ({
 
   const isSearching = searchQuery.length > 0;
   const showAllDefaults = !isSearching && listMode === 'all';
-  const showOverrides = !isSearching && (listMode === 'all' || listMode === 'overrides');
+  const showOverridesInSeparateBox = !isSearching && listMode === 'all';
+  const showOnlyOverrides = !isSearching && listMode === 'overrides';
   const showPopular = listMode === 'popular';
 
   return (
@@ -69,27 +68,27 @@ export const OptionsPaneOptions: React.FC<Props> = ({
         <Field className={styles.customFieldMargin}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </Field>
-        <Field className={styles.customFieldMargin}>
+        <Field className={styles.noFieldMargin}>
           <RadioButtonGroup options={radioOptions} value={listMode} fullWidth onChange={setListMode} />
         </Field>
       </div>
       <CustomScrollbar autoHeightMin="100%">
-        {showAllDefaults && <div className={styles.optionsBox}>{allDefaults}</div>}
-        {showPopular && (
-          <div className={styles.optionsBox}>
+        <div className={styles.mainBox}>
+          {showAllDefaults && allDefaults}
+          {showOnlyOverrides && justOverrides}
+          {showPopular && (
             <OptionsPaneCategory id="Popular options" title="Popular options">
               No poular options, try again later
             </OptionsPaneCategory>
-          </div>
-        )}
-        {isSearching && (
-          <div className={styles.optionsBox}>
+          )}
+          {isSearching && (
             <OptionsPaneCategory id="Found options" title="Found options">
               {getSearchHits(allOptions, searchRegex)}
             </OptionsPaneCategory>
-          </div>
-        )}
-        {showOverrides && <div className={styles.optionsBox}>{searchQuery.length === 0 && justOverrides}</div>}
+          )}
+        </div>
+
+        {showOverridesInSeparateBox && <div className={styles.overridesBox}>{justOverrides}</div>}
       </CustomScrollbar>
     </div>
   );
@@ -101,7 +100,6 @@ function getSearchHits(items: Array<ReactElement<OptionsPaneCategoryProps>>, sea
   React.Children.forEach(items, (topGroup) => {
     React.Children.forEach(topGroup, (item) => {
       const displayName = (item.type as any).displayName;
-      console.log('item', item);
 
       if (displayName === OptionsPaneItem.displayName) {
         const props = item.props as OptionsPaneItemProps;
@@ -129,11 +127,14 @@ const getStyles = (theme: GrafanaTheme) => ({
   customFieldMargin: css`
     margin-bottom: ${theme.spacing.sm};
   `,
+  noFieldMargin: css`
+    margin-bottom: 0;
+  `,
   formBox: css`
-    padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
+    padding: ${theme.spacing.sm};
     background: ${theme.colors.bg1};
     border: 1px solid ${theme.colors.border1};
-    margin-bottom: ${theme.spacing.md};
+    border-bottom: 0;
   `,
   searchHits: css`
     padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
@@ -142,7 +143,13 @@ const getStyles = (theme: GrafanaTheme) => ({
     flex-grow: 1;
     min-height: 0;
   `,
-  optionsBox: css`
+  mainBox: css`
+    background: ${theme.colors.bg1};
+    border: 1px solid ${theme.colors.border1};
+    border-top: none;
+    margin-bottom: ${theme.spacing.md};
+  `,
+  overridesBox: css`
     background: ${theme.colors.bg1};
     border: 1px solid ${theme.colors.border1};
     margin-bottom: ${theme.spacing.md};

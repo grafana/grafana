@@ -54,7 +54,7 @@ export function getFieldOverrideElements(props: OptionPaneRenderProps): Array<Re
   });
 
   elements.push(
-    <Container padding="md">
+    <Container padding="md" key="Add override">
       <ValuePicker
         icon="plus"
         label="Add an override"

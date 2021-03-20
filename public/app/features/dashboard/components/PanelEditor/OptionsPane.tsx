@@ -14,7 +14,6 @@ interface Props {
   panel: PanelModel;
   width: number;
   dashboard: DashboardModel;
-  onClose: () => void;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
   onPanelConfigChange: (configKey: string, value: any) => void;
@@ -27,7 +26,6 @@ export const OptionsPane: React.FC<Props> = ({
   onFieldConfigsChange,
   onPanelOptionsChanged,
   onPanelConfigChange,
-  onClose,
   dashboard,
 }: Props) => {
   const styles = useStyles(getStyles);
@@ -45,7 +43,6 @@ export const OptionsPane: React.FC<Props> = ({
             panel={panel}
             dashboard={dashboard}
             plugin={plugin}
-            onClose={onClose}
             onFieldConfigsChange={onFieldConfigsChange}
             onPanelOptionsChanged={onPanelOptionsChanged}
             onPanelConfigChange={onPanelConfigChange}
