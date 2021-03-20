@@ -82,17 +82,19 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
       </div>
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
-          {listMode === 'types' && (
-            <VizTypePicker
-              current={plugin.meta}
-              onTypeChange={onPluginTypeChange}
-              searchQuery={searchQuery}
-              onClose={() => {}}
-            />
-          )}
-          {listMode === 'library' && (
-            <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
-          )}
+          <div className={styles.scrollContent}>
+            {listMode === 'types' && (
+              <VizTypePicker
+                current={plugin.meta}
+                onTypeChange={onPluginTypeChange}
+                searchQuery={searchQuery}
+                onClose={() => {}}
+              />
+            )}
+            {listMode === 'library' && (
+              <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
+            )}
+          </div>
         </CustomScrollbar>
       </div>
     </div>
@@ -119,6 +121,9 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-grow: 1;
       min-height: 0;
     `,
+    scrollContent: css`
+      padding: ${theme.spacing.sm};
+    `,
     openWrapper: css`
       display: flex;
       flex-direction: column;
@@ -126,13 +131,13 @@ const getStyles = (theme: GrafanaTheme) => {
       height: 100%;
       background: ${theme.colors.bg1};
       border: 1px solid ${theme.colors.border1};
-      padding: ${theme.spacing.sm};
     `,
     customFieldMargin: css`
       margin-bottom: ${theme.spacing.sm};
     `,
     formBox: css`
-      margin-bottom: ${theme.spacing.md};
+      padding: ${theme.spacing.sm};
+      padding-bottom: 0;
     `,
   };
 };

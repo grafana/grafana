@@ -107,7 +107,7 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
   builder.addRadio({
     path: 'orientation',
     name: 'Orientation',
-    description: 'Stacking direction in case of multiple series or fields',
+    description: 'Layout orientation',
     category,
     settings: {
       options: [
