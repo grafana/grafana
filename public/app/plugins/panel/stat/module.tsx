@@ -29,7 +29,6 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
       .addRadio({
         path: 'colorMode',
         name: 'Color mode',
-        description: 'Color either the value or the background',
         defaultValue: 'value',
         settings: {
           options: [
@@ -52,8 +51,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
       })
       .addRadio({
         path: 'justifyMode',
-        name: 'Alignment mode',
-        description: 'Value & title posititioning',
+        name: 'Text alignment',
         defaultValue: 'auto',
         settings: {
           options: [

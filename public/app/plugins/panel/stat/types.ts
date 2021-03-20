@@ -29,6 +29,8 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   includeFieldMatcher = true,
   includeTextSizes = true
 ) {
+  const valueOptionsCategory = ['Value options'];
+
   builder.addRadio({
     path: 'reduceOptions.values',
     name: 'Show',
@@ -39,6 +41,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
         { value: true, label: 'All values' },
       ],
     },
+    category: valueOptionsCategory,
     defaultValue: false,
   });
 
@@ -46,6 +49,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
     path: 'reduceOptions.limit',
     name: 'Limit',
     description: 'Max number of rows to display',
+    category: valueOptionsCategory,
     settings: {
       placeholder: '5000',
       integer: true,
@@ -60,6 +64,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
     path: 'reduceOptions.calcs',
     name: 'Calculation',
     description: 'Choose a reducer function / calculation',
+    category: valueOptionsCategory,
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
     defaultValue: [ReducerID.lastNotNull],
     // Hides it when all values mode is on
@@ -71,6 +76,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
       path: 'reduceOptions.fields',
       name: 'Fields',
       description: 'Select the fields that should be included in the panel',
+      category: valueOptionsCategory,
       settings: {
         allowCustomValue: true,
         options: [],
