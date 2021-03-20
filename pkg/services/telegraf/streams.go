@@ -74,9 +74,9 @@ func NewMetricFrameStream(m telegraf.Metric) (MetricFrameStream, error) {
 	}
 
 	key := m.Name()
-	if len(fields[1].Labels) > 0 {
-		key += "{" + fields[1].Labels.String() + "}"
-	}
+	//if len(fields[1].Labels) > 0 {
+	//	key += "{" + fields[1].Labels.String() + "}"
+	//}
 	s.Key = key
 	s.Frame = data.NewFrame(m.Name(), fields...)
 	return s, nil

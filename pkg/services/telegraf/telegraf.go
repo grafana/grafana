@@ -50,6 +50,70 @@ func (t *LiveProxy) Init() error {
 	var allStreams = make(map[uint64]MetricFrameStream)
 	parser := NewInfluxParser()
 
+	//handler := func(ctx *models.ReqContext) {
+	//	path := ctx.Params("path")
+	//
+	//	body, err := ctx.Req.Body().Bytes()
+	//	if err != nil {
+	//		logger.Error("Error reading body", "error", err)
+	//		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+	//		return
+	//	}
+	//	logger.Info("Telegraf body", "body", string(body))
+	//
+	//	metrics, err := parser.Parse(body)
+	//	if err != nil {
+	//		logger.Error("Error making metrics", "error", err)
+	//		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+	//		return
+	//	}
+	//
+	//	created := make(map[uint64]bool)
+	//	batch := make(map[string]MetricFrameStream)
+	//
+	//	for _, m := range metrics {
+	//		id := m.HashID()
+	//		stream, ok := batch[m.Name()]
+	//		if ok {
+	//			// Same batch
+	//			stream.Append(m)
+	//		} else {
+	//			stream, ok = allStreams[m.Name()]
+	//			if ok {
+	//				stream.Clear()
+	//				stream.Append(m)
+	//			} else {
+	//				stream, err = NewMetricFrameStream(m)
+	//				if err != nil {
+	//					logger.Error("Error making frame", "error", err)
+	//					continue
+	//				}
+	//				allStreams[m.Name()] = stream
+	//				created[id] = true // flag for append vs new schema
+	//			}
+	//			batch[m.Name()] = stream
+	//		}
+	//	}
+	//
+	//	for _, v := range batch {
+	//		//isNew := created[v.id]
+	//		frameData, err := data.FrameToJSON(v.Frame, true, true)
+	//		if err != nil {
+	//			logger.Error("Error marshaling Frame to JSON", "error", err)
+	//			ctx.Resp.WriteHeader(http.StatusInternalServerError)
+	//			return
+	//		}
+	//		channel := fmt.Sprintf("telegraf/%s/%s", path, v.Key)
+	//		logger.Debug("publish data to channel", "channel", channel, "data", string(frameData))
+	//		err = t.GrafanaLive.Publish(channel, frameData)
+	//		if err != nil {
+	//			logger.Error("Error publishing to a channel", "error", err, "channel", channel)
+	//			ctx.Resp.WriteHeader(http.StatusInternalServerError)
+	//			return
+	//		}
+	//	}
+	//}
+
 	handler := func(ctx *models.ReqContext) {
 		path := ctx.Params("path")
 
@@ -72,7 +136,6 @@ func (t *LiveProxy) Init() error {
 		batch := make(map[uint64]MetricFrameStream)
 
 		for _, m := range metrics {
-			println(m.Name())
 			id := m.HashID()
 			stream, ok := batch[id]
 			if ok {
