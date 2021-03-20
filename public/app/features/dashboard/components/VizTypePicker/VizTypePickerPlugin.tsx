@@ -54,8 +54,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: column;
       text-align: center;
       cursor: pointer;
-      background: ${theme.colors.panelBg};
-      border: 1px solid ${theme.colors.panelBorder};
+      background: ${theme.colors.bg2};
+      border: 1px solid ${theme.colors.border1};
       border-radius: ${theme.border.radius.sm};
       margin-right: 10px;
       align-items: center;
@@ -66,7 +66,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       position: relative;
 
       &:hover {
-        background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
+        background: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
       }
     `,
     itemContent: css`

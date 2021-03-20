@@ -180,14 +180,14 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     openWrapper: css`
       flex-grow: 1;
+      background: ${theme.colors.bg1};
+      border: 1px solid ${theme.colors.border1};
+      padding: ${theme.spacing.sm};
     `,
     customFieldMargin: css`
       margin-bottom: ${theme.spacing.sm};
     `,
     formBox: css`
-      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
-      background: ${theme.colors.bg1};
-      border: 1px solid ${theme.colors.border1};
       margin-bottom: ${theme.spacing.md};
     `,
   };
