@@ -38,9 +38,12 @@ export function getFieldOverrideElements(props: OptionPaneRenderProps): Array<Re
   };
 
   currentFieldConfig.overrides.forEach((o, i) => {
+    const name = `Override ${i + 1}`;
+
     elements.push(
       <OverrideEditor
-        name={`Override ${i + 1}`}
+        name={name}
+        key={name}
         data={props.data?.series || []}
         override={o}
         onChange={(value) => onOverrideChange(i, value)}

@@ -16,9 +16,10 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 interface Props {
   panel: PanelModel;
+  searchQuery: string;
 }
 
-export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel }) => {
+export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, searchQuery }) => {
   const styles = useStyles(getStyles);
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
   const dashboard = getDashboardSrv().getCurrent();
@@ -53,7 +54,7 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel }) => {
     <div className={styles.box}>
       {!panel.libraryPanel && (
         <div className={styles.addButtonWrapper}>
-          <Button size="sm" onClick={onAddToPanelLibrary}>
+          <Button icon="plus" onClick={onAddToPanelLibrary} variant="secondary" fullWidth>
             Add current panel to library
           </Button>
         </div>
@@ -62,6 +63,7 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel }) => {
       <LibraryPanelsView
         formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}
         currentPanelId={panel.libraryPanel?.uid}
+        searchString={searchQuery}
         showSecondaryActions
       >
         {(panel) => (
@@ -85,13 +87,9 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel }) => {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    box: css`
-      background: ${theme.colors.bg1};
-      border: 1px solid ${theme.colors.border1};
-      padding: ${theme.spacing.sm};
-    `,
+    box: css``,
     addButtonWrapper: css`
-      padding: ${theme.spacing.sm};
+      padding-bottom: ${theme.spacing.md};
       text-align: center;
     `,
     panelLibraryTitle: css`

@@ -4,10 +4,15 @@ import { from, merge, of, Subscription, timer } from 'rxjs';
 import { catchError, finalize, mapTo, mergeMap, share, takeUntil } from 'rxjs/operators';
 
 import { deleteLibraryPanel as apiDeleteLibraryPanel, getLibraryPanels } from '../../state/api';
-import { initialLibraryPanelsViewState, initSearch, LibraryPanelsViewState, searchCompleted } from './reducer';
+import { initialLibraryPanelsViewState, initSearch, searchCompleted } from './reducer';
 
 type DispatchResult = (dispatch: Dispatch<AnyAction>) => void;
-type SearchArgs = Pick<LibraryPanelsViewState, 'searchString' | 'perPage' | 'page' | 'currentPanelId'>;
+interface SearchArgs {
+  perPage: number;
+  page: number;
+  searchString: string;
+  currentPanelId?: string;
+}
 
 export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
   return function (dispatch) {

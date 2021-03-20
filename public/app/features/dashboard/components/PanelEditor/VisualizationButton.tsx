@@ -150,7 +150,9 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
                   onClose={() => {}}
                 />
               )}
-              {listMode === 'library' && <PanelLibraryOptionsGroup panel={panel} key="Panel Library" />}
+              {listMode === 'library' && (
+                <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
+              )}
             </CustomScrollbar>
           </div>
         </div>

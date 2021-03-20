@@ -1,12 +1,12 @@
-import React, { FormEvent, useMemo, useReducer } from 'react';
+import React, { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 import { css, cx } from 'emotion';
-import { Button, Icon, Input, Pagination, stylesFactory, useStyles } from '@grafana/ui';
+import { Button, Pagination, stylesFactory, useStyles } from '@grafana/ui';
 import { DateTimeInput, GrafanaTheme, LoadingState } from '@grafana/data';
 
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
 import { LibraryPanelDTO } from '../../types';
-import { changePage, changeSearchString, initialLibraryPanelsViewState, libraryPanelsViewReducer } from './reducer';
+import { changePage, initialLibraryPanelsViewState, libraryPanelsViewReducer } from './reducer';
 import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './actions';
 
 interface LibraryPanelViewProps {
@@ -17,6 +17,7 @@ interface LibraryPanelViewProps {
   formatDate?: (dateString: DateTimeInput, format?: string) => string;
   showSecondaryActions?: boolean;
   currentPanelId?: string;
+  searchString: string;
 }
 
 export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
@@ -25,41 +26,30 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   onCreateNewPanel,
   onClickCard,
   formatDate,
+  searchString,
   showSecondaryActions,
   currentPanelId: currentPanel,
 }) => {
   const styles = useStyles(getPanelViewStyles);
-  const [
-    { libraryPanels, searchString, page, perPage, numberOfPages, loadingState, currentPanelId },
-    dispatch,
-  ] = useReducer(libraryPanelsViewReducer, {
-    ...initialLibraryPanelsViewState,
-    currentPanelId: currentPanel,
-  });
+  const [{ libraryPanels, page, perPage, numberOfPages, loadingState, currentPanelId }, dispatch] = useReducer(
+    libraryPanelsViewReducer,
+    {
+      ...initialLibraryPanelsViewState,
+      currentPanelId: currentPanel,
+    }
+  );
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
   useDebounce(() => asyncDispatch(searchForLibraryPanels({ searchString, page, perPage, currentPanelId })), 300, [
     searchString,
     page,
     asyncDispatch,
   ]);
-  const onSearchChange = (event: FormEvent<HTMLInputElement>) =>
-    asyncDispatch(changeSearchString({ searchString: event.currentTarget.value }));
   const onDelete = ({ uid }: LibraryPanelDTO) =>
     asyncDispatch(deleteLibraryPanel(uid, { searchString, page, perPage }));
   const onPageChange = (page: number) => asyncDispatch(changePage({ page }));
 
   return (
     <div className={cx(styles.container, className)}>
-      <div className={styles.searchHeader}>
-        <Input
-          placeholder="Search the panel library"
-          prefix={<Icon name="search" />}
-          value={searchString}
-          autoFocus
-          onChange={onSearchChange}
-        />
-        {/* <Select placeholder="Filter by" onChange={() => {}} width={35} /> */}
-      </div>
       <div className={styles.libraryPanelList}>
         {loadingState === LoadingState.Loading ? (
           <p>Loading library panels...</p>

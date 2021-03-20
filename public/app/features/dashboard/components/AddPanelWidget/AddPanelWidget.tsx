@@ -143,6 +143,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
           formatDate={(dateString: DateTimeInput) => dashboard.formatDate(dateString, 'L')}
           onClickCard={(panel) => onAddLibraryPanel(panel)}
           showSecondaryActions={false}
+          searchString={''}
         />
       ) : (
         <div className={styles.actionsWrapper}>
