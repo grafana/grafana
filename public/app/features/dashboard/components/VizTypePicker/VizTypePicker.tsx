@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 
 import config from 'app/core/config';
-import VizTypePickerPlugin from './VizTypePickerPlugin';
+import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { EmptySearchResult, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
 import { css } from 'emotion';
@@ -108,7 +108,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       max-width: 100%;
       display: grid;
       grid-gap: ${theme.spacing.sm};
-      grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
     `,
   };
 });

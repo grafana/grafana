@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Card, ConfirmModal, Icon, IconButton, Tooltip, useStyles } from '@grafana/ui';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { ConfirmModal } from '@grafana/ui';
+import { PanelPluginMeta } from '@grafana/data';
 import { LibraryPanelDTO } from '../../types';
+import { config } from '@grafana/runtime';
+import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
 
 export interface LibraryPanelCardProps {
   libraryPanel: LibraryPanelDTO;
@@ -20,7 +21,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
   formatDate,
   showSecondaryActions,
 }) => {
-  const styles = useStyles(getStyles);
+  //const styles = useStyles(getStyles);
   const [showDeletionModal, setShowDeletionModal] = useState(false);
 
   const onDeletePanel = () => {
@@ -28,9 +29,17 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
     setShowDeletionModal(false);
   };
 
+  const panelPlugin = config.panels[libraryPanel.model.type] ?? ({} as PanelPluginMeta);
+
   return (
     <>
-      <Card heading={libraryPanel.name} onClick={() => onClick(libraryPanel)}>
+      <PanelTypeCard
+        isCurrent={false}
+        title={libraryPanel.name}
+        plugin={panelPlugin}
+        onClick={() => onClick(libraryPanel)}
+      />
+      {/* <Card heading={libraryPanel.name} onClick={}>
         <Card.Figure>
           <Icon className={styles.panelIcon} name="book-open" size="xl" />
         </Card.Figure>
@@ -57,7 +66,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
             />
           </Card.SecondaryActions>
         )}
-      </Card>
+      </Card> */}
       {showDeletionModal && (
         <ConfirmModal
           isOpen={showDeletionModal}
@@ -73,19 +82,19 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
-  return {
-    tooltip: css`
-      display: inline;
-    `,
-    detailIcon: css`
-      margin-right: 0.5ch;
-    `,
-    panelIcon: css`
-      color: ${theme.colors.textWeak};
-    `,
-    tagList: css`
-      align-self: center;
-    `,
-  };
-};
+// const getStyles = (theme: GrafanaTheme) => {
+//   return {
+//     tooltip: css`
+//       display: inline;
+//     `,
+//     detailIcon: css`
+//       margin-right: 0.5ch;
+//     `,
+//     panelIcon: css`
+//       color: ${theme.colors.textWeak};
+//     `,
+//     tagList: css`
+//       align-self: center;
+//     `,
+//   };
+// };

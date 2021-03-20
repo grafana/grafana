@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { css } from 'emotion';
-import pick from 'lodash/pick';
-import omit from 'lodash/omit';
 import { GrafanaTheme } from '@grafana/data';
 import { Button, stylesFactory, useStyles } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -25,25 +23,24 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, searchQuery }
   const dashboard = getDashboardSrv().getCurrent();
   const dispatch = useDispatch();
 
-  const useLibraryPanel = (panelInfo: LibraryPanelDTO) => {
+  const useLibraryPanel = async (panelInfo: LibraryPanelDTO) => {
     const panelTypeChanged = panel.type !== panelInfo.model.type;
 
     if (panelTypeChanged) {
-      dispatch(changePanelPlugin(panel, panelInfo.model.type));
+      await dispatch(changePanelPlugin(panel, panelInfo.model.type));
     }
 
-    setTimeout(() => {
-      panel.restoreModel({
-        ...omit(panelInfo.model, 'type'),
-        ...pick(panel, 'gridPos', 'id'),
-        libraryPanel: toPanelModelLibraryPanel(panelInfo),
-      });
+    panel.restoreModel({
+      ...panelInfo.model,
+      gridPos: panel.gridPos,
+      id: panel.id,
+      libraryPanel: toPanelModelLibraryPanel(panelInfo),
+    });
 
-      panel.hasChanged = false;
-      panel.refresh();
-      panel.events.publish(new PanelQueriesChangedEvent());
-      panel.events.publish(new PanelOptionsChangedEvent());
-    }, 500);
+    panel.hasChanged = false;
+    panel.refresh();
+    panel.events.publish(new PanelQueriesChangedEvent());
+    panel.events.publish(new PanelOptionsChangedEvent());
   };
 
   const onAddToPanelLibrary = () => {

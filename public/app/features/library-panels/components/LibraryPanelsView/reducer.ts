@@ -14,7 +14,7 @@ export interface LibraryPanelsViewState {
 }
 
 export const initialLibraryPanelsViewState: LibraryPanelsViewState = {
-  loadingState: LoadingState.NotStarted,
+  loadingState: LoadingState.Loading,
   libraryPanels: [],
   totalCount: 0,
   perPage: 10,

@@ -84,14 +84,11 @@ const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       flex-wrap: nowrap;
-      gap: ${theme.spacing.sm};
-      height: 100%;
-      overflow-y: auto;
     `,
     libraryPanelList: css`
-      display: flex;
-      overflow-x: auto;
-      flex-direction: column;
+      max-width: 100%;
+      display: grid;
+      grid-gap: ${theme.spacing.sm};
     `,
     searchHeader: css`
       display: flex;
