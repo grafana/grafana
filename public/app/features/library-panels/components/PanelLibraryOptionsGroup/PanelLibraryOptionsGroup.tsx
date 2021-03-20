@@ -7,7 +7,7 @@ import { Button, stylesFactory, useStyles } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state';
 import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
-import { PanelQueriesChangedEvent } from 'app/types/events';
+import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 import { LibraryPanelDTO } from '../../types';
 import { toPanelModelLibraryPanel } from '../../utils';
 import { useDispatch } from 'react-redux';
@@ -26,27 +26,26 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel }) => {
 
   const useLibraryPanel = (panelInfo: LibraryPanelDTO) => {
     const panelTypeChanged = panel.type !== panelInfo.model.type;
-    panel.restoreModel({
-      ...omit(panelInfo.model, 'type'),
-      ...pick(panel, 'gridPos', 'id'),
-      libraryPanel: toPanelModelLibraryPanel(panelInfo),
-    });
 
     if (panelTypeChanged) {
       dispatch(changePanelPlugin(panel, panelInfo.model.type));
     }
 
-    // Though the panel model has changed, since we're switching to an existing
-    // library panel, we reset the "hasChanged" state.
-    panel.hasChanged = false;
-    panel.refresh();
-    panel.events.publish(PanelQueriesChangedEvent);
+    setTimeout(() => {
+      panel.restoreModel({
+        ...omit(panelInfo.model, 'type'),
+        ...pick(panel, 'gridPos', 'id'),
+        libraryPanel: toPanelModelLibraryPanel(panelInfo),
+      });
+
+      panel.hasChanged = false;
+      panel.refresh();
+      panel.events.publish(new PanelQueriesChangedEvent());
+      panel.events.publish(new PanelOptionsChangedEvent());
+    }, 500);
   };
 
-  const onAddToPanelLibrary = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const onAddToPanelLibrary = () => {
     setShowingAddPanelModal(true);
   };
 
