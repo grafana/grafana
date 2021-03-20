@@ -141,6 +141,19 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     if (prevProps.location.search !== this.props.location.search) {
+      // If the user clicks the same dashboard from the search
+      // We just don't need to do anything but to recover the params back.
+      if (prevProps.location.search && !this.props.location.search) {
+        try {
+          const params = new URLSearchParams(prevProps.location.search);
+          params.delete('search');
+          this.props.history.push({ search: params.toString() });
+          return;
+        } catch (error) {
+          console.error(`Invalid location.search string`);
+        }
+      }
+
       const prevUrlParams = prevProps.queryParams;
       const urlParams = this.props.queryParams;
 
