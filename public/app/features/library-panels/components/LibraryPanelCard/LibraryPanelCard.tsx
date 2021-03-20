@@ -10,15 +10,12 @@ export interface LibraryPanelCardProps {
   onClick: (panel: LibraryPanelDTO) => void;
   onDelete?: (panel: LibraryPanelDTO) => void;
   showSecondaryActions?: boolean;
-  formatDate?: (dateString: string) => string;
 }
 
 export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] }> = ({
   libraryPanel,
-  children,
   onClick,
   onDelete,
-  formatDate,
   showSecondaryActions,
 }) => {
   //const styles = useStyles(getStyles);
@@ -38,6 +35,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
         title={libraryPanel.name}
         plugin={panelPlugin}
         onClick={() => onClick(libraryPanel)}
+        onDelete={showSecondaryActions ? () => setShowDeletionModal(true) : undefined}
       />
       {/* <Card heading={libraryPanel.name} onClick={}>
         <Card.Figure>

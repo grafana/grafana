@@ -1,6 +1,6 @@
 import React from 'react';
 import { GrafanaTheme, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
-import { Badge, BadgeProps, PluginSignatureBadge, styleMixins, useStyles } from '@grafana/ui';
+import { Badge, BadgeProps, IconButton, PluginSignatureBadge, styleMixins, useStyles } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -14,7 +14,15 @@ interface Props {
   showBadge?: boolean;
 }
 
-export const PanelTypeCard: React.FC<Props> = ({ isCurrent, title, plugin, onClick, disabled }) => {
+export const PanelTypeCard: React.FC<Props> = ({
+  isCurrent,
+  title,
+  plugin,
+  onClick,
+  onDelete,
+  disabled,
+  showBadge,
+}) => {
   const styles = useStyles(getStyles);
   const cssClass = cx({
     [styles.item]: true,
@@ -34,9 +42,20 @@ export const PanelTypeCard: React.FC<Props> = ({ isCurrent, title, plugin, onCli
       <div className={styles.itemContent}>
         <div className={styles.name}>{title}</div>
       </div>
-      <div className={cx(styles.badge, disabled && styles.disabled)}>
-        <PanelPluginBadge plugin={plugin} />
-      </div>
+      {showBadge && (
+        <div className={cx(styles.badge, disabled && styles.disabled)}>
+          <PanelPluginBadge plugin={plugin} />
+        </div>
+      )}
+      {onDelete && (
+        <IconButton
+          name="trash-alt"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+        />
+      )}
     </div>
   );
 };

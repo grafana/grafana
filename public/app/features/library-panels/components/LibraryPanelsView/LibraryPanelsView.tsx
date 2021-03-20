@@ -2,7 +2,7 @@ import React, { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 import { css, cx } from 'emotion';
 import { Pagination, stylesFactory, useStyles } from '@grafana/ui';
-import { DateTimeInput, GrafanaTheme, LoadingState } from '@grafana/data';
+import { GrafanaTheme, LoadingState } from '@grafana/data';
 
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
 import { LibraryPanelDTO } from '../../types';
@@ -12,7 +12,6 @@ import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './a
 interface LibraryPanelViewProps {
   className?: string;
   onClickCard: (panel: LibraryPanelDTO) => void;
-  formatDate?: (dateString: DateTimeInput, format?: string) => string;
   showSecondaryActions?: boolean;
   currentPanelId?: string;
   searchString: string;
@@ -21,7 +20,6 @@ interface LibraryPanelViewProps {
 export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   className,
   onClickCard,
-  formatDate,
   searchString,
   showSecondaryActions,
   currentPanelId: currentPanel,
@@ -58,7 +56,6 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
               libraryPanel={item}
               onDelete={onDelete}
               onClick={onClickCard}
-              formatDate={formatDate}
               showSecondaryActions={showSecondaryActions}
             />
           ))

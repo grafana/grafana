@@ -58,7 +58,6 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, searchQuery }
       )}
 
       <LibraryPanelsView
-        formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}
         currentPanelId={panel.libraryPanel?.uid}
         searchString={searchQuery}
         onClickCard={useLibraryPanel}
