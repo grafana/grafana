@@ -9,8 +9,6 @@ exports[`Render should render component 1`] = `
       className="gf-form gf-form--grow"
     >
       <FilterInput
-        inputClassName="gf-form-input"
-        labelClassName="gf-form--has-input-icon gf-form--grow"
         onChange={[Function]}
         placeholder="Search members"
         value=""
@@ -103,8 +101,6 @@ exports[`Render should render team members 1`] = `
       className="gf-form gf-form--grow"
     >
       <FilterInput
-        inputClassName="gf-form-input"
-        labelClassName="gf-form--has-input-icon gf-form--grow"
         onChange={[Function]}
         placeholder="Search members"
         value=""
