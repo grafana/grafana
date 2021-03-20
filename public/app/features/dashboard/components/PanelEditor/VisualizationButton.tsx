@@ -1,15 +1,15 @@
 import React, { FC, useCallback, useState } from 'react';
 import { css } from 'emotion';
-import { GrafanaTheme, PanelPlugin, PanelPluginMeta } from '@grafana/data';
+import { GrafanaTheme, PanelPlugin, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import {
-  useTheme,
-  stylesFactory,
   Icon,
   Input,
   ToolbarButton,
   ButtonGroup,
   Button,
   RadioButtonGroup,
+  useStyles,
+  CustomScrollbar,
 } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
@@ -19,6 +19,7 @@ import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../VizTy
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { setPanelEditorUIState, toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
+import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 
 interface OwnProps {
   panel: PanelModel;
@@ -48,8 +49,8 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
   setPanelEditorUIState,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const [listMode, setListMode] = useState('types');
+  const styles = useStyles(getStyles);
 
   const onPluginTypeChange = (meta: PanelPluginMeta) => {
     if (meta.id === plugin!.meta.id) {
@@ -92,10 +93,10 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
       </Button>
     ) : null;
 
-  const radioOptions = [
-    { label: 'Visualization', value: 'types' },
-    { label: 'Library', value: 'libs' },
-    { label: 'Suggestion', value: 'sug' },
+  const radioOptions: Array<SelectableValue<string>> = [
+    { label: 'Visualizations', value: 'types' },
+    { label: 'Libray', value: 'library' },
+    { label: 'Explore', value: 'explore' },
   ];
 
   return (
@@ -136,16 +137,22 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
               />
             </Field>
             <Field className={styles.customFieldMargin}>
-              <RadioButtonGroup options={radioOptions} value="types" fullWidth />
+              <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
             </Field>
           </div>
-
-          <VizTypePicker
-            current={plugin.meta}
-            onTypeChange={onPluginTypeChange}
-            searchQuery={searchQuery}
-            onClose={() => {}}
-          />
+          <div className={styles.scrollWrapper}>
+            <CustomScrollbar autoHeightMin="100%">
+              {listMode === 'types' && (
+                <VizTypePicker
+                  current={plugin.meta}
+                  onTypeChange={onPluginTypeChange}
+                  searchQuery={searchQuery}
+                  onClose={() => {}}
+                />
+              )}
+              {listMode === 'library' && <PanelLibraryOptionsGroup panel={panel} key="Panel Library" />}
+            </CustomScrollbar>
+          </div>
         </div>
       )}
     </div>
@@ -154,7 +161,7 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
 
 VisualizationButtonUnconnected.displayName = 'VisualizationTabUnconnected';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     icon: css`
       color: ${theme.palette.gray33};
@@ -165,6 +172,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     vizButton: css`
       text-align: left;
+    `,
+    scrollWrapper: css`
+      flex-grow: 1;
     `,
     openWrapper: css`
       flex-grow: 1;
@@ -179,7 +189,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-bottom: ${theme.spacing.md};
     `,
   };
-});
+};
 
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
   return {

@@ -104,6 +104,7 @@ const pluginsSlice = createSlice({
     closeCompleted: (state) => {
       state.isOpen = false;
       state.initDone = false;
+      state.isVizPickerOpen = false;
     },
   },
 });

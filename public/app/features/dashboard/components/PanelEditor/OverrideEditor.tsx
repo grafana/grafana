@@ -42,7 +42,6 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
   const styles = useStyles(getStyles);
   const properties = override.properties.map((p) => registry.getIfExists(p.id)).filter((prop) => !!prop);
-
   const matcherLabel = <Label>{matcherUi.name}</Label>;
 
   const onMatcherConfigChange = useCallback(

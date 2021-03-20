@@ -9,7 +9,6 @@ import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 import config from 'app/core/config';
 import { LibraryPanelInformation } from 'app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo';
 import { isLibraryPanel } from '../../state/PanelModel';
-import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 
 interface Props {
   panel: PanelModel;
@@ -28,7 +27,7 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelConfigChange,
   onPanelOptionsChanged,
 }) => {
-  const makeDummyEdit = useCallback(() => onPanelConfigChange('isEditing', true), []);
+  //const makeDummyEdit = useCallback(() => onPanelConfigChange('isEditing', true), []);
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
     onPanelConfigChange,
@@ -139,11 +138,11 @@ export const PanelOptionsTab: FC<Props> = ({
     </OptionsPaneCategory>
   );
 
-  if (config.featureToggles.panelLibrary) {
-    elements.push(
-      <PanelLibraryOptionsGroup panel={panel} dashboard={dashboard} onChange={makeDummyEdit} key="Panel Library" />
-    );
-  }
+  // if (config.featureToggles.panelLibrary) {
+  //   elements.push(
+  //     <PanelLibraryOptionsGroup panel={panel} dashboard={dashboard} onChange={makeDummyEdit} key="Panel Library" />
+  //   );
+  // }
 
   return <>{elements}</>;
 };

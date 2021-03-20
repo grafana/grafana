@@ -35,7 +35,6 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
           <Icon className={styles.panelIcon} name="book-open" size="xl" />
         </Card.Figure>
         <Card.Meta>
-          <span>Reusable panel</span>
           <Tooltip content="Connected dashboards" placement="bottom">
             <div className={styles.tooltip}>
               <Icon name="apps" className={styles.detailIcon} />
