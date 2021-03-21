@@ -7,7 +7,7 @@ interface Props {
   highlightClassName: string;
 }
 
-export const SimpleHighlighter: React.FC<Props> = (props: Props) => {
+export const PartialHighlighter: React.FC<Props> = (props: Props) => {
   let { highlightParts, text, highlightClassName } = props;
 
   let children = [];

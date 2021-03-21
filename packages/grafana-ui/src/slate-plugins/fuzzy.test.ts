@@ -1,9 +1,4 @@
-import { CompletionItem } from '../types';
 import { fuzzyMatch } from './fuzzy';
-
-function createItems(...labels: string[]): CompletionItem[] {
-  return labels.map((label) => ({ label }));
-}
 
 describe('Fuzzy search', () => {
   it('finds only matching elements', () => {
