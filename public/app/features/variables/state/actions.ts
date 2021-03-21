@@ -297,8 +297,7 @@ export const setOptionFromUrl = (
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
     // Simple case. Value in url matches existing options text or value.
-    const { options } = variableFromState;
-    let option = options.find((op) => {
+    let option = variableFromState.options.find((op) => {
       return op.text === stringUrlValue || op.value === stringUrlValue;
     });
 
@@ -330,7 +329,7 @@ export const setOptionFromUrl = (
 
       // It is possible that we did not match the value to any existing option. In that case the url value will be
       // used anyway for both text and value.
-      option = { text: options[0]?.text ?? defaultText, value: options[0]?.value ?? defaultValue, selected: false };
+      option = { text: defaultText, value: defaultValue, selected: false };
     }
 
     if (isMulti(variableFromState)) {
