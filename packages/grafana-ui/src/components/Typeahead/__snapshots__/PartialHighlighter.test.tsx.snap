@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PartialHighlighter component should render 1`] = `
+<div>
+  <span
+    key="0"
+  >
+    Lorem 
+  </span>
+  <mark
+    className="highlight"
+    key="1"
+  >
+    ipsum
+  </mark>
+  <span
+    key="2"
+  >
+     dolor 
+  </span>
+  <mark
+    className="highlight"
+    key="3"
+  >
+    sit
+  </mark>
+  <span
+    key="4"
+  >
+     amet
+  </span>
+</div>
+`;
