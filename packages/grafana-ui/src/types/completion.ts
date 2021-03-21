@@ -1,9 +1,6 @@
 import { Value, Editor as CoreEditor } from 'slate';
 
-export interface CompletionMode {
-  filterFunction: (items: CompletionItem[], prefix: string) => CompletionItem[];
-  sortFunction: (item: CompletionItem) => number | string;
-}
+export type SearchFunction = (items: CompletionItem[], prefix: string) => CompletionItem[];
 
 export interface CompletionItemGroup {
   /**
@@ -16,7 +13,7 @@ export interface CompletionItemGroup {
    */
   items: CompletionItem[];
 
-  completionMode?: CompletionMode;
+  searchFunction?: SearchFunction;
 
   /**
    * If true, do not filter items in this group based on the search.
@@ -33,16 +30,9 @@ export enum CompletionItemKind {
   GroupTitle = 'GroupTitle',
 }
 
-type MatchingRange = {
+export type HighlightPart = {
   start: number;
   end: number;
-};
-
-type Matching = {
-  // used for sorting
-  score: number;
-  // used for highlighting
-  ranges: MatchingRange[];
 };
 
 export interface CompletionItem {
@@ -71,12 +61,15 @@ export interface CompletionItem {
   documentation?: string;
 
   /**
-   * A string that should be used when comparing this item
-   * with other items. When `falsy` the `label` is used.
+   * A string or number that should be used when comparing this
+   * item with other items. When `undefined` then `label` is used.
    */
-  sortText?: string;
+  sortValue?: string | number;
 
-  matching?: Matching;
+  /**
+   * Parts of the label to be highlighted
+   */
+  highlightParts?: HighlightPart[];
 
   /**
    * A string that should be used when filtering a set of

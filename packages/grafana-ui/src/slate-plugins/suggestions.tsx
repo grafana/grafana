@@ -8,7 +8,7 @@ import { Plugin as SlatePlugin } from '@grafana/slate-react';
 import TOKEN_MARK from './slate-prism/TOKEN_MARK';
 import { Typeahead } from '../components/Typeahead/Typeahead';
 import { CompletionItem, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types';
-import { makeFragment, WordCompletionMode } from '../utils';
+import { makeFragment, wordSearch } from '../utils';
 
 export const TYPEAHEAD_DEBOUNCE = 250;
 
@@ -289,13 +289,13 @@ const handleTypeahead = async (
       if (!group.items) {
         return group;
       }
-      const completionMode = group.completionMode || WordCompletionMode;
+      const searchFunction = group.searchFunction || wordSearch;
       let newGroup = { ...group };
       if (prefix) {
         // Filter groups based on prefix
         if (!group.skipFilter) {
           newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).length >= prefix.length);
-          newGroup.items = completionMode.filterFunction(newGroup.items, prefix);
+          newGroup.items = searchFunction(newGroup.items, prefix);
         }
 
         // Filter out the already typed value (prefix) unless it inserts custom text not matching the prefix
@@ -305,7 +305,9 @@ const handleTypeahead = async (
       }
 
       if (!group.skipSort) {
-        newGroup.items = sortBy(newGroup.items, completionMode.sortFunction);
+        newGroup.items = sortBy(newGroup.items, (item: CompletionItem) =>
+          item.sortValue !== undefined ? item.sortValue : item.label
+        );
       }
 
       return newGroup;

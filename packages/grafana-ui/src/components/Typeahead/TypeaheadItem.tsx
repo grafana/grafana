@@ -84,11 +84,11 @@ export const TypeaheadItem: React.FC<Props> = (props: Props) => {
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      {item.matching !== undefined ? (
+      {item.highlightParts !== undefined ? (
         <SimpleHighlighter
           text={label}
           highlightClassName={highlightClassName}
-          ranges={item.matching.ranges}
+          highlightParts={item.highlightParts}
         ></SimpleHighlighter>
       ) : (
         <Highlighter textToHighlight={label} searchWords={[prefix]} highlightClassName={highlightClassName} />

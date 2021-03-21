@@ -18,7 +18,7 @@ import { CloudWatchQuery, TSDBResponse } from './types';
 import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
 
 import { CloudWatchDatasource } from './datasource';
-import { CompletionItemGroup, Token, TypeaheadInput, TypeaheadOutput, PrefixCompletionMode } from '@grafana/ui';
+import { CompletionItemGroup, Token, TypeaheadInput, TypeaheadOutput, prefixSearch } from '@grafana/ui';
 import Prism, { Grammar } from 'prismjs';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
@@ -169,7 +169,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
     const functionSuggestions: CompletionItemGroup[] = [
       {
-        completionMode: PrefixCompletionMode,
+        searchFunction: prefixSearch,
         label: 'Functions',
         items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS),
       },
@@ -248,7 +248,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       return {
         suggestions: [
           {
-            completionMode: PrefixCompletionMode,
+            searchFunction: prefixSearch,
             label: 'Sort Order',
             items: [
               {
@@ -272,18 +272,18 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   };
 
   private getCommandCompletionItems = (): TypeaheadOutput => {
-    return { suggestions: [{ completionMode: PrefixCompletionMode, label: 'Commands', items: QUERY_COMMANDS }] };
+    return { suggestions: [{ searchFunction: prefixSearch, label: 'Commands', items: QUERY_COMMANDS }] };
   };
 
   private getFieldAndFilterFunctionCompletionItems = (): TypeaheadOutput => {
     return {
-      suggestions: [{ completionMode: PrefixCompletionMode, label: 'Functions', items: FIELD_AND_FILTER_FUNCTIONS }],
+      suggestions: [{ searchFunction: prefixSearch, label: 'Functions', items: FIELD_AND_FILTER_FUNCTIONS }],
     };
   };
 
   private getStatsAggCompletionItems = (): TypeaheadOutput => {
     return {
-      suggestions: [{ completionMode: PrefixCompletionMode, label: 'Functions', items: AGGREGATION_FUNCTIONS_STATS }],
+      suggestions: [{ searchFunction: prefixSearch, label: 'Functions', items: AGGREGATION_FUNCTIONS_STATS }],
     };
   };
 
@@ -291,7 +291,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return {
       suggestions: [
         {
-          completionMode: PrefixCompletionMode,
+          searchFunction: prefixSearch,
           label: 'Functions',
           items: BOOLEAN_FUNCTIONS,
         },
@@ -303,7 +303,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return {
       suggestions: [
         {
-          completionMode: PrefixCompletionMode,
+          searchFunction: prefixSearch,
           label: 'Functions',
           items: NUMERIC_OPERATORS.concat(BOOLEAN_FUNCTIONS),
         },

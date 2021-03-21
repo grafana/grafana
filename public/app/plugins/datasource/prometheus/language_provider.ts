@@ -8,8 +8,8 @@ import {
   CompletionItemGroup,
   TypeaheadInput,
   TypeaheadOutput,
-  FuzzyCompletionMode,
-  PrefixCompletionMode,
+  fuzzySearch,
+  prefixSearch,
 } from '@grafana/ui';
 
 import {
@@ -221,7 +221,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         .value();
 
       suggestions.push({
-        completionMode: PrefixCompletionMode,
+        searchFunction: prefixSearch,
         skipSort: true,
         label: 'History',
         items: historyItems,
@@ -236,7 +236,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suggestions: CompletionItemGroup[] = [];
 
     suggestions.push({
-      completionMode: PrefixCompletionMode,
+      searchFunction: prefixSearch,
       label: 'Functions',
       items: FUNCTIONS.map(setFunctionKind),
     });
@@ -246,7 +246,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions.push({
         label: `Metrics${limitInfo}`,
         items: limitSuggestions(metrics).map((m) => addMetricsMetadata(m, metricsMetadata)),
-        completionMode: FuzzyCompletionMode,
+        searchFunction: fuzzySearch,
       });
     }
 

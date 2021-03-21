@@ -123,14 +123,14 @@ describe('Language completion provider', () => {
       expect(result.suggestions).toMatchObject([
         {
           items: [
-            { label: '$__interval', sortText: '$__interval' }, // TODO: figure out why this row and sortText is needed
-            { label: '$__rate_interval', sortText: '$__rate_interval' },
-            { label: '1m', sortText: '00:01:00' },
-            { label: '5m', sortText: '00:05:00' },
-            { label: '10m', sortText: '00:10:00' },
-            { label: '30m', sortText: '00:30:00' },
-            { label: '1h', sortText: '01:00:00' },
-            { label: '1d', sortText: '24:00:00' },
+            { label: '$__interval', sortValue: '$__interval' }, // TODO: figure out why this row and sortValue is needed
+            { label: '$__rate_interval', sortValue: '$__rate_interval' },
+            { label: '1m', sortValue: '00:01:00' },
+            { label: '5m', sortValue: '00:05:00' },
+            { label: '10m', sortValue: '00:10:00' },
+            { label: '30m', sortValue: '00:30:00' },
+            { label: '1h', sortValue: '01:00:00' },
+            { label: '1d', sortValue: '24:00:00' },
           ],
           label: 'Range vector',
         },

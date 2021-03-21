@@ -1,25 +1,26 @@
 import React from 'react';
+import { HighlightPart } from '../../types';
 
 interface Props {
   text: string;
-  ranges: Array<{ start: number; end: number }>;
+  highlightParts: HighlightPart[];
   highlightClassName: string;
 }
 
 export const SimpleHighlighter: React.FC<Props> = (props: Props) => {
-  let { ranges, text, highlightClassName } = props;
+  let { highlightParts, text, highlightClassName } = props;
 
   let children = [];
 
-  const firstRange = ranges[0];
+  const firstRange = highlightParts[0];
 
   if (firstRange.start !== 0) {
     children.push(<span key={children.length}>{text.substring(0, firstRange.start)}</span>);
   }
 
-  for (let i = 0; i < ranges.length - 1; i++) {
-    let range = ranges[i],
-      nextRange = ranges[i + 1];
+  for (let i = 0; i < highlightParts.length - 1; i++) {
+    let range = highlightParts[i],
+      nextRange = highlightParts[i + 1];
     children.push(
       <mark key={children.length} className={highlightClassName}>
         {text.substring(range.start, range.end + 1)}
@@ -28,7 +29,7 @@ export const SimpleHighlighter: React.FC<Props> = (props: Props) => {
     children.push(<span key={children.length}>{text.substring(range.end + 1, nextRange.start)}</span>);
   }
 
-  let lastRange = ranges[ranges.length - 1];
+  let lastRange = highlightParts[highlightParts.length - 1];
 
   children.push(
     <mark key={children.length} className={highlightClassName}>
