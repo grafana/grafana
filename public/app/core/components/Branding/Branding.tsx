@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { useTheme } from '@grafana/ui';
+import { regionalizeText } from '../../utils/regionalizeText';
 
 export interface BrandComponentProps {
   className?: string;
@@ -45,7 +46,7 @@ export class Branding {
       "Don't get in the way of the data",
       'Your single pane of glass',
       'Built better together',
-      'Democratising data',
+      regionalizeText('Democratising') + ' data',
     ];
     const count = slogans.length;
     return slogans[Math.floor(Math.random() * count)];
