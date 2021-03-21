@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { FC, useCallback } from 'react';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelData, PanelPlugin } from '@grafana/data';
 import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
@@ -27,8 +27,6 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelConfigChange,
   onPanelOptionsChanged,
 }) => {
-  //const makeDummyEdit = useCallback(() => onPanelConfigChange('isEditing', true), []);
-  const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
     onPanelConfigChange,
   ]);
@@ -100,7 +98,7 @@ export const PanelOptionsTab: FC<Props> = ({
       <DataLinksInlineEditor
         links={panel.links}
         onChange={(links) => onPanelConfigChange('links', links)}
-        suggestions={linkVariablesSuggestions}
+        getSuggestions={getPanelLinksVariableSuggestions}
         data={[]}
       />
     </OptionsPaneCategory>

@@ -17,7 +17,6 @@ function setupTestContext(options: Partial<DataLinksListItemProps>) {
     onChange: jest.fn(),
     onEdit: jest.fn(),
     onRemove: jest.fn(),
-    suggestions: [],
   };
 
   const props = { ...defaults, ...options };

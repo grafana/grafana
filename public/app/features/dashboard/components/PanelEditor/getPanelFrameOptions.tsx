@@ -59,14 +59,11 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         new OptionsPaneItemDescriptor({
           title: 'Panel links',
           Component: function renderLinks() {
-            //const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
-            const linkVariablesSuggestions = getPanelLinksVariableSuggestions();
-
             return (
               <DataLinksInlineEditor
                 links={panel.links}
                 onChange={(links) => onPanelConfigChange('links', links)}
-                suggestions={linkVariablesSuggestions}
+                getSuggestions={getPanelLinksVariableSuggestions}
                 data={[]}
               />
             );

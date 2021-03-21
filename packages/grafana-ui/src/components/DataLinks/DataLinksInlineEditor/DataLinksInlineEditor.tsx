@@ -11,11 +11,16 @@ import { DataLinkEditorModalContent } from './DataLinkEditorModalContent';
 interface DataLinksInlineEditorProps {
   links?: DataLink[];
   onChange: (links: DataLink[]) => void;
-  suggestions: VariableSuggestion[];
+  getSuggestions: () => VariableSuggestion[];
   data: DataFrame[];
 }
 
-export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ links, onChange, suggestions, data }) => {
+export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({
+  links,
+  onChange,
+  getSuggestions,
+  data,
+}) => {
   const theme = useTheme();
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -74,7 +79,6 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
                 onEdit={() => setEditIndex(i)}
                 onRemove={() => onDataLinkRemove(i)}
                 data={data}
-                suggestions={suggestions}
               />
             );
           })}
@@ -95,7 +99,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({ li
             data={data}
             onSave={onDataLinkChange}
             onCancel={onDataLinkCancel}
-            suggestions={suggestions}
+            getSuggestions={getSuggestions}
           />
         </Modal>
       )}
