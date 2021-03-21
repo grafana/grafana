@@ -1,16 +1,16 @@
-import React, { ReactElement, useState } from 'react';
+import React, { useState } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, Field, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { usePanelLatestData } from './usePanelLatestData';
 import { OptionPaneRenderProps } from './types';
-import { getPanelFrameOptions } from './getPanelFrameOptions';
+import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from 'emotion';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { OptionsPaneItem, OptionsPaneItemProps } from './OptionsPaneItem';
-import { OptionsPaneCategory, OptionsPaneCategoryProps } from './OptionsPaneCategory';
-import { getFieldOverrideElements } from './getFieldOverrideElements';
+import { OptionsPaneCategory } from './OptionsPaneCategory';
+import { getFieldOverrideCategories } from './getFieldOverrideElements';
+import { OptionsPaneCategoryDescriptor, OptionsPaneItemDescriptor } from './OptionsPaneItems';
 
 interface Props {
   plugin: PanelPlugin;
@@ -45,10 +45,9 @@ export const OptionsPaneOptions: React.FC<Props> = ({
     eventBus: dashboard.events,
   };
 
-  const allDefaults = [getPanelFrameOptions(optionProps), ...getVizualizationOptions(optionProps)];
-
-  const justOverrides = getFieldOverrideElements(optionProps);
-  const allOptions = allDefaults.concat(justOverrides);
+  const callCategories = [getPanelFrameCategory(optionProps), ...getVizualizationOptions(optionProps)];
+  const justOverrides = getFieldOverrideCategories(optionProps);
+  const allOptions = callCategories;
 
   const radioOptions = [
     { label: 'All', value: 'all' },
@@ -75,8 +74,8 @@ export const OptionsPaneOptions: React.FC<Props> = ({
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
           <div className={styles.mainBox}>
-            {showAllDefaults && allDefaults}
-            {showOnlyOverrides && justOverrides}
+            {showAllDefaults && callCategories.map((callCategories) => callCategories.render())}
+            {showOnlyOverrides && justOverrides.map((override) => override.render())}
             {showPopular && (
               <OptionsPaneCategory id="Popular options" title="Popular options">
                 No poular options, try again later
@@ -84,37 +83,32 @@ export const OptionsPaneOptions: React.FC<Props> = ({
             )}
             {isSearching && (
               <OptionsPaneCategory id="Found options" title="Found options">
-                {getSearchHits(allOptions, searchRegex)}
+                {getSearchHits(allOptions, searchRegex).map((hit) => hit.render())}
               </OptionsPaneCategory>
             )}
           </div>
-          {showOverridesInSeparateBox && <div className={styles.overridesBox}>{justOverrides}</div>}
+          {showOverridesInSeparateBox && (
+            <div className={styles.overridesBox}>{justOverrides.map((override) => override.render())}</div>
+          )}
         </CustomScrollbar>
       </div>
     </div>
   );
 };
 
-function getSearchHits(items: Array<ReactElement<OptionsPaneCategoryProps>>, searchRegex: RegExp) {
-  const filteredItems: React.ReactElement[] = [];
+function getSearchHits(categories: OptionsPaneCategoryDescriptor[], searchRegex: RegExp) {
+  const filteredItems: OptionsPaneItemDescriptor[] = [];
 
-  React.Children.forEach(items, (topGroup) => {
-    React.Children.forEach(topGroup, (item) => {
-      const displayName = (item.type as any).displayName;
-
-      if (displayName === OptionsPaneItem.displayName) {
-        const props = item.props as OptionsPaneItemProps;
-        if (searchRegex.test(props.title)) {
-          filteredItems.push(item);
-        }
-        return;
+  for (const category of categories) {
+    for (const item of category.items) {
+      if (searchRegex.test(item.props.title)) {
+        filteredItems.push(item);
       }
-
-      if (item.props.children) {
-        filteredItems.push(...getSearchHits(item.props.children as any, searchRegex));
-      }
-    });
-  });
+    }
+    if (category.categories.length > 0) {
+      filteredItems.push(...getSearchHits(category.categories, searchRegex));
+    }
+  }
 
   return filteredItems;
 }

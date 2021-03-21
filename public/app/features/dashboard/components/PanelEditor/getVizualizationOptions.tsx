@@ -1,17 +1,16 @@
-import React, { useCallback, ReactElement } from 'react';
+import React, { useCallback } from 'react';
 import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet, set as lodashSet } from 'lodash';
 import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue } from './utils';
-import { OptionsPaneItem } from './OptionsPaneItem';
-import { OptionsPaneCategory, OptionsPaneCategoryProps } from './OptionsPaneCategory';
+import { OptionsPaneCategoryDescriptor, OptionsPaneItemDescriptor } from './OptionsPaneItems';
 
-export function getVizualizationOptions(props: OptionPaneRenderProps): Array<ReactElement<OptionsPaneCategoryProps>> {
+export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
   const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, eventBus } = props;
   const currentOptions = panel.getOptions();
   const currentFieldConfig = panel.fieldConfig;
-  const categoryIndex: Record<string, ReactElement[]> = {};
+  const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
 
   const onOptionChange = useCallback(
     (key: string, value: any) => {
@@ -38,33 +37,42 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): Array<Rea
     },
   };
 
-  const getOptionsPaneCategory = (categoryNames?: string[]): ReactElement[] => {
+  const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
     const categoryName = (categoryNames && categoryNames[0]) ?? `${plugin.meta.name}`;
-    const categoryItems = categoryIndex[categoryName];
+    const category = categoryIndex[categoryName];
 
-    if (categoryItems) {
-      return categoryItems;
+    if (category) {
+      return category;
     }
 
-    return (categoryIndex[categoryName] = []);
+    return (categoryIndex[categoryName] = new OptionsPaneCategoryDescriptor({
+      title: categoryName,
+      id: categoryName,
+    }));
   };
 
   /**
    * Panel options
    */
   for (const pluginOption of plugin.optionEditors.list()) {
-    const categoryItems = getOptionsPaneCategory(pluginOption.category);
+    const category = getOptionsPaneCategory(pluginOption.category);
     const Editor = pluginOption.editor;
 
-    categoryItems.push(
-      <OptionsPaneItem title={pluginOption.name} description={pluginOption.description} key={pluginOption.name}>
-        <Editor
-          value={lodashGet(currentOptions, pluginOption.path)}
-          onChange={(value) => onOptionChange(pluginOption.path, value)}
-          item={pluginOption}
-          context={context}
-        />
-      </OptionsPaneItem>
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: pluginOption.name,
+        description: pluginOption.description,
+        render: function renderEditor() {
+          return (
+            <Editor
+              value={lodashGet(currentOptions, pluginOption.path)}
+              onChange={(value) => onOptionChange(pluginOption.path, value)}
+              item={pluginOption}
+              context={context}
+            />
+          );
+        },
+      })
     );
   }
 
@@ -84,7 +92,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): Array<Rea
       continue;
     }
 
-    const categoryItems = getOptionsPaneCategory(fieldOption.category);
+    const category = getOptionsPaneCategory(fieldOption.category);
     const Editor = fieldOption.editor;
 
     const defaults = currentFieldConfig.defaults;
@@ -94,21 +102,23 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): Array<Rea
         : undefined
       : lodashGet(defaults, fieldOption.path);
 
-    categoryItems.push(
-      <OptionsPaneItem title={fieldOption.name} description={fieldOption.description} key={fieldOption.name}>
-        <Editor
-          value={value}
-          onChange={(v) => onDefaultValueChange(fieldOption.path, v, fieldOption.isCustom)}
-          item={fieldOption}
-          context={context}
-        />
-      </OptionsPaneItem>
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: fieldOption.name,
+        description: fieldOption.description,
+        render: function renderEditor() {
+          return (
+            <Editor
+              value={value}
+              onChange={(v) => onDefaultValueChange(fieldOption.path, v, fieldOption.isCustom)}
+              item={fieldOption}
+              context={context}
+            />
+          );
+        },
+      })
     );
   }
 
-  return Object.keys(categoryIndex).map((name) => (
-    <OptionsPaneCategory id={name} key={name} title={name}>
-      {categoryIndex[name]}
-    </OptionsPaneCategory>
-  ));
+  return Object.values(categoryIndex);
 }
