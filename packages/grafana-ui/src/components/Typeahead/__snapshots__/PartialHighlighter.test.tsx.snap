@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`PartialHighlighter component should render 1`] = `
+exports[`PartialHighlighter component should highlight inner parts correctly 1`] = `
 <div>
   <span
     key="0"
@@ -29,5 +29,27 @@ exports[`PartialHighlighter component should render 1`] = `
   >
      amet
   </span>
+</div>
+`;
+
+exports[`PartialHighlighter component should highlight outer parts correctly 1`] = `
+<div>
+  <mark
+    className="highlight"
+    key="0"
+  >
+    Lorem
+  </mark>
+  <span
+    key="1"
+  >
+     ipsum dolor sit 
+  </span>
+  <mark
+    className="highlight"
+    key="2"
+  >
+    amet
+  </mark>
 </div>
 `;

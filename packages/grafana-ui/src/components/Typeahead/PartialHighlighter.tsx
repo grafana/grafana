@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createElement } from 'react';
 import { HighlightPart } from '../../types';
 
 interface Props {
@@ -7,38 +7,48 @@ interface Props {
   highlightClassName: string;
 }
 
+/**
+ * Flattens parts into a list of indices pointing to the index where a part
+ * (highlighted or not highlighted) starts. Adds extra indices if needed
+ * at the beginning or the end to ensure the entire text is covered.
+ */
+function getStartIndices(parts: HighlightPart[], length: number): number[] {
+  const indices: number[] = [];
+  parts.forEach((part) => {
+    indices.push(part.start, part.end + 1);
+  });
+  if (indices[0] !== 0) {
+    indices.unshift(0);
+  }
+  if (indices[indices.length - 1] !== length) {
+    indices.push(length);
+  }
+  return indices;
+}
+
 export const PartialHighlighter: React.FC<Props> = (props: Props) => {
   let { highlightParts, text, highlightClassName } = props;
 
+  if (!highlightParts) {
+    return null;
+  }
+
   let children = [];
+  let indices = getStartIndices(highlightParts, text.length);
+  let highlighted = highlightParts[0].start === 0;
 
-  const firstRange = highlightParts[0];
+  for (let i = 1; i < indices.length; i++) {
+    let start = indices[i - 1];
+    let end = indices[i];
 
-  if (firstRange.start !== 0) {
-    children.push(<span key={children.length}>{text.substring(0, firstRange.start)}</span>);
-  }
-
-  for (let i = 0; i < highlightParts.length - 1; i++) {
-    let range = highlightParts[i],
-      nextRange = highlightParts[i + 1];
     children.push(
-      <mark key={children.length} className={highlightClassName}>
-        {text.substring(range.start, range.end + 1)}
-      </mark>
+      createElement(highlighted ? 'mark' : 'span', {
+        key: i - 1,
+        children: text.substring(start, end),
+        className: highlighted ? highlightClassName : undefined,
+      })
     );
-    children.push(<span key={children.length}>{text.substring(range.end + 1, nextRange.start)}</span>);
-  }
-
-  let lastRange = highlightParts[highlightParts.length - 1];
-
-  children.push(
-    <mark key={children.length} className={highlightClassName}>
-      {text.substring(lastRange.start, lastRange.end + 1)}
-    </mark>
-  );
-
-  if (lastRange.end + 1 < text.length) {
-    children.push(<span key={children.length}>{text.substring(lastRange.end + 1, text.length)}</span>);
+    highlighted = !highlighted;
   }
 
   return <div>{children}</div>;
