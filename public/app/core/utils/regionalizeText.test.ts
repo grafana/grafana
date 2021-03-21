@@ -14,24 +14,24 @@ describe('regionalizeText', () => {
 
   describe('word that does not change based on region', () => {
     it('returns the same text as passed to the function', () => {
-      const regionalizedTest = regionalizeText('conor');
-      expect(regionalizedTest).toBe('conor');
+      const regionalizedText = regionalizeText('conor');
+      expect(regionalizedText).toBe('conor');
     });
   });
 
   describe('word that changes based on region', () => {
     describe('user language is en-US', () => {
       it('translates -ising to -izing', () => {
-        const regionalizedTest = regionalizeText('democratising');
-        expect(regionalizedTest).toBe('democratizing');
+        const regionalizedText = regionalizeText('democratising');
+        expect(regionalizedText).toBe('democratizing');
       });
     });
 
     describe('user language is not en-US', () => {
       it('translates -izing to -ising', () => {
         languageGetter.mockReturnValue('en-GB');
-        const regionalizedTest = regionalizeText('democratizing');
-        expect(regionalizedTest).toBe('democratising');
+        const regionalizedText = regionalizeText('democratizing');
+        expect(regionalizedText).toBe('democratising');
       });
     });
   });
