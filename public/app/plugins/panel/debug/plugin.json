@@ -5,7 +5,7 @@
   "state": "alpha",
 
   "info": {
-    "description": "Singlestat Panel for Grafana",
+    "description": "Debug Panel for Grafana",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
