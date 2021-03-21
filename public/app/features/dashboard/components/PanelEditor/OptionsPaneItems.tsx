@@ -1,5 +1,5 @@
 import { Field, Label } from '@grafana/ui';
-import React, { ComponentType } from 'react';
+import React, { ComponentType, ReactNode } from 'react';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 
 export interface OptionsPaneItemProps {
@@ -18,18 +18,28 @@ export class OptionsPaneItemDescriptor {
 
   constructor(public props: OptionsPaneItemProps) {}
 
-  getLabel(isSearching?: boolean) {
+  getLabel(isSearching?: boolean): ReactNode {
     const { title, description } = this.props;
 
     if (!isSearching) {
+      // Do not render label for categories with only one child
+      if (this.parent.items.length === 1) {
+        return null;
+      }
+
       return title;
     }
 
     const categories: string[] = [];
-    categories.push(this.parent.props.title);
+
     if (this.parent.parent) {
       categories.push(this.parent.parent.props.title);
     }
+
+    if (this.parent.props.title !== title) {
+      categories.push(this.parent.props.title);
+    }
+
     return (
       <Label description={description} category={categories}>
         {title}

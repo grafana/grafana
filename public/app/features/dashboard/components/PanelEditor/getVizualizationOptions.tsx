@@ -99,7 +99,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
         Component: function renderEditor() {
           const onChange = (v: any) => {
             onFieldConfigsChange(
-              updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, value, fieldOption.isCustom)
+              updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom)
             );
           };
 
