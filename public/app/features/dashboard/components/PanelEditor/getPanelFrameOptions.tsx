@@ -16,7 +16,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       new OptionsPaneItemDescriptor({
         title: 'Title',
         value: panel.title,
-        render: function renderTitle() {
+        Component: function renderTitle() {
           return (
             <Input defaultValue={panel.title} onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)} />
           );
@@ -28,7 +28,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         title: 'Description',
         description: panel.description,
         value: panel.description,
-        render: function renderDescription() {
+        Component: function renderDescription() {
           return (
             <TextArea
               defaultValue={panel.description}
@@ -41,7 +41,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     .addItem(
       new OptionsPaneItemDescriptor({
         title: 'Transparent background',
-        render: function renderTransparent() {
+        Component: function renderTransparent() {
           return (
             <Switch
               value={panel.transparent}
@@ -58,7 +58,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: 'Panel links',
-          render: function renderLinks() {
+          Component: function renderLinks() {
             //const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
             const linkVariablesSuggestions = getPanelLinksVariableSuggestions();
 
@@ -83,7 +83,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           title: 'Repeat by variable',
           description:
             'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
-          render: function renderRepeatOptions() {
+          Component: function renderRepeatOptions() {
             return (
               <RepeatRowSelect
                 repeat={panel.repeat}

@@ -1,12 +1,12 @@
-import { Field } from '@grafana/ui';
-import React, { ReactElement } from 'react';
+import { Field, Label } from '@grafana/ui';
+import React, { ComponentType } from 'react';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 
 export interface OptionsPaneItemProps {
   title: string;
   value?: any;
   description?: string;
-  render: () => ReactElement;
+  Component: ComponentType;
   skipLabel?: boolean;
 }
 
@@ -18,13 +18,32 @@ export class OptionsPaneItemDescriptor {
 
   constructor(public props: OptionsPaneItemProps) {}
 
-  render() {
-    const { title, description, render } = this.props;
+  getLabel(isSearching?: boolean) {
+    const { title, description } = this.props;
+
+    if (!isSearching) {
+      return title;
+    }
+
+    const categories: string[] = [];
+    categories.push(this.parent.props.title);
+    if (this.parent.parent) {
+      categories.push(this.parent.parent.props.title);
+    }
+    return (
+      <Label description={description} category={categories}>
+        {title}
+      </Label>
+    );
+  }
+
+  render(isSearching?: boolean) {
+    const { title, description, Component } = this.props;
     const key = `${this.parent.props.id}${title}`;
 
     return (
-      <Field label={title} description={description} key={key}>
-        {render()}
+      <Field label={this.getLabel(isSearching)} description={description} key={key}>
+        <Component />
       </Field>
     );
   }
@@ -32,7 +51,7 @@ export class OptionsPaneItemDescriptor {
 
 export interface OptionsPaneCategoryProps {
   id: string;
-  title?: string;
+  title: string;
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   defaultToClosed?: boolean;
   className?: string;
@@ -46,7 +65,7 @@ export interface OptionsPaneCategoryProps {
 export class OptionsPaneCategoryDescriptor {
   items: OptionsPaneItemDescriptor[] = [];
   categories: OptionsPaneCategoryDescriptor[] = [];
-  parent!: OptionsPaneCategoryDescriptor;
+  parent?: OptionsPaneCategoryDescriptor;
 
   constructor(public props: OptionsPaneCategoryProps) {}
 

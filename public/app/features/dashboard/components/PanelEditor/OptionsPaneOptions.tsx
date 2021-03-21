@@ -71,7 +71,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
             )}
             {isSearching && (
               <OptionsPaneCategory id="Found options" title="Found options">
-                {getSearchHits(allOptions, searchRegex).map((hit) => hit.render())}
+                {getSearchHits(allOptions, searchRegex).map((hit) => hit.render(true))}
               </OptionsPaneCategory>
             )}
           </div>

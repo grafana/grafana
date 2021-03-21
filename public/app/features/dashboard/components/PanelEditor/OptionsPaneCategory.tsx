@@ -1,4 +1,4 @@
-import React, { ComponentType, FC, ReactNode, useCallback, useState } from 'react';
+import React, { FC, ReactNode, useCallback, useState } from 'react';
 import { css, cx } from 'emotion';
 import _ from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
@@ -9,17 +9,12 @@ import { selectors } from '@grafana/e2e-selectors';
 
 export interface OptionsPaneCategoryProps {
   id: string;
-  title?: React.ReactNode;
+  title?: string;
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   defaultToClosed?: boolean;
   className?: string;
   nested?: boolean;
   children: ReactNode;
-}
-
-export interface OptionsPaneCategoryObj {
-  props: OptionsPaneCategoryProps;
-  render: ComponentType<OptionsPaneCategoryProps>;
 }
 
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
