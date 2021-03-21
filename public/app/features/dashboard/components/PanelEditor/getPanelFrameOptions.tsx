@@ -1,4 +1,4 @@
-import { DataLinksInlineEditor, Input, Switch, TextArea } from '@grafana/ui';
+import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import React from 'react';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
@@ -75,20 +75,66 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       new OptionsPaneCategoryDescriptor({
         title: 'Repeat options',
         id: 'Repeat options',
-      }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: 'Repeat by variable',
-          description:
-            'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
-          Component: function renderRepeatOptions() {
-            return (
-              <RepeatRowSelect
-                repeat={panel.repeat}
-                onChange={(value: string | null) => onPanelConfigChange('repeat', value)}
-              />
-            );
-          },
-        })
-      )
+      })
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Repeat by variable',
+            description:
+              'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
+            Component: function renderRepeatOptions() {
+              return (
+                <RepeatRowSelect
+                  repeat={panel.repeat}
+                  onChange={(value: string | null) => {
+                    onPanelConfigChange('repeat', value);
+
+                    // Set of clear repeatDirection
+                    if (value && !panel.repeatDirection) {
+                      onPanelConfigChange('repeatDirection', 'h');
+                    } else if (!value) {
+                      onPanelConfigChange('repeatDirection', undefined);
+                    }
+                  }}
+                />
+              );
+            },
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Repeat direction',
+            showIf: () => !!panel.repeat,
+            Component: function renderRepeatOptions() {
+              const directionOptions = [
+                { label: 'Horizontal', value: 'h' },
+                { label: 'Vertical', value: 'v' },
+              ];
+
+              return (
+                <RadioButtonGroup
+                  options={directionOptions}
+                  value={panel.repeatDirection || 'h'}
+                  onChange={(value) => onPanelConfigChange('repeatDirection', value)}
+                />
+              );
+            },
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Max per row',
+            showIf: () => (panel.repeat && panel.repeatDirection === 'h') as boolean,
+            Component: function renderOption() {
+              const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
+              return (
+                <Select
+                  options={maxPerRowOptions}
+                  value={panel.maxPerRow}
+                  onChange={(value) => onPanelConfigChange('maxPerRow', value.value)}
+                />
+              );
+            },
+          })
+        )
     );
 }

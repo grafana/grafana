@@ -8,6 +8,7 @@ export interface OptionsPaneItemProps {
   description?: string;
   Component: ComponentType;
   skipLabel?: boolean;
+  showIf?: () => boolean;
 }
 
 /**
@@ -48,8 +49,12 @@ export class OptionsPaneItemDescriptor {
   }
 
   render(isSearching?: boolean) {
-    const { title, description, Component } = this.props;
+    const { title, description, Component, showIf } = this.props;
     const key = `${this.parent.props.id}${title}`;
+
+    if (showIf && !showIf()) {
+      return null;
+    }
 
     return (
       <Field label={this.getLabel(isSearching)} description={description} key={key}>
