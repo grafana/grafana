@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
 import { get as lodashGet, set as lodashSet } from 'lodash';
 import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -7,31 +7,16 @@ import { updateDefaultFieldConfigValue } from './utils';
 import { OptionsPaneCategoryDescriptor, OptionsPaneItemDescriptor } from './OptionsPaneItems';
 
 export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
-  const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, eventBus } = props;
+  const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, dashboard } = props;
   const currentOptions = panel.getOptions();
   const currentFieldConfig = panel.fieldConfig;
   const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
-
-  const onOptionChange = useCallback(
-    (key: string, value: any) => {
-      const newOptions = lodashSet({ ...currentOptions }, key, value);
-      onPanelOptionsChanged(newOptions);
-    },
-    [currentOptions, onPanelOptionsChanged]
-  );
-
-  const onDefaultValueChange = useCallback(
-    (name: string, value: any, isCustom: boolean | undefined) => {
-      onFieldConfigsChange(updateDefaultFieldConfigValue(currentFieldConfig, name, value, isCustom));
-    },
-    [currentFieldConfig, onFieldConfigsChange]
-  );
 
   const context: StandardEditorContext<any> = {
     data: data?.series || [],
     replaceVariables: panel.replaceVariables,
     options: currentOptions,
-    eventBus,
+    eventBus: dashboard.events,
     getSuggestions: (scope?: VariableSuggestionsScope) => {
       return getPanelOptionsVariableSuggestions(plugin, data?.series);
     },
@@ -63,10 +48,15 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
         title: pluginOption.name,
         description: pluginOption.description,
         render: function renderEditor() {
+          const onChange = (value: any) => {
+            const newOptions = lodashSet({ ...currentOptions }, pluginOption.path, value);
+            onPanelOptionsChanged(newOptions);
+          };
+
           return (
             <Editor
               value={lodashGet(currentOptions, pluginOption.path)}
-              onChange={(value) => onOptionChange(pluginOption.path, value)}
+              onChange={onChange}
               item={pluginOption}
               context={context}
             />
@@ -107,14 +97,13 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
         title: fieldOption.name,
         description: fieldOption.description,
         render: function renderEditor() {
-          return (
-            <Editor
-              value={value}
-              onChange={(v) => onDefaultValueChange(fieldOption.path, v, fieldOption.isCustom)}
-              item={fieldOption}
-              context={context}
-            />
-          );
+          const onChange = (v: any) => {
+            onFieldConfigsChange(
+              updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, value, fieldOption.isCustom)
+            );
+          };
+
+          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} />;
         },
       })
     );

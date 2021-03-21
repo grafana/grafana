@@ -1,19 +1,12 @@
 import { DataLinksInlineEditor, Input, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
-import React, { useCallback, useMemo } from 'react';
+import React from 'react';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 import { OptionsPaneCategoryDescriptor, OptionsPaneItemDescriptor } from './OptionsPaneItems';
 import { OptionPaneRenderProps } from './types';
 
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
   const { panel, onPanelConfigChange } = props;
-
-  const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
-  //const panelLinksCount = panel && panel.links ? panel.links.length : 0;
-
-  const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
-    onPanelConfigChange,
-  ]);
 
   return new OptionsPaneCategoryDescriptor({
     title: 'Panel frame',
@@ -66,6 +59,9 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         new OptionsPaneItemDescriptor({
           title: 'Panel links',
           render: function renderLinks() {
+            //const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
+            const linkVariablesSuggestions = getPanelLinksVariableSuggestions();
+
             return (
               <DataLinksInlineEditor
                 links={panel.links}
@@ -88,7 +84,12 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           description:
             'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
           render: function renderRepeatOptions() {
-            return <RepeatRowSelect repeat={panel.repeat} onChange={onRepeatRowSelectChange} />;
+            return (
+              <RepeatRowSelect
+                repeat={panel.repeat}
+                onChange={(value: string | null) => onPanelConfigChange('repeat', value)}
+              />
+            );
           },
         })
       )

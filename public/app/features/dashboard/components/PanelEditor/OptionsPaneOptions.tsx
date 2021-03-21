@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, Field, RadioButtonGroup, useStyles } from '@grafana/ui';
-import { usePanelLatestData } from './usePanelLatestData';
-import { OptionPaneRenderProps } from './types';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from 'emotion';
@@ -16,38 +14,28 @@ interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
   dashboard: DashboardModel;
+  data?: PanelData;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
   onPanelOptionsChanged: (options: any) => void;
   onPanelConfigChange: (configKey: string, value: any) => void;
 }
 
-export const OptionsPaneOptions: React.FC<Props> = ({
-  plugin,
-  panel,
-  onFieldConfigsChange,
-  onPanelOptionsChanged,
-  onPanelConfigChange,
-  dashboard,
-}: Props) => {
-  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
+export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState('all');
   const searchRegex = new RegExp(searchQuery, 'i');
   const styles = useStyles(getStyles);
 
-  const optionProps: OptionPaneRenderProps = {
-    panel,
-    onPanelOptionsChanged,
-    onPanelConfigChange,
-    onFieldConfigsChange,
-    plugin,
-    data,
-    eventBus: dashboard.events,
-  };
+  // const [allDefaults, justOverrides] = useMemo(() => {
+  //   return [[getPanelFrameCategory(props), ...getVizualizationOptions(props)], getFieldOverrideCategories(props)];
+  // }, [data, panel, panel.fieldConfig, panel.options, props]);
 
-  const callCategories = [getPanelFrameCategory(optionProps), ...getVizualizationOptions(optionProps)];
-  const justOverrides = getFieldOverrideCategories(optionProps);
-  const allOptions = callCategories;
+  const [allDefaults, justOverrides] = [
+    [getPanelFrameCategory(props), ...getVizualizationOptions(props)],
+    getFieldOverrideCategories(props),
+  ];
+
+  const allOptions = allDefaults.concat(justOverrides);
 
   const radioOptions = [
     { label: 'All', value: 'all' },
@@ -74,7 +62,7 @@ export const OptionsPaneOptions: React.FC<Props> = ({
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
           <div className={styles.mainBox}>
-            {showAllDefaults && callCategories.map((callCategories) => callCategories.render())}
+            {showAllDefaults && allDefaults.map((category) => category.render())}
             {showOnlyOverrides && justOverrides.map((override) => override.render())}
             {showPopular && (
               <OptionsPaneCategory id="Popular options" title="Popular options">

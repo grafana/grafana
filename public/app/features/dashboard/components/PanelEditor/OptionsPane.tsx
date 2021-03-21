@@ -9,6 +9,7 @@ import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
 import { VisualizationSelectPane } from './VisualizationSelectPane';
+import { usePanelLatestData } from './usePanelLatestData';
 
 interface Props {
   plugin: PanelPlugin;
@@ -31,6 +32,7 @@ export const OptionsPane: React.FC<Props> = ({
 }: Props) => {
   const styles = useStyles(getStyles);
   const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
+  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>
@@ -44,6 +46,7 @@ export const OptionsPane: React.FC<Props> = ({
               panel={panel}
               dashboard={dashboard}
               plugin={plugin}
+              data={data}
               onFieldConfigsChange={onFieldConfigsChange}
               onPanelOptionsChanged={onPanelOptionsChanged}
               onPanelConfigChange={onPanelConfigChange}
