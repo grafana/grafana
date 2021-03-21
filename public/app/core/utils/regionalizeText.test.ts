@@ -7,7 +7,7 @@ describe('regionalizeText', () => {
    *
    * mock per https://stackoverflow.com/questions/52868727/how-to-mock-window-navigator-language-using-jest
    */
-  let languageGetter;
+  let languageGetter: jest.SpyInstance;
   beforeEach(() => {
     languageGetter = jest.spyOn(window.navigator, 'language', 'get');
   });
