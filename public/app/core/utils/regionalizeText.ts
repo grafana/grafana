@@ -2,15 +2,14 @@ const TRANSLATIONS_MAP: Record<string, Record<string, string>> = {
   'en-US': {
     ising: 'izing',
   },
-  default: {
+  'default': {
     izing: 'ising',
   },
 };
 
 export function regionalizeText(input: string): string {
   const userLanguage = navigator.language;
-  const language = userLanguage === 'en-US' ? 'en-US' : 'default';
-  const translationsMap = TRANSLATIONS_MAP[language];
+  const translationsMap = TRANSLATIONS_MAP[userLanguage] || TRANSLATIONS_MAP['default'];
 
   // look through translation for user language,
   // return modified string if match found.
