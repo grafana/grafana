@@ -45,6 +45,8 @@ function parseOptionalMeta(str?: string): any {
 /**
  * Parse arrow table to basically a standard dataFrame. Use together with base64StringToArrowTable to get data frame
  * from backend data source response.
+ *
+ * @public
  */
 export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
   const fields: Field[] = [];
@@ -130,8 +132,8 @@ function toArrowVector(field: Field): ArrowVector {
 }
 
 /**
- * @param keepOriginalNames by default, the exported Table will get names that match the
- * display within grafana.  This typically includes any labels defined in the metadata.
+ * @param keepOriginalNames - by default, the exported Table will get names that match the
+ * display within grafana. This typically includes any labels defined in the metadata.
  *
  * When using this function to round-trip data, be sure to set `keepOriginalNames=true`
  */
@@ -180,7 +182,8 @@ export function grafanaDataFrameToArrowTable(data: DataFrame, keepOriginalNames?
 /**
  * Turns arrow table into a base64 encoded string. This is symmetrical to base64StringToArrowTable and can be used
  * to simulate response from backend.
- * @param table
+ *
+ * @public
  */
 export function arrowTableToBase64String(table: Table): string {
   const binstring = Array.prototype.map

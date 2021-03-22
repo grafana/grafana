@@ -19,6 +19,8 @@ import { FetchResponse } from '../services';
  * Single response object from a backend data source. Properties are optional but response should contain at least
  * an error or a some data (but can contain both). Main way to send data is with dataframes attribute as series and
  * tables data attributes are legacy formats.
+ *
+ * @internal
  */
 export interface DataResponse {
   error?: string;
@@ -31,6 +33,8 @@ export interface DataResponse {
 
 /**
  * This is the type of response expected form backend datasource.
+ *
+ * @internal
  */
 export interface BackendDataSourceResponse {
   results: KeyValue<DataResponse>;
