@@ -4,11 +4,11 @@ import { backendSrv } from './backend_srv';
 export class PreferencesService {
   constructor(private resourceUri: string) {}
 
-  async update(preferences: UserPreferencesDTO) {
-    await backendSrv.put(`/api/${this.resourceUri}/preferences`, preferences);
+  update(preferences: UserPreferencesDTO): Promise<any> {
+    return backendSrv.put(`/api/${this.resourceUri}/preferences`, preferences);
   }
 
-  async load(): Promise<UserPreferencesDTO> {
-    return (await backendSrv.get(`/api/${this.resourceUri}/preferences`)) as UserPreferencesDTO;
+  load(): Promise<UserPreferencesDTO> {
+    return backendSrv.get<UserPreferencesDTO>(`/api/${this.resourceUri}/preferences`);
   }
 }
