@@ -1,28 +1,32 @@
-import { FieldType } from '../types/dataFrame';
+import { DataFrame, FieldType } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
 import { StreamingDataFrame } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
   describe('when called with a DataFrame', () => {
-    it('should decode values not supported natively in JSON (e.g. NaN, Infinity)', () => {
-      const json: DataFrameJSON = {
-        schema: {
-          fields: [
-            { name: 'time', type: FieldType.time },
-            { name: 'name', type: FieldType.string },
-            { name: 'value', type: FieldType.number },
-          ],
-        },
-        data: {
-          values: [
-            [100, 200, 300],
-            ['a', 'b', 'c'],
-            [1, 2, 3],
-          ],
-        },
-      };
+    const json: DataFrameJSON = {
+      schema: {
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'name', type: FieldType.string },
+          { name: 'value', type: FieldType.number },
+        ],
+      },
+      data: {
+        values: [
+          [100, 200, 300],
+          ['a', 'b', 'c'],
+          [1, 2, 3],
+        ],
+      },
+    };
 
-      const stream = new StreamingDataFrame(json);
+    const stream = new StreamingDataFrame(json, {
+      maxLength: 5,
+      maxDelta: 300,
+    });
+
+    it('should create frame with schema & data', () => {
       expect(stream.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
         Array [
           Object {
@@ -51,8 +55,10 @@ describe('Streaming JSON', () => {
           },
         ]
       `);
+    });
 
-      stream.update({
+    it('should append new data to frame', () => {
+      stream.push({
         data: {
           values: [[400], ['d'], [4]],
         },
@@ -90,5 +96,117 @@ describe('Streaming JSON', () => {
         ]
       `);
     });
+
+    it('should append new data and slice based on maxDelta', () => {
+      stream.push({
+        data: {
+          values: [[500], ['e'], [5]],
+        },
+      });
+
+      expect(stream.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "name": "time",
+            "value": Array [
+              200,
+              300,
+              400,
+              500,
+            ],
+          },
+          Object {
+            "name": "name",
+            "value": Array [
+              "b",
+              "c",
+              "d",
+              "e",
+            ],
+          },
+          Object {
+            "name": "value",
+            "value": Array [
+              2,
+              3,
+              4,
+              5,
+            ],
+          },
+        ]
+      `);
+    });
+
+    it('should append new data and slice based on maxLength', () => {
+      stream.push({
+        data: {
+          values: [
+            [501, 502, 503],
+            ['f', 'g', 'h'],
+            [6, 7, 8, 9],
+          ],
+        },
+      });
+
+      expect(stream.fields.map((f) => ({ name: f.name, value: f.values.buffer }))).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "name": "time",
+            "value": Array [
+              400,
+              500,
+              501,
+              502,
+              503,
+            ],
+          },
+          Object {
+            "name": "name",
+            "value": Array [
+              "d",
+              "e",
+              "f",
+              "g",
+              "h",
+            ],
+          },
+          Object {
+            "name": "value",
+            "value": Array [
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+            ],
+          },
+        ]
+      `);
+    });
+  });
+
+  describe('lengths property is accurate', () => {
+    const stream = new StreamingDataFrame(
+      {
+        schema: {
+          fields: [{ name: 'simple', type: FieldType.number }],
+        },
+        data: {
+          values: [[100]],
+        },
+      },
+      {
+        maxLength: 5,
+      }
+    );
+    expect(stream.length).toEqual(1);
+    stream.push({
+      data: { values: [[200]] },
+    });
+    expect(stream.length).toEqual(2);
+
+    const copy = ({ ...stream } as any) as DataFrame;
+    expect(copy.length).toEqual(2);
   });
 });

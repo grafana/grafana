@@ -88,7 +88,7 @@ export function runSignalStream(
       }
 
       const event = { data };
-      return frame.update(event);
+      return frame.push(event);
     };
 
     // Fill the buffer on init
