@@ -9,12 +9,30 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type streamSender struct {
-	channel          string
-	channelPublisher channelPublisher
+//go:generate mockgen -destination=mock.go -package=features github.com/grafana/grafana/pkg/services/live/features ChannelPublisher,PresenceGetter,PluginContextGetter,StreamRunner
+
+type ChannelPublisher interface {
+	Publish(channel string, data []byte) error
 }
 
-func newStreamSender(channel string, publisher channelPublisher) *streamSender {
+type PresenceGetter interface {
+	GetNumSubscribers(channel string) (int, error)
+}
+
+type PluginContextGetter interface {
+	GetPluginContext(ctx context.Context, pluginID string, datasourceUID string) (backend.PluginContext, bool, error)
+}
+
+type StreamRunner interface {
+	RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error
+}
+
+type streamSender struct {
+	channel          string
+	channelPublisher ChannelPublisher
+}
+
+func newStreamSender(channel string, publisher ChannelPublisher) *streamSender {
 	return &streamSender{channel: channel, channelPublisher: publisher}
 }
 
@@ -22,27 +40,17 @@ func (p *streamSender) Send(packet *backend.StreamPacket) error {
 	return p.channelPublisher.Publish(p.channel, packet.Payload)
 }
 
+// PluginRunner can handle streaming operations for channels belonging to plugins.
 type PluginRunner struct {
 	pluginID            string
 	datasourceUID       string
-	pluginContextGetter pluginContextGetter
+	pluginContextGetter PluginContextGetter
 	handler             backend.StreamHandler
 	streamManager       *StreamManager
 }
 
-type pluginContextGetter interface {
-	GetPluginContext(ctx context.Context, pluginID string, datasourceUID string) (backend.PluginContext, bool, error)
-}
-
-type channelPublisher interface {
-	Publish(channel string, data []byte) error
-}
-
-type presenceGetter interface {
-	GetNumSubscribers(channel string) (int, error)
-}
-
-func NewPluginRunner(pluginID string, datasourceUID string, streamManager *StreamManager, pluginContextGetter pluginContextGetter, handler backend.StreamHandler) *PluginRunner {
+// NewPluginRunner creates new PluginRunner.
+func NewPluginRunner(pluginID string, datasourceUID string, streamManager *StreamManager, pluginContextGetter PluginContextGetter, handler backend.StreamHandler) *PluginRunner {
 	return &PluginRunner{
 		pluginID:            pluginID,
 		datasourceUID:       datasourceUID,
@@ -58,22 +66,23 @@ func (m *PluginRunner) GetHandlerForPath(path string) (models.ChannelHandler, er
 		path:                path,
 		pluginID:            m.pluginID,
 		datasourceUID:       m.datasourceUID,
-		pluginContextGetter: m.pluginContextGetter,
-		handler:             m.handler,
 		streamManager:       m.streamManager,
+		handler:             m.handler,
+		pluginContextGetter: m.pluginContextGetter,
 	}, nil
 }
 
+// PluginPathRunner can handle streaming operations for channels belonging to plugin specific path.
 type PluginPathRunner struct {
 	path                string
 	pluginID            string
 	datasourceUID       string
-	pluginContextGetter pluginContextGetter
-	handler             backend.StreamHandler
 	streamManager       *StreamManager
+	handler             backend.StreamHandler
+	pluginContextGetter PluginContextGetter
 }
 
-// OnSubscribe ...
+// OnSubscribe passes control to a plugin.
 func (r *PluginPathRunner) OnSubscribe(client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	pCtx, found, err := r.pluginContextGetter.GetPluginContext(client.Context(), r.pluginID, r.datasourceUID)
 	if err != nil {
@@ -84,7 +93,7 @@ func (r *PluginPathRunner) OnSubscribe(client *centrifuge.Client, e centrifuge.S
 		logger.Error("Plugin context not found", "path", r.path)
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 	}
-	resp, err := r.handler.CanSubscribeToStream(context.Background(), &backend.SubscribeToStreamRequest{
+	resp, err := r.handler.CanSubscribeToStream(client.Context(), &backend.SubscribeToStreamRequest{
 		PluginContext: pCtx,
 		Path:          r.path,
 	})
@@ -107,7 +116,7 @@ func (r *PluginPathRunner) OnSubscribe(client *centrifuge.Client, e centrifuge.S
 	}, nil
 }
 
-// OnPublish ...
+// OnPublish passes control to a plugin.
 func (r *PluginPathRunner) OnPublish(_ *centrifuge.Client, _ centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-	return centrifuge.PublishReply{}, fmt.Errorf("can not publish to plugin")
+	return centrifuge.PublishReply{}, fmt.Errorf("not implemented yet")
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 )
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
@@ -241,7 +240,7 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 	pluginID := c.Params("pluginId")
 
-	pCtx, found, err := plugincontext.Get(pluginID, "", hs.PluginManager, c.SignedInUser, hs.CacheService, hs.Bus, hs.DatasourceCache)
+	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser)
 	if err != nil {
 		return response.Error(500, "Failed to get plugin settings", err)
 	}
@@ -283,7 +282,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 
-	pCtx, found, err := plugincontext.Get(pluginID, "", hs.PluginManager, c.SignedInUser, hs.CacheService, hs.Bus, hs.DatasourceCache)
+	pCtx, found, err := hs.PluginContextProvider.Get(pluginID, "", c.SignedInUser)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
 		return
