@@ -38,6 +38,17 @@ func (r RoleType) Includes(other RoleType) bool {
 	return r == other
 }
 
+func (r RoleType) Children() []RoleType {
+	switch r {
+	case ROLE_ADMIN:
+		return []RoleType{ROLE_EDITOR, ROLE_VIEWER}
+	case ROLE_EDITOR:
+		return []RoleType{ROLE_VIEWER}
+	default:
+		return nil
+	}
+}
+
 func (r *RoleType) UnmarshalJSON(data []byte) error {
 	var str string
 	err := json.Unmarshal(data, &str)
