@@ -87,13 +87,6 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
                   repeat={panel.repeat}
                   onChange={(value: string | null) => {
                     onPanelConfigChange('repeat', value);
-
-                    // Set of clear repeatDirection
-                    if (value && !panel.repeatDirection) {
-                      onPanelConfigChange('repeatDirection', 'h');
-                    } else if (!value) {
-                      onPanelConfigChange('repeatDirection', undefined);
-                    }
                   }}
                 />
               );

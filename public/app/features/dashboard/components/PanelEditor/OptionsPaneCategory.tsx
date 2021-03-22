@@ -11,23 +11,28 @@ export interface OptionsPaneCategoryProps {
   id: string;
   title?: string;
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
-  defaultToClosed?: boolean;
+  isOpenDefault?: boolean;
+  isOpen?: boolean;
   className?: string;
-  nested?: boolean;
+  isNested?: boolean;
   children: ReactNode;
 }
 
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
-  ({ id, title, children, defaultToClosed, renderTitle, className, nested = false }) => {
-    const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), { isExpanded: !defaultToClosed });
-    const [isExpanded, setExpanded] = useState(savedState.isExpanded);
+  ({ id, title, children, isOpen, isOpenDefault, renderTitle, className, isNested = false }) => {
+    const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), { isExpanded: !isOpenDefault });
+    const [isExpandedState, setExpandedState] = useState(savedState.isExpanded);
+
+    // isOpen from props can override any saved internal state
+    const isExpanded = isOpen !== undefined ? isOpen : isExpandedState;
+
     const theme = useTheme();
-    const styles = getStyles(theme, isExpanded, nested);
+    const styles = getStyles(theme, isExpanded, isNested);
 
     const onToggle = useCallback(() => {
       setSavedState({ isExpanded: !isExpanded });
-      setExpanded(!isExpanded);
-    }, [setSavedState, isExpanded, setExpanded]);
+      setExpandedState(!isExpanded);
+    }, [setSavedState, isExpanded, setExpandedState]);
 
     return (
       <div className={cx(styles.box, className, 'options-group')}>

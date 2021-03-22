@@ -59,8 +59,8 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
           padding-left: 0;
           padding-right: 0;
         `}
-        nested
-        defaultToClosed={property.value !== undefined}
+        isNested
+        isOpenDefault={property.value !== undefined}
       >
         <item.override
           value={property.value}
