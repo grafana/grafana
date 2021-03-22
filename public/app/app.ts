@@ -4,8 +4,6 @@ import 'regenerator-runtime/runtime';
 
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'; // fetch polyfill needed for PhantomJs rendering
-// @ts-ignore
-import ttiPolyfill from 'tti-polyfill';
 
 import 'file-saver';
 import 'jquery';
@@ -23,7 +21,7 @@ import {
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
+import { registerEchoBackend, setEchoSrv, setPanelRenderer, setQueryRunnerFactory } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -39,6 +37,8 @@ import { configureStore } from './store/configureStore';
 import { AppWrapper } from './AppWrapper';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { AngularApp } from './angular/AngularApp';
+import { PanelRenderer } from './features/panel/PanelRenderer';
+import { QueryRunner } from './features/query/state/QueryRunner';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -65,6 +65,7 @@ export class GrafanaApp {
     initEchoSrv();
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
+    setPanelRenderer(PanelRenderer);
     setTimeZoneResolver(() => config.bootData.user.timezone);
     // Important that extensions are initialized before store
     initExtensions();
@@ -75,6 +76,7 @@ export class GrafanaApp {
     standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
 
+    setQueryRunnerFactory(() => new QueryRunner());
     setVariableQueryRunner(new VariableQueryRunner());
 
     // intercept anchor clicks and forward it to custom history instead of relying on browser's history
@@ -111,17 +113,24 @@ function initExtensions() {
 function initEchoSrv() {
   setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
 
-  ttiPolyfill.getFirstConsistentlyInteractive().then((tti: any) => {
+  window.addEventListener('load', (e) => {
     // Collecting paint metrics first
-    const paintMetrics = performance && performance.getEntriesByType ? performance.getEntriesByType('paint') : [];
+    if (performance && performance.getEntriesByType) {
+      performance.mark('load');
 
-    for (const metric of paintMetrics) {
-      reportPerformance(metric.name, Math.round(metric.startTime + metric.duration));
+      const paintMetrics = performance.getEntriesByType('paint');
+
+      for (const metric of paintMetrics) {
+        reportPerformance(metric.name, Math.round(metric.startTime + metric.duration));
+      }
+
+      const loadMetric = performance.getEntriesByName('load')[0];
+      reportPerformance(loadMetric.name, Math.round(loadMetric.startTime + loadMetric.duration));
     }
-    reportPerformance('tti', tti);
   });
 
   registerEchoBackend(new PerformanceBackend({}));
+
   if (config.sentry.enabled) {
     registerEchoBackend(
       new SentryEchoBackend({
