@@ -161,9 +161,7 @@ export const PanelOptionsTab: FC<Props> = ({
           <Select
             options={maxPerRowOptions}
             value={panel.maxPerRow}
-            onChange={(value) => {
-              value && onPanelConfigChange('maxPerRow', value.value);
-            }}
+            onChange={(value) => onPanelConfigChange('maxPerRow', value.value)}
           />
         </Field>
       )}

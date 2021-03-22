@@ -51,11 +51,10 @@ export const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDis
           prefix={'base'}
           width={12}
           onChange={(v) => {
-            v &&
-              onChange({
-                ...value,
-                log: v.value!,
-              });
+            onChange({
+              ...value,
+              log: v.value!,
+            });
           }}
         />
       )}

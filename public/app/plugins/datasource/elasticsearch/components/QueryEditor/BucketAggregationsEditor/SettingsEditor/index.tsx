@@ -35,9 +35,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
         <>
           <InlineField label="Order" {...inlineFieldProps}>
             <Select
-              onChange={(e) => {
-                e && dispatch(changeBucketAggregationSetting(bucketAgg, 'order', e.value!));
-              }}
+              onChange={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'order', e.value!))}
               options={orderOptions}
               value={bucketAgg.settings?.order || bucketAggregationConfig[bucketAgg.type].defaultSettings?.order}
             />
@@ -45,9 +43,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
 
           <InlineField label="Size" {...inlineFieldProps}>
             <Select
-              onChange={(e) => {
-                e && dispatch(changeBucketAggregationSetting(bucketAgg, 'size', e.value!));
-              }}
+              onChange={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'size', e.value!))}
               options={sizeOptions}
               value={bucketAgg.settings?.size || bucketAggregationConfig[bucketAgg.type].defaultSettings?.size}
               allowCustomValue
@@ -56,9 +52,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
 
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
-              onBlur={(e) => {
-                e && dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!));
-              }}
+              onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
               defaultValue={
                 bucketAgg.settings?.min_doc_count ||
                 bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
@@ -68,9 +62,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
 
           <InlineField label="Order By" {...inlineFieldProps}>
             <Select
-              onChange={(e) => {
-                e && dispatch(changeBucketAggregationSetting(bucketAgg, 'orderBy', e.value!));
-              }}
+              onChange={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'orderBy', e.value!))}
               options={orderBy}
               value={bucketAgg.settings?.orderBy || bucketAggregationConfig[bucketAgg.type].defaultSettings?.orderBy}
             />
@@ -102,9 +94,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
         <>
           <InlineField label="Interval" {...inlineFieldProps}>
             <Select
-              onChange={(e) => {
-                e && dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.value!));
-              }}
+              onChange={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.value!))}
               options={intervalOptions}
               value={bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval}
               allowCustomValue

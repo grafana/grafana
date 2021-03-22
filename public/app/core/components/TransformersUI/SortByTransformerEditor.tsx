@@ -40,7 +40,7 @@ export const SortByTransformerEditor: React.FC<TransformerUIProps<SortByTransfor
                 value={fieldNames.find((v) => v.value === s.field)}
                 placeholder="Select field"
                 onChange={(v) => {
-                  v && onSortChange(index, { ...s, field: v.value! });
+                  onSortChange(index, { ...s, field: v.value! });
                 }}
               />
             </InlineField>

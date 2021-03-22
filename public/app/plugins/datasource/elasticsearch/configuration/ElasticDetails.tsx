@@ -83,9 +83,6 @@ export const ElasticDetails = (props: Props) => {
               <Select
                 options={esVersions}
                 onChange={(option) => {
-                  if (!option) {
-                    return;
-                  }
                   const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
                     value.jsonData.maxConcurrentShardRequests,
                     option.value!

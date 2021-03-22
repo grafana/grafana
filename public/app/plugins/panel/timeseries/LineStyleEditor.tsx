@@ -94,11 +94,10 @@ export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>>
             value={current}
             width={20}
             onChange={(v) => {
-              v &&
-                onChange({
-                  ...value,
-                  dash: parseText(v.value ?? ''),
-                });
+              onChange({
+                ...value,
+                dash: parseText(v.value ?? ''),
+              });
             }}
             formatCreateLabel={(t) => `Segments: ${parseText(t).join(', ')}`}
           />

@@ -17,9 +17,7 @@ export function NodeGraphEditor({ query, onChange }: Props) {
             value: o,
           }))}
           value={options.find((item) => item === type)}
-          onChange={(value) => {
-            value && onChange({ ...query.nodes, type: value.value! });
-          }}
+          onChange={(value) => onChange({ ...query.nodes, type: value.value! })}
           width={32}
         />
       </InlineField>

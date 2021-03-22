@@ -171,9 +171,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
             isSearchable={true}
             options={panels}
             value={selected}
-            onChange={(item) => {
-              item && this.onPanelChanged(item.value!);
-            }}
+            onChange={(item) => this.onPanelChanged(item.value!)}
           />
         </div>
         <div className={css({ padding: '16px' })}>{query.panelId && this.renderQueryData(editURL)}</div>

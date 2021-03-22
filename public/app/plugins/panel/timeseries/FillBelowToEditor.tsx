@@ -40,7 +40,7 @@ export const FillBellowToEditor: React.FC<FieldOverrideEditorProps<string, any>>
       options={names}
       value={current}
       onChange={(v) => {
-        v && onChange(v.value);
+        onChange(v.value);
       }}
     />
   );

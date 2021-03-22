@@ -13,9 +13,7 @@ export const OrgRolePicker: FC<Props> = ({ value, onChange, ...restProps }) => (
   <Select
     value={value}
     options={options}
-    onChange={(val) => {
-      val && onChange(val.value as OrgRole);
-    }}
+    onChange={(val) => onChange(val.value as OrgRole)}
     placeholder="Choose role..."
     {...restProps}
   />

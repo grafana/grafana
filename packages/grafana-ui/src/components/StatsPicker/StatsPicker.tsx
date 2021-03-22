@@ -52,7 +52,7 @@ export class StatsPicker extends PureComponent<Props> {
     }
   };
 
-  onSelectionChange = (item: SelectableValue<string> | null) => {
+  onSelectionChange = (item: SelectableValue<string>) => {
     const { onChange } = this.props;
     if (Array.isArray(item)) {
       onChange(item.map((v) => v.value));

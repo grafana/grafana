@@ -66,9 +66,7 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
         value={current}
         defaultValue={value}
         allowCustomValue={settings?.allowCustomValue}
-        onChange={(change) => {
-          change && onChange(change.value);
-        }}
+        onChange={(e) => onChange(e.value)}
         options={options}
       />
     );

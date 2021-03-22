@@ -109,7 +109,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = (props) => {
               options={authProviderOptions}
               defaultValue={dataSourceConfig.jsonData.sigV4AuthType || ''}
               onChange={(option) => {
-                option && onJsonDataChange('sigV4AuthType', option.value);
+                onJsonDataChange('sigV4AuthType', option.value);
               }}
             />
           </div>
@@ -243,9 +243,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = (props) => {
               value={regions.find((region) => region.value === dataSourceConfig.jsonData.sigV4Region)}
               options={regions}
               defaultValue={dataSourceConfig.jsonData.sigV4Region || ''}
-              onChange={(option) => {
-                option && onJsonDataChange('sigV4Region', option.value);
-              }}
+              onChange={(option) => onJsonDataChange('sigV4Region', option.value)}
             />
           </div>
         </div>
