@@ -1,14 +1,25 @@
 import React from 'react';
 import { cloneDeep } from 'lodash';
-import { SelectableValue } from '@grafana/data';
+import {
+  FieldConfigOptionsRegistry,
+  SelectableValue,
+  isSystemOverride as isSystemOverrideGuard,
+  FieldConfigProperty,
+  VariableSuggestionsScope,
+  DynamicConfigValue,
+} from '@grafana/data';
 import { Container, fieldMatchersUI, ValuePicker } from '@grafana/ui';
-import { OverrideEditor } from './OverrideEditor';
 import { OptionPaneRenderProps } from './types';
-import { OptionsPaneCategoryDescriptor } from './OptionsPaneItems';
+import { OptionsPaneCategoryDescriptor, OptionsPaneItemDescriptor } from './OptionsPaneItems';
+import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import { OverrideCategoryTitle } from './OverrideCategoryTitle';
 
 export function getFieldOverrideCategories(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = props.panel.fieldConfig;
+  const registry = props.plugin.fieldConfigRegistry;
+  const data = props.data?.series ?? [];
 
   const onOverrideChange = (index: number, override: any) => {
     let overrides = cloneDeep(currentFieldConfig.overrides);
@@ -37,29 +48,138 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
     });
   };
 
+  const context = {
+    data,
+    getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+  };
+
   for (let idx = 0; idx < currentFieldConfig.overrides.length; idx++) {
     const override = currentFieldConfig.overrides[idx];
-    const name = `Override ${idx + 1}`;
+    const overrideName = `Override ${idx + 1}`;
+    const matcherUi = fieldMatchersUI.get(override.matcher.id);
+    const configPropertiesOptions = getOverrideProperties(registry);
+    const isSystemOverride = isSystemOverrideGuard(override);
 
-    categories.push(
-      new OptionsPaneCategoryDescriptor({
-        title: name,
-        id: name,
-        customRender: function renderOverrideRule() {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: overrideName,
+      id: overrideName,
+      renderTitle: function renderOverrideTitle(isExpanded: boolean) {
+        return (
+          <OverrideCategoryTitle
+            override={override}
+            isExpanded={isExpanded}
+            registry={registry}
+            overrideName={overrideName}
+            matcherUi={matcherUi}
+            onOverrideRemove={() => onOverrideRemove(idx)}
+          />
+        );
+      },
+    });
+
+    const onMatcherConfigChange = (options: any) => {
+      override.matcher.options = options;
+      onOverrideChange(idx, override);
+    };
+
+    const onDynamicConfigValueAdd = (value: SelectableValue<string>) => {
+      const registryItem = registry.get(value.value!);
+      const propertyConfig: DynamicConfigValue = {
+        id: registryItem.id,
+        value: registryItem.defaultValue,
+      };
+
+      if (override.properties) {
+        override.properties.push(propertyConfig);
+      } else {
+        override.properties = [propertyConfig];
+      }
+
+      onOverrideChange(idx, override);
+    };
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: matcherUi.name,
+        Component: function renderMatcherUI() {
           return (
-            <OverrideEditor
-              name={name}
-              key={name}
-              data={props.data?.series || []}
-              override={override}
-              onChange={(value) => onOverrideChange(idx, value)}
-              onRemove={() => onOverrideRemove(idx)}
-              registry={props.plugin.fieldConfigRegistry}
+            <matcherUi.component
+              matcher={matcherUi.matcher}
+              data={props.data?.series ?? []}
+              options={override.matcher.options}
+              onChange={onMatcherConfigChange}
             />
           );
         },
       })
     );
+
+    for (let propIdx = 0; propIdx < override.properties.length; propIdx++) {
+      const property = override.properties[propIdx];
+      const registryItemForProperty = registry.getIfExists(property.id);
+
+      if (!registryItemForProperty) {
+        continue;
+      }
+
+      const isCollapsible =
+        Array.isArray(property.value) || COLLECTION_STANDARD_PROPERTIES.includes(property.id as FieldConfigProperty);
+
+      const onPropertyChange = (value: any) => {
+        override.properties[propIdx].value = value;
+        onOverrideChange(idx, override);
+      };
+
+      const onPropertyRemove = () => {
+        override.properties.splice(propIdx, 1);
+        onOverrideChange(idx, override);
+      };
+
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: registryItemForProperty.name,
+          skipField: true,
+          Component: function renderPropertyEditor() {
+            return (
+              <DynamicConfigValueEditor
+                key={`${property.id}/${propIdx}`}
+                isCollapsible={isCollapsible}
+                isSystemOverride={isSystemOverride}
+                onChange={onPropertyChange}
+                onRemove={onPropertyRemove}
+                property={property}
+                registry={registry}
+                context={context}
+              />
+            );
+          },
+        })
+      );
+    }
+
+    if (!isSystemOverride && override.matcher.options) {
+      category.addItem(
+        new OptionsPaneItemDescriptor({
+          title: '----------',
+          skipField: true,
+          Component: function renderAddPropertyButton() {
+            return (
+              <ValuePicker
+                label="Add override property"
+                variant="secondary"
+                isFullWidth={false}
+                icon="plus"
+                menuPlacement="auto"
+                options={configPropertiesOptions}
+                onChange={onDynamicConfigValueAdd}
+              />
+            );
+          },
+        })
+      );
+    }
+
+    categories.push(category);
   }
 
   categories.push(
@@ -71,16 +191,16 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
           <Container padding="md" key="Add override">
             <ValuePicker
               icon="plus"
-              label="Add an override"
+              label="Add a field override"
               variant="secondary"
               size="sm"
               menuPlacement="auto"
+              isFullWidth={false}
               options={fieldMatchersUI
                 .list()
                 .filter((o) => !o.excludeFromPicker)
                 .map<SelectableValue<string>>((i) => ({ label: i.name, value: i.id, description: i.description }))}
               onChange={(value) => onOverrideAdd(value)}
-              isFullWidth={true}
             />
           </Container>
         );
@@ -101,19 +221,25 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
   return categories;
 }
 
-// function getOverrideProperties(plugin: PanelPlugin) {
-//   return plugin.fieldConfigRegistry
-//     .list()
-//     .filter((o) => !o.hideFromOverrides)
-//     .map((item) => {
-//       let label = item.name;
-//       if (item.category && item.category.length > 1) {
-//         label = [...item.category!.slice(1), item.name].join(' > ');
-//       }
-//       return {
-//         label,
-//         value: item.id,
-//         description: item.description,
-//       };
-//     });
-// }
+const COLLECTION_STANDARD_PROPERTIES = [
+  FieldConfigProperty.Thresholds,
+  FieldConfigProperty.Links,
+  FieldConfigProperty.Mappings,
+];
+
+function getOverrideProperties(registry: FieldConfigOptionsRegistry) {
+  return registry
+    .list()
+    .filter((o) => !o.hideFromOverrides)
+    .map((item) => {
+      let label = item.name;
+      if (item.category && item.category.length > 1) {
+        label = [...item.category!.slice(1), item.name].join(' > ');
+      }
+      return {
+        label,
+        value: item.id,
+        description: item.description,
+      };
+    });
+}

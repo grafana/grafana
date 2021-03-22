@@ -30,15 +30,14 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   if (!item) {
     return null;
   }
+
+  const labelCategory = item.category?.filter((c) => c !== item.name);
   let editor;
 
   // eslint-disable-next-line react/display-name
   const renderLabel = (includeDescription = true, includeCounter = false) => (isExpanded = false) => (
     <HorizontalGroup justify="space-between">
-      <Label
-        category={item.category?.filter((c) => c !== undefined) as string[]}
-        description={includeDescription ? item.description : undefined}
-      >
+      <Label category={labelCategory} description={includeDescription ? item.description : undefined}>
         {item.name}
         {!isExpanded && includeCounter && item.getItemsCount && <Counter value={item.getItemsCount(property.value)} />}
       </Label>

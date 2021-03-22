@@ -7,7 +7,7 @@ export interface OptionsPaneItemProps {
   value?: any;
   description?: string;
   Component: ComponentType;
-  skipLabel?: boolean;
+  skipField?: boolean;
   showIf?: () => boolean;
 }
 
@@ -24,7 +24,7 @@ export class OptionsPaneItemDescriptor {
 
     if (!isSearching) {
       // Do not render label for categories with only one child
-      if (this.parent.items.length === 1) {
+      if (this.parent.props.title === title) {
         return null;
       }
 
@@ -49,11 +49,15 @@ export class OptionsPaneItemDescriptor {
   }
 
   render(isSearching?: boolean) {
-    const { title, description, Component, showIf } = this.props;
+    const { title, description, Component, showIf, skipField } = this.props;
     const key = `${this.parent.props.id}${title}`;
 
     if (showIf && !showIf()) {
       return null;
+    }
+
+    if (skipField) {
+      return <Component />;
     }
 
     return (
@@ -70,7 +74,7 @@ export interface OptionsPaneCategoryProps {
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   defaultToClosed?: boolean;
   className?: string;
-  nested?: boolean;
+  isNested?: boolean;
   customRender?: () => React.ReactNode;
 }
 
@@ -91,7 +95,7 @@ export class OptionsPaneCategoryDescriptor {
   }
 
   addCategory(category: OptionsPaneCategoryDescriptor) {
-    category.props.nested = true;
+    category.props.isNested = true;
     category.parent = this;
     this.categories.push(category);
     return this;
