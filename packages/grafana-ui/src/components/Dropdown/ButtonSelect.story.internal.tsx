@@ -3,7 +3,6 @@ import { action } from '@storybook/addon-actions';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { SelectableValue } from '@grafana/data';
 import { ButtonSelect } from './ButtonSelect';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
@@ -26,8 +25,8 @@ export default {
 };
 
 export const Basic: Story = (args) => {
-  const value: SelectableValue<string> = { label: 'A label', value: 'A value' };
-  const options: SelectableValue<string> = [value, { label: 'Another label', value: 'Another value' }];
+  const value = { label: 'A label', value: 'A value' };
+  const options = [value, { label: 'Another label', value: 'Another value' }];
   return (
     <DashboardStoryCanvas>
       <UseState initialState={value}>
