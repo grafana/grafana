@@ -66,7 +66,7 @@ function circPush(data: number[][], newData: number[][], deltaIdx = 0, maxDelta 
  */
 export interface StreamingFrameOptions {
   maxLength?: number; // 1000
-  maxSeconds?: number; // how long to keep things
+  maxDelta?: number; // how long to keep things
 }
 
 /**
@@ -88,10 +88,11 @@ export class StreamingDataFrame implements DataFrame {
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
       maxLength: 1000,
+      maxDelta: Infinity,
       ...opts,
     };
 
-    this.update(frame);
+    this.push(frame);
   }
 
   get length() {
@@ -105,7 +106,7 @@ export class StreamingDataFrame implements DataFrame {
    * apply the new message to the existing data.  This will replace the existing schema
    * if a new schema is included in the message, or append data matching the current schema
    */
-  update(msg: DataFrameJSON) {
+  push(msg: DataFrameJSON) {
     const { schema, data } = msg;
     if (schema) {
       // Keep old values if they are the same shape
@@ -145,7 +146,7 @@ export class StreamingDataFrame implements DataFrame {
     if (data && data.values.length && data.values[0].length) {
       const { values, entities } = data;
       if (values.length !== this.fields.length) {
-        throw new Error('update message mismatch');
+        throw new Error('push message mismatch');
       }
 
       if (entities) {
@@ -159,9 +160,7 @@ export class StreamingDataFrame implements DataFrame {
 
       let curValues = this.fields.map((f) => f.values.buffer);
 
-      let maxMillis = (this.options.maxSeconds || Infinity) * 1e3;
-
-      let appended = circPush(curValues, values, this.timeFieldIndex, maxMillis, this.options.maxLength);
+      let appended = circPush(curValues, values, this.timeFieldIndex, this.options.maxDelta, this.options.maxLength);
 
       appended.forEach((v, i) => {
         this.fields[i].values.buffer = v;
