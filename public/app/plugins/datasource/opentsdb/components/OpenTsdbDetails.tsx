@@ -1,6 +1,6 @@
 import React, { SyntheticEvent } from 'react';
-import { EventsWithValidation, regexValidation, InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField } = LegacyForms;
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+const { Select, Input } = LegacyForms;
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { OpenTsdbOptions } from '../types';
 
@@ -52,30 +52,6 @@ export const OpenTsdbDetails = (props: Props) => {
           value={value.jsonData.lookupLimit ?? 1000}
           onChange={onInputChangeHandler('lookupLimit', value, onChange)}
         />
-      </div>
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <FormField
-            labelWidth={7}
-            label="Min time interval"
-            inputEl={
-              <Input
-                className={'width-6'}
-                value={value.jsonData.interval || ''}
-                onChange={onInputChangeHandler('interval', value, onChange)}
-                placeholder="1m"
-                validationEvents={{
-                  [EventsWithValidation.onBlur]: [
-                    regexValidation(
-                      /^\d+(ms|[Mwdhmsy])$/,
-                      'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
-                    ),
-                  ],
-                }}
-              />
-            }
-          />
-        </div>
       </div>
     </>
   );
