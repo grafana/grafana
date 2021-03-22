@@ -5,6 +5,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -226,15 +227,38 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
-// This may be temporary, as there might be a fair amount we want to display in the frontend, and it might not make sense to store that in data.Frame.
-// For the first pass, I would expect a Frame with a single row, and a column for each instance with a boolean value.
+// It displays one row per alert instance, with a column for each label and one for the alerting state.
 func (evalResults Results) AsDataFrame() data.Frame {
-	fields := make([]*data.Field, 0)
+	fieldLen := len(evalResults)
+
+	uniqueLabelKeys := make(map[string]struct{})
+
 	for _, evalResult := range evalResults {
-		fields = append(fields, data.NewField("", evalResult.Instance, []string{evalResult.State.String()}))
+		for k := range evalResult.Instance {
+			uniqueLabelKeys[k] = struct{}{}
+		}
 	}
-	f := data.NewFrame("", fields...)
-	return *f
+
+	labelColumns := make([]string, 0, len(uniqueLabelKeys))
+	for k := range uniqueLabelKeys {
+		labelColumns = append(labelColumns, k)
+	}
+
+	labelColumns = sort.StringSlice(labelColumns)
+
+	frame := data.NewFrame("evaluation results")
+	for _, lKey := range labelColumns {
+		frame.Fields = append(frame.Fields, data.NewField(lKey, nil, make([]string, fieldLen)))
+	}
+	frame.Fields = append(frame.Fields, data.NewField("State", nil, make([]string, fieldLen)))
+
+	for evalIdx, evalResult := range evalResults {
+		for lIdx, v := range labelColumns {
+			frame.Set(lIdx, evalIdx, evalResult.Instance[v])
+		}
+		frame.Set(len(labelColumns), evalIdx, evalResult.State.String())
+	}
+	return *frame
 }
 
 // ConditionEval executes conditions and evaluates the result.
