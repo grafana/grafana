@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// AccessControlService is the service implementing role based access control.
-type AccessControlService struct {
+// Manager is the service implementing role based access control.
+type Manager struct {
 	Cfg           *setting.Cfg          `inject:""`
 	RouteRegister routing.RouteRegister `inject:""`
 	Log           log.Logger
@@ -21,14 +21,14 @@ type AccessControlService struct {
 }
 
 func init() {
-	registry.RegisterService(&AccessControlService{})
+	registry.RegisterService(&Manager{})
 }
 
-// Init initializes the AccessControlService.
-func (ac *AccessControlService) Init() error {
-	ac.Log = log.New("accesscontrol")
+// Init initializes the Manager.
+func (m *Manager) Init() error {
+	m.Log = log.New("accesscontrol")
 
-	seeder := seeder.NewSeeder(ac, ac.Log)
+	seeder := seeder.NewSeeder(m, m.Log)
 
 	// TODO: Seed all orgs
 	err := seeder.Seed(context.TODO(), 1)
@@ -39,13 +39,13 @@ func (ac *AccessControlService) Init() error {
 	return nil
 }
 
-func (ac *AccessControlService) IsDisabled() bool {
-	_, exists := ac.Cfg.FeatureToggles["accesscontrol"]
+func (m *Manager) IsDisabled() bool {
+	_, exists := m.Cfg.FeatureToggles["accesscontrol"]
 	return !exists
 }
 
-func (ac *AccessControlService) AddMigration(mg *migrator.Migrator) {
-	if ac.IsDisabled() {
+func (m *Manager) AddMigration(mg *migrator.Migrator) {
+	if m.IsDisabled() {
 		return
 	}
 

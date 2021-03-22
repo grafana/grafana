@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setupTestEnv(t testing.TB) *AccessControlService {
+func setupTestEnv(t testing.TB) *Manager {
 	t.Helper()
 
 	cfg := setting.NewCfg()
@@ -34,10 +34,10 @@ func setupTestEnv(t testing.TB) *AccessControlService {
 	return &ac
 }
 
-func overrideAccessControlInRegistry(t testing.TB, cfg *setting.Cfg) AccessControlService {
+func overrideAccessControlInRegistry(t testing.TB, cfg *setting.Cfg) Manager {
 	t.Helper()
 
-	ac := AccessControlService{
+	ac := Manager{
 		Cfg:           cfg,
 		RouteRegister: routing.NewRouteRegister(),
 		Log:           log.New("accesscontrol-test"),
@@ -47,7 +47,7 @@ func overrideAccessControlInRegistry(t testing.TB, cfg *setting.Cfg) AccessContr
 	}
 
 	overrideServiceFunc := func(descriptor registry.Descriptor) (*registry.Descriptor, bool) {
-		if _, ok := descriptor.Instance.(*AccessControlService); ok {
+		if _, ok := descriptor.Instance.(*Manager); ok {
 			return &registry.Descriptor{
 				Name:         "AccessControl",
 				Instance:     &ac,

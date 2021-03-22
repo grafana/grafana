@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func (ac *AccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
+func (m *Manager) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
 	roles := []string{string(user.OrgRole)}
 	for _, role := range user.OrgRole.Children() {
 		roles = append(roles, string(role))
@@ -18,7 +18,7 @@ func (ac *AccessControlService) Evaluate(ctx context.Context, user *models.Signe
 		roles = append(roles, "Grafana Admin")
 	}
 
-	res, err := ac.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
+	res, err := m.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
 		OrgID:  user.OrgId,
 		UserID: user.UserId,
 		Roles:  roles,
