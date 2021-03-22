@@ -16,7 +16,7 @@
   },
   "basePath": "/api/v1",
   "paths": {
-    "/alertmanager/{DatasourceId}/api/v2/alerts": {
+    "/alertmanager/{Recipient}/api/v2/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -67,7 +67,8 @@
           },
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -106,7 +107,8 @@
           },
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -127,7 +129,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceId}/api/v2/alerts/groups": {
+    "/alertmanager/{Recipient}/api/v2/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -178,7 +180,8 @@
           },
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -199,7 +202,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceId}/api/v2/silence/{SilenceId}": {
+    "/alertmanager/{Recipient}/api/v2/silence/{SilenceId}": {
       "get": {
         "description": "get silence",
         "tags": [
@@ -215,7 +218,8 @@
           },
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -250,7 +254,8 @@
           },
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -271,7 +276,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceId}/api/v2/silences": {
+    "/alertmanager/{Recipient}/api/v2/silences": {
       "get": {
         "description": "get silences",
         "tags": [
@@ -281,7 +286,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -317,7 +323,8 @@
           },
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -338,7 +345,7 @@
         }
       }
     },
-    "/alertmanager/{DatasourceId}/config/api/v1/alerts": {
+    "/alertmanager/{Recipient}/config/api/v1/alerts": {
       "get": {
         "description": "gets an Alerting config",
         "tags": [
@@ -348,7 +355,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -384,7 +392,8 @@
           },
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -413,7 +422,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -510,7 +520,7 @@
         }
       }
     },
-    "/prometheus/{DatasourceId}/api/v1/alerts": {
+    "/prometheus/{Recipient}/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
         "tags": [
@@ -520,7 +530,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -535,7 +546,7 @@
         }
       }
     },
-    "/prometheus/{DatasourceId}/api/v1/rules": {
+    "/prometheus/{Recipient}/api/v1/rules": {
       "get": {
         "description": "gets the evaluation statuses of all rules",
         "tags": [
@@ -545,7 +556,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -560,7 +572,7 @@
         }
       }
     },
-    "/ruler/{DatasourceId}/api/v1/rules": {
+    "/ruler/{Recipient}/api/v1/rules": {
       "get": {
         "description": "List rule groups",
         "produces": [
@@ -573,7 +585,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           }
@@ -588,7 +601,7 @@
         }
       }
     },
-    "/ruler/{DatasourceId}/api/v1/rules/{Namespace}": {
+    "/ruler/{Recipient}/api/v1/rules/{Namespace}": {
       "get": {
         "description": "Get rule groups by namespace",
         "produces": [
@@ -601,7 +614,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -634,7 +648,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -670,7 +685,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -691,7 +707,7 @@
         }
       }
     },
-    "/ruler/{DatasourceId}/api/v1/rules/{Namespace}/{Groupname}": {
+    "/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}": {
       "get": {
         "description": "Get rule group",
         "produces": [
@@ -704,7 +720,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },
@@ -739,7 +756,8 @@
         "parameters": [
           {
             "type": "string",
-            "name": "DatasourceId",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
             "in": "path",
             "required": true
           },

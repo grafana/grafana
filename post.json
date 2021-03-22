@@ -2973,7 +2973,7 @@
   "version": "1.0.0"
  },
  "paths": {
-  "/alertmanager/{DatasourceId}/api/v2/alerts": {
+  "/alertmanager/{Recipient}/api/v2/alerts": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetAmAlerts",
@@ -3020,8 +3020,9 @@
       "x-go-name": "Receivers"
      },
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3059,8 +3060,9 @@
       }
      },
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3084,7 +3086,7 @@
     ]
    }
   },
-  "/alertmanager/{DatasourceId}/api/v2/alerts/groups": {
+  "/alertmanager/{Recipient}/api/v2/alerts/groups": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetAmAlertGroups",
@@ -3131,8 +3133,9 @@
       "x-go-name": "Receivers"
      },
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3156,7 +3159,7 @@
     ]
    }
   },
-  "/alertmanager/{DatasourceId}/api/v2/silence/{SilenceId}": {
+  "/alertmanager/{Recipient}/api/v2/silence/{SilenceId}": {
    "delete": {
     "description": "delete silence",
     "operationId": "RouteDeleteSilence",
@@ -3168,8 +3171,9 @@
       "type": "string"
      },
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3203,8 +3207,9 @@
       "type": "string"
      },
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3228,14 +3233,15 @@
     ]
    }
   },
-  "/alertmanager/{DatasourceId}/api/v2/silences": {
+  "/alertmanager/{Recipient}/api/v2/silences": {
    "get": {
     "description": "get silences",
     "operationId": "RouteGetSilences",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3270,8 +3276,9 @@
       }
      },
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3295,14 +3302,15 @@
     ]
    }
   },
-  "/alertmanager/{DatasourceId}/config/api/v1/alerts": {
+  "/alertmanager/{Recipient}/config/api/v1/alerts": {
    "delete": {
     "description": "deletes the Alerting config for a tenant",
     "operationId": "RouteDeleteAlertingConfig",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3330,8 +3338,9 @@
     "operationId": "RouteGetAlertingConfig",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3366,8 +3375,9 @@
       }
      },
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3467,14 +3477,15 @@
     ]
    }
   },
-  "/prometheus/{DatasourceId}/api/v1/alerts": {
+  "/prometheus/{Recipient}/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
     "operationId": "RouteGetAlertStatuses",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3492,14 +3503,15 @@
     ]
    }
   },
-  "/prometheus/{DatasourceId}/api/v1/rules": {
+  "/prometheus/{Recipient}/api/v1/rules": {
    "get": {
     "description": "gets the evaluation statuses of all rules",
     "operationId": "RouteGetRuleStatuses",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3517,14 +3529,15 @@
     ]
    }
   },
-  "/ruler/{DatasourceId}/api/v1/rules": {
+  "/ruler/{Recipient}/api/v1/rules": {
    "get": {
     "description": "List rule groups",
     "operationId": "RouteGetRulesConfig",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      }
@@ -3545,14 +3558,15 @@
     ]
    }
   },
-  "/ruler/{DatasourceId}/api/v1/rules/{Namespace}": {
+  "/ruler/{Recipient}/api/v1/rules/{Namespace}": {
    "delete": {
     "description": "Delete namespace",
     "operationId": "RouteDeleteNamespaceRulesConfig",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      },
@@ -3580,8 +3594,9 @@
     "operationId": "RouteGetNamespaceRulesConfig",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      },
@@ -3616,8 +3631,9 @@
     "operationId": "RoutePostNameRulesConfig",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      },
@@ -3648,14 +3664,15 @@
     ]
    }
   },
-  "/ruler/{DatasourceId}/api/v1/rules/{Namespace}/{Groupname}": {
+  "/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}": {
    "delete": {
     "description": "Delete rule group",
     "operationId": "RouteDeleteRuleGroupConfig",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      },
@@ -3689,8 +3706,9 @@
     "operationId": "RouteGetRulegGroupConfig",
     "parameters": [
      {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
       "in": "path",
-      "name": "DatasourceId",
+      "name": "Recipient",
       "required": true,
       "type": "string"
      },
