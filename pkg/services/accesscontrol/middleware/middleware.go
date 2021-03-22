@@ -31,7 +31,7 @@ func Middleware(ac accesscontrol.AccessControl) func(string, ...string) macaron.
 				scopes[i] = buf.String()
 			}
 
-			hasAccess, err := ac.Evaluate(context.TODO(), c.SignedInUser, permission, scopes...)
+			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, permission, scopes...)
 			if err != nil {
 				c.Logger.Error("Error from access control system", "error", err)
 				c.JsonApiErr(http.StatusForbidden, "Forbidden", nil)
