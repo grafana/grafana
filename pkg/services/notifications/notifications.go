@@ -83,7 +83,7 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 				ns.log.Error("Failed to send webrequest ", "error", err)
 			}
 		case msg := <-ns.mailQueue:
-			num, err := ns.send(msg)
+			num, err := ns.Send(msg)
 			tos := strings.Join(msg.To, "; ")
 			info := ""
 			if err != nil {
@@ -133,7 +133,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 		return err
 	}
 
-	_, err = ns.send(message)
+	_, err = ns.Send(message)
 	return err
 }
 
