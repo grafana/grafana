@@ -120,6 +120,16 @@ type CanBeDisabled interface {
 	IsDisabled() bool
 }
 
+// CanBeReloaded allows the services to decide if it should
+// be reloaded after every settings update. This is useful
+// for services that rely on settings that may be updated on
+// runtime. This will be called by the settings provider.
+type CanBeReloaded interface {
+	// Reload is similar to Service.Init but
+	// with an already initialized service instance.
+	Reload() error
+}
+
 // BackgroundService should be implemented for services that have
 // long running tasks in the background.
 type BackgroundService interface {
