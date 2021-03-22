@@ -402,6 +402,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "PlaylistNewPage"*/ 'app/features/playlist/PlaylistNewPage')
       ),
     },
+    {
+      path: '/playlists/edit/:id',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "PlaylistEditPage"*/ 'app/features/playlist/PlaylistEditPage')
+      ),
+    },
     ...extraRoutes,
     {
       path: '/*',

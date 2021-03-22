@@ -1,9 +1,10 @@
 import React, { FC, MouseEvent } from 'react';
-import { Icon, IconButton, useStyles } from '@grafana/ui';
-import { TagBadge } from '../../core/components/TagFilter/TagBadge';
-import { PlaylistItem } from './playlist_edit_ctrl';
-import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
+import { Icon, IconButton, useStyles } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
+
+import { TagBadge } from '../../core/components/TagFilter/TagBadge';
+import { PlaylistItem } from './types';
 
 interface PlaylistTableRowProps {
   first: boolean;
@@ -17,15 +18,15 @@ interface PlaylistTableRowProps {
 export const PlaylistTableRow: FC<PlaylistTableRowProps> = ({ item, onDelete, onMoveDown, onMoveUp, first, last }) => {
   const styles = useStyles(getStyles);
   const onDeleteClick = (event: MouseEvent) => {
-    event.stopPropagation();
+    event.preventDefault();
     onDelete(item);
   };
   const onMoveDownClick = (event: MouseEvent) => {
-    event.stopPropagation();
+    event.preventDefault();
     onMoveDown(item);
   };
   const onMoveUpClick = (event: MouseEvent) => {
-    event.stopPropagation();
+    event.preventDefault();
     onMoveUp(item);
   };
 

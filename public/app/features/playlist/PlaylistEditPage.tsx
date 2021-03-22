@@ -7,7 +7,7 @@ import { StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from '../../core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PlaylistForm } from './PlaylistForm';
-import { createPlaylist } from './api';
+import { updatePlaylist } from './api';
 import { Playlist } from './types';
 import { locationService } from '@grafana/runtime';
 import { usePlaylist } from './usePlaylist';
@@ -16,12 +16,16 @@ interface ConnectedProps {
   navModel: NavModel;
 }
 
-interface Props extends ConnectedProps, GrafanaRouteComponentProps {}
+export interface RouteParams {
+  id: number;
+}
 
-export const PlaylistNewPage: FC<Props> = ({ navModel }) => {
-  const { playlist, loading } = usePlaylist();
+interface Props extends ConnectedProps, GrafanaRouteComponentProps<RouteParams> {}
+
+export const PlaylistEditPage: FC<Props> = ({ navModel, match }) => {
+  const { playlist, loading } = usePlaylist(match.params.id);
   const onSubmit = async (playlist: Playlist) => {
-    await createPlaylist(playlist);
+    await updatePlaylist(match.params.id, playlist);
     locationService.push('/playlists');
   };
 
@@ -30,7 +34,7 @@ export const PlaylistNewPage: FC<Props> = ({ navModel }) => {
       <Page.Contents isLoading={loading}>
         <div className="page-container page-body" ng-form="ctrl.playlistEditForm">
           <h3 className="page-sub-heading" ng-show="ctrl.isNew">
-            New Playlist
+            Edit Playlist
           </h3>
 
           <p className="playlist-description">
@@ -50,4 +54,4 @@ const mapStateToProps: MapStateToProps<ConnectedProps, {}, StoreState> = (state:
   navModel: getNavModel(state.navIndex, 'playlists'),
 });
 
-export default connect(mapStateToProps)(PlaylistNewPage);
+export default connect(mapStateToProps)(PlaylistEditPage);

@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
+
 import { PlaylistTableRow } from './PlaylistTableRow';
-import { PlaylistItem } from './playlist_edit_ctrl';
+import { PlaylistItem } from './types';
 
 interface PlaylistTableRowsProps {
   items: PlaylistItem[];
