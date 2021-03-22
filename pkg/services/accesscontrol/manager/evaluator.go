@@ -9,13 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+const roleGrafanaAdmin = "Grafana Admin"
+
 func (m *Manager) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
 	roles := []string{string(user.OrgRole)}
 	for _, role := range user.OrgRole.Children() {
 		roles = append(roles, string(role))
 	}
 	if user.IsGrafanaAdmin {
-		roles = append(roles, "Grafana Admin")
+		roles = append(roles, roleGrafanaAdmin)
 	}
 
 	res, err := m.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
