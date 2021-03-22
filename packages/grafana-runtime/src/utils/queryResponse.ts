@@ -26,6 +26,8 @@ export interface DataResponse {
 
 /**
  * This is the type of response expected form backend datasource.
+ *
+ * @private
  */
 export interface BackendDataSourceResponse {
   results: KeyValue<DataResponse>;
