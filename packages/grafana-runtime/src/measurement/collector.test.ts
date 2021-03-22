@@ -65,6 +65,7 @@ describe('MeasurementCollector', () => {
         "meta": undefined,
         "name": undefined,
         "options": Object {
+          "maxDelta": Infinity,
           "maxLength": 600,
         },
         "refId": undefined,
