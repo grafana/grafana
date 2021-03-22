@@ -9,15 +9,13 @@ import {
   FieldType,
   MutableDataFrame,
 } from '@grafana/data';
-
-import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
-import { Observable, from, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { serializeParams } from 'app/core/utils/fetch';
-import { createGraphFrames } from './graphTransform';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { createTraceFrame } from './responseTransform';
+import { createGraphFrames } from './graphTransform';
 
 export type JaegerQuery = {
   query: string;
@@ -107,16 +105,14 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
-    // Hack for proxying metadata requests
-    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
     const params = data ? serializeParams(data) : '';
-    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
+    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
       ...options,
       url,
     };
 
-    return from(getBackendSrv().datasourceRequest(req));
+    return getBackendSrv().fetch(req);
   }
 }
 

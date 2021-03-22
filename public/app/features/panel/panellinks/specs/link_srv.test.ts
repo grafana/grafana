@@ -424,4 +424,28 @@ describe('getDataFrameVars', () => {
       ]);
     });
   });
+
+  describe('when called with multiple DataFrames', () => {
+    it('it should not return any suggestions', () => {
+      const frame1 = toDataFrame({
+        name: 'server1',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', type: FieldType.number, values: [10, 11, 12] },
+        ],
+      });
+
+      const frame2 = toDataFrame({
+        name: 'server2',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', type: FieldType.number, values: [10, 11, 12] },
+        ],
+      });
+
+      const suggestions = getDataFrameVars([frame1, frame2]);
+
+      expect(suggestions).toEqual([]);
+    });
+  });
 });

@@ -7,6 +7,7 @@ import {
   DataFrameFieldIndex,
   FieldMatcherID,
   fieldMatchers,
+  FieldType,
   TimeRange,
   TimeZone,
 } from '@grafana/data';
@@ -92,7 +93,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     return {
       ...state,
-      data: preparePlotData(frame),
+      data: preparePlotData(frame, [FieldType.string]),
       alignedDataFrame: frame,
       seriesToDataFrameFieldIndexMap: frame.fields.map((f) => f.state!.origin!),
       dimFields,
