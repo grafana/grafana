@@ -45,9 +45,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return !!(
       item.hide !== true &&
       item.azureMonitor.resourceGroup &&
+      item.azureMonitor.resourceGroup !== defaultDropdownValue &&
       item.azureMonitor.resourceName &&
+      item.azureMonitor.resourceName !== defaultDropdownValue &&
       item.azureMonitor.metricDefinition &&
-      item.azureMonitor.metricName
+      item.azureMonitor.metricDefinition !== defaultDropdownValue &&
+      item.azureMonitor.metricName &&
+      item.azureMonitor.metricName !== defaultDropdownValue
     );
   }
 
