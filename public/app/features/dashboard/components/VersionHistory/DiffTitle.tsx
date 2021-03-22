@@ -2,7 +2,7 @@ import React from 'react';
 import { useStyles, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
-import { Diff, getChangeText } from './utils';
+import { Diff, getDiffText } from './utils';
 import { DiffValues } from './DiffValues';
 
 type DiffTitleProps = {
@@ -10,17 +10,19 @@ type DiffTitleProps = {
   title: string;
 };
 
+const replaceDiff: Diff = { op: 'replace', originalValue: undefined, path: [], value: undefined, startLineNumber: 0 };
+
 export const DiffTitle: React.FC<DiffTitleProps> = ({ diff, title }) => {
   const styles = useStyles(getDiffTitleStyles);
   return diff ? (
     <>
       <Icon type="mono" name="circle" className={styles[diff.op]} /> <span className={styles.embolden}>{title}</span>{' '}
-      <span>{getChangeText(diff.op)}</span> <DiffValues diff={diff} />
+      <span>{getDiffText(diff, false)}</span> <DiffValues diff={diff} />
     </>
   ) : (
     <div className={styles.withoutDiff}>
       <Icon type="mono" name="circle" className={styles.replace} /> <span className={styles.embolden}>{title}</span>{' '}
-      <span>{getChangeText('replace')}</span>
+      <span>{getDiffText(replaceDiff, false)}</span>
     </div>
   );
 };

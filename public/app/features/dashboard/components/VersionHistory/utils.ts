@@ -66,12 +66,38 @@ export const jsonDiff = (lhs: any, rhs: any): Diffs => {
   return _.flow([getDiffInformation, sortByLineNumber, groupByPath])(diffs);
 };
 
-export const getChangeText = (operation: string): string => {
-  if (operation === 'replace') {
-    return 'changed';
+export const getDiffText = (diff: Diff, showProp = true) => {
+  let text = getDiffOperationText(diff.op);
+  const prop = _.last(diff.path)!;
+
+  if (diff.op === 'add' || diff.op === 'remove') {
+    const val = diff.op === 'add' ? diff.value : diff.originalValue;
+
+    if (_.isArray(val)) {
+      if (!_.isEmpty(val)) {
+        text += isNumeric(prop) ? ` item ${prop}` : ` ${val.length} ${prop}`;
+      } else {
+        text += ` ${prop}`;
+      }
+    } else {
+      text += isNumeric(prop) ? ` item ${prop}` : ` ${prop}`;
+    }
+  } else {
+    if (showProp) {
+      text += isNumeric(prop) ? ` item ${prop}` : ` ${prop}`;
+    }
+  }
+  return text;
+};
+
+const isNumeric = (value: string) => !_.isNaN(_.toNumber(value));
+
+export const getDiffOperationText = (operation: string): string => {
+  if (operation === 'add') {
+    return 'added';
   }
   if (operation === 'remove') {
     return 'deleted';
   }
-  return 'added';
+  return 'changed';
 };
