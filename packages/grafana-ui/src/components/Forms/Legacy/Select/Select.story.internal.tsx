@@ -39,7 +39,7 @@ export default {
   },
 };
 
-const value: SelectableValue<string> = { label: 'A label', value: 'A value' };
+const value = { label: 'A label', value: 'A value' };
 
 const options = [
   value,
