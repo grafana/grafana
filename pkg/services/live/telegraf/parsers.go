@@ -5,7 +5,7 @@ import (
 	"github.com/influxdata/telegraf/plugins/parsers/influx"
 )
 
+// NewInfluxParser returns new metric parser.
 func NewInfluxParser() parsers.Parser {
-	handler := influx.NewMetricHandler()
-	return influx.NewParser(handler)
+	return influx.NewParser(influx.NewMetricHandler())
 }
