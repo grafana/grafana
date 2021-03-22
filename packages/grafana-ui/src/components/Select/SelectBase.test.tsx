@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { mount, ReactWrapper } from 'enzyme';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import { SelectBase } from './SelectBase';
 import { SelectableValue } from '@grafana/data';
@@ -41,6 +42,25 @@ describe('SelectBase', () => {
     );
 
     expect(screen.getByLabelText('My select')).toBeInTheDocument();
+  });
+
+  it('allows the value to be unset', async () => {
+    const Test = () => {
+      const option = { value: 'test-value', label: 'Test label' };
+      const [value, setValue] = useState<SelectableValue<string> | null>(option);
+
+      return (
+        <>
+          <button onClick={() => setValue(null)}>clear value</button>
+          <SelectBase value={value} onChange={setValue} options={[option]} />
+        </>
+      );
+    };
+
+    render(<Test />);
+    expect(screen.queryByText('Test label')).toBeInTheDocument();
+    userEvent.click(screen.getByText('clear value'));
+    expect(screen.queryByText('Test label')).not.toBeInTheDocument();
   });
 
   describe('when openMenuOnFocus prop', () => {
