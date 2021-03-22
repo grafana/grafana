@@ -13,15 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/live"
-	"github.com/grafana/grafana/pkg/services/live/telegraf"
-	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/shorturls"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/tsdb"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -31,21 +22,31 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
+	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/live/telegraf"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	macaron "gopkg.in/macaron.v1"
@@ -66,6 +67,7 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
+	PluginContextProvider  *plugincontext.Provider                 `inject:""`
 	RouteRegister          routing.RouteRegister                   `inject:""`
 	Bus                    bus.Bus                                 `inject:""`
 	RenderService          rendering.Service                       `inject:""`
@@ -77,7 +79,7 @@ type HTTPServer struct {
 	QuotaService           *quota.QuotaService                     `inject:""`
 	RemoteCacheService     *remotecache.RemoteCache                `inject:""`
 	ProvisioningService    provisioning.ProvisioningService        `inject:""`
-	Login                  *login.LoginService                     `inject:""`
+	Login                  login.Service                           `inject:""`
 	License                models.Licensing                        `inject:""`
 	BackendPluginManager   backendplugin.Manager                   `inject:""`
 	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
@@ -117,8 +119,9 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	hs.httpSrv = &http.Server{
-		Addr:    net.JoinHostPort(host, hs.Cfg.HTTPPort),
-		Handler: hs.macaron,
+		Addr:        net.JoinHostPort(host, hs.Cfg.HTTPPort),
+		Handler:     hs.macaron,
+		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 	switch hs.Cfg.Protocol {
 	case setting.HTTP2Scheme:

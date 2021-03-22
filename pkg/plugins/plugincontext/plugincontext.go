@@ -5,32 +5,46 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/bus"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-type cacheService interface {
-	Get(k string) (interface{}, bool)
-	Set(k string, x interface{}, d time.Duration)
+func init() {
+	registry.Register(&registry.Descriptor{
+		Name:     "PluginContextProvider",
+		Instance: newProvider(),
+	})
 }
 
-type busDispatcher interface {
-	Dispatch(msg bus.Msg) error
+func newProvider() *Provider {
+	return &Provider{}
 }
 
-type datasourceGetter interface {
-	GetDatasourceByUID(datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+type Provider struct {
+	Bus             bus.Bus                  `inject:""`
+	CacheService    *localcache.CacheService `inject:""`
+	PluginManager   plugins.Manager          `inject:""`
+	DatasourceCache datasources.CacheService `inject:""`
 }
 
-func Get(pluginID string, datasourceUID string, pluginManager plugins.Manager, user *models.SignedInUser, cacheService cacheService, busDispatcher busDispatcher, datasourceGetter datasourceGetter) (backend.PluginContext, bool, error) {
+func (p *Provider) Init() error {
+	return nil
+}
+
+// Get allows getting plugin context by its id. If datasourceUID is not empty string
+// then PluginContext.DataSourceInstanceSettings will be resolved and appended to
+// returned context.
+func (p *Provider) Get(pluginID string, datasourceUID string, user *models.SignedInUser) (backend.PluginContext, bool, error) {
 	pc := backend.PluginContext{}
-	plugin := pluginManager.GetPlugin(pluginID)
+	plugin := p.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
 		return pc, false, nil
 	}
@@ -39,7 +53,7 @@ func Get(pluginID string, datasourceUID string, pluginManager plugins.Manager, u
 	decryptedSecureJSONData := map[string]string{}
 	var updated time.Time
 
-	ps, err := getCachedPluginSettings(pluginID, user, cacheService, busDispatcher)
+	ps, err := p.getCachedPluginSettings(pluginID, user)
 	if err != nil {
 		// models.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
@@ -67,7 +81,7 @@ func Get(pluginID string, datasourceUID string, pluginManager plugins.Manager, u
 	}
 
 	if datasourceUID != "" {
-		ds, err := datasourceGetter.GetDatasourceByUID(datasourceUID, user, false)
+		ds, err := p.DatasourceCache.GetDatasourceByUID(datasourceUID, user, false)
 		if err != nil {
 			return pc, false, errutil.Wrap("Failed to get datasource", err)
 		}
@@ -84,10 +98,10 @@ func Get(pluginID string, datasourceUID string, pluginManager plugins.Manager, u
 const pluginSettingsCacheTTL = 5 * time.Second
 const pluginSettingsCachePrefix = "plugin-setting-"
 
-func getCachedPluginSettings(pluginID string, user *models.SignedInUser, cacheService cacheService, busDispatcher busDispatcher) (*models.PluginSetting, error) {
+func (p *Provider) getCachedPluginSettings(pluginID string, user *models.SignedInUser) (*models.PluginSetting, error) {
 	cacheKey := pluginSettingsCachePrefix + pluginID
 
-	if cached, found := cacheService.Get(cacheKey); found {
+	if cached, found := p.CacheService.Get(cacheKey); found {
 		ps := cached.(*models.PluginSetting)
 		if ps.OrgId == user.OrgId {
 			return ps, nil
@@ -95,10 +109,10 @@ func getCachedPluginSettings(pluginID string, user *models.SignedInUser, cacheSe
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: user.OrgId}
-	if err := busDispatcher.Dispatch(&query); err != nil {
+	if err := p.Bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
 
-	cacheService.Set(cacheKey, query.Result, pluginSettingsCacheTTL)
+	p.CacheService.Set(cacheKey, query.Result, pluginSettingsCacheTTL)
 	return query.Result, nil
 }

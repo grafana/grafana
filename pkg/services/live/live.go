@@ -10,11 +10,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/features"
@@ -47,13 +46,12 @@ type CoreGrafanaScope struct {
 
 // GrafanaLive pretends to be the server
 type GrafanaLive struct {
-	Cfg             *setting.Cfg             `inject:""`
-	RouteRegister   routing.RouteRegister    `inject:""`
-	LogsService     *cloudwatch.LogsService  `inject:""`
-	PluginManager   *manager.PluginManager   `inject:""`
-	Bus             bus.Bus                  `inject:""`
-	CacheService    *localcache.CacheService `inject:""`
-	DatasourceCache datasources.CacheService `inject:""`
+	PluginContextProvider *plugincontext.Provider  `inject:""`
+	Cfg                   *setting.Cfg             `inject:""`
+	RouteRegister         routing.RouteRegister    `inject:""`
+	LogsService           *cloudwatch.LogsService  `inject:""`
+	PluginManager         *manager.PluginManager   `inject:""`
+	DatasourceCache       datasources.CacheService `inject:""`
 
 	node *centrifuge.Node
 
@@ -117,7 +115,7 @@ func (g *GrafanaLive) Init() error {
 	}
 	g.node = node
 
-	g.contextGetter = newPluginContextGetter(g.Bus, g.PluginManager, g.CacheService, g.DatasourceCache)
+	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
 
 	channelPublisher := newPluginChannelPublisher(node)
 	presenceGetter := newPluginPresenceGetter(node)

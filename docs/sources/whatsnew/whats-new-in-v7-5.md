@@ -148,3 +148,13 @@ For more information on Grafana Enterprise licensing and restrictions, refer to 
 ## Breaking changes
 
 There are no known breaking changes in this release.
+
+## Updated configuration
+
+```
+[server]
+read_timeout = 0
+```
+
+Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
+`0` means there is no timeout for reading the request.

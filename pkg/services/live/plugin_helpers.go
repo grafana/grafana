@@ -4,14 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
-	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type pluginChannelPublisher struct {
@@ -47,18 +42,12 @@ func (p *pluginPresenceGetter) GetNumSubscribers(channel string) (int, error) {
 }
 
 type pluginContextGetter struct {
-	PluginManager   plugins.Manager
-	Bus             bus.Bus
-	Cache           *localcache.CacheService
-	DatasourceCache datasources.CacheService
+	PluginContextProvider *plugincontext.Provider
 }
 
-func newPluginContextGetter(bus bus.Bus, pluginManager plugins.Manager, cache *localcache.CacheService, datasourceCache datasources.CacheService) *pluginContextGetter {
+func newPluginContextGetter(pluginContextProvider *plugincontext.Provider) *pluginContextGetter {
 	return &pluginContextGetter{
-		PluginManager:   pluginManager,
-		DatasourceCache: datasourceCache,
-		Bus:             bus,
-		Cache:           cache,
+		PluginContextProvider: pluginContextProvider,
 	}
 }
 
@@ -67,5 +56,5 @@ func (g *pluginContextGetter) GetPluginContext(ctx context.Context, pluginID str
 	if !ok {
 		return backend.PluginContext{}, false, fmt.Errorf("no signed user found in context")
 	}
-	return plugincontext.Get(pluginID, datasourceUID, g.PluginManager, user, g.Cache, g.Bus, g.DatasourceCache)
+	return g.PluginContextProvider.Get(pluginID, datasourceUID, user)
 }
