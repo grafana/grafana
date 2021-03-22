@@ -11,7 +11,13 @@ export { loadPluginCss, SystemJS, PluginCssOptions } from './utils/plugin';
 export { reportMetaAnalytics } from './utils/analytics';
 export { logInfo, logDebug, logWarning, logError } from './utils/logging';
 export { DataSourceWithBackend, HealthCheckResult, HealthStatus } from './utils/DataSourceWithBackend';
-export { toDataQueryError, toDataQueryResponse, frameToMetricFindValue } from './utils/queryResponse';
+export {
+  toDataQueryError,
+  toDataQueryResponse,
+  frameToMetricFindValue,
+  BackendDataSourceResponse,
+  DataResponse,
+} from './utils/queryResponse';
 export { PanelRenderer, PanelRendererProps, PanelRendererType, setPanelRenderer } from './components/PanelRenderer';
 export { setQueryRunnerFactory, createQueryRunner, QueryRunnerFactory } from './services/QueryRunner';
 export { DataSourcePicker, DataSourcePickerProps, DataSourcePickerState } from './components/DataSourcePicker';

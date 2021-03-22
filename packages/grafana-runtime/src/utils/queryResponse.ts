@@ -13,13 +13,31 @@ import {
   FieldType,
   DataQuery,
 } from '@grafana/data';
+import { FetchResponse } from '../services';
 
-interface DataResponse {
+/**
+ * Single response object from a backend data source. Properties are optional but response should contain at least
+ * an error or a some data (but can contain both). Main way to send data is with dataframes attribute as series and
+ * tables data attributes are legacy formats.
+ *
+ * @internal
+ */
+export interface DataResponse {
   error?: string;
   refId?: string;
+  // base64 encoded arrow tables
   dataframes?: string[];
   series?: TimeSeries[];
   tables?: TableData[];
+}
+
+/**
+ * This is the type of response expected form backend datasource.
+ *
+ * @internal
+ */
+export interface BackendDataSourceResponse {
+  results: KeyValue<DataResponse>;
 }
 
 /**
@@ -30,17 +48,24 @@ interface DataResponse {
  *
  * @public
  */
-export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryResponse {
+export function toDataQueryResponse(
+  res:
+    | { data: BackendDataSourceResponse | undefined }
+    | FetchResponse<BackendDataSourceResponse | undefined>
+    | DataQueryError,
+  queries?: DataQuery[]
+): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
-  if (res.data?.results) {
-    const results: KeyValue = res.data.results;
+  // If the response isn't in a correct shape we just ignore the data and pass empty DataQueryResponse.
+  if ((res as FetchResponse).data?.results) {
+    const results = (res as FetchResponse).data.results;
     const resultIDs = Object.keys(results);
     const refIDs = queries ? queries.map((q) => q.refId) : resultIDs;
     const usedResultIDs = new Set<string>(resultIDs);
     const data: DataResponse[] = [];
 
     for (const refId of refIDs) {
-      const dr = results[refId] as DataResponse;
+      const dr = results[refId];
       if (!dr) {
         continue;
       }
@@ -52,7 +77,7 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
     // Add any refIds that do not match the query targets
     if (usedResultIDs.size) {
       for (const refId of usedResultIDs) {
-        const dr = results[refId] as DataResponse;
+        const dr = results[refId];
         if (!dr) {
           continue;
         }
@@ -110,12 +135,12 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
   }
 
   // When it is not an OK response, make sure the error gets added
-  if (res.status && res.status !== 200) {
+  if ((res as FetchResponse).status && (res as FetchResponse).status !== 200) {
     if (rsp.state !== LoadingState.Error) {
       rsp.state = LoadingState.Error;
     }
     if (!rsp.error) {
-      rsp.error = toDataQueryError(res);
+      rsp.error = toDataQueryError(res as DataQueryError);
     }
   }
 
@@ -128,7 +153,7 @@ export function toDataQueryResponse(res: any, queries?: DataQuery[]): DataQueryR
  *
  * @public
  */
-export function toDataQueryError(err: any): DataQueryError {
+export function toDataQueryError(err: DataQueryError | string | Object): DataQueryError {
   const error = (err || {}) as DataQueryError;
 
   if (!error.message) {
