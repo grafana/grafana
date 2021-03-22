@@ -71,7 +71,7 @@ const (
 	Normal state = iota
 
 	// Alerting is the eval state for an alert instance condition
-	// that evaluated to false.
+	// that evaluated to true (Alerting).
 	Alerting
 
 	// NoData is the eval state for an alert rule condition
@@ -79,7 +79,7 @@ const (
 	NoData
 
 	// Error is the eval state for an alert rule condition
-	// that evaluated to NoData.
+	// that evaluated to Error.
 	Error
 )
 
