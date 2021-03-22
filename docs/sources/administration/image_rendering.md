@@ -29,7 +29,7 @@ Alert notifications can include images, but rendering many images at the same ti
 
 The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) is a plugin that runs on the backend and handles rendering panels and dashboards as PNG images using headless Chrome.
 
-To install the plugin, refer to the [Grafana Image Renderer Installation instructions](https://grafana.com/grafana/plugins/grafana-image-renderer/installation).
+To install the plugin, refer to the [Grafana Image Renderer Installation instructions](https://grafana.com/grafana/plugins/grafana-image-renderer/?tab=installation).
 
 ## Run in custom Grafana Docker image
 
