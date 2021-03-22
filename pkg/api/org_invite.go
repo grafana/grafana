@@ -186,15 +186,14 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.C
 		SkipOrgSetup: true,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	user, err := hs.Login.CreateUser(cmd)
+	if err != nil {
 		if errors.Is(err, models.ErrUserAlreadyExists) {
 			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", completeInvite.Email, completeInvite.Username), err)
 		}
 
 		return response.Error(500, "failed to create user", err)
 	}
-
-	user := &cmd.Result
 
 	if err := bus.Publish(&events.SignUpCompleted{
 		Name:  user.NameOrFallback(),
@@ -207,7 +206,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.C
 		return rsp
 	}
 
-	err := hs.loginUserWithUser(user, c)
+	err = hs.loginUserWithUser(user, c)
 	if err != nil {
 		return response.Error(500, "failed to accept invite", err)
 	}

@@ -1,5 +1,12 @@
 import { PanelModel } from '../dashboard/state';
 
+export interface LibraryPanelSearchResult {
+  totalCount: number;
+  libraryPanels: LibraryPanelDTO[];
+  perPage: number;
+  page: number;
+}
+
 export interface LibraryPanelDTO {
   id: number;
   orgId: number;

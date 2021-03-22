@@ -17,7 +17,8 @@ import {
   UrlQueryMap,
 } from '@grafana/data';
 import { AppNotificationSeverity } from 'app/types';
-import { Alert, InfoBox, Tooltip } from '@grafana/ui';
+import { Alert, InfoBox, Tooltip, PluginSignatureBadge } from '@grafana/ui';
+
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin, importDataSourcePlugin, importPanelPlugin } from './plugin_loader';
@@ -29,7 +30,6 @@ import { appEvents } from 'app/core/core';
 import { config } from 'app/core/config';
 import { contextSrv } from '../../core/services/context_srv';
 import { css } from 'emotion';
-import { PluginSignatureBadge } from './PluginSignatureBadge';
 import { selectors } from '@grafana/e2e-selectors';
 import { ShowModalEvent } from 'app/types/events';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
