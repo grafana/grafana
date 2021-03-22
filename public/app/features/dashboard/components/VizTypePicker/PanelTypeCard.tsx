@@ -77,6 +77,7 @@ const getStyles = (theme: GrafanaTheme) => {
       width: 100%;
       position: relative;
       overflow: hidden;
+      height: 55px;
 
       &:hover {
         background: ${styleMixins.hoverColor(theme.colors.bg2, theme)};

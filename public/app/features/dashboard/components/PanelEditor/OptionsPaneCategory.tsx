@@ -78,7 +78,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNes
         cursor: pointer;
         align-items: baseline;
         padding: ${theme.spacing.sm};
-        color: ${theme.colors.formLabel};
+        color: ${isExpanded ? theme.colors.text : theme.colors.formLabel};
         font-weight: ${theme.typography.weight.semibold};
 
         &:hover {

@@ -31,6 +31,10 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
     }
   };
 
+  const onCloseVizPicker = () => {
+    dispatch(toggleVizPicker(false));
+  };
+
   const onKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
@@ -65,7 +69,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
   return (
     <div className={styles.openWrapper}>
       <div className={styles.formBox}>
-        <Field className={styles.customFieldMargin}>
+        <div className={styles.searchRow}>
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.currentTarget.value)}
@@ -75,7 +79,8 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
             autoFocus
             placeholder="Search for..."
           />
-        </Field>
+          <Button variant="secondary" icon="angle-up" className={styles.closeButton} onClick={onCloseVizPicker} />
+        </div>
         <Field className={styles.customFieldMargin}>
           <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
         </Field>
@@ -131,6 +136,13 @@ const getStyles = (theme: GrafanaTheme) => {
       height: 100%;
       background: ${theme.colors.bg1};
       border: 1px solid ${theme.colors.border1};
+    `,
+    searchRow: css`
+      display: flex;
+      margin-bottom: ${theme.spacing.sm};
+    `,
+    closeButton: css`
+      margin-left: ${theme.spacing.sm};
     `,
     customFieldMargin: css`
       margin-bottom: ${theme.spacing.sm};

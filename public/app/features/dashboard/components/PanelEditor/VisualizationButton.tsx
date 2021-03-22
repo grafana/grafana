@@ -62,7 +62,7 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
         </ToolbarButton>
         <ToolbarButton
           tooltip={isPanelOptionsVisible ? 'Close options pane' : 'Show options pane'}
-          icon="angle-right"
+          icon={isPanelOptionsVisible ? 'angle-right' : 'angle-left'}
           onClick={onToggleOptionsPane}
           aria-label={selectors.components.PanelEditor.toggleVizOptions}
         />
