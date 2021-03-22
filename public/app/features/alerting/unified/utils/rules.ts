@@ -1,5 +1,5 @@
 import { PromRuleType } from 'app/types/unified-alerting/dto';
-import { AlertingRule, RecordingRule, Rule } from 'app/types/unified-alerting/internal';
+import { Alert, AlertingRule, RecordingRule, Rule } from 'app/types/unified-alerting/internal';
 
 export function isAlertingRule(rule: Rule): rule is AlertingRule {
   return rule.type === PromRuleType.Alerting;
@@ -18,4 +18,8 @@ export function ruleKey(rule: Rule): string {
     rule.name,
     isAlertingRule(rule) ? rule.annotations : rule,
   ]);
+}
+
+export function alertInstanceKey(alert: Alert): string {
+  return JSON.stringify(alert.labels);
 }

@@ -13,6 +13,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     display: inline-block;
     color: white;
     border-radius: 2px;
+    font-size: ${theme.typography.size.sm};
     padding: ${theme.spacing.xs} ${theme.spacing.sm};
     text-transform: capitalize;
   `,

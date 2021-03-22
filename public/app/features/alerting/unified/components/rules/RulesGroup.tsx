@@ -9,6 +9,7 @@ import { StateColoredText } from '../StateColoredText';
 import { CollapseToggle } from '../CollapseToggle';
 import { RulesTable } from './RulesTable';
 import { isCloudRulesSource } from '../../utils/datasource';
+import { ActionIcon } from './ActionIcon';
 
 interface Props {
   namespace: string;
@@ -83,8 +84,8 @@ export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
         </div>
         <div className={styles.actionsSeparator}>|</div>
         <div className={styles.actionIcons}>
-          <Icon title="edit" name="pen" />
-          <Icon title="manage permissions" name="lock" />
+          <ActionIcon icon="pen" tooltip="edit" />
+          <ActionIcon icon="lock" tooltip="manage permissions" />
         </div>
       </div>
       {!isCollapsed && <RulesTable rulesSource={rulesSource} namespace={namespace} group={group} />}

@@ -15,7 +15,7 @@ export const AlertLabel: FC<Props> = ({ labelKey, value }) => (
 );
 
 export const getStyles = (theme: GrafanaTheme) => css`
-  padding: ${theme.spacing.xs};
+  padding: 3px ${theme.spacing.xs};
   border-radius: ${theme.border.radius.sm};
   border: solid 1px #343b40; // @TODO
   font-size: ${theme.typography.size.sm};

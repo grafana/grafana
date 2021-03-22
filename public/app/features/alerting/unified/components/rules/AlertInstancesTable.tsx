@@ -1,11 +1,15 @@
 import { GrafanaTheme } from '@grafana/data';
-import { Button, useStyles } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { AlertingRule } from 'app/types/unified-alerting/internal';
 import { css, cx } from 'emotion';
-import React, { FC } from 'react';
+import React, { FC, Fragment, useState } from 'react';
 import { getAlertTableStyles } from '../../styles/table';
+import { alertInstanceKey } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
+import { CollapseToggle } from '../CollapseToggle';
 import { StateTag } from '../StateTag';
+import { ActionButton } from './ActionButton';
+import { AlertInstanceDetails } from './AlertInstanceDetails';
 
 interface Props {
   instances: AlertingRule['alerts'];
@@ -14,10 +18,26 @@ interface Props {
 export const AlertInstancesTable: FC<Props> = ({ instances }) => {
   const styles = useStyles(getStyles);
   const tableStyles = useStyles(getAlertTableStyles);
+
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+
+  const toggleExpandedState = (ruleKey: string) =>
+    setExpandedKeys(
+      expandedKeys.includes(ruleKey) ? expandedKeys.filter((key) => key !== ruleKey) : [...expandedKeys, ruleKey]
+    );
+
   return (
     <table className={cx(tableStyles.table, styles.table)}>
+      <colgroup>
+        <col className={styles.colExpand} />
+        <col className={styles.colState} />
+        <col />
+        <col />
+        <col />
+      </colgroup>
       <thead>
         <tr>
+          <th></th>
           <th>State</th>
           <th>Labels</th>
           <th>Created</th>
@@ -25,39 +45,61 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
         </tr>
       </thead>
       <tbody>
-        {instances.map((instance, idx) => (
-          <tr key={idx} className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
-            <td>
-              <StateTag status={instance.state} />
-            </td>
-            <td className={styles.labelsCell}>
-              <AlertLabels labels={instance.labels} />
-            </td>
-            <td>{String(instance.activeAt).substr(0, 19).replace('T', ' ')}</td>
-            <td>
-              <Button className={styles.buttonSilence} variant="secondary" icon="bell" size="xs">
-                Silence
-              </Button>
-            </td>
-          </tr>
-        ))}
+        {instances.map((instance, idx) => {
+          const key = alertInstanceKey(instance);
+          const isExpanded = expandedKeys.includes(key);
+          return (
+            <Fragment key={key}>
+              <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
+                <td>
+                  <CollapseToggle isCollapsed={!isExpanded} onToggle={() => toggleExpandedState(key)} />
+                </td>
+                <td>
+                  <StateTag status={instance.state} />
+                </td>
+                <td className={styles.labelsCell}>
+                  <AlertLabels labels={instance.labels} />
+                </td>
+                <td className={styles.createdCell}>{String(instance.activeAt).substr(0, 19).replace('T', ' ')}</td>
+                <td>
+                  <ActionButton icon="bell-slash">Silence</ActionButton>
+                </td>
+              </tr>
+              {isExpanded && (
+                <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
+                  <td></td>
+                  <td colSpan={4}>
+                    <AlertInstanceDetails instance={instance} />
+                  </td>
+                </tr>
+              )}
+            </Fragment>
+          );
+        })}
       </tbody>
     </table>
   );
 };
 
 export const getStyles = (theme: GrafanaTheme) => ({
+  colExpand: css`
+    width: 36px;
+  `,
+  colState: css`
+    width: 110px;
+  `,
   labelsCell: css`
     padding-top: ${theme.spacing.xs} !important;
+    padding-bottom: ${theme.spacing.xs} !important;
+  `,
+  createdCell: css`
+    white-space: nowrap;
   `,
   table: css`
     td {
       vertical-align: top;
       padding-top: ${theme.spacing.sm};
+      padding-bottom: ${theme.spacing.sm};
     }
-  `,
-  buttonSilence: css`
-    height: 24px;
-    font-size: ${theme.typography.size.sm};
   `,
 });

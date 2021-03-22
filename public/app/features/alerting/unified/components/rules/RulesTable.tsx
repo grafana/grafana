@@ -1,5 +1,5 @@
 import { GrafanaTheme } from '@grafana/data';
-import { Button, Icon, useStyles } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
 import { RuleGroup, RulesSource } from 'app/types/unified-alerting/internal';
 import React, { FC, Fragment, useState } from 'react';
 import { isAlertingRule, ruleKey } from '../../utils/rules';
@@ -10,6 +10,10 @@ import { formatDuration } from '../../utils/formatting';
 import { StateTag } from '../StateTag';
 import { RuleDetails } from './RuleDetails';
 import { getAlertTableStyles } from '../../styles/table';
+import { ActionIcon } from './ActionIcon';
+import { createExploreLink } from '../../utils/misc';
+import { isCloudRulesSource } from '../../utils/datasource';
+import { ActionButton } from './ActionButton';
 
 interface Props {
   namespace: string;
@@ -31,7 +35,7 @@ export const RulesTable: FC<Props> = ({ group, rulesSource }) => {
     );
 
   if (!rules.length) {
-    return <p>No rules.</p>;
+    return <div className={styles.wrapper}>Folder is empty.</div>;
   }
 
   return (
@@ -84,12 +88,16 @@ export const RulesTable: FC<Props> = ({ group, rulesSource }) => {
                     )}
                   </td>
                   <td className={styles.actionsCell}>
-                    <Button className={styles.buttonSilence} variant="secondary" icon="bell" size="xs">
-                      Silence
-                    </Button>
-                    <Icon name="compass" />
-                    <Icon name="pen" />
-                    <Icon name="trash-alt" />
+                    <ActionButton icon="bell-slash">Silence</ActionButton>
+                    {isCloudRulesSource(rulesSource) && (
+                      <ActionIcon
+                        icon="compass"
+                        tooltip="view in explore"
+                        href={createExploreLink(rulesSource.name, rule.query)}
+                      />
+                    )}
+                    <ActionIcon icon="pen" tooltip="edit rule" />
+                    <ActionIcon icon="trash-alt" tooltip="delete rule" />
                   </td>
                 </tr>
                 {isExpanded && (
@@ -141,10 +149,6 @@ export const getStyles = (theme: GrafanaTheme) => ({
   `,
   evenRow: css`
     background-color: ${theme.colors.bodyBg};
-  `,
-  buttonSilence: css`
-    height: 24px;
-    font-size: ${theme.typography.size.sm};
   `,
   colExpand: css`
     width: 36px;

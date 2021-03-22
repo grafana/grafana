@@ -9,6 +9,7 @@ import { isCloudRulesSource } from '../../utils/datasource';
 import { Annotation } from '../Annotation';
 import { AlertLabels } from '../AlertLabels';
 import { AlertInstancesTable } from './AlertInstancesTable';
+import { DetailsField } from './DetailsField';
 
 interface Props {
   rule: Rule;
@@ -25,48 +26,31 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {!!rule.labels && !!Object.keys(rule.labels).length && (
-            <div className={cx(styles.field, styles.fieldHorizontal)}>
-              <div>Labels</div>
-              <div>
-                <AlertLabels labels={rule.labels} />
-              </div>
-            </div>
+            <DetailsField label="Labels" horizontal={true}>
+              <AlertLabels labels={rule.labels} />
+            </DetailsField>
           )}
-          <div className={cx(styles.field, { [styles.exprRow]: !!annotations.length })}>
-            <div>Expression</div>
-            <div>
-              <RuleQuery rule={rule} rulesSource={rulesSource} />
-            </div>
-          </div>
+          <DetailsField label="Expression" className={cx({ [styles.exprRow]: !!annotations.length })} horizontal={true}>
+            <RuleQuery rule={rule} rulesSource={rulesSource} />
+          </DetailsField>
           {annotations.map(([key, value]) => (
-            <div key={key} className={cx(styles.field, styles.fieldHorizontal)}>
-              <div>{key}</div>
-              <div className={styles.annotationValue}>
-                <Annotation annotationKey={key} value={value} />
-              </div>
-            </div>
+            <DetailsField key={key} label={key} horizontal={true}>
+              <Annotation annotationKey={key} value={value} />
+            </DetailsField>
           ))}
         </div>
         <div className={styles.rightSide}>
-          <div className={cx(styles.field, styles.fieldVertical)}>
-            <div>Data source</div>
-            <div>
-              {isCloudRulesSource(rulesSource) && (
-                <>
-                  <img className={styles.datasourceIcon} src={rulesSource.meta.info.logos.small} /> {rulesSource.name}
-                </>
-              )}
-            </div>
-          </div>
+          {isCloudRulesSource(rulesSource) && (
+            <DetailsField label="Data source">
+              <img className={styles.datasourceIcon} src={rulesSource.meta.info.logos.small} /> {rulesSource.name}
+            </DetailsField>
+          )}
         </div>
       </div>
       {isAlertingRule(rule) && !!rule.alerts?.length && (
-        <div className={cx(styles.field, styles.fieldHorizontal)}>
-          <div>Matching instances</div>
-          <div>
-            <AlertInstancesTable instances={rule.alerts} />
-          </div>
-        </div>
+        <DetailsField label="Matching instances" horizontal={true}>
+          <AlertInstancesTable instances={rule.alerts} />
+        </DetailsField>
       )}
     </div>
   );
@@ -87,33 +71,8 @@ export const getStyles = (theme: GrafanaTheme) => ({
   exprRow: css`
     margin-bottom: 46px;
   `,
-  fieldHorizontal: css`
-    flex-direction: row;
-  `,
-  fieldVertical: css`
-    flex-direction: column;
-  `,
-  field: css`
-    display: flex;
-    margin: ${theme.spacing.md} 0;
-
-    & > div:first-child {
-      width: 110px;
-      padding-right: ${theme.spacing.sm};
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.bold};
-      line-height: ${theme.typography.lineHeight.lg};
-    }
-    & > div:nth-child(2) {
-      flex: 1;
-      color: ${theme.colors.textSemiWeak};
-    }
-  `,
   datasourceIcon: css`
     width: ${theme.spacing.md};
     height: ${theme.spacing.md};
-  `,
-  annotationValue: css`
-    word-break: break-all;
   `,
 });
