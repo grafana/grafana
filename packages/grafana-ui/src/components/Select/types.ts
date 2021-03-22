@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import React from 'react';
 
-export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>> | null;
+export type SelectValue<T> = T | SelectableValue<T> | T[] | Array<SelectableValue<T>>;
 export type InputActionMeta = {
   action: 'set-value' | 'input-change' | 'input-blur' | 'menu-close';
 };
@@ -45,7 +45,7 @@ export interface SelectCommonProps<T> {
   /** The message to display when no options could be found */
   noOptionsMessage?: string;
   onBlur?: () => void;
-  onChange: (value: SelectableValue<T> | null) => {} | void;
+  onChange: (value: SelectableValue<T>) => {} | void;
   onCloseMenu?: () => void;
   /** allowCustomValue must be enabled. Function decides what to do with that custom value. */
   onCreateOption?: (value: string) => void;
@@ -60,7 +60,7 @@ export interface SelectCommonProps<T> {
   /** Use a custom element to control Select. A proper ref to the renderControl is needed if 'portal' isn't set to null*/
   renderControl?: ControlComponent<T>;
   tabSelectsValue?: boolean;
-  value?: SelectValue<T>;
+  value?: SelectValue<T> | null;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
   isOptionDisabled?: () => boolean;
