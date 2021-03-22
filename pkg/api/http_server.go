@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -77,7 +76,7 @@ type HTTPServer struct {
 	QuotaService           *quota.QuotaService                     `inject:""`
 	RemoteCacheService     *remotecache.RemoteCache                `inject:""`
 	ProvisioningService    provisioning.ProvisioningService        `inject:""`
-	Login                  *login.LoginService                     `inject:""`
+	Login                  login.Service                           `inject:""`
 	License                models.Licensing                        `inject:""`
 	BackendPluginManager   backendplugin.Manager                   `inject:""`
 	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
@@ -116,8 +115,9 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	hs.httpSrv = &http.Server{
-		Addr:    net.JoinHostPort(host, hs.Cfg.HTTPPort),
-		Handler: hs.macaron,
+		Addr:        net.JoinHostPort(host, hs.Cfg.HTTPPort),
+		Handler:     hs.macaron,
+		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 	switch hs.Cfg.Protocol {
 	case setting.HTTP2Scheme:
@@ -321,7 +321,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(middleware.Recovery(hs.Cfg))
 
-	for _, route := range manager.StaticRoutes {
+	for _, route := range hs.PluginManager.StaticRoutes() {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
 		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
 		hs.mapStatic(m, route.Directory, "", pluginRoute)

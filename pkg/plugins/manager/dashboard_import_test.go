@@ -78,16 +78,14 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 	t.Helper()
 
 	t.Run("Given a plugin", func(t *testing.T) {
-		pm := &PluginManager{
-			Cfg: &setting.Cfg{
-				FeatureToggles: map[string]bool{},
-				PluginSettings: setting.PluginSettings{
-					"test-app": map[string]string{
-						"path": "testdata/test-app",
-					},
+		pm := newManager(&setting.Cfg{
+			FeatureToggles: map[string]bool{},
+			PluginSettings: setting.PluginSettings{
+				"test-app": map[string]string{
+					"path": "testdata/test-app",
 				},
 			},
-		}
+		})
 		err := pm.Init()
 		require.NoError(t, err)
 
