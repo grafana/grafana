@@ -34,6 +34,7 @@ go.sum @grafana/backend-platform
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
 /contribute/architecture/backend @grafana/backend-platform
+/contribute/engineering/backend @grafana/backend-platform
 
 /e2e @grafana/grafana-frontend-platform
 /packages @grafana/grafana-frontend-platform
