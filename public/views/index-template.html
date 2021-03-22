@@ -257,7 +257,11 @@
         window.grafanaBootData = {
           user: [[.User]],
           settings: [[.Settings]],
-          navTree: [[.NavTree]]
+          navTree: [[.NavTree]],
+          themePaths: {
+            light: '[[.ContentDeliveryURL]]public/build/grafana.light.<%= webpack.hash %>.css',
+            dark: '[[.ContentDeliveryURL]]public/build/grafana.dark.<%= webpack.hash %>.css'
+          }
         };
 
       // In case the js files fails to load the code below will show an info message.
