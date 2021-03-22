@@ -24,6 +24,12 @@ import (
 	"xorm.io/core"
 )
 
+const (
+	dateFormatSeconds      = "2006-01-02 15:04:05"
+	dateFormatMicroseconds = "2006-01-02 15:04:05.000000"
+	dateFormatNanoseconds  = "2006-01-02 15:04:05.000000000"
+)
+
 func init() {
 	tsdb.RegisterTsdbQueryEndpoint("mysql", newMysqlQueryEndpoint)
 }
@@ -236,8 +242,38 @@ var converterList = []sqlutil.StringConverter{
 					return nil, nil
 				}
 				var layouts = [...]string{
-					"2006-01-02 15:04:05",
-					"2006-01-02 15:04:05.123456",
+					dateFormatSeconds,
+					dateFormatMicroseconds,
+					dateFormatNanoseconds,
+				}
+				var err error
+				var v time.Time
+				for _, layout := range layouts {
+					v, err = time.Parse(layout, *in)
+					if err == nil {
+						return &v, nil
+					}
+				}
+				return nil, err
+			},
+		},
+	},
+	{
+		Name:           "handle TIMESTAMP",
+		InputScanKind:  reflect.Struct,
+		InputTypeName:  "TIMESTAMP",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableTime,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				var layouts = [...]string{
+					dateFormatSeconds,
+					dateFormatMicroseconds,
+					dateFormatNanoseconds,
 				}
 				var err error
 				var v time.Time

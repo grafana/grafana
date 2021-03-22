@@ -112,11 +112,11 @@ func TestMySQL(t *testing.T) {
 
 			sql = "INSERT INTO `mysql_types` "
 			sql += "(`atinyint`, `avarchar`, `achar`, `amediumint`, `asmallint`, `abigint`, `aint`, `adouble`, "
-			sql += "`anewdecimal`, `afloat`, `adatetime`, `atimestamp`, `atime`, `ayear`, `abit`, `atinytext`, "
+			sql += "`anewdecimal`, `afloat`, `atimestamp`, `adatetime`,  `atime`, `ayear`, `abit`, `atinytext`, "
 			sql += "`atinyblob`, `atext`, `ablob`, `amediumtext`, `amediumblob`, `alongtext`, `alongblob`, "
 			sql += "`aenum`, `aset`, `adate`, `time_sec`) "
 			sql += "VALUES(1, 'abc', 'def', 1, 10, 100, 1420070400, 1.11, "
-			sql += "2.22, 3.33, now(), current_timestamp(), '11:11:11', '2018', 1, 'tinytext', "
+			sql += "2.22, 3.33, current_timestamp(), now(), '11:11:11', '2018', 1, 'tinytext', "
 			sql += "'tinyblob', 'text', 'blob', 'mediumtext', 'mediumblob', 'longtext', 'longblob', "
 			sql += "'val2', 'a,b', curdate(), '2018-01-01 00:01:01.123456');"
 			_, err = sess.Exec(sql)
@@ -153,8 +153,8 @@ func TestMySQL(t *testing.T) {
 				So(*frames[0].Fields[7].At(0).(*float64), ShouldEqual, 1.11)
 				So(*frames[0].Fields[8].At(0).(*float64), ShouldEqual, 2.22)
 				So(frames[0].Fields[9].At(0).(float32), ShouldEqual, 3.33)
-				// So(frames[0].Fields[10].At(0).(time.Time), ShouldHappenWithin, 10*time.Second, time.Now())
-				// So(column[11].(time.Time), ShouldHappenWithin, 10*time.Second, time.Now())
+				So(*frames[0].Fields[10].At(0).(*time.Time), ShouldHappenWithin, 10*time.Second, time.Now())
+				So(*frames[0].Fields[11].At(0).(*time.Time), ShouldHappenWithin, 10*time.Second, time.Now())
 				So(*frames[0].Fields[12].At(0).(*string), ShouldEqual, "11:11:11")
 				So(*frames[0].Fields[13].At(0).(*int64), ShouldEqual, 2018)
 				So(*frames[0].Fields[14].At(0).(*[]byte), ShouldHaveSameTypeAs, []byte{1})
