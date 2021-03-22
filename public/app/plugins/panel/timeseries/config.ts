@@ -30,7 +30,6 @@ import { ScaleDistributionEditor } from './ScaleDistributionEditor';
 import { LineStyleEditor } from './LineStyleEditor';
 import { FillBellowToEditor } from './FillBelowToEditor';
 import { OptionsWithLegend } from './types';
-import { SpanNullsEditor } from './SpanNullsEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
@@ -134,16 +133,17 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           process: identityOverrideProcessor,
           shouldApply: (f) => f.type === FieldType.number,
         })
-        .addCustomEditor<void, boolean>({
-          id: 'spanNulls',
+        .addRadio({
           path: 'spanNulls',
           name: 'Null values',
           defaultValue: false,
-          editor: SpanNullsEditor,
-          override: SpanNullsEditor,
+          settings: {
+            options: [
+              { label: 'Gaps', value: false },
+              { label: 'Connected', value: true },
+            ],
+          },
           showIf: (c) => c.drawStyle === DrawStyle.Line,
-          shouldApply: (f) => f.type !== FieldType.time,
-          process: identityOverrideProcessor,
         })
         .addRadio({
           path: 'showPoints',
