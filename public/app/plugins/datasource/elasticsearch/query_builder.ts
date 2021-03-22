@@ -132,16 +132,16 @@ export class ElasticQueryBuilder {
     return filterObj;
   }
 
-  documentQuery(query: any, size: number) {
+  documentQuery(query: any, size: number, metric?: any) {
     query.size = size;
-    query.sort = [
-      {
-        [this.timeField]: { order: 'desc', unmapped_type: 'boolean' },
-      },
-      {
-        _doc: { order: 'desc' },
-      },
-    ];
+    query.sort = {};
+    if (metric && (metric.type === "raw_document" || metric.type === "raw_data" )&& metric.settings.sortBy) {
+      query.size = metric.settings.size;
+      metric.settings.orderBy = metric.settings.orderBy ?  metric.settings.orderBy : "desc"
+      query.sort[metric.settings.sortBy] = { order: metric.settings.orderBy, unmapped_type: 'boolean' };
+    } else {
+      query.sort[this.timeField] = { order: 'desc', unmapped_type: 'boolean' };
+    }
 
     // fields field not supported on ES 5.x
     if (this.esVersion < 5) {
@@ -244,7 +244,7 @@ export class ElasticQueryBuilder {
       // TODO: This default should be somewhere else together with the one used in the UI
       const size = metric.settings?.size ? parseInt(metric.settings.size, 10) : 500;
 
-      return this.documentQuery(query, size || 500);
+      return this.documentQuery(query, size || 500, metric);
     }
 
     nestedAggs = query;

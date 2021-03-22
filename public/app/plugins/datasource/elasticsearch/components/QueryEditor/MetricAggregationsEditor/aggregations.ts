@@ -135,6 +135,8 @@ interface RawDocument extends BaseMetricAggregation {
   type: 'raw_document';
   settings?: {
     size?: string;
+    sortBy?:string;
+    orderBy?:string;
   };
 }
 
@@ -142,6 +144,8 @@ interface RawData extends BaseMetricAggregation {
   type: 'raw_data';
   settings?: {
     size?: string;
+    sortBy?:string;
+    orderBy?:string;
   };
 }
 
