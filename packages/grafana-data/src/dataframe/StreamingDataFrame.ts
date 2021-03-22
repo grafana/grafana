@@ -83,6 +83,8 @@ export class StreamingDataFrame implements DataFrame {
   fields: Array<Field<any, ArrayVector<any>>> = [];
 
   options: StreamingFrameOptions;
+
+  length = 0;
   private timeFieldIndex = -1;
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
@@ -93,24 +95,6 @@ export class StreamingDataFrame implements DataFrame {
     };
 
     this.push(frame);
-
-    // Get Length to show up if you use spread
-    Object.defineProperty(this, 'length', {
-      enumerable: true,
-      get: () => {
-        if (!this.fields.length) {
-          return 0;
-        }
-        return this.fields[0].values.buffer.length;
-      },
-    });
-  }
-
-  get length() {
-    if (!this.fields.length) {
-      return 0;
-    }
-    return this.fields[0].values.buffer.length;
   }
 
   /**
@@ -176,6 +160,9 @@ export class StreamingDataFrame implements DataFrame {
       appended.forEach((v, i) => {
         this.fields[i].values.buffer = v;
       });
+
+      // Update the frame length
+      this.length = this.fields[0].values.buffer.length;
     }
   }
 }
