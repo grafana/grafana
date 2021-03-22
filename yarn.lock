@@ -3430,10 +3430,10 @@
     source-map "~0.6.1"
     typescript "~3.9.7"
 
-"@grafana/aws-sdk@0.0.22":
-  version "0.0.22"
-  resolved "https://registry.yarnpkg.com/@grafana/aws-sdk/-/aws-sdk-0.0.22.tgz#58389616beda01ef137804ab6d9ef07d4a4a35b0"
-  integrity sha512-gTyHmD5VeXjjnnq3zVyI2x3ktJB7dBp92GoJW+lH2t9bWNkcnXyzHSaXZZdrnNpjctaqpv85uxcocK4U7BGCvw==
+"@grafana/aws-sdk@0.0.24":
+  version "0.0.24"
+  resolved "https://registry.yarnpkg.com/@grafana/aws-sdk/-/aws-sdk-0.0.24.tgz#30511706d5efaf52e81cadd8f933d1c21e8d1c6b"
+  integrity sha512-tKYZ5KgJn0/S+/z7KFUtcgihYC1vCpUPvDMONp8j1j02JWwUE3ivu9LDiPeWBLcicy0psUypC0mL3QG/e8prIw==
   dependencies:
     "@grafana/data" "7.4.0"
     "@grafana/runtime" "7.4.0"
