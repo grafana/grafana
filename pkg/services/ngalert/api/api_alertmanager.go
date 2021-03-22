@@ -51,15 +51,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "failed to get latest configuration", err)
 	}
 
-	/*
-		templateFiles := make(map[string]string)
-		err = yaml.Unmarshal([]byte(query.Result.AlertmanagerTemplates), &templateFiles)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "failed to unmarshal template files", err)
-		}
-	*/
-
-	cfg := apimodels.PostableApiAlertingConfig{}
+	cfg := apimodels.PostableUserConfig{}
 	err = yaml.Unmarshal([]byte(query.Result.AlertmanagerConfiguration), &cfg)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to unmarshal alertmanager configuration", err)
@@ -67,10 +59,11 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 
 	var apiReceiverName string
 	var receivers []*apimodels.GettableGrafanaReceiver
-	if len(cfg.Receivers) > 0 {
-		apiReceiverName = cfg.Receivers[0].Name
-		receivers = make([]*apimodels.GettableGrafanaReceiver, 0, len(cfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers))
-		for _, pr := range cfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers {
+	alertmanagerCfg := cfg.AlertmanagerConfig
+	if len(alertmanagerCfg.Receivers) > 0 {
+		apiReceiverName = alertmanagerCfg.Receivers[0].Name
+		receivers = make([]*apimodels.GettableGrafanaReceiver, 0, len(alertmanagerCfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers))
+		for _, pr := range alertmanagerCfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
 			for k := range pr.SecureSettings {
 				secureFields[k] = true
@@ -97,9 +90,9 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 	}
 	gettableApiReceiver.Name = apiReceiverName
 	result := apimodels.GettableUserConfig{
-		// TemplateFiles: templateFiles,
+		TemplateFiles: cfg.TemplateFiles,
 		AlertmanagerConfig: apimodels.GettableApiAlertingConfig{
-			Config: cfg.Config,
+			Config: alertmanagerCfg.Config,
 			Receivers: []*apimodels.GettableApiReceiver{
 				&gettableApiReceiver,
 			},
@@ -393,27 +386,21 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	config, err := yaml.Marshal(&body.AlertmanagerConfig)
+	config, err := yaml.Marshal(&body)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to serialize to the Alertmanager  configuration", err)
-	}
-
-	templateFiles, err := yaml.Marshal(&body.TemplateFiles)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to serialize to the template files", err)
+		return response.Error(http.StatusInternalServerError, "failed to serialize to the Alertmanager configuration", err)
 	}
 
 	err = srv.store.SaveAlertmanagerConfiguration(&ngmodels.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(config),
-		AlertmanagerTemplates:     string(templateFiles),
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 	})
 
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to serialize to the template files", err)
+		return response.Error(http.StatusInternalServerError, "failed to save Alertmanager configuration", err)
 	}
 
-	// reloadCOnfigFromDatabase
+	// reloadConfigFromDatabase
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 }

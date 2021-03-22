@@ -29,7 +29,6 @@ type GetAlertmanagerConfigurationQuery struct {
 // SaveAlertmanagerConfigurationCmd is the command to save an alertmanager configuration.
 type SaveAlertmanagerConfigurationCmd struct {
 	AlertmanagerConfiguration string
-	AlertmanagerTemplates     string
 	ConfigurationVersion      string
 
 	Result *AlertConfiguration
