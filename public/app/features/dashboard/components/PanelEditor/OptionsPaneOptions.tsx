@@ -23,12 +23,7 @@ interface Props {
 export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState('all');
-  const searchRegex = new RegExp(searchQuery, 'i');
   const styles = useStyles(getStyles);
-
-  // const [allDefaults, justOverrides] = useMemo(() => {
-  //   return [[getPanelFrameCategory(props), ...getVizualizationOptions(props)], getFieldOverrideCategories(props)];
-  // }, [data, panel, panel.fieldConfig, panel.options, props]);
 
   const [allDefaults, justOverrides] = [
     [getPanelFrameCategory(props), ...getVizualizationOptions(props)],
@@ -69,11 +64,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
                 No poular options, try again later
               </OptionsPaneCategory>
             )}
-            {isSearching && (
-              <OptionsPaneCategory id="Found options" title="Found options">
-                {getSearchHits(allOptions, searchRegex).map((hit) => hit.render(true))}
-              </OptionsPaneCategory>
-            )}
+            {isSearching && renderSearchHits(allOptions, searchQuery)}
           </div>
           {showOverridesInSeparateBox && (
             <div className={styles.overridesBox}>{justOverrides.map((override) => override.render())}</div>
@@ -99,6 +90,32 @@ function getSearchHits(categories: OptionsPaneCategoryDescriptor[], searchRegex:
   }
 
   return filteredItems;
+}
+
+function renderSearchHits(allOptions: OptionsPaneCategoryDescriptor[], searchQuery: string) {
+  const searchRegex = new RegExp(searchQuery, 'i');
+  const allOptionsCount = getAllOptionsCount(allOptions);
+  const hits = getSearchHits(allOptions, searchRegex);
+
+  return (
+    <OptionsPaneCategory id="Found options" title={`Matched ${hits.length}/${allOptionsCount} options`}>
+      {hits.map((hit) => hit.render(true))}
+    </OptionsPaneCategory>
+  );
+}
+
+function getAllOptionsCount(categories: OptionsPaneCategoryDescriptor[]) {
+  var total = 0;
+
+  for (const category of categories) {
+    total += category.items.length;
+
+    if (category.categories.length > 0) {
+      total += getAllOptionsCount(category.categories);
+    }
+  }
+
+  return total;
 }
 
 const getStyles = (theme: GrafanaTheme) => ({
