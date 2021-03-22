@@ -1,5 +1,7 @@
-import { InlineField, Input, InlineSwitch } from '@grafana/ui';
+import { InlineField, Input, InlineSwitch, SegmentAsync, useTheme, Select } from '@grafana/ui';
 import React, { FunctionComponent, ComponentProps, useState } from 'react';
+import { MetricFindValue, SelectableValue } from '@grafana/data';
+import { cx } from 'emotion';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
@@ -15,14 +17,21 @@ import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { useDescription } from './useDescription';
 import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
 import { uniqueId } from 'lodash';
+import { getStyles } from '../styles';
 import { metricAggregationConfig } from '../utils';
-import { useQuery } from '../../ElasticsearchQueryContext';
+import { useQuery, useDatasource} from '../../ElasticsearchQueryContext';
+import { segmentStyles } from '../../../QueryEditor/styles';
+import { orderOptions } from '../../BucketAggregationsEditor/utils';
 
 // TODO: Move this somewhere and share it with BucketsAggregation Editor
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
 };
 
+const toSelectableValue = ({ value, text }: MetricFindValue): SelectableValue<string> => ({
+  label: text,
+  value: `${value || text}`,
+});
 interface Props {
   metric: MetricAggregation;
   previousMetrics: MetricAggregation[];
@@ -32,7 +41,19 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
   const dispatch = useDispatch();
   const description = useDescription(metric);
   const query = useQuery();
+  const styles = getStyles(useTheme(), !!metric.hide);
+  const datasource = useDatasource();
 
+  const getFields = async () => {
+    const get = () => {
+      if (metric.type === 'cardinality') {
+        return datasource.getFields();
+      }
+      return datasource.getFields('number');
+    };
+
+    return (await get().toPromise()).map(toSelectableValue);
+  };
   return (
     <SettingsEditorContainer label={description} hidden={metric.hide}>
       {metric.type === 'derivative' && <SettingField label="Unit" metric={metric} settingName="unit" />}
@@ -63,13 +84,32 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       )}
 
       {(metric.type === 'raw_data' || metric.type === 'raw_document') && (
+       <>
         <InlineField label="Size" {...inlineFieldProps}>
           <Input
+            css=""
             id={`ES-query-${query.refId}_metric-${metric.id}-size`}
             onBlur={(e) => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
             defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
           />
         </InlineField>
+        <InlineField label="Sort By" {...inlineFieldProps}>
+          <SegmentAsync
+            className={cx(styles.color, segmentStyles)}
+            loadOptions={getFields}
+            onChange={(e) => dispatch(changeMetricSetting(metric,'sortBy', e.value!))}
+            placeholder="Select Field"
+            value={metric.settings?.sortBy ?? metricAggregationConfig['raw_data'].defaults.settings?.sortBy}
+          />
+        </InlineField>
+        <InlineField label="Order" {...inlineFieldProps}>
+          <Select
+          onChange={(e) => dispatch(changeMetricSetting(metric,'orderBy', e.value!))}
+          options={orderOptions}
+          value={metric.settings?.orderBy ?? metricAggregationConfig['raw_data'].defaults.settings?.orderBy}
+        />
+        </InlineField>
+        </>
       )}
 
       {metric.type === 'cardinality' && (
