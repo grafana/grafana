@@ -65,7 +65,7 @@ func (ccc *ConditionsCmd) NeedsVars() []string {
 type EvalMatch struct {
 	Value  *float64    `json:"value"`
 	Metric string      `json:"metric"`
-	Labels data.Labels `json:"tags"`
+	Labels data.Labels `json:"labels"`
 }
 
 // Execute runs the command and returns the results or an error if the command
