@@ -292,7 +292,6 @@
     "tether": "1.4.7",
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.4.1",
-    "tti-polyfill": "0.2.2",
     "uuid": "8.3.0",
     "visjs-network": "4.25.0",
     "whatwg-fetch": "3.1.0"
