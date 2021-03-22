@@ -1,4 +1,4 @@
-import { AsyncSelect, Button, Checkbox, Field, Modal, useStyles } from '@grafana/ui';
+import { AsyncSelect, Button, Checkbox, Field, HorizontalGroup, Modal, useStyles } from '@grafana/ui';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { css } from 'emotion';
 import { QueryVariableModel, VariableModel } from 'app/features/variables/types';
@@ -95,7 +95,6 @@ export const VarImportModal: FC<VarImportModalProps> = ({ panelVars, dashboard, 
           loadOptions={searchDashboards}
           onChange={onDashboardSelect}
           value={selectedDash}
-          className={styles.dashSelect}
         />
       </Field>
 
@@ -166,12 +165,12 @@ export const VarImportModal: FC<VarImportModalProps> = ({ panelVars, dashboard, 
         </>
       )}
 
-      <div className={styles.buttons}>
+      <HorizontalGroup>
         <Button onClick={submitNewVars}>Import template variables and add panel</Button>
         <Button variant="secondary" onClick={onDismiss}>
           Cancel
         </Button>
-      </div>
+      </HorizontalGroup>
     </Modal>
   );
 };
@@ -182,36 +181,29 @@ const getStyles = (theme: GrafanaTheme) => ({
     font-style: normal;
   `,
   selectAll: css`
-    margin-left: 9px;
+    margin-left: ${theme.spacing.sm};
   `,
   checkbox: css`
     margin-top: -20px;
-  `,
-  dashSelect: css`
-    margin-bottom: ${theme.spacing.md};
-  `,
-  buttons: css`
-    display: flex;
-    gap: 10px;
   `,
   table: css`
     width: 100%;
   `,
   p: css`
-    margin-top: 14px;
-    margin-bottom: 14px;
+    margin-top: ${theme.spacing.md};
+    margin-bottom: ${theme.spacing.md};
   `,
   rowHeader: css`
     font-size: ${theme.typography.size.sm};
     font-weight: ${theme.typography.weight.bold};
     color: ${theme.colors.textSemiWeak};
-    height: 36px;
-    min-height: 36px;
-    max-height: 36px;
+    height: ${theme.spacing.xl};
+    min-height: ${theme.spacing.xl};
+    max-height: ${theme.spacing.xl};
     > th {
-      height: 36px;
-      min-height: 36px;
-      max-height: 36px;
+      height: ${theme.spacing.xl};
+      min-height: ${theme.spacing.xl};
+      max-height: ${theme.spacing.xl};
     }
   `,
   dataTable: css`
@@ -222,7 +214,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     width: 100%;
     td,
     th {
-      padding: 9px;
+      padding: ${theme.spacing.sm};
     }
     tbody > tr:nth-child(odd) {
       background: ${theme.colors.panelBorder};
