@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <script nonce="[[.Nonce]]">
-      // https://github.com/GoogleChromeLabs/tti-polyfill
-      !(function () {
-        if ('PerformanceLongTaskTiming' in window) {
-          var g = (window.__tti = { e: [] });
-          g.o = new PerformanceObserver(function (l) {
-            g.e = g.e.concat(l.getEntries());
-          });
-          g.o.observe({ entryTypes: ['longtask'] });
-        }
-      })();
-    </script>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width" />
