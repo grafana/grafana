@@ -23,8 +23,8 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
 
   useEffect(() => {
     const eventSubs = new Subscription();
-    eventSubs.add(panel.events.subscribe(PanelQueriesChangedEvent, () => forceUpdate()));
-    eventSubs.add(panel.events.subscribe(PanelTransformationsChangedEvent, () => forceUpdate()));
+    eventSubs.add(panel.events.subscribe(PanelQueriesChangedEvent, forceUpdate));
+    eventSubs.add(panel.events.subscribe(PanelTransformationsChangedEvent, forceUpdate));
     return () => eventSubs.unsubscribe();
   }, [panel, forceUpdate]);
 
