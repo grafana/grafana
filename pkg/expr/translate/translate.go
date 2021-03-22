@@ -15,23 +15,12 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// Decide on input (model or json, and from where?)
-// Decide on output (model or json)
-// This package is probably the wrong place, will worry about that later
-
-/*
-Main Goals:
- - Take an existing Dashboard Alert and Generate SSE queries with a classic conditions operation
-
-Need To:
- - Check for queries that share a refId within the conditions
- - For each of those, create new queries with new refIds for each unique timerange case. If the timerange is the same, the same refId can be used
- - Add a refId for the classic condition
- - Convert the "now" style timerange to relativeTime (From and To in seconds).
- - DatasourceID to Datasource UID (need OrgID)
-*/
-
-// DashboardAlertConditions turns dashboard alerting conditions into a server side expression conditions.
+// DashboardAlertConditions turns dashboard alerting conditions into a server side expression queries and a
+// classic conditions operation. A Condition from the ngalert model's package will be returned if the
+// translation is successful in create an expression that can be parsed.
+// A query is created for each unique referenced query in the dashboard. Each query is considered to be unique
+// based on the RefID and the Time Range. Therefore, if the same RefID has multiple time ranges in the dashboard
+// condition, new RefIDs will be created.
 func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*ngmodels.Condition, error) {
 	oldCond := dashConditionsJSON{}
 
@@ -64,6 +53,8 @@ type dashConditionsJSON struct {
 	Conditions []dashAlertingConditionJSON `json:"conditions"`
 }
 
+// dashAlertingConditionJSON is like classic.ClassicConditionJSON except that it
+// include the model property with the query.
 type dashAlertingConditionJSON struct {
 	Evaluator conditionEvalJSON `json:"evaluator"`
 
@@ -280,12 +271,6 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 			return nil, err
 		}
 	}
-
-	// b, err := json.MarshalIndent(ngCond, "", " ")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// fmt.Println(string(b))
 
 	sort.Slice(ngCond.QueriesAndExpressions, func(i, j int) bool {
 		return ngCond.QueriesAndExpressions[i].RefID < ngCond.QueriesAndExpressions[j].RefID
