@@ -10,14 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
-type backendType string
-
-const (
-	grafanaRecipient backendType = "grafana"
-	lokiRecipient    backendType = "loki"
-	cortexRecipient  backendType = "prometheus"
-)
-
 // ForkedRuler will validate and proxy requests to the correct backend type depending on the datasource.
 type ForkedRuler struct {
 	LotexRuler, GrafanaRuler RulerApiService
@@ -32,34 +24,33 @@ func NewForkedRuler(datasourceCache datasources.CacheService, lotex, grafana Rul
 	}
 }
 
-func (r *ForkedRuler) backendType(ctx *models.ReqContext) (backend backendType) {
+func (r *ForkedRuler) backendType(ctx *models.ReqContext) (apimodels.Backend, error) {
 	recipient := ctx.Params("Recipient")
-	if backendType(recipient) == grafanaRecipient {
-		return backendType(recipient)
+	if recipient == apimodels.GrafanaBackend.String() {
+		return apimodels.GrafanaBackend, nil
 	}
 	if datasourceID, err := strconv.ParseInt(recipient, 10, 64); err == nil {
 		if ds, err := r.DatasourceCache.GetDatasource(datasourceID, ctx.SignedInUser, ctx.SkipCache); err == nil {
-			return backendType(ds.Type)
+			switch ds.Type {
+			case "loki", "prometheus":
+				return apimodels.LoTexRulerBackend, nil
+			default:
+				return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
+			}
 		}
 	}
-	return backendType(recipient)
-}
-
-func backend(backendType backendType) (backend apimodels.Backend) {
-	switch backendType {
-	case grafanaRecipient:
-		return apimodels.GrafanaBackend
-	case lokiRecipient, cortexRecipient:
-		return apimodels.LoTexRulerBackend
-	}
-	return
+	return 0, fmt.Errorf("unexpected backend type (%v)", recipient)
 }
 
 func (r *ForkedRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	switch t := r.backendType(ctx); t {
-	case grafanaRecipient:
+	t, err := r.backendType(ctx)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	switch t {
+	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RouteDeleteNamespaceRulesConfig(ctx)
-	case lokiRecipient, cortexRecipient:
+	case apimodels.LoTexRulerBackend:
 		return r.LotexRuler.RouteDeleteNamespaceRulesConfig(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -67,10 +58,14 @@ func (r *ForkedRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) re
 }
 
 func (r *ForkedRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	switch t := r.backendType(ctx); t {
-	case grafanaRecipient:
+	t, err := r.backendType(ctx)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	switch t {
+	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RouteDeleteRuleGroupConfig(ctx)
-	case lokiRecipient, cortexRecipient:
+	case apimodels.LoTexRulerBackend:
 		return r.LotexRuler.RouteDeleteRuleGroupConfig(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -78,10 +73,14 @@ func (r *ForkedRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) respons
 }
 
 func (r *ForkedRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	switch t := r.backendType(ctx); t {
-	case grafanaRecipient:
+	t, err := r.backendType(ctx)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	switch t {
+	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RouteGetNamespaceRulesConfig(ctx)
-	case lokiRecipient, cortexRecipient:
+	case apimodels.LoTexRulerBackend:
 		return r.LotexRuler.RouteGetNamespaceRulesConfig(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -89,10 +88,14 @@ func (r *ForkedRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respo
 }
 
 func (r *ForkedRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
-	switch t := r.backendType(ctx); t {
-	case grafanaRecipient:
+	t, err := r.backendType(ctx)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	switch t {
+	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RouteGetRulegGroupConfig(ctx)
-	case lokiRecipient, cortexRecipient:
+	case apimodels.LoTexRulerBackend:
 		return r.LotexRuler.RouteGetRulegGroupConfig(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -100,10 +103,14 @@ func (r *ForkedRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.
 }
 
 func (r *ForkedRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
-	switch t := r.backendType(ctx); t {
-	case grafanaRecipient:
+	t, err := r.backendType(ctx)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	switch t {
+	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RouteGetRulesConfig(ctx)
-	case lokiRecipient, cortexRecipient:
+	case apimodels.LoTexRulerBackend:
 		return r.LotexRuler.RouteGetRulesConfig(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -111,16 +118,18 @@ func (r *ForkedRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respo
 }
 
 func (r *ForkedRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.RuleGroupConfig) response.Response {
-	backendType := r.backendType(ctx)
+	backendType, err := r.backendType(ctx)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
 	payloadType := conf.Type()
 
-	b := backend(backendType)
-	if b != payloadType {
+	if backendType != payloadType {
 		return response.Error(
 			400,
 			fmt.Sprintf(
 				"unexpected backend type (%v) vs payload type (%v)",
-				b,
+				backendType,
 				payloadType,
 			),
 			nil,
@@ -128,9 +137,9 @@ func (r *ForkedRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apim
 	}
 
 	switch backendType {
-	case grafanaRecipient:
+	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RoutePostNameRulesConfig(ctx, conf)
-	case lokiRecipient, cortexRecipient:
+	case apimodels.LoTexRulerBackend:
 		return r.LotexRuler.RoutePostNameRulesConfig(ctx, conf)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", backendType), nil)
