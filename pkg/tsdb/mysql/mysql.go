@@ -25,9 +25,8 @@ import (
 )
 
 const (
-	dateFormatSeconds      = "2006-01-02 15:04:05"
-	dateFormatMicroseconds = "2006-01-02 15:04:05.000000"
-	dateFormatNanoseconds  = "2006-01-02 15:04:05.000000000"
+	dateFormat     = "2006-01-02"
+	dateTimeFormat = "2006-01-02 15:04:05"
 )
 
 func init() {
@@ -241,18 +240,29 @@ var converterList = []sqlutil.StringConverter{
 				if in == nil {
 					return nil, nil
 				}
-				var layouts = [...]string{
-					dateFormatSeconds,
-					dateFormatMicroseconds,
-					dateFormatNanoseconds,
+				v, err := time.Parse(dateTimeFormat, *in)
+				if err == nil {
+					return &v, nil
 				}
-				var err error
-				var v time.Time
-				for _, layout := range layouts {
-					v, err = time.Parse(layout, *in)
-					if err == nil {
-						return &v, nil
-					}
+				return nil, err
+			},
+		},
+	},
+	{
+		Name:           "handle DATE",
+		InputScanKind:  reflect.Struct,
+		InputTypeName:  "DATE",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableTime,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				v, err := time.Parse(dateFormat, *in)
+				if err == nil {
+					return &v, nil
 				}
 				return nil, err
 			},
@@ -270,18 +280,9 @@ var converterList = []sqlutil.StringConverter{
 				if in == nil {
 					return nil, nil
 				}
-				var layouts = [...]string{
-					dateFormatSeconds,
-					dateFormatMicroseconds,
-					dateFormatNanoseconds,
-				}
-				var err error
-				var v time.Time
-				for _, layout := range layouts {
-					v, err = time.Parse(layout, *in)
-					if err == nil {
-						return &v, nil
-					}
+				v, err := time.Parse(dateTimeFormat, *in)
+				if err == nil {
+					return &v, nil
 				}
 				return nil, err
 			},
