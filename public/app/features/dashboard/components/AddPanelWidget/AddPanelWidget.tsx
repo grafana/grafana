@@ -4,18 +4,24 @@ import { css, cx, keyframes } from 'emotion';
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
 import { locationService } from '@grafana/runtime';
-import { Icon, IconButton, styleMixins, useStyles } from '@grafana/ui';
+import { Icon, IconButton, ModalsController, styleMixins, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { DateTimeInput, GrafanaTheme } from '@grafana/data';
+import { DateTimeInput, GrafanaTheme, VariableModel } from '@grafana/data';
 
 import config from 'app/core/config';
 import store from 'app/core/store';
+import { initDashboardTemplating } from 'app/features/variables/state/actions';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 import { DashboardModel, PanelModel } from '../../state';
 import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { LibraryPanelDTO } from '../../../library-panels/types';
 import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
+import { createUsagesNetwork } from 'app/features/variables/inspect/utils';
+import {
+  VarImportModal,
+  VarImportModalProps,
+} from 'app/features/library-panels/components/VarImportModal/VarImportModal';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -26,6 +32,7 @@ export interface OwnProps {
 
 export interface DispatchProps {
   addPanel: typeof addPanel;
+  initDashboardTemplating: typeof initDashboardTemplating;
 }
 
 export type Props = OwnProps & DispatchProps;
@@ -53,7 +60,7 @@ const getCopiedPanelPlugins = () => {
   return _.sortBy(copiedPanels, 'sort');
 };
 
-export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard }) => {
+export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, initDashboardTemplating }) => {
   const [addPanelView, setAddPanelView] = useState(false);
 
   const onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {
@@ -105,7 +112,11 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     dashboard.removePanel(panel);
   };
 
-  const onAddLibraryPanel = (panelInfo: LibraryPanelDTO) => {
+  const onAddLibraryPanel = (
+    panelInfo: LibraryPanelDTO,
+    showModal: (component: React.ComponentType<VarImportModalProps>, props: VarImportModalProps) => void,
+    hideModal: () => void
+  ) => {
     const { gridPos } = panel;
 
     const newPanel: PanelModel = {
@@ -114,8 +125,39 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
       libraryPanel: toPanelModelLibraryPanel(panelInfo),
     };
 
-    dashboard.addPanel(newPanel);
-    dashboard.removePanel(panel);
+    let variables: any[] = [];
+    const { unknown } = createUsagesNetwork(variables, newPanel);
+    if (unknown.length > 0) {
+      showModal(VarImportModal, {
+        isOpen: true,
+        onSubmit: (newVars: VariableModel[]) => {
+          dashboard.addPanel(newPanel);
+          dashboard.removePanel(panel);
+          updateTemplateVariables(newVars);
+          hideModal();
+        },
+        onDismiss: hideModal,
+        panelVars: unknown.map((v) => v.variable),
+        dashboard,
+      });
+    } else {
+      dashboard.addPanel(newPanel);
+      dashboard.removePanel(panel);
+    }
+  };
+
+  const updateTemplateVariables = (newVars: VariableModel[]) => {
+    const varMap = dashboard.templating.list.reduce((acc, cur) => {
+      acc[cur.name] = cur;
+      return acc;
+    }, {} as Record<string, VariableModel>);
+
+    for (const newVar of newVars) {
+      varMap[newVar.name] = newVar;
+    }
+
+    dashboard.templating.list = Object.values(varMap);
+    initDashboardTemplating(dashboard.templating.list);
   };
 
   const onCreateNewRow = () => {
@@ -138,12 +180,16 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
         {addPanelView ? 'Add panel from panel library' : 'Add panel'}
       </AddPanelWidgetHandle>
       {addPanelView ? (
-        <LibraryPanelsView
-          className={styles.libraryPanelsWrapper}
-          formatDate={(dateString: DateTimeInput) => dashboard.formatDate(dateString, 'L')}
-          onClickCard={(panel) => onAddLibraryPanel(panel)}
-          showSecondaryActions={false}
-        />
+        <ModalsController>
+          {({ showModal, hideModal }) => (
+            <LibraryPanelsView
+              className={styles.libraryPanelsWrapper}
+              formatDate={(dateString: DateTimeInput) => dashboard.formatDate(dateString, 'L')}
+              onClickCard={(panel) => onAddLibraryPanel(panel, showModal, hideModal)}
+              showSecondaryActions={false}
+            />
+          )}
+        </ModalsController>
       ) : (
         <div className={styles.actionsWrapper}>
           <div className={styles.actionsRow}>
@@ -178,7 +224,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
   );
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel, initDashboardTemplating };
 
 export const AddPanelWidget = connect(undefined, mapDispatchToProps)(AddPanelWidgetUnconnected);
 
