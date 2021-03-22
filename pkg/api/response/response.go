@@ -34,7 +34,6 @@ type NormalResponse struct {
 	header     http.Header
 	errMessage string
 	err        error
-	http.ResponseWriter
 }
 
 // Write implements http.ResponseWriter
