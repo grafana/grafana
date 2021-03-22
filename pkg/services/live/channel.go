@@ -13,7 +13,7 @@ type ChannelAddress struct {
 	// Namespace meaning depends on the scope.
 	// * when ScopeGrafana, namespace is a "feature"
 	// * when ScopePlugin, namespace is the plugin name
-	// * when ScopeDatasource, namespace is the datasource id
+	// * when ScopeDatasource, namespace is the datasource uid
 	Namespace string `json:"namespace,omitempty"`
 
 	// Within each namespace, the handler can process the path as needed.
