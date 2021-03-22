@@ -1,4 +1,4 @@
-package api
+package datasourceproxy
 
 import (
 	"testing"

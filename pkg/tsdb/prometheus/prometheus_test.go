@@ -142,3 +142,49 @@ func TestPrometheus(t *testing.T) {
 		require.Equal(t, time.Minute*2, models[0].Step)
 	})
 }
+
+func TestParseResponse(t *testing.T) {
+	t.Run("value is not of type matrix", func(t *testing.T) {
+		queryRes := plugins.DataQueryResult{}
+		value := p.Vector{}
+		res, err := parseResponse(value, nil)
+
+		require.Equal(t, queryRes, res)
+		require.Error(t, err)
+	})
+
+	t.Run("response should be parsed normally", func(t *testing.T) {
+		values := []p.SamplePair{
+			{Value: 1, Timestamp: 1000},
+			{Value: 2, Timestamp: 2000},
+			{Value: 3, Timestamp: 3000},
+			{Value: 4, Timestamp: 4000},
+			{Value: 5, Timestamp: 5000},
+		}
+		value := p.Matrix{
+			&p.SampleStream{
+				Metric: p.Metric{"app": "Application", "tag2": "tag2"},
+				Values: values,
+			},
+		}
+		query := &PrometheusQuery{
+			LegendFormat: "legend {{app}}",
+		}
+		res, err := parseResponse(value, query)
+		require.NoError(t, err)
+
+		decoded, _ := res.Dataframes.Decoded()
+		require.Len(t, decoded, 1)
+		require.Equal(t, decoded[0].Name, "legend Application")
+		require.Len(t, decoded[0].Fields, 2)
+		require.Len(t, decoded[0].Fields[0].Labels, 0)
+		require.Equal(t, decoded[0].Fields[0].Name, "time")
+		require.Len(t, decoded[0].Fields[1].Labels, 2)
+		require.Equal(t, decoded[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
+		require.Equal(t, decoded[0].Fields[1].Name, "value")
+
+		// Ensure the timestamps are UTC zoned
+		testValue := decoded[0].Fields[0].At(0)
+		require.Equal(t, "UTC", testValue.(time.Time).Location().String())
+	})
+}

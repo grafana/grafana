@@ -12,7 +12,7 @@ import { textUtil } from '@grafana/data';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
-import { StoreState } from 'app/types';
+import { KioskMode, StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 import { locationService } from '@grafana/runtime';
@@ -22,6 +22,8 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
+  kioskMode: KioskMode;
+  hideTimePicker: boolean;
   onAddPanel: () => void;
 }
 
@@ -104,21 +106,16 @@ class DashNav extends PureComponent<Props> {
     });
   }
 
-  isInKioskMode() {
-    // TODO fix this
-    return false;
-  }
-
   isPlaylistRunning() {
     return playlistSrv.isPlaying;
   }
 
   renderLeftActionsButton() {
-    const { dashboard } = this.props;
+    const { dashboard, kioskMode } = this.props;
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
-    if (this.isInKioskMode() || this.isPlaylistRunning()) {
+    if (kioskMode !== KioskMode.Off || this.isPlaylistRunning()) {
       return [];
     }
 
@@ -169,8 +166,20 @@ class DashNav extends PureComponent<Props> {
     );
   }
 
+  renderTimeControls() {
+    const { dashboard, updateTimeZoneForSession, hideTimePicker } = this.props;
+
+    if (hideTimePicker) {
+      return null;
+    }
+
+    return (
+      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
+    );
+  }
+
   renderRightActionsButton() {
-    const { dashboard, onAddPanel, updateTimeZoneForSession, isFullscreen } = this.props;
+    const { dashboard, onAddPanel, isFullscreen, kioskMode } = this.props;
     const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -178,16 +187,13 @@ class DashNav extends PureComponent<Props> {
     const tvButton = (
       <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
     );
-    const timeControls = (
-      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
-    );
 
     if (this.isPlaylistRunning()) {
-      return [this.renderPlaylistControls(), timeControls];
+      return [this.renderPlaylistControls(), this.renderTimeControls()];
     }
 
-    if (this.isInKioskMode()) {
-      return [timeControls, tvButton];
+    if (kioskMode === KioskMode.TV) {
+      return [this.renderTimeControls(), tvButton];
     }
 
     if (canEdit && !isFullscreen) {
@@ -229,10 +235,7 @@ class DashNav extends PureComponent<Props> {
 
     this.addCustomContent(customRightActions, buttons);
 
-    if (!dashboard.timepicker.hidden) {
-      buttons.push(timeControls);
-    }
-
+    buttons.push(this.renderTimeControls());
     buttons.push(tvButton);
     return buttons;
   }

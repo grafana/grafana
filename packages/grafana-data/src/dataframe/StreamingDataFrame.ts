@@ -50,8 +50,20 @@ export class StreamingDataFrame implements DataFrame {
   update(msg: DataFrameJSON) {
     const { schema, data } = msg;
     if (schema) {
-      if (this.fields.length > 0) {
-        // ?? keep existing data?
+      // Keep old values if they are the same shape
+      let oldValues: ArrayVector[] | undefined;
+      if (schema.fields.length === this.fields.length) {
+        let same = true;
+        oldValues = this.fields.map((f, idx) => {
+          const oldField = this.fields[idx];
+          if (f.name !== oldField.name || f.type !== oldField.type) {
+            same = false;
+          }
+          return f.values;
+        });
+        if (!same) {
+          oldValues = undefined;
+        }
       }
 
       this.name = schema.name;
@@ -59,13 +71,13 @@ export class StreamingDataFrame implements DataFrame {
       this.meta = schema.meta;
 
       // Create new fields from the schema
-      this.fields = schema.fields.map((f) => {
+      this.fields = schema.fields.map((f, idx) => {
         return {
           config: f.config ?? {},
           name: f.name,
           labels: f.labels,
           type: f.type ?? FieldType.other,
-          values: new ArrayVector(),
+          values: oldValues ? oldValues[idx] : new ArrayVector(),
         };
       });
 
