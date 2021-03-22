@@ -6,11 +6,12 @@ import tinycolor from 'tinycolor2';
 import { locationService } from '@grafana/runtime';
 import { Icon, IconButton, ModalsController, styleMixins, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { DateTimeInput, GrafanaTheme, VariableModel } from '@grafana/data';
+import { DateTimeInput, GrafanaTheme } from '@grafana/data';
 
 import config from 'app/core/config';
 import store from 'app/core/store';
-import { initDashboardTemplating } from 'app/features/variables/state/actions';
+import { VariableModel } from 'app/features/variables/types';
+import { updateTemplateVariables } from 'app/features/variables/state/actions';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 import { DashboardModel, PanelModel } from '../../state';
 import { LibraryPanelsView } from '../../../library-panels/components/LibraryPanelsView/LibraryPanelsView';
@@ -32,7 +33,7 @@ export interface OwnProps {
 
 export interface DispatchProps {
   addPanel: typeof addPanel;
-  initDashboardTemplating: typeof initDashboardTemplating;
+  updateTemplateVariables: typeof updateTemplateVariables;
 }
 
 export type Props = OwnProps & DispatchProps;
@@ -60,7 +61,7 @@ const getCopiedPanelPlugins = () => {
   return _.sortBy(copiedPanels, 'sort');
 };
 
-export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, initDashboardTemplating }) => {
+export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateTemplateVariables }) => {
   const [addPanelView, setAddPanelView] = useState(false);
 
   const onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {
@@ -133,7 +134,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, i
         onSubmit: (newVars: VariableModel[]) => {
           dashboard.addPanel(newPanel);
           dashboard.removePanel(panel);
-          updateTemplateVariables(newVars);
+          updateTemplateVariables(dashboard, newVars);
           hideModal();
         },
         onDismiss: hideModal,
@@ -144,20 +145,6 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, i
       dashboard.addPanel(newPanel);
       dashboard.removePanel(panel);
     }
-  };
-
-  const updateTemplateVariables = (newVars: VariableModel[]) => {
-    const varMap = dashboard.templating.list.reduce((acc, cur) => {
-      acc[cur.name] = cur;
-      return acc;
-    }, {} as Record<string, VariableModel>);
-
-    for (const newVar of newVars) {
-      varMap[newVar.name] = newVar;
-    }
-
-    dashboard.templating.list = Object.values(varMap);
-    initDashboardTemplating(dashboard.templating.list);
   };
 
   const onCreateNewRow = () => {
@@ -224,7 +211,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, i
   );
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel, initDashboardTemplating };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel, updateTemplateVariables };
 
 export const AddPanelWidget = connect(undefined, mapDispatchToProps)(AddPanelWidgetUnconnected);
 

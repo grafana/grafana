@@ -8,7 +8,7 @@ const setup = (propOverrides?: object) => {
     dashboard: {} as DashboardModel,
     panel: {} as PanelModel,
     addPanel: jest.fn() as any,
-    initDashboardTemplating: {} as any,
+    updateTemplateVariables: {} as any,
   };
 
   Object.assign(props, propOverrides);

@@ -111,6 +111,22 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   };
 };
 
+export const updateTemplateVariables = (dashboard: DashboardModel, newVars: VariableModel[]): ThunkResult<void> => (
+  dispatch
+) => {
+  const varMap = dashboard.templating.list.reduce((acc, cur) => {
+    acc[cur.name] = cur;
+    return acc;
+  }, {} as Record<string, VariableModel>);
+
+  for (const newVar of newVars) {
+    varMap[newVar.name] = newVar;
+  }
+
+  dashboard.templating.list = Object.values(varMap);
+  dispatch(initDashboardTemplating(dashboard.templating.list));
+};
+
 export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch, getState) => {
     const dashboardModel: DashboardVariableModel = {

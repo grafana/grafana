@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import pick from 'lodash/pick';
 import omit from 'lodash/omit';
 import { GrafanaTheme } from '@grafana/data';
-import { Button, stylesFactory, useStyles } from '@grafana/ui';
+import { Button, ModalsController, stylesFactory, useStyles } from '@grafana/ui';
 
 import { OptionsGroup } from 'app/features/dashboard/components/PanelEditor/OptionsGroup';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -14,6 +14,10 @@ import { LibraryPanelDTO } from '../../types';
 import { toPanelModelLibraryPanel } from '../../utils';
 import { useDispatch } from 'react-redux';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
+import { VarImportModal, VarImportModalProps } from '../VarImportModal/VarImportModal';
+import { createUsagesNetwork } from 'app/features/variables/inspect/utils';
+import { updateTemplateVariables } from 'app/features/variables/state/actions';
+import { VariableModel } from 'app/features/variables/types';
 
 interface Props {
   panel: PanelModel;
@@ -26,7 +30,7 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard, on
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
   const dispatch = useDispatch();
 
-  const useLibraryPanel = (panelInfo: LibraryPanelDTO) => {
+  const switchLibraryPanel = (panelInfo: LibraryPanelDTO) => {
     const panelTypeChanged = panel.type !== panelInfo.model.type;
     panel.restoreModel({
       ...omit(panelInfo.model, 'type'),
@@ -46,6 +50,34 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard, on
 
     // onChange is called here to force the panel editor to re-render
     onChange();
+  };
+
+  const useLibraryPanel = (
+    panelInfo: LibraryPanelDTO,
+    showModal: (component: React.ComponentType<VarImportModalProps>, props: VarImportModalProps) => void,
+    hideModal: () => void
+  ) => {
+    const newPanel: PanelModel = {
+      ...panelInfo.model,
+      libraryPanel: toPanelModelLibraryPanel(panelInfo),
+    };
+    let variables: any[] = [];
+    const { unknown } = createUsagesNetwork(variables, newPanel);
+    if (unknown.length > 0) {
+      showModal(VarImportModal, {
+        isOpen: true,
+        onSubmit: (newVars: VariableModel[]) => {
+          dispatch(updateTemplateVariables(dashboard, newVars));
+          switchLibraryPanel(panelInfo);
+          hideModal();
+        },
+        onDismiss: hideModal,
+        panelVars: unknown.map((v) => v.variable),
+        dashboard,
+      });
+    } else {
+      switchLibraryPanel(panelInfo);
+    }
   };
 
   const onAddToPanelLibrary = (e: React.MouseEvent) => {
@@ -79,9 +111,13 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard, on
         showSecondaryActions
       >
         {(panel) => (
-          <Button variant="secondary" onClick={() => useLibraryPanel(panel)}>
-            Use instead of current panel
-          </Button>
+          <ModalsController>
+            {({ showModal, hideModal }) => (
+              <Button variant="secondary" onClick={() => useLibraryPanel(panel, showModal, hideModal)}>
+                Use instead of current panel
+              </Button>
+            )}
+          </ModalsController>
         )}
       </LibraryPanelsView>
       {showingAddPanelModal && (
