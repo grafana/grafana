@@ -55,8 +55,6 @@ export class PanelEditorQueries extends PureComponent<Props> {
       // trigger queries when changing data source
       setTimeout(this.onRunQueries, 10);
     }
-
-    this.setState({ options: options });
   };
 
   render() {
