@@ -99,8 +99,10 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 			if evalRes {
 				match := EvalMatch{
 					Value:  reducedNum.GetFloat64Value(),
-					Labels: reducedNum.GetLabels().Copy(),
 					Metric: series.GetName(),
+				}
+				if reducedNum.GetLabels() != nil {
+					match.Labels = reducedNum.GetLabels().Copy()
 				}
 				matches = append(matches, match)
 			}
