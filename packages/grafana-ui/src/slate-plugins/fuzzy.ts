@@ -1,48 +1,59 @@
 import { HighlightPart } from '../types';
+import { last } from 'lodash';
 
 type FuzzyMatch = {
+  /**
+   * Total number of unmatched letters between matched letters
+   */
   distance: number;
   ranges: HighlightPart[];
   found: boolean;
 };
 
 /**
- * Attempts to do a partial input search allowing to search for a text
- * by skipping some letters in-between.
- * The search is case sensitive! Convert stack and needle to lower case
+ * Attempts to do a partial input search, e.g. allowing to search for a text (needle)
+ * in another text (stack) by skipping some letters in-between. All letters from
+ * the needle must exist in the stack in the same order to find a match.
+ *
+ * The search is case sensitive. Convert stack and needle to lower case
  * to make it case insensitive.
- * @param stack - main content to be searched
+ *
+ * @param stack - main text to be searched
  * @param needle - partial text to find in the stack
  */
 export function fuzzyMatch(stack: string, needle: string): FuzzyMatch {
-  let distance = 0;
-  let index = stack.indexOf(needle);
+  let distance = 0,
+    searchIndex = stack.indexOf(needle);
 
-  if (index !== -1) {
+  const ranges: HighlightPart[] = [];
+
+  if (searchIndex !== -1) {
     return {
       distance: 0,
       found: true,
-      ranges: [{ start: index, end: index + needle.length - 1 }],
+      ranges: [{ start: searchIndex, end: searchIndex + needle.length - 1 }],
     };
   }
 
   let letters: string[] = needle.split('');
-  const ranges: HighlightPart[] = [];
+
   while (letters.length) {
-    const letter = letters.shift();
-    const letterIndex = stack.indexOf(letter!, index);
+    const letter = letters.shift(),
+      letterIndex = stack.indexOf(letter!, searchIndex);
+
     if (letterIndex === -1) {
       return { distance: Infinity, ranges: [], found: false };
     }
-    if (index !== -1) {
-      distance += letterIndex - index;
+    // do not cumulate the distance if it's the first letter
+    if (searchIndex !== -1) {
+      distance += letterIndex - searchIndex;
     }
-    index = letterIndex + 1;
+    searchIndex = letterIndex + 1;
 
     if (ranges.length === 0) {
       ranges.push({ start: letterIndex, end: letterIndex });
     } else {
-      const lastRange = ranges[ranges.length - 1];
+      const lastRange = last(ranges)!;
       if (letterIndex === lastRange.end + 1) {
         lastRange.end++;
       } else {
