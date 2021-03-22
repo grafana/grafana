@@ -126,7 +126,7 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
     const isDeprecated = isDeprecatedPanel(panel.type);
 
     if (isDeprecated) {
-      pluginToLoad = DEPRECATED_PANELS[panel.type];
+      pluginToLoad = DEPRECATED_PANELS[panel.type](panel);
     }
 
     let plugin = getStore().plugins.panels[pluginToLoad];
@@ -136,7 +136,7 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
     }
 
     if (isDeprecated) {
-      dispatch(changePanelPlugin(panel, DEPRECATED_PANELS[panel.type]));
+      dispatch(changePanelPlugin(panel, pluginToLoad));
     }
 
     if (!panel.plugin) {

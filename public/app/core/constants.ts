@@ -1,3 +1,5 @@
+import { PanelModel } from '../features/dashboard/state';
+
 export const GRID_CELL_HEIGHT = 30;
 export const GRID_CELL_VMARGIN = 8;
 export const GRID_COLUMN_COUNT = 24;
@@ -13,6 +15,11 @@ export const PANEL_BORDER = 2;
 
 export const EDIT_PANEL_ID = 23763571993;
 
-export const DEPRECATED_PANELS: Record<string, string> = {
-  singlestat: 'stat',
+export const DEPRECATED_PANELS: Record<string, (panel: PanelModel) => string> = {
+  singlestat: (panel: PanelModel) => {
+    if ((panel as any).gauge && (panel as any).gauge.show) {
+      return 'gauge';
+    }
+    return 'stat';
+  },
 };
