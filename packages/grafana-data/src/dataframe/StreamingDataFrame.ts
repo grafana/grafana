@@ -28,12 +28,12 @@ function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
 }
 
 // mutable circular push
-function circPush(data: number[][], newData: number[][], deltaIdx = 0, maxDelta = Infinity, maxLength = Infinity) {
+function circPush(data: number[][], newData: number[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
   for (let i = 0; i < data.length; i++) {
     data[i] = data[i].concat(newData[i]);
   }
 
-  let nlen = data[deltaIdx].length;
+  const nlen = data[0].length;
 
   let sliceIdx = 0;
 
@@ -42,10 +42,10 @@ function circPush(data: number[][], newData: number[][], deltaIdx = 0, maxDelta 
   }
 
   if (maxDelta !== Infinity) {
-    let deltaLookup = data[deltaIdx];
+    const deltaLookup = data[deltaIdx];
 
-    let low = deltaLookup[sliceIdx];
-    let high = deltaLookup[nlen - 1];
+    const low = deltaLookup[sliceIdx];
+    const high = deltaLookup[nlen - 1];
 
     if (high - low > maxDelta) {
       sliceIdx = closestIdx(high - maxDelta, deltaLookup, sliceIdx);
@@ -93,13 +93,24 @@ export class StreamingDataFrame implements DataFrame {
     };
 
     this.push(frame);
+
+    // Get Length to show up if you use spread
+    Object.defineProperty(this, 'length', {
+      enumerable: true,
+      get: () => {
+        if (!this.fields.length) {
+          return 0;
+        }
+        return this.fields[0].values.buffer.length;
+      },
+    });
   }
 
   get length() {
     if (!this.fields.length) {
       return 0;
     }
-    return this.fields[0].values.length;
+    return this.fields[0].values.buffer.length;
   }
 
   /**
@@ -160,7 +171,7 @@ export class StreamingDataFrame implements DataFrame {
 
       let curValues = this.fields.map((f) => f.values.buffer);
 
-      let appended = circPush(curValues, values, this.timeFieldIndex, this.options.maxDelta, this.options.maxLength);
+      let appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
 
       appended.forEach((v, i) => {
         this.fields[i].values.buffer = v;

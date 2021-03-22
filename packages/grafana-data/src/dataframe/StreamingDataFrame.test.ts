@@ -1,4 +1,4 @@
-import { FieldType } from '../types/dataFrame';
+import { DataFrame, FieldType } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
 import { StreamingDataFrame } from './StreamingDataFrame';
 
@@ -184,5 +184,29 @@ describe('Streaming JSON', () => {
         ]
       `);
     });
+  });
+
+  describe('lengths property is accurate', () => {
+    const stream = new StreamingDataFrame(
+      {
+        schema: {
+          fields: [{ name: 'simple', type: FieldType.number }],
+        },
+        data: {
+          values: [[100]],
+        },
+      },
+      {
+        maxLength: 5,
+      }
+    );
+    expect(stream.length).toEqual(1);
+    stream.push({
+      data: { values: [[200]] },
+    });
+    expect(stream.length).toEqual(2);
+
+    const copy = ({ ...stream } as any) as DataFrame;
+    expect(copy.length).toEqual(2);
   });
 });
