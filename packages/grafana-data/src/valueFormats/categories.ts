@@ -288,6 +288,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Length',
     formats: [
       { name: 'millimeter (mm)', id: 'lengthmm', fn: SIPrefix('m', -1) },
+      { name: 'inch (in)', id: 'lengthin', fn: toFixedUnit('in') },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },
       { name: 'meter (m)', id: 'lengthm', fn: SIPrefix('m') },
       { name: 'kilometer (km)', id: 'lengthkm', fn: SIPrefix('m', 1) },

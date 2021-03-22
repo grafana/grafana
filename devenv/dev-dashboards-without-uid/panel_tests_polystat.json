@@ -685,6 +685,10 @@
               "text": "meter (m)",
               "value": "lengthm"
             },
+	    {
+              "text": "inch (in)",
+              "value": "lengthin"
+	    },
             {
               "text": "feet (ft)",
               "value": "lengthft"
@@ -1788,6 +1792,10 @@
               "text": "meter (m)",
               "value": "lengthm"
             },
+	    {
+              "text": "inch (in)",
+              "value": "lengthin"
+	    },
             {
               "text": "feet (ft)",
               "value": "lengthft"
@@ -2871,6 +2879,10 @@
               "text": "meter (m)",
               "value": "lengthm"
             },
+	    {
+              "text": "inch (in)",
+              "value": "lengthin"
+	    },
             {
               "text": "feet (ft)",
               "value": "lengthft"
