@@ -23,6 +23,22 @@ To access OpenTSDB settings, hover your mouse over the **Configuration** (gear) 
 | `Version`    | Version = opentsdb version, either <=2.1 or 2.2                                                                                       |
 | `Resolution` | Metrics from opentsdb may have datapoints with either second or millisecond resolution.                                               |
 | `Lookup Limit`| Default is 1000.                                                                                                                     |
+| `Min time interval`| A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute. This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value _must_ be formatted as a number followed by a [valid time identifier](#Supported min time identifiers), e.g. `1m` (1 minute) or `30s` (30 seconds). |
+
+### Supported min time identifiers
+
+The following time identifiers are supported:
+
+| Identifier | Description |
+| ---------- | ----------- |
+| `y`        | Years (365 days)|
+| `n`        | Months (30 days)|
+| `w`        | Weeks (7 days)|
+| `d`        | Days (24 hours)|
+| `h`        | Hours        |
+| `m`        | Minutes      |
+| `s`        | Seconds      |
+| `ms`       | Milliseconds |
 
 ## Query editor
 

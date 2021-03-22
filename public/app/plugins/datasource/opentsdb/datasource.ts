@@ -24,6 +24,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
   tsdbVersion: any;
   tsdbResolution: any;
   lookupLimit: any;
+  interval: any;
   tagKeys: any;
 
   aggregatorsPromise: any;
@@ -40,6 +41,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     this.tsdbVersion = instanceSettings.jsonData.tsdbVersion || 1;
     this.tsdbResolution = instanceSettings.jsonData.tsdbResolution || 1;
     this.lookupLimit = instanceSettings.jsonData.lookupLimit || 1000;
+    this.interval = instanceSettings.jsonData.interval || '30s';
     this.tagKeys = {};
 
     this.aggregatorsPromise = null;
