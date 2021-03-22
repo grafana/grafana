@@ -15,6 +15,11 @@ import {
 } from '@grafana/data';
 import { FetchResponse } from '../services';
 
+/**
+ * Single response object from a backend data source. Properties are optional but response should contain at least
+ * an error or a some data (but can contain both). Main way to send data is with dataframes attribute as series and
+ * tables data attributes are legacy formats.
+ */
 export interface DataResponse {
   error?: string;
   refId?: string;

@@ -177,6 +177,11 @@ export function grafanaDataFrameToArrowTable(data: DataFrame, keepOriginalNames?
   return table;
 }
 
+/**
+ * Turns arrow table into a base64 encoded string. This is symmetrical to base64StringToArrowTable and can be used
+ * to simulate response from backend.
+ * @param table
+ */
 export function arrowTableToBase64String(table: Table): string {
   const binstring = Array.prototype.map
     .call(table.serialize() as Uint8Array, (ch: number) => {
