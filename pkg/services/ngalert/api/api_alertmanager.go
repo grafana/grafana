@@ -65,36 +65,43 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "failed to unmarshal alertmanager configuration", err)
 	}
 
-	receivers := make([]*apimodels.GettableGrafanaReceiver, 0, len(cfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers))
-	for _, pr := range cfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers {
-		secureFields := make(map[string]bool, len(pr.SecureSettings))
-		for k := range pr.SecureSettings {
-			secureFields[k] = true
+	var apiReceiverName string
+	var receivers []*apimodels.GettableGrafanaReceiver
+	if len(cfg.Receivers) > 0 {
+		apiReceiverName = cfg.Receivers[0].Name
+		receivers = make([]*apimodels.GettableGrafanaReceiver, 0, len(cfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers))
+		for _, pr := range cfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers {
+			secureFields := make(map[string]bool, len(pr.SecureSettings))
+			for k := range pr.SecureSettings {
+				secureFields[k] = true
+			}
+			gr := apimodels.GettableGrafanaReceiver{
+				Uid:                   pr.Uid,
+				Name:                  pr.Name,
+				Type:                  pr.Type,
+				IsDefault:             pr.IsDefault,
+				SendReminder:          pr.SendReminder,
+				DisableResolveMessage: pr.DisableResolveMessage,
+				Frequency:             pr.Frequency,
+				Settings:              pr.Settings,
+				SecureFields:          secureFields,
+			}
+			receivers = append(receivers, &gr)
 		}
-		gr := apimodels.GettableGrafanaReceiver{
-			Uid:                   pr.Uid,
-			Name:                  pr.Name,
-			Type:                  pr.Type,
-			IsDefault:             pr.IsDefault,
-			SendReminder:          pr.SendReminder,
-			DisableResolveMessage: pr.DisableResolveMessage,
-			Frequency:             pr.Frequency,
-			Settings:              pr.Settings,
-			SecureFields:          secureFields,
-		}
-		receivers = append(receivers, &gr)
 	}
 
+	gettableApiReceiver := apimodels.GettableApiReceiver{
+		GettableGrafanaReceivers: apimodels.GettableGrafanaReceivers{
+			GrafanaManagedReceivers: receivers,
+		},
+	}
+	gettableApiReceiver.Name = apiReceiverName
 	result := apimodels.GettableUserConfig{
 		// TemplateFiles: templateFiles,
 		AlertmanagerConfig: apimodels.GettableApiAlertingConfig{
 			Config: cfg.Config,
 			Receivers: []*apimodels.GettableApiReceiver{
-				{
-					GettableGrafanaReceivers: apimodels.GettableGrafanaReceivers{
-						GrafanaManagedReceivers: receivers,
-					},
-				},
+				&gettableApiReceiver,
 			},
 		},
 	}
