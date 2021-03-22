@@ -1,10 +1,8 @@
 import { css } from 'emotion';
 import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
 import { Icon, InfoBox, LoadingPlaceholder, useStyles } from '@grafana/ui';
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { FC, useMemo } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { useDispatch } from 'react-redux';
-import { fetchRulesAction } from '../../state/actions';
 import { RulesGroup } from './RulesGroup';
 import { getRulesDatasources } from '../../utils/datasource';
 import { RuleNamespace } from 'app/types/unified-alerting/internal';
@@ -13,12 +11,8 @@ import pluralize from 'pluralize';
 
 export const SystemOrApplicationAlerts: FC = () => {
   const styles = useStyles(getStyles);
-  const dispatch = useDispatch();
   const rules = useUnifiedAlertingSelector((state) => state.rules);
   const rulesDatasources = useMemo(getRulesDatasources, []);
-
-  // trigger fetch for any rules sources that dont have results and are not currently loading
-  useEffect(() => getRulesDatasources().forEach((ds) => dispatch(fetchRulesAction(ds.name))), []);
 
   const namespaces = useMemo(
     (): Array<{ namespace: RuleNamespace; datasource: DataSourceInstanceSettings }> =>
