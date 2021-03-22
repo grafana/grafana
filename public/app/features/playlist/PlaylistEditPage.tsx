@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
@@ -9,7 +10,6 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { PlaylistForm } from './PlaylistForm';
 import { updatePlaylist } from './api';
 import { Playlist } from './types';
-import { locationService } from '@grafana/runtime';
 import { usePlaylist } from './usePlaylist';
 
 interface ConnectedProps {

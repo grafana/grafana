@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
@@ -9,7 +10,6 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { PlaylistForm } from './PlaylistForm';
 import { createPlaylist } from './api';
 import { Playlist } from './types';
-import { locationService } from '@grafana/runtime';
 import { usePlaylist } from './usePlaylist';
 
 interface ConnectedProps {
@@ -28,10 +28,8 @@ export const PlaylistNewPage: FC<Props> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={loading}>
-        <div className="page-container page-body" ng-form="ctrl.playlistEditForm">
-          <h3 className="page-sub-heading" ng-show="ctrl.isNew">
-            New Playlist
-          </h3>
+        <div className="page-container page-body">
+          <h3 className="page-sub-heading">New Playlist</h3>
 
           <p className="playlist-description">
             A playlist rotates through a pre-selected list of Dashboards. A Playlist can be a great way to build

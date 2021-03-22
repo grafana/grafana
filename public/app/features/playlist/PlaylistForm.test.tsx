@@ -172,21 +172,21 @@ interface ExpectCorrectRowArgs {
 }
 
 function expectCorrectRow({ index, type, title, first = false, last = false }: ExpectCorrectRowArgs) {
-  const row = () => within(rows()[index]);
+  const row = within(rows()[index]);
   const cell = `playlist item dashboard by ${type} type ${title}`;
   const regex = new RegExp(cell, 'i');
-  expect(row().getByRole('cell', { name: regex })).toBeInTheDocument();
+  expect(row.getByRole('cell', { name: regex })).toBeInTheDocument();
   if (first) {
-    expect(row().queryByRole('button', { name: /move playlist item order up/i })).not.toBeInTheDocument();
+    expect(row.queryByRole('button', { name: /move playlist item order up/i })).not.toBeInTheDocument();
   } else {
-    expect(row().getByRole('button', { name: /move playlist item order up/i })).toBeInTheDocument();
+    expect(row.getByRole('button', { name: /move playlist item order up/i })).toBeInTheDocument();
   }
 
   if (last) {
-    expect(row().queryByRole('button', { name: /move playlist item order down/i })).not.toBeInTheDocument();
+    expect(row.queryByRole('button', { name: /move playlist item order down/i })).not.toBeInTheDocument();
   } else {
-    expect(row().getByRole('button', { name: /move playlist item order down/i })).toBeInTheDocument();
+    expect(row.getByRole('button', { name: /move playlist item order down/i })).toBeInTheDocument();
   }
 
-  expect(row().getByRole('button', { name: /delete playlist item/i })).toBeInTheDocument();
+  expect(row.getByRole('button', { name: /delete playlist item/i })).toBeInTheDocument();
 }

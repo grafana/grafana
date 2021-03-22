@@ -1,5 +1,6 @@
-import { Playlist } from './types';
 import { getBackendSrv } from '@grafana/runtime';
+
+import { Playlist } from './types';
 import { dispatch } from '../../store/store';
 import { notifyApp } from '../../core/actions';
 import { createErrorNotification, createSuccessNotification } from '../../core/copy/appNotification';
