@@ -1,7 +1,8 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAction } from '@reduxjs/toolkit';
 import { LoadingState } from '@grafana/data';
 
 import { LibraryPanelDTO } from '../../types';
+import { AnyAction } from 'redux';
 
 export interface LibraryPanelsViewState {
   loadingState: LoadingState;
@@ -23,32 +24,35 @@ export const initialLibraryPanelsViewState: LibraryPanelsViewState = {
   currentPanelId: undefined,
 };
 
-const libraryPanelsViewSlice = createSlice({
-  name: 'libraryPanels/view',
-  initialState: initialLibraryPanelsViewState,
-  reducers: {
-    initSearch: (state) => {
-      state.loadingState = LoadingState.Loading;
-    },
-    searchCompleted: (
-      state,
-      action: PayloadAction<
-        Omit<LibraryPanelsViewState, 'currentPanelId' | 'searchString' | 'loadingState' | 'numberOfPages'>
-      >
-    ) => {
-      const { libraryPanels, page, perPage, totalCount } = action.payload;
-      state.libraryPanels = libraryPanels;
-      state.perPage = perPage;
-      state.totalCount = totalCount;
-      state.loadingState = LoadingState.Done;
-      state.numberOfPages = Math.ceil(totalCount / perPage);
-      state.page = page > state.numberOfPages ? page - 1 : page;
-    },
-    changePage: (state, action: PayloadAction<Pick<LibraryPanelsViewState, 'page'>>) => {
-      state.page = action.payload.page;
-    },
-  },
-});
+export const initSearch = createAction('libraryPanels/view/initSearch');
+export const searchCompleted = createAction<
+  Omit<LibraryPanelsViewState, 'currentPanelId' | 'searchString' | 'loadingState' | 'numberOfPages'>
+>('libraryPanels/view/searchCompleted');
 
-export const libraryPanelsViewReducer = libraryPanelsViewSlice.reducer;
-export const { initSearch, searchCompleted, changePage } = libraryPanelsViewSlice.actions;
+export const changePage = createAction<Pick<LibraryPanelsViewState, 'page'>>('libraryPanels/view/changePage');
+
+export const libraryPanelsViewReducer = (state: LibraryPanelsViewState, action: AnyAction) => {
+  if (initSearch.match(action)) {
+    return { ...state, loadingState: LoadingState.Loading };
+  }
+
+  if (searchCompleted.match(action)) {
+    const { libraryPanels, page, perPage, totalCount } = action.payload;
+    const numberOfPages = Math.ceil(totalCount / perPage);
+    return {
+      ...state,
+      libraryPanels,
+      perPage,
+      totalCount,
+      loadingState: LoadingState.Done,
+      numberOfPages,
+      page: page > numberOfPages ? page - 1 : page,
+    };
+  }
+
+  if (changePage.match(action)) {
+    return { ...state, page: action.payload.page };
+  }
+
+  return state;
+};
