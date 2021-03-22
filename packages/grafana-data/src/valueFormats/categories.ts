@@ -280,6 +280,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'milligram (mg)', id: 'massmg', fn: SIPrefix('g', -1) },
       { name: 'gram (g)', id: 'massg', fn: SIPrefix('g') },
+      { name: 'pound (lb)', id: 'masslb', fn: toFixedUnit('lb') },
       { name: 'kilogram (kg)', id: 'masskg', fn: SIPrefix('g', 1) },
       { name: 'metric ton (t)', id: 'masst', fn: toFixedUnit('t') },
     ],

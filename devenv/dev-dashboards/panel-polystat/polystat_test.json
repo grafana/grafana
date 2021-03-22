@@ -731,6 +731,10 @@
               "text": "gram (g)",
               "value": "massg"
             },
+	    {
+              "text": "pound (lb)",
+              "value": "masslb"
+            },
             {
               "text": "kilogram (kg)",
               "value": "masskg"
@@ -1838,6 +1842,10 @@
               "text": "gram (g)",
               "value": "massg"
             },
+	    {
+              "text": "pound (lb)",
+              "value": "masslb"
+            },
             {
               "text": "kilogram (kg)",
               "value": "masskg"
@@ -2924,6 +2932,10 @@
             {
               "text": "gram (g)",
               "value": "massg"
+            },
+	    {
+              "text": "pound (lb)",
+              "value": "masslb"
             },
             {
               "text": "kilogram (kg)",
