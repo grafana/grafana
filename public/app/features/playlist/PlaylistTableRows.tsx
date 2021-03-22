@@ -34,7 +34,7 @@ export const PlaylistTableRows: FC<PlaylistTableRowsProps> = ({ items, onMoveUp,
             onDelete={onDelete}
             onMoveDown={onMoveDown}
             onMoveUp={onMoveUp}
-            key={item.id}
+            key={item.title}
           />
         );
       })}

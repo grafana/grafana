@@ -73,7 +73,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
 
   const deleteItem = useCallback(
     (item: PlaylistItem) => {
-      setItems(items.filter((i) => i.id !== item.id));
+      setItems(items.filter((i) => i !== item));
     },
     [items]
   );

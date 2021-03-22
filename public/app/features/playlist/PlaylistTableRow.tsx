@@ -5,6 +5,7 @@ import { GrafanaTheme } from '@grafana/data';
 
 import { TagBadge } from '../../core/components/TagFilter/TagBadge';
 import { PlaylistItem } from './types';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface PlaylistTableRowProps {
   first: boolean;
@@ -31,23 +32,45 @@ export const PlaylistTableRow: FC<PlaylistTableRowProps> = ({ item, onDelete, on
   };
 
   return (
-    <tr>
+    <tr aria-label={selectors.pages.PlaylistForm.itemRow} key={item.title}>
       {item.type === 'dashboard_by_id' ? (
         <td className={cx(styles.td, styles.item)}>
-          <Icon name="apps" />
+          <Icon name="apps" aria-label={selectors.pages.PlaylistForm.itemIdType} />
           <span>{item.title}</span>
         </td>
       ) : null}
       {item.type === 'dashboard_by_tag' ? (
         <td className={cx(styles.td, styles.item)}>
-          <Icon name="tag-alt" />
+          <Icon name="tag-alt" aria-label={selectors.pages.PlaylistForm.itemTagType} />
           <TagBadge key={item.id} label={item.title} removeIcon={false} count={0} />
         </td>
       ) : null}
       <td className={cx(styles.td, styles.settings)}>
-        {!first ? <IconButton name="arrow-up" size="md" onClick={onMoveUpClick} /> : null}
-        {!last ? <IconButton name="arrow-down" size="md" onClick={onMoveDownClick} /> : null}
-        <IconButton name="times" size="md" onClick={onDeleteClick} />
+        {!first ? (
+          <IconButton
+            name="arrow-up"
+            size="md"
+            onClick={onMoveUpClick}
+            aria-label={selectors.pages.PlaylistForm.itemMoveUp}
+            type="button"
+          />
+        ) : null}
+        {!last ? (
+          <IconButton
+            name="arrow-down"
+            size="md"
+            onClick={onMoveDownClick}
+            aria-label={selectors.pages.PlaylistForm.itemMoveDown}
+            type="button"
+          />
+        ) : null}
+        <IconButton
+          name="times"
+          size="md"
+          onClick={onDeleteClick}
+          aria-label={selectors.pages.PlaylistForm.itemDelete}
+          type="button"
+        />
       </td>
     </tr>
   );

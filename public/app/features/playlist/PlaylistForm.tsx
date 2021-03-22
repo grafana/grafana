@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { config } from '@grafana/runtime';
 import { Button, Field, Form, HorizontalGroup, Input, LinkButton } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { Playlist } from './types';
 import { DashboardPicker } from '../../core/components/Select/DashboardPicker';
@@ -21,8 +22,9 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
   const { items, addById, addByTag, deleteItem, moveDown, moveUp } = usePlaylistItems(propItems);
   return (
     <>
-      <Form onSubmit={(list: Playlist) => onSubmit({ ...list, items })}>
-        {({ register, errors, getValues }) => {
+      <Form onSubmit={(list: Playlist) => onSubmit({ ...list, items })} validateOn={'onBlur'}>
+        {({ register, errors }) => {
+          const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
           return (
             <>
               <Field label="Name" invalid={!!errors.name} error={errors?.name?.message}>
@@ -32,6 +34,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
                   ref={register({ required: 'Name is required' })}
                   placeholder="Name"
                   defaultValue={name}
+                  aria-label={selectors.pages.PlaylistForm.name}
                 />
               </Field>
               <Field label="Interval" invalid={!!errors.interval} error={errors?.interval?.message}>
@@ -41,15 +44,17 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
                   ref={register({ required: 'Interval is required' })}
                   placeholder="5m"
                   defaultValue={interval ?? '5m'}
+                  aria-label={selectors.pages.PlaylistForm.interval}
                 />
               </Field>
 
               <PlaylistTable items={items} onMoveUp={moveUp} onMoveDown={moveDown} onDelete={deleteItem} />
+
               <div className="gf-form-group">
                 <h3 className="page-headering">Add dashboards</h3>
 
                 <Field label="Add by title">
-                  <DashboardPicker onChange={addById} />
+                  <DashboardPicker onChange={addById} isClearable />
                 </Field>
 
                 <Field label="Add by tag">
@@ -65,7 +70,7 @@ export const PlaylistForm: FC<PlaylistFormProps> = ({ onSubmit, playlist }) => {
               </div>
 
               <HorizontalGroup>
-                <Button variant="primary" disabled={items.length === 0 || Object.keys(errors).length > 0}>
+                <Button variant="primary" disabled={isDisabled}>
                   Save
                 </Button>
                 <LinkButton variant="secondary" href={`${config.appSubUrl}/playlists`}>
