@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
+import { useStyles } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
@@ -11,6 +12,7 @@ import { PlaylistForm } from './PlaylistForm';
 import { updatePlaylist } from './api';
 import { Playlist } from './types';
 import { usePlaylist } from './usePlaylist';
+import { getPlaylistStyles } from './styles';
 
 interface ConnectedProps {
   navModel: NavModel;
@@ -23,6 +25,7 @@ export interface RouteParams {
 interface Props extends ConnectedProps, GrafanaRouteComponentProps<RouteParams> {}
 
 export const PlaylistEditPage: FC<Props> = ({ navModel, match }) => {
+  const styles = useStyles(getPlaylistStyles);
   const { playlist, loading } = usePlaylist(match.params.id);
   const onSubmit = async (playlist: Playlist) => {
     await updatePlaylist(match.params.id, playlist);
@@ -32,12 +35,10 @@ export const PlaylistEditPage: FC<Props> = ({ navModel, match }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={loading}>
-        <div className="page-container page-body" ng-form="ctrl.playlistEditForm">
-          <h3 className="page-sub-heading" ng-show="ctrl.isNew">
-            Edit Playlist
-          </h3>
+        <div className="page-container page-body">
+          <h3 className={styles.subHeading}>Edit Playlist</h3>
 
-          <p className="playlist-description">
+          <p className={styles.description}>
             A playlist rotates through a pre-selected list of Dashboards. A Playlist can be a great way to build
             situational awareness, or just show off your metrics to your team or visitors.
           </p>
