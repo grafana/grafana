@@ -152,7 +152,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
 
     const processedRow =
-      row.hasUnescapedContent && forceEscape ? { ...row, entry: escapeUnescapedString(row.entry) } : row;
+      row.hasUnescapedContent && forceEscape
+        ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
+        : row;
 
     return (
       <>

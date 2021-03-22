@@ -58,6 +58,14 @@ type LibraryPanelDTO struct {
 	Meta     LibraryPanelDTOMeta `json:"meta"`
 }
 
+// LibraryPanelSearchResult is the search result for library panels.
+type LibraryPanelSearchResult struct {
+	TotalCount    int64             `json:"totalCount"`
+	LibraryPanels []LibraryPanelDTO `json:"libraryPanels"`
+	Page          int               `json:"page"`
+	PerPage       int               `json:"perPage"`
+}
+
 // LibraryPanelDTOMeta is the meta information for LibraryPanelDTO.
 type LibraryPanelDTOMeta struct {
 	CanEdit             bool  `json:"canEdit"`

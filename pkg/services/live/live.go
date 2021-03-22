@@ -43,6 +43,7 @@ type GrafanaLive struct {
 	Cfg           *setting.Cfg            `inject:""`
 	RouteRegister routing.RouteRegister   `inject:""`
 	LogsService   *cloudwatch.LogsService `inject:""`
+	PluginManager plugins.Manager         `inject:""`
 	node          *centrifuge.Node
 
 	// The websocket handler
@@ -222,8 +223,8 @@ func (g *GrafanaLive) GetChannelHandlerFactory(scope string, name string) (model
 			}, nil
 		}
 
-		p, ok := plugins.Plugins[name]
-		if ok {
+		p := g.PluginManager.GetPlugin(name)
+		if p != nil {
 			h := &PluginHandler{
 				Plugin: p,
 			}

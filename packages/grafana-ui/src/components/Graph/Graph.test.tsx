@@ -79,6 +79,13 @@ const mockGraphProps = (multiSeries = false) => {
     timeZone: 'browser',
   };
 };
+
+(window as any).ResizeObserver = class ResizeObserver {
+  constructor() {}
+  observe() {}
+  disconnect() {}
+};
+
 describe('Graph', () => {
   describe('with tooltip', () => {
     describe('in single mode', () => {

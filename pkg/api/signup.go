@@ -81,8 +81,8 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2For
 		createUserCmd.EmailVerified = true
 	}
 
-	// dispatch create command
-	if err := bus.Dispatch(&createUserCmd); err != nil {
+	user, err := hs.Login.CreateUser(createUserCmd)
+	if err != nil {
 		if errors.Is(err, models.ErrUserAlreadyExists) {
 			return response.Error(401, "User with same email address already exists", nil)
 		}
@@ -91,7 +91,6 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2For
 	}
 
 	// publish signup event
-	user := &createUserCmd.Result
 	if err := bus.Publish(&events.SignUpCompleted{
 		Email: user.Email,
 		Name:  user.NameOrFallback(),
@@ -118,7 +117,7 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2For
 		apiResponse["code"] = "redirect-to-select-org"
 	}
 
-	err := hs.loginUserWithUser(user, c)
+	err = hs.loginUserWithUser(user, c)
 	if err != nil {
 		return response.Error(500, "failed to login user", err)
 	}

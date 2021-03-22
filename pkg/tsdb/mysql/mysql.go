@@ -19,7 +19,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"xorm.io/core"
 )
@@ -29,15 +29,11 @@ const (
 	dateTimeFormat = "2006-01-02 15:04:05"
 )
 
-func init() {
-	tsdb.RegisterTsdbQueryEndpoint("mysql", newMysqlQueryEndpoint)
-}
-
 func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	logger := log.New("tsdb.mysql")
 
 	protocol := "tcp"
@@ -70,7 +66,7 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 
-	config := sqleng.SqlQueryEndpointConfiguration{
+	config := sqleng.DataPluginConfiguration{
 		DriverName:        "mysql",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
@@ -82,7 +78,7 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		log: logger,
 	}
 
-	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+	return sqleng.NewDataPlugin(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
 }
 
 type mysqlQueryResultTransformer struct {
@@ -90,7 +86,8 @@ type mysqlQueryResultTransformer struct {
 }
 
 // converter map to be implemented here
-func (t *mysqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *mysqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
+	plugins.DataRowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 
 	for i := range values {

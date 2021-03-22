@@ -14,8 +14,8 @@
 # Documentation owner: Diana Payton
 /docs/ @grafana/docs-squad
 /contribute/ @marcusolsson @grafana/docs-squad
-/docs/sources/developers/plugins/ @marcusolsson
-/docs/sources/enterprise/ @osg-grafana
+/docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad
+/docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
 
 # Backend code
 *.go @grafana/backend-platform
@@ -33,6 +33,7 @@ go.sum @grafana/backend-platform
 
 # Backend code docs
 /contribute/style-guides/backend.md @grafana/backend-platform
+/contribute/architecture/backend @grafana/backend-platform
 
 /e2e @grafana/grafana-frontend-platform
 /packages @grafana/grafana-frontend-platform
