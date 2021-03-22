@@ -162,7 +162,7 @@ export class StreamingDataFrame implements DataFrame {
       });
 
       // Update the frame length
-      this.length = this.fields[0].values.buffer.length;
+      this.length = appended[0].length;
     }
   }
 }

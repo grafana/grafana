@@ -62,6 +62,7 @@ describe('MeasurementCollector', () => {
             ],
           },
         ],
+        "length": 4,
         "meta": undefined,
         "name": undefined,
         "options": Object {
