@@ -31,7 +31,21 @@ type Ack struct{}
 type Backend int
 
 const (
-	GrafanaBackend Backend = iota
+	GrafanaBackend Backend = iota + 1
 	AlertmanagerBackend
 	LoTexRulerBackend
 )
+
+func (b Backend) String() string {
+	switch b {
+	case GrafanaBackend:
+		return "grafana"
+	case AlertmanagerBackend:
+		return "alertmanager"
+	case LoTexRulerBackend:
+		return "lotex"
+	default:
+		return ""
+	}
+
+}
