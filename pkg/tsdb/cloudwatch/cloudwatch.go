@@ -267,7 +267,6 @@ func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwat
 	return nil, nil
 }
 
-// Query executes a CloudWatch query.
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	/*
 		Unlike many other data sources, with Cloudwatch Logs query requests don't receive the results as the response
