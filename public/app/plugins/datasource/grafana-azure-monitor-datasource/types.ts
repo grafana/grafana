@@ -53,11 +53,11 @@ export interface AzureMetricDimension {
 }
 
 export interface AzureMetricQuery {
-  resourceGroup: string;
-  resourceName: string;
-  metricDefinition: string;
-  metricNamespace: string;
-  metricName: string;
+  resourceGroup: string | undefined;
+  resourceName: string | undefined;
+  metricDefinition: string | undefined;
+  metricNamespace: string | undefined;
+  metricName: string | undefined;
   timeGrainUnit?: string;
   timeGrain: string;
   allowedTimeGrainsMs: number[];

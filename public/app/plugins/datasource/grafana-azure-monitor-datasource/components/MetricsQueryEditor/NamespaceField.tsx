@@ -16,13 +16,15 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   const [namespaces, setNamespaces] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
-    if (!(subscriptionId && query.azureMonitor.resourceGroup)) {
+    const { resourceGroup } = query.azureMonitor;
+
+    if (!(subscriptionId && resourceGroup)) {
       namespaces.length && setNamespaces([]);
       return;
     }
 
     datasource
-      .getMetricDefinitions(subscriptionId, query.azureMonitor.resourceGroup)
+      .getMetricDefinitions(subscriptionId, resourceGroup)
       .then((results) => setNamespaces(results.map(toOption)))
       .catch((err) => {
         // TODO: handle error
@@ -41,9 +43,9 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
         azureMonitor: {
           ...query.azureMonitor,
           metricDefinition: change.value,
-          resourceName: 'select',
-          metricNamespace: 'select',
-          metricName: 'select',
+          resourceName: undefined,
+          metricNamespace: undefined,
+          metricName: undefined,
           aggregation: '',
           timeGrain: '',
           dimensionFilters: [],
