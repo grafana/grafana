@@ -3,6 +3,7 @@ import { fuzzyMatch } from '../slate-plugins/fuzzy';
 
 /**
  * List of auto-complete search function used by SuggestionsPlugin.handleTypeahead()
+ * @alpha
  */
 export enum SearchFunctionType {
   Word = 'Word',
@@ -13,7 +14,7 @@ export enum SearchFunctionType {
 /**
  * Exact-word matching for auto-complete suggestions.
  * - Returns items containing the searched text.
- * @alpha
+ * @internal
  */
 export const wordSearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
   return items.filter((c) => (c.filterText || c.label).includes(text));
@@ -22,7 +23,7 @@ export const wordSearch: SearchFunction = (items: CompletionItem[], text: string
 /**
  * Prefix-based search for auto-complete suggestions.
  * - Returns items starting with the searched text.
- * @alpha
+ * @internal
  */
 export const prefixSearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
   return items.filter((c) => (c.filterText || c.label).startsWith(text));
@@ -32,7 +33,7 @@ export const prefixSearch: SearchFunction = (items: CompletionItem[], text: stri
  * Fuzzy search for auto-complete suggestions.
  * - Returns items containing all letters from the search text occurring in the same order.
  * - Stores highlight parts with parts of the text phrase found by fuzzy search
- * @alpha
+ * @internal
  */
 export const fuzzySearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
   text = text.toLowerCase();
@@ -47,6 +48,9 @@ export const fuzzySearch: SearchFunction = (items: CompletionItem[], text: strin
   });
 };
 
+/**
+ * @internal
+ */
 export const SearchFunctionMap = {
   [SearchFunctionType.Word]: wordSearch,
   [SearchFunctionType.Prefix]: prefixSearch,

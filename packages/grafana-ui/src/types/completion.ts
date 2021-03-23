@@ -2,7 +2,7 @@ import { Value, Editor as CoreEditor } from 'slate';
 import { SearchFunctionType } from '../utils';
 
 /**
- * @alpha
+ * @internal
  */
 export type SearchFunction = (items: CompletionItem[], prefix: string) => CompletionItem[];
 
@@ -45,7 +45,7 @@ export enum CompletionItemKind {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export type HighlightPart = {
   start: number;
@@ -80,7 +80,7 @@ export interface CompletionItem {
   /**
    * A string that should be used when comparing this item
    * with other items. When `falsy` the `label` is used.
-   * @deprecated
+   * @deprecated use sortValue instead
    */
   sortText?: string;
 
@@ -93,7 +93,7 @@ export interface CompletionItem {
 
   /**
    * Parts of the label to be highlighted
-   * @alpha
+   * @internal
    */
   highlightParts?: HighlightPart[];
 
