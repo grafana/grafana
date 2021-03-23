@@ -6,7 +6,7 @@ aliases = ["/docs/grafana/latest/features/datasources/loki"]
 weight = 800
 +++
 
-# Loki data source
+# Using Loki in Grafana
 
 Grafana ships with built-in support for Loki, an open source log aggregation system by Grafana Labs. Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore" >}}).
 
