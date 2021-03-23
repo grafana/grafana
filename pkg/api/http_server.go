@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	macaron "gopkg.in/macaron.v1"
@@ -91,6 +93,7 @@ type HTTPServer struct {
 	DataService            *tsdb.Service                           `inject:""`
 	PluginDashboardService *plugindashboards.Service               `inject:""`
 	AlertEngine            *alerting.AlertEngine                   `inject:""`
+	AccessControl          accesscontrol.AccessControl             `inject:""`
 	Listener               net.Listener
 }
 

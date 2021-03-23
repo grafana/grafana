@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-macaron/binding"
+
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	acmiddleware "github.com/grafana/grafana/pkg/services/accesscontrol/middleware"
 )
 
 var plog = log.New("api")
@@ -29,6 +31,7 @@ func (hs *HTTPServer) registerRoutes() {
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL(hs.Cfg)
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
+	authorize := acmiddleware.Middleware(hs.AccessControl)
 	quota := middleware.Quota(hs.QuotaService)
 	bind := binding.Bind
 
@@ -404,20 +407,8 @@ func (hs *HTTPServer) registerRoutes() {
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
 		adminRoute.Get("/settings", routing.Wrap(AdminGetSettings))
-		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), routing.Wrap(hs.AdminCreateUser))
-		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
-		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(hs.AdminUpdateUserPermissions))
-		adminRoute.Delete("/users/:id", routing.Wrap(AdminDeleteUser))
-		adminRoute.Post("/users/:id/disable", routing.Wrap(hs.AdminDisableUser))
-		adminRoute.Post("/users/:id/enable", routing.Wrap(AdminEnableUser))
-		adminRoute.Get("/users/:id/quotas", routing.Wrap(GetUserQuotas))
-		adminRoute.Put("/users/:id/quotas/:target", bind(models.UpdateUserQuotaCmd{}), routing.Wrap(UpdateUserQuota))
 		adminRoute.Get("/stats", routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
-
-		adminRoute.Post("/users/:id/logout", routing.Wrap(hs.AdminLogoutUser))
-		adminRoute.Get("/users/:id/auth-tokens", routing.Wrap(hs.AdminGetUserAuthTokens))
-		adminRoute.Post("/users/:id/revoke-auth-token", bind(models.RevokeAuthTokenCmd{}), routing.Wrap(hs.AdminRevokeUserAuthToken))
 
 		adminRoute.Post("/provisioning/dashboards/reload", routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", routing.Wrap(hs.AdminProvisioningReloadPlugins))
@@ -428,6 +419,22 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/ldap/:username", routing.Wrap(hs.GetUserFromLDAP))
 		adminRoute.Get("/ldap/status", routing.Wrap(hs.GetLDAPStatus))
 	}, reqGrafanaAdmin)
+
+	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
+		const userIDScope = `users:{{ index . ":id" }}`
+		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, "users:create"), bind(dtos.AdminCreateUserForm{}), routing.Wrap(hs.AdminCreateUser))
+		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, "users.password:edit", userIDScope), bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
+		adminUserRoute.Put("/:id/permissions", authorize(reqGrafanaAdmin, "users:edit", userIDScope), bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(hs.AdminUpdateUserPermissions))
+		adminUserRoute.Delete("/:id", authorize(reqGrafanaAdmin, "users:delete", userIDScope), routing.Wrap(AdminDeleteUser))
+		adminUserRoute.Post("/:id/disable", authorize(reqGrafanaAdmin, "users:edit", userIDScope), routing.Wrap(hs.AdminDisableUser))
+		adminUserRoute.Post("/:id/enable", authorize(reqGrafanaAdmin, "users:edit", userIDScope), routing.Wrap(AdminEnableUser))
+		adminUserRoute.Get("/:id/quotas", authorize(reqGrafanaAdmin, "users:edit", userIDScope), routing.Wrap(GetUserQuotas))
+		adminUserRoute.Put("/:id/quotas/:target", authorize(reqGrafanaAdmin, "users:edit", userIDScope), bind(models.UpdateUserQuotaCmd{}), routing.Wrap(UpdateUserQuota))
+
+		adminUserRoute.Post("/:id/logout", authorize(reqGrafanaAdmin, "users:logout", userIDScope), routing.Wrap(hs.AdminLogoutUser))
+		adminUserRoute.Get("/:id/auth-tokens", authorize(reqGrafanaAdmin, "users:read", userIDScope), routing.Wrap(hs.AdminGetUserAuthTokens))
+		adminUserRoute.Post("/:id/revoke-auth-token", authorize(reqGrafanaAdmin, "users:logout", userIDScope), bind(models.RevokeAuthTokenCmd{}), routing.Wrap(hs.AdminRevokeUserAuthToken))
+	})
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)
