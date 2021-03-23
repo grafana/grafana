@@ -8,7 +8,9 @@ weight = 800
 
 # Using Loki in Grafana
 
-Grafana ships with built-in support for Loki, an open source log aggregation system by Grafana Labs. Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore" >}}).
+Grafana ships with built-in support for Loki, an open source log aggregation system by Grafana Labs. This topic explains options, variables, querying, and other options specific to this data source.
+
+Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore" >}}). Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 This topic explains options, variables, querying, and other options specific to this data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
