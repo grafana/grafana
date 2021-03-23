@@ -62,10 +62,13 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
     const matcherUi = fieldMatchersUI.get(override.matcher.id);
     const configPropertiesOptions = getOverrideProperties(registry);
     const isSystemOverride = isSystemOverrideGuard(override);
+    // A way force open new override categories
+    const forceOpen = override.properties.length === 0 ? 1 : 0;
 
     const category = new OptionsPaneCategoryDescriptor({
       title: overrideName,
       id: overrideName,
+      forceOpen,
       renderTitle: function renderOverrideTitle(isExpanded: boolean) {
         return (
           <OverrideCategoryTitle

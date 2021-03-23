@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useCallback, useState } from 'react';
+import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { css, cx } from 'emotion';
 import _ from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
@@ -13,27 +13,31 @@ export interface OptionsPaneCategoryProps {
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   isOpenDefault?: boolean;
   itemsCount?: number;
-  isOpen?: boolean;
+  forceOpen?: number;
   className?: string;
   isNested?: boolean;
   children: ReactNode;
 }
 
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
-  ({ id, title, children, isOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
-    const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), { isExpanded: !isOpenDefault });
-    const [isExpandedState, setExpandedState] = useState(savedState.isExpanded);
-
-    // isOpen from props can override any saved internal state
-    const isExpanded = isOpen !== undefined ? isOpen : isExpandedState;
-
+  ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
+    const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
+      isExpanded: isOpenDefault ?? false,
+    });
+    const [isExpanded, setIsExpanded] = useState(savedState.isExpanded);
     const theme = useTheme();
     const styles = getStyles(theme, isExpanded, isNested);
 
+    useEffect(() => {
+      if (!isExpanded && forceOpen && forceOpen > 0) {
+        setIsExpanded(true);
+      }
+    }, [forceOpen]);
+
     const onToggle = useCallback(() => {
       setSavedState({ isExpanded: !isExpanded });
-      setExpandedState(!isExpanded);
-    }, [setSavedState, isExpanded, setExpandedState]);
+      setIsExpanded(!isExpanded);
+    }, [setSavedState, setIsExpanded, isExpanded]);
 
     if (!renderTitle) {
       renderTitle = function defaultTitle(isExpanded: boolean) {

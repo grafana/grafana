@@ -12,6 +12,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
   return new OptionsPaneCategoryDescriptor({
     title: 'Panel frame',
     id: 'Panel frame',
+    isOpenDefault: true,
   })
     .addItem(
       new OptionsPaneItemDescriptor({

@@ -72,7 +72,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
         break;
       case OptionFilter.Popular:
         mainBoxElements.push(
-          <OptionsPaneCategory id="Popular options" title="Popular options" key="Popular options">
+          <OptionsPaneCategory id="Popular options" title="Popular options" key="Popular options" forceOpen={1}>
             {getPopularOptions(allOptions).map((item) => item.render())}
           </OptionsPaneCategory>
         );
@@ -132,6 +132,7 @@ function renderSearchHits(
         id="Found options"
         title={`Matched ${optionHits.length}/${totalCount} options`}
         key="Normal options"
+        forceOpen={1}
       >
         {optionHits.map((hit) => hit.render(true))}
       </OptionsPaneCategory>
