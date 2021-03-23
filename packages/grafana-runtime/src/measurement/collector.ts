@@ -75,7 +75,7 @@ export class MeasurementCollector implements LiveMeasurements {
 
       let s = this.measurements.get(key);
       if (s) {
-        s.update(measure);
+        s.push(measure);
       } else {
         s = new StreamingDataFrame(measure, this.config); //
         this.measurements.set(key, s);

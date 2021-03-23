@@ -2,7 +2,6 @@ package tempo
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,11 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 
-	jaeger "github.com/jaegertracing/jaeger/model"
-	jaeger_json "github.com/jaegertracing/jaeger/model/converter/json"
-
 	ot_pdata "go.opentelemetry.io/collector/consumer/pdata"
-	ot_jaeger "go.opentelemetry.io/collector/translator/trace/jaeger"
 )
 
 type tempoExecutor struct {
@@ -77,42 +72,17 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 
 	otTrace := ot_pdata.NewTraces()
 	err = otTrace.FromOtlpProtoBytes(body)
+
 	if err != nil {
 		return plugins.DataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)
 	}
 
-	jaegerBatches, err := ot_jaeger.InternalTracesToJaegerProto(otTrace)
+	frame, err := TraceToFrame(otTrace)
 	if err != nil {
-		return plugins.DataResponse{}, fmt.Errorf("failed to translate to jaegerBatches %v: %w", traceID, err)
+		return plugins.DataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", traceID, err)
 	}
-
-	jaegerTrace := &jaeger.Trace{
-		Spans:      []*jaeger.Span{},
-		ProcessMap: []jaeger.Trace_ProcessMapping{},
-	}
-
-	// otel proto conversion doesn't set jaeger processes
-	for _, batch := range jaegerBatches {
-		for _, s := range batch.Spans {
-			s.Process = batch.Process
-		}
-
-		jaegerTrace.Spans = append(jaegerTrace.Spans, batch.Spans...)
-		jaegerTrace.ProcessMap = append(jaegerTrace.ProcessMap, jaeger.Trace_ProcessMapping{
-			Process:   *batch.Process,
-			ProcessID: batch.Process.ServiceName,
-		})
-	}
-	jsonTrace := jaeger_json.FromDomain(jaegerTrace)
-
-	traceBytes, err := json.Marshal(jsonTrace)
-	if err != nil {
-		return plugins.DataResponse{}, fmt.Errorf("failed to json.Marshal trace \"%s\" :%w", traceID, err)
-	}
-
-	frames := []*data.Frame{
-		{Name: "Traces", RefID: refID, Fields: []*data.Field{data.NewField("trace", nil, []string{string(traceBytes)})}},
-	}
+	frame.RefID = refID
+	frames := []*data.Frame{frame}
 	queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
 
 	return plugins.DataResponse{
