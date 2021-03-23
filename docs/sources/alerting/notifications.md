@@ -118,11 +118,11 @@ To setup Opsgenie you will need an API Key and the Alert API Url. These can be o
 Setting | Description
 --------|------------
 Alert API URL | The API URL for your Opsgenie instance. This will normally be either `https://api.opsgenie.com` or, for EU customers, `https://api.eu.opsgenie.com`.
-API Key | The API Key as provided by Opsgenie for your configured Grafana Integration.
-Override priority | Allows the alert priority to be set using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4` or `P5`. Default is `False`.
-Send notification tags as | Allows you to specify how you would like [Notification Tags]({{< relref "create-alerts.md/#notifications" >}}) delivered to Opsgenie. They can be delivered as `Tags`, `Extra Properties` or both. Default is `Tags`. (1)
+API Key | The API Key as provided by Opsgenie for your configured Grafana integration.
+Override priority | Configures the alert priority using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4,` or `P5`. Default is `False`.
+Send notification tags as | Specify how you would like [Notification Tags]({{< relref "create-alerts.md/#notifications" >}}) delivered to Opsgenie. They can be delivered as `Tags`, `Extra Properties` or both. Default is `Tags`. (1)
 
-> **Note:** When notification tags are sent as `Tags` they will be concatenated into string with a `key:value` format. If you prefer to receive the notifications tags as key/values under Extra Properties in Opsgenie then change the `Send notification tags as` to either `Extra Properties` or `Tags & Extra Properties`.
+> **Note:** When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. If you prefer to receive the notifications tags as key/values under Extra Properties in Opsgenie then change the `Send notification tags as` to either `Extra Properties` or `Tags & Extra Properties`.
 
 ### PagerDuty
 
