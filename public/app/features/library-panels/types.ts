@@ -13,6 +13,8 @@ export interface LibraryPanelDTO {
   folderId: number;
   uid: string;
   name: string;
+  type: string;
+  description: string;
   model: any;
   version: number;
   meta: LibraryPanelDTOMeta;
