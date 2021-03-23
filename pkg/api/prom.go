@@ -23,7 +23,7 @@ import (
 // swagger:model
 type RuleResponse struct {
 	// in: body
-	discoveryBase
+	DiscoveryBase
 	// in: body
 	Data RuleDiscovery `json:"data"`
 }
@@ -31,13 +31,13 @@ type RuleResponse struct {
 // swagger:model
 type AlertResponse struct {
 	// in: body
-	discoveryBase
+	DiscoveryBase
 	// in: body
 	Data AlertDiscovery `json:"data"`
 }
 
 // swagger:model
-type discoveryBase struct {
+type DiscoveryBase struct {
 	// required: true
 	Status string `json:"status"`
 	// required: false
