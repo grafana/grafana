@@ -19,7 +19,7 @@ export interface CompletionItemGroup {
 
   /**
    * If true, match only by prefix (and not mid-word).
-   * @deprecated use searchFunction instead
+   * @deprecated use searchFunctionType instead
    */
   prefixMatch?: boolean;
 
