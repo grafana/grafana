@@ -58,6 +58,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       new OptionsPaneCategoryDescriptor({
         title: 'Panel links',
         id: 'Panel links',
+        isOpenDefault: false,
         itemsCount: panel.links?.length,
       }).addItem(
         new OptionsPaneItemDescriptor({
@@ -79,6 +80,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       new OptionsPaneCategoryDescriptor({
         title: 'Repeat options',
         id: 'Repeat options',
+        isOpenDefault: false,
       })
         .addItem(
           new OptionsPaneItemDescriptor({

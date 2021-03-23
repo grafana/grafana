@@ -1,18 +1,13 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import {
-  LoadingState,
-  PanelData,
-  PanelPlugin,
-  standardEditorsRegistry,
-  standardFieldConfigEditorRegistry,
-} from '@grafana/data';
+import { LoadingState, PanelData, standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
 import { mockStandardFieldConfigOptions } from '../../../../../test/helpers/fieldConfig';
 import { selectors } from '@grafana/e2e-selectors';
 import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { DashboardModel, PanelModel } from '../../state';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
+import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
 standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
@@ -29,9 +24,19 @@ class OptionsPaneOptionsTestScenario {
     state: LoadingState.Done,
     timeRange: {} as any,
   };
-  plugin = new PanelPlugin(() => null).useFieldConfig();
+  plugin = getPanelPlugin({
+    id: 'TestPanel',
+  }).useFieldConfig({
+    standardOptions: {},
+    useCustomConfig: (b) => {
+      b.addBooleanSwitch({
+        name: 'CustomBool',
+        path: 'customBool',
+      });
+    },
+  });
   panel = new PanelModel({
-    type: 'plugin',
+    type: this.plugin.meta.id,
     fieldConfig: {
       defaults: {
         max: 100,
@@ -78,8 +83,7 @@ describe('OptionsPaneOptions', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.render();
 
-    const editors = screen.queryAllByLabelText(OptionsPaneSelector.fieldLabel('Panel frame Title'));
-    expect(editors).toHaveLength(1);
+    expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel frame Title'))).toBeInTheDocument();
   });
 
   it('should render all categories', async () => {
@@ -89,5 +93,12 @@ describe('OptionsPaneOptions', () => {
     expect(screen.getByRole('heading', { name: /Panel frame/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Standard options/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Thresholds/ })).toBeInTheDocument();
+  });
+
+  it('should render custom  options', () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.render();
+
+    expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('TestPanel CustomBool'))).toBeInTheDocument();
   });
 });

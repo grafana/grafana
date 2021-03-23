@@ -22,7 +22,7 @@ export interface OptionsPaneCategoryProps {
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
-      isExpanded: isOpenDefault ?? false,
+      isExpanded: isOpenDefault !== false,
     });
     const [isExpanded, setIsExpanded] = useState(savedState.isExpanded);
     const theme = useTheme();
