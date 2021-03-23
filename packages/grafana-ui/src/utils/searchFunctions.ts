@@ -1,4 +1,4 @@
-import { CompletionItem } from '../types';
+import { CompletionItem, SearchFunction } from '../types';
 import { fuzzyMatch } from '../slate-plugins/fuzzy';
 
 /**
@@ -9,16 +9,18 @@ import { fuzzyMatch } from '../slate-plugins/fuzzy';
 /**
  * Exact-word matching for auto-complete suggestions.
  * - Returns items containing the searched text.
+ * @alpha
  */
-export const wordSearch = (items: CompletionItem[], text: string): CompletionItem[] => {
+export const wordSearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
   return items.filter((c) => (c.filterText || c.label).includes(text));
 };
 
 /**
  * Prefix-based search for auto-complete suggestions.
  * - Returns items starting with the searched text.
+ * @alpha
  */
-export const prefixSearch = (items: CompletionItem[], text: string): CompletionItem[] => {
+export const prefixSearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
   return items.filter((c) => (c.filterText || c.label).startsWith(text));
 };
 
@@ -26,8 +28,9 @@ export const prefixSearch = (items: CompletionItem[], text: string): CompletionI
  * Fuzzy search for auto-complete suggestions.
  * - Returns items containing all letters from the search text occurring in the same order.
  * - Stores highlight parts with parts of the text phrase found by fuzzy search
+ * @alpha
  */
-export const fuzzySearch = (items: CompletionItem[], text: string): CompletionItem[] => {
+export const fuzzySearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
   text = text.toLowerCase();
   return items.filter((item) => {
     const { distance, ranges, found } = fuzzyMatch(item.label.toLowerCase(), text);

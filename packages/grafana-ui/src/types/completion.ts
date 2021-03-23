@@ -1,5 +1,8 @@
 import { Value, Editor as CoreEditor } from 'slate';
 
+/**
+ * @alpha
+ */
 export type SearchFunction = (items: CompletionItem[], prefix: string) => CompletionItem[];
 
 export interface CompletionItemGroup {
@@ -13,6 +16,16 @@ export interface CompletionItemGroup {
    */
   items: CompletionItem[];
 
+  /**
+   * If true, match only by prefix (and not mid-word).
+   * @deprecated use searchFunction instead
+   */
+  prefixMatch?: boolean;
+
+  /**
+   * Function used to create auto-complete list
+   * @alpha
+   */
   searchFunction?: SearchFunction;
 
   /**
@@ -30,6 +43,9 @@ export enum CompletionItemKind {
   GroupTitle = 'GroupTitle',
 }
 
+/**
+ * @alpha
+ */
 export type HighlightPart = {
   start: number;
   end: number;
@@ -61,13 +77,22 @@ export interface CompletionItem {
   documentation?: string;
 
   /**
+   * A string that should be used when comparing this item
+   * with other items. When `falsy` the `label` is used.
+   * @deprecated
+   */
+  sortText?: string;
+
+  /**
    * A string or number that should be used when comparing this
    * item with other items. When `undefined` then `label` is used.
+   * @alpha
    */
   sortValue?: string | number;
 
   /**
    * Parts of the label to be highlighted
+   * @alpha
    */
   highlightParts?: HighlightPart[];
 
