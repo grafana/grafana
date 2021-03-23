@@ -70,7 +70,7 @@ There are two types of LogQL queries:
 - **Log queries -** Return the contents of log lines.
 - **Metric queries -** Extend log queries and calculate sample values based on the content of logs from a log query.
 
-### Log Queries
+### Log queries
 
 Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/#log-queries) query to display your logs.
 
