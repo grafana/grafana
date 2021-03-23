@@ -93,6 +93,10 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
         : undefined
       : lodashGet(defaults, fieldOption.path);
 
+    if (fieldOption.getItemsCount) {
+      category.props.itemsCount = fieldOption.getItemsCount(value);
+    }
+
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,

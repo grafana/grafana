@@ -2,7 +2,7 @@ import React, { FC, ReactNode, useCallback, useState } from 'react';
 import { css, cx } from 'emotion';
 import _ from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { Counter, Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,6 +12,7 @@ export interface OptionsPaneCategoryProps {
   title?: string;
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   isOpenDefault?: boolean;
+  itemsCount?: number;
   isOpen?: boolean;
   className?: string;
   isNested?: boolean;
@@ -19,7 +20,7 @@ export interface OptionsPaneCategoryProps {
 }
 
 export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
-  ({ id, title, children, isOpen, isOpenDefault, renderTitle, className, isNested = false }) => {
+  ({ id, title, children, isOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), { isExpanded: !isOpenDefault });
     const [isExpandedState, setExpandedState] = useState(savedState.isExpanded);
 
@@ -34,13 +35,27 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       setExpandedState(!isExpanded);
     }, [setSavedState, isExpanded, setExpandedState]);
 
+    if (!renderTitle) {
+      renderTitle = function defaultTitle(isExpanded: boolean) {
+        if (isExpanded || itemsCount === undefined || itemsCount === 0) {
+          return title;
+        }
+
+        return (
+          <span>
+            {title} <Counter value={itemsCount} />
+          </span>
+        );
+      };
+    }
+
     return (
       <div className={cx(styles.box, className, 'options-group')}>
         <div className={styles.header} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
           </div>
-          <div className={styles.title}>{renderTitle ? renderTitle(isExpanded) : title}</div>
+          <div className={styles.title}>{renderTitle!(isExpanded)}</div>
         </div>
         {isExpanded && <div className={styles.body}>{children}</div>}
       </div>

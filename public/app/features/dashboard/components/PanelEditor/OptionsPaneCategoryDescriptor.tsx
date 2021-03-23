@@ -2,14 +2,14 @@ import React from 'react';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 
-export interface OptionsPaneCategoryProps {
+export interface OptionsPaneCategoryDescriptorProps {
   id: string;
   title: string;
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   defaultToClosed?: boolean;
   className?: string;
   isNested?: boolean;
-  isOverride?: boolean;
+  itemsCount?: number;
   customRender?: () => React.ReactNode;
 }
 /**
@@ -21,7 +21,7 @@ export class OptionsPaneCategoryDescriptor {
   categories: OptionsPaneCategoryDescriptor[] = [];
   parent?: OptionsPaneCategoryDescriptor;
 
-  constructor(public props: OptionsPaneCategoryProps) {}
+  constructor(public props: OptionsPaneCategoryDescriptorProps) {}
 
   addItem(item: OptionsPaneItemDescriptor) {
     item.parent = this;

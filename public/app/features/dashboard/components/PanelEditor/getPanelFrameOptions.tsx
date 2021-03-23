@@ -56,6 +56,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       new OptionsPaneCategoryDescriptor({
         title: 'Panel links',
         id: 'Panel links',
+        itemsCount: panel.links?.length,
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: 'Panel links',
