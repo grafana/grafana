@@ -56,7 +56,7 @@ You can use the Loki query editor to create log and metric queries.
 
 | Name               | Description                                                                                                                                                                                                 |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Query expression` | Loki query expression, check out the [LogQL documentation](https://grafana.com/docs/loki/latest/logql/).                                                                                                    |
+| `Query expression` | Loki query expression, refer to the [LogQL documentation](https://grafana.com/docs/loki/latest/logql/) for more information.                                                                                                    |
 | `Query type`       | Choose the type of query you would like to run. An instant query queries against a single point in time. We are using "To" time from the time range. A range query queries over the selected range of time. |
 | `Line limit`       | Upper limit for number of log lines returned by query. The default is the Maximum lines limit set in Loki settings.                                                                                         |
 | `Legend`           | Available only in Dashboard. Controls the name of the time series, using name or pattern. For example `{{hostname}}` is replaced with the label value for the label `hostname`.                             |
