@@ -22,10 +22,19 @@
 go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
 
-#Cloud Datasources backend code
-/pkg/tsdb/cloudwatch @grafana/cloud-datasources
+# Cloud Datasources backend code
+/pkg/tsdb/cloudwatch @grafana/cloud-datasources @grafana/observability-squad
 /pkg/tsdb/azuremonitor @grafana/cloud-datasources
 /pkg/tsdb/cloudmonitoring @grafana/cloud-datasources
+
+# Observability backend code
+/pkg/tsdb/influxdb @grafana/observability-squad
+/pkg/tsdb/elasticsearch @grafana/observability-squad
+/pkg/tsdb/graphite @grafana/observability-squad
+/pkg/tsdb/jaeger @grafana/observability-squad
+/pkg/tsdb/loki @grafana/observability-squad
+/pkg/tsdb/zipkin @grafana/observability-squad
+/pkg/tsdb/tempo @grafana/observability-squad
 
 # Database migrations
 /pkg/services/sqlstore/migrations @grafana/backend-platform @grafana/hosted-grafana-team
@@ -73,6 +82,7 @@ lerna.json @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/prometheus @grafana/observability-squad
 /public/app/plugins/datasource/cloud-monitoring @grafana/cloud-datasources
 /public/app/plugins/datasource/zipkin @grafana/observability-squad
+/public/app/plugins/datasource/tempo @grafana/observability-squad
 
 # Cloud middleware
 /grafana-mixin/ @grafana/cloud-middleware
