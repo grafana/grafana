@@ -76,7 +76,7 @@ Querying and displaying log data from Loki is available via [Explore]({{< relref
 
 A log query consists of two parts: **log stream selector**, and a **log pipeline**. For performance reasons you need to start by choosing a log stream by selecting a log label.
 
-### Log Context
+### Log context
 
 When using a search expression as detailed above, you now have the ability to retrieve the context surrounding your filtered results.
 By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
