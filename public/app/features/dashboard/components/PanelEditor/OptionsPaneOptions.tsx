@@ -49,9 +49,11 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
         <Field className={styles.customFieldMargin}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </Field>
-        <Field className={styles.noFieldMargin}>
-          <RadioButtonGroup options={radioOptions} value={listMode} fullWidth onChange={setListMode} />
-        </Field>
+        {!isSearching && (
+          <Field className={styles.noFieldMargin}>
+            <RadioButtonGroup options={radioOptions} value={listMode} fullWidth onChange={setListMode} />
+          </Field>
+        )}
       </div>
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
