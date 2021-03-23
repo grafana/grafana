@@ -15,9 +15,9 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// DashboardAlertConditions turns dashboard alerting conditions into a server side expression queries and a
+// DashboardAlertConditions turns dashboard alerting conditions into server side expression queries and a
 // classic conditions operation. A Condition from the ngalert model's package will be returned if the
-// translation is successful in create an expression that can be parsed.
+// translation is successful in creating an expression that can be parsed.
 // A query is created for each unique referenced query in the dashboard. Each query is considered to be unique
 // based on the RefID and the Time Range. Therefore, if the same RefID has multiple time ranges in the dashboard
 // condition, new RefIDs will be created.
