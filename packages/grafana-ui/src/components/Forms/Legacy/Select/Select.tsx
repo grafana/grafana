@@ -39,7 +39,7 @@ interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 
   value?: SelectableValue<T>;
 }
 
-interface LegacySelectProps<T> extends LegacyCommonProps<T> {
+export interface LegacySelectProps<T> extends LegacyCommonProps<T> {
   tooltipContent?: PopoverContent;
   noOptionsMessage?: () => string;
   isDisabled?: boolean;
