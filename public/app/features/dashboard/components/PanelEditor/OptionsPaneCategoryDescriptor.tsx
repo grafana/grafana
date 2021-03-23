@@ -42,7 +42,7 @@ export class OptionsPaneCategoryDescriptor {
     }
 
     return (
-      <OptionsPaneCategory key={this.props.title} isOpen={isSearching} {...this.props}>
+      <OptionsPaneCategory key={this.props.title} {...this.props}>
         {this.items.map((item) => item.render())}
         {this.categories.map((category) => category.render())}
       </OptionsPaneCategory>

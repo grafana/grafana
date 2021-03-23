@@ -10,6 +10,7 @@ import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
+import { AngularPanelOptions } from './AngularPanelOptions';
 
 interface Props {
   plugin: PanelPlugin;
@@ -25,9 +26,11 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState('all');
   const styles = useStyles(getStyles);
+  const { plugin, dashboard, panel } = props;
 
-  const [allDefaults, justOverrides] = [
-    [getPanelFrameCategory(props), ...getVizualizationOptions(props)],
+  const [panelFrameOptions, vizOptions, justOverrides] = [
+    getPanelFrameCategory(props),
+    getVizualizationOptions(props),
     getFieldOverrideCategories(props),
   ];
 
@@ -37,11 +40,53 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     { label: `Overrides`, value: 'overrides' },
   ];
 
+  const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
-  const showAllDefaults = !isSearching && listMode === 'all';
+
+  if (isSearching) {
+    const allOptions = [panelFrameOptions, ...vizOptions];
+    mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
+
+    // If searching for angular panel then we need to add notice that results are limited
+    if (props.plugin.angularPanelCtrl) {
+      mainBoxElements.push(
+        <div className={styles.searchNotice} key="Search notice">
+          This is an old visualization type that does not support searching all options.
+        </div>
+      );
+    }
+  } else {
+    switch (listMode) {
+      case 'all':
+        // Panel frame options first
+        mainBoxElements.push(panelFrameOptions.render());
+        // If angular add those options next
+        if (props.plugin.angularPanelCtrl) {
+          mainBoxElements.push(
+            <AngularPanelOptions plugin={plugin} dashboard={dashboard} panel={panel} key="AngularOptions" />
+          );
+        }
+        // Then add all panel & field defaults
+        for (const item of vizOptions) {
+          mainBoxElements.push(item.render());
+        }
+        break;
+      case 'overrides':
+        for (const override of justOverrides) {
+          mainBoxElements.push(override.render());
+        }
+        break;
+      case 'popular':
+        mainBoxElements.push(
+          <OptionsPaneCategory id="Popular options" title="Popular options" key="Popular options">
+            No poular options, try again later
+          </OptionsPaneCategory>
+        );
+        break;
+    }
+  }
+
   const showOverridesInSeparateBox = !isSearching && listMode === 'all';
-  const showOnlyOverrides = !isSearching && listMode === 'overrides';
-  const showPopular = listMode === 'popular';
 
   return (
     <div className={styles.wrapper}>
@@ -57,16 +102,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
       </div>
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
-          <div className={styles.mainBox}>
-            {showAllDefaults && allDefaults.map((category) => category.render())}
-            {showOnlyOverrides && justOverrides.map((override) => override.render())}
-            {showPopular && (
-              <OptionsPaneCategory id="Popular options" title="Popular options">
-                No poular options, try again later
-              </OptionsPaneCategory>
-            )}
-            {isSearching && renderSearchHits(allDefaults, justOverrides, searchQuery)}
-          </div>
+          <div className={styles.mainBox}>{mainBoxElements}</div>
           {showOverridesInSeparateBox && (
             <div className={styles.overridesBox}>{justOverrides.map((override) => override.render())}</div>
           )}
@@ -85,12 +121,16 @@ function renderSearchHits(
   const { optionHits, totalCount, overrideHits } = engine.search(searchQuery);
 
   return (
-    <>
-      <OptionsPaneCategory id="Found options" title={`Matched ${optionHits.length}/${totalCount} options`}>
+    <div key="search results">
+      <OptionsPaneCategory
+        id="Found options"
+        title={`Matched ${optionHits.length}/${totalCount} options`}
+        key="Normal options"
+      >
         {optionHits.map((hit) => hit.render(true))}
       </OptionsPaneCategory>
       {overrideHits.map((override) => override.render(true))}
-    </>
+    </div>
   );
 }
 
@@ -124,6 +164,12 @@ const getStyles = (theme: GrafanaTheme) => ({
   scrollWrapper: css`
     flex-grow: 1;
     min-height: 0;
+  `,
+  searchNotice: css`
+    text-align: center;
+    font-size: ${theme.typography.size.sm};
+    color: ${theme.colors.textWeak};
+    padding: ${theme.spacing.sm};
   `,
   mainBox: css`
     background: ${theme.colors.bg1};
