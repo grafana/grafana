@@ -5,6 +5,7 @@ export * from './dataLinks';
 export * from './tags';
 export * from './scrollbar';
 export * from './measureText';
+export * from './useForceUpdate';
 export * from './searchFunctions';
 export { default as ansicolor } from './ansicolor';
 
