@@ -5,6 +5,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -71,12 +72,20 @@ const (
 	Normal state = iota
 
 	// Alerting is the eval state for an alert instance condition
-	// that evaluated to false.
+	// that evaluated to true (Alerting).
 	Alerting
+
+	// NoData is the eval state for an alert rule condition
+	// that evaluated to NoData.
+	NoData
+
+	// Error is the eval state for an alert rule condition
+	// that evaluated to Error.
+	Error
 )
 
 func (s state) String() string {
-	return [...]string{"Normal", "Alerting"}[s]
+	return [...]string{"Normal", "Alerting", "NoData", "Error"}[s]
 }
 
 // AlertExecCtx is the context provided for executing an alert condition.
@@ -87,9 +96,8 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// execute runs the Condition's expressions or queries.
-func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
-	result := ExecutionResults{}
+// GetQueryDataRequest validates the condition and creates a backend.QueryDataRequest from it.
+func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (*backend.QueryDataRequest, error) {
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
 		// TODO: Things probably
@@ -126,6 +134,17 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 			QueryType:     q.QueryType,
 			TimeRange:     q.RelativeTimeRange.ToTimeRange(now),
 		})
+	}
+	return queryDataReq, nil
+}
+
+// execute runs the Condition's expressions or queries.
+func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
+	result := ExecutionResults{}
+
+	queryDataReq, err := GetQueryDataRequest(ctx, c, now)
+	if err != nil {
+		return &result, err
 	}
 
 	exprService := expr.Service{
@@ -182,9 +201,20 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 		}
 		labels[labelsStr] = true
 
-		state := Normal
-		val, err := f.Fields[0].FloatAt(0)
-		if err != nil || val != 0 {
+		val, ok := f.Fields[0].At(0).(*float64)
+		if !ok {
+			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("expected nullable float64 but got type %T", f.Fields[0].Type())}
+		}
+
+		var state state
+		switch {
+		case err != nil:
+			state = Error
+		case val == nil:
+			state = NoData
+		case *val == 0:
+			state = Normal
+		default:
 			state = Alerting
 		}
 
@@ -197,15 +227,38 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
-// This may be temporary, as there might be a fair amount we want to display in the frontend, and it might not make sense to store that in data.Frame.
-// For the first pass, I would expect a Frame with a single row, and a column for each instance with a boolean value.
+// It displays one row per alert instance, with a column for each label and one for the alerting state.
 func (evalResults Results) AsDataFrame() data.Frame {
-	fields := make([]*data.Field, 0)
+	fieldLen := len(evalResults)
+
+	uniqueLabelKeys := make(map[string]struct{})
+
 	for _, evalResult := range evalResults {
-		fields = append(fields, data.NewField("", evalResult.Instance, []bool{evalResult.State != Normal}))
+		for k := range evalResult.Instance {
+			uniqueLabelKeys[k] = struct{}{}
+		}
 	}
-	f := data.NewFrame("", fields...)
-	return *f
+
+	labelColumns := make([]string, 0, len(uniqueLabelKeys))
+	for k := range uniqueLabelKeys {
+		labelColumns = append(labelColumns, k)
+	}
+
+	labelColumns = sort.StringSlice(labelColumns)
+
+	frame := data.NewFrame("evaluation results")
+	for _, lKey := range labelColumns {
+		frame.Fields = append(frame.Fields, data.NewField(lKey, nil, make([]string, fieldLen)))
+	}
+	frame.Fields = append(frame.Fields, data.NewField("State", nil, make([]string, fieldLen)))
+
+	for evalIdx, evalResult := range evalResults {
+		for lIdx, v := range labelColumns {
+			frame.Set(lIdx, evalIdx, evalResult.Instance[v])
+		}
+		frame.Set(len(labelColumns), evalIdx, evalResult.State.String())
+	}
+	return *frame
 }
 
 // ConditionEval executes conditions and evaluates the result.
