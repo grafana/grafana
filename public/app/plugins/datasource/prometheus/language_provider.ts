@@ -321,6 +321,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions.push({
         label: `Labels${limitInfo}`,
         items: Object.keys(labelValues).map(wrapLabel),
+        searchFunction: fuzzySearch,
       });
     }
     return result;
@@ -399,7 +400,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
           context = 'context-labels';
           const newItems = possibleKeys.map((key) => ({ label: key }));
           const limitInfo = addLimitInfo(newItems);
-          const newSuggestion: CompletionItemGroup = { label: `Labels${limitInfo}`, items: newItems };
+          const newSuggestion: CompletionItemGroup = {
+            label: `Labels${limitInfo}`,
+            items: newItems,
+            searchFunction: fuzzySearch,
+          };
           suggestions.push(newSuggestion);
         }
       }
