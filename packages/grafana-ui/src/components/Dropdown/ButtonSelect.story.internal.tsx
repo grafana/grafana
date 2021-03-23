@@ -25,11 +25,11 @@ export default {
 };
 
 export const Basic: Story = (args) => {
-  const value = { label: 'A label', value: 'A value' };
-  const options = [value, { label: 'Another label', value: 'Another value' }];
+  const initialValue = { label: 'A label', value: 'A value' };
+  const options = [initialValue, { label: 'Another label', value: 'Another value' }];
   return (
     <DashboardStoryCanvas>
-      <UseState initialState={value}>
+      <UseState initialState={initialValue}>
         {(value, updateValue) => {
           return (
             <div style={{ marginLeft: '100px', position: 'relative', display: 'inline-block' }}>
