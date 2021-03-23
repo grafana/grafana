@@ -24,6 +24,7 @@ export type IconName =
   | 'bolt'
   | 'book-open'
   | 'book'
+  | 'brackets-curly'
   | 'bug'
   | 'calculator-alt'
   | 'calendar-alt'
@@ -157,6 +158,7 @@ export const getAvailableIcons = (): IconName[] => [
   'bolt',
   'book-open',
   'book',
+  'brackets-curly',
   'bug',
   'calculator-alt',
   'calendar-alt',

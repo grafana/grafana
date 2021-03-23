@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func (ns *NotificationService) send(msg *Message) (int, error) {
+func (ns *NotificationService) Send(msg *Message) (int, error) {
 	messages := []*Message{}
 
 	if msg.SingleEmail {

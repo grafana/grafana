@@ -3430,10 +3430,10 @@
     source-map "~0.6.1"
     typescript "~3.9.7"
 
-"@grafana/aws-sdk@0.0.22":
-  version "0.0.22"
-  resolved "https://registry.yarnpkg.com/@grafana/aws-sdk/-/aws-sdk-0.0.22.tgz#58389616beda01ef137804ab6d9ef07d4a4a35b0"
-  integrity sha512-gTyHmD5VeXjjnnq3zVyI2x3ktJB7dBp92GoJW+lH2t9bWNkcnXyzHSaXZZdrnNpjctaqpv85uxcocK4U7BGCvw==
+"@grafana/aws-sdk@0.0.24":
+  version "0.0.24"
+  resolved "https://registry.yarnpkg.com/@grafana/aws-sdk/-/aws-sdk-0.0.24.tgz#30511706d5efaf52e81cadd8f933d1c21e8d1c6b"
+  integrity sha512-tKYZ5KgJn0/S+/z7KFUtcgihYC1vCpUPvDMONp8j1j02JWwUE3ivu9LDiPeWBLcicy0psUypC0mL3QG/e8prIw==
   dependencies:
     "@grafana/data" "7.4.0"
     "@grafana/runtime" "7.4.0"
@@ -25485,11 +25485,6 @@ tsutils@^3.17.1:
   integrity sha512-kzeQ5B8H3w60nFY2g8cJIuH7JDpsALXySGtwGJ0p2LSjLgay3NdIpqq5SoOBe46bKDW2iq25irHCr8wjomUS2g==
   dependencies:
     tslib "^1.8.1"
-
-tti-polyfill@0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/tti-polyfill/-/tti-polyfill-0.2.2.tgz#f7bbf71b13afa9edf60c8bb0d0c05f134e1513b9"
-  integrity sha512-URIoJxvsHThbQEJij29hIBUDHx9UNoBBCQVjy7L8PnzkqY8N6lsAI6h8JrT1Wt2lA0avus/DkuiJxd9qpfCpqw==
 
 tty-browserify@0.0.0:
   version "0.0.0"

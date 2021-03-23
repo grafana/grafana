@@ -42,6 +42,9 @@ type DashboardPageRouteSearchParams = {
   editview?: string;
   inspect?: string;
   kiosk?: UrlQueryValue;
+  from?: string;
+  to?: string;
+  refresh?: string;
 };
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
@@ -138,9 +141,19 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     if (prevProps.location.search !== this.props.location.search) {
-      getTimeSrv().updateTimeRangeFromUrl();
+      const prevUrlParams = prevProps.queryParams;
+      const urlParams = this.props.queryParams;
+
+      if (urlParams?.from !== prevUrlParams?.from && urlParams?.to !== prevUrlParams?.to) {
+        getTimeSrv().updateTimeRangeFromUrl();
+      }
+
+      if (!prevUrlParams?.refresh && urlParams?.refresh) {
+        getTimeSrv().setAutoRefresh(urlParams.refresh);
+      }
 
       const templateVarChanges = findTemplateVarChanges(this.props.queryParams, prevProps.queryParams);
+
       if (templateVarChanges) {
         templateVarsChangedInUrl(templateVarChanges);
       }
@@ -331,7 +344,13 @@ export class DashboardPage extends PureComponent<Props, State> {
       <div className="dashboard-container">
         {kioskMode !== KioskMode.Full && (
           <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
-            <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} onAddPanel={this.onAddPanel} />
+            <DashNav
+              dashboard={dashboard}
+              isFullscreen={!!viewPanel}
+              onAddPanel={this.onAddPanel}
+              kioskMode={kioskMode}
+              hideTimePicker={dashboard.timepicker.hidden}
+            />
           </div>
         )}
 

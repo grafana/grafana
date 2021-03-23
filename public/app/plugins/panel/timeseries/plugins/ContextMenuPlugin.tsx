@@ -6,6 +6,8 @@ import {
   IconName,
   MenuItemProps,
   MenuItemsGroup,
+  MenuGroup,
+  MenuItem,
   Portal,
   useGraphNGContext,
 } from '@grafana/ui';
@@ -31,9 +33,9 @@ interface ContextMenuPluginProps {
 
 export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
   data,
+  defaultItems,
   onClose,
   timeZone,
-  defaultItems,
   replaceVariables,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -105,7 +107,6 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
   if (!xField) {
     return null;
   }
-
   const items = defaultItems ? [...defaultItems] : [];
   let renderHeader: () => JSX.Element | null = () => null;
 
@@ -160,9 +161,28 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     );
   }
 
+  const renderMenuGroupItems = () => {
+    return items?.map((group, index) => (
+      <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+        {(group.items || []).map((item) => (
+          <MenuItem
+            key={item.label}
+            url={item.url}
+            label={item.label}
+            ariaLabel={item.label}
+            target={item.target}
+            icon={item.icon}
+            active={item.active}
+            onClick={item.onClick}
+          />
+        ))}
+      </MenuGroup>
+    ));
+  };
+
   return (
     <ContextMenu
-      itemsGroup={items}
+      renderMenuItems={renderMenuGroupItems}
       renderHeader={renderHeader}
       x={selection.coords.viewport.x}
       y={selection.coords.viewport.y}
