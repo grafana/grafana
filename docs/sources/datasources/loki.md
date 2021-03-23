@@ -78,7 +78,7 @@ A log query consists of two parts: **log stream selector**, and a **log pipeline
 
 ### Log context
 
-When using a search expression as detailed above, you now have the ability to retrieve the context surrounding your filtered results.
+When using a search expression as detailed above, you can retrieve the context surrounding your filtered results.
 By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
 log message you're interested in.
 
