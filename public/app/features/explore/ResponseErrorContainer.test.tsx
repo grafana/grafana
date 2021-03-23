@@ -11,7 +11,7 @@ describe('ResponseErrorContainer', () => {
     setup({
       message: 'test error',
     });
-    expect(screen.queryByText('test error')).not.toBeNull();
+    expect(screen.getByText('test error')).toBeInTheDocument();
   });
 
   it('shows error.data.message if error.message does not exist', async () => {
@@ -20,7 +20,7 @@ describe('ResponseErrorContainer', () => {
         message: 'test error',
       },
     });
-    expect(screen.queryByText('test error')).not.toBeNull();
+    expect(screen.getByText('test error')).toBeInTheDocument();
   });
 
   it('does not show error if there is refID', async () => {
@@ -28,7 +28,7 @@ describe('ResponseErrorContainer', () => {
       refId: 'someId',
       message: 'test error',
     });
-    expect(screen.queryByText('test error')).toBeNull();
+    expect(screen.queryByText('test error')).not.toBeInTheDocument();
   });
 
   it('does not show error if there is refID', async () => {
@@ -36,7 +36,7 @@ describe('ResponseErrorContainer', () => {
       refId: 'someId',
       message: 'test error',
     });
-    expect(screen.queryByText('test error')).toBeNull();
+    expect(screen.queryByText('test error')).not.toBeInTheDocument();
   });
 });
 
