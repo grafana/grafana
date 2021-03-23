@@ -12,7 +12,7 @@ Grafana ships with built-in support for Loki, an open source log aggregation sys
 
 This topic explains options, variables, querying, and other options specific to this data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-> **Note:** If you have issues with getting this data source to work and Grafana is giving you undescriptive errors, then check your log file (try looking in /var/log/grafana/grafana.log).
+> **Note:** To troubleshoot configuration and other issues, check the log file (/var/log/grafana/grafana.log).
 
 ## Loki settings
 
