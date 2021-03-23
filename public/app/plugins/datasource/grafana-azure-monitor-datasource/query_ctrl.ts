@@ -197,7 +197,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       }
 
       delete this.target.azureMonitor.timeGrainUnit;
-      // this.onMetricNameChange();
     }
 
     if (this.target.appInsights.timeGrainUnit) {

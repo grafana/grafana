@@ -26,15 +26,15 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
     datasource
       .getMetricNamespaces(subscriptionId, resourceGroup, metricDefinition, resourceName)
       .then((results) => {
-        if (results.length === 1) {
-          onQueryChange({
-            ...query,
-            azureMonitor: {
-              ...query.azureMonitor,
-              metricNamespace: results[0].value,
-            },
-          });
-        }
+        // if (results.length === 1) {
+        //   onQueryChange({
+        //     ...query,
+        //     azureMonitor: {
+        //       ...query.azureMonitor,
+        //       metricNamespace: results[0].value,
+        //     },
+        //   });
+        // }
         setMetricNamespaces(results.map(toOption));
       })
       .catch((err) => {
