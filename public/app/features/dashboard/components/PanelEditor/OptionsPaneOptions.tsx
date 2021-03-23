@@ -31,8 +31,6 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     getFieldOverrideCategories(props),
   ];
 
-  const allOptions = allDefaults.concat(justOverrides);
-
   const radioOptions = [
     { label: 'All', value: 'all' },
     { label: 'Popular', value: 'popular' },
@@ -65,7 +63,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
                 No poular options, try again later
               </OptionsPaneCategory>
             )}
-            {isSearching && renderSearchHits(allOptions, searchQuery)}
+            {isSearching && renderSearchHits(allDefaults, justOverrides, searchQuery)}
           </div>
           {showOverridesInSeparateBox && (
             <div className={styles.overridesBox}>{justOverrides.map((override) => override.render())}</div>
@@ -76,14 +74,21 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   );
 };
 
-function renderSearchHits(allOptions: OptionsPaneCategoryDescriptor[], searchQuery: string) {
-  const engine = new OptionSearchEngine(allOptions, []);
-  const { optionHits, totalCount } = engine.search(searchQuery);
+function renderSearchHits(
+  allOptions: OptionsPaneCategoryDescriptor[],
+  overrides: OptionsPaneCategoryDescriptor[],
+  searchQuery: string
+) {
+  const engine = new OptionSearchEngine(allOptions, overrides);
+  const { optionHits, totalCount, overrideHits } = engine.search(searchQuery);
 
   return (
-    <OptionsPaneCategory id="Found options" title={`Matched ${optionHits.length}/${totalCount} options`}>
-      {optionHits.map((hit) => hit.render(true))}
-    </OptionsPaneCategory>
+    <>
+      <OptionsPaneCategory id="Found options" title={`Matched ${optionHits.length}/${totalCount} options`}>
+        {optionHits.map((hit) => hit.render(true))}
+      </OptionsPaneCategory>
+      {overrideHits.map((override) => override.render(true))}
+    </>
   );
 }
 

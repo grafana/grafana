@@ -23,6 +23,22 @@ describe('OptionSearchEngine', () => {
     expect(results.optionHits.length).toBe(4);
     expect(results.optionHits[0].props.title).toBe('Frame');
   });
+
+  it('Override hits should contain matcher and matched properties', () => {
+    const engine = new OptionSearchEngine(getOptionCategories(), getOverrides());
+    const results = engine.search('Max');
+    expect(results.overrideHits.length).toBe(2);
+    expect(results.overrideHits[0].items.length).toBe(2);
+    expect(results.overrideHits[0].items[0].props.title).toBe('Match by name');
+    expect(results.overrideHits[0].items[1].props.title).toBe('Max');
+  });
+
+  it('Override hits should not add matcher twice', () => {
+    const engine = new OptionSearchEngine(getOptionCategories(), getOverrides());
+    const results = engine.search('Match by name');
+    expect(results.overrideHits.length).toBe(2);
+    expect(results.overrideHits[0].items.length).toBe(1);
+  });
 });
 
 function getOptionCategories(): OptionsPaneCategoryDescriptor[] {
@@ -34,14 +50,12 @@ function getOptionCategories(): OptionsPaneCategoryDescriptor[] {
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Title',
-          description: 'AAA',
           Component: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Min',
-          description: 'BBB',
           Component: jest.fn(),
         })
       )
@@ -59,21 +73,67 @@ function getOptionCategories(): OptionsPaneCategoryDescriptor[] {
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Min',
-          description: 'CCC',
           Component: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'DescriptionMatch',
-          description: 'MUUUU',
           Component: jest.fn(),
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
           title: 'Frame',
-          description: 'MUUUU',
+          Component: jest.fn(),
+        })
+      ),
+  ];
+}
+
+function getOverrides(): OptionsPaneCategoryDescriptor[] {
+  return [
+    new OptionsPaneCategoryDescriptor({
+      id: 'Override 1',
+      title: 'Override 1',
+    })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Match by name',
+          Component: jest.fn(),
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Min',
+          Component: jest.fn(),
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Max',
+          Component: jest.fn(),
+        })
+      ),
+    new OptionsPaneCategoryDescriptor({
+      id: 'Override 2',
+      title: 'Override 2',
+    })
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Match by name',
+          Component: jest.fn(),
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Threshold',
+          Component: jest.fn(),
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Max',
           Component: jest.fn(),
         })
       ),

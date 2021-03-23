@@ -15,15 +15,16 @@ export class OptionSearchEngine {
 
   search(query: string): OptionSearchResults {
     const searchRegex = new RegExp(query, 'i');
-    //const allOptionsCount = getAllOptionsCount(allOptions);
-    //const hits = getSearchHits(allOptions, searchRegex);
 
     const optionHits = this.collectHits(this.categories, searchRegex, []);
     const sortedHits = optionHits.sort(compareHit).map((x) => x.item);
 
+    const overrideHits = this.collectHits(this.overrides, searchRegex, []);
+    const sortedOverridesHits = overrideHits.sort(compareHit).map((x) => x.item);
+
     return {
       optionHits: sortedHits,
-      overrideHits: [],
+      overrideHits: this.buildOverrideHitCategories(sortedOverridesHits),
       totalCount: this.getAllOptionsCount(this.categories),
     };
   }
@@ -66,6 +67,27 @@ export class OptionSearchEngine {
     }
 
     return total;
+  }
+
+  buildOverrideHitCategories(hits: OptionsPaneItemDescriptor[]): OptionsPaneCategoryDescriptor[] {
+    const categories: Record<string, OptionsPaneCategoryDescriptor> = {};
+
+    for (const hit of hits) {
+      let category = categories[hit.parent.props.title];
+
+      if (!category) {
+        category = categories[hit.parent.props.title] = new OptionsPaneCategoryDescriptor(hit.parent.props);
+        // Add matcher item as that should always be shown
+        category.addItem(hit.parent.items[0]);
+      }
+
+      // Prevent adding matcher twice since it's automatically added for every override
+      if (category.items[0].props.title !== hit.props.title) {
+        category.addItem(hit);
+      }
+    }
+
+    return Object.values(categories);
   }
 }
 

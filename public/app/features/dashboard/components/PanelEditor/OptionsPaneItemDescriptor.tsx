@@ -57,7 +57,7 @@ export class OptionsPaneItemDescriptor {
     }
 
     if (skipField) {
-      return <Component />;
+      return <Component key={key} />;
     }
 
     return (
