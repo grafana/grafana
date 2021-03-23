@@ -6,13 +6,8 @@ import { NavModelSrv } from 'app/core/nav_model_srv';
 import { AppEventEmitter } from 'app/types';
 import { AppEvents } from '@grafana/data';
 import { promiseToDigest } from '../../core/utils/promiseToDigest';
+import { PlaylistItem } from './types';
 
-export interface PlaylistItem {
-  value: any;
-  id: any;
-  type: string;
-  order: any;
-}
 export class PlaylistEditCtrl {
   filteredDashboards: any = [];
   filteredTags: any = [];
@@ -67,7 +62,7 @@ export class PlaylistEditCtrl {
   }
 
   addPlaylistItem(playlistItem: PlaylistItem) {
-    playlistItem.value = playlistItem.id.toString();
+    playlistItem.value = playlistItem.id!.toString();
     playlistItem.type = 'dashboard_by_id';
     playlistItem.order = this.playlistItems.length + 1;
 
