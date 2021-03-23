@@ -32,6 +32,14 @@ type TokenExpiredError struct {
 
 func (e *TokenExpiredError) Error() string { return "user token expired" }
 
+type TokenRevokedError struct {
+	UserID                int64
+	TokenID               int64
+	MaxConcurrentSessions int64
+}
+
+func (e *TokenRevokedError) Error() string { return "user token revoked" }
+
 // UserToken represents a user token
 type UserToken struct {
 	Id            int64
@@ -45,6 +53,7 @@ type UserToken struct {
 	RotatedAt     int64
 	CreatedAt     int64
 	UpdatedAt     int64
+	RevokedAt     int64
 	UnhashedToken string
 }
 
@@ -57,9 +66,10 @@ type UserTokenService interface {
 	CreateToken(ctx context.Context, user *User, clientIP net.IP, userAgent string) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
 	TryRotateToken(ctx context.Context, token *UserToken, clientIP net.IP, userAgent string) (bool, error)
-	RevokeToken(ctx context.Context, token *UserToken) error
+	RevokeToken(ctx context.Context, token *UserToken, soft bool) error
 	RevokeAllUserTokens(ctx context.Context, userId int64) error
 	ActiveTokenCount(ctx context.Context) (int64, error)
 	GetUserToken(ctx context.Context, userId, userTokenId int64) (*UserToken, error)
 	GetUserTokens(ctx context.Context, userId int64) ([]*UserToken, error)
+	GetUserRevokedTokens(ctx context.Context, userId int64) ([]*UserToken, error)
 }

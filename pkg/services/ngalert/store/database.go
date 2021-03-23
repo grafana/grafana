@@ -35,6 +35,9 @@ type Store interface {
 	SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error
 	ValidateAlertDefinition(*models.AlertDefinition, bool) error
 	UpdateAlertDefinitionPaused(*models.UpdateAlertDefinitionPausedCommand) error
+
+	// Alertmanager
+	GetLatestAlertmanagerConfiguration(cmd *models.GetLatestAlertmanagerConfigurationQuery) error
 }
 
 // DBstore stores the alert definitions and instances in the database.
