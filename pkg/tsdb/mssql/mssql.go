@@ -155,9 +155,9 @@ func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
 
 var converterList = []sqlutil.StringConverter{
 	{
-		Name:           "handle float",
-		InputScanKind:  reflect.Struct,
-		InputTypeName:  "DOUBLE",
+		Name:           "handle MONEY",
+		InputScanKind:  reflect.Slice,
+		InputTypeName:  "MONEY",
 		ConversionFunc: func(in *string) (*string, error) { return in, nil },
 		Replacer: &sqlutil.StringFieldReplacer{
 			OutputFieldType: data.FieldTypeNullableFloat64,
@@ -170,6 +170,67 @@ var converterList = []sqlutil.StringConverter{
 				if err != nil {
 					return nil, err
 				}
+				return &v, nil
+			},
+		},
+	},
+	{
+		Name:           "handle SMALLMONEY",
+		InputScanKind:  reflect.Slice,
+		InputTypeName:  "SMALLMONEY",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableFloat64,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				v, err := strconv.ParseFloat(*in, 64)
+				if err != nil {
+					return nil, err
+				}
+				return &v, nil
+			},
+		},
+	},
+	{
+		Name:           "handle DECIMAL",
+		InputScanKind:  reflect.Slice,
+		InputTypeName:  "DECIMAL",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableFloat64,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				v, err := strconv.ParseFloat(*in, 64)
+				if err != nil {
+					return nil, err
+				}
+				return &v, nil
+			},
+		},
+	},
+	{
+		Name:           "handle UNIQUEIDENTIFIER",
+		InputScanKind:  reflect.Slice,
+		InputTypeName:  "UNIQUEIDENTIFIER",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableString,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				spew.Dump(in)
+				if in == nil {
+					return nil, nil
+				}
+				uuid := &mssql.UniqueIdentifier{}
+				if err := uuid.Scan([]byte(*in)); err != nil {
+					return nil, nil
+				}
+				v := uuid.String()
 				return &v, nil
 			},
 		},
