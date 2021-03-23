@@ -67,26 +67,23 @@ export const jsonDiff = (lhs: any, rhs: any): Diffs => {
 };
 
 export const getDiffText = (diff: Diff, showProp = true) => {
-  let text = getDiffOperationText(diff.op);
   const prop = _.last(diff.path)!;
+  const propIsNumeric = isNumeric(prop);
+  const val = diff.op === 'remove' ? diff.originalValue : diff.value;
+  let text = getDiffOperationText(diff.op);
 
-  if (diff.op === 'add' || diff.op === 'remove') {
-    const val = diff.op === 'add' ? diff.value : diff.originalValue;
-
-    if (_.isArray(val)) {
-      if (!_.isEmpty(val)) {
-        text += isNumeric(prop) ? ` item ${prop}` : ` ${val.length} ${prop}`;
+  if (showProp) {
+    if (propIsNumeric) {
+      text += ` item ${prop}`;
+    } else {
+      if (_.isArray(val) && !_.isEmpty(val)) {
+        text += ` ${val.length} ${prop}`;
       } else {
         text += ` ${prop}`;
       }
-    } else {
-      text += isNumeric(prop) ? ` item ${prop}` : ` ${prop}`;
-    }
-  } else {
-    if (showProp) {
-      text += isNumeric(prop) ? ` item ${prop}` : ` ${prop}`;
     }
   }
+
   return text;
 };
 

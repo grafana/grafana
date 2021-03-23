@@ -26,16 +26,12 @@ export const VersionHistoryComparison: React.FC<DiffViewProps> = ({ baseInfo, ne
         <HorizontalGroup justify="space-between" align="center">
           <div>
             <p className={styles.versionInfo}>
-              <strong>Version {newInfo.version}</strong> updated by
-              <span>{newInfo.createdBy} </span>
-              <span>{newInfo.ageString}</span>
-              <span> - {newInfo.message}</span>
+              <strong>Version {newInfo.version}</strong> updated by {newInfo.createdBy} {newInfo.ageString} -{' '}
+              {newInfo.message}
             </p>
             <p className={cx(styles.versionInfo, styles.noMarginBottom)}>
-              <strong>Version {baseInfo.version}</strong> updated by
-              <span>{baseInfo.createdBy} </span>
-              <span>{baseInfo.ageString}</span>
-              <span> - {baseInfo.message}</span>
+              <strong>Version {baseInfo.version}</strong> updated by {baseInfo.createdBy} {baseInfo.ageString} -{' '}
+              {baseInfo.message}
             </p>
           </div>
           {isNewLatest && (

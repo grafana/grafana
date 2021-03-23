@@ -10,14 +10,14 @@ type DiffTitleProps = {
   title: string;
 };
 
-const replaceDiff: Diff = { op: 'replace', originalValue: undefined, path: [], value: undefined, startLineNumber: 0 };
+const replaceDiff: Diff = { op: 'replace', originalValue: undefined, path: [''], value: undefined, startLineNumber: 0 };
 
 export const DiffTitle: React.FC<DiffTitleProps> = ({ diff, title }) => {
   const styles = useStyles(getDiffTitleStyles);
   return diff ? (
     <>
       <Icon type="mono" name="circle" className={styles[diff.op]} /> <span className={styles.embolden}>{title}</span>{' '}
-      <span>{getDiffText(diff, false)}</span> <DiffValues diff={diff} />
+      <span>{getDiffText(diff, diff.path.length > 1)}</span> <DiffValues diff={diff} />
     </>
   ) : (
     <div className={styles.withoutDiff}>
