@@ -12,8 +12,8 @@ import {
   getFieldDisplayName,
   escapeStringForRegex,
   VizOrientation,
+  PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import { PanelOptionsEditorBuilder } from '@grafana/data';
 
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {
@@ -23,8 +23,8 @@ export interface StatPanelOptions extends SingleStatBaseOptions {
   textMode: BigValueTextMode;
 }
 
-export function addStandardDataReduceOptions(
-  builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
+export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
+  builder: PanelOptionsEditorBuilder<T>,
   includeOrientation = true,
   includeFieldMatcher = true,
   includeTextSizes = true

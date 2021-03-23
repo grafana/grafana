@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -16,12 +16,12 @@ func TestMacroEngine(t *testing.T) {
 		engine := newPostgresMacroEngine(timescaledbEnabled)
 		timescaledbEnabled = true
 		engineTS := newPostgresMacroEngine(timescaledbEnabled)
-		query := &tsdb.Query{}
+		query := plugins.DataSubQuery{}
 
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
 			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 			to := from.Add(5 * time.Minute)
-			timeRange := tsdb.NewFakeTimeRange("5m", "now", to)
+			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: to}
 
 			Convey("interpolate __time function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__time(time_column)")
@@ -104,6 +104,13 @@ func TestMacroEngine(t *testing.T) {
 				So(sql, ShouldEqual, "GROUP BY time_bucket('300s',time_column)")
 			})
 
+			Convey("interpolate __timeGroup function with large time range as an argument and TimescaleDB enabled", func() {
+				sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '12d')")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "GROUP BY time_bucket('1036800s',time_column)")
+			})
+
 			Convey("interpolate __unixEpochFilter function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochFilter(time)")
 				So(err, ShouldBeNil)
@@ -144,7 +151,9 @@ func TestMacroEngine(t *testing.T) {
 		Convey("Given a time range between 1960-02-01 07:00 and 1965-02-03 08:00", func() {
 			from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 			to := time.Date(1965, 2, 3, 8, 0, 0, 0, time.UTC)
-			timeRange := tsdb.NewTimeRange(strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+			timeRange := plugins.NewDataTimeRange(
+				strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10),
+				strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
 
 			Convey("interpolate __timeFilter function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
@@ -170,7 +179,9 @@ func TestMacroEngine(t *testing.T) {
 		Convey("Given a time range between 1960-02-01 07:00 and 1980-02-03 08:00", func() {
 			from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 			to := time.Date(1980, 2, 3, 8, 0, 0, 0, time.UTC)
-			timeRange := tsdb.NewTimeRange(strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+			timeRange := plugins.NewDataTimeRange(
+				strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10),
+				strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
 
 			Convey("interpolate __timeFilter function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
@@ -196,7 +207,8 @@ func TestMacroEngine(t *testing.T) {
 		Convey("Given a time range between 1960-02-01 07:00:00.5 and 1980-02-03 08:00:00.5", func() {
 			from := time.Date(1960, 2, 1, 7, 0, 0, 500e6, time.UTC)
 			to := time.Date(1980, 2, 3, 8, 0, 0, 500e6, time.UTC)
-			timeRange := tsdb.NewTimeRange(strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
+			timeRange := plugins.NewDataTimeRange(
+				strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10), strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
 
 			So(from.Format(time.RFC3339Nano), ShouldEqual, "1960-02-01T07:00:00.5Z")
 			So(to.Format(time.RFC3339Nano), ShouldEqual, "1980-02-03T08:00:00.5Z")

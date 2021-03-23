@@ -1,11 +1,12 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { SoloPanelPage, Props } from './SoloPanelPage';
+import { Props, SoloPanelPage } from './SoloPanelPage';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
 import { DashboardModel } from '../state';
-import { DashboardRouteInfo } from 'app/types';
+import { DashboardRoutes } from 'app/types';
+import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
 
-jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
+jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
   class DashboardPanel extends React.Component<DashboardPanelProps> {
     render() {
@@ -63,12 +64,15 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       },
       mount: (propOverrides?: Partial<Props>) => {
         const props: Props = {
-          urlSlug: 'my-dash',
-          $scope: {},
-          urlUid: '11',
-          urlPanelId: '1',
-          $injector: {},
-          routeInfo: DashboardRouteInfo.Normal,
+          ...getRouteComponentProps({
+            match: {
+              params: { slug: 'my-dash', uid: '11' },
+            } as any,
+            queryParams: {
+              panelId: '1',
+            },
+            route: { routeName: DashboardRoutes.Normal } as any,
+          }),
           initDashboard: jest.fn(),
           dashboard: null,
         };
@@ -78,7 +82,7 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
         ctx.dashboard = props.dashboard;
         let { rerender } = render(<SoloPanelPage {...props} />);
         // prop updates will be submitted by rerendering the same component with different props
-        ctx.rerender = (newProps: Partial<Props>) => {
+        ctx.rerender = (newProps?: Partial<Props>) => {
           Object.assign(props, newProps);
           rerender(<SoloPanelPage {...props} />);
         };

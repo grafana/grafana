@@ -1,15 +1,14 @@
 import React, { useContext, useRef, useState, useLayoutEffect, useEffect } from 'react';
-import { LogRowModel } from '@grafana/data';
+import { GrafanaTheme, DataQueryError, LogRowModel, textUtil } from '@grafana/data';
 import { css, cx } from 'emotion';
 
 import { Alert } from '../Alert/Alert';
 import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
-import { GrafanaTheme } from '@grafana/data';
-import { DataQueryError } from '@grafana/data';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { List } from '../List/List';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
+import { LogMessageAnsi } from './LogMessageAnsi';
 
 interface LogRowContextProps {
   row: LogRowModel;
@@ -97,7 +96,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   );
 };
 
-const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
+export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   row,
   rows,
   error,
@@ -141,7 +140,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
                         padding: 5px 0;
                       `}
                     >
-                      {item}
+                      {typeof item === 'string' && textUtil.hasAnsiCodes(item) ? <LogMessageAnsi value={item} /> : item}
                     </div>
                   );
                 }}

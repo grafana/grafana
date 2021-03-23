@@ -1,5 +1,4 @@
-import TimeSeries from 'app/core/time_series2';
-import { updateLegendValues } from 'app/core/time_series2';
+import TimeSeries, { updateLegendValues } from 'app/core/time_series2';
 
 describe('TimeSeries', () => {
   let points, series: any;

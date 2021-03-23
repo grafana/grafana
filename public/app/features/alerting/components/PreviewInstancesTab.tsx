@@ -1,23 +1,23 @@
 import React, { FC } from 'react';
-import { PanelData } from '@grafana/data';
-import { Button } from '@grafana/ui';
-import { PreviewStyles } from './AlertingQueryPreview';
+import { DataFrame } from '@grafana/data';
+import { Button, Table } from '@grafana/ui';
+import { EmptyState } from './EmptyState';
 
 interface Props {
-  data: PanelData;
-  isTested: boolean;
-  styles: PreviewStyles;
+  instances: DataFrame[];
+  width: number;
+  height: number;
+  onTest: () => void;
 }
 
-export const PreviewInstancesTab: FC<Props> = ({ data, isTested, styles }) => {
-  if (!isTested) {
+export const PreviewInstancesTab: FC<Props> = ({ instances, onTest, height, width }) => {
+  if (!instances.length) {
     return (
-      <div className={styles.noQueries}>
-        <h4 className={styles.noQueriesHeader}>You haven’t tested your alert yet.</h4>
+      <EmptyState title="You haven’t tested your alert yet.">
         <div>In order to see your instances, you need to test your alert first.</div>
-        <Button>Test alert now</Button>
-      </div>
+        <Button onClick={onTest}>Test alert now</Button>
+      </EmptyState>
     );
   }
-  return <div>Instances</div>;
+  return <Table data={instances[0]} height={height} width={width} />;
 };

@@ -12,7 +12,7 @@ const intervalOptions: Array<SelectableValue<number>> = [
 
 interface Props {
   alertDefinition: AlertDefinition;
-  onChange: (event: FormEvent) => void;
+  onChange: (event: FormEvent<HTMLElement>) => void;
   onIntervalChange: (interval: SelectableValue<number>) => void;
   onConditionChange: (refId: SelectableValue<string>) => void;
   queryOptions: QueryGroupOptions;

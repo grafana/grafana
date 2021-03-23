@@ -3,7 +3,7 @@ import { DataSourceSettings } from '@grafana/data';
 export const getMockDataSources = (amount: number) => {
   const dataSources = [];
 
-  for (let i = 0; i <= amount; i++) {
+  for (let i = 0; i < amount; i++) {
     dataSources.push({
       access: '',
       basicAuth: false,
@@ -37,6 +37,7 @@ export const getMockDataSource = (): DataSourceSettings => {
     isDefault: false,
     jsonData: { authType: 'credentials', defaultRegion: 'eu-west-2' },
     name: 'gdev-cloudwatch',
+    typeName: 'Cloudwatch',
     orgId: 1,
     password: '',
     readOnly: false,

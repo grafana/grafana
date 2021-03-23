@@ -43,12 +43,11 @@ export interface QueryRunnerOptions<
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
-  delayStateNotification?: number; // default 100ms.
   transformations?: DataTransformerConfig[];
 }
 
 let counter = 100;
-function getNextRequestId() {
+export function getNextRequestId() {
   return 'Q' + counter++;
 }
 

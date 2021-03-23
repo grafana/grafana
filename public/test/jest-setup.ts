@@ -1,6 +1,5 @@
 import { configure } from 'enzyme';
 import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
-import 'jquery';
 import $ from 'jquery';
 import 'mutationobserver-shim';
 
@@ -9,7 +8,6 @@ global.$ = global.jQuery = $;
 
 import '../vendor/flot/jquery.flot';
 import '../vendor/flot/jquery.flot.time';
-import 'angular';
 import angular from 'angular';
 
 angular.module('grafana', ['ngRoute']);

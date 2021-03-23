@@ -55,7 +55,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     if (xMode === 'time') {
       innerHtml = '<div class="graph-tooltip-time">' + absoluteTime + '</div>' + innerHtml;
     }
-    $tooltip.html(innerHtml).place_tt(pos.pageX + 20, pos.pageY);
+    $tooltip.html(innerHtml).place_tt(pos.pageX, pos.pageY, { offset: 10 });
   };
 
   this.getMultiSeriesPlotHoverInfo = function (seriesList: any[], pos: { x: number }) {
