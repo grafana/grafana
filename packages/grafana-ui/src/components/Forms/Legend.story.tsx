@@ -1,14 +1,9 @@
 import React from 'react';
-import { text } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 
 import { Legend } from '@grafana/ui';
 import mdx from './Legend.mdx';
-
-const getKnobs = () => {
-  return {
-    label: text('text', 'Form section'),
-  };
-};
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 export default {
   title: 'Forms/Legend',
@@ -17,11 +12,19 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+  },
+  argTypes: {
+    children: { name: 'Label' },
+    description: NOOP_CONTROL,
   },
 };
 
-export const basic = () => {
-  const { label } = getKnobs();
-
-  return <Legend>{label}</Legend>;
+export const Basic: Story = (args) => {
+  return <Legend>{args.children}</Legend>;
+};
+Basic.args = {
+  children: 'Form section',
 };

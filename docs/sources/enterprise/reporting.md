@@ -157,7 +157,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ## Choose template variables
 
-> ** Note:** Available in Grafana Enterprise version 7.5+ (behind `templateVariables` feature flag).
+> ** Note:** Available in Grafana Enterprise version 7.5+ (behind `reportVariables` feature flag).
 
 You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/_index.md" >}}) section. 
 
