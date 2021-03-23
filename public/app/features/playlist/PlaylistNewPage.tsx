@@ -31,17 +31,14 @@ export const PlaylistNewPage: FC<Props> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={loading}>
-        <div className="page-container page-body">
-          <h3 className={styles.subHeading}>New Playlist</h3>
+        <h3 className={styles.subHeading}>New Playlist</h3>
 
-          <p className={styles.description}>
-            A playlist rotates through a pre-selected list of Dashboards. A Playlist can be a great way to build
-            situational awareness, or just show off your metrics to your team or visitors.
-          </p>
+        <p className={styles.description}>
+          A playlist rotates through a pre-selected list of Dashboards. A Playlist can be a great way to build
+          situational awareness, or just show off your metrics to your team or visitors.
+        </p>
 
-          <PlaylistForm onSubmit={onSubmit} playlist={playlist} />
-        </div>
-        <footer />
+        <PlaylistForm onSubmit={onSubmit} playlist={playlist} />
       </Page.Contents>
     </Page>
   );
