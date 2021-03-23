@@ -31,7 +31,7 @@ type Ack struct{}
 type Backend int
 
 const (
-	GrafanaBackend Backend = iota + 1
+	GrafanaBackend Backend = iota
 	AlertmanagerBackend
 	LoTexRulerBackend
 )
