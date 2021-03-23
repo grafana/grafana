@@ -30,10 +30,11 @@ func TestGetLibraryPanel(t *testing.T) {
 					UID:      result.Result.UID,
 					Name:     "Text - Library Panel",
 					Model: map[string]interface{}{
-						"datasource": "${DS_GDEV-TESTDATA}",
-						"id":         float64(1),
-						"title":      "Text - Library Panel",
-						"type":       "text",
+						"datasource":  "${DS_GDEV-TESTDATA}",
+						"description": "A description",
+						"id":          float64(1),
+						"title":       "Text - Library Panel",
+						"type":        "text",
 					},
 					Version: 1,
 					Meta: LibraryPanelDTOMeta{

@@ -84,7 +84,8 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"x": 6,
 							"y": 0,
 						},
-						"datasource": "${DS_GDEV-TESTDATA}",
+						"datasource":  "${DS_GDEV-TESTDATA}",
+						"description": "A description",
 						"libraryPanel": map[string]interface{}{
 							"uid":     sc.initialResult.Result.UID,
 							"name":    sc.initialResult.Result.Name,
@@ -723,7 +724,8 @@ func getCreateCommand(folderID int64, name string) createLibraryPanelCommand {
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
 			  "title": "Text - Library Panel",
-			  "type": "text"
+			  "type": "text",
+			  "description": "A description"
 			}
 		`),
 	}

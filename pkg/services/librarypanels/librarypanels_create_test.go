@@ -25,10 +25,11 @@ func TestCreateLibraryPanel(t *testing.T) {
 					UID:      sc.initialResult.Result.UID,
 					Name:     "Text - Library Panel",
 					Model: map[string]interface{}{
-						"datasource": "${DS_GDEV-TESTDATA}",
-						"id":         float64(1),
-						"title":      "Text - Library Panel",
-						"type":       "text",
+						"datasource":  "${DS_GDEV-TESTDATA}",
+						"description": "A description",
+						"id":          float64(1),
+						"title":       "Text - Library Panel",
+						"type":        "text",
 					},
 					Version: 1,
 					Meta: LibraryPanelDTOMeta{
@@ -67,10 +68,11 @@ func TestCreateLibraryPanel(t *testing.T) {
 					UID:      result.Result.UID,
 					Name:     "Library Panel Name",
 					Model: map[string]interface{}{
-						"datasource": "${DS_GDEV-TESTDATA}",
-						"id":         float64(1),
-						"title":      "Library Panel Name",
-						"type":       "text",
+						"datasource":  "${DS_GDEV-TESTDATA}",
+						"description": "A description",
+						"id":          float64(1),
+						"title":       "Library Panel Name",
+						"type":        "text",
 					},
 					Version: 1,
 					Meta: LibraryPanelDTOMeta{
