@@ -134,8 +134,14 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 		}
 
 		sort.Slice(timeRanges, func(i, j int) bool {
-			// proper sort needed
-			return timeRanges[i][0] < timeRanges[j][0]
+			switch {
+			case timeRanges[i][0] < timeRanges[j][0]:
+				return true
+			case timeRanges[i][0] > timeRanges[j][0]:
+				return false
+			default:
+				return timeRanges[i][1] < timeRanges[j][1]
+			}
 		})
 
 		for _, tr := range timeRanges {
