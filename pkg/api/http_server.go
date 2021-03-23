@@ -13,10 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	macaron "gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -29,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
+	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -48,6 +45,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func init() {
@@ -65,6 +66,7 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
+	PluginContextProvider  *plugincontext.Provider                 `inject:""`
 	RouteRegister          routing.RouteRegister                   `inject:""`
 	Bus                    bus.Bus                                 `inject:""`
 	RenderService          rendering.Service                       `inject:""`

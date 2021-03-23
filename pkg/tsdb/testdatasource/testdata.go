@@ -33,6 +33,7 @@ func (p *testDataPlugin) Init() error {
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler:    p.queryMux,
 		CallResourceHandler: httpadapter.New(resourceMux),
+		StreamHandler:       newTestStreamHandler(p.logger),
 	})
 	err := p.BackendPluginManager.Register("testdata", factory)
 	if err != nil {
