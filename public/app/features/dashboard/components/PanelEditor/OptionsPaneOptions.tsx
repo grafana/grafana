@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, Field, RadioButtonGroup, useStyles } from '@grafana/ui';
@@ -28,11 +28,10 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const styles = useStyles(getStyles);
   const { plugin, dashboard, panel } = props;
 
-  const [panelFrameOptions, vizOptions, justOverrides] = [
-    getPanelFrameCategory(props),
-    getVizualizationOptions(props),
-    getFieldOverrideCategories(props),
-  ];
+  const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
+    () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
+    [props]
+  );
 
   const radioOptions = [
     { label: 'All', value: 'all' },
