@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// swagger:route Get /ruler/{DatasourceId}/api/v1/rules ruler RouteGetRulesConfig
+// swagger:route Get /ruler/{Recipient}/api/v1/rules ruler RouteGetRulesConfig
 //
 // List rule groups
 //
@@ -18,7 +18,7 @@ import (
 //     Responses:
 //       202: NamespaceConfigResponse
 
-// swagger:route POST /ruler/{DatasourceId}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
+// swagger:route POST /ruler/{Recipient}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
 // Creates or updates a rule group
 //
@@ -29,7 +29,7 @@ import (
 //     Responses:
 //       202: Ack
 
-// swagger:route Get /ruler/{DatasourceId}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
+// swagger:route Get /ruler/{Recipient}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
 //
 // Get rule groups by namespace
 //
@@ -39,14 +39,14 @@ import (
 //     Responses:
 //       202: NamespaceConfigResponse
 
-// swagger:route Delete /ruler/{DatasourceId}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
+// swagger:route Delete /ruler/{Recipient}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
 //
 // Delete namespace
 //
 //     Responses:
 //       202: Ack
 
-// swagger:route Get /ruler/{DatasourceId}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
+// swagger:route Get /ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
 // Get rule group
 //
@@ -56,7 +56,7 @@ import (
 //     Responses:
 //       202: RuleGroupConfigResponse
 
-// swagger:route Delete /ruler/{DatasourceId}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
+// swagger:route Delete /ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
 //
 // Delete rule group
 //

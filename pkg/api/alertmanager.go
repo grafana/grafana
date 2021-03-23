@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-// swagger:route POST /alertmanager/{DatasourceId}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
+// swagger:route POST /alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
 //
 // sets an Alerting config
 //
@@ -18,7 +18,7 @@ import (
 //       201: Ack
 //       400: ValidationError
 
-// swagger:route GET /alertmanager/{DatasourceId}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
+// swagger:route GET /alertmanager/{Recipient}/config/api/v1/alerts alertmanager RouteGetAlertingConfig
 //
 // gets an Alerting config
 //
@@ -26,7 +26,7 @@ import (
 //       200: GettableUserConfig
 //       400: ValidationError
 
-// swagger:route DELETE /alertmanager/{DatasourceId}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
+// swagger:route DELETE /alertmanager/{Recipient}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
 //
 // deletes the Alerting config for a tenant
 //
@@ -34,7 +34,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route GET /alertmanager/{DatasourceId}/api/v2/alerts alertmanager RouteGetAmAlerts
+// swagger:route GET /alertmanager/{Recipient}/api/v2/alerts alertmanager RouteGetAmAlerts
 //
 // get alertmanager alerts
 //
@@ -42,7 +42,7 @@ import (
 //       200: GettableAlerts
 //       400: ValidationError
 
-// swagger:route POST /alertmanager/{DatasourceId}/api/v2/alerts alertmanager RoutePostAmAlerts
+// swagger:route POST /alertmanager/{Recipient}/api/v2/alerts alertmanager RoutePostAmAlerts
 //
 // create alertmanager alerts
 //
@@ -50,7 +50,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route GET /alertmanager/{DatasourceId}/api/v2/alerts/groups alertmanager RouteGetAmAlertGroups
+// swagger:route GET /alertmanager/{Recipient}/api/v2/alerts/groups alertmanager RouteGetAmAlertGroups
 //
 // get alertmanager alerts
 //
@@ -58,7 +58,7 @@ import (
 //       200: AlertGroups
 //       400: ValidationError
 
-// swagger:route GET /alertmanager/{DatasourceId}/api/v2/silences alertmanager RouteGetSilences
+// swagger:route GET /alertmanager/{Recipient}/api/v2/silences alertmanager RouteGetSilences
 //
 // get silences
 //
@@ -66,7 +66,7 @@ import (
 //       200: GettableSilences
 //       400: ValidationError
 
-// swagger:route POST /alertmanager/{DatasourceId}/api/v2/silences alertmanager RouteCreateSilence
+// swagger:route POST /alertmanager/{Recipient}/api/v2/silences alertmanager RouteCreateSilence
 //
 // create silence
 //
@@ -74,7 +74,7 @@ import (
 //       201: GettableSilence
 //       400: ValidationError
 
-// swagger:route GET /alertmanager/{DatasourceId}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
+// swagger:route GET /alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteGetSilence
 //
 // get silence
 //
@@ -82,7 +82,7 @@ import (
 //       200: GettableSilence
 //       400: ValidationError
 
-// swagger:route DELETE /alertmanager/{DatasourceId}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
+// swagger:route DELETE /alertmanager/{Recipient}/api/v2/silence/{SilenceId} alertmanager RouteDeleteSilence
 //
 // delete silence
 //
@@ -168,8 +168,10 @@ type BodyAlertingConfig struct {
 // prom routes
 // swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
 type DatasourceReference struct {
+	// Recipient should be "grafana" for requests to be handled by grafana
+	// and the numeric datasource id for requests to be forwarded to a datasource
 	// in:path
-	DatasourceId string
+	Recipient string
 }
 
 // swagger:model
