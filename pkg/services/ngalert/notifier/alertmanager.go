@@ -92,7 +92,7 @@ func (am *Alertmanager) Init() (err error) {
 
 func (am *Alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
-	if err := am.SyncAndApplyConfigFromDatabase(); err != nil && errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+	if err := am.SyncAndApplyConfigFromDatabase(); err != nil && !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return err
 	}
 
