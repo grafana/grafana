@@ -29,7 +29,6 @@ func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*ngmodels.Condi
 		return nil, err
 	}
 
-	// TODO OrgID
 	ngCond, err := oldCond.GetNew(orgID)
 	if err != nil {
 		return nil, err
