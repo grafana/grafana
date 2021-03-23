@@ -110,3 +110,89 @@ export const versions = [
     message: '',
   },
 ];
+
+export const diffs = {
+  lhs: {
+    data: {
+      annotations: {
+        list: [
+          {
+            builtIn: 1,
+            datasource: '-- Grafana --',
+            enable: true,
+            hide: true,
+            iconColor: 'rgba(0, 211, 255, 1)',
+            name: 'Annotations & Alerts',
+            type: 'dashboard',
+          },
+        ],
+      },
+      editable: true,
+      gnetId: null,
+      graphTooltip: 0,
+      id: 141,
+      links: [],
+      panels: [],
+      schemaVersion: 27,
+      style: 'dark',
+      tags: [],
+      templating: {
+        list: [],
+      },
+      time: {
+        from: 'now-6h',
+        to: 'now',
+      },
+      timepicker: {},
+      timezone: '',
+      title: 'test dashboard',
+      uid: '_U4zObQMz',
+      version: 2,
+    },
+  },
+  rhs: {
+    data: {
+      annotations: {
+        list: [
+          {
+            builtIn: 1,
+            datasource: '-- Grafana --',
+            enable: true,
+            hide: true,
+            iconColor: 'rgba(0, 211, 255, 1)',
+            name: 'Annotations & Alerts',
+            type: 'dashboard',
+          },
+        ],
+      },
+      description: 'The dashboard description',
+      editable: true,
+      gnetId: null,
+      graphTooltip: 1,
+      id: 141,
+      links: [],
+      panels: [
+        {
+          type: 'graph',
+        },
+      ],
+      schemaVersion: 27,
+      style: 'dark',
+      tags: ['the tag'],
+      templating: {
+        list: [],
+      },
+      time: {
+        from: 'now-6h',
+        to: 'now',
+      },
+      timepicker: {
+        refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
+      },
+      timezone: 'utc',
+      title: 'My favourite dashboard',
+      uid: '_U4zObQMz',
+      version: 11,
+    },
+  },
+};
