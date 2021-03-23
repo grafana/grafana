@@ -7,6 +7,7 @@ import { grafanaLiveCoreFeatures } from './scopes';
 export function registerLiveFeatures() {
   const random2s = new MeasurementCollector();
   const randomFlakey = new MeasurementCollector();
+  const random20Hz = new MeasurementCollector();
   const channels: LiveChannelConfig[] = [
     {
       path: 'random-2s-stream',
@@ -19,6 +20,12 @@ export function registerLiveFeatures() {
       description: 'Random stream with flakey data points',
       getController: () => randomFlakey,
       processMessage: randomFlakey.addBatch,
+    },
+    {
+      path: 'random-20Hz-stream',
+      description: 'Random stream with points in 20Hz',
+      getController: () => random20Hz,
+      processMessage: random20Hz.addBatch,
     },
   ];
 
