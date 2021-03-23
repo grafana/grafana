@@ -93,7 +93,13 @@ export interface LineConfig {
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
   lineStyle?: LineStyle;
-  spanNulls?: boolean;
+
+  /**
+   * Indicate if null values should be treated as gaps or connected.
+   * When the value is a number, it represents the maximum delta in the
+   * X axis that should be considered connected.  For timeseries, this is milliseconds
+   */
+  spanNulls?: boolean | number;
 }
 
 /**

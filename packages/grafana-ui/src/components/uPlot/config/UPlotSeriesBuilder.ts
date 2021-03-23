@@ -104,7 +104,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     return {
       scale: scaleKey,
-      spanGaps: spanNulls,
+      spanGaps: typeof spanNulls === 'number' ? false : spanNulls,
       pxAlign,
       show,
       fill: this.getFill(),

@@ -134,7 +134,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
         }
 
         // Support the standard graph span nulls field config
-        nullModesFrame.push(field.config.custom?.spanNulls ? NULL_REMOVE : NULL_EXPAND);
+        nullModesFrame.push(field.config.custom?.spanNulls === true ? NULL_REMOVE : NULL_EXPAND);
 
         let labels = field.labels ?? {};
         if (frame.name) {
@@ -177,6 +177,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
   }
 
   const joined = join(allData, nullModes);
+
   return {
     // ...options.data[0], // keep name, meta?
     length: joined[0].length,
