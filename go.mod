@@ -86,7 +86,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210313182246-cd4f82c27b84
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
-	gonum.org/v1/gonum v0.8.2
+	gonum.org/v1/gonum v0.9.0
 	google.golang.org/api v0.42.0
 	google.golang.org/grpc v1.36.0
 	google.golang.org/protobuf v1.26.0
