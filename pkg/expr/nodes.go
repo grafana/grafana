@@ -234,6 +234,10 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 
 	vals := make([]mathexp.Value, 0)
 	for refID, qr := range resp.Responses {
+		if qr.Error != nil {
+			return mathexp.Results{}, fmt.Errorf("failed to execute query %v: %w", refID, qr.Error)
+		}
+
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
