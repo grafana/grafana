@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	log "github.com/inconshreveable/log15"
 
@@ -71,7 +70,17 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 			return nil, os.ErrNotExist
 		}
 
-		sourceMapStore := frontendlogging.NewSourceMapStore(cfg, readSourceMap)
+		// fake plugin route so we will try to find a source map there
+		pm := fakePluginManager{
+			staticRoutes: []*plugins.PluginStaticRoute{
+				{
+					Directory: "/usr/local/telepathic-panel",
+					PluginId:  "telepathic",
+				},
+			},
+		}
+
+		sourceMapStore := frontendlogging.NewSourceMapStore(cfg, &pm, readSourceMap)
 
 		loggingHandler := NewFrontendLogMessageHandler(sourceMapStore)
 
@@ -89,12 +98,6 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 func TestFrontendLoggingEndpoint(t *testing.T) {
 	ts, err := time.Parse("2006-01-02T15:04:05.000Z", "2020-10-22T06:29:29.078Z")
 	require.NoError(t, err)
-
-	// fake plugin route so we will try to find a source map there. I can't believe I can do this
-	manager.StaticRoutes = append(manager.StaticRoutes, &plugins.PluginStaticRoute{
-		Directory: "/usr/local/telepathic-panel",
-		PluginId:  "telepathic",
-	})
 
 	t.Run("FrontendLoggingEndpoint", func(t *testing.T) {
 		request := sentry.Request{
@@ -144,19 +147,20 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			},
 		}
 
-		logSentryEventScenario(t, "Should log received error event", errorEvent, func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
-			assert.Equal(t, 200, sc.resp.Code)
-			assert.Len(t, logs, 1)
-			assertContextContains(t, logs[0], "logger", "frontend")
-			assertContextContains(t, logs[0], "url", errorEvent.Request.URL)
-			assertContextContains(t, logs[0], "user_agent", errorEvent.Request.Headers["User-Agent"])
-			assertContextContains(t, logs[0], "event_id", errorEvent.EventID)
-			assertContextContains(t, logs[0], "original_timestamp", errorEvent.Timestamp)
-			assertContextContains(t, logs[0], "stacktrace", `UserError: Please replace user and try again
+		logSentryEventScenario(t, "Should log received error event", errorEvent,
+			func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
+				assert.Equal(t, 200, sc.resp.Code)
+				assert.Len(t, logs, 1)
+				assertContextContains(t, logs[0], "logger", "frontend")
+				assertContextContains(t, logs[0], "url", errorEvent.Request.URL)
+				assertContextContains(t, logs[0], "user_agent", errorEvent.Request.Headers["User-Agent"])
+				assertContextContains(t, logs[0], "event_id", errorEvent.EventID)
+				assertContextContains(t, logs[0], "original_timestamp", errorEvent.Timestamp)
+				assertContextContains(t, logs[0], "stacktrace", `UserError: Please replace user and try again
   at foofn (foo.js:123:23)
   at barfn (bar.js:113:231)`)
-			assert.NotContains(t, logs[0].Ctx, "context")
-		})
+				assert.NotContains(t, logs[0].Ctx, "context")
+			})
 
 		messageEvent := frontendlogging.FrontendSentryEvent{
 			Event: &sentry.Event{
@@ -170,21 +174,22 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			Exception: nil,
 		}
 
-		logSentryEventScenario(t, "Should log received message event", messageEvent, func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
-			assert.Equal(t, 200, sc.resp.Code)
-			assert.Len(t, logs, 1)
-			assert.Equal(t, "hello world", logs[0].Msg)
-			assert.Equal(t, log.LvlInfo, logs[0].Lvl)
-			assertContextContains(t, logs[0], "logger", "frontend")
-			assertContextContains(t, logs[0], "url", messageEvent.Request.URL)
-			assertContextContains(t, logs[0], "user_agent", messageEvent.Request.Headers["User-Agent"])
-			assertContextContains(t, logs[0], "event_id", messageEvent.EventID)
-			assertContextContains(t, logs[0], "original_timestamp", messageEvent.Timestamp)
-			assert.NotContains(t, logs[0].Ctx, "stacktrace")
-			assert.NotContains(t, logs[0].Ctx, "context")
-			assertContextContains(t, logs[0], "user_email", user.Email)
-			assertContextContains(t, logs[0], "user_id", user.ID)
-		})
+		logSentryEventScenario(t, "Should log received message event", messageEvent,
+			func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
+				assert.Equal(t, 200, sc.resp.Code)
+				assert.Len(t, logs, 1)
+				assert.Equal(t, "hello world", logs[0].Msg)
+				assert.Equal(t, log.LvlInfo, logs[0].Lvl)
+				assertContextContains(t, logs[0], "logger", "frontend")
+				assertContextContains(t, logs[0], "url", messageEvent.Request.URL)
+				assertContextContains(t, logs[0], "user_agent", messageEvent.Request.Headers["User-Agent"])
+				assertContextContains(t, logs[0], "event_id", messageEvent.EventID)
+				assertContextContains(t, logs[0], "original_timestamp", messageEvent.Timestamp)
+				assert.NotContains(t, logs[0].Ctx, "stacktrace")
+				assert.NotContains(t, logs[0].Ctx, "context")
+				assertContextContains(t, logs[0], "user_email", user.Email)
+				assertContextContains(t, logs[0], "user_id", user.ID)
+			})
 
 		eventWithContext := frontendlogging.FrontendSentryEvent{
 			Event: &sentry.Event{
@@ -205,13 +210,14 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			Exception: nil,
 		}
 
-		logSentryEventScenario(t, "Should log event context", eventWithContext, func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
-			assert.Equal(t, 200, sc.resp.Code)
-			assert.Len(t, logs, 1)
-			assertContextContains(t, logs[0], "context_foo_one", "two")
-			assertContextContains(t, logs[0], "context_foo_three", "4")
-			assertContextContains(t, logs[0], "context_bar", "baz")
-		})
+		logSentryEventScenario(t, "Should log event context", eventWithContext,
+			func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
+				assert.Equal(t, 200, sc.resp.Code)
+				assert.Len(t, logs, 1)
+				assertContextContains(t, logs[0], "context_foo_one", "two")
+				assertContextContains(t, logs[0], "context_foo_three", "4")
+				assertContextContains(t, logs[0], "context_bar", "baz")
+			})
 
 		errorEventForSourceMapping := frontendlogging.FrontendSentryEvent{
 			Event: &event,
@@ -271,10 +277,11 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			},
 		}
 
-		logSentryEventScenario(t, "Should load sourcemap and transform stacktrace line when possible", errorEventForSourceMapping, func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
-			assert.Equal(t, 200, sc.resp.Code)
-			assert.Len(t, logs, 1)
-			assertContextContains(t, logs[0], "stacktrace", `UserError: Please replace user and try again
+		logSentryEventScenario(t, "Should load sourcemap and transform stacktrace line when possible",
+			errorEventForSourceMapping, func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
+				assert.Equal(t, 200, sc.resp.Code)
+				assert.Len(t, logs, 1)
+				assertContextContains(t, logs[0], "stacktrace", `UserError: Please replace user and try again
   at ? (core|webpack:///./some_source.ts:2:2)
   at ? (telepathic|webpack:///./some_source.ts:3:2)
   at explode (http://localhost:3000/public/build/error.js:3:10)
@@ -282,20 +289,20 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
   at nope (http://localhost:3000/baz.js:3:10)
   at fake (http://localhost:3000/public/build/../../secrets.txt:3:10)
   at ? (core|webpack:///./some_source.ts:3:2)`)
-			assert.Len(t, sourceMapReads, 6)
-			assert.Equal(t, "/staticroot", sourceMapReads[0].dir)
-			assert.Equal(t, "build/moo/foo.js.map", sourceMapReads[0].path)
-			assert.Equal(t, "/usr/local/telepathic-panel", sourceMapReads[1].dir)
-			assert.Equal(t, "/foo.js.map", sourceMapReads[1].path)
-			assert.Equal(t, "/staticroot", sourceMapReads[2].dir)
-			assert.Equal(t, "build/error.js.map", sourceMapReads[2].path)
-			assert.Equal(t, "/staticroot", sourceMapReads[3].dir)
-			assert.Equal(t, "build/bar.js.map", sourceMapReads[3].path)
-			assert.Equal(t, "/staticroot", sourceMapReads[4].dir)
-			assert.Equal(t, "secrets.txt.map", sourceMapReads[4].path)
-			assert.Equal(t, "/staticroot", sourceMapReads[5].dir)
-			assert.Equal(t, "build/foo.js.map", sourceMapReads[5].path)
-		})
+				assert.Len(t, sourceMapReads, 6)
+				assert.Equal(t, "/staticroot", sourceMapReads[0].dir)
+				assert.Equal(t, "build/moo/foo.js.map", sourceMapReads[0].path)
+				assert.Equal(t, "/usr/local/telepathic-panel", sourceMapReads[1].dir)
+				assert.Equal(t, "/foo.js.map", sourceMapReads[1].path)
+				assert.Equal(t, "/staticroot", sourceMapReads[2].dir)
+				assert.Equal(t, "build/error.js.map", sourceMapReads[2].path)
+				assert.Equal(t, "/staticroot", sourceMapReads[3].dir)
+				assert.Equal(t, "build/bar.js.map", sourceMapReads[3].path)
+				assert.Equal(t, "/staticroot", sourceMapReads[4].dir)
+				assert.Equal(t, "secrets.txt.map", sourceMapReads[4].path)
+				assert.Equal(t, "/staticroot", sourceMapReads[5].dir)
+				assert.Equal(t, "build/foo.js.map", sourceMapReads[5].path)
+			})
 	})
 }
 

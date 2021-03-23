@@ -15,7 +15,26 @@ Each organization can have one or more data sources.
 
 All dashboards are owned by a particular organization.
 
- > **Note:** Most metric databases do not provide per-user series authentication. This means that organization data sources and dashboards are available to all users in a particular organization.
+> **Note:** Most metric databases do not provide per-user series authentication. This means that organization data sources and dashboards are available to all users in a particular organization.
+
+## Compare roles
+
+The table below compares what each role can do. Read the sections below for more detailed explanations.
+
+|    | Admin   | Editor   | Viewer   |
+|:---|:--:|:--:|:--:|
+| View dashboards   |  x  |  x  |  x  |
+| Add, edit, delete dashboards   |  x  |  x  |    |
+| Add, edit, delete folders   |  x  |  x  |    |
+| View playlists   |  x  |  x  |  x  |
+| Create, update, delete playlists   |  x  |  x  |    |
+| Access Explore   |  x  |  x  |    |
+| Add, edit, delete data sources   |  x  |    |    |
+| Add and edit users   |  x  |    |    |
+| Add and edit teams   |  x  |    |    |
+| Change organizations settings   |  x  |    |    |
+| Change team settings   |  x  |    |    |
+| Configure app plugins   |  x  |    |    |
 
 ## Organization admin role
 

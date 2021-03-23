@@ -3,7 +3,7 @@ import ReactDOMServer from 'react-dom/server';
 import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
 // Utils
-import { ApiKey, CoreEvents, NewApiKey, StoreState } from 'app/types';
+import { ApiKey, NewApiKey, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
 import { addApiKey, deleteApiKey, loadApiKeys } from './state/actions';
@@ -20,6 +20,7 @@ import { ApiKeysForm } from './ApiKeysForm';
 import { ApiKeysActionBar } from './ApiKeysActionBar';
 import { ApiKeysTable } from './ApiKeysTable';
 import { ApiKeysController } from './ApiKeysController';
+import { ShowModalEvent } from 'app/types/events';
 
 const { Switch } = LegacyForms;
 
@@ -83,9 +84,11 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       const rootPath = window.location.origin + config.appSubUrl;
       const modalTemplate = ReactDOMServer.renderToString(<ApiKeysAddedModal apiKey={apiKey} rootPath={rootPath} />);
 
-      appEvents.emit(CoreEvents.showModal, {
-        templateHtml: modalTemplate,
-      });
+      appEvents.publish(
+        new ShowModalEvent({
+          templateHtml: modalTemplate,
+        })
+      );
     };
 
     const secondsToLive = newApiKey.secondsToLive;
@@ -132,7 +135,6 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                     <EmptyListCTA
                       title="You haven't added any API Keys yet."
                       buttonIcon="key-skeleton-alt"
-                      buttonLink="#"
                       onClick={toggleIsAdding}
                       buttonTitle="New API Key"
                       proTip="Remember you can provide view-only API access to other applications."
