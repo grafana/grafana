@@ -554,7 +554,7 @@ func (mock AlertmanagerApiMock) RouteGetAlertingConfig(c *models.ReqContext) res
 			"tmpl2": "val2",
 		},
 		AlertmanagerConfig: apimodels.GettableApiAlertingConfig{
-			Config: config.Config{
+			Config: apimodels.Config{
 				Global:       &config.GlobalConfig{},
 				Route:        &config.Route{},
 				InhibitRules: []*config.InhibitRule{},
