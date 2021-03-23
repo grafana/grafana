@@ -26,19 +26,19 @@ type PrometheusApiBase struct {
 
 func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Get(toMacaronPath("/prometheus/{DatasourceId}/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertStatuses))
-		group.Get(toMacaronPath("/prometheus/{DatasourceId}/api/v1/rules"), routing.Wrap(srv.RouteGetRuleStatuses))
+		group.Get(toMacaronPath("/prometheus/{Recipient}/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertStatuses))
+		group.Get(toMacaronPath("/prometheus/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRuleStatuses))
 	})
 }
 
 func (base PrometheusApiBase) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
-	datasourceId := c.Params(":DatasourceId")
-	base.log.Info("RouteGetAlertStatuses: ", "DatasourceId", datasourceId)
+	recipient := c.Params(":Recipient")
+	base.log.Info("RouteGetAlertStatuses: ", "Recipient", recipient)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
 func (base PrometheusApiBase) RouteGetRuleStatuses(c *models.ReqContext) response.Response {
-	datasourceId := c.Params(":DatasourceId")
-	base.log.Info("RouteGetRuleStatuses: ", "DatasourceId", datasourceId)
+	recipient := c.Params(":Recipient")
+	base.log.Info("RouteGetRuleStatuses: ", "Recipient", recipient)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }

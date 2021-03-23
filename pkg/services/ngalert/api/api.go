@@ -46,6 +46,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiMock{log: logger})
 	api.RegisterPrometheusApiEndpoints(PrometheusApiMock{log: logger})
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
+		api.DatasourceCache,
 		&LotexRuler{DataProxy: api.DataProxy, log: logger},
 		RulerApiMock{log: logger},
 	))
