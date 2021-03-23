@@ -42,8 +42,7 @@ func syncFieldsWithModel(libraryPanel *LibraryPanel) error {
 	}
 	if model["description"] != nil {
 		libraryPanel.Description = model["description"].(string)
-	}
-	if model["description"] == nil {
+	} else {
 		model["description"] = libraryPanel.Description
 	}
 	syncedModel, err := json.Marshal(&model)
