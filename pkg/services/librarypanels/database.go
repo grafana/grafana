@@ -37,8 +37,7 @@ func syncFieldsWithModel(libraryPanel *LibraryPanel) error {
 	model["title"] = libraryPanel.Name
 	if model["type"] != nil {
 		libraryPanel.Type = model["type"].(string)
-	}
-	if model["type"] == nil {
+	} else {
 		model["type"] = libraryPanel.Type
 	}
 	if model["description"] != nil {
