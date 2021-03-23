@@ -54,11 +54,11 @@ type ExecutionResults struct {
 }
 
 // Results is a slice of evaluated alert instances states.
-type Results []result
+type Results []Result
 
-// result contains the evaluated State of an alert instance
+// Result contains the evaluated State of an alert instance
 // identified by its labels.
-type result struct {
+type Result struct {
 	Instance data.Labels
 	State    State // Enum
 }
@@ -175,7 +175,7 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 // evaluateExecutionResult takes the ExecutionResult, and returns a frame where
 // each column is a string type that holds a string representing its State.
 func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
-	evalResults := make([]result, 0)
+	evalResults := make([]Result, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
 		rowLen, err := f.RowLen()
@@ -218,7 +218,7 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 			state = Alerting
 		}
 
-		evalResults = append(evalResults, result{
+		evalResults = append(evalResults, Result{
 			Instance: f.Fields[0].Labels,
 			State:    state,
 		})
@@ -261,7 +261,7 @@ func (evalResults Results) AsDataFrame() data.Frame {
 	return *frame
 }
 
-// ConditionEval executes conditions and evaluates the result.
+// ConditionEval executes conditions and evaluates the Result.
 func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, dataService *tsdb.Service) (Results, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()

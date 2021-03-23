@@ -1,17 +1,16 @@
 package state
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"strconv"
 	"sync"
 )
 
 type AlertState struct {
 	UID     string
+	CacheId string
 	Labels  data.Labels
 	State   eval.State
 	Results []eval.State
@@ -31,47 +30,61 @@ func Init() {
 	}
 }
 
-func (c *cache) getOrCreate(uid string, labels data.Labels) AlertState {
+func (c *cache) getOrCreate(uid string, result eval.Result) AlertState {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	idString := fmt.Sprintf("%s %s", uid, labelsToString(labels))
+	idString := fmt.Sprintf("%s %s", uid, result.Instance.String())
 	if state, ok := c.cacheMap[idString]; ok {
 		return state
 	} else {
 		state := AlertState{
 			UID:     uid,
-			Labels:  labels,
-			State:   eval.Normal,
-			Results: []eval.State{},
+			CacheId: idString,
+			Labels:  result.Instance,
+			State:   result.State,
+			Results: []eval.State{result.State},
 		}
 		c.cacheMap[idString] = state
 		return state
 	}
 }
 
+func (c *cache) update(stateEntry AlertState) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.cacheMap[stateEntry.CacheId] = stateEntry
+}
+
+func (c *cache) getStateForEntry(stateId string) eval.State {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.cacheMap[stateId].State
+}
+
 func ProcessEvalResults(uid string, results eval.Results, condition models.Condition) {
 	for _, result := range results {
-		currentState := stateCache.getOrCreate(uid, result.Instance)
+		currentState := stateCache.getOrCreate(uid, result)
 		currentState.Results = append(currentState.Results, result.State)
-		fmt.Println(currentState)
+		currentState.State = getNextState(uid, result)
+		stateCache.update(currentState)
 	}
 }
 
-func labelsToString(ls data.Labels) string {
-	var b bytes.Buffer
-	b.WriteByte('{')
-	i := 0
-	for k, v := range ls {
-		if i > 0 {
-			b.WriteByte(',')
-			b.WriteByte(' ')
-		}
-		b.WriteString(k)
-		b.WriteByte('=')
-		b.WriteString(strconv.Quote(v))
-		i++
+func getNextState(uid string, result eval.Result) eval.State {
+	currentState := stateCache.getOrCreate(uid, result)
+	if currentState.State == result.State {
+		return currentState.State
 	}
-	b.WriteByte('}')
-	return b.String()
+
+	switch {
+	case currentState.State == result.State:
+		return currentState.State
+	case currentState.State == eval.Normal && result.State == eval.Alerting:
+		return eval.Alerting
+	case currentState.State == eval.Alerting && result.State == eval.Normal:
+		return eval.Normal
+	default:
+		return eval.Alerting
+	}
 }
