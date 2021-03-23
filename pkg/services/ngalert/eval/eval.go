@@ -96,7 +96,7 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// GetQueryDataRequest creates a backend.QueryDataRequest from the condition.
+// GetQueryDataRequest validates the condition and creates a backend.QueryDataRequest from it.
 func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (*backend.QueryDataRequest, error) {
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
