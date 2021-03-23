@@ -396,6 +396,14 @@ func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourc
 	return backendplugin.ErrMethodNotImplemented
 }
 
+func (tp *testPlugin) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	return backendplugin.ErrMethodNotImplemented
+}
+
 type testLicensingService struct {
 	edition    string
 	hasLicense bool
