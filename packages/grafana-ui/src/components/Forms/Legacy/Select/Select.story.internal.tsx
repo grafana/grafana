@@ -39,10 +39,10 @@ export default {
   },
 };
 
-const value = { label: 'A label', value: 'A value' };
+const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };
 
 const options = [
-  value,
+  initialValue,
   { label: 'Another label', value: 'Another value 1' },
   { label: 'Another label', value: 'Another value 2' },
   { label: 'Another label', value: 'Another value 3' },
@@ -53,12 +53,12 @@ const options = [
 
 export const Basic: Story = (args) => {
   return (
-    <UseState initialState={value}>
+    <UseState initialState={initialValue}>
       {(value, updateValue) => {
         return (
           <Select
             {...args}
-            onChange={(value) => {
+            onChange={(value: SelectableValue<string>) => {
               action('onChanged fired')(value);
               updateValue(value);
             }}
@@ -76,7 +76,7 @@ Basic.args = {
 
 export const AsyncSelect: Story = (args) => {
   const [isLoading, setIsLoading] = useState<boolean>(args.loading);
-  const [asyncValue, setasyncValue] = useState<SelectableValue<any>>();
+  const [asyncValue, setAsyncValue] = useState<SelectableValue<any>>();
   const loadAsyncOptions = useCallback((inputValue) => {
     return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(() => {
@@ -93,7 +93,7 @@ export const AsyncSelect: Story = (args) => {
       loadOptions={loadAsyncOptions}
       onChange={(value) => {
         action('onChange')(value);
-        setasyncValue(value);
+        setAsyncValue(value);
       }}
     />
   );
