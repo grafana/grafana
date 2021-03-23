@@ -541,6 +541,7 @@ The following sections detail the supported settings and secure settings for eac
 | apiUrl           |                |
 | autoClose        |                |
 | overridePriority |                |
+| sendTagsAs       |                |
 
 #### Alert notification `telegram`
 
