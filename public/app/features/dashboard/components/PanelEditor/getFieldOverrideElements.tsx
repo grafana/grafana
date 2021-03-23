@@ -10,7 +10,8 @@ import {
 } from '@grafana/data';
 import { Container, fieldMatchersUI, ValuePicker } from '@grafana/ui';
 import { OptionPaneRenderProps } from './types';
-import { OptionsPaneCategoryDescriptor, OptionsPaneItemDescriptor } from './OptionsPaneItems';
+import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
+import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
@@ -53,6 +54,9 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
     getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
   };
 
+  /**
+   * Main loop through all override rules
+   */
   for (let idx = 0; idx < currentFieldConfig.overrides.length; idx++) {
     const override = currentFieldConfig.overrides[idx];
     const overrideName = `Override ${idx + 1}`;
@@ -98,6 +102,9 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
       onOverrideChange(idx, override);
     };
 
+    /**
+     * Add override matcher UI element
+     */
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: matcherUi.name,
@@ -114,6 +121,9 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
       })
     );
 
+    /**
+     * Loop through all override properties
+     */
     for (let propIdx = 0; propIdx < override.properties.length; propIdx++) {
       const property = override.properties[propIdx];
       const registryItemForProperty = registry.getIfExists(property.id);
@@ -135,6 +145,9 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
         onOverrideChange(idx, override);
       };
 
+      /**
+       * Add override property item
+       */
       category.addItem(
         new OptionsPaneItemDescriptor({
           title: registryItemForProperty.name,
@@ -157,6 +170,9 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
       );
     }
 
+    /**
+     * Add button that adds new overrides
+     */
     if (!isSystemOverride && override.matcher.options) {
       category.addItem(
         new OptionsPaneItemDescriptor({

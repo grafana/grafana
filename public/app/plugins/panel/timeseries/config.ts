@@ -307,9 +307,9 @@ export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOpti
     .addCustomEditor<StatsPickerConfigSettings, string[]>({
       id: 'legend.calcs',
       path: 'legend.calcs',
-      name: 'Legend calculations',
+      name: 'Legend values',
       category: ['Legend'],
-      description: 'Choose a reducer functions / calculations to include in legend',
+      description: 'Select values or calculations to show in legend',
       editor: standardEditorsRegistry.get('stats-picker').editor as any,
       defaultValue: [],
       settings: {

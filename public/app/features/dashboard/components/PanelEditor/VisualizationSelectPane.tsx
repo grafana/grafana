@@ -79,7 +79,13 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
             autoFocus
             placeholder="Search for..."
           />
-          <Button variant="secondary" icon="angle-up" className={styles.closeButton} onClick={onCloseVizPicker} />
+          <Button
+            title="Close"
+            variant="secondary"
+            icon="angle-up"
+            className={styles.closeButton}
+            onClick={onCloseVizPicker}
+          />
         </div>
         <Field className={styles.customFieldMargin}>
           <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />

@@ -4,7 +4,8 @@ import { get as lodashGet, set as lodashSet } from 'lodash';
 import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
 import { updateDefaultFieldConfigValue } from './utils';
-import { OptionsPaneCategoryDescriptor, OptionsPaneItemDescriptor } from './OptionsPaneItems';
+import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
+import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 
 export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
   const { plugin, panel, onPanelOptionsChanged, onFieldConfigsChange, data, dashboard } = props;

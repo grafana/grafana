@@ -2,7 +2,8 @@ import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextAre
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import React from 'react';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
-import { OptionsPaneCategoryDescriptor, OptionsPaneItemDescriptor } from './OptionsPaneItems';
+import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
+import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionPaneRenderProps } from './types';
 
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
