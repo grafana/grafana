@@ -11,7 +11,7 @@ describe('ResponseErrorContainer', () => {
     setup({
       message: 'test error',
     });
-    screen.getByText('test error');
+    expect(screen.queryByText('test error')).not.toBeNull();
   });
 
   it('shows error.data.message if error.message does not exist', async () => {
@@ -20,7 +20,7 @@ describe('ResponseErrorContainer', () => {
         message: 'test error',
       },
     });
-    screen.getByText('test error');
+    expect(screen.queryByText('test error')).not.toBeNull();
   });
 
   it('does not show error if there is refID', async () => {
