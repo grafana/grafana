@@ -49,13 +49,13 @@ export interface ExpressionQuery extends DataQuery {
   conditions?: ClassicCondition[];
 }
 
-interface ClassicCondition {
+export interface ClassicCondition {
   evaluator: {
     params: number[];
     type: string;
   };
   operator?: {
-    type: 'and' | 'or';
+    type: string;
   };
   query: {
     params: string[];
@@ -67,7 +67,7 @@ interface ClassicCondition {
   type: 'query';
 }
 
-type ReducerType =
+export type ReducerType =
   | 'avg'
   | 'min'
   | 'max'

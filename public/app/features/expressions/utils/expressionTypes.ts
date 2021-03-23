@@ -1,5 +1,5 @@
 import { ReducerID } from '@grafana/data';
-import { ExpressionQuery, ExpressionQueryType } from '../types';
+import { ClassicCondition, ExpressionQuery, ExpressionQueryType } from '../types';
 
 export const getDefaults = (query: ExpressionQuery) => {
   switch (query.type) {
@@ -24,20 +24,7 @@ export const getDefaults = (query: ExpressionQuery) => {
 
     case ExpressionQueryType.classic:
       if (!query.conditions) {
-        query.conditions = [
-          {
-            type: 'query',
-            reducer: {
-              params: [],
-              type: 'avg',
-            },
-            query: { params: ['A'] },
-            evaluator: {
-              params: [2],
-              type: 'gt',
-            },
-          },
-        ];
+        query.conditions = [defaultCondition];
       }
       break;
 
@@ -46,4 +33,20 @@ export const getDefaults = (query: ExpressionQuery) => {
   }
 
   return query;
+};
+
+export const defaultCondition: ClassicCondition = {
+  type: 'query',
+  reducer: {
+    params: [],
+    type: 'avg',
+  },
+  operator: {
+    type: 'and',
+  },
+  query: { params: ['A'] },
+  evaluator: {
+    params: [2],
+    type: 'gt',
+  },
 };

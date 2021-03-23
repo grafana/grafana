@@ -6,7 +6,7 @@ import { Resample } from './components/Resample';
 import { Reduce } from './components/Reduce';
 import { Math } from './components/Math';
 import { ExpressionQuery, ExpressionQueryType, gelTypes } from './types';
-import { getDefaults } from './utils/expressionTypes';
+import { defaultCondition, getDefaults } from './utils/expressionTypes';
 import { ClassicConditions } from './components/ClassicConditions';
 
 type Props = QueryEditorProps<ExpressionDatasourceApi, ExpressionQuery>;
@@ -17,6 +17,23 @@ export class ExpressionQueryEditor extends PureComponent<Props> {
     const { query, onChange } = this.props;
 
     onChange(getDefaults({ ...query, type: item.value! }));
+  };
+
+  onAddCondition = () => {
+    const { onChange, query } = this.props;
+    onChange({
+      ...query,
+      conditions: [...query.conditions!, defaultCondition],
+    });
+  };
+
+  onRemoveCondition = (index: number) => {
+    const { onChange, query } = this.props;
+
+    onChange({
+      ...query,
+      conditions: [...query.conditions!.splice(index + 1)],
+    });
   };
 
   renderExpressionType() {
@@ -34,7 +51,15 @@ export class ExpressionQueryEditor extends PureComponent<Props> {
         return <Resample query={query} labelWidth={labelWidth} onChange={onChange} refIds={refIds} />;
 
       case ExpressionQueryType.classic:
-        return <ClassicConditions query={query} refIds={refIds} />;
+        return (
+          <ClassicConditions
+            onChange={onChange}
+            query={query}
+            refIds={refIds}
+            onAddCondition={this.onAddCondition}
+            onRemoveCondition={this.onRemoveCondition}
+          />
+        );
     }
   }
 

@@ -1,17 +1,26 @@
 import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { Button, Icon, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
-import alertDef from '../../alerting/state/alertDef';
-import { ExpressionQuery } from '../types';
-
-const conditionFunctions = alertDef.reducerTypes.map((rt) => ({ label: rt.text, value: rt.value }));
+import { Button, Icon, InlineField, InlineFieldRow } from '@grafana/ui';
+import { Condition } from './Condition';
+import { ClassicCondition, ExpressionQuery } from '../types';
 
 interface Props {
   query: ExpressionQuery;
   refIds: Array<SelectableValue<string>>;
+  onAddCondition: () => void;
+  onRemoveCondition: (id: number) => void;
+  onChange: (query: ExpressionQuery) => void;
 }
 
-export const ClassicConditions: FC<Props> = ({ query, refIds }) => {
+export const ClassicConditions: FC<Props> = ({ onAddCondition, onRemoveCondition, onChange, query, refIds }) => {
+  const onConditionChange = (condition: ClassicCondition, index: number) => {
+    query.conditions![index] = condition;
+    onChange({
+      ...query,
+      conditions: [...query.conditions!],
+    });
+  };
+
   return (
     <div>
       <InlineFieldRow>
@@ -19,29 +28,20 @@ export const ClassicConditions: FC<Props> = ({ query, refIds }) => {
           <div>
             {query.conditions?.map((condition, index) => {
               return (
-                <InlineFieldRow key={index}>
-                  {index === 0 ? (
-                    <InlineField label="WHEN">
-                      <Select onChange={(event) => console.log(event)} options={conditionFunctions} width={20} />
-                    </InlineField>
-                  ) : (
-                    <InlineField label="WHEN">
-                      <Select onChange={(event) => console.log(event)} options={conditionFunctions} width={20} />
-                    </InlineField>
-                  )}
-                  <InlineField label="OF">
-                    <Select onChange={(event) => console.log(event)} options={refIds} />
-                  </InlineField>
-                  <InlineField label="IS ABOVE">
-                    <Input />
-                  </InlineField>
-                </InlineFieldRow>
+                <Condition
+                  key={index}
+                  condition={condition}
+                  index={index}
+                  onChange={onConditionChange}
+                  onRemoveCondition={onRemoveCondition}
+                  refIds={refIds}
+                />
               );
             })}
           </div>
         </InlineField>
       </InlineFieldRow>
-      <Button variant="secondary">
+      <Button variant="secondary" onClick={onAddCondition}>
         <Icon name="plus-circle" />
       </Button>
     </div>
