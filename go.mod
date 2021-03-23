@@ -2,7 +2,7 @@ module github.com/grafana/grafana
 
 go 1.15
 
-replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go
+replace github.com/grafana/grafana-live-sdk => ../grafana-live-sdk
 
 // Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
 // We need a more current go-mssqldb so we get rid of a version of apache/thrift with vulnerabilities.
@@ -38,14 +38,15 @@ require (
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang/mock v1.5.0
-	github.com/golang/protobuf v1.4.3
+	github.com/golang/protobuf v1.5.1
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/alerting-api v0.0.0-20210318231719-9499804fc548
 	github.com/grafana/grafana-aws-sdk v0.2.0
+	github.com/grafana/grafana-live-sdk v0.0.0-00010101000000-000000000000
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.88.1-0.20210317124829-3096a3cc1573
+	github.com/grafana/grafana-plugin-sdk-go v0.89.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-hclog v0.15.0
@@ -53,7 +54,6 @@ require (
 	github.com/hashicorp/go-version v1.2.1
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/influxdata/influxdb-client-go/v2 v2.2.2
-	github.com/influxdata/telegraf v1.16.3
 	github.com/jaegertracing/jaeger v1.22.0
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.10

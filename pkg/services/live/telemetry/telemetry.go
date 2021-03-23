@@ -1,12 +1,12 @@
-package telegraf
+package telemetry
 
 import (
 	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana-live-sdk/telemetry/telegraf"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/influxdata/telegraf/plugins/parsers"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -21,14 +21,14 @@ import (
 )
 
 var (
-	logger = log.New("telegraf")
+	logger = log.New("telemetry")
 )
 
 func init() {
 	registry.RegisterServiceWithPriority(&LiveProxy{}, registry.Low)
 }
 
-// LiveProxy proxies metric stream from Telegraf to Grafana Live system.
+// LiveProxy proxies telemetry requests to Grafana Live system.
 type LiveProxy struct {
 	Cfg             *setting.Cfg             `inject:""`
 	RouteRegister   routing.RouteRegister    `inject:""`
@@ -41,18 +41,17 @@ type LiveProxy struct {
 
 // Init LiveProxy.
 func (t *LiveProxy) Init() error {
-	logger.Info("Telegraf LiveProxy proxy initialization")
+	logger.Info("Telemetry LiveProxy proxy initialization")
 
 	if !t.IsEnabled() {
-		logger.Debug("Telegraf LiveProxy feature not enabled, skipping initialization")
+		logger.Debug("Telemetry LiveProxy feature not enabled, skipping initialization")
 		return nil
 	}
 
-	parser := NewInfluxParser()
-	converter := NewMetricConverter()
+	converter := telegraf.NewConverter()
 
-	t.RouteRegister.Post("/api/live/telegraf/:path", func(ctx *models.ReqContext) {
-		t.handleTelegrafRequest(ctx, parser, converter)
+	t.RouteRegister.Post("/api/live/telemetry/:path", func(ctx *models.ReqContext) {
+		t.handleTelemetryRequest(ctx, converter)
 	})
 	return nil
 }
@@ -72,7 +71,7 @@ func (t *LiveProxy) IsEnabled() bool {
 	return t.Cfg.IsLiveEnabled() // turn on when Live on for now.
 }
 
-func (t *LiveProxy) handleTelegrafRequest(ctx *models.ReqContext, parser parsers.Parser, converter *MetricConverter) {
+func (t *LiveProxy) handleTelemetryRequest(ctx *models.ReqContext, converter *telegraf.Converter) {
 	path := ctx.Params("path")
 
 	body, err := ctx.Req.Body().Bytes()
@@ -81,16 +80,9 @@ func (t *LiveProxy) handleTelegrafRequest(ctx *models.ReqContext, parser parsers
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	logger.Info("Telegraf body", "body", string(body))
+	logger.Debug("Telemetry request body", "body", string(body))
 
-	metrics, err := parser.Parse(body)
-	if err != nil {
-		logger.Error("Error parsing metrics", "error", err)
-		ctx.Resp.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	metricFrames, err := converter.Convert(metrics)
+	metricFrames, err := converter.Convert(body)
 	if err != nil {
 		logger.Error("Error converting metrics", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -104,7 +96,7 @@ func (t *LiveProxy) handleTelegrafRequest(ctx *models.ReqContext, parser parsers
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		channel := fmt.Sprintf("telegraf/%s/%s", path, mf.Key)
+		channel := fmt.Sprintf("telemetry/%s/%s", path, mf.Key())
 		logger.Debug("publish data to channel", "channel", channel, "data", string(frameData))
 		err = t.GrafanaLive.Publish(channel, frameData)
 		if err != nil {

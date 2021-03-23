@@ -1,1 +1,0 @@
-system,host=MacBook-Pro-Alexander.local,mylabel=boom load15=2.00341796875,n_cpus=12i,n_users=6i,load1=3.15966796875,load5=2.3837890625 1616403089000000000
