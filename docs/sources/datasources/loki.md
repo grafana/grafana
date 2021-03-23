@@ -48,7 +48,7 @@ You can use a debug section to see what your fields extract and how the URL is i
 The new field with the link shown in log details:
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields_detail.png" class="docs-image--no-shadow" caption="Screenshot of the derived field in log detail" >}}
 
-## Loki Query Editor
+## Loki query editor
 
 Loki query editor can be used to create both log and metric queries.
 
