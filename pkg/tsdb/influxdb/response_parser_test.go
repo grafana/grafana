@@ -80,6 +80,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 								Tags: map[string]string{
 									"datacenter":     "America",
 									"dc.region.name": "Northeast",
+									"cluster-name":   "Cluster",
 								},
 								Values: [][]interface{}{
 									{json.Number("111"), json.Number("222"), json.Number("333")},
@@ -170,6 +171,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 					result := parser.Parse(response, query)
 
 					So(result.Series[0].Name, ShouldEqual, "alias Northeast")
+				})
+
+				Convey("tag alias with hyphens", func() {
+					query := &Query{Alias: "alias [[tag_cluster-name]]"}
+					result := parser.Parse(response, query)
+
+					So(result.Series[0].Name, ShouldEqual, "alias Cluster")
 				})
 			})
 		})
