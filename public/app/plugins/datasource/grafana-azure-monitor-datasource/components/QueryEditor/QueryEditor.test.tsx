@@ -4,7 +4,7 @@ import selectEvent from 'react-select-event';
 
 import QueryEditor from './QueryEditor';
 
-import mockQuery from '../../__mocks__/query';
+import createMockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';
 import { AzureQueryType } from '../../types';
 
@@ -18,7 +18,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     render(
       <QueryEditor
-        query={mockQuery}
+        query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={() => {}}
@@ -29,6 +29,7 @@ describe('Azure Monitor QueryEditor', () => {
 
   it("does not render the Metrics query editor when the query type isn't Metrics", async () => {
     const mockDatasource = createMockDatasource();
+    const mockQuery = createMockQuery();
     const logsMockQuery = {
       ...mockQuery,
       queryType: AzureQueryType.LogAnalytics,
@@ -46,6 +47,7 @@ describe('Azure Monitor QueryEditor', () => {
 
   it('changes the query type when selected', async () => {
     const mockDatasource = createMockDatasource();
+    const mockQuery = createMockQuery();
     const onChange = jest.fn();
     render(
       <QueryEditor
