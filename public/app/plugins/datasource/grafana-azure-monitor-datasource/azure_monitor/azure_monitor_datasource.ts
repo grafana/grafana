@@ -42,11 +42,15 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
-    return (
+    return !!(
       item.hide !== true &&
+      item.azureMonitor.resourceGroup &&
       item.azureMonitor.resourceGroup !== defaultDropdownValue &&
+      item.azureMonitor.resourceName &&
       item.azureMonitor.resourceName !== defaultDropdownValue &&
+      item.azureMonitor.metricDefinition &&
       item.azureMonitor.metricDefinition !== defaultDropdownValue &&
+      item.azureMonitor.metricName &&
       item.azureMonitor.metricName !== defaultDropdownValue
     );
   }
