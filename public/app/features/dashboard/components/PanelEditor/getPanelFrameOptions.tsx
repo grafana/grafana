@@ -17,6 +17,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       new OptionsPaneItemDescriptor({
         title: 'Title',
         value: panel.title,
+        popularRank: 1,
         Component: function renderTitle() {
           return (
             <Input defaultValue={panel.title} onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)} />

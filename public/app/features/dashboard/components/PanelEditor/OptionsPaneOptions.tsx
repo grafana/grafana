@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, Field, RadioButtonGroup, useStyles } from '@grafana/ui';
+import { CustomScrollbar, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from 'emotion';
@@ -11,7 +11,7 @@ import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
 import { AngularPanelOptions } from './AngularPanelOptions';
-
+import { getPopularOptions } from './state/getPopularOptions';
 interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
@@ -23,27 +23,22 @@ interface Props {
 }
 
 export const OptionsPaneOptions: React.FC<Props> = (props) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [listMode, setListMode] = useState('all');
-  const styles = useStyles(getStyles);
   const { plugin, dashboard, panel } = props;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [listMode, setListMode] = useState(OptionFilter.All);
+  const styles = useStyles(getStyles);
 
   const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
     () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
     [props]
   );
 
-  const radioOptions = [
-    { label: 'All', value: 'all' },
-    { label: 'Popular', value: 'popular' },
-    { label: `Overrides`, value: 'overrides' },
-  ];
-
   const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
+  const optionRadioFilters = useMemo(getOptionRadioFilters, []);
+  const allOptions = [panelFrameOptions, ...vizOptions];
 
   if (isSearching) {
-    const allOptions = [panelFrameOptions, ...vizOptions];
     mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
 
     // If searching for angular panel then we need to add notice that results are limited
@@ -56,7 +51,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     }
   } else {
     switch (listMode) {
-      case 'all':
+      case OptionFilter.All:
         // Panel frame options first
         mainBoxElements.push(panelFrameOptions.render());
         // If angular add those options next
@@ -70,39 +65,37 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
           mainBoxElements.push(item.render());
         }
         break;
-      case 'overrides':
+      case OptionFilter.Overrides:
         for (const override of justOverrides) {
           mainBoxElements.push(override.render());
         }
         break;
-      case 'popular':
+      case OptionFilter.Popular:
         mainBoxElements.push(
           <OptionsPaneCategory id="Popular options" title="Popular options" key="Popular options">
-            No poular options, try again later
+            {getPopularOptions(allOptions).map((item) => item.render())}
           </OptionsPaneCategory>
         );
         break;
     }
   }
 
-  const showOverridesInSeparateBox = !isSearching && listMode === 'all';
-
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
-        <Field className={styles.customFieldMargin}>
+        <div className={styles.formRow}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
-        </Field>
+        </div>
         {!isSearching && (
-          <Field className={styles.noFieldMargin}>
-            <RadioButtonGroup options={radioOptions} value={listMode} fullWidth onChange={setListMode} />
-          </Field>
+          <div className={styles.formRow}>
+            <RadioButtonGroup options={optionRadioFilters} value={listMode} fullWidth onChange={setListMode} />
+          </div>
         )}
       </div>
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
           <div className={styles.mainBox}>{mainBoxElements}</div>
-          {showOverridesInSeparateBox && (
+          {!isSearching && listMode === OptionFilter.All && (
             <div className={styles.overridesBox}>{justOverrides.map((override) => override.render())}</div>
           )}
         </CustomScrollbar>
@@ -110,6 +103,20 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     </div>
   );
 };
+
+function getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
+  return [
+    { label: OptionFilter.All, value: OptionFilter.All },
+    { label: OptionFilter.Popular, value: OptionFilter.Popular },
+    { label: OptionFilter.Overrides, value: OptionFilter.Overrides },
+  ];
+}
+
+export enum OptionFilter {
+  All = 'All',
+  Overrides = 'Overrides',
+  Popular = 'Popular',
+}
 
 function renderSearchHits(
   allOptions: OptionsPaneCategoryDescriptor[],
@@ -145,17 +152,17 @@ const getStyles = (theme: GrafanaTheme) => ({
     flex-direction: column;
     min-height: 0;
   `,
-  customFieldMargin: css`
+  formRow: css`
     margin-bottom: ${theme.spacing.sm};
-  `,
-  noFieldMargin: css`
-    margin-bottom: 0;
   `,
   formBox: css`
     padding: ${theme.spacing.sm};
     background: ${theme.colors.bg1};
     border: 1px solid ${theme.colors.border1};
     border-bottom: 0;
+  `,
+  closeButton: css`
+    margin-left: ${theme.spacing.sm};
   `,
   searchHits: css`
     padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};

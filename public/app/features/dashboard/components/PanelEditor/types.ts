@@ -45,18 +45,3 @@ export interface OptionPaneRenderProps {
   onPanelOptionsChanged: (options: any) => void;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
 }
-
-export interface OptionsPaneItemDescriptor {
-  title: string;
-  description?: string;
-  value?: any;
-  reactNode?: React.ReactElement;
-  children?: OptionsPaneItemDescriptor[];
-}
-
-export interface OptionsPaneGroup {
-  title: string;
-  count?: number;
-  items?: OptionsPaneItemDescriptor[];
-  groups?: OptionsPaneGroup[];
-}

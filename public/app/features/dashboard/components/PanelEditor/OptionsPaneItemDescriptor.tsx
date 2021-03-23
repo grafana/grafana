@@ -7,6 +7,7 @@ export interface OptionsPaneItemProps {
   title: string;
   value?: any;
   description?: string;
+  popularRank?: number;
   Component: ComponentType;
   skipField?: boolean;
   showIf?: () => boolean;
