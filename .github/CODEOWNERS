@@ -22,10 +22,13 @@
 go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
 
-#Cloud Datasources backend code
+# Cloud Datasources backend code
 /pkg/tsdb/cloudwatch @grafana/cloud-datasources
 /pkg/tsdb/azuremonitor @grafana/cloud-datasources
 /pkg/tsdb/cloudmonitoring @grafana/cloud-datasources
+
+# Observability backend code
+/pkg/tsdb/influxdb @grafana/observability-squad
 
 # Database migrations
 /pkg/services/sqlstore/migrations @grafana/backend-platform @grafana/hosted-grafana-team
