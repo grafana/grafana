@@ -50,7 +50,7 @@ The new field with the link shown in log details:
 
 ## Loki query editor
 
-Loki query editor can be used to create both log and metric queries.
+You can use the Loki query editor to create log and metric queries.
 
 | Name               | Description                                                                                                                                                                                                 |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
