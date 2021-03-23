@@ -24,11 +24,13 @@ func TestGetLibraryPanel(t *testing.T) {
 			var result = validateAndUnMarshalResponse(t, resp)
 			var expected = libraryPanelResult{
 				Result: libraryPanel{
-					ID:       1,
-					OrgID:    1,
-					FolderID: 1,
-					UID:      result.Result.UID,
-					Name:     "Text - Library Panel",
+					ID:          1,
+					OrgID:       1,
+					FolderID:    1,
+					UID:         result.Result.UID,
+					Name:        "Text - Library Panel",
+					Type:        "text",
+					Description: "A description",
 					Model: map[string]interface{}{
 						"datasource":  "${DS_GDEV-TESTDATA}",
 						"description": "A description",

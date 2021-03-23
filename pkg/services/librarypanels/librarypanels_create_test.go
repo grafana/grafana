@@ -19,11 +19,13 @@ func TestCreateLibraryPanel(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			var expected = libraryPanelResult{
 				Result: libraryPanel{
-					ID:       1,
-					OrgID:    1,
-					FolderID: 1,
-					UID:      sc.initialResult.Result.UID,
-					Name:     "Text - Library Panel",
+					ID:          1,
+					OrgID:       1,
+					FolderID:    1,
+					UID:         sc.initialResult.Result.UID,
+					Name:        "Text - Library Panel",
+					Type:        "text",
+					Description: "A description",
 					Model: map[string]interface{}{
 						"datasource":  "${DS_GDEV-TESTDATA}",
 						"description": "A description",
@@ -62,11 +64,13 @@ func TestCreateLibraryPanel(t *testing.T) {
 			var result = validateAndUnMarshalResponse(t, resp)
 			var expected = libraryPanelResult{
 				Result: libraryPanel{
-					ID:       1,
-					OrgID:    1,
-					FolderID: 1,
-					UID:      result.Result.UID,
-					Name:     "Library Panel Name",
+					ID:          1,
+					OrgID:       1,
+					FolderID:    1,
+					UID:         result.Result.UID,
+					Name:        "Library Panel Name",
+					Type:        "text",
+					Description: "A description",
 					Model: map[string]interface{}{
 						"datasource":  "${DS_GDEV-TESTDATA}",
 						"description": "A description",

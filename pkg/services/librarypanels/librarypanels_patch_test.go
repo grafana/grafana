@@ -32,9 +32,10 @@ func TestPatchLibraryPanel(t *testing.T) {
 				Model: []byte(`
 								{
 								  "datasource": "${DS_GDEV-TESTDATA}",
+                                  "description": "An updated description",
 								  "id": 1,
 								  "title": "Model - New name",
-								  "type": "text"
+								  "type": "graph"
 								}
 							`),
 				Version: 1,
@@ -45,16 +46,19 @@ func TestPatchLibraryPanel(t *testing.T) {
 			var result = validateAndUnMarshalResponse(t, resp)
 			var expected = libraryPanelResult{
 				Result: libraryPanel{
-					ID:       1,
-					OrgID:    1,
-					FolderID: newFolder.Id,
-					UID:      sc.initialResult.Result.UID,
-					Name:     "Panel - New name",
+					ID:          1,
+					OrgID:       1,
+					FolderID:    newFolder.Id,
+					UID:         sc.initialResult.Result.UID,
+					Name:        "Panel - New name",
+					Type:        "graph",
+					Description: "An updated description",
 					Model: map[string]interface{}{
-						"datasource": "${DS_GDEV-TESTDATA}",
-						"id":         float64(1),
-						"title":      "Panel - New name",
-						"type":       "text",
+						"datasource":  "${DS_GDEV-TESTDATA}",
+						"description": "An updated description",
+						"id":          float64(1),
+						"title":       "Panel - New name",
+						"type":        "graph",
 					},
 					Version: 2,
 					Meta: LibraryPanelDTOMeta{
@@ -120,19 +124,73 @@ func TestPatchLibraryPanel(t *testing.T) {
 			}
 		})
 
-	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with model only, it should change model successfully and return correct result",
+	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with model only, it should change model successfully, sync name, type and description fields and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := patchLibraryPanelCommand{
 				FolderID: -1,
-				Model:    []byte(`{ "title": "New Model Title", "name": "New Model Name" }`),
+				Model:    []byte(`{ "title": "New Model Title", "name": "New Model Name", "type":"graph", "description": "New description" }`),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
+			sc.initialResult.Result.Type = "graph"
+			sc.initialResult.Result.Description = "New description"
 			sc.initialResult.Result.Model = map[string]interface{}{
-				"title": "Text - Library Panel",
-				"name":  "New Model Name",
+				"title":       "Text - Library Panel",
+				"name":        "New Model Name",
+				"type":        "graph",
+				"description": "New description",
+			}
+			sc.initialResult.Result.Meta.CreatedBy.Name = "user_in_db"
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			sc.initialResult.Result.Version = 2
+			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with model.description only, it should change model successfully, sync name, type and description fields and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			cmd := patchLibraryPanelCommand{
+				FolderID: -1,
+				Model:    []byte(`{ "description": "New description" }`),
+				Version:  1,
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			var result = validateAndUnMarshalResponse(t, resp)
+			sc.initialResult.Result.Type = "text"
+			sc.initialResult.Result.Description = "New description"
+			sc.initialResult.Result.Model = map[string]interface{}{
+				"title":       "Text - Library Panel",
+				"type":        "text",
+				"description": "New description",
+			}
+			sc.initialResult.Result.Meta.CreatedBy.Name = "user_in_db"
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			sc.initialResult.Result.Version = 2
+			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	scenarioWithLibraryPanel(t, "When an admin tries to patch a library panel with model.type only, it should change model successfully, sync name, type and description fields and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			cmd := patchLibraryPanelCommand{
+				FolderID: -1,
+				Model:    []byte(`{ "type": "graph" }`),
+				Version:  1,
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
+			resp := sc.service.patchHandler(sc.reqContext, cmd)
+			var result = validateAndUnMarshalResponse(t, resp)
+			sc.initialResult.Result.Type = "graph"
+			sc.initialResult.Result.Description = "A description"
+			sc.initialResult.Result.Model = map[string]interface{}{
+				"title":       "Text - Library Panel",
+				"type":        "graph",
+				"description": "A description",
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = "user_in_db"
 			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"

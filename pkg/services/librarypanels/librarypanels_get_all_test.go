@@ -51,11 +51,13 @@ func TestGetAllLibraryPanels(t *testing.T) {
 					PerPage:    100,
 					LibraryPanels: []libraryPanel{
 						{
-							ID:       1,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[0].UID,
-							Name:     "Text - Library Panel",
+							ID:          1,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
 								"datasource":  "${DS_GDEV-TESTDATA}",
 								"description": "A description",
@@ -82,11 +84,13 @@ func TestGetAllLibraryPanels(t *testing.T) {
 							},
 						},
 						{
-							ID:       2,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[1].UID,
-							Name:     "Text - Library Panel2",
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[1].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
 								"datasource":  "${DS_GDEV-TESTDATA}",
 								"description": "A description",
@@ -142,11 +146,13 @@ func TestGetAllLibraryPanels(t *testing.T) {
 					PerPage:    100,
 					LibraryPanels: []libraryPanel{
 						{
-							ID:       2,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[0].UID,
-							Name:     "Text - Library Panel2",
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
 								"datasource":  "${DS_GDEV-TESTDATA}",
 								"description": "A description",
@@ -202,11 +208,13 @@ func TestGetAllLibraryPanels(t *testing.T) {
 					PerPage:    1,
 					LibraryPanels: []libraryPanel{
 						{
-							ID:       1,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[0].UID,
-							Name:     "Text - Library Panel",
+							ID:          1,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
 								"datasource":  "${DS_GDEV-TESTDATA}",
 								"description": "A description",
@@ -263,11 +271,13 @@ func TestGetAllLibraryPanels(t *testing.T) {
 					PerPage:    1,
 					LibraryPanels: []libraryPanel{
 						{
-							ID:       2,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[0].UID,
-							Name:     "Text - Library Panel2",
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
 								"datasource":  "${DS_GDEV-TESTDATA}",
 								"description": "A description",
@@ -325,11 +335,13 @@ func TestGetAllLibraryPanels(t *testing.T) {
 					PerPage:    1,
 					LibraryPanels: []libraryPanel{
 						{
-							ID:       2,
-							OrgID:    1,
-							FolderID: 1,
-							UID:      result.Result.LibraryPanels[0].UID,
-							Name:     "Text - Library Panel2",
+							ID:          2,
+							OrgID:       1,
+							FolderID:    1,
+							UID:         result.Result.LibraryPanels[0].UID,
+							Name:        "Text - Library Panel2",
+							Type:        "text",
+							Description: "A description",
 							Model: map[string]interface{}{
 								"datasource":  "${DS_GDEV-TESTDATA}",
 								"description": "A description",
