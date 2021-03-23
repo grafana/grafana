@@ -36,8 +36,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
     if (!value.pipelineVariables?.length) {
       dispatch(addPipelineVariable());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dispatch, value.pipelineVariables?.length]);
 
   return (
     <>

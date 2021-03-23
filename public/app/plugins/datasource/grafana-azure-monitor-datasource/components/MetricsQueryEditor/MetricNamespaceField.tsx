@@ -41,14 +41,7 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
         // TODO: handle error
         console.error(err);
       });
-  }, [
-    subscriptionId,
-    query.azureMonitor.resourceGroup,
-    query.azureMonitor.metricDefinition,
-    query.azureMonitor.resourceName,
-    datasource,
-    metricNamespaces.length,
-  ]);
+  }, [datasource, metricNamespaces.length, query.azureMonitor, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {

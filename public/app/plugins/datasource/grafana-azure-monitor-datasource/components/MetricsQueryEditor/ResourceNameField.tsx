@@ -30,13 +30,7 @@ const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
         // TODO: handle error
         console.error(err);
       });
-  }, [
-    subscriptionId,
-    query.azureMonitor.resourceGroup,
-    query.azureMonitor.metricDefinition,
-    datasource,
-    resourceNames.length,
-  ]);
+  }, [datasource, query.azureMonitor, resourceNames.length, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {

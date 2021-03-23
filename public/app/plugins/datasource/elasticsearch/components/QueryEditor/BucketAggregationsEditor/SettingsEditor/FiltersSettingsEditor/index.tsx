@@ -28,8 +28,7 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
     if (!value.settings?.filters?.length) {
       dispatch(addFilter());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dispatch, value.settings?.filters?.length]);
 
   return (
     <>
