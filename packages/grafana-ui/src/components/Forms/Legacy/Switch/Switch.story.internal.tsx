@@ -25,9 +25,9 @@ const getStory = (title: string, component: any) => ({
 
 export default getStory('Forms/Legacy/Switch', Switch);
 
-const SwitchWrapper: Story<Props> = (args) => {
+const SwitchWrapper: Story<Props> = ({ label, ...args }) => {
   const [checked, setChecked] = useState(false);
-  return <Switch {...args} label={args.label} checked={checked} onChange={() => setChecked(!checked)} />;
+  return <Switch {...args} label={label} checked={checked} onChange={() => setChecked(!checked)} />;
 };
 
 export const Basic = SwitchWrapper.bind({});
