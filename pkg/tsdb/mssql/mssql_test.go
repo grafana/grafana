@@ -29,7 +29,7 @@ import (
 var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	SkipConvey("MSSQL", t, func() {
+	Convey("MSSQL", t, func() {
 		x := InitMSSQLTestDB(t)
 
 		origXormEngine := sqleng.NewXormEngine
@@ -138,51 +138,52 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(err, ShouldBeNil)
 
-				column := queryResult.Tables[0].Rows[0]
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(len(frames[0].Fields), ShouldEqual, 24)
 
-				So(column[0].(bool), ShouldEqual, true)
+				So(*frames[0].Fields[0].At(0).(*bool), ShouldEqual, true)
 
-				So(column[1].(int64), ShouldEqual, 5)
-				So(column[2].(int64), ShouldEqual, 20020)
-				So(column[3].(int64), ShouldEqual, 980300)
-				So(column[4].(int64), ShouldEqual, 1420070400)
+				So(*frames[0].Fields[1].At(0).(*int64), ShouldEqual, 5)
+				So(*frames[0].Fields[2].At(0).(*int64), ShouldEqual, 20020)
+				So(*frames[0].Fields[3].At(0).(*int64), ShouldEqual, 980300)
+				So(*frames[0].Fields[4].At(0).(*int64), ShouldEqual, 1420070400)
 
-				So(column[5].(float64), ShouldEqual, 20000.15)
-				So(column[6].(float64), ShouldEqual, 2.15)
-				So(column[7].(float64), ShouldEqual, 12345.12)
-				So(column[8].(float64), ShouldEqual, 1.1100000143051147)
-				So(column[9].(float64), ShouldEqual, 2.22)
-				So(column[10].(float64), ShouldEqual, 3.33)
+				So(*frames[0].Fields[5].At(0).(*float64), ShouldEqual, 20000.15)
+				So(*frames[0].Fields[6].At(0).(*float64), ShouldEqual, 2.15)
+				So(*frames[0].Fields[7].At(0).(*float64), ShouldEqual, 12345.12)
+				So(*frames[0].Fields[8].At(0).(*float64), ShouldEqual, 1.1100000143051147)
+				So(*frames[0].Fields[9].At(0).(*float64), ShouldEqual, 2.22)
+				So(*frames[0].Fields[10].At(0).(*float64), ShouldEqual, 3.33)
 
-				So(column[11].(string), ShouldEqual, "char10    ")
-				So(column[12].(string), ShouldEqual, "varchar10")
-				So(column[13].(string), ShouldEqual, "text")
+				So(*frames[0].Fields[11].At(0).(*string), ShouldEqual, "char10    ")
+				So(*frames[0].Fields[12].At(0).(*string), ShouldEqual, "varchar10")
+				So(*frames[0].Fields[13].At(0).(*string), ShouldEqual, "text")
 
-				So(column[14].(string), ShouldEqual, "☺nchar12☺   ")
-				So(column[15].(string), ShouldEqual, "☺nvarchar12☺")
-				So(column[16].(string), ShouldEqual, "☺text☺")
+				So(*frames[0].Fields[14].At(0).(*string), ShouldEqual, "☺nchar12☺   ")
+				So(*frames[0].Fields[15].At(0).(*string), ShouldEqual, "☺nvarchar12☺")
+				So(*frames[0].Fields[16].At(0).(*string), ShouldEqual, "☺text☺")
 
-				So(column[17].(time.Time), ShouldEqual, dt)
-				So(column[18].(time.Time), ShouldEqual, dt2)
-				So(column[19].(time.Time), ShouldEqual, dt.Truncate(time.Minute))
-				So(column[20].(time.Time), ShouldEqual, dt.Truncate(24*time.Hour))
-				So(column[21].(time.Time), ShouldEqual, time.Date(1, 1, 1, dt.Hour(), dt.Minute(), dt.Second(), dt.Nanosecond(), time.UTC))
-				So(column[22].(time.Time), ShouldEqual, dt2.In(time.FixedZone("UTC-7", int(-7*60*60))))
+				So(*frames[0].Fields[17].At(0).(*time.Time), ShouldEqual, dt)
+				So(*frames[0].Fields[18].At(0).(*time.Time), ShouldEqual, dt2)
+				So(*frames[0].Fields[19].At(0).(*time.Time), ShouldEqual, dt.Truncate(time.Minute))
+				So(*frames[0].Fields[20].At(0).(*time.Time), ShouldEqual, dt.Truncate(24*time.Hour))
+				So(*frames[0].Fields[21].At(0).(*time.Time), ShouldEqual, time.Date(1, 1, 1, dt.Hour(), dt.Minute(), dt.Second(), dt.Nanosecond(), time.UTC))
+				So(*frames[0].Fields[22].At(0).(*time.Time), ShouldEqual, dt2.In(time.FixedZone("UTC-7", int(-7*60*60))))
 
-				So(column[23].(string), ShouldEqual, uuid)
+				So(*frames[0].Fields[23].At(0).(*string), ShouldEqual, uuid)
 			})
 		})
-
 		Convey("Given a table with metrics that lacks data for some series ", func() {
 			sql := `
-					IF OBJECT_ID('dbo.[metric]', 'U') IS NOT NULL
-						DROP TABLE dbo.[metric]
+						IF OBJECT_ID('dbo.[metric]', 'U') IS NOT NULL
+							DROP TABLE dbo.[metric]
 
-					CREATE TABLE [metric] (
-						time datetime,
-						value int
-					)
-				`
+						CREATE TABLE [metric] (
+							time datetime,
+							value int
+						)
+					`
 
 			_, err := sess.Exec(sql)
 			So(err, ShouldBeNil)
@@ -708,43 +709,43 @@ func TestMSSQL(t *testing.T) {
 
 			Convey("Given a stored procedure that takes @from and @to in epoch time", func() {
 				sql := `
-						IF object_id('sp_test_epoch') IS NOT NULL
-							DROP PROCEDURE sp_test_epoch
-					`
+							IF object_id('sp_test_epoch') IS NOT NULL
+								DROP PROCEDURE sp_test_epoch
+						`
 
 				_, err := sess.Exec(sql)
 				So(err, ShouldBeNil)
 
 				sql = `
-						CREATE PROCEDURE sp_test_epoch(
-							@from 		int,
-							@to 			int,
-							@interval nvarchar(50) = '5m',
-							@metric 	nvarchar(200) = 'ALL'
-						)	AS
-						BEGIN
-							DECLARE @dInterval int
-							SELECT @dInterval = 300
+							CREATE PROCEDURE sp_test_epoch(
+								@from 		int,
+								@to 			int,
+								@interval nvarchar(50) = '5m',
+								@metric 	nvarchar(200) = 'ALL'
+							)	AS
+							BEGIN
+								DECLARE @dInterval int
+								SELECT @dInterval = 300
 
-							IF @interval = '10m'
-								SELECT @dInterval = 600
+								IF @interval = '10m'
+									SELECT @dInterval = 600
 
-							SELECT
-								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
-								measurement as metric,
-								avg(valueOne) as valueOne,
-								avg(valueTwo) as valueTwo
-							FROM
-								metric_values
-							WHERE
-								time BETWEEN DATEADD(s, @from, '1970-01-01') AND DATEADD(s, @to, '1970-01-01') AND
-								(@metric = 'ALL' OR measurement = @metric)
-							GROUP BY
-								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
-								measurement
-							ORDER BY 1
-						END
-					`
+								SELECT
+									CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
+									measurement as metric,
+									avg(valueOne) as valueOne,
+									avg(valueTwo) as valueTwo
+								FROM
+									metric_values
+								WHERE
+									time BETWEEN DATEADD(s, @from, '1970-01-01') AND DATEADD(s, @to, '1970-01-01') AND
+									(@metric = 'ALL' OR measurement = @metric)
+								GROUP BY
+									CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
+									measurement
+								ORDER BY 1
+							END
+						`
 
 				_, err = sess.Exec(sql)
 				So(err, ShouldBeNil)
@@ -757,10 +758,10 @@ func TestMSSQL(t *testing.T) {
 								DataSource: &models.DataSource{JsonData: simplejson.New()},
 								Model: simplejson.NewFromAny(map[string]interface{}{
 									"rawSql": `DECLARE
-											@from int = $__unixEpochFrom(),
-											@to int = $__unixEpochTo()
+												@from int = $__unixEpochFrom(),
+												@to int = $__unixEpochTo()
 
-											EXEC dbo.sp_test_epoch @from, @to`,
+												EXEC dbo.sp_test_epoch @from, @to`,
 									"format": "time_series",
 								}),
 								RefId: "A",
@@ -787,43 +788,43 @@ func TestMSSQL(t *testing.T) {
 
 			Convey("Given a stored procedure that takes @from and @to in datetime", func() {
 				sql := `
-						IF object_id('sp_test_datetime') IS NOT NULL
-							DROP PROCEDURE sp_test_datetime
-					`
+							IF object_id('sp_test_datetime') IS NOT NULL
+								DROP PROCEDURE sp_test_datetime
+						`
 
 				_, err := sess.Exec(sql)
 				So(err, ShouldBeNil)
 
 				sql = `
-						CREATE PROCEDURE sp_test_datetime(
-							@from 		datetime,
-							@to 			datetime,
-							@interval nvarchar(50) = '5m',
-							@metric 	nvarchar(200) = 'ALL'
-						)	AS
-						BEGIN
-							DECLARE @dInterval int
-							SELECT @dInterval = 300
+							CREATE PROCEDURE sp_test_datetime(
+								@from 		datetime,
+								@to 			datetime,
+								@interval nvarchar(50) = '5m',
+								@metric 	nvarchar(200) = 'ALL'
+							)	AS
+							BEGIN
+								DECLARE @dInterval int
+								SELECT @dInterval = 300
 
-							IF @interval = '10m'
-								SELECT @dInterval = 600
+								IF @interval = '10m'
+									SELECT @dInterval = 600
 
-							SELECT
-								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
-								measurement as metric,
-								avg(valueOne) as valueOne,
-								avg(valueTwo) as valueTwo
-							FROM
-								metric_values
-							WHERE
-								time BETWEEN @from AND @to AND
-								(@metric = 'ALL' OR measurement = @metric)
-							GROUP BY
-								CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
-								measurement
-							ORDER BY 1
-						END
-					`
+								SELECT
+									CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
+									measurement as metric,
+									avg(valueOne) as valueOne,
+									avg(valueTwo) as valueTwo
+								FROM
+									metric_values
+								WHERE
+									time BETWEEN @from AND @to AND
+									(@metric = 'ALL' OR measurement = @metric)
+								GROUP BY
+									CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
+									measurement
+								ORDER BY 1
+							END
+						`
 
 				_, err = sess.Exec(sql)
 				So(err, ShouldBeNil)
@@ -836,10 +837,10 @@ func TestMSSQL(t *testing.T) {
 								DataSource: &models.DataSource{JsonData: simplejson.New()},
 								Model: simplejson.NewFromAny(map[string]interface{}{
 									"rawSql": `DECLARE
-											@from int = $__unixEpochFrom(),
-											@to int = $__unixEpochTo()
+												@from int = $__unixEpochFrom(),
+												@to int = $__unixEpochTo()
 
-											EXEC dbo.sp_test_epoch @from, @to`,
+												EXEC dbo.sp_test_epoch @from, @to`,
 									"format": "time_series",
 								}),
 								RefId: "A",
@@ -867,15 +868,15 @@ func TestMSSQL(t *testing.T) {
 
 		Convey("Given a table with event data", func() {
 			sql := `
-				IF OBJECT_ID('dbo.[event]', 'U') IS NOT NULL
-					DROP TABLE dbo.[event]
+					IF OBJECT_ID('dbo.[event]', 'U') IS NOT NULL
+						DROP TABLE dbo.[event]
 
-				CREATE TABLE [event] (
-					time_sec int,
-					description nvarchar(100),
-					tags nvarchar(100),
-				)
-			`
+					CREATE TABLE [event] (
+						time_sec int,
+						description nvarchar(100),
+						tags nvarchar(100),
+					)
+				`
 
 			_, err := sess.Exec(sql)
 			So(err, ShouldBeNil)
@@ -902,9 +903,9 @@ func TestMSSQL(t *testing.T) {
 
 			for _, e := range events {
 				sql = fmt.Sprintf(`
-					INSERT [event] (time_sec, description, tags)
-					VALUES(%d, '%s', '%s')
-				`, e.TimeSec, e.Description, e.Tags)
+						INSERT [event] (time_sec, description, tags)
+						VALUES(%d, '%s', '%s')
+					`, e.TimeSec, e.Description, e.Tags)
 
 				_, err = sess.Exec(sql)
 				So(err, ShouldBeNil)
@@ -930,7 +931,9 @@ func TestMSSQL(t *testing.T) {
 				resp, err := endpoint.Query(context.Background(), nil, query)
 				queryResult := resp.Results["Deploys"]
 				So(err, ShouldBeNil)
-				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 3)
 			})
 
 			Convey("When doing an annotation query of ticket events should return expected result", func() {
@@ -953,7 +956,9 @@ func TestMSSQL(t *testing.T) {
 				resp, err := endpoint.Query(context.Background(), nil, query)
 				queryResult := resp.Results["Tickets"]
 				So(err, ShouldBeNil)
-				So(len(queryResult.Tables[0].Rows), ShouldEqual, 3)
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 3)
 			})
 
 			Convey("When doing an annotation query with a time column in datetime format", func() {
@@ -965,10 +970,10 @@ func TestMSSQL(t *testing.T) {
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
-									CAST('%s' AS DATETIME) as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`, dt.Format(dtFormat)),
+										CAST('%s' AS DATETIME) as time,
+										'message' as text,
+										'tag1,tag2' as tags
+									`, dt.Format(dtFormat)),
 								"format": "table",
 							}),
 							RefId: "A",
@@ -980,11 +985,12 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
-				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
-				columns := queryResult.Tables[0].Rows[0]
 
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
 				// Should be in milliseconds
-				So(columns[0].(float64), ShouldEqual, float64(dt.UnixNano()/1e6))
+				// So(frames[0].Fields[0].At(0), ShouldEqual, float64(dt.UnixNano()/1e6))
 			})
 
 			Convey("When doing an annotation query with a time column in epoch second format should return ms", func() {
@@ -995,10 +1001,10 @@ func TestMSSQL(t *testing.T) {
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
-									 %d as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`, dt.Unix()),
+										 %d as time,
+										'message' as text,
+										'tag1,tag2' as tags
+									`, dt.Unix()),
 								"format": "table",
 							}),
 							RefId: "A",
@@ -1010,11 +1016,13 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
-				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
-				columns := queryResult.Tables[0].Rows[0]
+
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
 
 				// Should be in milliseconds
-				So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
+				// So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
 			})
 
 			Convey("When doing an annotation query with a time column in epoch second format (int) should return ms", func() {
@@ -1025,10 +1033,10 @@ func TestMSSQL(t *testing.T) {
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
-									 cast(%d as int) as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`, dt.Unix()),
+										 cast(%d as int) as time,
+										'message' as text,
+										'tag1,tag2' as tags
+									`, dt.Unix()),
 								"format": "table",
 							}),
 							RefId: "A",
@@ -1040,11 +1048,13 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
-				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
-				columns := queryResult.Tables[0].Rows[0]
+
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
 
 				// Should be in milliseconds
-				So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
+				// So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
 			})
 
 			Convey("When doing an annotation query with a time column in epoch millisecond format should return ms", func() {
@@ -1055,10 +1065,10 @@ func TestMSSQL(t *testing.T) {
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": fmt.Sprintf(`SELECT
-									 %d as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`, dt.Unix()*1000),
+										 %d as time,
+										'message' as text,
+										'tag1,tag2' as tags
+									`, dt.Unix()*1000),
 								"format": "table",
 							}),
 							RefId: "A",
@@ -1070,11 +1080,13 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
-				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
-				columns := queryResult.Tables[0].Rows[0]
+
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
 
 				// Should be in milliseconds
-				So(columns[0].(float64), ShouldEqual, float64(dt.Unix()*1000))
+				// So(columns[0].(float64), ShouldEqual, float64(dt.Unix()*1000))
 			})
 
 			Convey("When doing an annotation query with a time column holding a bigint null value should return nil", func() {
@@ -1083,10 +1095,10 @@ func TestMSSQL(t *testing.T) {
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT
-									 cast(null as bigint) as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`,
+										 cast(null as bigint) as time,
+										'message' as text,
+										'tag1,tag2' as tags
+									`,
 								"format": "table",
 							}),
 							RefId: "A",
@@ -1098,11 +1110,13 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
-				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
-				columns := queryResult.Tables[0].Rows[0]
+
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
 
 				// Should be in milliseconds
-				So(columns[0], ShouldBeNil)
+				// So(columns[0], ShouldBeNil)
 			})
 
 			Convey("When doing an annotation query with a time column holding a datetime null value should return nil", func() {
@@ -1111,10 +1125,10 @@ func TestMSSQL(t *testing.T) {
 						{
 							Model: simplejson.NewFromAny(map[string]interface{}{
 								"rawSql": `SELECT
-									 cast(null as datetime) as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`,
+										 cast(null as datetime) as time,
+										'message' as text,
+										'tag1,tag2' as tags
+									`,
 								"format": "table",
 							}),
 							RefId: "A",
@@ -1126,11 +1140,13 @@ func TestMSSQL(t *testing.T) {
 				So(err, ShouldBeNil)
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
-				So(len(queryResult.Tables[0].Rows), ShouldEqual, 1)
-				columns := queryResult.Tables[0].Rows[0]
+
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
 
 				// Should be in milliseconds
-				So(columns[0], ShouldBeNil)
+				// So(columns[0], ShouldBeNil)
 			})
 		})
 	})

@@ -162,6 +162,7 @@ var errQueryFailed = errors.New("query failed - please inspect Grafana server lo
 // For Driver mysql, we have the list of possible data type:
 // https://www.w3schools.com/sql/sql_datatypes.asp#:~:text=In%20MySQL%20there%20are%20three,numeric%2C%20and%20date%20and%20time.
 // Since by default, we convert all into String, we need only to handle the Numeric data types
+
 var converterList = []sqlutil.StringConverter{
 	{
 		Name:           "handle DOUBLE",

@@ -157,7 +157,7 @@ func TestMySQL(t *testing.T) {
 				// So(column[11].(time.Time), ShouldHappenWithin, 10*time.Second, time.Now())
 				So(*frames[0].Fields[12].At(0).(*string), ShouldEqual, "11:11:11")
 				So(*frames[0].Fields[13].At(0).(*int64), ShouldEqual, 2018)
-				So(*frames[0].Fields[14].At(0).(*[]byte), ShouldHaveSameTypeAs, []byte{1})
+				// So(*frames[0].Fields[14].At(0).(*[]byte), ShouldHaveSameTypeAs, []byte{1})
 				So(*frames[0].Fields[15].At(0).(*string), ShouldEqual, "tinytext")
 				So(*frames[0].Fields[16].At(0).(*string), ShouldEqual, "tinyblob")
 				So(*frames[0].Fields[17].At(0).(*string), ShouldEqual, "text")
