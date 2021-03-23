@@ -189,13 +189,6 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 			queryObj["datasourceUid"] = getDsInfo.Result.Uid
 			queryObj["refId"] = refID
 
-			if _, found := queryObj["maxDataPoints"]; !found {
-				queryObj["maxDataPoints"] = 100
-			}
-			if _, found := queryObj["intervalMs"]; !found {
-				queryObj["intervalMs"] = 1000
-			}
-
 			encodedObj, err := json.Marshal(queryObj)
 			if err != nil {
 				return nil, err
@@ -266,7 +259,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	ngCond.QueriesAndExpressions = append(ngCond.QueriesAndExpressions, ccAlertQuery)
 
 	for i := range ngCond.QueriesAndExpressions {
-		err := ngCond.QueriesAndExpressions[i].PreSave()
+		err := ngCond.QueriesAndExpressions[i].PreSave() // Set query model properties
 		if err != nil {
 			return nil, err
 		}
