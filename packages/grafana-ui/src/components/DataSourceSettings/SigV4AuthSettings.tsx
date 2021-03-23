@@ -46,6 +46,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = (props) => {
   useEffect(() => {
     const sigV4AuthType = dataSourceConfig.jsonData.sigV4AuthType || 'default';
     onJsonDataChange('sigV4AuthType', sigV4AuthType);
+    // We can't enforce the eslint rule here because we only want to run this once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

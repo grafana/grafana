@@ -79,6 +79,7 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, dashboard, on
         showSecondaryActions
       >
         {(panel) => (
+          // useLibraryPanel is not a real hook so no need to enforce this rule here.
           // eslint-disable-next-line react-hooks/rules-of-hooks
           <Button variant="secondary" onClick={() => useLibraryPanel(panel)}>
             Use instead of current panel
