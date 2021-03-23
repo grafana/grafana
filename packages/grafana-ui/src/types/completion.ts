@@ -1,4 +1,5 @@
 import { Value, Editor as CoreEditor } from 'slate';
+import { SearchFunctionType } from '../utils';
 
 /**
  * @alpha
@@ -23,10 +24,10 @@ export interface CompletionItemGroup {
   prefixMatch?: boolean;
 
   /**
-   * Function used to create auto-complete list
+   * Function type used to create auto-complete list
    * @alpha
    */
-  searchFunction?: SearchFunction;
+  searchFunctionType?: SearchFunctionType;
 
   /**
    * If true, do not filter items in this group based on the search.

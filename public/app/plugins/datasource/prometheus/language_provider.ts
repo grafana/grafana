@@ -3,14 +3,7 @@ import LRU from 'lru-cache';
 import { Value } from 'slate';
 
 import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
-import {
-  CompletionItem,
-  CompletionItemGroup,
-  TypeaheadInput,
-  TypeaheadOutput,
-  fuzzySearch,
-  prefixSearch,
-} from '@grafana/ui';
+import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 import {
   addLimitInfo,
@@ -221,7 +214,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         .value();
 
       suggestions.push({
-        searchFunction: prefixSearch,
+        searchFunctionType: SearchFunctionType.Prefix,
         skipSort: true,
         label: 'History',
         items: historyItems,
@@ -236,7 +229,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suggestions: CompletionItemGroup[] = [];
 
     suggestions.push({
-      searchFunction: prefixSearch,
+      searchFunctionType: SearchFunctionType.Prefix,
       label: 'Functions',
       items: FUNCTIONS.map(setFunctionKind),
     });
@@ -246,7 +239,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions.push({
         label: `Metrics${limitInfo}`,
         items: limitSuggestions(metrics).map((m) => addMetricsMetadata(m, metricsMetadata)),
-        searchFunction: fuzzySearch,
+        searchFunctionType: SearchFunctionType.Fuzzy,
       });
     }
 
@@ -321,7 +314,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions.push({
         label: `Labels${limitInfo}`,
         items: Object.keys(labelValues).map(wrapLabel),
-        searchFunction: fuzzySearch,
+        searchFunctionType: SearchFunctionType.Fuzzy,
       });
     }
     return result;
@@ -403,7 +396,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
           const newSuggestion: CompletionItemGroup = {
             label: `Labels${limitInfo}`,
             items: newItems,
-            searchFunction: fuzzySearch,
+            searchFunctionType: SearchFunctionType.Fuzzy,
           };
           suggestions.push(newSuggestion);
         }

@@ -3,8 +3,12 @@ import { fuzzyMatch } from '../slate-plugins/fuzzy';
 
 /**
  * List of auto-complete search function used by SuggestionsPlugin.handleTypeahead()
- * @see SuggestionsPlugin
  */
+export enum SearchFunctionType {
+  Word = 'Word',
+  Prefix = 'Prefix',
+  Fuzzy = 'Fuzzy',
+}
 
 /**
  * Exact-word matching for auto-complete suggestions.
@@ -41,4 +45,10 @@ export const fuzzySearch: SearchFunction = (items: CompletionItem[], text: strin
     item.highlightParts = ranges;
     return true;
   });
+};
+
+export const SearchFunctionMap = {
+  [SearchFunctionType.Word]: wordSearch,
+  [SearchFunctionType.Prefix]: prefixSearch,
+  [SearchFunctionType.Fuzzy]: fuzzySearch,
 };
