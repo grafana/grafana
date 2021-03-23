@@ -3,6 +3,7 @@ package schedule
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"sync"
 	"time"
 
@@ -77,13 +78,14 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 					return err
 				}
 				for _, r := range results {
-					sch.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					sch.log.Info("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 					cmd := models.SaveAlertInstanceCommand{DefinitionOrgID: key.OrgID, DefinitionUID: key.DefinitionUID, State: models.InstanceStateType(r.State.String()), Labels: models.InstanceLabels(r.Instance), LastEvalTime: ctx.now}
 					err := sch.store.SaveAlertInstance(&cmd)
 					if err != nil {
 						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
 					}
 				}
+				state.ProcessEvalResults(key.DefinitionUID, results, condition)
 				return nil
 			}
 

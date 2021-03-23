@@ -56,35 +56,35 @@ type ExecutionResults struct {
 // Results is a slice of evaluated alert instances states.
 type Results []result
 
-// result contains the evaluated state of an alert instance
+// result contains the evaluated State of an alert instance
 // identified by its labels.
 type result struct {
 	Instance data.Labels
-	State    state // Enum
+	State    State // Enum
 }
 
-// state is an enum of the evaluation state for an alert instance.
-type state int
+// State is an enum of the evaluation State for an alert instance.
+type State int
 
 const (
-	// Normal is the eval state for an alert instance condition
+	// Normal is the eval State for an alert instance condition
 	// that evaluated to false.
-	Normal state = iota
+	Normal State = iota
 
-	// Alerting is the eval state for an alert instance condition
+	// Alerting is the eval State for an alert instance condition
 	// that evaluated to true (Alerting).
 	Alerting
 
-	// NoData is the eval state for an alert rule condition
+	// NoData is the eval State for an alert rule condition
 	// that evaluated to NoData.
 	NoData
 
-	// Error is the eval state for an alert rule condition
+	// Error is the eval State for an alert rule condition
 	// that evaluated to Error.
 	Error
 )
 
-func (s state) String() string {
+func (s State) String() string {
 	return [...]string{"Normal", "Alerting", "NoData", "Error"}[s]
 }
 
@@ -173,7 +173,7 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 }
 
 // evaluateExecutionResult takes the ExecutionResult, and returns a frame where
-// each column is a string type that holds a string representing its state.
+// each column is a string type that holds a string representing its State.
 func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 	evalResults := make([]result, 0)
 	labels := make(map[string]bool)
@@ -206,7 +206,7 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("expected nullable float64 but got type %T", f.Fields[0].Type())}
 		}
 
-		var state state
+		var state State
 		switch {
 		case err != nil:
 			state = Error
@@ -227,7 +227,7 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
-// It displays one row per alert instance, with a column for each label and one for the alerting state.
+// It displays one row per alert instance, with a column for each label and one for the alerting State.
 func (evalResults Results) AsDataFrame() data.Frame {
 	fieldLen := len(evalResults)
 
@@ -265,7 +265,6 @@ func (evalResults Results) AsDataFrame() data.Frame {
 func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, dataService *tsdb.Service) (Results, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
-
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
 
 	execResult, err := execute(alertExecCtx, condition, now, dataService)

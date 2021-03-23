@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -85,6 +86,7 @@ func (ng *AlertNG) Init() error {
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
+	state.Init()
 	return ng.schedule.Ticker(ctx)
 }
 
