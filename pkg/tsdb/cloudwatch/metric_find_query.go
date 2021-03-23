@@ -15,9 +15,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -43,7 +44,7 @@ var customMetricsMetricsMap = make(map[string]map[string]map[string]*customMetri
 var customMetricsDimensionsMap = make(map[string]map[string]map[string]*customMetricsCache)
 var metricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
-	"AWS/AmazonMQ":                {"BurstBalance", "ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "EstablishedConnectionsCount", "ExpiredCount", "HeapUsage", "InactiveDurableTopicSubscribersCount", "InFlightCount", "JobSchedulerStorePercentUsage", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "NetworkIn", "NetworkOut", "OpenTransactionCount", "ProducerCount", "QueueSize", "ReceiveCount", "StorePercentUsage", "TempPercentUsage", "TotalConsumerCount", "TotalDequeueCount", "TotalEnqueueCount", "TotalMessageCount", "TotalProducerCount", "VolumeReadOps", "VolumeWriteOps"},
+	"AWS/AmazonMQ":                {"AckRate", "BurstBalance", "ChannelCount", "ConfirmRate", "ConnectionCount", "ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "EstablishedConnectionsCount", "ExchangeCount", "ExpiredCount", "HeapUsage", "InactiveDurableTopicSubscribersCount", "InFlightCount", "JobSchedulerStorePercentUsage", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "MessageCount", "MessageReadyCount", "MessageUnacknowledgedCount", "NetworkIn", "NetworkOut", "OpenTransactionCount", "ProducerCount", "PublishRate", "QueueCount", "QueueSize", "RabbitMQDiskFree", "RabbitMQDiskFreeLimit", "RabbitMQFdUsed", "RabbitMQMemLimit", "RabbitMQMemUsed", "ReceiveCount", "StorePercentUsage", "SystemCpuUtilization", "TempPercentUsage", "TotalConsumerCount", "TotalDequeueCount", "TotalEnqueueCount", "TotalMessageCount", "TotalProducerCount", "VolumeReadOps", "VolumeWriteOps"},
 	"AWS/ApiGateway":              {"4xx", "4XXError", "5xx", "5XXError", "CacheHitCount", "CacheMissCount", "Count", "DataProcessed", "IntegrationLatency", "Latency"},
 	"AWS/AppStream":               {"ActualCapacity", "AvailableCapacity", "CapacityUtilization", "DesiredCapacity", "InUseCapacity", "InsufficientCapacityError", "PendingCapacity", "RunningCapacity"},
 	"AWS/AppSync":                 {"4XXError", "5XXError", "Latency"},
@@ -241,68 +242,57 @@ var dimensionsMap = map[string][]string{
 
 var regionCache sync.Map
 
-func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext plugins.DataQuery) (
-	plugins.DataResponse, error) {
-	firstQuery := queryContext.Queries[0]
+func (e *cloudWatchExecutor) executeMetricFindQuery(ctx context.Context, model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*backend.QueryDataResponse, error) {
+	subType := model.Get("subtype").MustString()
 
-	parameters := firstQuery.Model
-	subType := firstQuery.Model.Get("subtype").MustString()
 	var data []suggestData
 	var err error
 	switch subType {
 	case "regions":
-		data, err = e.handleGetRegions(ctx, parameters, queryContext)
+		data, err = e.handleGetRegions(ctx, model, pluginCtx)
 	case "namespaces":
-		data, err = e.handleGetNamespaces(ctx, parameters, queryContext)
+		data, err = e.handleGetNamespaces(ctx, model, pluginCtx)
 	case "metrics":
-		data, err = e.handleGetMetrics(ctx, parameters, queryContext)
+		data, err = e.handleGetMetrics(ctx, model, pluginCtx)
 	case "dimension_keys":
-		data, err = e.handleGetDimensions(ctx, parameters, queryContext)
+		data, err = e.handleGetDimensions(ctx, model, pluginCtx)
 	case "dimension_values":
-		data, err = e.handleGetDimensionValues(ctx, parameters, queryContext)
+		data, err = e.handleGetDimensionValues(ctx, model, pluginCtx)
 	case "ebs_volume_ids":
-		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
+		data, err = e.handleGetEbsVolumeIds(ctx, model, pluginCtx)
 	case "ec2_instance_attribute":
-		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
+		data, err = e.handleGetEc2InstanceAttribute(ctx, model, pluginCtx)
 	case "resource_arns":
-		data, err = e.handleGetResourceArns(ctx, parameters, queryContext)
+		data, err = e.handleGetResourceArns(ctx, model, pluginCtx)
 	}
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
-	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: firstQuery.RefID}
-	transformToTable(data, &queryResult)
-	result := plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{
-			firstQuery.RefID: queryResult,
-		},
-	}
-	return result, nil
+	resp := backend.NewQueryDataResponse()
+	respD := resp.Responses[query.RefID]
+	respD.Frames = append(respD.Frames, transformToTable(data))
+	resp.Responses[query.RefID] = respD
+
+	return resp, nil
 }
 
-func transformToTable(data []suggestData, result *plugins.DataQueryResult) {
-	table := plugins.DataTable{
-		Columns: []plugins.DataTableColumn{
-			{
-				Text: "text",
-			},
-			{
-				Text: "value",
-			},
-		},
-		Rows: make([]plugins.DataRowValues, 0),
+func transformToTable(d []suggestData) *data.Frame {
+	frame := data.NewFrame("",
+		data.NewField("text", nil, []string{}),
+		data.NewField("value", nil, []string{}))
+
+	for _, r := range d {
+		frame.AppendRow(r.Text, r.Value)
 	}
 
-	for _, r := range data {
-		values := []interface{}{
-			r.Text,
-			r.Value,
-		}
-		table.Rows = append(table.Rows, values)
+	frame.Meta = &data.FrameMeta{
+		Custom: map[string]interface{}{
+			"rowCount": len(d),
+		},
 	}
-	result.Tables = append(result.Tables, table)
-	result.Meta.Set("rowCount", len(data))
+
+	return frame
 }
 
 func parseMultiSelectValue(input string) []string {
@@ -322,16 +312,20 @@ func parseMultiSelectValue(input string) []string {
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json,
-	queryContext plugins.DataQuery) ([]suggestData, error) {
-	dsInfo := e.getAWSDatasourceSettings(defaultRegion)
-	profile := dsInfo.Profile
+	pluginCtx backend.PluginContext) ([]suggestData, error) {
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	profile := dsInfo.profile
 	if cache, ok := regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
 			return cache2, nil
 		}
 	}
 
-	client, err := e.getEC2Client(defaultRegion)
+	client, err := e.getEC2Client(defaultRegion, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -367,12 +361,18 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
-	keys := []string{}
+func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
+	var keys []string
 	for key := range metricsMap {
 		keys = append(keys, key)
 	}
-	customNamespaces := e.DataSource.JsonData.Get("customMetricsNamespaces").MustString()
+
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	customNamespaces := dsInfo.namespace
 	if customNamespaces != "" {
 		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
@@ -386,7 +386,7 @@ func (e *cloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -398,7 +398,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 		}
 	} else {
 		var err error
-		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region, namespace); err != nil {
+		if namespaceMetrics, err = e.getMetricsForCustomMetrics(region, namespace, pluginCtx); err != nil {
 			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
@@ -412,7 +412,7 @@ func (e *cloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -424,7 +424,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		}
 	} else {
 		var err error
-		if dimensionValues, err = e.getDimensionsForCustomMetrics(region, namespace); err != nil {
+		if dimensionValues, err = e.getDimensionsForCustomMetrics(region, namespace, pluginCtx); err != nil {
 			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
@@ -438,7 +438,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext plugins.DataQuery) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString()
@@ -469,7 +469,7 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	if metricName != "" {
 		params.MetricName = aws.String(metricName)
 	}
-	metrics, err := e.listMetrics(region, params)
+	metrics, err := e.listMetrics(region, params, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -497,12 +497,12 @@ func (e *cloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 }
 
 func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json,
-	queryContext plugins.DataQuery) ([]suggestData, error) {
+	pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
 
 	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
-	instances, err := e.ec2DescribeInstances(region, nil, instanceIds)
+	instances, err := e.ec2DescribeInstances(region, nil, instanceIds, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -520,7 +520,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 }
 
 func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json,
-	queryContext plugins.DataQuery) ([]suggestData, error) {
+	pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	attributeName := parameters.Get("attributeName").MustString()
 	filterJson := parameters.Get("filters").MustMap()
@@ -541,7 +541,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 		}
 	}
 
-	instances, err := e.ec2DescribeInstances(region, filters, nil)
+	instances, err := e.ec2DescribeInstances(region, filters, nil, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -600,7 +600,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 }
 
 func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, parameters *simplejson.Json,
-	queryContext plugins.DataQuery) ([]suggestData, error) {
+	pluginCtx backend.PluginContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	resourceType := parameters.Get("resourceType").MustString()
 	filterJson := parameters.Get("tags").MustMap()
@@ -624,7 +624,7 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 	var resourceTypes []*string
 	resourceTypes = append(resourceTypes, &resourceType)
 
-	resources, err := e.resourceGroupsGetResources(region, filters, resourceTypes)
+	resources, err := e.resourceGroupsGetResources(region, filters, resourceTypes, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -638,14 +638,14 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, paramete
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) listMetrics(region string, params *cloudwatch.ListMetricsInput) ([]*cloudwatch.Metric, error) {
-	client, err := e.getCWClient(region)
+func (e *cloudWatchExecutor) listMetrics(region string, params *cloudwatch.ListMetricsInput, pluginCtx backend.PluginContext) ([]*cloudwatch.Metric, error) {
+	client, err := e.getCWClient(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
 	plog.Debug("Listing metrics pages")
-	cloudWatchMetrics := []*cloudwatch.Metric{}
+	var cloudWatchMetrics []*cloudwatch.Metric
 
 	pageNum := 0
 	err = client.ListMetricsPages(params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
@@ -663,13 +663,13 @@ func (e *cloudWatchExecutor) listMetrics(region string, params *cloudwatch.ListM
 	return cloudWatchMetrics, err
 }
 
-func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
+func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string, pluginCtx backend.PluginContext) (*ec2.DescribeInstancesOutput, error) {
 	params := &ec2.DescribeInstancesInput{
 		Filters:     filters,
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.getEC2Client(region)
+	client, err := e.getEC2Client(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -686,13 +686,13 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 }
 
 func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters []*resourcegroupstaggingapi.TagFilter,
-	resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
+	resourceTypes []*string, pluginCtx backend.PluginContext) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
 	params := &resourcegroupstaggingapi.GetResourcesInput{
 		ResourceTypeFilters: resourceTypes,
 		TagFilters:          filters,
 	}
 
-	client, err := e.getRGTAClient(region)
+	client, err := e.getRGTAClient(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -711,90 +711,94 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 
 var metricsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string) ([]string, error) {
+func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string, pluginCtx backend.PluginContext) ([]string, error) {
 	plog.Debug("Getting metrics for custom metrics", "region", region, "namespace", namespace)
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	dsInfo := e.getAWSDatasourceSettings(region)
-
-	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
-	}
-	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*customMetricsCache)
-	}
-	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace] = &customMetricsCache{}
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
 	}
 
-	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire.After(time.Now()) {
-		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
+	if _, ok := customMetricsMetricsMap[dsInfo.profile]; !ok {
+		customMetricsMetricsMap[dsInfo.profile] = make(map[string]map[string]*customMetricsCache)
+	}
+	if _, ok := customMetricsMetricsMap[dsInfo.profile][dsInfo.region]; !ok {
+		customMetricsMetricsMap[dsInfo.profile][dsInfo.region] = make(map[string]*customMetricsCache)
+	}
+	if _, ok := customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace]; !ok {
+		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace] = &customMetricsCache{}
+		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
+	}
+
+	if customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Expire.After(time.Now()) {
+		return customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
 	}
 	metrics, err := e.listMetrics(region, &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(namespace),
-	})
-
+	}, pluginCtx)
 	if err != nil {
 		return []string{}, err
 	}
 
-	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
-	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
+	customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range metrics {
-		if isDuplicate(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *metric.MetricName) {
+		if isDuplicate(customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *metric.MetricName) {
 			continue
 		}
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = append(
-			customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *metric.MetricName)
+		customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache = append(
+			customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *metric.MetricName)
 	}
 
-	return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
+	return customMetricsMetricsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
 }
 
 var dimensionsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace string) ([]string, error) {
+func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace string, pluginCtx backend.PluginContext) ([]string, error) {
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
-	dsInfo := e.getAWSDatasourceSettings(region)
-
-	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
-	}
-	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*customMetricsCache)
-	}
-	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace] = &customMetricsCache{}
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
 	}
 
-	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire.After(time.Now()) {
-		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
+	if _, ok := customMetricsDimensionsMap[dsInfo.profile]; !ok {
+		customMetricsDimensionsMap[dsInfo.profile] = make(map[string]map[string]*customMetricsCache)
+	}
+	if _, ok := customMetricsDimensionsMap[dsInfo.profile][dsInfo.region]; !ok {
+		customMetricsDimensionsMap[dsInfo.profile][dsInfo.region] = make(map[string]*customMetricsCache)
+	}
+	if _, ok := customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace]; !ok {
+		customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace] = &customMetricsCache{}
+		customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
 	}
 
-	metrics, err := e.listMetrics(region, &cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)})
+	if customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Expire.After(time.Now()) {
+		return customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
+	}
+	metrics, err := e.listMetrics(region, &cloudwatch.ListMetricsInput{Namespace: aws.String(namespace)}, pluginCtx)
 	if err != nil {
 		return []string{}, err
 	}
-	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
-	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache = make([]string, 0)
+	customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range metrics {
 		for _, dimension := range metric.Dimensions {
-			if isDuplicate(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *dimension.Name) {
+			if isDuplicate(customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *dimension.Name) {
 				continue
 			}
-			customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = append(
-				customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *dimension.Name)
+			customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache = append(
+				customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, *dimension.Name)
 		}
 	}
 
-	return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
+	return customMetricsDimensionsMap[dsInfo.profile][dsInfo.region][namespace].Cache, nil
 }
 
 func isDuplicate(nameList []string, target string) bool {
