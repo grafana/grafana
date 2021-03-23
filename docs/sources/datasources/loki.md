@@ -74,7 +74,7 @@ There are two types of LogQL queries:
 
 Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/#log-queries) query to display your logs.
 
-A log query consists of two parts: **log stream selector**, and a **log pipeline**. For performance reasons you need to start by choosing a log stream by selecting a log label.
+A log query consists of two parts: **log stream selector**, and a **log pipeline**. For performance reasons begin by choosing a log stream by selecting a log label.
 
 ### Log context
 
