@@ -4,6 +4,7 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -13,12 +14,20 @@ var (
 // MeasurementsRunner will simply broadcast all events to `grafana/broadcast/*` channels.
 // This makes no assumptions about the shape of the data and will broadcast it to anyone listening
 type MeasurementsRunner struct {
+	Publisher models.ChannelPublisher
 }
 
 // GetHandlerForPath gets the handler for a path.
 // It's called on init.
 func (m *MeasurementsRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
 	return m, nil // for now all channels share config
+}
+
+// DoNamespaceHTTP is called from the HTTP API.
+func (m *MeasurementsRunner) DoNamespaceHTTP(c *models.ReqContext) {
+	c.JSON(400, util.DynMap{
+		"Unsupported": "MeasurementsRunner",
+	})
 }
 
 // OnSubscribe will let anyone connect to the path
@@ -32,4 +41,34 @@ func (m *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.Publis
 	return centrifuge.PublishReply{
 		Options: centrifuge.PublishOptions{},
 	}, nil
+}
+
+// DoChannelHTTP accepts POST from anywhere
+func (m *MeasurementsRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
+	if c.Req.Method == "POST" {
+		body, err := c.Req.Body().Bytes()
+		if err != nil {
+			c.JSON(500, util.DynMap{
+				"message": "error reading body",
+			})
+			return
+		}
+
+		err = m.Publisher(channel, body)
+		if err != nil {
+			c.JSON(500, util.DynMap{
+				"message": "error publishing",
+			})
+			return
+		}
+
+		c.JSON(200, util.DynMap{
+			"message": "OK",
+		})
+		return
+	}
+
+	c.JSON(400, util.DynMap{
+		"unsupported?": channel,
+	})
 }

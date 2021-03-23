@@ -5,6 +5,7 @@ import (
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // DashboardEvent events related to dashboards
@@ -25,6 +26,13 @@ func (h *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler
 	return h, nil // all dashboards share the same handler
 }
 
+// DoNamespaceHTTP is called from the HTTP API.
+func (m *DashboardHandler) DoNamespaceHTTP(c *models.ReqContext) {
+	c.JSON(400, util.DynMap{
+		"Unsupported": "MeasurementsRunner",
+	})
+}
+
 // OnSubscribe for now allows anyone to subscribe to any dashboard
 func (h *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	return centrifuge.SubscribeReply{
@@ -40,6 +48,13 @@ func (h *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishE
 	return centrifuge.PublishReply{
 		Options: centrifuge.PublishOptions{},
 	}, nil
+}
+
+// DoChannelHTTP is not implemented for this channel
+func (h *DashboardHandler) DoChannelHTTP(c *models.ReqContext, channel string) {
+	c.JSON(400, util.DynMap{
+		"Unsupported": channel,
+	})
 }
 
 // DashboardSaved should broadcast to the appropriate stream

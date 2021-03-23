@@ -397,6 +397,11 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Post("/graphite", reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), routing.Wrap(PostGraphiteAnnotation))
 		})
 
+		// The live handler will manage its own routes
+		if hs.Live != nil {
+			apiRoute.Any("/live/*", hs.LiveHTTPHandler)
+		}
+
 		// short urls
 		apiRoute.Post("/short-urls", bind(dtos.CreateShortURLCmd{}), routing.Wrap(hs.createShortURL))
 	}, reqSignedIn)

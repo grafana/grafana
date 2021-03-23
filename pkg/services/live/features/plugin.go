@@ -7,6 +7,7 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 //go:generate mockgen -destination=mock.go -package=features github.com/grafana/grafana/pkg/services/live/features ChannelPublisher,PresenceGetter,PluginContextGetter,StreamRunner
@@ -72,6 +73,13 @@ func (m *PluginRunner) GetHandlerForPath(path string) (models.ChannelHandler, er
 	}, nil
 }
 
+// DoNamespaceHTTP is called from the HTTP API.
+func (m *PluginRunner) DoNamespaceHTTP(c *models.ReqContext) {
+	c.JSON(400, util.DynMap{
+		"Unsupported": "PluginRunner",
+	})
+}
+
 // PluginPathRunner can handle streaming operations for channels belonging to plugin specific path.
 type PluginPathRunner struct {
 	path                string
@@ -119,4 +127,11 @@ func (r *PluginPathRunner) OnSubscribe(client *centrifuge.Client, e centrifuge.S
 // OnPublish passes control to a plugin.
 func (r *PluginPathRunner) OnPublish(_ *centrifuge.Client, _ centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
 	return centrifuge.PublishReply{}, fmt.Errorf("not implemented yet")
+}
+
+// DoChannelHTTP is not implemented for this channel
+func (h *PluginPathRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
+	c.JSON(400, util.DynMap{
+		"Unsupported": channel,
+	})
 }

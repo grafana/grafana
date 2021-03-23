@@ -20,6 +20,8 @@ func TestParseChannelAddress_Valid(t *testing.T) {
 	if diff := cmp.Diff(addr, ex); diff != "" {
 		t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 	}
+
+	require.Equal(t, "aaa/bbb/ccc/ddd", ex.ToChannelID())
 }
 
 func TestParseChannelAddress_Invalid(t *testing.T) {

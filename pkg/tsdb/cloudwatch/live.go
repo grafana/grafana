@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"golang.org/x/sync/errgroup"
 )
@@ -54,6 +55,20 @@ func (s *LogQueryRunnerSupplier) GetHandlerForPath(path string) (models.ChannelH
 		running:     make(map[string]bool),
 		service:     s.Service,
 	}, nil
+}
+
+// DoNamespaceHTTP is called from the HTTP API.
+func (s *LogQueryRunnerSupplier) DoNamespaceHTTP(c *models.ReqContext) {
+	c.JSON(400, util.DynMap{
+		"Unsupported": "PluginRunner",
+	})
+}
+
+// DoChannelHTTP is not implemented for this channel
+func (r *logQueryRunner) DoChannelHTTP(c *models.ReqContext, channel string) {
+	c.JSON(400, util.DynMap{
+		"Unsupported": channel,
+	})
 }
 
 // OnSubscribe publishes results from the corresponding CloudWatch Logs query to the provided channel
