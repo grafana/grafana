@@ -50,12 +50,14 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     }
 
     return (
-      <div className={cx(styles.box, className, 'options-group')}>
+      <div className={cx(styles.box, className, 'options-group')} data-testid="options-category">
         <div className={styles.header} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
           </div>
-          <div className={styles.title}>{renderTitle!(isExpanded)}</div>
+          <div className={styles.title} role="heading">
+            {renderTitle!(isExpanded)}
+          </div>
         </div>
         {isExpanded && <div className={styles.body}>{children}</div>}
       </div>
