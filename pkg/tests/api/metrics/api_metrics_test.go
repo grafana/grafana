@@ -67,36 +67,36 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 				}),
 			},
 		}
-		tr := makeCWRequest(t, req, addr)
+		result := makeCWRequest(t, req, addr)
+
+		dataFrames := plugins.NewDecodedDataFrames(data.Frames{
+			&data.Frame{
+				RefID: "A",
+				Fields: []*data.Field{
+					data.NewField("text", nil, []string{"Test_MetricName"}),
+					data.NewField("value", nil, []string{"Test_MetricName"}),
+				},
+				Meta: &data.FrameMeta{
+					Custom: map[string]interface{}{
+						"rowCount": float64(1),
+					},
+				},
+			},
+		})
+
+		// Have to call this so that dataFrames.encoded is non-nil, for the comparison
+		// In the future we should use gocmp instead and ignore this field
+		_, err := dataFrames.Encoded()
+		require.NoError(t, err)
 
 		assert.Equal(t, plugins.DataResponse{
 			Results: map[string]plugins.DataQueryResult{
 				"A": {
-					RefID: "A",
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": float64(1),
-					}),
-					Tables: []plugins.DataTable{
-						{
-							Columns: []plugins.DataTableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []plugins.DataRowValues{
-								{
-									"Test_MetricName",
-									"Test_MetricName",
-								},
-							},
-						},
-					},
+					RefID:      "A",
+					Dataframes: dataFrames,
 				},
 			},
-		}, tr)
+		}, result)
 	})
 }
 
@@ -132,7 +132,8 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 
 		dataFrames := plugins.NewDecodedDataFrames(data.Frames{
 			&data.Frame{
-				Name: "logGroups",
+				Name:  "logGroups",
+				RefID: "A",
 				Fields: []*data.Field{
 					data.NewField("logGroupName", nil, []*string{}),
 				},

@@ -60,7 +60,6 @@ func (s *Service) Init() error {
 	s.registry["postgres"] = s.PostgresService.NewExecutor
 	s.registry["mysql"] = mysql.NewExecutor
 	s.registry["elasticsearch"] = elasticsearch.NewExecutor
-	s.registry["cloudwatch"] = s.CloudWatchService.NewExecutor
 	s.registry["stackdriver"] = s.CloudMonitoringService.NewExecutor
 	s.registry["grafana-azure-monitor-datasource"] = s.AzureMonitorService.NewExecutor
 	s.registry["loki"] = loki.NewExecutor
