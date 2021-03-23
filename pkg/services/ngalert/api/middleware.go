@@ -23,11 +23,3 @@ func (api *API) validateOrgAlertDefinition(c *models.ReqContext) {
 		return
 	}
 }
-
-func (api *API) validateGrafanaIsRecipient(c *models.ReqContext) {
-	datasourceID := c.Params(":DatasourceId")
-	if datasourceID != grafanaRecipient {
-		c.JsonApiErr(400, "Bad request: grafana is not the recipient", nil)
-		return
-	}
-}

@@ -31,17 +31,15 @@ import { updateTimeRange } from './state/time';
 import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
-import { getFirstNonQueryRowSpecificError } from 'app/core/utils/explore';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
-import { ErrorContainer } from './ErrorContainer';
-//TODO:unification
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 import { NodeGraphContainer } from './NodeGraphContainer';
+import { ResponseErrorContainer } from './ResponseErrorContainer';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -315,12 +313,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
-
-    // gets an error without a refID, so non-query-row-related error, like a connection error
-    const queryErrors =
-      queryResponse.state === LoadingState.Error && queryResponse.error ? [queryResponse.error] : undefined;
-    const queryError = getFirstNonQueryRowSpecificError(queryErrors);
-
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
@@ -344,7 +336,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
             </div>
-            <ErrorContainer queryError={queryError} />
+            <ResponseErrorContainer exploreId={exploreId} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {

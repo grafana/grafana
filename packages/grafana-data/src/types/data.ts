@@ -20,6 +20,7 @@ export enum DataTopic {
   Annotations = 'annotations',
 }
 
+// Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 'nodeGraph';
 
 /**

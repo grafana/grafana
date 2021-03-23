@@ -57,7 +57,7 @@ func (r *LotexRuler) withReq(
 ) response.Response {
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req.Request = req
-	r.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64("DatasourceId"))
+	r.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64("Recipient"))
 
 	status := resp.Status()
 	if status >= 400 {
