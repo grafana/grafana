@@ -68,7 +68,7 @@ You can use the Loki query editor to create log and metric queries.
 There are two types of LogQL queries:
 
 - **Log queries -** Return the contents of log lines.
-- **Metric queries** that extend log queries and calculate sample values based on the content of logs from a log query.
+- **Metric queries -** Extend log queries and calculate sample values based on the content of logs from a log query.
 
 ### Log Queries
 
