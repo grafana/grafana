@@ -20,6 +20,8 @@ type Manager interface {
 	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error)
 	// CallResource calls a plugin resource.
 	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
+	// Get plugin by its ID.
+	Get(pluginID string) (Plugin, bool)
 	// GetDataPlugin gets a DataPlugin with a certain ID or nil if it doesn't exist.
 	// TODO: interface{} is the return type in order to break a dependency cycle. Should be plugins.DataPlugin.
 	GetDataPlugin(pluginID string) interface{}
@@ -37,4 +39,5 @@ type Plugin interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.StreamHandler
 }
