@@ -97,7 +97,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	}
 	sort.Strings(refIDs)
 
-	newRefIDsToTimeRanges := make(map[string][2]string) //a map of new RefIDs to their time range string tuple representation
+	newRefIDsToTimeRanges := make(map[string][2]string) // a map of new RefIDs to their time range string tuple representation
 	for _, refID := range refIDs {
 		condIdxes := refIDtoCondIdx[refID]
 
