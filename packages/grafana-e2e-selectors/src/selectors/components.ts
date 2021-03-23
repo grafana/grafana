@@ -192,4 +192,7 @@ export const Components = {
   DataLinksContextMenu: {
     singleLink: 'Data link',
   },
+  Reporting: {
+    pageHeader: 'Report page header',
+  },
 };

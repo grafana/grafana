@@ -149,4 +149,10 @@ export const Pages = {
     page: 'Plugin page',
     signatureInfo: 'Plugin signature info',
   },
+  ReportList: {
+    url: 'reports',
+  },
+  NewReport: {
+    url: 'reports/new',
+  },
 };
