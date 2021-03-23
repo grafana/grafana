@@ -127,8 +127,12 @@ func (g *GrafanaLive) Init() error {
 	}
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
-	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
-	g.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
+	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{
+		Publisher: g.Publish,
+	}
+	g.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{
+		Publisher: g.Publish,
+	}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
