@@ -29,8 +29,8 @@ func TestPersistTemplates(t *testing.T) {
 		},
 		{
 			name:          "With a invalid filename, it fails",
-			templates:     map[string]string{"adirecotry/email.template": "a perfectly fine template"},
-			expectedError: errors.New("template file name 'adirecotry/email.template' is  not valid"),
+			templates:     map[string]string{"adirectory/email.template": "a perfectly fine template"},
+			expectedError: errors.New("template file name 'adirectory/email.template' is not valid"),
 		},
 		{
 			name:              "with a template that has the same name but different content to an existing one",

@@ -22,7 +22,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	pathSet := map[string]struct{}{}
 	for name, content := range cfg.TemplateFiles {
 		if name != filepath.Base(filepath.Clean(name)) {
-			return nil, false, fmt.Errorf("template file name '%s' is  not valid", name)
+			return nil, false, fmt.Errorf("template file name '%s' is not valid", name)
 		}
 
 		err := os.MkdirAll(path, 0750)
