@@ -7,19 +7,18 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting-api/pkg/api"
-
-	"github.com/stretchr/testify/require"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPersistTemplates(t *testing.T) {
 	tc := []struct {
-		name           string
-		templates      map[string]string
-		expectedPaths  []string
-		expectedError  error
-		expectedChange bool
+		name              string
+		templates         map[string]string
+		existingTemplates map[string]string
+		expectedPaths     []string
+		expectedError     error
+		expectedChange    bool
 	}{
 		{
 			name:           "With valid templates file names, it persists successfully",
@@ -33,11 +32,47 @@ func TestPersistTemplates(t *testing.T) {
 			templates:     map[string]string{"adirecotry/email.template": "a perfectly fine template"},
 			expectedError: errors.New("template file name 'adirecotry/email.template' is  not valid"),
 		},
+		{
+			name:              "with a template that has the same name but different content to an existing one",
+			existingTemplates: map[string]string{"email.template": "a perfectly fine template"},
+			templates:         map[string]string{"email.template": "a completely different content"},
+			expectedChange:    true,
+			expectedError:     nil,
+			expectedPaths:     []string{"email.template"},
+		},
+		{
+			name:              "with a template that has the same name and the same content as an existing one",
+			existingTemplates: map[string]string{"email.template": "a perfectly fine template"},
+			templates:         map[string]string{"email.template": "a perfectly fine template"},
+			expectedChange:    false,
+			expectedError:     nil,
+			expectedPaths:     []string{"email.template"},
+		},
+		{
+			name:              "with two new template files, it changes the template tree",
+			existingTemplates: map[string]string{"email.template": "a perfectly fine template"},
+			templates:         map[string]string{"slack.template": "a perfectly fine template", "webhook.template": "a webhook template"},
+			expectedChange:    true,
+			expectedError:     nil,
+			expectedPaths:     []string{"slack.template", "webhook.template"},
+		},
+		{
+			name:              "when we remove a template file from the list, it changes the template tree",
+			existingTemplates: map[string]string{"slack.template": "a perfectly fine template", "webhook.template": "a webhook template"},
+			templates:         map[string]string{"slack.template": "a perfectly fine template"},
+			expectedChange:    true,
+			expectedError:     nil,
+			expectedPaths:     []string{"slack.template"},
+		},
 	}
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
+			// Write "existing files"
+			for name, content := range tt.existingTemplates {
+				ioutil.WriteFile(filepath.Join(dir, name), []byte(content), 0644)
+			}
 			c := &api.PostableUserConfig{TemplateFiles: tt.templates}
 
 			paths, changed, persistErr := PersistTemplates(c, dir)
@@ -62,15 +97,11 @@ func TestPersistTemplates(t *testing.T) {
 				tt.expectedPaths[i] = filepath.Join(dir, p)
 			}
 
-			if tt.expectedError != nil {
-				require.Equal(t, tt.expectedError, persistErr)
-				assert.Equal(t, tt.expectedPaths, paths)
-				assert.Equal(t, tt.expectedChange, changed)
-			} else {
-				assert.Equal(t, tt.expectedPaths, paths)
-				assert.Equal(t, tt.templates, files)
-				assert.Equal(t, tt.expectedChange, changed)
-				require.NoError(t, persistErr)
+			require.Equal(t, tt.expectedError, persistErr)
+			require.ElementsMatch(t, tt.expectedPaths, paths)
+			require.Equal(t, tt.expectedChange, changed)
+			if tt.expectedError == nil {
+				require.Equal(t, tt.templates, files)
 			}
 		})
 	}

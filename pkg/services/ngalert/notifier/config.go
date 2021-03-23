@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/alerting-api/pkg/api"
+	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -18,7 +19,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	}
 
 	var templatesChanged bool
-	paths := make([]string, 0, len(cfg.TemplateFiles))
+	pathSet := map[string]struct{}{}
 	for name, content := range cfg.TemplateFiles {
 		if name != filepath.Base(filepath.Clean(name)) {
 			return nil, false, fmt.Errorf("template file name '%s' is  not valid", name)
@@ -30,7 +31,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 		}
 
 		file := filepath.Join(path, name)
-		paths = append(paths, file)
+		pathSet[file] = struct{}{}
 
 		// Check if the template file already exists and if it has changed
 		// We can safeily ignore gosec here and we've previously checked the filename is clean
@@ -50,6 +51,27 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 		templatesChanged = true
 	}
 
+	// Now that we have the list of _actual_ templates, let's remove the ones that we don't need.
+	existingFiles, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Error("unable to read directory for deleting alertmanager templates", "err", err, "path", path)
+	}
+	for _, existingFile := range existingFiles {
+		p := filepath.Join(path, existingFile.Name())
+		_, ok := pathSet[p]
+		if !ok {
+			templatesChanged = true
+			err := os.Remove(p)
+			if err != nil {
+				log.Error("unable to delete template", "err", err, "file", p)
+			}
+		}
+	}
+
+	paths := make([]string, 0, len(pathSet))
+	for path := range pathSet {
+		paths = append(paths, path)
+	}
 	return paths, templatesChanged, nil
 }
 

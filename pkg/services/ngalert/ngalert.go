@@ -4,25 +4,22 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-
-	"github.com/grafana/grafana/pkg/services/datasourceproxy"
-	"github.com/grafana/grafana/pkg/services/ngalert/api"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
 	"github.com/benbjohnson/clock"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 const (

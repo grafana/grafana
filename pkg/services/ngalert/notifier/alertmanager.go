@@ -7,17 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
-
-	"github.com/prometheus/alertmanager/template"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/dispatch"
@@ -27,12 +16,18 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/silence"
 	"github.com/prometheus/alertmanager/silence/silencepb"
+	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
