@@ -55,6 +55,7 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
 
   const onTagsChange = (tags: string[]) => {
     dashboard.tags = tags;
+    setRenderCounter(renderCounter + 1);
   };
 
   const onEditableChange = (value: boolean) => {
