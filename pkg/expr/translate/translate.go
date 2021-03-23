@@ -213,7 +213,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 				RelativeTimeRange: *rTR,
 				DatasourceUID:     getDsInfo.Uid,
 			}
-			ngCond.QueriesAndExpressions = append(ngCond.QueriesAndExpressions, alertQuery)
+			ngCond.Data = append(ngCond.Data, alertQuery)
 		}
 	}
 
@@ -236,7 +236,7 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	if err != nil {
 		return nil, err
 	}
-	ngCond.RefID = ccRefID // set the alert condition to point to the classic condition
+	ngCond.Condition = ccRefID // set the alert condition to point to the classic condition
 	ngCond.OrgID = orgID
 
 	exprModel := struct {
@@ -261,17 +261,17 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 		Model: exprModelJSON,
 	}
 
-	ngCond.QueriesAndExpressions = append(ngCond.QueriesAndExpressions, ccAlertQuery)
+	ngCond.Data = append(ngCond.Data, ccAlertQuery)
 
-	for i := range ngCond.QueriesAndExpressions {
-		err := ngCond.QueriesAndExpressions[i].PreSave() // Set query model properties
+	for i := range ngCond.Data {
+		err := ngCond.Data[i].PreSave() // Set query model properties
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	sort.Slice(ngCond.QueriesAndExpressions, func(i, j int) bool {
-		return ngCond.QueriesAndExpressions[i].RefID < ngCond.QueriesAndExpressions[j].RefID
+	sort.Slice(ngCond.Data, func(i, j int) bool {
+		return ngCond.Data[i].RefID < ngCond.Data[j].RefID
 	})
 
 	return ngCond, nil
