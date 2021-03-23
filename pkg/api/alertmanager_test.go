@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func Test_ApiReceiver_Marshaling(t *testing.T) {
@@ -95,7 +97,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 		{
 			desc: "success am",
 			input: PostableApiAlertingConfig{
-				Config: config.Config{
+				Config: Config{
 					Route: &config.Route{
 						Receiver: "am",
 						Routes: []*config.Route{
@@ -118,7 +120,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 		{
 			desc: "success graf",
 			input: PostableApiAlertingConfig{
-				Config: config.Config{
+				Config: Config{
 					Route: &config.Route{
 						Receiver: "graf",
 						Routes: []*config.Route{
@@ -143,7 +145,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 		{
 			desc: "failure undefined am receiver",
 			input: PostableApiAlertingConfig{
-				Config: config.Config{
+				Config: Config{
 					Route: &config.Route{
 						Receiver: "am",
 						Routes: []*config.Route{
@@ -167,7 +169,7 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 		{
 			desc: "failure undefined graf receiver",
 			input: PostableApiAlertingConfig{
-				Config: config.Config{
+				Config: Config{
 					Route: &config.Route{
 						Receiver: "graf",
 						Routes: []*config.Route{
@@ -204,6 +206,54 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 				require.Nil(t, err)
 				require.Equal(t, tc.input, out)
 			}
+		})
+	}
+}
+
+func Test_PostableApiReceiver_Unmarshaling_YAML(t *testing.T) {
+	for _, tc := range []struct {
+		desc  string
+		input string
+		rtype ReceiverType
+	}{
+		{
+			desc: "grafana receivers",
+			input: `
+name: grafana_managed
+grafana_managed_receiver_configs:
+  - uid: alertmanager UID
+    name: an alert manager receiver
+    type: prometheus-alertmanager
+    sendreminder: false
+    disableresolvemessage: false
+    frequency: 5m
+    isdefault: false
+    settings: {}
+    securesettings:
+      basicAuthPassword: <basicAuthPassword>
+  - uid: dingding UID
+    name: a dingding receiver
+    type: dingding
+    sendreminder: false
+    disableresolvemessage: false
+    frequency: 5m
+    isdefault: false`,
+			rtype: GrafanaReceiverType,
+		},
+		{
+			desc: "receiver",
+			input: `
+name: example-email
+email_configs:
+  - to: 'youraddress@example.org'`,
+			rtype: AlertmanagerReceiverType,
+		},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			var r PostableApiReceiver
+			err := yaml.Unmarshal([]byte(tc.input), &r)
+			require.Nil(t, err)
+			assert.Equal(t, tc.rtype, r.Type())
 		})
 	}
 }
