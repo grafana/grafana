@@ -15,7 +15,7 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { nullToUndefThreshold } from '../../../../grafana-data/src/transformations/transformers/nullToUndefThreshold';
+import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { FIXED_UNIT } from './GraphNG';
 import {
