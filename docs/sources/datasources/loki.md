@@ -64,7 +64,7 @@ You can use the Loki query editor to create log and metric queries.
 With Loki log browser you can easily navigate trough your list of labels and values and construct the query of your choice. Log browser has multi-step selection:
 1. Choose the labels you would like to consider for your search.
 2. Pick the values for selected labels. Log browser supports facetting and therefore it shows you only possible label combinations. 
-3. Choose the type of query - logs query or rate metrics query. Additionaly, you can also validate selector.
+3. Choose the type of query - logs query or rate metrics query. Additionally, you can also validate selector.
 
 {{< docs-imagebox img="/img/docs/v75/loki_log_browser.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
 
