@@ -168,11 +168,11 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 
 	tags := make([]string, 0)
 	for _, tag := range evalContext.Rule.AlertRuleTags {
-		if sendDetailsOrBoth(on.SendTagsAs) {
+		if on.sendDetails() {
 			details.Set(tag.Key, tag.Value)
 		}
 
-		if sendTagsOrBoth(on.SendTagsAs) {
+		if on.sendTags() {
 			if len(tag.Value) > 0 {
 				tags = append(tags, fmt.Sprintf("%s:%s", tag.Key, tag.Value))
 			} else {
@@ -235,10 +235,10 @@ func (on *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) error 
 	return nil
 }
 
-func sendDetailsOrBoth(sendTagsAs string) bool {
-	return sendTagsAs == sendDetails || sendTagsAs == sendBoth
+func (on *OpsGenieNotifier) sendDetails() bool {
+	return on.SendTagsAs == sendDetails || on.SendTagsAs == sendBoth
 }
 
-func sendTagsOrBoth(sendTagsAs string) bool {
-	return sendTagsAs == sendTags || sendTagsAs == sendBoth
+func (on *OpsGenieNotifier) sendTags() bool {
+	return on.SendTagsAs == sendTags || on.SendTagsAs == sendBoth
 }
