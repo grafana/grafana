@@ -15,6 +15,7 @@ type pluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.StreamHandler
 }
 
 type grpcPlugin struct {
@@ -137,4 +138,28 @@ func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResource
 	p.mutex.RUnlock()
 
 	return pluginClient.CallResource(ctx, req, sender)
+}
+
+func (p *grpcPlugin) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+	p.mutex.RLock()
+	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
+		p.mutex.RUnlock()
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	pluginClient := p.pluginClient
+	p.mutex.RUnlock()
+
+	return pluginClient.CanSubscribeToStream(ctx, request)
+}
+
+func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	p.mutex.RLock()
+	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
+		p.mutex.RUnlock()
+		return backendplugin.ErrPluginUnavailable
+	}
+	pluginClient := p.pluginClient
+	p.mutex.RUnlock()
+
+	return pluginClient.RunStream(ctx, req, sender)
 }
