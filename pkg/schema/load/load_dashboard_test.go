@@ -17,7 +17,7 @@ var p BaseLoadPaths = BaseLoadPaths{
 	DistPluginCueFS: grafana.PluginSchema,
 }
 
-func TestScuemataExists(t *testing.T) {
+func TestScuemataBasics(t *testing.T) {
 	rawmap, err := rawDistPanels(p)
 	require.NoError(t, err, "error while loading raw dist panels")
 
@@ -29,7 +29,12 @@ func TestScuemataExists(t *testing.T) {
 				for min, sch := range seq {
 					t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
 						cv := sch.CUE()
-						require.True(t, cv.Exists(), "cue value for schema does not exist")
+						t.Run("Exists", func(t *testing.T) {
+							require.True(t, cv.Exists(), "cue value for schema does not exist")
+						})
+						t.Run("Validate", func(t *testing.T) {
+							require.NoError(t, cv.Validate(), "all schema should be valid with respect to basic CUE rules")
+						})
 					})
 				}
 			}
