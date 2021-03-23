@@ -10,6 +10,7 @@ import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../VizTy
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { toggleVizPicker } from './state/reducers';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   panel: PanelModel;
@@ -19,9 +20,8 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
   const plugin = useSelector((state: StoreState) => state.plugins.panels[panel.type]);
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState('types');
-  const styles = useStyles(getStyles);
-
   const dispatch = useDispatch();
+  const styles = useStyles(getStyles);
 
   const onPluginTypeChange = (meta: PanelPluginMeta) => {
     if (meta.id === plugin.meta.id) {
@@ -84,6 +84,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
             variant="secondary"
             icon="angle-up"
             className={styles.closeButton}
+            aria-label={selectors.components.PanelEditor.toggleVizPicker}
             onClick={onCloseVizPicker}
           />
         </div>
