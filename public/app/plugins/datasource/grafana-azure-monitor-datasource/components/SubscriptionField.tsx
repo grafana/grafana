@@ -64,10 +64,11 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       if (query.queryType === AzureQueryType.AzureMonitor) {
         newQuery.azureMonitor = {
           ...newQuery.azureMonitor,
-          resourceGroup: 'select',
-          metricDefinition: 'select',
-          resourceName: 'select',
-          metricName: 'select',
+          resourceGroup: undefined,
+          metricDefinition: undefined,
+          metricNamespace: undefined,
+          resourceName: undefined,
+          metricName: undefined,
           aggregation: '',
           timeGrain: '',
           dimensionFilters: [],
