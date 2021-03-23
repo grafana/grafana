@@ -16,28 +16,18 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   const [metricNames, setMetricNames] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
-    if (
-      !(
-        subscriptionId &&
-        query.azureMonitor.resourceGroup &&
-        query.azureMonitor.metricDefinition &&
-        query.azureMonitor.resourceName &&
-        query.azureMonitor.metricNamespace
-      )
-    ) {
+    const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor;
+
+    if (!(subscriptionId && resourceGroup && metricDefinition && resourceName && metricNamespace)) {
       metricNames.length > 0 && setMetricNames([]);
       return;
     }
 
     datasource
-      .getMetricNames(
-        subscriptionId,
-        query.azureMonitor.resourceGroup,
-        query.azureMonitor.metricDefinition,
-        query.azureMonitor.resourceName,
-        query.azureMonitor.metricNamespace
-      )
-      .then((results) => setMetricNames(results.map(toOption)))
+      .getMetricNames(subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace)
+      .then((results) => {
+        setMetricNames(results.map(toOption));
+      })
       .catch((err) => {
         // TODO: handle error
         console.error(err);

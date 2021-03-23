@@ -678,6 +678,56 @@ describe('logSeriesToLogsModel', () => {
       },
     ]);
   });
+
+  it('should return empty string if message field is undefined', () => {
+    const logSeries: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z', '1970-02-01T00:00:01Z', '1970-03-01T00:00:01Z'],
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+            values: ['WARN boooo 0', undefined, 'WARN boooo 2'],
+            labels: {
+              foo: 'bar',
+              level: 'dbug',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['0', '1', '2'],
+          },
+        ],
+        refId: 'A',
+        meta: {},
+      }),
+    ];
+
+    const logsModel = dataFrameToLogsModel(logSeries, 0, 'utc');
+    expect(logsModel.rows).toHaveLength(3);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'WARN boooo 0',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+      },
+      {
+        entry: '',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+      },
+      {
+        entry: 'WARN boooo 2',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+      },
+    ]);
+  });
 });
 
 describe('getSeriesProperties()', () => {

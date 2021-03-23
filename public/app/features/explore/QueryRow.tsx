@@ -177,6 +177,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
     const canToggleEditorModes = has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const isNotStarted = queryResponse.state === LoadingState.NotStarted;
+
+    // We show error without refId in ResponseErrorContainer so this condition needs to match se we don't loose errors.
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
 
     return (
