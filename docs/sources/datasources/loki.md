@@ -12,9 +12,7 @@ Grafana ships with built-in support for Loki, an open source log aggregation sys
 
 Add it as a data source and you are ready to build dashboards or query your log data in [Explore]({{< relref "../explore" >}}). Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-This topic explains options, variables, querying, and other options specific to this data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
-
-> **Note:** To troubleshoot configuration and other issues, check the log file (/var/log/grafana/grafana.log).
+> **Note:** To troubleshoot configuration and other issues, check the log file located at /var/log/grafana/grafana.log on Unix systems or in <grafana_install_dir>/data/log on other platforms and manual installations.
 
 ## Loki settings
 
@@ -36,7 +34,7 @@ The Derived Fields configuration allows you to:
 - Add a link that uses the value of the field.
 
 You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/logs-integration/#labels-and-detected-fields).
-{{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
+
 Each derived field consists of:
 
 - **Name -** Shown in the log details as a label.
@@ -45,10 +43,10 @@ Each derived field consists of:
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
 You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
-{{< docs-imagebox img="/img/docs/v65/loki_derived_fields_debug.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
+{{< docs-imagebox img="/img/docs/v75/loki_derived_fields_settings.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
 
 The new field with the link shown in log details:
-{{< docs-imagebox img="/img/docs/v65/loki_derived_fields_detail.png" class="docs-image--no-shadow" caption="Screenshot of the derived field in log detail" >}}
+{{< docs-imagebox img="/img/docs/explore/detected-fields-link-7-4.png" max-width="800px" caption="Detected fields link in Explore" >}}
 
 ## Loki query editor
 
@@ -61,30 +59,27 @@ You can use the Loki query editor to create log and metric queries.
 | `Line limit`       | Upper limit for number of log lines returned by query. The default is the Maximum lines limit set in Loki settings.                                                                                         |
 | `Legend`           | Available only in Dashboard. Controls the name of the time series, using name or pattern. For example `{{hostname}}` is replaced with the label value for the label `hostname`.                             |
 
-### Log browser
+### Log label browser
 
-// TODO David
 
 ## Querying with Loki
 
 There are two types of LogQL queries:
 
-- **Log queries -** Return the contents of log lines.
-- **Metric queries -** Extend log queries and calculate sample values based on the content of logs from a log query.
+- Log queries - Return the contents of log lines.
+- Metric queries - Extend log queries and calculate sample values based on the content of logs from a log query.
 
 ### Log queries
 
 Querying and displaying log data from Loki is available via [Explore]({{< relref "../explore" >}}), and with the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards. Select the Loki data source, and then enter a [LogQL](https://grafana.com/docs/loki/latest/logql/#log-queries) query to display your logs.
 
-A log query consists of two parts: **log stream selector**, and a **log pipeline**. For performance reasons begin by choosing a log stream by selecting a log label.
+A log query consists of two parts: log stream selector, and a log pipeline. For performance reasons begin by choosing a log stream by selecting a log label.
 
 ### Log context
 
 When using a search expression as detailed above, you can retrieve the context surrounding your filtered results.
 By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
 log message you're interested in.
-
-> **Note:** This feature is only available in Grafana v6.3+
 
 ### Live tailing
 
