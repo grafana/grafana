@@ -172,7 +172,7 @@ function getDuration(spans: Span[]): number {
     }
 
     // We know there is overlap and current range ends later than previous so we can just extend the range
-    return [...acc.slice(0, -1), [prevStart, end]];
+    return [...acc.slice(0, -1), [prevStart, end]] as Array<[number, number]>;
   }, [] as Array<[number, number]>);
 
   return mergedRanges.reduce((acc, range) => {
