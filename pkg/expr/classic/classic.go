@@ -15,10 +15,10 @@ type ConditionsCmd struct {
 	refID      string
 }
 
-// classicConditionJSON is the JSON model for a single condition.
+// ClassicConditionJSON is the JSON model for a single condition.
 // It is based on services/alerting/conditions/query.go's newQueryCondition().
-type classicConditionJSON struct {
-	Evaluator conditionEvalJSON `json:"evaluator"`
+type ClassicConditionJSON struct {
+	Evaluator ConditionEvalJSON `json:"evaluator"`
 
 	Operator struct {
 		Type string `json:"type"`
@@ -34,10 +34,9 @@ type classicConditionJSON struct {
 	} `json:"reducer"`
 }
 
-type conditionEvalJSON struct {
+type ConditionEvalJSON struct {
 	Params []float64 `json:"params"`
 	Type   string    `json:"type"` // e.g. "gt"
-
 }
 
 // condition is a single condition within the ConditionsCmd.
@@ -120,7 +119,7 @@ func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*Con
 	if err != nil {
 		return nil, fmt.Errorf("failed to remarshal classic condition body: %w", err)
 	}
-	var ccj []classicConditionJSON
+	var ccj []ClassicConditionJSON
 	if err = json.Unmarshal(jsonFromM, &ccj); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal remarshaled classic condition body: %w", err)
 	}
@@ -132,7 +131,7 @@ func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*Con
 	for i, cj := range ccj {
 		cond := condition{}
 
-		if cj.Operator.Type != "and" && cj.Operator.Type != "or" {
+		if i > 0 && cj.Operator.Type != "and" && cj.Operator.Type != "or" {
 			return nil, fmt.Errorf("classic condition %v operator must be `and` or `or`", i+1)
 		}
 		cond.Operator = cj.Operator.Type
