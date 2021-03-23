@@ -72,7 +72,6 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
     // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
     if (!scope.$$childHead) {
       setTimeout(() => {
-        console.log('forceUpdate in timeout');
         this.forceUpdate();
       });
       return;

@@ -27,7 +27,7 @@ export const FilterInput: FC<Props> = ({ value, placeholder, width, onChange, au
       type="text"
       value={value ? unEscapeStringFromRegex(value) : ''}
       onChange={(event) => onChange(escapeStringForRegex(event.currentTarget.value))}
-      placeholder={placeholder ?? ''}
+      placeholder={placeholder}
     />
   );
 };

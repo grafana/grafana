@@ -1,4 +1,10 @@
-import { DynamicConfigValue, FieldConfigOptionsRegistry, FieldOverrideContext, GrafanaTheme } from '@grafana/data';
+import {
+  DynamicConfigValue,
+  FieldConfigOptionsRegistry,
+  FieldConfigProperty,
+  FieldOverrideContext,
+  GrafanaTheme,
+} from '@grafana/data';
 import React from 'react';
 import { Counter, Field, HorizontalGroup, IconButton, Label, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
@@ -10,7 +16,6 @@ interface DynamicConfigValueEditorProps {
   onChange: (value: DynamicConfigValue) => void;
   context: FieldOverrideContext;
   onRemove: () => void;
-  isCollapsible?: boolean;
   isSystemOverride?: boolean;
 }
 
@@ -20,7 +25,6 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   registry,
   onChange,
   onRemove,
-  isCollapsible,
   isSystemOverride,
 }) => {
   const theme = useTheme();
@@ -30,6 +34,12 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   if (!item) {
     return null;
   }
+
+  const isCollapsible =
+    Array.isArray(property.value) ||
+    property.id === FieldConfigProperty.Thresholds ||
+    property.id === FieldConfigProperty.Links ||
+    property.id === FieldConfigProperty.Mappings;
 
   const labelCategory = item.category?.filter((c) => c !== item.name);
   let editor;

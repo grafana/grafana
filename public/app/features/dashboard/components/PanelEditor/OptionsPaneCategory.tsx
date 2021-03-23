@@ -56,7 +56,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
           </div>
           <div className={styles.title} role="heading">
-            {renderTitle!(isExpanded)}
+            {renderTitle(isExpanded)}
           </div>
         </div>
         {isExpanded && <div className={styles.body}>{children}</div>}

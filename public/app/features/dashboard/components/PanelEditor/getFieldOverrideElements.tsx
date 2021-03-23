@@ -4,7 +4,6 @@ import {
   FieldConfigOptionsRegistry,
   SelectableValue,
   isSystemOverride as isSystemOverrideGuard,
-  FieldConfigProperty,
   VariableSuggestionsScope,
   DynamicConfigValue,
 } from '@grafana/data';
@@ -132,9 +131,6 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
         continue;
       }
 
-      const isCollapsible =
-        Array.isArray(property.value) || COLLECTION_STANDARD_PROPERTIES.includes(property.id as FieldConfigProperty);
-
       const onPropertyChange = (value: any) => {
         override.properties[propIdx].value = value;
         onOverrideChange(idx, override);
@@ -156,7 +152,6 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
             return (
               <DynamicConfigValueEditor
                 key={`${property.id}/${propIdx}`}
-                isCollapsible={isCollapsible}
                 isSystemOverride={isSystemOverride}
                 onChange={onPropertyChange}
                 onRemove={onPropertyRemove}
@@ -236,12 +231,6 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
 
   return categories;
 }
-
-const COLLECTION_STANDARD_PROPERTIES = [
-  FieldConfigProperty.Thresholds,
-  FieldConfigProperty.Links,
-  FieldConfigProperty.Mappings,
-];
 
 function getOverrideProperties(registry: FieldConfigOptionsRegistry) {
   return registry
