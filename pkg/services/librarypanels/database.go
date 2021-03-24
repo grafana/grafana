@@ -173,8 +173,14 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid str
 		if err := lps.requirePermissionsOnFolder(c.SignedInUser, panel.FolderID); err != nil {
 			return err
 		}
-		if _, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=?", panel.ID); err != nil {
+		var dashIDs []struct {
+			DashboardID int64 `xorm:"dashboard_id"`
+		}
+		sql := "SELECT dashboard_id FROM library_panel_dashboard WHERE librarypanel_id=?"
+		if err := session.SQL(sql, panel.ID).Find(&dashIDs); err != nil {
 			return err
+		} else if len(dashIDs) > 0 {
+			return errLibraryPanelHasConnectedDashboards
 		}
 
 		result, err := session.Exec("DELETE FROM library_panel WHERE id=?", panel.ID)

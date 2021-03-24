@@ -111,6 +111,8 @@ var (
 	ErrFolderHasConnectedLibraryPanels = errors.New("folder contains library panels that are linked to dashboards")
 	// errLibraryPanelVersionMismatch is an error for when a library panel has been changed by someone else.
 	errLibraryPanelVersionMismatch = errors.New("the library panel has been changed by someone else")
+	// errLibraryPanelHasConnectedDashboards is an error for when an user deletes a library panel that is connected to library panels.
+	errLibraryPanelHasConnectedDashboards = errors.New("the library panel is linked to dashboards")
 )
 
 // Commands
