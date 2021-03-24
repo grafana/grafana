@@ -356,7 +356,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
       const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
-      const messageValue: unknown = stringField.values.get(j);
+      // In edge cases, this can be undefined. If undefined, we want to replace it with empty string.
+      const messageValue: unknown = stringField.values.get(j) ?? '';
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
       const message: string = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
 

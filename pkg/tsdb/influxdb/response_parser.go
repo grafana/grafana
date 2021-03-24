@@ -18,7 +18,7 @@ var (
 )
 
 func init() {
-	legendFormat = regexp.MustCompile(`\[\[(\w+)(\.\w+)*\]\]*|\$\s*(\w+?)*`)
+	legendFormat = regexp.MustCompile(`\[\[([\w-]+)(\.[\w-]+)*\]\]*|\$\s*([\w-]+?)*`)
 }
 
 func (rp *ResponseParser) Parse(response *Response, query *Query) plugins.DataQueryResult {
@@ -64,7 +64,6 @@ func (rp *ResponseParser) formatSeriesName(row Row, column string, query *Query)
 	if query.Alias == "" {
 		return rp.buildSeriesNameFromQuery(row, column)
 	}
-
 	nameSegment := strings.Split(row.Name, ".")
 
 	result := legendFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
@@ -127,7 +126,7 @@ func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition 
 		return plugins.DataTimePoint{}, err
 	}
 
-	return plugins.DataTimePoint{value, null.FloatFrom(timestamp)}, nil
+	return plugins.DataTimePoint{value, null.FloatFrom(timestamp * 1000)}, nil
 }
 
 func (rp *ResponseParser) parseValue(value interface{}) null.Float {

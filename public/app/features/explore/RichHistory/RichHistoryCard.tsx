@@ -4,12 +4,15 @@ import { hot } from 'react-hot-loader';
 import { css, cx } from 'emotion';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
+import { GrafanaTheme, DataSourceApi } from '@grafana/data';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import appEvents from 'app/core/app_events';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { StoreState } from 'app/types';
 
 import { updateRichHistory } from '../state/history';
@@ -179,7 +182,7 @@ export function RichHistoryCard(props: Props) {
   const onCopyQuery = () => {
     const queriesToCopy = query.queries.map((q) => createQueryText(q, queryDsInstance)).join('\n');
     copyStringToClipboard(queriesToCopy);
-    appEvents.emit(AppEvents.alertSuccess, ['Query copied to clipboard']);
+    dispatch(notifyApp(createSuccessNotification('Query copied to clipboard')));
   };
 
   const onCreateShortLink = async () => {
@@ -198,13 +201,13 @@ export function RichHistoryCard(props: Props) {
           icon: 'trash-alt',
           onConfirm: () => {
             updateRichHistory(query.ts, 'delete');
-            appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
+            dispatch(notifyApp(createSuccessNotification('Query deleted')));
           },
         })
       );
     } else {
       updateRichHistory(query.ts, 'delete');
-      appEvents.emit(AppEvents.alertSuccess, ['Query deleted']);
+      dispatch(notifyApp(createSuccessNotification('Query deleted')));
     }
   };
 

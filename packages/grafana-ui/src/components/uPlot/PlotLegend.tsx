@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { DataFrame, DisplayValue, fieldReducers, reduceField } from '@grafana/data';
+import { DataFrame, DisplayValue, fieldReducers, getFieldDisplayName, reduceField } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { VizLegendItem, VizLegendOptions } from '../VizLegend/types';
 import { AxisPlacement } from './config';
@@ -56,11 +56,17 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
 
       const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
+      if (!field) {
+        return undefined;
+      }
+
+      const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!);
+
       return {
         disabled: !seriesConfig.show ?? false,
         fieldIndex,
         color: seriesConfig.lineColor!,
-        label: seriesConfig.fieldName,
+        label,
         yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         getDisplayValues: () => {
           if (!calcs?.length) {
@@ -80,6 +86,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
             };
           });
         },
+        getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
       };
     })
     .filter((i) => i !== undefined) as VizLegendItem[];

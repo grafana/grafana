@@ -97,6 +97,14 @@ func (s Series) SetLabels(ls data.Labels) { s.Frame.Fields[s.ValueIdx].Labels = 
 
 func (s Series) GetName() string { return s.Frame.Name }
 
+func (s Series) GetMeta() interface{} {
+	return s.Frame.Meta.Custom
+}
+
+func (s Series) SetMeta(v interface{}) {
+	s.Frame.SetMeta(&data.FrameMeta{Custom: v})
+}
+
 // AsDataFrame returns the underlying *data.Frame.
 func (s Series) AsDataFrame() *data.Frame { return s.Frame }
 
