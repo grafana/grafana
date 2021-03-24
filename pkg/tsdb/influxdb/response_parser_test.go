@@ -3,10 +3,10 @@ package influxdb
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInfluxdbResponseParser(t *testing.T) {
@@ -55,8 +55,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		require.Equal(t, result.Series[0].Name, "cpu.mean { datacenter: America }")
 		require.Equal(t, result.Series[1].Name, "cpu.sum { datacenter: America }")
 	})
-	t.Run("Influxdb response parser with alias", func(t *testing.T) {
 
+	t.Run("Influxdb response parser with alias", func(t *testing.T) {
 		parser := &ResponseParser{}
 
 		response := &Response{
@@ -144,7 +144,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {
-
 		parser := &ResponseParser{}
 
 		cfg := setting.NewCfg()
