@@ -87,7 +87,7 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 			frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
 			frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
 
-			bytes, err := data.FrameToJSON(frame, true, true)
+			bytes, err := data.FrameToJSON(frame, data.WithSchmaAndData)
 			if err != nil {
 				logger.Warn("unable to marshal line", "error", err)
 				continue

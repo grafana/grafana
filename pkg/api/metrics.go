@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -34,7 +36,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	// Loop to see if we have an expression.
 	for _, query := range reqDTO.Queries {
 		if query.Get("datasource").MustString("") == expr.DatasourceName {
-			return hs.handleExpressions(c, reqDTO)
+			return toMacronResponse(hs.handleExpressions(c, reqDTO))
 		}
 	}
 
@@ -78,20 +80,33 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
 
+	// This is insanity... but ¯\_(ツ)_/¯
+	// ideally this can just be the standard API!
+	qdr, err := resp.ToBackendDataResponse()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "error converting resuls", err)
+	}
+	return toMacronResponse(qdr, nil)
+}
+
+func toMacronResponse(qdr *backend.QueryDataResponse, err error) response.Response {
+	if err != nil {
+		// TODO?  is there a smart error handler that can throw status codes?
+		return response.Error(http.StatusBadRequest, err.Error(), nil)
+	}
+
 	statusCode := http.StatusOK
-	for _, res := range resp.Results {
+	for _, res := range qdr.Responses {
 		if res.Error != nil {
-			res.ErrorString = res.Error.Error()
-			resp.Message = res.ErrorString
 			statusCode = http.StatusBadRequest
 		}
 	}
 
-	return response.JSONStreaming(statusCode, resp)
+	return response.JSONStreaming(statusCode, qdr)
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
-func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
+func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
 	timeRange := plugins.NewDataTimeRange(reqDTO.From, reqDTO.To)
 	request := plugins.DataQuery{
 		TimeRange: &timeRange,
@@ -107,14 +122,14 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 		datasourceID, err := query.Get("datasourceId").Int64()
 		if err != nil {
 			hs.log.Debug("Can't process query since it's missing data source ID")
-			return response.Error(400, "Query missing data source ID", nil)
+			return nil, fmt.Errorf("Query missing data source ID") // .Error(400, "Query missing data source ID", nil)
 		}
 
 		if name != expr.DatasourceName {
 			// Expression requests have everything in one request, so need to check
 			// all data source queries for possible permission / not found issues.
 			if _, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache); err != nil {
-				return hs.handleGetDataSourceError(err, datasourceID)
+				return nil, fmt.Errorf("unknown datasource: %d", datasourceID)
 			}
 		}
 
@@ -133,19 +148,9 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 	}
 	resp, err := exprService.WrapTransformData(c.Req.Context(), request)
 	if err != nil {
-		return response.Error(500, "expression request error", err)
+		return nil, fmt.Errorf("expression request error") // response.Error(500, "expression request error", err)
 	}
-
-	statusCode := 200
-	for _, res := range resp.Results {
-		if res.Error != nil {
-			res.ErrorString = res.Error.Error()
-			resp.Message = res.ErrorString
-			statusCode = 400
-		}
-	}
-
-	return response.JSONStreaming(statusCode, resp)
+	return resp, nil
 }
 
 func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *response.NormalResponse {

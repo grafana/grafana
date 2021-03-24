@@ -12,6 +12,8 @@ import {
   MetricFindValue,
   FieldType,
   DataQuery,
+  DataFrameJSON,
+  dataFrameFromJSON,
 } from '@grafana/data';
 import { FetchResponse } from '../services';
 
@@ -24,9 +26,11 @@ import { FetchResponse } from '../services';
  */
 export interface DataResponse {
   error?: string;
+  frames?: DataFrameJSON[];
+
+  // Legacy fields from TSDB (will be removed after v8)
   refId?: string;
-  // base64 encoded arrow tables
-  dataframes?: string[];
+  dataframes?: string[]; // base64 encoded arrow tables
   series?: TimeSeries[];
   tables?: TableData[];
 }
@@ -56,9 +60,20 @@ export function toDataQueryResponse(
   queries?: DataQuery[]
 ): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
+
+  let isLatestFormat = false;
+  const fetchResponseData = (res as FetchResponse).data;
+
+  if (fetchResponseData?.responses) {
+    isLatestFormat = true;
+
+    // Move the key so existing processing works as expected
+    fetchResponseData.results = fetchResponseData.responses;
+  }
+
   // If the response isn't in a correct shape we just ignore the data and pass empty DataQueryResponse.
-  if ((res as FetchResponse).data?.results) {
-    const results = (res as FetchResponse).data.results;
+  if (fetchResponseData?.results) {
+    const results = fetchResponseData.results;
     const resultIDs = Object.keys(results);
     const refIDs = queries ? queries.map((q) => q.refId) : resultIDs;
     const usedResultIDs = new Set<string>(resultIDs);
@@ -98,6 +113,21 @@ export function toDataQueryResponse(
         }
       }
 
+      // Use the V8 JSON format
+      if (isLatestFormat) {
+        if (dr.frames?.length) {
+          for (const s of dr.frames) {
+            const df = dataFrameFromJSON(s as DataFrameJSON);
+            if (!df.refId) {
+              df.refId = dr.refId;
+            }
+            rsp.data.push(df);
+          }
+        }
+        continue;
+      }
+
+      // The following should be removed after v8 is released
       if (dr.series?.length) {
         for (const s of dr.series) {
           if (!s.refId) {

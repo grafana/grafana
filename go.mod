@@ -10,6 +10,8 @@ replace github.com/denisenkom/go-mssqldb => github.com/denisenkom/go-mssqldb v0.
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.18.8
 
+replace github.com/grafana/grafana-plugin-sdk-go => ../more/grafana-plugin-sdk-go
+
 require (
 	cloud.google.com/go/storage v1.14.0
 	github.com/BurntSushi/toml v0.3.1
