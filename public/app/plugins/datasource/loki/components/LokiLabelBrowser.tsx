@@ -369,10 +369,9 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     if (searchTerm) {
       // TODO extract from render() and debounce
       try {
-        matcher = new RegExp(searchTerm, 'i');
         selectedLabels = selectedLabels.map((label) => ({
           ...label,
-          values: label.values?.filter((value) => value.selected || matcher.test(value.name)),
+          values: label.values?.filter((value) => value.selected || value.name.includes(searchTerm)),
         }));
       } catch (error) {}
     }
