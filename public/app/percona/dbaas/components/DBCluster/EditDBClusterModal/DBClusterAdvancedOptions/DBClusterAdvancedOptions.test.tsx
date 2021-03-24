@@ -5,11 +5,17 @@ import { Databases } from 'app/percona/shared/core';
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions';
 import { EditDBClusterFields } from '../EditDBClusterModal.types';
 import { DBClusterResources } from './DBClusterAdvancedOptions.types';
+import { dbClustersStub } from '../../__mocks__/dbClustersStubs';
 
 describe('DBClusterAdvancedOptions::', () => {
   it('renders correctly', () => {
     const root = mount(
-      <Form onSubmit={jest.fn()} render={renderProps => <DBClusterAdvancedOptions {...renderProps} />} />
+      <Form
+        onSubmit={jest.fn()}
+        render={renderProps => (
+          <DBClusterAdvancedOptions renderProps={renderProps} selectedCluster={dbClustersStub[0]} />
+        )}
+      />
     );
 
     expect(root.find('[data-qa="topology-radio-state"]')).toBeTruthy();
@@ -28,7 +34,9 @@ describe('DBClusterAdvancedOptions::', () => {
           [EditDBClusterFields.resources]: DBClusterResources.small,
         }}
         onSubmit={jest.fn()}
-        render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
+        render={(renderProps: FormRenderProps) => (
+          <DBClusterAdvancedOptions renderProps={renderProps} selectedCluster={dbClustersStub[0]} />
+        )}
       />
     );
     const memory = root.find('[data-qa="memory-number-input"]');
@@ -47,7 +55,9 @@ describe('DBClusterAdvancedOptions::', () => {
           [EditDBClusterFields.resources]: DBClusterResources.small,
         }}
         onSubmit={jest.fn()}
-        render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
+        render={(renderProps: FormRenderProps) => (
+          <DBClusterAdvancedOptions renderProps={renderProps} selectedCluster={dbClustersStub[0]} />
+        )}
       />
     );
     root.find('[data-qa="resources-radio-state"]').simulate('change', { target: { value: DBClusterResources.custom } });
@@ -63,7 +73,12 @@ describe('DBClusterAdvancedOptions::', () => {
 
   it('should disable button when invalid', () => {
     const root = mount(
-      <Form onSubmit={jest.fn()} render={renderProps => <DBClusterAdvancedOptions {...renderProps} />} />
+      <Form
+        onSubmit={jest.fn()}
+        render={renderProps => (
+          <DBClusterAdvancedOptions renderProps={renderProps} selectedCluster={dbClustersStub[0]} />
+        )}
+      />
     );
     const button = root.find('[data-qa="dbcluster-update-cluster-button"]').find('button');
 
@@ -74,7 +89,12 @@ describe('DBClusterAdvancedOptions::', () => {
     const root = mount(
       <Form
         onSubmit={jest.fn()}
-        render={renderProps => <DBClusterAdvancedOptions {...renderProps} valid pristine={false} />}
+        render={renderProps => (
+          <DBClusterAdvancedOptions
+            renderProps={{ ...renderProps, valid: true, pristine: false }}
+            selectedCluster={dbClustersStub[0]}
+          />
+        )}
       />
     );
     const button = root.find('[data-qa="dbcluster-update-cluster-button"]').find('button');
@@ -92,7 +112,9 @@ describe('DBClusterAdvancedOptions::', () => {
           },
         }}
         onSubmit={jest.fn()}
-        render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
+        render={(renderProps: FormRenderProps) => (
+          <DBClusterAdvancedOptions renderProps={renderProps} selectedCluster={dbClustersStub[0]} />
+        )}
       />
     );
     const topology = root.find('[data-qa="topology-radio-button"]').at(1);
@@ -110,7 +132,9 @@ describe('DBClusterAdvancedOptions::', () => {
           },
         }}
         onSubmit={jest.fn()}
-        render={(renderProps: FormRenderProps) => <DBClusterAdvancedOptions {...renderProps} />}
+        render={(renderProps: FormRenderProps) => (
+          <DBClusterAdvancedOptions renderProps={renderProps} selectedCluster={dbClustersStub[0]} />
+        )}
       />
     );
     const topology = root.find('[data-qa="topology-radio-button"]').at(1);

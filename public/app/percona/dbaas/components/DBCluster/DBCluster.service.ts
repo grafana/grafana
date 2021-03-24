@@ -1,6 +1,7 @@
 import { Databases } from 'app/percona/shared/core';
 import { apiManagement } from 'app/percona/shared/helpers/api';
 import { Kubernetes } from '../Kubernetes/Kubernetes.types';
+import { BILLION, THOUSAND } from './DBCluster.constants';
 import {
   DBCluster,
   DBClusterPayload,
@@ -8,6 +9,7 @@ import {
   DBClusterLogsAPI,
   DBClusterAllocatedResources,
   DBClusterAllocatedResourcesAPI,
+  DBClusterExpectedResources,
 } from './DBCluster.types';
 
 export abstract class DBClusterService {
@@ -26,6 +28,8 @@ export abstract class DBClusterService {
   abstract getDBClusterCredentials(dbCluster: DBCluster): Promise<void | DBClusterConnectionAPI>;
 
   abstract restartDBCluster(dbCluster: DBCluster): Promise<void>;
+
+  abstract getExpectedResources(dbCluster: DBCluster): Promise<DBClusterExpectedResources>;
 
   abstract toModel(dbCluster: DBClusterPayload, kubernetesClusterName: string, databaseType: Databases): DBCluster;
 
@@ -47,14 +51,14 @@ export abstract class DBClusterService {
       })
       .then(response => ({
         total: {
-          cpu: response.all.cpu_m / 1000,
-          memory: response.all.memory_bytes / 10 ** 9,
-          disk: response.all.disk_size / 10 ** 9,
+          cpu: response.all.cpu_m / THOUSAND,
+          memory: response.all.memory_bytes / BILLION,
+          disk: response.all.disk_size / BILLION,
         },
         allocated: {
-          cpu: (response.all.cpu_m - response.available.cpu_m) / 1000,
-          memory: (response.all.memory_bytes - response.available.memory_bytes) / 10 ** 9,
-          disk: (response.all.disk_size - response.available.disk_size) / 10 ** 9,
+          cpu: (response.all.cpu_m - response.available.cpu_m) / THOUSAND,
+          memory: (response.all.memory_bytes - response.available.memory_bytes) / BILLION,
+          disk: (response.all.disk_size - response.available.disk_size) / BILLION,
         },
       }));
   }

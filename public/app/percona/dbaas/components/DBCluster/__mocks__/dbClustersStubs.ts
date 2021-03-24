@@ -112,3 +112,24 @@ export const dbClusterLogsAPI = {
     },
   ],
 };
+
+export const dbCLusterAllocatedResourcesStub = {
+  total: {
+    cpu: 10,
+    memory: 10,
+    disk: 100,
+  },
+  allocated: {
+    cpu: 1,
+    memory: 2,
+    disk: 10,
+  },
+};
+
+export const dbClusterExpectedResourcesStub = {
+  expected: {
+    memory: 4,
+    cpu: 4,
+    disk: 20,
+  },
+};

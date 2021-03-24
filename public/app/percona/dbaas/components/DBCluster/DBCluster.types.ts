@@ -77,6 +77,10 @@ export interface DBClusterAllocatedResources {
   allocated: DBClusterResources;
 }
 
+export interface DBClusterExpectedResources {
+  expected: DBClusterResources;
+}
+
 interface DBClusterResources {
   cpu: number;
   disk: number;
@@ -136,14 +140,16 @@ export interface DBClusterLogAPI {
 }
 
 export interface DBClusterAllocatedResourcesAPI {
-  all: {
-    cpu_m: number;
-    disk_size: number;
-    memory_bytes: number;
-  };
-  available: {
-    cpu_m: number;
-    disk_size: number;
-    memory_bytes: number;
-  };
+  all: ResourcesAPI;
+  available: ResourcesAPI;
+}
+
+export interface DBClusterExpectedResourcesAPI {
+  expected: ResourcesAPI;
+}
+
+interface ResourcesAPI {
+  cpu_m: number;
+  disk_size: number;
+  memory_bytes: number;
 }
