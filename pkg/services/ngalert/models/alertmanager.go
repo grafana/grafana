@@ -9,7 +9,6 @@ type AlertConfiguration struct {
 	AlertmanagerConfiguration string
 	ConfigurationVersion      string
 	CreatedAt                 time.Time `xorm:"created"`
-	UpdatedAt                 time.Time `xorm:"updated"`
 }
 
 // GetLatestAlertmanagerConfigurationQuery is the query to get the latest alertmanager configuration.
