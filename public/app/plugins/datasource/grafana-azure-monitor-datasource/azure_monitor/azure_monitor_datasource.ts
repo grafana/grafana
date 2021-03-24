@@ -11,8 +11,16 @@ import {
   AzureQueryType,
   AzureMonitorMetricsMetadataResponse,
 } from '../types';
-import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  ScopedVars,
+  MetricFindValue,
+  DataQueryResponse,
+  DataQueryRequest,
+} from '@grafana/data';
 import { getBackendSrv, DataSourceWithBackend, getTemplateSrv, FetchResponse } from '@grafana/runtime';
+import { from, Observable } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 
 const defaultDropdownValue = 'select';
 
@@ -49,6 +57,47 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       item.azureMonitor.metricDefinition !== defaultDropdownValue &&
       item.azureMonitor.metricName !== defaultDropdownValue
     );
+  }
+
+  query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
+    const metricQueries = request.targets.reduce((prev: Record<string, AzureMonitorQuery>, cur) => {
+      prev[cur.refId] = cur;
+      return prev;
+    }, {});
+
+    return super.query(request).pipe(
+      mergeMap((res: DataQueryResponse) => {
+        return from(this.processResponse(res, metricQueries));
+      })
+    );
+  }
+
+  async processResponse(
+    res: DataQueryResponse,
+    metricQueries: Record<string, AzureMonitorQuery>
+  ): Promise<DataQueryResponse> {
+    if (res.data) {
+      for (const df of res.data) {
+        const metricQuery = metricQueries[df.refId]?.azureMonitor;
+        if (metricQuery) {
+          const url =
+            `https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${this.subscriptionId}/` +
+            `resourceGroups/${metricQuery.resourceGroup}/providers/${metricQuery.metricNamespace}/${metricQuery.resourceName}/metrics`;
+          if (url?.length) {
+            for (const field of df.fields) {
+              field.config.links = [
+                {
+                  url: url,
+                  title: 'View in Azure Portal',
+                  targetBlank: true,
+                },
+              ];
+            }
+          }
+        }
+      }
+    }
+    return res;
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
