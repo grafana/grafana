@@ -45,11 +45,18 @@ type API struct {
 // RegisterAPIEndpoints registers API handlers
 func (api *API) RegisterAPIEndpoints() {
 	logger := log.New("ngalert.api")
+	proxy := &AlertingProxy{
+		DataProxy: api.DataProxy,
+	}
 	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiMock{log: logger})
-	api.RegisterPrometheusApiEndpoints(PrometheusApiMock{log: logger})
+	api.RegisterPrometheusApiEndpoints(NewForkedProm(
+		api.DatasourceCache,
+		NewLotexProm(proxy, logger),
+		PrometheusApiMock{log: logger},
+	))
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
-		&LotexRuler{DataProxy: api.DataProxy, log: logger},
+		NewLotexRuler(proxy, logger),
 		RulerApiMock{log: logger},
 	))
 	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
