@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { Icon, Input, RadioButtonGroup, CustomScrollbar, useStyles, Button } from '@grafana/ui';
@@ -23,6 +23,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
   const [listMode, setListMode] = useState('types');
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
+  const searchRef = useRef<HTMLInputElement | null>(null);
 
   const onPluginTypeChange = (meta: PanelPluginMeta) => {
     if (meta.id === plugin.meta.id) {
@@ -31,6 +32,13 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
       dispatch(changePanelPlugin(panel, meta.id));
     }
   };
+
+  // Give Search input focus when using radio button switch list mode
+  useEffect(() => {
+    if (searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [listMode]);
 
   const onCloseVizPicker = () => {
     dispatch(toggleVizPicker(false));
@@ -77,7 +85,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
             onKeyPress={onKeyPress}
             prefix={<Icon name="search" />}
             suffix={suffix}
-            autoFocus
+            ref={searchRef}
             placeholder="Search for..."
           />
           <Button
