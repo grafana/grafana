@@ -19,16 +19,19 @@ func TestCreateLibraryPanel(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			var expected = libraryPanelResult{
 				Result: libraryPanel{
-					ID:       1,
-					OrgID:    1,
-					FolderID: 1,
-					UID:      sc.initialResult.Result.UID,
-					Name:     "Text - Library Panel",
+					ID:          1,
+					OrgID:       1,
+					FolderID:    1,
+					UID:         sc.initialResult.Result.UID,
+					Name:        "Text - Library Panel",
+					Type:        "text",
+					Description: "A description",
 					Model: map[string]interface{}{
-						"datasource": "${DS_GDEV-TESTDATA}",
-						"id":         float64(1),
-						"title":      "Text - Library Panel",
-						"type":       "text",
+						"datasource":  "${DS_GDEV-TESTDATA}",
+						"description": "A description",
+						"id":          float64(1),
+						"title":       "Text - Library Panel",
+						"type":        "text",
 					},
 					Version: 1,
 					Meta: LibraryPanelDTOMeta{
@@ -61,16 +64,19 @@ func TestCreateLibraryPanel(t *testing.T) {
 			var result = validateAndUnMarshalResponse(t, resp)
 			var expected = libraryPanelResult{
 				Result: libraryPanel{
-					ID:       1,
-					OrgID:    1,
-					FolderID: 1,
-					UID:      result.Result.UID,
-					Name:     "Library Panel Name",
+					ID:          1,
+					OrgID:       1,
+					FolderID:    1,
+					UID:         result.Result.UID,
+					Name:        "Library Panel Name",
+					Type:        "text",
+					Description: "A description",
 					Model: map[string]interface{}{
-						"datasource": "${DS_GDEV-TESTDATA}",
-						"id":         float64(1),
-						"title":      "Library Panel Name",
-						"type":       "text",
+						"datasource":  "${DS_GDEV-TESTDATA}",
+						"description": "A description",
+						"id":          float64(1),
+						"title":       "Library Panel Name",
+						"type":        "text",
 					},
 					Version: 1,
 					Meta: LibraryPanelDTOMeta{
