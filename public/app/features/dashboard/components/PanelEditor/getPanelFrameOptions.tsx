@@ -21,7 +21,11 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         popularRank: 1,
         Component: function renderTitle() {
           return (
-            <Input defaultValue={panel.title} onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)} />
+            <Input
+              id="PanelFrameTitle"
+              defaultValue={panel.title}
+              onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)}
+            />
           );
         },
       })
