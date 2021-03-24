@@ -337,10 +337,6 @@ func (tp *testPlugin) Logger() log.Logger {
 	return tp.logger
 }
 
-func (tp *testPlugin) CanHandleDataQueries() bool {
-	return false
-}
-
 func (tp *testPlugin) Start(ctx context.Context) error {
 	tp.mutex.Lock()
 	defer tp.mutex.Unlock()
