@@ -218,7 +218,7 @@ func (sch *schedule) Unpause() error {
 	return nil
 }
 
-func (sch *schedule) Ticker(grafanaCtx context.Context) error {
+func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.StateTracker) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
 	for {
 		select {
@@ -251,7 +251,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context) error {
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return sch.definitionRoutine(ctx, key, definitionInfo.evalCh, definitionInfo.stopCh)
+						return sch.definitionRoutine(ctx, key, definitionInfo.evalCh, definitionInfo.stopCh, stateTracker)
 					})
 				}
 
