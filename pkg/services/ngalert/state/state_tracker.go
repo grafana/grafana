@@ -2,10 +2,11 @@ package state
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"sync"
 )
 
 type AlertState struct {
@@ -41,17 +42,16 @@ func (c *cache) getOrCreate(uid string, result eval.Result) AlertState {
 	idString := fmt.Sprintf("%s %s", uid, result.Instance.String())
 	if state, ok := c.cacheMap[idString]; ok {
 		return state
-	} else {
-		state := AlertState{
-			UID:     uid,
-			CacheId: idString,
-			Labels:  result.Instance,
-			State:   result.State,
-			Results: []eval.State{result.State},
-		}
-		c.cacheMap[idString] = state
-		return state
 	}
+	newState := AlertState{
+		UID:     uid,
+		CacheId: idString,
+		Labels:  result.Instance,
+		State:   result.State,
+		Results: []eval.State{result.State},
+	}
+	c.cacheMap[idString] = newState
+	return newState
 }
 
 func (c *cache) update(stateEntry AlertState) {

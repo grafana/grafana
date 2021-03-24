@@ -3,11 +3,12 @@ package tests
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"runtime"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 

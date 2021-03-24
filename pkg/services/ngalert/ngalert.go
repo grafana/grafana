@@ -2,8 +2,9 @@ package ngalert
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"

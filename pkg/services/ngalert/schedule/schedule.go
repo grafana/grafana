@@ -3,9 +3,10 @@ package schedule
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 

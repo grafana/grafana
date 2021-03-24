@@ -1,11 +1,12 @@
 package state
 
 import (
+	"testing"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestProcessEvalResults(t *testing.T) {
