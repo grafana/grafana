@@ -10,7 +10,7 @@ import (
 
 var (
 	// ErrNoAlertmanagerConfiguration is an error for when no alertmanager configuration is found.
-	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an alert configuration")
+	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an Alertmanager configuration")
 )
 
 // GetLatestAlertmanagerConfiguration returns the lastest version of the alertmanager configuration.

@@ -4,25 +4,24 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana/pkg/services/datasourceproxy"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
 	"github.com/go-macaron/binding"
+
+	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr/translate"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
@@ -30,6 +29,10 @@ import (
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
+
+type Alertmanager interface {
+	ApplyConfig(config *apimodels.PostableUserConfig) error
+}
 
 // API handlers.
 type API struct {
@@ -40,6 +43,7 @@ type API struct {
 	Schedule        schedule.ScheduleService
 	Store           store.Store
 	DataProxy       *datasourceproxy.DatasourceProxyService
+	Alertmanager    Alertmanager
 }
 
 // RegisterAPIEndpoints registers API handlers
