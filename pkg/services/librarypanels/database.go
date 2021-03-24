@@ -9,14 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
 	sqlStatmentLibrayPanelDTOWithMeta = `
 SELECT DISTINCT
-	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by, lp.version
+	lp.id, lp.org_id, lp.folder_id, lp.uid, lp.name, lp.type, lp.description, lp.model, lp.created, lp.created_by, lp.updated, lp.updated_by, lp.version
 	, 0 AS can_edit
 	, u1.login AS created_by_name
 	, u1.email AS created_by_email
@@ -29,13 +28,23 @@ FROM library_panel AS lp
 `
 )
 
-func syncTitleWithName(libraryPanel *LibraryPanel) error {
+func syncFieldsWithModel(libraryPanel *LibraryPanel) error {
 	var model map[string]interface{}
 	if err := json.Unmarshal(libraryPanel.Model, &model); err != nil {
 		return err
 	}
 
 	model["title"] = libraryPanel.Name
+	if model["type"] != nil {
+		libraryPanel.Type = model["type"].(string)
+	} else {
+		model["type"] = libraryPanel.Type
+	}
+	if model["description"] != nil {
+		libraryPanel.Description = model["description"].(string)
+	} else {
+		model["description"] = libraryPanel.Description
+	}
 	syncedModel, err := json.Marshal(&model)
 	if err != nil {
 		return err
@@ -63,7 +72,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		UpdatedBy: c.SignedInUser.UserId,
 	}
 
-	if err := syncTitleWithName(&libraryPanel); err != nil {
+	if err := syncFieldsWithModel(&libraryPanel); err != nil {
 		return LibraryPanelDTO{}, err
 	}
 
@@ -81,13 +90,15 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 	})
 
 	dto := LibraryPanelDTO{
-		ID:       libraryPanel.ID,
-		OrgID:    libraryPanel.OrgID,
-		FolderID: libraryPanel.FolderID,
-		UID:      libraryPanel.UID,
-		Name:     libraryPanel.Name,
-		Model:    libraryPanel.Model,
-		Version:  libraryPanel.Version,
+		ID:          libraryPanel.ID,
+		OrgID:       libraryPanel.OrgID,
+		FolderID:    libraryPanel.FolderID,
+		UID:         libraryPanel.UID,
+		Name:        libraryPanel.Name,
+		Type:        libraryPanel.Type,
+		Description: libraryPanel.Description,
+		Model:       libraryPanel.Model,
+		Version:     libraryPanel.Version,
 		Meta: LibraryPanelDTOMeta{
 			CanEdit:             true,
 			ConnectedDashboards: 0,
@@ -109,7 +120,17 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 	return dto, err
 }
 
-func connectDashboard(session *sqlstore.DBSession, dialect migrator.Dialect, user *models.SignedInUser, uid string, dashboardID int64) error {
+// connectDashboard adds a connection between a Library Panel and a Dashboard.
+func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid string, dashboardID int64) error {
+	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
+		return lps.internalConnectDashboard(session, c.SignedInUser, uid, dashboardID)
+	})
+
+	return err
+}
+
+func (lps *LibraryPanelService) internalConnectDashboard(session *sqlstore.DBSession, user *models.SignedInUser,
+	uid string, dashboardID int64) error {
 	panel, err := getLibraryPanel(session, uid, user.OrgId)
 	if err != nil {
 		return err
@@ -118,8 +139,6 @@ func connectDashboard(session *sqlstore.DBSession, dialect migrator.Dialect, use
 		return err
 	}
 
-	// TODO add check that dashboard exists
-
 	libraryPanelDashboard := libraryPanelDashboard{
 		DashboardID:    dashboardID,
 		LibraryPanelID: panel.ID,
@@ -127,21 +146,12 @@ func connectDashboard(session *sqlstore.DBSession, dialect migrator.Dialect, use
 		CreatedBy:      user.UserId,
 	}
 	if _, err := session.Insert(&libraryPanelDashboard); err != nil {
-		if dialect.IsUniqueConstraintViolation(err) {
+		if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 			return nil
 		}
 		return err
 	}
 	return nil
-}
-
-// connectDashboard adds a connection between a Library Panel and a Dashboard.
-func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid string, dashboardID int64) error {
-	err := lps.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		return connectDashboard(session, lps.SQLStore.Dialect, c.SignedInUser, uid, dashboardID)
-	})
-
-	return err
 }
 
 // connectLibraryPanelsForDashboard adds connections for all Library Panels in a Dashboard.
@@ -152,7 +162,7 @@ func (lps *LibraryPanelService) connectLibraryPanelsForDashboard(c *models.ReqCo
 			return err
 		}
 		for _, uid := range uids {
-			err := connectDashboard(session, lps.SQLStore.Dialect, c.SignedInUser, uid, dashboardID)
+			err := lps.internalConnectDashboard(session, c.SignedInUser, uid, dashboardID)
 			if err != nil {
 				return err
 			}
@@ -343,13 +353,15 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 	})
 
 	dto := LibraryPanelDTO{
-		ID:       libraryPanel.ID,
-		OrgID:    libraryPanel.OrgID,
-		FolderID: libraryPanel.FolderID,
-		UID:      libraryPanel.UID,
-		Name:     libraryPanel.Name,
-		Model:    libraryPanel.Model,
-		Version:  libraryPanel.Version,
+		ID:          libraryPanel.ID,
+		OrgID:       libraryPanel.OrgID,
+		FolderID:    libraryPanel.FolderID,
+		UID:         libraryPanel.UID,
+		Name:        libraryPanel.Name,
+		Type:        libraryPanel.Type,
+		Description: libraryPanel.Description,
+		Model:       libraryPanel.Model,
+		Version:     libraryPanel.Version,
 		Meta: LibraryPanelDTOMeta{
 			CanEdit:             true,
 			ConnectedDashboards: libraryPanel.ConnectedDashboards,
@@ -416,13 +428,15 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext, perPag
 		retDTOs := make([]LibraryPanelDTO, 0)
 		for _, panel := range libraryPanels {
 			retDTOs = append(retDTOs, LibraryPanelDTO{
-				ID:       panel.ID,
-				OrgID:    panel.OrgID,
-				FolderID: panel.FolderID,
-				UID:      panel.UID,
-				Name:     panel.Name,
-				Model:    panel.Model,
-				Version:  panel.Version,
+				ID:          panel.ID,
+				OrgID:       panel.OrgID,
+				FolderID:    panel.FolderID,
+				UID:         panel.UID,
+				Name:        panel.Name,
+				Type:        panel.Type,
+				Description: panel.Description,
+				Model:       panel.Model,
+				Version:     panel.Version,
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             true,
 					ConnectedDashboards: panel.ConnectedDashboards,
@@ -512,13 +526,15 @@ func (lps *LibraryPanelService) getLibraryPanelsForDashboardID(c *models.ReqCont
 
 		for _, panel := range libraryPanels {
 			libraryPanelMap[panel.UID] = LibraryPanelDTO{
-				ID:       panel.ID,
-				OrgID:    panel.OrgID,
-				FolderID: panel.FolderID,
-				UID:      panel.UID,
-				Name:     panel.Name,
-				Model:    panel.Model,
-				Version:  panel.Version,
+				ID:          panel.ID,
+				OrgID:       panel.OrgID,
+				FolderID:    panel.FolderID,
+				UID:         panel.UID,
+				Name:        panel.Name,
+				Type:        panel.Type,
+				Description: panel.Description,
+				Model:       panel.Model,
+				Version:     panel.Version,
 				Meta: LibraryPanelDTOMeta{
 					CanEdit:             panel.CanEdit,
 					ConnectedDashboards: panel.ConnectedDashboards,
@@ -580,17 +596,19 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		}
 
 		var libraryPanel = LibraryPanel{
-			ID:        panelInDB.ID,
-			OrgID:     c.SignedInUser.OrgId,
-			FolderID:  cmd.FolderID,
-			UID:       uid,
-			Name:      cmd.Name,
-			Model:     cmd.Model,
-			Version:   panelInDB.Version + 1,
-			Created:   panelInDB.Created,
-			CreatedBy: panelInDB.CreatedBy,
-			Updated:   time.Now(),
-			UpdatedBy: c.SignedInUser.UserId,
+			ID:          panelInDB.ID,
+			OrgID:       c.SignedInUser.OrgId,
+			FolderID:    cmd.FolderID,
+			UID:         uid,
+			Name:        cmd.Name,
+			Type:        panelInDB.Type,
+			Description: panelInDB.Description,
+			Model:       cmd.Model,
+			Version:     panelInDB.Version + 1,
+			Created:     panelInDB.Created,
+			CreatedBy:   panelInDB.CreatedBy,
+			Updated:     time.Now(),
+			UpdatedBy:   c.SignedInUser.UserId,
 		}
 
 		if cmd.Name == "" {
@@ -602,7 +620,7 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		if err := handleFolderIDPatches(&libraryPanel, panelInDB.FolderID, cmd.FolderID, c.SignedInUser); err != nil {
 			return err
 		}
-		if err := syncTitleWithName(&libraryPanel); err != nil {
+		if err := syncFieldsWithModel(&libraryPanel); err != nil {
 			return err
 		}
 		if rowsAffected, err := session.ID(panelInDB.ID).Update(&libraryPanel); err != nil {
@@ -615,13 +633,15 @@ func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patc
 		}
 
 		dto = LibraryPanelDTO{
-			ID:       libraryPanel.ID,
-			OrgID:    libraryPanel.OrgID,
-			FolderID: libraryPanel.FolderID,
-			UID:      libraryPanel.UID,
-			Name:     libraryPanel.Name,
-			Model:    libraryPanel.Model,
-			Version:  libraryPanel.Version,
+			ID:          libraryPanel.ID,
+			OrgID:       libraryPanel.OrgID,
+			FolderID:    libraryPanel.FolderID,
+			UID:         libraryPanel.UID,
+			Name:        libraryPanel.Name,
+			Type:        libraryPanel.Type,
+			Description: libraryPanel.Description,
+			Model:       libraryPanel.Model,
+			Version:     libraryPanel.Version,
 			Meta: LibraryPanelDTOMeta{
 				CanEdit:             true,
 				ConnectedDashboards: panelInDB.ConnectedDashboards,
