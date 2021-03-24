@@ -35,8 +35,10 @@ type Store interface {
 	SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error
 	ValidateAlertDefinition(*models.AlertDefinition, bool) error
 	UpdateAlertDefinitionPaused(*models.UpdateAlertDefinitionPausedCommand) error
+}
 
-	// Alertmanager
+// AlertingStore is the database interface used by the Alertmanager service.
+type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(cmd *models.GetLatestAlertmanagerConfigurationQuery) error
 }
 

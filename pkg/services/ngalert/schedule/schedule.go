@@ -64,9 +64,9 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 				}
 
 				condition := models.Condition{
-					RefID:                 alertDefinition.Condition,
-					OrgID:                 alertDefinition.OrgID,
-					QueriesAndExpressions: alertDefinition.Data,
+					Condition: alertDefinition.Condition,
+					OrgID:     alertDefinition.OrgID,
+					Data:      alertDefinition.Data,
 				}
 				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
 				end = timeNow()
