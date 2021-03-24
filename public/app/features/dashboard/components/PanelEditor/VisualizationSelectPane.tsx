@@ -11,6 +11,7 @@ import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from 'app/core/config';
 
 interface Props {
   panel: PanelModel;
@@ -88,9 +89,11 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
             onClick={onCloseVizPicker}
           />
         </div>
-        <Field className={styles.customFieldMargin}>
-          <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
-        </Field>
+        {config.featureToggles.panelLibrary && (
+          <Field className={styles.customFieldMargin}>
+            <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
+          </Field>
+        )}
       </div>
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
