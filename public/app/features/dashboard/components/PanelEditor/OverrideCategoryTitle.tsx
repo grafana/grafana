@@ -34,11 +34,7 @@ export const OverrideCategoryTitle: FC<OverrideCategoryTitleProps> = ({
       {!isExpanded && (
         <div className={styles.overrideDetails}>
           <div className={styles.options} title={matcherOptions}>
-            {matcherUi.name} <Icon name="angle-right" /> {matcherOptions}
-          </div>
-          <div className={styles.options} title={propertyNames}>
-            Properties overridden <Icon name="angle-right" />
-            {propertyNames}
+            {matcherOptions} <Icon name="angle-right" /> {propertyNames}
           </div>
         </div>
       )}
