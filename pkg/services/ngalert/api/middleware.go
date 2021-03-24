@@ -6,8 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-const grafanaRecipient = "grafana"
-
 func (api *API) validateOrgAlertDefinition(c *models.ReqContext) {
 	uid := c.ParamsEscape(":alertDefinitionUID")
 
