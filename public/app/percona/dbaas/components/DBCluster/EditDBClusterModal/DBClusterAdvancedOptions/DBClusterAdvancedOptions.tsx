@@ -20,10 +20,8 @@ import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../D
 import { DBClusterService } from '../../DBCluster.service';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
 import { ResourcesBar } from '../../ResourcesBar/ResourcesBar';
-import { CPU, Memory } from '../../../DBaaSIcons';
+import { CPU, Disk, Memory } from '../../../DBaaSIcons';
 import {
-  CPU_UNITS,
-  MEMORY_UNITS,
   RECHECK_INTERVAL,
   EXPECTED_DELAY,
 } from '../../AddDBClusterModal/DBClusterAdvancedOptions/DBClusterAdvancedOptions.constants';
@@ -66,6 +64,10 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
 
   const getAllocatedResources = async (triggerLoading = true) => {
     try {
+      if (allocatedTimer) {
+        clearTimeout(allocatedTimer);
+      }
+
       if (triggerLoading) {
         setLoadingAllocatedResources(true);
       }
@@ -76,6 +78,8 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
       if (triggerLoading) {
         setLoadingAllocatedResources(false);
       }
+
+      allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
     }
   };
 
@@ -122,8 +126,6 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
   useEffect(() => {
     if (selectedCluster) {
       getAllocatedResources();
-
-      allocatedTimer = setInterval(() => getAllocatedResources(false), RECHECK_INTERVAL);
     }
 
     return () => clearTimeout(allocatedTimer);
@@ -207,7 +209,6 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
               allocated={allocatedResources?.allocated.memory}
               expected={expectedResources?.expected.memory}
               className={cx(resourcesBarStyles)}
-              units={MEMORY_UNITS}
               dataQa="dbcluster-resources-bar-memory"
             />
             <ResourcesBar
@@ -217,8 +218,16 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
               allocated={allocatedResources?.allocated.cpu}
               expected={expectedResources?.expected.cpu}
               className={cx(resourcesBarStyles)}
-              units={CPU_UNITS}
               dataQa="dbcluster-resources-bar-cpu"
+            />
+            <ResourcesBar
+              resourceLabel={Messages.dbcluster.addModal.resourcesBar.disk}
+              icon={<Disk />}
+              total={allocatedResources?.total.disk}
+              allocated={allocatedResources?.allocated.disk}
+              expected={undefined}
+              className={cx(resourcesBarStyles)}
+              dataQa="dbcluster-resources-bar-disk"
             />
           </Overlay>
         </div>

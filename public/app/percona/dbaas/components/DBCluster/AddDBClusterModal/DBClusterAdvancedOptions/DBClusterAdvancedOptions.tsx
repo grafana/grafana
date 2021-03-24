@@ -14,8 +14,6 @@ import {
   MIN_NODES,
   MIN_RESOURCES,
   MIN_DISK_SIZE,
-  MEMORY_UNITS,
-  CPU_UNITS,
   RECHECK_INTERVAL,
   EXPECTED_DELAY,
 } from './DBClusterAdvancedOptions.constants';
@@ -24,7 +22,7 @@ import { AddDBClusterFields } from '../AddDBClusterModal.types';
 import { DBClusterTopology, DBClusterResources } from './DBClusterAdvancedOptions.types';
 import { resourceValidator } from './DBClusterAdvancedOptions.utils';
 import { ResourcesBar } from '../../ResourcesBar/ResourcesBar';
-import { CPU, Memory } from '../../../DBaaSIcons';
+import { CPU, Disk, Memory } from '../../../DBaaSIcons';
 import { DBClusterService } from '../../DBCluster.service';
 import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
 import { newDBClusterService } from '../../DBCluster.utils';
@@ -68,6 +66,10 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
 
   const getAllocatedResources = async (triggerLoading = true) => {
     try {
+      if (allocatedTimer) {
+        clearTimeout(allocatedTimer);
+      }
+
       if (triggerLoading) {
         setLoadingAllocatedResources(true);
       }
@@ -78,6 +80,8 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
       if (triggerLoading) {
         setLoadingAllocatedResources(false);
       }
+
+      allocatedTimer = setTimeout(() => getAllocatedResources(false), RECHECK_INTERVAL);
     }
   };
 
@@ -127,11 +131,9 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
   useEffect(() => {
     if (kubernetesCluster) {
       getAllocatedResources();
-
-      allocatedTimer = setInterval(() => getAllocatedResources(false), RECHECK_INTERVAL);
     }
 
-    return () => clearInterval(allocatedTimer);
+    return () => clearTimeout(allocatedTimer);
   }, [kubernetesCluster]);
 
   useEffect(() => {
@@ -213,7 +215,6 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
               allocated={allocatedResources?.allocated.memory}
               expected={expectedResources?.expected.memory}
               className={cx(resourcesBarStyles)}
-              units={MEMORY_UNITS}
               dataQa="dbcluster-resources-bar-memory"
             />
             <ResourcesBar
@@ -223,10 +224,9 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
               allocated={allocatedResources?.allocated.cpu}
               expected={expectedResources?.expected.cpu}
               className={cx(resourcesBarStyles)}
-              units={CPU_UNITS}
               dataQa="dbcluster-resources-bar-cpu"
             />
-            {/* <ResourcesBar
+            <ResourcesBar
               resourceLabel={Messages.dbcluster.addModal.resourcesBar.disk}
               icon={<Disk />}
               total={allocatedResources?.total.disk}
@@ -234,7 +234,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
               expected={expectedResources?.expected.disk}
               className={styles.resourcesBarLast}
               dataQa="dbcluster-resources-bar-disk"
-            /> */}
+            />
           </Overlay>
         </div>
       </div>

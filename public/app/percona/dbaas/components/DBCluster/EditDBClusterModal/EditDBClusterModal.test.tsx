@@ -6,6 +6,9 @@ import { setVisibleStub, onDBClusterAddedStub } from './__mocks__/addDBClusterMo
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
 
 jest.mock('app/core/app_events');
+jest.mock('../DBCluster.service');
+jest.mock('../PSMDB.service');
+jest.mock('../XtraDB.service');
 
 describe('EditDBClusterModal::', () => {
   it('should render advanced options', () => {

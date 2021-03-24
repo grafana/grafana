@@ -23,3 +23,4 @@ export const SERVICE_MAP: Partial<DBClusterServiceDatabasesMap> = {
 
 export const THOUSAND = 1000;
 export const BILLION = 10 ** 9;
+export const RESOURCES_PRECISION = 2;

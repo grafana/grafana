@@ -82,9 +82,29 @@ export interface DBClusterExpectedResources {
 }
 
 interface DBClusterResources {
-  cpu: number;
-  disk: number;
-  memory: number;
+  cpu: ResourcesWithUnits;
+  disk: ResourcesWithUnits;
+  memory: ResourcesWithUnits;
+}
+
+export interface ResourcesWithUnits {
+  value: number;
+  units: ResourcesUnits | CpuUnits;
+  original: number;
+}
+
+export enum ResourcesUnits {
+  BYTES = 'Bytes',
+  KB = 'KB',
+  MB = 'MB',
+  GB = 'GB',
+  TB = 'TB',
+  PB = 'PB',
+  EB = 'EB',
+}
+
+export enum CpuUnits {
+  MILLI = 'CPU',
 }
 
 export interface DBClusterPayload {

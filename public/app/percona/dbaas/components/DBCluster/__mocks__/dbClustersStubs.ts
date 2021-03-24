@@ -1,5 +1,5 @@
 import { Databases } from 'app/percona/shared/core';
-import { DBCluster, DBClusterConnection, DBClusterStatus } from '../DBCluster.types';
+import { CpuUnits, DBCluster, DBClusterConnection, DBClusterStatus, ResourcesUnits } from '../DBCluster.types';
 
 export const dbClustersStub: DBCluster[] = [
   {
@@ -115,21 +115,21 @@ export const dbClusterLogsAPI = {
 
 export const dbCLusterAllocatedResourcesStub = {
   total: {
-    cpu: 10,
-    memory: 10,
-    disk: 100,
+    cpu: { value: 10, units: CpuUnits.MILLI },
+    memory: { value: 10, units: ResourcesUnits.GB },
+    disk: { value: 100, units: ResourcesUnits.GB },
   },
   allocated: {
-    cpu: 1,
-    memory: 2,
-    disk: 10,
+    cpu: { value: 1, units: CpuUnits.MILLI },
+    memory: { value: 3, units: ResourcesUnits.GB },
+    disk: { value: 10, units: ResourcesUnits.GB },
   },
 };
 
 export const dbClusterExpectedResourcesStub = {
   expected: {
-    memory: 4,
-    cpu: 4,
-    disk: 20,
+    memory: { value: 4, units: ResourcesUnits.GB },
+    cpu: { value: 4, units: CpuUnits.MILLI },
+    disk: { value: 20, units: ResourcesUnits.GB },
   },
 };

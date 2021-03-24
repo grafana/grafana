@@ -1,3 +1,4 @@
+import { ResourcesUnits } from '../DBCluster.types';
 import { formatResources, getResourcesWidth } from './ResourcesBar.utils';
 
 describe('ResourcesBar.utils::', () => {
@@ -11,12 +12,14 @@ describe('ResourcesBar.utils::', () => {
   });
 
   it('formats resources to 2 decimal places if needed', () => {
-    expect(formatResources(0.04)).toEqual(0.04);
-    expect(formatResources(0.004)).toEqual(0);
-    expect(formatResources(0.07340032)).toEqual(0.07);
-    expect(formatResources(0.076)).toEqual(0.08);
-    expect(formatResources(4.129873)).toEqual(4.13);
-    expect(formatResources(0.65)).toEqual(0.65);
-    expect(formatResources(6)).toEqual(6);
+    const getValueWithUnits = (value: number) => ({ value, units: ResourcesUnits.GB });
+
+    expect(formatResources(getValueWithUnits(0.04))).toEqual(getValueWithUnits(0.04));
+    expect(formatResources(getValueWithUnits(0.004))).toEqual(getValueWithUnits(0));
+    expect(formatResources(getValueWithUnits(0.07340032))).toEqual(getValueWithUnits(0.07));
+    expect(formatResources(getValueWithUnits(0.076))).toEqual(getValueWithUnits(0.08));
+    expect(formatResources(getValueWithUnits(4.129873))).toEqual(getValueWithUnits(4.13));
+    expect(formatResources(getValueWithUnits(0.65))).toEqual(getValueWithUnits(0.65));
+    expect(formatResources(getValueWithUnits(6))).toEqual(getValueWithUnits(6));
   });
 });
