@@ -3,15 +3,17 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../common';
+import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
+const ERROR_SOURCE = 'metrics-resourcegroups';
 const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  setError,
 }) => {
   const [resourceGroups, setResourceGroups] = useState<AzureMonitorOption[]>([]);
 
@@ -23,11 +25,11 @@ const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
 
     datasource
       .getResourceGroups(subscriptionId)
-      .then((results) => setResourceGroups(results.map(toOption)))
-      .catch((err) => {
-        // TODO: handle error
-        console.error(err);
-      });
+      .then((results) => {
+        setResourceGroups(results.map(toOption));
+        setError(ERROR_SOURCE, undefined);
+      })
+      .catch((err) => setError(ERROR_SOURCE, err));
   }, [subscriptionId]);
 
   const handleChange = useCallback(
