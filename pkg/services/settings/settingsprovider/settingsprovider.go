@@ -3,7 +3,6 @@ package settingsprovider
 import (
 	"reflect"
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
@@ -39,32 +38,11 @@ func (i *Implementation) Init() (err error) {
 		return err
 	}
 
-	go func() {
-		syncTicker := time.NewTicker(1 * time.Minute)
-		for {
-			<-syncTicker.C
-			logger.Info("Checking for new updates")
-
-			err := i.Refresh()
-			if err != nil {
-				logger.Error("Error while refreshing settings", "error", err.Error())
-			}
-		}
-	}()
-
 	return
 }
 
 func (i *Implementation) Section(name string) settings.Section {
-	i.RLock()
-	defer i.RUnlock()
-
-	keyValues, ok := i.settings[name]
-	if !ok {
-		return section{}
-	}
-
-	return buildSection(keyValues)
+	return passthroughSection{name, i}
 }
 
 func (i *Implementation) KeyValue(section, key string) settings.KeyValue {
@@ -107,11 +85,6 @@ func (i *Implementation) Refresh() error {
 	i.settings = settingsBag
 	i.Unlock()
 
-	err = i.reloadServices()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -143,20 +116,4 @@ func (i *Implementation) loadAndMergeSettings() (settingsBag, error) {
 	}
 
 	return bag, nil
-}
-
-func (i *Implementation) reloadServices() error {
-	for _, descriptor := range registry.GetServices() {
-		sc, ok := descriptor.Instance.(registry.CanBeReloaded)
-		if !ok {
-			continue
-		}
-
-		logger.Info("Reloading service", "service", descriptor.Name)
-		err := sc.Reload()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

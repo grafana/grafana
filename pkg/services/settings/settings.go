@@ -21,6 +21,7 @@ type Section interface {
 	// KeyValue returns a key-value
 	// abstraction for the given key.
 	KeyValue(key string) KeyValue
+	Reload() error
 }
 
 // KeyValue represents a settings key-value

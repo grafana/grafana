@@ -24,3 +24,16 @@ func buildSection(keyValues map[string]string) section {
 
 	return section{settings: keyValuesCopy}
 }
+
+type passthroughSection struct {
+	section string
+	impl    *Implementation
+}
+
+func (p passthroughSection) KeyValue(key string) settings.KeyValue {
+	return p.impl.KeyValue(p.section, key)
+}
+
+func (p passthroughSection) Reload() error {
+	return p.impl.Refresh()
+}
