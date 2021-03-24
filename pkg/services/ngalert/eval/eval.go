@@ -61,6 +61,10 @@ type Results []result
 type result struct {
 	Instance data.Labels
 	State    state // Enum
+	// StartAt is the time at which we first saw this state
+	StartAt time.Time
+	// FiredAt is the time at which we first transitioned to a firing state
+	FiredAt time.Time
 }
 
 // state is an enum of the evaluation state for an alert instance.
@@ -174,7 +178,7 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 
 // evaluateExecutionResult takes the ExecutionResult, and returns a frame where
 // each column is a string type that holds a string representing its state.
-func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
+func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, error) {
 	evalResults := make([]result, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
@@ -206,22 +210,24 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("expected nullable float64 but got type %T", f.Fields[0].Type())}
 		}
 
-		var state state
-		switch {
-		case err != nil:
-			state = Error
-		case val == nil:
-			state = NoData
-		case *val == 0:
-			state = Normal
-		default:
-			state = Alerting
+		r := result{
+			Instance: f.Fields[0].Labels,
+			StartAt:  ts,
 		}
 
-		evalResults = append(evalResults, result{
-			Instance: f.Fields[0].Labels,
-			State:    state,
-		})
+		switch {
+		case err != nil:
+			r.State = Error
+		case val == nil:
+			r.State = NoData
+		case *val == 0:
+			r.State = Normal
+		default:
+			r.FiredAt = ts
+			r.State = Alerting
+		}
+
+		evalResults = append(evalResults, r)
 	}
 	return evalResults, nil
 }
@@ -273,7 +279,7 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
 
-	evalResults, err := evaluateExecutionResult(execResult)
+	evalResults, err := evaluateExecutionResult(execResult, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate results: %w", err)
 	}
