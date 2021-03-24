@@ -1,7 +1,7 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { RulesSource } from 'app/types/unified-alerting/internal';
-import { getAllDataSources, getDatasourceByName } from './config';
+import { getAllDataSources } from './config';
 
 export enum DataSourceType {
   Alertmanager = 'grafana-alertmanager-datasource',
@@ -59,4 +59,8 @@ export function getLotexDatasourceByName(datasourceName: string): DataSourceInst
 
 export function isCloudRulesSource(rulesSource: RulesSource): rulesSource is DataSourceInstanceSettings {
   return rulesSource !== 'grafana';
+}
+
+export function getDatasourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
+  return getAllDataSources().find((source) => source.name === name);
 }

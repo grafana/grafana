@@ -67,6 +67,7 @@ export const SystemOrApplicationAlerts: FC = () => {
       </div>
       {errors && (
         <InfoBox
+          data-testid="cloud-rulessource-errors"
           title={
             <h4>
               <Icon className={styles.iconError} name="exclamation-triangle" size="xl" />

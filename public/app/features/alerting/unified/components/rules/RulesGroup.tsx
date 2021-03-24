@@ -57,8 +57,8 @@ export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
   }
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.header}>
+    <div className={styles.wrapper} data-testid="rule-group">
+      <div className={styles.header} data-testid="rule-group-header">
         <CollapseToggle className={styles.collapseToggle} isCollapsed={isCollapsed} onToggle={setIsCollapsed} />
         <Icon name={isCollapsed ? 'folder-open' : 'folder'} />
         {isCloudRulesSource(rulesSource) && (
