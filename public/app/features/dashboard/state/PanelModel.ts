@@ -60,6 +60,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   replaceVariables: true,
   editSourceId: true,
   hasChanged: true,
+  getDisplayTitle: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -103,6 +104,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   interval: true,
   replaceVariables: true,
   libraryPanel: true,
+  getDisplayTitle: true,
 };
 
 const defaults: any = {
@@ -549,6 +551,14 @@ export class PanelModel implements DataConfigSource {
    * */
   getSavedId(): number {
     return this.editSourceId ?? this.id;
+  }
+
+  /*
+   * This is the title used when displaying the title in the UI so it will include any interpolated variables.
+   * If you need the raw title without interpolation use title property instead.
+   * */
+  getDisplayTitle(): string {
+    return this.replaceVariables(this.title, {}, 'text');
   }
 }
 

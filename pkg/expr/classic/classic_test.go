@@ -114,15 +114,11 @@ func TestUnmarshalConditionCMD(t *testing.T) {
 }
 
 func TestConditionsCmdExecute(t *testing.T) {
-	trueNumber := valBasedNumber(ptr.Float64(1))
-	falseNumber := valBasedNumber(ptr.Float64(0))
-	noDataNumber := valBasedNumber(nil)
-
 	tests := []struct {
 		name          string
 		vars          mathexp.Vars
 		conditionsCmd *ConditionsCmd
-		resultNumber  mathexp.Number
+		resultNumber  func() mathexp.Number
 	}{
 		{
 			name: "single query and single condition",
@@ -142,7 +138,11 @@ func TestConditionsCmdExecute(t *testing.T) {
 						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
 					},
 				}},
-			resultNumber: trueNumber,
+			resultNumber: func() mathexp.Number {
+				v := valBasedNumber(ptr.Float64(1))
+				v.SetMeta([]EvalMatch{{Value: ptr.Float64(35)}})
+				return v
+			},
 		},
 		{
 			name: "single query and single ranged condition",
@@ -163,7 +163,11 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			resultNumber: falseNumber,
+			resultNumber: func() mathexp.Number {
+				v := valBasedNumber(ptr.Float64(0))
+				v.SetMeta([]EvalMatch{})
+				return v
+			},
 		},
 		{
 			name: "single query with no data",
@@ -182,7 +186,11 @@ func TestConditionsCmdExecute(t *testing.T) {
 					},
 				},
 			},
-			resultNumber: noDataNumber,
+			resultNumber: func() mathexp.Number {
+				v := valBasedNumber(nil)
+				v.SetMeta([]EvalMatch{{Metric: "NoData"}})
+				return v
+			},
 		},
 	}
 
@@ -193,7 +201,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 
 			require.Equal(t, 1, len(res.Values))
 
-			require.Equal(t, tt.resultNumber, res.Values[0])
+			require.Equal(t, tt.resultNumber(), res.Values[0])
 		})
 	}
 }

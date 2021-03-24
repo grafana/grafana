@@ -3,12 +3,14 @@ package manager
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -58,8 +60,8 @@ func TestManager(t *testing.T) {
 				})
 
 				t.Run("Should provide expected host environment variables", func(t *testing.T) {
-					require.Len(t, ctx.env, 2)
-					require.EqualValues(t, []string{"GF_VERSION=7.0.0", "GF_EDITION=Open Source"}, ctx.env)
+					require.Len(t, ctx.env, 4)
+					require.EqualValues(t, []string{"GF_VERSION=7.0.0", "GF_EDITION=Open Source", fmt.Sprintf("%s=true", awsds.AssumeRoleEnabledEnvVarKeyName), fmt.Sprintf("%s=keys,credentials", awsds.AllowedAuthProvidersEnvVarKeyName)}, ctx.env)
 				})
 
 				t.Run("When manager runs should start and stop plugin", func(t *testing.T) {
@@ -261,8 +263,8 @@ func TestManager(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("Should provide expected host environment variables", func(t *testing.T) {
-				require.Len(t, ctx.env, 4)
-				require.EqualValues(t, []string{"GF_VERSION=7.0.0", "GF_EDITION=Enterprise", "GF_ENTERPRISE_LICENSE_PATH=/license.txt", "GF_ENTERPRISE_LICENSE_TEXT=testtoken"}, ctx.env)
+				require.Len(t, ctx.env, 6)
+				require.EqualValues(t, []string{"GF_VERSION=7.0.0", "GF_EDITION=Enterprise", "GF_ENTERPRISE_LICENSE_PATH=/license.txt", "GF_ENTERPRISE_LICENSE_TEXT=testtoken", fmt.Sprintf("%s=true", awsds.AssumeRoleEnabledEnvVarKeyName), fmt.Sprintf("%s=keys,credentials", awsds.AllowedAuthProvidersEnvVarKeyName)}, ctx.env)
 			})
 		})
 	})
@@ -280,6 +282,9 @@ type managerScenarioCtx struct {
 func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *managerScenarioCtx)) {
 	t.Helper()
 	cfg := setting.NewCfg()
+	cfg.AWSAllowedAuthProviders = []string{"keys", "credentials"}
+	cfg.AWSAssumeRoleEnabled = true
+
 	license := &testLicensingService{}
 	validator := &testPluginRequestValidator{}
 	ctx := &managerScenarioCtx{
@@ -289,6 +294,8 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 			Cfg:                    cfg,
 			License:                license,
 			PluginRequestValidator: validator,
+			logger:                 log.New("test"),
+			plugins:                map[string]backendplugin.Plugin{},
 		},
 	}
 
@@ -386,6 +393,14 @@ func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourc
 		return tp.CallResourceHandlerFunc(ctx, req, sender)
 	}
 
+	return backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
 	return backendplugin.ErrMethodNotImplemented
 }
 

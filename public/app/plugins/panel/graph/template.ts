@@ -8,7 +8,7 @@ const template = `
   </div>
   <div ng-if="ctrl.contextMenuCtrl.isVisible">
     <graph-context-menu
-      items="ctrl.contextMenuCtrl.menuItemsSupplier()"
+      itemsGroup="ctrl.contextMenuCtrl.menuItemsSupplier()"
       onClose="ctrl.onContextMenuClose"
       getContextMenuSource="ctrl.contextMenuCtrl.getSource"
       timeZone="ctrl.getTimeZone()"
