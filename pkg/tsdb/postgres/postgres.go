@@ -25,15 +25,22 @@ func init() {
 	})
 }
 
+func ProvideService(cfg *setting.Cfg) *PostgresService {
+	logger := log.New("tsdb.postgres")
+	return &PostgresService{
+		Cfg:        cfg,
+		logger:     logger,
+		tlsManager: newTLSManager(logger, cfg.DataPath),
+	}
+}
+
 type PostgresService struct {
-	Cfg        *setting.Cfg `inject:""`
+	Cfg        *setting.Cfg
 	logger     log.Logger
 	tlsManager tlsSettingsProvider
 }
 
 func (s *PostgresService) Init() error {
-	s.logger = log.New("tsdb.postgres")
-	s.tlsManager = newTLSManager(s.logger, s.Cfg.DataPath)
 	return nil
 }
 

@@ -17,18 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
 	remotecache.Register(&RenderUser{})
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     &RenderingService{},
-		InitPriority: registry.High,
-	})
 }
 
 const ServiceName = "RenderingService"
@@ -52,28 +46,40 @@ type RenderingService struct {
 	PluginManager      plugins.Manager          `inject:""`
 }
 
+// Init is necessary to implement registry.Service.
 func (rs *RenderingService) Init() error {
-	rs.log = log.New("rendering")
+	return nil
+}
 
+func ProvideService(cfg *setting.Cfg) (*RenderingService, error) {
 	// ensure ImagesDir exists
-	err := os.MkdirAll(rs.Cfg.ImagesDir, 0700)
+	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
-		return fmt.Errorf("failed to create images directory %q: %w", rs.Cfg.ImagesDir, err)
+		return nil, fmt.Errorf("failed to create images directory %q: %w", cfg.ImagesDir, err)
 	}
 
+	var domain string
 	// set value used for domain attribute of renderKey cookie
 	switch {
-	case rs.Cfg.RendererUrl != "":
+	case cfg.RendererUrl != "":
 		// RendererCallbackUrl has already been passed, it won't generate an error.
-		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
-		rs.domain = u.Hostname()
-	case rs.Cfg.HTTPAddr != setting.DefaultHTTPAddr:
-		rs.domain = rs.Cfg.HTTPAddr
+		u, err := url.Parse(cfg.RendererCallbackUrl)
+		if err != nil {
+			return nil, err
+		}
+
+		domain = u.Hostname()
+	case cfg.HTTPAddr != setting.DefaultHTTPAddr:
+		domain = cfg.HTTPAddr
 	default:
-		rs.domain = "localhost"
+		domain = "localhost"
 	}
 
-	return nil
+	return &RenderingService{
+		Cfg:    cfg,
+		log:    log.New("rendering"),
+		domain: domain,
+	}, nil
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {

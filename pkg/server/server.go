@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -16,10 +15,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
 	_ "github.com/grafana/grafana/pkg/extensions"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
@@ -28,7 +24,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/middleware"
 	_ "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
@@ -45,9 +40,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// Config contains parameters for the New function.
-type Config struct {
-	ConfigFile  string
+// Options contains parameters for the New function.
+type Options struct {
 	HomePath    string
 	PidFile     string
 	Version     string
@@ -57,31 +51,29 @@ type Config struct {
 }
 
 // New returns a new instance of Server.
-func New(cfg Config) (*Server, error) {
+func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
 	s := &Server{
 		context:       childCtx,
+		HTTPServer:    httpServer,
 		shutdownFn:    shutdownFn,
 		childRoutines: childRoutines,
 		log:           log.New("server"),
-		// Need to use the singleton setting.Cfg instance, to make sure we use the same as is injected in the DI
-		// graph
-		cfg: setting.GetCfg(),
-
-		configFile:  cfg.ConfigFile,
-		homePath:    cfg.HomePath,
-		pidFile:     cfg.PidFile,
-		version:     cfg.Version,
-		commit:      cfg.Commit,
-		buildBranch: cfg.BuildBranch,
-		listener:    cfg.Listener,
+		cfg:           cfg,
+		pidFile:       opts.PidFile,
+		version:       opts.Version,
+		commit:        opts.Commit,
+		buildBranch:   opts.BuildBranch,
 	}
 
-	if err := s.init(); err != nil {
-		return nil, err
-	}
+	s.log.Info("Starting "+setting.ApplicationName,
+		"version", s.version,
+		"commit", s.commit,
+		"branch", s.buildBranch,
+		"compiled", time.Unix(setting.BuildStamp, 0),
+	)
 
 	return s, nil
 }
@@ -97,16 +89,13 @@ type Server struct {
 	shutdownInProgress bool
 	isInitialized      bool
 	mtx                sync.Mutex
-	listener           net.Listener
 
-	configFile  string
-	homePath    string
 	pidFile     string
 	version     string
 	commit      string
 	buildBranch string
 
-	HTTPServer *api.HTTPServer `inject:""`
+	HTTPServer *api.HTTPServer
 }
 
 // init initializes the server and its services.
@@ -119,7 +108,6 @@ func (s *Server) init() error {
 	}
 	s.isInitialized = true
 
-	s.loadConfiguration()
 	s.writePIDFile()
 	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
 		return err
@@ -131,17 +119,6 @@ func (s *Server) init() error {
 	services := registry.GetServices()
 	if err := s.buildServiceGraph(services); err != nil {
 		return err
-	}
-
-	if s.listener != nil {
-		for _, service := range services {
-			if httpS, ok := service.Instance.(*api.HTTPServer); ok {
-				// Configure the api.HTTPServer if necessary
-				// Hopefully we can find a better solution, maybe with a more advanced DI framework, f.ex. Dig?
-				s.log.Debug("Using provided listener for HTTP server")
-				httpS.Listener = s.listener
-			}
-		}
 	}
 
 	return nil
@@ -264,36 +241,9 @@ func (s *Server) writePIDFile() {
 func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 	// Specify service dependencies.
 	objs := []interface{}{
-		bus.GetBus(),
-		s.cfg,
-		routing.NewRouteRegister(middleware.RequestTracing, middleware.RequestMetrics(s.cfg)),
-		localcache.New(5*time.Minute, 10*time.Minute),
 		s,
 	}
 	return registry.BuildServiceGraph(objs, services)
-}
-
-// loadConfiguration loads settings and configuration from config files.
-func (s *Server) loadConfiguration() {
-	args := &setting.CommandLineArgs{
-		Config:   s.configFile,
-		HomePath: s.homePath,
-		Args:     flag.Args(),
-	}
-
-	if err := s.cfg.Load(args); err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to start grafana. error: %s\n", err.Error())
-		os.Exit(1)
-	}
-
-	s.log.Info("Starting "+setting.ApplicationName,
-		"version", s.version,
-		"commit", s.commit,
-		"branch", s.buildBranch,
-		"compiled", time.Unix(setting.BuildStamp, 0),
-	)
-
-	s.cfg.LogConfigSources()
 }
 
 // notifySystemd sends state notifications to systemd.

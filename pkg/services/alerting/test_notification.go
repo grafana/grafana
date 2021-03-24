@@ -115,6 +115,11 @@ func evalMatchesBasedOnState() []*EvalMatch {
 
 type fakeRequestValidator struct{}
 
+// Init is necessary to implement registry.Service.
+func (v fakeRequestValidator) Init() error {
+	return nil
+}
+
 func (fakeRequestValidator) Validate(_ string, _ *http.Request) error {
 	return nil
 }

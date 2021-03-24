@@ -10,6 +10,8 @@ import (
 
 // Manager manages backend plugins.
 type Manager interface {
+	// Init is necessary to implement registry.Service.
+	Init() error
 	// Register registers a backend plugin
 	Register(pluginID string, factory PluginFactoryFunc) error
 	// StartPlugin starts a non-managed backend plugin

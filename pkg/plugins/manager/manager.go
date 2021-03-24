@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -45,9 +44,9 @@ type PluginScanner struct {
 }
 
 type PluginManager struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	SQLStore             *sqlstore.SQLStore    `inject:""`
+	BackendPluginManager backendplugin.Manager
+	Cfg                  *setting.Cfg
+	SQLStore             *sqlstore.SQLStore
 	log                  log.Logger
 	scanningErrors       []error
 
@@ -66,28 +65,26 @@ type PluginManager struct {
 	staticRoutes []*plugins.PluginStaticRoute
 }
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "PluginManager",
-		Instance:     newManager(nil),
-		InitPriority: registry.MediumHigh,
-	})
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) *PluginManager {
+	return newManager(cfg, sqlStore, backendPM)
 }
 
-func newManager(cfg *setting.Cfg) *PluginManager {
+func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) *PluginManager {
 	return &PluginManager{
-		Cfg:         cfg,
-		dataSources: map[string]*plugins.DataSourcePlugin{},
-		plugins:     map[string]*plugins.PluginBase{},
-		panels:      map[string]*plugins.PanelPlugin{},
-		apps:        map[string]*plugins.AppPlugin{},
+		Cfg:                  cfg,
+		SQLStore:             sqlStore,
+		BackendPluginManager: backendPM,
+		dataSources:          map[string]*plugins.DataSourcePlugin{},
+		plugins:              map[string]*plugins.PluginBase{},
+		panels:               map[string]*plugins.PanelPlugin{},
+		apps:                 map[string]*plugins.AppPlugin{},
+		pluginScanningErrors: map[string]plugins.PluginError{},
+		log:                  log.New("plugins"),
 	}
 }
 
 func (pm *PluginManager) Init() error {
-	pm.log = log.New("plugins")
 	plog = log.New("plugins")
-	pm.pluginScanningErrors = map[string]plugins.PluginError{}
 
 	pm.log.Info("Starting plugin search")
 

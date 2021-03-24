@@ -38,18 +38,10 @@ var (
 // ContextSessionKey is used as key to save values in `context.Context`
 type ContextSessionKey struct{}
 
-const ServiceName = "SqlStore"
-const InitPriority = registry.High
-
-func init() {
-	ss := &SQLStore{}
-	ss.Register()
-}
-
 type SQLStore struct {
-	Cfg          *setting.Cfg             `inject:""`
-	Bus          bus.Bus                  `inject:""`
-	CacheService *localcache.CacheService `inject:""`
+	Cfg          *setting.Cfg
+	Bus          bus.Bus
+	CacheService *localcache.CacheService
 
 	dbCfg                       DatabaseConfig
 	engine                      *xorm.Engine
@@ -58,26 +50,32 @@ type SQLStore struct {
 	skipEnsureDefaultOrgAndUser bool
 }
 
-// Register registers the SQLStore service with the DI system.
-func (ss *SQLStore) Register() {
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     ss,
-		InitPriority: InitPriority,
-	})
+	return newSQLStore(cfg, cacheService, bus, nil)
 }
 
-func (ss *SQLStore) Init() error {
-	ss.log = log.New("sqlstore")
-	ss.readConfig()
+func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus, engine *xorm.Engine,
+	opts ...InitTestDBOpt) (*SQLStore, error) {
+	ss := &SQLStore{
+		Cfg:                         cfg,
+		Bus:                         bus,
+		CacheService:                cacheService,
+		log:                         log.New("sqlstore"),
+		skipEnsureDefaultOrgAndUser: true,
+	}
+	for _, opt := range opts {
+		if opt.EnsureDefaultOrgAndUser {
+			testSQLStore.skipEnsureDefaultOrgAndUser = false
+		}
+	}
 
-	if err := ss.initEngine(); err != nil {
-		return errutil.Wrap("failed to connect to database", err)
+	ss.readConfig()
+	if err := ss.initEngine(engine); err != nil {
+		return nil, errutil.Wrap("failed to connect to database", err)
 	}
 
 	ss.Dialect = migrator.NewDialect(ss.engine)
@@ -98,7 +96,7 @@ func (ss *SQLStore) Init() error {
 		}
 
 		if err := migrator.Start(); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -113,15 +111,20 @@ func (ss *SQLStore) Init() error {
 	ss.addPreferencesQueryAndCommandHandlers()
 
 	if err := ss.Reset(); err != nil {
-		return err
+		return nil, err
 	}
 	// Make sure the changes are synced, so they get shared with eventual other DB connections
 	if !ss.dbCfg.SkipMigrations {
 		if err := ss.Sync(); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
+	return ss, nil
+}
+
+// Init is necessary to implement registry.Service.
+func (ss *SQLStore) Init() error {
 	return nil
 }
 
@@ -271,7 +274,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 }
 
 // initEngine initializes ss.engine.
-func (ss *SQLStore) initEngine() error {
+func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 	if ss.engine != nil {
 		sqlog.Debug("Already connected to database")
 		return nil
@@ -316,9 +319,12 @@ func (ss *SQLStore) initEngine() error {
 			}
 		}
 	}
-	engine, err := xorm.NewEngine(ss.dbCfg.Type, connectionString)
-	if err != nil {
-		return err
+	if engine == nil {
+		var err error
+		engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
+		if err != nil {
+			return err
+		}
 	}
 
 	engine.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
@@ -405,15 +411,6 @@ type InitTestDBOpt struct {
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	if testSQLStore == nil {
-		testSQLStore = &SQLStore{}
-		testSQLStore.Bus = bus.New()
-		testSQLStore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
-		testSQLStore.skipEnsureDefaultOrgAndUser = true
-
-		for _, opt := range opts {
-			testSQLStore.skipEnsureDefaultOrgAndUser = !opt.EnsureDefaultOrgAndUser
-		}
-
 		dbType := migrator.SQLite
 
 		// environment variable present for test db?
@@ -423,8 +420,11 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		}
 
 		// set test db config
-		testSQLStore.Cfg = setting.NewCfg()
-		sec, err := testSQLStore.Cfg.Raw.NewSection("database")
+		cfg, err := setting.NewCfg(setting.CommandLineArgs{})
+		if err != nil {
+			t.Fatalf("Failed to create configuration: %s", err.Error())
+		}
+		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			t.Fatalf("Failed to create section: %s", err)
 		}
@@ -454,23 +454,21 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 			t.Fatalf("Failed to init test database: %v", err)
 		}
 
-		testSQLStore.Dialect = migrator.NewDialect(engine)
+		engine.DatabaseTZ = time.UTC
+		engine.TZLocation = time.UTC
 
+		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), bus.New(), engine, opts...)
+		if err != nil {
+			t.Fatalf("Failed to init test database: %s", err)
+		}
+		t.Log("Successfully initialized test database")
 		// temp global var until we get rid of global vars
 		dialect = testSQLStore.Dialect
 
 		t.Logf("Cleaning DB")
-		if err := dialect.CleanDB(); err != nil {
+		if err := testSQLStore.Dialect.CleanDB(); err != nil {
 			t.Fatalf("Failed to clean test db: %s", err)
 		}
-
-		if err := testSQLStore.Init(); err != nil {
-			t.Fatalf("Failed to init test database: %s", err)
-		}
-		t.Log("Successfully initialized test database")
-
-		testSQLStore.engine.DatabaseTZ = time.UTC
-		testSQLStore.engine.TZLocation = time.UTC
 
 		return testSQLStore
 	}

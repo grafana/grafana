@@ -25,6 +25,9 @@ type TransactionManager interface {
 
 // Bus type defines the bus interface structure
 type Bus interface {
+	// Init is necessary to implement registry.Service.
+	Init() error
+
 	Dispatch(msg Msg) error
 	DispatchCtx(ctx context.Context, msg Msg) error
 	Publish(msg Msg) error
@@ -45,11 +48,6 @@ type Bus interface {
 	SetTransactionManager(tm TransactionManager)
 }
 
-// InTransaction defines an in transaction function
-func (b *InProcBus) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return b.txMng.InTransaction(ctx, fn)
-}
-
 // InProcBus defines the bus structure
 type InProcBus struct {
 	handlers        map[string]HandlerFunc
@@ -58,18 +56,31 @@ type InProcBus struct {
 	txMng           TransactionManager
 }
 
+// Init is necessary to implement registry.Service.
+func (b *InProcBus) Init() error {
+	return nil
+}
+
+func ProvideBus() *InProcBus {
+	return &InProcBus{
+		handlers:        make(map[string]HandlerFunc),
+		handlersWithCtx: make(map[string]HandlerFunc),
+		listeners:       make(map[string][]HandlerFunc),
+		txMng:           &noopTransactionManager{},
+	}
+}
+
+// InTransaction defines an in transaction function
+func (b *InProcBus) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+	return b.txMng.InTransaction(ctx, fn)
+}
+
 // temp stuff, not sure how to handle bus instance, and init yet
 var globalBus = New()
 
 // New initialize the bus
 func New() Bus {
-	bus := &InProcBus{}
-	bus.handlers = make(map[string]HandlerFunc)
-	bus.handlersWithCtx = make(map[string]HandlerFunc)
-	bus.listeners = make(map[string][]HandlerFunc)
-	bus.txMng = &noopTransactionManager{}
-
-	return bus
+	return ProvideBus()
 }
 
 // Want to get rid of global bus

@@ -27,6 +27,7 @@ func BuildServiceGraph(objs []interface{}, services []*Descriptor) error {
 
 	// Resolve services and their dependencies.
 	if err := serviceGraph.Populate(); err != nil {
+		panic(err)
 		return fmt.Errorf("failed to populate service dependencies: %w", err)
 	}
 

@@ -14,9 +14,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
@@ -148,11 +150,16 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 
 	metrics.SetBuildInformation(version, commit, buildBranch)
 
-	s, err := server.New(server.Config{
-		ConfigFile: configFile, HomePath: homePath, PidFile: pidFile,
-		Version: version, Commit: commit, BuildBranch: buildBranch,
-	})
+	s, err := initializeServer(setting.CommandLineArgs{
+		Config: configFile, HomePath: homePath, Args: flag.Args(),
+	}, server.Options{
+		PidFile: pidFile, Version: version, Commit: commit, BuildBranch: buildBranch,
+	}, api.ServerOptions{})
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to start grafana. error: %s\n", err.Error())
+		return err
+	}
+	if err := registerServices(s); err != nil {
 		return err
 	}
 
@@ -166,6 +173,31 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		}
 	}
 
+	return nil
+}
+
+// registerServices registers Google Wire instantiated services with the dependency graph.
+// TODO: Remove after migration to Wire is completed.
+func registerServices(s *server.Server) error {
+	for _, svc := range []registry.Service{
+		s.HTTPServer,
+		s.HTTPServer.DataService,
+		s.HTTPServer.AlertEngine,
+		s.HTTPServer.Cfg,
+		s.HTTPServer.Bus,
+		s.HTTPServer.RenderService,
+		s.HTTPServer.RouteRegister,
+		s.HTTPServer.HooksService,
+		s.HTTPServer.SQLStore,
+		s.HTTPServer.CacheService,
+		s.HTTPServer.UsageStatsService,
+		s.HTTPServer.PluginRequestValidator,
+		s.HTTPServer.PluginManager,
+		s.HTTPServer.BackendPluginManager,
+	} {
+		fmt.Printf("Registering %T\n", svc)
+		registry.RegisterService(svc)
+	}
 	return nil
 }
 

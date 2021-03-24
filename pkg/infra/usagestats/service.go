@@ -13,18 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var metricsLogger log.Logger = log.New("metrics")
-
-func init() {
-	registry.RegisterService(&UsageStatsService{
-		log:             log.New("infra.usagestats"),
-		externalMetrics: make(map[string]MetricFunc),
-	})
-}
 
 type UsageStats interface {
 	GetUsageReport(ctx context.Context) (UsageReport, error)
@@ -48,8 +40,23 @@ type UsageStatsService struct {
 	concurrentUserStatsCache memoConcurrentUserStats
 }
 
+func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
+	alertingStats alerting.UsageStatsQuerier, licensing models.Licensing, pluginManager plugins.Manager) *UsageStatsService {
+	oauthProviders := social.GetOAuthProviders(cfg)
+	return &UsageStatsService{
+		Cfg:                cfg,
+		Bus:                bus,
+		SQLStore:           sqlStore,
+		AlertingUsageStats: alertingStats,
+		License:            licensing,
+		oauthProviders:     oauthProviders,
+		PluginManager:      pluginManager,
+		log:                log.New("infra.usagestats"),
+		externalMetrics:    make(map[string]MetricFunc),
+	}
+}
+
 func (uss *UsageStatsService) Init() error {
-	uss.oauthProviders = social.GetOAuthProviders(uss.Cfg)
 	return nil
 }
 

@@ -20,33 +20,36 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
-func init() {
-	registry.RegisterServiceWithPriority(&manager{
-		logger:  log.New("plugins.backend"),
-		plugins: map[string]backendplugin.Plugin{},
-	}, registry.MediumHigh)
+func ProvideService(cfg *setting.Cfg, licensing models.Licensing,
+	pluginRequestValidator models.PluginRequestValidator) *Manager {
+	return &Manager{
+		Cfg:                    cfg,
+		License:                licensing,
+		PluginRequestValidator: pluginRequestValidator,
+		logger:                 log.New("plugins.backend"),
+		plugins:                map[string]backendplugin.Plugin{},
+	}
 }
 
-type manager struct {
-	Cfg                    *setting.Cfg                  `inject:""`
-	License                models.Licensing              `inject:""`
-	PluginRequestValidator models.PluginRequestValidator `inject:""`
+type Manager struct {
+	Cfg                    *setting.Cfg
+	License                models.Licensing
+	PluginRequestValidator models.PluginRequestValidator
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
 }
 
-func (m *manager) Init() error {
+func (m *Manager) Init() error {
 	return nil
 }
 
-func (m *manager) Run(ctx context.Context) error {
+func (m *Manager) Run(ctx context.Context) error {
 	m.start(ctx)
 	<-ctx.Done()
 	m.stop(ctx)
@@ -54,7 +57,7 @@ func (m *manager) Run(ctx context.Context) error {
 }
 
 // Register registers a backend plugin
-func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
+func (m *Manager) Register(pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	m.logger.Debug("Registering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -96,12 +99,12 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	return nil
 }
 
-func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
+func (m *Manager) Get(pluginID string) (backendplugin.Plugin, bool) {
 	p, ok := m.plugins[pluginID]
 	return p, ok
 }
 
-func (m *manager) getAWSEnvironmentVariables() []string {
+func (m *Manager) getAWSEnvironmentVariables() []string {
 	variables := []string{}
 	if m.Cfg.AWSAssumeRoleEnabled {
 		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
@@ -113,7 +116,7 @@ func (m *manager) getAWSEnvironmentVariables() []string {
 	return variables
 }
 
-func (m *manager) GetDataPlugin(pluginID string) interface{} {
+func (m *Manager) GetDataPlugin(pluginID string) interface{} {
 	plugin := m.plugins[pluginID]
 	if plugin == nil || !plugin.CanHandleDataQueries() {
 		return nil
@@ -127,7 +130,7 @@ func (m *manager) GetDataPlugin(pluginID string) interface{} {
 }
 
 // start starts all managed backend plugins
-func (m *manager) start(ctx context.Context) {
+func (m *Manager) start(ctx context.Context) {
 	m.pluginsMu.RLock()
 	defer m.pluginsMu.RUnlock()
 	for _, p := range m.plugins {
@@ -143,7 +146,7 @@ func (m *manager) start(ctx context.Context) {
 }
 
 // StartPlugin starts a non-managed backend plugin
-func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
+func (m *Manager) StartPlugin(ctx context.Context, pluginID string) error {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
@@ -159,7 +162,7 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 }
 
 // stop stops all managed backend plugins
-func (m *manager) stop(ctx context.Context) {
+func (m *Manager) stop(ctx context.Context) {
 	m.pluginsMu.RLock()
 	defer m.pluginsMu.RUnlock()
 	var wg sync.WaitGroup
@@ -178,7 +181,7 @@ func (m *manager) stop(ctx context.Context) {
 }
 
 // CollectMetrics collects metrics from a registered backend plugin.
-func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
+func (m *Manager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
@@ -200,7 +203,7 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend
 }
 
 // CheckHealth checks the health of a registered backend plugin.
-func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginContext) (*backend.CheckHealthResult, error) {
+func (m *Manager) CheckHealth(ctx context.Context, pluginContext backend.PluginContext) (*backend.CheckHealthResult, error) {
 	var dsURL string
 	if pluginContext.DataSourceInstanceSettings != nil {
 		dsURL = pluginContext.DataSourceInstanceSettings.URL
@@ -247,7 +250,7 @@ type keepCookiesJSONModel struct {
 	KeepCookies []string `json:"keepCookies"`
 }
 
-func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
+func (m *Manager) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
 	m.pluginsMu.RLock()
 	p, registered := m.plugins[pCtx.PluginID]
 	m.pluginsMu.RUnlock()
@@ -311,7 +314,7 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 }
 
 // CallResource calls a plugin resource.
-func (m *manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
+func (m *Manager) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
 	var dsURL string
 	if pCtx.DataSourceInstanceSettings != nil {
 		dsURL = pCtx.DataSourceInstanceSettings.URL

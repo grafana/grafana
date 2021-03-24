@@ -38,6 +38,7 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
+	github.com/google/wire v0.5.0 // indirect
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/alerting-api v0.0.0-20210323194814-03a29a4c4c27
 	github.com/grafana/grafana-aws-sdk v0.2.0

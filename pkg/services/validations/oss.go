@@ -13,3 +13,7 @@ func (*OSSPluginRequestValidator) Init() error {
 func (*OSSPluginRequestValidator) Validate(string, *http.Request) error {
 	return nil
 }
+
+func ProvideValidator() *OSSPluginRequestValidator {
+	return &OSSPluginRequestValidator{}
+}

@@ -9,6 +9,8 @@ import (
 
 // Manager is the plugin manager service interface.
 type Manager interface {
+	// Init is necessary to implement registry.Service.
+	Init() error
 	// Renderer gets the renderer plugin.
 	Renderer() *RendererPlugin
 	// GetDataSource gets a data source plugin with a certain ID.

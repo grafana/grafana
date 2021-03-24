@@ -71,8 +71,14 @@ func init() {
 	})
 }
 
+func ProvideService(pluginManager plugins.Manager) *Service {
+	return &Service{
+		PluginManager: pluginManager,
+	}
+}
+
 type Service struct {
-	PluginManager plugins.Manager `inject:""`
+	PluginManager plugins.Manager
 }
 
 func (s *Service) Init() error {

@@ -33,6 +33,8 @@ type RenderResult struct {
 type renderFunc func(ctx context.Context, renderKey string, options Opts) (*RenderResult, error)
 
 type Service interface {
+	// Init is necessary to implement registry.Service.
+	Init() error
 	IsAvailable() bool
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
 	RenderErrorImage(error error) (*RenderResult, error)

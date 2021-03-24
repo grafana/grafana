@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -24,46 +23,45 @@ import (
 )
 
 // NewService returns a new Service.
-func NewService() Service {
-	return Service{
-		registry: map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
+func NewService(cfg *setting.Cfg, cloudWatchService *cloudwatch.CloudWatchService,
+	cloudMonitoringService *cloudmonitoring.Service, azureMonitorService *azuremonitor.Service,
+	pluginManager plugins.Manager, postgresService *postgres.PostgresService) *Service {
+	return &Service{
+		Cfg:                    cfg,
+		CloudWatchService:      cloudWatchService,
+		CloudMonitoringService: cloudMonitoringService,
+		AzureMonitorService:    azureMonitorService,
+		PluginManager:          pluginManager,
+		registry: map[string]func(*models.DataSource) (plugins.DataPlugin, error){
+			"graphite":                         graphite.NewExecutor,
+			"opentsdb":                         opentsdb.NewExecutor,
+			"prometheus":                       prometheus.NewExecutor,
+			"influxdb":                         influxdb.NewExecutor,
+			"mssql":                            mssql.NewExecutor,
+			"postgres":                         postgresService.NewExecutor,
+			"mysql":                            mysql.NewExecutor,
+			"elasticsearch":                    elasticsearch.NewExecutor,
+			"stackdriver":                      cloudMonitoringService.NewExecutor,
+			"grafana-azure-monitor-datasource": azureMonitorService.NewExecutor,
+			"loki":                             loki.NewExecutor,
+			"tempo":                            tempo.NewExecutor,
+		},
 	}
-}
-
-func init() {
-	svc := NewService()
-	registry.Register(&registry.Descriptor{
-		Name:     "DataService",
-		Instance: &svc,
-	})
 }
 
 // Service handles data requests to data sources.
 type Service struct {
-	Cfg                    *setting.Cfg                  `inject:""`
-	CloudWatchService      *cloudwatch.CloudWatchService `inject:""`
-	PostgresService        *postgres.PostgresService     `inject:""`
-	CloudMonitoringService *cloudmonitoring.Service      `inject:""`
-	AzureMonitorService    *azuremonitor.Service         `inject:""`
-	PluginManager          plugins.Manager               `inject:""`
+	Cfg                    *setting.Cfg
+	CloudWatchService      *cloudwatch.CloudWatchService
+	CloudMonitoringService *cloudmonitoring.Service
+	AzureMonitorService    *azuremonitor.Service
+	PluginManager          plugins.Manager
 
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }
 
 // Init initialises the service.
 func (s *Service) Init() error {
-	s.registry["graphite"] = graphite.NewExecutor
-	s.registry["opentsdb"] = opentsdb.NewExecutor
-	s.registry["prometheus"] = prometheus.NewExecutor
-	s.registry["influxdb"] = influxdb.NewExecutor
-	s.registry["mssql"] = mssql.NewExecutor
-	s.registry["postgres"] = s.PostgresService.NewExecutor
-	s.registry["mysql"] = mysql.NewExecutor
-	s.registry["elasticsearch"] = elasticsearch.NewExecutor
-	s.registry["stackdriver"] = s.CloudMonitoringService.NewExecutor
-	s.registry["grafana-azure-monitor-datasource"] = s.AzureMonitorService.NewExecutor
-	s.registry["loki"] = loki.NewExecutor
-	s.registry["tempo"] = tempo.NewExecutor
 	return nil
 }
 

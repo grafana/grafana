@@ -5,11 +5,13 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 )
 
-func init() {
-	registry.RegisterService(&LogsService{})
+func ProvideLogsService() *LogsService {
+	return &LogsService{
+		responseChannels: make(map[string]chan plugins.DataResponse),
+		queues:           make(map[string](chan bool)),
+	}
 }
 
 // LogsService provides methods for querying CloudWatch Logs.
@@ -22,8 +24,6 @@ type LogsService struct {
 
 // Init is called by the DI framework to initialize the instance.
 func (s *LogsService) Init() error {
-	s.responseChannels = make(map[string]chan plugins.DataResponse)
-	s.queues = make(map[string](chan bool))
 	return nil
 }
 

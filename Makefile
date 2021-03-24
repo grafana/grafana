@@ -2,6 +2,8 @@
 ##
 ## For more information, refer to https://suva.sh/posts/well-documented-makefiles/
 
+WIRE_TAGS = "oss"
+
 -include local/Makefile
 
 .PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go revive golangci-lint test-go test-js test run run-frontend clean devenv devenv-down revive-strict protobuf help
@@ -27,7 +29,11 @@ node_modules: package.json yarn.lock ## Install node modules.
 
 ##@ Building
 
-build-go: ## Build all Go binaries.
+gen-go:
+	@echo "generate go files"
+	wire gen -tags $(WIRE_TAGS) ./pkg/cmd/grafana-server
+
+build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go build
 

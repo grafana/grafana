@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
@@ -38,8 +37,9 @@ type AlertEngine struct {
 	resultHandler resultHandler
 }
 
-func init() {
-	registry.RegisterService(&AlertEngine{})
+// Init is necessary to implement registry.Service.
+func (e *AlertEngine) Init() error {
+	return nil
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
@@ -47,8 +47,16 @@ func (e *AlertEngine) IsDisabled() bool {
 	return !setting.AlertingEnabled || !setting.ExecuteAlerts
 }
 
-// Init initializes the AlertingService.
-func (e *AlertEngine) Init() error {
+// ProvideAlertEngine returns a new AlertEngine.
+func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
+	dataService plugins.DataRequestHandler) *AlertEngine {
+	e := &AlertEngine{
+		RenderService:    renderer,
+		Bus:              bus,
+		RequestValidator: requestValidator,
+		DataService:      dataService,
+	}
+
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
@@ -56,7 +64,7 @@ func (e *AlertEngine) Init() error {
 	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
 	e.resultHandler = newResultHandler(e.RenderService)
-	return nil
+	return e
 }
 
 // Run starts the alerting service background process.
