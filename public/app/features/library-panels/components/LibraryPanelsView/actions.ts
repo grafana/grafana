@@ -5,8 +5,8 @@ import { catchError, finalize, mapTo, mergeMap, share, takeUntil } from 'rxjs/op
 
 import { deleteLibraryPanel as apiDeleteLibraryPanel, getLibraryPanels } from '../../state/api';
 import { initialLibraryPanelsViewState, initSearch, LibraryPanelsViewState, searchCompleted } from './reducer';
+import { DispatchResult } from '../../types';
 
-type DispatchResult = (dispatch: Dispatch<AnyAction>) => void;
 type SearchArgs = Pick<LibraryPanelsViewState, 'searchString' | 'perPage' | 'page' | 'currentPanelId'>;
 
 export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
@@ -17,6 +17,7 @@ export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
         name: args.searchString,
         perPage: args.perPage,
         page: args.page,
+        excludeUid: args.currentPanelId,
       })
     ).pipe(
       mergeMap(({ perPage, libraryPanels, page, totalCount }) =>

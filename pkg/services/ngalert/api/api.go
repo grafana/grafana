@@ -4,25 +4,22 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana/pkg/services/datasourceproxy"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
 	"github.com/go-macaron/binding"
+
+	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/expr/translate"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
@@ -30,6 +27,10 @@ import (
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
+
+type Alertmanager interface {
+	ApplyConfig(config *apimodels.PostableUserConfig) error
+}
 
 // API handlers.
 type API struct {
@@ -40,16 +41,24 @@ type API struct {
 	Schedule        schedule.ScheduleService
 	Store           store.Store
 	DataProxy       *datasourceproxy.DatasourceProxyService
+	Alertmanager    Alertmanager
 }
 
 // RegisterAPIEndpoints registers API handlers
 func (api *API) RegisterAPIEndpoints() {
 	logger := log.New("ngalert.api")
+	proxy := &AlertingProxy{
+		DataProxy: api.DataProxy,
+	}
 	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiMock{log: logger})
-	api.RegisterPrometheusApiEndpoints(PrometheusApiMock{log: logger})
+	api.RegisterPrometheusApiEndpoints(NewForkedProm(
+		api.DatasourceCache,
+		NewLotexProm(proxy, logger),
+		PrometheusApiMock{log: logger},
+	))
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
-		&LotexRuler{DataProxy: api.DataProxy, log: logger},
+		NewLotexRuler(proxy, logger),
 		RulerApiMock{log: logger},
 	))
 	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
@@ -67,6 +76,18 @@ func (api *API) RegisterAPIEndpoints() {
 		alertDefinitions.Post("/unpause", middleware.ReqEditorRole, binding.Bind(ngmodels.UpdateAlertDefinitionPausedCommand{}), routing.Wrap(api.alertDefinitionUnpauseEndpoint))
 	})
 
+	if api.Cfg.Env == setting.Dev {
+		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+			alertDefinitions.Post("/evalOld", middleware.ReqSignedIn, routing.Wrap(api.conditionEvalOldEndpoint))
+		})
+		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+			alertDefinitions.Get("/evalOldByID/:id", middleware.ReqSignedIn, routing.Wrap(api.conditionEvalOldEndpointByID))
+		})
+		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+			alertDefinitions.Get("/oldByID/:id", middleware.ReqSignedIn, routing.Wrap(api.conditionOldEndpointByID))
+		})
+	}
+
 	api.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
 		schedulerRouter.Post("/pause", routing.Wrap(api.pauseScheduler))
 		schedulerRouter.Post("/unpause", routing.Wrap(api.unpauseScheduler))
@@ -75,119 +96,14 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
 		alertInstances.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertInstancesEndpoint))
 	})
-
-	if api.Cfg.Env == setting.Dev {
-		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
-			alertDefinitions.Post("/evalOld", middleware.ReqSignedIn, routing.Wrap(api.conditionEvalOldEndpoint))
-		})
-		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
-			alertDefinitions.Get("/evalOldByID/:id", middleware.ReqSignedIn, routing.Wrap(api.conditionEvalOldEndpointByID))
-		})
-	}
-}
-
-// conditionEvalEndpoint handles POST /api/alert-definitions/evalOld.
-func (api *API) conditionEvalOldEndpoint(c *models.ReqContext) response.Response {
-	b, err := c.Req.Body().Bytes()
-	if err != nil {
-		response.Error(400, "failed to read body", err)
-	}
-	evalCond, err := translate.DashboardAlertConditions(b, c.OrgId)
-	if err != nil {
-		return response.Error(400, "Failed to translate alert conditions", err)
-	}
-
-	if err := api.validateCondition(*evalCond, c.SignedInUser, c.SkipCache); err != nil {
-		return response.Error(400, "invalid condition", err)
-	}
-
-	//now := cmd.Now
-	//if now.IsZero() {
-	//now := timeNow()
-	//}
-
-	evaluator := eval.Evaluator{Cfg: api.Cfg}
-	evalResults, err := evaluator.ConditionEval(evalCond, timeNow(), api.DataService)
-	if err != nil {
-		return response.Error(400, "Failed to evaluate conditions", err)
-	}
-
-	frame := evalResults.AsDataFrame()
-	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
-	instances, err := df.Encoded()
-	if err != nil {
-		return response.Error(400, "Failed to encode result dataframes", err)
-	}
-
-	return response.JSON(200, util.DynMap{
-		"instances": instances,
-	})
-}
-
-// conditionEvalEndpoint handles POST /api/alert-definitions/evalOld.
-func (api *API) conditionEvalOldEndpointByID(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64("id")
-	if id == 0 {
-		return response.Error(400, "missing id", nil)
-	}
-
-	getAlert := &models.GetAlertByIdQuery{
-		Id: id,
-	}
-
-	if err := bus.Dispatch(getAlert); err != nil {
-		return response.Error(400, fmt.Sprintf("could find alert with id %v", id), err)
-	}
-
-	if getAlert.Result.OrgId != c.SignedInUser.OrgId {
-		return response.Error(403, "alert does not match organization of user", nil)
-	}
-
-	settings := getAlert.Result.Settings
-
-	sb, err := settings.ToDB()
-	if err != nil {
-		return response.Error(400, "failed to marshal alert settings", err)
-	}
-
-	evalCond, err := translate.DashboardAlertConditions(sb, c.OrgId)
-	if err != nil {
-		return response.Error(400, "Failed to translate alert conditions", err)
-	}
-
-	if err := api.validateCondition(*evalCond, c.SignedInUser, c.SkipCache); err != nil {
-		return response.Error(400, "invalid condition", err)
-	}
-
-	//now := cmd.Now
-	//if now.IsZero() {
-	//now := timeNow()
-	//}
-
-	evaluator := eval.Evaluator{Cfg: api.Cfg}
-	evalResults, err := evaluator.ConditionEval(evalCond, timeNow(), api.DataService)
-	if err != nil {
-		return response.Error(400, "Failed to evaluate conditions", err)
-	}
-
-	frame := evalResults.AsDataFrame()
-	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
-	instances, err := df.Encoded()
-	if err != nil {
-		return response.Error(400, "Failed to encode result dataframes", err)
-	}
-
-	return response.JSON(200, util.DynMap{
-		"instances": instances,
-	})
 }
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
 func (api *API) conditionEvalEndpoint(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand) response.Response {
 	evalCond := ngmodels.Condition{
-		RefID:                 cmd.Condition,
-		OrgID:                 c.SignedInUser.OrgId,
-		QueriesAndExpressions: cmd.Data,
+		Condition: cmd.Condition,
+		OrgID:     c.SignedInUser.OrgId,
+		Data:      cmd.Data,
 	}
 	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
@@ -288,9 +204,9 @@ func (api *API) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels
 	cmd.OrgID = c.SignedInUser.OrgId
 
 	evalCond := ngmodels.Condition{
-		RefID:                 cmd.Condition,
-		OrgID:                 c.SignedInUser.OrgId,
-		QueriesAndExpressions: cmd.Data,
+		Condition: cmd.Condition,
+		OrgID:     c.SignedInUser.OrgId,
+		Data:      cmd.Data,
 	}
 	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
@@ -308,9 +224,9 @@ func (api *API) createAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels
 	cmd.OrgID = c.SignedInUser.OrgId
 
 	evalCond := ngmodels.Condition{
-		RefID:                 cmd.Condition,
-		OrgID:                 c.SignedInUser.OrgId,
-		QueriesAndExpressions: cmd.Data,
+		Condition: cmd.Condition,
+		OrgID:     c.SignedInUser.OrgId,
+		Data:      cmd.Data,
 	}
 	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
@@ -388,22 +304,22 @@ func (api *API) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*ngm
 	}
 
 	return &ngmodels.Condition{
-		RefID:                 alertDefinition.Condition,
-		OrgID:                 alertDefinition.OrgID,
-		QueriesAndExpressions: alertDefinition.Data,
+		Condition: alertDefinition.Condition,
+		OrgID:     alertDefinition.OrgID,
+		Data:      alertDefinition.Data,
 	}, nil
 }
 
 func (api *API) validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool) error {
 	var refID string
 
-	if len(c.QueriesAndExpressions) == 0 {
+	if len(c.Data) == 0 {
 		return nil
 	}
 
-	for _, query := range c.QueriesAndExpressions {
-		if c.RefID == query.RefID {
-			refID = c.RefID
+	for _, query := range c.Data {
+		if c.Condition == query.RefID {
+			refID = c.Condition
 		}
 
 		datasourceUID, err := query.GetDatasource()
@@ -426,7 +342,7 @@ func (api *API) validateCondition(c ngmodels.Condition, user *models.SignedInUse
 	}
 
 	if refID == "" {
-		return fmt.Errorf("condition %s not found in any query or expression", c.RefID)
+		return fmt.Errorf("condition %s not found in any query or expression", c.Condition)
 	}
 	return nil
 }

@@ -14,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
-func newDataSourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, client grpcplugin.DataClient) *DatasourcePluginWrapperV2 {
-	return &DatasourcePluginWrapperV2{DataClient: client, logger: log, pluginId: pluginId, pluginType: pluginType}
+func newDataSourcePluginWrapperV2(log log.Logger, pluginId, pluginType string, dataClient grpcplugin.DataClient) *DatasourcePluginWrapperV2 {
+	return &DatasourcePluginWrapperV2{DataClient: dataClient, logger: log, pluginId: pluginId, pluginType: pluginType}
 }
 
 type DatasourcePluginWrapperV2 struct {

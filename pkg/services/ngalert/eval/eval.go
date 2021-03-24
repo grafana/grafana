@@ -61,25 +61,29 @@ type Results []Result
 type Result struct {
 	Instance data.Labels
 	State    State // Enum
+	// StartAt is the time at which we first saw this state
+	StartAt time.Time
+	// FiredAt is the time at which we first transitioned to a firing state
+	FiredAt time.Time
 }
 
 // State is an enum of the evaluation State for an alert instance.
 type State int
 
 const (
-	// Normal is the eval State for an alert instance condition
+	// Normal is the eval state for an alert instance condition
 	// that evaluated to false.
 	Normal State = iota
 
-	// Alerting is the eval State for an alert instance condition
+	// Alerting is the eval state for an alert instance condition
 	// that evaluated to true (Alerting).
 	Alerting
 
-	// NoData is the eval State for an alert rule condition
+	// NoData is the eval state for an alert rule condition
 	// that evaluated to NoData.
 	NoData
 
-	// Error is the eval State for an alert rule condition
+	// Error is the eval state for an alert rule condition
 	// that evaluated to Error.
 	Error
 )
@@ -110,8 +114,8 @@ func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (
 		Queries: []backend.DataQuery{},
 	}
 
-	for i := range c.QueriesAndExpressions {
-		q := c.QueriesAndExpressions[i]
+	for i := range c.Data {
+		q := c.Data[i]
 		model, err := q.GetModel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
@@ -157,7 +161,7 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 	}
 
 	for refID, res := range pbRes.Responses {
-		if refID != c.RefID {
+		if refID != c.Condition {
 			continue
 		}
 		result.Results = res.Frames
@@ -174,7 +178,7 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 
 // evaluateExecutionResult takes the ExecutionResult, and returns a frame where
 // each column is a string type that holds a string representing its State.
-func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
+func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, error) {
 	evalResults := make([]Result, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
@@ -206,28 +210,30 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("expected nullable float64 but got type %T", f.Fields[0].Type())}
 		}
 
-		var state State
-		switch {
-		case err != nil:
-			state = Error
-		case val == nil:
-			state = NoData
-		case *val == 0:
-			state = Normal
-		default:
-			state = Alerting
+		r := Result{
+			Instance: f.Fields[0].Labels,
+			StartAt:  ts,
 		}
 
-		evalResults = append(evalResults, Result{
-			Instance: f.Fields[0].Labels,
-			State:    state,
-		})
+		switch {
+		case err != nil:
+			r.State = Error
+		case val == nil:
+			r.State = NoData
+		case *val == 0:
+			r.State = Normal
+		default:
+			r.FiredAt = ts
+			r.State = Alerting
+		}
+
+		evalResults = append(evalResults, r)
 	}
 	return evalResults, nil
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
-// It displays one row per alert instance, with a column for each label and one for the alerting State.
+// It displays one row per alert instance, with a column for each label and one for the alerting state.
 func (evalResults Results) AsDataFrame() data.Frame {
 	fieldLen := len(evalResults)
 
@@ -261,10 +267,11 @@ func (evalResults Results) AsDataFrame() data.Frame {
 	return *frame
 }
 
-// ConditionEval executes conditions and evaluates the Result.
+// ConditionEval executes conditions and evaluates the result.
 func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, dataService *tsdb.Service) (Results, error) {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
+
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
 
 	execResult, err := execute(alertExecCtx, condition, now, dataService)
@@ -272,7 +279,7 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
 
-	evalResults, err := evaluateExecutionResult(execResult)
+	evalResults, err := evaluateExecutionResult(execResult, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate results: %w", err)
 	}
