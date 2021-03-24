@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -36,7 +35,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	// Loop to see if we have an expression.
 	for _, query := range reqDTO.Queries {
 		if query.Get("datasource").MustString("") == expr.DatasourceName {
-			return toMacronResponse(hs.handleExpressions(c, reqDTO))
+			return hs.handleExpressions(c, reqDTO)
 		}
 	}
 
@@ -91,8 +90,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 
 func toMacronResponse(qdr *backend.QueryDataResponse, err error) response.Response {
 	if err != nil {
-		// TODO?  is there a smart error handler that can throw status codes?
-		return response.Error(http.StatusBadRequest, err.Error(), nil)
+		return response.Error(http.StatusInternalServerError, "error running query", err)
 	}
 
 	statusCode := http.StatusOK
@@ -106,7 +104,7 @@ func toMacronResponse(qdr *backend.QueryDataResponse, err error) response.Respon
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
-func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
 	timeRange := plugins.NewDataTimeRange(reqDTO.From, reqDTO.To)
 	request := plugins.DataQuery{
 		TimeRange: &timeRange,
@@ -122,14 +120,14 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 		datasourceID, err := query.Get("datasourceId").Int64()
 		if err != nil {
 			hs.log.Debug("Can't process query since it's missing data source ID")
-			return nil, fmt.Errorf("Query missing data source ID") // .Error(400, "Query missing data source ID", nil)
+			return response.Error(400, "Query missing data source ID", nil)
 		}
 
 		if name != expr.DatasourceName {
 			// Expression requests have everything in one request, so need to check
 			// all data source queries for possible permission / not found issues.
 			if _, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache); err != nil {
-				return nil, fmt.Errorf("unknown datasource: %d", datasourceID)
+				return hs.handleGetDataSourceError(err, datasourceID)
 			}
 		}
 
@@ -146,11 +144,11 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 		Cfg:         hs.Cfg,
 		DataService: hs.DataService,
 	}
-	resp, err := exprService.WrapTransformData(c.Req.Context(), request)
+	qdr, err := exprService.WrapTransformData(c.Req.Context(), request)
 	if err != nil {
-		return nil, fmt.Errorf("expression request error") // response.Error(500, "expression request error", err)
+		return response.Error(500, "expression request error", err)
 	}
-	return resp, nil
+	return toMacronResponse(qdr, nil)
 }
 
 func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *response.NormalResponse {
