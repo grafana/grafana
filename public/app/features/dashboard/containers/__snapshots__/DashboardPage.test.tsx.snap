@@ -32,6 +32,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "_eventsCount": 0,
             },
           },
+          "formatDate": [Function],
           "getVariables": [Function],
           "getVariablesFromState": [Function],
           "gnetId": null,
@@ -102,6 +103,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         }
       }
       isFullscreen={false}
+      kioskMode="off"
       onAddPanel={[Function]}
     />
   </div>
@@ -158,6 +160,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     "_eventsCount": 0,
                   },
                 },
+                "formatDate": [Function],
                 "getVariables": [Function],
                 "getVariablesFromState": [Function],
                 "gnetId": null,
@@ -255,6 +258,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                   "_eventsCount": 0,
                 },
               },
+              "formatDate": [Function],
               "getVariables": [Function],
               "getVariablesFromState": [Function],
               "gnetId": null,
@@ -408,6 +412,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "_eventsCount": 0,
             },
           },
+          "formatDate": [Function],
           "getVariables": [Function],
           "getVariablesFromState": [Function],
           "gnetId": null,
@@ -478,6 +483,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         }
       }
       isFullscreen={false}
+      kioskMode="off"
       onAddPanel={[Function]}
     />
   </div>
@@ -534,6 +540,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "_eventsCount": 0,
                   },
                 },
+                "formatDate": [Function],
                 "getVariables": [Function],
                 "getVariablesFromState": [Function],
                 "gnetId": null,
@@ -631,6 +638,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                   "_eventsCount": 0,
                 },
               },
+              "formatDate": [Function],
               "getVariables": [Function],
               "getVariablesFromState": [Function],
               "gnetId": null,
@@ -732,6 +740,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
             "_eventsCount": 0,
           },
         },
+        "formatDate": [Function],
         "getVariables": [Function],
         "getVariablesFromState": [Function],
         "gnetId": null,

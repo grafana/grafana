@@ -13,8 +13,8 @@ import (
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -84,11 +84,14 @@ func TestLoadLibraryPanelsForDashboard(t *testing.T) {
 							"x": 6,
 							"y": 0,
 						},
-						"datasource": "${DS_GDEV-TESTDATA}",
+						"datasource":  "${DS_GDEV-TESTDATA}",
+						"description": "A description",
 						"libraryPanel": map[string]interface{}{
-							"uid":     sc.initialResult.Result.UID,
-							"name":    sc.initialResult.Result.Name,
-							"version": sc.initialResult.Result.Version,
+							"uid":         sc.initialResult.Result.UID,
+							"name":        sc.initialResult.Result.Name,
+							"type":        sc.initialResult.Result.Type,
+							"description": sc.initialResult.Result.Description,
+							"version":     sc.initialResult.Result.Version,
 							"meta": map[string]interface{}{
 								"canEdit":             false,
 								"connectedDashboards": int64(1),
@@ -646,11 +649,11 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
-			var result libraryPanelsResult
+			var result libraryPanelsSearch
 			err := json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
 			require.NotNil(t, result.Result)
-			require.Equal(t, 1, len(result.Result))
+			require.Equal(t, 1, len(result.Result.LibraryPanels))
 
 			err = sc.service.DeleteLibraryPanelsInFolder(sc.reqContext, sc.folder.Uid)
 			require.NoError(t, err)
@@ -659,27 +662,36 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
 			require.NotNil(t, result.Result)
-			require.Equal(t, 0, len(result.Result))
+			require.Equal(t, 0, len(result.Result.LibraryPanels))
 		})
 }
 
 type libraryPanel struct {
-	ID       int64                  `json:"id"`
-	OrgID    int64                  `json:"orgId"`
-	FolderID int64                  `json:"folderId"`
-	UID      string                 `json:"uid"`
-	Name     string                 `json:"name"`
-	Model    map[string]interface{} `json:"model"`
-	Version  int64                  `json:"version"`
-	Meta     LibraryPanelDTOMeta    `json:"meta"`
+	ID          int64  `json:"id"`
+	OrgID       int64  `json:"orgId"`
+	FolderID    int64  `json:"folderId"`
+	UID         string `json:"uid"`
+	Name        string `json:"name"`
+	Type        string
+	Description string
+	Model       map[string]interface{} `json:"model"`
+	Version     int64                  `json:"version"`
+	Meta        LibraryPanelDTOMeta    `json:"meta"`
 }
 
 type libraryPanelResult struct {
 	Result libraryPanel `json:"result"`
 }
 
-type libraryPanelsResult struct {
-	Result []libraryPanel `json:"result"`
+type libraryPanelsSearch struct {
+	Result libraryPanelsSearchResult `json:"result"`
+}
+
+type libraryPanelsSearchResult struct {
+	TotalCount    int64          `json:"totalCount"`
+	LibraryPanels []libraryPanel `json:"libraryPanels"`
+	Page          int            `json:"page"`
+	PerPage       int            `json:"perPage"`
 }
 
 type libraryPanelDashboardsResult struct {
@@ -716,7 +728,8 @@ func getCreateCommand(folderID int64, name string) createLibraryPanelCommand {
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
 			  "title": "Text - Library Panel",
-			  "type": "text"
+			  "type": "text",
+			  "description": "A description"
 			}
 		`),
 	}
@@ -731,6 +744,7 @@ type scenarioContext struct {
 	user          models.SignedInUser
 	folder        *models.Folder
 	initialResult libraryPanelResult
+	sqlStore      *sqlstore.SQLStore
 }
 
 type folderACLItem struct {
@@ -738,7 +752,8 @@ type folderACLItem struct {
 	permission models.PermissionType
 }
 
-func createDashboard(t *testing.T, user models.SignedInUser, title string, folderID int64) *models.Dashboard {
+func createDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, user models.SignedInUser, title string,
+	folderID int64) *models.Dashboard {
 	dash := models.NewDashboard(title)
 	dash.FolderId = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
@@ -748,53 +763,47 @@ func createDashboard(t *testing.T, user models.SignedInUser, title string, folde
 		User:      &user,
 		Overwrite: false,
 	}
-	bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
-		return nil
+	origUpdateAlerting := dashboards.UpdateAlerting
+	t.Cleanup(func() {
+		dashboards.UpdateAlerting = origUpdateAlerting
 	})
-	bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
-		cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+	dashboards.UpdateAlerting = func(store dboards.Store, orgID int64, dashboard *models.Dashboard,
+		user *models.SignedInUser) error {
 		return nil
-	})
-	bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
-		cmd.Result = nil
-		return nil
-	})
-	bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
-		return nil
-	})
+	}
 
-	dashboard, err := dashboards.NewService(nil).SaveDashboard(dashItem, true)
+	dashboard, err := dashboards.NewService(sqlStore).SaveDashboard(dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
 }
 
-func createFolderWithACL(t *testing.T, title string, user models.SignedInUser, items []folderACLItem) *models.Folder {
-	s := dashboards.NewFolderService(user.OrgId, &user)
-	folderCmd := models.CreateFolderCommand{
-		Uid:   title,
-		Title: title,
-	}
-	err := s.CreateFolder(&folderCmd)
+func createFolderWithACL(t *testing.T, sqlStore *sqlstore.SQLStore, title string, user models.SignedInUser,
+	items []folderACLItem) *models.Folder {
+	t.Helper()
+
+	s := dashboards.NewFolderService(user.OrgId, &user, sqlStore)
+	t.Logf("Creating folder with title and UID %q", title)
+	folder, err := s.CreateFolder(title, title)
 	require.NoError(t, err)
 
-	updateFolderACL(t, folderCmd.Result.Id, items)
+	updateFolderACL(t, sqlStore, folder.Id, items)
 
-	return folderCmd.Result
+	return folder
 }
 
-func updateFolderACL(t *testing.T, folderID int64, items []folderACLItem) {
+func updateFolderACL(t *testing.T, sqlStore *sqlstore.SQLStore, folderID int64, items []folderACLItem) {
+	t.Helper()
+
 	if len(items) == 0 {
 		return
 	}
 
-	cmd := models.UpdateDashboardAclCommand{
-		DashboardID: folderID,
-	}
+	var aclItems []*models.DashboardAcl
 	for _, item := range items {
 		role := item.roleType
 		permission := item.permission
-		cmd.Items = append(cmd.Items, &models.DashboardAcl{
+		aclItems = append(aclItems, &models.DashboardAcl{
 			DashboardID: folderID,
 			Role:        &role,
 			Permission:  permission,
@@ -803,11 +812,13 @@ func updateFolderACL(t *testing.T, folderID int64, items []folderACLItem) {
 		})
 	}
 
-	err := bus.Dispatch(&cmd)
+	err := sqlStore.UpdateDashboardACL(folderID, aclItems)
 	require.NoError(t, err)
 }
 
 func validateAndUnMarshalResponse(t *testing.T, resp response.Response) libraryPanelResult {
+	t.Helper()
+
 	require.Equal(t, 200, resp.Status())
 
 	var result = libraryPanelResult{}
@@ -818,6 +829,8 @@ func validateAndUnMarshalResponse(t *testing.T, resp response.Response) libraryP
 }
 
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
+	t.Helper()
+
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := getCreateCommand(sc.folder.Id, "Text - Library Panel")
 		resp := sc.service.createHandler(sc.reqContext, command)
@@ -865,25 +878,26 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		// deliberate difference between signed in user and user in db to make it crystal clear
 		// what to expect in the tests
 		// In the real world these are identical
-		cmd := &models.CreateUserCommand{
+		cmd := models.CreateUserCommand{
 			Email: "user.in.db@test.com",
 			Name:  "User In DB",
 			Login: UserInDbName,
 		}
-		err := sqlstore.CreateUser(context.Background(), cmd)
+		_, err := sqlStore.CreateUser(context.Background(), cmd)
 		require.NoError(t, err)
 
 		sc := scenarioContext{
-			user:    user,
-			ctx:     &ctx,
-			service: &service,
+			user:     user,
+			ctx:      &ctx,
+			service:  &service,
+			sqlStore: sqlStore,
 			reqContext: &models.ReqContext{
 				Context:      &ctx,
 				SignedInUser: &user,
 			},
 		}
 
-		sc.folder = createFolderWithACL(t, "ScenarioFolder", sc.user, []folderACLItem{})
+		sc.folder = createFolderWithACL(t, sc.sqlStore, "ScenarioFolder", sc.user, []folderACLItem{})
 
 		fn(t, sc)
 	})

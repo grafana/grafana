@@ -5,7 +5,6 @@ package searchstore_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -34,13 +33,11 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	}
 
 	db := setupTestEnvironment(t)
-	err := createDashboards(0, 1, user.OrgId)
-	require.NoError(t, err)
+	createDashboards(t, db, 0, 1, user.OrgId)
 
 	// create one dashboard in another organization that shouldn't
 	// be listed in the results.
-	err = createDashboards(1, 2, 2)
-	require.NoError(t, err)
+	createDashboards(t, db, 1, 2, 2)
 
 	builder := &searchstore.Builder{
 		Filters: []interface{}{
@@ -51,7 +48,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	}
 
 	res := []sqlstore.DashboardSearchProjection{}
-	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)
 	})
@@ -77,8 +74,7 @@ func TestBuilder_Pagination(t *testing.T) {
 	}
 
 	db := setupTestEnvironment(t)
-	err := createDashboards(0, 25, user.OrgId)
-	require.NoError(t, err)
+	createDashboards(t, db, 0, 25, user.OrgId)
 
 	builder := &searchstore.Builder{
 		Filters: []interface{}{
@@ -91,7 +87,7 @@ func TestBuilder_Pagination(t *testing.T) {
 	resPg1 := []sqlstore.DashboardSearchProjection{}
 	resPg2 := []sqlstore.DashboardSearchProjection{}
 	resPg3 := []sqlstore.DashboardSearchProjection{}
-	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(15, 1)
 		err := sess.SQL(sql, params...).Find(&resPg1)
 		if err != nil {
@@ -124,8 +120,7 @@ func TestBuilder_Permissions(t *testing.T) {
 	}
 
 	db := setupTestEnvironment(t)
-	err := createDashboards(0, 1, user.OrgId)
-	require.NoError(t, err)
+	createDashboards(t, db, 0, 1, user.OrgId)
 
 	level := models.PERMISSION_EDIT
 
@@ -145,7 +140,7 @@ func TestBuilder_Permissions(t *testing.T) {
 	}
 
 	res := []sqlstore.DashboardSearchProjection{}
-	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)
 	})
@@ -161,10 +156,10 @@ func setupTestEnvironment(t *testing.T) *sqlstore.SQLStore {
 	return store
 }
 
-func createDashboards(startID, endID int, orgID int64) error {
-	if endID < startID {
-		return fmt.Errorf("startID must be smaller than endID")
-	}
+func createDashboards(t *testing.T, db *sqlstore.SQLStore, startID, endID int, orgID int64) {
+	t.Helper()
+
+	require.GreaterOrEqual(t, endID, startID)
 
 	for i := startID; i < endID; i++ {
 		dashboard, err := simplejson.NewJson([]byte(`{
@@ -176,20 +171,15 @@ func createDashboards(startID, endID int, orgID int64) error {
 			"schemaVersion": 16,
 			"version": 0
 		}`))
-		if err != nil {
-			return err
-		}
-		err = sqlstore.SaveDashboard(&models.SaveDashboardCommand{
+		require.NoError(t, err)
+		_, err = db.SaveDashboard(models.SaveDashboardCommand{
 			Dashboard: dashboard,
 			UserId:    1,
 			OrgId:     orgID,
 			UpdatedAt: time.Now(),
 		})
-		if err != nil {
-			return err
-		}
+		require.NoError(t, err)
 	}
-	return nil
 }
 
 // lexiCounter counts in a lexicographically sortable order.

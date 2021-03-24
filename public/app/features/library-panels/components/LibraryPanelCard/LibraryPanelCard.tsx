@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Icon, IconButton, ConfirmModal, Tooltip, useStyles, Card } from '@grafana/ui';
+import { Card, Icon, IconButton, Tooltip, useStyles } from '@grafana/ui';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { LibraryPanelDTO } from '../../types';
+import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
 
 export interface LibraryPanelCardProps {
   libraryPanel: LibraryPanelDTO;
   onClick?: (panel: LibraryPanelDTO) => void;
-  onDelete?: () => void;
+  onDelete?: (panel: LibraryPanelDTO) => void;
   showSecondaryActions?: boolean;
   formatDate?: (dateString: string) => string;
 }
@@ -24,7 +25,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
   const [showDeletionModal, setShowDeletionModal] = useState(false);
 
   const onDeletePanel = () => {
-    onDelete?.();
+    onDelete?.(libraryPanel);
     setShowDeletionModal(false);
   };
 
@@ -69,12 +70,8 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
         )}
       </Card>
       {showDeletionModal && (
-        <ConfirmModal
-          isOpen={showDeletionModal}
-          icon="trash-alt"
-          title="Delete library panel"
-          body="Do you want to delete this panel?"
-          confirmText="Delete"
+        <DeleteLibraryPanelModal
+          libraryPanel={libraryPanel}
           onConfirm={onDeletePanel}
           onDismiss={() => setShowDeletionModal(false)}
         />

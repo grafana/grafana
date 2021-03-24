@@ -81,7 +81,7 @@ func (lps *LibraryPanelService) getHandler(c *models.ReqContext) response.Respon
 
 // getAllHandler handles GET /api/library-panels/.
 func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) response.Response {
-	libraryPanels, err := lps.getAllLibraryPanels(c, c.QueryInt64("limit"))
+	libraryPanels, err := lps.getAllLibraryPanels(c, c.QueryInt("perPage"), c.QueryInt("page"), c.Query("name"), c.Query("excludeUid"))
 	if err != nil {
 		return toLibraryPanelError(err, "Failed to get library panels")
 	}
@@ -127,6 +127,9 @@ func toLibraryPanelError(err error, message string) response.Response {
 	}
 	if errors.Is(err, models.ErrFolderAccessDenied) {
 		return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
+	}
+	if errors.Is(err, errLibraryPanelHasConnectedDashboards) {
+		return response.Error(403, errLibraryPanelHasConnectedDashboards.Error(), err)
 	}
 	return response.Error(500, message, err)
 }

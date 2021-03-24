@@ -60,8 +60,7 @@ import { expect } from '../../../../test/lib/common';
 import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { LocationState } from 'app/types';
+import { setDataSourceSrv, setLocationService } from '@grafana/runtime';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -146,8 +145,9 @@ describe('shared actions', () => {
       const list = [query, constant, datasource, custom, textbox];
       const preloadedState = {
         templating: ({} as unknown) as TemplatingState,
-        location: ({ query: {} } as unknown) as LocationState,
       };
+      const locationService: any = { getSearchObject: () => ({}) };
+      setLocationService(locationService);
 
       const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
         .givenRootReducer(getTemplatingRootReducer())
@@ -203,9 +203,10 @@ describe('shared actions', () => {
 
       const list = [stats, substats];
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
+      const locationService: any = { getSearchObject: () => query };
+      setLocationService(locationService);
       const preloadedState = {
         templating: ({} as unknown) as TemplatingState,
-        location: ({ query } as unknown) as LocationState,
       };
 
       const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
@@ -223,6 +224,9 @@ describe('shared actions', () => {
           toVariablePayload(stats, { option: { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false } })
         ),
         variableStateCompleted(toVariablePayload(stats)),
+        setCurrentVariableValue(
+          toVariablePayload(stats, { option: { text: ['response'], value: ['response'], selected: false } })
+        ),
         variableStateFetching(toVariablePayload(substats)),
         updateVariableOptions(
           toVariablePayload(substats, { results: [{ text: '200' }, { text: '500' }], templatedRegex: '' })
@@ -232,7 +236,12 @@ describe('shared actions', () => {
             option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: true },
           })
         ),
-        variableStateCompleted(toVariablePayload(substats))
+        variableStateCompleted(toVariablePayload(substats)),
+        setCurrentVariableValue(
+          toVariablePayload(substats, {
+            option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: false },
+          })
+        )
       );
     });
   });
