@@ -24,7 +24,7 @@ var timeNow = time.Now
 
 // ScheduleService handles scheduling
 type ScheduleService interface {
-	Ticker(context.Context) error
+	Ticker(context.Context, *state.StateTracker) error
 	Pause() error
 	Unpause() error
 
@@ -34,8 +34,7 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
-func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.AlertDefinitionKey,
-	evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
+func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.AlertDefinitionKey, evalCh <-chan *evalContext, stopCh <-chan struct{}, stateTracker *state.StateTracker) error {
 	sch.log.Debug("alert definition routine started", "key", key)
 
 	evalRunning := false
@@ -85,7 +84,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
 					}
 				}
-				state.ProcessEvalResults(key.DefinitionUID, results, condition)
+				stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
 				return nil
 			}
 

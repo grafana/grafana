@@ -21,12 +21,16 @@ type cache struct {
 	mu       sync.Mutex
 }
 
-var stateCache cache
+type StateTracker struct {
+	stateCache cache
+}
 
-func Init() {
-	stateCache = cache{
-		cacheMap: make(map[string]AlertState, 0),
-		mu:       sync.Mutex{},
+func NewStateTracker() *StateTracker {
+	return &StateTracker{
+		stateCache: cache{
+			cacheMap: make(map[string]AlertState, 0),
+			mu:       sync.Mutex{},
+		},
 	}
 }
 
@@ -62,17 +66,17 @@ func (c *cache) getStateForEntry(stateId string) eval.State {
 	return c.cacheMap[stateId].State
 }
 
-func ProcessEvalResults(uid string, results eval.Results, condition models.Condition) {
+func (st *StateTracker) ProcessEvalResults(uid string, results eval.Results, condition models.Condition) {
 	for _, result := range results {
-		currentState := stateCache.getOrCreate(uid, result)
+		currentState := st.stateCache.getOrCreate(uid, result)
 		currentState.Results = append(currentState.Results, result.State)
-		currentState.State = getNextState(uid, result)
-		stateCache.update(currentState)
+		currentState.State = st.getNextState(uid, result)
+		st.stateCache.update(currentState)
 	}
 }
 
-func getNextState(uid string, result eval.Result) eval.State {
-	currentState := stateCache.getOrCreate(uid, result)
+func (st *StateTracker) getNextState(uid string, result eval.Result) eval.State {
+	currentState := st.stateCache.getOrCreate(uid, result)
 	if currentState.State == result.State {
 		return currentState.State
 	}

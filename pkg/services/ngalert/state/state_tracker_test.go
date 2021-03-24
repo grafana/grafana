@@ -9,7 +9,7 @@ import (
 )
 
 func TestProcessEvalResults(t *testing.T) {
-	Init()
+	st := NewStateTracker()
 	testCases := []struct {
 		desc                 string
 		uid                  string
@@ -102,13 +102,13 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("the correct number of entries are added to the cache", func(t *testing.T) {
-			ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
-			assert.Equal(t, len(stateCache.cacheMap), tc.expectedCacheEntries)
+			st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
+			assert.Equal(t, len(st.stateCache.cacheMap), tc.expectedCacheEntries)
 		})
 
 		t.Run("the correct state is set", func(t *testing.T) {
-			ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
-			assert.Equal(t, stateCache.getStateForEntry("test_uid label1=value1, label2=value2"), tc.expectedState)
+			st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
+			assert.Equal(t, st.stateCache.getStateForEntry("test_uid label1=value1, label2=value2"), tc.expectedState)
 		})
 	}
 }
