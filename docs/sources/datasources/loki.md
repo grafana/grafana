@@ -43,7 +43,7 @@ Each derived field consists of:
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
 You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
-{{< docs-imagebox img="/img/docs/v75/loki_derived_fields_settings.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
+{{< docs-imagebox img="/img/docs/v75/loki_derived_fields_settings.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the derived fields debugging" >}}
 
 The new field with the link shown in log details:
 {{< docs-imagebox img="/img/docs/explore/detected-fields-link-7-4.png" max-width="800px" caption="Detected fields link in Explore" >}}
