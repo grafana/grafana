@@ -43,7 +43,7 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
 
     const onKeyPress = useCallback(
       (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && plugin) {
+        if (e.key === 'Enter') {
           const query = e.currentTarget.value;
           const plugins = getAllPanelPluginMeta();
           const match = filterPluginList(plugins, query, plugin.meta);
@@ -66,10 +66,6 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
           Clear filter
         </span>
       ) : null;
-
-    if (!plugin) {
-      return null;
-    }
 
     return (
       <div className={styles.wrapper}>
