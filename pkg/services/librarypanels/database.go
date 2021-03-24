@@ -37,14 +37,12 @@ func syncFieldsWithModel(libraryPanel *LibraryPanel) error {
 	model["title"] = libraryPanel.Name
 	if model["type"] != nil {
 		libraryPanel.Type = model["type"].(string)
-	}
-	if model["type"] == nil {
+	} else {
 		model["type"] = libraryPanel.Type
 	}
 	if model["description"] != nil {
 		libraryPanel.Description = model["description"].(string)
-	}
-	if model["description"] == nil {
+	} else {
 		model["description"] = libraryPanel.Description
 	}
 	syncedModel, err := json.Marshal(&model)
