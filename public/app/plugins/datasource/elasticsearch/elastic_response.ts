@@ -451,7 +451,7 @@ export class ElasticResponse {
         const { propNames, docs } = flattenHits(response.hits.hits);
         if (docs.length > 0) {
           let series = createEmptyDataFrame(
-            propNames,
+            propNames.map(toNameTypePair(docs)),
             this.targets[0].timeField!,
             isLogsRequest,
             logMessageField,
@@ -635,7 +635,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
  * @param logLevelField
  */
 const createEmptyDataFrame = (
-  propNames: string[],
+  props: Array<[string, FieldType]>,
   timeField: string,
   isLogsRequest: boolean,
   logMessageField?: string,
@@ -671,13 +671,13 @@ const createEmptyDataFrame = (
 
   const fieldNames = series.fields.map((field) => field.name);
 
-  for (const propName of propNames) {
+  for (const [name, type] of props) {
     // Do not duplicate fields. This can mean that we will shadow some fields.
-    if (fieldNames.includes(propName)) {
+    if (fieldNames.includes(name)) {
       continue;
     }
     // Do not add _source field (besides logs) as we are showing each _source field in table instead.
-    if (!isLogsRequest && propName === '_source') {
+    if (!isLogsRequest && name === '_source') {
       continue;
     }
 
@@ -685,8 +685,8 @@ const createEmptyDataFrame = (
       config: {
         filterable: true,
       },
-      name: propName,
-      type: FieldType.string,
+      name,
+      type,
     }).parse = (v: any) => {
       return v || '';
     };
@@ -704,4 +704,24 @@ const addPreferredVisualisationType = (series: any, type: PreferredVisualisation
       });
 
   return s;
+};
+
+const toNameTypePair = (docs: Array<Record<string, any>>) => (propName: string): [string, FieldType] => [
+  propName,
+  guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName]),
+];
+
+/**
+ * Trying to guess data type from its value. This is far from perfect, as in order to have accurate guess
+ * we should have access to the elasticsearch mapping, but it covers the most common use cases for numbers, strings & arrays.
+ */
+const guessType = (value: unknown): FieldType => {
+  switch (typeof value) {
+    case 'number':
+      return FieldType.number;
+    case 'string':
+      return FieldType.string;
+    default:
+      return FieldType.other;
+  }
 };
