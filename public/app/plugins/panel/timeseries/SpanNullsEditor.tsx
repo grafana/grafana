@@ -3,32 +3,36 @@ import { FieldOverrideEditorProps, rangeUtil, SelectableValue } from '@grafana/d
 import { HorizontalGroup, Input, RadioButtonGroup } from '@grafana/ui';
 import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
 
-const GAPS_OPTIONS: Array<SelectableValue<boolean>> = [
+const GAPS_OPTIONS: Array<SelectableValue<boolean | number>> = [
   {
-    label: 'Gaps',
+    label: 'Never',
     value: false,
   },
   {
-    label: 'Connected',
+    label: 'Always',
     value: true,
+  },
+  {
+    label: 'Threshold',
+    value: 3600000, // 1h
   },
 ];
 
 export const SpanNullsEditor: React.FC<FieldOverrideEditorProps<boolean | number, any>> = ({ value, onChange }) => {
-  const isNumber = typeof value === 'number';
-  const isConnected = value === true || isNumber;
-  const formattedTime = isNumber ? secondsToHms(value as number) : undefined;
+  const isThreshold = typeof value === 'number';
+  const formattedTime = isThreshold ? secondsToHms((value as number) / 1000) : undefined;
+  GAPS_OPTIONS[2].value = isThreshold ? (value as number) : 3600000; // reuse constants
 
   const checkAndUpdate = (txt: string) => {
+    let val: boolean | number = false;
     if (txt) {
       try {
-        onChange(rangeUtil.intervalToSeconds(txt));
+        val = rangeUtil.intervalToSeconds(txt) * 1000;
       } catch (err) {
         console.warn('ERROR', err);
       }
-    } else {
-      onChange(true); // nothing special
     }
+    onChange(val);
   };
 
   const handleEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -42,12 +46,20 @@ export const SpanNullsEditor: React.FC<FieldOverrideEditorProps<boolean | number
     checkAndUpdate(e.target.value);
   };
 
-  console.log('SPAN null', { isNumber, isConnected, value });
   return (
     <HorizontalGroup>
-      <RadioButtonGroup value={isConnected} options={GAPS_OPTIONS} onChange={onChange} />
-      {isConnected && (
-        <Input placeholder="always" defaultValue={formattedTime} onKeyDown={handleEnterKey} onBlur={handleBlur} />
+      <RadioButtonGroup value={value} options={GAPS_OPTIONS} onChange={onChange} />
+      {isThreshold && (
+        <>
+          <div>&nbsp;&lt;&nbsp;&nbsp;</div>
+          <Input
+            placeholder="always"
+            width={10}
+            defaultValue={formattedTime}
+            onKeyDown={handleEnterKey}
+            onBlur={handleBlur}
+          />
+        </>
       )}
     </HorizontalGroup>
   );

@@ -137,7 +137,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         .addCustomEditor<void, boolean>({
           id: 'spanNulls',
           path: 'spanNulls',
-          name: 'Null values',
+          name: 'Connect null values',
           defaultValue: false,
           editor: SpanNullsEditor,
           override: SpanNullsEditor,
