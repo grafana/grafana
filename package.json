@@ -297,8 +297,7 @@
     "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
-    "caniuse-db": "1.0.30000772",
-    "react-use-measure": "2.0.4"
+    "caniuse-db": "1.0.30000772"
   },
   "workspaces": {
     "packages": [
