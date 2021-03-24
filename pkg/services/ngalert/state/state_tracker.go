@@ -66,13 +66,19 @@ func (c *cache) getStateForEntry(stateId string) eval.State {
 	return c.cacheMap[stateId].State
 }
 
-func (st *StateTracker) ProcessEvalResults(uid string, results eval.Results, condition models.Condition) {
+func (st *StateTracker) ProcessEvalResults(uid string, results eval.Results, condition models.Condition) []AlertState {
+	var changedStates []AlertState
 	for _, result := range results {
 		currentState := st.stateCache.getOrCreate(uid, result)
 		currentState.Results = append(currentState.Results, result.State)
-		currentState.State = st.getNextState(uid, result)
+		newState := st.getNextState(uid, result)
+		if newState != currentState.State {
+			currentState.State = newState
+			changedStates = append(changedStates, currentState)
+		}
 		st.stateCache.update(currentState)
 	}
+	return changedStates
 }
 
 func (st *StateTracker) getNextState(uid string, result eval.Result) eval.State {

@@ -84,7 +84,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
 					}
 				}
-				stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
+				_ = stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
 				return nil
 			}
 

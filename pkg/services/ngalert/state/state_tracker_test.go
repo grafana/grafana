@@ -9,7 +9,6 @@ import (
 )
 
 func TestProcessEvalResults(t *testing.T) {
-	st := NewStateTracker()
 	testCases := []struct {
 		desc                 string
 		uid                  string
@@ -17,6 +16,7 @@ func TestProcessEvalResults(t *testing.T) {
 		condition            models.Condition
 		expectedCacheEntries int
 		expectedState        eval.State
+		expectedResultCount  int
 	}{
 		{
 			desc: "given a single evaluation result",
@@ -26,13 +26,9 @@ func TestProcessEvalResults(t *testing.T) {
 					Instance: data.Labels{"label1": "value1", "label2": "value2"},
 				},
 			},
-			condition: models.Condition{
-				RefID:                 "A",
-				OrgID:                 1,
-				QueriesAndExpressions: nil,
-			},
 			expectedCacheEntries: 1,
 			expectedState:        eval.Normal,
+			expectedResultCount:  0,
 		},
 		{
 			desc: "given a state change from normal to alerting",
@@ -49,6 +45,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedCacheEntries: 1,
 			expectedState:        eval.Alerting,
+			expectedResultCount:  1,
 		},
 		{
 			desc: "given a state change from alerting to normal",
@@ -65,6 +62,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedCacheEntries: 1,
 			expectedState:        eval.Normal,
+			expectedResultCount:  1,
 		},
 		{
 			desc: "given a constant alerting state",
@@ -81,6 +79,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedCacheEntries: 1,
 			expectedState:        eval.Alerting,
+			expectedResultCount:  0,
 		},
 		{
 			desc: "given a constant normal state",
@@ -97,18 +96,27 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedCacheEntries: 1,
 			expectedState:        eval.Normal,
+			expectedResultCount:  0,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run("the correct number of entries are added to the cache", func(t *testing.T) {
+			st := NewStateTracker()
 			st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
 			assert.Equal(t, len(st.stateCache.cacheMap), tc.expectedCacheEntries)
 		})
 
 		t.Run("the correct state is set", func(t *testing.T) {
+			st := NewStateTracker()
 			st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
 			assert.Equal(t, st.stateCache.getStateForEntry("test_uid label1=value1, label2=value2"), tc.expectedState)
+		})
+
+		t.Run("the correct number of results are returned", func(t *testing.T) {
+			st := NewStateTracker()
+			results := st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
+			assert.Equal(t, len(results), tc.expectedResultCount)
 		})
 	}
 }
