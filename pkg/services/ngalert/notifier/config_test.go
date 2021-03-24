@@ -124,7 +124,6 @@ alertmanager_config:
   route:
     receiver: email
   receivers:
-    - name: email
 template_files:
   'email.template': something with a pretty good content
 `,
