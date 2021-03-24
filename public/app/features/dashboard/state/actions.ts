@@ -17,6 +17,7 @@ import { PanelModel } from './PanelModel';
 import { cancelVariables } from '../../variables/state/actions';
 import { isDeprecatedPanel } from '../utils/panel';
 import { DEPRECATED_PANELS } from '../../../core/constants';
+import { getPanelPluginNotFound } from '../dashgrid/PanelPluginError';
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async (dispatch) => {
@@ -124,18 +125,23 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
     let pluginToLoad = panel.type;
 
     const isDeprecated = isDeprecatedPanel(panel.type);
-
-    if (isDeprecated) {
-      pluginToLoad = DEPRECATED_PANELS[panel.type](panel);
-    }
-
+    let notFound = false;
     let plugin = getStore().plugins.panels[pluginToLoad];
 
     if (!plugin) {
-      plugin = await dispatch(loadPanelPlugin(pluginToLoad));
+      try {
+        plugin = await dispatch(loadPanelPlugin(pluginToLoad));
+      } catch (e) {
+        // When plugin not found
+        plugin = getPanelPluginNotFound(pluginToLoad);
+        notFound = true;
+      }
     }
 
-    if (isDeprecated) {
+    // if there isn't an "external" plugin with the same name as deprecated one, load the deprecated panel replacement
+    if (notFound && isDeprecated) {
+      pluginToLoad = DEPRECATED_PANELS[panel.type](panel);
+      plugin = await dispatch(loadPanelPlugin(pluginToLoad));
       await dispatch(changePanelPlugin(panel, pluginToLoad));
     }
 
