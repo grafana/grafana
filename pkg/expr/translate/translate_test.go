@@ -31,24 +31,24 @@ func TestDashboardAlertConditions(t *testing.T) {
 			name:           "two conditions one query but different time ranges",
 			inputJSONFName: `sameQueryDifferentTimeRange.json`,
 			spotCheckFn: func(t *testing.T, cond *ngmodels.Condition) {
-				require.Equal(t, "C", cond.RefID, "unexpected refId for condition")
-				require.Equal(t, 3, len(cond.QueriesAndExpressions), "unexpected query/expression array length")
+				require.Equal(t, "C", cond.Condition, "unexpected refId for condition")
+				require.Equal(t, 3, len(cond.Data), "unexpected query/expression array length")
 
-				firstQuery := cond.QueriesAndExpressions[0]
+				firstQuery := cond.Data[0]
 				require.Equal(t, "A", firstQuery.RefID, "unexpected refId for first query")
 				require.Equal(t, ngmodels.RelativeTimeRange{
 					From: ngmodels.Duration(time.Second * 600),
 					To:   ngmodels.Duration(time.Second * 300),
 				}, firstQuery.RelativeTimeRange, "unexpected timerange for first query")
 
-				secondQuery := cond.QueriesAndExpressions[1]
+				secondQuery := cond.Data[1]
 				require.Equal(t, "B", secondQuery.RefID, "unexpected refId for second query")
 				require.Equal(t, ngmodels.RelativeTimeRange{
 					From: ngmodels.Duration(time.Second * 300),
 					To:   ngmodels.Duration(0),
 				}, secondQuery.RelativeTimeRange, "unexpected timerange for second query")
 
-				condQuery := cond.QueriesAndExpressions[2]
+				condQuery := cond.Data[2]
 				require.Equal(t, "C", condQuery.RefID, "unexpected refId for second query")
 				isExpr, err := condQuery.IsExpression()
 				require.NoError(t, err)
@@ -78,10 +78,10 @@ func TestDashboardAlertConditions(t *testing.T) {
 			name:           "mixed shared and unshared time ranges",
 			inputJSONFName: `mixedSharedUnsharedTimeRange.json`,
 			spotCheckFn: func(t *testing.T, cond *ngmodels.Condition) {
-				require.Equal(t, "G", cond.RefID, "unexpected refId for condition")
-				require.Equal(t, 7, len(cond.QueriesAndExpressions), "unexpected query/expression array length")
+				require.Equal(t, "G", cond.Condition, "unexpected refId for condition")
+				require.Equal(t, 7, len(cond.Data), "unexpected query/expression array length")
 
-				condQuery := cond.QueriesAndExpressions[6]
+				condQuery := cond.Data[6]
 				isExpr, err := condQuery.IsExpression()
 				require.NoError(t, err)
 				require.Equal(t, true, isExpr, "expected last query to be an expression")
@@ -123,7 +123,7 @@ func TestDashboardAlertConditions(t *testing.T) {
 }
 
 func alertRuleByRefId(cond *ngmodels.Condition, refID string) (ngmodels.AlertQuery, error) {
-	for _, aq := range cond.QueriesAndExpressions {
+	for _, aq := range cond.Data {
 		if aq.RefID == refID {
 			return aq, nil
 		}

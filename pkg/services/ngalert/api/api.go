@@ -192,9 +192,9 @@ func (api *API) conditionEvalOldEndpointByID(c *models.ReqContext) response.Resp
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
 func (api *API) conditionEvalEndpoint(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand) response.Response {
 	evalCond := ngmodels.Condition{
-		RefID:                 cmd.Condition,
-		OrgID:                 c.SignedInUser.OrgId,
-		QueriesAndExpressions: cmd.Data,
+		Condition: cmd.Condition,
+		OrgID:     c.SignedInUser.OrgId,
+		Data:      cmd.Data,
 	}
 	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
@@ -295,9 +295,9 @@ func (api *API) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels
 	cmd.OrgID = c.SignedInUser.OrgId
 
 	evalCond := ngmodels.Condition{
-		RefID:                 cmd.Condition,
-		OrgID:                 c.SignedInUser.OrgId,
-		QueriesAndExpressions: cmd.Data,
+		Condition: cmd.Condition,
+		OrgID:     c.SignedInUser.OrgId,
+		Data:      cmd.Data,
 	}
 	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
@@ -315,9 +315,9 @@ func (api *API) createAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels
 	cmd.OrgID = c.SignedInUser.OrgId
 
 	evalCond := ngmodels.Condition{
-		RefID:                 cmd.Condition,
-		OrgID:                 c.SignedInUser.OrgId,
-		QueriesAndExpressions: cmd.Data,
+		Condition: cmd.Condition,
+		OrgID:     c.SignedInUser.OrgId,
+		Data:      cmd.Data,
 	}
 	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
@@ -395,22 +395,22 @@ func (api *API) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*ngm
 	}
 
 	return &ngmodels.Condition{
-		RefID:                 alertDefinition.Condition,
-		OrgID:                 alertDefinition.OrgID,
-		QueriesAndExpressions: alertDefinition.Data,
+		Condition: alertDefinition.Condition,
+		OrgID:     alertDefinition.OrgID,
+		Data:      alertDefinition.Data,
 	}, nil
 }
 
 func (api *API) validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool) error {
 	var refID string
 
-	if len(c.QueriesAndExpressions) == 0 {
+	if len(c.Data) == 0 {
 		return nil
 	}
 
-	for _, query := range c.QueriesAndExpressions {
-		if c.RefID == query.RefID {
-			refID = c.RefID
+	for _, query := range c.Data {
+		if c.Condition == query.RefID {
+			refID = c.Condition
 		}
 
 		datasourceUID, err := query.GetDatasource()
@@ -433,7 +433,7 @@ func (api *API) validateCondition(c ngmodels.Condition, user *models.SignedInUse
 	}
 
 	if refID == "" {
-		return fmt.Errorf("condition %s not found in any query or expression", c.RefID)
+		return fmt.Errorf("condition %s not found in any query or expression", c.Condition)
 	}
 	return nil
 }

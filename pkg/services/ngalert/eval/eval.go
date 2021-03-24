@@ -110,8 +110,8 @@ func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (
 		Queries: []backend.DataQuery{},
 	}
 
-	for i := range c.QueriesAndExpressions {
-		q := c.QueriesAndExpressions[i]
+	for i := range c.Data {
+		q := c.Data[i]
 		model, err := q.GetModel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
@@ -157,7 +157,7 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 	}
 
 	for refID, res := range pbRes.Responses {
-		if refID != c.RefID {
+		if refID != c.Condition {
 			continue
 		}
 		result.Results = res.Frames
