@@ -1,6 +1,16 @@
 import React, { FC, useState, useEffect } from 'react';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { FieldSet, Field, Input, InputControl, stylesFactory, Select, FormAPI } from '@grafana/ui';
+import {
+  Cascader,
+  FieldSet,
+  Field,
+  Input,
+  InputControl,
+  stylesFactory,
+  Select,
+  FormAPI,
+  CascaderOption,
+} from '@grafana/ui';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 
@@ -26,11 +36,6 @@ const alertTypeOptions: SelectableValue[] = [
     value: ALERT_TYPE.SYSTEM,
     description: 'Alert based on a system or application behavior. Based on Prometheus.',
   },
-  {
-    label: 'Host',
-    value: ALERT_TYPE.HOST,
-    description: 'Alert based on a Synthetic Monitoring check',
-  },
 ];
 
 const AlertTypeSection: FC<Props> = ({ register, control, watch }) => {
@@ -55,7 +60,17 @@ const AlertTypeSection: FC<Props> = ({ register, control, watch }) => {
         </Field>
       </div>
       <Field className={styles.formInput}>
-        <InputControl as={Select} name="folder" options={folderOptions} control={control} />
+        <InputControl
+          as={Cascader}
+          displayAllSelectedLevels={true}
+          separator=" > "
+          name="folder"
+          options={folderOptions}
+          control={control}
+          onSelect={(val: string) => {
+            console.log(val);
+          }}
+        />
       </Field>
     </FieldSet>
   );
@@ -86,16 +101,20 @@ const useDatasourceSelectOptions = (alertType: SelectableValue) => {
 };
 
 const useFolderSelectOptions = (datasource: SelectableValue) => {
-  const [folderOptions, setFolderOptions] = useState<SelectableValue[]>([]);
+  const [folderOptions, setFolderOptions] = useState<CascaderOption[]>([]);
 
   useEffect(() => {
     if (datasource?.value) {
       fetchRulerRules(datasource?.value).then((namespaces) => {
         console.log(namespaces);
-        const options = Object.entries(namespaces).flatMap(([namespace, group]) => {
-          return group.map(({ name }) => {
-            return { label: `${namespace} > ${name}`, value: [namespace, name] };
-          });
+        const options = Object.entries(namespaces).map(([namespace, group]) => {
+          return {
+            label: namespace,
+            value: namespace,
+            items: group.map(({ name }) => {
+              return { label: name, value: `${namespace} > ${name}` };
+            }),
+          };
         });
         setFolderOptions(options);
       });

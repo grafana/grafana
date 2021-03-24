@@ -9,11 +9,11 @@ import AlertConditionsSection from './components/AlertConditionsSection';
 import Expression from './components/Expression';
 
 import { fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
-import { RulerRuleDTO } from 'app/types/unified-alerting/dto';
+import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting/dto';
 
 type Props = {};
 
-interface AlertRuleDTO {
+interface AlertRuleFormFields {
   name: string;
   type: SelectableValue;
   folder: SelectableValue;
@@ -29,12 +29,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
     `,
     formWrapper: css`
-      padding: 0 16px;
+      padding: 0 ${theme.spacing.md};
     `,
     formInput: css`
       width: 400px;
       & + & {
-        margin-left: 8px;
+        margin-left: ${theme.spacing.sm};
       }
     `,
     flexRow: css`
@@ -48,16 +48,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 const AlertEditor: FC<Props> = () => {
   const styles = getStyles(config.theme);
 
-  const handleSubmit = (alertRule: AlertRuleDTO) => {
+  const handleSubmit = (alertRule: AlertRuleFormFields) => {
     const { name, expression, forTime, folder, datasource, timeUnit } = alertRule;
     const [namespace, groupName] = folder?.value;
     fetchRulerRulesNamespace(datasource?.value, namespace)
       .then((ruleGroup) => {
-        const group = ruleGroup.find(({ name }) => name === groupName) || {
+        const group: RulerRuleGroupDTO = ruleGroup.find(({ name }) => name === groupName) || {
           name: groupName,
           rules: [] as RulerRuleDTO[],
         };
-        const alertRule = {
+        const alertRule: RulerRuleDTO = {
           alert: name,
           expr: expression,
           for: `${forTime}${timeUnit.value}`,
