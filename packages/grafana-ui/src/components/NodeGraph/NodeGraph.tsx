@@ -107,14 +107,17 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
   const styles = getStyles(theme);
 
+  // This cannot be inline func or it will create infinite render cycle.
+  const topLevelRef = useCallback(
+    (r) => {
+      measureRef(r);
+      (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
+    },
+    [measureRef, zoomRef]
+  );
+
   return (
-    <div
-      ref={(r) => {
-        measureRef(r);
-        (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
-      }}
-      className={styles.wrapper}
-    >
+    <div ref={topLevelRef} className={styles.wrapper}>
       <svg
         ref={panRef}
         viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
