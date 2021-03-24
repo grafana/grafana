@@ -28,7 +28,7 @@ type StateTracker struct {
 func NewStateTracker() *StateTracker {
 	return &StateTracker{
 		stateCache: cache{
-			cacheMap: make(map[string]AlertState, 0),
+			cacheMap: make(map[string]AlertState),
 			mu:       sync.Mutex{},
 		},
 	}
