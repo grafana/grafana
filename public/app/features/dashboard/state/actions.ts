@@ -136,7 +136,7 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
     }
 
     if (isDeprecated) {
-      dispatch(changePanelPlugin(panel, pluginToLoad));
+      await dispatch(changePanelPlugin(panel, pluginToLoad));
     }
 
     if (!panel.plugin) {
