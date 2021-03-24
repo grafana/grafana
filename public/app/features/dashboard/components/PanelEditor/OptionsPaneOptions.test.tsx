@@ -1,16 +1,24 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { LoadingState, PanelData, standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
-import { mockStandardFieldConfigOptions } from '../../../../../test/helpers/fieldConfig';
+import {
+  FieldConfigSource,
+  LoadingState,
+  PanelData,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+} from '@grafana/data';
+
 import { selectors } from '@grafana/e2e-selectors';
 import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { DashboardModel, PanelModel } from '../../state';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
+import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 
-standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
-standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
+standardEditorsRegistry.setInit(getStandardOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+
 const mockStore = configureMockStore<any, any>();
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
 
@@ -41,6 +49,9 @@ class OptionsPaneOptionsTestScenario {
         .addTextInput({
           name: 'TextPropWithCategory',
           path: 'TextPropWithCategory',
+          settings: {
+            placeholder: 'CustomTextPropPlaceholder',
+          },
           category: ['Axis'],
         });
     },
@@ -158,5 +169,31 @@ describe('OptionsPaneOptions', () => {
     fireEvent.blur(input);
 
     expect(scenario.onPanelConfigChange).toHaveBeenCalledWith('title', 'New');
+  });
+
+  it('should call onFieldConfigsChange when updating field config', () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.render();
+
+    const input = screen.getByPlaceholderText('CustomTextPropPlaceholder');
+    fireEvent.change(input, { target: { value: 'New' } });
+    fireEvent.blur(input);
+
+    const newFieldConfig: FieldConfigSource = scenario.panel.fieldConfig;
+    newFieldConfig.defaults.custom = { TextPropWithCategory: 'New' };
+
+    expect(scenario.onFieldConfigsChange).toHaveBeenCalledWith(newFieldConfig);
+  });
+
+  it('should only render hits when search query specified', async () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.render();
+
+    const input = screen.getByPlaceholderText('Search options');
+    fireEvent.change(input, { target: { value: 'TextPropWithCategory' } });
+    fireEvent.blur(input);
+
+    expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('Panel frame Title'))).not.toBeInTheDocument();
+    expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Axis TextPropWithCategory'))).toBeInTheDocument();
   });
 });
