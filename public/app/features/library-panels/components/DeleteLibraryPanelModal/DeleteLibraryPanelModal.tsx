@@ -23,7 +23,7 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
   useEffect(() => {
     asyncDispatch(getConnectedDashboards(libraryPanel));
-  }, []);
+  }, [asyncDispatch, libraryPanel]);
   const connected = Boolean(dashboardTitles.length);
   const done = loadingState === LoadingState.Done;
 
