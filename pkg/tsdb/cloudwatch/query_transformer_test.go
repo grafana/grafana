@@ -12,7 +12,7 @@ import (
 )
 
 func TestQueryTransformer(t *testing.T) {
-	executor := newExecutor(nil, &setting.Cfg{}, fakeSessionCache{})
+	executor := newExecutor(nil, nil, &setting.Cfg{}, fakeSessionCache{})
 	t.Run("One cloudwatchQuery is generated when its request query has one stat", func(t *testing.T) {
 		requestQueries := []*requestQuery{
 			{

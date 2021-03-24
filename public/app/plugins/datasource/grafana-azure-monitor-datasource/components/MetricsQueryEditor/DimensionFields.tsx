@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { Button, Select, Input, HorizontalGroup, VerticalGroup, InlineLabel } from '@grafana/ui';
 
 import { Field } from '../Field';
-import { findOption } from '../common';
+import { findOption } from '../../utils/common';
 import { AzureMetricDimension, AzureMonitorOption, AzureQueryEditorFieldProps } from '../../types';
 
 interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
