@@ -62,7 +62,7 @@ class UnthemedTimeline extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidMount() {
-    const { theme } = this.props;
+    const { theme, mode } = this.props;
 
     // alignedDataFrame is already prepared by getDerivedStateFromProps method
     const { alignedDataFrame } = this.state;
@@ -72,17 +72,19 @@ class UnthemedTimeline extends React.Component<GraphNGProps, GraphNGState> {
     }
 
     this.setState({
-      config: preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone),
+      config: preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone, {
+        mode,
+      }),
     });
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { data, theme } = this.props;
+    const { data, theme, timeZone, mode } = this.props;
     const { alignedDataFrame } = this.state;
     let shouldConfigUpdate = false;
     let stateUpdate = {} as GraphNGState;
 
-    if (this.state.config === undefined || this.props.timeZone !== prevProps.timeZone) {
+    if (this.state.config === undefined || timeZone !== prevProps.timeZone || mode !== prevProps.mode) {
       shouldConfigUpdate = true;
     }
 
@@ -91,12 +93,16 @@ class UnthemedTimeline extends React.Component<GraphNGProps, GraphNGState> {
         return;
       }
 
-      const hasStructureChanged = !compareArrayValues(data, prevProps.data, compareDataFrameStructures);
-
-      if (shouldConfigUpdate || hasStructureChanged) {
-        const builder = preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone);
-        stateUpdate = { ...stateUpdate, config: builder };
+      if (!compareArrayValues(data, prevProps.data, compareDataFrameStructures)) {
+        shouldConfigUpdate = true;
       }
+    }
+
+    if (shouldConfigUpdate) {
+      const builder = preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone, {
+        mode,
+      });
+      stateUpdate = { ...stateUpdate, config: builder };
     }
 
     if (Object.keys(stateUpdate).length > 0) {

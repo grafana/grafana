@@ -55,7 +55,8 @@ export function preparePlotConfigBuilder(
   frame: DataFrame,
   theme: GrafanaTheme,
   getTimeRange: () => TimeRange,
-  getTimeZone: () => TimeZone
+  getTimeZone: () => TimeZone,
+  coreOptions: Partial<TimelineCoreOptions>
 ): UPlotConfigBuilder {
   const builder = new UPlotConfigBuilder(getTimeZone);
 
@@ -83,7 +84,7 @@ export function preparePlotConfigBuilder(
     count: frame.fields.length - 1, // number of series/lanes
 
     // should expose in panel config
-    mode: TimelineMode.Spans,
+    mode: coreOptions.mode!,
     laneWidth: 0.9,
 
     /** used only for Grid mode, should expose in panel config */
