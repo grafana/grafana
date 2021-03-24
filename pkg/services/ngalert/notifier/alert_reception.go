@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -29,9 +30,13 @@ type AlertProvider struct {
 	// will be stored in memory and provided via an iterator, for example
 	// GetPendingLegacy() AlertIterator, and the external code will use this
 	// iterator to send to the stage.
-	stage notify.Stage
+	stage    notify.Stage
+	stageMtx sync.Mutex
 }
 
+// NewAlertProvider returns AlertProvider that also supports legacy alerts via PutPostableAlert.
+// The notify.Stage should be of the type notify.RoutingStage or something similar that takes
+// notification channel name from the context.
 func NewAlertProvider(s notify.Stage, m types.Marker, l log.Logger) (*AlertProvider, error) {
 	alerts, err := mem.NewAlerts(context.Background(), m, 30*time.Minute, l)
 	if err != nil {
@@ -74,14 +79,22 @@ func (ap *AlertProvider) PutPostableAlert(alerts ...*PostableAlert) error {
 	}
 
 	for recv, alerts := range groupedAlerts {
+		ap.stageMtx.Lock()
 		ctx := notify.WithReceiverName(context.Background(), recv)
 		_, _, err := ap.stage.Exec(ctx, ap.logger, alerts...)
+		ap.stageMtx.Unlock()
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (ap *AlertProvider) SetStage(s notify.Stage) {
+	ap.stageMtx.Lock()
+	defer ap.stageMtx.Unlock()
+	ap.stage = s
 }
 
 func alertForDelivery(a *PostableAlert) *types.Alert {

@@ -84,7 +84,7 @@ copied panel into the current dashboard.
 
 ### Graph Panel
 
-New enhancements include support for multiple series stacking in histogram mode, thresholds for right Y axis, aligning left and right Y-axes to one level and additional units. More information in the [Graph panel documentation](/features/panels/graph/).
+New enhancements include support for multiple series stacking in histogram mode, thresholds for right Y axis, aligning left and right Y-axes to one level and additional units. More information in the [Graph panel documentation](https://grafana.com/docs/grafana/latest/panels/visualizations/graph-panel/).
 
 ### Table Panel
 

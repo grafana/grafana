@@ -102,14 +102,13 @@ describe('AzureMonitorDatasource', () => {
         datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       });
 
-      it('should return a list of subscriptions', () => {
-        return ctx.ds.metricFindQuery('subscriptions()').then((results: Array<{ text: string; value: string }>) => {
-          expect(results.length).toBe(2);
-          expect(results[0].text).toBe('Primary');
-          expect(results[0].value).toBe('sub1');
-          expect(results[1].text).toBe('Secondary');
-          expect(results[1].value).toBe('sub2');
-        });
+      it('should return a list of subscriptions', async () => {
+        const results = await ctx.ds.metricFindQuery('subscriptions()');
+        expect(results.length).toBe(2);
+        expect(results[0].text).toBe('Primary');
+        expect(results[0].value).toBe('sub1');
+        expect(results[1].text).toBe('Secondary');
+        expect(results[1].value).toBe('sub2');
       });
     });
 
@@ -126,14 +125,13 @@ describe('AzureMonitorDatasource', () => {
         datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       });
 
-      it('should return a list of resource groups', () => {
-        return ctx.ds.metricFindQuery('ResourceGroups()').then((results: Array<{ text: string; value: string }>) => {
-          expect(results.length).toBe(2);
-          expect(results[0].text).toBe('grp1');
-          expect(results[0].value).toBe('grp1');
-          expect(results[1].text).toBe('grp2');
-          expect(results[1].value).toBe('grp2');
-        });
+      it('should return a list of resource groups', async () => {
+        const results = await ctx.ds.metricFindQuery('ResourceGroups()');
+        expect(results.length).toBe(2);
+        expect(results[0].text).toBe('grp1');
+        expect(results[0].value).toBe('grp1');
+        expect(results[1].text).toBe('grp2');
+        expect(results[1].value).toBe('grp2');
       });
     });
 
@@ -153,16 +151,13 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should return a list of resource groups', () => {
-        return ctx.ds
-          .metricFindQuery('ResourceGroups(11112222-eeee-4949-9b2d-9106972f9123)')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toBe(2);
-            expect(results[0].text).toBe('grp1');
-            expect(results[0].value).toBe('grp1');
-            expect(results[1].text).toBe('grp2');
-            expect(results[1].value).toBe('grp2');
-          });
+      it('should return a list of resource groups', async () => {
+        const results = await ctx.ds.metricFindQuery('ResourceGroups(11112222-eeee-4949-9b2d-9106972f9123)');
+        expect(results.length).toBe(2);
+        expect(results[0].text).toBe('grp1');
+        expect(results[0].value).toBe('grp1');
+        expect(results[1].text).toBe('grp2');
+        expect(results[1].value).toBe('grp2');
       });
     });
 
@@ -189,14 +184,11 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should return a list of namespaces', () => {
-        return ctx.ds
-          .metricFindQuery('Namespaces(nodesapp)')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(1);
-            expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
-            expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
-          });
+      it('should return a list of namespaces', async () => {
+        const results = await ctx.ds.metricFindQuery('Namespaces(nodesapp)');
+        expect(results.length).toEqual(1);
+        expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
+        expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
       });
     });
 
@@ -223,14 +215,11 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should return a list of namespaces', () => {
-        return ctx.ds
-          .metricFindQuery('namespaces(11112222-eeee-4949-9b2d-9106972f9123, nodesapp)')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(1);
-            expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
-            expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
-          });
+      it('should return a list of namespaces', async () => {
+        const results = await ctx.ds.metricFindQuery('namespaces(11112222-eeee-4949-9b2d-9106972f9123, nodesapp)');
+        expect(results.length).toEqual(1);
+        expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
+        expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
       });
     });
 
@@ -261,14 +250,11 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should return a list of resource names', () => {
-        return ctx.ds
-          .metricFindQuery('resourceNames(nodeapp, microsoft.insights/components )')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(1);
-            expect(results[0].text).toEqual('nodeapp');
-            expect(results[0].value).toEqual('nodeapp');
-          });
+      it('should return a list of resource names', async () => {
+        const results = await ctx.ds.metricFindQuery('resourceNames(nodeapp, microsoft.insights/components )');
+        expect(results.length).toEqual(1);
+        expect(results[0].text).toEqual('nodeapp');
+        expect(results[0].value).toEqual('nodeapp');
       });
     });
 
@@ -347,17 +333,16 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should return a list of metric names', () => {
-        return ctx.ds
-          .metricFindQuery('Metricnames(nodeapp, microsoft.insights/components, rn, default)')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(2);
-            expect(results[0].text).toEqual('Percentage CPU');
-            expect(results[0].value).toEqual('Percentage CPU');
+      it('should return a list of metric names', async () => {
+        const results = await ctx.ds.metricFindQuery(
+          'Metricnames(nodeapp, microsoft.insights/components, rn, default)'
+        );
+        expect(results.length).toEqual(2);
+        expect(results[0].text).toEqual('Percentage CPU');
+        expect(results[0].value).toEqual('Percentage CPU');
 
-            expect(results[1].text).toEqual('Used capacity');
-            expect(results[1].value).toEqual('UsedCapacity');
-          });
+        expect(results[1].text).toEqual('Used capacity');
+        expect(results[1].value).toEqual('UsedCapacity');
       });
     });
 
@@ -396,19 +381,16 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should return a list of metric names', () => {
-        return ctx.ds
-          .metricFindQuery(
-            'Metricnames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components, rn, default)'
-          )
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(2);
-            expect(results[0].text).toEqual('Percentage CPU');
-            expect(results[0].value).toEqual('Percentage CPU');
+      it('should return a list of metric names', async () => {
+        const results = await ctx.ds.metricFindQuery(
+          'Metricnames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components, rn, default)'
+        );
+        expect(results.length).toEqual(2);
+        expect(results[0].text).toEqual('Percentage CPU');
+        expect(results[0].value).toEqual('Percentage CPU');
 
-            expect(results[1].text).toEqual('Used capacity');
-            expect(results[1].value).toEqual('UsedCapacity');
-          });
+        expect(results[1].text).toEqual('Used capacity');
+        expect(results[1].value).toEqual('UsedCapacity');
       });
     });
 
@@ -446,17 +428,14 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should return a list of metric names', () => {
-        return ctx.ds
-          .metricFindQuery('Metricnamespace(nodeapp, Microsoft.Compute/virtualMachines, rn)')
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(2);
-            expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
-            expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
+      it('should return a list of metric names', async () => {
+        const results = await ctx.ds.metricFindQuery('Metricnamespace(nodeapp, Microsoft.Compute/virtualMachines, rn)');
+        expect(results.length).toEqual(2);
+        expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
+        expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
 
-            expect(results[1].text).toEqual('Telegraf-mem');
-            expect(results[1].value).toEqual('Telegraf/mem');
-          });
+        expect(results[1].text).toEqual('Telegraf-mem');
+        expect(results[1].value).toEqual('Telegraf/mem');
       });
     });
 
@@ -494,19 +473,16 @@ describe('AzureMonitorDatasource', () => {
         });
       });
 
-      it('should return a list of metric namespaces', () => {
-        return ctx.ds
-          .metricFindQuery(
-            'Metricnamespace(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, Microsoft.Compute/virtualMachines, rn)'
-          )
-          .then((results: Array<{ text: string; value: string }>) => {
-            expect(results.length).toEqual(2);
-            expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
-            expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
+      it('should return a list of metric namespaces', async () => {
+        const results = await ctx.ds.metricFindQuery(
+          'Metricnamespace(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, Microsoft.Compute/virtualMachines, rn)'
+        );
+        expect(results.length).toEqual(2);
+        expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
+        expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
 
-            expect(results[1].text).toEqual('Telegraf-mem');
-            expect(results[1].value).toEqual('Telegraf/mem');
-          });
+        expect(results[1].text).toEqual('Telegraf-mem');
+        expect(results[1].value).toEqual('Telegraf/mem');
       });
     });
   });

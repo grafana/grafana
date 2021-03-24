@@ -13,13 +13,6 @@ import (
 
 var varRegex = regexp.MustCompile(`(\$\{.+?\})`)
 
-type ImportDashboardInput struct {
-	Type     string `json:"type"`
-	PluginId string `json:"pluginId"`
-	Name     string `json:"name"`
-	Value    string `json:"value"`
-}
-
 type DashboardInputMissingError struct {
 	VariableName string
 }
@@ -29,7 +22,7 @@ func (e DashboardInputMissingError) Error() string {
 }
 
 func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
-	overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser,
+	overwrite bool, inputs []plugins.ImportDashboardInput, user *models.SignedInUser,
 	requestHandler plugins.DataRequestHandler) (plugins.PluginDashboardInfoDTO, error) {
 	var dashboard *models.Dashboard
 	if pluginID != "" {
@@ -67,7 +60,7 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 		User:      user,
 	}
 
-	savedDash, err := dashboards.NewService().ImportDashboard(dto)
+	savedDash, err := dashboards.NewService(pm.SQLStore).ImportDashboard(dto)
 	if err != nil {
 		return plugins.PluginDashboardInfoDTO{}, err
 	}
@@ -89,12 +82,12 @@ func (pm *PluginManager) ImportDashboard(pluginID, path string, orgID, folderID 
 
 type DashTemplateEvaluator struct {
 	template  *simplejson.Json
-	inputs    []ImportDashboardInput
+	inputs    []plugins.ImportDashboardInput
 	variables map[string]string
 	result    *simplejson.Json
 }
 
-func (e *DashTemplateEvaluator) findInput(varName string, varType string) *ImportDashboardInput {
+func (e *DashTemplateEvaluator) findInput(varName string, varType string) *plugins.ImportDashboardInput {
 	for _, input := range e.inputs {
 		if varType == input.Type && (input.Name == varName || input.Name == "*") {
 			return &input
