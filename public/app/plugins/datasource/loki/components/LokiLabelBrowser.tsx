@@ -364,16 +364,13 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       return <LoadingPlaceholder text="Loading labels..." />;
     }
     const styles = getStyles(theme);
-    let matcher: RegExp;
     let selectedLabels = labels.filter((label) => label.selected && label.values);
     if (searchTerm) {
       // TODO extract from render() and debounce
-      try {
-        selectedLabels = selectedLabels.map((label) => ({
-          ...label,
-          values: label.values?.filter((value) => value.selected || value.name.includes(searchTerm)),
-        }));
-      } catch (error) {}
+      selectedLabels = selectedLabels.map((label) => ({
+        ...label,
+        values: label.values?.filter((value) => value.selected || value.name.includes(searchTerm)),
+      }));
     }
     const selector = buildSelector(this.state.labels);
     const empty = selector === EMPTY_SELECTOR;
@@ -438,7 +435,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                           value={value?.name}
                           active={value?.selected}
                           onClick={this.onClickValue}
-                          searchTerm={matcher}
+                          searchTerm={searchTerm}
                         />
                       </div>
                     );
