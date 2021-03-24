@@ -20,7 +20,7 @@ interface Props {
 export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
   const plugin = useSelector((state: StoreState) => state.plugins.panels[panel.type]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [listMode, setListMode] = useState('types');
+  const [listMode, setListMode] = useState(ListMode.Globals);
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -69,10 +69,9 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
     return null;
   }
 
-  const radioOptions: Array<SelectableValue<string>> = [
-    { label: 'Visualizations', value: 'types' },
-    { label: 'Libray', value: 'library' },
-    { label: 'Explore', value: 'explore' },
+  const radioOptions: Array<SelectableValue<ListMode>> = [
+    { label: 'Visualizations', value: ListMode.Visualizations },
+    { label: 'Global panels', value: ListMode.Globals },
   ];
 
   return (
@@ -106,7 +105,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
           <div className={styles.scrollContent}>
-            {listMode === 'types' && (
+            {listMode === ListMode.Visualizations && (
               <VizTypePicker
                 current={plugin.meta}
                 onTypeChange={onPluginTypeChange}
@@ -114,7 +113,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
                 onClose={() => {}}
               />
             )}
-            {listMode === 'library' && (
+            {listMode === ListMode.Globals && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
             )}
           </div>
@@ -123,6 +122,11 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
     </div>
   );
 };
+
+enum ListMode {
+  Visualizations,
+  Globals,
+}
 
 VisualizationSelectPane.displayName = 'VisualizationSelectPane';
 

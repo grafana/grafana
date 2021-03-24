@@ -73,11 +73,6 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-grow: 1;
       min-height: 0;
     `,
-    paneBg: css`
-      background: ${theme.colors.bg1};
-      border: 1px solid ${theme.colors.border1};
-      flex-grow: 1;
-    `,
     vizButtonWrapper: css`
       padding: 0 0 ${theme.spacing.md} 0;
     `,

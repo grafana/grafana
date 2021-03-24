@@ -160,7 +160,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     padding: ${theme.spacing.sm};
     background: ${theme.colors.bg1};
     border: 1px solid ${theme.colors.border1};
-    border-bottom: 0;
+    border-bottom: none;
   `,
   closeButton: css`
     margin-left: ${theme.spacing.sm};
@@ -173,16 +173,16 @@ const getStyles = (theme: GrafanaTheme) => ({
     min-height: 0;
   `,
   searchNotice: css`
-    text-align: center;
     font-size: ${theme.typography.size.sm};
     color: ${theme.colors.textWeak};
     padding: ${theme.spacing.sm};
+    text-align: center;
   `,
   mainBox: css`
     background: ${theme.colors.bg1};
+    margin-bottom: ${theme.spacing.md};
     border: 1px solid ${theme.colors.border1};
     border-top: none;
-    margin-bottom: ${theme.spacing.md};
   `,
   overridesBox: css`
     background: ${theme.colors.bg1};
