@@ -249,7 +249,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	pluginID := c.Params("pluginId")
 	plugin := hs.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
-		c.Handle(hs.Cfg, 404, "Plugin not found parameters error", nil)
+		c.Handle(hs.Cfg, 404, "Plugin not found", nil)
 		return
 	}
 
@@ -265,8 +265,8 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 
 	requestedFile := c.Params("*")
 
-	// security check
-	if strings.Contains(requestedFile, string(filepath.Separator)) {
+	// forbid directory changes
+	if strings.Contains(requestedFile, ".."+string(filepath.Separator)) {
 		c.Handle(hs.Cfg, 400, "Could not open plugin file", nil)
 		return
 	}
