@@ -64,7 +64,8 @@ func (am *Alertmanager) IsDisabled() bool {
 
 func (am *Alertmanager) Init() (err error) {
 	am.logger = log.New("alertmanager")
-	am.marker = types.NewMarker(prometheus.DefaultRegisterer)
+	r := prometheus.NewRegistry()
+	am.marker = types.NewMarker(r)
 	am.Store = store.DBstore{SQLStore: am.SQLStore}
 
 	am.notificationLog, err = nflog.New(
