@@ -582,9 +582,11 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
         map((results: any) => {
           if (results.status !== 200 || typeof results.data !== 'object') {
             if (typeof results.data === 'string') {
-              // Fix for a Graphite bug: https://github.com/graphite-project/graphite-web/pull/2612
-              // The fix in Graphite project was merged to master in July 2020 but it has never been
-              // released (the last Graphite release was 1.1.7 - March 2020)
+              // Fix for a Graphite bug: https://github.com/graphite-project/graphite-web/issues/2609
+              // There is a fix for it https://github.com/graphite-project/graphite-web/pull/2612 but
+              // it was merged to master in July 2020 but it has never been released (the last Graphite
+              // release was 1.1.7 - March 2020). The bug was introduced in Graphite 1.1.7, in versions
+              // 1.1.0 - 1.1.6 /functions endpoint returns a valid JSON
               const fixedData = JSON.parse(results.data.replace(/"default": Infinity/g, '"default": 1e9999'));
               this.funcDefs = gfunc.parseFuncDefs(fixedData);
             } else {
