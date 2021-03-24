@@ -167,18 +167,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   renderDataOptions(dataFrames: DataFrame[]) {
     const { options, onOptionsChange, panel, data } = this.props;
-    if (!panel || !onOptionsChange) {
-      return null;
-    }
     const { transformId, transformationOptions, selectedDataFrame } = this.state;
 
     const styles = getPanelInspectorStyles();
 
-    const panelTransformations = panel.getTransformations();
+    const panelTransformations = panel?.getTransformations();
     const showPanelTransformationsOption =
-      panelTransformations && panelTransformations.length > 0 && (transformId as any) !== 'join by time';
-    const showFieldConfigsOption = !panel.plugin?.fieldConfigRegistry.isEmpty();
-    const showDataOptions = showPanelTransformationsOption || showFieldConfigsOption;
+      Boolean(panelTransformations?.length) && (transformId as any) !== 'join by time';
+    const showFieldConfigsOption = panel && !panel.plugin?.fieldConfigRegistry.isEmpty();
 
     let dataSelect = dataFrames;
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
@@ -194,10 +190,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     const selectableOptions = [...transformationOptions, ...choices];
 
-    if (!showDataOptions) {
-      return null;
-    }
-
     return (
       <QueryOperationRow
         id="Data options"
@@ -206,7 +198,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
         headerElement={<DetailText>{this.getActiveString()}</DetailText>}
         isOpen={false}
       >
-        <div className={styles.options}>
+        <div className={styles.options} data-testid="dataOptions">
           <VerticalGroup spacing="none">
             {data!.length > 1 && (
               <Field label="Show data frame">
@@ -215,12 +207,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   value={selectedDataFrame}
                   onChange={this.onDataFrameChange}
                   width={30}
+                  aria-label="Select dataframe"
                 />
               </Field>
             )}
 
             <HorizontalGroup>
-              {showPanelTransformationsOption && (
+              {showPanelTransformationsOption && onOptionsChange && (
                 <Field
                   label="Apply panel transformations"
                   description="Table data is displayed with transformations defined in the panel Transform tab."
@@ -231,7 +224,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   />
                 </Field>
               )}
-              {showFieldConfigsOption && (
+              {showFieldConfigsOption && onOptionsChange && (
                 <Field
                   label="Formatted data"
                   description="Table data is formatted with options defined in the Field and Override tabs."
