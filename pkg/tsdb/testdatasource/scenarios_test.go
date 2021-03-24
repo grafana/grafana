@@ -190,12 +190,6 @@ func TestTestdataScenarios(t *testing.T) {
 		t.Run("should support nulls and return all data", func(t *testing.T) {
 			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
-			// body := strings.NewReader(
-
-			// model := simplejson.NewFromReader(body)
-			// modelBytes, err := model.MarshalJSON()
-			// require.NoError(t, err)
-
 			query := backend.DataQuery{
 				RefID: "A",
 				TimeRange: backend.TimeRange{
