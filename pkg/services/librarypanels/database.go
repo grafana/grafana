@@ -183,9 +183,6 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid str
 			return errLibraryPanelHasConnectedDashboards
 		}
 
-		if _, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=?", panel.ID); err != nil {
-			return err
-		}
 		result, err := session.Exec("DELETE FROM library_panel WHERE id=?", panel.ID)
 		if err != nil {
 			return err
