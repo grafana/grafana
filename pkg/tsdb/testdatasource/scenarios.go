@@ -299,7 +299,7 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 		for _, val := range points {
 			pointValues := val.([]interface{})
 
-			var value *float64 = nil
+			var value *float64
 
 			if pointValues[0] != nil {
 				if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
