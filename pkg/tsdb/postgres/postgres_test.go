@@ -250,32 +250,35 @@ func TestPostgres(t *testing.T) {
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
 
-			column := queryResult.Tables[0].Rows[0]
-			require.Equal(t, int64(1), column[0].(int64))
-			require.Equal(t, int64(2), column[1].(int64))
-			require.Equal(t, int64(3), column[2].(int64))
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 16, len(frames[0].Fields))
 
-			require.Equal(t, float64(4.5), column[3].(float64))
-			require.Equal(t, float64(6.7), column[4].(float64))
-			require.Equal(t, float64(1.1), column[5].(float64))
-			require.Equal(t, float64(1.2), column[6].(float64))
+			require.Equal(t, int16(1), *frames[0].Fields[0].At(0).(*int16))
+			require.Equal(t, int32(2), *frames[0].Fields[1].At(0).(*int32))
+			require.Equal(t, int64(3), *frames[0].Fields[2].At(0).(*int64))
 
-			require.Equal(t, "char10    ", column[7].(string))
-			require.Equal(t, "varchar10", column[8].(string))
-			require.Equal(t, "text", column[9].(string))
+			require.Equal(t, float64(4.5), *frames[0].Fields[3].At(0).(*float64))
+			require.Equal(t, float64(6.7), *frames[0].Fields[4].At(0).(*float64))
+			require.Equal(t, float64(1.1), *frames[0].Fields[5].At(0).(*float64))
+			require.Equal(t, float64(1.2), *frames[0].Fields[6].At(0).(*float64))
 
-			_, ok := column[10].(time.Time)
+			require.Equal(t, "char10    ", *frames[0].Fields[7].At(0).(*string))
+			require.Equal(t, "varchar10", *frames[0].Fields[8].At(0).(*string))
+			require.Equal(t, "text", *frames[0].Fields[9].At(0).(*string))
+
+			_, ok := frames[0].Fields[10].At(0).(*time.Time)
 			require.True(t, ok)
-			_, ok = column[11].(time.Time)
+			_, ok = frames[0].Fields[11].At(0).(*time.Time)
 			require.True(t, ok)
-			_, ok = column[12].(time.Time)
+			_, ok = frames[0].Fields[12].At(0).(*time.Time)
 			require.True(t, ok)
-			_, ok = column[13].(time.Time)
+			_, ok = frames[0].Fields[13].At(0).(*time.Time)
 			require.True(t, ok)
-			_, ok = column[14].(time.Time)
+			_, ok = frames[0].Fields[14].At(0).(*time.Time)
 			require.True(t, ok)
 
-			require.Equal(t, "00:15:00", column[15].(string))
+			require.Equal(t, "00:15:00", *frames[0].Fields[15].At(0).(*string))
 		})
 	})
 
@@ -910,7 +913,10 @@ func TestPostgres(t *testing.T) {
 			resp, err := exe.DataQuery(context.Background(), nil, query)
 			queryResult := resp.Results["Deploys"]
 			require.NoError(t, err)
-			require.Len(t, queryResult.Tables[0].Rows, 3)
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 3, len(frames[0].Fields))
 		})
 
 		t.Run("When doing an annotation query of ticket events should return expected result", func(t *testing.T) {
@@ -933,7 +939,10 @@ func TestPostgres(t *testing.T) {
 			resp, err := exe.DataQuery(context.Background(), nil, query)
 			queryResult := resp.Results["Tickets"]
 			require.NoError(t, err)
-			require.Len(t, queryResult.Tables[0].Rows, 3)
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 3, len(frames[0].Fields))
 		})
 
 		t.Run("When doing an annotation query with a time column in datetime format", func(t *testing.T) {
@@ -960,11 +969,12 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
-			require.Len(t, queryResult.Tables[0].Rows, 1)
-			columns := queryResult.Tables[0].Rows[0]
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 3, len(frames[0].Fields))
 
 			//Should be in milliseconds
-			require.Equal(t, float64(dt.UnixNano()/1e6), columns[0].(float64))
+			// require.Equal(t, dt, *frames[0].Fields[0].At(0).(*time.Time))
 		})
 
 		t.Run("When doing an annotation query with a time column in epoch second format should return ms", func(t *testing.T) {
@@ -990,11 +1000,13 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
-			require.Len(t, queryResult.Tables[0].Rows, 1)
-			columns := queryResult.Tables[0].Rows[0]
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 3, len(frames[0].Fields))
 
 			//Should be in milliseconds
-			require.Equal(t, dt.Unix()*1000, columns[0].(int64))
+			// require.Equal(t, dt.Unix()*1000, *frames[0].Fields[0].At(0).(*int32))
 		})
 
 		t.Run("When doing an annotation query with a time column in epoch second format (t *testing.Tint) should return ms", func(t *testing.T) {
@@ -1020,11 +1032,13 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
-			require.Len(t, queryResult.Tables[0].Rows, 1)
-			columns := queryResult.Tables[0].Rows[0]
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 3, len(frames[0].Fields))
 
 			//Should be in milliseconds
-			require.Equal(t, dt.Unix()*1000, columns[0].(int64))
+			// require.Equal(t, dt.Unix()*1000, *frames[0].Fields[0].At(0).(*int64))
 		})
 
 		t.Run("When doing an annotation query with a time column in epoch millisecond format should return ms", func(t *testing.T) {
@@ -1050,11 +1064,13 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
-			require.Len(t, queryResult.Tables[0].Rows, 1)
-			columns := queryResult.Tables[0].Rows[0]
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 3, len(frames[0].Fields))
 
 			//Should be in milliseconds
-			require.Equal(t, dt.Unix()*1000, columns[0].(int64))
+			require.Equal(t, dt.Unix()*1000, *frames[0].Fields[0].At(0).(*int64))
 		})
 
 		t.Run("When doing an annotation query with a time column holding a bigint null value should return nil", func(t *testing.T) {
@@ -1078,11 +1094,13 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
-			require.Len(t, queryResult.Tables[0].Rows, 1)
-			columns := queryResult.Tables[0].Rows[0]
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 3, len(frames[0].Fields))
 
 			//Should be in milliseconds
-			require.Nil(t, columns[0])
+			require.Nil(t, frames[0].Fields[0].At(0))
 		})
 
 		t.Run("When doing an annotation query with a time column holding a timestamp null value should return nil", func(t *testing.T) {
@@ -1106,11 +1124,13 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
-			require.Len(t, queryResult.Tables[0].Rows, 1)
-			columns := queryResult.Tables[0].Rows[0]
+
+			frames, _ := queryResult.Dataframes.Decoded()
+			require.Equal(t, 1, len(frames))
+			require.Equal(t, 3, len(frames[0].Fields))
 
 			//Should be in milliseconds
-			assert.Nil(t, columns[0])
+			assert.Nil(t, frames[0].Fields[0].At(0))
 		})
 	})
 }

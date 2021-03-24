@@ -990,8 +990,9 @@ func TestMSSQL(t *testing.T) {
 				frames, _ := queryResult.Dataframes.Decoded()
 				So(len(frames), ShouldEqual, 1)
 				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
+
 				// Should be in milliseconds
-				// So(frames[0].Fields[0].At(0), ShouldEqual, float64(dt.UnixNano()/1e6))
+				So(frames[0].Fields[0].At(0).(float64), ShouldEqual, float64(dt.UnixNano()/1e6))
 			})
 
 			Convey("When doing an annotation query with a time column in epoch second format should return ms", func() {
