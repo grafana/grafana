@@ -23,7 +23,7 @@ import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -104,11 +104,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.languageProvider = new LanguageProvider(this);
   }
 
-  private request(method: string, url: string, data?: undefined): Observable<any> {
-    const options: any = {
+  private request(
+    method: string,
+    url: string,
+    data?: undefined,
+    headers?: BackendSrvRequest['headers']
+  ): Observable<any> {
+    const options: BackendSrvRequest = {
       url: this.url + '/' + url,
-      method: method,
-      data: data,
+      method,
+      data,
+      headers,
     };
 
     if (this.basicAuth || this.withCredentials) {
@@ -192,7 +198,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   private post(url: string, data: any): Observable<any> {
-    return this.request('POST', url, data);
+    return this.request('POST', url, data, { 'Content-Type': 'application/x-ndjson' });
   }
 
   annotationQuery(options: any): Promise<any> {
