@@ -74,7 +74,7 @@ describe('Azure Monitor QueryEditor', () => {
     mockDatasource.azureMonitorDatasource.getSubscriptions = jest.fn().mockRejectedValue(invalidNamespaceError());
     render(
       <QueryEditor
-        query={mockQuery}
+        query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={() => {}}
