@@ -100,7 +100,7 @@ const series: GraphSeriesXY[] = [
 ];
 
 interface StoryProps extends GraphWithLegendProps {
-  rightAxisSeries: boolean;
+  rightAxisSeries: string;
   displayMode: string;
 }
 
@@ -109,11 +109,9 @@ export const WithLegend: Story<StoryProps> = ({ rightAxisSeries, displayMode, le
     series: series.map((s) => {
       if (
         rightAxisSeries
-          ? 'A,C'
-          : ''
-              .split(',')
-              .map((s) => s.trim())
-              .indexOf(s.label.split('-')[0]) > -1
+          .split(',')
+          .map((s) => s.trim())
+          .indexOf(s.label.split('-')[0]) > -1
       ) {
         s.yAxis = { index: 2 };
       } else {
@@ -138,7 +136,7 @@ export const WithLegend: Story<StoryProps> = ({ rightAxisSeries, displayMode, le
   );
 };
 WithLegend.args = {
-  rightAxisSeries: false,
+  rightAxisSeries: '',
   displayMode: 'list',
   onToggleSort: () => {},
   timeRange: {
