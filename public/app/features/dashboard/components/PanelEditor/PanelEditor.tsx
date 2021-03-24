@@ -413,8 +413,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
         <Prompt
           when={true}
-          message={() => {
-            if (!this.props.panel.hasChanged) {
+          message={(location) => {
+            const searchParams = new URLSearchParams(location.search);
+            if (!this.props.panel.libraryPanel || !this.props.panel.hasChanged || searchParams.has('editPanel')) {
               return true;
             }
 
