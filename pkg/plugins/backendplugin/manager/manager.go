@@ -96,6 +96,11 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	return nil
 }
 
+func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
+	p, ok := m.plugins[pluginID]
+	return p, ok
+}
+
 func (m *manager) getAWSEnvironmentVariables() []string {
 	variables := []string{}
 	if m.Cfg.AWSAssumeRoleEnabled {

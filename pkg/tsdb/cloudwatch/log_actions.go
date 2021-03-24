@@ -10,21 +10,27 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
 	"golang.org/x/sync/errgroup"
 )
 
-func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
-	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
-	resultChan := make(chan plugins.DataQueryResult, len(queryContext.Queries))
+func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	resultChan := make(chan backend.Responses, len(req.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
 
-	for _, query := range queryContext.Queries {
+	for _, query := range req.Queries {
+		model, err := simplejson.NewJson(query.JSON)
+		if err != nil {
+			return nil, err
+		}
+
 		query := query
 		eg.Go(func() error {
-			dataframe, err := e.executeLogAction(ectx, queryContext, query)
+			dataframe, err := e.executeLogAction(ectx, model, query, req.PluginContext)
 			if err != nil {
 				return err
 			}
@@ -36,16 +42,15 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
 			// Because of this, if the frontend sees that a "stats ... by ..." query is being made
 			// the "statsGroups" parameter is sent along with the query to the backend so that we
 			// can correctly group the CloudWatch logs response.
-			statsGroups := query.Model.Get("statsGroups").MustStringArray()
+			statsGroups := model.Get("statsGroups").MustStringArray()
 			if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
 				groupedFrames, err := groupResults(dataframe, statsGroups)
 				if err != nil {
 					return err
 				}
 
-				resultChan <- plugins.DataQueryResult{
-					RefID:      query.RefID,
-					Dataframes: plugins.NewDecodedDataFrames(groupedFrames),
+				resultChan <- backend.Responses{
+					query.RefID: backend.DataResponse{Frames: groupedFrames},
 				}
 				return nil
 			}
@@ -58,37 +63,41 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context,
 				}
 			}
 
-			resultChan <- plugins.DataQueryResult{
-				RefID:      query.RefID,
-				Dataframes: plugins.NewDecodedDataFrames(data.Frames{dataframe}),
+			resultChan <- backend.Responses{
+				query.RefID: backend.DataResponse{Frames: data.Frames{dataframe}},
 			}
 			return nil
 		})
 	}
 	if err := eg.Wait(); err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
 	close(resultChan)
 
-	response := plugins.DataResponse{
-		Results: make(map[string]plugins.DataQueryResult),
-	}
 	for result := range resultChan {
-		response.Results[result.RefID] = result
+		for refID, response := range result {
+			respD := resp.Responses[refID]
+			respD.Frames = response.Frames
+			resp.Responses[refID] = respD
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
-func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext plugins.DataQuery,
-	query plugins.DataSubQuery) (*data.Frame, error) {
-	parameters := query.Model
-	subType := query.Model.Get("subtype").MustString()
+func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, model *simplejson.Json, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
+	subType := model.Get("subtype").MustString()
 
-	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
-	region := parameters.Get("region").MustString(defaultRegion)
-	logsClient, err := e.getCWLogsClient(region)
+	dsInfo, err := e.getDSInfo(pluginCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	defaultRegion := dsInfo.region
+
+	region := model.Get("region").MustString(defaultRegion)
+	logsClient, err := e.getCWLogsClient(region, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -97,17 +106,17 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, queryContext 
 
 	switch subType {
 	case "DescribeLogGroups":
-		data, err = e.handleDescribeLogGroups(ctx, logsClient, parameters)
+		data, err = e.handleDescribeLogGroups(ctx, logsClient, model)
 	case "GetLogGroupFields":
-		data, err = e.handleGetLogGroupFields(ctx, logsClient, parameters, query.RefID)
+		data, err = e.handleGetLogGroupFields(ctx, logsClient, model, query.RefID)
 	case "StartQuery":
-		data, err = e.handleStartQuery(ctx, logsClient, parameters, *queryContext.TimeRange, query.RefID)
+		data, err = e.handleStartQuery(ctx, logsClient, model, query.TimeRange, query.RefID)
 	case "StopQuery":
-		data, err = e.handleStopQuery(ctx, logsClient, parameters)
+		data, err = e.handleStopQuery(ctx, logsClient, model)
 	case "GetQueryResults":
-		data, err = e.handleGetQueryResults(ctx, logsClient, parameters, query.RefID)
+		data, err = e.handleGetQueryResults(ctx, logsClient, model, query.RefID)
 	case "GetLogEvents":
-		data, err = e.handleGetLogEvents(ctx, logsClient, parameters)
+		data, err = e.handleGetLogEvents(ctx, logsClient, model)
 	}
 	if err != nil {
 		return nil, err
@@ -200,16 +209,9 @@ func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 }
 
 func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	parameters *simplejson.Json, timeRange plugins.DataTimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
-	startTime, err := timeRange.ParseFrom()
-	if err != nil {
-		return nil, err
-	}
-
-	endTime, err := timeRange.ParseTo()
-	if err != nil {
-		return nil, err
-	}
+	parameters *simplejson.Json, timeRange backend.TimeRange) (*cloudwatchlogs.StartQueryOutput, error) {
+	startTime := timeRange.From
+	endTime := timeRange.To
 
 	if !startTime.Before(endTime) {
 		return nil, fmt.Errorf("invalid time range: start time must be before end time")
@@ -237,8 +239,8 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 }
 
 func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	parameters *simplejson.Json, timeRange plugins.DataTimeRange, refID string) (*data.Frame, error) {
-	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, parameters, timeRange)
+	model *simplejson.Json, timeRange backend.TimeRange, refID string) (*data.Frame, error) {
+	startQueryResponse, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +248,7 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	dataFrame := data.NewFrame(refID, data.NewField("queryId", nil, []string{*startQueryResponse.QueryId}))
 	dataFrame.RefID = refID
 
-	clientRegion := parameters.Get("region").MustString("default")
+	clientRegion := model.Get("region").MustString("default")
 
 	dataFrame.Meta = &data.FrameMeta{
 		Custom: map[string]interface{}{

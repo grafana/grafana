@@ -119,16 +119,16 @@ type RulerApiMock struct {
 }
 
 func (mock RulerApiMock) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteDeleteNamespaceRulesConfig: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteDeleteNamespaceRulesConfig: ", "Recipient", recipient)
 	namespace := c.Params(":Namespace")
 	mock.log.Info("RouteDeleteNamespaceRulesConfig: ", "Namespace", namespace)
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
 }
 
 func (mock RulerApiMock) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteDeleteRuleGroupConfig: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteDeleteRuleGroupConfig: ", "Recipient", recipient)
 	namespace := c.Params(":Namespace")
 	mock.log.Info("RouteDeleteRuleGroupConfig: ", "Namespace", namespace)
 	groupname := c.Params(":Groupname")
@@ -137,8 +137,8 @@ func (mock RulerApiMock) RouteDeleteRuleGroupConfig(c *models.ReqContext) respon
 }
 
 func (mock RulerApiMock) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteGetNamespaceRulesConfig: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteGetNamespaceRulesConfig: ", "Recipient", recipient)
 	namespace := c.Params(":Namespace")
 	mock.log.Info("RouteGetNamespaceRulesConfig: ", "Namespace", namespace)
 	result := apimodels.NamespaceConfigResponse{
@@ -181,8 +181,8 @@ func (mock RulerApiMock) RouteGetNamespaceRulesConfig(c *models.ReqContext) resp
 }
 
 func (mock RulerApiMock) RouteGetRulegGroupConfig(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteGetRulegGroupConfig: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteGetRulegGroupConfig: ", "Recipient", recipient)
 	namespace := c.Params(":Namespace")
 	mock.log.Info("RouteGetRulegGroupConfig: ", "Namespace", namespace)
 	groupname := c.Params(":Groupname")
@@ -212,8 +212,8 @@ func (mock RulerApiMock) RouteGetRulegGroupConfig(c *models.ReqContext) response
 }
 
 func (mock RulerApiMock) RouteGetRulesConfig(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteGetRulesConfig: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteGetRulesConfig: ", "Recipient", recipient)
 	result := apimodels.NamespaceConfigResponse{
 		"namespace1": []apimodels.RuleGroupConfig{
 			{
@@ -286,8 +286,8 @@ func (mock RulerApiMock) RouteGetRulesConfig(c *models.ReqContext) response.Resp
 }
 
 func (mock RulerApiMock) RoutePostNameRulesConfig(c *models.ReqContext, body apimodels.RuleGroupConfig) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RoutePostNameRulesConfig: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RoutePostNameRulesConfig: ", "Recipient", recipient)
 	namespace := c.Params(":Namespace")
 	mock.log.Info("RoutePostNameRulesConfig: ", "Namespace", namespace)
 	mock.log.Info("RoutePostNameRulesConfig: ", "body", body)

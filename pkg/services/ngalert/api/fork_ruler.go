@@ -6,27 +6,29 @@ import (
 	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // ForkedRuler will validate and proxy requests to the correct backend type depending on the datasource.
 type ForkedRuler struct {
 	LotexRuler, GrafanaRuler RulerApiService
+	DatasourceCache          datasources.CacheService
 }
 
-func NewForkedRuler(lotex, grafana RulerApiService) *ForkedRuler {
+func NewForkedRuler(datasourceCache datasources.CacheService, lotex, grafana RulerApiService) *ForkedRuler {
 	return &ForkedRuler{
-		LotexRuler:   lotex,
-		GrafanaRuler: grafana,
+		LotexRuler:      lotex,
+		GrafanaRuler:    grafana,
+		DatasourceCache: datasourceCache,
 	}
 }
 
-func (r *ForkedRuler) backendType(ctx *models.ReqContext) apimodels.Backend {
-	// TODO: implement, hardcoded for now
-	return apimodels.LoTexRulerBackend
-}
-
 func (r *ForkedRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	switch t := r.backendType(ctx); t {
+	t, err := backendType(ctx, r.DatasourceCache)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	switch t {
 	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RouteDeleteNamespaceRulesConfig(ctx)
 	case apimodels.LoTexRulerBackend:
@@ -37,7 +39,11 @@ func (r *ForkedRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) re
 }
 
 func (r *ForkedRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
-	switch t := r.backendType(ctx); t {
+	t, err := backendType(ctx, r.DatasourceCache)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	switch t {
 	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RouteDeleteRuleGroupConfig(ctx)
 	case apimodels.LoTexRulerBackend:
@@ -48,7 +54,11 @@ func (r *ForkedRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) respons
 }
 
 func (r *ForkedRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
-	switch t := r.backendType(ctx); t {
+	t, err := backendType(ctx, r.DatasourceCache)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	switch t {
 	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RouteGetNamespaceRulesConfig(ctx)
 	case apimodels.LoTexRulerBackend:
@@ -59,7 +69,11 @@ func (r *ForkedRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respo
 }
 
 func (r *ForkedRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
-	switch t := r.backendType(ctx); t {
+	t, err := backendType(ctx, r.DatasourceCache)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	switch t {
 	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RouteGetRulegGroupConfig(ctx)
 	case apimodels.LoTexRulerBackend:
@@ -70,7 +84,11 @@ func (r *ForkedRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.
 }
 
 func (r *ForkedRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
-	switch t := r.backendType(ctx); t {
+	t, err := backendType(ctx, r.DatasourceCache)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+	switch t {
 	case apimodels.GrafanaBackend:
 		return r.GrafanaRuler.RouteGetRulesConfig(ctx)
 	case apimodels.LoTexRulerBackend:
@@ -81,7 +99,10 @@ func (r *ForkedRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respo
 }
 
 func (r *ForkedRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.RuleGroupConfig) response.Response {
-	backendType := r.backendType(ctx)
+	backendType, err := backendType(ctx, r.DatasourceCache)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
 	payloadType := conf.Type()
 
 	if backendType != payloadType {

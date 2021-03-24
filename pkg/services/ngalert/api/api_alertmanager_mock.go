@@ -524,29 +524,29 @@ type AlertmanagerApiMock struct {
 }
 
 func (mock AlertmanagerApiMock) RouteCreateSilence(c *models.ReqContext, body apimodels.SilenceBody) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteCreateSilence: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteCreateSilence: ", "Recipient", recipient)
 	mock.log.Info("RouteCreateSilence: ", "body", body)
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "silence created"})
 }
 
 func (mock AlertmanagerApiMock) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteDeleteAlertingConfig: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteDeleteAlertingConfig: ", "Recipient", recipient)
 	return response.JSON(http.StatusOK, util.DynMap{"message": "config deleted"})
 }
 
 func (mock AlertmanagerApiMock) RouteDeleteSilence(c *models.ReqContext) response.Response {
 	silenceID := c.Params(":SilenceId")
 	mock.log.Info("RouteDeleteSilence: ", "SilenceId", silenceID)
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteDeleteSilence: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteDeleteSilence: ", "Recipient", recipient)
 	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
 }
 
 func (mock AlertmanagerApiMock) RouteGetAlertingConfig(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteGetAlertingConfig: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteGetAlertingConfig: ", "Recipient", recipient)
 	// now := time.Now()
 	result := apimodels.GettableUserConfig{
 		TemplateFiles: map[string]string{
@@ -554,7 +554,7 @@ func (mock AlertmanagerApiMock) RouteGetAlertingConfig(c *models.ReqContext) res
 			"tmpl2": "val2",
 		},
 		AlertmanagerConfig: apimodels.GettableApiAlertingConfig{
-			Config: config.Config{
+			Config: apimodels.Config{
 				Global:       &config.GlobalConfig{},
 				Route:        &config.Route{},
 				InhibitRules: []*config.InhibitRule{},
@@ -594,8 +594,8 @@ func (mock AlertmanagerApiMock) RouteGetAlertingConfig(c *models.ReqContext) res
 }
 
 func (mock AlertmanagerApiMock) RouteGetAmAlertGroups(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteGetAmAlertGroups: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteGetAmAlertGroups: ", "Recipient", recipient)
 	now := time.Now()
 	result := apimodels.AlertGroups{
 		&amv2.AlertGroup{
@@ -715,8 +715,8 @@ func (mock AlertmanagerApiMock) RouteGetAmAlertGroups(c *models.ReqContext) resp
 }
 
 func (mock AlertmanagerApiMock) RouteGetAmAlerts(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteGetAmAlerts: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteGetAmAlerts: ", "Recipient", recipient)
 	now := time.Now()
 	result := apimodels.GettableAlerts{
 		&amv2.GettableAlert{
@@ -786,8 +786,8 @@ func (mock AlertmanagerApiMock) RouteGetAmAlerts(c *models.ReqContext) response.
 func (mock AlertmanagerApiMock) RouteGetSilence(c *models.ReqContext) response.Response {
 	silenceID := c.Params(":SilenceId")
 	mock.log.Info("RouteGetSilence: ", "SilenceId", silenceID)
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteGetSilence: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteGetSilence: ", "Recipient", recipient)
 	now := time.Now()
 	result := apimodels.GettableSilence{
 		ID: stringPtr("id"),
@@ -818,8 +818,8 @@ func (mock AlertmanagerApiMock) RouteGetSilence(c *models.ReqContext) response.R
 }
 
 func (mock AlertmanagerApiMock) RouteGetSilences(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RouteGetSilences: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteGetSilences: ", "Recipient", recipient)
 	now := time.Now()
 	result := apimodels.GettableSilences{
 		&amv2.GettableSilence{
@@ -877,15 +877,15 @@ func (mock AlertmanagerApiMock) RouteGetSilences(c *models.ReqContext) response.
 }
 
 func (mock AlertmanagerApiMock) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RoutePostAlertingConfig: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RoutePostAlertingConfig: ", "Recipient", recipient)
 	mock.log.Info("RoutePostAlertingConfig: ", "body", body)
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 }
 
 func (mock AlertmanagerApiMock) RoutePostAmAlerts(c *models.ReqContext, body apimodels.PostableAlerts) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	mock.log.Info("RoutePostAmAlerts: ", "DatasourceId", datasourceID)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RoutePostAmAlerts: ", "Recipient", recipient)
 	mock.log.Info("RoutePostAmAlerts: ", "body", body)
 	return response.JSON(http.StatusOK, util.DynMap{"message": "alerts created"})
 }

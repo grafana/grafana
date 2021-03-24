@@ -134,14 +134,17 @@ type UpdateAlertDefinitionPausedCommand struct {
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
-	RefID string `json:"refId"`
-	OrgID int64  `json:"-"`
+	// Condition is the RefID of the query or expression from
+	// the Data property to get the results for.
+	Condition string `json:"condition"`
+	OrgID     int64  `json:"-"`
 
-	QueriesAndExpressions []AlertQuery `json:"queriesAndExpressions"`
+	// Data is an array of data source queries and/or server side expressions.
+	Data []AlertQuery `json:"data"`
 }
 
 // IsValid checks the condition's validity.
 func (c Condition) IsValid() bool {
 	// TODO search for refIDs in QueriesAndExpressions
-	return len(c.QueriesAndExpressions) != 0
+	return len(c.Data) != 0
 }
