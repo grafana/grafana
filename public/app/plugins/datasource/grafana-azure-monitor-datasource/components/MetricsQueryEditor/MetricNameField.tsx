@@ -3,15 +3,17 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../common';
+import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
+const ERROR_SOURCE = 'metrics-metricname';
 const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  setError,
 }) => {
   const [metricNames, setMetricNames] = useState<AzureMonitorOption[]>([]);
 
@@ -28,10 +30,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
       .then((results) => {
         setMetricNames(results.map(toOption));
       })
-      .catch((err) => {
-        // TODO: handle error
-        console.error(err);
-      });
+      .catch((err) => setError(ERROR_SOURCE, err));
   }, [
     subscriptionId,
     query.azureMonitor.resourceGroup,
