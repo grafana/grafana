@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -13,8 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,14 +29,14 @@ func TestQuery_Metrics(t *testing.T) {
 		NewCWClient = origNewCWClient
 	})
 
-	var client FakeCWClient
+	var cwClient FakeCWClient
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return client
+		return cwClient
 	}
 
 	t.Run("Custom metrics", func(t *testing.T) {
-		client = FakeCWClient{
+		cwClient = FakeCWClient{
 			Metrics: []*cloudwatch.Metric{
 				{
 					MetricName: aws.String("Test_MetricName"),
@@ -45,52 +48,50 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
-			Queries: []plugins.DataSubQuery{
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":      "metricFindQuery",
 						"subtype":   "metrics",
 						"region":    "us-east-1",
-						"namespace": "custom",
-					}),
+						"namespace": "custom"
+					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 1,
-					}),
-					Tables: []plugins.DataTable{
-						{
-							Columns: []plugins.DataTableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []plugins.DataRowValues{
-								{
-									"Test_MetricName",
-									"Test_MetricName",
-								},
-							},
-						},
-					},
-				},
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, []string{"Test_MetricName"}),
+			data.NewField("value", nil, []string{"Test_MetricName"}),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": 1,
 			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 
 	t.Run("Dimension keys for custom metrics", func(t *testing.T) {
-		client = FakeCWClient{
+		cwClient = FakeCWClient{
 			Metrics: []*cloudwatch.Metric{
 				{
 					MetricName: aws.String("Test_MetricName"),
@@ -102,47 +103,44 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
-			Queries: []plugins.DataSubQuery{
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":      "metricFindQuery",
 						"subtype":   "dimension_keys",
 						"region":    "us-east-1",
-						"namespace": "custom",
-					}),
+						"namespace": "custom"
+					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 1,
-					}),
-					Tables: []plugins.DataTable{
-						{
-							Columns: []plugins.DataTableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []plugins.DataRowValues{
-								{
-									"Test_DimensionName",
-									"Test_DimensionName",
-								},
-							},
-						},
-					},
-				},
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, []string{"Test_DimensionName"}),
+			data.NewField("value", nil, []string{"Test_DimensionName"}),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": 1,
 			},
+		}
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 }
@@ -164,53 +162,46 @@ func TestQuery_Regions(t *testing.T) {
 		cli = fakeEC2Client{
 			regions: []string{regionName},
 		}
-		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
-			Queries: []plugins.DataSubQuery{
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":      "metricFindQuery",
 						"subtype":   "regions",
 						"region":    "us-east-1",
-						"namespace": "custom",
-					}),
+						"namespace": "custom"
+					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
-		rows := []plugins.DataRowValues{}
-		for _, region := range knownRegions {
-			rows = append(rows, []interface{}{
-				region,
-				region,
-			})
-		}
-		rows = append(rows, []interface{}{
-			regionName,
-			regionName,
-		})
-		assert.Equal(t, plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": len(knownRegions) + 1,
-					}),
-					Tables: []plugins.DataTable{
-						{
-							Columns: []plugins.DataTableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: rows,
-						},
-					},
-				},
+		expRegions := append(knownRegions, regionName)
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, expRegions),
+			data.NewField("value", nil, expRegions),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": len(knownRegions) + 1,
 			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 }
@@ -246,50 +237,48 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
-			Queries: []plugins.DataSubQuery{
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":          "metricFindQuery",
 						"subtype":       "ec2_instance_attribute",
 						"region":        "us-east-1",
 						"attributeName": "InstanceId",
-						"filters": map[string]interface{}{
-							"tag:Environment": []string{"production"},
-						},
-					}),
+						"filters": {
+							"tag:Environment": ["production"]
+						}
+					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 1,
-					}),
-					Tables: []plugins.DataTable{
-						{
-							Columns: []plugins.DataTableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []plugins.DataRowValues{
-								{
-									instanceID,
-									instanceID,
-								},
-							},
-						},
-					},
-				},
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, []string{instanceID}),
+			data.NewField("value", nil, []string{instanceID}),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": 1,
 			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 }
@@ -307,8 +296,6 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 	}
 
 	t.Run("", func(t *testing.T) {
-		const instanceIDs = "{i-1, i-2, i-3}"
-
 		cli = fakeEC2Client{
 			reservations: []*ec2.Reservation{
 				{
@@ -349,67 +336,46 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
-			Queries: []plugins.DataSubQuery{
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":       "metricFindQuery",
 						"subtype":    "ebs_volume_ids",
 						"region":     "us-east-1",
-						"instanceId": instanceIDs,
-					}),
+						"instanceId": "{i-1, i-2, i-3}"
+					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 6,
-					}),
-					Tables: []plugins.DataTable{
-						{
-							Columns: []plugins.DataTableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []plugins.DataRowValues{
-								{
-									"vol-1-1",
-									"vol-1-1",
-								},
-								{
-									"vol-1-2",
-									"vol-1-2",
-								},
-								{
-									"vol-2-1",
-									"vol-2-1",
-								},
-								{
-									"vol-2-2",
-									"vol-2-2",
-								},
-								{
-									"vol-3-1",
-									"vol-3-1",
-								},
-								{
-									"vol-3-2",
-									"vol-3-2",
-								},
-							},
-						},
-					},
-				},
+		expValues := []string{"vol-1-1", "vol-1-2", "vol-2-1", "vol-2-2", "vol-3-1", "vol-3-2"}
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, expValues),
+			data.NewField("value", nil, expValues),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": 6,
 			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 }
@@ -449,54 +415,52 @@ func TestQuery_ResourceARNs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil, newTestConfig(), fakeSessionCache{})
-		resp, err := executor.DataQuery(context.Background(), fakeDataSource(), plugins.DataQuery{
-			Queries: []plugins.DataSubQuery{
+
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":         "metricFindQuery",
 						"subtype":      "resource_arns",
 						"region":       "us-east-1",
 						"resourceType": "ec2:instance",
-						"tags": map[string]interface{}{
-							"Environment": []string{"production"},
-						},
-					}),
+						"tags": {
+							"Environment": ["production"]
+						}
+					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 
-		assert.Equal(t, plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 2,
-					}),
-					Tables: []plugins.DataTable{
-						{
-							Columns: []plugins.DataTableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []plugins.DataRowValues{
-								{
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
-								},
-								{
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
-								},
-							},
-						},
-					},
-				},
+		expValues := []string{
+			"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
+			"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
+		}
+		expFrame := data.NewFrame(
+			"",
+			data.NewField("text", nil, expValues),
+			data.NewField("value", nil, expValues),
+		)
+		expFrame.Meta = &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"rowCount": 2,
 			},
+		}
+
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": {
+				Frames: data.Frames{expFrame},
+			},
+		},
 		}, resp)
 	})
 }
@@ -528,9 +492,13 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 
 	t.Run("List Metrics and page limit is reached", func(t *testing.T) {
 		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
-		executor := newExecutor(nil, &setting.Cfg{AWSListMetricsPageLimit: 3, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, fakeSessionCache{})
-		executor.DataSource = fakeDataSource()
-		response, err := executor.listMetrics("default", &cloudwatch.ListMetricsInput{})
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(nil, im, &setting.Cfg{AWSListMetricsPageLimit: 3, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, fakeSessionCache{})
+		response, err := executor.listMetrics("default", &cloudwatch.ListMetricsInput{}, backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+		})
 		require.NoError(t, err)
 
 		expectedMetrics := client.MetricsPerPage * executor.cfg.AWSListMetricsPageLimit
@@ -539,9 +507,13 @@ func TestQuery_ListMetricsPagination(t *testing.T) {
 
 	t.Run("List Metrics and page limit is not reached", func(t *testing.T) {
 		client = FakeCWClient{Metrics: metrics, MetricsPerPage: 2}
-		executor := newExecutor(nil, &setting.Cfg{AWSListMetricsPageLimit: 1000, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, fakeSessionCache{})
-		executor.DataSource = fakeDataSource()
-		response, err := executor.listMetrics("default", &cloudwatch.ListMetricsInput{})
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+		executor := newExecutor(nil, im, &setting.Cfg{AWSListMetricsPageLimit: 1000, AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true}, fakeSessionCache{})
+		response, err := executor.listMetrics("default", &cloudwatch.ListMetricsInput{}, backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+		})
 		require.NoError(t, err)
 
 		assert.Equal(t, len(metrics), len(response))

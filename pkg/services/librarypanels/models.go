@@ -8,13 +8,15 @@ import (
 
 // LibraryPanel is the model for library panel definitions.
 type LibraryPanel struct {
-	ID       int64  `xorm:"pk autoincr 'id'"`
-	OrgID    int64  `xorm:"org_id"`
-	FolderID int64  `xorm:"folder_id"`
-	UID      string `xorm:"uid"`
-	Name     string
-	Model    json.RawMessage
-	Version  int64
+	ID          int64  `xorm:"pk autoincr 'id'"`
+	OrgID       int64  `xorm:"org_id"`
+	FolderID    int64  `xorm:"folder_id"`
+	UID         string `xorm:"uid"`
+	Name        string
+	Type        string
+	Description string
+	Model       json.RawMessage
+	Version     int64
 
 	Created time.Time
 	Updated time.Time
@@ -25,13 +27,15 @@ type LibraryPanel struct {
 
 // LibraryPanelWithMeta is the model used to retrieve library panels with additional meta information.
 type LibraryPanelWithMeta struct {
-	ID       int64  `xorm:"pk autoincr 'id'"`
-	OrgID    int64  `xorm:"org_id"`
-	FolderID int64  `xorm:"folder_id"`
-	UID      string `xorm:"uid"`
-	Name     string
-	Model    json.RawMessage
-	Version  int64
+	ID          int64  `xorm:"pk autoincr 'id'"`
+	OrgID       int64  `xorm:"org_id"`
+	FolderID    int64  `xorm:"folder_id"`
+	UID         string `xorm:"uid"`
+	Name        string
+	Type        string
+	Description string
+	Model       json.RawMessage
+	Version     int64
 
 	Created time.Time
 	Updated time.Time
@@ -48,14 +52,16 @@ type LibraryPanelWithMeta struct {
 
 // LibraryPanelDTO is the frontend DTO for library panels.
 type LibraryPanelDTO struct {
-	ID       int64               `json:"id"`
-	OrgID    int64               `json:"orgId"`
-	FolderID int64               `json:"folderId"`
-	UID      string              `json:"uid"`
-	Name     string              `json:"name"`
-	Model    json.RawMessage     `json:"model"`
-	Version  int64               `json:"version"`
-	Meta     LibraryPanelDTOMeta `json:"meta"`
+	ID          int64               `json:"id"`
+	OrgID       int64               `json:"orgId"`
+	FolderID    int64               `json:"folderId"`
+	UID         string              `json:"uid"`
+	Name        string              `json:"name"`
+	Type        string              `json:"type"`
+	Description string              `json:"description"`
+	Model       json.RawMessage     `json:"model"`
+	Version     int64               `json:"version"`
+	Meta        LibraryPanelDTOMeta `json:"meta"`
 }
 
 // LibraryPanelSearchResult is the search result for library panels.
@@ -111,6 +117,8 @@ var (
 	ErrFolderHasConnectedLibraryPanels = errors.New("folder contains library panels that are linked to dashboards")
 	// errLibraryPanelVersionMismatch is an error for when a library panel has been changed by someone else.
 	errLibraryPanelVersionMismatch = errors.New("the library panel has been changed by someone else")
+	// errLibraryPanelHasConnectedDashboards is an error for when an user deletes a library panel that is connected to library panels.
+	errLibraryPanelHasConnectedDashboards = errors.New("the library panel is linked to dashboards")
 )
 
 // Commands

@@ -3,45 +3,34 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../common';
+import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
+const ERROR_SOURCE = 'metrics-metricname';
 const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  setError,
 }) => {
   const [metricNames, setMetricNames] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
-    if (
-      !(
-        subscriptionId &&
-        query.azureMonitor.resourceGroup &&
-        query.azureMonitor.metricDefinition &&
-        query.azureMonitor.resourceName &&
-        query.azureMonitor.metricNamespace
-      )
-    ) {
+    const { resourceGroup, metricDefinition, resourceName, metricNamespace } = query.azureMonitor;
+
+    if (!(subscriptionId && resourceGroup && metricDefinition && resourceName && metricNamespace)) {
       metricNames.length > 0 && setMetricNames([]);
       return;
     }
 
     datasource
-      .getMetricNames(
-        subscriptionId,
-        query.azureMonitor.resourceGroup,
-        query.azureMonitor.metricDefinition,
-        query.azureMonitor.resourceName,
-        query.azureMonitor.metricNamespace
-      )
-      .then((results) => setMetricNames(results.map(toOption)))
-      .catch((err) => {
-        // TODO: handle error
-        console.error(err);
-      });
+      .getMetricNames(subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace)
+      .then((results) => {
+        setMetricNames(results.map(toOption));
+      })
+      .catch((err) => setError(ERROR_SOURCE, err));
   }, [
     subscriptionId,
     query.azureMonitor.resourceGroup,
