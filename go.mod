@@ -2,8 +2,6 @@ module github.com/grafana/grafana
 
 go 1.15
 
-replace github.com/grafana/grafana-live-sdk => ../grafana-live-sdk
-
 // Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
 // We need a more current go-mssqldb so we get rid of a version of apache/thrift with vulnerabilities.
 replace github.com/denisenkom/go-mssqldb => github.com/denisenkom/go-mssqldb v0.0.0-20200620013148-b91950f658ec
@@ -43,7 +41,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/alerting-api v0.0.0-20210318231719-9499804fc548
 	github.com/grafana/grafana-aws-sdk v0.2.0
-	github.com/grafana/grafana-live-sdk v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana-live-sdk v0.0.1
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.89.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
