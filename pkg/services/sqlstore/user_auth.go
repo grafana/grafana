@@ -29,7 +29,7 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 	authQuery := &models.GetAuthInfoQuery{}
 
 	// Try to find the user by auth module and id first
-	if query.AuthModule != "" {
+	if query.AuthModule != "" && query.AuthId != "" {
 		authQuery.AuthModule = query.AuthModule
 		authQuery.AuthId = query.AuthId
 
@@ -151,13 +151,6 @@ func GetAuthInfo(query *models.GetAuthInfoQuery) error {
 	if err != nil {
 		return err
 	}
-	if has {
-		_, err := x.Desc("created").Exec("DELETE FROM user_auth WHERE o_auth_access_token = ? AND rowid NOT IN (SELECT MIN(rowid) FROM user_auth GROUP BY o_auth_access_token)", userAuth.OAuthAccessToken)
-		if err != nil {
-			sqlog.Error("Error removing duplicated user_auth entries", "error", err)
-		}
-	}
-
 	if !has {
 		return models.ErrUserNotFound
 	}
