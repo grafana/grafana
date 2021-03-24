@@ -1,15 +1,35 @@
 import React from 'react';
 
-import { select, text } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
-import { LegendPlacement, LegendDisplayMode } from '../VizLegend/types';
+import { LegendDisplayMode } from '../VizLegend/types';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 export default {
   title: 'Visualizations/Graph/GraphWithLegend',
   component: GraphWithLegend,
   decorator: [withCenteredStory],
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+  },
+  argTypes: {
+    displayMode: { control: { type: 'radio', options: ['table', 'list', 'hidden'] } },
+    placement: { control: { type: 'radio', options: ['bottom', 'right'] } },
+    rightAxisSeries: { name: 'Right y-axis series, i.e. A,C' },
+    timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
+    width: { control: { type: 'range', min: 200, max: 800 } },
+    height: { control: { type: 'range', min: 200, max: 800 } },
+    lineWidth: { control: { type: 'range', min: 1, max: 10 } },
+    className: NOOP_CONTROL,
+    series: NOOP_CONTROL,
+    timeRange: NOOP_CONTROL,
+    ariaLabel: NOOP_CONTROL,
+    legendDisplayMode: NOOP_CONTROL,
+  },
 };
 
 const series: GraphSeriesXY[] = [
@@ -79,36 +99,13 @@ const series: GraphSeriesXY[] = [
   },
 ];
 
-const getStoriesKnobs = () => {
-  const rightAxisSeries = text('Right y-axis series, i.e. A,C', '');
+interface StoryProps extends GraphWithLegendProps {
+  rightAxisSeries: string;
+  displayMode: string;
+}
 
-  const legendPlacement = select<LegendPlacement>(
-    'Legend placement',
-    {
-      bottom: 'under',
-      right: 'right',
-    },
-    'bottom'
-  );
-  const renderLegendAsTable = select<any>(
-    'Render legend as',
-    {
-      list: false,
-      table: true,
-    },
-    false
-  );
-
-  return {
-    rightAxisSeries,
-    legendPlacement,
-    renderLegendAsTable,
-  };
-};
-
-export const graphWithLegend = () => {
-  const { legendPlacement, rightAxisSeries, renderLegendAsTable } = getStoriesKnobs();
-  const props: GraphWithLegendProps = {
+export const WithLegend: Story<StoryProps> = ({ rightAxisSeries, displayMode, legendDisplayMode, ...args }) => {
+  const props: Partial<GraphWithLegendProps> = {
     series: series.map((s) => {
       if (
         rightAxisSeries
@@ -122,21 +119,36 @@ export const graphWithLegend = () => {
       }
       return s;
     }),
-    legendDisplayMode: renderLegendAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List,
-    onToggleSort: () => {},
-    timeRange: {
-      from: dateTime(1546372800000),
-      to: dateTime(1546380000000),
-      raw: {
-        from: dateTime(1546372800000),
-        to: dateTime(1546380000000),
-      },
-    },
-    timeZone: 'browser',
-    width: 600,
-    height: 300,
-    placement: legendPlacement,
   };
 
-  return <GraphWithLegend {...props} />;
+  return (
+    <GraphWithLegend
+      legendDisplayMode={
+        displayMode === 'hidden'
+          ? LegendDisplayMode.Hidden
+          : displayMode === 'table'
+          ? LegendDisplayMode.Table
+          : LegendDisplayMode.List
+      }
+      {...props}
+      {...args}
+    />
+  );
+};
+WithLegend.args = {
+  rightAxisSeries: '',
+  displayMode: 'list',
+  onToggleSort: () => {},
+  timeRange: {
+    from: dateTime(1546372800000),
+    to: dateTime(1546380000000),
+    raw: {
+      from: dateTime(1546372800000),
+      to: dateTime(1546380000000),
+    },
+  },
+  timeZone: 'browser',
+  width: 600,
+  height: 300,
+  placement: 'bottom',
 };
