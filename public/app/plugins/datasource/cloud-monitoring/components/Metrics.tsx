@@ -37,19 +37,19 @@ export function Metrics(props: Props) {
     projectName: null,
   });
 
-  const { services, service, metrics } = state;
-  const { metricType, templateVariableOptions, projectName } = props;
+  const { services, service, metrics, metricDescriptors } = state;
+  const { metricType, templateVariableOptions, projectName, templateSrv, datasource, onChange, children } = props;
 
   const getSelectedMetricDescriptor = useCallback(
     (metricDescriptors: MetricDescriptor[], metricType: string) => {
-      return metricDescriptors.find((md) => md.type === props.templateSrv.replace(metricType))!;
+      return metricDescriptors.find((md) => md.type === templateSrv.replace(metricType))!;
     },
-    [props.templateSrv]
+    [templateSrv]
   );
 
   useEffect(() => {
     const getMetricsList = (metricDescriptors: MetricDescriptor[]) => {
-      const selectedMetricDescriptor = getSelectedMetricDescriptor(metricDescriptors, props.metricType);
+      const selectedMetricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
       if (!selectedMetricDescriptor) {
         return [];
       }
@@ -66,11 +66,11 @@ export function Metrics(props: Props) {
 
     const loadMetricDescriptors = async () => {
       if (projectName) {
-        const metricDescriptors = await props.datasource.getMetricTypes(props.projectName);
+        const metricDescriptors = await datasource.getMetricTypes(projectName);
         const services = getServicesList(metricDescriptors);
         const metrics = getMetricsList(metricDescriptors);
         const service = metrics.length > 0 ? metrics[0].service : '';
-        const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, props.metricType);
+        const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
         setState((prevState) => ({
           ...prevState,
           metricDescriptors,
@@ -82,19 +82,9 @@ export function Metrics(props: Props) {
       }
     };
     loadMetricDescriptors();
-  }, [
-    getSelectedMetricDescriptor,
-    projectName,
-    props.datasource,
-    props.metricType,
-    props.projectName,
-    props.templateSrv,
-  ]);
+  }, [datasource, getSelectedMetricDescriptor, metricType, projectName]);
 
   const onServiceChange = ({ value: service }: any) => {
-    const { metricDescriptors } = state;
-    const { metricType, templateSrv } = props;
-
     const metrics = metricDescriptors
       .filter((m: MetricDescriptor) => m.service === templateSrv.replace(service))
       .map((m: MetricDescriptor) => ({
@@ -114,7 +104,7 @@ export function Metrics(props: Props) {
   const onMetricTypeChange = ({ value }: SelectableValue<string>, extra: any = {}) => {
     const metricDescriptor = getSelectedMetricDescriptor(state.metricDescriptors, value!);
     setState({ ...state, metricDescriptor, ...extra });
-    props.onChange({ ...metricDescriptor, type: value! });
+    onChange({ ...metricDescriptor, type: value! });
   };
 
   const getServicesList = (metricDescriptors: MetricDescriptor[]) => {
@@ -166,7 +156,7 @@ export function Metrics(props: Props) {
           <div className="gf-form-label gf-form-label--grow" />
         </div>
       </div>
-      {props.children(state.metricDescriptor)}
+      {children(state.metricDescriptor)}
     </>
   );
 }
