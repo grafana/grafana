@@ -72,7 +72,7 @@ footer_links_support_text = Support
 footer_links_support_url = http://your.support.site
 footer_links_guides_text = Guides
 footer_links_guides_url = http://your.guides.site
-footer_links_extracustom_text = Custom Text
+footer_links_extracustom_text = Custom text
 footer_links_extracustom_url = http://your.custom.site
 ```
 
