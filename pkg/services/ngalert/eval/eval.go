@@ -54,26 +54,26 @@ type ExecutionResults struct {
 }
 
 // Results is a slice of evaluated alert instances states.
-type Results []result
+type Results []Result
 
-// result contains the evaluated state of an alert instance
+// Result contains the evaluated State of an alert instance
 // identified by its labels.
-type result struct {
+type Result struct {
 	Instance data.Labels
-	State    state // Enum
+	State    State // Enum
 	// StartAt is the time at which we first saw this state
 	StartAt time.Time
 	// FiredAt is the time at which we first transitioned to a firing state
 	FiredAt time.Time
 }
 
-// state is an enum of the evaluation state for an alert instance.
-type state int
+// State is an enum of the evaluation State for an alert instance.
+type State int
 
 const (
 	// Normal is the eval state for an alert instance condition
 	// that evaluated to false.
-	Normal state = iota
+	Normal State = iota
 
 	// Alerting is the eval state for an alert instance condition
 	// that evaluated to true (Alerting).
@@ -88,7 +88,7 @@ const (
 	Error
 )
 
-func (s state) String() string {
+func (s State) String() string {
 	return [...]string{"Normal", "Alerting", "NoData", "Error"}[s]
 }
 
@@ -177,9 +177,9 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 }
 
 // evaluateExecutionResult takes the ExecutionResult, and returns a frame where
-// each column is a string type that holds a string representing its state.
+// each column is a string type that holds a string representing its State.
 func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, error) {
-	evalResults := make([]result, 0)
+	evalResults := make([]Result, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
 		rowLen, err := f.RowLen()
@@ -210,7 +210,7 @@ func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, 
 			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("expected nullable float64 but got type %T", f.Fields[0].Type())}
 		}
 
-		r := result{
+		r := Result{
 			Instance: f.Fields[0].Labels,
 			StartAt:  ts,
 		}
