@@ -122,7 +122,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         .addItem(
           new OptionsPaneItemDescriptor({
             title: 'Max per row',
-            showIf: () => (panel.repeat && panel.repeatDirection === 'h') as boolean,
+            showIf: () => Boolean(panel.repeat && panel.repeatDirection === 'h'),
             Component: function renderOption() {
               const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
               return (
