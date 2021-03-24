@@ -17,6 +17,7 @@ export * from './vector';
 export * from './app';
 export * from './datasource';
 export * from './panel';
+export * from './schema';
 export * from './plugin';
 export * from './thresholds';
 export * from './templateVars';

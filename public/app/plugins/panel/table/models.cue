@@ -36,9 +36,10 @@ Model: {
                     sortBy?: [...ui.TableSortByFieldState]
                 }
                 PanelFieldConfig: {
-                    width?: int
-                    align?: string
-                    displayMode?: string
+                    width?: int 
+                    align?: *null | string
+                    displayMode?: string | *"auto" // TODO? TableCellDisplayMode
+                    filterable?: bool
                 }
             },
             { // v0.1

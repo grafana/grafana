@@ -1,12 +1,13 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { CustomFieldConfig, Options } from './types';
+import { schemaInfo, PanelOptions, PanelFieldConfig, defatulPanelOptions, defatulPanelFieldConfig } from './models.gen';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
 
-export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
+  .setModelSchemaInfo(schemaInfo)
   .setNoPadding()
   .useFieldConfig({
     useCustomConfig: (builder) => {
@@ -32,7 +33,7 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
               { label: 'right', value: 'right' },
             ],
           },
-          defaultValue: null,
+          defaultValue: defatulPanelFieldConfig.align,
         })
         .addSelect({
           path: 'displayMode',
@@ -50,12 +51,13 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
               { value: TableCellDisplayMode.Image, label: 'Image' },
             ],
           },
+          defaultValue: defatulPanelFieldConfig.displayMode,
         })
         .addBooleanSwitch({
           path: 'filterable',
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
-          defaultValue: false,
+          defaultValue: defatulPanelFieldConfig.filterable,
         });
     },
   })
@@ -64,6 +66,6 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
       path: 'showHeader',
       name: 'Show header',
       description: "To display table's header or not to display",
-      defaultValue: true,
+      defaultValue: defatulPanelOptions.showHeader,
     });
   });
