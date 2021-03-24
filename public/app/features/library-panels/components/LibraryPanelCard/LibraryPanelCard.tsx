@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ConfirmModal } from '@grafana/ui';
 import { PanelPluginMeta } from '@grafana/data';
 import { LibraryPanelDTO } from '../../types';
 import { config } from '@grafana/runtime';
 import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
+import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
 
 export interface LibraryPanelCardProps {
   libraryPanel: LibraryPanelDTO;
@@ -66,12 +66,8 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
         )}
       </Card> */}
       {showDeletionModal && (
-        <ConfirmModal
-          isOpen={showDeletionModal}
-          icon="trash-alt"
-          title="Delete library panel"
-          body="Do you want to delete this panel?"
-          confirmText="Delete"
+        <DeleteLibraryPanelModal
+          libraryPanel={libraryPanel}
           onConfirm={onDeletePanel}
           onDismiss={() => setShowDeletionModal(false)}
         />

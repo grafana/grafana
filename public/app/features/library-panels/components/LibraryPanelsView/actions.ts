@@ -22,6 +22,7 @@ export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
         name: args.searchString,
         perPage: args.perPage,
         page: args.page,
+        excludeUid: args.currentPanelId,
       })
     ).pipe(
       mergeMap(({ perPage, libraryPanels, page, totalCount }) =>

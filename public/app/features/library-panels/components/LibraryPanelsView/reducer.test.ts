@@ -117,6 +117,8 @@ function mockLibraryPanel({
     updatedBy: { id: 2, name: 'User Y', avatarUrl: '/avatar/xyz' },
   },
   version = 1,
+  description = 'a description',
+  type = 'text',
 }: Partial<LibraryPanelDTO> = {}): LibraryPanelDTO {
   return {
     uid,
@@ -127,5 +129,7 @@ function mockLibraryPanel({
     model,
     version,
     meta,
+    description,
+    type,
   };
 }
