@@ -83,7 +83,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	// ideally this can just be the standard API!
 	qdr, err := resp.ToBackendDataResponse()
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error converting resuls", err)
+		return response.Error(http.StatusInternalServerError, "error converting results", err)
 	}
 	return toMacronResponse(qdr, nil)
 }
