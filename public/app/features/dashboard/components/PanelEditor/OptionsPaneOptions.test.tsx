@@ -105,14 +105,14 @@ describe('OptionsPaneOptions', () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.render();
 
-    expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel Title'))).toBeInTheDocument();
+    expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
   });
 
   it('should render all categories', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
     scenario.render();
 
-    expect(screen.getByRole('heading', { name: /Panel/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Panel options/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Standard options/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Thresholds/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /TestPanel/ })).toBeInTheDocument();
@@ -193,7 +193,7 @@ describe('OptionsPaneOptions', () => {
     fireEvent.change(input, { target: { value: 'TextPropWithCategory' } });
     fireEvent.blur(input);
 
-    expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('Panel Title'))).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(OptionsPaneSelector.fieldLabel('Panel options Title'))).not.toBeInTheDocument();
     expect(screen.getByLabelText(OptionsPaneSelector.fieldLabel('Axis TextPropWithCategory'))).toBeInTheDocument();
   });
 });

@@ -20,7 +20,7 @@ interface Props {
 export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
   const plugin = useSelector((state: StoreState) => state.plugins.panels[panel.type]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [listMode, setListMode] = useState(ListMode.Globals);
+  const [listMode, setListMode] = useState(ListMode.Visualizations);
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
   const searchRef = useRef<HTMLInputElement | null>(null);

@@ -10,8 +10,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
   const { panel, onPanelConfigChange } = props;
 
   return new OptionsPaneCategoryDescriptor({
-    title: 'Panel',
-    id: 'Panel',
+    title: 'Panel options',
+    id: 'Panel options',
     isOpenDefault: true,
   })
     .addItem(

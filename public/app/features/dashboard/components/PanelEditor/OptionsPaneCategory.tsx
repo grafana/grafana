@@ -2,7 +2,7 @@ import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { css, cx } from 'emotion';
 import _ from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
-import { Counter, Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { Counter, Icon, useStyles } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
@@ -25,8 +25,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       isExpanded: isOpenDefault !== false,
     });
     const [isExpanded, setIsExpanded] = useState(savedState.isExpanded);
-    const theme = useTheme();
-    const styles = getStyles(theme, isExpanded, isNested);
+    const styles = useStyles(getStyles);
 
     useEffect(() => {
       if (!isExpanded && forceOpen && forceOpen > 0) {
@@ -53,9 +52,28 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       };
     }
 
+    const boxStyles = cx(
+      {
+        [styles.box]: true,
+        [styles.boxExpanded]: isExpanded,
+        [styles.boxNestedExpanded]: isNested && isExpanded,
+      },
+      className,
+      'options-group'
+    );
+
+    const headerStyles = cx(styles.header, {
+      [styles.headerExpanded]: isExpanded,
+      [styles.headerNested]: isNested,
+    });
+
+    const bodyStyles = cx(styles.body, {
+      [styles.bodyNested]: isNested,
+    });
+
     return (
-      <div className={cx(styles.box, className, 'options-group')} data-testid="options-category">
-        <div className={styles.header} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
+      <div className={boxStyles} data-testid="options-category">
+        <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
           </div>
@@ -63,28 +81,26 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
             {renderTitle(isExpanded)}
           </div>
         </div>
-        {isExpanded && <div className={styles.body}>{children}</div>}
+        {isExpanded && <div className={bodyStyles}>{children}</div>}
       </div>
     );
   }
 );
 
-const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNested: boolean) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
-    box: cx(
-      !isNested &&
-        css`
-          border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
-          &:last-child {
-            border-bottom: none;
-          }
-        `,
-      isNested &&
-        isExpanded &&
-        css`
-          margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
-        `
-    ),
+    box: css`
+      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
+      &:last-child {
+        border-bottom: none;
+      }
+    `,
+    boxExpanded: css`
+      border-bottom: 0;
+    `,
+    boxNestedExpanded: css`
+      margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
+    `,
     toggle: css`
       color: ${theme.colors.textWeak};
       margin-right: ${theme.spacing.sm};
@@ -93,50 +109,46 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isExpanded: boolean, isNes
       flex-grow: 1;
       overflow: hidden;
     `,
-    header: cx(
-      css`
-        display: flex;
-        cursor: pointer;
-        align-items: baseline;
-        padding: ${theme.spacing.sm};
-        color: ${isExpanded ? theme.colors.text : theme.colors.formLabel};
-        font-weight: ${theme.typography.weight.semibold};
+    header: css`
+      display: flex;
+      cursor: pointer;
+      align-items: baseline;
+      padding: ${theme.spacing.sm};
+      color: ${theme.colors.formLabel};
+      font-weight: ${theme.typography.weight.semibold};
 
-        &:hover {
+      &:hover {
+        color: ${theme.colors.text};
+
+        .editor-options-group-toggle {
           color: ${theme.colors.text};
-
-          .editor-options-group-toggle {
-            color: ${theme.colors.text};
-          }
         }
-      `,
-      isNested &&
-        css`
-          padding-left: 0;
-          padding-right: 0;
-          padding-top: 0;
-        `
-    ),
-    body: cx(
-      css`
-        padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.xl};
-      `,
-      isNested &&
-        css`
-          position: relative;
-          padding-right: 0;
-          &:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 8px;
-            width: 1px;
-            height: 100%;
-            background: ${theme.colors.pageHeaderBorder};
-          }
-        `
-    ),
+      }
+    `,
+    headerExpanded: css`
+      color: ${theme.colors.text};
+    `,
+    headerNested: css`
+      padding-left: 0;
+      padding-right: 0;
+    `,
+    body: css`
+      padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.xl};
+    `,
+    bodyNested: css`
+      position: relative;
+      padding-right: 0;
+      &:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 8px;
+        width: 1px;
+        height: 100%;
+        background: ${theme.colors.pageHeaderBorder};
+      }
+    `,
   };
-});
+};
 
 const getOptionGroupStorageKey = (id: string): string => `${PANEL_EDITOR_UI_STATE_STORAGE_KEY}.optionGroup[${id}]`;
