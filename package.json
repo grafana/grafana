@@ -162,7 +162,6 @@
     "jest-matcher-utils": "26.0.0",
     "lerna": "^3.22.1",
     "lint-staged": "10.0.7",
-    "load-grunt-tasks": "5.1.0",
     "mini-css-extract-plugin": "0.9.0",
     "mocha": "7.0.1",
     "module-alias": "2.2.2",
@@ -202,7 +201,7 @@
   },
   "dependencies": {
     "@emotion/core": "10.0.27",
-    "@grafana/aws-sdk": "0.0.22",
+    "@grafana/aws-sdk": "0.0.24",
     "@grafana/slate-react": "0.22.9-grafana",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",
@@ -292,7 +291,6 @@
     "tether": "1.4.7",
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.4.1",
-    "tti-polyfill": "0.2.2",
     "uuid": "8.3.0",
     "visjs-network": "4.25.0",
     "whatwg-fetch": "3.1.0"

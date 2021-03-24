@@ -15,8 +15,8 @@ type PrometheusApiMock struct {
 }
 
 func (mock PrometheusApiMock) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
-	datasourceId := c.Params(":DatasourceId")
-	mock.log.Info("RouteGetAlertStatuses: ", "DatasourceId", datasourceId)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteGetAlertStatuses: ", "Recipient", recipient)
 	now := time.Now()
 	result := apimodels.AlertResponse{
 		Data: apimodels.AlertDiscovery{
@@ -54,8 +54,8 @@ func (mock PrometheusApiMock) RouteGetAlertStatuses(c *models.ReqContext) respon
 }
 
 func (mock PrometheusApiMock) RouteGetRuleStatuses(c *models.ReqContext) response.Response {
-	datasourceId := c.Params(":DatasourceId")
-	mock.log.Info("RouteGetRuleStatuses: ", "DatasourceId", datasourceId)
+	recipient := c.Params(":Recipient")
+	mock.log.Info("RouteGetRuleStatuses: ", "Recipient", recipient)
 	now := time.Now()
 	result := apimodels.RuleResponse{
 		Data: apimodels.RuleDiscovery{

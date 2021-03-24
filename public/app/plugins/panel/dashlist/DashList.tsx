@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import take from 'lodash/take';
 
-import { PanelProps } from '@grafana/data';
+import { InterpolateFunction, PanelProps } from '@grafana/data';
 import { CustomScrollbar, Icon, useStyles } from '@grafana/ui';
 
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -19,7 +19,7 @@ interface DashboardGroup {
   dashboards: Dashboard[];
 }
 
-async function fetchDashboards(options: DashListOptions) {
+async function fetchDashboards(options: DashListOptions, replaceVars: InterpolateFunction) {
   let starredDashboards: Promise<Dashboard[]> = Promise.resolve([]);
   if (options.showStarred) {
     const params = { limit: options.maxItems, starred: 'true' };
@@ -37,9 +37,9 @@ async function fetchDashboards(options: DashListOptions) {
   if (options.showSearch) {
     const params = {
       limit: options.maxItems,
-      query: options.query,
+      query: replaceVars(options.query, {}, 'text'),
       folderIds: options.folderId,
-      tag: options.tags,
+      tag: options.tags.map((tag: string) => replaceVars(tag, {}, 'text')),
       type: 'dash-db',
     };
 
@@ -79,7 +79,7 @@ async function fetchDashboards(options: DashListOptions) {
 export function DashList(props: PanelProps<DashListOptions>) {
   const [dashboards, setDashboards] = useState(new Map<number, Dashboard>());
   useEffect(() => {
-    fetchDashboards(props.options).then((dashes) => {
+    fetchDashboards(props.options, props.replaceVariables).then((dashes) => {
       setDashboards(dashes);
     });
   }, [
@@ -90,6 +90,8 @@ export function DashList(props: PanelProps<DashListOptions>) {
     props.options.query,
     props.options.tags,
     props.options.folderId,
+    props.replaceVariables,
+    props.renderCounter,
   ]);
 
   const toggleDashboardStar = async (e: React.SyntheticEvent, dash: Dashboard) => {

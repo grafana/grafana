@@ -4,22 +4,22 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
 	"github.com/benbjohnson/clock"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 const (
@@ -36,11 +36,13 @@ const (
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
-	Cfg             *setting.Cfg             `inject:""`
-	DatasourceCache datasources.CacheService `inject:""`
-	RouteRegister   routing.RouteRegister    `inject:""`
-	SQLStore        *sqlstore.SQLStore       `inject:""`
-	DataService     *tsdb.Service            `inject:""`
+	Cfg             *setting.Cfg                            `inject:""`
+	DatasourceCache datasources.CacheService                `inject:""`
+	RouteRegister   routing.RouteRegister                   `inject:""`
+	SQLStore        *sqlstore.SQLStore                      `inject:""`
+	DataService     *tsdb.Service                           `inject:""`
+	Alertmanager    *notifier.Alertmanager                  `inject:""`
+	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
 	Log             log.Logger
 	schedule        schedule.ScheduleService
 }
@@ -73,7 +75,10 @@ func (ng *AlertNG) Init() error {
 		RouteRegister:   ng.RouteRegister,
 		DataService:     ng.DataService,
 		Schedule:        ng.schedule,
-		Store:           store}
+		DataProxy:       ng.DataProxy,
+		Store:           store,
+		Alertmanager:    ng.Alertmanager,
+	}
 	api.RegisterAPIEndpoints()
 
 	return nil

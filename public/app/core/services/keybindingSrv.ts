@@ -20,6 +20,7 @@ import {
 import { contextSrv } from '../core';
 import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
 import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
+import { toggleTheme } from './toggleTheme';
 
 export class KeybindingSrv {
   modalOpen = false;
@@ -43,6 +44,9 @@ export class KeybindingSrv {
       this.bind('esc', this.exit);
       this.bindGlobal('esc', this.globalEsc);
     }
+
+    this.bind('t t', () => toggleTheme(false));
+    this.bind('t r', () => toggleTheme(true));
   }
 
   private globalEsc() {
