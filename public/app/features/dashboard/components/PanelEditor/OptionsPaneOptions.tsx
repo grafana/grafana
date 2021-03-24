@@ -11,7 +11,7 @@ import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionSearchEngine } from './state/OptionSearchEngine';
 import { AngularPanelOptions } from './AngularPanelOptions';
-import { getPopularOptions } from './state/getPopularOptions';
+import { getRecentOptions } from './state/getRecentOptions';
 interface Props {
   plugin: PanelPlugin;
   panel: PanelModel;
@@ -70,10 +70,10 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
           mainBoxElements.push(override.render());
         }
         break;
-      case OptionFilter.Popular:
+      case OptionFilter.Recent:
         mainBoxElements.push(
-          <OptionsPaneCategory id="Popular options" title="Popular options" key="Popular options" forceOpen={1}>
-            {getPopularOptions(allOptions).map((item) => item.render())}
+          <OptionsPaneCategory id="Recent options" title="Recent options" key="Recent options" forceOpen={1}>
+            {getRecentOptions(allOptions).map((item) => item.render())}
           </OptionsPaneCategory>
         );
         break;
@@ -107,7 +107,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
 function getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
   return [
     { label: OptionFilter.All, value: OptionFilter.All },
-    { label: OptionFilter.Popular, value: OptionFilter.Popular },
+    { label: OptionFilter.Recent, value: OptionFilter.Recent },
     { label: OptionFilter.Overrides, value: OptionFilter.Overrides },
   ];
 }
@@ -115,7 +115,7 @@ function getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
 export enum OptionFilter {
   All = 'All',
   Overrides = 'Overrides',
-  Popular = 'Popular',
+  Recent = 'Recent',
 }
 
 function renderSearchHits(

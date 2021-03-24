@@ -1,7 +1,7 @@
 import { OptionsPaneCategoryDescriptor } from '../OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from '../OptionsPaneItemDescriptor';
 
-export function getPopularOptions(allOptions: OptionsPaneCategoryDescriptor[]) {
+export function getRecentOptions(allOptions: OptionsPaneCategoryDescriptor[]) {
   const popularOptions: OptionsPaneItemDescriptor[] = [];
 
   for (const category of allOptions) {
