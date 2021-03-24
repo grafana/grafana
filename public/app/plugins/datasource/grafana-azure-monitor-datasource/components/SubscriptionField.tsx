@@ -55,8 +55,8 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       })
       .catch((err) => setError(ERROR_SOURCE, err));
   }, [
-    datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId,
-    datasource.azureLogAnalyticsDatasource.subscriptionId,
+    datasource.azureLogAnalyticsDatasource?.logAnalyticsSubscriptionId,
+    datasource.azureLogAnalyticsDatasource?.subscriptionId,
     datasource.azureMonitorDatasource,
     onQueryChange,
     query,
