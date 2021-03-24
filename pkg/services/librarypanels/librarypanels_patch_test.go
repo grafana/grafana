@@ -68,8 +68,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 						Updated:             result.Result.Meta.Updated,
 						CreatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
-							Name:      "user_in_db",
-							AvatarUrl: "/avatar/402d08de060496d6b6874495fe20f5ad",
+							Name:      UserInDbName,
+							AvatarUrl: UserInDbAvatar,
 						},
 						UpdatedBy: LibraryPanelDTOMetaUser{
 							ID:        1,
@@ -96,8 +96,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.FolderID = newFolder.Id
-			sc.initialResult.Result.Meta.CreatedBy.Name = "user_in_db"
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -115,8 +115,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Name = "New Name"
-			sc.initialResult.Result.Meta.CreatedBy.Name = "user_in_db"
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
 			sc.initialResult.Result.Model["title"] = "New Name"
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -142,8 +142,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 				"type":        "graph",
 				"description": "New description",
 			}
-			sc.initialResult.Result.Meta.CreatedBy.Name = "user_in_db"
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -167,8 +167,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 				"type":        "text",
 				"description": "New description",
 			}
-			sc.initialResult.Result.Meta.CreatedBy.Name = "user_in_db"
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -192,8 +192,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 				"type":        "graph",
 				"description": "A description",
 			}
-			sc.initialResult.Result.Meta.CreatedBy.Name = "user_in_db"
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -208,8 +208,8 @@ func TestPatchLibraryPanel(t *testing.T) {
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Meta.UpdatedBy.ID = int64(2)
-			sc.initialResult.Result.Meta.CreatedBy.Name = "user_in_db"
-			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = "/avatar/402d08de060496d6b6874495fe20f5ad"
+			sc.initialResult.Result.Meta.CreatedBy.Name = UserInDbName
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = UserInDbAvatar
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
