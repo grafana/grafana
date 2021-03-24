@@ -64,7 +64,7 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 ;apple_touch_icon =
 ```
 You can replace the default footer links (Documentation, Support, Community) and even add your own custom links.
-Below is an example for how to replace the default footer and help links with new custom links.
+An example follows for replacing the default footer and help links with new custom links.
 
 ```ini
 footer_links = support guides extracustom
