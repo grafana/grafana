@@ -20,7 +20,7 @@ func TestAlertProvider_PutPostableAlert(t *testing.T) {
 	stage := &mockStage{alerts: make(map[string][]*types.Alert)}
 	provider := &mockAlertProvider{}
 
-	ap, err := NewAlertProvider(stage, marker, log.NewNopLogger())
+	ap, err := NewAlertProvider(stage, marker)
 	require.NoError(t, err)
 	ap.Alerts = provider
 
