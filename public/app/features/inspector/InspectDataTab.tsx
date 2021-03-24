@@ -173,11 +173,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     const panelTransformations = panel?.getTransformations();
     const showPanelTransformationsOption =
-      onOptionsChange &&
-      panelTransformations &&
-      panelTransformations.length > 0 &&
-      (transformId as any) !== 'join by time';
-    const showFieldConfigsOption = onOptionsChange && panel && !panel.plugin?.fieldConfigRegistry.isEmpty();
+      Boolean(panelTransformations?.length) && (transformId as any) !== 'join by time';
+    const showFieldConfigsOption = panel && !panel.plugin?.fieldConfigRegistry.isEmpty();
 
     let dataSelect = dataFrames;
     if (selectedDataFrame === DataTransformerID.seriesToColumns) {
@@ -216,25 +213,25 @@ export class InspectDataTab extends PureComponent<Props, State> {
             )}
 
             <HorizontalGroup>
-              {showPanelTransformationsOption && (
+              {showPanelTransformationsOption && onOptionsChange && (
                 <Field
                   label="Apply panel transformations"
                   description="Table data is displayed with transformations defined in the panel Transform tab."
                 >
                   <Switch
                     value={!!options.withTransforms}
-                    onChange={() => onOptionsChange!({ ...options, withTransforms: !options.withTransforms })}
+                    onChange={() => onOptionsChange({ ...options, withTransforms: !options.withTransforms })}
                   />
                 </Field>
               )}
-              {showFieldConfigsOption && (
+              {showFieldConfigsOption && onOptionsChange && (
                 <Field
                   label="Formatted data"
                   description="Table data is formatted with options defined in the Field and Override tabs."
                 >
                   <Switch
                     value={!!options.withFieldConfig}
-                    onChange={() => onOptionsChange!({ ...options, withFieldConfig: !options.withFieldConfig })}
+                    onChange={() => onOptionsChange({ ...options, withFieldConfig: !options.withFieldConfig })}
                   />
                 </Field>
               )}

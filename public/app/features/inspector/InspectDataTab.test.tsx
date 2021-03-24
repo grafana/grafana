@@ -1,6 +1,7 @@
 import React, { ComponentProps } from 'react';
 import { FieldType } from '@grafana/data';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { InspectDataTab } from './InspectDataTab';
 
 const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTab>>) => {
@@ -48,18 +49,16 @@ describe('InspectDataTab', () => {
     it('should show available options', () => {
       render(<InspectDataTab {...createProps()} />);
       const dataOptions = screen.getByText(/Data options/i);
-      fireEvent.click(dataOptions);
+      userEvent.click(dataOptions);
       expect(screen.getByText(/Show data frame/i)).toBeInTheDocument();
       expect(screen.getByText(/Download for Excel/i)).toBeInTheDocument();
     });
     it('should show available dataFrame options', () => {
       render(<InspectDataTab {...createProps()} />);
       const dataOptions = screen.getByText(/Data options/i);
-      fireEvent.click(dataOptions);
-      const dataFrameInput = screen.getByLabelText(/Select dataframe/i);
-      fireEvent.change(dataFrameInput, {
-        target: { value: 1 },
-      });
+      userEvent.click(dataOptions);
+      const dataFrameInput = screen.getByRole('textbox', { name: /Select dataframe/i });
+      userEvent.click(dataFrameInput);
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
     });
   });
