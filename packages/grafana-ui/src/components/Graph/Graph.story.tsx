@@ -4,9 +4,10 @@ import Chart from '../Chart';
 import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId } from '@grafana/data';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TooltipContentProps } from '../Chart/Tooltip';
+import { TooltipContentProps, TooltipMode } from '../Chart/Tooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
 import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
+import { GraphProps } from './Graph';
 
 const series: GraphSeriesXY[] = [
   {
@@ -114,7 +115,7 @@ export default {
   },
 };
 
-export const WithTooltip: Story = ({ tooltipMode, ...args }) => {
+export const WithTooltip: Story<GraphProps & { tooltipMode: TooltipMode }> = ({ tooltipMode, ...args }) => {
   return (
     <Graph {...args}>
       <Chart.Tooltip mode={tooltipMode} />
@@ -131,7 +132,7 @@ const CustomGraphTooltip = ({ activeDimensions }: TooltipContentProps) => {
   );
 };
 
-export const WithCustomTooltip: Story = ({ tooltipMode, ...args }) => {
+export const WithCustomTooltip: Story<GraphProps & { tooltipMode: TooltipMode }> = ({ tooltipMode, ...args }) => {
   return (
     <Graph {...args}>
       <Chart.Tooltip mode={tooltipMode} tooltipComponent={CustomGraphTooltip} />
