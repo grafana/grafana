@@ -581,7 +581,15 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       .pipe(
         map((results: any) => {
           if (results.status !== 200 || typeof results.data !== 'object') {
-            this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+            if (typeof results.data === 'string') {
+              // Fix for a Graphite bug: https://github.com/graphite-project/graphite-web/pull/2612
+              // The fix in Graphite project was merged to master in July 2020 but it has never been
+              // released (the last Graphite release was 1.1.7 - March 2020)
+              const fixedData = JSON.parse(results.data.replace(/"default": Infinity/g, '"default": 1e9999'));
+              this.funcDefs = gfunc.parseFuncDefs(fixedData);
+            } else {
+              this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+            }
           } else {
             this.funcDefs = gfunc.parseFuncDefs(results.data);
           }
