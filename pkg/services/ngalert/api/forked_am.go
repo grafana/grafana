@@ -31,7 +31,7 @@ func (am *ForkedAMSvc) RouteCreateSilence(ctx *models.ReqContext, body apimodels
 	switch t {
 	case apimodels.GrafanaBackend:
 		return am.GrafanaSvc.RouteCreateSilence(ctx, body)
-	case apimodels.LoTexRulerBackend:
+	case apimodels.AlertmanagerBackend:
 		return am.AmSvc.RouteCreateSilence(ctx, body)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -47,7 +47,7 @@ func (am *ForkedAMSvc) RouteDeleteAlertingConfig(ctx *models.ReqContext) respons
 	switch t {
 	case apimodels.GrafanaBackend:
 		return am.GrafanaSvc.RouteDeleteAlertingConfig(ctx)
-	case apimodels.LoTexRulerBackend:
+	case apimodels.AlertmanagerBackend:
 		return am.AmSvc.RouteDeleteAlertingConfig(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -63,7 +63,7 @@ func (am *ForkedAMSvc) RouteDeleteSilence(ctx *models.ReqContext) response.Respo
 	switch t {
 	case apimodels.GrafanaBackend:
 		return am.GrafanaSvc.RouteDeleteSilence(ctx)
-	case apimodels.LoTexRulerBackend:
+	case apimodels.AlertmanagerBackend:
 		return am.AmSvc.RouteDeleteSilence(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -79,7 +79,7 @@ func (am *ForkedAMSvc) RouteGetAlertingConfig(ctx *models.ReqContext) response.R
 	switch t {
 	case apimodels.GrafanaBackend:
 		return am.GrafanaSvc.RouteGetAlertingConfig(ctx)
-	case apimodels.LoTexRulerBackend:
+	case apimodels.AlertmanagerBackend:
 		return am.AmSvc.RouteGetAlertingConfig(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -95,7 +95,7 @@ func (am *ForkedAMSvc) RouteGetAmAlertGroups(ctx *models.ReqContext) response.Re
 	switch t {
 	case apimodels.GrafanaBackend:
 		return am.GrafanaSvc.RouteGetAmAlertGroups(ctx)
-	case apimodels.LoTexRulerBackend:
+	case apimodels.AlertmanagerBackend:
 		return am.AmSvc.RouteGetAmAlertGroups(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -111,7 +111,7 @@ func (am *ForkedAMSvc) RouteGetAmAlerts(ctx *models.ReqContext) response.Respons
 	switch t {
 	case apimodels.GrafanaBackend:
 		return am.GrafanaSvc.RouteGetAmAlerts(ctx)
-	case apimodels.LoTexRulerBackend:
+	case apimodels.AlertmanagerBackend:
 		return am.AmSvc.RouteGetAmAlerts(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -127,7 +127,7 @@ func (am *ForkedAMSvc) RouteGetSilence(ctx *models.ReqContext) response.Response
 	switch t {
 	case apimodels.GrafanaBackend:
 		return am.GrafanaSvc.RouteGetSilence(ctx)
-	case apimodels.LoTexRulerBackend:
+	case apimodels.AlertmanagerBackend:
 		return am.AmSvc.RouteGetSilence(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -143,7 +143,7 @@ func (am *ForkedAMSvc) RouteGetSilences(ctx *models.ReqContext) response.Respons
 	switch t {
 	case apimodels.GrafanaBackend:
 		return am.GrafanaSvc.RouteGetSilences(ctx)
-	case apimodels.LoTexRulerBackend:
+	case apimodels.AlertmanagerBackend:
 		return am.AmSvc.RouteGetSilences(ctx)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -159,7 +159,7 @@ func (am *ForkedAMSvc) RoutePostAlertingConfig(ctx *models.ReqContext, body apim
 	switch t {
 	case apimodels.GrafanaBackend:
 		return am.GrafanaSvc.RoutePostAlertingConfig(ctx, body)
-	case apimodels.LoTexRulerBackend:
+	case apimodels.AlertmanagerBackend:
 		return am.AmSvc.RoutePostAlertingConfig(ctx, body)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
@@ -175,7 +175,7 @@ func (am *ForkedAMSvc) RoutePostAmAlerts(ctx *models.ReqContext, body apimodels.
 	switch t {
 	case apimodels.GrafanaBackend:
 		return am.GrafanaSvc.RoutePostAmAlerts(ctx, body)
-	case apimodels.LoTexRulerBackend:
+	case apimodels.AlertmanagerBackend:
 		return am.AmSvc.RoutePostAmAlerts(ctx, body)
 	default:
 		return response.Error(400, fmt.Sprintf("unexpected backend type (%v)", t), nil)
