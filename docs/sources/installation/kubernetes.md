@@ -10,7 +10,7 @@ This page explains how to install and run Grafana on Kubernetes (K8S). It uses K
 For those interested in Grafana Enterprise (not Grafana OS), please jump to [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes)
 
 #### Create Grafana Kubernetes manifest
-Create a file called `grafana.yaml` and paste the following contents in. 
+1. Create the file `grafana.yaml`, then paste the following contents in it. 
 
 ```yaml
 ---
