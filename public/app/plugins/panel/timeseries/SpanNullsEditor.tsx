@@ -21,7 +21,7 @@ const GAPS_OPTIONS: Array<SelectableValue<boolean | number>> = [
 export const SpanNullsEditor: React.FC<FieldOverrideEditorProps<boolean | number, any>> = ({ value, onChange }) => {
   const isThreshold = typeof value === 'number';
   const formattedTime = isThreshold ? secondsToHms((value as number) / 1000) : undefined;
-  GAPS_OPTIONS[2].value = isThreshold ? (value as number) : 3600000; // reuse constants
+  GAPS_OPTIONS[2].value = isThreshold ? (value as number) : 3600000; // 1h
 
   const checkAndUpdate = (txt: string) => {
     let val: boolean | number = false;
@@ -50,16 +50,15 @@ export const SpanNullsEditor: React.FC<FieldOverrideEditorProps<boolean | number
     <HorizontalGroup>
       <RadioButtonGroup value={value} options={GAPS_OPTIONS} onChange={onChange} />
       {isThreshold && (
-        <>
-          <div>&nbsp;&lt;&nbsp;&nbsp;</div>
-          <Input
-            placeholder="always"
-            width={10}
-            defaultValue={formattedTime}
-            onKeyDown={handleEnterKey}
-            onBlur={handleBlur}
-          />
-        </>
+        <Input
+          placeholder="always"
+          width={10}
+          defaultValue={formattedTime}
+          onKeyDown={handleEnterKey}
+          onBlur={handleBlur}
+          prefix={<div>&lt;</div>}
+          spellCheck={false}
+        />
       )}
     </HorizontalGroup>
   );
