@@ -102,12 +102,11 @@ export const StorageLocations: FC = () => {
         await StorageLocationsService.add(formatToRawLocation(location));
         appEvents.emit(AppEvents.alertSuccess, [Messages.addSuccess]);
       }
+      setAddModalVisible(false);
+      setSelectedLocation(null);
       getData();
     } catch (e) {
       logger.error(e);
-    } finally {
-      setAddModalVisible(false);
-      setSelectedLocation(null);
     }
   };
 
