@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
-import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/data';
+import { DataFrame, DataLink, GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../../themes';
 import { HorizontalGroup, VerticalGroup } from '../../Layout/Layout';
 import { IconButton } from '../../IconButton/IconButton';
@@ -12,7 +12,6 @@ export interface DataLinksListItemProps {
   onChange: (index: number, link: DataLink) => void;
   onEdit: () => void;
   onRemove: () => void;
-  suggestions: VariableSuggestion[];
   isEditing?: boolean;
 }
 

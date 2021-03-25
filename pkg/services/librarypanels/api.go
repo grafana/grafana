@@ -128,5 +128,8 @@ func toLibraryPanelError(err error, message string) response.Response {
 	if errors.Is(err, models.ErrFolderAccessDenied) {
 		return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
 	}
+	if errors.Is(err, errLibraryPanelHasConnectedDashboards) {
+		return response.Error(403, errLibraryPanelHasConnectedDashboards.Error(), err)
+	}
 	return response.Error(500, message, err)
 }

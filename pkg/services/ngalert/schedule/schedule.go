@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -23,7 +25,7 @@ var timeNow = time.Now
 
 // ScheduleService handles scheduling
 type ScheduleService interface {
-	Ticker(context.Context) error
+	Ticker(context.Context, *state.StateTracker) error
 	Pause() error
 	Unpause() error
 
@@ -33,8 +35,7 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
-func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.AlertDefinitionKey,
-	evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
+func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.AlertDefinitionKey, evalCh <-chan *evalContext, stopCh <-chan struct{}, stateTracker *state.StateTracker) error {
 	sch.log.Debug("alert definition routine started", "key", key)
 
 	evalRunning := false
@@ -64,9 +65,9 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 				}
 
 				condition := models.Condition{
-					RefID:                 alertDefinition.Condition,
-					OrgID:                 alertDefinition.OrgID,
-					QueriesAndExpressions: alertDefinition.Data,
+					Condition: alertDefinition.Condition,
+					OrgID:     alertDefinition.OrgID,
+					Data:      alertDefinition.Data,
 				}
 				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
 				end = timeNow()
@@ -77,13 +78,14 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 					return err
 				}
 				for _, r := range results {
-					sch.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					sch.log.Info("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 					cmd := models.SaveAlertInstanceCommand{DefinitionOrgID: key.OrgID, DefinitionUID: key.DefinitionUID, State: models.InstanceStateType(r.State.String()), Labels: models.InstanceLabels(r.Instance), LastEvalTime: ctx.now}
 					err := sch.store.SaveAlertInstance(&cmd)
 					if err != nil {
 						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
 					}
 				}
+				_ = stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
 				return nil
 			}
 
@@ -217,7 +219,7 @@ func (sch *schedule) Unpause() error {
 	return nil
 }
 
-func (sch *schedule) Ticker(grafanaCtx context.Context) error {
+func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.StateTracker) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
 	for {
 		select {
@@ -250,7 +252,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context) error {
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return sch.definitionRoutine(ctx, key, definitionInfo.evalCh, definitionInfo.stopCh)
+						return sch.definitionRoutine(ctx, key, definitionInfo.evalCh, definitionInfo.stopCh, stateTracker)
 					})
 				}
 

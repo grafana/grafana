@@ -24,10 +24,13 @@ const createUser = async (user: UserDTO) => getBackendSrv().post('/api/admin/use
 const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
   const history = useHistory();
 
-  const onSubmit = useCallback(async (data: UserDTO) => {
-    await createUser(data);
-    history.push('/admin/users');
-  }, []);
+  const onSubmit = useCallback(
+    async (data: UserDTO) => {
+      await createUser(data);
+      history.push('/admin/users');
+    },
+    [history]
+  );
 
   return (
     <Page navModel={navModel}>

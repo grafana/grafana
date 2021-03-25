@@ -7,6 +7,7 @@ import QueryEditor from './QueryEditor';
 import createMockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';
 import { AzureQueryType } from '../../types';
+import { invalidNamespaceError } from '../../__mocks__/errors';
 
 const variableOptionGroup = {
   label: 'Template variables',
@@ -66,5 +67,21 @@ describe('Azure Monitor QueryEditor', () => {
       ...mockQuery,
       queryType: AzureQueryType.LogAnalytics,
     });
+  });
+
+  it('displays error messages from frontend Azure calls', async () => {
+    const mockDatasource = createMockDatasource();
+    mockDatasource.azureMonitorDatasource.getSubscriptions = jest.fn().mockRejectedValue(invalidNamespaceError());
+    render(
+      <QueryEditor
+        query={createMockQuery()}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={() => {}}
+      />
+    );
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
+
+    expect(screen.getByText("The resource namespace 'grafanadev' is invalid.")).toBeInTheDocument();
   });
 });
