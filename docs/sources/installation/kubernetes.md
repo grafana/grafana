@@ -108,7 +108,7 @@ Now if you navigate to `localhost:3000` in your browser, you should see a Grafan
 ## Deploy Grafana Enterprise on Kubernetes
 The process for deploying Grafana Enterprise is almost identical to the process above, except for some extra steps required to add in your license file.
 
-### Obtain Grafana Enterprise License
+### Obtain Grafana Enterprise license
 To run Grafana Enterprise, you need a valid license. To obtain a license, [contact a Grafana Labs representative](https://grafana.com/contact?about=grafana-enterprise). This guide will assume you already have done this and have a `license.jwt` file. Your license should also be associated with a URL, which we will use further down in this guide. 
 
 ### Create License Secret
