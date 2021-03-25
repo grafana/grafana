@@ -23,7 +23,7 @@ const NotificationsListPage: FC = () => {
     fetchNotifications().then((res) => {
       setNotifications(res);
     });
-  }, []);
+  }, [fetchNotifications]);
 
   const deleteNotification = (id: number) => {
     appEvents.publish(
