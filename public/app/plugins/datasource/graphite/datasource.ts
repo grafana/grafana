@@ -587,7 +587,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
               // it was merged to master in July 2020 but it has never been released (the last Graphite
               // release was 1.1.7 - March 2020). The bug was introduced in Graphite 1.1.7, in versions
               // 1.1.0 - 1.1.6 /functions endpoint returns a valid JSON
-              const fixedData = JSON.parse(results.data.replace(/"default": Infinity/g, '"default": 1e9999'));
+              const fixedData = JSON.parse(results.data.replace(/"default": ?Infinity/g, '"default": 1e9999'));
               this.funcDefs = gfunc.parseFuncDefs(fixedData);
             } else {
               this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
