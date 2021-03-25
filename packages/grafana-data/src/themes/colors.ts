@@ -1,3 +1,5 @@
+import { DeepPartial } from './types';
+
 export interface ThemeRichColor {
   name: string;
   main: string;
@@ -16,14 +18,18 @@ export interface ThemeColors {
   warning: ThemeRichColor;
   info: ThemeRichColor;
 
-  layer0: string;
-  layer1: string;
-  layer2: string;
-  layer3: string;
+  background: {
+    layer0: string;
+    layer1: string;
+    layer2: string;
+    layer3: string;
+  };
 
-  border1: string;
-  border2: string;
-  border3: string;
+  border: {
+    b1: string;
+    b2: string;
+    b3: string;
+  };
 
   text: {
     primary: string;
@@ -36,4 +42,4 @@ export interface ThemeColors {
   getContrastText: (backgroundColor: string) => string;
 }
 
-export function createColors(colors: Partial<ThemeColors>): ThemeColors {}
+export function createColors(colors: DeepPartial<ThemeColors>): ThemeColors {}
