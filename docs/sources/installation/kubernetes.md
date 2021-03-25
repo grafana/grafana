@@ -226,7 +226,7 @@ spec:
 kubectl apply -f grafana.yaml
 ```
 
-2. Check that it worked
+1. Check that it worked by running the following:
 ```bash
 kubectl port-forward service/grafana 3000:3000
 ```
