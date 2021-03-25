@@ -10,23 +10,24 @@ import (
 
 const resourcesPath = "/resources"
 
+var gzipIgnoredPathPrefixes = []string{
+	"/api/datasources/proxy", // Ignore datasource proxy requests.
+	"/api/plugin-proxy/",
+	"/metrics",
+	"/live/ws", // WebSocket does not support gzip compression.
+}
+
 func Gziper() macaron.Handler {
 	gziperLogger := log.New("gziper")
 	gziper := gzip.Gziper()
 
 	return func(ctx *macaron.Context) {
 		requestPath := ctx.Req.URL.RequestURI()
-		// ignore datasource proxy requests
-		if strings.HasPrefix(requestPath, "/api/datasources/proxy") {
-			return
-		}
 
-		if strings.HasPrefix(requestPath, "/api/plugin-proxy/") {
-			return
-		}
-
-		if strings.HasPrefix(requestPath, "/metrics") {
-			return
+		for _, pathPrefix := range gzipIgnoredPathPrefixes {
+			if strings.HasPrefix(requestPath, pathPrefix) {
+				return
+			}
 		}
 
 		// ignore resources
