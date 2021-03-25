@@ -70,14 +70,14 @@ dashboardFamily: #SchemaFamily & {
                 schemaVersion: number | *25
                 // Version of the dashboard, incremented each time the dashboard is updated.
                 version?: number
-                panels?: [..._Panel]
+                panels?: [...#Panel]
 
                 // Dashboard panels. Panels are canonically defined inline
                 // because they share a version timeline with the dashboard
                 // schema; they do not vary independently. We create a separate,
                 // synthetic Family to represent them in Go, for ease of generating
                 // e.g. JSON Schema.
-                _Panel: {
+                #Panel: {
                     // The panel plugin type id. 
                     type: !=""
 
@@ -207,8 +207,8 @@ dashboardFamily: #SchemaFamily & {
 
 // Stub to be unified with a model from a panel plugin.
 //
-// This directly replicates the form of the current schema, which isn't good for
-// versioning. Need some indirection.
+// This has to exist here until a bug is fixed in CUE that makes it impossible
+// to use cue.MakePath() to target hidden fields.
 discriminatedPanel: {
     arg: {
         model: #PanelModel
@@ -227,7 +227,6 @@ discriminatedPanel: {
 
 allPanels: [Name=_]: discriminatedPanel
 parts: [for v in allPanels { v.result }]
-scratch: {}
 
 // An individual schema governing a panel plugin's persistable configuration.
 //

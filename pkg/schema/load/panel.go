@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
@@ -15,137 +14,100 @@ import (
 	"github.com/grafana/grafana/pkg/schema"
 )
 
-var rt = &cue.Runtime{}
-
-// Families can have variants, where more typing information narrows the
-// possible values for certain keys in schemas. These are a meta-property
-// of the schema, effectively encoded in these loaders.
-//
-// We can generally define three variants:
-//  - "Base": strictly core schema files, no plugins. (go:embed-able)
-//  - "Dist": "Base" + plugins that ship with vanilla Grafana (go:embed-able)
-//  - "Instance": "Dist" + the non-core plugins available in an actual, running Grafana
-
-// BaseLoadPaths contains the configuration for loading a DistDashboard
-type BaseLoadPaths struct {
-	// BaseCueFS should be rooted at a directory containing the filesystem layout
-	// expected to exist at github.com/grafana/grafana/cue.
-	BaseCueFS fs.FS
-
-	// DistPluginCueFS should point to some fs path (TBD) under which all core
-	// plugins live.
-	DistPluginCueFS fs.FS
-
-	// InstanceCueFS should point to a root dir in which non-core plugins live.
-	// Normal case will be that this only happens when an actual Grafana
-	// instance is making the call, and has a plugin dir to offer - though
-	// external tools could always create their own dirs shaped like a Grafana
-	// plugin dir, and point to those.
-	InstanceCueFS fs.FS
-}
-
-type compositeDashboardSchema struct {
+// TODO a proper approach to this type would probably include responsibility for
+// moving between the declared and composed forms of panel plugin schema
+type panelSchema struct {
 	actual    cue.Value
-	scratch   cue.Value
 	major     int
 	minor     int
-	next      *compositeDashboardSchema
+	next      *panelSchema
 	migration migrationFunc
 }
 
-// Validate checks that the resource is correct with respect to the schema.
-func (cds *compositeDashboardSchema) Validate(r schema.Resource) error {
+func (ps *panelSchema) Validate(r schema.Resource) error {
 	rv, err := rt.Compile("resource", r.Value)
 	if err != nil {
 		return err
 	}
-	return cds.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
+	return ps.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
 }
 
-// ApplyDefaults returns a new, concrete copy of the Resource with all paths
-// that are 1) missing in the Resource AND 2) specified by the schema,
-// filled with default values specified by the schema.
-func (cds *compositeDashboardSchema) ApplyDefaults(_ schema.Resource) (schema.Resource, error) {
+func (ps *panelSchema) ApplyDefaults(_ schema.Resource) (schema.Resource, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-// TrimDefaults returns a new, concrete copy of the Resource where all paths
-// in the  where the values at those paths are the same as the default value
-// given in the schema.
-func (cds *compositeDashboardSchema) TrimDefaults(_ schema.Resource) (schema.Resource, error) {
+func (ps *panelSchema) TrimDefaults(_ schema.Resource) (schema.Resource, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-// CUE returns the cue.Value representing the actual schema.
-func (cds *compositeDashboardSchema) CUE() cue.Value {
-	return cds.actual
+func (ps *panelSchema) CUE() cue.Value {
+	return ps.actual
 }
 
-// Version reports the major and minor versions of the schema.
-func (cds *compositeDashboardSchema) Version() (major int, minor int) {
-	return cds.major, cds.minor
+func (ps *panelSchema) Version() (major int, minor int) {
+	return ps.major, ps.minor
 }
 
-// Returns the next VersionedCueSchema
-func (cds *compositeDashboardSchema) Successor() schema.VersionedCueSchema {
-	return cds.next
+func (ps *panelSchema) Successor() schema.VersionedCueSchema {
+	panic("not implemented")
 }
 
-func (cds *compositeDashboardSchema) Migrate(x schema.Resource) (schema.Resource, schema.VersionedCueSchema, error) { // TODO restrict input/return type to concrete
-	r, sch, err := cds.migration(x.Value)
-	if err != nil || sch == nil {
-		// TODO fix sloppy types
-		r = x.Value.(cue.Value)
-	}
-
-	return schema.Resource{Value: r}, sch, nil
+func (ps *panelSchema) Migrate(x schema.Resource) (schema.Resource, schema.VersionedCueSchema, error) {
+	panic("not implemented")
 }
 
-// toOverlay converts all .cue files in the fs.FS into Source entries in an
-// overlay map, as expected by load.Config.
-//
-// Each entry is placed in the map with the provided prefix - which must be an
-// absolute path - ahead of the actual path of the added file within the fs.FS.
-//
-// The function writes into the provided overlay map, to facilitate the
-// construction of a single overlay map from multiple fs.FS.
-//
-// All files reachable by walking the provided fs.FS are added to the overlay
-// map, on the premise that control over the FS is sufficient to allow any
-// desired filtering.
-func toOverlay(prefix string, vfs fs.FS, overlay map[string]load.Source) error {
-	if !filepath.IsAbs(prefix) {
-		return fmt.Errorf("must provide absolute path prefix when generating cue overlay, got %q", prefix)
-	}
-
-	err := fs.WalkDir(vfs, ".", (func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() {
-			return nil
-		}
-
-		f, err := vfs.Open(path)
-		if err != nil {
-			return err
-		}
-
-		b, err := io.ReadAll(f)
-		if err != nil {
-			return err
-		}
-
-		overlay[filepath.Join(prefix, path)] = load.FromBytes(b)
-		return nil
-	}))
-
+func disjunctPanelScuemata(scuemap map[string]schema.Fam) (cue.Value, error) {
+	partsi, err := rt.Compile("panelDisjunction", `
+	allPanels: { in: {}, result: {}}
+	parts: [for v in allPanels { v.result }]
+	`)
 	if err != nil {
-		return err
+		return cue.Value{}, err
 	}
 
-	return nil
+	parts := partsi.Value()
+	for id, fam := range scuemap {
+		sch := fam.First()
+
+		// TODO lol, be better
+		for !reflect.ValueOf(sch).IsNil() {
+			cv := panelMapFor(id, sch)
+
+			mjv, miv := sch.Version()
+			parts = parts.Fill(cv, "allPanels", fmt.Sprintf("%s@%v.%v", id, mjv, miv))
+			sch = sch.Successor()
+		}
+	}
+
+	return parts, nil
+}
+
+func panelMapFor(id string, vcs schema.VersionedCueSchema) cue.Value {
+	maj, min := vcs.Version()
+	inter, err := rt.Compile("typedPanel", fmt.Sprintf(`
+	in: {
+		type: %q
+		v: {
+			maj: %d
+			min: %d
+		}
+		model: {...}
+	}
+	result: {
+		type: in.type,
+		panelSchema: maj: in.v.maj
+		panelSchema: min: in.v.min
+		options: in.model.PanelOptions
+		fieldConfig: defaults: custom: in.model.PanelFieldConfig
+	}
+	`, id, maj, min))
+	if err != nil {
+		// The above can't not compile
+		panic(err)
+	}
+
+	// TODO validate, especially with #PanelModel
+	return inter.Value().Fill(vcs.CUE(), "in", "model").Lookup("result")
 }
 
 func DistDashboardFamily(p BaseLoadPaths) (*schema.Family, error) {
@@ -234,8 +196,6 @@ func buildDistDashboardFamily(famval, parts cue.Value) (*schema.Family, error) {
 		for miniter.Next() {
 			cds := &compositeDashboardSchema{
 				actual: miniter.Value(),
-				major:  major,
-				minor:  minor,
 				// This gets overwritten on all but the very final schema
 				migration: terminalMigrationFunc,
 			}
@@ -514,6 +474,104 @@ func rawDistPanels(p BaseLoadPaths) (map[string]panelFamily, error) {
 			typ: id,
 			fam: fam,
 		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return all, nil
+}
+
+func rawDistPanels2(p BaseLoadPaths) (map[string]schema.Fam, error) {
+	overlay := make(map[string]load.Source)
+	if err := toOverlay("/", p.BaseCueFS, overlay); err != nil {
+		return nil, err
+	}
+	if err := toOverlay("/", p.DistPluginCueFS, overlay); err != nil {
+		return nil, err
+	}
+
+	cfg := &load.Config{
+		Overlay: overlay,
+		Package: "scuemata",
+	}
+
+	pmf := cue.Build(load.Instances([]string{"/cue/scuemata/scuemata.cue"}, cfg))[0].LookupDef("#PanelModelFamily")
+	if !pmf.Exists() {
+		return nil, errors.New("could not locate #PanelModelFamily definition")
+	}
+
+	all := make(map[string]schema.Fam)
+	err := fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() || d.Name() != "plugin.json" {
+			return nil
+		}
+
+		dpath := filepath.Dir(path)
+		// For now, skip plugins without a models.cue
+		_, err = p.DistPluginCueFS.Open(filepath.Join(dpath, "models.cue"))
+		if err != nil {
+			return nil
+		}
+
+		fi, err := p.DistPluginCueFS.Open(path)
+		if err != nil {
+			return err
+		}
+		b, err := ioutil.ReadAll(fi)
+		if err != nil {
+			return err
+		}
+
+		jmap := make(map[string]interface{})
+		json.Unmarshal(b, &jmap)
+		if err != nil {
+			return err
+		}
+		iid, has := jmap["id"]
+		if !has || jmap["type"] != "panel" {
+			return errors.New("no type field in plugin.json or not a panel type plugin")
+		}
+		id := iid.(string)
+
+		cfg := &load.Config{
+			Package: "grafanaschema",
+			Overlay: overlay,
+		}
+
+		li := load.Instances([]string{filepath.Join("/", dpath, "models.cue")}, cfg)
+		built := cue.Build(li)
+		// TODO this is a silly check...right?
+		if len(built) != 1 {
+			return fmt.Errorf("expected exactly one instance, got %v", len(built))
+		}
+		imod := built[0]
+
+		// Verify that there exists a Model declaration in the models.cue file...
+		// TODO Best (?) ergonomics for entire models.cue file to emit a struct
+		// compliant with #PanelModelFamily
+		pmod := imod.Lookup("Model")
+		if !pmod.Exists() {
+			return fmt.Errorf("%s does not contain a declaration of its models at path 'Model'", path)
+		}
+
+		// Ensure the declared value is subsumed by/correct wrt #PanelModelFamily
+		if err := pmf.Subsume(pmod); err != nil {
+			return err
+		}
+
+		// Create a generic schema family to represent the whole of the
+		fam, err := buildGenericFamily(pmod)
+		if err != nil {
+			return err
+		}
+
+		all[id] = fam
 		return nil
 	})
 	if err != nil {

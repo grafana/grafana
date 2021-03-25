@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 
 	cuerr "cuelang.org/go/cue/errors"
@@ -18,26 +19,56 @@ var p BaseLoadPaths = BaseLoadPaths{
 }
 
 func TestScuemataBasics(t *testing.T) {
-	rawmap, err := rawDistPanels(p)
-	require.NoError(t, err, "error while loading raw dist panels")
+	// rawmap, err := rawDistPanels(p)
+	// require.NoError(t, err, "error while loading raw dist panels")
 
-	for id, plug := range rawmap {
-		t.Run(id, func(t *testing.T) {
-			require.Greater(t, len(plug.fam.Seqs), 0, "no schema in scuemata")
+	// for id, plug := range rawmap {
+	// 	t.Run(id, func(t *testing.T) {
+	// 		require.Greater(t, len(plug.fam.Seqs), 0, "no schema in scuemata")
 
-			for maj, seq := range plug.fam.Seqs {
-				for min, sch := range seq {
-					t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
-						cv := sch.CUE()
-						t.Run("Exists", func(t *testing.T) {
-							require.True(t, cv.Exists(), "cue value for schema does not exist")
-						})
-						t.Run("Validate", func(t *testing.T) {
-							require.NoError(t, cv.Validate(), "all schema should be valid with respect to basic CUE rules")
-						})
-					})
-				}
+	// 		for maj, seq := range plug.fam.Seqs {
+	// 			for min, sch := range seq {
+	// 				t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
+	// 					cv := sch.CUE()
+	// 					t.Run("Exists", func(t *testing.T) {
+	// 						require.True(t, cv.Exists(), "cue value for schema does not exist")
+	// 					})
+	// 					t.Run("Validate", func(t *testing.T) {
+	// 						require.NoError(t, cv.Validate(), "all schema should be valid with respect to basic CUE rules")
+	// 					})
+	// 				})
+	// 			}
+	// 		}
+	// 	})
+	// }
+
+	all := make(map[string]schema.Fam)
+
+	dash, err := BaseDashboardScuemata(p)
+	require.NoError(t, err, "error while loading base dashboard scuemata")
+	all["basedash"] = dash
+
+	ddash, err := DistDashboardScuemata(p)
+	require.NoError(t, err, "error while loading dist dashboard scuemata")
+	all["distdash"] = ddash
+
+	for set, fam := range all {
+		t.Run(set, func(t *testing.T) {
+			sch := fam.First()
+			if reflect.ValueOf(sch).IsNil() {
+				t.Error("scuemata linked to empty chain")
 			}
+			maj, min := sch.Version()
+			t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
+				cv := sch.CUE()
+				// t.Logf("%v\n", cv)
+				t.Run("Exists", func(t *testing.T) {
+					require.True(t, cv.Exists(), "cue value for schema does not exist")
+				})
+				t.Run("Validate", func(t *testing.T) {
+					require.NoError(t, cv.Validate(), "all schema should be valid with respect to basic CUE rules")
+				})
+			})
 		})
 	}
 }
@@ -125,7 +156,7 @@ var testdash = []byte(`
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": "right",
+            "align": 14,
             "filterable": false
           },
           "decimals": 3,
