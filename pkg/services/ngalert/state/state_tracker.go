@@ -3,6 +3,7 @@ package state
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -14,6 +15,8 @@ type AlertState struct {
 	CacheId string
 	Labels  data.Labels
 	State   eval.State
+	StartAt time.Time
+	FiredAt time.Time
 	Results []eval.State
 }
 
@@ -48,6 +51,8 @@ func (c *cache) getOrCreate(uid string, result eval.Result) AlertState {
 		CacheId: idString,
 		Labels:  result.Instance,
 		State:   result.State,
+		StartAt: result.StartAt,
+		FiredAt: result.FiredAt,
 		Results: []eval.State{result.State},
 	}
 	c.cacheMap[idString] = newState
