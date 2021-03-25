@@ -3,7 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
-import { AzureDataSourceSettings } from '../types';
+import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
 
 export interface State {
   sameAsSwitched: boolean;
@@ -15,9 +15,9 @@ export interface Props {
   workspaces: SelectableValue[];
   makeSameAs: () => void;
   onUpdateDatasourceOptions: (options: AzureDataSourceSettings) => void;
-  onUpdateJsonDataOption: (key: string, val: any) => void;
-  onUpdateSecureJsonDataOption: (key: string, val: any) => void;
-  onResetOptionKey: (key: string) => void;
+  onUpdateJsonDataOption: (key: keyof AzureDataSourceJsonData, val: any) => void;
+  onUpdateSecureJsonDataOption: (key: keyof AzureDataSourceSecureJsonData, val: any) => void;
+  onResetOptionKey: (key: keyof AzureDataSourceSecureJsonData) => void;
   onLoadSubscriptions: (type?: string) => void;
   onLoadWorkspaces: (type?: string) => void;
 }
