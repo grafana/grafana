@@ -16,7 +16,7 @@ export enum SearchFunctionType {
  * - Returns items containing the searched text.
  * @internal
  */
-export const wordSearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
+const wordSearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
   return items.filter((c) => (c.filterText || c.label).includes(text));
 };
 
@@ -25,7 +25,7 @@ export const wordSearch: SearchFunction = (items: CompletionItem[], text: string
  * - Returns items starting with the searched text.
  * @internal
  */
-export const prefixSearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
+const prefixSearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
   return items.filter((c) => (c.filterText || c.label).startsWith(text));
 };
 
@@ -35,7 +35,7 @@ export const prefixSearch: SearchFunction = (items: CompletionItem[], text: stri
  * - Stores highlight parts with parts of the text phrase found by fuzzy search
  * @internal
  */
-export const fuzzySearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
+const fuzzySearch: SearchFunction = (items: CompletionItem[], text: string): CompletionItem[] => {
   text = text.toLowerCase();
   return items.filter((item) => {
     const { distance, ranges, found } = fuzzyMatch(item.label.toLowerCase(), text);
