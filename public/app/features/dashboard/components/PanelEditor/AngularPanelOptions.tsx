@@ -114,6 +114,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
     };
 
     this.angularOptions = loader.load(this.element, scopeProps, template);
+    this.angularOptions.digest();
   }
 
   render() {

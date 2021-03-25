@@ -58,7 +58,6 @@ export interface FieldConfigSource<TOptions extends object = any> {
 export interface FieldOverrideContext extends StandardEditorContext<any> {
   field?: Field;
   dataFrameIndex?: number; // The index for the selected field frame
-  data: DataFrame[]; // All results
 }
 export interface FieldConfigEditorProps<TValue, TSettings>
   extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> {

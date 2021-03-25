@@ -8,7 +8,6 @@ export const SliderValueEditor: React.FC<FieldConfigEditorProps<number, SliderFi
   item,
 }) => {
   const { settings } = item;
-
   const initialValue = typeof value === 'number' ? value : typeof value === 'string' ? +value : 0;
 
   return (

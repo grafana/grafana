@@ -13,13 +13,7 @@ export const ApiKeysActionBar: FC<Props> = ({ searchQuery, disabled, onAddClick,
   return (
     <div className="page-action-bar">
       <div className="gf-form gf-form--grow">
-        <FilterInput
-          labelClassName="gf-form--has-input-icon gf-form--grow"
-          inputClassName="gf-form-input"
-          placeholder="Search keys"
-          value={searchQuery}
-          onChange={onSearchChange}
-        />
+        <FilterInput placeholder="Search keys" value={searchQuery} onChange={onSearchChange} />
       </div>
 
       <div className="page-action-bar__spacer" />

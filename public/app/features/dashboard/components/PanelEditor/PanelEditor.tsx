@@ -21,7 +21,7 @@ import { calculatePanelSize } from './utils';
 
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { OptionsPaneContent } from './OptionsPaneContent';
+import { OptionsPane } from './OptionsPane';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
@@ -45,6 +45,7 @@ import { getVariables } from 'app/features/variables/state/selectors';
 import { StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
+import { VisualizationButton } from './VisualizationButton';
 import { PanelOptionsChangedEvent, ShowModalReactEvent } from 'app/types/events';
 import { locationService } from '@grafana/runtime';
 import { UnlinkModal } from '../../../library-panels/components/UnlinkModal/UnlinkModal';
@@ -286,20 +287,15 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, uiState, variables, updateTimeZoneForSession } = this.props;
+    const { dashboard, uiState, variables, updateTimeZoneForSession, panel } = this.props;
     return (
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
           {this.renderTemplateVariables(styles)}
-
           <HorizontalGroup>
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
-            {!uiState.isPanelOptionsVisible && (
-              <ToolbarButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" icon="angle-left">
-                Show options
-              </ToolbarButton>
-            )}
+            {!uiState.isPanelOptionsVisible && <VisualizationButton panel={panel} />}
           </HorizontalGroup>
         </HorizontalGroup>
       </div>
@@ -390,12 +386,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     }
 
     return (
-      <OptionsPaneContent
+      <OptionsPane
         plugin={plugin}
         dashboard={dashboard}
         panel={panel}
         width={rightPaneSize}
-        onClose={this.onTogglePanelOptions}
         onFieldConfigsChange={this.onFieldConfigChange}
         onPanelOptionsChanged={this.onPanelOptionsChanged}
         onPanelConfigChange={this.onPanelConfigChanged}

@@ -7,7 +7,6 @@ import { AnyAction } from 'redux';
 export interface LibraryPanelsViewState {
   loadingState: LoadingState;
   libraryPanels: LibraryPanelDTO[];
-  searchString: string;
   totalCount: number;
   perPage: number;
   page: number;
@@ -16,11 +15,10 @@ export interface LibraryPanelsViewState {
 }
 
 export const initialLibraryPanelsViewState: LibraryPanelsViewState = {
-  loadingState: LoadingState.NotStarted,
+  loadingState: LoadingState.Loading,
   libraryPanels: [],
-  searchString: '',
   totalCount: 0,
-  perPage: 10,
+  perPage: 40,
   page: 1,
   numberOfPages: 0,
   currentPanelId: undefined,
@@ -30,9 +28,7 @@ export const initSearch = createAction('libraryPanels/view/initSearch');
 export const searchCompleted = createAction<
   Omit<LibraryPanelsViewState, 'currentPanelId' | 'searchString' | 'loadingState' | 'numberOfPages'>
 >('libraryPanels/view/searchCompleted');
-export const changeSearchString = createAction<Pick<LibraryPanelsViewState, 'searchString'>>(
-  'libraryPanels/view/changeSearchString'
-);
+
 export const changePage = createAction<Pick<LibraryPanelsViewState, 'page'>>('libraryPanels/view/changePage');
 
 export const libraryPanelsViewReducer = (state: LibraryPanelsViewState, action: AnyAction) => {
@@ -52,10 +48,6 @@ export const libraryPanelsViewReducer = (state: LibraryPanelsViewState, action: 
       numberOfPages,
       page: page > numberOfPages ? page - 1 : page,
     };
-  }
-
-  if (changeSearchString.match(action)) {
-    return { ...state, searchString: action.payload.searchString };
   }
 
   if (changePage.match(action)) {

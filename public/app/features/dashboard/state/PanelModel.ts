@@ -511,6 +511,17 @@ export class PanelModel implements DataConfigSource {
   setProperty(key: keyof this, value: any) {
     this[key] = value;
     this.hasChanged = true;
+
+    // Custom handling of repeat dependent options, handled here as PanelEditor can
+    // update one key at a time right now
+    if (key === 'repeat') {
+      if (this.repeat && !this.repeatDirection) {
+        this.repeatDirection = 'h';
+      } else if (!this.repeat) {
+        delete this.repeatDirection;
+        delete this.maxPerRow;
+      }
+    }
   }
 
   replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
