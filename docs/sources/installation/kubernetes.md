@@ -92,12 +92,10 @@ spec:
 ### Send manifest to Kubernetes API server
 
 1. Run the following command: 
-
 `kubectl apply -f grafana.yaml`
 
 1. Check that it worked by running the following:
 `kubectl port-forward service/grafana 3000:3000`
-
 Now if you navigate to `localhost:3000` in your browser, you should see a Grafana login page. 
 
 1. Use `admin` for both the username and password to login.
@@ -220,12 +218,10 @@ spec:
 ```
  
 1. Send manifest to Kubernetes API Server
-
 `kubectl apply -f grafana.yaml`
 
 1. Check that it worked by running the following:
 `kubectl port-forward service/grafana 3000:3000`
-
 Now if you navigate to `localhost:3000` in your browser, you should see the Grafana login page. 
 
 1. Use `admin` for both the username and password to login.
