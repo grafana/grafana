@@ -37,8 +37,6 @@ export class UsersActionBar extends PureComponent<Props> {
       <div className="page-action-bar">
         <div className="gf-form gf-form--grow">
           <FilterInput
-            labelClassName="gf-form--has-input-icon"
-            inputClassName="gf-form-input width-20"
             value={searchQuery}
             onChange={setUsersSearchQuery}
             placeholder="Search user by login, email or name"
