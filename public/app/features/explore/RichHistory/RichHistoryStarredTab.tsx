@@ -132,8 +132,6 @@ export function RichHistoryStarredTab(props: Props) {
           )}
           <div className={styles.filterInput}>
             <FilterInput
-              labelClassName="gf-form--has-input-icon gf-form--grow"
-              inputClassName="gf-form-input"
               placeholder="Search queries"
               value={searchInput}
               onChange={(value: string) => {

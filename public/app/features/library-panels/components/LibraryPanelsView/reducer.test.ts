@@ -3,7 +3,6 @@ import { LoadingState } from '@grafana/data';
 import { reducerTester } from '../../../../../test/core/redux/reducerTester';
 import {
   changePage,
-  changeSearchString,
   initialLibraryPanelsViewState,
   initSearch,
   libraryPanelsViewReducer,
@@ -70,18 +69,6 @@ describe('libraryPanelsViewReducer', () => {
             numberOfPages: 20,
           });
       });
-    });
-  });
-
-  describe('when changeSearchString is dispatched', () => {
-    it('then the state should be correct', () => {
-      reducerTester<LibraryPanelsViewState>()
-        .givenReducer(libraryPanelsViewReducer, { ...initialLibraryPanelsViewState })
-        .whenActionIsDispatched(changeSearchString({ searchString: 'a search string' }))
-        .thenStateShouldEqual({
-          ...initialLibraryPanelsViewState,
-          searchString: 'a search string',
-        });
     });
   });
 
