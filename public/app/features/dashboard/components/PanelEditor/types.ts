@@ -1,4 +1,5 @@
-import { DataFrame, FieldConfigSource, PanelPlugin } from '@grafana/data';
+import { DataFrame, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
+import { DashboardModel, PanelModel } from '../../state';
 
 export interface PanelEditorTab {
   id: string;
@@ -33,4 +34,14 @@ export interface Props {
   onChange: (config: FieldConfigSource) => void;
   /* Helpful for IntelliSense */
   data: DataFrame[];
+}
+
+export interface OptionPaneRenderProps {
+  panel: PanelModel;
+  plugin: PanelPlugin;
+  data?: PanelData;
+  dashboard: DashboardModel;
+  onPanelConfigChange: (configKey: string, value: any) => void;
+  onPanelOptionsChanged: (options: any) => void;
+  onFieldConfigsChange: (config: FieldConfigSource) => void;
 }
