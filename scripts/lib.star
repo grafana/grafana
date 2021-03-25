@@ -403,7 +403,7 @@ def build_frontend_step(edition, ver_mode, is_downstream=False):
         'image': build_image,
         'depends_on': [
             'initialize',
-            'test-frontend',
+            # 'test-frontend',
         ],
         'commands': cmds,
     }

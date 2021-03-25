@@ -27,198 +27,12 @@ steps:
   environment:
     DOCKERIZE_VERSION: 0.6.1
 
-- name: lint-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl lint-backend --edition oss
-  environment:
-    CGO_ENABLED: 1
-  depends_on:
-  - initialize
-
-- name: codespell
-  image: grafana/build-container:1.4.1
-  commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
-  - codespell -I words_to_ignore.txt docs/
-  depends_on:
-  - initialize
-
-- name: shellcheck
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
-  depends_on:
-  - initialize
-
-- name: test-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
-  depends_on:
-  - initialize
-  - lint-backend
-
-- name: test-frontend
-  image: grafana/build-container:1.4.1
-  commands:
-  - yarn run ci:test-frontend
-  environment:
-    TEST_MAX_WORKERS: 50%
-  depends_on:
-  - initialize
-
-- name: build-backend
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise
-  depends_on:
-  - initialize
-  - lint-backend
-  - test-backend
-
 - name: build-frontend
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
-  - test-frontend
-
-- name: build-plugins
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
-  depends_on:
-  - initialize
-  - lint-backend
-
-- name: gen-version
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./bin/grabpl gen-version --build-id ${DRONE_BUILD_NUMBER}
-  depends_on:
-  - build-backend
-  - build-frontend
-  - build-plugins
-  - test-backend
-  - test-frontend
-  - codespell
-  - shellcheck
-  - check-dashboard-schemas
-
-- name: package
-  image: grafana/build-container:1.4.1
-  commands:
-  - . scripts/build/gpg-test-vars.sh && ./bin/grabpl package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise --variants linux-x64,linux-x64-musl,osx64,win64
-  depends_on:
-  - gen-version
-
-- name: end-to-end-tests-server
-  image: grafana/build-container:1.4.1
-  detach: true
-  commands:
-  - ./e2e/start-server
-  environment:
-    PORT: 3001
-  depends_on:
-  - package
-
-- name: end-to-end-tests
-  image: grafana/ci-e2e:12.19.0-1
-  commands:
-  - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
-  environment:
-    HOST: end-to-end-tests-server
-  depends_on:
-  - end-to-end-tests-server
-
-- name: build-storybook
-  image: grafana/build-container:1.4.1
-  commands:
-  - yarn storybook:build
-  - ./bin/grabpl verify-storybook
-  environment:
-    NODE_OPTIONS: --max_old_space_size=4096
-  depends_on:
-  - package
-
-- name: build-frontend-docs
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./scripts/ci-reference-docs-lint.sh ci
-  depends_on:
-  - build-frontend
-
-- name: build-docs-website
-  image: grafana/docs-base:latest
-  commands:
-  - mkdir -p /hugo/content/docs/grafana
-  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
-  - cd /hugo && make prod
-  depends_on:
-  - initialize
-  - build-frontend-docs
-
-- name: copy-packages-for-docker
-  image: grafana/build-container:1.4.1
-  commands:
-  - ls dist/*.tar.gz*
-  - cp dist/*.tar.gz* packaging/docker/
-  depends_on:
-  - package
-
-- name: build-docker-images
-  image: grafana/drone-grafana-docker:0.3.2
-  settings:
-    archs: amd64
-    dry_run: true
-    edition: oss
-  depends_on:
-  - copy-packages-for-docker
-
-- name: postgres-integration-tests
-  image: grafana/build-container:1.4.1
-  commands:
-  - apt-get update
-  - apt-get install -yq postgresql-client
-  - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
-  - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  depends_on:
-  - test-backend
-  - test-frontend
-
-- name: mysql-integration-tests
-  image: grafana/build-container:1.4.1
-  commands:
-  - apt-get update
-  - apt-get install -yq default-mysql-client
-  - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
-  - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
-  - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
-  environment:
-    GRAFANA_TEST_DB: mysql
-    MYSQL_HOST: mysql
-  depends_on:
-  - test-backend
-  - test-frontend
 
 services:
 - name: postgres
@@ -357,7 +171,6 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
-  - test-frontend
 
 - name: build-plugins
   image: grafana/build-container:1.4.1
@@ -805,7 +618,6 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition oss --no-pull-enterprise ${DRONE_TAG}
   depends_on:
   - initialize
-  - test-frontend
 
 - name: build-plugins
   image: grafana/build-container:1.4.1
@@ -1181,7 +993,6 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition enterprise --no-pull-enterprise ${DRONE_TAG}
   depends_on:
   - initialize
-  - test-frontend
 
 - name: build-plugins
   image: grafana/build-container:1.4.1
@@ -1724,7 +1535,6 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition oss --no-pull-enterprise v7.3.0-test
   depends_on:
   - initialize
-  - test-frontend
 
 - name: build-plugins
   image: grafana/build-container:1.4.1
@@ -2089,7 +1899,6 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --github-token $${GITHUB_TOKEN} --no-install-deps --edition enterprise --no-pull-enterprise v7.3.0-test
   depends_on:
   - initialize
-  - test-frontend
 
 - name: build-plugins
   image: grafana/build-container:1.4.1
@@ -2622,7 +2431,6 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
-  - test-frontend
 
 - name: build-plugins
   image: grafana/build-container:1.4.1
@@ -2958,7 +2766,6 @@ steps:
   - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition enterprise --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
   depends_on:
   - initialize
-  - test-frontend
 
 - name: build-plugins
   image: grafana/build-container:1.4.1
