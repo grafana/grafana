@@ -10,15 +10,18 @@ interface DimensionFieldsProps extends AzureQueryEditorFieldProps {
 }
 
 const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptions, onQueryChange }) => {
-  const setDimensionFilters = (newFilters: AzureMetricDimension[]) => {
-    onQueryChange({
-      ...query,
-      azureMonitor: {
-        ...query.azureMonitor,
-        dimensionFilters: newFilters,
-      },
-    });
-  };
+  const setDimensionFilters = useCallback(
+    (newFilters: AzureMetricDimension[]) => {
+      onQueryChange({
+        ...query,
+        azureMonitor: {
+          ...query.azureMonitor,
+          dimensionFilters: newFilters,
+        },
+      });
+    },
+    [onQueryChange, query]
+  );
 
   const addFilter = useCallback(() => {
     setDimensionFilters([
@@ -29,7 +32,7 @@ const DimensionFields: React.FC<DimensionFieldsProps> = ({ query, dimensionOptio
         filter: '',
       },
     ]);
-  }, [query.azureMonitor.dimensionFilters]);
+  }, [query.azureMonitor.dimensionFilters, setDimensionFilters]);
 
   const removeFilter = (index: number) => {
     const newFilters = [...query.azureMonitor.dimensionFilters];

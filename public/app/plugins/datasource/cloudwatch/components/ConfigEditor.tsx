@@ -15,6 +15,7 @@ export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, Cloud
 
 export const ConfigEditor: FC<Props> = (props: Props) => {
   const [datasource, setDatasource] = useState<CloudWatchDatasource>();
+  const { options } = props;
 
   const addWarning = (message: string) => {
     store.dispatch(notifyApp(createWarningNotification('CloudWatch Authentication', message)));
@@ -22,23 +23,19 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
 
   useEffect(() => {
     getDatasourceSrv()
-      .loadDatasource(props.options.name)
+      .loadDatasource(options.name)
       .then((datasource: CloudWatchDatasource) => setDatasource(datasource));
 
-    if (props.options.jsonData.authType === 'arn') {
+    if (options.jsonData.authType === 'arn') {
       addWarning('Since grafana 7.3 authentication type "arn" is deprecated, falling back to default SDK provider');
-    } else if (
-      props.options.jsonData.authType === 'credentials' &&
-      !props.options.jsonData.profile &&
-      !props.options.jsonData.database
-    ) {
+    } else if (options.jsonData.authType === 'credentials' && !options.jsonData.profile && !options.jsonData.database) {
       addWarning(
         'As of grafana 7.3 authentication type "credentials" should be used only for shared file credentials. \
              If you don\'t have a credentials file, switch to the default SDK provider for extracting credentials \
              from environment variables or IAM roles'
       );
     }
-  }, []);
+  }, [options.jsonData.authType, options.jsonData.database, options.jsonData.profile, options.name]);
 
   return (
     <>
@@ -53,7 +50,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
           <Input
             width={60}
             placeholder="Namespace1,Namespace2"
-            value={props.options.jsonData.customMetricsNamespaces || ''}
+            value={options.jsonData.customMetricsNamespaces || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'customMetricsNamespaces')}
           />
         </InlineField>

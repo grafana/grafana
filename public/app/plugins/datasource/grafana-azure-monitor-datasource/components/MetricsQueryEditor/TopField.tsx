@@ -23,7 +23,7 @@ const TopField: React.FC<AzureQueryEditorFieldProps> = ({ onQueryChange, query }
         top: value,
       },
     });
-  }, [query, value]);
+  }, [onQueryChange, query, value]);
 
   return (
     <Field label="Top">

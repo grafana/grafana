@@ -38,22 +38,21 @@ export const NotificationChannelForm: FC<Props> = ({
 }) => {
   const styles = getStyles(useTheme());
 
-  /*
-   Finds fields that have dependencies on other fields and removes duplicates.
-   Needs to be prefixed with settings.
-  */
-  const fieldsToWatch =
-    new Set(
-      selectedChannel?.options
-        .filter((o) => o.showWhen.field)
-        .map((option) => {
-          return `settings.${option.showWhen.field}`;
-        })
-    ) || [];
-
   useEffect(() => {
+    /*
+      Finds fields that have dependencies on other fields and removes duplicates.
+      Needs to be prefixed with settings.
+    */
+    const fieldsToWatch =
+      new Set(
+        selectedChannel?.options
+          .filter((o) => o.showWhen.field)
+          .map((option) => {
+            return `settings.${option.showWhen.field}`;
+          })
+      ) || [];
     watch(['type', 'sendReminder', 'uploadImage', ...fieldsToWatch]);
-  }, [fieldsToWatch]);
+  }, [selectedChannel?.options, watch]);
 
   const currentFormValues = getValues();
 

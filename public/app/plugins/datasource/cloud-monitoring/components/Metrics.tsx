@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import _ from 'lodash';
 
 import { TemplateSrv } from '@grafana/runtime';
@@ -37,48 +37,54 @@ export function Metrics(props: Props) {
     projectName: null,
   });
 
-  const { services, service, metrics } = state;
-  const { metricType, templateVariableOptions, projectName } = props;
+  const { services, service, metrics, metricDescriptors } = state;
+  const { metricType, templateVariableOptions, projectName, templateSrv, datasource, onChange, children } = props;
 
-  const loadMetricDescriptors = async () => {
-    if (projectName) {
-      const metricDescriptors = await props.datasource.getMetricTypes(props.projectName);
-      const services = getServicesList(metricDescriptors);
-      const metrics = getMetricsList(metricDescriptors);
-      const service = metrics.length > 0 ? metrics[0].service : '';
-      const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, props.metricType);
-      setState({ ...state, metricDescriptors, services, metrics, service: service, metricDescriptor });
-    }
-  };
+  const getSelectedMetricDescriptor = useCallback(
+    (metricDescriptors: MetricDescriptor[], metricType: string) => {
+      return metricDescriptors.find((md) => md.type === templateSrv.replace(metricType))!;
+    },
+    [templateSrv]
+  );
 
   useEffect(() => {
+    const getMetricsList = (metricDescriptors: MetricDescriptor[]) => {
+      const selectedMetricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
+      if (!selectedMetricDescriptor) {
+        return [];
+      }
+      const metricsByService = metricDescriptors
+        .filter((m) => m.service === selectedMetricDescriptor.service)
+        .map((m) => ({
+          service: m.service,
+          value: m.type,
+          label: m.displayName,
+          description: m.description,
+        }));
+      return metricsByService;
+    };
+
+    const loadMetricDescriptors = async () => {
+      if (projectName) {
+        const metricDescriptors = await datasource.getMetricTypes(projectName);
+        const services = getServicesList(metricDescriptors);
+        const metrics = getMetricsList(metricDescriptors);
+        const service = metrics.length > 0 ? metrics[0].service : '';
+        const metricDescriptor = getSelectedMetricDescriptor(metricDescriptors, metricType);
+        setState((prevState) => ({
+          ...prevState,
+          metricDescriptors,
+          services,
+          metrics,
+          service: service,
+          metricDescriptor,
+        }));
+      }
+    };
     loadMetricDescriptors();
-  }, [projectName]);
-
-  const getSelectedMetricDescriptor = (metricDescriptors: MetricDescriptor[], metricType: string) => {
-    return metricDescriptors.find((md) => md.type === props.templateSrv.replace(metricType))!;
-  };
-
-  const getMetricsList = (metricDescriptors: MetricDescriptor[]) => {
-    const selectedMetricDescriptor = getSelectedMetricDescriptor(metricDescriptors, props.metricType);
-    if (!selectedMetricDescriptor) {
-      return [];
-    }
-    const metricsByService = metricDescriptors
-      .filter((m) => m.service === selectedMetricDescriptor.service)
-      .map((m) => ({
-        service: m.service,
-        value: m.type,
-        label: m.displayName,
-        description: m.description,
-      }));
-    return metricsByService;
-  };
+  }, [datasource, getSelectedMetricDescriptor, metricType, projectName]);
 
   const onServiceChange = ({ value: service }: any) => {
-    const { metricDescriptors } = state;
-    const { metricType, templateSrv } = props;
-
     const metrics = metricDescriptors
       .filter((m: MetricDescriptor) => m.service === templateSrv.replace(service))
       .map((m: MetricDescriptor) => ({
@@ -98,7 +104,7 @@ export function Metrics(props: Props) {
   const onMetricTypeChange = ({ value }: SelectableValue<string>, extra: any = {}) => {
     const metricDescriptor = getSelectedMetricDescriptor(state.metricDescriptors, value!);
     setState({ ...state, metricDescriptor, ...extra });
-    props.onChange({ ...metricDescriptor, type: value! });
+    onChange({ ...metricDescriptor, type: value! });
   };
 
   const getServicesList = (metricDescriptors: MetricDescriptor[]) => {
@@ -150,7 +156,7 @@ export function Metrics(props: Props) {
           <div className="gf-form-label gf-form-label--grow" />
         </div>
       </div>
-      {props.children(state.metricDescriptor)}
+      {children(state.metricDescriptor)}
     </>
   );
 }

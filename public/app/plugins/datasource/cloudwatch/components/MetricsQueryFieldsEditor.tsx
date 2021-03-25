@@ -44,15 +44,15 @@ export function MetricsQueryFieldsEditor({
 
     Promise.all([datasource.metricFindQuery('regions()'), datasource.metricFindQuery('namespaces()')]).then(
       ([regions, namespaces]) => {
-        setState({
-          ...state,
+        setState((prevState) => ({
+          ...prevState,
           regions: [...regions, variableOptionGroup],
           namespaces: [...namespaces, variableOptionGroup],
           variableOptionGroup,
-        });
+        }));
       }
     );
-  }, []);
+  }, [datasource]);
 
   const loadMetricNames = async () => {
     const { namespace, region } = query;

@@ -61,14 +61,14 @@ export function usePlaylistItems(playlistItems?: PlaylistItem[]) {
     (item: PlaylistItem) => {
       movePlaylistItem(item, -1);
     },
-    [items]
+    [movePlaylistItem]
   );
 
   const moveDown = useCallback(
     (item: PlaylistItem) => {
       movePlaylistItem(item, 1);
     },
-    [items]
+    [movePlaylistItem]
   );
 
   const deleteItem = useCallback(

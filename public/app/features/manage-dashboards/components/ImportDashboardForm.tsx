@@ -49,7 +49,7 @@ export const ImportDashboardForm: FC<Props> = ({
     if (isSubmitted && (errors.title || errors.uid)) {
       onSubmit(getValues({ nest: true }), {} as any);
     }
-  }, [errors]);
+  }, [errors, getValues, isSubmitted, onSubmit]);
 
   return (
     <>

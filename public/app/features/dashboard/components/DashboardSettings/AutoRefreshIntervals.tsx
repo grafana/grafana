@@ -22,7 +22,7 @@ export const AutoRefreshIntervals: FC<Props> = ({
   useEffect(() => {
     const intervals = getIntervalsFunc(refreshIntervals ?? defaultIntervals);
     setIntervals(intervals);
-  }, [refreshIntervals]);
+  }, [getIntervalsFunc, refreshIntervals]);
 
   const intervalsString = useMemo(() => {
     if (!Array.isArray(intervals)) {
@@ -52,7 +52,7 @@ export const AutoRefreshIntervals: FC<Props> = ({
 
       setInvalidIntervalsMessage(invalidMessage);
     },
-    [intervals, onRefreshIntervalChange, setInvalidIntervalsMessage]
+    [getIntervalsFunc, intervals, onRefreshIntervalChange, validateIntervalsFunc]
   );
 
   return (

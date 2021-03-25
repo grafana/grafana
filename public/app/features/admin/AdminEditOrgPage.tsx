@@ -46,7 +46,7 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
   useEffect(() => {
     fetchOrg();
     fetchOrgUsers().then((res) => setUsers(res));
-  }, []);
+  }, [fetchOrg, fetchOrgUsers]);
 
   const updateOrgName = async (name: string) => {
     return await getBackendSrv().put('/api/orgs/' + orgId, { ...orgState.value, name });

@@ -79,6 +79,9 @@ export function useMetricsMetadata(
     query.azureMonitor.resourceName,
     query.azureMonitor.metricNamespace,
     query.azureMonitor.metricName,
+    query,
+    datasource,
+    onQueryChange,
   ]);
 
   return metricMetadata;

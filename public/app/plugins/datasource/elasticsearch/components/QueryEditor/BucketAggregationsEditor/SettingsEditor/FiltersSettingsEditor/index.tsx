@@ -28,7 +28,7 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
     if (!value.settings?.filters?.length) {
       dispatch(addFilter());
     }
-  }, []);
+  }, [dispatch, value.settings?.filters?.length]);
 
   return (
     <>

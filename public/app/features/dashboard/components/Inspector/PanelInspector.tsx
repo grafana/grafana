@@ -3,7 +3,6 @@ import { connect, MapStateToProps } from 'react-redux';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelPlugin } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-
 import { StoreState } from 'app/types';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
@@ -24,10 +23,6 @@ export interface ConnectedProps {
 export type Props = OwnProps & ConnectedProps;
 
 const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }) => {
-  if (!plugin) {
-    return null;
-  }
-
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
     withFieldConfig: true,
@@ -36,7 +31,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }
   const location = useLocation();
   const { data, isLoading, error } = usePanelLatestData(panel, dataOptions);
   const metaDs = useDatasourceMetadata(data);
-  const tabs = useInspectTabs(plugin, dashboard, error, metaDs);
+  const tabs = useInspectTabs(dashboard, plugin, error, metaDs);
   const defaultTab = new URLSearchParams(location.search).get('inspectTab') as InspectTab;
 
   const onClose = () => {
@@ -45,6 +40,10 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }
       inspectTab: null,
     });
   };
+
+  if (!plugin) {
+    return null;
+  }
 
   return (
     <InspectContent

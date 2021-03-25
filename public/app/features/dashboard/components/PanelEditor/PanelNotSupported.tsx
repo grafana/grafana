@@ -13,10 +13,11 @@ export interface Props {
 }
 
 export const PanelNotSupported: FC<Props> = ({ message, dispatch: propsDispatch }) => {
-  const dispatch = propsDispatch ? propsDispatch : useDispatch();
+  let dispatch = useDispatch();
+  dispatch = propsDispatch ?? dispatch;
   const onBackToQueries = useCallback(() => {
     locationService.partial({ tab: PanelEditorTabId.Query });
-  }, [dispatch]);
+  }, []);
 
   return (
     <Layout justify="center" style={{ marginTop: '100px' }}>

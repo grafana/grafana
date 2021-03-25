@@ -31,7 +31,7 @@ interface Props {
 export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, onTest, queries, queryRunner }) => {
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
   const styles = getStyles(config.theme);
-  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
+  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), [queryRunner]);
   const data = useObservable<PanelData>(observable);
   const instances = getInstances();
 

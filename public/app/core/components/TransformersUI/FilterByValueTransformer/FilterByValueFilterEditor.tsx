@@ -21,18 +21,9 @@ export const FilterByValueFilterEditor: React.FC<Props> = (props) => {
   const { fieldsAsOptions, fieldByDisplayName } = fieldsInfo;
   const fieldName = getFieldName(filter, fieldsAsOptions) ?? '';
   const field = fieldByDisplayName[fieldName];
-
-  if (!field) {
-    return null;
-  }
-
   const matcherOptions = getMatcherOptions(field);
   const matcherId = getSelectedMatcherId(filter, matcherOptions);
   const editor = valueMatchersUI.getIfExists(matcherId);
-
-  if (!editor || !editor.component) {
-    return null;
-  }
 
   const onChangeField = useCallback(
     (selectable?: SelectableValue<string>) => {
@@ -76,6 +67,10 @@ export const FilterByValueFilterEditor: React.FC<Props> = (props) => {
     },
     [onChange, filter]
   );
+
+  if (!field || !editor || !editor.component) {
+    return null;
+  }
 
   return (
     <div className="gf-form-inline">

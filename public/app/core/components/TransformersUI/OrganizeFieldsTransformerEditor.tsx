@@ -34,7 +34,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
         },
       });
     },
-    [onChange, excludeByName, indexByName]
+    [onChange, options, excludeByName]
   );
 
   const onDragEnd = useCallback(
@@ -55,7 +55,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
         indexByName: reorderToIndex(fieldNames, startIndex, endIndex),
       });
     },
-    [onChange, indexByName, excludeByName, fieldNames]
+    [onChange, options, fieldNames]
   );
 
   const onRenameField = useCallback(
@@ -68,7 +68,7 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
         },
       });
     },
-    [onChange, fieldNames, renameByName]
+    [onChange, options]
   );
 
   // Show warning that we only apply the first frame

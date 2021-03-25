@@ -31,13 +31,14 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 const UserListAdminPageUnConnected: React.FC<Props> = (props) => {
   const styles = getStyles();
+  const { fetchUsers, navModel, query, changeQuery, users, showPaging, totalPages, page, changePage } = props;
 
   useEffect(() => {
-    props.fetchUsers();
-  }, []);
+    fetchUsers();
+  }, [fetchUsers]);
 
   return (
-    <Page navModel={props.navModel}>
+    <Page navModel={navModel}>
       <Page.Contents>
         <>
           <div>
@@ -48,9 +49,9 @@ const UserListAdminPageUnConnected: React.FC<Props> = (props) => {
                 placeholder="Search user by login, email or name"
                 tabIndex={1}
                 autoFocus={true}
-                value={props.query}
+                value={query}
                 spellCheck={false}
-                onChange={(event) => props.changeQuery(event.currentTarget.value)}
+                onChange={(event) => changeQuery(event.currentTarget.value)}
                 prefix={<Icon name="search" />}
               />
               <LinkButton href="admin/users/create" variant="primary">
@@ -77,12 +78,10 @@ const UserListAdminPageUnConnected: React.FC<Props> = (props) => {
                   <th style={{ width: '1%' }}></th>
                 </tr>
               </thead>
-              <tbody>{props.users.map(renderUser)}</tbody>
+              <tbody>{users.map(renderUser)}</tbody>
             </table>
           </div>
-          {props.showPaging && (
-            <Pagination numberOfPages={props.totalPages} currentPage={props.page} onNavigate={props.changePage} />
-          )}
+          {showPaging && <Pagination numberOfPages={totalPages} currentPage={page} onNavigate={changePage} />}
         </>
       </Page.Contents>
     </Page>

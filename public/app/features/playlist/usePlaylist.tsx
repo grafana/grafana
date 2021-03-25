@@ -17,7 +17,7 @@ export function usePlaylist(playlistId?: number) {
       setLoading(false);
     };
     initPlaylist();
-  }, []);
+  }, [playlistId]);
 
   return { playlist, loading };
 }
