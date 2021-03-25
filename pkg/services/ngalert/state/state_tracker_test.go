@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/go-openapi/strfmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -171,31 +173,31 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("the correct number of entries are added to the cache", func(t *testing.T) {
-			st := NewStateTracker()
+			st := NewStateTracker(log.New("test_state_tracker"))
 			st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
 			assert.Equal(t, len(tc.expectedCacheEntries), len(st.stateCache.cacheMap))
 		})
 
 		t.Run("the correct state is set for each evaluation result", func(t *testing.T) {
-			st := NewStateTracker()
+			st := NewStateTracker(log.New("test_state_tracker"))
 			st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
 			for _, entry := range tc.expectedCacheEntries {
-				testState := st.stateCache.get(entry.CacheId)
+				testState := st.get(entry.CacheId)
 				assert.Equal(t, tc.expectedState, testState.State)
 			}
 		})
 
 		t.Run("the correct number of states are returned to the caller", func(t *testing.T) {
-			st := NewStateTracker()
+			st := NewStateTracker(log.New("test_state_tracker"))
 			results := st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
 			assert.Equal(t, tc.expectedReturnedStateCount, len(results))
 		})
 
 		t.Run("the correct results are set for each cache entry", func(t *testing.T) {
-			st := NewStateTracker()
+			st := NewStateTracker(log.New("test_state_tracker"))
 			_ = st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
 			for _, entry := range tc.expectedCacheEntries {
-				testState := st.stateCache.get(entry.CacheId)
+				testState := st.get(entry.CacheId)
 				assert.Equal(t, len(entry.Results), len(testState.Results))
 				for i, res := range entry.Results {
 					assert.Equal(t, res, testState.Results[i])

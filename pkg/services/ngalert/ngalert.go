@@ -57,7 +57,7 @@ func init() {
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
 	ng.Log = log.New("ngalert")
-	ng.stateTracker = state.NewStateTracker()
+	ng.stateTracker = state.NewStateTracker(ng.Log)
 	baseInterval := baseIntervalSeconds * time.Second
 
 	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
