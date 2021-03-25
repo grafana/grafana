@@ -11,8 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	promModels "github.com/prometheus/alertmanager/api/v2/models"
 )
 
 type AlertState struct {
@@ -46,7 +44,7 @@ func NewStateTracker(logger log.Logger) *StateTracker {
 		quit: make(chan struct{}),
 		Log:  logger,
 	}
-	tracker.cleanUp()
+	go tracker.cleanUp()
 	return tracker
 }
 
@@ -112,6 +110,7 @@ func (st *StateTracker) setNextState(uid string, result eval.Result) (AlertState
 		currentState.State = eval.Alerting
 		currentState.EvaluatedAt = strfmt.DateTime(result.EvaluatedAt)
 		currentState.StartsAt = strfmt.DateTime(result.EvaluatedAt)
+		currentState.EndsAt = strfmt.DateTime(result.EvaluatedAt.Add(40 * time.Second))
 		currentState.Results = append(currentState.Results, result.State)
 		st.set(currentState)
 		return currentState, true
@@ -126,23 +125,6 @@ func (st *StateTracker) setNextState(uid string, result eval.Result) (AlertState
 	default:
 		return currentState, false
 	}
-}
-
-func FromAlertStateToPostableAlerts(firingStates []AlertState) []*notifier.PostableAlert {
-	alerts := make([]*notifier.PostableAlert, 0, len(firingStates))
-	for _, state := range firingStates {
-		alerts = append(alerts, &notifier.PostableAlert{
-			PostableAlert: promModels.PostableAlert{
-				Annotations: promModels.LabelSet{},
-				StartsAt:    state.StartsAt,
-				EndsAt:      state.EndsAt,
-				Alert: promModels.Alert{
-					Labels: promModels.LabelSet(state.Labels),
-				},
-			},
-		})
-	}
-	return alerts
 }
 
 func (st *StateTracker) cleanUp() {
