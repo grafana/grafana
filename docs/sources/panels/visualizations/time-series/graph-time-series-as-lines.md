@@ -155,17 +155,27 @@ Dot spacing set to 0, 30:
 
 Choose how null values (gaps in the data) are displayed on the graph.
 
-#### Gaps
+#### Connect null values
 
-If there is a gap in the series, the line in the graph will be broken and show the gap.
+If there are null values in the series, the line can be connected or show gaps
 
 ![Null values gaps example](/img/docs/time-series-panel/line-graph-null-gaps-7-4.png)
 
-#### Connected
+#### Never
 
-If there is a gap in the series, the line will skip the gap and connect to the next non-null value.
+When values are missing in the data, they will be rendered as gaps in the line
+
+#### Always
+
+If there is a gap in the data, the line will be shown connected to the next non-null value
 
 ![Null values connected example](/img/docs/time-series-panel/line-graph-null-connected-7-4.png)
+
+#### Threshold
+
+The threshold settings allows specifying a maximum time between points that should be connected.
+
+
 
 ### Show points
 
