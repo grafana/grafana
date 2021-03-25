@@ -293,8 +293,8 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
-		timeField.Name = "time"
-		valueField.Name = "value"
+		timeField.Name = data.TimeSeriesTimeFieldName
+		valueField.Name = data.TimeSeriesValueFieldName
 
 		for _, val := range points {
 			pointValues := val.([]interface{})
