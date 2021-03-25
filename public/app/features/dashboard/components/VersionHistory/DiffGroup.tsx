@@ -17,14 +17,14 @@ export const DiffGroup: React.FC<DiffGroupProps> = ({ diffs, title }) => {
 
   if (diffs.length === 1) {
     return (
-      <div className={styles.container}>
+      <div className={styles.container} data-testid="diffGroup">
         <DiffTitle title={title} diff={diffs[0]} />
       </div>
     );
   }
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid="diffGroup">
       <DiffTitle title={title} />
       <ul className={styles.list}>
         {diffs.map((diff: Diff, idx: number) => {

@@ -156,10 +156,23 @@ describe('VersionSettings', () => {
     expect(queryByFullText('Version 11 updated by admin')).toBeInTheDocument();
     expect(queryByFullText('Version 2 updated by admin')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /restore to version 2/i })).toBeInTheDocument();
+    expect(screen.queryAllByTestId('diffGroup').length).toBe(5);
 
+    const diffGroups = screen.getAllByTestId('diffGroup');
+
+    expect(queryByFullText('description added The dashboard description')).toBeInTheDocument();
+    expect(queryByFullText('panels changed')).toBeInTheDocument();
+    expect(within(diffGroups[1]).queryByRole('list')).toBeInTheDocument();
+    expect(within(diffGroups[1]).queryByText(/added title/i)).toBeInTheDocument();
+    expect(within(diffGroups[1]).queryByText(/changed id/i)).toBeInTheDocument();
+    expect(queryByFullText('tags deleted item 0')).toBeInTheDocument();
+    expect(queryByFullText('timepicker added 1 refresh_intervals')).toBeInTheDocument();
+    expect(queryByFullText('version changed')).toBeInTheDocument();
     expect(screen.queryByText(/view json diff/i)).toBeInTheDocument();
+
     userEvent.click(screen.getByText(/view json diff/i));
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
+    screen.debug(screen.getByRole('table'));
   });
 });

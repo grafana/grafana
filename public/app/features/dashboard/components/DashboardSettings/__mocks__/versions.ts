@@ -7,7 +7,7 @@ export const versions = [
     version: 11,
     created: '2021-01-15T14:44:44+01:00',
     createdBy: 'admin',
-    message: 'Another day another change...',
+    message: 'testing changes...',
   },
   {
     id: 247,
@@ -132,10 +132,15 @@ export const diffs = {
       graphTooltip: 0,
       id: 141,
       links: [],
-      panels: [],
+      panels: [
+        {
+          type: 'graph',
+          id: 4,
+        },
+      ],
       schemaVersion: 27,
       style: 'dark',
-      tags: [],
+      tags: ['the tag'],
       templating: {
         list: [],
       },
@@ -168,17 +173,19 @@ export const diffs = {
       description: 'The dashboard description',
       editable: true,
       gnetId: null,
-      graphTooltip: 1,
+      graphTooltip: 0,
       id: 141,
       links: [],
       panels: [
         {
           type: 'graph',
+          title: 'panel title',
+          id: 6,
         },
       ],
       schemaVersion: 27,
       style: 'dark',
-      tags: ['the tag'],
+      tags: [],
       templating: {
         list: [],
       },
@@ -187,10 +194,10 @@ export const diffs = {
         to: 'now',
       },
       timepicker: {
-        refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d', '2d'],
+        refresh_intervals: ['5s'],
       },
-      timezone: 'utc',
-      title: 'My favourite dashboard',
+      timezone: '',
+      title: 'test dashboard',
       uid: '_U4zObQMz',
       version: 11,
     },
