@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+
 	"github.com/benbjohnson/clock"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -45,6 +47,7 @@ type AlertNG struct {
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
 	Log             log.Logger
 	schedule        schedule.ScheduleService
+	stateTracker    *state.StateTracker
 }
 
 func init() {
@@ -54,7 +57,7 @@ func init() {
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
 	ng.Log = log.New("ngalert")
-
+	ng.stateTracker = state.NewStateTracker()
 	baseInterval := baseIntervalSeconds * time.Second
 
 	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
@@ -87,7 +90,7 @@ func (ng *AlertNG) Init() error {
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
-	return ng.schedule.Ticker(ctx)
+	return ng.schedule.Ticker(ctx, ng.stateTracker)
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
