@@ -115,7 +115,7 @@ Create a Kubernetes secret from your license file using the following command:
 kubectl create secret generic ge-license --from-file=/path/to/your/license.jwt
 ```
 
-### Create Grafana Enterprise Config
+### Create Grafana Enterprise configuration
 Create a Grafana config file by creating a new file called `grafana.ini` and pasting in the contents below. You will have to update the `root_url` field to the url associated with the license you were given. 
 ```yaml
 [enterprise]
