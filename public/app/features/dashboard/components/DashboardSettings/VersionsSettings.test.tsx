@@ -173,6 +173,5 @@ describe('VersionSettings', () => {
     userEvent.click(screen.getByText(/view json diff/i));
 
     await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
-    screen.debug(screen.getByRole('table'));
   });
 });
