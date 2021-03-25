@@ -101,7 +101,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 func getTitleFromTemplateData(data *template.Data) string {
 	title := "[" + data.Status
 	if data.Status == string(model.AlertFiring) {
-		title += ":" + fmt.Sprintf("%d", len(data.Alerts.Firing()))
+		title += fmt.Sprintf(":%d", len(data.Alerts.Firing()))
 	}
 	title += "]" + strings.Join(data.GroupLabels.SortedPairs().Values(), " ") + " "
 	if len(data.CommonLabels) > len(data.GroupLabels) {
