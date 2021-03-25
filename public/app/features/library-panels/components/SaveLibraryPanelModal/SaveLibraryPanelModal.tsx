@@ -60,7 +60,7 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
   const discardAndClose = useCallback(() => {
     onDiscard();
     onDismiss();
-  }, []);
+  }, [onDiscard, onDismiss]);
 
   return (
     <Modal title="Update all panel instances" icon="save" onDismiss={onDismiss} isOpen={isOpen}>

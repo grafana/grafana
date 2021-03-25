@@ -25,13 +25,16 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
   const styles = useStyles(getStyles);
   const searchRef = useRef<HTMLInputElement | null>(null);
 
-  const onPluginTypeChange = (meta: PanelPluginMeta) => {
-    if (meta.id === plugin.meta.id) {
-      dispatch(toggleVizPicker(false));
-    } else {
-      dispatch(changePanelPlugin(panel, meta.id));
-    }
-  };
+  const onPluginTypeChange = useCallback(
+    (meta: PanelPluginMeta) => {
+      if (meta.id === plugin.meta.id) {
+        dispatch(toggleVizPicker(false));
+      } else {
+        dispatch(changePanelPlugin(panel, meta.id));
+      }
+    },
+    [dispatch, panel, plugin.meta.id]
+  );
 
   // Give Search input focus when using radio button switch list mode
   useEffect(() => {
@@ -55,7 +58,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
         }
       }
     },
-    [onPluginTypeChange]
+    [onPluginTypeChange, plugin.meta]
   );
 
   const suffix =
