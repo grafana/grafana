@@ -224,8 +224,8 @@ func TestTestdataScenarios(t *testing.T) {
 			require.Len(t, dResp.Frames, 1)
 			frame := dResp.Frames[0]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, "time", frame.Fields[0].Name)
-			require.Equal(t, "value", frame.Fields[1].Name)
+			require.Equal(t, "Time", frame.Fields[0].Name)
+			require.Equal(t, "Value", frame.Fields[1].Name)
 			require.Equal(t, 3, frame.Rows())
 
 			vals := frame.Fields[1]
