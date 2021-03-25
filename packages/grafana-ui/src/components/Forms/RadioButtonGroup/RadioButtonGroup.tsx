@@ -37,7 +37,7 @@ const getRadioButtonGroupStyles = () => {
   };
 };
 
-interface RadioButtonGroupProps<T> {
+export interface RadioButtonGroupProps<T> {
   value?: T;
   disabled?: boolean;
   disabledOptions?: T[];
