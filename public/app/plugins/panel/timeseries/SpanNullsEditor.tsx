@@ -1,7 +1,6 @@
 import React from 'react';
 import { FieldOverrideEditorProps, rangeUtil, SelectableValue } from '@grafana/data';
 import { HorizontalGroup, Input, RadioButtonGroup } from '@grafana/ui';
-import { secondsToHms } from '@grafana/data/src/datetime/rangeutil';
 
 const GAPS_OPTIONS: Array<SelectableValue<boolean | number>> = [
   {
@@ -20,7 +19,7 @@ const GAPS_OPTIONS: Array<SelectableValue<boolean | number>> = [
 
 export const SpanNullsEditor: React.FC<FieldOverrideEditorProps<boolean | number, any>> = ({ value, onChange }) => {
   const isThreshold = typeof value === 'number';
-  const formattedTime = isThreshold ? secondsToHms((value as number) / 1000) : undefined;
+  const formattedTime = isThreshold ? rangeUtil.secondsToHms((value as number) / 1000) : undefined;
   GAPS_OPTIONS[2].value = isThreshold ? (value as number) : 3600000; // 1h
 
   const checkAndUpdate = (txt: string) => {
