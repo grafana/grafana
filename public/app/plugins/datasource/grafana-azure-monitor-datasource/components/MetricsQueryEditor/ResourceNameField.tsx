@@ -29,7 +29,7 @@ const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
       .getResourceNames(subscriptionId, resourceGroup, metricDefinition)
       .then((results) => setResourceNames(results.map(toOption)))
       .catch((err) => setError(ERROR_SOURCE, err));
-  }, [subscriptionId, query.azureMonitor.resourceGroup, query.azureMonitor.metricDefinition]);
+  }, [datasource, query.azureMonitor, resourceNames.length, setError, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -51,7 +51,7 @@ const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...resourceNames, variableOptionGroup], [resourceNames, variableOptionGroup]);

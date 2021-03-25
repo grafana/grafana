@@ -40,7 +40,9 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
         },
       });
     },
-    [options]
+    // Adding options to the dependency array causes infinite loop here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onChange]
   );
 
   return (
