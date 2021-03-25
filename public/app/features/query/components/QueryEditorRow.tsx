@@ -4,20 +4,20 @@ import classNames from 'classnames';
 import _ from 'lodash';
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader, getTemplateSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ErrorBoundaryAlert, HorizontalGroup, InfoBox } from '@grafana/ui';
 import {
   DataQuery,
   DataSourceApi,
+  DataSourceInstanceSettings,
+  EventBusExtended,
+  EventBusSrv,
   LoadingState,
   PanelData,
   PanelEvents,
   TimeRange,
   toLegacyResponseData,
-  EventBusExtended,
-  DataSourceInstanceSettings,
-  EventBusSrv,
 } from '@grafana/data';
 import { QueryEditorRowTitle } from './QueryEditorRowTitle';
 import {
@@ -302,15 +302,16 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   renderTitle = (props: QueryOperationRowRenderProps) => {
     const { query, dsSettings, onChange, queries } = this.props;
-    const { datasource } = this.state;
+    const dataSourceName = dsSettings.meta.mixed
+      ? getTemplateSrv().replace(this.getQueryDataSourceIdentifier() ?? '')
+      : undefined;
     const isDisabled = query.hide;
 
     return (
       <QueryEditorRowTitle
         query={query}
         queries={queries}
-        inMixedMode={dsSettings.meta.mixed}
-        dataSourceName={datasource!.name}
+        dataSourceName={dataSourceName}
         disabled={isDisabled}
         onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}

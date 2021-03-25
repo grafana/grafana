@@ -1,0 +1,130 @@
+[[Subject .Subject "[[.Title]]"]]
+
+<style>
+  .alert.alert-warning {
+    background-color: #E6522C;
+  }
+  .alert.alert-good {
+    background-color: #68B90F;
+  }
+</style>
+
+<table class="row">
+  <tr>
+    <td class="wrapper last">
+      <table class="twelve columns">
+        <tr>
+          <td class="center">
+            <h3 style="[[ if gt (len .Alerts.Firing) 0 ]]color: #E6522C;[[end]] font-weight: bold; font-style: italic;">[[.Title]]</h3>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<table class="row">
+  <tr>
+    <td class="last">
+      <table>
+        <tr>
+          [[ if gt (len .Alerts.Firing) 0 ]]
+          <td class="alert alert-warning">
+            [[ else ]]
+          <td class="alert alert-good">
+            [[ end ]].
+            [[ .Alerts | len ]] alert[[ if gt (len .Alerts) 1 ]]s[[ end ]] for
+            [[ range .GroupLabels.SortedPairs ]]
+              [[ .Name ]]=[[ .Value ]]
+            [[ end ]]
+          </td>
+        </tr>
+        <tr>
+          <td class="">
+            <table>
+              [[ if gt (len .Alerts.Firing) 0 ]]
+                <tr>
+                  <td class="">
+                    <strong>([[ .Alerts.Firing | len ]]) Firing</strong>
+                  </td>
+                </tr>
+              [[ end ]]
+              [[ range .Alerts.Firing ]]
+                <tr>
+                  <td class="">
+                    <strong>Labels</strong><br />
+                    [[ range .Labels.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+                    [[ if gt (len .Annotations) 0 ]]<strong>Annotations</strong><br />[[ end ]]
+                    [[ range .Annotations.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+                    <a href="[[ .GeneratorURL ]]">Source</a><br />
+                  </td>
+                </tr>
+              [[ end ]]
+
+              [[ if gt (len .Alerts.Resolved) 0 ]]
+                [[ if gt (len .Alerts.Firing) 0 ]]
+                  <tr>
+                    <td class="">
+                      <br />
+                      <hr />
+                      <br />
+                    </td>
+                  </tr>
+                [[ end ]]
+                <tr>
+                  <td class="">
+                    <strong>([[ .Alerts.Resolved | len ]]) Resolved</strong>
+                  </td>
+                </tr>
+              [[ end ]]
+              [[ range .Alerts.Resolved ]]
+                <tr>
+                  <td class="">
+                    <strong>Labels</strong><br />
+                    [[ range .Labels.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+                    [[ if gt (len .Annotations) 0 ]]<strong>Annotations</strong><br />[[ end ]]
+                    [[ range .Annotations.SortedPairs ]][[ .Name ]] = [[ .Value ]]<br />[[ end ]]
+                    <a href="[[ .GeneratorURL ]]">Source</a><br />
+                  </td>
+                </tr>
+              [[ end ]]
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+
+
+<table class="row">
+  <tr>
+    <td class="wrapper last">
+      <table class="twelve columns">
+        <tr>
+          <td class="center six">
+            <table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="center" class="better-button" bgcolor="#ff8f2b">
+                  <a href="[[.RuleUrl]]"  target="_blank">View your Alert rule</a>
+                </td>
+              </tr>
+            </table>
+            </td>
+            <td class="center six">
+            <table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="center" class="better-button-alt" bgcolor="#efefef">
+                  <a href="[[.AlertPageUrl]]"  target="_blank"> Go to the Alerts page</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+

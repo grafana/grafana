@@ -18,6 +18,7 @@ var plog = log.New("api")
 
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
+	reqNoAuth := middleware.NoAuth()
 	reqSignedIn := middleware.ReqSignedIn
 	reqSignedInNoAnonymous := middleware.ReqSignedInNoAnonymous
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
@@ -118,7 +119,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/api/user/password/reset", bind(dtos.ResetUserPasswordForm{}), routing.Wrap(ResetPassword))
 
 	// dashboard snapshots
-	r.Get("/dashboard/snapshot/*", hs.Index)
+	r.Get("/dashboard/snapshot/*", reqNoAuth, hs.Index)
 	r.Get("/dashboard/snapshots/", reqSignedIn, hs.Index)
 
 	// api renew session based on cookie
@@ -265,7 +266,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/datasources/id/:name", routing.Wrap(GetDataSourceIdByName), reqSignedIn)
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))
-		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(GetPluginSettingByID))
+		apiRoute.Get("/plugins/:pluginId/settings", routing.Wrap(hs.GetPluginSettingByID))
 		apiRoute.Get("/plugins/:pluginId/markdown/:name", routing.Wrap(hs.GetPluginMarkdown))
 		apiRoute.Get("/plugins/:pluginId/health", routing.Wrap(hs.CheckHealth))
 		apiRoute.Any("/plugins/:pluginId/resources", hs.CallResource)
@@ -274,7 +275,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", routing.Wrap(hs.GetPluginDashboards))
-			pluginRoute.Post("/:pluginId/settings", bind(models.UpdatePluginSettingCmd{}), routing.Wrap(UpdatePluginSetting))
+			pluginRoute.Post("/:pluginId/settings", bind(models.UpdatePluginSettingCmd{}), routing.Wrap(hs.UpdatePluginSetting))
 			pluginRoute.Get("/:pluginId/metrics", routing.Wrap(hs.CollectPluginMetrics))
 		}, reqOrgAdmin)
 
@@ -287,13 +288,13 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
-			folderRoute.Get("/", routing.Wrap(GetFolders))
-			folderRoute.Get("/id/:id", routing.Wrap(GetFolderByID))
+			folderRoute.Get("/", routing.Wrap(hs.GetFolders))
+			folderRoute.Get("/id/:id", routing.Wrap(hs.GetFolderByID))
 			folderRoute.Post("/", bind(models.CreateFolderCommand{}), routing.Wrap(hs.CreateFolder))
 
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-				folderUidRoute.Get("/", routing.Wrap(GetFolderByUID))
-				folderUidRoute.Put("/", bind(models.UpdateFolderCommand{}), routing.Wrap(UpdateFolder))
+				folderUidRoute.Get("/", routing.Wrap(hs.GetFolderByUID))
+				folderUidRoute.Put("/", bind(models.UpdateFolderCommand{}), routing.Wrap(hs.UpdateFolder))
 				folderUidRoute.Delete("/", routing.Wrap(hs.DeleteFolder))
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
@@ -403,9 +404,9 @@ func (hs *HTTPServer) registerRoutes() {
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
 		adminRoute.Get("/settings", routing.Wrap(AdminGetSettings))
-		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), routing.Wrap(AdminCreateUser))
+		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), routing.Wrap(hs.AdminCreateUser))
 		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
-		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(AdminUpdateUserPermissions))
+		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(hs.AdminUpdateUserPermissions))
 		adminRoute.Delete("/users/:id", routing.Wrap(AdminDeleteUser))
 		adminRoute.Post("/users/:id/disable", routing.Wrap(hs.AdminDisableUser))
 		adminRoute.Post("/users/:id/enable", routing.Wrap(AdminEnableUser))
@@ -446,6 +447,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Delete("/api/snapshots/:key", reqEditorRole, routing.Wrap(DeleteDashboardSnapshot))
 
 	// Frontend logs
-	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, frontendlogging.ReadSourceMapFromFS)
-	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now), bind(frontendlogging.FrontendSentryEvent{}), routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
+	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.PluginManager, frontendlogging.ReadSourceMapFromFS)
+	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now),
+		bind(frontendlogging.FrontendSentryEvent{}), routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
 }

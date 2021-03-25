@@ -10,7 +10,7 @@ import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
 import { useLocation } from 'react-router-dom';
-import { InspectTab } from './types';
+import { InspectTab } from 'app/features/inspector/types';
 
 interface OwnProps {
   dashboard: DashboardModel;

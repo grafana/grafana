@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -20,8 +20,9 @@ func init() {
 }
 
 type Service struct {
-	DataService   *tsdb.Service          `inject:""`
-	PluginManager *manager.PluginManager `inject:""`
+	DataService   *tsdb.Service      `inject:""`
+	PluginManager plugins.Manager    `inject:""`
+	SQLStore      *sqlstore.SQLStore `inject:""`
 
 	logger log.Logger
 }
@@ -40,19 +41,19 @@ func (s *Service) Run(ctx context.Context) error {
 func (s *Service) updateAppDashboards() {
 	s.logger.Debug("Looking for app dashboard updates")
 
-	query := models.GetPluginSettingsQuery{OrgId: 0}
-	if err := bus.Dispatch(&query); err != nil {
+	pluginSettings, err := s.SQLStore.GetPluginSettings(0)
+	if err != nil {
 		s.logger.Error("Failed to get all plugin settings", "error", err)
 		return
 	}
 
-	for _, pluginSetting := range query.Result {
+	for _, pluginSetting := range pluginSettings {
 		// ignore disabled plugins
 		if !pluginSetting.Enabled {
 			continue
 		}
 
-		if pluginDef, exists := manager.Plugins[pluginSetting.PluginId]; exists {
+		if pluginDef := s.PluginManager.GetPlugin(pluginSetting.PluginId); pluginDef != nil {
 			if pluginDef.Info.Version != pluginSetting.PluginVersion {
 				s.syncPluginDashboards(pluginDef, pluginSetting.OrgId)
 			}
@@ -117,7 +118,7 @@ func (s *Service) handlePluginStateChanged(event *models.PluginStateChangedEvent
 	s.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {
-		s.syncPluginDashboards(manager.Plugins[event.PluginId], event.OrgId)
+		s.syncPluginDashboards(s.PluginManager.GetPlugin(event.PluginId), event.OrgId)
 	} else {
 		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
 		if err := bus.Dispatch(&query); err != nil {

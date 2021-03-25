@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,7 @@ func TestDashboardImport(t *testing.T) {
 		dashboards.MockDashboardService(mock)
 
 		info, err := pm.ImportDashboard("test-app", "dashboards/connections.json", 1, 0, nil, false,
-			[]ImportDashboardInput{
+			[]plugins.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "graphite"},
 			}, &models.SignedInUser{UserId: 1, OrgRole: models.ROLE_ADMIN}, nil)
 		require.NoError(t, err)
@@ -58,7 +59,7 @@ func TestDashboardImport(t *testing.T) {
 
 		evaluator := &DashTemplateEvaluator{
 			template: template,
-			inputs: []ImportDashboardInput{
+			inputs: []plugins.ImportDashboardInput{
 				{Name: "*", Type: "datasource", Value: "my-server"},
 			},
 		}
@@ -77,16 +78,14 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 	t.Helper()
 
 	t.Run("Given a plugin", func(t *testing.T) {
-		pm := &PluginManager{
-			Cfg: &setting.Cfg{
-				FeatureToggles: map[string]bool{},
-				PluginSettings: setting.PluginSettings{
-					"test-app": map[string]string{
-						"path": "testdata/test-app",
-					},
+		pm := newManager(&setting.Cfg{
+			FeatureToggles: map[string]bool{},
+			PluginSettings: setting.PluginSettings{
+				"test-app": map[string]string{
+					"path": "testdata/test-app",
 				},
 			},
-		}
+		})
 		err := pm.Init()
 		require.NoError(t, err)
 

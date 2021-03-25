@@ -83,6 +83,13 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.target.query = target.query;
   };
 
+  // only called from raw-mode influxql-editor
+  onRawInfluxQLChange = (target: InfluxQuery) => {
+    this.target.query = target.query;
+    this.target.resultFormat = target.resultFormat;
+    this.target.alias = target.alias;
+  };
+
   onRunQuery = () => {
     this.panelCtrl.refresh();
   };

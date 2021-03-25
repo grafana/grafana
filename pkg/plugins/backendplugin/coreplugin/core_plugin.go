@@ -19,6 +19,7 @@ type corePlugin struct {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
+	backend.StreamHandler
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
@@ -30,6 +31,7 @@ func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 			CheckHealthHandler:  opts.CheckHealthHandler,
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,
+			StreamHandler:       opts.StreamHandler,
 		}, nil
 	}
 }
@@ -55,9 +57,7 @@ func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (cp *corePlugin) Start(ctx context.Context) error {
-	if cp.QueryDataHandler != nil {
-		cp.isDataPlugin = true
-	}
+	cp.isDataPlugin = cp.QueryDataHandler != nil
 	return nil
 }
 
@@ -90,5 +90,19 @@ func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourc
 		return cp.CallResourceHandler.CallResource(ctx, req, sender)
 	}
 
+	return backendplugin.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) CanSubscribeToStream(ctx context.Context, req *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+	if cp.StreamHandler != nil {
+		return cp.StreamHandler.CanSubscribeToStream(ctx, req)
+	}
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	if cp.StreamHandler != nil {
+		return cp.StreamHandler.RunStream(ctx, req, sender)
+	}
 	return backendplugin.ErrMethodNotImplemented
 }

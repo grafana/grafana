@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { SoloPanelPage, Props } from './SoloPanelPage';
+import { Props, SoloPanelPage } from './SoloPanelPage';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
 import { DashboardModel } from '../state';
 import { DashboardRoutes } from 'app/types';
@@ -82,7 +82,7 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
         ctx.dashboard = props.dashboard;
         let { rerender } = render(<SoloPanelPage {...props} />);
         // prop updates will be submitted by rerendering the same component with different props
-        ctx.rerender = (newProps: Partial<Props>) => {
+        ctx.rerender = (newProps?: Partial<Props>) => {
           Object.assign(props, newProps);
           rerender(<SoloPanelPage {...props} />);
         };

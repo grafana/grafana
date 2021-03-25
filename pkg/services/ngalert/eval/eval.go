@@ -5,6 +5,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -53,30 +54,42 @@ type ExecutionResults struct {
 }
 
 // Results is a slice of evaluated alert instances states.
-type Results []result
+type Results []Result
 
-// result contains the evaluated state of an alert instance
+// Result contains the evaluated State of an alert instance
 // identified by its labels.
-type result struct {
+type Result struct {
 	Instance data.Labels
-	State    state // Enum
+	State    State // Enum
+	// StartAt is the time at which we first saw this state
+	StartAt time.Time
+	// FiredAt is the time at which we first transitioned to a firing state
+	FiredAt time.Time
 }
 
-// state is an enum of the evaluation state for an alert instance.
-type state int
+// State is an enum of the evaluation State for an alert instance.
+type State int
 
 const (
 	// Normal is the eval state for an alert instance condition
 	// that evaluated to false.
-	Normal state = iota
+	Normal State = iota
 
 	// Alerting is the eval state for an alert instance condition
-	// that evaluated to false.
+	// that evaluated to true (Alerting).
 	Alerting
+
+	// NoData is the eval state for an alert rule condition
+	// that evaluated to NoData.
+	NoData
+
+	// Error is the eval state for an alert rule condition
+	// that evaluated to Error.
+	Error
 )
 
-func (s state) String() string {
-	return [...]string{"Normal", "Alerting"}[s]
+func (s State) String() string {
+	return [...]string{"Normal", "Alerting", "NoData", "Error"}[s]
 }
 
 // AlertExecCtx is the context provided for executing an alert condition.
@@ -87,9 +100,8 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// execute runs the Condition's expressions or queries.
-func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
-	result := ExecutionResults{}
+// GetQueryDataRequest validates the condition and creates a backend.QueryDataRequest from it.
+func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (*backend.QueryDataRequest, error) {
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
 		// TODO: Things probably
@@ -102,8 +114,8 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 		Queries: []backend.DataQuery{},
 	}
 
-	for i := range c.QueriesAndExpressions {
-		q := c.QueriesAndExpressions[i]
+	for i := range c.Data {
+		q := c.Data[i]
 		model, err := q.GetModel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
@@ -127,6 +139,17 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 			TimeRange:     q.RelativeTimeRange.ToTimeRange(now),
 		})
 	}
+	return queryDataReq, nil
+}
+
+// execute runs the Condition's expressions or queries.
+func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
+	result := ExecutionResults{}
+
+	queryDataReq, err := GetQueryDataRequest(ctx, c, now)
+	if err != nil {
+		return &result, err
+	}
 
 	exprService := expr.Service{
 		Cfg:         &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
@@ -138,7 +161,7 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 	}
 
 	for refID, res := range pbRes.Responses {
-		if refID != c.RefID {
+		if refID != c.Condition {
 			continue
 		}
 		result.Results = res.Frames
@@ -154,9 +177,9 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 }
 
 // evaluateExecutionResult takes the ExecutionResult, and returns a frame where
-// each column is a string type that holds a string representing its state.
-func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
-	evalResults := make([]result, 0)
+// each column is a string type that holds a string representing its State.
+func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, error) {
+	evalResults := make([]Result, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
 		rowLen, err := f.RowLen()
@@ -182,30 +205,66 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 		}
 		labels[labelsStr] = true
 
-		state := Normal
-		val, err := f.Fields[0].FloatAt(0)
-		if err != nil || val != 0 {
-			state = Alerting
+		val, ok := f.Fields[0].At(0).(*float64)
+		if !ok {
+			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("expected nullable float64 but got type %T", f.Fields[0].Type())}
 		}
 
-		evalResults = append(evalResults, result{
+		r := Result{
 			Instance: f.Fields[0].Labels,
-			State:    state,
-		})
+			StartAt:  ts,
+		}
+
+		switch {
+		case err != nil:
+			r.State = Error
+		case val == nil:
+			r.State = NoData
+		case *val == 0:
+			r.State = Normal
+		default:
+			r.FiredAt = ts
+			r.State = Alerting
+		}
+
+		evalResults = append(evalResults, r)
 	}
 	return evalResults, nil
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
-// This may be temporary, as there might be a fair amount we want to display in the frontend, and it might not make sense to store that in data.Frame.
-// For the first pass, I would expect a Frame with a single row, and a column for each instance with a boolean value.
+// It displays one row per alert instance, with a column for each label and one for the alerting state.
 func (evalResults Results) AsDataFrame() data.Frame {
-	fields := make([]*data.Field, 0)
+	fieldLen := len(evalResults)
+
+	uniqueLabelKeys := make(map[string]struct{})
+
 	for _, evalResult := range evalResults {
-		fields = append(fields, data.NewField("", evalResult.Instance, []bool{evalResult.State != Normal}))
+		for k := range evalResult.Instance {
+			uniqueLabelKeys[k] = struct{}{}
+		}
 	}
-	f := data.NewFrame("", fields...)
-	return *f
+
+	labelColumns := make([]string, 0, len(uniqueLabelKeys))
+	for k := range uniqueLabelKeys {
+		labelColumns = append(labelColumns, k)
+	}
+
+	labelColumns = sort.StringSlice(labelColumns)
+
+	frame := data.NewFrame("evaluation results")
+	for _, lKey := range labelColumns {
+		frame.Fields = append(frame.Fields, data.NewField(lKey, nil, make([]string, fieldLen)))
+	}
+	frame.Fields = append(frame.Fields, data.NewField("State", nil, make([]string, fieldLen)))
+
+	for evalIdx, evalResult := range evalResults {
+		for lIdx, v := range labelColumns {
+			frame.Set(lIdx, evalIdx, evalResult.Instance[v])
+		}
+		frame.Set(len(labelColumns), evalIdx, evalResult.State.String())
+	}
+	return *frame
 }
 
 // ConditionEval executes conditions and evaluates the result.
@@ -220,7 +279,7 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
 
-	evalResults, err := evaluateExecutionResult(execResult)
+	evalResults, err := evaluateExecutionResult(execResult, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate results: %w", err)
 	}

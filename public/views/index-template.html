@@ -1,18 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <script nonce="[[.Nonce]]">
-      // https://github.com/GoogleChromeLabs/tti-polyfill
-      !(function () {
-        if ('PerformanceLongTaskTiming' in window) {
-          var g = (window.__tti = { e: [] });
-          g.o = new PerformanceObserver(function (l) {
-            g.e = g.e.concat(l.getEntries());
-          });
-          g.o.observe({ entryTypes: ['longtask'] });
-        }
-      })();
-    </script>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta name="viewport" content="width=device-width" />
@@ -257,7 +245,11 @@
         window.grafanaBootData = {
           user: [[.User]],
           settings: [[.Settings]],
-          navTree: [[.NavTree]]
+          navTree: [[.NavTree]],
+          themePaths: {
+            light: '[[.ContentDeliveryURL]]public/build/grafana.light.<%= webpack.hash %>.css',
+            dark: '[[.ContentDeliveryURL]]public/build/grafana.dark.<%= webpack.hash %>.css'
+          }
         };
 
       // In case the js files fails to load the code below will show an info message.

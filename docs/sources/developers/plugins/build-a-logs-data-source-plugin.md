@@ -14,6 +14,7 @@ To add logs support to an existing data source, you need to:
 
 - Enable logs support
 - Construct the log data
+- (Optional) Add preferred visualisation type hint to the data frame
 
 ### Enable logs support
 
@@ -49,6 +50,25 @@ frame.add({ time: 1589189406480, content: 'user logged in' });
 That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../explore/_index.md" >}}) or by adding a [Logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}).
 
 Congratulations, you just wrote your first logs data source plugin! Next, let's look at a couple of features that can further improve the experience for the user.
+
+### (Optional) Add preferred visualisation type hint to the data frame
+
+To make sure Grafana recognizes data as logs and shows logs visualization automatically in Explore you have do set `meta.preferredVisualisationType` to `'logs'` in the returned data frame. See [Selecting preferred visualisation section]({{< relref "add-support-for-explore-queries.md#selecting-preferred-visualisation" >}})
+
+**Example:**
+
+```ts
+const frame = new MutableDataFrame({
+  refId: query.refId,
+  meta: {
+    preferredVisualisationType: 'logs',
+  },
+  fields: [
+    { name: 'time', type: FieldType.time },
+    { name: 'content', type: FieldType.string },
+  ],
+});
+```
 
 ## Add labels to your logs
 
