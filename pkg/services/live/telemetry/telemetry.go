@@ -25,11 +25,11 @@ var (
 )
 
 func init() {
-	registry.RegisterServiceWithPriority(&LiveProxy{}, registry.Low)
+	registry.RegisterServiceWithPriority(&Receiver{}, registry.Low)
 }
 
-// LiveProxy proxies telemetry requests to Grafana Live system.
-type LiveProxy struct {
+// Receiver proxies telemetry requests to Grafana Live system.
+type Receiver struct {
 	Cfg             *setting.Cfg             `inject:""`
 	PluginManager   *manager.PluginManager   `inject:""`
 	Bus             bus.Bus                  `inject:""`
@@ -37,26 +37,27 @@ type LiveProxy struct {
 	DatasourceCache datasources.CacheService `inject:""`
 	GrafanaLive     *live.GrafanaLive        `inject:""`
 
-	converter *telegraf.Converter
+	telegrafConverter *telegraf.Converter
 }
 
-// Init LiveProxy.
-func (t *LiveProxy) Init() error {
-	logger.Info("Telemetry LiveProxy proxy initialization")
+// Init Receiver.
+func (t *Receiver) Init() error {
+	logger.Info("Telemetry Receiver initialization")
 
 	if !t.IsEnabled() {
-		logger.Debug("Telemetry LiveProxy feature not enabled, skipping initialization")
+		logger.Debug("Telemetry Receiver not enabled, skipping initialization")
 		return nil
 	}
 
-	t.converter = telegraf.NewConverter()
+	// For now only Telegraf converter (influx format) is supported.
+	t.telegrafConverter = telegraf.NewConverter()
 	return nil
 }
 
-// Run LiveProxy.
-func (t *LiveProxy) Run(ctx context.Context) error {
+// Run Receiver.
+func (t *Receiver) Run(ctx context.Context) error {
 	if !t.IsEnabled() {
-		logger.Debug("GrafanaLive feature not enabled, skipping initialization")
+		logger.Debug("GrafanaLive feature not enabled, skipping initialization of Telemetry Receiver")
 		return nil
 	}
 	<-ctx.Done()
@@ -64,11 +65,11 @@ func (t *LiveProxy) Run(ctx context.Context) error {
 }
 
 // IsEnabled returns true if the Grafana Live feature is enabled.
-func (t *LiveProxy) IsEnabled() bool {
+func (t *Receiver) IsEnabled() bool {
 	return t.Cfg.IsLiveEnabled() // turn on when Live on for now.
 }
 
-func (t *LiveProxy) Handle(ctx *models.ReqContext) {
+func (t *Receiver) Handle(ctx *models.ReqContext) {
 	path := ctx.Req.URL.Path
 	path = strings.TrimPrefix(path, "/api/live/telemetry/")
 
@@ -80,7 +81,7 @@ func (t *LiveProxy) Handle(ctx *models.ReqContext) {
 	}
 	logger.Debug("Telemetry request body", "body", string(body), "path", path)
 
-	metricFrames, err := t.converter.Convert(body)
+	metricFrames, err := t.telegrafConverter.Convert(body)
 	if err != nil {
 		logger.Error("Error converting metrics", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
@@ -94,6 +95,7 @@ func (t *LiveProxy) Handle(ctx *models.ReqContext) {
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		// TODO: need a proper path validation (but for now pass it as part of channel name).
 		channel := fmt.Sprintf("telemetry/%s/%s", path, mf.Key())
 		logger.Debug("publish data to channel", "channel", channel, "data", string(frameData))
 		err = t.GrafanaLive.Publish(channel, frameData)

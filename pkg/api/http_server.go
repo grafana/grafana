@@ -88,7 +88,7 @@ type HTTPServer struct {
 	SearchService          *search.SearchService                   `inject:""`
 	ShortURLService        *shorturls.ShortURLService              `inject:""`
 	Live                   *live.GrafanaLive                       `inject:""`
-	LiveTelemetry          *telemetry.LiveProxy                    `inject:""`
+	LiveTelemetry          *telemetry.Receiver                     `inject:""`
 	ContextHandler         *contexthandler.ContextHandler          `inject:""`
 	SQLStore               *sqlstore.SQLStore                      `inject:""`
 	LibraryPanelService    *librarypanels.LibraryPanelService      `inject:""`
