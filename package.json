@@ -296,8 +296,7 @@
     "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
-    "caniuse-db": "1.0.30000772",
-    "react-use-measure": "https://github.com/mckn/react-use-measure#remove-cjs-export"
+    "caniuse-db": "1.0.30000772"
   },
   "workspaces": {
     "packages": [

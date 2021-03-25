@@ -47,7 +47,7 @@
     "@visx/gradient": "1.0.0",
     "@visx/scale": "1.4.0",
     "@visx/shape": "1.4.0",
-    "@visx/tooltip": "1.3.0",
+    "@visx/tooltip": "1.7.2",
     "react-router-dom": "^5.2.0",
     "classnames": "2.2.6",
     "d3": "5.15.0",
