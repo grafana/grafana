@@ -219,7 +219,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
 const closeOptions = (): any =>
   isOptionsOpen().then((isOpen: any) => {
     if (isOpen) {
-      e2e.components.PanelEditor.OptionsPane.close().click();
+      e2e.components.PanelEditor.toggleVizOptions().click();
     }
   });
 
@@ -271,7 +271,7 @@ const isOptionsOpen = (): any =>
 const openOptions = (): any =>
   isOptionsOpen().then((isOpen: any) => {
     if (!isOpen) {
-      e2e.components.PanelEditor.OptionsPane.open().click();
+      e2e.components.PanelEditor.toggleVizOptions().click();
     }
   });
 

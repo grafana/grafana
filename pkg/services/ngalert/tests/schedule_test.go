@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
@@ -57,8 +59,10 @@ func TestAlertingTicker(t *testing.T) {
 	sched := schedule.NewScheduler(schefCfg, nil)
 
 	ctx := context.Background()
+
+	st := state.NewStateTracker()
 	go func() {
-		err := sched.Ticker(ctx)
+		err := sched.Ticker(ctx, st)
 		require.NoError(t, err)
 	}()
 	runtime.Gosched()
