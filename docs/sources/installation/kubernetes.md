@@ -96,7 +96,7 @@ Run the following command to create the necessary resources in your cluster.
 kubectl apply -f grafana.yaml
 ```
 
-### Check that it worked
+1. Check that it worked by running the following:
 Run the following: 
 ```bash
 kubectl port-forward service/grafana 3000:3000
