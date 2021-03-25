@@ -267,8 +267,8 @@ func (p *testDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Contex
 		frame := newSeriesForQuery(q, model, 0)
 		outsideTime := q.TimeRange.From.Add(-1 * time.Hour)
 		frame.Fields = data.Fields{
-			data.NewField("time", nil, []time.Time{outsideTime}),
-			data.NewField("value", nil, []float64{10}),
+			data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{outsideTime}),
+			data.NewField(data.TimeSeriesValueFieldName, nil, []float64{10}),
 		}
 
 		respD := resp.Responses[q.RefID]
@@ -293,8 +293,8 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
-		timeField.Name = "time"
-		valueField.Name = "value"
+		timeField.Name = data.TimeSeriesTimeFieldName
+		valueField.Name = data.TimeSeriesValueFieldName
 
 		for _, val := range points {
 			pointValues := val.([]interface{})
@@ -795,8 +795,8 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 	}
 
 	return data.Fields{
-		data.NewField("time", nil, timeVec),
-		data.NewField("value", nil, floatVec),
+		data.NewField(data.TimeSeriesTimeFieldName, nil, timeVec),
+		data.NewField(data.TimeSeriesValueFieldName, nil, floatVec),
 	}, nil
 }
 
