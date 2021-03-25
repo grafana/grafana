@@ -12,7 +12,9 @@ const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 module.exports = merge(common, {
   mode: 'production',
   devtool: 'source-map',
-
+  stats: {
+    errorDetails: true,
+  },
   entry: {
     dark: './public/sass/grafana.dark.scss',
     light: './public/sass/grafana.light.scss',
