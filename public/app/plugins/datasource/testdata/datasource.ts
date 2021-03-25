@@ -220,7 +220,7 @@ function runGrafanaLiveQuery(
   }
   return getLiveMeasurementsObserver(
     {
-      scope: LiveChannelScope.Grafana,
+      scope: LiveChannelScope.Plugin,
       namespace: 'testdata',
       path: target.channel,
     },

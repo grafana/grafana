@@ -3,31 +3,32 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../common';
+import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
+const ERROR_SOURCE = 'metrics-namespace';
 const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  setError,
 }) => {
   const [namespaces, setNamespaces] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
-    if (!(subscriptionId && query.azureMonitor.resourceGroup)) {
+    const { resourceGroup } = query.azureMonitor;
+
+    if (!(subscriptionId && resourceGroup)) {
       namespaces.length && setNamespaces([]);
       return;
     }
 
     datasource
-      .getMetricDefinitions(subscriptionId, query.azureMonitor.resourceGroup)
+      .getMetricDefinitions(subscriptionId, resourceGroup)
       .then((results) => setNamespaces(results.map(toOption)))
-      .catch((err) => {
-        // TODO: handle error
-        console.error(err);
-      });
+      .catch((err) => setError(ERROR_SOURCE, err));
   }, [subscriptionId, query.azureMonitor.resourceGroup]);
 
   const handleChange = useCallback(
@@ -41,9 +42,9 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
         azureMonitor: {
           ...query.azureMonitor,
           metricDefinition: change.value,
-          resourceName: 'select',
-          metricNamespace: 'select',
-          metricName: 'select',
+          resourceName: undefined,
+          metricNamespace: undefined,
+          metricName: undefined,
           aggregation: '',
           timeGrain: '',
           dimensionFilters: [],

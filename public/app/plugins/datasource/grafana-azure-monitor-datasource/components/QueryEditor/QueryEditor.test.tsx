@@ -4,9 +4,10 @@ import selectEvent from 'react-select-event';
 
 import QueryEditor from './QueryEditor';
 
-import mockQuery from '../../__mocks__/query';
+import createMockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';
 import { AzureQueryType } from '../../types';
+import { invalidNamespaceError } from '../../__mocks__/errors';
 
 const variableOptionGroup = {
   label: 'Template variables',
@@ -18,7 +19,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     render(
       <QueryEditor
-        query={mockQuery}
+        query={createMockQuery()}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={() => {}}
@@ -29,6 +30,7 @@ describe('Azure Monitor QueryEditor', () => {
 
   it("does not render the Metrics query editor when the query type isn't Metrics", async () => {
     const mockDatasource = createMockDatasource();
+    const mockQuery = createMockQuery();
     const logsMockQuery = {
       ...mockQuery,
       queryType: AzureQueryType.LogAnalytics,
@@ -46,6 +48,7 @@ describe('Azure Monitor QueryEditor', () => {
 
   it('changes the query type when selected', async () => {
     const mockDatasource = createMockDatasource();
+    const mockQuery = createMockQuery();
     const onChange = jest.fn();
     render(
       <QueryEditor
@@ -64,5 +67,21 @@ describe('Azure Monitor QueryEditor', () => {
       ...mockQuery,
       queryType: AzureQueryType.LogAnalytics,
     });
+  });
+
+  it('displays error messages from frontend Azure calls', async () => {
+    const mockDatasource = createMockDatasource();
+    mockDatasource.azureMonitorDatasource.getSubscriptions = jest.fn().mockRejectedValue(invalidNamespaceError());
+    render(
+      <QueryEditor
+        query={createMockQuery()}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={() => {}}
+      />
+    );
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-query-editor')).toBeInTheDocument());
+
+    expect(screen.getByText("The resource namespace 'grafanadev' is invalid.")).toBeInTheDocument();
   });
 });
