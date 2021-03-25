@@ -10,7 +10,7 @@ This page explains how to install and run Grafana on Kubernetes (K8S). It uses K
 If you are interested in Grafana Enterprise (not Grafana OS), jump to [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes) section.
 
 #### Create Grafana Kubernetes manifest
-1. Create the file `grafana.yaml`, then paste the following contents in it. 
+1. Create a file called `grafana.yaml`, then paste the contents below. 
 
 ```yaml
 ---
@@ -91,6 +91,7 @@ spec:
 
 ### Send manifest to Kubernetes API server
 
+1. Run the following command: 
 ```bash
 kubectl apply -f grafana.yaml
 ```
@@ -233,3 +234,5 @@ kubectl port-forward service/grafana 3000:3000
 Now if you navigate to `localhost:3000` in your browser, you should see the Grafana login page. 
 
 1. Use `admin` for both the username and password to login.
+
+If it worked, you should see "Enterprise (Licensed)" at the bottom of the page. 
