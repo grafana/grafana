@@ -91,13 +91,11 @@ spec:
 
 ### Send manifest to Kubernetes API server
 
-Run the following command to create the necessary resources in your cluster. 
 ```bash
 kubectl apply -f grafana.yaml
 ```
 
 1. Check that it worked by running the following:
-Run the following: 
 ```bash
 kubectl port-forward service/grafana 3000:3000
 ```
@@ -222,20 +220,15 @@ spec:
   type: LoadBalancer
 ```
  
-### Send manifest to Kubernetes API Server
+1. Send manifest to Kubernetes API Server
 
-Run the following command to create the necessary resources in your cluster. 
 ```bash
 kubectl apply -f grafana.yaml
 ```
 
-### Check that it worked
-Run the following: 
+2. Check that it worked
 ```bash
 kubectl port-forward service/grafana 3000:3000
 ```
 Now if you navigate to `localhost:3000` in your browser, you should see a Grafana login page. Use `admin` for both the username and password values to login.
 
-A successful Grafana Enterprise installation with a valid license should show an opened lock icon when you mouse over the shield icon in the left menu bar. You can also verify by scrolling down to the bottom of the page.
-![lock_ge](../../lock_ge.png "Showing left menu")
-![bottom_ge](../../bottom_ge.png "Showing bottom pane") 
