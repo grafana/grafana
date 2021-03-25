@@ -1,5 +1,5 @@
-import { RuleNamespace } from 'app/types/unified-alerting/internal';
-import { PromRulesResponse } from 'app/types/unified-alerting/dto';
+import { RuleNamespace } from 'app/types/unified-alerting';
+import { PromRulesResponse } from 'app/types/unified-alerting-dto';
 import { datasourceRequest, DataSourceType, getLotexDatasourceByName } from '../utils/datasource';
 
 // @TODO currently uses datasource proxy. Will need rework when unified alerting API is operational

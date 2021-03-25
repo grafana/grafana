@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
-import { PromAlertingRuleState } from 'app/types/unified-alerting/dto';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { css, cx } from 'emotion';
 import React, { FC } from 'react';
 

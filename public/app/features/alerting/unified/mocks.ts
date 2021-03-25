@@ -1,6 +1,6 @@
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
-import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting/dto';
-import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting/internal';
+import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
+import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 
 let nextDatasourceId = 1;
 

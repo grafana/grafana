@@ -1,7 +1,7 @@
 /* Prometheus internal models */
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { PromAlertingRuleState, PromRuleType } from './dto';
+import { PromAlertingRuleState, PromRuleType } from './unified-alerting-dto';
 
 export type Alert = {
   activeAt: string;

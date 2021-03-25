@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
-import { RuleGroup, RulesSource } from 'app/types/unified-alerting/internal';
+import { RuleGroup, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, Fragment, useState } from 'react';
 import { isAlertingRule, ruleKey } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -40,7 +40,7 @@ export const RulesTable: FC<Props> = ({ group, rulesSource }) => {
 
   return (
     <div className={styles.wrapper}>
-      <table className={tableStyles.table}>
+      <table className={tableStyles.table} data-testid="rules-table">
         <colgroup>
           <col className={styles.colExpand} />
           <col className={styles.colState} />
@@ -73,7 +73,11 @@ export const RulesTable: FC<Props> = ({ group, rulesSource }) => {
                     {!(idx === rules.length - 1) && (
                       <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
                     )}
-                    <CollapseToggle isCollapsed={!isExpanded} onToggle={() => toggleExpandedState(key)} />
+                    <CollapseToggle
+                      isCollapsed={!isExpanded}
+                      onToggle={() => toggleExpandedState(key)}
+                      data-testid="rule-collapse-toggle"
+                    />
                   </td>
                   <td>{isAlertingRule(rule) ? <StateTag status={rule.state} /> : 'n/a'}</td>
                   <td>{rule.name}</td>

@@ -1,5 +1,5 @@
-import { PromRuleType } from 'app/types/unified-alerting/dto';
-import { Alert, AlertingRule, RecordingRule, Rule } from 'app/types/unified-alerting/internal';
+import { PromRuleType } from 'app/types/unified-alerting-dto';
+import { Alert, AlertingRule, RecordingRule, Rule } from 'app/types/unified-alerting';
 
 export function isAlertingRule(rule: Rule): rule is AlertingRule {
   return rule.type === PromRuleType.Alerting;

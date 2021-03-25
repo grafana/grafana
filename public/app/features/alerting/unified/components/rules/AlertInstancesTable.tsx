@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
-import { AlertingRule } from 'app/types/unified-alerting/internal';
+import { AlertingRule } from 'app/types/unified-alerting';
 import { css, cx } from 'emotion';
 import React, { FC, Fragment, useState } from 'react';
 import { getAlertTableStyles } from '../../styles/table';
@@ -52,7 +52,11 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
             <Fragment key={key}>
               <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                 <td>
-                  <CollapseToggle isCollapsed={!isExpanded} onToggle={() => toggleExpandedState(key)} />
+                  <CollapseToggle
+                    isCollapsed={!isExpanded}
+                    onToggle={() => toggleExpandedState(key)}
+                    data-testid="alert-collapse-toggle"
+                  />
                 </td>
                 <td>
                   <StateTag status={instance.state} />

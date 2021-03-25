@@ -1,4 +1,4 @@
-import { Rule, RulesSource } from 'app/types/unified-alerting/internal';
+import { Rule, RulesSource } from 'app/types/unified-alerting';
 import React, { FC } from 'react';
 import { useStyles } from '@grafana/ui';
 import { css, cx } from 'emotion';

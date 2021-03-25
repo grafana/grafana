@@ -1,4 +1,4 @@
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting/dto';
+import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { datasourceRequest, DataSourceType, getLotexDatasourceByName } from '../utils/datasource';
 import yaml from 'yaml';
 

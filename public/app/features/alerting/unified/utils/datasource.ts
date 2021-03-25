@@ -1,6 +1,6 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
-import { RulesSource } from 'app/types/unified-alerting/internal';
+import { RulesSource } from 'app/types/unified-alerting';
 import { getAllDataSources } from './config';
 
 export enum DataSourceType {

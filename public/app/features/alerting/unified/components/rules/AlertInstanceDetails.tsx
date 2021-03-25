@@ -1,4 +1,4 @@
-import { Alert } from 'app/types/unified-alerting/internal';
+import { Alert } from 'app/types/unified-alerting';
 import React, { FC } from 'react';
 import { Annotation } from '../Annotation';
 import { DetailsField } from './DetailsField';

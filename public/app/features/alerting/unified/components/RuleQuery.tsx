@@ -6,7 +6,7 @@ import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { makeValue, SlatePrism, useStyles } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Rule, RulesSource } from 'app/types/unified-alerting/internal';
+import { Rule, RulesSource } from 'app/types/unified-alerting';
 import { DataSourceType, isCloudRulesSource } from '../utils/datasource';
 import { Well } from './Well';
 

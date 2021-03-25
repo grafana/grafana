@@ -5,7 +5,7 @@ import React, { FC, useMemo } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RulesGroup } from './RulesGroup';
 import { getRulesDatasources } from '../../utils/datasource';
-import { RuleNamespace } from 'app/types/unified-alerting/internal';
+import { RuleNamespace } from 'app/types/unified-alerting';
 import { SerializedError } from '@reduxjs/toolkit';
 import pluralize from 'pluralize';
 
