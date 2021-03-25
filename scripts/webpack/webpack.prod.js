@@ -121,10 +121,11 @@ module.exports = merge(common, {
     }),
     function () {
       this.hooks.done.tap('Done', function (stats) {
-        if (stats.compilation.errors && stats.compilation.errors.length) {
-          console.log(stats.compilation.errors);
-          process.exit(1);
-        }
+        console.log(stats.compilations);
+        // if (stats.compilation.errors && stats.compilation.errors.length) {
+        //   console.log(stats.compilation.errors);
+        //   process.exit(1);
+        // }
       });
     },
   ],
