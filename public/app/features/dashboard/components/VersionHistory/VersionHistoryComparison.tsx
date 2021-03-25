@@ -1,47 +1,80 @@
-import React, { PureComponent } from 'react';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-import { DashboardModel } from '../../state/DashboardModel';
+import React from 'react';
+import { css, cx } from 'emotion';
+
+import { Button, ModalsController, CollapsableSection, HorizontalGroup, useStyles } from '@grafana/ui';
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
+import { RevertDashboardModal } from './RevertDashboardModal';
+import { DiffGroup } from './DiffGroup';
+import { DiffViewer } from './DiffViewer';
+import { jsonDiff } from './utils';
+import { GrafanaTheme } from '@grafana/data';
 
 type DiffViewProps = {
-  dashboard: DashboardModel;
   isNewLatest: boolean;
-  newInfo?: DecoratedRevisionModel;
-  baseInfo?: DecoratedRevisionModel;
-  delta: { basic: string; json: string };
-  onFetchFail: () => void;
+  newInfo: DecoratedRevisionModel;
+  baseInfo: DecoratedRevisionModel;
+  diffData: { lhs: any; rhs: any };
 };
 
-export class VersionHistoryComparison extends PureComponent<DiffViewProps> {
-  element?: HTMLElement | null;
-  angularCmp?: AngularComponent;
+export const VersionHistoryComparison: React.FC<DiffViewProps> = ({ baseInfo, newInfo, diffData, isNewLatest }) => {
+  const diff = jsonDiff(diffData.lhs, diffData.rhs);
+  const styles = useStyles(getStyles);
 
-  constructor(props: DiffViewProps) {
-    super(props);
-  }
+  return (
+    <div>
+      <div className={styles.spacer}>
+        <HorizontalGroup justify="space-between" align="center">
+          <div>
+            <p className={styles.versionInfo}>
+              <strong>Version {newInfo.version}</strong> updated by {newInfo.createdBy} {newInfo.ageString} -{' '}
+              {newInfo.message}
+            </p>
+            <p className={cx(styles.versionInfo, styles.noMarginBottom)}>
+              <strong>Version {baseInfo.version}</strong> updated by {baseInfo.createdBy} {baseInfo.ageString} -{' '}
+              {baseInfo.message}
+            </p>
+          </div>
+          {isNewLatest && (
+            <ModalsController>
+              {({ showModal, hideModal }) => (
+                <Button
+                  variant="destructive"
+                  icon="history"
+                  onClick={() => {
+                    showModal(RevertDashboardModal, {
+                      version: baseInfo.version,
+                      hideModal,
+                    });
+                  }}
+                >
+                  Restore to version {baseInfo.version}
+                </Button>
+              )}
+            </ModalsController>
+          )}
+        </HorizontalGroup>
+      </div>
+      <div className={styles.spacer}>
+        {Object.entries(diff).map(([key, diffs]) => (
+          <DiffGroup diffs={diffs} key={key} title={key} />
+        ))}
+      </div>
+      <CollapsableSection isOpen={false} label="View JSON Diff">
+        <DiffViewer oldValue={JSON.stringify(diffData.lhs, null, 2)} newValue={JSON.stringify(diffData.rhs, null, 2)} />
+      </CollapsableSection>
+    </div>
+  );
+};
 
-  componentDidMount() {
-    const loader = getAngularLoader();
-    const template =
-      '<gf-dashboard-history dashboard="dashboard" newinfo="newinfo" baseinfo="baseinfo" isnewlatest="isnewlatest" onfetchfail="onfetchfail" delta="delta"/>';
-    const scopeProps = {
-      dashboard: this.props.dashboard,
-      delta: this.props.delta,
-      baseinfo: this.props.baseInfo,
-      newinfo: this.props.newInfo,
-      isnewlatest: this.props.isNewLatest,
-      onfetchfail: this.props.onFetchFail,
-    };
-    this.angularCmp = loader.load(this.element, scopeProps, template);
-  }
-
-  componentWillUnmount() {
-    if (this.angularCmp) {
-      this.angularCmp.destroy();
-    }
-  }
-
-  render() {
-    return <div data-testid="angular-history-comparison" ref={(ref) => (this.element = ref)} />;
-  }
-}
+const getStyles = (theme: GrafanaTheme) => ({
+  spacer: css`
+    margin-bottom: ${theme.spacing.xl};
+  `,
+  versionInfo: css`
+    color: ${theme.colors.textWeak};
+    font-size: ${theme.typography.size.sm};
+  `,
+  noMarginBottom: css`
+    margin-bottom: 0;
+  `,
+});
