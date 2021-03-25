@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"cuelang.org/go/cue"
 	cuerr "cuelang.org/go/cue/errors"
 	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/schema"
@@ -61,7 +62,8 @@ func TestScuemataBasics(t *testing.T) {
 			maj, min := sch.Version()
 			t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
 				cv := sch.CUE()
-				// t.Logf("%v\n", cv)
+				t.Fail()
+				t.Logf("%v\n", cv.LookupPath(cue.MakePath(cue.Def("#Panel"))))
 				t.Run("Exists", func(t *testing.T) {
 					require.True(t, cv.Exists(), "cue value for schema does not exist")
 				})
@@ -88,7 +90,8 @@ func TestLoadDistPanels(t *testing.T) {
 	}
 
 	t.Run("Validate dashboard", func(t *testing.T) {
-		fam, err := DistDashboardFamily(p)
+		// fam, err := DistDashboardFamily(p)
+		fam, err := DistDashboardScuemata(p)
 		require.NoError(t, err)
 
 		_, err = fam.Validate(dashr)

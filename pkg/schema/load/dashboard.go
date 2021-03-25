@@ -55,41 +55,41 @@ func DistDashboardScuemata(p BaseLoadPaths) (schema.Fam, error) {
 	}
 
 	dj, err := disjunctPanelScuemata(scuemap)
+	// fmt.Printf("%v\n", dj)
 
 	// Stick this into a dummy struct so that we can unify it into place, as
 	// Value.Fill() can't target definitions. (Need new cue.Path-based method.)
-	dummy, _ := rt.Compile("", `
-	obj: _
+	dummy, _ := rt.Compile("mergeStruct", `
+	obj: {}
 	dummy: {
-		#Panel: obj
+		#Panel: or([for v in obj {v}])
 	}
 	`)
-	ddj := dummy.Value().Fill(dj, "obj").LookupPath(cue.MakePath(cue.Str("dummy")))
+	filled := dummy.Value().Fill(dj, "obj")
+	ddj := filled.LookupPath(cue.MakePath(cue.Str("dummy")))
+	// fmt.Printf("%v\n", ddj)
 
 	var prev *compositeDashboardSchema
-	first := base.First()
-
-	// Temporary hack that relies on a pre-existing relation being explicitly
-	// written in gen.cue
-
-	sch := first
+	scuem, sch := &scuemata{}, base.First()
 	for !reflect.ValueOf(sch).IsNil() {
 		cds := &compositeDashboardSchema{
 			base:      sch,
-			actual:    sch.CUE().Fill(ddj),
+			actual:    sch.CUE().Unify(ddj),
 			panelFams: scuemap,
 			// TODO migrations
 			migration: terminalMigrationFunc,
 		}
 
-		if prev != nil {
+		if prev == nil {
+			scuem.first = cds
+		} else {
 			prev.next = cds
 		}
 		prev = cds
 		sch = sch.Successor()
 	}
 
-	return &scuemata{first: first}, nil
+	return scuem, nil
 }
 
 type compositeDashboardSchema struct {

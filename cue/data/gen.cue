@@ -78,6 +78,7 @@ dashboardFamily: #SchemaFamily & {
                 // synthetic Family to represent them in Go, for ease of generating
                 // e.g. JSON Schema.
                 #Panel: {
+                    ...
                     // The panel plugin type id. 
                     type: !=""
 
@@ -199,34 +200,11 @@ dashboardFamily: #SchemaFamily & {
                             }]
                         }]
                     }
-                } & or(parts)
+                }
             }
 		]
 	]
 }
-
-// Stub to be unified with a model from a panel plugin.
-//
-// This has to exist here until a bug is fixed in CUE that makes it impossible
-// to use cue.MakePath() to target hidden fields.
-discriminatedPanel: {
-    arg: {
-        model: #PanelModel
-        type: string
-        v: { maj: int, min: int }
-    }
-    result: {
-        type: arg.type
-        // Yay floating point silliness https://github.com/cuelang/cue/issues/253
-        panelSchema: maj: arg.v.maj
-        panelSchema: min: arg.v.min
-        options: arg.model.PanelOptions
-        fieldConfig: defaults: custom: arg.model.PanelFieldConfig
-    }
-}
-
-allPanels: [Name=_]: discriminatedPanel
-parts: [for v in allPanels { v.result }]
 
 // An individual schema governing a panel plugin's persistable configuration.
 //

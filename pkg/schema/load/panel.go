@@ -56,10 +56,12 @@ func (ps *panelSchema) Migrate(x schema.Resource) (schema.Resource, schema.Versi
 	panic("not implemented")
 }
 
+// Returns a disjunction of structs representing each schema version from each
+// scuemata in the map.
 func disjunctPanelScuemata(scuemap map[string]schema.Fam) (cue.Value, error) {
 	partsi, err := rt.Compile("panelDisjunction", `
-	allPanels: { in: {}, result: {}}
-	parts: [for v in allPanels { v.result }]
+	allPanels: [Name=_]: {}
+	parts: or([for v in allPanels { v }])
 	`)
 	if err != nil {
 		return cue.Value{}, err
@@ -79,7 +81,8 @@ func disjunctPanelScuemata(scuemap map[string]schema.Fam) (cue.Value, error) {
 		}
 	}
 
-	return parts, nil
+	return parts.LookupPath(cue.MakePath(cue.Str("parts"))), nil
+	// return parts.LookupPath(cue.MakePath(cue.Str("allPanels"))), nil
 }
 
 func panelMapFor(id string, vcs schema.VersionedCueSchema) cue.Value {
@@ -107,6 +110,7 @@ func panelMapFor(id string, vcs schema.VersionedCueSchema) cue.Value {
 	}
 
 	// TODO validate, especially with #PanelModel
+	// fmt.Printf("%v\n", inter.Value().Fill(vcs.CUE(), "in", "model").Lookup("result"))
 	return inter.Value().Fill(vcs.CUE(), "in", "model").Lookup("result")
 }
 
@@ -284,6 +288,11 @@ var terminalMigrationFunc = func(x interface{}) (cue.Value, schema.VersionedCueS
 	return cue.Value{}, nil, nil
 }
 
+// panic if called
+var panicMigrationFunc = func(x interface{}) (cue.Value, schema.VersionedCueSchema, error) {
+	panic("migrations are not yet implemented")
+}
+
 // Creates a func to perform a "migration" that simply unifies the input
 // artifact (which is expected to have already have been validated against an
 // earlier schema) with a later schema.
@@ -396,13 +405,17 @@ func rawDistPanels(p BaseLoadPaths) (map[string]panelFamily, error) {
 		Package: "scuemata",
 	}
 
-	pmf := cue.Build(load.Instances([]string{"/cue/scuemata/scuemata.cue"}, cfg))[0].LookupDef("#PanelModelFamily")
+	built, err := rt.Build(load.Instances([]string{"/cue/scuemata/scuemata.cue"}, cfg)[0])
+	if err != nil {
+		return nil, err
+	}
+	pmf := built.Value().LookupPath(cue.MakePath(cue.Def("#PanelModelFamily")))
 	if !pmf.Exists() {
 		return nil, errors.New("could not locate #PanelModelFamily definition")
 	}
 
 	all := make(map[string]panelFamily)
-	err := fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -444,12 +457,10 @@ func rawDistPanels(p BaseLoadPaths) (map[string]panelFamily, error) {
 		}
 
 		li := load.Instances([]string{filepath.Join("/", dpath, "models.cue")}, cfg)
-		built := cue.Build(li)
-		// TODO this is a silly check...right?
-		if len(built) != 1 {
-			return fmt.Errorf("expected exactly one instance, got %v", len(built))
+		imod, err := rt.Build(li[0])
+		if err != nil {
+			return err
 		}
-		imod := built[0]
 
 		// Verify that there exists a Model declaration in the models.cue file...
 		// TODO Best (?) ergonomics for entire models.cue file to emit a struct
@@ -497,13 +508,17 @@ func rawDistPanels2(p BaseLoadPaths) (map[string]schema.Fam, error) {
 		Package: "scuemata",
 	}
 
-	pmf := cue.Build(load.Instances([]string{"/cue/scuemata/scuemata.cue"}, cfg))[0].LookupDef("#PanelModelFamily")
+	built, err := rt.Build(load.Instances([]string{"/cue/scuemata/scuemata.cue"}, cfg)[0])
+	if err != nil {
+		return nil, err
+	}
+	pmf := built.Value().LookupPath(cue.MakePath(cue.Def("#PanelModelFamily")))
 	if !pmf.Exists() {
 		return nil, errors.New("could not locate #PanelModelFamily definition")
 	}
 
 	all := make(map[string]schema.Fam)
-	err := fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
