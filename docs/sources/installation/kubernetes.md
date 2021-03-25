@@ -101,7 +101,9 @@ Run the following:
 ```bash
 kubectl port-forward service/grafana 3000:3000
 ```
-Now if you navigate to `localhost:3000` in your browser, you should see a Grafana login page. Use `admin` for both the username and password values to login.
+Now if you navigate to `localhost:3000` in your browser, you should see a Grafana login page. 
+
+1. Use `admin` for both the username and password to login.
 
 ## Deploy Grafana Enterprise on Kubernetes
 The process for deploying Grafana Enterprise is almost identical to the process above, except for some extra steps required to add in your license file.
