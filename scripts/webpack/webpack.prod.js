@@ -121,7 +121,16 @@ module.exports = merge(common, {
     }),
     function () {
       this.hooks.done.tap('Done', function (stats) {
-        console.log(stats.compilations);
+        // console.log(stats.compilation);
+        if (stats.hasErrors()) {
+          console.log(
+            stats.toString({
+              errors: true,
+              errorStack: true,
+              errorDetails: true,
+            })
+          );
+        }
         // if (stats.compilation.errors && stats.compilation.errors.length) {
         //   console.log(stats.compilation.errors);
         //   process.exit(1);
