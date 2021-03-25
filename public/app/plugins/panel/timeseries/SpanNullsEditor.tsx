@@ -51,7 +51,8 @@ export const SpanNullsEditor: React.FC<FieldOverrideEditorProps<boolean | number
       <RadioButtonGroup value={value} options={GAPS_OPTIONS} onChange={onChange} />
       {isThreshold && (
         <Input
-          placeholder="always"
+          autoFocus={true}
+          placeholder="never"
           width={10}
           defaultValue={formattedTime}
           onKeyDown={handleEnterKey}
