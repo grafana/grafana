@@ -80,19 +80,21 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       for (const df of res.data) {
         const metricQuery = metricQueries[df.refId]?.azureMonitor;
         if (metricQuery) {
-          const url =
-            `https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${this.subscriptionId}/` +
-            `resourceGroups/${metricQuery.resourceGroup}/providers/${metricQuery.metricNamespace}/${metricQuery.resourceName}/metrics`;
-          if (url?.length) {
-            for (const field of df.fields) {
-              field.config.links = [
-                {
-                  url: url,
-                  title: 'View in Azure Portal',
-                  targetBlank: true,
-                },
-              ];
-            }
+          const url = `https://portal.azure.com/#blade/Microsoft_Azure_MonitoringAz/MetricsV4/Referer/MetricsExplorer/ResourceId/%2Fsubscriptions%2F${
+            this.subscriptionId
+          }%2FresourceGroups%2F${metricQuery.resourceGroup}%2Fproviders%2F${metricQuery.metricNamespace.replace(
+            '/',
+            '%2F'
+          )}%2F${metricQuery.resourceName}`;
+
+          for (const field of df.fields) {
+            field.config.links = [
+              {
+                url: url,
+                title: 'View in Azure Portal',
+                targetBlank: true,
+              },
+            ];
           }
         }
       }
