@@ -31,7 +31,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       if (!isExpanded && forceOpen && forceOpen > 0) {
         setIsExpanded(true);
       }
-    }, [forceOpen]);
+    }, [forceOpen, isExpanded]);
 
     const onToggle = useCallback(() => {
       setSavedState({ isExpanded: !isExpanded });

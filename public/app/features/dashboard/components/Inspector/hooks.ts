@@ -34,8 +34,8 @@ export const useDatasourceMetadata = (data?: PanelData) => {
  * Configures tabs for PanelInspector
  */
 export const useInspectTabs = (
-  plugin: PanelPlugin,
   dashboard: DashboardModel,
+  plugin: PanelPlugin | undefined | null,
   error?: DataQueryError,
   metaDs?: DataSourceApi
 ) => {

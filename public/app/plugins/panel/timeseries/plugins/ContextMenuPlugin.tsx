@@ -42,7 +42,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
 
   const onClick = useCallback(() => {
     setIsOpen(!isOpen);
-  }, [setIsOpen]);
+  }, [isOpen]);
 
   return (
     <ClickPlugin id="ContextMenu" onClick={onClick}>
