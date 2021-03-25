@@ -109,11 +109,11 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
           >
             Update all
           </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
-          </Button>
           <Button variant="destructive" onClick={discardAndClose}>
             Discard
+          </Button>
+          <Button variant="secondary" onClick={onDismiss}>
+            Cancel
           </Button>
         </HorizontalGroup>
       </div>
