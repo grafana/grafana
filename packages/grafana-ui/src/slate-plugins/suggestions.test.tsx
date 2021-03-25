@@ -130,9 +130,8 @@ describe('SuggestionsPlugin', () => {
 
 function createEditorMock(currentText: string) {
   return {
-    blur: () => ({
-      focus: () => {},
-    }),
+    blur: jest.fn().mockReturnThis(),
+    focus: jest.fn().mockReturnThis(),
     value: {
       selection: {
         start: {
