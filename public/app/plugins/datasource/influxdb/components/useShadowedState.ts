@@ -12,7 +12,7 @@ export function useShadowedState<T>(outsideVal: T): [T, (newVal: T) => void] {
     if (isOutsideValChanged && currentVal !== outsideVal) {
       setCurrentVal(outsideVal);
     }
-  }, [outsideVal, currentVal]);
+  }, [outsideVal, currentVal, prevOutsideVal]);
 
   return [currentVal, setCurrentVal];
 }

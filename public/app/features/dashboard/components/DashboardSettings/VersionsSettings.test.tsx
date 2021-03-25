@@ -5,14 +5,25 @@ import { within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import { historySrv } from '../VersionHistory/HistorySrv';
 import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
-import { versions } from './__mocks__/versions';
+import { versions, diffs } from './__mocks__/versions';
 
 jest.mock('../VersionHistory/HistorySrv');
+
+const queryByFullText = (text: string) =>
+  screen.queryByText((_, node: Element | undefined | null) => {
+    if (node) {
+      const nodeHasText = (node: HTMLElement | Element) => node.textContent?.includes(text);
+      const currentNodeHasText = nodeHasText(node);
+      const childrenDontHaveText = Array.from(node.children).every((child) => !nodeHasText(child));
+      return Boolean(currentNodeHasText && childrenDontHaveText);
+    }
+    return false;
+  });
 
 describe('VersionSettings', () => {
   const dashboard: any = {
     id: 74,
-    version: 7,
+    version: 11,
     formatDate: jest.fn(() => 'date'),
     getRelativeTime: jest.fn(() => 'time ago'),
   };
@@ -115,8 +126,10 @@ describe('VersionSettings', () => {
   test('selecting two versions and clicking compare button should render compare view', async () => {
     // @ts-ignore
     historySrv.getHistoryList.mockResolvedValue(versions.slice(0, VERSIONS_FETCH_LIMIT));
-    // @ts-ignore
-    historySrv.calculateDiff.mockResolvedValue('<div></div>');
+    historySrv.getDashboardVersion
+      // @ts-ignore
+      .mockImplementationOnce(() => Promise.resolve(diffs.lhs))
+      .mockImplementationOnce(() => Promise.resolve(diffs.rhs));
 
     render(<VersionsSettings dashboard={dashboard} />);
 
@@ -126,17 +139,39 @@ describe('VersionSettings', () => {
 
     const compareButton = screen.getByRole('button', { name: /compare versions/i });
     const tableBody = screen.getAllByRole('rowgroup')[1];
-    userEvent.click(within(tableBody).getAllByRole('checkbox')[1]);
-    userEvent.click(within(tableBody).getAllByRole('checkbox')[4]);
+    userEvent.click(within(tableBody).getAllByRole('checkbox')[0]);
+    userEvent.click(within(tableBody).getAllByRole('checkbox')[VERSIONS_FETCH_LIMIT - 1]);
 
     expect(compareButton).toBeEnabled();
 
-    userEvent.click(within(tableBody).getAllByRole('checkbox')[0]);
+    userEvent.click(within(tableBody).getAllByRole('checkbox')[1]);
 
     expect(compareButton).toBeDisabled();
-    // TODO: currently blows up due to angularLoader.load would be nice to assert the header...
-    // userEvent.click(compareButton);
-    // expect(historySrv.calculateDiff).toBeCalledTimes(1);
-    // await waitFor(() => expect(screen.getByTestId('angular-history-comparison')).toBeInTheDocument());
+
+    userEvent.click(within(tableBody).getAllByRole('checkbox')[1]);
+    userEvent.click(compareButton);
+
+    await waitFor(() => expect(screen.getByRole('heading', { name: /versions comparing 2 11/i })).toBeInTheDocument());
+
+    expect(queryByFullText('Version 11 updated by admin')).toBeInTheDocument();
+    expect(queryByFullText('Version 2 updated by admin')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /restore to version 2/i })).toBeInTheDocument();
+    expect(screen.queryAllByTestId('diffGroup').length).toBe(5);
+
+    const diffGroups = screen.getAllByTestId('diffGroup');
+
+    expect(queryByFullText('description added The dashboard description')).toBeInTheDocument();
+    expect(queryByFullText('panels changed')).toBeInTheDocument();
+    expect(within(diffGroups[1]).queryByRole('list')).toBeInTheDocument();
+    expect(within(diffGroups[1]).queryByText(/added title/i)).toBeInTheDocument();
+    expect(within(diffGroups[1]).queryByText(/changed id/i)).toBeInTheDocument();
+    expect(queryByFullText('tags deleted item 0')).toBeInTheDocument();
+    expect(queryByFullText('timepicker added 1 refresh_intervals')).toBeInTheDocument();
+    expect(queryByFullText('version changed')).toBeInTheDocument();
+    expect(screen.queryByText(/view json diff/i)).toBeInTheDocument();
+
+    userEvent.click(screen.getByText(/view json diff/i));
+
+    await waitFor(() => expect(screen.getByRole('table')).toBeInTheDocument());
   });
 });

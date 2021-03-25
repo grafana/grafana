@@ -9,15 +9,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/benbjohnson/clock"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"golang.org/x/sync/errgroup"
 )
 
 // timeNow makes it possible to test usage of time
@@ -86,7 +90,11 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 					}
 				}
 				transitionedStates := stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
-				_ = state.FromAlertStateToPostableAlerts(transitionedStates)
+				alerts = state.FromAlertStateToPostableAlerts(transitionedStates)
+				err = sch.SendAlerts(alerts)
+				if err != nil {
+					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts), "err", err)
+				}
 				return nil
 			}
 
@@ -113,6 +121,11 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 			return grafanaCtx.Err()
 		}
 	}
+}
+
+// Notifier handles the delivery of alert notifications to the end user
+type Notifier interface {
+	PutAlerts(alerts ...*notifier.PostableAlert) error
 }
 
 type schedule struct {
@@ -145,6 +158,8 @@ type schedule struct {
 	store store.Store
 
 	dataService *tsdb.Service
+
+	notifier Notifier
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -157,6 +172,7 @@ type SchedulerCfg struct {
 	StopAppliedFunc func(models.AlertDefinitionKey)
 	Evaluator       eval.Evaluator
 	Store           store.Store
+	Notifier        Notifier
 }
 
 // NewScheduler returns a new schedule.
@@ -174,6 +190,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
 		evaluator:       cfg.Evaluator,
 		store:           cfg.Store,
 		dataService:     dataService,
+		notifier:        cfg.Notifier,
 	}
 	return &sch
 }
@@ -301,6 +318,10 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 			return err
 		}
 	}
+}
+
+func (sch *schedule) SendAlerts(alerts []*notifier.PostableAlert) error {
+	return sch.notifier.PutAlerts(alerts...)
 }
 
 type alertDefinitionRegistry struct {

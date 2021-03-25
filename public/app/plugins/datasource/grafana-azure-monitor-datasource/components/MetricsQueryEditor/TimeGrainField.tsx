@@ -31,7 +31,7 @@ const TimeGrainField: React.FC<TimeGrainFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const timeGrains = useMemo(() => {
