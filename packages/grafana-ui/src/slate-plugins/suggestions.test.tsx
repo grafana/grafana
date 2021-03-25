@@ -1,22 +1,25 @@
-const prefixSearchMock = jest.fn((x) => x);
-const wordSearchMock = jest.fn((x) => x);
-const fuzzySearchMock = jest.fn((x) => x);
-jest.mock('../utils/searchFunctions', () => {
-  let module = {
-    ...jest.requireActual('../utils/searchFunctions'),
-    SearchFunctionMap: {
-      Prefix: prefixSearchMock,
-      Word: wordSearchMock,
-      Fuzzy: fuzzySearchMock,
-    },
-  };
-  return module;
-});
+import { SearchFunctionMap } from '../utils/searchFunctions';
+import { render } from 'enzyme';
+import { SuggestionsPlugin } from './suggestions';
+import { Plugin as SlatePlugin } from '@grafana/slate-react';
+import { SearchFunctionType } from '../utils';
+import { CompletionItemGroup, SuggestionsState } from '../types';
 
-const TypeaheadMock = jest.fn((state) => '');
+jest.mock('../utils/searchFunctions', () => ({
+  // @ts-ignore
+  ...jest.requireActual('../utils/searchFunctions'),
+  SearchFunctionMap: {
+    Prefix: jest.fn((items) => items),
+    Word: jest.fn((items) => items),
+    Fuzzy: jest.fn((items) => items),
+  },
+}));
+
+const TypeaheadMock = jest.fn(() => '');
 jest.mock('../components/Typeahead/Typeahead', () => {
   return {
     Typeahead: (state: Partial<SuggestionsState>) => {
+      // @ts-ignore
       TypeaheadMock(state);
       return '';
     },
@@ -24,21 +27,8 @@ jest.mock('../components/Typeahead/Typeahead', () => {
 });
 
 jest.mock('lodash/debounce', () => {
-  const fakeDebounce = (func: () => any, period: number) => func;
-  return fakeDebounce;
+  return (func: () => any) => func;
 });
-
-import { render } from 'enzyme';
-import { SuggestionsPlugin } from './suggestions';
-import { Plugin as SlatePlugin } from '@grafana/slate-react';
-import { SearchFunctionType } from '../utils';
-import { CompletionItemGroup, SuggestionsState } from '../types';
-
-declare global {
-  interface Window {
-    KeyboardEvent: any;
-  }
-}
 
 describe('SuggestionsPlugin', () => {
   let plugin: SlatePlugin, nextMock: any, suggestions: CompletionItemGroup[], editorMock: any, eventMock: any;
@@ -50,16 +40,20 @@ describe('SuggestionsPlugin', () => {
       };
     };
 
-    prefixSearchMock.mockClear();
-    wordSearchMock.mockClear();
-    fuzzySearchMock.mockClear();
-    TypeaheadMock.mockClear();
+    (SearchFunctionMap.Prefix as jest.Mock).mockClear();
+    (SearchFunctionMap.Word as jest.Mock).mockClear();
+    (SearchFunctionMap.Fuzzy as jest.Mock).mockClear();
 
     plugin = SuggestionsPlugin({ portalOrigin: '', onTypeahead });
     nextMock = () => {};
     editorMock = createEditorMock('foo');
     eventMock = new window.KeyboardEvent('keydown', { key: 'a' });
   });
+
+  async function triggerAutocomplete() {
+    await plugin.onKeyDown!(eventMock, editorMock, nextMock);
+    render(plugin.renderEditor!({} as any, editorMock, nextMock));
+  }
 
   it('is backward compatible with prefixMatch and sortText', async () => {
     suggestions = [
@@ -74,12 +68,12 @@ describe('SuggestionsPlugin', () => {
       },
     ];
 
-    await plugin.onKeyDown!(eventMock, editorMock, nextMock);
-    await render(plugin.renderEditor!({} as any, editorMock, nextMock));
+    await triggerAutocomplete();
 
-    expect(wordSearchMock).not.toBeCalled();
-    expect(fuzzySearchMock).not.toBeCalled();
-    expect(prefixSearchMock).toBeCalled();
+    expect(SearchFunctionMap.Word).not.toBeCalled();
+    expect(SearchFunctionMap.Fuzzy).not.toBeCalled();
+    expect(SearchFunctionMap.Prefix).toBeCalled();
+
     expect(TypeaheadMock).toBeCalledWith(
       expect.objectContaining({
         groupedItems: [
@@ -110,12 +104,12 @@ describe('SuggestionsPlugin', () => {
       },
     ];
 
-    await plugin.onKeyDown!(eventMock, editorMock, nextMock);
-    await render(plugin.renderEditor!({} as any, editorMock, nextMock));
+    await triggerAutocomplete();
 
-    expect(wordSearchMock).not.toBeCalled();
-    expect(prefixSearchMock).not.toBeCalled();
-    expect(fuzzySearchMock).toBeCalled();
+    expect(SearchFunctionMap.Word).not.toBeCalled();
+    expect(SearchFunctionMap.Prefix).not.toBeCalled();
+    expect(SearchFunctionMap.Fuzzy).toBeCalled();
+
     expect(TypeaheadMock).toBeCalledWith(
       expect.objectContaining({
         groupedItems: [
