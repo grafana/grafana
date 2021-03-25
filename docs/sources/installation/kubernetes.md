@@ -89,7 +89,7 @@ spec:
 ```
 
 
-### Send manifest to Kubernetes API Server
+### Send manifest to Kubernetes API server
 
 Run the following command to create the necessary resources in your cluster. 
 ```bash
