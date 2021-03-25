@@ -6,9 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/benbjohnson/clock"
@@ -90,7 +87,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 					}
 				}
 				transitionedStates := stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
-				alerts = state.FromAlertStateToPostableAlerts(transitionedStates)
+				alerts := FromAlertStateToPostableAlerts(transitionedStates)
 				err = sch.SendAlerts(alerts)
 				if err != nil {
 					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts), "err", err)
