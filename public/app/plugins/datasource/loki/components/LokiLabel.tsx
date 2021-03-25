@@ -24,7 +24,7 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
   ({ name, value, hidden, facets, onClick, className, loading, searchTerm, active, style, ...rest }, ref) => {
     const theme = useTheme();
     const styles = getLabelStyles(theme);
-    const matcher = searchTerm ? new RegExp(searchTerm, 'i') : undefined;
+    const searchWords = searchTerm ? [searchTerm] : [];
 
     const onLabelClick = (event: React.MouseEvent<HTMLElement>) => {
       if (onClick && !hidden) {
@@ -56,7 +56,7 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
         )}
         {...rest}
       >
-        <Highlighter textToHighlight={text} searchWords={[matcher]} highlightClassName={styles.matchHighLight} />
+        <Highlighter textToHighlight={text} searchWords={searchWords} highlightClassName={styles.matchHighLight} />
       </span>
     );
   }
