@@ -2,7 +2,6 @@
 title = "JWT Authentication"
 description = "Grafana JWT Authentication"
 keywords = ["grafana", "configuration", "documentation", "jwt", "jwk"]
-aliases = ["/docs/grafana/latest/installation/jwt/"]
 weight = 250
 +++
 
