@@ -999,7 +999,7 @@ export class FuncInstance {
       }
 
       // param types that should never be quoted
-      if (_.includes(['value_or_series', 'boolean', 'int', 'float', 'node'], paramType)) {
+      if (_.includes(['value_or_series', 'boolean', 'int', 'float', 'node', 'int_or_infinity'], paramType)) {
         return value;
       }
 
@@ -1155,7 +1155,11 @@ function parseFuncDefs(rawDefs: any) {
       };
 
       if (rawParam.default !== undefined) {
-        func.defaultParams.push(_.toString(rawParam.default));
+        if (rawParam.default === Infinity) {
+          func.defaultParams.push('inf');
+        } else {
+          func.defaultParams.push(_.toString(rawParam.default));
+        }
       } else if (rawParam.suggestions) {
         func.defaultParams.push(_.toString(rawParam.suggestions[0]));
       } else {
@@ -1179,6 +1183,8 @@ function parseFuncDefs(rawDefs: any) {
         param.type = 'int_or_interval';
       } else if (rawParam.type === 'seriesList') {
         param.type = 'value_or_series';
+      } else if (rawParam.type === 'intOrInf') {
+        param.type = 'int_or_infinity';
       }
 
       if (rawParam.options) {

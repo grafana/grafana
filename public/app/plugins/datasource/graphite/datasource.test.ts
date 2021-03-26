@@ -253,6 +253,37 @@ describe('graphiteDatasource', () => {
     });
   });
 
+  describe('when fetching Graphite function descriptions', () => {
+    // `"default": Infinity` (invalid JSON) in params passed by Graphite API in 1.1.7
+    const INVALID_JSON =
+      '{"testFunction":{"name":"function","description":"description","module":"graphite.render.functions","group":"Transform","params":[{"name":"param","type":"intOrInf","required":true,"default":Infinity}]}}';
+
+    it('should parse the response with an invalid JSON', async () => {
+      fetchMock.mockImplementation(() => {
+        return of(createFetchResponse(INVALID_JSON));
+      });
+      const funcDefs = await ctx.ds.getFuncDefs();
+      expect(funcDefs).toEqual({
+        testFunction: {
+          category: 'Transform',
+          defaultParams: ['inf'],
+          description: 'description',
+          fake: true,
+          name: 'function',
+          params: [
+            {
+              multiple: false,
+              name: 'param',
+              optional: false,
+              options: undefined,
+              type: 'int_or_infinity',
+            },
+          ],
+        },
+      });
+    });
+  });
+
   describe('building graphite params', () => {
     it('should return empty array if no targets', () => {
       const results = ctx.ds.buildGraphiteParams({
