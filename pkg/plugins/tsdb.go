@@ -216,10 +216,10 @@ func (r DataResponse) ToBackendDataResponse() (*backend.QueryDataResponse, error
 
 		for _, series := range res.Series {
 			frame, err := SeriesToFrame(series)
-			frame.RefID = refID
 			if err != nil {
 				return nil, err
 			}
+			frame.RefID = refID
 			pRes.Frames = append(pRes.Frames, frame)
 		}
 
