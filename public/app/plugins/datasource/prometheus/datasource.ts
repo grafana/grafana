@@ -447,6 +447,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
 
+    // Replace carriage-return characters which can be invisible if copied from
+    // somewhere (e.g. Excel) that implements its own parsing.
+    query.expr = query.expr.replace('\\r', '');
+
     // Align query interval with step to allow query caching and to ensure
     // that about-same-time query results look the same.
     const adjusted = alignRange(start, end, query.step, this.timeSrv.timeRange().to.utcOffset() * 60);
