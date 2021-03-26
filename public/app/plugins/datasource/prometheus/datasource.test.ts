@@ -161,7 +161,7 @@ describe('PrometheusDatasource', () => {
       expect(result).toMatchObject({ expr: DEFAULT_QUERY_EXPRESSION });
     });
 
-    it('replace any carriage-return ("\\r") character', () => {
+    it('replaces any carriage-return ("\\r") character', () => {
       const result = ds.createQuery({ expr: 'metric{job="foo\\r"} - metric' } as any, { interval: '15s' } as any, 0, 0);
       expect(result).toMatchObject({ expr: DEFAULT_QUERY_EXPRESSION });
     });
