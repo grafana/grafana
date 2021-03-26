@@ -2,7 +2,6 @@ import {
   DataQueryResponse,
   arrowTableToDataFrame,
   base64StringToArrowTable,
-  KeyValue,
   LoadingState,
   DataQueryError,
   TimeSeries,
@@ -15,6 +14,7 @@ import {
   DataFrameJSON,
   dataFrameFromJSON,
 } from '@grafana/data';
+import { isArray } from 'lodash';
 import { FetchResponse } from '../services';
 
 /**
@@ -25,11 +25,11 @@ import { FetchResponse } from '../services';
  * @internal
  */
 export interface DataResponse {
+  refId?: string;
   error?: string;
   frames?: DataFrameJSON[];
 
-  // Legacy fields from TSDB (will be removed after v8)
-  refId?: string;
+  // Legacy TSDB format...
   dataframes?: string[]; // base64 encoded arrow tables
   series?: TimeSeries[];
   tables?: TableData[];
@@ -41,11 +41,14 @@ export interface DataResponse {
  * @internal
  */
 export interface BackendDataSourceResponse {
-  results: KeyValue<DataResponse>;
+  results: DataResponse[];
 }
 
 /**
  * Parse the results from /api/ds/query into a DataQueryResponse
+ *
+ * NOTE: this also supports responses from /api/tsdb, lets keep support for both until we
+ * are sure it is not used/needed anywhere core.
  *
  * @param res - the HTTP response data.
  * @param queries - optional DataQuery array that will order the response based on the order of query refId's.
@@ -61,19 +64,32 @@ export function toDataQueryResponse(
 ): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
 
-  let isLatestFormat = false;
-  const fetchResponseData = (res as FetchResponse).data;
+  const resultsObj = (res as FetchResponse).data?.results;
 
-  if (fetchResponseData?.responses) {
-    isLatestFormat = true;
+  // The new V8 path
+  if (isArray(resultsObj)) {
+    const results = resultsObj as DataResponse[];
+    for (const res of results) {
+      if (res.error) {
+        rsp.state = LoadingState.Error;
+        rsp.error = {
+          refId: res.refId,
+          message: res.error,
+        };
+      }
 
-    // Move the key so existing processing works as expected
-    fetchResponseData.results = fetchResponseData.responses;
-  }
-
-  // If the response isn't in a correct shape we just ignore the data and pass empty DataQueryResponse.
-  if (fetchResponseData?.results) {
-    const results = fetchResponseData.results;
+      if (res.frames) {
+        for (const js of res.frames) {
+          const df = dataFrameFromJSON(js);
+          if (!df.refId) {
+            df.refId = res.refId;
+          }
+          rsp.data.push(df);
+        }
+      }
+    }
+  } else if (resultsObj) {
+    const results = (res as FetchResponse).data.results;
     const resultIDs = Object.keys(results);
     const refIDs = queries ? queries.map((q) => q.refId) : resultIDs;
     const usedResultIDs = new Set<string>(resultIDs);
@@ -113,21 +129,6 @@ export function toDataQueryResponse(
         }
       }
 
-      // Use the V8 JSON format
-      if (isLatestFormat) {
-        if (dr.frames?.length) {
-          for (const s of dr.frames) {
-            const df = dataFrameFromJSON(s as DataFrameJSON);
-            if (!df.refId) {
-              df.refId = dr.refId;
-            }
-            rsp.data.push(df);
-          }
-        }
-        continue;
-      }
-
-      // The following should be removed after v8 is released
       if (dr.series?.length) {
         for (const s of dr.series) {
           if (!s.refId) {
