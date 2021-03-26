@@ -1,32 +1,26 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import _ from 'lodash';
-import { hot } from 'react-hot-loader';
 import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
 import TeamMembers from './TeamMembers';
 import TeamSettings from './TeamSettings';
 import TeamGroupSync from './TeamGroupSync';
-import { Team, TeamMember } from 'app/types';
+import { StoreState } from 'app/types';
 import { loadTeam, loadTeamMembers } from './state/actions';
 import { getTeam, getTeamMembers, isSignedInUserTeamAdmin } from './state/selectors';
 import { getTeamLoadingNav } from './state/navModel';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getRouteParamsId, getRouteParamsPage } from '../../core/selectors/location';
-import { contextSrv, User } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { NavModel } from '@grafana/data';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-export interface Props {
-  team: Team;
-  loadTeam: typeof loadTeam;
-  loadTeamMembers: typeof loadTeamMembers;
-  teamId: number;
-  pageName: string;
-  navModel: NavModel;
-  members: TeamMember[];
-  editorsCanAdmin: boolean;
-  signedInUser: User;
+interface TeamPageRouteParams {
+  id: string;
+  page: string | null;
 }
+
+export interface OwnProps extends GrafanaRouteComponentProps<TeamPageRouteParams> {}
 
 interface State {
   isSyncEnabled: boolean;
@@ -38,6 +32,34 @@ enum PageTypes {
   Settings = 'settings',
   GroupSync = 'groupsync',
 }
+
+function mapStateToProps(state: StoreState, props: OwnProps) {
+  const teamId = parseInt(props.match.params.id, 10);
+  const pageName = props.match.params.page ?? 'members';
+  const teamLoadingNav = getTeamLoadingNav(pageName as string);
+  const navModel = getNavModel(state.navIndex, `team-${pageName}-${teamId}`, teamLoadingNav);
+  const team = getTeam(state.team, teamId);
+  const members = getTeamMembers(state.team);
+
+  return {
+    navModel,
+    teamId: teamId,
+    pageName: pageName,
+    team,
+    members,
+    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
+    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
+  };
+}
+
+const mapDispatchToProps = {
+  loadTeam,
+  loadTeamMembers,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class TeamPages extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -83,8 +105,8 @@ export class TeamPages extends PureComponent<Props, State> {
   hideTabsFromNonTeamAdmin = (navModel: NavModel, isSignedInUserTeamAdmin: boolean) => {
     if (!isSignedInUserTeamAdmin && navModel.main && navModel.main.children) {
       navModel.main.children
-        .filter(navItem => !this.textsAreEqual(navItem.text, PageTypes.Members))
-        .map(navItem => {
+        .filter((navItem) => !this.textsAreEqual(navItem.text, PageTypes.Members))
+        .map((navItem) => {
           navItem.hideFromTabs = true;
         });
     }
@@ -94,7 +116,7 @@ export class TeamPages extends PureComponent<Props, State> {
 
   renderPage(isSignedInUserTeamAdmin: boolean): React.ReactNode {
     const { isSyncEnabled } = this.state;
-    const { members } = this.props;
+    const { members, team } = this.props;
     const currentPage = this.getCurrentPage();
 
     switch (currentPage) {
@@ -102,7 +124,7 @@ export class TeamPages extends PureComponent<Props, State> {
         return <TeamMembers syncEnabled={isSyncEnabled} members={members} />;
 
       case PageTypes.Settings:
-        return isSignedInUserTeamAdmin && <TeamSettings />;
+        return isSignedInUserTeamAdmin && <TeamSettings team={team!} />;
       case PageTypes.GroupSync:
         return isSignedInUserTeamAdmin && isSyncEnabled && <TeamGroupSync />;
     }
@@ -124,28 +146,4 @@ export class TeamPages extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state: any) {
-  const teamId = getRouteParamsId(state.location);
-  const pageName = getRouteParamsPage(state.location) || 'members';
-  const teamLoadingNav = getTeamLoadingNav(pageName as string);
-  const navModel = getNavModel(state.navIndex, `team-${pageName}-${teamId}`, teamLoadingNav);
-  const team = getTeam(state.team, teamId);
-  const members = getTeamMembers(state.team);
-
-  return {
-    navModel,
-    teamId: teamId,
-    pageName: pageName,
-    team,
-    members,
-    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
-    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
-  };
-}
-
-const mapDispatchToProps = {
-  loadTeam,
-  loadTeamMembers,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TeamPages));
+export default connector(TeamPages);

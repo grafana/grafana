@@ -19,12 +19,6 @@ export interface RevisionsModel {
   message: string;
 }
 
-export interface CalculateDiffOptions {
-  new: DiffTarget;
-  base: DiffTarget;
-  diffType: string;
-}
-
 export interface DiffTarget {
   dashboardId: number;
   version: number;
@@ -37,8 +31,8 @@ export class HistorySrv {
     return id ? getBackendSrv().get(`api/dashboards/id/${id}/versions`, options) : Promise.resolve([]);
   }
 
-  calculateDiff(options: CalculateDiffOptions) {
-    return getBackendSrv().post('api/dashboards/calculate-diff', options);
+  getDashboardVersion(id: number, version: number) {
+    return getBackendSrv().get(`api/dashboards/id/${id}/versions/${version}`);
   }
 
   restoreDashboard(dashboard: DashboardModel, version: number) {
@@ -48,5 +42,8 @@ export class HistorySrv {
     return id && _.isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
   }
 }
+
+const historySrv = new HistorySrv();
+export { historySrv };
 
 coreModule.service('historySrv', HistorySrv);

@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { arrayMove } from 'app/core/utils/arrayMove';
 import { Parser } from './parser';
 import { TemplateSrv } from '@grafana/runtime';
 import { ScopedVars } from '@grafana/data';
@@ -84,7 +85,7 @@ export default class GraphiteQuery {
         const innerFunc = this.datasource.createFuncInstance(astNode.name, {
           withDefaultParams: false,
         });
-        _.each(astNode.params, param => {
+        _.each(astNode.params, (param) => {
           this.parseTargetRecursive(param, innerFunc);
         });
 
@@ -146,8 +147,7 @@ export default class GraphiteQuery {
 
   moveFunction(func: any, offset: number) {
     const index = this.functions.indexOf(func);
-    // @ts-ignore
-    _.move(this.functions, index, index + offset);
+    arrayMove(this.functions, index, index + offset);
   }
 
   updateModelTarget(targets: any) {
@@ -250,7 +250,7 @@ export default class GraphiteQuery {
   }
 
   getSeriesByTagFuncIndex() {
-    return _.findIndex(this.functions, func => func.def.name === 'seriesByTag');
+    return _.findIndex(this.functions, (func) => func.def.name === 'seriesByTag');
   }
 
   getSeriesByTagFunc() {

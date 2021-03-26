@@ -1,33 +1,34 @@
-import React, { FC, useState, useCallback, useEffect } from 'react';
+import React, { FC, useState, useCallback } from 'react';
 import { ConfirmModal, Button, LinkButton } from '@grafana/ui';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Snapshot } from '../types';
+import useAsync from 'react-use/lib/useAsync';
 
-interface Props {
-  url: string;
+export function getSnapshots() {
+  return getBackendSrv()
+    .get('/api/dashboard/snapshots')
+    .then((result: Snapshot[]) => {
+      return result.map((snapshot) => ({
+        ...snapshot,
+        url: `/dashboard/snapshot/${snapshot.key}`,
+      }));
+    });
 }
-
-export const SnapshotListTable: FC<Props> = ({ url }) => {
+export const SnapshotListTable: FC = () => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
+  const currentPath = locationService.getLocation().pathname;
+  const fullUrl = window.location.href;
+  const baseUrl = fullUrl.substr(0, fullUrl.indexOf(currentPath));
 
-  const getSnapshots = useCallback(async () => {
-    await getBackendSrv()
-      .get('/api/dashboard/snapshots')
-      .then((result: Snapshot[]) => {
-        const absUrl = window.location.href;
-        const baseUrl = absUrl.replace(url, '');
-        const snapshots = result.map(snapshot => ({
-          ...snapshot,
-          url: snapshot.externalUrl || `${baseUrl}/dashboard/snapshot/${snapshot.key}`,
-        }));
-        setSnapshots(snapshots);
-      });
-  }, []);
+  useAsync(async () => {
+    const response = await getSnapshots();
+    setSnapshots(response);
+  }, [setSnapshots]);
 
   const doRemoveSnapshot = useCallback(
     async (snapshot: Snapshot) => {
-      const filteredSnapshots = snapshots.filter(ss => ss.key !== snapshot.key);
+      const filteredSnapshots = snapshots.filter((ss) => ss.key !== snapshot.key);
       setSnapshots(filteredSnapshots);
       await getBackendSrv()
         .delete(`/api/snapshots/${snapshot.key}`)
@@ -37,10 +38,6 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
     },
     [snapshots]
   );
-
-  useEffect(() => {
-    getSnapshots();
-  }, []);
 
   return (
     <div className="page-container page-body">
@@ -59,18 +56,20 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
           </tr>
         </thead>
         <tbody>
-          {snapshots.map(snapshot => {
+          {snapshots.map((snapshot) => {
+            const url = snapshot.externalUrl || snapshot.url;
+            const fullUrl = snapshot.externalUrl || `${baseUrl}${snapshot.url}`;
             return (
               <tr key={snapshot.key}>
                 <td>
-                  <a href={snapshot.url}>{snapshot.name}</a>
+                  <a href={url}>{snapshot.name}</a>
                 </td>
                 <td>
-                  <a href={snapshot.url}>{snapshot.url}</a>
+                  <a href={url}>{fullUrl}</a>
                 </td>
                 <td>{snapshot.external && <span className="query-keyword">External</span>}</td>
                 <td className="text-center">
-                  <LinkButton href={snapshot.url} variant="secondary" size="sm" icon="eye">
+                  <LinkButton href={url} variant="secondary" size="sm" icon="eye">
                     View
                   </LinkButton>
                 </td>

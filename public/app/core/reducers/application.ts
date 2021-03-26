@@ -9,7 +9,7 @@ const applicationSlice = createSlice({
   name: 'application',
   initialState,
   reducers: {
-    toggleLogActions: state => ({ ...state, logActions: !state.logActions }),
+    toggleLogActions: (state) => ({ ...state, logActions: !state.logActions }),
   },
 });
 

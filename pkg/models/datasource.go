@@ -9,24 +9,15 @@ import (
 )
 
 const (
-	DS_GRAPHITE      = "graphite"
-	DS_INFLUXDB      = "influxdb"
-	DS_INFLUXDB_08   = "influxdb_08"
-	DS_ES            = "elasticsearch"
-	DS_OPENTSDB      = "opentsdb"
-	DS_CLOUDWATCH    = "cloudwatch"
-	DS_KAIROSDB      = "kairosdb"
-	DS_PROMETHEUS    = "prometheus"
-	DS_POSTGRES      = "postgres"
-	DS_MYSQL         = "mysql"
-	DS_MSSQL         = "mssql"
-	DS_ACCESS_DIRECT = "direct"
-	DS_ACCESS_PROXY  = "proxy"
-	// Stackdriver was renamed Google Cloud monitoring 2020-05 but we keep
-	// "stackdriver" to avoid breaking changes in reporting.
-	DS_CLOUD_MONITORING = "stackdriver"
-	DS_AZURE_MONITOR    = "grafana-azure-monitor-datasource"
-	DS_LOKI             = "loki"
+	DS_GRAPHITE       = "graphite"
+	DS_INFLUXDB       = "influxdb"
+	DS_INFLUXDB_08    = "influxdb_08"
+	DS_ES             = "elasticsearch"
+	DS_PROMETHEUS     = "prometheus"
+	DS_MYSQL          = "mysql"
+	DS_ACCESS_DIRECT  = "direct"
+	DS_ACCESS_PROXY   = "proxy"
+	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
 )
 
 var (
@@ -37,6 +28,7 @@ var (
 	ErrDatasourceIsReadOnly              = errors.New("data source is readonly, can only be updated from configuration")
 	ErrDataSourceAccessDenied            = errors.New("data source access denied")
 	ErrDataSourceFailedGenerateUniqueUid = errors.New("failed to generate unique datasource ID")
+	ErrDataSourceIdentifierNotSet        = errors.New("unique identifier and org id are needed to be able to get or delete a datasource")
 )
 
 type DsAccess string
@@ -85,50 +77,6 @@ func (ds *DataSource) decryptedValue(field string, fallback string) string {
 		return value
 	}
 	return fallback
-}
-
-var knownDatasourcePlugins = map[string]bool{
-	DS_ES:                                    true,
-	DS_GRAPHITE:                              true,
-	DS_INFLUXDB:                              true,
-	DS_INFLUXDB_08:                           true,
-	DS_KAIROSDB:                              true,
-	DS_CLOUDWATCH:                            true,
-	DS_PROMETHEUS:                            true,
-	DS_OPENTSDB:                              true,
-	DS_POSTGRES:                              true,
-	DS_MYSQL:                                 true,
-	DS_MSSQL:                                 true,
-	DS_CLOUD_MONITORING:                      true,
-	DS_AZURE_MONITOR:                         true,
-	DS_LOKI:                                  true,
-	"opennms":                                true,
-	"abhisant-druid-datasource":              true,
-	"dalmatinerdb-datasource":                true,
-	"gnocci":                                 true,
-	"zabbix":                                 true,
-	"newrelic-app":                           true,
-	"grafana-datadog-datasource":             true,
-	"grafana-simple-json":                    true,
-	"grafana-splunk-datasource":              true,
-	"udoprog-heroic-datasource":              true,
-	"grafana-openfalcon-datasource":          true,
-	"opennms-datasource":                     true,
-	"rackerlabs-blueflood-datasource":        true,
-	"crate-datasource":                       true,
-	"ayoungprogrammer-finance-datasource":    true,
-	"monasca-datasource":                     true,
-	"vertamedia-clickhouse-datasource":       true,
-	"alexanderzobnin-zabbix-datasource":      true,
-	"grafana-influxdb-flux-datasource":       true,
-	"doitintl-bigquery-datasource":           true,
-	"grafana-azure-data-explorer-datasource": true,
-	"tempo":                                  true,
-}
-
-func IsKnownDataSourcePlugin(dsType string) bool {
-	_, exists := knownDatasourcePlugins[dsType]
-	return exists
 }
 
 // ----------------------
@@ -184,16 +132,14 @@ type UpdateDataSourceCommand struct {
 	Result *DataSource
 }
 
-type DeleteDataSourceByIdCommand struct {
-	Id    int64
-	OrgId int64
+// DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
+// At least one of the UID, ID, or Name properties must be set in addition to OrgID.
+type DeleteDataSourceCommand struct {
+	ID   int64
+	UID  string
+	Name string
 
-	DeletedDatasourcesCount int64
-}
-
-type DeleteDataSourceByNameCommand struct {
-	Name  string
-	OrgId int64
+	OrgID int64
 
 	DeletedDatasourcesCount int64
 }
@@ -208,15 +154,26 @@ type GetDataSourcesQuery struct {
 	Result          []*DataSource
 }
 
-type GetDataSourceByIdQuery struct {
-	Id     int64
+type GetDataSourcesByTypeQuery struct {
+	Type   string
+	Result []*DataSource
+}
+
+type GetDefaultDataSourceQuery struct {
 	OrgId  int64
+	User   *SignedInUser
 	Result *DataSource
 }
 
-type GetDataSourceByNameQuery struct {
-	Name   string
-	OrgId  int64
+// GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
+// At least one of the UID, ID, or Name properties must be set in addition to OrgID.
+type GetDataSourceQuery struct {
+	Id   int64
+	Uid  string
+	Name string
+
+	OrgId int64
+
 	Result *DataSource
 }
 

@@ -173,7 +173,7 @@ export class JsonExplorer {
    */
   private get keys(): string[] {
     if (this.isObject) {
-      return Object.keys(this.json).map(key => (key ? key : '""'));
+      return Object.keys(this.json).map((key) => (key ? key : '""'));
     } else {
       return [];
     }
@@ -391,7 +391,7 @@ export class JsonExplorer {
 
       requestAnimationFrame(addAChild);
     } else {
-      this.keys.forEach(key => {
+      this.keys.forEach((key) => {
         const formatter = new JsonExplorer(this.json[key], this.open - 1, this.config, key);
         children.appendChild(formatter.render());
       });

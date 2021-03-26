@@ -24,7 +24,7 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
       filterFieldsByNameTransformer.operator({
         exclude: { names: mapToExcludeArray(options.excludeByName) },
@@ -39,5 +39,5 @@ const mapToExcludeArray = (excludeByName: Record<string, boolean>): string[] => 
     return [];
   }
 
-  return Object.keys(excludeByName).filter(name => excludeByName[name]);
+  return Object.keys(excludeByName).filter((name) => excludeByName[name]);
 };

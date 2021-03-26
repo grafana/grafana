@@ -61,7 +61,7 @@ export function ValuePicker<T>({
             isOpen
             onCloseMenu={() => setIsPicking(false)}
             autoFocus={true}
-            onChange={value => {
+            onChange={(value) => {
               setIsPicking(false);
               onChange(value);
             }}

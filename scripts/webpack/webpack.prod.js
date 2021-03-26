@@ -117,8 +117,8 @@ module.exports = merge(common, {
       excludeChunks: ['manifest', 'dark', 'light'],
       chunksSortMode: 'none',
     }),
-    function() {
-      this.hooks.done.tap('Done', function(stats) {
+    function () {
+      this.hooks.done.tap('Done', function (stats) {
         if (stats.compilation.errors && stats.compilation.errors.length) {
           console.log(stats.compilation.errors);
           process.exit(1);

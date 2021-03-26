@@ -158,7 +158,7 @@ export interface BackendSrv {
    * to display datasource query information. Can be skipped by adding `option.silent`
    * when initializing the request.
    */
-  datasourceRequest(options: BackendSrvRequest): Promise<any>;
+  datasourceRequest<T = any>(options: BackendSrvRequest): Promise<FetchResponse<T>>;
 
   /**
    * Observable http request interface

@@ -40,7 +40,7 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
           inputWidth={18}
           placeholder="user"
           value={dataSourceConfig.basicAuthUser}
-          onChange={event => onChange({ ...dataSourceConfig, basicAuthUser: event.currentTarget.value })}
+          onChange={(event) => onChange({ ...dataSourceConfig, basicAuthUser: event.currentTarget.value })}
         />
       </div>
       <div className="gf-form">

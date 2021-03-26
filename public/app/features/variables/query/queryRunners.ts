@@ -4,7 +4,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
-  DefaultTimeRange,
+  getDefaultTimeRange,
   LoadingState,
   PanelData,
   VariableSupportType,
@@ -53,7 +53,7 @@ export class QueryRunners {
   }
 
   getRunnerForDatasource(datasource: DataSourceApi): QueryRunner {
-    const runner = this.runners.find(runner => runner.canRun(datasource));
+    const runner = this.runners.find((runner) => runner.canRun(datasource));
     if (runner) {
       return runner;
     }
@@ -85,13 +85,13 @@ class LegacyQueryRunner implements QueryRunner {
     const queryOptions: any = getLegacyQueryOptions(variable, searchFilter, timeSrv);
 
     return from(datasource.metricFindQuery(variable.query, queryOptions)).pipe(
-      mergeMap(values => {
+      mergeMap((values) => {
         if (!values || !values.length) {
           return getEmptyMetricFindValueObservable();
         }
 
         const series: any = values;
-        return of({ series, state: LoadingState.Done, timeRange: DefaultTimeRange });
+        return of({ series, state: LoadingState.Done, timeRange: queryOptions.range });
       })
     );
   }
@@ -174,5 +174,5 @@ class DatasourceQueryRunner implements QueryRunner {
 }
 
 function getEmptyMetricFindValueObservable(): Observable<PanelData> {
-  return of({ state: LoadingState.Done, series: [], timeRange: DefaultTimeRange });
+  return of({ state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() });
 }

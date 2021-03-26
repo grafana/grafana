@@ -34,7 +34,7 @@ export const ArrayOptions = () => {
       <Segment
         value={value}
         options={options}
-        onChange={item => {
+        onChange={(item) => {
           setValue(item);
           action('Segment value changed')(item.value);
         }}
@@ -72,7 +72,7 @@ export const ArrayOptionsWithPlaceholder = () => {
         value={value}
         options={options}
         placeholder="Enter a value"
-        onChange={item => {
+        onChange={(item) => {
           setValue(item);
           action('Segment value changed')(item.value);
         }}
@@ -88,7 +88,7 @@ export const GroupedArrayOptions = () => {
       <Segment
         value={value}
         options={groupedOptions}
-        onChange={item => {
+        onChange={(item) => {
           setValue(item);
           action('Segment value changed')(item.value);
         }}

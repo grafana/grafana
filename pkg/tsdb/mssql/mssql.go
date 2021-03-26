@@ -13,27 +13,24 @@ import (
 	mssql "github.com/denisenkom/go-mssqldb"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"xorm.io/core"
 )
 
-func init() {
-	tsdb.RegisterTsdbQueryEndpoint("mssql", newMssqlQueryEndpoint)
-}
-
 var logger = log.New("tsdb.mssql")
 
-func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	cnnstr, err := generateConnectionString(datasource)
 	if err != nil {
 		return nil, err
 	}
+	// TODO: Don't use global
 	if setting.Env == setting.Dev {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 
-	config := sqleng.SqlQueryEndpointConfiguration{
+	config := sqleng.DataPluginConfiguration{
 		DriverName:        "mssql",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
@@ -44,7 +41,7 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		log: logger,
 	}
 
-	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+	return sqleng.NewDataPlugin(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 }
 
 // ParseURL tries to parse an MSSQL URL string into a URL object.
@@ -105,7 +102,8 @@ type mssqlQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
+	plugins.DataRowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 

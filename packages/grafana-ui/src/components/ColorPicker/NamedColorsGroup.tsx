@@ -4,7 +4,6 @@ import { ColorDefinition } from '@grafana/data';
 import { Color } from 'csstype';
 import upperFirst from 'lodash/upperFirst';
 import find from 'lodash/find';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 type ColorChangeHandler = (color: ColorDefinition) => void;
 
@@ -31,21 +30,13 @@ export const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
   const isSmall = variant === ColorSwatchVariant.Small;
   const swatchSize = isSmall ? '16px' : '32px';
 
-  const selectedSwatchBorder = selectThemeVariant(
-    {
-      light: theme.palette.white,
-      dark: theme.palette.black,
-    },
-    theme.type
-  );
-
   const swatchStyles = {
     width: swatchSize,
     height: swatchSize,
     borderRadius: '50%',
     background: `${color}`,
     marginRight: isSmall ? '0px' : '8px',
-    boxShadow: isSelected ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${selectedSwatchBorder}` : 'none',
+    boxShadow: isSelected ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${theme.colors.bg1}` : 'none',
   };
 
   return (
@@ -77,7 +68,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
   theme,
   ...otherProps
 }) => {
-  const primaryColor = find(colors, color => !!color.isPrimary);
+  const primaryColor = find(colors, (color) => !!color.isPrimary);
 
   return (
     <div {...otherProps} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -99,7 +90,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
         }}
       >
         {colors.map(
-          color =>
+          (color) =>
             !color.isPrimary && (
               <div key={color.name} style={{ marginRight: '4px' }}>
                 <ColorSwatch

@@ -96,7 +96,7 @@ export default class ResponseParser {
 
     const unique = Array.from(new Set(res));
 
-    return _.map(unique, value => {
+    return _.map(unique, (value) => {
       return { text: value };
     });
   }

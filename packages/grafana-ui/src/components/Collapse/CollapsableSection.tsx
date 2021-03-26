@@ -37,6 +37,7 @@ const collapsableSectionStyles = (theme: GrafanaTheme) => {
       display: flex;
       justify-content: space-between;
       font-size: ${theme.typography.size.lg};
+      line-height: ${theme.spacing.base * 5}px;
       cursor: pointer;
     `,
     headerCollapsed: css`

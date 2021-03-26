@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import {
   DataTransformerID,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
   getFieldDisplayName,
   DataFrame,
@@ -33,14 +33,16 @@ const filterMatch: Array<SelectableValue<FilterByValueMatch>> = [
   { label: 'Match any', value: FilterByValueMatch.any },
 ];
 
-export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterByValueTransformerOptions>> = props => {
+export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterByValueTransformerOptions>> = (
+  props
+) => {
   const { input, options, onChange } = props;
   const styles = getEditorStyles();
   const fieldsInfo = useFieldsInfo(input);
 
   const onAddFilter = useCallback(() => {
     const frame = input[0];
-    const field = frame.fields.find(f => f.type !== FieldType.time);
+    const field = frame.fields.find((f) => f.type !== FieldType.time);
 
     if (!field) {
       return;
@@ -57,7 +59,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
       },
     });
     onChange({ ...options, filters });
-  }, [onChange, options, valueMatchers, input]);
+  }, [onChange, options, input]);
 
   const onDeleteFilter = useCallback(
     (index: number) => {
@@ -117,7 +119,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
             key={idx}
             filter={filter}
             fieldsInfo={fieldsInfo}
-            onChange={filter => onChangeFilter(filter, idx)}
+            onChange={(filter) => onChangeFilter(filter, idx)}
             onDelete={() => onDeleteFilter(idx)}
           />
         ))}
@@ -131,13 +133,13 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   );
 };
 
-export const filterByValueTransformRegistryItem: TransformerRegistyItem<FilterByValueTransformerOptions> = {
+export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterByValueTransformerOptions> = {
   id: DataTransformerID.filterByValue,
   editor: FilterByValueTransformerEditor,
   transformation: standardTransformers.filterByValueTransformer,
   name: standardTransformers.filterByValueTransformer.name,
   description:
-    'Removes rows of the query results using user definied filters. This is useful if you can not filter your data in the data source.',
+    'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
 };
 
 const getEditorStyles = stylesFactory(() => ({

@@ -178,6 +178,8 @@ export const Table: FC<Props> = memo((props: Props) => {
               tableStyles={tableStyles}
               cell={cell}
               onCellFilterAdded={onCellFilterAdded}
+              columnIndex={index}
+              columnCount={row.cells.length}
             />
           ))}
         </div>
@@ -206,15 +208,21 @@ export const Table: FC<Props> = memo((props: Props) => {
               })}
             </div>
           )}
-          <FixedSizeList
-            height={height - headerHeight}
-            itemCount={rows.length}
-            itemSize={tableStyles.rowHeight}
-            width={'100%'}
-            style={{ overflow: 'hidden auto' }}
-          >
-            {RenderRow}
-          </FixedSizeList>
+          {rows.length > 0 ? (
+            <FixedSizeList
+              height={height - headerHeight}
+              itemCount={rows.length}
+              itemSize={tableStyles.rowHeight}
+              width={'100%'}
+              style={{ overflow: 'hidden auto' }}
+            >
+              {RenderRow}
+            </FixedSizeList>
+          ) : (
+            <div style={{ height: height - headerHeight }} className={tableStyles.noData}>
+              No data to show
+            </div>
+          )}
         </div>
       </CustomScrollbar>
     </div>

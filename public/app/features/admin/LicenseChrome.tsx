@@ -24,7 +24,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: 40px 0 0 79px;
       position: relative;
       background: url('${backgroundUrl}') right;
-  `,
+    `,
   };
 });
 

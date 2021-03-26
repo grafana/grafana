@@ -73,7 +73,7 @@ export class FolderPickerCtrl {
           result.unshift({ title: this.initialTitle, id: null });
         }
 
-        return _.map(result, item => {
+        return _.map(result, (item) => {
           return { text: item.title, value: item.id };
         });
       })

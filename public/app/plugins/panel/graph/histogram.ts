@@ -38,7 +38,7 @@ export function convertValuesToHistogram(values: number[], bucketSize: number, m
     .domain([minBound, maxBound])
     .thresholds(Math.round(max - min) / bucketSize);
 
-  return histGenerator(values).map(bin => {
+  return histGenerator(values).map((bin) => {
     return [bin.x0, bin.length];
   });
 }

@@ -43,6 +43,9 @@ type RouteRegister interface {
 	// Register iterates over all routes added to the RouteRegister
 	// and add them to the `Router` pass as an parameter.
 	Register(Router)
+
+	// Reset resets the route register.
+	Reset()
 }
 
 type RegisterNamedMiddleware func(name string) macaron.Handler
@@ -69,6 +72,16 @@ type routeRegister struct {
 	namedMiddleware []RegisterNamedMiddleware
 	routes          []route
 	groups          []*routeRegister
+}
+
+func (rr *routeRegister) Reset() {
+	if rr == nil {
+		return
+	}
+
+	rr.routes = nil
+	rr.groups = nil
+	rr.subfixHandlers = nil
 }
 
 func (rr *routeRegister) Insert(pattern string, fn func(RouteRegister), handlers ...macaron.Handler) {

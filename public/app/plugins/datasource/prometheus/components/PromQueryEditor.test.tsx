@@ -19,7 +19,7 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => {
 
 const setup = (propOverrides?: object) => {
   const datasourceMock: unknown = {
-    createQuery: jest.fn(q => q),
+    createQuery: jest.fn((q) => q),
     getPrometheusTime: jest.fn((date, roundup) => 123),
   };
   const datasource: PrometheusDatasource = datasourceMock as PrometheusDatasource;

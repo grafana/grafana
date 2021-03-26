@@ -151,4 +151,7 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Add unique index datasource_org_id_uid", NewAddIndexMigration(tableV2, &Index{
 		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
 	}))
+
+	mg.AddMigration("add unique index datasource_org_id_is_default", NewAddIndexMigration(tableV2, &Index{
+		Cols: []string{"org_id", "is_default"}}))
 }

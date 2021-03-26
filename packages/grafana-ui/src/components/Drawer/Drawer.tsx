@@ -4,7 +4,7 @@ import RcDrawer from 'rc-drawer';
 import { css } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
 
-import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { IconButton } from '../IconButton/IconButton';
 import { stylesFactory, useTheme } from '../../themes';
 

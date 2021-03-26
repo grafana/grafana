@@ -28,7 +28,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
     if (!isEqual(completeDimensions, dimensions)) {
       onChange(completeDimensions);
     }
-  }, [data]);
+  }, [data, dimensions, onChange]);
 
   const excludeUsedKeys = (options: SelectableStrings) => {
     return options.filter(({ value }) => !Object.keys(data).includes(value!));
@@ -41,7 +41,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
           <SegmentAsync
             allowCustomValue
             value={key}
-            loadOptions={() => loadKeys().then(keys => [removeOption, ...excludeUsedKeys(keys)])}
+            loadOptions={() => loadKeys().then((keys) => [removeOption, ...excludeUsedKeys(keys)])}
             onChange={({ value: newKey }) => {
               const { [key]: value, ...newDimensions } = data;
               if (newKey === removeText) {
@@ -64,7 +64,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
           )}
         </Fragment>
       ))}
-      {Object.values(data).every(v => v) && (
+      {Object.values(data).every((v) => v) && (
         <SegmentAsync
           allowCustomValue
           Component={

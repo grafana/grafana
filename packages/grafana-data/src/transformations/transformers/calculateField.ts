@@ -7,6 +7,7 @@ import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 import { RowVector } from '../../vector/RowVector';
 import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
+import { AsNumberVector } from '../../vector/AsNumberVector';
 import { getTimeField } from '../../dataframe/processDataFrame';
 import defaults from 'lodash/defaults';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
@@ -70,13 +71,13 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  operator: options => outerSource => {
+  operator: (options) => (outerSource) => {
     const operator =
       options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
 
     return outerSource.pipe(
       operator,
-      map(data => {
+      map((data) => {
         const mode = options.mode ?? CalculateFieldMode.ReduceRow;
         let creator: ValuesCreator | undefined = undefined;
 
@@ -91,7 +92,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           return data;
         }
 
-        return data.map(frame => {
+        return data.map((frame) => {
           // delegate field creation to the specific function
           const values = creator!(frame);
           if (!values) {
@@ -135,7 +136,9 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
   if (options.include && options.include.length) {
     matcher = getFieldMatcher({
       id: FieldMatcherID.byNames,
-      options: options.include,
+      options: {
+        names: options.include,
+      },
     });
   }
 
@@ -185,6 +188,9 @@ function findFieldValuesWithNameOrConstant(frame: DataFrame, name: string, allFr
 
   for (const f of frame.fields) {
     if (name === getFieldDisplayName(f, frame, allFrames)) {
+      if (f.type === FieldType.boolean) {
+        return new AsNumberVector(f.values);
+      }
       return f.values;
     }
   }

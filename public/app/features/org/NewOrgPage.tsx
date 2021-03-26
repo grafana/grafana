@@ -59,7 +59,7 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
                     name="name"
                     ref={register({
                       required: 'Organization name is required',
-                      validate: async orgName => await validateOrg(orgName),
+                      validate: async (orgName) => await validateOrg(orgName),
                     })}
                   />
                 </Field>

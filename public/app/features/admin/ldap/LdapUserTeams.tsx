@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const LdapUserTeams: FC<Props> = ({ teams, showAttributeMapping }) => {
-  const items = showAttributeMapping ? teams : teams.filter(item => item.teamName);
+  const items = showAttributeMapping ? teams : teams.filter((item) => item.teamName);
 
   return (
     <div className="gf-form-group">

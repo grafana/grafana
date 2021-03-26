@@ -1,8 +1,7 @@
-import { toDataQueryError } from '@grafana/runtime';
+import { toDataQueryError, getDataSourceSrv } from '@grafana/runtime';
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
@@ -29,9 +28,7 @@ export const updateQueryVariableOptions = (
       await new Promise((resolve, reject) => {
         const subscription: Subscription = new Subscription();
         const observer = variableQueryObserver(resolve, reject, subscription);
-        const responseSubscription = getVariableQueryRunner()
-          .getResponse(identifier)
-          .subscribe(observer);
+        const responseSubscription = getVariableQueryRunner().getResponse(identifier).subscribe(observer);
         subscription.add(responseSubscription);
 
         getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });

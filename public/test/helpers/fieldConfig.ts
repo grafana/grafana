@@ -1,7 +1,10 @@
-import { identityOverrideProcessor } from '@grafana/data';
+import { identityOverrideProcessor, ThresholdsMode } from '@grafana/data';
 
 export function mockStandardFieldConfigOptions() {
+  const category = ['Standard options'];
+
   const unit = {
+    category,
     id: 'unit',
     path: 'unit',
     name: 'Unit',
@@ -15,6 +18,7 @@ export function mockStandardFieldConfigOptions() {
   };
 
   const decimals = {
+    category,
     id: 'decimals',
     path: 'decimals',
     name: 'Decimals',
@@ -28,6 +32,7 @@ export function mockStandardFieldConfigOptions() {
   };
 
   const boolean = {
+    category,
     id: 'boolean',
     path: 'boolean',
     name: 'Boolean',
@@ -41,6 +46,7 @@ export function mockStandardFieldConfigOptions() {
   };
 
   const fieldColor = {
+    category,
     id: 'color',
     path: 'color',
     name: 'color',
@@ -54,6 +60,7 @@ export function mockStandardFieldConfigOptions() {
   };
 
   const text = {
+    category,
     id: 'text',
     path: 'text',
     name: 'text',
@@ -67,6 +74,7 @@ export function mockStandardFieldConfigOptions() {
   };
 
   const number = {
+    category,
     id: 'number',
     path: 'number',
     name: 'number',
@@ -79,5 +87,26 @@ export function mockStandardFieldConfigOptions() {
     shouldApply: () => true,
   };
 
-  return [unit, decimals, boolean, fieldColor, text, number];
+  const thresholds = {
+    category: ['Thresholds'],
+    id: 'thresholds',
+    path: 'thresholds',
+    name: 'thresholds',
+    description: '',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+    defaultValue: {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 80, color: 'red' },
+      ],
+    },
+  };
+
+  return [unit, decimals, boolean, fieldColor, text, number, thresholds];
 }

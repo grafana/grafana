@@ -65,10 +65,7 @@ describe('DataLinks', () => {
         wrapper = await mount(<DataLinks value={testValue} onChange={onChangeMock} />);
       }
     );
-    const removeButton = wrapper
-      .find(DataLink)
-      .at(0)
-      .find(Button);
+    const removeButton = wrapper.find(DataLink).at(0).find(Button);
     removeButton.simulate('click');
     const newValue = onChangeMock.mock.calls[0][0];
     expect(newValue.length).toBe(1);

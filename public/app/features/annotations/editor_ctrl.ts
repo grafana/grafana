@@ -77,7 +77,7 @@ export class AnnotationsEditorCtrl {
   onAnnotationChange = (annotation: AnnotationQuery) => {
     let replaced = false;
 
-    this.dashboard.annotations.list = this.dashboard.annotations.list.map(a => {
+    this.dashboard.annotations.list = this.dashboard.annotations.list.map((a) => {
       if (a.name !== annotation.name) {
         return a;
       }
@@ -142,7 +142,7 @@ export class AnnotationsEditorCtrl {
   }
 
   removeAnnotation(annotation: AnnotationQuery) {
-    this.dashboard.annotations.list = this.dashboard.annotations.list.filter(a => {
+    this.dashboard.annotations.list = this.dashboard.annotations.list.filter((a) => {
       return a.name !== annotation.name;
     });
     this.dashboard.updateSubmenuVisibility();

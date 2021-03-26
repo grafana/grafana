@@ -8,7 +8,7 @@ interface Props {
   children?: any;
 }
 
-export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
+export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = (props) => {
   const [ref, setRef] = useState<HTMLLIElement | null>(null);
   const isSubMenu = props.type === 'submenu';
   const isDivider = props.type === 'divider';

@@ -1,35 +1,16 @@
-import React, { FC, useMemo } from 'react';
-import { Provider } from 'react-redux';
+import React, { FC } from 'react';
 import { css } from 'emotion';
 import { Icon, Tooltip, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { createUsagesNetwork, transformUsagesToNetwork } from './utils';
-import { store } from '../../../store/store';
+import { UsagesToNetwork } from './utils';
 import { VariablesUnknownButton } from './VariablesUnknownButton';
-import { VariableModel } from '../types';
-import { DashboardModel } from '../../dashboard/state';
 
-interface OwnProps {
-  variables: VariableModel[];
-  dashboard: DashboardModel | null;
+interface Props {
+  usages: UsagesToNetwork[];
 }
 
-interface ConnectedProps {}
-
-interface DispatchProps {}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
-
-export const UnProvidedVariablesUnknownTable: FC<Props> = ({ variables, dashboard }) => {
+export const VariablesUnknownTable: FC<Props> = ({ usages }) => {
   const style = useStyles(getStyles);
-  const { unknown } = useMemo(() => createUsagesNetwork(variables, dashboard), [variables, dashboard]);
-  const networks = useMemo(() => transformUsagesToNetwork(unknown), [unknown]);
-  const unknownExist = useMemo(() => Object.keys(unknown).length > 0, [unknown]);
-
-  if (!unknownExist) {
-    return null;
-  }
-
   return (
     <div className={style.container}>
       <h5>
@@ -48,8 +29,8 @@ export const UnProvidedVariablesUnknownTable: FC<Props> = ({ variables, dashboar
             </tr>
           </thead>
           <tbody>
-            {networks.map(network => {
-              const { variable } = network;
+            {usages.map((usage) => {
+              const { variable } = usage;
               const { id, name } = variable;
               return (
                 <tr key={id}>
@@ -60,7 +41,7 @@ export const UnProvidedVariablesUnknownTable: FC<Props> = ({ variables, dashboar
                   <td className={style.defaultColumn} />
                   <td className={style.defaultColumn} />
                   <td className={style.lastColumn}>
-                    <VariablesUnknownButton variable={variable} variables={variables} dashboard={dashboard} />
+                    <VariablesUnknownButton id={variable.id} usages={usages} />
                   </td>
                 </tr>
               );
@@ -97,9 +78,3 @@ const getStyles = (theme: GrafanaTheme) => ({
     text-align: right;
   `,
 });
-
-export const VariablesUnknownTable: FC<Props> = props => (
-  <Provider store={store}>
-    <UnProvidedVariablesUnknownTable {...props} />
-  </Provider>
-);

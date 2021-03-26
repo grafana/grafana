@@ -4,12 +4,10 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { TimeRange, AppEvents } from '@grafana/data';
+import { TimeRange, AppEvents, rangeUtil, dateMath } from '@grafana/data';
 
 // Utils
 import { isString as _isString } from 'lodash';
-import { rangeUtil } from '@grafana/data';
-import { dateMath } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 
@@ -18,9 +16,9 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 // Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
-import { CoreEvents } from 'app/types';
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
+import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -28,17 +26,20 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
     const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : undefined;
     const confirmText = panel.alert ? 'YES' : undefined;
 
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Remove Panel',
-      text: 'Are you sure you want to remove this panel?',
-      text2: text2,
-      icon: 'trash-alt',
-      confirmText: confirmText,
-      yesText: 'Remove',
-      onConfirm: () => removePanel(dashboard, panel, false),
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Remove Panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'trash-alt',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => removePanel(dashboard, panel, false),
+      })
+    );
     return;
   }
+
   dashboard.removePanel(panel);
 };
 
@@ -47,18 +48,25 @@ export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => 
 };
 
 export const copyPanel = (panel: PanelModel) => {
-  store.set(LS_PANEL_COPY_KEY, JSON.stringify(panel.getSaveModel()));
+  let saveModel = panel;
+  if (panel instanceof PanelModel) {
+    saveModel = panel.getSaveModel();
+  }
+
+  store.set(LS_PANEL_COPY_KEY, JSON.stringify(saveModel));
   appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Open Add Panel to paste']);
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
-  appEvents.emit(CoreEvents.showModalReact, {
-    component: ShareModal,
-    props: {
-      dashboard: dashboard,
-      panel: panel,
-    },
-  });
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: ShareModal,
+      props: {
+        dashboard: dashboard,
+        panel: panel,
+      },
+    })
+  );
 };
 
 export const refreshPanel = (panel: PanelModel) => {

@@ -20,7 +20,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
       type: 'application/json;charset=utf-8',
     });
     saveAs(blob, dashboard.title + '-' + new Date().getTime() + '.json');
-  }, [dashboardJSON]);
+  }, [dashboard.title, dashboardJSON]);
 
   const onCopyToClipboardSuccess = useCallback(() => {
     appEvents.emit(AppEvents.alertSuccess, ['Dashboard JSON copied to clipboard']);
@@ -53,7 +53,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
         <TextArea
           spellCheck={false}
           value={dashboardJSON}
-          onChange={e => {
+          onChange={(e) => {
             setDashboardJson(e.currentTarget.value);
           }}
           className={styles.json}

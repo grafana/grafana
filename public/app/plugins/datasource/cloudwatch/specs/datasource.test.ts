@@ -2,6 +2,7 @@ import { interval, of, throwError } from 'rxjs';
 import {
   DataFrame,
   DataQueryErrorType,
+  DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
   dateMath,
@@ -9,10 +10,16 @@ import {
 } from '@grafana/data';
 
 import * as redux from 'app/store/store';
-import '../datasource';
 import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CloudWatchLogsQuery, CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, LogAction } from '../types';
+import {
+  CloudWatchJsonData,
+  CloudWatchLogsQuery,
+  CloudWatchLogsQueryStatus,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  LogAction,
+} from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
@@ -47,7 +54,7 @@ function getTestContext({ response = {}, throws = false, templateSrv = new Templ
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1' },
     name: 'TestDatasource',
-  } as DataSourceInstanceSettings;
+  } as DataSourceInstanceSettings<CloudWatchJsonData>;
 
   const timeSrv = {
     time: { from: '2016-12-31 15:00:00Z', to: '2016-12-31 16:00:00Z' },
@@ -187,7 +194,7 @@ describe('CloudWatchDatasource', () => {
     it('should stop querying when no more data received a number of times in a row', async () => {
       const { ds } = getTestContext();
       const fakeFrames = genMockFrames(20);
-      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find(stat => stat.displayName === 'Records scanned')!
+      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
         .value!;
       for (let i = 1; i < 4; i++) {
         fakeFrames[i].meta!.stats = [
@@ -198,7 +205,7 @@ describe('CloudWatchDatasource', () => {
         ];
       }
 
-      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find(stat => stat.displayName === 'Records scanned')!
+      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
         .value!;
       for (let i = 10; i < fakeFrames.length; i++) {
         fakeFrames[i].meta!.stats = [
@@ -296,7 +303,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should call the replace method on provided log groups', () => {
       const { ds } = getTestContext();
-      const replaceSpy = jest.spyOn(ds, 'replace').mockImplementation((target: string) => target);
+      const replaceSpy = jest.spyOn(ds, 'replace').mockImplementation((target?: string) => target ?? '');
       ds.makeLogActionRequest('StartQuery', [
         {
           queryString: 'test query string',
@@ -339,7 +346,7 @@ describe('CloudWatchDatasource', () => {
           type: 'Metrics',
           error: '',
           refId: 'A',
-          meta: { gmdMeta: [] },
+          meta: {},
           series: [
             {
               name: 'CPUUtilization_Average',
@@ -418,9 +425,9 @@ describe('CloudWatchDatasource', () => {
       });
     });
 
-    it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', stat => {
+    it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', (stat) => {
       const { ds } = getTestContext({ response });
-      const query = {
+      const query: DataQueryRequest<CloudWatchQuery> = ({
         range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
@@ -437,7 +444,7 @@ describe('CloudWatchDatasource', () => {
             period: '60s',
           },
         ],
-      };
+      } as unknown) as DataQueryRequest<CloudWatchQuery>;
 
       expect(ds.query.bind(ds, query)).toThrow(/Invalid extended statistics/);
     });
@@ -445,72 +452,10 @@ describe('CloudWatchDatasource', () => {
     it('should return series list', async () => {
       const { ds } = getTestContext({ response });
 
-      await expect(ds.query(query)).toEmitValuesWith(received => {
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
         const result = received[0];
         expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
-      });
-    });
-
-    describe('a correct cloudwatch url should be built for each time series in the response', () => {
-      it('should be built correctly if theres one search expressions returned in meta for a given query row', async () => {
-        const { ds } = getTestContext({ response });
-
-        response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
-
-        await expect(ds.query(query)).toEmitValuesWith(received => {
-          const result = received[0];
-          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
-          expect(decodeURIComponent(result.data[0].fields[1].config.links[0].url)).toContain(
-            `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
-          );
-        });
-      });
-
-      it('should be built correctly if theres two search expressions returned in meta for a given query row', async () => {
-        const { ds } = getTestContext({ response });
-
-        response.results['A'].meta.gmdMeta = [
-          { Expression: `REMOVE_EMPTY(SEARCH('first expression'))` },
-          { Expression: `REMOVE_EMPTY(SEARCH('second expression'))` },
-        ];
-
-        await expect(ds.query(query)).toEmitValuesWith(received => {
-          const result = received[0];
-          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
-          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
-            `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
-          );
-        });
-      });
-
-      it('should be built correctly if the query is a metric stat query', async () => {
-        const { ds } = getTestContext({ response });
-
-        response.results['A'].meta.gmdMeta = [{ Period: '300' }];
-
-        await expect(ds.query(query)).toEmitValuesWith(received => {
-          const result = received[0];
-          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
-          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
-            `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
-          );
-        });
-      });
-
-      it('should not be added at all if query is a math expression', async () => {
-        const { ds } = getTestContext({ response });
-
-        query.targets[0].expression = 'a * 2';
-        response.results['A'].meta.searchExpressions = [];
-
-        await expect(ds.query(query)).toEmitValuesWith(received => {
-          const result = received[0];
-          expect(result.data[0].fields[1].config.links).toBeUndefined();
-        });
       });
     });
 
@@ -582,7 +527,7 @@ describe('CloudWatchDatasource', () => {
         const { ds } = getTestContext({ response: backendErrorResponse, throws: true });
         const memoizedDebounceSpy = jest.spyOn(ds, 'debouncedAlert');
 
-        await expect(ds.query(query)).toEmitValuesWith(received => {
+        await expect(ds.query(query)).toEmitValuesWith((received) => {
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-1');
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
           expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'eu-north-1');
@@ -752,13 +697,7 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
-          meta: {
-            gmdMeta: [
-              {
-                Period: 300,
-              },
-            ],
-          },
+          meta: {},
           series: [
             {
               name: 'TargetResponseTime_p90.00',
@@ -780,7 +719,7 @@ describe('CloudWatchDatasource', () => {
     it('should return series list', async () => {
       const { ds } = getTestContext({ response });
 
-      await expect(ds.query(query)).toEmitValuesWith(received => {
+      await expect(ds.query(query)).toEmitValuesWith((received) => {
         const result = received[0];
         expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
         expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);

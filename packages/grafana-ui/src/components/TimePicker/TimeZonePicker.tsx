@@ -23,7 +23,7 @@ export interface Props {
   includeInternal?: boolean;
 }
 
-export const TimeZonePicker: React.FC<Props> = props => {
+export const TimeZonePicker: React.FC<Props> = (props) => {
   const { onChange, width, autoFocus = false, onBlur, value, includeInternal = false } = props;
   const groupedTimeZones = useTimeZones(includeInternal);
   const selected = useSelectedTimeZone(groupedTimeZones, value);
@@ -99,14 +99,14 @@ const useSelectedTimeZone = (
 
     const tz = toLower(timeZone);
 
-    const group = groups.find(group => {
+    const group = groups.find((group) => {
       if (!group.label) {
         return isInternal(tz);
       }
       return tz.startsWith(toLower(group.label));
     });
 
-    return group?.options.find(option => {
+    return group?.options.find((option) => {
       if (isEmpty(tz)) {
         return option.value === InternalTimeZones.default;
       }

@@ -38,22 +38,21 @@ export const NotificationChannelForm: FC<Props> = ({
 }) => {
   const styles = getStyles(useTheme());
 
-  /*
-   Finds fields that have dependencies on other fields and removes duplicates.
-   Needs to be prefixed with settings.
-  */
-  const fieldsToWatch =
-    new Set(
-      selectedChannel?.options
-        .filter(o => o.showWhen.field)
-        .map(option => {
-          return `settings.${option.showWhen.field}`;
-        })
-    ) || [];
-
   useEffect(() => {
+    /*
+      Finds fields that have dependencies on other fields and removes duplicates.
+      Needs to be prefixed with settings.
+    */
+    const fieldsToWatch =
+      new Set(
+        selectedChannel?.options
+          .filter((o) => o.showWhen.field)
+          .map((option) => {
+            return `settings.${option.showWhen.field}`;
+          })
+      ) || [];
     watch(['type', 'sendReminder', 'uploadImage', ...fieldsToWatch]);
-  }, [fieldsToWatch]);
+  }, [selectedChannel?.options, watch]);
 
   const currentFormValues = getValues();
 
@@ -76,7 +75,7 @@ export const NotificationChannelForm: FC<Props> = ({
         />
       </div>
       {/* If there are no non-required fields, don't render this section*/}
-      {selectedChannel.options.filter(o => !o.required).length > 0 && (
+      {selectedChannel.options.filter((o) => !o.required).length > 0 && (
         <div className={styles.formItem}>
           <ChannelSettings
             selectedChannel={selectedChannel}

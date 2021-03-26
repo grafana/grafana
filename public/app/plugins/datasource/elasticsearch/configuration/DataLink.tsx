@@ -1,11 +1,11 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { css } from 'emotion';
 import { VariableSuggestion } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
 import { Button, LegacyForms, DataLinkInput, stylesFactory } from '@grafana/ui';
 const { FormField, Switch } = LegacyForms;
 import { DataLinkConfig } from '../types';
 import { usePrevious } from 'react-use';
-import { DataSourcePicker } from '../../../../core/components/Select/DataSourcePicker';
 
 const getStyles = stylesFactory(() => ({
   firstRow: css`
@@ -60,7 +60,7 @@ export const DataLink = (props: Props) => {
           variant={'destructive'}
           title="Remove field"
           icon="times"
-          onClick={event => {
+          onClick={(event) => {
             event.preventDefault();
             onDelete();
           }}
@@ -74,7 +74,7 @@ export const DataLink = (props: Props) => {
             <DataLinkInput
               placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
               value={value.url || ''}
-              onChange={newValue =>
+              onChange={(newValue) =>
                 onChange({
                   ...value,
                   url: newValue,
@@ -109,7 +109,7 @@ export const DataLink = (props: Props) => {
           <DataSourcePicker
             tracing={true}
             // Uid and value should be always set in the db and so in the items.
-            onChange={ds => {
+            onChange={(ds) => {
               onChange({
                 ...value,
                 datasourceUid: ds.uid,

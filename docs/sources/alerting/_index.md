@@ -1,7 +1,7 @@
 +++
 title = "Alerts"
 aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alerting/metrics/"]
-weight = 100
+weight = 110
 +++
 
 # Alerts overview
@@ -37,12 +37,12 @@ The actual notifications are configured and shared between multiple alerts.
 ## Alert execution
 
 Alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
+of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
 `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`.
 
 ## Metrics from the alert engine
 
-The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../administration/metrics/" >}}).
+The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../administration/view-server/internal-metrics.md" >}}).
 
 Description | Type | Metric name
 ---------- | ----------- | ----------
@@ -50,4 +50,3 @@ Total number of alerts | counter | `alerting.active_alerts`
 Alert execution result | counter | `alerting.result`
 Notifications sent counter | counter | `alerting.notifications_sent`
 Alert execution timer | timer | `alerting.execution_time`
-

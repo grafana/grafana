@@ -1,27 +1,25 @@
-// Libraries
 import _ from 'lodash';
-// Utils
-import coreModule from 'app/core/core_module';
-// Types
+import { ITimeoutService } from 'angular';
 import {
   dateMath,
-  DefaultTimeRange,
-  TimeRange,
-  RawTimeRange,
-  toUtc,
   dateTime,
+  getDefaultTimeRange,
   isDateTime,
   rangeUtil,
+  RawTimeRange,
+  TimeRange,
+  toUtc,
 } from '@grafana/data';
-import { ITimeoutService, ILocationService } from 'angular';
+
+import coreModule from 'app/core/core_module';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { appEvents } from '../../../core/core';
-import { CoreEvents } from '../../../types';
-
 import { config } from 'app/core/config';
+import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
+import { locationService } from '@grafana/runtime';
+import { ShiftTimeEvent, ShiftTimeEventPayload, ZoomOutEvent } from '../../../types/events';
 
 export class TimeSrv {
   time: any;
@@ -33,19 +31,16 @@ export class TimeSrv {
   private autoRefreshBlocked: boolean;
 
   /** @ngInject */
-  constructor(
-    $rootScope: GrafanaRootScope,
-    private $timeout: ITimeoutService,
-    private $location: ILocationService,
-    private timer: any,
-    private contextSrv: ContextSrv
-  ) {
+  constructor(private $timeout: ITimeoutService, private timer: any, private contextSrv: ContextSrv) {
     // default time
-    this.time = DefaultTimeRange.raw;
-
-    appEvents.on(CoreEvents.zoomOut, this.zoomOut.bind(this));
-    appEvents.on(CoreEvents.shiftTime, this.shiftTime.bind(this));
-    $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
+    this.time = getDefaultTimeRange().raw;
+    this.refreshDashboard = this.refreshDashboard.bind(this);
+    appEvents.subscribe(ZoomOutEvent, (e) => {
+      this.zoomOut(e.payload);
+    });
+    appEvents.subscribe(ShiftTimeEvent, (e) => {
+      this.shiftTime(e.payload);
+    });
 
     document.addEventListener('visibilitychange', () => {
       if (this.autoRefreshBlocked && document.visibilityState === 'visible') {
@@ -78,7 +73,7 @@ export class TimeSrv {
       return intervals;
     }
 
-    return intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
+    return intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval);
   }
 
   private parseTime() {
@@ -133,43 +128,56 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
-    const params = this.$location.search();
+    const params = locationService.getSearch();
 
-    if (params.time && params['time.window']) {
-      this.time = this.getTimeWindow(params.time, params['time.window']);
+    if (params.get('time') && params.get('time.window')) {
+      this.time = this.getTimeWindow(params.get('time')!, params.get('time.window')!);
     }
 
-    if (params.from) {
-      this.time.from = this.parseUrlParam(params.from) || this.time.from;
+    if (params.get('from')) {
+      this.time.from = this.parseUrlParam(params.get('from')!) || this.time.from;
     }
-    if (params.to) {
-      this.time.to = this.parseUrlParam(params.to) || this.time.to;
+
+    if (params.get('to')) {
+      this.time.to = this.parseUrlParam(params.get('to')!) || this.time.to;
     }
+
     // if absolute ignore refresh option saved to dashboard
-    if (params.to && params.to.indexOf('now') === -1) {
+    if (params.get('to') && params.get('to')!.indexOf('now') === -1) {
       this.refresh = false;
       this.dashboard.refresh = false;
     }
+
+    let paramsJSON: Record<string, string> = {};
+    params.forEach(function (value, key) {
+      paramsJSON[key] = value;
+    });
+
     // but if refresh explicitly set then use that
-    if (params.refresh) {
-      if (!this.contextSrv.isAllowedInterval(params.refresh)) {
-        this.refresh = config.minRefreshInterval;
-      } else {
-        this.refresh = params.refresh || this.refresh;
-      }
-    }
+    this.refresh = getRefreshFromUrl({
+      params: paramsJSON,
+      currentRefresh: this.refresh,
+      refreshIntervals: this.dashboard?.timepicker?.refresh_intervals,
+      isAllowedIntervalFn: this.contextSrv.isAllowedInterval,
+      minRefreshInterval: config.minRefreshInterval,
+    });
   }
 
-  private routeUpdated() {
-    const params = this.$location.search();
-    if (params.left) {
+  updateTimeRangeFromUrl() {
+    const params = locationService.getSearch();
+
+    if (params.get('left')) {
       return; // explore handles this;
     }
+
     const urlRange = this.timeRangeForUrl();
+    const from = params.get('from');
+    const to = params.get('to');
+
     // check if url has time range
-    if (params.from && params.to) {
+    if (from && to) {
       // is it different from what our current time range?
-      if (params.from !== urlRange.from || params.to !== urlRange.to) {
+      if (from !== urlRange.from || to !== urlRange.to) {
         // issue update
         this.initTimeFromUrl();
         this.setTime(this.time, true);
@@ -199,17 +207,12 @@ export class TimeSrv {
       );
     }
 
-    // update url inside timeout to so that a digest happens after (called from react)
-    this.$timeout(() => {
-      const params = this.$location.search();
-      if (interval) {
-        params.refresh = this.contextSrv.getValidInterval(interval);
-        this.$location.search(params);
-      } else if (params.refresh) {
-        delete params.refresh;
-        this.$location.search(params);
-      }
-    });
+    if (interval) {
+      const refresh = this.contextSrv.getValidInterval(interval);
+      locationService.partial({ refresh }, true);
+    } else {
+      locationService.partial({ refresh: null }, true);
+    }
   }
 
   refreshDashboard() {
@@ -249,13 +252,18 @@ export class TimeSrv {
     // update url
     if (fromRouteUpdate !== true) {
       const urlRange = this.timeRangeForUrl();
-      const urlParams = this.$location.search();
-      urlParams.from = urlRange.from;
-      urlParams.to = urlRange.to;
-      this.$location.search(urlParams);
+      const urlParams = locationService.getSearch();
+
+      urlParams.set('from', urlRange.from.toString());
+      urlParams.set('to', urlRange.to.toString());
+
+      locationService.push({
+        ...locationService.getLocation(),
+        search: urlParams.toString(),
+      });
     }
 
-    this.$timeout(this.refreshDashboard.bind(this), 0);
+    this.refreshDashboard();
   }
 
   timeRangeForUrl = () => {
@@ -294,7 +302,7 @@ export class TimeSrv {
     this.setTime({ from: toUtc(from), to: toUtc(to) });
   }
 
-  shiftTime(direction: number) {
+  shiftTime(direction: ShiftTimeEventPayload) {
     const range = this.timeRange();
     const { from, to } = getShiftedTimeRange(direction, range);
 

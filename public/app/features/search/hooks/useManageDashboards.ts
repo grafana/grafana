@@ -23,7 +23,7 @@ export const useManageDashboards = (
     dispatch,
   } = useSearch<ManageDashboardsState>(query, reducer, {});
 
-  const onToggleChecked: OnToggleChecked = item => {
+  const onToggleChecked: OnToggleChecked = (item) => {
     dispatch({ type: TOGGLE_CHECKED, payload: item });
   };
 
@@ -40,7 +40,7 @@ export const useManageDashboards = (
   };
 
   const canMove = useMemo(
-    () => results.some((result: DashboardSection) => result.items && result.items.some(item => item.checked)),
+    () => results.some((result: DashboardSection) => result.items && result.items.some((item) => item.checked)),
     [results]
   );
   const canDelete = useMemo(

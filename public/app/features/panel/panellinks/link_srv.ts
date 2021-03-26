@@ -84,7 +84,7 @@ const buildLabelPath = (label: string) => {
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...getTemplateSrv()
     .getVariables()
-    .map(variable => ({
+    .map((variable) => ({
       value: variable.name as string,
       label: variable.name,
       origin: VariableOrigin.Template,
@@ -110,10 +110,7 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
     }
   }
 
-  const labels = _.chain(all)
-    .flatten()
-    .uniq()
-    .value();
+  const labels = _.chain(all).flatten().uniq().value();
 
   return [
     {
@@ -122,7 +119,7 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
       documentation: 'Field name of the clicked datapoint (in ms epoch)',
       origin: VariableOrigin.Field,
     },
-    ...labels.map(label => ({
+    ...labels.map((label) => ({
       value: `__field.labels${buildLabelPath(label)}`,
       label: `labels.${label}`,
       documentation: `${label} label value`,
@@ -137,30 +134,36 @@ export const getDataFrameVars = (dataFrames: DataFrame[]) => {
   const suggestions: VariableSuggestion[] = [];
   const keys: KeyValue<true> = {};
 
-  for (const frame of dataFrames) {
-    for (const field of frame.fields) {
-      const displayName = getFieldDisplayName(field, frame, dataFrames);
+  if (dataFrames.length !== 1) {
+    // It's not possible to access fields of other dataframes. So if there are multiple dataframes we need to skip these suggestions.
+    // Also return early if there are no dataFrames.
+    return [];
+  }
 
-      if (keys[displayName]) {
-        continue;
-      }
+  const frame = dataFrames[0];
 
-      suggestions.push({
-        value: `__data.fields${buildLabelPath(displayName)}`,
-        label: `${displayName}`,
-        documentation: `Formatted value for ${displayName} on the same row`,
-        origin: VariableOrigin.Fields,
-      });
+  for (const field of frame.fields) {
+    const displayName = getFieldDisplayName(field, frame, dataFrames);
 
-      keys[displayName] = true;
+    if (keys[displayName]) {
+      continue;
+    }
 
-      if (!numeric && field.type === FieldType.number) {
-        numeric = { ...field, name: displayName };
-      }
+    suggestions.push({
+      value: `__data.fields${buildLabelPath(displayName)}`,
+      label: `${displayName}`,
+      documentation: `Formatted value for ${displayName} on the same row`,
+      origin: VariableOrigin.Fields,
+    });
 
-      if (!title && field.config.displayName && field.config.displayName !== field.name) {
-        title = { ...field, name: displayName };
-      }
+    keys[displayName] = true;
+
+    if (!numeric && field.type === FieldType.number) {
+      numeric = { ...field, name: displayName };
+    }
+
+    if (!title && field.config.displayName && field.config.displayName !== field.name) {
+      title = { ...field, name: displayName };
     }
   }
 
@@ -246,7 +249,7 @@ export const getPanelOptionsVariableSuggestions = (plugin: PanelPlugin, data?: D
     ...dataVariables, // field values
     ...getTemplateSrv()
       .getVariables()
-      .map(variable => ({
+      .map((variable) => ({
         value: variable.name as string,
         label: variable.name,
         origin: VariableOrigin.Template,
@@ -289,6 +292,7 @@ export class LinkSrv implements LinkService {
     const info: any = {};
     info.href = this.getLinkUrl(link);
     info.title = this.templateSrv.replace(link.title || '');
+    info.tooltip = this.templateSrv.replace(link.tooltip || '');
     return info;
   }
 
@@ -326,7 +330,7 @@ export class LinkSrv implements LinkService {
     const info: LinkModel<T> = {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
       title: replaceVariables ? replaceVariables(link.title || '') : link.title,
-      target: link.targetBlank ? '_blank' : '_self',
+      target: link.targetBlank ? '_blank' : undefined,
       origin,
       onClick,
     };

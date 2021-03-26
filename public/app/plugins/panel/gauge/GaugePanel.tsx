@@ -39,8 +39,8 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks}>
-          {api => {
+        <DataLinksContextMenu links={getLinks} config={value.field}>
+          {(api) => {
             return this.renderComponent(valueProps, api);
           }}
         </DataLinksContextMenu>

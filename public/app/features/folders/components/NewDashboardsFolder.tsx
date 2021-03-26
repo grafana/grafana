@@ -37,7 +37,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
       .then(() => {
         return true;
       })
-      .catch(e => {
+      .catch((e) => {
         return e.message;
       });
   };
@@ -59,7 +59,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
                     name="folderName"
                     ref={register({
                       required: 'Folder name is required.',
-                      validate: async v => await this.validateFolderName(v),
+                      validate: async (v) => await this.validateFolderName(v),
                     })}
                   />
                 </Field>
@@ -73,7 +73,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => ({
   navModel: getNavModel(state.navIndex, 'manage-dashboards'),
 });
 

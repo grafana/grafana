@@ -64,7 +64,7 @@ describe('DateMath', () => {
       anchored = dateTime(anchor);
     });
 
-    each(spans, span => {
+    each(spans, (span) => {
       const nowEx = 'now-5' + span;
       const thenEx = anchor + '||-5' + span;
 
@@ -90,7 +90,7 @@ describe('DateMath', () => {
       now = dateTime();
     });
 
-    each(spans, span => {
+    each(spans, (span) => {
       it('should round now to the beginning of the ' + span, () => {
         expect(dateMath.parse('now/' + span)!.format(format)).toEqual(now.startOf(span).format(format));
       });

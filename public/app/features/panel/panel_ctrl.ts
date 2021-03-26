@@ -51,6 +51,7 @@ export class PanelCtrl {
 
   panelDidMount() {
     this.events.emit(PanelEvents.componentDidMount);
+    this.events.emit(PanelEvents.initialized);
     this.dashboard.panelInitialized(this.panel);
   }
 

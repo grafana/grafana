@@ -260,13 +260,13 @@ func validateDatasourceV1(dsCfg *configs) {
 
 type fakeRepository struct {
 	inserted []*models.AddDataSourceCommand
-	deleted  []*models.DeleteDataSourceByNameCommand
+	deleted  []*models.DeleteDataSourceCommand
 	updated  []*models.UpdateDataSourceCommand
 
 	loadAll []*models.DataSource
 }
 
-func mockDelete(cmd *models.DeleteDataSourceByNameCommand) error {
+func mockDelete(cmd *models.DeleteDataSourceCommand) error {
 	fakeRepo.deleted = append(fakeRepo.deleted, cmd)
 	return nil
 }
@@ -281,7 +281,7 @@ func mockInsert(cmd *models.AddDataSourceCommand) error {
 	return nil
 }
 
-func mockGet(cmd *models.GetDataSourceByNameQuery) error {
+func mockGet(cmd *models.GetDataSourceQuery) error {
 	for _, v := range fakeRepo.loadAll {
 		if cmd.Name == v.Name && cmd.OrgId == v.OrgId {
 			cmd.Result = v

@@ -2,40 +2,9 @@
   .react-resizable-handle,
   .add-row-panel-hint,
   .dash-row-menu-container,
-  .navbar-buttons--actions,
   .panel-info-corner--info,
   .panel-info-corner--links {
     display: none;
-  }
-
-  .navbar-page-btn {
-    i {
-      display: none;
-    }
-
-    i.navbar-page-btn__folder-icon {
-      display: inline-block;
-      opacity: inherit;
-    }
-  }
-
-  .navbar-button--zoom {
-    display: none;
-  }
-}
-
-.view-mode--playlist {
-  @extend .view-mode--inactive;
-}
-
-// https://github.com/grafana/grafana/issues/18114
-.view-mode--tv.panel-in-fullscreen {
-  .navbar {
-    padding-left: $navbar-padding;
-  }
-
-  .navbar-page-btn {
-    transform: none;
   }
 }
 
@@ -60,8 +29,12 @@
     }
   }
 
-  .navbar {
+  .page-toolbar {
     padding-left: $side-menu-width;
+
+    &--fullscreen {
+      padding-left: $space-md;
+    }
   }
 
   .submenu-controls {
@@ -73,15 +46,21 @@
   @extend .view-mode--tv;
 
   .sidemenu,
-  .navbar {
+  .page-toolbar {
     display: none;
-  }
-
-  .scroll-canvas--dashboard {
-    height: 100%;
   }
 
   .submenu-controls {
     display: none;
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  div.page-toolbar {
+    padding-left: 53px;
+
+    &--fullscreen {
+      padding-left: $space-md;
+    }
   }
 }

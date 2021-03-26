@@ -15,7 +15,7 @@
 import React from 'react';
 import { css } from 'emotion';
 import NewWindowIcon from '../common/NewWindowIcon';
-import { TraceSpanReference } from '@grafana/data';
+import { TraceSpanReference } from '../types/trace';
 import { UITooltip, UIDropdown, UIMenuItem, UIMenu, TooltipPlacement } from '../uiElementsContext';
 
 import ReferenceLink from '../url/ReferenceLink';
@@ -55,7 +55,7 @@ export default class ReferencesButton extends React.PureComponent<TReferencesBut
     const styles = getStyles();
     return (
       <UIMenu>
-        {references.map(ref => {
+        {references.map((ref) => {
           const { span, spanID } = ref;
           return (
             <UIMenuItem key={`${spanID}`}>

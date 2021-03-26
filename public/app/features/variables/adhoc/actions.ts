@@ -35,7 +35,7 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
       variable = getVariableByOptions(options, getState());
     }
 
-    const index = variable.filters.findIndex(f => f.key === options.key && f.value === options.value);
+    const index = variable.filters.findIndex((f) => f.key === options.key && f.value === options.value);
 
     if (index === -1) {
       const { value, key, operator } = options;
@@ -108,7 +108,7 @@ export const changeVariableDatasource = (datasource: string): ThunkResult<void> 
   };
 };
 
-export const initAdHocVariableEditor = (): ThunkResult<void> => dispatch => {
+export const initAdHocVariableEditor = (): ThunkResult<void> => (dispatch) => {
   const dataSources = getDatasourceSrv().getMetricSources();
   const selectable = dataSources.reduce(
     (all: Array<{ text: string; value: string }>, ds) => {
@@ -157,6 +157,6 @@ const createAdHocVariable = (options: AdHocTableOptions): ThunkResult<void> => {
 
 const getVariableByOptions = (options: AdHocTableOptions, state: StoreState): AdHocVariableModel => {
   return Object.values(state.templating.variables).find(
-    v => isAdHoc(v) && v.datasource === options.datasource
+    (v) => isAdHoc(v) && v.datasource === options.datasource
   ) as AdHocVariableModel;
 };

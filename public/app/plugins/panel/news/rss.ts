@@ -17,7 +17,7 @@ export async function loadRSSFeed(url: string): Promise<RssFeed> {
     return '';
   };
 
-  doc.querySelectorAll('item').forEach(node => {
+  doc.querySelectorAll('item').forEach((node) => {
     const item: RssItem = {
       title: getProperty(node, 'title'),
       link: getProperty(node, 'link'),

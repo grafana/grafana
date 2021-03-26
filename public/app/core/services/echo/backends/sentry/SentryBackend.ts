@@ -48,7 +48,7 @@ export class SentryEchoBackend implements EchoBackend<SentryEchoEvent, SentryEch
   }
 
   addEvent = (e: SentryEchoEvent) => {
-    this.transports.forEach(t => t.sendEvent(e.payload));
+    this.transports.forEach((t) => t.sendEvent(e.payload));
   };
 
   // backend will log events to stdout, and at least in case of hosted grafana they will be

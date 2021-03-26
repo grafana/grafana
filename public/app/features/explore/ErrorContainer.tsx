@@ -7,11 +7,11 @@ export interface ErrorContainerProps {
   queryError?: DataQueryError;
 }
 
-export const ErrorContainer: FunctionComponent<ErrorContainerProps> = props => {
+export const ErrorContainer: FunctionComponent<ErrorContainerProps> = (props) => {
   const { queryError } = props;
   const showError = queryError ? true : false;
   const duration = showError ? 100 : 10;
-  const message = queryError ? queryError.message : null;
+  const message = queryError?.message || queryError?.data?.message || 'Unknown error';
 
   return (
     <FadeIn in={showError} duration={duration}>

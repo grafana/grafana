@@ -20,7 +20,8 @@ export enum DataTopic {
   Annotations = 'annotations',
 }
 
-export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
+// Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
+export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 'nodeGraph';
 
 /**
  * @public
@@ -66,7 +67,6 @@ export interface QueryResultMeta {
   /**
    * Legacy data source specific, should be moved to custom
    * */
-  gmdMeta?: any[]; // used by cloudwatch
   alignmentPeriod?: number; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki

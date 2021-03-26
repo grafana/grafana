@@ -104,7 +104,7 @@ function sortColorsByHue(hexColors: string[]) {
 
   const sortedHSLColors = sortBy(hslColors, ['h']);
   const chunkedHSLColors = chunk(sortedHSLColors, PALETTE_ROWS);
-  const sortedChunkedHSLColors = map(chunkedHSLColors, chunk => {
+  const sortedChunkedHSLColors = map(chunkedHSLColors, (chunk) => {
     return sortBy(chunk, 'l');
   });
   const flattenedZippedSortedChunkedHSLColors = flattenDeep(zip(...sortedChunkedHSLColors));
@@ -134,8 +134,10 @@ export let sortedColors = sortColorsByHue(colors);
 export function getColorsFromSeverity(severity: AlertVariant, theme: GrafanaTheme): [string, string] {
   switch (severity) {
     case 'error':
-    case 'warning':
       return [theme.palette.redBase, theme.palette.redShade];
+    case 'warning':
+      return [theme.palette.queryOrange, theme.palette.orange];
+    case 'info':
     case 'info':
       return [theme.palette.blue80, theme.palette.blue77];
     case 'success':

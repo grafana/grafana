@@ -43,12 +43,12 @@ class SubMenuUnConnected extends PureComponent<Props> {
       return true;
     }
 
-    const visibleVariables = this.props.variables.filter(variable => variable.hide !== VariableHide.hideVariable);
+    const visibleVariables = this.props.variables.filter((variable) => variable.hide !== VariableHide.hideVariable);
     if (visibleVariables.length > 0) {
       return true;
     }
 
-    const visibleAnnotations = this.props.dashboard.annotations.list.filter(annotation => annotation.hide !== true);
+    const visibleAnnotations = this.props.dashboard.annotations.list.filter((annotation) => annotation.hide !== true);
     return visibleAnnotations.length > 0;
   };
 
@@ -71,7 +71,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   return {
     variables: getSubMenuVariables(state.templating.variables),
   };

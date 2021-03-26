@@ -5,12 +5,14 @@ import React, { memo } from 'react';
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';
 import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
+import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchLogsQueryField } from './LogsQueryField';
 import CloudWatchLink from './CloudWatchLink';
 import { css } from 'emotion';
 
-type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery> & { allowCustomValue?: boolean };
+type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
+  allowCustomValue?: boolean;
+};
 
 const labelClass = css`
   margin-left: 3px;

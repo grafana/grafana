@@ -8,7 +8,10 @@
     <div class="gf-form-inline">
       <div class="gf-form">
         <span class="gf-form-label width-6">Name</span>
-        <input type="text" class="gf-form-input width-20" ng-model="ctrl.alert.name" />
+        <input type="text" class="gf-form-input width-20 gf-form-input--has-help-icon" ng-model="ctrl.alert.name" />
+        <info-popover mode="right-absolute">
+          If you want to apply templating to the alert rule name, you must use the following syntax - ${Label}
+        </info-popover>
       </div>
       <div class="gf-form">
         <span class="gf-form-label width-9">Evaluate every</span>
@@ -186,11 +189,14 @@
   <div class="gf-form gf-form--v-stretch">
     <span class="gf-form-label width-8">Message</span>
     <textarea
-      class="gf-form-input"
+      class="gf-form-input gf-form-input--has-help-icon"
       rows="10"
       ng-model="ctrl.alert.message"
       placeholder="Notification message details..."
     ></textarea>
+    <info-popover mode="right-absolute">
+      If you want to apply templating to the alert rule name, you must use the following syntax - ${Label}
+    </info-popover>
   </div>
   <div class="gf-form">
     <span class="gf-form-label width-8">Tags</span>

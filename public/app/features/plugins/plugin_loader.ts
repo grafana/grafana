@@ -21,17 +21,6 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import {
-  DataSourcePlugin,
-  AppPlugin,
-  PanelPlugin,
-  PluginMeta,
-  DataSourcePluginMeta,
-  dateMath,
-  DataSourceApi,
-  DataSourceJsonData,
-  DataQuery,
-} from '@grafana/data';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
@@ -151,7 +140,7 @@ export const exposeAsyncModules = async (
 
   // `SystemJS.resolve` failed if `SystemJS.prepareImport` was not called
   const completeModules = semiCompleteModules.map(
-    module =>
+    (module) =>
       ({
         ...module,
         url: module.url === TEMP_URL ? SystemJS.resolve(module.key) : module.url,
@@ -218,7 +207,7 @@ exposeAsyncModules([
   },
 
   { key: 'app/plugins/sdk', value: sdk },
-  { key: 'app/core/utils/datemath', value: dateMath },
+  { key: 'app/core/utils/datemath', value: grafanaData.dateMath },
   { key: 'app/core/utils/flatten', value: flatten },
   { key: 'app/core/utils/kbn', value: kbn },
   { key: 'app/core/utils/ticks', value: ticks },
@@ -239,7 +228,7 @@ exposeAsyncModules([
     },
   },
 
-  ...flotDeps.map(flotDep => ({ key: flotDep, value: { fakeDep: 1 } })),
+  ...flotDeps.map((flotDep) => ({ key: flotDep, value: { fakeDep: 1 } })),
 ]);
 
 export async function importPluginModule(path: string): Promise<any> {
@@ -256,8 +245,8 @@ export async function importPluginModule(path: string): Promise<any> {
   return SystemJS.import(resolveModulePath(path, true));
 }
 
-export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  return importPluginModule(meta.module).then(pluginExports => {
+export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
+  return importPluginModule(meta.module).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
       dsPlugin.meta = meta;
@@ -265,10 +254,10 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
     }
 
     if (pluginExports.Datasource) {
-      const dsPlugin = new DataSourcePlugin<
-        DataSourceApi<DataQuery, DataSourceJsonData>,
-        DataQuery,
-        DataSourceJsonData
+      const dsPlugin = new grafanaData.DataSourcePlugin<
+        grafanaData.DataSourceApi<grafanaData.DataQuery, grafanaData.DataSourceJsonData>,
+        grafanaData.DataQuery,
+        grafanaData.DataSourceJsonData
       >(pluginExports.Datasource);
       dsPlugin.setComponentsFromLegacyExports(pluginExports);
       dsPlugin.meta = meta;
@@ -279,9 +268,9 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
   });
 }
 
-export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
-  return importPluginModule(meta.module).then(pluginExports => {
-    const plugin = pluginExports.plugin ? (pluginExports.plugin as AppPlugin) : new AppPlugin();
+export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaData.AppPlugin> {
+  return importPluginModule(meta.module).then((pluginExports) => {
+    const plugin = pluginExports.plugin ? (pluginExports.plugin as grafanaData.AppPlugin) : new grafanaData.AppPlugin();
     plugin.init(meta);
     plugin.meta = meta;
     plugin.setComponentsFromLegacyExports(pluginExports);
@@ -290,11 +279,11 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
 }
 
 interface PanelCache {
-  [key: string]: Promise<PanelPlugin>;
+  [key: string]: Promise<grafanaData.PanelPlugin>;
 }
 const panelCache: PanelCache = {};
 
-export function importPanelPlugin(id: string): Promise<PanelPlugin> {
+export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> {
   const loaded = panelCache[id];
 
   if (loaded) {
@@ -308,21 +297,21 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
   }
 
   panelCache[id] = importPluginModule(meta.module)
-    .then(pluginExports => {
+    .then((pluginExports) => {
       if (pluginExports.plugin) {
-        return pluginExports.plugin as PanelPlugin;
+        return pluginExports.plugin as grafanaData.PanelPlugin;
       } else if (pluginExports.PanelCtrl) {
-        const plugin = new PanelPlugin(null);
+        const plugin = new grafanaData.PanelPlugin(null);
         plugin.angularPanelCtrl = pluginExports.PanelCtrl;
         return plugin;
       }
       throw new Error('missing export: plugin or PanelCtrl');
     })
-    .then(plugin => {
+    .then((plugin) => {
       plugin.meta = meta;
       return plugin;
     })
-    .catch(err => {
+    .catch((err) => {
       // TODO, maybe a different error plugin
       console.warn('Error loading panel plugin: ' + id, err);
       return getPanelPluginLoadError(meta, err);

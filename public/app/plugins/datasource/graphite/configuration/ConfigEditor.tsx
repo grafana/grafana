@@ -3,16 +3,14 @@ import { DataSourceHttpSettings, InlineFormLabel, LegacyForms } from '@grafana/u
 const { Select, Switch } = LegacyForms;
 import {
   DataSourcePluginOptionsEditorProps,
+  updateDatasourcePluginJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
 import { GraphiteOptions, GraphiteType } from '../types';
+import { DEFAULT_GRAPHITE_VERSION, GRAPHITE_VERSIONS } from '../versions';
 
-const graphiteVersions = [
-  { label: '0.9.x', value: '0.9' },
-  { label: '1.0.x', value: '1.0' },
-  { label: '1.1.x', value: '1.1' },
-];
+const graphiteVersions = GRAPHITE_VERSIONS.map((version) => ({ label: `${version}.x`, value: version }));
 
 const graphiteTypes = Object.entries(GraphiteType).map(([label, value]) => ({
   label,
@@ -40,11 +38,14 @@ export class ConfigEditor extends PureComponent<Props> {
     );
   };
 
+  componentDidMount() {
+    updateDatasourcePluginJsonDataOption(this.props, 'graphiteVersion', this.currentGraphiteVersion);
+  }
+
   render() {
     const { options, onOptionsChange } = this.props;
 
-    const currentVersion =
-      graphiteVersions.find(item => item.value === options.jsonData.graphiteVersion) ?? graphiteVersions[2];
+    const currentVersion = graphiteVersions.find((item) => item.value === this.currentGraphiteVersion);
 
     return (
       <>
@@ -73,7 +74,7 @@ export class ConfigEditor extends PureComponent<Props> {
               <InlineFormLabel tooltip={this.renderTypeHelp}>Type</InlineFormLabel>
               <Select
                 options={graphiteTypes}
-                value={graphiteTypes.find(type => type.value === options.jsonData.graphiteType)}
+                value={graphiteTypes.find((type) => type.value === options.jsonData.graphiteType)}
                 width={8}
                 onChange={onUpdateDatasourceJsonDataOptionSelect(this.props, 'graphiteType')}
               />
@@ -95,5 +96,9 @@ export class ConfigEditor extends PureComponent<Props> {
         </div>
       </>
     );
+  }
+
+  private get currentGraphiteVersion() {
+    return this.props.options.jsonData.graphiteVersion || DEFAULT_GRAPHITE_VERSION;
   }
 }

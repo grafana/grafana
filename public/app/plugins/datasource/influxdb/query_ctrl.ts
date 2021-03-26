@@ -83,6 +83,13 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.target.query = target.query;
   };
 
+  // only called from raw-mode influxql-editor
+  onRawInfluxQLChange = (target: InfluxQuery) => {
+    this.target.query = target.query;
+    this.target.resultFormat = target.resultFormat;
+    this.target.alias = target.alias;
+  };
+
   onRunQuery = () => {
     this.panelCtrl.refresh();
   };
@@ -283,7 +290,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   transformToSegments(addTemplateVars: any) {
     return (results: any) => {
-      const segments = _.map(results, segment => {
+      const segments = _.map(results, (segment) => {
         return this.uiSegmentSrv.newSegment({
           value: segment.text,
           expandable: segment.expandable,

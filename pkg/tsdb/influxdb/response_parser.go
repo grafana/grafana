@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 type ResponseParser struct{}
@@ -18,11 +18,11 @@ var (
 )
 
 func init() {
-	legendFormat = regexp.MustCompile(`\[\[(\w+)(\.\w+)*\]\]*|\$\s*(\w+?)*`)
+	legendFormat = regexp.MustCompile(`\[\[([\w-]+)(\.[\w-]+)*\]\]*|\$\s*([\w-]+?)*`)
 }
 
-func (rp *ResponseParser) Parse(response *Response, query *Query) *tsdb.QueryResult {
-	queryRes := tsdb.NewQueryResult()
+func (rp *ResponseParser) Parse(response *Response, query *Query) plugins.DataQueryResult {
+	var queryRes plugins.DataQueryResult
 
 	for _, result := range response.Results {
 		queryRes.Series = append(queryRes.Series, rp.transformRows(result.Series, queryRes, query)...)
@@ -34,22 +34,22 @@ func (rp *ResponseParser) Parse(response *Response, query *Query) *tsdb.QueryRes
 	return queryRes
 }
 
-func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResult, query *Query) tsdb.TimeSeriesSlice {
-	var result tsdb.TimeSeriesSlice
+func (rp *ResponseParser) transformRows(rows []Row, queryResult plugins.DataQueryResult, query *Query) plugins.DataTimeSeriesSlice {
+	var result plugins.DataTimeSeriesSlice
 	for _, row := range rows {
 		for columnIndex, column := range row.Columns {
 			if column == "time" {
 				continue
 			}
 
-			var points tsdb.TimeSeriesPoints
+			var points plugins.DataTimeSeriesPoints
 			for _, valuePair := range row.Values {
 				point, err := rp.parseTimepoint(valuePair, columnIndex)
 				if err == nil {
 					points = append(points, point)
 				}
 			}
-			result = append(result, &tsdb.TimeSeries{
+			result = append(result, plugins.DataTimeSeries{
 				Name:   rp.formatSeriesName(row, column, query),
 				Points: points,
 				Tags:   row.Tags,
@@ -64,7 +64,6 @@ func (rp *ResponseParser) formatSeriesName(row Row, column string, query *Query)
 	if query.Alias == "" {
 		return rp.buildSeriesNameFromQuery(row, column)
 	}
-
 	nameSegment := strings.Split(row.Name, ".")
 
 	result := legendFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
@@ -115,19 +114,19 @@ func (rp *ResponseParser) buildSeriesNameFromQuery(row Row, column string) strin
 	return fmt.Sprintf("%s.%s%s", row.Name, column, tagText)
 }
 
-func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition int) (tsdb.TimePoint, error) {
+func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition int) (plugins.DataTimePoint, error) {
 	value := rp.parseValue(valuePair[valuePosition])
 
 	timestampNumber, ok := valuePair[0].(json.Number)
 	if !ok {
-		return tsdb.TimePoint{}, fmt.Errorf("valuePair[0] has invalid type: %#v", valuePair[0])
+		return plugins.DataTimePoint{}, fmt.Errorf("valuePair[0] has invalid type: %#v", valuePair[0])
 	}
 	timestamp, err := timestampNumber.Float64()
 	if err != nil {
-		return tsdb.TimePoint{}, err
+		return plugins.DataTimePoint{}, err
 	}
 
-	return tsdb.NewTimePoint(value, timestamp), nil
+	return plugins.DataTimePoint{value, null.FloatFrom(timestamp * 1000)}, nil
 }
 
 func (rp *ResponseParser) parseValue(value interface{}) null.Float {

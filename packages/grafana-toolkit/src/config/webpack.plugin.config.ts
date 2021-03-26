@@ -34,7 +34,7 @@ export const findModuleFiles = async (base: string, files?: string[], result?: s
 
   if (files) {
     await Promise.all(
-      files.map(async file => {
+      files.map(async (file) => {
         const newbase = path.join(base, file);
         if (fs.statSync(newbase).isDirectory()) {
           result = await findModuleFiles(newbase, await readdirPromise(newbase), result);
@@ -74,7 +74,7 @@ const getEntries = async () => {
   const entries: { [key: string]: string } = {};
   const modules = await getModuleFiles();
 
-  modules.forEach(modFile => {
+  modules.forEach((modFile) => {
     const mod = getManualChunk(modFile);
     // @ts-ignore
     entries[mod.name] = mod.module;
@@ -136,7 +136,7 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
   ];
 };
 
-const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
+const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
   const plugins = getCommonPlugins(options);
   const optimization: { [key: string]: any } = {};
 
@@ -258,7 +258,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
   };
 };
 
-export const loadWebpackConfig: WebpackConfigurationGetter = async options => {
+export const loadWebpackConfig: WebpackConfigurationGetter = async (options) => {
   const baseConfig = await getBaseWebpackConfig(options);
   const customWebpackPath = path.resolve(process.cwd(), 'webpack.config.js');
 

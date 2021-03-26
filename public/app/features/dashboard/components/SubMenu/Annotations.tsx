@@ -11,7 +11,7 @@ interface Props {
 export const Annotations: FunctionComponent<Props> = ({ annotations, onAnnotationChanged }) => {
   const [visibleAnnotations, setVisibleAnnotations] = useState<any>([]);
   useEffect(() => {
-    setVisibleAnnotations(annotations.filter(annotation => annotation.hide !== true));
+    setVisibleAnnotations(annotations.filter((annotation) => annotation.hide !== true));
   }, [annotations]);
 
   if (visibleAnnotations.length === 0) {

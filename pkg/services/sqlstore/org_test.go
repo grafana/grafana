@@ -15,7 +15,7 @@ import (
 
 func TestAccountDataAccess(t *testing.T) {
 	Convey("Testing Account DB Access", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
 
 		Convey("Given we have organizations, we can query them by IDs", func() {
 			var err error
@@ -78,13 +78,13 @@ func TestAccountDataAccess(t *testing.T) {
 				ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 				ac2cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
 
-				err := CreateUser(context.Background(), &ac1cmd)
+				ac1, err := sqlStore.CreateUser(context.Background(), ac1cmd)
 				So(err, ShouldBeNil)
-				err = CreateUser(context.Background(), &ac2cmd)
+				ac2, err := sqlStore.CreateUser(context.Background(), ac2cmd)
 				So(err, ShouldBeNil)
 
-				q1 := models.GetUserOrgListQuery{UserId: ac1cmd.Result.Id}
-				q2 := models.GetUserOrgListQuery{UserId: ac2cmd.Result.Id}
+				q1 := models.GetUserOrgListQuery{UserId: ac1.Id}
+				q2 := models.GetUserOrgListQuery{UserId: ac2.Id}
 				err = GetUserOrgList(&q1)
 				So(err, ShouldBeNil)
 				err = GetUserOrgList(&q2)
@@ -101,12 +101,9 @@ func TestAccountDataAccess(t *testing.T) {
 			ac1cmd := models.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 			ac2cmd := models.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name", IsAdmin: true}
 
-			err := CreateUser(context.Background(), &ac1cmd)
-			err = CreateUser(context.Background(), &ac2cmd)
+			ac1, err := sqlStore.CreateUser(context.Background(), ac1cmd)
+			ac2, err := sqlStore.CreateUser(context.Background(), ac2cmd)
 			So(err, ShouldBeNil)
-
-			ac1 := ac1cmd.Result
-			ac2 := ac2cmd.Result
 
 			Convey("Should be able to read user info projection", func() {
 				query := models.GetUserProfileQuery{UserId: ac1.Id}
@@ -266,9 +263,8 @@ func TestAccountDataAccess(t *testing.T) {
 
 				Convey("Given an org user with dashboard permissions", func() {
 					ac3cmd := models.CreateUserCommand{Login: "ac3", Email: "ac3@test.com", Name: "ac3 name", IsAdmin: false}
-					err := CreateUser(context.Background(), &ac3cmd)
+					ac3, err := sqlStore.CreateUser(context.Background(), ac3cmd)
 					So(err, ShouldBeNil)
-					ac3 := ac3cmd.Result
 
 					orgUserCmd := models.AddOrgUserCommand{
 						OrgId:  ac1.OrgId,
@@ -284,13 +280,17 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 3)
 
-					dash1 := insertTestDashboard(t, "1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
-					dash2 := insertTestDashboard(t, "2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
+					dash1 := insertTestDashboard(t, sqlStore, "1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
+					dash2 := insertTestDashboard(t, sqlStore, "2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
 
-					err = testHelperUpdateDashboardAcl(dash1.Id, models.DashboardAcl{DashboardID: dash1.Id, OrgID: ac1.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT})
+					err = testHelperUpdateDashboardAcl(t, sqlStore, dash1.Id, models.DashboardAcl{
+						DashboardID: dash1.Id, OrgID: ac1.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT,
+					})
 					So(err, ShouldBeNil)
 
-					err = testHelperUpdateDashboardAcl(dash2.Id, models.DashboardAcl{DashboardID: dash2.Id, OrgID: ac3.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT})
+					err = testHelperUpdateDashboardAcl(t, sqlStore, dash2.Id, models.DashboardAcl{
+						DashboardID: dash2.Id, OrgID: ac3.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT,
+					})
 					So(err, ShouldBeNil)
 
 					Convey("When org user is deleted", func() {
@@ -322,13 +322,16 @@ func TestAccountDataAccess(t *testing.T) {
 	})
 }
 
-func testHelperUpdateDashboardAcl(dashboardId int64, items ...models.DashboardAcl) error {
-	cmd := models.UpdateDashboardAclCommand{DashboardID: dashboardId}
-	for _, i := range items {
-		item := i
+func testHelperUpdateDashboardAcl(t *testing.T, sqlStore *SQLStore, dashboardID int64,
+	items ...models.DashboardAcl) error {
+	t.Helper()
+
+	var itemPtrs []*models.DashboardAcl
+	for _, it := range items {
+		item := it
 		item.Created = time.Now()
 		item.Updated = time.Now()
-		cmd.Items = append(cmd.Items, &item)
+		itemPtrs = append(itemPtrs, &item)
 	}
-	return UpdateDashboardAcl(&cmd)
+	return sqlStore.UpdateDashboardACL(dashboardID, itemPtrs)
 }

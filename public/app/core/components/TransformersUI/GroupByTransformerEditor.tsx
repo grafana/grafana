@@ -5,7 +5,7 @@ import {
   ReducerID,
   SelectableValue,
   standardTransformers,
-  TransformerRegistyItem,
+  TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
@@ -40,7 +40,9 @@ export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransf
         },
       });
     },
-    [options]
+    // Adding options to the dependency array causes infinite loop here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onChange]
   );
 
   return (
@@ -101,7 +103,7 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
             placeholder="Select Stats"
             allowMultiple
             stats={config.aggregations}
-            onChange={stats => {
+            onChange={(stats) => {
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
           />
@@ -136,7 +138,7 @@ const getStyling = stylesFactory(() => {
   };
 });
 
-export const groupByTransformRegistryItem: TransformerRegistyItem<GroupByTransformerOptions> = {
+export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
   id: DataTransformerID.groupBy,
   editor: GroupByTransformerEditor,
   transformation: standardTransformers.groupByTransformer,

@@ -35,8 +35,8 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipPrope
     let bKeys = Object.keys(cfgB);
 
     if (skipProperties) {
-      aKeys = aKeys.filter(k => skipProperties.indexOf(k) < 0);
-      bKeys = aKeys.filter(k => skipProperties.indexOf(k) < 0);
+      aKeys = aKeys.filter((k) => skipProperties.indexOf(k) < 0);
+      bKeys = aKeys.filter((k) => skipProperties.indexOf(k) < 0);
     }
     if (aKeys.length !== bKeys.length) {
       return false;

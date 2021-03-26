@@ -12,7 +12,7 @@ const defaultThemeVariablesPath = __dirname + '/../../public/sass/_variables.gen
 
 const writeVariablesFile = async (path: string, data: string) => {
   return new Promise((resolve, reject) => {
-    fs.writeFile(path, data, e => {
+    fs.writeFile(path, data, (e) => {
       if (e) {
         reject(e);
       } else {

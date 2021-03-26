@@ -21,7 +21,7 @@ export interface ArrowDataFrame extends DataFrame {
 
 export function base64StringToArrowTable(text: string): Table {
   const b64 = atob(text);
-  const arr = Uint8Array.from(b64, c => {
+  const arr = Uint8Array.from(b64, (c) => {
     return c.charCodeAt(0);
   });
   return Table.from(arr);
@@ -42,6 +42,12 @@ function parseOptionalMeta(str?: string): any {
   return undefined;
 }
 
+/**
+ * Parse arrow table to basically a standard dataFrame. Use together with base64StringToArrowTable to get data frame
+ * from backend data source response.
+ *
+ * @public
+ */
 export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
   const fields: Field[] = [];
 
@@ -126,8 +132,8 @@ function toArrowVector(field: Field): ArrowVector {
 }
 
 /**
- * @param keepOriginalNames by default, the exported Table will get names that match the
- * display within grafana.  This typically includes any labels defined in the metadata.
+ * @param keepOriginalNames - by default, the exported Table will get names that match the
+ * display within grafana. This typically includes any labels defined in the metadata.
  *
  * When using this function to round-trip data, be sure to set `keepOriginalNames=true`
  */
@@ -171,6 +177,21 @@ export function grafanaDataFrameToArrowTable(data: DataFrame, keepOriginalNames?
     metadata.set('meta', JSON.stringify(data.meta));
   }
   return table;
+}
+
+/**
+ * Turns arrow table into a base64 encoded string. This is symmetrical to base64StringToArrowTable and can be used
+ * to simulate response from backend.
+ *
+ * @public
+ */
+export function arrowTableToBase64String(table: Table): string {
+  const binstring = Array.prototype.map
+    .call(table.serialize() as Uint8Array, (ch: number) => {
+      return String.fromCharCode(ch);
+    })
+    .join('');
+  return btoa(binstring);
 }
 
 function updateArrowTableNames(table: Table, frame: DataFrame): Table | undefined {

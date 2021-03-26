@@ -23,7 +23,7 @@ export const validateTitle = (newTitle: string, folderId: number) => {
     .then(() => {
       return true;
     })
-    .catch(error => {
+    .catch((error) => {
       if (error.type === 'EXISTING') {
         return error.message;
       }
@@ -33,10 +33,10 @@ export const validateTitle = (newTitle: string, folderId: number) => {
 export const validateUid = (value: string) => {
   return getBackendSrv()
     .get(`/api/dashboards/uid/${value}`)
-    .then(existingDashboard => {
+    .then((existingDashboard) => {
       return `Dashboard named '${existingDashboard?.dashboard.title}' in folder '${existingDashboard?.meta.folderTitle}' has the same uid`;
     })
-    .catch(error => {
+    .catch((error) => {
       error.isHandled = true;
       return true;
     });

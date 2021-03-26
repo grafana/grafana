@@ -131,7 +131,8 @@ export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>
 export type PanelTypeChangedHandler<TOptions = any> = (
   panel: PanelModel<TOptions>,
   prevPluginId: string,
-  prevOptions: any
+  prevOptions: Record<string, any>,
+  prevFieldConfig: FieldConfigSource
 ) => Partial<TOptions>;
 
 export type PanelOptionEditorsRegistry = Registry<PanelOptionsEditorItem>;

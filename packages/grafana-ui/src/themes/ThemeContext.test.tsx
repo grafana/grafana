@@ -50,9 +50,9 @@ describe('useStyles', () => {
     expect(memoizedStyleCreators.get(styleCreators[1])).toBeUndefined();
   });
 
-  it('passes in theme and returns style object', done => {
-    const Dummy: React.FC = function() {
-      const styles = useStyles(theme => {
+  it('passes in theme and returns style object', (done) => {
+    const Dummy: React.FC = function () {
+      const styles = useStyles((theme) => {
         expect(theme).toEqual(config.theme);
 
         return {

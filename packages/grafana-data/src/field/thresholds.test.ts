@@ -13,7 +13,7 @@ describe('thresholds', () => {
       ],
       mode: ThresholdsMode.Absolute,
     };
-    const sorted = sortThresholds(thresholds.steps).map(t => t.value);
+    const sorted = sortThresholds(thresholds.steps).map((t) => t.value);
     expect(sorted).toEqual([1, 10, 100]);
     const config: FieldConfig = { thresholds };
 

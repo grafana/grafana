@@ -7,7 +7,7 @@ import { useStyles } from '../../themes';
 import { TableCellProps } from './types';
 import { GrafanaTheme } from '@grafana/data';
 
-export const JSONViewCell: FC<TableCellProps> = props => {
+export const JSONViewCell: FC<TableCellProps> = (props) => {
   const { cell, tableStyles, cellProps } = props;
 
   const txt = css`
@@ -41,7 +41,7 @@ interface PopupProps {
   value: any;
 }
 
-const JSONTooltip: FC<PopupProps> = props => {
+const JSONTooltip: FC<PopupProps> = (props) => {
   const styles = useStyles((theme: GrafanaTheme) => {
     return {
       container: css`

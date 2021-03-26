@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -10,28 +11,29 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQuery_DescribeLogGroups(t *testing.T) {
-	origNewCWLogsClient := newCWLogsClient
+	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		newCWLogsClient = origNewCWLogsClient
+		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli fakeCWLogsClient
+	var cli FakeCWLogsClient
 
-	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return cli
 	}
 
 	t.Run("Empty log group name prefix", func(t *testing.T) {
-		cli = fakeCWLogsClient{
+		cli = FakeCWLogsClient{
 			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
 				LogGroups: []*cloudwatchlogs.LogGroup{
 					{
@@ -47,44 +49,50 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			},
 		}
 
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: json.RawMessage(`{
 						"type":    "logAction",
 						"subtype": "DescribeLogGroups",
-						"limit":   50,
-					}),
+						"limit":   50
+					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{
-						&data.Frame{
-							Name: "logGroups",
-							Fields: []*data.Field{
-								data.NewField("logGroupName", nil, []*string{
-									aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
-								}),
-							},
-							Meta: &data.FrameMeta{
-								PreferredVisualization: "logs",
-							},
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": backend.DataResponse{
+				Frames: data.Frames{
+					&data.Frame{
+						Name: "logGroups",
+						Fields: []*data.Field{
+							data.NewField("logGroupName", nil, []*string{
+								aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
+							}),
 						},
-					}),
+						Meta: &data.FrameMeta{
+							PreferredVisualization: "logs",
+						},
+					},
 				},
 			},
+		},
 		}, resp)
 	})
 
 	t.Run("Non-empty log group name prefix", func(t *testing.T) {
-		cli = fakeCWLogsClient{
+		cli = FakeCWLogsClient{
 			logGroups: cloudwatchlogs.DescribeLogGroupsOutput{
 				LogGroups: []*cloudwatchlogs.LogGroup{
 					{
@@ -100,56 +108,64 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			},
 		}
 
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"type":               "logAction",
-						"subtype":            "DescribeLogGroups",
-						"logGroupNamePrefix": "g",
-					}),
+					JSON: json.RawMessage(`{
+						"type":    "logAction",
+						"subtype": "DescribeLogGroups",
+						"limit": 50,
+						"region": "default",
+						"logGroupNamePrefix": "g"
+					}`),
 				},
 			},
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{
-						&data.Frame{
-							Name: "logGroups",
-							Fields: []*data.Field{
-								data.NewField("logGroupName", nil, []*string{
-									aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
-								}),
-							},
-							Meta: &data.FrameMeta{
-								PreferredVisualization: "logs",
-							},
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			"": backend.DataResponse{
+				Frames: data.Frames{
+					&data.Frame{
+						Name: "logGroups",
+						Fields: []*data.Field{
+							data.NewField("logGroupName", nil, []*string{
+								aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
+							}),
 						},
-					}),
+						Meta: &data.FrameMeta{
+							PreferredVisualization: "logs",
+						},
+					},
 				},
 			},
+		},
 		}, resp)
 	})
 }
 
 func TestQuery_GetLogGroupFields(t *testing.T) {
-	origNewCWLogsClient := newCWLogsClient
+	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		newCWLogsClient = origNewCWLogsClient
+		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli fakeCWLogsClient
+	var cli FakeCWLogsClient
 
-	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return cli
 	}
 
-	cli = fakeCWLogsClient{
+	cli = FakeCWLogsClient{
 		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
@@ -170,17 +186,24 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 
 	const refID = "A"
 
-	executor := newExecutor(nil)
-	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-		Queries: []*tsdb.Query{
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return datasourceInfo{}, nil
+	})
+
+	executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+		},
+		Queries: []backend.DataQuery{
 			{
-				RefId: refID,
-				Model: simplejson.NewFromAny(map[string]interface{}{
-					"type":         "logAction",
-					"subtype":      "GetLogGroupFields",
+				RefID: refID,
+				JSON: json.RawMessage(`{
+					"type":    "logAction",
+					"subtype": "GetLogGroupFields",
 					"logGroupName": "group_a",
-					"limit":        50,
-				}),
+					"limit": 50
+				}`),
 			},
 		},
 	})
@@ -202,30 +225,28 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 		},
 	}
 	expFrame.RefID = refID
-	assert.Equal(t, &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
-			refID: {
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
-				RefId:      refID,
-			},
+	assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+		refID: backend.DataResponse{
+			Frames: data.Frames{expFrame},
 		},
+	},
 	}, resp)
 }
 
 func TestQuery_StartQuery(t *testing.T) {
-	origNewCWLogsClient := newCWLogsClient
+	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		newCWLogsClient = origNewCWLogsClient
+		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli fakeCWLogsClient
+	var cli FakeCWLogsClient
 
-	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return cli
 	}
 
 	t.Run("invalid time range", func(t *testing.T) {
-		cli = fakeCWLogsClient{
+		cli = FakeCWLogsClient{
 			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 				LogGroupFields: []*cloudwatchlogs.LogGroupField{
 					{
@@ -244,23 +265,30 @@ func TestQuery_StartQuery(t *testing.T) {
 			},
 		}
 
-		timeRange := &tsdb.TimeRange{
-			From: "1584873443000",
-			To:   "1584700643000",
+		timeRange := backend.TimeRange{
+			From: time.Unix(1584873443, 0),
+			To:   time.Unix(1584700643, 0),
 		}
 
-		executor := newExecutor(nil)
-		_, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			TimeRange: timeRange,
-			Queries: []*tsdb.Query{
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					TimeRange: timeRange,
+					JSON: json.RawMessage(`{
 						"type":        "logAction",
 						"subtype":     "StartQuery",
 						"limit":       50,
 						"region":      "default",
-						"queryString": "fields @message",
-					}),
+						"queryString": "fields @message"
+					}`),
 				},
 			},
 		})
@@ -271,7 +299,7 @@ func TestQuery_StartQuery(t *testing.T) {
 
 	t.Run("valid time range", func(t *testing.T) {
 		const refID = "A"
-		cli = fakeCWLogsClient{
+		cli = FakeCWLogsClient{
 			logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 				LogGroupFields: []*cloudwatchlogs.LogGroupField{
 					{
@@ -290,24 +318,31 @@ func TestQuery_StartQuery(t *testing.T) {
 			},
 		}
 
-		timeRange := &tsdb.TimeRange{
-			From: "1584700643000",
-			To:   "1584873443000",
+		timeRange := backend.TimeRange{
+			From: time.Unix(1584700643000, 0),
+			To:   time.Unix(1584873443000, 0),
 		}
 
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			TimeRange: timeRange,
-			Queries: []*tsdb.Query{
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return datasourceInfo{}, nil
+		})
+
+		executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			},
+			Queries: []backend.DataQuery{
 				{
-					RefId: refID,
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					RefID:     refID,
+					TimeRange: timeRange,
+					JSON: json.RawMessage(`{
 						"type":        "logAction",
 						"subtype":     "StartQuery",
 						"limit":       50,
 						"region":      "default",
-						"queryString": "fields @message",
-					}),
+						"queryString": "fields @message"
+					}`),
 				},
 			},
 		})
@@ -324,30 +359,28 @@ func TestQuery_StartQuery(t *testing.T) {
 			},
 			PreferredVisualization: "logs",
 		}
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				refID: {
-					Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
-					RefId:      refID,
-				},
+		assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+			refID: {
+				Frames: data.Frames{expFrame},
 			},
+		},
 		}, resp)
 	})
 }
 
 func TestQuery_StopQuery(t *testing.T) {
-	origNewCWLogsClient := newCWLogsClient
+	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		newCWLogsClient = origNewCWLogsClient
+		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli fakeCWLogsClient
+	var cli FakeCWLogsClient
 
-	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return cli
 	}
 
-	cli = fakeCWLogsClient{
+	cli = FakeCWLogsClient{
 		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
 			LogGroupFields: []*cloudwatchlogs.LogGroupField{
 				{
@@ -366,21 +399,28 @@ func TestQuery_StopQuery(t *testing.T) {
 		},
 	}
 
-	timeRange := &tsdb.TimeRange{
-		From: "1584873443000",
-		To:   "1584700643000",
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return datasourceInfo{}, nil
+	})
+
+	timeRange := backend.TimeRange{
+		From: time.Unix(1584873443, 0),
+		To:   time.Unix(1584700643, 0),
 	}
 
-	executor := newExecutor(nil)
-	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-		TimeRange: timeRange,
-		Queries: []*tsdb.Query{
+	executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+		},
+		Queries: []backend.DataQuery{
 			{
-				Model: simplejson.NewFromAny(map[string]interface{}{
+				TimeRange: timeRange,
+				JSON: json.RawMessage(`{
 					"type":    "logAction",
 					"subtype": "StopQuery",
-					"queryId": "abcd-efgh-ijkl-mnop",
-				}),
+					"queryId": "abcd-efgh-ijkl-mnop"
+				}`),
 			},
 		},
 	})
@@ -395,29 +435,28 @@ func TestQuery_StopQuery(t *testing.T) {
 			PreferredVisualization: "logs",
 		},
 	}
-	assert.Equal(t, &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
-			"": {
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
-			},
+	assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+		"": {
+			Frames: data.Frames{expFrame},
 		},
+	},
 	}, resp)
 }
 
 func TestQuery_GetQueryResults(t *testing.T) {
-	origNewCWLogsClient := newCWLogsClient
+	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
-		newCWLogsClient = origNewCWLogsClient
+		NewCWLogsClient = origNewCWLogsClient
 	})
 
-	var cli fakeCWLogsClient
+	var cli FakeCWLogsClient
 
-	newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
+	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
 		return cli
 	}
 
 	const refID = "A"
-	cli = fakeCWLogsClient{
+	cli = FakeCWLogsClient{
 		queryResults: cloudwatchlogs.GetQueryResultsOutput{
 			Results: [][]*cloudwatchlogs.ResultField{
 				{
@@ -458,16 +497,23 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		},
 	}
 
-	executor := newExecutor(nil)
-	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-		Queries: []*tsdb.Query{
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return datasourceInfo{}, nil
+	})
+
+	executor := newExecutor(nil, im, newTestConfig(), fakeSessionCache{})
+	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+		},
+		Queries: []backend.DataQuery{
 			{
-				RefId: refID,
-				Model: simplejson.NewFromAny(map[string]interface{}{
+				RefID: refID,
+				JSON: json.RawMessage(`{
 					"type":    "logAction",
 					"subtype": "GetQueryResults",
-					"queryId": "abcd-efgh-ijkl-mnop",
-				}),
+					"queryId": "abcd-efgh-ijkl-mnop"
+				}`),
 			},
 		},
 	})
@@ -507,12 +553,10 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		PreferredVisualization: "logs",
 	}
 
-	assert.Equal(t, &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
-			refID: {
-				RefId:      refID,
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{expFrame}),
-			},
+	assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
+		refID: {
+			Frames: data.Frames{expFrame},
 		},
+	},
 	}, resp)
 }

@@ -98,13 +98,7 @@ export class TeamList extends PureComponent<Props, any> {
       <>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <FilterInput
-              labelClassName="gf-form--has-input-icon gf-form--grow"
-              inputClassName="gf-form-input"
-              placeholder="Search teams"
-              value={searchQuery}
-              onChange={this.onSearchQueryChange}
-            />
+            <FilterInput placeholder="Search teams" value={searchQuery} onChange={this.onSearchQueryChange} />
           </div>
 
           <div className="page-action-bar__spacer" />
@@ -125,7 +119,7 @@ export class TeamList extends PureComponent<Props, any> {
                 <th style={{ width: '1%' }} />
               </tr>
             </thead>
-            <tbody>{teams.map(team => this.renderTeam(team))}</tbody>
+            <tbody>{teams.map((team) => this.renderTeam(team))}</tbody>
           </table>
         </div>
       </>
@@ -175,4 +169,4 @@ const mapDispatchToProps = {
   setSearchQuery,
 };
 
-export default hot(module)(connectWithCleanUp(mapStateToProps, mapDispatchToProps, state => state.teams)(TeamList));
+export default hot(module)(connectWithCleanUp(mapStateToProps, mapDispatchToProps, (state) => state.teams)(TeamList));

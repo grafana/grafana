@@ -19,7 +19,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const [searchFilter, setSearchFilter] = useState('');
-  const items = useMemo(() => options.filter(option => option.label?.indexOf(searchFilter) !== -1), [
+  const items = useMemo(() => options.filter((option) => option.label?.indexOf(searchFilter) !== -1), [
     options,
     searchFilter,
   ]);
@@ -37,7 +37,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
     (option: SelectableValue) => (event: React.FormEvent<HTMLInputElement>) => {
       const newValues = event.currentTarget.checked
         ? values.concat(option)
-        : values.filter(c => c.value !== option.value);
+        : values.filter((c) => c.value !== option.value);
 
       onChange(newValues);
     },
@@ -64,7 +64,7 @@ export const FilterList: FC<Props> = ({ options, values, onChange }) => {
           {({ index, style }) => {
             const option = items[index];
             const { value, label } = option;
-            const isChecked = values.find(s => s.value === value) !== undefined;
+            const isChecked = values.find((s) => s.value === value) !== undefined;
 
             return (
               <div className={styles.filterListRow} style={style} title={label}>

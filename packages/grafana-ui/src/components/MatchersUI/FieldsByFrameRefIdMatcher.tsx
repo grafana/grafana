@@ -7,7 +7,7 @@ import { Select } from '../Select/Select';
  * UI to configure "fields by frame refId"-matcher.
  * @public
  */
-export const FieldsByFrameRefIdMatcher = memo<MatcherUIProps<string>>(props => {
+export const FieldsByFrameRefIdMatcher = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps } = props;
   const referenceIDs = useFrameRefIds(data);
   const selectOptions = useSelectOptions(referenceIDs);
@@ -22,7 +22,7 @@ export const FieldsByFrameRefIdMatcher = memo<MatcherUIProps<string>>(props => {
     [referenceIDs, onChangeFromProps]
   );
 
-  const selectedOption = selectOptions.find(v => v.value === options);
+  const selectedOption = selectOptions.find((v) => v.value === options);
   return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
 
@@ -38,7 +38,7 @@ export const fieldsByFrameRefIdItem: FieldMatcherUIRegistryItem<string> = {
   matcher: fieldMatchers.get(FieldMatcherID.byFrameRefID),
   name: 'Fields returned by query',
   description: 'Set properties for fields from a specific query',
-  optionsToLabel: options => options,
+  optionsToLabel: (options) => options,
 };
 
 const useFrameRefIds = (data: DataFrame[]): Set<string> => {
@@ -57,7 +57,7 @@ const useFrameRefIds = (data: DataFrame[]): Set<string> => {
 
 const useSelectOptions = (displayNames: Set<string>): Array<SelectableValue<string>> => {
   return useMemo(() => {
-    return Array.from(displayNames).map(n => ({
+    return Array.from(displayNames).map((n) => ({
       value: n,
       label: n,
     }));

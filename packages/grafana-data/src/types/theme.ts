@@ -53,6 +53,7 @@ export interface GrafanaThemeCommons {
     };
   };
   spacing: {
+    base: number;
     insetSquishMd: string;
     d: string;
     xxs: string;

@@ -10,9 +10,11 @@ weight = 200
 
 This topic helps you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "_index.md" >}}).
 
+> **Note:** Grafana also offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help getting started even easier and faster. You can install Grafana to self-host or get a free Grafana Cloud account.
+
 ## Step 1: Install Grafana
 
-Grafana can be installed on many different operating systems. For a list of minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../installation/_index.md" >}}).
+Grafana can be installed on many different operating systems. For a list of the minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../installation/_index.md" >}}).
 
 ## Step 2: Log in
 
@@ -39,7 +41,7 @@ To create your first dashboard:
 
 ## Next steps
 
- Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:
+ Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/_index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:
 
 - [Panels]({{< relref "../panels/_index.md" >}})
 - [Dashboards]({{< relref "../dashboards/_index.md" >}})

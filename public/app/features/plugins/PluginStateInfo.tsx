@@ -17,7 +17,7 @@ function getPluginStateInfoText(state?: PluginState): string | null {
   return null;
 }
 
-const PluginStateinfo: FC<Props> = props => {
+const PluginStateinfo: FC<Props> = (props) => {
   const text = getPluginStateInfoText(props.state);
 
   if (!text) {

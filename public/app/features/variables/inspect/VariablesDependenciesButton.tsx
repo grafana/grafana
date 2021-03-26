@@ -43,7 +43,7 @@ export const UnProvidedVariablesDependenciesButton: FC<Props> = ({ variables }) 
   );
 };
 
-export const VariablesDependenciesButton: FC<Props> = props => (
+export const VariablesDependenciesButton: FC<Props> = (props) => (
   <Provider store={store}>
     <UnProvidedVariablesDependenciesButton {...props} />
   </Provider>

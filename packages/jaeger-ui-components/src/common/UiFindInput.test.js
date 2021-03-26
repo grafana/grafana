@@ -38,7 +38,7 @@ describe('UiFindInput', () => {
   let wrapper;
 
   beforeAll(() => {
-    debounceMock.mockImplementation(fn => {
+    debounceMock.mockImplementation((fn) => {
       function debounceFunction(...args) {
         fn(...args);
       }

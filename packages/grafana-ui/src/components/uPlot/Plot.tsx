@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import uPlot, { AlignedData, AlignedDataWithGapTest, Options } from 'uplot';
+import uPlot, { AlignedData, Options } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
-import { AlignedFrameWithGapTest, PlotProps } from './types';
-import { DataFrame } from '@grafana/data';
+import { PlotProps } from './types';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -14,17 +13,13 @@ import usePrevious from 'react-use/lib/usePrevious';
  * Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
  * Exposes contexts for plugins registration and uPlot instance access
  */
-export const UPlotChart: React.FC<PlotProps> = props => {
+export const UPlotChart: React.FC<PlotProps> = (props) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const plotInstance = useRef<uPlot>();
   const [isPlotReady, setIsPlotReady] = useState(false);
   const prevProps = usePrevious(props);
-  const { isConfigReady, currentConfig, registerPlugin } = usePlotConfig(
-    props.width,
-    props.height,
-    props.timeZone,
-    props.config
-  );
+  const { isConfigReady, currentConfig, registerPlugin } = usePlotConfig(props.width, props.height, props.config);
+
   const getPlotInstance = useCallback(() => {
     return plotInstance.current;
   }, []);
@@ -36,9 +31,17 @@ export const UPlotChart: React.FC<PlotProps> = props => {
       return;
     }
 
+    // 0. Exit if the data set length is different than number of series expected to render
+    // This may happen when GraphNG has not synced config yet with the aligned frame. Alignment happens before the render
+    // in the getDerivedStateFromProps, while the config creation happens in componentDidUpdate, causing one more render
+    // of the UPlotChart if the config needs to be updated.
+    if (currentConfig.current.series.length !== props.data.length) {
+      return;
+    }
+
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (isConfigReady && !plotInstance.current) {
-      plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
+      plotInstance.current = initializePlot(props.data, currentConfig.current, canvasRef.current);
       setIsPlotReady(true);
       return;
     }
@@ -53,18 +56,18 @@ export const UPlotChart: React.FC<PlotProps> = props => {
       return;
     }
 
-    // 3. When config or timezone has changed, re-initialize plot
-    if (isConfigReady && (props.config !== prevProps.config || props.timeZone !== prevProps.timeZone)) {
+    // 3. When config has changed re-initialize plot
+    if (isConfigReady && props.config !== prevProps.config) {
       if (plotInstance.current) {
         pluginLog('uPlot core', false, 'destroying instance');
         plotInstance.current.destroy();
       }
-      plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
+      plotInstance.current = initializePlot(props.data, currentConfig.current, canvasRef.current);
       return;
     }
 
     // 4. Otherwise, assume only data has changed and update uPlot data
-    updateData(props.data.frame, props.config, plotInstance.current, prepareData(props.data));
+    updateData(props.config, props.data, plotInstance.current);
   }, [props, isConfigReady]);
 
   // When component unmounts, clean the existing uPlot instance
@@ -85,24 +88,12 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   );
 };
 
-function prepareData(data: AlignedFrameWithGapTest) {
-  return {
-    data: data.frame.fields.map(f => f.values.toArray()) as AlignedData,
-    isGap: data.isGap,
-  };
-}
-
-function initializePlot(data: AlignedDataWithGapTest, config: Options, el: HTMLDivElement) {
+function initializePlot(data: AlignedData, config: Options, el: HTMLDivElement) {
   pluginLog('UPlotChart: init uPlot', false, 'initialized with', data, config);
   return new uPlot(config, data, el);
 }
 
-function updateData(
-  frame: DataFrame,
-  config: UPlotConfigBuilder,
-  plotInstance?: uPlot,
-  data?: AlignedDataWithGapTest | null
-) {
+function updateData(config: UPlotConfigBuilder, data?: AlignedData | null, plotInstance?: uPlot) {
   if (!plotInstance || !data) {
     return;
   }

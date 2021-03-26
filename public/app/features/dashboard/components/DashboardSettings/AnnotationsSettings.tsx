@@ -16,6 +16,7 @@ export class AnnotationsSettings extends PureComponent<Props> {
     const template = '<div ng-include="\'public/app/features/annotations/partials/editor.html\'" />';
     const scopeProps = { dashboard: this.props.dashboard };
     this.angularCmp = loader.load(this.element, scopeProps, template);
+    this.angularCmp.digest();
   }
 
   componentWillUnmount() {
@@ -25,6 +26,6 @@ export class AnnotationsSettings extends PureComponent<Props> {
   }
 
   render() {
-    return <div ref={ref => (this.element = ref)} />;
+    return <div ref={(ref) => (this.element = ref)} />;
   }
 }

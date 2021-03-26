@@ -15,7 +15,7 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
       propertyName: propertyName,
       index: $scope.overrideMenu.length,
       values,
-      submenu: _.map(values, value => {
+      submenu: _.map(values, (value) => {
         return { text: String(value), value: value };
       }),
     };
@@ -79,14 +79,14 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
   };
 
   $scope.getSeriesNames = () => {
-    return _.map($scope.ctrl.seriesList, series => {
+    return _.map($scope.ctrl.seriesList, (series) => {
       return textUtil.escapeHtml(series.alias);
     });
   };
 
   $scope.updateCurrentOverrides = () => {
     $scope.currentOverrides = [];
-    _.each($scope.overrideMenu, option => {
+    _.each($scope.overrideMenu, (option) => {
       const value = $scope.override[option.propertyName];
       if (_.isUndefined(value)) {
         return;

@@ -22,7 +22,7 @@ The following sections provide an overview of things you might want to do with y
 
 Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side.
 
-Refer to [Explore]({{< relref "../explore/index.md" >}}) for more information.
+Refer to [Explore]({{< relref "../explore/_index.md" >}}) for more information.
 
 ## Alerts
 

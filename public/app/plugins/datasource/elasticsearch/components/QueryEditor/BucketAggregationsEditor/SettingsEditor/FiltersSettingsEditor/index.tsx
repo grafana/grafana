@@ -17,7 +17,7 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
   const upperStateDispatch = useDispatch<BucketAggregationAction<Filters>>();
 
   const dispatch = useStatelessReducer(
-    newState => upperStateDispatch(changeBucketAggregationSetting(value, 'filters', newState)),
+    (newState) => upperStateDispatch(changeBucketAggregationSetting(value, 'filters', newState)),
     value.settings?.filters,
     filtersReducer
   );
@@ -28,7 +28,7 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
     if (!value.settings?.filters?.length) {
       dispatch(addFilter());
     }
-  }, []);
+  }, [dispatch, value.settings?.filters?.length]);
 
   return (
     <>
@@ -55,7 +55,7 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
                   placeholder="Lucene Query"
                   portalOrigin="elasticsearch"
                   onBlur={() => {}}
-                  onChange={query => dispatch(changeFilter(index, { ...filter, query }))}
+                  onChange={(query) => dispatch(changeFilter(index, { ...filter, query }))}
                   query={filter.query}
                 />
               </InlineField>
@@ -63,7 +63,7 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
             <InlineField label="Label" labelWidth={10}>
               <Input
                 placeholder="Label"
-                onBlur={e => dispatch(changeFilter(index, { ...filter, label: e.target.value }))}
+                onBlur={(e) => dispatch(changeFilter(index, { ...filter, label: e.target.value }))}
                 defaultValue={filter.label}
               />
             </InlineField>

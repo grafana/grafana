@@ -41,7 +41,7 @@ export const updateRichHistory = (ts: number, property: string, updatedProperty?
 };
 
 export const deleteRichHistory = (): ThunkResult<void> => {
-  return dispatch => {
+  return (dispatch) => {
     deleteAllFromRichHistory();
     dispatch(richHistoryUpdatedAction({ richHistory: [] }));
   };

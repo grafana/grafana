@@ -20,7 +20,8 @@ type templateData struct {
 }
 
 // NewApiPluginProxy create a plugin proxy
-func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
+func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute,
+	appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		query := models.GetPluginSettingByIdQuery{OrgId: ctx.OrgId, PluginId: appID}
 		if err := bus.Dispatch(&query); err != nil {

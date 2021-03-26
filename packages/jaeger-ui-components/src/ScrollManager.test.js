@@ -41,8 +41,8 @@ function getAccessors() {
     getBottomRowIndexVisible: jest.fn(),
     getTopRowIndexVisible: jest.fn(),
     getRowPosition: jest.fn(),
-    mapRowIndexToSpanIndex: jest.fn(n => n),
-    mapSpanIndexToRowIndex: jest.fn(n => n),
+    mapRowIndexToSpanIndex: jest.fn((n) => n),
+    mapSpanIndexToRowIndex: jest.fn((n) => n),
   };
 }
 

@@ -39,7 +39,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
     const model = dashboard.getSaveModelClone();
 
     // now replace panel to get current edits
-    model.panels = model.panels.map(dashPanel => {
+    model.panels = model.panels.map((dashPanel) => {
       return dashPanel.id === panel.editSourceId ? panel.getSaveModel() : dashPanel;
     });
 
@@ -63,7 +63,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
   };
 
   onToggleExpand = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       ...prevState,
       allNodesExpanded: !this.state.allNodesExpanded,
     }));

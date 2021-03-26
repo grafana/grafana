@@ -29,18 +29,18 @@ export default class ResponseParser {
 
   parseRawQueryResultRow(query: any, columns: any, rows: any, xaxis: string, yaxises: string, spliton: string) {
     const data: any[] = [];
-    const columnsForDropdown = _.map(columns, column => ({ text: column.ColumnName, value: column.ColumnName }));
+    const columnsForDropdown = _.map(columns, (column) => ({ text: column.ColumnName, value: column.ColumnName }));
 
     const xaxisColumn = columns.findIndex((column: any) => column.ColumnName === xaxis);
     const yaxisesSplit = yaxises.split(',');
     const yaxisColumns: any = {};
-    _.forEach(yaxisesSplit, yaxis => {
+    _.forEach(yaxisesSplit, (yaxis) => {
       yaxisColumns[yaxis] = columns.findIndex((column: any) => column.ColumnName === yaxis);
     });
     const splitonColumn = columns.findIndex((column: any) => column.ColumnName === spliton);
     const convertTimestamp = xaxis === 'timestamp';
 
-    _.forEach(rows, row => {
+    _.forEach(rows, (row) => {
       _.forEach(yaxisColumns, (yaxisColumn, yaxisName) => {
         const bucket =
           splitonColumn === -1
@@ -163,7 +163,7 @@ export default class ResponseParser {
   static getMetricFieldKey(segment: { [x: string]: any }) {
     const keys = _.keys(segment);
 
-    return _.filter(_.without(keys, 'start', 'end'), key => {
+    return _.filter(_.without(keys, 'start', 'end'), (key) => {
       return _.isObject(segment[key]);
     })[0];
   }

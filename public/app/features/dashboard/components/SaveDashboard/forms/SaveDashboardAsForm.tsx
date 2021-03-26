@@ -109,7 +109,6 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
               initialFolderId={dashboard.meta.folderId}
               initialTitle={dashboard.meta.folderTitle}
               enableCreateNew
-              useNewForms
             />
           </Field>
           <Field label="Copy tags">

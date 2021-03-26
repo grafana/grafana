@@ -1,123 +1,229 @@
+import React from 'react';
+import isNumber from 'lodash/isNumber';
+import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
 import {
-  DataFrame,
   ArrayVector,
-  NullValueMode,
+  DataFrame,
+  FieldConfig,
+  FieldType,
+  formattedValueToString,
+  getFieldColorModeForField,
   getFieldDisplayName,
-  Field,
-  fieldMatchers,
-  FieldMatcherID,
+  getFieldSeriesColor,
+  GrafanaTheme,
+  outerJoinDataFrames,
+  TimeRange,
+  TimeZone,
 } from '@grafana/data';
-import { AlignedFrameWithGapTest } from '../uPlot/types';
-import uPlot, { AlignedData, JoinNullMode } from 'uplot';
-import { XYFieldMatchers } from './GraphNG';
+import { nullToUndefThreshold } from './nullToUndefThreshold';
+import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { FIXED_UNIT } from './GraphNG';
+import {
+  AxisPlacement,
+  DrawStyle,
+  GraphFieldConfig,
+  PointVisibility,
+  ScaleDirection,
+  ScaleOrientation,
+} from '../uPlot/config';
 
-// the results ofter passing though data
-export interface XYDimensionFields {
-  x: Field[];
-  y: Field[];
+const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
+
+const defaultConfig: GraphFieldConfig = {
+  drawStyle: DrawStyle.Line,
+  showPoints: PointVisibility.Auto,
+  axisPlacement: AxisPlacement.Auto,
+};
+
+export function mapMouseEventToMode(event: React.MouseEvent): GraphNGLegendEventMode {
+  if (event.ctrlKey || event.metaKey || event.shiftKey) {
+    return GraphNGLegendEventMode.AppendToSelection;
+  }
+  return GraphNGLegendEventMode.ToggleSelection;
 }
 
-export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: DataFrame[]): XYDimensionFields {
-  const out: XYDimensionFields = {
-    x: [],
-    y: [],
-  };
-  for (const field of frame.fields) {
-    if (match.x(field, frame, frames ?? [])) {
-      out.x.push(field);
-    }
-    if (match.y(field, frame, frames ?? [])) {
-      out.y.push(field);
-    }
-  }
-  return out;
-}
-
-/**
- * Returns a single DataFrame with:
- * - A shared time column
- * - only numeric fields
- *
- * @alpha
- */
-export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
-  const valuesFromFrames: AlignedData[] = [];
-  const sourceFields: Field[] = [];
-  const nullModes: JoinNullMode[][] = [];
-
-  // Default to timeseries config
-  if (!fields) {
-    fields = {
-      x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-      y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-    };
-  }
-
+function applySpanNullsThresholds(frames: DataFrame[]) {
   for (const frame of frames) {
-    const dims = mapDimesions(fields, frame, frames);
+    let refField = frame.fields.find((field) => field.type === FieldType.time); // this doesnt need to be time, just any numeric/asc join field
+    let refValues = refField?.values.toArray() as any[];
 
-    if (!(dims.x.length && dims.y.length)) {
-      continue; // both x and y matched something!
-    }
+    for (let i = 0; i < frame.fields.length; i++) {
+      let field = frame.fields[i];
 
-    if (dims.x.length > 1) {
-      throw new Error('Only a single x field is supported');
-    }
-
-    let nullModesFrame: JoinNullMode[] = [];
-
-    // Add the first X axis
-    if (!sourceFields.length) {
-      sourceFields.push(dims.x[0]);
-      nullModesFrame.push(0);
-    }
-
-    const alignedData: AlignedData = [
-      dims.x[0].values.toArray(), // The x axis (time)
-    ];
-
-    // Add the Y values
-    for (const field of dims.y) {
-      let values = field.values.toArray();
-      let joinNullMode = field.config.custom.spanNulls ? 0 : 2;
-
-      if (field.config.nullValueMode === NullValueMode.AsZero) {
-        values = values.map(v => (v === null ? 0 : v));
-        joinNullMode = 0;
+      if (field === refField) {
+        continue;
       }
 
-      alignedData.push(values);
-      nullModesFrame.push(joinNullMode);
+      if (field.type === FieldType.number) {
+        let spanNulls = field.config.custom?.spanNulls;
 
-      // This will cache an appropriate field name in the field state
-      getFieldDisplayName(field, frame, frames);
-      sourceFields.push(field);
+        if (typeof spanNulls === 'number') {
+          field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
+        }
+      }
+    }
+  }
+
+  return frames;
+}
+
+export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers) {
+  applySpanNullsThresholds(frames);
+
+  let joined = outerJoinDataFrames({
+    frames: frames,
+    joinBy: dimFields.x,
+    keep: dimFields.y,
+    keepOriginIndices: true,
+  });
+
+  return joined;
+}
+
+export function preparePlotConfigBuilder(
+  frame: DataFrame,
+  theme: GrafanaTheme,
+  getTimeRange: () => TimeRange,
+  getTimeZone: () => TimeZone
+): UPlotConfigBuilder {
+  const builder = new UPlotConfigBuilder(getTimeZone);
+
+  // X is the first field in the aligned frame
+  const xField = frame.fields[0];
+  let seriesIndex = 0;
+
+  if (xField.type === FieldType.time) {
+    builder.addScale({
+      scaleKey: 'x',
+      orientation: ScaleOrientation.Horizontal,
+      direction: ScaleDirection.Right,
+      isTime: true,
+      range: () => {
+        const r = getTimeRange();
+        return [r.from.valueOf(), r.to.valueOf()];
+      },
+    });
+
+    builder.addAxis({
+      scaleKey: 'x',
+      isTime: true,
+      placement: AxisPlacement.Bottom,
+      timeZone: getTimeZone(),
+      theme,
+    });
+  } else {
+    // Not time!
+    builder.addScale({
+      scaleKey: 'x',
+      orientation: ScaleOrientation.Horizontal,
+      direction: ScaleDirection.Right,
+    });
+
+    builder.addAxis({
+      scaleKey: 'x',
+      placement: AxisPlacement.Bottom,
+      theme,
+    });
+  }
+
+  let indexByName: Map<string, number> | undefined = undefined;
+
+  for (let i = 0; i < frame.fields.length; i++) {
+    const field = frame.fields[i];
+    const config = field.config as FieldConfig<GraphFieldConfig>;
+    const customConfig: GraphFieldConfig = {
+      ...defaultConfig,
+      ...config.custom,
+    };
+
+    if (field === xField || field.type !== FieldType.number) {
+      continue;
+    }
+    field.state!.seriesIndex = seriesIndex++;
+
+    const fmt = field.display ?? defaultFormatter;
+    const scaleKey = config.unit || FIXED_UNIT;
+    const colorMode = getFieldColorModeForField(field);
+    const scaleColor = getFieldSeriesColor(field, theme);
+    const seriesColor = scaleColor.color;
+
+    // The builder will manage unique scaleKeys and combine where appropriate
+    builder.addScale({
+      scaleKey,
+      orientation: ScaleOrientation.Vertical,
+      direction: ScaleDirection.Up,
+      distribution: customConfig.scaleDistribution?.type,
+      log: customConfig.scaleDistribution?.log,
+      min: field.config.min,
+      max: field.config.max,
+      softMin: customConfig.axisSoftMin,
+      softMax: customConfig.axisSoftMax,
+    });
+
+    if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+      builder.addAxis({
+        scaleKey,
+        label: customConfig.axisLabel,
+        size: customConfig.axisWidth,
+        placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
+        formatValue: (v) => formattedValueToString(fmt(v)),
+        theme,
+      });
     }
 
-    valuesFromFrames.push(alignedData);
-    nullModes.push(nullModesFrame);
+    const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+
+    let { fillOpacity } = customConfig;
+    if (customConfig.fillBelowTo) {
+      if (!indexByName) {
+        indexByName = getNamesToFieldIndex(frame);
+      }
+      const t = indexByName.get(getFieldDisplayName(field, frame));
+      const b = indexByName.get(customConfig.fillBelowTo);
+      if (isNumber(b) && isNumber(t)) {
+        builder.addBand({
+          series: [t, b],
+          fill: null as any, // using null will have the band use fill options from `t`
+        });
+      }
+      if (!fillOpacity) {
+        fillOpacity = 35; // default from flot
+      }
+    }
+
+    builder.addSeries({
+      scaleKey,
+      showPoints,
+      colorMode,
+      fillOpacity,
+      theme,
+      drawStyle: customConfig.drawStyle!,
+      lineColor: customConfig.lineColor ?? seriesColor,
+      lineWidth: customConfig.lineWidth,
+      lineInterpolation: customConfig.lineInterpolation,
+      lineStyle: customConfig.lineStyle,
+      barAlignment: customConfig.barAlignment,
+      pointSize: customConfig.pointSize,
+      pointColor: customConfig.pointColor ?? seriesColor,
+      spanNulls: customConfig.spanNulls || false,
+      show: !customConfig.hideFrom?.graph,
+      gradientMode: customConfig.gradientMode,
+      thresholds: config.thresholds,
+
+      // The following properties are not used in the uPlot config, but are utilized as transport for legend config
+      dataFrameFieldIndex: field.state?.origin,
+      fieldName: getFieldDisplayName(field, frame),
+      hideInLegend: customConfig.hideFrom?.legend,
+    });
   }
 
-  if (valuesFromFrames.length === 0) {
-    return null;
+  return builder;
+}
+
+export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
+  const names = new Map<string, number>();
+  for (let i = 0; i < frame.fields.length; i++) {
+    names.set(getFieldDisplayName(frame.fields[i], frame), i);
   }
-
-  // do the actual alignment (outerJoin on the first arrays)
-  let { data: alignedData, isGap } = uPlot.join(valuesFromFrames, nullModes);
-
-  if (alignedData!.length !== sourceFields.length) {
-    throw new Error('outerJoinValues lost a field?');
-  }
-
-  // Replace the values from the outer-join field
-  return {
-    frame: {
-      length: alignedData![0].length,
-      fields: alignedData!.map((vals, idx) => ({
-        ...sourceFields[idx],
-        values: new ArrayVector(vals),
-      })),
-    },
-    isGap,
-  };
+  return names;
 }

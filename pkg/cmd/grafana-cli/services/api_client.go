@@ -2,7 +2,7 @@ package services
 
 import (
 	"bufio"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -101,15 +101,15 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 	}()
 
 	w := bufio.NewWriter(tmpFile)
-	h := md5.New()
+	h := sha256.New()
 	if _, err = io.Copy(w, io.TeeReader(bodyReader, h)); err != nil {
-		return errutil.Wrap("Failed to compute MD5 checksum", err)
+		return errutil.Wrap("failed to compute SHA256 checksum", err)
 	}
 	if err := w.Flush(); err != nil {
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
 	}
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
-		return fmt.Errorf("expected MD5 checksum does not match the downloaded archive - please contact security@grafana.com")
+		return fmt.Errorf("expected SHA256 checksum does not match the downloaded archive - please contact security@grafana.com")
 	}
 	return nil
 }

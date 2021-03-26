@@ -39,7 +39,7 @@ export class MssqlDatasource {
       return value;
     }
 
-    const quotedValues = _.map(value, val => {
+    const quotedValues = _.map(value, (val) => {
       if (typeof value === 'number') {
         return value;
       }
@@ -55,7 +55,7 @@ export class MssqlDatasource {
   ): MssqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
@@ -69,9 +69,9 @@ export class MssqlDatasource {
   }
 
   query(options: any): Observable<MssqlResponse> {
-    const queries = _.filter(options.targets, item => {
+    const queries = _.filter(options.targets, (item) => {
       return item.hide !== true;
-    }).map(item => {
+    }).map((item) => {
       return {
         refId: item.refId,
         intervalMs: options.intervalMs,
@@ -177,7 +177,7 @@ export class MssqlDatasource {
       })
       .pipe(
         mapTo({ status: 'success', message: 'Database Connection OK' }),
-        catchError(err => {
+        catchError((err) => {
           console.error(err);
           if (err.data && err.data.message) {
             return of({ status: 'error', message: err.data.message });

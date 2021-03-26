@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/facebookgo/inject"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -30,12 +29,13 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
-	_ "github.com/grafana/grafana/pkg/plugins"
+	_ "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/librarypanels"
+	_ "github.com/grafana/grafana/pkg/services/login/loginservice"
 	_ "github.com/grafana/grafana/pkg/services/ngalert"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
@@ -43,7 +43,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Config contains parameters for the New function.
@@ -67,7 +66,9 @@ func New(cfg Config) (*Server, error) {
 		shutdownFn:    shutdownFn,
 		childRoutines: childRoutines,
 		log:           log.New("server"),
-		cfg:           setting.NewCfg(),
+		// Need to use the singleton setting.Cfg instance, to make sure we use the same as is injected in the DI
+		// graph
+		cfg: setting.GetCfg(),
 
 		configFile:  cfg.ConfigFile,
 		homePath:    cfg.HomePath,
@@ -75,11 +76,11 @@ func New(cfg Config) (*Server, error) {
 		version:     cfg.Version,
 		commit:      cfg.Commit,
 		buildBranch: cfg.BuildBranch,
+		listener:    cfg.Listener,
 	}
-	if cfg.Listener != nil {
-		if err := s.init(&cfg); err != nil {
-			return nil, err
-		}
+
+	if err := s.init(); err != nil {
+		return nil, err
 	}
 
 	return s, nil
@@ -96,6 +97,7 @@ type Server struct {
 	shutdownInProgress bool
 	isInitialized      bool
 	mtx                sync.Mutex
+	listener           net.Listener
 
 	configFile  string
 	homePath    string
@@ -108,7 +110,7 @@ type Server struct {
 }
 
 // init initializes the server and its services.
-func (s *Server) init(cfg *Config) error {
+func (s *Server) init() error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -131,24 +133,14 @@ func (s *Server) init(cfg *Config) error {
 		return err
 	}
 
-	// Initialize services.
-	for _, service := range services {
-		if registry.IsDisabled(service.Instance) {
-			continue
-		}
-
-		if cfg != nil {
+	if s.listener != nil {
+		for _, service := range services {
 			if httpS, ok := service.Instance.(*api.HTTPServer); ok {
 				// Configure the api.HTTPServer if necessary
 				// Hopefully we can find a better solution, maybe with a more advanced DI framework, f.ex. Dig?
-				if cfg.Listener != nil {
-					s.log.Debug("Using provided listener for HTTP server")
-					httpS.Listener = cfg.Listener
-				}
+				s.log.Debug("Using provided listener for HTTP server")
+				httpS.Listener = s.listener
 			}
-		}
-		if err := service.Instance.Init(); err != nil {
-			return errutil.Wrapf(err, "Service init failed")
 		}
 	}
 
@@ -158,7 +150,7 @@ func (s *Server) init(cfg *Config) error {
 // Run initializes and starts services. This will block until all services have
 // exited. To initiate shutdown, call the Shutdown method in another goroutine.
 func (s *Server) Run() (err error) {
-	if err = s.init(nil); err != nil {
+	if err = s.init(); err != nil {
 		return
 	}
 
@@ -278,26 +270,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 		localcache.New(5*time.Minute, 10*time.Minute),
 		s,
 	}
-
-	for _, service := range services {
-		objs = append(objs, service.Instance)
-	}
-
-	var serviceGraph inject.Graph
-
-	// Provide services and their dependencies to the graph.
-	for _, obj := range objs {
-		if err := serviceGraph.Provide(&inject.Object{Value: obj}); err != nil {
-			return errutil.Wrapf(err, "Failed to provide object to the graph")
-		}
-	}
-
-	// Resolve services and their dependencies.
-	if err := serviceGraph.Populate(); err != nil {
-		return errutil.Wrapf(err, "Failed to populate service dependencies")
-	}
-
-	return nil
+	return registry.BuildServiceGraph(objs, services)
 }
 
 // loadConfiguration loads settings and configuration from config files.

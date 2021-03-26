@@ -263,7 +263,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     }
 
     // Calculate bucket size based on heatmap data
-    const xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
+    const xBucketBoundSet = _.map(_.keys(bucketsData), (key) => Number(key));
     xBucketSize = calculateBucketSize(xBucketBoundSet);
     // Always let yBucketSize=1 in 'tsbuckets' mode
     yBucketSize = 1;
@@ -295,7 +295,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
   // Directly support DataFrame
   onDataFramesReceived(data: DataFrame[]) {
-    this.series = this.processor.getSeriesList({ dataList: data, range: this.range }).map(ts => {
+    this.series = this.processor.getSeriesList({ dataList: data, range: this.range }).map((ts) => {
       ts.color = undefined; // remove whatever the processor set
       ts.flotpairs = ts.getFlotPairs(this.panel.nullPointMode);
       return ts;
@@ -341,9 +341,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   parseSeries(series: TimeSeries[]) {
-    const min = _.min(_.map(series, s => s.stats.min));
-    const minLog = _.min(_.map(series, s => s.stats.logmin));
-    const max = _.max(_.map(series, s => s.stats.max));
+    const min = _.min(_.map(series, (s) => s.stats.min));
+    const minLog = _.min(_.map(series, (s) => s.stats.logmin));
+    const max = _.max(_.map(series, (s) => s.stats.max));
 
     return {
       max,
@@ -353,7 +353,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   parseHistogramSeries(series: TimeSeries[]) {
-    const bounds = _.map(series, s => Number(s.alias));
+    const bounds = _.map(series, (s) => Number(s.alias));
     const min = _.min(bounds);
     const minLog = _.min(bounds);
     const max = _.max(bounds);

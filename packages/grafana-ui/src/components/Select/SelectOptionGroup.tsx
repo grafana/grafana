@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { GroupProps } from 'react-select';
-import { stylesFactory, withTheme, selectThemeVariant } from '../../themes';
+import { stylesFactory, withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { Icon } from '../Icon/Icon';
 
@@ -19,13 +19,6 @@ interface State {
 }
 
 const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
-  const optionBorder = selectThemeVariant(
-    {
-      light: theme.palette.gray4,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
   return {
     header: css`
       display: flex;
@@ -35,7 +28,7 @@ const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: pointer;
       padding: 7px 10px;
       width: 100%;
-      border-bottom: 1px solid ${optionBorder};
+      border-bottom: 1px solid ${theme.colors.bg2};
 
       &:hover {
         color: ${theme.colors.textStrong};
@@ -61,7 +54,7 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
     } else if (this.props.selectProps && this.props.selectProps.value) {
       const { value } = this.props.selectProps.value;
 
-      if (value && this.props.options.some(option => option.value === value)) {
+      if (value && this.props.options.some((option) => option.value === value)) {
         this.setState({ expanded: true });
       }
     }
@@ -74,7 +67,7 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
   }
 
   onToggleChildren = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       expanded: !prevState.expanded,
     }));
   };

@@ -2,7 +2,7 @@
 
 exports[`FormField should render component with custom inputEl 1`] = `
 <div
-  className="form-field"
+  className="css-aq4c43"
 >
   <FormLabel
     width={11}
@@ -20,7 +20,7 @@ exports[`FormField should render component with custom inputEl 1`] = `
 
 exports[`FormField should render component with default inputEl 1`] = `
 <div
-  className="form-field"
+  className="css-aq4c43"
 >
   <FormLabel
     width={11}

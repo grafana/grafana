@@ -6,14 +6,14 @@ import { buildNavModel } from './navModel';
 import { teamGroupsLoaded, teamLoaded, teamMembersLoaded, teamsLoaded } from './reducers';
 
 export function loadTeams(): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const response = await getBackendSrv().get('/api/teams/search', { perpage: 1000, page: 1 });
     dispatch(teamsLoaded(response.teams));
   };
 }
 
 export function loadTeam(id: number): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const response = await getBackendSrv().get(`/api/teams/${id}`);
     dispatch(teamLoaded(response));
     dispatch(updateNavIndex(buildNavModel(response)));
@@ -77,14 +77,14 @@ export function removeTeamGroup(groupId: string): ThunkResult<void> {
 }
 
 export function deleteTeam(id: number): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     await getBackendSrv().delete(`/api/teams/${id}`);
     dispatch(loadTeams());
   };
 }
 
 export function updateTeamMember(member: TeamMember): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     await getBackendSrv().put(`/api/teams/${member.teamId}/members/${member.userId}`, {
       permission: member.permission,
     });

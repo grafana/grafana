@@ -186,7 +186,7 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
 }
 
 function isLogsData(series: DataFrame) {
-  return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
+  return series.fields.some((f) => f.type === FieldType.time) && series.fields.some((f) => f.type === FieldType.string);
 }
 
 /**
@@ -308,10 +308,10 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
   // We are sometimes passing data frames with no fields because we want to calculate correct meta stats.
   // Therefore we need to filter out series with no fields. These series are used only for meta stats calculation.
-  const seriesWithFields = logSeries.filter(series => series.fields.length);
+  const seriesWithFields = logSeries.filter((series) => series.fields.length);
 
   if (seriesWithFields.length) {
-    allSeries = seriesWithFields.map(series => {
+    allSeries = seriesWithFields.map((series) => {
       const fieldCache = new FieldCache(series);
       const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
 
@@ -356,11 +356,15 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const tsNs = timeNanosecondField ? timeNanosecondField.values.get(j) : undefined;
       const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
 
-      const messageValue: unknown = stringField.values.get(j);
+      // In edge cases, this can be undefined. If undefined, we want to replace it with empty string.
+      const messageValue: unknown = stringField.values.get(j) ?? '';
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
       const message: string = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
 
       const hasAnsi = textUtil.hasAnsiCodes(message);
+
+      const hasUnescapedContent = !!message.match(/\\n|\\t|\\r/);
+
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
 
       let logLevel = LogLevel.unknown;
@@ -383,6 +387,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
         uniqueLabels,
         hasAnsi,
+        hasUnescapedContent,
         searchWords,
         entry: hasAnsi ? ansicolor.strip(message) : message,
         raw: message,
@@ -402,7 +407,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     });
   }
 
-  const limits = logSeries.filter(series => series.meta && series.meta.limit);
+  const limits = logSeries.filter((series) => series.meta && series.meta.limit);
   const limitValue = Object.values(
     limits.reduce((acc: any, elem: any) => {
       acc[elem.refId] = elem.meta.limit;
@@ -439,7 +444,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
     if (refId && !queriesVisited[refId]) {
       if (totalBytesKey && series.meta?.stats) {
-        const byteStat = series.meta.stats.find(stat => stat.displayName === totalBytesKey);
+        const byteStat = series.meta.stats.find((stat) => stat.displayName === totalBytesKey);
         if (byteStat) {
           totalBytes += byteStat.value;
         }

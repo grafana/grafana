@@ -37,7 +37,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
         onToggleChecked(section);
       }
     },
-    [section]
+    [onToggleChecked, section]
   );
 
   return (
@@ -60,7 +60,6 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
           </a>
         )}
       </div>
-
       {section.itemsFetching ? <Spinner /> : <Icon name={section.expanded ? 'angle-down' : 'angle-right'} />}
     </div>
   );

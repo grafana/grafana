@@ -28,10 +28,31 @@ datasources:
     database: site
     user: grafana
     url: http://localhost:8086
-    jsonData:
-      timeInterval: "15s"
     secureJsonData:
       password: grafana
+  
+  - name: gdev-influxdb2
+    type: influxdb
+    access: proxy
+    url: http://localhost:8087
+    user: grafana
+    secureJsonData:
+      token: mytoken
+      password: grafana12345
+    jsonData:
+      version: Flux
+      organization: myorg
+      defaultBucket: mybucket
+
+  - name: gdev-influxdb2-influxql
+    type: influxdb
+    access: proxy
+    database: site
+    url: http://localhost:8087
+    jsonData:
+      httpHeaderName1: "Authorization"
+    secureJsonData:
+      httpHeaderValue1: "Token mytoken"
 
   - name: gdev-influxdb-telegraf
     type: influxdb
@@ -39,11 +60,9 @@ datasources:
     database: telegraf
     user: grafana
     url: http://localhost:8086
-    jsonData:
-      timeInterval: "10s"
     secureJsonData:
       password: grafana
-
+    
   - name: gdev-opentsdb
     type: opentsdb
     access: proxy
@@ -227,20 +246,6 @@ datasources:
       defaultRegion: eu-west-2
       customMetricsNamespaces: "CWAgent"
 
-  # Keep to test old /api/prom API
-  - name: gdev-loki-0.3
-    type: loki
-    access: proxy
-    url: http://localhost:3103
-    editable: false
-
-  # First version with new v1 API (remove once v1 is out)
-  - name: gdev-loki-0.4
-    type: loki
-    access: proxy
-    url: http://localhost:3104
-    editable: false
-
   - name: gdev-loki
     type: loki
     access: proxy
@@ -269,4 +274,11 @@ datasources:
     uid: gdev-zipkin
     access: proxy
     url: http://localhost:9411
+    editable: false
+
+  - name: gdev-tempo
+    type: tempo
+    uid: gdev-tempo
+    access: proxy
+    url: http://localhost:3101
     editable: false

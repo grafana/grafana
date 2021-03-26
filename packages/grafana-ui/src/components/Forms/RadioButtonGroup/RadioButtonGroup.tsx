@@ -4,6 +4,7 @@ import uniqueId from 'lodash/uniqueId';
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
 import { Icon } from '../../Icon/Icon';
+import { IconName } from '../../../types/icon';
 
 const getRadioButtonGroupStyles = () => {
   return {
@@ -36,7 +37,7 @@ const getRadioButtonGroupStyles = () => {
   };
 };
 
-interface RadioButtonGroupProps<T> {
+export interface RadioButtonGroupProps<T> {
   value?: T;
   disabled?: boolean;
   disabledOptions?: T[];
@@ -85,8 +86,9 @@ export function RadioButtonGroup<T>({
             id={`option-${o.value}-${id}`}
             name={groupName.current}
             fullWidth={fullWidth}
+            description={o.description}
           >
-            {o.icon && <Icon name={o.icon} className={styles.icon} />}
+            {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
             {o.label}
           </RadioButton>
         );

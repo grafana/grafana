@@ -31,7 +31,7 @@ export const BasicSettings: FC<Props> = ({
         <InputControl name="type" as={Select} options={channels} control={control} rules={{ required: true }} />
       </Field>
       <NotificationChannelOptions
-        selectedChannelOptions={selectedChannel.options.filter(o => o.required)}
+        selectedChannelOptions={selectedChannel.options.filter((o) => o.required)}
         currentFormValues={currentFormValues}
         secureFields={secureFields}
         onResetSecureField={resetSecureField}

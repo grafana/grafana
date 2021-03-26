@@ -1,11 +1,12 @@
 import React from 'react';
 import { render, fireEvent, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import selectEvent from 'react-select-event';
 import * as SearchSrv from 'app/core/services/search_srv';
 import * as MockSearchSrv from 'app/core/services/__mocks__/search_srv';
 import { DashboardSearch, Props } from './DashboardSearch';
 import { searchResults } from '../testData';
 import { SearchLayout } from '../types';
+import { locationService } from '@grafana/runtime';
 
 jest.mock('app/core/services/search_srv');
 // Typecast the mock search so the mock import is correctly recognised by TS
@@ -36,6 +37,7 @@ const setup = (testProps?: Partial<Props>) => {
  */
 describe('DashboardSearch', () => {
   it('should call search api with default query when initialised', async () => {
+    locationService.push('/');
     setup();
 
     await waitFor(() => screen.getByPlaceholderText('Search dashboards by name'));
@@ -50,10 +52,12 @@ describe('DashboardSearch', () => {
       folderIds: [],
       layout: SearchLayout.Folders,
       sort: undefined,
+      prevSort: null,
     });
   });
 
   it('should call api with updated query on query change', async () => {
+    locationService.push('/');
     setup();
 
     const input = await screen.findByPlaceholderText('Search dashboards by name');
@@ -71,10 +75,12 @@ describe('DashboardSearch', () => {
       folderIds: [],
       layout: SearchLayout.Folders,
       sort: undefined,
+      prevSort: null,
     });
   });
 
   it("should render 'No results' message when there are no dashboards", async () => {
+    locationService.push('/');
     setup();
 
     const message = await screen.findByText('No dashboards matching your query were found.');
@@ -84,22 +90,22 @@ describe('DashboardSearch', () => {
   it('should render search results', async () => {
     mockSearch.mockResolvedValueOnce(searchResults);
 
+    locationService.push('/');
     setup();
+
     const section = await screen.findAllByLabelText('Search section');
     expect(section).toHaveLength(2);
     expect(screen.getAllByLabelText('Search items')).toHaveLength(1);
   });
 
   it('should call search with selected tags', async () => {
+    locationService.push('/');
     setup();
 
     await waitFor(() => screen.getByLabelText('Tag filter'));
-    // Get the actual element for the underlying Select component, since Select doesn't accept aria- props
-    const tagComponent = screen.getByLabelText('Tag filter').querySelector('div') as Node;
-    fireEvent.keyDown(tagComponent, { keyCode: 40 });
 
-    const firstTag = await screen.findByText('tag1');
-    userEvent.click(firstTag);
+    const tagComponent = screen.getByLabelText('Tag filter');
+    await selectEvent.select(tagComponent, 'tag1');
 
     expect(tagComponent).toBeInTheDocument();
 
@@ -113,13 +119,14 @@ describe('DashboardSearch', () => {
         folderIds: [],
         layout: SearchLayout.Folders,
         sort: undefined,
+        prevSort: null,
       })
     );
   });
 
   it('should call search api with provided search params', async () => {
-    const params = { query: 'test query', tag: ['tag1'], sort: { value: 'asc' } };
-    setup({ params });
+    locationService.partial({ query: 'test query', tag: ['tag1'], sort: 'asc' });
+    setup({});
 
     await waitFor(() => {
       expect(mockSearch).toHaveBeenCalledTimes(1);

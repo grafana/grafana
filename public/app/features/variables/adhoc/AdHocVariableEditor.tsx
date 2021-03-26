@@ -39,8 +39,8 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
     const { variable, editor } = this.props;
     const dataSources = editor.extended?.dataSources ?? [];
     const infoText = editor.extended?.infoText ?? null;
-    const options = dataSources.map(ds => ({ label: ds.text, value: ds.value ?? '' }));
-    const value = options.find(o => o.value === variable.datasource) ?? options[0];
+    const options = dataSources.map((ds) => ({ label: ds.text, value: ds.value ?? '' }));
+    const value = options.find((o) => o.value === variable.datasource) ?? options[0];
 
     return (
       <VerticalGroup spacing="xs">

@@ -16,7 +16,7 @@ export class QueryEditor extends PureComponent<Props> {
     {
       label: 'Random Walk',
       value: GrafanaQueryType.RandomWalk,
-      description: 'Random signal within the selected time rage',
+      description: 'Random signal within the selected time range',
     },
     {
       label: 'Live Measurements',
@@ -43,7 +43,7 @@ export class QueryEditor extends PureComponent<Props> {
       ...query,
       measurements: {
         ...query.measurements,
-        name: sel?.value,
+        key: sel?.value,
       },
     });
     onRunQuery();
@@ -52,7 +52,7 @@ export class QueryEditor extends PureComponent<Props> {
   renderMeasurementsQuery() {
     let { channel, measurements } = this.props.query;
     const channels: Array<SelectableValue<string>> = [];
-    let currentChannel = channels.find(c => c.value === channel);
+    let currentChannel = channels.find((c) => c.value === channel);
     if (channel && !currentChannel) {
       currentChannel = {
         value: channel,
@@ -79,12 +79,12 @@ export class QueryEditor extends PureComponent<Props> {
 
       let foundName = false;
       if (info) {
-        for (const name of info.getDistinctNames()) {
+        for (const name of info.getKeys()) {
           names.push({
             value: name,
             label: name,
           });
-          if (name === measurements.name) {
+          if (name === measurements.key) {
             foundName = true;
           }
         }
@@ -92,11 +92,11 @@ export class QueryEditor extends PureComponent<Props> {
         console.log('NO INFO for', channel);
       }
 
-      if (measurements.name && !foundName) {
+      if (measurements.key && !foundName) {
         names.push({
-          label: measurements.name,
-          value: measurements.name,
-          description: `Frames with name ${measurements.name}`,
+          label: measurements.key,
+          value: measurements.key,
+          description: `Frames with key ${measurements.key}`,
         });
       }
     }
@@ -123,7 +123,7 @@ export class QueryEditor extends PureComponent<Props> {
             <InlineField label="Measurement" grow={true} labelWidth={labelWidth}>
               <Select
                 options={names}
-                value={names.find(v => v.value === measurements?.name) || names[0]}
+                value={names.find((v) => v.value === measurements?.key) || names[0]}
                 onChange={this.onMeasurementNameChanged}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}
@@ -155,7 +155,7 @@ export class QueryEditor extends PureComponent<Props> {
           <InlineField label="Query type" grow={true} labelWidth={labelWidth}>
             <Select
               options={this.queryTypes}
-              value={this.queryTypes.find(v => v.value === query.queryType) || this.queryTypes[0]}
+              value={this.queryTypes.find((v) => v.value === query.queryType) || this.queryTypes[0]}
               onChange={this.onQueryTypeChange}
             />
           </InlineField>

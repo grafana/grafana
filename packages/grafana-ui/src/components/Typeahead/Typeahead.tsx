@@ -144,9 +144,9 @@ export class Typeahead extends React.PureComponent<Props, State> {
       const scrollX = window.scrollX;
       const scrollY = window.scrollY;
 
-      return `position: absolute; display: flex; top: ${rect.top + scrollY + rect.height + 6}px; left: ${rect.left +
-        scrollX -
-        2}px`;
+      return `position: absolute; display: flex; top: ${rect.top + scrollY + rect.height + 6}px; left: ${
+        rect.left + scrollX - 2
+      }px`;
     }
 
     return '';
@@ -166,7 +166,7 @@ export class Typeahead extends React.PureComponent<Props, State> {
             ref={this.listRef}
             itemCount={allItems.length}
             itemSize={itemHeight}
-            itemKey={index => {
+            itemKey={(index) => {
               const item = allItems && allItems[index];
               const key = item ? `${index}-${item.label}` : `${index}`;
               return key;

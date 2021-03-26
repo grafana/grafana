@@ -16,7 +16,7 @@ export const formatVariableLabel = (variable: VariableModel) => {
   }
 
   // filer out values that are in selected tags
-  const selectedAndNotInTag = options.filter(option => {
+  const selectedAndNotInTag = options.filter((option) => {
     if (!option.selected) {
       return false;
     }
@@ -27,7 +27,7 @@ export const formatVariableLabel = (variable: VariableModel) => {
 
     for (let i = 0; i < current.tags.length; i++) {
       const tag = current.tags[i];
-      const foundIndex = tag?.values?.findIndex(v => v === option.value);
+      const foundIndex = tag?.values?.findIndex((v) => v === option.value);
       if (foundIndex && foundIndex !== -1) {
         return false;
       }
@@ -36,7 +36,7 @@ export const formatVariableLabel = (variable: VariableModel) => {
   });
 
   // convert values to text
-  const currentTexts = selectedAndNotInTag.map(s => s.text);
+  const currentTexts = selectedAndNotInTag.map((s) => s.text);
 
   // join texts
   const newLinkText = currentTexts.join(' + ');

@@ -44,10 +44,7 @@ export class HeatmapTooltip {
   }
 
   add() {
-    this.tooltip = d3
-      .select('body')
-      .append('div')
-      .attr('class', 'heatmap-tooltip graph-tooltip grafana-tooltip');
+    this.tooltip = d3.select('body').append('div').attr('class', 'heatmap-tooltip graph-tooltip grafana-tooltip');
   }
 
   destroy() {
@@ -161,7 +158,7 @@ export class HeatmapTooltip {
   getXBucketIndex(x: number, data: { buckets: any; xBucketSize: number }) {
     // First try to find X bucket by checking x pos is in the
     // [bucket.x, bucket.x + xBucketSize] interval
-    const xBucket: any = _.find(data.buckets, bucket => {
+    const xBucket: any = _.find(data.buckets, (bucket) => {
       return x > bucket.x && x - bucket.x <= data.xBucketSize;
     });
     return xBucket ? xBucket.x : getValueBucketBound(x, data.xBucketSize, 1);
@@ -195,11 +192,11 @@ export class HeatmapTooltip {
       max = this.scope.ctrl.data.yAxis.max;
       ticks = this.scope.ctrl.data.yAxis.ticks;
     }
-    let histogramData = _.map(xBucket.buckets, bucket => {
+    let histogramData = _.map(xBucket.buckets, (bucket) => {
       const count = bucket.count !== undefined ? bucket.count : bucket.values.length;
       return [bucket.bounds.bottom, count];
     });
-    histogramData = _.filter(histogramData, d => {
+    histogramData = _.filter(histogramData, (d) => {
       return d[0] >= min && d[0] <= max;
     });
 
@@ -217,14 +214,11 @@ export class HeatmapTooltip {
 
     // Normalize histogram Y axis
     const histogramDomain = _.reduce(
-      _.map(histogramData, d => d[1]),
+      _.map(histogramData, (d) => d[1]),
       (sum, val) => sum + val,
       0
     );
-    const histYScale = d3
-      .scaleLinear()
-      .domain([0, histogramDomain])
-      .range([0, HISTOGRAM_HEIGHT]);
+    const histYScale = d3.scaleLinear().domain([0, histogramDomain]).range([0, HISTOGRAM_HEIGHT]);
 
     const histogram = this.tooltip
       .select('.heatmap-histogram')

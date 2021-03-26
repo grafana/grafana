@@ -14,7 +14,7 @@
 
 export default class TreeNode {
   static iterFunction(fn, depth = 0) {
-    return node => fn(node.value, node, depth);
+    return (node) => fn(node.value, node, depth);
   }
 
   static searchFunction(search) {

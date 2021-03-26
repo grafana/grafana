@@ -122,6 +122,10 @@
     "hiddenQueries": {
       "type": "boolean"
     },
+    "autoEnabled": {
+      "type": "boolean",
+      "description": "Set to true for app plugins that should be enabled by default in all orgs"
+    },
     "dependencies": {
       "type": "object",
       "description": "Dependencies needed by the plugin.",
@@ -353,7 +357,41 @@
             "properties": {
               "url": {
                 "type": "string",
-                "description": "For data source plugins. URL to fetch the authentication token.",
+                "description": "For data source plugins. URL to fetch the authentication token."
+              },
+              "params": {
+                "type": "object",
+                "description": "For data source plugins. Parameters for the token authentication request.",
+                "additionalProperties": false,
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "description": "For data source plugins. OAuth grant type."
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "For data source plugins. OAuth client id."
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "description": "For data source plugins. OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob."
+                  },
+                  "resource": {
+                    "type": "string",
+                    "description": "For data source plugins. OAuth resource."
+                  }
+                }
+              }
+            }
+          },
+          "jwtTokenAuth": {
+            "type": "object",
+            "description": "For data source plugins. Token authentication section used with an JWT OAuth API.",
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "For data source plugins. URL to fetch the JWT token.",
                 "format": "uri"
               },
               "params": {

@@ -35,7 +35,7 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
       const result = received[0];
       expect(result[0]).toBe(testSeries);
     });
@@ -63,7 +63,7 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         {
@@ -104,7 +104,7 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         {
@@ -155,7 +155,7 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
       const result = received[0];
       const expected: Field[] = [
         {
@@ -224,7 +224,7 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], testSeries)).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], testSeries)).toEmitValuesWith((received) => {
       const result = received[0];
       const expectedA: Field[] = [
         {

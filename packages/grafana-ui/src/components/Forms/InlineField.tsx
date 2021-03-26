@@ -5,6 +5,7 @@ import { useTheme } from '../../themes';
 import { InlineLabel } from './InlineLabel';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { FieldProps } from './Field';
+import { getChildId } from '../../utils/children';
 
 export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'description' | 'error'> {
   /** Content for the label's tooltip */
@@ -13,6 +14,8 @@ export interface Props extends Omit<FieldProps, 'css' | 'horizontal' | 'descript
   labelWidth?: number | 'auto';
   /** Make the field's child to fill the width of the row. Equivalent to setting `flex-grow:1` on the field */
   grow?: boolean;
+  /** Make field's background transparent */
+  transparent?: boolean;
 }
 
 export const InlineField: FC<Props> = ({
@@ -25,19 +28,16 @@ export const InlineField: FC<Props> = ({
   disabled,
   className,
   grow,
+  transparent,
   ...htmlProps
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme, grow);
-  const child = React.Children.only(children);
-  let inputId;
+  const inputId = getChildId(children);
 
-  if (child) {
-    inputId = (child as React.ReactElement<{ id?: string }>).props.id;
-  }
   const labelElement =
     typeof label === 'string' ? (
-      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId}>
+      <InlineLabel width={labelWidth} tooltip={tooltip} htmlFor={inputId} transparent={transparent}>
         {label}
       </InlineLabel>
     ) : (

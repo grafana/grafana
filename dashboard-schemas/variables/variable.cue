@@ -11,7 +11,7 @@ _variable: {
 	// * 0 - Show all.
 	// * 1 - Hide label.
 	// * 2 - Hide label and variable.
-	hide: int & >=0 & <=2 | *0
+	hide: int >= 0 <= 2 | *0
 	// Enable include all option.
 	includeAll: bool | *false
 	// When includeAll is enabled, this sets its value.

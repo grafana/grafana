@@ -1,7 +1,7 @@
 // @ts-ignore
 import RCCascader from 'rc-cascader';
 import React from 'react';
-import PromQlLanguageProvider, { DEFAULT_LOOKUP_METRICS_THRESHOLD } from '../language_provider';
+import PromQlLanguageProvider from '../language_provider';
 import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
 import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { PromOptions } from '../types';
@@ -92,6 +92,55 @@ describe('PromQueryField', () => {
     let cascader = screen.getByRole('button');
     expect(cascader.textContent).toContain('Loading');
     checkMetricsInCascader(await screen.findByRole('button'), changedMetrics);
+  });
+
+  it('does not refreshes metrics when after rounding to minute time range does not change', async () => {
+    const defaultProps = {
+      query: { expr: '', refId: '' },
+      onRunQuery: () => {},
+      onChange: () => {},
+      history: [],
+    };
+    const metrics = ['foo', 'bar'];
+    const changedMetrics = ['foo', 'baz'];
+    const range = {
+      from: dateTime('2020-10-28T00:00:00Z'),
+      to: dateTime('2020-10-28T01:00:00Z'),
+    };
+
+    const languageProvider = makeLanguageProvider({ metrics: [metrics, changedMetrics] });
+    const queryField = render(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ languageProvider }}
+        range={{
+          ...range,
+          raw: range,
+        }}
+        {...defaultProps}
+      />
+    );
+    checkMetricsInCascader(await screen.findByRole('button'), metrics);
+
+    const newRange = {
+      from: dateTime('2020-10-28T00:00:01Z'),
+      to: dateTime('2020-10-28T01:00:01Z'),
+    };
+    queryField.rerender(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ languageProvider }}
+        range={{
+          ...newRange,
+          raw: newRange,
+        }}
+        {...defaultProps}
+      />
+    );
+    let cascader = screen.getByRole('button');
+    // Should not show loading
+    expect(cascader.textContent).toContain('Metrics');
+    checkMetricsInCascader(await screen.findByRole('button'), metrics);
   });
 
   it('refreshes metrics when time range changes but dont show loading state', async () => {
@@ -205,7 +254,6 @@ function makeLanguageProvider(options: { metrics: string[][] }) {
     metrics: [],
     metricsMetadata: {},
     lookupsDisabled: false,
-    lookupMetricsThreshold: DEFAULT_LOOKUP_METRICS_THRESHOLD,
     start() {
       this.metrics = metricsStack.shift();
       return Promise.resolve([]);

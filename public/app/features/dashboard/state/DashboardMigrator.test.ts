@@ -908,7 +908,7 @@ function createRow(options: any, panelDescriptions: any[]) {
   let { height } = options;
   height = height * PANEL_HEIGHT_STEP;
   const panels: any[] = [];
-  _.each(panelDescriptions, panelDesc => {
+  _.each(panelDescriptions, (panelDesc) => {
     const panel = { span: panelDesc[0] };
     if (panelDesc.length > 1) {
       //@ts-ignore

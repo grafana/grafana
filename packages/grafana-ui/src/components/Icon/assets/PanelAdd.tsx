@@ -1,15 +1,15 @@
 import React, { FunctionComponent } from 'react';
 import { SvgProps } from './types';
 
-export const PanelAdd: FunctionComponent<SvgProps> = ({ size, ...rest }) => {
+export const PanelAdd: FunctionComponent<SvgProps> = ({ ...rest }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       enableBackground="new 0 0 117.8 64"
       viewBox="0 0 117.8 64"
       xmlSpace="preserve"
-      width={size}
-      height={size}
+      width={24}
+      height={24}
       {...rest}
     >
       <linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="96.4427" y1="83.7013" x2="96.4427" y2="-9.4831">

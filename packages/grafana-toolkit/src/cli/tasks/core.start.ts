@@ -28,7 +28,7 @@ const startTaskRunner: TaskRunner<StartTaskOptions> = async ({ watchThemes, noTs
 
   try {
     await concurrently(
-      jobs.filter(job => !!job),
+      jobs.filter((job) => !!job),
       {
         killOthers: ['failure', 'failure'],
         raw: true,

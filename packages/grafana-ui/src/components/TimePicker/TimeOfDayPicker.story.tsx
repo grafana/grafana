@@ -22,7 +22,7 @@ export const basic = () => {
       {(value, updateValue) => {
         return (
           <TimeOfDayPicker
-            onChange={newValue => {
+            onChange={(newValue) => {
               action('on selected')(newValue);
               updateValue({ value: newValue });
             }}
@@ -40,7 +40,7 @@ export const onlyMinutes = () => {
       {(value, updateValue) => {
         return (
           <TimeOfDayPicker
-            onChange={newValue => {
+            onChange={(newValue) => {
               action('on selected')(newValue);
               updateValue({ value: newValue });
             }}

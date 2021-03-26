@@ -30,13 +30,13 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
 }));
 
 class ScenarioCtx {
-  ds: DataSourceApi;
-  request: DataQueryRequest;
-  subscriber: Subscriber<DataQueryResponse>;
+  ds!: DataSourceApi;
+  request!: DataQueryRequest;
+  subscriber!: Subscriber<DataQueryResponse>;
   isUnsubbed = false;
   setupFn: () => void = () => {};
-  results: PanelData[];
-  subscription: Subscription;
+  results!: PanelData[];
+  subscription!: Subscription;
   wasStarted = false;
   error: Error | null = null;
   toStartTime = dateTime();
@@ -62,7 +62,7 @@ class ScenarioCtx {
 
     this.ds = {
       query: (request: DataQueryRequest) => {
-        return new Observable<DataQueryResponse>(subscriber => {
+        return new Observable<DataQueryResponse>((subscriber) => {
           this.subscriber = subscriber;
           this.wasStarted = true;
 
@@ -110,7 +110,7 @@ function runRequestScenario(desc: string, fn: (ctx: ScenarioCtx) => void) {
 }
 
 describe('runRequest', () => {
-  runRequestScenario('with no queries', ctx => {
+  runRequestScenario('with no queries', (ctx) => {
     ctx.setup(() => {
       ctx.request.targets = [];
       ctx.start();
@@ -122,7 +122,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('After first response', ctx => {
+  runRequestScenario('After first response', (ctx) => {
     ctx.setup(() => {
       ctx.start();
       ctx.emitPacket({
@@ -136,7 +136,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('After tree responses, 2 with different keys', ctx => {
+  runRequestScenario('After tree responses, 2 with different keys', (ctx) => {
     ctx.setup(() => {
       ctx.start();
       ctx.emitPacket({
@@ -166,7 +166,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('After response with state Streaming', ctx => {
+  runRequestScenario('After response with state Streaming', (ctx) => {
     ctx.setup(() => {
       ctx.start();
       ctx.emitPacket({
@@ -185,7 +185,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('If no response after 250ms', ctx => {
+  runRequestScenario('If no response after 250ms', (ctx) => {
     ctx.setup(async () => {
       ctx.start();
       await sleep(250);
@@ -197,7 +197,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('on thrown error', ctx => {
+  runRequestScenario('on thrown error', (ctx) => {
     ctx.setup(() => {
       ctx.error = new Error('Ohh no');
       ctx.start();
@@ -209,7 +209,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('If time range is relative', ctx => {
+  runRequestScenario('If time range is relative', (ctx) => {
     ctx.setup(async () => {
       // any changes to ctx.request.range will throw and state would become LoadingState.Error
       deepFreeze(ctx.request.range);
@@ -218,7 +218,7 @@ describe('runRequest', () => {
       // wait a bit
       await sleep(20);
 
-      ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
+      ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame], state: LoadingState.Streaming });
     });
 
     it('should add the correct timeRange property and the request range should not be mutated', () => {
@@ -230,7 +230,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('If time range is not relative', ctx => {
+  runRequestScenario('If time range is not relative', (ctx) => {
     ctx.setup(async () => {
       ctx.request.range!.raw.from = ctx.fromStartTime;
       ctx.request.range!.raw.to = ctx.toStartTime;
@@ -253,7 +253,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('With annotations dataTopic', ctx => {
+  runRequestScenario('With annotations dataTopic', (ctx) => {
     ctx.setup(() => {
       ctx.start();
       ctx.emitPacket({
@@ -277,11 +277,10 @@ const expectThatRangeHasNotMutated = (ctx: ScenarioCtx) => {
   // Make sure that the range for request is not changed and that deepfreeze hasn't thrown
   expect(ctx.results[0].request?.range?.to.valueOf()).toBe(ctx.toStartTime.valueOf());
   expect(ctx.results[0].error).not.toBeDefined();
-  expect(ctx.results[0].state).toBe(LoadingState.Done);
 };
 
 async function sleep(ms: number) {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 }

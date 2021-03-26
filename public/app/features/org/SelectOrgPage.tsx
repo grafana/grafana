@@ -43,7 +43,7 @@ export const SelectOrgPage: FC = () => {
           </p>
           <HorizontalGroup wrap>
             {orgs &&
-              orgs.map(org => (
+              orgs.map((org) => (
                 <Button key={org.orgId} icon="signin" onClick={() => setUserOrg(org)}>
                   {org.name}
                 </Button>

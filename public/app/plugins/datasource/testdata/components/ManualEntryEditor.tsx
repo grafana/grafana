@@ -67,7 +67,7 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
                 options={points}
                 width={32}
                 name="selectedPoint"
-                onChange={value => value[0]}
+                onChange={(value) => value[0]}
                 placeholder="Select point"
               />
             </InlineField>

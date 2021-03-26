@@ -66,7 +66,7 @@ export class UsersListPage extends PureComponent<Props, State> {
   };
 
   onShowInvites = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       showInvites: !prevState.showInvites,
     }));
   };
@@ -81,7 +81,7 @@ export class UsersListPage extends PureComponent<Props, State> {
         <UsersTable
           users={users}
           onRoleChange={(role, user) => this.onRoleChange(role, user)}
-          onRemoveUser={user => this.props.removeUser(user.userId)}
+          onRemoveUser={(user) => this.props.removeUser(user.userId)}
         />
       );
     }

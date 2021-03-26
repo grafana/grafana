@@ -10,7 +10,7 @@ export default function flatten(target: object, opts?: { delimiter?: any; maxDep
   const output: any = {};
 
   function step(object: any, prev: string | null) {
-    Object.keys(object).forEach(key => {
+    Object.keys(object).forEach((key) => {
       const value = object[key];
       const isarray = opts?.safe && Array.isArray(value);
       const type = Object.prototype.toString.call(value);

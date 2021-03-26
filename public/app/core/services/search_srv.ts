@@ -34,10 +34,10 @@ export class SearchSrv {
       return Promise.resolve([]);
     }
 
-    return backendSrv.search({ dashboardIds: dashIds }).then(result => {
+    return backendSrv.search({ dashboardIds: dashIds }).then((result) => {
       return dashIds
-        .map(orderId => result.find(result => result.id === orderId))
-        .filter(hit => hit && !hit.isStarred) as DashboardSearchHit[];
+        .map((orderId) => result.find((result) => result.id === orderId))
+        .filter((hit) => hit && !hit.isStarred) as DashboardSearchHit[];
     });
   }
 
@@ -46,7 +46,7 @@ export class SearchSrv {
       return Promise.resolve();
     }
 
-    return backendSrv.search({ starred: true, limit: 30 }).then(result => {
+    return backendSrv.search({ starred: true, limit: 30 }).then((result) => {
       if (result.length > 0) {
         (sections as any)['starred'] = {
           title: 'Starred',
@@ -71,7 +71,7 @@ export class SearchSrv {
     if (query.layout === SearchLayout.List) {
       return backendSrv
         .search({ ...query, type: DashboardSearchItemType.DashDB })
-        .then(results => (results.length ? [{ title: '', items: results }] : []));
+        .then((results) => (results.length ? [{ title: '', items: results }] : []));
     }
 
     if (!filters) {
@@ -87,7 +87,7 @@ export class SearchSrv {
     }
 
     promises.push(
-      backendSrv.search(query).then(results => {
+      backendSrv.search(query).then((results) => {
         return this.handleSearchResult(sections, results);
       })
     );

@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -170,6 +171,7 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 
 	bodyJSON := simplejson.NewFromAny(alerts)
 	body, _ := bodyJSON.MarshalJSON()
+	errCnt := 0
 
 	for _, url := range am.URL {
 		cmd := &models.SendWebhookSync{
@@ -182,8 +184,13 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 
 		if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 			am.log.Error("Failed to send alertmanager", "error", err, "alertmanager", am.Name, "url", url)
-			return err
+			errCnt++
 		}
+	}
+
+	// This happens when every dispatch return error
+	if errCnt == len(am.URL) {
+		return fmt.Errorf("failed to send alert to alertmanager")
 	}
 
 	return nil

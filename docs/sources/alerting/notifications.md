@@ -59,16 +59,16 @@ Hipchat | `hipchat` | yes, external only | no
 [Kafka](#kafka) | `kafka` | yes, external only | no
 Line | `line` | yes, external only | no
 Microsoft Teams | `teams` | yes, external only | no
-OpsGenie | `opsgenie` | yes, external only | yes
+[Opsgenie](#opsgenie) | `opsgenie` | yes, external only | yes
 [Pagerduty](#pagerduty) | `pagerduty` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
-Pushover | `pushover` | yes | no
+[Pushover](#pushover) | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
 [Sensu Go](#sensu-go) | `sensugo` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
-VictorOps | `victorops` | yes, external only | no
+VictorOps | `victorops` | yes, external only | yes
 [Webhook](#webhook) | `webhook` | yes, external only | yes
 [Zenduty](#zenduty) | `webhook` | yes, external only | yes
 
@@ -111,6 +111,19 @@ Token | If provided, Grafana will upload the generated image via Slack's file.up
 
 If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
 
+### Opsgenie
+
+To setup Opsgenie you will need an API Key and the Alert API Url. These can be obtained by configuring a new [Grafana Integration](https://docs.opsgenie.com/docs/grafana-integration).
+
+Setting | Description
+--------|------------
+Alert API URL | The API URL for your Opsgenie instance. This will normally be either `https://api.opsgenie.com` or, for EU customers, `https://api.eu.opsgenie.com`.
+API Key | The API Key as provided by Opsgenie for your configured Grafana integration.
+Override priority | Configures the alert priority using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4`, or `P5`. Default is `False`.
+Send notification tags as | Specify how you would like [Notification Tags]({{< relref "create-alerts.md/#notifications" >}}) delivered to Opsgenie. They can be delivered as `Tags`, `Extra Properties` or both. Default is Tags. See note below for more information.
+
+> **Note:** When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. If you prefer to receive the notifications tags as key/values under Extra Properties in Opsgenie then change the `Send notification tags as` to either `Extra Properties` or `Tags & Extra Properties`.
+
 ### PagerDuty
 
 To set up PagerDuty, all you have to do is to provide an integration key.
@@ -129,7 +142,32 @@ This might break custom event rules in your PagerDuty rules if you rely on the f
 Move any existing rules using `custom_details.myMetric` to `custom_details.queries.myMetric`.
 This behavior will become the default in a future version of Grafana.
 
-> Using `dedup_key` tag will override Grafana generated `dedup_key` with a custom key.
+> **Note:** The `dedup_key` tag overrides the Grafana-generated `dedup_key` with a custom key.
+
+> **Note:** The `state` tag overrides the current alert state inside the `custom_details` payload.
+
+### VictorOps
+
+To configure VictorOps, provide the URL from the Grafana Integration and substitute `$routing_key` with a valid key.
+
+> **Note:** The tag `Severity` has special meaning in the [VictorOps Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this key, then it replaces the `message_type` in the root of the event sent to VictorOps.
+### Pushover
+
+To set up Pushover, you must provide a user key and an API token. Refer to [What is Pushover and how do I use it](https://support.pushover.net/i7-what-is-pushover-and-how-do-i-use-it) for instructions on how to generate them.
+
+
+Setting | Description
+---------- | -----------
+API Token | Application token
+User key(s) | A comma-separated list of user keys
+Device(s) | A comma-separated list of devices
+Priority | The priority alerting nottifications are sent
+OK priority | The priority OK notifications are sent; if not set, then OK notifications are sent with the priority set for alerting notifications 
+Retry | How often (in seconds) the Pushover servers send the same notification to the user. (minimum 30 seconds)
+Expire | How many seconds your notification will continue to be retried for (maximum 86400 seconds)
+Alerting sound | The sound for alerting notifications
+OK sound | The sound for OK notifications
+
 ### Webhook
 
 The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint.
@@ -199,10 +237,6 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. For more information about configuring a webhook, refer to [webhooks](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
-### Squadcast
-
-Squadcast helps you get alerted via Phone call, SMS, Email and Push notifications and lets you take actions on those alerts. Grafana notifications can be sent to Squadcast via a simple incoming webhook. Refer the official [Squadcast support documentation](https://support.squadcast.com/docs/grafana) for configuring these webhooks.
-
 ### Prometheus Alertmanager
 
 Alertmanager handles alerts sent by client applications such as Prometheus server or Grafana. It takes care of deduplicating, grouping, and routing them to the correct receiver. Grafana notifications can be sent to Alertmanager via a simple incoming webhook. Refer to the official [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/alertmanager) for configuration information.
@@ -230,3 +264,9 @@ Notification services which need public image access are marked as 'external onl
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
 This URL is based on the [domain]({{< relref "../administration/configuration/#domain" >}}) setting in Grafana.
+
+## Notification templating
+
+> **Note:** Alert notification templating is only available in Grafana v7.4 and above.
+
+The alert notification template feature allows you to take the [label]({{< relref "../getting-started/timeseries-dimensions.md#labels" >}}) value from an alert query and [inject that into alert notifications]({{< relref "./add-notification-template.md" >}}).

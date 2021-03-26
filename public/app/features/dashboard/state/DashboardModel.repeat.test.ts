@@ -374,7 +374,7 @@ describe('given dashboard with row repeat', () => {
     });
 
     const scopedVars = _.compact(
-      _.map(dashboard.panels, panel => {
+      _.map(dashboard.panels, (panel) => {
         return panel.scopedVars ? panel.scopedVars.apps.value : null;
       })
     );
@@ -496,7 +496,7 @@ describe('given dashboard with row repeat', () => {
     dashboard.processRepeats();
 
     const panelIds = _.flattenDeep(
-      _.map(dashboard.panels, panel => {
+      _.map(dashboard.panels, (panel) => {
         let ids = [];
         if (panel.panels && panel.panels.length) {
           ids = _.map(panel.panels, 'id');
@@ -520,7 +520,7 @@ describe('given dashboard with row repeat', () => {
 
     const panelTypes = _.map(dashboard.panels, 'type');
     expect(panelTypes).toEqual(['row', 'graph', 'graph', 'graph', 'row', 'graph', 'graph', 'graph']);
-    const panelYPositions = _.map(dashboard.panels, p => p.gridPos.y);
+    const panelYPositions = _.map(dashboard.panels, (p) => p.gridPos.y);
     expect(panelYPositions).toEqual([0, 1, 1, 5, 7, 8, 8, 12]);
   });
 });

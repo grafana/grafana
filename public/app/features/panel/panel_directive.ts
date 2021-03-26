@@ -66,6 +66,8 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         ctrl.width = scope.$parent.$parent.size.width;
       }
 
+      updateDimensionsFromParentScope();
+
       // Pass PanelModel events down to angular controller event emitter
       subs.add(
         panel.events.subscribe(RefreshEvent, () => {
@@ -75,13 +77,28 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       );
 
       subs.add(
-        panel.events.subscribe(RenderEvent, () => {
+        panel.events.subscribe(RenderEvent, (event) => {
+          // this event originated from angular so no need to bubble it back
+          if (event.payload?.fromAngular) {
+            return;
+          }
+
           updateDimensionsFromParentScope();
 
           $timeout(() => {
             resizeScrollableContent();
             ctrl.events.emit('render');
           });
+        })
+      );
+
+      subs.add(
+        ctrl.events.subscribe(RenderEvent, (event) => {
+          // this event originated from angular so bubble it to react so the PanelChromeAngular can update the panel header alert state
+          if (event.payload) {
+            event.payload.fromAngular = true;
+            panel.events.publish(event);
+          }
         })
       );
 

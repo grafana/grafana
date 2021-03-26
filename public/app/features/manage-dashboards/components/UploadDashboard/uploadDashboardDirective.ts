@@ -1,6 +1,6 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import angular, { ILocationService } from 'angular';
+import angular from 'angular';
 import { AppEvents } from '@grafana/data';
 
 const template = `
@@ -11,7 +11,7 @@ const template = `
 `;
 
 /** @ngInject */
-export function uploadDashboardDirective(timer: any, $location: ILocationService) {
+export function uploadDashboardDirective() {
   return {
     restrict: 'E',
     template: template,

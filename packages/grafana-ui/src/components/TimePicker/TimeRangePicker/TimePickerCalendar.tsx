@@ -198,7 +198,7 @@ interface Props {
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
-export const TimePickerCalendar = memo<Props>(props => {
+export const TimePickerCalendar = memo<Props>((props) => {
   const theme = useTheme();
   const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen } = props;

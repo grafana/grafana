@@ -21,14 +21,14 @@ export const ThemeContext = React.createContext(getTheme(GrafanaThemeType.Dark))
 ThemeContext.displayName = 'ThemeContext';
 
 export const withTheme = <P extends Themeable, S extends {} = {}>(Component: React.ComponentType<P>) => {
-  const WithTheme: React.FunctionComponent<Subtract<P, Themeable>> = props => {
+  const WithTheme: React.FunctionComponent<Subtract<P, Themeable>> = (props) => {
     /**
      * If theme context is mocked, let's use it instead of the original context
      * This is used in tests when mocking theme using mockThemeContext function defined below
      */
     const ContextComponent = ThemeContextMock || ThemeContext;
     // @ts-ignore
-    return <ContextComponent.Consumer>{theme => <Component {...props} theme={theme} />}</ContextComponent.Consumer>;
+    return <ContextComponent.Consumer>{(theme) => <Component {...props} theme={theme} />}</ContextComponent.Consumer>;
   };
 
   WithTheme.displayName = `WithTheme(${Component.displayName})`;

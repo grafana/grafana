@@ -7,7 +7,7 @@ const regexValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<string>> = {
   id: ValueMatcherID.regex,
   name: 'Regex',
   description: 'Match when field value is matching regex.',
-  get: options => {
+  get: (options) => {
     const regex = new RegExp(options.value);
 
     return (valueIndex: number, field: Field) => {
@@ -15,7 +15,7 @@ const regexValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<string>> = {
       return regex.test(value);
     };
   },
-  getOptionsDisplayText: options => {
+  getOptionsDisplayText: (options) => {
     return `Matches all rows where field value is matching regex: ${options.value}`;
   },
   isApplicable: () => true,

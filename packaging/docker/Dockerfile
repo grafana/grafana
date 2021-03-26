@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=alpine:3.12
+ARG BASE_IMAGE=alpine:3.13
 FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"

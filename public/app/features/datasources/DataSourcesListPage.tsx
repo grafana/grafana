@@ -49,11 +49,7 @@ const emptyListModel = {
 
 export class DataSourcesListPage extends PureComponent<Props> {
   componentDidMount() {
-    this.fetchDataSources();
-  }
-
-  async fetchDataSources() {
-    return await this.props.loadDataSources();
+    this.props.loadDataSources();
   }
 
   render() {
@@ -81,7 +77,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
               dataSourcesCount > 0 && [
                 <OrgActionBar
                   searchQuery={searchQuery}
-                  setSearchQuery={query => setDataSourcesSearchQuery(query)}
+                  setSearchQuery={(query) => setDataSourcesSearchQuery(query)}
                   linkButton={linkButton}
                   key="action-bar"
                 />,

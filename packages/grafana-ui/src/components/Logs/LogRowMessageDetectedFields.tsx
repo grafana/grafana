@@ -26,8 +26,8 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
     );
 
     const line = showDetectedFields
-      .map(parsedKey => {
-        const field = fields.find(field => {
+      .map((parsedKey) => {
+        const field = fields.find((field) => {
           const { key } = field;
           return key === parsedKey;
         });
@@ -38,7 +38,7 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
 
         return null;
       })
-      .filter(s => s !== null)
+      .filter((s) => s !== null)
       .join(' ');
 
     return <td className={wrapClassName}>{line}</td>;

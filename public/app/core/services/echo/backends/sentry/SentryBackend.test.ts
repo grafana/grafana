@@ -8,6 +8,7 @@ import { SentryEchoEvent } from './types';
 import { EchoBackend, EchoEventType, EchoMeta, setEchoSrv } from '@grafana/runtime';
 import { waitFor } from '@testing-library/react';
 import { Echo } from '../../Echo';
+import { GrafanaEdition } from '@grafana/data/src/types/config';
 
 jest.mock('@sentry/browser');
 
@@ -19,7 +20,7 @@ describe('SentryEchoBackend', () => {
     commit: 'abcd123',
     isEnterprise: false,
     env: 'production',
-    edition: "Director's cut",
+    edition: GrafanaEdition.OpenSource,
     latestVersion: 'ba',
     hasUpdate: false,
     hideVersion: false,
@@ -80,7 +81,7 @@ describe('SentryEchoBackend', () => {
       meta: ({} as unknown) as EchoMeta,
     };
     backend.addEvent(event);
-    backend.transports.forEach(transport => {
+    backend.transports.forEach((transport) => {
       expect(transport.sendEvent).toHaveBeenCalledTimes(1);
       expect(transport.sendEvent).toHaveBeenCalledWith(event.payload);
     });

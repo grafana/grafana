@@ -34,6 +34,8 @@ export interface DashboardMeta {
   createdBy?: string;
   updated?: string;
   updatedBy?: string;
+  fromScript?: boolean;
+  fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
 }
 
@@ -41,7 +43,7 @@ export interface DashboardDataDTO {
   title: string;
 }
 
-export enum DashboardRouteInfo {
+export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
@@ -61,8 +63,12 @@ export interface DashboardInitError {
   error: any;
 }
 
-export const KIOSK_MODE_TV = 'tv';
-export type KioskUrlValue = 'tv' | '1' | true;
+export enum KioskMode {
+  Off = 'off',
+  TV = 'tv',
+  Full = 'full',
+}
+
 export type GetMutableDashboardModelFn = () => DashboardModel | null;
 
 export interface QueriesToUpdateOnDashboardLoad {

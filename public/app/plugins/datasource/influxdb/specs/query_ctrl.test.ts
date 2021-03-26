@@ -1,4 +1,3 @@
-import '../query_ctrl';
 import { uiSegmentSrv } from 'app/core/services/segment_srv';
 import { InfluxQueryCtrl } from '../query_ctrl';
 import InfluxDatasource from '../datasource';

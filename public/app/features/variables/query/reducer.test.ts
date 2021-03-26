@@ -1,5 +1,11 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { queryVariableReducer, sortVariableValues, updateVariableOptions, updateVariableTags } from './reducer';
+import {
+  metricNamesToVariableValues,
+  queryVariableReducer,
+  sortVariableValues,
+  updateVariableOptions,
+  updateVariableTags,
+} from './reducer';
 import { QueryVariableModel, VariableSort } from '../types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariablesState } from '../state/variablesReducer';
@@ -218,6 +224,25 @@ describe('queryVariableReducer', () => {
         });
     });
 
+    it('unnamed capture group returns any unnamed match', () => {
+      const regex = '/.*_(\\w+)\\{/gi';
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
+      const metrics = [createMetric('instance_counter{someother="atext",something="avalue"}'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: regex };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
+      reducerTester<VariablesState>()
+        .givenReducer(queryVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateVariableOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            options: [{ text: 'counter', value: 'counter', selected: false }],
+          } as unknown) as QueryVariableModel,
+        });
+    });
+
     it('unmatched text capture and unmatched value capture returns empty state', () => {
       const regex = '/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi';
       const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
@@ -279,6 +304,83 @@ describe('sortVariableValues', () => {
         expect(result).toEqual(expected);
       }
     );
+  });
+});
+
+describe('metricNamesToVariableValues', () => {
+  const item = (str: string) => ({ text: str, value: str, selected: false });
+  const metricsNames = [
+    item('go_info{instance="demo.robustperception.io:9090",job="prometheus",version="go1.15.6"} 1 1613047998000'),
+    item('go_info{instance="demo.robustperception.io:9091",job="pushgateway",version="go1.15.6"} 1 1613047998000'),
+    item('go_info{instance="demo.robustperception.io:9093",job="alertmanager",version="go1.14.4"} 1 1613047998000'),
+    item('go_info{instance="demo.robustperception.io:9100",job="node",version="go1.14.4"} 1 1613047998000'),
+  ];
+
+  const expected1 = [
+    { value: 'demo.robustperception.io:9090', text: 'demo.robustperception.io:9090', selected: false },
+    { value: 'demo.robustperception.io:9091', text: 'demo.robustperception.io:9091', selected: false },
+    { value: 'demo.robustperception.io:9093', text: 'demo.robustperception.io:9093', selected: false },
+    { value: 'demo.robustperception.io:9100', text: 'demo.robustperception.io:9100', selected: false },
+  ];
+
+  const expected2 = [
+    { value: 'prometheus', text: 'prometheus', selected: false },
+    { value: 'pushgateway', text: 'pushgateway', selected: false },
+    { value: 'alertmanager', text: 'alertmanager', selected: false },
+    { value: 'node', text: 'node', selected: false },
+  ];
+
+  const expected3 = [
+    { value: 'demo.robustperception.io:9090', text: 'prometheus', selected: false },
+    { value: 'demo.robustperception.io:9091', text: 'pushgateway', selected: false },
+    { value: 'demo.robustperception.io:9093', text: 'alertmanager', selected: false },
+    { value: 'demo.robustperception.io:9100', text: 'node', selected: false },
+  ];
+
+  const expected4 = [
+    { value: 'demo.robustperception.io:9090', text: 'demo.robustperception.io:9090', selected: false },
+    { value: undefined, text: undefined, selected: false },
+    { value: 'demo.robustperception.io:9091', text: 'demo.robustperception.io:9091', selected: false },
+    { value: 'demo.robustperception.io:9093', text: 'demo.robustperception.io:9093', selected: false },
+    { value: 'demo.robustperception.io:9100', text: 'demo.robustperception.io:9100', selected: false },
+  ];
+
+  it.each`
+    variableRegEx                                          | expected
+    ${''}                                                  | ${metricsNames}
+    ${'/unknown/'}                                         | ${[]}
+    ${'/unknown/g'}                                        | ${[]}
+    ${'/go/'}                                              | ${metricsNames}
+    ${'/go/g'}                                             | ${metricsNames}
+    ${'/(go)/'}                                            | ${[{ value: 'go', text: 'go', selected: false }]}
+    ${'/(go)/g'}                                           | ${[{ value: 'go', text: 'go', selected: false }]}
+    ${'/(go)?/'}                                           | ${[{ value: 'go', text: 'go', selected: false }]}
+    ${'/(go)?/g'}                                          | ${[{ value: 'go', text: 'go', selected: false }, { value: undefined, text: undefined, selected: false }]}
+    ${'/go(\\w+)/'}                                        | ${[{ value: '_info', text: '_info', selected: false }]}
+    ${'/go(\\w+)/g'}                                       | ${[{ value: '_info', text: '_info', selected: false }, { value: '1', text: '1', selected: false }]}
+    ${'/.*_(\\w+)\\{/'}                                    | ${[{ value: 'info', text: 'info', selected: false }]}
+    ${'/.*_(\\w+)\\{/g'}                                   | ${[{ value: 'info', text: 'info', selected: false }]}
+    ${'/instance="(?<value>[^"]+)/'}                       | ${expected1}
+    ${'/instance="(?<value>[^"]+)/g'}                      | ${expected1}
+    ${'/instance="(?<grp1>[^"]+)/'}                        | ${expected1}
+    ${'/instance="(?<grp1>[^"]+)/g'}                       | ${expected1}
+    ${'/instancee="(?<value>[^"]+)/'}                      | ${[]}
+    ${'/job="(?<text>[^"]+)/'}                             | ${expected2}
+    ${'/job="(?<text>[^"]+)/g'}                            | ${expected2}
+    ${'/job="(?<grp2>[^"]+)/'}                             | ${expected2}
+    ${'/job="(?<grp2>[^"]+)/g'}                            | ${expected2}
+    ${'/jobb="(?<text>[^"]+)/g'}                           | ${[]}
+    ${'/instance="(?<value>[^"]+)|job="(?<text>[^"]+)/'}   | ${expected1}
+    ${'/instance="(?<value>[^"]+)|job="(?<text>[^"]+)/g'}  | ${expected3}
+    ${'/instance="(?<grp1>[^"]+)|job="(?<grp2>[^"]+)/'}    | ${expected1}
+    ${'/instance="(?<grp1>[^"]+)|job="(?<grp2>[^"]+)/g'}   | ${expected4}
+    ${'/instance="(?<value>[^"]+).*job="(?<text>[^"]+)/'}  | ${expected3}
+    ${'/instance="(?<value>[^"]+).*job="(?<text>[^"]+)/g'} | ${expected3}
+    ${'/instance="(?<grp1>[^"]+).*job="(?<grp2>[^"]+)/'}   | ${expected1}
+    ${'/instance="(?<grp1>[^"]+).*job="(?<grp2>[^"]+)/g'}  | ${expected1}
+  `('when called with variableRegEx:$variableRegEx then it return correct options', ({ variableRegEx, expected }) => {
+    const result = metricNamesToVariableValues(variableRegEx, VariableSort.disabled, metricsNames);
+    expect(result).toEqual(expected);
   });
 });
 
