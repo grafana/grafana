@@ -1,108 +1,3 @@
-package load
-
-import (
-	"encoding/json"
-	"fmt"
-	"os"
-	"reflect"
-	"testing"
-
-	"cuelang.org/go/cue"
-	cuerr "cuelang.org/go/cue/errors"
-	"github.com/grafana/grafana"
-	"github.com/grafana/grafana/pkg/schema"
-	"github.com/stretchr/testify/require"
-)
-
-var p BaseLoadPaths = BaseLoadPaths{
-	BaseCueFS:       grafana.CoreSchema,
-	DistPluginCueFS: grafana.PluginSchema,
-}
-
-func TestScuemataBasics(t *testing.T) {
-	// rawmap, err := rawDistPanels(p)
-	// require.NoError(t, err, "error while loading raw dist panels")
-
-	// for id, plug := range rawmap {
-	// 	t.Run(id, func(t *testing.T) {
-	// 		require.Greater(t, len(plug.fam.Seqs), 0, "no schema in scuemata")
-
-	// 		for maj, seq := range plug.fam.Seqs {
-	// 			for min, sch := range seq {
-	// 				t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
-	// 					cv := sch.CUE()
-	// 					t.Run("Exists", func(t *testing.T) {
-	// 						require.True(t, cv.Exists(), "cue value for schema does not exist")
-	// 					})
-	// 					t.Run("Validate", func(t *testing.T) {
-	// 						require.NoError(t, cv.Validate(), "all schema should be valid with respect to basic CUE rules")
-	// 					})
-	// 				})
-	// 			}
-	// 		}
-	// 	})
-	// }
-
-	all := make(map[string]schema.Fam)
-
-	dash, err := BaseDashboardScuemata(p)
-	require.NoError(t, err, "error while loading base dashboard scuemata")
-	all["basedash"] = dash
-
-	ddash, err := DistDashboardScuemata(p)
-	require.NoError(t, err, "error while loading dist dashboard scuemata")
-	all["distdash"] = ddash
-
-	for set, fam := range all {
-		t.Run(set, func(t *testing.T) {
-			sch := fam.First()
-			if reflect.ValueOf(sch).IsNil() {
-				t.Error("scuemata linked to empty chain")
-			}
-			maj, min := sch.Version()
-			t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
-				cv := sch.CUE()
-				t.Fail()
-				t.Logf("%v\n", cv.LookupPath(cue.MakePath(cue.Def("#Panel"))))
-				t.Run("Exists", func(t *testing.T) {
-					require.True(t, cv.Exists(), "cue value for schema does not exist")
-				})
-				t.Run("Validate", func(t *testing.T) {
-					require.NoError(t, cv.Validate(), "all schema should be valid with respect to basic CUE rules")
-				})
-			})
-		})
-	}
-}
-
-func TestDashboardValidity(t *testing.T) {
-
-}
-
-func TestLoadDistPanels(t *testing.T) {
-	jmap := make(map[string]interface{})
-	err := json.Unmarshal(testdash, &jmap)
-	require.NoError(t, err)
-
-	dashr := schema.Resource{
-		Value: testdash,
-		// Value: jmap,
-	}
-
-	t.Run("Validate dashboard", func(t *testing.T) {
-		// fam, err := DistDashboardFamily(p)
-		fam, err := DistDashboardScuemata(p)
-		require.NoError(t, err)
-
-		_, err = fam.Validate(dashr)
-		if err != nil {
-			cuerr.Print(os.Stderr, err, nil)
-		}
-		require.NoError(t, err)
-	})
-}
-
-var testdash = []byte(`
 {
   "__inputs": [
     {
@@ -159,7 +54,7 @@ var testdash = []byte(`
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": 14,
+            "align": "right",
             "filterable": false
           },
           "decimals": 3,
@@ -256,4 +151,3 @@ var testdash = []byte(`
   "uid": "emal8gQMz",
   "version": 2
 }
-`)
