@@ -2,7 +2,9 @@ package channels
 
 import (
 	"context"
+	"fmt"
 	"net/url"
+	"strings"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -66,12 +68,13 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	// We only need ExternalURL from this template object. This hack should go away with https://github.com/prometheus/alertmanager/pull/2508.
 	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.externalUrl}, as, gokit_log.NewNopLogger())
 
+	title := getTitleFromTemplateData(data)
+
 	cmd := &models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
-			Subject: "TODO",
+			Subject: title,
 			Data: map[string]interface{}{
-				"Title":             "TODO",
-				"Subject":           "TODO",
+				"Title":             title,
 				"Receiver":          data.Receiver,
 				"Status":            data.Status,
 				"Alerts":            data.Alerts,
@@ -93,6 +96,18 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	return true, nil
+}
+
+func getTitleFromTemplateData(data *template.Data) string {
+	title := "[" + data.Status
+	if data.Status == string(model.AlertFiring) {
+		title += fmt.Sprintf(":%d", len(data.Alerts.Firing()))
+	}
+	title += "]" + strings.Join(data.GroupLabels.SortedPairs().Values(), " ") + " "
+	if len(data.CommonLabels) > len(data.GroupLabels) {
+		title += "(" + strings.Join(data.CommonLabels.Remove(data.GroupLabels.Names()).Values(), " ") + ")"
+	}
+	return title
 }
 
 func (en *EmailNotifier) SendResolved() bool {

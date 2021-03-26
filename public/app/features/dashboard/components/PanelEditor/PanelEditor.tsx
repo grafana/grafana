@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { Prompt } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css, cx } from 'emotion';
 import { Subscription } from 'rxjs';
@@ -29,6 +30,7 @@ import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
 import {
   exitPanelEditor,
+  discardPanelChanges,
   initPanelEditor,
   panelEditorCleanUp,
   updatePanelEditorUIState,
@@ -36,7 +38,6 @@ import {
 } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { setDiscardChanges } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
@@ -83,7 +84,7 @@ const mapDispatchToProps = {
   exitPanelEditor,
   updateSourcePanel,
   panelEditorCleanUp,
-  setDiscardChanges,
+  discardPanelChanges,
   updatePanelEditorUIState,
   updateTimeZoneForSession,
   notifyApp,
@@ -118,13 +119,16 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onDiscard = () => {
-    this.props.setDiscardChanges(true);
-
+  onBack = () => {
     locationService.partial({
       editPanel: null,
       tab: null,
     });
+  };
+
+  onDiscard = () => {
+    this.props.discardPanelChanges();
+    this.onBack();
   };
 
   onOpenDashboardSettings = () => {
@@ -148,12 +152,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       return;
     }
 
-    if (this.props.panel.libraryPanel.meta.connectedDashboards === 0) {
-      return;
-    }
-
     const connectedDashboards = await getLibraryPanelConnectedDashboards(this.props.panel.libraryPanel.uid);
-    if (connectedDashboards.length === 1 && connectedDashboards.indexOf(this.props.dashboard.id) !== -1) {
+    if (
+      connectedDashboards.length === 0 ||
+      (connectedDashboards.length === 1 && connectedDashboards.includes(this.props.dashboard.id))
+    ) {
       try {
         await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
         this.props.updateSourcePanel(this.props.panel);
@@ -327,12 +330,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           Save
         </ToolbarButton>
       ),
-      <ToolbarButton
-        onClick={this.props.exitPanelEditor}
-        variant="primary"
-        title="Apply changes and go back to dashboard"
-        key="apply"
-      >
+      <ToolbarButton onClick={this.onBack} variant="primary" title="Apply changes and go back to dashboard" key="apply">
         Apply
       </ToolbarButton>,
     ];
@@ -408,6 +406,18 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
+        <Prompt
+          when={true}
+          message={(location) => {
+            const searchParams = new URLSearchParams(location.search);
+            if (!this.props.panel.libraryPanel || !this.props.panel.hasChanged || searchParams.has('editPanel')) {
+              return true;
+            }
+
+            exitPanelEditor();
+            return false;
+          }}
+        />
         <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={exitPanelEditor}>
           {this.renderEditorActions()}
         </PageToolbar>
