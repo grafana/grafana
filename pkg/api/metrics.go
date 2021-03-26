@@ -149,7 +149,7 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 	if err != nil {
 		return response.Error(500, "expression request error", err)
 	}
-	return toMacronResponse(qdr, nil)
+	return toMacronResponse(qdr)
 }
 
 func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *response.NormalResponse {
