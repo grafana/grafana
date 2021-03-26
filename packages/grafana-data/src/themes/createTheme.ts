@@ -1,5 +1,6 @@
 import { createBreakpoints, ThemeBreakpoints } from './breakpoints';
-import { createColors, ThemeColors, ThemeColorsInput } from './colors';
+import { createColors, ThemeColors, ThemeColorsInput } from './createColors';
+import { createSpacing, ThemeSpacingOptions, ThemeSpacing } from './createSpacing';
 
 export interface GrafanaTheme {
   name: string;
@@ -7,18 +8,21 @@ export interface GrafanaTheme {
   isLight: boolean;
   colors: ThemeColors;
   breakpoints: ThemeBreakpoints;
+  spacing: ThemeSpacing;
 }
 
 export interface NewThemeOptions {
   name?: string;
   colors?: ThemeColorsInput;
+  spacing?: ThemeSpacingOptions;
 }
 
 export function createTheme(options: NewThemeOptions = {}): GrafanaTheme {
-  const { name = 'Dark', colors: colorsInput = {} } = options;
+  const { name = 'Dark', colors: colorsInput = {}, spacing: spacingInput = {} } = options;
 
   const colors = createColors(colorsInput);
   const breakpoints = createBreakpoints();
+  const spacing = createSpacing(spacingInput);
 
   return {
     name,
@@ -26,5 +30,6 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme {
     isLight: colors.mode === 'light',
     colors,
     breakpoints,
+    spacing,
   };
 }

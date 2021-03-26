@@ -5,8 +5,7 @@ import { DeepPartial } from './types';
 export interface ThemeRichColor {
   name: string;
   main: string;
-  light: string;
-  dark: string;
+  text: string;
   contrastText: string;
 }
 
@@ -15,6 +14,10 @@ export interface ThemeColorsBase<TColor> {
 
   primary: TColor;
   secondary: TColor;
+  info: TColor;
+  error: TColor;
+  success: TColor;
+  warning: TColor;
 
   background: {
     layer0: string;
@@ -35,11 +38,15 @@ export interface ThemeColorsBase<TColor> {
     disabled: string;
   };
 
+  hoverFactor: number;
   contrastThreshold: number;
 }
 
 export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
-  getContrastText(background: string): string;
+  /** Returns a text color for the background */
+  textForBg(background: string): string;
+  /* Retruns a hover color for any background */
+  forHover(background: string): string;
 }
 
 export type ThemeColorsInput = DeepPartial<ThemeColorsBase<ThemeRichColor>>;
@@ -52,6 +59,18 @@ const dark: ThemeColorsBase<Partial<ThemeRichColor>> = {
   secondary: {
     main: palette.gray15,
   },
+  info: {
+    main: palette.blue80,
+  },
+  error: {
+    main: palette.red88,
+  },
+  success: {
+    main: palette.greenBase,
+  },
+  warning: {
+    main: palette.orange,
+  },
   background: {
     layer0: palette.gray05,
     layer1: palette.gray10,
@@ -64,11 +83,12 @@ const dark: ThemeColorsBase<Partial<ThemeRichColor>> = {
     b3: palette.gray25,
   },
   text: {
-    primary: palette.gray85,
-    secondary: palette.gray60,
-    disabled: palette.gray33,
+    primary: 'rgba(255, 255, 255, 0.8)',
+    secondary: 'rgba(255, 255, 255, 0.6)',
+    disabled: 'rgba(255, 255, 255, 0.4)',
   },
   contrastThreshold: 3,
+  hoverFactor: 1.1,
 };
 
 const light: ThemeColorsBase<Partial<ThemeRichColor>> = {
@@ -79,6 +99,18 @@ const light: ThemeColorsBase<Partial<ThemeRichColor>> = {
   secondary: {
     main: palette.gray15,
   },
+  info: {
+    main: palette.blue80,
+  },
+  error: {
+    main: palette.red88,
+  },
+  success: {
+    main: palette.greenBase,
+  },
+  warning: {
+    main: palette.orange,
+  },
   background: {
     layer0: palette.gray05,
     layer1: palette.gray10,
@@ -91,18 +123,32 @@ const light: ThemeColorsBase<Partial<ThemeRichColor>> = {
     b3: palette.gray25,
   },
   text: {
-    primary: palette.gray33,
-    secondary: palette.gray60,
-    disabled: palette.gray70,
+    primary: 'rgba(0, 0, 0, 0.87)',
+    secondary: 'rgba(0, 0, 0, 0.54)',
+    disabled: 'rgba(0, 0, 0, 0.38)',
   },
   contrastThreshold: 3,
+  hoverFactor: 1.1,
 };
 
 export function createColors(colors: ThemeColorsInput): ThemeColors {
   const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;
-  const { primary = base.primary, secondary = base.secondary, ...other } = colors;
+  const {
+    primary = base.primary,
+    secondary = base.secondary,
+    info = base.info,
+    warning = base.warning,
+    success = base.success,
+    error = base.error,
+    ...other
+  } = colors;
 
-  function getContrastText(color: string) {
+  function textForBg(color: string) {
+    // todo, need color framework
+    return color;
+  }
+
+  function forHover(color: string) {
     return color;
   }
 
@@ -121,7 +167,12 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       ...base,
       primary: getRichColor({ color: primary, name: 'primary' }),
       secondary: getRichColor({ color: secondary, name: 'secondary' }),
-      getContrastText,
+      info: getRichColor({ color: info, name: 'info' }),
+      error: getRichColor({ color: error, name: 'error' }),
+      success: getRichColor({ color: success, name: 'success' }),
+      warning: getRichColor({ color: warning, name: 'warning' }),
+      textForBg,
+      forHover,
     },
     other
   );
