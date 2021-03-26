@@ -185,6 +185,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			rows, err := db.Query(rawSQL)
 			if err != nil {
 				queryResult.Error = e.queryResultTransformer.TransformQueryError(err)
+				ch <- queryResult
 				return
 			}
 			defer func() {
@@ -200,12 +201,14 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				err := e.transformToTimeSeries(query, rows, &queryResult, queryContext)
 				if err != nil {
 					queryResult.Error = err
+					ch <- queryResult
 					return
 				}
 			case "table":
 				err := e.transformToTable(query, rows, &queryResult, queryContext)
 				if err != nil {
 					queryResult.Error = err
+					ch <- queryResult
 					return
 				}
 			}
