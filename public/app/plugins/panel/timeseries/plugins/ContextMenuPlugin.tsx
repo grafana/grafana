@@ -102,7 +102,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     onClose();
   });
 
-  const xField = graphContext.getXAxisField(data);
+  const xField = graphContext.getXAxisField();
 
   if (!xField) {
     return null;

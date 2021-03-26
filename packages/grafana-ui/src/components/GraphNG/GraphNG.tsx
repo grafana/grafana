@@ -188,6 +188,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
         value={{
           mapSeriesIndexToDataFrameFieldIndex: this.mapSeriesIndexToDataFrameFieldIndex,
           dimFields: this.state.dimFields,
+          data: this.state.alignedDataFrame,
         }}
       >
         <VizLayout width={width} height={height} legend={this.renderLegend()}>

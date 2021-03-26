@@ -6,6 +6,7 @@ import React, { useCallback, useContext } from 'react';
 interface GraphNGContextType {
   mapSeriesIndexToDataFrameFieldIndex: (index: number) => DataFrameFieldIndex;
   dimFields: XYFieldMatchers;
+  data: DataFrame;
 }
 
 /** @alpha */
@@ -16,30 +17,25 @@ export const GraphNGContext = React.createContext<GraphNGContextType>({} as Grap
  * Exposes API for data frame inspection in Plot plugins
  */
 export const useGraphNGContext = () => {
-  const graphCtx = useContext<GraphNGContextType>(GraphNGContext);
+  const { data, dimFields, mapSeriesIndexToDataFrameFieldIndex } = useContext<GraphNGContextType>(GraphNGContext);
 
-  const getXAxisField = useCallback(
-    (data: DataFrame[]) => {
-      const xFieldMatcher = graphCtx.dimFields.x;
-      let xField: Field | null = null;
+  const getXAxisField = useCallback(() => {
+    const xFieldMatcher = dimFields.x;
+    let xField: Field | null = null;
 
-      for (let i = 0; i < data.length; i++) {
-        const frame = data[i];
-        for (let j = 0; j < frame.fields.length; j++) {
-          if (xFieldMatcher(frame.fields[j], frame, data)) {
-            xField = frame.fields[j];
-            break;
-          }
-        }
+    for (let j = 0; j < data.fields.length; j++) {
+      if (xFieldMatcher(data.fields[j], data, [data])) {
+        xField = data.fields[j];
+        break;
       }
+    }
 
-      return xField;
-    },
-    [graphCtx]
-  );
+    return xField;
+  }, [data, dimFields]);
 
   return {
-    ...graphCtx,
+    dimFields,
+    mapSeriesIndexToDataFrameFieldIndex,
     getXAxisField,
   };
 };

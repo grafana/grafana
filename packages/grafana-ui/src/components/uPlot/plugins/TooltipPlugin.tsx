@@ -29,7 +29,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
   const plotContext = usePlotContext();
   const graphContext = useGraphNGContext();
 
-  let xField = graphContext.getXAxisField(otherProps.data);
+  let xField = graphContext.getXAxisField();
   if (!xField) {
     return null;
   }
@@ -60,8 +60,9 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
         if (mode === 'single' && originFieldIndex !== null) {
           const field = otherProps.data[originFieldIndex.frameIndex].fields[originFieldIndex.fieldIndex];
           const plotSeries = plotContext.getSeries();
-
           const fieldFmt = field.display || getDisplayProcessor({ field, timeZone });
+          const value = fieldFmt(plotContext.data[focusedSeriesIdx!][focusedPointIdx]);
+
           tooltip = (
             <SeriesTable
               series={[
@@ -69,7 +70,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
                   // TODO: align with uPlot typings
                   color: (plotSeries[focusedSeriesIdx!].stroke as any)(),
                   label: getFieldDisplayName(field, otherProps.data[originFieldIndex.frameIndex]),
-                  value: fieldFmt(field.values.get(focusedPointIdx)).text,
+                  value: value ? formattedValueToString(value) : null,
                 },
               ]}
               timestamp={xVal}
@@ -94,11 +95,13 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
               continue;
             }
 
+            const value = field.display!(plotContext.data[i][focusedPointIdx]);
+
             series.push({
               // TODO: align with uPlot typings
               color: (plotSeries[i].stroke as any)!(),
               label: getFieldDisplayName(field, frame),
-              value: formattedValueToString(field.display!(field.values.get(focusedPointIdx!))),
+              value: value ? formattedValueToString(value) : null,
               isActive: originFieldIndex
                 ? dataFrameFieldIndex.frameIndex === originFieldIndex.frameIndex &&
                   dataFrameFieldIndex.fieldIndex === originFieldIndex.fieldIndex
