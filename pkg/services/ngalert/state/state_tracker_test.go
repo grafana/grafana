@@ -6,8 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
-	"github.com/go-openapi/strfmt"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -34,8 +32,14 @@ func TestProcessEvalResults(t *testing.T) {
 			uid:  "test_uid",
 			evalResults: eval.Results{
 				eval.Result{
-					Instance: data.Labels{"label1": "value1", "label2": "value2"},
+					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
+					State:       eval.Normal,
+					EvaluatedAt: evaluationTime,
 				},
+			},
+			condition: models.Condition{
+				Condition: "A",
+				OrgID:     123,
 			},
 			expectedState:              eval.Normal,
 			expectedReturnedStateCount: 0,
@@ -43,13 +47,14 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedCacheEntries: []AlertState{
 				{
 					UID:         "test_uid",
+					OrgID:       123,
 					CacheId:     "test_uid label1=value1, label2=value2",
 					Labels:      data.Labels{"label1": "value1", "label2": "value2"},
 					State:       eval.Normal,
 					Results:     []eval.State{eval.Normal},
-					StartsAt:    strfmt.DateTime{},
-					EndsAt:      strfmt.DateTime{},
-					EvaluatedAt: strfmt.DateTime(evaluationTime),
+					StartsAt:    time.Time{},
+					EndsAt:      time.Time{},
+					EvaluatedAt: evaluationTime,
 				},
 			},
 		},
@@ -58,13 +63,19 @@ func TestProcessEvalResults(t *testing.T) {
 			uid:  "test_uid",
 			evalResults: eval.Results{
 				eval.Result{
-					Instance: data.Labels{"label1": "value1", "label2": "value2"},
-					State:    eval.Normal,
+					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
+					State:       eval.Normal,
+					EvaluatedAt: evaluationTime,
 				},
 				eval.Result{
-					Instance: data.Labels{"label1": "value1", "label2": "value2"},
-					State:    eval.Alerting,
+					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
+					State:       eval.Alerting,
+					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
 				},
+			},
+			condition: models.Condition{
+				Condition: "A",
+				OrgID:     123,
 			},
 			expectedState:              eval.Alerting,
 			expectedReturnedStateCount: 1,
@@ -72,13 +83,14 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedCacheEntries: []AlertState{
 				{
 					UID:         "test_uid",
+					OrgID:       123,
 					CacheId:     "test_uid label1=value1, label2=value2",
 					Labels:      data.Labels{"label1": "value1", "label2": "value2"},
 					State:       eval.Alerting,
 					Results:     []eval.State{eval.Normal, eval.Alerting},
-					StartsAt:    strfmt.DateTime{},
-					EndsAt:      strfmt.DateTime{},
-					EvaluatedAt: strfmt.DateTime(evaluationTime),
+					StartsAt:    evaluationTime.Add(1 * time.Minute),
+					EndsAt:      evaluationTime.Add(100 * time.Second),
+					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
 				},
 			},
 		},
@@ -87,13 +99,19 @@ func TestProcessEvalResults(t *testing.T) {
 			uid:  "test_uid",
 			evalResults: eval.Results{
 				eval.Result{
-					Instance: data.Labels{"label1": "value1", "label2": "value2"},
-					State:    eval.Alerting,
+					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
+					State:       eval.Alerting,
+					EvaluatedAt: evaluationTime,
 				},
 				eval.Result{
-					Instance: data.Labels{"label1": "value1", "label2": "value2"},
-					State:    eval.Normal,
+					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
+					State:       eval.Normal,
+					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
 				},
+			},
+			condition: models.Condition{
+				Condition: "A",
+				OrgID:     123,
 			},
 			expectedState:              eval.Normal,
 			expectedReturnedStateCount: 1,
@@ -101,13 +119,14 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedCacheEntries: []AlertState{
 				{
 					UID:         "test_uid",
+					OrgID:       123,
 					CacheId:     "test_uid label1=value1, label2=value2",
 					Labels:      data.Labels{"label1": "value1", "label2": "value2"},
 					State:       eval.Normal,
 					Results:     []eval.State{eval.Alerting, eval.Normal},
-					StartsAt:    strfmt.DateTime{},
-					EndsAt:      strfmt.DateTime{},
-					EvaluatedAt: strfmt.DateTime(evaluationTime),
+					StartsAt:    time.Time{},
+					EndsAt:      evaluationTime.Add(1 * time.Minute),
+					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
 				},
 			},
 		},
@@ -116,13 +135,19 @@ func TestProcessEvalResults(t *testing.T) {
 			uid:  "test_uid",
 			evalResults: eval.Results{
 				eval.Result{
-					Instance: data.Labels{"label1": "value1", "label2": "value2"},
-					State:    eval.Alerting,
+					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
+					State:       eval.Alerting,
+					EvaluatedAt: evaluationTime,
 				},
 				eval.Result{
-					Instance: data.Labels{"label1": "value1", "label2": "value2"},
-					State:    eval.Alerting,
+					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
+					State:       eval.Alerting,
+					EvaluatedAt: evaluationTime,
 				},
+			},
+			condition: models.Condition{
+				Condition: "A",
+				OrgID:     123,
 			},
 			expectedState:              eval.Alerting,
 			expectedReturnedStateCount: 0,
@@ -130,13 +155,14 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedCacheEntries: []AlertState{
 				{
 					UID:         "test_uid",
+					OrgID:       123,
 					CacheId:     "test_uid label1=value1, label2=value2",
 					Labels:      data.Labels{"label1": "value1", "label2": "value2"},
 					State:       eval.Alerting,
 					Results:     []eval.State{eval.Alerting, eval.Alerting},
-					StartsAt:    strfmt.DateTime{},
-					EndsAt:      strfmt.DateTime{},
-					EvaluatedAt: strfmt.DateTime(evaluationTime),
+					StartsAt:    time.Time{},
+					EndsAt:      time.Time{},
+					EvaluatedAt: evaluationTime,
 				},
 			},
 		},
@@ -145,13 +171,19 @@ func TestProcessEvalResults(t *testing.T) {
 			uid:  "test_uid",
 			evalResults: eval.Results{
 				eval.Result{
-					Instance: data.Labels{"label1": "value1", "label2": "value2"},
-					State:    eval.Normal,
+					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
+					State:       eval.Normal,
+					EvaluatedAt: evaluationTime,
 				},
 				eval.Result{
-					Instance: data.Labels{"label1": "value1", "label2": "value2"},
-					State:    eval.Normal,
+					Instance:    data.Labels{"label1": "value1", "label2": "value2"},
+					State:       eval.Normal,
+					EvaluatedAt: evaluationTime,
 				},
+			},
+			condition: models.Condition{
+				Condition: "A",
+				OrgID:     123,
 			},
 			expectedState:              eval.Normal,
 			expectedReturnedStateCount: 0,
@@ -159,50 +191,38 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedCacheEntries: []AlertState{
 				{
 					UID:         "test_uid",
+					OrgID:       123,
 					CacheId:     "test_uid label1=value1, label2=value2",
 					Labels:      data.Labels{"label1": "value1", "label2": "value2"},
 					State:       eval.Normal,
 					Results:     []eval.State{eval.Normal, eval.Normal},
-					StartsAt:    strfmt.DateTime{},
-					EndsAt:      strfmt.DateTime{},
-					EvaluatedAt: strfmt.DateTime(evaluationTime),
+					StartsAt:    time.Time{},
+					EndsAt:      time.Time{},
+					EvaluatedAt: evaluationTime,
 				},
 			},
 		},
 	}
 
 	for _, tc := range testCases {
+		t.Run("all fields for a cache entry are set correctly", func(t *testing.T) {
+			st := NewStateTracker(log.New("test_state_tracker"))
+			_ = st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
+			for _, entry := range tc.expectedCacheEntries {
+				assert.True(t, entry.Equals(st.get(entry.CacheId)))
+			}
+		})
+
 		t.Run("the correct number of entries are added to the cache", func(t *testing.T) {
 			st := NewStateTracker(log.New("test_state_tracker"))
 			st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
 			assert.Equal(t, len(tc.expectedCacheEntries), len(st.stateCache.cacheMap))
 		})
 
-		t.Run("the correct state is set for each evaluation result", func(t *testing.T) {
-			st := NewStateTracker(log.New("test_state_tracker"))
-			st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
-			for _, entry := range tc.expectedCacheEntries {
-				testState := st.get(entry.CacheId)
-				assert.Equal(t, tc.expectedState, testState.State)
-			}
-		})
-
 		t.Run("the correct number of states are returned to the caller", func(t *testing.T) {
 			st := NewStateTracker(log.New("test_state_tracker"))
 			results := st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
 			assert.Equal(t, tc.expectedReturnedStateCount, len(results))
-		})
-
-		t.Run("the correct results are set for each cache entry", func(t *testing.T) {
-			st := NewStateTracker(log.New("test_state_tracker"))
-			_ = st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
-			for _, entry := range tc.expectedCacheEntries {
-				testState := st.get(entry.CacheId)
-				assert.Equal(t, len(entry.Results), len(testState.Results))
-				for i, res := range entry.Results {
-					assert.Equal(t, res, testState.Results[i])
-				}
-			}
 		})
 	}
 }

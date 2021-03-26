@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
-	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -15,13 +14,14 @@ import (
 
 type AlertState struct {
 	UID         string
+	OrgID       int64
 	CacheId     string
 	Labels      data.Labels
 	State       eval.State
 	Results     []eval.State
-	StartsAt    strfmt.DateTime
-	EndsAt      strfmt.DateTime
-	EvaluatedAt strfmt.DateTime
+	StartsAt    time.Time
+	EndsAt      time.Time
+	EvaluatedAt time.Time
 }
 
 type cache struct {
@@ -48,7 +48,7 @@ func NewStateTracker(logger log.Logger) *StateTracker {
 	return tracker
 }
 
-func (st *StateTracker) getOrCreate(uid string, result eval.Result) AlertState {
+func (st *StateTracker) getOrCreate(uid string, orgId int64, result eval.Result) AlertState {
 	st.stateCache.mu.Lock()
 	defer st.stateCache.mu.Unlock()
 
@@ -59,11 +59,12 @@ func (st *StateTracker) getOrCreate(uid string, result eval.Result) AlertState {
 	st.Log.Debug("adding new alert state cache entry", "cacheId", idString, "state", result.State.String(), "evaluatedAt", result.EvaluatedAt.String())
 	newState := AlertState{
 		UID:         uid,
+		OrgID:       orgId,
 		CacheId:     idString,
 		Labels:      result.Instance,
 		State:       result.State,
 		Results:     []eval.State{},
-		EvaluatedAt: strfmt.DateTime(result.EvaluatedAt),
+		EvaluatedAt: result.EvaluatedAt,
 	}
 	st.stateCache.cacheMap[idString] = newState
 	return newState
@@ -85,7 +86,7 @@ func (st *StateTracker) ProcessEvalResults(uid string, results eval.Results, con
 	st.Log.Info("state tracker processing evaluation results", "uid", uid, "resultCount", len(results))
 	var changedStates []AlertState
 	for _, result := range results {
-		if s, ok := st.setNextState(uid, result); ok {
+		if s, ok := st.setNextState(uid, condition.OrgID, result); ok {
 			changedStates = append(changedStates, s)
 		}
 	}
@@ -95,36 +96,46 @@ func (st *StateTracker) ProcessEvalResults(uid string, results eval.Results, con
 
 //Set the current state based on evaluation results
 //return the state and a bool indicating whether a state transition occurred
-func (st *StateTracker) setNextState(uid string, result eval.Result) (AlertState, bool) {
-	currentState := st.getOrCreate(uid, result)
+func (st *StateTracker) setNextState(uid string, orgId int64, result eval.Result) (AlertState, bool) {
+	currentState := st.getOrCreate(uid, orgId, result)
 	st.Log.Debug("setting alert state", "uid", uid)
 	switch {
 	case currentState.State == result.State:
 		st.Log.Debug("no state transition", "cacheId", currentState.CacheId, "state", currentState.State.String())
-		currentState.EvaluatedAt = strfmt.DateTime(result.EvaluatedAt)
+		currentState.EvaluatedAt = result.EvaluatedAt
 		currentState.Results = append(currentState.Results, result.State)
 		st.set(currentState)
 		return currentState, false
 	case currentState.State == eval.Normal && result.State == eval.Alerting:
 		st.Log.Debug("state transition from normal to alerting", "cacheId", currentState.CacheId)
 		currentState.State = eval.Alerting
-		currentState.EvaluatedAt = strfmt.DateTime(result.EvaluatedAt)
-		currentState.StartsAt = strfmt.DateTime(result.EvaluatedAt)
-		currentState.EndsAt = strfmt.DateTime(result.EvaluatedAt.Add(40 * time.Second))
+		currentState.EvaluatedAt = result.EvaluatedAt
+		currentState.StartsAt = result.EvaluatedAt
+		currentState.EndsAt = result.EvaluatedAt.Add(40 * time.Second)
 		currentState.Results = append(currentState.Results, result.State)
 		st.set(currentState)
 		return currentState, true
 	case currentState.State == eval.Alerting && result.State == eval.Normal:
 		st.Log.Debug("state transition from alerting to normal", "cacheId", currentState.CacheId)
 		currentState.State = eval.Normal
-		currentState.EvaluatedAt = strfmt.DateTime(result.EvaluatedAt)
-		currentState.EndsAt = strfmt.DateTime(result.EvaluatedAt)
+		currentState.EvaluatedAt = result.EvaluatedAt
+		currentState.EndsAt = result.EvaluatedAt
 		currentState.Results = append(currentState.Results, result.State)
 		st.set(currentState)
 		return currentState, true
 	default:
 		return currentState, false
 	}
+}
+
+func (st *StateTracker) GetAll() []AlertState {
+	var states []AlertState
+	st.stateCache.mu.Lock()
+	defer st.stateCache.mu.Unlock()
+	for _, v := range st.stateCache.cacheMap {
+		states = append(states, v)
+	}
+	return states
 }
 
 func (st *StateTracker) cleanUp() {
@@ -159,4 +170,25 @@ func (st *StateTracker) trim() {
 			st.set(v)
 		}
 	}
+}
+
+func (a AlertState) Equals(b AlertState) bool {
+	return a.UID == b.UID &&
+		a.OrgID == b.OrgID &&
+		a.CacheId == b.CacheId &&
+		a.Labels.String() == b.Labels.String() &&
+		a.State.String() == b.State.String() &&
+		resultsEquals(a.Results, b.Results) &&
+		a.StartsAt == b.StartsAt &&
+		a.EndsAt == b.EndsAt &&
+		a.EvaluatedAt == b.EvaluatedAt
+}
+
+func resultsEquals(a, b []eval.State) bool {
+	for i, s := range a {
+		if s.String() != b[i].String() {
+			return false
+		}
+	}
+	return true
 }

@@ -78,15 +78,9 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
-				for _, r := range results {
-					sch.log.Info("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
-					cmd := models.SaveAlertInstanceCommand{DefinitionOrgID: key.OrgID, DefinitionUID: key.DefinitionUID, State: models.InstanceStateType(r.State.String()), Labels: models.InstanceLabels(r.Instance), LastEvalTime: ctx.now}
-					err := sch.store.SaveAlertInstance(&cmd)
-					if err != nil {
-						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
-					}
-				}
+
 				transitionedStates := stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
+				sch.SaveAlertStates(transitionedStates)
 				alerts := FromAlertStateToPostableAlerts(transitionedStates)
 				err = sch.SendAlerts(alerts)
 				if err != nil {
@@ -312,6 +306,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 			}
 		case <-grafanaCtx.Done():
 			err := dispatcherGroup.Wait()
+			sch.SaveAlertStates(stateTracker.GetAll())
 			return err
 		}
 	}
@@ -319,6 +314,23 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 
 func (sch *schedule) SendAlerts(alerts []*notifier.PostableAlert) error {
 	return sch.notifier.PutAlerts(alerts...)
+}
+
+func (sch *schedule) SaveAlertStates(states []state.AlertState) {
+	sch.log.Debug("saving alert states", "count", len(states))
+	for _, s := range states {
+		cmd := models.SaveAlertInstanceCommand{
+			DefinitionOrgID: s.OrgID,
+			DefinitionUID:   s.UID,
+			Labels:          models.InstanceLabels(s.Labels),
+			State:           models.InstanceStateType(s.State.String()),
+			LastEvalTime:    s.EvaluatedAt,
+		}
+		err := sch.store.SaveAlertInstance(&cmd)
+		if err != nil {
+			sch.log.Error("failed to save alert state", "uid", s.UID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String())
+		}
+	}
 }
 
 type alertDefinitionRegistry struct {
