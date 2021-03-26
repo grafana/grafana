@@ -9,7 +9,12 @@ import {
 import { Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
-import { FetchResponse, setBackendSrv, BackendDataSourceResponse } from '@grafana/runtime';
+import { FetchResponse, setBackendSrv } from '@grafana/runtime';
+import { DataResponse } from '@grafana/runtime/src/utils/queryResponse';
+
+interface BackendDataSourceResponse {
+  results: DataResponse[];
+}
 
 describe('Tempo data source', () => {
   it('parses json fields from backend', async () => {
@@ -51,7 +56,7 @@ function setupBackendSrv(frame: DataFrame) {
               dataframes: [encode(frame)],
             },
           },
-        })
+        }) as any
       );
     },
   } as any);
