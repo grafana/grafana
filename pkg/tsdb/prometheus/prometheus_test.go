@@ -182,6 +182,7 @@ func TestParseResponse(t *testing.T) {
 		require.Len(t, decoded[0].Fields[1].Labels, 2)
 		require.Equal(t, decoded[0].Fields[1].Labels.String(), "app=Application, tag2=tag2")
 		require.Equal(t, decoded[0].Fields[1].Name, "value")
+		require.Equal(t, decoded[0].Fields[1].Config.DisplayNameFromDS, "legend Application")
 
 		// Ensure the timestamps are UTC zoned
 		testValue := decoded[0].Fields[0].At(0)

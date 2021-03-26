@@ -216,7 +216,7 @@ func parseResponse(value model.Value, query *PrometheusQuery) (plugins.DataQuery
 		}
 		frames = append(frames, data.NewFrame(name,
 			data.NewField("time", nil, timeVector),
-			data.NewField("value", tags, values)))
+			data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
 	}
 	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
 
