@@ -159,27 +159,22 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
   }
 
   const getRichColor = ({ color, name }: GetRichColorProps): ThemeRichColor => {
-    color = { ...color };
+    color = { ...color, name };
     if (!color.main) {
       throw new Error(`Missing main color for ${name}`);
     }
-
     if (!color.dark) {
-      // missing color manipulation functions
+      // missing color manipulation functions in grafana/data
       color.dark = 'darken(color.main, tonalOffset)';
     }
-
     if (!color.light) {
-      // missing color manipulation functions
+      // missing color manipulation functions in grafana/data
       color.light = 'lighten(color.main, tonalOffset)';
     }
-
     if (!color.contrastText) {
-      // missing color manipulation functions
       color.contrastText = textForBg(color.main);
     }
 
-    color.name = name;
     return color as ThemeRichColor;
   };
 
