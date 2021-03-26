@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, FormEvent } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { ClassicCondition, ReducerType } from '../types';
 
 interface Props {
   condition: ClassicCondition;
-  onChange: (condition: ClassicCondition, index: number) => void;
+  onChange: (condition: ClassicCondition) => void;
   onRemoveCondition: (id: number) => void;
   index: number;
   refIds: Array<SelectableValue<string>>;
@@ -21,51 +21,52 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
   const styles = useStyles(getStyles);
 
   const onEvalOperatorChange = (evalOperator: SelectableValue<string>) => {
-    onChange(
-      {
-        ...condition,
-        operator: { type: evalOperator.value! },
-      },
-      index
-    );
+    onChange({
+      ...condition,
+      operator: { type: evalOperator.value! },
+    });
   };
 
   const onReducerFunctionChange = (conditionFunction: SelectableValue<string>) => {
-    onChange(
-      {
-        ...condition,
-        reducer: { type: conditionFunction.value! as ReducerType, params: [] },
-      },
-      index
-    );
+    onChange({
+      ...condition,
+      reducer: { type: conditionFunction.value! as ReducerType, params: [] },
+    });
   };
 
   const onRefIdChange = (refId: SelectableValue<string>) => {
-    onChange(
-      {
-        ...condition,
-        query: { params: [refId.value!] },
-      },
-      index
-    );
+    onChange({
+      ...condition,
+      query: { params: [refId.value!] },
+    });
   };
 
   const onEvalFunctionChange = (evalFunction: SelectableValue<string>) => {
-    onChange(
-      {
-        ...condition,
-        evaluator: { params: [], type: evalFunction.value! },
-      },
-      index
-    );
+    onChange({
+      ...condition,
+      evaluator: { params: [], type: evalFunction.value! },
+    });
+  };
+
+  const onEvaluateValueChange = (event: FormEvent<HTMLInputElement>, index: number) => {
+    const newValue = parseFloat(event.currentTarget.value);
+    const newParams = [...condition.evaluator.params];
+    newParams[index] = newValue;
+
+    onChange({
+      ...condition,
+      evaluator: { ...condition.evaluator, params: newParams },
+    });
   };
 
   const buttonWidth = css`
     width: 60px;
   `;
 
+  const isRange = condition.evaluator.type === 'within_range' || condition.evaluator.type === 'outside_range';
+
   return (
-    <InlineFieldRow key={index}>
+    <InlineFieldRow>
       {index === 0 ? (
         <div className={cx(styles.button, buttonWidth)}>WHEN</div>
       ) : (
@@ -83,14 +84,43 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
         value={reducerFunctions.find((rf) => rf.value === condition.reducer.type)}
       />
       <div className={styles.button}>OF</div>
-      <Select onChange={onRefIdChange} options={refIds} width={15} value={condition.query.params[0]} />
+      <Select
+        onChange={onRefIdChange}
+        options={refIds}
+        width={15}
+        value={refIds.find((r) => r.value === condition.query.params[0])}
+      />
       <ButtonSelect
         className={styles.buttonSelectText}
         options={evalFunctions}
         onChange={onEvalFunctionChange}
         value={evalFunctions.find((ef) => ef.value === condition.evaluator.type)}
       />
-      <Input type="number" width={20} />
+      {isRange ? (
+        <>
+          <Input
+            type="number"
+            width={10}
+            onChange={(event) => onEvaluateValueChange(event, 0)}
+            value={condition.evaluator.params[0]}
+          />
+          <div className={styles.button}>TO</div>
+          <Input
+            type="number"
+            width={10}
+            onChange={(event) => onEvaluateValueChange(event, 1)}
+            value={condition.evaluator.params[1]}
+          />
+        </>
+      ) : (
+        <Input
+          type="number"
+          width={10}
+          onChange={(event) => onEvaluateValueChange(event, 0)}
+          value={condition.evaluator.params[0]}
+        />
+      )}
+
       <Button variant="secondary" onClick={() => onRemoveCondition(index)}>
         <Icon name="trash-alt" />
       </Button>

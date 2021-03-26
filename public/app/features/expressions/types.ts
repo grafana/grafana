@@ -4,7 +4,7 @@ export enum ExpressionQueryType {
   math = 'math',
   reduce = 'reduce',
   resample = 'resample',
-  classic = 'classic',
+  classic = 'classic_conditions',
 }
 
 export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [

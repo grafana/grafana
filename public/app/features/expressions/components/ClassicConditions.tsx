@@ -3,16 +3,15 @@ import { SelectableValue } from '@grafana/data';
 import { Button, Icon, InlineField, InlineFieldRow } from '@grafana/ui';
 import { Condition } from './Condition';
 import { ClassicCondition, ExpressionQuery } from '../types';
+import { defaultCondition } from '../utils/expressionTypes';
 
 interface Props {
   query: ExpressionQuery;
   refIds: Array<SelectableValue<string>>;
-  onAddCondition: () => void;
-  onRemoveCondition: (id: number) => void;
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const ClassicConditions: FC<Props> = ({ onAddCondition, onRemoveCondition, onChange, query, refIds }) => {
+export const ClassicConditions: FC<Props> = ({ onChange, query, refIds }) => {
   const onConditionChange = (condition: ClassicCondition, index: number) => {
     query.conditions![index] = condition;
     onChange({
@@ -21,18 +20,35 @@ export const ClassicConditions: FC<Props> = ({ onAddCondition, onRemoveCondition
     });
   };
 
+  const onAddCondition = () => {
+    onChange({
+      ...query,
+      conditions: [...query.conditions!, defaultCondition],
+    });
+  };
+
+  const onRemoveCondition = (index: number) => {
+    if (query.conditions) {
+      delete query.conditions[index];
+      onChange({
+        ...query,
+        conditions: [...query.conditions!],
+      });
+    }
+  };
+
   return (
     <div>
       <InlineFieldRow>
-        <InlineField label="Conditions">
+        <InlineField label="Conditions" labelWidth={14}>
           <div>
             {query.conditions?.map((condition, index) => {
               return (
                 <Condition
                   key={index}
-                  condition={condition}
                   index={index}
-                  onChange={onConditionChange}
+                  condition={condition}
+                  onChange={(condition: ClassicCondition) => onConditionChange(condition, index)}
                   onRemoveCondition={onRemoveCondition}
                   refIds={refIds}
                 />

@@ -44,9 +44,9 @@ export const defaultCondition: ClassicCondition = {
   operator: {
     type: 'and',
   },
-  query: { params: ['A'] },
+  query: { params: [] },
   evaluator: {
-    params: [2],
+    params: [0, 0],
     type: 'gt',
   },
 };
