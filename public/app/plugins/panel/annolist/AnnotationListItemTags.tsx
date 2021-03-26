@@ -19,7 +19,7 @@ export const AnnotationListItemTags: FC<Props> = ({ tags, remove, onClick }) => 
       e.stopPropagation();
       onClick(tag, remove);
     },
-    [remove]
+    [onClick, remove]
   );
 
   if (!tags || !tags.length) {
