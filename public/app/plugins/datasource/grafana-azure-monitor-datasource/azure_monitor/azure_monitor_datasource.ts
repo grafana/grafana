@@ -82,7 +82,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         if (metricQuery) {
           const url = `https://portal.azure.com/#blade/Microsoft_Azure_MonitoringAz/MetricsV4/Referer/MetricsExplorer/ResourceId/%2Fsubscriptions%2F${
             this.subscriptionId
-          }%2FresourceGroups%2F${metricQuery.resourceGroup}%2Fproviders%2F${metricQuery.metricNamespace.replace(
+          }%2FresourceGroups%2F${metricQuery.resourceGroup}%2Fproviders%2F${metricQuery.metricNamespace?.replace(
             '/',
             '%2F'
           )}%2F${metricQuery.resourceName}`;
