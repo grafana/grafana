@@ -88,4 +88,8 @@ GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_TEXT=Custom Text
 GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_URL=http://your.custom.site
 ```
 
-> **Note:** Any link other than the Grafana edition and version/build number that is not specified in `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS` is removed from the footer.
+> **Note:** The following two links are always present in the footer:
+- Grafana Edition
+- Grafana version with build number
+
+If you specify `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS` then all other default links are removed from the footer and only what is specified is included.
