@@ -164,6 +164,21 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       throw new Error(`Missing main color for ${name}`);
     }
 
+    if (!color.dark) {
+      // missing color manipulation functions
+      color.dark = 'darken(color.main, tonalOffset)';
+    }
+
+    if (!color.light) {
+      // missing color manipulation functions
+      color.light = 'lighten(color.main, tonalOffset)';
+    }
+
+    if (!color.contrastText) {
+      // missing color manipulation functions
+      color.contrastText = textForBg(color.main);
+    }
+
     color.name = name;
     return color as ThemeRichColor;
   };
