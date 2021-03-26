@@ -33,9 +33,9 @@ export interface ThemeColorsBase<TColor> {
   };
 
   border: {
-    b1: string;
-    b2: string;
-    b3: string;
+    layer0: string;
+    layer1: string;
+    layer2: string;
   };
 
   text: {
@@ -84,9 +84,9 @@ const dark: ThemeColorsBase<Partial<ThemeRichColor>> = {
     layer3: palette.gray25,
   },
   border: {
-    b1: palette.gray10,
-    b2: palette.gray15,
-    b3: palette.gray25,
+    layer0: palette.gray10,
+    layer1: palette.gray15,
+    layer2: palette.gray25,
   },
   text: {
     primary: 'rgba(255, 255, 255, 0.8)',
@@ -124,9 +124,9 @@ const light: ThemeColorsBase<Partial<ThemeRichColor>> = {
     layer3: palette.gray25,
   },
   border: {
-    b1: palette.gray10,
-    b2: palette.gray15,
-    b3: palette.gray25,
+    layer0: palette.gray10,
+    layer1: palette.gray15,
+    layer2: palette.gray25,
   },
   text: {
     primary: 'rgba(0, 0, 0, 0.87)',
