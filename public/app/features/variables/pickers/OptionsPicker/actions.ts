@@ -105,7 +105,10 @@ export const commitChangesToVariable = (callback?: (updated: any) => void): Thun
 export const toggleOptionByHighlight = (clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
   return (dispatch, getState) => {
     const { highlightIndex, options } = getState().templating.optionsPicker;
-    const option = options[highlightIndex];
+    let option = options[highlightIndex];
+    if (option === undefined) {
+      option = mapToCurrent(getState().templating.optionsPicker) as VariableOption;
+    }
     dispatch(toggleOption({ option, forceSelect, clearOthers }));
   };
 };
