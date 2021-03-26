@@ -15,7 +15,11 @@
       <table class="twelve columns">
         <tr>
           <td class="center">
-            <h3 style="[[ if gt (len .Alerts.Firing) 0 ]]color: #E6522C;[[end]] font-weight: bold; font-style: italic;">[[.Title]]</h3>
+            [[ if gt (len .Alerts.Firing) 0 ]]
+            <h3 style="color: #E6522C; font-weight: bold; font-style: italic;">[[.Title]]</h3>
+            [[ else ]]
+            <h3 style="font-weight: bold; font-style: italic;">[[.Title]]</h3>
+            [[ end ]]
           </td>
         </tr>
       </table>
