@@ -3,15 +3,17 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../common';
+import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
+const ERROR_SOURCE = 'metrics-metricnamespace';
 const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  setError,
 }) => {
   const [metricNamespaces, setMetricNamespaces] = useState<AzureMonitorOption[]>([]);
 
@@ -26,27 +28,19 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
     datasource
       .getMetricNamespaces(subscriptionId, resourceGroup, metricDefinition, resourceName)
       .then((results) => {
-        // if (results.length === 1) {
-        //   onQueryChange({
-        //     ...query,
-        //     azureMonitor: {
-        //       ...query.azureMonitor,
-        //       metricNamespace: results[0].value,
-        //     },
-        //   });
-        // }
+        if (results.length === 1) {
+          onQueryChange({
+            ...query,
+            azureMonitor: {
+              ...query.azureMonitor,
+              metricNamespace: results[0].value,
+            },
+          });
+        }
         setMetricNamespaces(results.map(toOption));
       })
-      .catch((err) => {
-        // TODO: handle error
-        console.error(err);
-      });
-  }, [
-    subscriptionId,
-    query.azureMonitor.resourceGroup,
-    query.azureMonitor.metricDefinition,
-    query.azureMonitor.resourceName,
-  ]);
+      .catch((err) => setError(ERROR_SOURCE, err));
+  }, [datasource, metricNamespaces.length, onQueryChange, query, setError, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -65,7 +59,7 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...metricNamespaces, variableOptionGroup], [metricNamespaces, variableOptionGroup]);

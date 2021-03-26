@@ -16,7 +16,7 @@ interface AnnotationsDataFrameViewDTO {
 
 export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone }) => {
   const pluginId = 'AnnotationsPlugin';
-  const plotCtx = usePlotContext();
+  const { isPlotReady, registerPlugin, getPlotInstance } = usePlotContext();
 
   const theme = useTheme();
   const annotationsRef = useRef<Array<DataFrameView<AnnotationsDataFrameViewDTO>>>();
@@ -32,7 +32,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   );
 
   useEffect(() => {
-    if (plotCtx.isPlotReady) {
+    if (isPlotReady) {
       const views: Array<DataFrameView<AnnotationsDataFrameViewDTO>> = [];
 
       for (const frame of annotations) {
@@ -41,10 +41,10 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
 
       annotationsRef.current = views;
     }
-  }, [plotCtx.isPlotReady, annotations]);
+  }, [isPlotReady, annotations]);
 
   useEffect(() => {
-    const unregister = plotCtx.registerPlugin({
+    const unregister = registerPlugin({
       id: pluginId,
       hooks: {
         // Render annotation lines on the canvas
@@ -89,13 +89,13 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
     return () => {
       unregister();
     };
-  }, []);
+  }, [registerPlugin, theme.palette.red]);
 
   const mapAnnotationToXYCoords = useCallback(
     (frame: DataFrame, index: number) => {
       const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
       const annotation = view.get(index);
-      const plotInstance = plotCtx.getPlotInstance();
+      const plotInstance = getPlotInstance();
       if (!annotation.time || !plotInstance) {
         return undefined;
       }
@@ -105,7 +105,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
         y: plotInstance.bbox.height / window.devicePixelRatio + 4,
       };
     },
-    [plotCtx.getPlotInstance]
+    [getPlotInstance]
   );
 
   const renderMarker = useCallback(

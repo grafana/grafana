@@ -22,6 +22,7 @@ describe('Azure Monitor QueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={() => {}}
+        setError={() => {}}
       />
     );
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
@@ -50,6 +51,7 @@ describe('Azure Monitor QueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        setError={() => {}}
       />
     );
 
@@ -77,7 +79,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     const onChange = jest.fn();
     const mockQuery = createMockQuery();
-    mockDatasource.getMetricNames = jest.fn().mockResolvedValueOnce([
+    mockDatasource.getMetricNames = jest.fn().mockResolvedValue([
       {
         value: 'metric-a',
         text: 'Metric A',
@@ -94,6 +96,7 @@ describe('Azure Monitor QueryEditor', () => {
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onChange={onChange}
+        setError={() => {}}
       />
     );
     await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());

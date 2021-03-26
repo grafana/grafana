@@ -3,15 +3,17 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../common';
+import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
+const ERROR_SOURCE = 'metrics-namespace';
 const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  setError,
 }) => {
   const [namespaces, setNamespaces] = useState<AzureMonitorOption[]>([]);
 
@@ -26,11 +28,8 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
     datasource
       .getMetricDefinitions(subscriptionId, resourceGroup)
       .then((results) => setNamespaces(results.map(toOption)))
-      .catch((err) => {
-        // TODO: handle error
-        console.error(err);
-      });
-  }, [subscriptionId, query.azureMonitor.resourceGroup]);
+      .catch((err) => setError(ERROR_SOURCE, err));
+  }, [datasource, namespaces.length, query.azureMonitor, setError, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -52,7 +51,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...namespaces, variableOptionGroup], [namespaces, variableOptionGroup]);

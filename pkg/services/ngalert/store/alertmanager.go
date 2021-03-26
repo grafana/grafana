@@ -10,7 +10,7 @@ import (
 
 var (
 	// ErrNoAlertmanagerConfiguration is an error for when no alertmanager configuration is found.
-	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an alert configuration")
+	ErrNoAlertmanagerConfiguration = fmt.Errorf("could not find an Alertmanager configuration")
 )
 
 func getAlertmanagerConfigurationByID(sess *sqlstore.DBSession, id int64) (*models.AlertConfiguration, error) {
