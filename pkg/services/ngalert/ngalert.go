@@ -80,6 +80,7 @@ func (ng *AlertNG) Init() error {
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
 		Store:           store,
+		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
 	}
 	api.RegisterAPIEndpoints()

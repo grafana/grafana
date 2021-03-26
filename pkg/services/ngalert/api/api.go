@@ -40,6 +40,7 @@ type API struct {
 	DataService     *tsdb.Service
 	Schedule        schedule.ScheduleService
 	Store           store.Store
+	AlertingStore   store.AlertingStore
 	DataProxy       *datasourceproxy.DatasourceProxyService
 	Alertmanager    Alertmanager
 }
@@ -50,7 +51,7 @@ func (api *API) RegisterAPIEndpoints() {
 	proxy := &AlertingProxy{
 		DataProxy: api.DataProxy,
 	}
-	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiMock{log: logger})
+	api.RegisterAlertmanagerApiEndpoints(AlertmanagerSrv{store: api.AlertingStore, log: logger})
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),

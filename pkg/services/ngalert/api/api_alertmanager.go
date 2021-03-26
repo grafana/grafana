@@ -20,7 +20,7 @@ import (
 )
 
 type AlertmanagerSrv struct {
-	store store.Store
+	store store.AlertingStore
 	log   log.Logger
 }
 
