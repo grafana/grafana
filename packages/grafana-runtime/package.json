@@ -22,9 +22,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@grafana/e2e-selectors": "7.5.0-pre.0",
     "@grafana/data": "7.5.0-pre.0",
     "@grafana/ui": "7.5.0-pre.0",
+    "@grafana/e2e-selectors": "7.5.0-pre.0",
     "systemjs": "6.8.2",
     "systemjs-css-extra": "github:grafana/systemjs-css-extra",
     "systemjs-plugin-css": "0.1.37",
