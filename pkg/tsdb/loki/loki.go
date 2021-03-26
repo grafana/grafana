@@ -171,7 +171,7 @@ func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (plugins.Data
 
 		frames = append(frames, data.NewFrame(name,
 			data.NewField("time", nil, timeVector),
-			data.NewField("value", tags, values)))
+		    data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
 	}
 	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
 
