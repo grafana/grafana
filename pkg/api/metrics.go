@@ -79,8 +79,9 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
 
-	// This is insanity... but ¯\_(ツ)_/¯
-	// ideally this can just be the standard API!
+	// This is insanity... but ¯\_(ツ)_/¯, the current query path looks like:
+	//  encodeJson( decodeBase64( encodeBase64( decodeArrow( encodeArrow(frame)) ) )
+	// this will soon change to a more direct route
 	qdr, err := resp.ToBackendDataResponse()
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "error converting results", err)

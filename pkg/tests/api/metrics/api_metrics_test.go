@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -70,7 +69,7 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 		}
 		result := makeCWRequest(t, req, addr)
 
-		dataFrames := plugins.NewDecodedDataFrames(data.Frames{
+		dataFrames := data.Frames{
 			&data.Frame{
 				RefID: "A",
 				Fields: []*data.Field{
@@ -83,21 +82,13 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 					},
 				},
 			},
-		})
+		}
 
-		// Have to call this so that dataFrames.encoded is non-nil, for the comparison
-		// In the future we should use gocmp instead and ignore this field
-		_, err := dataFrames.Encoded()
-		require.NoError(t, err)
-
-		assert.Equal(t, plugins.DataResponse{
-			Results: map[string]plugins.DataQueryResult{
-				"A": {
-					RefID:      "A",
-					Dataframes: dataFrames,
-				},
-			},
-		}, result)
+		expect := backend.NewQueryDataResponse()
+		expect.Responses["A"] = backend.DataResponse{
+			Frames: dataFrames,
+		}
+		assert.Equal(t, *expect, result)
 	})
 }
 
