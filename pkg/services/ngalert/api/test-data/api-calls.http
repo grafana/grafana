@@ -1,7 +1,3 @@
-# invalid recipient
-GET http://admin:admin@localhost:3000/alertmanager/42/config/api/v1/alerts
-content-type: application/json
-
 ###
 # create AM configuration
 POST http://admin:admin@localhost:3000/alertmanager/grafana/config/api/v1/alerts
@@ -13,3 +9,57 @@ content-type: application/json
 # get latest AM configuration
 GET http://admin:admin@localhost:3000/alertmanager/grafana/config/api/v1/alerts
 content-type: application/json
+
+###
+# delete AM configuration
+DELETE http://admin:admin@localhost:3000/alertmanager/grafana/config/api/v1/alerts
+
+###
+# create AM alerts
+POST http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/alerts
+content-type: application/json
+
+###
+# get silences - no silences
+GET http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silences
+
+###
+# create silence
+POST http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silences
+content-type: application/json
+
+{
+  "comment": "string",
+  "createdBy": "string",
+  "endsAt": "2021-03-23T16:22:05.400Z",
+  "id": "just-testing",
+  "matchers": [
+    {
+      "isRegex": true,
+      "name": "string",
+      "value": "string"
+    }
+  ],
+  "startsAt": "2021-03-23T16:22:05.400Z"
+}
+
+###
+# get silences
+GET http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silences
+
+
+###
+# get silence
+GET http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silence/just-testing
+
+###
+# get silence - unknown
+GET http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silence/unknown
+
+###
+# delete silence
+DELETE http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silence/just-testing
+
+###
+# delete silence - unknown
+DELETE http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silence/unknown

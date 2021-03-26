@@ -76,7 +76,8 @@ func (ng *AlertNG) Init() error {
 		DataService:     ng.DataService,
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
-		Store:           store}
+		Store:           store,
+	}
 	api.RegisterAPIEndpoints()
 
 	return nil
@@ -103,9 +104,12 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	if ng.IsDisabled() {
 		return
 	}
-	addAlertDefinitionMigrations(mg)
-	addAlertDefinitionVersionMigrations(mg)
+	store.AddAlertDefinitionMigrations(mg, defaultIntervalSeconds)
+	store.AddAlertDefinitionVersionMigrations(mg)
 	// Create alert_instance table
-	alertInstanceMigration(mg)
-	alertmanagerConfigurationMigration(mg)
+	store.AlertInstanceMigration(mg)
+	store.AlertmanagerConfigurationMigration(mg)
+
+	// Create silence table
+	store.SilenceMigration(mg)
 }
