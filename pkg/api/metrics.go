@@ -89,10 +89,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	return toMacronResponse(qdr)
 }
 
-func toMacronResponse(qdr *backend.QueryDataResponse, err error) response.Response {
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "error running query", err)
-	}
+func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
 
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {
