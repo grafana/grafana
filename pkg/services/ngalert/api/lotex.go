@@ -156,8 +156,8 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 	return r.withReq(ctx, req, jsonExtractor(nil))
 }
 
-func (p *LotexRuler) getPrefix(ctx *models.ReqContext) (string, error) {
-	ds, err := p.DataProxy.DatasourceCache.GetDatasource(ctx.ParamsInt64("Recipient"), ctx.SignedInUser, ctx.SkipCache)
+func (r *LotexRuler) getPrefix(ctx *models.ReqContext) (string, error) {
+	ds, err := r.DataProxy.DatasourceCache.GetDatasource(ctx.ParamsInt64("Recipient"), ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
 		return "", err
 	}

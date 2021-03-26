@@ -10,11 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-const (
-	promRulesPath  = "/prometheus/api/v1/rules"
-	promAlertsPath = "/prometheus/api/v1/alerts"
-)
-
 type promEndpoints struct {
 	rules, alerts string
 }
