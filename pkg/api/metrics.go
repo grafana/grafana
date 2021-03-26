@@ -86,7 +86,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "error converting results", err)
 	}
-	return toMacronResponse(qdr, nil)
+	return toMacronResponse(qdr)
 }
 
 func toMacronResponse(qdr *backend.QueryDataResponse, err error) response.Response {
