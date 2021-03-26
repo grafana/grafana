@@ -46,12 +46,7 @@ export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEd
                   </td>
                 )}
                 {annotation.builtIn && (
-                  <td
-                    style={{ width: '90%' }}
-                    ng-show="annotation.builtIn"
-                    className="pointer"
-                    onClick={() => onEdit(idx)}
-                  >
+                  <td style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
                     <Icon name="comment-alt" /> &nbsp; <em className="muted">{annotation.name} (Built-in)</em>
                   </td>
                 )}
