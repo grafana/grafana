@@ -64,3 +64,10 @@ export function isCloudRulesSource(rulesSource: RulesSource): rulesSource is Dat
 export function getDataSourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
   return getAllDataSources().find((source) => source.name === name);
 }
+
+export function getDatasourceAPIId(datasourceName: string) {
+  if (datasourceName === 'grafana') {
+    return 'grafana';
+  }
+  return String(getLotexDatasourceByName(datasourceName).id);
+}

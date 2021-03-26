@@ -1,13 +1,22 @@
+import { getBackendSrv } from '@grafana/runtime';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromRulesResponse } from 'app/types/unified-alerting-dto';
-import { dataSourceRequest, DataSourceType, getLotexDataSourceByName } from '../utils/datasource';
+import { dataSourceRequest, getDatasourceAPIId } from '../utils/datasource';
 
 // @TODO currently uses datasource proxy. Will need rework when unified alerting API is operational
 export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[]> {
-  const dataSource = getLotexDataSourceByName(dataSourceName);
-  const response = await dataSourceRequest<PromRulesResponse>(
-    dataSourceName,
-    dataSource.type === DataSourceType.Loki ? '/prometheus/api/v1/rules' : '/api/v1/rules'
+  const response = await getBackendSrv()
+    .fetch<PromRulesResponse>({
+      url: `/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+    })
+    .toPromise();
+
+  console.log(
+    await getBackendSrv()
+      .fetch<PromRulesResponse>({
+        url: `/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+      })
+      .toPromise()
   );
 
   if (response.status === 200 && response.data.status === 'success') {
