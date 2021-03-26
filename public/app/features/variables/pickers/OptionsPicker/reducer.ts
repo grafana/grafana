@@ -150,7 +150,7 @@ const optionsPickerSlice = createSlice({
       const { multi, selectedValues } = state;
       const selected = !selectedValues.find((o) => o.value === option.value);
 
-      if (option.value === ALL_VARIABLE_VALUE || !multi || clearOthers) {
+      if ((option && option.value === ALL_VARIABLE_VALUE) || !multi || clearOthers) {
         if (selected || forceSelect) {
           state.selectedValues = [{ ...option, selected: true }];
         } else {
