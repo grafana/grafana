@@ -3,9 +3,15 @@ import { palette } from './palette';
 import { DeepPartial } from './types';
 
 export interface ThemeRichColor {
+  /** color intent (primary, secondary, info, error, etc) */
   name: string;
+  /** Main color */
   main: string;
-  text: string;
+  /** Light shade */
+  light: string;
+  /** Dark shade */
+  dark: string;
+  /** Text color for text ontop of main */
   contrastText: string;
 }
 
