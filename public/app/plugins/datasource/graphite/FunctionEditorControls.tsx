@@ -25,7 +25,6 @@ const FunctionDescription = React.lazy(async () => {
   const { default: rst2html } = await import(/* webpackChunkName: "rst2html" */ 'rst2html');
   return {
     default(props: { description?: string }) {
-
       return <div dangerouslySetInnerHTML={{ __html: rst2html(props.description ?? '') }} />;
     },
   };
