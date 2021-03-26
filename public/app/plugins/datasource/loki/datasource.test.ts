@@ -469,8 +469,9 @@ describe('LokiDatasource', () => {
               },
               {
                 stream: {
-                  label: '',
+                  label: '', // empty value gets filtered
                   label2: 'value2',
+                  label3: ' ', // whitespace value gets trimmed then filtered
                 },
                 values: [['1549024057498000000', 'hello 2']],
               },

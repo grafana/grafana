@@ -514,8 +514,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           tags.push.apply(tags, [
             ...new Set(
               Object.values(field.labels)
-                .filter((label: string) => label !== '')
                 .map((label: string) => label.trim())
+                .filter((label: string) => label !== '')
             ),
           ]);
         }
