@@ -469,6 +469,7 @@ describe('LokiDatasource', () => {
               },
               {
                 stream: {
+                  label: '',
                   label2: 'value2',
                 },
                 values: [['1549024057498000000', 'hello 2']],

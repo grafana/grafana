@@ -511,7 +511,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const tags: string[] = [];
       for (const field of frame.fields) {
         if (field.labels) {
-          tags.push.apply(tags, [...new Set(Object.values(field.labels).map((label: string) => label.trim()))]);
+          tags.push.apply(tags, [...new Set(Object.values(field.labels).filter((label: string) => label !== '').map((label: string) => label.trim()))]);
         }
       }
       const view = new DataFrameView<{ ts: string; line: string }>(frame);
