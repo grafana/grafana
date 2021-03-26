@@ -1,19 +1,15 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { HttpSettingsBaseProps } from './types';
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings, SelectableValue } from '@grafana/data';
-import { AwsAuthDataSourceSecureJsonData, AwsAuthDataSourceJsonData, ConnectionConfig } from '@grafana/aws-sdk';
-
-import { Button, InlineFormLabel, Input } from '..';
-import Select from '../Forms/Legacy/Select/Select';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import {
+  AwsAuthDataSourceSecureJsonData,
+  AwsAuthDataSourceJsonData,
+  ConnectionConfig,
+  ConnectionConfigProps,
+} from '@grafana/aws-sdk';
 
 export const SigV4AuthSettings: React.FC<HttpSettingsBaseProps> = (props) => {
   const { dataSourceConfig, onChange } = props;
-
-  const authProviderOptions = [
-    { label: 'AWS SDK Default', value: 'default' },
-    { label: 'Access & secret key', value: 'keys' },
-    { label: 'Credentials file', value: 'credentials' },
-  ] as SelectableValue[];
 
   const regions = [
     { value: 'af-south-1', label: 'af-south-1' },
@@ -44,63 +40,10 @@ export const SigV4AuthSettings: React.FC<HttpSettingsBaseProps> = (props) => {
     { value: 'us-west-2', label: 'us-west-2' },
   ] as SelectableValue[];
 
-  // Apply some defaults on initial render
-  useEffect(() => {
-    const sigV4AuthType = dataSourceConfig.jsonData.sigV4AuthType || 'default';
-    onJsonDataChange('sigV4AuthType', sigV4AuthType);
-    // We can't enforce the eslint rule here because we only want to run this once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const onSecureJsonDataReset = (fieldName: string) => {
-    const state = {
-      ...dataSourceConfig,
-      secureJsonData: {
-        ...dataSourceConfig.secureJsonData,
-        [fieldName]: '',
-      },
-      secureJsonFields: {
-        ...dataSourceConfig.secureJsonFields,
-        [fieldName]: false,
-      },
-    };
-
-    onChange(state);
-  };
-
-  const onSecureJsonDataChange = (fieldName: string, fieldValue: string) => {
-    const state = {
-      ...dataSourceConfig,
-      secureJsonData: {
-        ...dataSourceConfig.secureJsonData,
-        [fieldName]: fieldValue,
-      },
-    };
-
-    onChange(state);
-  };
-
-  const onJsonDataChange = (fieldName: string, fieldValue: string) => {
-    const state = {
-      ...dataSourceConfig,
-      jsonData: {
-        ...dataSourceConfig.jsonData,
-        [fieldName]: fieldValue,
-      },
-    };
-
-    onChange(state);
-  };
-
-  const connectionConfigProps: DataSourcePluginOptionsEditorProps<
-    AwsAuthDataSourceJsonData,
-    AwsAuthDataSourceSecureJsonData
-  > = {
-    onOptionsChange: (
-      awsDataSourceSettings: DataSourceSettings<AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData>
-    ) => {
+  const connectionConfigProps: ConnectionConfigProps<AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData> = {
+    onOptionsChange: (awsDataSourceSettings) => {
       const dataSourceSettings: DataSourceSettings = {
-        ...awsDataSourceSettings,
+        ...dataSourceConfig,
         jsonData: {
           ...awsDataSourceSettings.jsonData,
           sigV4AuthType: awsDataSourceSettings.jsonData.authType,
@@ -146,163 +89,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsBaseProps> = (props) => {
   return (
     <>
       <h6>SigV4 Auth Details</h6>
-      <ConnectionConfig {...(connectionConfigProps as any)}></ConnectionConfig>
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel
-              className="width-14"
-              tooltip="Which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
-            >
-              Authentication Provider
-            </InlineFormLabel>
-            <Select
-              className="width-30"
-              value={authProviderOptions.find(
-                (authProvider) => authProvider.value === dataSourceConfig.jsonData.sigV4AuthType
-              )}
-              options={authProviderOptions}
-              defaultValue={dataSourceConfig.jsonData.sigV4AuthType || ''}
-              onChange={(option) => {
-                onJsonDataChange('sigV4AuthType', option.value);
-              }}
-            />
-          </div>
-        </div>
-        {dataSourceConfig.jsonData.sigV4AuthType === 'credentials' && (
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel
-                className="width-14"
-                tooltip="Credentials profile name, as specified in ~/.aws/credentials, leave blank for default."
-              >
-                Credentials Profile Name
-              </InlineFormLabel>
-              <div className="width-30">
-                <Input
-                  className="width-30"
-                  placeholder="default"
-                  value={dataSourceConfig.jsonData.sigV4Profile || ''}
-                  onChange={(e) => onJsonDataChange('sigV4Profile', e.currentTarget.value)}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-        {dataSourceConfig.jsonData.sigV4AuthType === 'keys' && (
-          <div>
-            {dataSourceConfig.secureJsonFields?.sigV4AccessKey ? (
-              <div className="gf-form-inline">
-                <div className="gf-form">
-                  <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
-                  <Input className="width-25" placeholder="Configured" disabled={true} />
-                </div>
-                <div className="gf-form">
-                  <div className="max-width-30 gf-form-inline">
-                    <Button variant="secondary" type="button" onClick={(e) => onSecureJsonDataReset('sigV4AccessKey')}>
-                      Reset
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="gf-form-inline">
-                <div className="gf-form">
-                  <InlineFormLabel className="width-14">Access Key ID</InlineFormLabel>
-                  <div className="width-30">
-                    <Input
-                      className="width-30"
-                      value={dataSourceConfig.secureJsonData?.sigV4AccessKey || ''}
-                      onChange={(e) => onSecureJsonDataChange('sigV4AccessKey', e.currentTarget.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-            {dataSourceConfig.secureJsonFields?.sigV4SecretKey ? (
-              <div className="gf-form-inline">
-                <div className="gf-form">
-                  <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>
-                  <Input className="width-25" placeholder="Configured" disabled={true} />
-                </div>
-                <div className="gf-form">
-                  <div className="max-width-30 gf-form-inline">
-                    <Button variant="secondary" type="button" onClick={(e) => onSecureJsonDataReset('sigV4SecretKey')}>
-                      Reset
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="gf-form-inline">
-                <div className="gf-form">
-                  <InlineFormLabel className="width-14">Secret Access Key</InlineFormLabel>
-                  <div className="width-30">
-                    <Input
-                      className="width-30"
-                      value={dataSourceConfig.secureJsonData?.sigV4SecretKey || ''}
-                      onChange={(e) => onSecureJsonDataChange('sigV4SecretKey', e.currentTarget.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel
-              className="width-14"
-              tooltip="ARN of the role to assume. Specifying a role here ensures that the selected authentication provider is used to assume the role rather than using the credentials directly. Leave blank if you don't need to assume a role."
-            >
-              Assume Role ARN
-            </InlineFormLabel>
-            <div className="width-30">
-              <Input
-                className="width-30"
-                placeholder="arn:aws:iam:*"
-                value={dataSourceConfig.jsonData.sigV4AssumeRoleArn || ''}
-                onChange={(e) => onJsonDataChange('sigV4AssumeRoleArn', e.currentTarget.value)}
-              />
-            </div>
-          </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel
-                className="width-14"
-                tooltip="If you are assuming a role in another account, that was created with an external ID, specify the external ID here."
-              >
-                External ID
-              </InlineFormLabel>
-              <div className="width-30">
-                <Input
-                  className="width-30"
-                  placeholder="External ID"
-                  value={dataSourceConfig.jsonData.sigV4ExternalId || ''}
-                  onChange={(e) => onJsonDataChange('sigV4ExternalId', e.currentTarget.value)}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel
-              className="width-14"
-              tooltip="Specify the region, for example, use ` us-west-2 ` for US West (Oregon)."
-            >
-              Default Region
-            </InlineFormLabel>
-            <Select
-              className="width-30"
-              value={regions.find((region) => region.value === dataSourceConfig.jsonData.sigV4Region)}
-              options={regions}
-              defaultValue={dataSourceConfig.jsonData.sigV4Region || ''}
-              onChange={(option) => onJsonDataChange('sigV4Region', option.value)}
-            />
-          </div>
-        </div>
-      </div>
+      <ConnectionConfig {...connectionConfigProps} standardRegions={regions.map((r) => r.value)}></ConnectionConfig>
     </>
   );
 };
