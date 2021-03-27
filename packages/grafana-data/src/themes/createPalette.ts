@@ -31,6 +31,11 @@ export interface ThemePaletteBase<TColor> {
     layer2: string;
   };
 
+  formComponent: {
+    background: string;
+    border: string;
+  };
+
   border: {
     layer0: string;
     layer1: string;
@@ -41,6 +46,7 @@ export interface ThemePaletteBase<TColor> {
     primary: string;
     secondary: string;
     disabled: string;
+    link: string;
   };
 
   hoverFactor: number;
@@ -90,6 +96,11 @@ const dark: ThemePaletteBase<Partial<ThemePaletteColor>> = {
     primary: 'rgba(255, 255, 255, 0.7)',
     secondary: 'rgba(255, 255, 255, 0.55)',
     disabled: 'rgba(255, 255, 255, 0.38)',
+    link: colors.blue85,
+  },
+  formComponent: {
+    background: colors.gray10,
+    border: colors.gray25,
   },
   contrastThreshold: 3,
   hoverFactor: 1.1,
@@ -129,6 +140,11 @@ const light: ThemePaletteBase<Partial<ThemePaletteColor>> = {
     primary: 'rgba(0, 0, 0, 0.87)',
     secondary: 'rgba(0, 0, 0, 0.54)',
     disabled: 'rgba(0, 0, 0, 0.38)',
+    link: colors.blue85,
+  },
+  formComponent: {
+    background: colors.white,
+    border: colors.gray85,
   },
   contrastThreshold: 3,
   hoverFactor: 1.1,
