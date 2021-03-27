@@ -21,6 +21,7 @@ interface Props {
   queries: DataQuery[];
   panelData: PanelData;
   onChange: (queries: DataQuery[]) => void;
+  onRunQueries: () => void;
 }
 
 type State = {
@@ -97,6 +98,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
         panelId: id,
       } as DashboardQuery,
     ]);
+    this.props.onRunQueries();
   };
 
   renderQueryData(editURL: string) {
