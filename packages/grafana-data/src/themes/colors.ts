@@ -1,4 +1,7 @@
-export const palette = {
+export const colors = {
+  white: '#fff',
+  black: '#000',
+
   // New greys palette used by next-gen form elements
   gray98: '#f7f8fa',
   gray97: '#f1f5f9',

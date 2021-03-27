@@ -42,7 +42,7 @@ const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color
 export const NewThemeColors = () => {
   const oldTheme = useTheme();
   const theme = createTheme({
-    colors: {
+    palette: {
       mode: oldTheme.type,
     },
   });
@@ -51,20 +51,21 @@ export const NewThemeColors = () => {
     <div
       className={css`
         width: 100%;
+        color: ${theme.palette.text.primary};
       `}
     >
-      <DemoBox bg={theme.colors.background.layer0}>
-        <DemoText>theme.colors.background.layer0</DemoText>
-        <DemoBox bg={theme.colors.background.layer1} border={theme.colors.border.layer0}>
+      <DemoBox bg={theme.palette.background.layer0}>
+        <DemoText>theme.palette.background.layer0</DemoText>
+        <DemoBox bg={theme.palette.background.layer1} border={theme.palette.border.layer0}>
           <DemoText>
-            theme.colors.background.layer1 is the main & preferred content background for text and elements This box is
+            theme.palette.background.layer1 is the main & preferred content background for text and elements This box is
             using border.layer0
           </DemoText>
-          <DemoBox bg={theme.colors.background.layer2} border={theme.colors.border.layer1}>
+          <DemoBox bg={theme.palette.background.layer2} border={theme.palette.border.layer1}>
             <DemoText>
-              colors.background.layer2 background used for elements placed on colors.background.layer1. Using
-              colors.border.layer1 should be used on elements placed ontop of colors.background.layer2. This box is
-              using colors.border.layer2.
+              palette.background.layer2 background used for elements placed on palette.background.layer1. Using
+              colors.border.layer1 should be used on elements placed ontop of palette.background.layer2. This box is
+              using palette.border.layer2.
             </DemoText>
           </DemoBox>
         </DemoBox>

@@ -1,8 +1,8 @@
 import { merge } from 'lodash';
-import { palette } from './palette';
+import { colors } from './colors';
 import { DeepPartial } from './types';
 
-export interface ThemeRichColor {
+export interface ThemePaletteColor {
   /** color intent (primary, secondary, info, error, etc) */
   name: string;
   /** Main color */
@@ -15,7 +15,7 @@ export interface ThemeRichColor {
   contrastText: string;
 }
 
-export interface ThemeColorsBase<TColor> {
+export interface ThemePaletteBase<TColor> {
   mode: 'light' | 'dark';
 
   primary: TColor;
@@ -29,7 +29,6 @@ export interface ThemeColorsBase<TColor> {
     layer0: string;
     layer1: string;
     layer2: string;
-    layer3: string;
   };
 
   border: {
@@ -48,85 +47,83 @@ export interface ThemeColorsBase<TColor> {
   contrastThreshold: number;
 }
 
-export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
+export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
   /** Returns a text color for the background */
   textForBg(background: string): string;
   /* Retruns a hover color for any background */
   forHover(background: string): string;
 }
 
-export type ThemeColorsInput = DeepPartial<ThemeColorsBase<ThemeRichColor>>;
+export type ThemePaletteInput = DeepPartial<ThemePaletteBase<ThemePaletteColor>>;
 
-const dark: ThemeColorsBase<Partial<ThemeRichColor>> = {
+const dark: ThemePaletteBase<Partial<ThemePaletteColor>> = {
   mode: 'dark',
   primary: {
-    main: palette.blue80,
+    main: colors.blue80,
   },
   secondary: {
-    main: palette.gray15,
+    main: colors.gray15,
   },
   info: {
-    main: palette.blue80,
+    main: colors.blue80,
   },
   error: {
-    main: palette.red88,
+    main: colors.red88,
   },
   success: {
-    main: palette.greenBase,
+    main: colors.greenBase,
   },
   warning: {
-    main: palette.orange,
+    main: colors.orange,
   },
   background: {
-    layer0: palette.gray05,
-    layer1: palette.gray10,
-    layer2: palette.gray15,
-    layer3: palette.gray25,
+    layer0: colors.gray05,
+    layer1: colors.gray10,
+    layer2: colors.gray15,
   },
   border: {
-    layer0: palette.gray10,
-    layer1: palette.gray15,
-    layer2: palette.gray25,
+    layer0: colors.gray15,
+    layer1: colors.gray25,
+    layer2: colors.gray33,
   },
   text: {
-    primary: 'rgba(255, 255, 255, 0.8)',
-    secondary: 'rgba(255, 255, 255, 0.6)',
-    disabled: 'rgba(255, 255, 255, 0.4)',
+    primary: 'rgba(255, 255, 255, 0.7)',
+    secondary: 'rgba(255, 255, 255, 0.55)',
+    disabled: 'rgba(255, 255, 255, 0.38)',
   },
   contrastThreshold: 3,
   hoverFactor: 1.1,
 };
 
-const light: ThemeColorsBase<Partial<ThemeRichColor>> = {
+const light: ThemePaletteBase<Partial<ThemePaletteColor>> = {
   mode: 'light',
   primary: {
-    main: palette.blue80,
+    main: colors.blue80,
   },
   secondary: {
-    main: palette.gray15,
+    main: colors.gray15,
   },
   info: {
-    main: palette.blue80,
+    main: colors.blue80,
   },
   error: {
-    main: palette.red88,
+    main: colors.red88,
   },
   success: {
-    main: palette.greenBase,
+    main: colors.greenBase,
   },
   warning: {
-    main: palette.orange,
+    main: colors.orange,
   },
   background: {
-    layer0: palette.gray05,
-    layer1: palette.gray10,
-    layer2: palette.gray15,
-    layer3: palette.gray25,
+    layer0: colors.gray98,
+    layer1: colors.white,
+    layer2: colors.gray97,
   },
   border: {
-    layer0: palette.gray10,
-    layer1: palette.gray15,
-    layer2: palette.gray25,
+    layer0: colors.gray90,
+    layer1: colors.gray85,
+    layer2: colors.gray70,
   },
   text: {
     primary: 'rgba(0, 0, 0, 0.87)',
@@ -137,8 +134,8 @@ const light: ThemeColorsBase<Partial<ThemeRichColor>> = {
   hoverFactor: 1.1,
 };
 
-export function createColors(colors: ThemeColorsInput): ThemeColors {
-  const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;
+export function createPalette(palette: ThemePaletteInput): ThemePalette {
+  const base = (palette.mode ?? 'dark') === 'dark' ? dark : light;
   const {
     primary = base.primary,
     secondary = base.secondary,
@@ -147,7 +144,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     success = base.success,
     error = base.error,
     ...other
-  } = colors;
+  } = palette;
 
   function textForBg(color: string) {
     // todo, need color framework
@@ -158,7 +155,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     return color;
   }
 
-  const getRichColor = ({ color, name }: GetRichColorProps): ThemeRichColor => {
+  const getRichColor = ({ color, name }: GetRichColorProps): ThemePaletteColor => {
     color = { ...color, name };
     if (!color.main) {
       throw new Error(`Missing main color for ${name}`);
@@ -175,7 +172,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.contrastText = textForBg(color.main);
     }
 
-    return color as ThemeRichColor;
+    return color as ThemePaletteColor;
   };
 
   return merge(
@@ -195,6 +192,6 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
 }
 
 interface GetRichColorProps {
-  color: Partial<ThemeRichColor>;
+  color: Partial<ThemePaletteColor>;
   name: string;
 }
