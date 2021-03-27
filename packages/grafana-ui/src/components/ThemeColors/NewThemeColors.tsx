@@ -2,11 +2,12 @@ import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
-import { HorizontalGroup } from '../Layout/Layout';
-import { createTheme } from '@grafana/data';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { createTheme, GrafanaThemeV2 } from '@grafana/data';
+import { CollapsableSection } from '../Collapse/CollapsableSection';
 
 interface DemoBoxProps {
-  bg: string;
+  bg?: string;
   border?: string;
   textColor?: string;
 }
@@ -15,7 +16,7 @@ const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
   const style = cx(
     css`
       padding: 32px 32px 16px 32px;
-      background: ${bg};
+      background: ${bg ?? 'inherit'};
       width: 100%;
     `,
     border
@@ -41,7 +42,7 @@ const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color
 
 export const NewThemeColors = () => {
   const oldTheme = useTheme();
-  const theme = createTheme({
+  const t = createTheme({
     palette: {
       mode: oldTheme.type,
     },
@@ -51,24 +52,32 @@ export const NewThemeColors = () => {
     <div
       className={css`
         width: 100%;
-        color: ${theme.palette.text.primary};
+        color: ${t.palette.text.primary};
       `}
     >
-      <DemoBox bg={theme.palette.background.layer0}>
-        <DemoText>theme.palette.background.layer0</DemoText>
-        <DemoBox bg={theme.palette.background.layer1} border={theme.palette.border.layer0}>
-          <DemoText>
-            theme.palette.background.layer1 is the main & preferred content background for text and elements This box is
-            using border.layer0
-          </DemoText>
-          <DemoBox bg={theme.palette.background.layer2} border={theme.palette.border.layer1}>
-            <DemoText>
-              palette.background.layer2 background used for elements placed on palette.background.layer1. Using
-              colors.border.layer1 should be used on elements placed ontop of palette.background.layer2. This box is
-              using palette.border.layer2.
-            </DemoText>
+      <DemoBox bg={t.palette.background.layer0}>
+        <CollapsableSection label="Layers" isOpen={true}>
+          <DemoText>t.palette.background.layer0</DemoText>
+          <DemoBox bg={t.palette.background.layer1} border={t.palette.border.layer0}>
+            <DemoText>t.palette.background.layer1 is the main & preferred content background.</DemoText>
+            <DemoBox bg={t.palette.background.layer2} border={t.palette.border.layer1}>
+              <DemoText>t.palette.background.layer2 and t.palette.border.layer1</DemoText>
+            </DemoBox>
           </DemoBox>
-        </DemoBox>
+        </CollapsableSection>
+        <CollapsableSection label="Text colors" isOpen={true}>
+          <HorizontalGroup>
+            <DemoBox>
+              <TextColors t={t} />
+            </DemoBox>
+            <DemoBox bg={t.palette.background.layer1}>
+              <TextColors t={t} />
+            </DemoBox>
+            <DemoBox bg={t.palette.background.layer2}>
+              <TextColors t={t} />
+            </DemoBox>
+          </HorizontalGroup>
+        </CollapsableSection>
       </DemoBox>
 
       {/* <HorizontalGroup>
@@ -136,3 +145,13 @@ export const NewThemeColors = () => {
     </div>
   );
 };
+
+export function TextColors({ t }: { t: GrafanaThemeV2 }) {
+  return (
+    <>
+      <DemoText color={t.palette.text.primary}>text.primary</DemoText>
+      <DemoText color={t.palette.text.secondary}>text.secondary</DemoText>
+      <DemoText color={t.palette.text.disabled}>text.disabled</DemoText>
+    </>
+  );
+}

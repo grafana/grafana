@@ -2,7 +2,7 @@ import { createBreakpoints, ThemeBreakpoints } from './breakpoints';
 import { createPalette, ThemePalette, ThemePaletteInput } from './createPalette';
 import { createSpacing, ThemeSpacingOptions, ThemeSpacing } from './createSpacing';
 
-export interface GrafanaTheme {
+export interface GrafanaThemeV2 {
   name: string;
   isDark: boolean;
   isLight: boolean;
@@ -17,7 +17,7 @@ export interface NewThemeOptions {
   spacing?: ThemeSpacingOptions;
 }
 
-export function createTheme(options: NewThemeOptions = {}): GrafanaTheme {
+export function createTheme(options: NewThemeOptions = {}): GrafanaThemeV2 {
   const { name = 'Dark', palette: paletteInput = {}, spacing: spacingInput = {} } = options;
 
   const palette = createPalette(paletteInput);
