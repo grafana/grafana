@@ -81,7 +81,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         map(({ data }) => {
           const dataQueryResponse = toDataQueryResponse({
             data: data,
-          });
+          } as any);
           const df: any = [];
           if (dataQueryResponse.data.length !== 0) {
             for (let i = 0; i < dataQueryResponse.data.length; i++) {
