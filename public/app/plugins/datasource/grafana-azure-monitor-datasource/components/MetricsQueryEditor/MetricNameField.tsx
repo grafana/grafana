@@ -31,13 +31,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
         setMetricNames(results.map(toOption));
       })
       .catch((err) => setError(ERROR_SOURCE, err));
-  }, [
-    subscriptionId,
-    query.azureMonitor.resourceGroup,
-    query.azureMonitor.metricDefinition,
-    query.azureMonitor.resourceName,
-    query.azureMonitor.metricNamespace,
-  ]);
+  }, [datasource, metricNames.length, query.azureMonitor, setError, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -53,7 +47,7 @@ const MetricName: React.FC<AzureQueryEditorFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...metricNames, variableOptionGroup], [metricNames, variableOptionGroup]);

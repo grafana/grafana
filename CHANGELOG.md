@@ -1,4 +1,32 @@
 
+<!-- 7.5.1 START -->
+
+# 7.5.1 (2021-03-26)
+
+### Bug fixes
+
+* **MSSQL**: Fix panic not implemented by upgrading go-mssqldb dependency. [#32347](https://github.com/grafana/grafana/pull/32347), [@aknuds1](https://github.com/aknuds1)
+
+<!-- 7.5.1 END -->
+
+<!-- 7.5.0 START -->
+
+# 7.5.0 (2021-03-25)
+
+### Features and enhancements
+
+* **Alerting**: Add ability to include aliases with hyphen in InfluxDB. [#32262](https://github.com/grafana/grafana/pull/32262), [@grafanabot](https://github.com/grafanabot)
+* **CloudWatch**: Use latest version of aws sdk. [#32217](https://github.com/grafana/grafana/pull/32217), [@sunker](https://github.com/sunker)
+
+### Bug fixes
+
+* **Alerting**: Add ability to include aliases with hyphen in InfluxDB. [#32224](https://github.com/grafana/grafana/pull/32224), [@dsotirakis](https://github.com/dsotirakis)
+* **DashboardSettings**: Fixes issue with tags list not updating changes are made. [#32241](https://github.com/grafana/grafana/pull/32241), [@huynhsamha](https://github.com/huynhsamha)
+* **DashboardSettings**: Fixes issue with tags list not updating changes are made. [#32189](https://github.com/grafana/grafana/pull/32189), [@huynhsamha](https://github.com/huynhsamha)
+* **Loki**: Fix text search in Label browser. [#32293](https://github.com/grafana/grafana/pull/32293), [@ivanahuckova](https://github.com/ivanahuckova)
+
+<!-- 7.5.0 END -->
+
 <!-- 7.5.0-beta2 START -->
 
 # 7.5.0-beta2 (2021-03-19)
