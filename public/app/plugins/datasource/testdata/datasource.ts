@@ -146,7 +146,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   variablesQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-    const query = target.stringInput;
+    const query = target.stringInput ?? '';
     const interpolatedQuery = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '*', options: options.scopedVars })
