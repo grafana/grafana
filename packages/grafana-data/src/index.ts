@@ -13,8 +13,7 @@ export * from './text';
 export * from './valueFormats';
 export * from './field';
 export * from './events';
-export { createTheme, GrafanaThemeV2 } from './themes/createTheme';
-
+export * from './themes';
 export {
   ValueMatcherOptions,
   BasicValueMatcherOptions,

@@ -1,19 +1,8 @@
 import { merge } from 'lodash';
+import { EmptyError } from 'rxjs';
+import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { colors } from './colors';
-import { DeepPartial } from './types';
-
-export interface ThemePaletteColor {
-  /** color intent (primary, secondary, info, error, etc) */
-  name: string;
-  /** Main color */
-  main: string;
-  /** Light shade */
-  light: string;
-  /** Dark shade */
-  dark: string;
-  /** Text color for text ontop of main */
-  contrastText: string;
-}
+import { DeepPartial, ThemePaletteColor } from './types';
 
 export interface ThemePaletteBase<TColor> {
   mode: 'light' | 'dark';
@@ -43,6 +32,7 @@ export interface ThemePaletteBase<TColor> {
   };
 
   text: {
+    strong: string;
     primary: string;
     secondary: string;
     disabled: string;
@@ -51,33 +41,50 @@ export interface ThemePaletteBase<TColor> {
 
   hoverFactor: number;
   contrastThreshold: number;
+  tonalOffset: number;
 }
 
 export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
   /** Returns a text color for the background */
-  textForBg(background: string): string;
+  getContrastText(background: string): string;
   /* Retruns a hover color for any background */
-  forHover(background: string): string;
+  getHoverBackground(background: string): string;
 }
 
 export type ThemePaletteInput = DeepPartial<ThemePaletteBase<ThemePaletteColor>>;
 
 const dark: ThemePaletteBase<Partial<ThemePaletteColor>> = {
   mode: 'dark',
+  text: {
+    strong: colors.white,
+    primary: 'rgba(255, 255, 255, 0.75)',
+    secondary: 'rgba(255, 255, 255, 0.50)',
+    disabled: 'rgba(255, 255, 255, 0.35)',
+    link: colors.blueDark2,
+  },
   primary: {
-    main: colors.blue80,
+    main: colors.blueDark1,
+    border: colors.blueDark2,
+    text: colors.blueDark2,
   },
   secondary: {
-    main: colors.gray15,
+    main: 'rgba(255,255,255,0.1)',
+    contrastText: 'rgba(255, 255, 255, 0.8)',
   },
   info: {
-    main: colors.blue80,
+    main: colors.blueDark1,
+    border: colors.blueDark2,
+    text: colors.blueDark2,
   },
   error: {
-    main: colors.red88,
+    main: colors.redDark1,
+    border: colors.redDark2,
+    text: colors.redDark2,
   },
   success: {
-    main: colors.greenBase,
+    main: colors.green1,
+    text: colors.green2,
+    border: colors.green2,
   },
   warning: {
     main: colors.orange,
@@ -92,33 +99,41 @@ const dark: ThemePaletteBase<Partial<ThemePaletteColor>> = {
     layer1: colors.gray25,
     layer2: colors.gray33,
   },
-  text: {
-    primary: 'rgba(255, 255, 255, 0.7)',
-    secondary: 'rgba(255, 255, 255, 0.55)',
-    disabled: 'rgba(255, 255, 255, 0.38)',
-    link: colors.blue85,
-  },
   formComponent: {
     background: colors.gray10,
     border: colors.gray25,
   },
   contrastThreshold: 3,
-  hoverFactor: 1.1,
+  hoverFactor: 0.15,
+  tonalOffset: 0.1,
 };
 
 const light: ThemePaletteBase<Partial<ThemePaletteColor>> = {
   mode: 'light',
+  text: {
+    strong: colors.black,
+    primary: 'rgba(0, 0, 0, 0.87)',
+    secondary: 'rgba(0, 0, 0, 0.54)',
+    disabled: 'rgba(0, 0, 0, 0.38)',
+    link: colors.blueLight3,
+  },
   primary: {
-    main: colors.blue80,
+    main: colors.blueLight1,
+    border: colors.blueLight3,
+    text: colors.blueLight3,
   },
   secondary: {
-    main: colors.gray15,
+    main: 'rgba(0,0,0,0.2)',
+    contrastText: 'rgba(0, 0, 0, 0.87)',
   },
   info: {
-    main: colors.blue80,
+    main: colors.blueLight1,
+    text: colors.blueLight3,
   },
   error: {
-    main: colors.red88,
+    main: colors.redLight1,
+    text: colors.redLight2,
+    border: colors.redLight2,
   },
   success: {
     main: colors.greenBase,
@@ -136,22 +151,18 @@ const light: ThemePaletteBase<Partial<ThemePaletteColor>> = {
     layer1: colors.gray85,
     layer2: colors.gray70,
   },
-  text: {
-    primary: 'rgba(0, 0, 0, 0.87)',
-    secondary: 'rgba(0, 0, 0, 0.54)',
-    disabled: 'rgba(0, 0, 0, 0.38)',
-    link: colors.blue85,
-  },
   formComponent: {
     background: colors.white,
     border: colors.gray85,
   },
   contrastThreshold: 3,
-  hoverFactor: 1.1,
+  hoverFactor: 0.15,
+  tonalOffset: 0.2,
 };
 
 export function createPalette(palette: ThemePaletteInput): ThemePalette {
   const base = (palette.mode ?? 'dark') === 'dark' ? dark : light;
+  const isDark = base.mode === 'dark';
   const {
     primary = base.primary,
     secondary = base.secondary,
@@ -159,16 +170,21 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     warning = base.warning,
     success = base.success,
     error = base.error,
+    tonalOffset = base.tonalOffset,
+    hoverFactor = base.hoverFactor,
+    contrastThreshold = base.contrastThreshold,
     ...other
   } = palette;
 
-  function textForBg(color: string) {
+  function getContrastText(background: string) {
+    const contrastText =
+      getContrastRatio(background, dark.text.primary) >= contrastThreshold ? dark.text.strong : light.text.strong;
     // todo, need color framework
-    return color;
+    return contrastText;
   }
 
-  function forHover(color: string) {
-    return color;
+  function getHoverBackground(color: string) {
+    return emphasize(color, hoverFactor);
   }
 
   const getRichColor = ({ color, name }: GetRichColorProps): ThemePaletteColor => {
@@ -176,16 +192,14 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     if (!color.main) {
       throw new Error(`Missing main color for ${name}`);
     }
-    if (!color.dark) {
-      // missing color manipulation functions in grafana/data
-      color.dark = 'darken(color.main, tonalOffset)';
+    if (!color.border) {
+      color.border = color.main;
     }
-    if (!color.light) {
-      // missing color manipulation functions in grafana/data
-      color.light = 'lighten(color.main, tonalOffset)';
+    if (!color.text) {
+      color.text = color.main;
     }
     if (!color.contrastText) {
-      color.contrastText = textForBg(color.main);
+      color.contrastText = getContrastText(color.main);
     }
 
     return color as ThemePaletteColor;
@@ -200,8 +214,8 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
       error: getRichColor({ color: error, name: 'error' }),
       success: getRichColor({ color: success, name: 'success' }),
       warning: getRichColor({ color: warning, name: 'warning' }),
-      textForBg,
-      forHover,
+      getContrastText,
+      getHoverBackground,
     },
     other
   );

@@ -16,17 +16,28 @@ export const colors = {
   gray10: '#141619',
   gray05: '#0b0c0e',
 
-  // New blues palette used by next-gen form elements
-  blue95: '#5794f2', // blue95
-  blue85: '#33a2e5', // blueText
-  blue80: '#3274d9', // blue80
-  blue77: '#1f60c4', // blue77
+  blueDark1: '#3658E2',
+  blueDark2: '#5B93FF',
+
+  blueLight1: '#276EF1',
+  blueLight2: '#93BDFE',
+  blueLight3: '#1F62E0',
+
+  redDark1: '#D10E5C',
+  redDark2: '#FF5286',
+
+  redLight1: '#CF0E5B',
+  redLight2: '#FF5286',
+
+  green1: '#13875D',
+  green2: '#6CCF8E',
 
   // New reds palette used by next-gen form elements
   red88: '#e02f44', // redBase
 
   // below taken from dark theme
   redShade: '#c4162a',
+  redBase: '#e02f44',
   greenBase: '#299c46',
   greenShade: '#23843b',
   red: '#d44a3a',
