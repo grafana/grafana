@@ -73,7 +73,7 @@ func GetDataSourceById(c *models.ReqContext) response.Response {
 			return response.Error(404, "Data source not found", nil)
 		}
 		if errors.Is(err, models.ErrDataSourceIdentifierNotSet) {
-			return response.Error(400, "Invalid parameters", nil)
+			return response.Error(400, "Datasource id is missing.", nil)
 		}
 		return response.Error(500, "Failed to query datasources", err)
 	}
