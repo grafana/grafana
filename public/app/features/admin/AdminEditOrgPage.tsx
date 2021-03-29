@@ -56,7 +56,7 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
     <Page navModel={navModel}>
       <Page.Contents>
         <>
-          <Legend>Edit Organization</Legend>
+          <Legend>Edit organization</Legend>
 
           {orgState.value && (
             <Form
@@ -79,7 +79,7 @@ export const AdminEditOrgPage: FC<Props> = ({ match }) => {
               margin-top: 20px;
             `}
           >
-            <Legend>Organization Users</Legend>
+            <Legend>Organization users</Legend>
             {!!users.length && (
               <UsersTable
                 users={users}
