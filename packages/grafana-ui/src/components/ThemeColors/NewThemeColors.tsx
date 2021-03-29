@@ -1,11 +1,14 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { css, cx } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { HorizontalGroup } from '../Layout/Layout';
 import { createTheme, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
-import theme from '../../themes/default';
+import { Field } from '../Forms/Field';
+import { Input } from '../Input/Input';
+import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Switch } from '../Switch/Switch';
 
 interface DemoBoxProps {
   bg?: string;
@@ -42,12 +45,10 @@ const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color
 };
 
 export const NewThemeColors = () => {
+  const [radioValue, setRadioValue] = useState('v');
+  const [boolValue, setBoolValue] = useState(false);
   const oldTheme = useTheme();
-  const t = createTheme({
-    palette: {
-      mode: oldTheme.type,
-    },
-  });
+  const t = oldTheme.v2;
 
   const richColors = [
     t.palette.primary,
@@ -56,6 +57,12 @@ export const NewThemeColors = () => {
     t.palette.error,
     t.palette.warning,
     t.palette.info,
+  ];
+
+  const radioOptions = [
+    { value: 'h', label: 'Horizontal' },
+    { value: 'v', label: 'Vertical' },
+    { value: 'a', label: 'Auto' },
   ];
 
   return (
@@ -106,70 +113,31 @@ export const NewThemeColors = () => {
             </table>
           </DemoBox>
         </CollapsableSection>
+        <CollapsableSection label="Forms" isOpen={true}>
+          <DemoBox bg={t.palette.background.layer1}>
+            <Field label="Input label" description="Field description">
+              <Input placeholder="Placeholder" />
+            </Field>
+            <Field label="Input disabled" disabled>
+              <Input placeholder="Placeholder" value="Disabled value" />
+            </Field>
+            <Field label="Radio label">
+              <RadioButtonGroup options={radioOptions} value={radioValue} onChange={setRadioValue} />
+            </Field>
+            <HorizontalGroup>
+              <Field label="Switch">
+                <Switch value={boolValue} onChange={(e) => setBoolValue(e.currentTarget.checked)} />
+              </Field>
+              <Field label="Switch true">
+                <Switch value={true} />
+              </Field>
+              <Field label="Switch false disabled">
+                <Switch value={false} disabled />
+              </Field>
+            </HorizontalGroup>
+          </DemoBox>
+        </CollapsableSection>
       </DemoBox>
-
-      {/* <HorizontalGroup>
-        <DemoBox bg={theme.colors.bodyBg}>
-          <>
-            Text on main body background (bg1)
-            <DemoText color={theme.colors.textHeading} size={24}>
-              textHeading Usually a bit bigger text <Icon name="trash-alt" />
-            </DemoText>
-            <DemoText color={theme.colors.text}>
-              text <Icon name="trash-alt" />
-            </DemoText>
-            <DemoText color={theme.colors.textSemiWeak}>
-              textSemiWeak <Icon name="trash-alt" />
-            </DemoText>
-            <DemoText color={theme.colors.textWeak}>
-              textWeak <Icon name="trash-alt" />
-            </DemoText>
-            <DemoText color={theme.colors.textFaint}>
-              textFaint <Icon name="trash-alt" />
-            </DemoText>
-            <DemoText color={theme.colors.textStrong}>
-              textStrong <Icon name="trash-alt" />
-            </DemoText>
-            <DemoText color={theme.colors.formInputText}>
-              formInputText <Icon name="trash-alt" />
-            </DemoText>
-            <DemoText color={theme.colors.formLabel} bold>
-              formLabel is also bold <Icon name="trash-alt" />
-            </DemoText>
-            <DemoText color={theme.colors.formDescription}>
-              formDescription <Icon name="trash-alt" />
-            </DemoText>
-            <DemoText color={theme.colors.textBlue} bold>
-              textBlue usually bold
-            </DemoText>
-            <DemoText color={theme.colors.link}>link</DemoText>
-            <DemoText color={theme.colors.linkHover}>linkHover</DemoText>
-            <DemoText color={theme.colors.linkDisabled}>linkDisabled</DemoText>
-            <DemoText color={theme.colors.linkExternal}>linkExternal</DemoText>
-          </>
-        </DemoBox>
-        <DemoBox bg={theme.colors.formInputBg}>
-          This is inside form input bg (same as dashboard bg)
-          <DemoText color={theme.colors.formInputText}>formInputText</DemoText>
-          <DemoText color={theme.colors.formInputDisabledText}>formInputDisabledText</DemoText>
-          <DemoText color={theme.colors.formInputPlaceholderText}>formInputPlaceholderText</DemoText>
-        </DemoBox>
-        <DemoBox bg={theme.colors.bg2}>
-          Inside bg2
-          <DemoText color={theme.colors.text}>
-            text <Icon name="trash-alt" />
-          </DemoText>
-          <DemoText color={theme.colors.textWeak}>
-            textWeak <Icon name="trash-alt" />
-          </DemoText>
-          <DemoText color={theme.colors.textFaint}>
-            textFaint <Icon name="trash-alt" />
-          </DemoText>
-          <DemoText color={theme.colors.textStrong}>
-            textStrong <Icon name="trash-alt" />
-          </DemoText>
-        </DemoBox>
-      </HorizontalGroup> */}
     </div>
   );
 };
@@ -230,9 +198,6 @@ const colorsTableStyle = css`
 export function TextColors({ t }: { t: GrafanaThemeV2 }) {
   return (
     <>
-      <DemoText color={t.palette.text.strong}>
-        text.strong <Icon name="trash-alt" />
-      </DemoText>
       <DemoText color={t.palette.text.primary}>
         text.primary <Icon name="trash-alt" />
       </DemoText>

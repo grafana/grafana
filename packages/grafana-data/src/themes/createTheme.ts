@@ -1,4 +1,5 @@
 import { createBreakpoints, ThemeBreakpoints } from './breakpoints';
+import { ThemeComponents, createComponents } from './createComponents';
 import { createPalette, ThemePalette, ThemePaletteInput } from './createPalette';
 import { createShape, ThemeShape, ThemeShapeInput } from './createShape';
 import { createSpacing, ThemeSpacingOptions, ThemeSpacing } from './createSpacing';
@@ -11,6 +12,7 @@ export interface GrafanaThemeV2 {
   breakpoints: ThemeBreakpoints;
   spacing: ThemeSpacing;
   shape: ThemeShape;
+  components: ThemeComponents;
 }
 
 export interface NewThemeOptions {
@@ -27,6 +29,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaThemeV2 {
   const breakpoints = createBreakpoints();
   const spacing = createSpacing(spacingInput);
   const shape = createShape(shapeInput);
+  const components = createComponents();
 
   return {
     name,
@@ -36,5 +39,6 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaThemeV2 {
     breakpoints,
     spacing,
     shape,
+    components,
   };
 }

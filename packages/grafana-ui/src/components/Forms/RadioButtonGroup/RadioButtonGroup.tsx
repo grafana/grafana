@@ -42,7 +42,7 @@ export interface RadioButtonGroupProps<T> {
   disabled?: boolean;
   disabledOptions?: T[];
   options: Array<SelectableValue<T>>;
-  onChange?: (value?: T) => void;
+  onChange?: (value: T) => void;
   size?: RadioButtonSize;
   fullWidth?: boolean;
   className?: string;
