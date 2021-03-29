@@ -98,7 +98,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLi
       )}
       {linkSettings.type === 'link' && (
         <>
-          <Field label="Url">
+          <Field label="URL">
             <Input name="url" value={linkSettings.url} onChange={onChange} />
           </Field>
           <Field label="Tooltip">
