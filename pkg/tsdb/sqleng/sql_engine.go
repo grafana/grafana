@@ -4,8 +4,10 @@ import (
 	"container/list"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"math"
+	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -28,6 +30,8 @@ import (
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
+
+var ErrConnectionFailed = errors.New("failed to connect to server - please inspect Grafana server log for details")
 
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
@@ -184,7 +188,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 			rows, err := db.Query(rawSQL)
 			if err != nil {
-				queryResult.Error = e.queryResultTransformer.TransformQueryError(err)
+				queryResult.Error = e.transformQueryError(err)
 				ch <- queryResult
 				return
 			}
@@ -429,6 +433,20 @@ func (e *dataPlugin) transformToTimeSeries(query plugins.DataSubQuery, rows *cor
 
 	result.Meta.Set("rowCount", cfg.rowCount)
 	return nil
+}
+
+func (e *dataPlugin) transformQueryError(err error) error {
+	// OpError is the error type usually returned by functions in the net
+	// package. It describes the operation, network type, and address of
+	// an error. We log this error rather than returing it to the client
+	// for security purposes.
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		e.log.Error("query error", "err", err)
+		return ErrConnectionFailed
+	}
+
+	return e.queryResultTransformer.TransformQueryError(err)
 }
 
 type processCfg struct {

@@ -56,7 +56,8 @@ type Alertmanager struct {
 	dispatcher   *dispatch.Dispatcher
 	dispatcherWG sync.WaitGroup
 
-	stageMetrics *notify.Metrics
+	stageMetrics      *notify.Metrics
+	dispatcherMetrics *dispatch.DispatcherMetrics
 
 	reloadConfigMtx sync.Mutex
 }
@@ -77,6 +78,7 @@ func (am *Alertmanager) Init() (err error) {
 	r := prometheus.NewRegistry()
 	am.marker = types.NewMarker(r)
 	am.stageMetrics = notify.NewMetrics(r)
+	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(r)
 	am.Store = store.DBstore{SQLStore: am.SQLStore}
 
 	am.notificationLog, err = nflog.New(
@@ -204,8 +206,7 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	am.StopAndWait()
 	//TODO: Verify this is correct
 	route := dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
-	//TODO: This needs the metrics
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), nil)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), am.dispatcherMetrics)
 
 	am.dispatcherWG.Add(1)
 	go func() {
