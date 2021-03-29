@@ -6,6 +6,7 @@ import { KubernetesOperatorStatus } from '../../../Kubernetes/OperatorStatusItem
 import { OptionContent } from '../../OptionContent/OptionContent';
 import { Kubernetes } from '../../../Kubernetes/Kubernetes.types';
 import { KubernetesOptionProps } from './DBClusterBasicOptions.types';
+import { DatabaseVersion } from '../../DBCluster.types';
 
 export const kubernetesClusterNameValidator = (value: string) => {
   const clusterNameRegexp = /^[a-z]([-a-z0-9]*[a-z0-9])?$/;
@@ -54,5 +55,7 @@ export const getKubernetesOptions = (kubernetes: Kubernetes[]) =>
     })
     .filter(operators => operators.availableOperators.length);
 
-export const databaseTypeRequired = (value: SelectableValue) =>
-  value && value.label && value.value ? undefined : Messages.dbcluster.addModal.validationMessages.requiredDatabaseType;
+export const optionRequired = (option: SelectableValue) =>
+  option && option.label && option.value ? undefined : Messages.dbcluster.addModal.validationMessages.requiredField;
+
+export const findDefaultDatabaseVersion = (versions: DatabaseVersion[]) => versions.find(version => version.default);

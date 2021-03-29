@@ -48,6 +48,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
     name,
     kubernetesCluster,
     databaseType,
+    databaseVersion,
     topology,
     nodes,
     single,
@@ -66,6 +67,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
         cpu,
         memory,
         disk,
+        databaseImage: databaseVersion.value,
       });
       setVisible(false);
       onDBClusterAdded();

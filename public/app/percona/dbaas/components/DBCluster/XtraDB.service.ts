@@ -3,9 +3,11 @@ import { Databases } from 'app/percona/shared/core';
 import { apiManagement } from 'app/percona/shared/helpers/api';
 import { Kubernetes } from '../Kubernetes/Kubernetes.types';
 import {
+  DatabaseVersion,
   CpuUnits,
   DBCluster,
   DBClusterActionAPI,
+  DBClusterComponentsAPI,
   DBClusterConnectionAPI,
   DBClusterExpectedResources,
   DBClusterExpectedResourcesAPI,
@@ -71,6 +73,22 @@ export class XtraDBService extends DBClusterService {
     );
   }
 
+  getComponents(kubernetesClusterName: string): Promise<DBClusterComponentsAPI> {
+    return apiManagement.post<DBClusterComponentsAPI, any>('/DBaaS/Components/GetPXC', {
+      kubernetes_cluster_name: kubernetesClusterName,
+    });
+  }
+
+  getDatabaseVersions(kubernetesClusterName: string): Promise<DatabaseVersion[]> {
+    return this.getComponents(kubernetesClusterName).then(({ versions }) => {
+      return Object.entries(versions[0].matrix.pxc).map(([version, component]) => ({
+        value: component.image_path,
+        label: version,
+        default: !!component.default,
+      }));
+    });
+  }
+
   getExpectedResources(dbCluster: DBCluster): Promise<DBClusterExpectedResources> {
     return apiManagement
       .post<any, Partial<DBClusterPayload>>('/DBaaS/XtraDBCluster/Resources/Get', pick(toAPI(dbCluster), ['params']))
@@ -115,6 +133,7 @@ const toAPI = (dbCluster: DBCluster): DBClusterPayload => ({
         memory_bytes: dbCluster.memory * BILLION,
       },
       disk_size: dbCluster.disk * BILLION,
+      image: dbCluster.databaseImage,
     },
     // Temporary mock data
     proxysql: {

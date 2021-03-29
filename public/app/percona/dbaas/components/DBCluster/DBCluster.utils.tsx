@@ -1,4 +1,5 @@
 import React from 'react';
+import { SelectableValue } from '@grafana/data';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { Databases } from 'app/percona/shared/core';
 import { DBCluster, DBClusterStatus, DBClusterStatusMap, ResourcesUnits, ResourcesWithUnits } from './DBCluster.types';
@@ -34,6 +35,8 @@ export const newDBClusterService = (type: Databases): DBClusterService => {
 
   return service || SERVICE_MAP[Databases.mysql];
 };
+
+export const isOptionEmpty = (option?: SelectableValue) => !option || Object.keys(option).length === 0 || !option.value;
 
 export const formatResources = (bytes: number, decimals: number): ResourcesWithUnits => {
   const i = Math.floor(Math.log(bytes) / Math.log(THOUSAND));
