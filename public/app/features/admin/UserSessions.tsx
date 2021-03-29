@@ -53,7 +53,7 @@ export class UserSessions extends PureComponent<Props, State> {
                   <th>Last seen</th>
                   <th>Logged on</th>
                   <th>IP address</th>
-                  <th colSpan={2}>Browser &amp; OS</th>
+                  <th colSpan={2}>Browser and OS</th>
                 </tr>
               </thead>
               <tbody>

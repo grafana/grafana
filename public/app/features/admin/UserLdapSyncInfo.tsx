@@ -34,7 +34,7 @@ export class UserLdapSyncInfo extends PureComponent<Props, State> {
               <tbody>
                 <tr>
                   <td>External sync</td>
-                  <td>User synced via LDAP – some changes must be done in LDAP or mappings.</td>
+                  <td>User synced via LDAP. Some changes must be done in LDAP or mappings.</td>
                   <td>
                     <span className="label label-tag">LDAP</span>
                   </td>
@@ -42,12 +42,12 @@ export class UserLdapSyncInfo extends PureComponent<Props, State> {
                 <tr>
                   {ldapSyncInfo.enabled ? (
                     <>
-                      <td>Next scheduled synchronisation</td>
+                      <td>Next scheduled synchronization</td>
                       <td colSpan={2}>{nextSyncTime}</td>
                     </>
                   ) : (
                     <>
-                      <td>Next scheduled synchronisation</td>
+                      <td>Next scheduled synchronization</td>
                       <td colSpan={2}>Not enabled</td>
                     </>
                   )}

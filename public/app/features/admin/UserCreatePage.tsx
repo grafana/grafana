@@ -49,7 +49,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
                   <Input name="name" ref={register({ required: true })} />
                 </Field>
 
-                <Field label="E-mail">
+                <Field label="Email">
                   <Input name="email" ref={register} />
                 </Field>
 

@@ -46,7 +46,7 @@ export class UserOrgs extends PureComponent<Props, State> {
 
     return (
       <>
-        <h3 className="page-heading">Organisations</h3>
+        <h3 className="page-heading">Organizations</h3>
         <div className="gf-form-group">
           <div className="gf-form">
             <table className="filter-table form-inline">
@@ -64,7 +64,7 @@ export class UserOrgs extends PureComponent<Props, State> {
           </div>
           <div className={addToOrgContainerClass}>
             <Button variant="secondary" onClick={this.showOrgAddModal(true)}>
-              Add user to organisation
+              Add user to organization
             </Button>
           </div>
           <AddToOrgModal isOpen={showAddOrgModal} onOrgAdd={onOrgAdd} onDismiss={this.showOrgAddModal(false)} />
@@ -162,7 +162,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
               onCancel={this.onCancelClick}
               onConfirm={this.onOrgRemove}
             >
-              Remove from organisation
+              Remove from organization
             </ConfirmButton>
           </div>
         </td>
@@ -235,7 +235,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         isOpen={isOpen}
         onDismiss={this.onCancel}
       >
-        <Field label="Organisation">
+        <Field label="Organization">
           <OrgPicker onSelected={this.onOrgSelect} />
         </Field>
         <Field label="Role">
@@ -244,7 +244,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         <Container padding="md">
           <HorizontalGroup spacing="md" justify="center">
             <Button variant="primary" onClick={this.onAddUserToOrg}>
-              Add to organisation
+              Add to organization
             </Button>
             <Button variant="secondary" onClick={this.onCancel}>
               Cancel
