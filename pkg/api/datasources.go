@@ -240,7 +240,7 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 	err = bus.Dispatch(&cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
-			return response.Error(500, "Failed to update datasource. Reload new version and try again", err)
+			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
 		}
 		return response.Error(500, "Failed to update datasource", err)
 	}
