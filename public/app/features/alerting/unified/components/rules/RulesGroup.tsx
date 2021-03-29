@@ -72,7 +72,8 @@ export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
           </Tooltip>
         )}
         <h6 className={styles.heading}>
-          {namespace} &gt; {group.name}
+          {namespace && `${namespace} > `}
+          {group.name}
         </h6>
         <div className={styles.spacer} />
         <div className={styles.headerStats}>

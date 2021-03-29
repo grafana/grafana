@@ -2,6 +2,8 @@ import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { RulesSource } from 'app/types/unified-alerting';
 import { getAllDataSources } from './config';
 
+export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
+
 export enum DataSourceType {
   Alertmanager = 'grafana-alertmanager-datasource',
   Loki = 'loki',

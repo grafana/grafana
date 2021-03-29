@@ -1,17 +1,26 @@
-import React, { FC, useEffect } from 'react';
+import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
+import { Icon, InfoBox, useStyles } from '@grafana/ui';
+import { SerializedError } from '@reduxjs/toolkit';
+import React, { FC, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
-import { SystemOrApplicationAlerts } from './components/rules/SystemOrApplicationRules';
+import { SystemOrApplicationRules } from './components/rules/SystemOrApplicationRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchRulesAction } from './state/actions';
-import { getRulesDataSources } from './utils/datasource';
+import { fetchRulesFromAllSourcesAction } from './state/actions';
+import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { css } from 'emotion';
+import { ThresholdRules } from './components/rules/ThresholdRules';
 
 export const RuleList: FC = () => {
   const dispatch = useDispatch();
+  const styles = useStyles(getStyles);
+  const rulesDataSources = useMemo(getRulesDataSources, []);
 
   // trigger fetch for any rules sources that dont have results and are not currently loading
-  useEffect(() => getRulesDataSources().forEach((ds) => dispatch(fetchRulesAction(ds.name))), [dispatch]);
+  useEffect(() => {
+    dispatch(fetchRulesFromAllSourcesAction());
+  }, [dispatch]);
 
   const rules = useUnifiedAlertingSelector((state) => state.rules);
 
@@ -20,10 +29,55 @@ export const RuleList: FC = () => {
   const loading = !!requests.find((r) => r.loading);
   const haveResults = !!requests.find((r) => !r.loading && r.dispatched && (r.result?.length || !!r.error));
 
+  const cloudErrors = useMemo(
+    () =>
+      rulesDataSources.reduce<Array<{ error: SerializedError; dataSource: DataSourceInstanceSettings }>>(
+        (result, dataSource) => {
+          const error = rules[dataSource.name]?.error;
+          if (error) {
+            return [...result, { dataSource, error }];
+          }
+          return result;
+        },
+        []
+      ),
+    [rules, rulesDataSources]
+  );
+
+  const grafanaError = rules[GRAFANA_RULES_SOURCE_NAME]?.error;
+
   return (
     <AlertingPageWrapper isLoading={loading && !haveResults}>
+      {(cloudErrors || grafanaError) && (
+        <InfoBox
+          data-testid="cloud-rulessource-errors"
+          title={
+            <h4>
+              <Icon className={styles.iconError} name="exclamation-triangle" size="xl" />
+              Errors loading rules
+            </h4>
+          }
+          severity="error"
+        >
+          {grafanaError && <div>Failed to load threshold rules: {grafanaError.message || 'Unknown error.'}</div>}
+          {cloudErrors.map(({ dataSource, error }) => (
+            <div key={dataSource.name}>
+              Failed to load rules from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
+              {error.message || 'Unknown error.'}
+            </div>
+          ))}
+        </InfoBox>
+      )}
       {dispatched && !loading && !haveResults && <NoRulesSplash />}
-      {haveResults && <SystemOrApplicationAlerts />}
+      {haveResults && <ThresholdRules />}
+      {haveResults && <SystemOrApplicationRules />}
     </AlertingPageWrapper>
   );
 };
+
+const getStyles = (theme: GrafanaTheme) => ({
+  iconError: css`
+    color: ${theme.palette.red};
+    margin-right: ${theme.spacing.md};
+  `,
+});
