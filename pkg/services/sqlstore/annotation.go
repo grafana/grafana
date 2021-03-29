@@ -15,7 +15,7 @@ import (
 func validateTimeRange(item *annotations.Item) error {
 	if item.EpochEnd == 0 {
 		if item.Epoch == 0 {
-			return errors.New("missing time range")
+			return annotations.ErrTimerangeMissing
 		}
 		item.EpochEnd = item.Epoch
 	}

@@ -2,9 +2,14 @@ package annotations
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	ErrTimerangeMissing = errors.New("missing timerange")
 )
 
 type Repository interface {
