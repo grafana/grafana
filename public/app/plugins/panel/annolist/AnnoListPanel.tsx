@@ -9,6 +9,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import appEvents from 'app/core/app_events';
 import { AnnotationListItem } from './AnnotationListItem';
 import { AnnotationListItemTags } from './AnnotationListItemTags';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 interface UserInfo {
   id?: number;
@@ -74,7 +75,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
     let timeInfo = '';
     if (options.onlyInTimeRange) {
-      const { timeRange } = this.props;
+      const timeRange = getTimeSrv().timeRange();
       params.from = timeRange.from.valueOf();
       params.to = timeRange.to.valueOf();
     } else {
