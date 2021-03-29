@@ -69,6 +69,9 @@ export class DatasourceSrv implements DataSourceService {
       // The return name or uid needs preservet string containing the variable
       const clone = cloneDeep(dsSettings);
       clone.name = nameOrUid;
+      // A data source being looked up using a variable should not be considered default
+      clone.isDefault = false;
+
       return clone;
     }
 
