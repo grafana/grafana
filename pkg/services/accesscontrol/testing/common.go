@@ -59,13 +59,12 @@ func CreateUserWithRole(t *testing.T, db *sqlstore.SQLStore, ac accesscontrol.St
 			OrgID: 1,
 			Name:  p.Name,
 		}
-		res, err := ac.CreateRole(context.Background(), createRoleCmd)
+		role, err := ac.CreateRole(context.Background(), createRoleCmd)
 		require.NoError(t, err)
-		roleId := res.ID
 
 		for _, perm := range p.Permissions {
 			permCmd := accesscontrol.CreatePermissionCommand{
-				RoleID:     roleId,
+				RoleID:     role.ID,
 				Permission: perm.Permission,
 				Scope:      perm.Scope,
 			}
@@ -75,9 +74,9 @@ func CreateUserWithRole(t *testing.T, db *sqlstore.SQLStore, ac accesscontrol.St
 		}
 
 		addUserRoleCmd := accesscontrol.AddUserRoleCommand{
-			OrgID:  1,
-			RoleID: roleId,
-			UserID: userId,
+			OrgID:   1,
+			RoleUID: role.UID,
+			UserID:  userId,
 		}
 		err = ac.AddUserRole(&addUserRoleCmd)
 		require.NoError(t, err)
@@ -95,13 +94,12 @@ func CreateTeamWithRole(t *testing.T, db *sqlstore.SQLStore, ac accesscontrol.St
 			OrgID: orgID,
 			Name:  p.Name,
 		}
-		res, err := ac.CreateRole(context.Background(), createRoleCmd)
+		role, err := ac.CreateRole(context.Background(), createRoleCmd)
 		require.NoError(t, err)
-		roleId := res.ID
 
 		for _, perm := range p.Permissions {
 			permCmd := accesscontrol.CreatePermissionCommand{
-				RoleID:     roleId,
+				RoleID:     role.ID,
 				Permission: perm.Permission,
 				Scope:      perm.Scope,
 			}
@@ -111,9 +109,9 @@ func CreateTeamWithRole(t *testing.T, db *sqlstore.SQLStore, ac accesscontrol.St
 		}
 
 		addTeamRoleCmd := accesscontrol.AddTeamRoleCommand{
-			OrgID:  1,
-			RoleID: roleId,
-			TeamID: teamId,
+			OrgID:   1,
+			RoleUID: role.UID,
+			TeamID:  teamId,
 		}
 		err = ac.AddTeamRole(&addTeamRoleCmd)
 		require.NoError(t, err)
