@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { useStyles } from '@grafana/ui';
 import { css } from 'emotion';
+import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
   isLoading?: boolean;
@@ -25,10 +26,10 @@ export const AlertingPageWrapper: FC<Props> = ({ children, isLoading }) => {
   );
 };
 
-export const getStyles = () => ({
+export const getStyles = (theme: GrafanaTheme) => ({
   page: css`
     .page-container {
-      max-width: 1400px;
+      max-width: ${theme.breakpoints.xxl};
     }
   `,
 });

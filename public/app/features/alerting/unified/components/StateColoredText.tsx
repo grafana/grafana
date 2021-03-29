@@ -8,6 +8,12 @@ type Props = {
   status: PromAlertingRuleState;
 };
 
+export const StateColoredText: FC<Props> = ({ children, status }) => {
+  const styles = useStyles(getStyles);
+
+  return <span className={styles[status]}>{children || status}</span>;
+};
+
 const getStyles = (theme: GrafanaTheme) => ({
   [PromAlertingRuleState.Inactive]: css`
     color: ${theme.palette.brandSuccess};
@@ -19,9 +25,3 @@ const getStyles = (theme: GrafanaTheme) => ({
     color: ${theme.palette.brandDanger};
   `,
 });
-
-export const StateColoredText: FC<Props> = ({ children, status }) => {
-  const styles = useStyles(getStyles);
-
-  return <span className={styles[status]}>{children || status}</span>;
-};

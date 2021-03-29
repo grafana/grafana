@@ -1,4 +1,4 @@
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, rangeUtil } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { RuleGroup, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, Fragment, useState } from 'react';
@@ -6,7 +6,6 @@ import { isAlertingRule, ruleKey } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from 'emotion';
 import { TimeToNow } from '../TimeToNow';
-import { formatDuration } from '../../utils/formatting';
 import { StateTag } from '../StateTag';
 import { RuleDetails } from './RuleDetails';
 import { getAlertTableStyles } from '../../styles/table';
@@ -85,7 +84,7 @@ export const RulesTable: FC<Props> = ({ group, rulesSource }) => {
                   <td>
                     {rule.lastEvaluation && rule.evaluationTime ? (
                       <>
-                        <TimeToNow date={rule.lastEvaluation} />, for {formatDuration(rule.evaluationTime)}
+                        <TimeToNow date={rule.lastEvaluation} />, for {rangeUtil.secondsToHms(rule.evaluationTime)}
                       </>
                     ) : (
                       'n/a'

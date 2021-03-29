@@ -15,12 +15,13 @@ export const AlertLabel: FC<Props> = ({ labelKey, value }) => (
 );
 
 export const getStyles = (theme: GrafanaTheme) => css`
-  padding: 3px ${theme.spacing.xs};
+  padding: ${theme.spacing.xs} ${theme.spacing.sm};
   border-radius: ${theme.border.radius.sm};
-  border: solid 1px #343b40; // @TODO
+  border: solid 1px ${theme.colors.border2};
   font-size: ${theme.typography.size.sm};
   background-color: ${theme.colors.bg2};
   font-weight: ${theme.typography.weight.bold};
   color: ${theme.colors.formLabel};
   display: inline-block;
+  line-height: 1.2;
 `;

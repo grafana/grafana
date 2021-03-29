@@ -24,6 +24,8 @@ export const getStyles = () => ({
     background: none;
     border: none;
 
+    outline: none !important;
+
     svg {
       margin-bottom: 0;
     }

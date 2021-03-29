@@ -64,7 +64,7 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
                 <td className={styles.labelsCell}>
                   <AlertLabels labels={instance.labels} />
                 </td>
-                <td className={styles.createdCell}>{String(instance.activeAt).substr(0, 19).replace('T', ' ')}</td>
+                <td className={styles.createdCell}>{instance.activeAt.substr(0, 19).replace('T', ' ')}</td>
                 <td>
                   <ActionButton icon="bell-slash">Silence</ActionButton>
                 </td>

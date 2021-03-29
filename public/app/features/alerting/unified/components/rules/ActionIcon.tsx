@@ -1,13 +1,14 @@
-import { Icon, IconName, useStyles } from '@grafana/ui';
-import { Tooltip, TooltipProps } from '@grafana/ui/src/components/Tooltip/Tooltip';
+import { Icon, IconName, useStyles, Tooltip } from '@grafana/ui';
+import { PopoverContent } from '@grafana/ui/src/components/Tooltip/Tooltip';
+import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip/PopoverController';
 import React, { FC } from 'react';
 import { css } from 'emotion';
 
 interface Props {
-  tooltip: TooltipProps['content'];
+  tooltip: PopoverContent;
   icon: IconName;
 
-  tooltipPlacement?: TooltipProps['placement'];
+  tooltipPlacement?: TooltipPlacement;
   href?: string;
 }
 
