@@ -48,7 +48,7 @@ func (ps *panelSchema) Version() (major int, minor int) {
 	return ps.major, ps.minor
 }
 
-func (ps *panelSchema) Successor() schema.VersionedCueSchema {
+func (ps *panelSchema) Successor() (schema.VersionedCueSchema, bool) {
 	panic("not implemented")
 }
 
@@ -56,8 +56,8 @@ func (ps *panelSchema) Migrate(x schema.Resource) (schema.Resource, schema.Versi
 	panic("not implemented")
 }
 
-// Returns a disjunction of structs representing each schema version from each
-// scuemata in the map.
+// Returns a disjunction of structs representing each panel schema version
+// (post-mapping from on-disk #PanelModel form) from each scuemata in the map.
 func disjunctPanelScuemata(scuemap map[string]schema.Fam) (cue.Value, error) {
 	partsi, err := rt.Compile("panelDisjunction", `
 	allPanels: [Name=_]: {}
@@ -73,7 +73,7 @@ func disjunctPanelScuemata(scuemap map[string]schema.Fam) (cue.Value, error) {
 
 		// TODO lol, be better
 		for !reflect.ValueOf(sch).IsNil() {
-			cv := panelMapFor(id, sch)
+			cv := mapPanelModel(id, sch)
 
 			mjv, miv := sch.Version()
 			parts = parts.Fill(cv, "allPanels", fmt.Sprintf("%s@%v.%v", id, mjv, miv))
@@ -82,12 +82,15 @@ func disjunctPanelScuemata(scuemap map[string]schema.Fam) (cue.Value, error) {
 	}
 
 	return parts.LookupPath(cue.MakePath(cue.Str("parts"))), nil
-	// return parts.LookupPath(cue.MakePath(cue.Str("allPanels"))), nil
 }
 
-func panelMapFor(id string, vcs schema.VersionedCueSchema) cue.Value {
+// mapPanelModel maps a schema from the #PanelModel form in which it's declared
+// in a plugin's model.cue to the structure in which it actually appears in the
+// dashboard schema.
+func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 	maj, min := vcs.Version()
-	inter, err := rt.Compile("typedPanel", fmt.Sprintf(`
+	// Ignore err return, this can't fail to compile
+	inter, _ := rt.Compile("typedPanel", fmt.Sprintf(`
 	in: {
 		type: %q
 		v: {
@@ -104,244 +107,12 @@ func panelMapFor(id string, vcs schema.VersionedCueSchema) cue.Value {
 		fieldConfig: defaults: custom: in.model.PanelFieldConfig
 	}
 	`, id, maj, min))
-	if err != nil {
-		// The above can't not compile
-		panic(err)
-	}
 
 	// TODO validate, especially with #PanelModel
-	// fmt.Printf("%v\n", inter.Value().Fill(vcs.CUE(), "in", "model").Lookup("result"))
 	return inter.Value().Fill(vcs.CUE(), "in", "model").Lookup("result")
 }
 
-func DistDashboardFamily(p BaseLoadPaths) (*schema.Family, error) {
-	overlay := make(map[string]load.Source)
-	if err := toOverlay("/", p.BaseCueFS, overlay); err != nil {
-		return nil, err
-	}
-	if err := toOverlay("/", p.DistPluginCueFS, overlay); err != nil {
-		return nil, err
-	}
-
-	cfg := &load.Config{Overlay: overlay}
-	inst := cue.Build(load.Instances([]string{"/cue/data/gen.cue"}, cfg))[0]
-
-	distpanels, err := rawDistPanels(p)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO Sucks that these are not a hidden field rn, but FieldByName doesn't
-	// seem to be working?
-	dp := inst.Lookup("discriminatedPanel")
-	if !dp.Exists() {
-		return nil, errors.New("discriminatedPanel did not exist")
-	}
-
-	// f, err := inst.Value().FieldByName("_parts", true)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	for id, pfam := range distpanels {
-		cur := pfam.fam.Seqs[0][0]
-
-		// TODO lol, be better
-		for !reflect.ValueOf(cur).IsNil() {
-			cv := cur.CUE()
-			mjv, miv := cur.Version()
-			pv := dp.Fill(cv, "arg", "model").
-				Fill(id, "arg", "type").
-				Fill(mjv, "arg", "v", "maj").
-				Fill(miv, "arg", "v", "min")
-
-			inst, err = inst.Fill(pv, "allPanels", fmt.Sprintf("%s%v%v", id, mjv, miv))
-			if err != nil {
-				return nil, err
-			}
-			cur = cur.Successor()
-		}
-	}
-
-	allp := inst.Lookup("allPanels")
-	if !allp.Exists() {
-		return nil, errors.New("allPanels did not exist")
-	}
-
-	parts := inst.Lookup("parts")
-	if !parts.Exists() {
-		return nil, errors.New("parts did not exist")
-	}
-
-	famval := inst.Lookup("dashboardFamily")
-	if !famval.Exists() {
-		return nil, errors.New("dashboard schema family did not exist at expected path in expected file")
-	}
-
-	return buildDistDashboardFamily(famval, parts)
-}
-
-func buildDistDashboardFamily(famval, parts cue.Value) (*schema.Family, error) {
-	// TODO verify subsumption by #SchemaFamily; renders many
-	// error checks below unnecessary
-	majiter, err := famval.Lookup("seqs").List()
-	if err != nil {
-		return nil, err
-	}
-	// TODO for now we do nothing with parts, relying on the cue file to unify
-	// because filling hidden fields is still crappy
-	var major int
-	var lastcds *compositeDashboardSchema
-	fam := &schema.Family{}
-	for majiter.Next() {
-		var minor int
-		miniter, _ := majiter.Value().List()
-		var seq schema.Seq
-		for miniter.Next() {
-			cds := &compositeDashboardSchema{
-				actual: miniter.Value(),
-				// This gets overwritten on all but the very final schema
-				migration: terminalMigrationFunc,
-			}
-
-			if minor != 0 {
-				lastcds.next = cds
-				// TODO Verify that this schema is backwards compat with prior.
-				// Create an implicit migration operation on the prior schema.
-				lastcds.migration = implicitMigration(cds.actual, cds)
-			} else if major != 0 {
-				lastcds.next = cds
-				// x.0. There should exist an explicit migration definition;
-				// load it up and ready it for use, and place it on the final
-				// schema in the prior sequence.
-				//
-				// Also...should at least try to make sure it's pointing at the
-				// expected schema, to maintain our invariants?
-
-				// TODO impl
-			}
-			seq = append(seq, cds)
-		}
-		fam.Seqs = append(fam.Seqs, seq)
-	}
-
-	return fam, nil
-}
-
-type panelFamily struct {
-	typ string
-	fam *schema.Family
-}
-
-// rawDistPanels loads up generic Families representing the set of possible
-// schemata for panel plugin configuration. It does not remap them onto the
-// dashboard-declared panel type.
-//
-// The returned map is keyed by plugin id.
-func rawDistPanels(p BaseLoadPaths) (map[string]panelFamily, error) {
-	overlay := make(map[string]load.Source)
-	if err := toOverlay("/", p.BaseCueFS, overlay); err != nil {
-		return nil, err
-	}
-	if err := toOverlay("/", p.DistPluginCueFS, overlay); err != nil {
-		return nil, err
-	}
-
-	cfg := &load.Config{
-		Overlay: overlay,
-		Package: "scuemata",
-	}
-
-	built, err := rt.Build(load.Instances([]string{"/cue/scuemata/scuemata.cue"}, cfg)[0])
-	if err != nil {
-		return nil, err
-	}
-	pmf := built.Value().LookupPath(cue.MakePath(cue.Def("#PanelModelFamily")))
-	if !pmf.Exists() {
-		return nil, errors.New("could not locate #PanelModelFamily definition")
-	}
-
-	all := make(map[string]panelFamily)
-	err = fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if d.IsDir() || d.Name() != "plugin.json" {
-			return nil
-		}
-
-		dpath := filepath.Dir(path)
-		// For now, skip plugins without a models.cue
-		_, err = p.DistPluginCueFS.Open(filepath.Join(dpath, "models.cue"))
-		if err != nil {
-			return nil
-		}
-
-		fi, err := p.DistPluginCueFS.Open(path)
-		if err != nil {
-			return err
-		}
-		b, err := ioutil.ReadAll(fi)
-		if err != nil {
-			return err
-		}
-
-		jmap := make(map[string]interface{})
-		json.Unmarshal(b, &jmap)
-		if err != nil {
-			return err
-		}
-		iid, has := jmap["id"]
-		if !has || jmap["type"] != "panel" {
-			return errors.New("no type field in plugin.json or not a panel type plugin")
-		}
-		id := iid.(string)
-
-		cfg := &load.Config{
-			Package: "grafanaschema",
-			Overlay: overlay,
-		}
-
-		li := load.Instances([]string{filepath.Join("/", dpath, "models.cue")}, cfg)
-		imod, err := rt.Build(li[0])
-		if err != nil {
-			return err
-		}
-
-		// Verify that there exists a Model declaration in the models.cue file...
-		// TODO Best (?) ergonomics for entire models.cue file to emit a struct
-		// compliant with #PanelModelFamily
-		pmod := imod.Lookup("Model")
-		if !pmod.Exists() {
-			return fmt.Errorf("%s does not contain a declaration of its models at path 'Model'", path)
-		}
-
-		// Ensure the declared value is subsumed by/correct wrt #PanelModelFamily
-		if err := pmf.Subsume(pmod); err != nil {
-			return err
-		}
-
-		// Create a generic schema family to represent the whole of the
-		fam, err := buildSchemaFamily(pmod)
-		if err != nil {
-			return err
-		}
-
-		all[id] = panelFamily{
-			typ: id,
-			fam: fam,
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return all, nil
-}
-
-func rawDistPanels2(p BaseLoadPaths) (map[string]schema.Fam, error) {
+func readPanelModels(p BaseLoadPaths) (map[string]schema.Fam, error) {
 	overlay := make(map[string]load.Source)
 	if err := toOverlay("/", p.BaseCueFS, overlay); err != nil {
 		return nil, err
@@ -428,7 +199,7 @@ func rawDistPanels2(p BaseLoadPaths) (map[string]schema.Fam, error) {
 		}
 
 		// Create a generic schema family to represent the whole of the
-		fam, err := buildGenericFamily(pmod)
+		fam, err := buildGenericScuemata(pmod)
 		if err != nil {
 			return err
 		}
@@ -441,15 +212,4 @@ func rawDistPanels2(p BaseLoadPaths) (map[string]schema.Fam, error) {
 	}
 
 	return all, nil
-}
-
-func pr(v interface{}) {
-	switch t := v.(type) {
-	case *cue.Instance:
-		fmt.Printf("%v\n", t.Value())
-	case cue.Value:
-		fmt.Printf("%v\n", t)
-	default:
-		panic("unsupported helpy printer")
-	}
 }

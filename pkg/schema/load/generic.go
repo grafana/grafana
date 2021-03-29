@@ -30,7 +30,7 @@ func (df *scuemata) First() schema.VersionedCueSchema {
 	return df.first
 }
 
-func buildGenericFamily(famval cue.Value) (schema.Fam, error) {
+func buildGenericScuemata(famval cue.Value) (schema.Fam, error) {
 	// TODO verify subsumption by #SchemaFamily; renders many
 	// error checks below unnecessary
 	majiter, err := famval.Lookup("seqs").List()
@@ -54,10 +54,6 @@ func buildGenericFamily(famval cue.Value) (schema.Fam, error) {
 				migration: terminalMigrationFunc,
 			}
 
-			if scuem.first == nil {
-				scuem.first = gvs
-			}
-
 			if minor != 0 {
 				// TODO Verify that this schema is backwards compat with prior.
 				// Create an implicit migration operation on the prior schema.
@@ -73,30 +69,14 @@ func buildGenericFamily(famval cue.Value) (schema.Fam, error) {
 				// expected schema, to maintain our invariants?
 
 				// TODO impl
+			} else {
+				scuem.first = gvs
 			}
 			lastgvs = gvs
 			minor++
 		}
 		major++
 	}
-
-	// TODO stupid pointers not being references, fixme
-	// for o, seq := range fam.Seqs {
-	// 	for i, gen := range seq {
-	// 		var next *genericVersionedSchema
-	// 		if len(seq) == i+1 {
-	// 			if len(fam.Seqs) == o+1 {
-	// 				continue
-	// 			}
-	// 			next = fam.Seqs[o+1][0].(*genericVersionedSchema)
-	// 		} else {
-	// 			next = seq[i+1].(*genericVersionedSchema)
-	// 		}
-	// 		gvs := gen.(*genericVersionedSchema)
-	// 		gvs.next = next
-	// 		fam.Seqs[o][i] = gvs
-	// 	}
-	// }
 
 	return scuem, nil
 }

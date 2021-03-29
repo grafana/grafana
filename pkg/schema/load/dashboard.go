@@ -41,7 +41,7 @@ func BaseDashboardScuemata(p BaseLoadPaths) (schema.Fam, error) {
 		return nil, errors.New("dashboard schema family did not exist at expected path in expected file")
 	}
 
-	return buildGenericFamily(famval)
+	return buildGenericScuemata(famval)
 }
 
 func DistDashboardScuemata(p BaseLoadPaths) (schema.Fam, error) {
@@ -49,25 +49,26 @@ func DistDashboardScuemata(p BaseLoadPaths) (schema.Fam, error) {
 	if err != nil {
 		return nil, err
 	}
-	scuemap, err := rawDistPanels2(p)
+	scuemap, err := readPanelModels(p)
 	if err != nil {
 		return nil, err
 	}
 
 	dj, err := disjunctPanelScuemata(scuemap)
-	// fmt.Printf("%v\n", dj)
 
 	// Stick this into a dummy struct so that we can unify it into place, as
-	// Value.Fill() can't target definitions. (Need new cue.Path-based method.)
+	// Value.Fill() can't target definitions. (Need new method based on
+	// cue.Path; there's a CL pending -
+	// https://cue-review.googlesource.com/c/cue/+/9162 - and it should be in
+	// next release of CUE.)
 	dummy, _ := rt.Compile("mergeStruct", `
 	obj: {}
 	dummy: {
-		#Panel: or([for v in obj {v}])
+		#Panel: obj
 	}
 	`)
 	filled := dummy.Value().Fill(dj, "obj")
 	ddj := filled.LookupPath(cue.MakePath(cue.Str("dummy")))
-	// fmt.Printf("%v\n", ddj)
 
 	var prev *compositeDashboardSchema
 	scuem, sch := &scuemata{}, base.First()
@@ -163,7 +164,7 @@ func (cds *compositeDashboardSchema) LatestPanelSchemaFor(id string) (schema.Ver
 	}
 
 	sch := &genericVersionedSchema{
-		actual: cds.base.CUE().LookupPath(panelSubpath).Unify(panelMapFor(id, latest)),
+		actual: cds.base.CUE().LookupPath(panelSubpath).Unify(mapPanelModel(id, latest)),
 	}
 	sch.major, sch.minor = latest.Version()
 
@@ -173,12 +174,12 @@ func (cds *compositeDashboardSchema) LatestPanelSchemaFor(id string) (schema.Ver
 func (cds *compositeDashboardSchema) basePanelValue() cue.Value {
 	v := cds.base.CUE().LookupPath(panelSubpath)
 	if !v.Exists() {
-		panic("could not find Panel object in dashboard schema, err")
+		panic("could not find Panel object in dashboard schema")
 	}
 	return v
 }
 
-// One-off special type for dashboard composite schema, until the composite
+// One-off special interface for dashboard composite schema, until the composite
 // dashboard schema pattern is fully generalized.
 //
 // NOTE: THIS IS A TEMPORARY TYPE. IT WILL BE REPLACED WITH A GENERIC INTERFACE

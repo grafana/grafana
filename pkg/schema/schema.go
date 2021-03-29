@@ -194,11 +194,8 @@ type CueSchema interface {
 	Migrate(Resource) (Resource, VersionedCueSchema, error)
 
 	// Successor returns the CueSchema to which this CueSchema can migrate a
-	// Resource. If there is no successor schema, the second return value is
-	// false.
+	// Resource.
 	Successor() VersionedCueSchema
-	// TODO
-	// Successor() (VersionedCueSchema, bool)
 
 	// CUE returns the cue.Value representing the actual schema.
 	CUE() cue.Value

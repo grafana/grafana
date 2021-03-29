@@ -39,7 +39,6 @@ func TestScuemataBasics(t *testing.T) {
 			maj, min := sch.Version()
 			t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
 				cv := sch.CUE()
-				t.Fail()
 				t.Run("Exists", func(t *testing.T) {
 					require.True(t, cv.Exists(), "cue value for schema does not exist")
 				})
