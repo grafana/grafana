@@ -29,8 +29,6 @@ type GetAlertmanagerConfigurationQuery struct {
 type SaveAlertmanagerConfigurationCmd struct {
 	AlertmanagerConfiguration string
 	ConfigurationVersion      string
-
-	Result *AlertConfiguration
 }
 
 type DeleteAlertmanagerConfigurationCmd struct {

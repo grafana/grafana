@@ -17,11 +17,11 @@ func getAlertmanagerConfigurationByID(sess *sqlstore.DBSession, id int64) (*mode
 	c := &models.AlertConfiguration{}
 
 	has, err := sess.ID(id).Get(c)
-	if !has {
-		return nil, ErrNoAlertmanagerConfiguration
-	}
 	if err != nil {
 		return nil, err
+	}
+	if !has {
+		return nil, ErrNoAlertmanagerConfiguration
 	}
 
 	return c, nil
@@ -78,8 +78,6 @@ func (st DBstore) SaveAlertmanagerConfiguration(cmd *models.SaveAlertmanagerConf
 		if _, err := sess.Insert(config); err != nil {
 			return err
 		}
-
-		cmd.Result = &config
 		return nil
 	})
 }

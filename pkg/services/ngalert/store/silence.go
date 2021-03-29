@@ -18,11 +18,11 @@ func getSilenceByUID(sess *sqlstore.DBSession, silenceUID string, orgID int64) (
 		UID:   silenceUID,
 	}
 	has, err := sess.Get(silence)
-	if !has {
-		return nil, models.ErrSilenceNotFound
-	}
 	if err != nil {
 		return nil, err
+	}
+	if !has {
+		return nil, models.ErrSilenceNotFound
 	}
 	return silence, nil
 }
@@ -31,11 +31,11 @@ func getSilenceByID(sess *sqlstore.DBSession, id int64) (*models.Silence, error)
 	silence := &models.Silence{}
 
 	has, err := sess.ID(id).Get(silence)
-	if !has {
-		return nil, ErrNoAlertmanagerConfiguration
-	}
 	if err != nil {
 		return nil, err
+	}
+	if !has {
+		return nil, ErrNoAlertmanagerConfiguration
 	}
 
 	return silence, nil

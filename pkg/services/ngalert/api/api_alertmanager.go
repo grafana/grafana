@@ -340,12 +340,11 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 		return response.Error(http.StatusInternalServerError, "failed to serialize to the Alertmanager configuration", err)
 	}
 
-	err = srv.store.SaveAlertmanagerConfiguration(&ngmodels.SaveAlertmanagerConfigurationCmd{
+	cmd := ngmodels.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: string(config),
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-	})
-
-	if err != nil {
+	}
+	if err := srv.store.SaveAlertmanagerConfiguration(&cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to save Alertmanager configuration", err)
 	}
 
