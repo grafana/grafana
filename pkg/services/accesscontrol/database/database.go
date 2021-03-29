@@ -449,44 +449,46 @@ func (*AccessControlStore) userRolesFilter(orgID, userID int64, roles []string) 
 
 func (ac *AccessControlStore) AddTeamRole(cmd *accesscontrol.AddTeamRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if res, err := sess.Query("SELECT 1 from team_role WHERE org_id=? and team_id=? and role_id=?", cmd.OrgID, cmd.TeamID, cmd.RoleID); err != nil {
+		role, err := getRoleByUID(sess, cmd.RoleUID, cmd.OrgID)
+		if err != nil {
 			return err
-		} else if len(res) == 1 {
-			return accesscontrol.ErrTeamRoleAlreadyAdded
 		}
 
 		if _, err := teamExists(cmd.OrgID, cmd.TeamID, sess); err != nil {
 			return err
 		}
 
-		if _, err := roleExists(cmd.OrgID, cmd.RoleID, sess); err != nil {
+		if res, err := sess.Query("SELECT 1 from team_role WHERE org_id=? and team_id=? and role_id=?", cmd.OrgID, cmd.TeamID, role.ID); err != nil {
 			return err
+		} else if len(res) == 1 {
+			return accesscontrol.ErrTeamRoleAlreadyAdded
 		}
 
 		teamRole := &accesscontrol.TeamRole{
 			OrgID:   cmd.OrgID,
 			TeamID:  cmd.TeamID,
-			RoleID:  cmd.RoleID,
+			RoleID:  role.ID,
 			Created: TimeNow(),
 		}
 
-		_, err := sess.Insert(teamRole)
+		_, err = sess.Insert(teamRole)
 		return err
 	})
 }
 
 func (ac *AccessControlStore) RemoveTeamRole(cmd *accesscontrol.RemoveTeamRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		role, err := getRoleByUID(sess, cmd.RoleUID, cmd.OrgID)
+		if err != nil {
+			return err
+		}
+
 		if _, err := teamExists(cmd.OrgID, cmd.TeamID, sess); err != nil {
 			return err
 		}
 
-		if _, err := roleExists(cmd.OrgID, cmd.RoleID, sess); err != nil {
-			return err
-		}
-
 		q := "DELETE FROM team_role WHERE org_id=? and team_id=? and role_id=?"
-		res, err := sess.Exec(q, cmd.OrgID, cmd.TeamID, cmd.RoleID)
+		res, err := sess.Exec(q, cmd.OrgID, cmd.TeamID, role.ID)
 		if err != nil {
 			return err
 		}
@@ -501,36 +503,38 @@ func (ac *AccessControlStore) RemoveTeamRole(cmd *accesscontrol.RemoveTeamRoleCo
 
 func (ac *AccessControlStore) AddUserRole(cmd *accesscontrol.AddUserRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if res, err := sess.Query("SELECT 1 from user_role WHERE org_id=? and user_id=? and role_id=?", cmd.OrgID, cmd.UserID, cmd.RoleID); err != nil {
+		role, err := getRoleByUID(sess, cmd.RoleUID, cmd.OrgID)
+		if err != nil {
+			return err
+		}
+
+		if res, err := sess.Query("SELECT 1 from user_role WHERE org_id=? and user_id=? and role_id=?", cmd.OrgID, cmd.UserID, role.ID); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return accesscontrol.ErrUserRoleAlreadyAdded
 		}
 
-		if _, err := roleExists(cmd.OrgID, cmd.RoleID, sess); err != nil {
-			return err
-		}
-
 		userRole := &accesscontrol.UserRole{
 			OrgID:   cmd.OrgID,
 			UserID:  cmd.UserID,
-			RoleID:  cmd.RoleID,
+			RoleID:  role.ID,
 			Created: TimeNow(),
 		}
 
-		_, err := sess.Insert(userRole)
+		_, err = sess.Insert(userRole)
 		return err
 	})
 }
 
 func (ac *AccessControlStore) RemoveUserRole(cmd *accesscontrol.RemoveUserRoleCommand) error {
 	return ac.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if _, err := roleExists(cmd.OrgID, cmd.RoleID, sess); err != nil {
+		role, err := getRoleByUID(sess, cmd.RoleUID, cmd.OrgID)
+		if err != nil {
 			return err
 		}
 
 		q := "DELETE FROM user_role WHERE org_id=? and user_id=? and role_id=?"
-		res, err := sess.Exec(q, cmd.OrgID, cmd.UserID, cmd.RoleID)
+		res, err := sess.Exec(q, cmd.OrgID, cmd.UserID, role.ID)
 		if err != nil {
 			return err
 		}

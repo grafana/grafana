@@ -148,27 +148,27 @@ type DeleteRoleCommand struct {
 }
 
 type AddTeamRoleCommand struct {
-	OrgID  int64 `json:"org_id"`
-	RoleID int64 `json:"role_id"`
-	TeamID int64 `json:"team_id"`
+	OrgID   int64  `json:"org_id"`
+	RoleUID string `json:"role_uid"`
+	TeamID  int64  `json:"team_id"`
 }
 
 type RemoveTeamRoleCommand struct {
-	OrgID  int64 `json:"org_id"`
-	RoleID int64 `json:"role_id"`
-	TeamID int64 `json:"team_id"`
+	OrgID   int64  `json:"org_id"`
+	RoleUID string `json:"role_uid"`
+	TeamID  int64  `json:"team_id"`
 }
 
 type AddUserRoleCommand struct {
-	OrgID  int64 `json:"org_id"`
-	RoleID int64 `json:"role_id"`
-	UserID int64 `json:"user_id"`
+	OrgID   int64  `json:"org_id"`
+	RoleUID string `json:"role_uid"`
+	UserID  int64  `json:"user_id"`
 }
 
 type RemoveUserRoleCommand struct {
-	OrgID  int64 `json:"org_id"`
-	RoleID int64 `json:"role_id"`
-	UserID int64 `json:"user_id"`
+	OrgID   int64  `json:"org_id"`
+	RoleUID string `json:"role_uid"`
+	UserID  int64  `json:"user_id"`
 }
 
 type EvaluationResult struct {
