@@ -398,7 +398,7 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		if hs.Live.IsEnabled() {
-			apiRoute.Post("/live/publish/*", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
+			apiRoute.Post("/live/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
 		}
 
 		// short urls

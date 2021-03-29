@@ -116,5 +116,6 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 
 // OnPublish passes control to a plugin.
 func (r *PluginPathRunner) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, bool, error) {
+	// TODO: pass control to a plugin.
 	return models.PublishReply{}, false, fmt.Errorf("not implemented yet")
 }

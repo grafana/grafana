@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -368,25 +367,22 @@ func (g *GrafanaLive) IsEnabled() bool {
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
-	path := ctx.Req.URL.Path
-	path = strings.TrimPrefix(path, "/api/live/invoke/")
-
-	addr := ParseChannelAddress(path)
+	addr := ParseChannelAddress(cmd.Channel)
 	if !addr.IsValid() {
 		return response.Error(http.StatusBadRequest, "Bad channel address", nil)
 	}
 
-	logger.Debug("Invoke API cmd", "cmd", cmd, "path", path)
+	logger.Debug("Publish API cmd", "cmd", cmd)
 
-	channelHandler, addr, err := g.GetChannelHandler(ctx.SignedInUser, path)
+	channelHandler, addr, err := g.GetChannelHandler(ctx.SignedInUser, cmd.Channel)
 	if err != nil {
-		logger.Error("Error getting channels handler", "error", err, "path", path)
+		logger.Error("Error getting channels handler", "error", err, "channel", cmd.Channel)
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 	}
 
-	_, allowed, err := channelHandler.OnPublish(ctx.Req.Context(), ctx.SignedInUser, models.PublishEvent{Channel: path, Path: path, Data: cmd.Data})
+	_, allowed, err := channelHandler.OnPublish(ctx.Req.Context(), ctx.SignedInUser, models.PublishEvent{Channel: cmd.Channel, Path: addr.Path, Data: cmd.Data})
 	if err != nil {
-		logger.Error("Error calling OnPublish", "error", err, "path", path)
+		logger.Error("Error calling OnPublish", "error", err, "channel", cmd.Channel)
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 	}
 	if !allowed {
