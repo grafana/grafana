@@ -75,9 +75,9 @@ func (t *Receiver) Handle(ctx *models.ReqContext) {
 	path := ctx.Req.URL.Path
 	path = strings.TrimPrefix(path, "/api/live/telemetry/")
 
-	converter := t.telegrafConverterLabelsColumn
-	if ctx.Req.URL.Query().Get("format") == "wide" {
-		converter = t.telegrafConverterWide
+	converter := t.telegrafConverterWide
+	if ctx.Req.URL.Query().Get("format") == "labels_column" {
+		converter = t.telegrafConverterLabelsColumn
 	}
 
 	body, err := ctx.Req.Body().Bytes()
