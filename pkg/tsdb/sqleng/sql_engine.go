@@ -31,7 +31,7 @@ import (
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
 
-var errConnectionFailed = errors.New("failed to connect to server - please inspect Grafana server log for details")
+var ErrConnectionFailed = errors.New("failed to connect to server - please inspect Grafana server log for details")
 
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
@@ -443,7 +443,7 @@ func (e *dataPlugin) transformQueryError(err error) error {
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
 		e.log.Error("query error", "err", err)
-		return errConnectionFailed
+		return ErrConnectionFailed
 	}
 
 	return e.queryResultTransformer.TransformQueryError(err)

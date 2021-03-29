@@ -2,7 +2,6 @@ package mssql
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -152,10 +151,8 @@ func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
 	// ref https://github.com/denisenkom/go-mssqldb/blob/045585d74f9069afe2e115b6235eb043c8047043/tds.go#L904
 	if strings.HasPrefix(strings.ToLower(err.Error()), "unable to open tcp connection with host") {
 		t.log.Error("query error", "err", err)
-		return errConnectionFailed
+		return sqleng.ErrConnectionFailed
 	}
 
 	return err
 }
-
-var errConnectionFailed = errors.New("failed to connect - please inspect Grafana server log for details")
