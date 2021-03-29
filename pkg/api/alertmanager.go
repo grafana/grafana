@@ -34,7 +34,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route GET /alertmanager/{Recipient}/api/v2/alerts alertmanager RouteGetAmAlerts
+// swagger:route GET /alertmanager/{Recipient}/api/v2/alerts alertmanager RouteGetAMAlerts
 //
 // get alertmanager alerts
 //
@@ -42,7 +42,7 @@ import (
 //       200: GettableAlerts
 //       400: ValidationError
 
-// swagger:route POST /alertmanager/{Recipient}/api/v2/alerts alertmanager RoutePostAmAlerts
+// swagger:route POST /alertmanager/{Recipient}/api/v2/alerts alertmanager RoutePostAMAlerts
 //
 // create alertmanager alerts
 //
@@ -50,7 +50,7 @@ import (
 //       200: Ack
 //       400: ValidationError
 
-// swagger:route GET /alertmanager/{Recipient}/api/v2/alerts/groups alertmanager RouteGetAmAlertGroups
+// swagger:route GET /alertmanager/{Recipient}/api/v2/alerts/groups alertmanager RouteGetAMAlertGroups
 //
 // get alertmanager alerts
 //
@@ -120,7 +120,7 @@ type GettableAlerts amv2.GettableAlerts
 // swagger:model
 type AlertGroups amv2.AlertGroups
 
-// swagger:parameters RouteGetAmAlerts RouteGetAmAlertGroups
+// swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups
 type AlertsParams struct {
 
 	// Show active alerts
@@ -149,7 +149,7 @@ type AlertsParams struct {
 	Receivers []string `json:"receivers"`
 }
 
-// swagger:parameters RoutePostAmAlerts
+// swagger:parameters RoutePostAMAlerts
 type PostableAlerts struct {
 	// in:body
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
@@ -162,7 +162,7 @@ type BodyAlertingConfig struct {
 }
 
 // alertmanager routes
-// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAmAlerts RoutePostAmAlerts RouteGetAmAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
+// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
 // ruler routes
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
 // prom routes
