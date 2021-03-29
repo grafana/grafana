@@ -17,7 +17,7 @@ import {
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
 
-export const defaultQuery: StreamingQuery = {
+export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
   speed: 250, // ms
   spread: 3.5,
@@ -26,7 +26,7 @@ export const defaultQuery: StreamingQuery = {
 };
 
 export function runStream(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-  const query = defaults(target.stream, defaultQuery);
+  const query = defaults(target.stream, defaultStreamQuery);
   if ('signal' === query.type) {
     return runSignalStream(target, query, req);
   }

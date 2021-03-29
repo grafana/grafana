@@ -9,22 +9,24 @@ export interface Props extends EditorProps {
 }
 
 export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
+  const points = query.points ?? [];
+
   const addPoint = (point: NewPoint) => {
     const newPointTime = dateMath.parse(point.newPointTime);
-    const points = [...query.points, [Number(point.newPointValue), newPointTime!.valueOf()]].sort(
+    const pointsUpdated = [...points, [Number(point.newPointValue), newPointTime!.valueOf()]].sort(
       (a, b) => a[1] - b[1]
     );
-    onChange({ ...query, points });
+    onChange({ ...query, points: pointsUpdated });
     onRunQuery();
   };
 
   const deletePoint = (point: SelectableValue) => {
-    const points = query.points.filter((_, index) => index !== point.value);
-    onChange({ ...query, points });
+    const pointsUpdated = points.filter((_, index) => index !== point.value);
+    onChange({ ...query, points: pointsUpdated });
     onRunQuery();
   };
 
-  const points = query.points.map((point, index) => {
+  const pointOptions = points.map((point, index) => {
     return {
       label: dateTime(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
       value: index,
@@ -64,7 +66,7 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
               <InputControl
                 control={control}
                 as={Select}
-                options={points}
+                options={pointOptions}
                 width={32}
                 name="selectedPoint"
                 onChange={(value) => value[0]}
