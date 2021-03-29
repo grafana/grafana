@@ -99,7 +99,7 @@ func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotatio
 
 	if cmd.What == "" {
 		err := &CreateAnnotationError{"what field should not be empty"}
-		return response.Error(500, "Failed to save Graphite annotation", err)
+		return response.Error(400, "Failed to save Graphite annotation", err)
 	}
 
 	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
@@ -119,12 +119,12 @@ func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotatio
 				tagsArray = append(tagsArray, tagStr)
 			} else {
 				err := &CreateAnnotationError{"tag should be a string"}
-				return response.Error(500, "Failed to save Graphite annotation", err)
+				return response.Error(400, "Failed to save Graphite annotation", err)
 			}
 		}
 	default:
 		err := &CreateAnnotationError{"unsupported tags format"}
-		return response.Error(500, "Failed to save Graphite annotation", err)
+		return response.Error(400, "Failed to save Graphite annotation", err)
 	}
 
 	item := annotations.Item{
