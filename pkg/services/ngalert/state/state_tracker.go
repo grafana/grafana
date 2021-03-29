@@ -94,6 +94,10 @@ func (st *StateTracker) ProcessEvalResults(uid string, results eval.Results, con
 	return changedStates
 }
 
+//TODO: When calculating if an alert should not be firing anymore, we should take three things into account:
+// 1. The re-send the delay if any, we don't want to send every firing alert every time, we should have a fixed delay across all alerts to avoid saturating the notification system
+// 2. The evaluation interval defined for this particular alert - we don't support that yet but will eventually allow you to define how often do you want this alert to be evaluted
+// 3. The base interval defined by the scheduler - in the case where #2 is not yet an option we can use the base interval at which every alert runs.
 //Set the current state based on evaluation results
 //return the state and a bool indicating whether a state transition occurred
 func (st *StateTracker) setNextState(uid string, orgId int64, result eval.Result) (AlertState, bool) {
@@ -104,6 +108,9 @@ func (st *StateTracker) setNextState(uid string, orgId int64, result eval.Result
 		st.Log.Debug("no state transition", "cacheId", currentState.CacheId, "state", currentState.State.String())
 		currentState.EvaluatedAt = result.EvaluatedAt
 		currentState.Results = append(currentState.Results, result.State)
+		if currentState.State == eval.Alerting {
+			currentState.EndsAt = strfmt.DateTime(result.EvaluatedAt.Add(40 * time.Second))
+		}
 		st.set(currentState)
 		return currentState, false
 	case currentState.State == eval.Normal && result.State == eval.Alerting:
@@ -141,16 +148,10 @@ func (st *StateTracker) GetAll() []AlertState {
 func (st *StateTracker) cleanUp() {
 	ticker := time.NewTicker(time.Duration(60) * time.Minute)
 	st.Log.Debug("starting cleanup process", "intervalMinutes", 60)
-	wg := sync.WaitGroup{}
 	for {
 		select {
 		case <-ticker.C:
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				st.trim()
-			}()
-			wg.Wait()
+			st.trim()
 		case <-st.quit:
 			st.Log.Debug("stopping cleanup process", "now", time.Now())
 			ticker.Stop()
@@ -166,7 +167,9 @@ func (st *StateTracker) trim() {
 	for _, v := range st.stateCache.cacheMap {
 		if len(v.Results) > 100 {
 			st.Log.Debug("trimming result set", "cacheId", v.CacheId, "count", len(v.Results)-100)
-			v.Results = v.Results[:len(v.Results)-100]
+			newResults := make([]eval.State, 100)
+			copy(newResults, v.Results[100:])
+			v.Results = newResults
 			st.set(v)
 		}
 	}
