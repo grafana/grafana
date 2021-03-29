@@ -14,14 +14,14 @@ func AddAccessControlMigrations(mg *migrator.Migrator) {
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"role_id"}},
+			{Cols: []string{"role_id", "permission", "scope"}, Type: migrator.UniqueIndex},
 		},
 	}
 
 	mg.AddMigration("create permission table", migrator.NewAddTableMigration(permissionV1))
 
 	//-------  indexes ------------------
-	mg.AddMigration("add unique index permission.role_id", migrator.NewAddIndexMigration(permissionV1, permissionV1.Indices[0]))
+	mg.AddMigration("add unique index role_id,permission,scope", migrator.NewAddIndexMigration(permissionV1, permissionV1.Indices[0]))
 
 	roleV1 := migrator.Table{
 		Name: "role",

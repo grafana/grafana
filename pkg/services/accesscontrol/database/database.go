@@ -138,6 +138,7 @@ func (ac *AccessControlStore) CreateRoleWithPermissions(ctx context.Context, cmd
 		createRoleCmd := accesscontrol.CreateRoleCommand{
 			OrgID:       cmd.OrgID,
 			UID:         cmd.UID,
+			Version:     cmd.Version,
 			Name:        cmd.Name,
 			Description: cmd.Description,
 		}
@@ -151,6 +152,7 @@ func (ac *AccessControlStore) CreateRoleWithPermissions(ctx context.Context, cmd
 			ID:          role.ID,
 			UID:         role.UID,
 			OrgID:       role.OrgID,
+			Version:     role.Version,
 			Name:        role.Name,
 			Description: role.Description,
 			Created:     role.Created,

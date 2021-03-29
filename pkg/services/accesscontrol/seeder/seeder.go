@@ -14,31 +14,16 @@ type seeder struct {
 	log   log.Logger
 }
 
-var builtInRoles = []accesscontrol.RoleDTO{
-	{
-		Name:    "grafana:builtin:users:read:self",
-		Version: 1,
-		Permissions: []accesscontrol.Permission{
-			{
-				Permission: "users:read",
-				Scope:      "users:self",
-			},
-			{
-				Permission: "users.tokens:list",
-				Scope:      "users:self",
-			},
-			{
-				Permission: "users.teams:read",
-				Scope:      "users:self",
-			},
-		},
-	},
-}
-
 // FIXME: Make sure builtin grants can be removed without being recreated
 var builtInRoleGrants = map[string][]string{
 	"grafana:builtin:users:read:self": {
 		"Viewer",
+	},
+	"roles:adminUsers:viewer": {
+		"Admin",
+	},
+	"roles:adminUsers:editor": {
+		"Admin",
 	},
 }
 

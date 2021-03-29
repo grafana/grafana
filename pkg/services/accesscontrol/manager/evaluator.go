@@ -2,7 +2,6 @@ package manager
 
 import (
 	"context"
-
 	"github.com/gobwas/glob"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -33,7 +32,6 @@ func (m *Manager) Evaluate(ctx context.Context, user *models.SignedInUser, permi
 	if !ok {
 		return false, nil
 	}
-
 	for _, s := range scope {
 		var match bool
 		for dbScope := range dbScopes {
