@@ -66,7 +66,10 @@ func init() {
 }
 
 func (am *Alertmanager) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts
+	if am.Settings == nil {
+		return true
+	}
+	return !am.Settings.IsNgAlertEnabled()
 }
 
 func (am *Alertmanager) Init() (err error) {

@@ -99,7 +99,6 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	// Check also about expressions?
 	return !ng.Cfg.IsNgAlertEnabled()
 }
 
