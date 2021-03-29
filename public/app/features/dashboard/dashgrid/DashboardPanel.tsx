@@ -66,14 +66,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     }
   }
 
-  onMouseEnter = () => {
-    this.props.dashboard.setPanelFocus(this.props.panel.id);
-  };
-
-  onMouseLeave = () => {
-    this.props.dashboard.setPanelFocus(0);
-  };
-
   renderPanel(plugin: PanelPlugin) {
     const { dashboard, panel, isViewing, isInView, isEditing } = this.props;
 
@@ -135,11 +127,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
       'panel-wrapper--view': isViewing,
     });
 
-    return (
-      <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-        {this.renderPanel(plugin)}
-      </div>
-    );
+    return <div className={panelWrapperClass}>{this.renderPanel(plugin)}</div>;
   }
 }
 
