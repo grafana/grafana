@@ -35,15 +35,14 @@ func GenerateRoles(b *testing.B, db *sqlstore.SQLStore, ac accesscontrol.Store, 
 		for j := 0; j < rolesPerUser; j++ {
 			roleName := fmt.Sprintf("role_%s_%v", teamName, j)
 			createRoleCmd := accesscontrol.CreateRoleCommand{OrgID: 1, Name: roleName}
-			res, err := ac.CreateRole(context.Background(), createRoleCmd)
+			role, err := ac.CreateRole(context.Background(), createRoleCmd)
 			require.NoError(b, err)
-			roleId := res.ID
 
 			for k := 0; k < PermissionsPerRole; k++ {
 				permission := fmt.Sprintf("permission_%v", k)
 				scope := fmt.Sprintf("scope_%v", k)
 				permCmd := accesscontrol.CreatePermissionCommand{
-					RoleID:     roleId,
+					RoleID:     role.ID,
 					Permission: permission,
 					Scope:      scope,
 				}
@@ -53,9 +52,9 @@ func GenerateRoles(b *testing.B, db *sqlstore.SQLStore, ac accesscontrol.Store, 
 			}
 
 			addTeamRoleCmd := accesscontrol.AddTeamRoleCommand{
-				OrgID:  1,
-				RoleID: roleId,
-				TeamID: teamId,
+				OrgID:   1,
+				RoleUID: role.UID,
+				TeamID:  teamId,
 			}
 			err = ac.AddTeamRole(&addTeamRoleCmd)
 			require.NoError(b, err)
@@ -76,15 +75,14 @@ func GenerateRoles(b *testing.B, db *sqlstore.SQLStore, ac accesscontrol.Store, 
 			for j := 0; j < rolesPerUser; j++ {
 				roleName := fmt.Sprintf("role_%s_%v", userName, j)
 				createRoleCmd := accesscontrol.CreateRoleCommand{OrgID: 1, Name: roleName}
-				res, err := ac.CreateRole(context.Background(), createRoleCmd)
+				role, err := ac.CreateRole(context.Background(), createRoleCmd)
 				require.NoError(b, err)
-				roleId := res.ID
 
 				for k := 0; k < PermissionsPerRole; k++ {
 					permission := fmt.Sprintf("permission_%v", k)
 					scope := fmt.Sprintf("scope_%v", k)
 					permCmd := accesscontrol.CreatePermissionCommand{
-						RoleID:     roleId,
+						RoleID:     role.ID,
 						Permission: permission,
 						Scope:      scope,
 					}
@@ -94,9 +92,9 @@ func GenerateRoles(b *testing.B, db *sqlstore.SQLStore, ac accesscontrol.Store, 
 				}
 
 				addUserRoleCmd := accesscontrol.AddUserRoleCommand{
-					OrgID:  1,
-					RoleID: roleId,
-					UserID: userId,
+					OrgID:   1,
+					RoleUID: role.UID,
+					UserID:  userId,
 				}
 				err = ac.AddUserRole(&addUserRoleCmd)
 				require.NoError(b, err)
