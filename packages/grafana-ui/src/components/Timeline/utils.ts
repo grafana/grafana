@@ -20,7 +20,6 @@ import { classicColors } from '../../../../grafana-data/src/utils/namedColorsPal
 import { measureText } from '../../utils/measureText';
 
 import { TimelineFieldConfig } from '../..';
-import { TimelineMode } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,

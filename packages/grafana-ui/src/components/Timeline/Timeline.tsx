@@ -2,16 +2,17 @@ import React from 'react';
 import { compareArrayValues, compareDataFrameStructures, FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { withTheme } from '../../themes';
 import { GraphNGContext } from '../GraphNG/hooks';
-import { GraphNGProps, GraphNGState } from '../GraphNG/GraphNG';
+import { GraphNGState } from '../GraphNG/GraphNG';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils'; // << preparePlotConfigBuilder is really the only change vs GraphNG
 import { preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
 import { LegendDisplayMode } from '../VizLegend/types';
 import { VizLayout } from '../VizLayout/VizLayout';
+import { TimelineProps } from './types';
 
-class UnthemedTimeline extends React.Component<GraphNGProps, GraphNGState> {
-  constructor(props: GraphNGProps) {
+class UnthemedTimeline extends React.Component<TimelineProps, GraphNGState> {
+  constructor(props: TimelineProps) {
     super(props);
     let dimFields = props.fields;
 
@@ -36,7 +37,7 @@ class UnthemedTimeline extends React.Component<GraphNGProps, GraphNGState> {
    * the data is updated first, and then the uPlot is re-initialized. But since the config updates does not happen that
    * often (apart from the edit mode interactions) this should be a fair performance compromise.
    */
-  static getDerivedStateFromProps(props: GraphNGProps, state: GraphNGState) {
+  static getDerivedStateFromProps(props: TimelineProps, state: GraphNGState) {
     let dimFields = props.fields;
 
     if (!dimFields) {
@@ -78,7 +79,7 @@ class UnthemedTimeline extends React.Component<GraphNGProps, GraphNGState> {
     });
   }
 
-  componentDidUpdate(prevProps: GraphNGProps) {
+  componentDidUpdate(prevProps: TimelineProps) {
     const { data, theme, timeZone, mode } = this.props;
     const { alignedDataFrame } = this.state;
     let shouldConfigUpdate = false;
@@ -157,7 +158,7 @@ class UnthemedTimeline extends React.Component<GraphNGProps, GraphNGState> {
           dimFields: this.state.dimFields,
         }}
       >
-        <VizLayout width={width} height={height} legend={this.renderLegend()}>
+        <VizLayout width={width} height={height}>
           {(vizWidth: number, vizHeight: number) => (
             <UPlotChart
               {...plotProps}
