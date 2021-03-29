@@ -14,7 +14,7 @@ func AddAccessControlMigrations(mg *migrator.Migrator) {
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"role_id", "permission", "scope"}},
+			{Cols: []string{"role_id", "permission", "scope"}, Type: migrator.UniqueIndex},
 		},
 	}
 
