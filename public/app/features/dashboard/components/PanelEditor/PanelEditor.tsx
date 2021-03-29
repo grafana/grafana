@@ -286,22 +286,23 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, uiState, variables, updateTimeZoneForSession } = this.props;
+    const { dashboard, uiState, updateTimeZoneForSession } = this.props;
     return (
       <div className={styles.panelToolbar}>
-        <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
-          {this.renderTemplateVariables(styles)}
-
-          <HorizontalGroup>
-            <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
-            <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
-            {!uiState.isPanelOptionsVisible && (
-              <ToolbarButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" icon="angle-left">
-                Show options
-              </ToolbarButton>
-            )}
+        <div style={{ width: '100%' }}>
+          <HorizontalGroup justify={'flex-end'} align="flex-start">
+            <HorizontalGroup>
+              <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
+              <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
+              {!uiState.isPanelOptionsVisible && (
+                <ToolbarButton onClick={this.onTogglePanelOptions} tooltip="Open options pane" icon="angle-left">
+                  Show options
+                </ToolbarButton>
+              )}
+            </HorizontalGroup>
           </HorizontalGroup>
-        </HorizontalGroup>
+        </div>
+        {this.renderTemplateVariables(styles)}
       </div>
     );
   }
@@ -475,6 +476,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       display: flex;
       flex-grow: 1;
       flex-wrap: wrap;
+      margin-top: 10px;
     `,
     panelWrapper: css`
       flex: 1 1 0;
