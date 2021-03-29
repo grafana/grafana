@@ -37,7 +37,6 @@ type Plugin interface {
 	Stop(ctx context.Context) error
 	IsManaged() bool
 	Exited() bool
-	CanHandleDataQueries() bool
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
