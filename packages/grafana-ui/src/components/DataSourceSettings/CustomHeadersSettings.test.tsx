@@ -4,6 +4,7 @@ import { CustomHeadersSettings, Props } from './CustomHeadersSettings';
 import { Button } from '../Button';
 
 const setup = (propOverrides?: object) => {
+  const onChange = jest.fn();
   const props: Props = {
     dataSourceConfig: {
       id: 4,
@@ -33,16 +34,16 @@ const setup = (propOverrides?: object) => {
       secureJsonFields: {},
       readOnly: true,
     },
-    onChange: jest.fn(),
+    onChange,
     ...propOverrides,
   };
 
-  return mount(<CustomHeadersSettings {...props} />);
+  return { wrapper: mount(<CustomHeadersSettings {...props} />), onChange };
 };
 
 describe('Render', () => {
   it('should add a new header', () => {
-    const wrapper = setup();
+    const { wrapper } = setup();
     const addButton = wrapper.find('Button').at(0);
     addButton.simulate('click', { preventDefault: () => {} });
     expect(wrapper.find('FormField').exists()).toBeTruthy();
@@ -50,12 +51,12 @@ describe('Render', () => {
   });
 
   it('add header button should not submit the form', () => {
-    const wrapper = setup();
+    const { wrapper } = setup();
     expect(wrapper.find(Button).getDOMNode()).toHaveAttribute('type', 'button');
   });
 
   it('should remove a header', () => {
-    const wrapper = setup({
+    const { wrapper, onChange } = setup({
       dataSourceConfig: {
         jsonData: {
           httpHeaderName1: 'X-Custom-Header',
@@ -69,10 +70,12 @@ describe('Render', () => {
     removeButton.simulate('click', { preventDefault: () => {} });
     expect(wrapper.find('FormField').exists()).toBeFalsy();
     expect(wrapper.find('SecretFormField').exists()).toBeFalsy();
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0].jsonData).toStrictEqual({});
   });
 
   it('should reset a header', () => {
-    const wrapper = setup({
+    const { wrapper } = setup({
       dataSourceConfig: {
         jsonData: {
           httpHeaderName1: 'X-Custom-Header',

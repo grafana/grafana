@@ -119,15 +119,15 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
       if (!header.configured) {
         secureJsonData[`httpHeaderValue${index + 1}`] = header.value;
       }
-      Object.keys(jsonData)
-        .filter(
-          (key) =>
-            key.startsWith('httpHeaderName') && parseInt(key.substring('httpHeaderName'.length), 10) > headers.length
-        )
-        .forEach((key) => {
-          delete jsonData[key];
-        });
     }
+    Object.keys(jsonData)
+      .filter(
+        (key) =>
+          key.startsWith('httpHeaderName') && parseInt(key.substring('httpHeaderName'.length), 10) > headers.length
+      )
+      .forEach((key) => {
+        delete jsonData[key];
+      });
 
     this.props.onChange({
       ...this.props.dataSourceConfig,
