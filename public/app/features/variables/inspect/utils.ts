@@ -1,6 +1,3 @@
-// @ts-ignore
-import vis from 'visjs-network';
-
 import { variableAdapters } from '../adapters';
 import { DashboardModel } from '../../dashboard/state';
 import { isAdHoc } from '../guard';
@@ -50,19 +47,6 @@ export const createDependencyEdges = (variables: VariableModel[]): GraphEdge[] =
   }
 
   return edges;
-};
-
-export const toVisNetworkNodes = (nodes: GraphNode[]): any[] => {
-  const nodesWithStyle: any[] = nodes.map((node) => ({
-    ...node,
-    shape: 'box',
-  }));
-  return new vis.DataSet(nodesWithStyle);
-};
-
-export const toVisNetworkEdges = (edges: GraphEdge[]): any[] => {
-  const edgesWithStyle: any[] = edges.map((edge) => ({ ...edge, arrows: 'to', dashes: true }));
-  return new vis.DataSet(edgesWithStyle);
 };
 
 function getVariableName(expression: string) {

@@ -18,6 +18,7 @@ export interface Props {
   dashboardId?: any;
   initialTitle?: string;
   initialFolderId?: number;
+  permissionLevel?: 'View' | 'Edit';
 }
 
 interface State {
@@ -40,11 +41,12 @@ export class FolderPicker extends PureComponent<Props, State> {
     });
   }
 
-  static defaultProps = {
+  static defaultProps: Partial<Props> = {
     rootName: 'General',
     enableReset: false,
     initialTitle: '',
     enableCreateNew: false,
+    permissionLevel: 'Edit',
   };
 
   componentDidMount = async () => {
@@ -52,11 +54,11 @@ export class FolderPicker extends PureComponent<Props, State> {
   };
 
   getOptions = async (query: string) => {
-    const { rootName, enableReset, initialTitle } = this.props;
+    const { rootName, enableReset, initialTitle, permissionLevel } = this.props;
     const params = {
       query,
       type: 'dash-folder',
-      permission: 'Edit',
+      permission: permissionLevel,
     };
 
     // TODO: move search to BackendSrv interface
