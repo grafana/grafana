@@ -77,6 +77,7 @@ describe('datasource_srv', () => {
       name: 'BBB',
       uid: 'uid-code-BBB',
       meta: { metrics: true },
+      isDefault: true,
     },
     Jaeger: {
       type: 'jaeger-db',
@@ -125,6 +126,11 @@ describe('datasource_srv', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasource}');
         expect(ds?.name).toBe('${datasource}');
         expect(ds?.uid).toBe('uid-code-BBB');
+      });
+
+      it('should not set isDefault when being fetched via variable', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasource}');
+        expect(ds?.isDefault).toBe(false);
       });
 
       it('should work with variable', () => {
@@ -182,6 +188,7 @@ describe('datasource_srv', () => {
             "uid": "uid-code-aaa",
           },
           Object {
+            "isDefault": true,
             "meta": Object {
               "metrics": true,
             },
