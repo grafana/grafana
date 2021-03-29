@@ -22,8 +22,8 @@ func NewForkedAM(datasourceCache datasources.CacheService, proxy, grafana Alertm
 	}
 }
 
-func (am *ForkedAMSvc) getService(ctx *models.ReqContext, datasourceCache datasources.CacheService) (AlertmanagerApiService, error) {
-	t, err := backendType(ctx, datasourceCache)
+func (am *ForkedAMSvc) getService(ctx *models.ReqContext) (AlertmanagerApiService, error) {
+	t, err := backendType(ctx, am.DatasourceCache)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (am *ForkedAMSvc) getService(ctx *models.ReqContext, datasourceCache dataso
 }
 
 func (am *ForkedAMSvc) RouteCreateSilence(ctx *models.ReqContext, body apimodels.SilenceBody) response.Response {
-	s, err := am.getService(ctx, am.DatasourceCache)
+	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
@@ -48,7 +48,7 @@ func (am *ForkedAMSvc) RouteCreateSilence(ctx *models.ReqContext, body apimodels
 }
 
 func (am *ForkedAMSvc) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
-	s, err := am.getService(ctx, am.DatasourceCache)
+	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
@@ -57,7 +57,7 @@ func (am *ForkedAMSvc) RouteDeleteAlertingConfig(ctx *models.ReqContext) respons
 }
 
 func (am *ForkedAMSvc) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
-	s, err := am.getService(ctx, am.DatasourceCache)
+	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
@@ -66,7 +66,7 @@ func (am *ForkedAMSvc) RouteDeleteSilence(ctx *models.ReqContext) response.Respo
 }
 
 func (am *ForkedAMSvc) RouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
-	s, err := am.getService(ctx, am.DatasourceCache)
+	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
@@ -75,7 +75,7 @@ func (am *ForkedAMSvc) RouteGetAlertingConfig(ctx *models.ReqContext) response.R
 }
 
 func (am *ForkedAMSvc) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
-	s, err := am.getService(ctx, am.DatasourceCache)
+	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
@@ -84,7 +84,7 @@ func (am *ForkedAMSvc) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Re
 }
 
 func (am *ForkedAMSvc) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
-	s, err := am.getService(ctx, am.DatasourceCache)
+	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
@@ -93,7 +93,7 @@ func (am *ForkedAMSvc) RouteGetAMAlerts(ctx *models.ReqContext) response.Respons
 }
 
 func (am *ForkedAMSvc) RouteGetSilence(ctx *models.ReqContext) response.Response {
-	s, err := am.getService(ctx, am.DatasourceCache)
+	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
@@ -102,7 +102,7 @@ func (am *ForkedAMSvc) RouteGetSilence(ctx *models.ReqContext) response.Response
 }
 
 func (am *ForkedAMSvc) RouteGetSilences(ctx *models.ReqContext) response.Response {
-	s, err := am.getService(ctx, am.DatasourceCache)
+	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
@@ -111,7 +111,7 @@ func (am *ForkedAMSvc) RouteGetSilences(ctx *models.ReqContext) response.Respons
 }
 
 func (am *ForkedAMSvc) RoutePostAlertingConfig(ctx *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	s, err := am.getService(ctx, am.DatasourceCache)
+	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
@@ -120,7 +120,7 @@ func (am *ForkedAMSvc) RoutePostAlertingConfig(ctx *models.ReqContext, body apim
 }
 
 func (am *ForkedAMSvc) RoutePostAMAlerts(ctx *models.ReqContext, body apimodels.PostableAlerts) response.Response {
-	s, err := am.getService(ctx, am.DatasourceCache)
+	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
