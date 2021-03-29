@@ -1,9 +1,8 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromRulesResponse } from 'app/types/unified-alerting-dto';
-import { dataSourceRequest, getDatasourceAPIId } from '../utils/datasource';
+import { getDatasourceAPIId } from '../utils/datasource';
 
-// @TODO currently uses datasource proxy. Will need rework when unified alerting API is operational
 export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[]> {
   const response = await getBackendSrv()
     .fetch<PromRulesResponse>({
@@ -32,19 +31,5 @@ export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[
     return [];
   } else {
     throw new Error(`http error status=${response.status} body=${JSON.stringify(response.data)}`);
-  }
-}
-
-export async function checkIfPromIsCortex(dataSourceName: string): Promise<boolean> {
-  // if it's prometheus, it returns 200 with html, because this api endpoint does not exist and it defaults to index page
-  // if it's cortex, it returns 200 with rules in yaml, or if there are no rules, 404
-  try {
-    const response = await dataSourceRequest(dataSourceName, '/rules');
-    return response.headers.get('content-type') === 'application/yaml';
-  } catch (e) {
-    if (e.status === 404) {
-      return true;
-    }
-    throw e;
   }
 }

@@ -1,5 +1,4 @@
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { RulesSource } from 'app/types/unified-alerting';
 import { getAllDataSources } from './config';
 
@@ -10,35 +9,6 @@ export enum DataSourceType {
 }
 
 export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
-
-// using ds proxy only temporarily until the new alerting API is running
-export function dataSourceRequest<T = any>(
-  dataSourceName: string,
-  path: string,
-  options: Partial<BackendSrvRequest> = {}
-) {
-  const datasource = getDataSourceByName(dataSourceName);
-  if (!datasource) {
-    throw new Error(`No datasource calle\d ${dataSourceName} found.`);
-  }
-
-  const _options: BackendSrvRequest = {
-    headers: {},
-    method: 'GET',
-    url: datasource.url + path,
-    ...options,
-  };
-
-  if (datasource.basicAuth || datasource.withCredentials) {
-    _options.credentials = 'include';
-  }
-
-  if (datasource.basicAuth && _options.headers) {
-    _options.headers.Authorization = datasource.basicAuth;
-  }
-
-  return getBackendSrv().fetch<T>(_options).toPromise();
-}
 
 export function getRulesDataSources() {
   return getAllDataSources()
@@ -69,5 +39,5 @@ export function getDatasourceAPIId(datasourceName: string) {
   if (datasourceName === 'grafana') {
     return 'grafana';
   }
-  return String(getLotexDatasourceByName(datasourceName).id);
+  return String(getLotexDataSourceByName(datasourceName).id);
 }
