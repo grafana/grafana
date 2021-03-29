@@ -81,6 +81,28 @@ describe('optionsPickerReducer', () => {
         });
     };
 
+    describe('When toggleOption with undefined option is dispatched', () => {
+      it('should update selected values', () => {
+        const { initialState } = getVariableTestContext({
+          options: [],
+          selectedValues: [],
+        });
+        const payload = {
+          forceSelect: false,
+          clearOthers: true,
+          option: undefined,
+        };
+        reducerTester<OptionsPickerState>()
+          .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+          .whenActionIsDispatched(toggleOption(payload))
+          .thenStateShouldEqual({
+            ...initialState,
+            selectedValues: [],
+            options: [],
+          });
+      });
+    });
+
     describe('toggleOption for multi value variable', () => {
       const multi = true;
       describe('and value All is selected in options', () => {
@@ -112,6 +134,7 @@ describe('optionsPickerReducer', () => {
             })
         );
       });
+
       describe('and value A is selected in options', () => {
         const options = opsA;
         it.each`
