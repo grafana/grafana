@@ -44,9 +44,9 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
         <h3 className="page-sub-heading">New organization</h3>
 
         <p className="playlist-description">
-          Each organization contains their own dashboards, data sources, and configuration, which cannot be shared between
-          organizations. While users might belong to more than one organization, multiple organizations are most frequently used in multi-tenant
-          deployments.{' '}
+          Each organization contains their own dashboards, data sources, and configuration, which cannot be shared
+          organizations. While users might belong to more than one organization, multiple organizations are most
+          frequently used in multi-tenant deployments.{' '}
         </p>
 
         <Form<CreateOrgFormDTO> onSubmit={createOrg}>
