@@ -308,7 +308,7 @@ Note: The JSON definition in the input field when using `Copy JSON to Clipboard`
 ### Reusable Dashboard URLs
 
 If the dashboard in the JSON file contains an [UID](../../dashboards/json-model), Grafana will force insert/update on that UID. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given because the new dashboard URL uses the UID as identifier.
-When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
+When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, then the dashboard is also updated.
 By default, Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
 > **Note:** Provisioning allows you to overwrite existing dashboards
