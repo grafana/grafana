@@ -26,7 +26,37 @@ const getPluginSettingsMock = getPluginSettings as jest.Mock<
   Parameters<typeof getPluginSettings>
 >;
 
-function rendeUnderRouter() {
+class RootComponent extends Component<AppRootProps> {
+  static timesMounted = 0;
+  componentDidMount() {
+    RootComponent.timesMounted += 1;
+    const node: NavModelItem = {
+      text: 'My Great plugin',
+      children: [
+        {
+          text: 'A page',
+          url: '/apage',
+          id: 'a',
+        },
+        {
+          text: 'Another page',
+          url: '/anotherpage',
+          id: 'b',
+        },
+      ],
+    };
+    this.props.onNavChanged({
+      main: node,
+      node,
+    });
+  }
+
+  render() {
+    return <p>my great plugin</p>;
+  }
+}
+
+function renderUnderRouter() {
   const route = { component: AppRootPage };
   locationService.push('/a/my-awesome-plugin');
 
@@ -52,50 +82,18 @@ describe('AppRootPage', () => {
       })
     );
 
-    let timesMounted = 0;
-
-    // a very basic component that does what most plugins do:
-    // immediately update nav on mounting
-    class RootComponent extends Component<AppRootProps> {
-      componentDidMount() {
-        timesMounted++;
-        const node: NavModelItem = {
-          text: 'My Great plugin',
-          children: [
-            {
-              text: 'A page',
-              url: '/apage',
-              id: 'a',
-            },
-            {
-              text: 'Another page',
-              url: '/anotherpage',
-              id: 'b',
-            },
-          ],
-        };
-        this.props.onNavChanged({
-          main: node,
-          node,
-        });
-      }
-      render() {
-        return <p>my great plugin</p>;
-      }
-    }
-
     const plugin = new AppPlugin();
     plugin.root = RootComponent;
 
     importAppPluginMock.mockResolvedValue(plugin);
 
-    rendeUnderRouter();
+    renderUnderRouter();
 
     // check that plugin and nav links were rendered, and plugin is mounted only once
-    await screen.findByText('my great plugin');
-    await screen.findAllByRole('link', { name: /A page/ });
-    await screen.findAllByRole('link', { name: /Another page/ });
-    expect(timesMounted).toEqual(1);
+    expect(await screen.findByText('my great plugin')).toBeVisible();
+    expect(await screen.findByRole('link', { name: 'A page' })).toBeVisible();
+    expect(await screen.findByRole('link', { name: 'Another page' })).toBeVisible();
+    expect(RootComponent.timesMounted).toEqual(1);
   });
 
   it('should not render component if not at plugin path', async () => {
@@ -106,10 +104,10 @@ describe('AppRootPage', () => {
       })
     );
 
-    let timesRendered = 0;
     class RootComponent extends Component<AppRootProps> {
+      static timesRendered = 0;
       render() {
-        timesRendered += 1;
+        RootComponent.timesRendered += 1;
         return <p>my great component</p>;
       }
     }
@@ -119,23 +117,23 @@ describe('AppRootPage', () => {
 
     importAppPluginMock.mockResolvedValue(plugin);
 
-    rendeUnderRouter();
+    renderUnderRouter();
 
-    await screen.findByText('my great component');
+    expect(await screen.findByText('my great component')).toBeVisible();
 
     // renders the first time
-    expect(timesRendered).toEqual(1);
+    expect(RootComponent.timesRendered).toEqual(1);
 
     await act(async () => {
       locationService.push('/foo');
     });
 
-    expect(timesRendered).toEqual(1);
+    expect(RootComponent.timesRendered).toEqual(1);
 
     await act(async () => {
       locationService.push('/a/my-awesome-plugin');
     });
 
-    expect(timesRendered).toEqual(2);
+    expect(RootComponent.timesRendered).toEqual(2);
   });
 });
