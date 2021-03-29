@@ -10,11 +10,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"xorm.io/xorm"
 )
 
@@ -1135,6 +1137,28 @@ func TestMSSQL(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestTransformQueryError(t *testing.T) {
+	transformer := &mssqlQueryResultTransformer{
+		log: log.New("test"),
+	}
+
+	randomErr := fmt.Errorf("random error")
+
+	tests := []struct {
+		err         error
+		expectedErr error
+	}{
+		{err: fmt.Errorf("Unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
+		{err: fmt.Errorf("unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
+		{err: randomErr, expectedErr: randomErr},
+	}
+
+	for _, tc := range tests {
+		resultErr := transformer.TransformQueryError(tc.err)
+		assert.ErrorIs(t, resultErr, tc.expectedErr)
+	}
 }
 
 func InitMSSQLTestDB(t *testing.T) *xorm.Engine {
