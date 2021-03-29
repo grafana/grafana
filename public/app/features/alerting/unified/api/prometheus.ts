@@ -8,16 +8,10 @@ export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[
   const response = await getBackendSrv()
     .fetch<PromRulesResponse>({
       url: `/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
     })
     .toPromise();
-
-  console.log(
-    await getBackendSrv()
-      .fetch<PromRulesResponse>({
-        url: `/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
-      })
-      .toPromise()
-  );
 
   if (response.status === 200 && response.data.status === 'success') {
     const nsMap: { [key: string]: RuleNamespace } = {};
