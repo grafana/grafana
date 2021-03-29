@@ -117,9 +117,9 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 	return response.JSON(http.StatusOK, result)
 }
 
-func (srv AlertmanagerSrv) RouteGetAmAlertGroups(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	srv.log.Info("RouteGetAmAlertGroups: ", "DatasourceId", datasourceID)
+func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.Response {
+	recipient := c.Params(":Recipient")
+	srv.log.Info("RouteGetAMAlertGroups: ", "Recipient", recipient)
 	now := time.Now()
 	result := apimodels.AlertGroups{
 		&amv2.AlertGroup{
@@ -238,9 +238,9 @@ func (srv AlertmanagerSrv) RouteGetAmAlertGroups(c *models.ReqContext) response.
 	return response.JSON(http.StatusOK, result)
 }
 
-func (srv AlertmanagerSrv) RouteGetAmAlerts(c *models.ReqContext) response.Response {
-	datasourceID := c.Params(":DatasourceId")
-	srv.log.Info("RouteGetAmAlerts: ", "DatasourceId", datasourceID)
+func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Response {
+	recipient := c.Params(":Recipient")
+	srv.log.Info("RouteGetAMAlerts: ", "Recipient", recipient)
 	now := time.Now()
 	result := apimodels.GettableAlerts{
 		&amv2.GettableAlert{
@@ -355,7 +355,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 }
 
-func (srv AlertmanagerSrv) RoutePostAmAlerts(c *models.ReqContext, body apimodels.PostableAlerts) response.Response {
+func (srv AlertmanagerSrv) RoutePostAMAlerts(c *models.ReqContext, body apimodels.PostableAlerts) response.Response {
 	// not implemented
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
