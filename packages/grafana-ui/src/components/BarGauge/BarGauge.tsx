@@ -538,13 +538,19 @@ export function getBarGradient(props: Props, maxSize: number): string {
     for (let i = 0; i < thresholds.steps.length; i++) {
       const threshold = thresholds.steps[i];
       const color = getColorForTheme(threshold.color, props.theme);
-      const valuePercent = getValuePercent(threshold.value, minValue, maxValue);
+      const valuePercent =
+        thresholds.mode === ThresholdsMode.Percentage
+          ? threshold.value / 100
+          : getValuePercent(threshold.value, minValue, maxValue);
       const pos = valuePercent * maxSize;
       const offset = Math.round(pos - (pos - lastpos) / 2);
-
+      const thresholdValue =
+        thresholds.mode === ThresholdsMode.Percentage
+          ? minValue + (maxValue - minValue) * valuePercent
+          : threshold.value;
       if (gradient === '') {
         gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      } else if (value.numeric < threshold.value) {
+      } else if (value.numeric < thresholdValue) {
         break;
       } else {
         lastpos = pos;
