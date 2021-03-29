@@ -50,7 +50,11 @@ func (api *API) RegisterAPIEndpoints() {
 	proxy := &AlertingProxy{
 		DataProxy: api.DataProxy,
 	}
-	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiMock{log: logger})
+	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
+		api.DatasourceCache,
+		NewLotexAM(proxy, logger),
+		AlertmanagerApiMock{log: logger},
+	))
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
