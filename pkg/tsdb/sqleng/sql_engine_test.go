@@ -1,15 +1,20 @@
 package sqleng
 
 import (
+	"database/sql"
 	"fmt"
+	"net"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"xorm.io/core"
 )
 
 func TestSQLEngine(t *testing.T) {
@@ -309,4 +314,41 @@ func TestSQLEngine(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("Should handle connection errors", func(t *testing.T) {
+		randomErr := fmt.Errorf("random error")
+
+		tests := []struct {
+			err                                   error
+			expectedErr                           error
+			expectQueryResultTransformerWasCalled bool
+		}{
+			{err: &net.OpError{Op: "Dial"}, expectedErr: ErrConnectionFailed, expectQueryResultTransformerWasCalled: false},
+			{err: randomErr, expectedErr: randomErr, expectQueryResultTransformerWasCalled: true},
+		}
+
+		for _, tc := range tests {
+			transformer := &testQueryResultTransformer{}
+			dp := dataPlugin{
+				log:                    log.New("test"),
+				queryResultTransformer: transformer,
+			}
+			resultErr := dp.transformQueryError(tc.err)
+			assert.ErrorIs(t, resultErr, tc.expectedErr)
+			assert.Equal(t, tc.expectQueryResultTransformerWasCalled, transformer.transformQueryErrorWasCalled)
+		}
+	})
+}
+
+type testQueryResultTransformer struct {
+	transformQueryErrorWasCalled bool
+}
+
+func (t *testQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (plugins.DataRowValues, error) {
+	return nil, nil
+}
+
+func (t *testQueryResultTransformer) TransformQueryError(err error) error {
+	t.transformQueryErrorWasCalled = true
+	return err
 }
