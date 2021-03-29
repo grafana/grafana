@@ -1,4 +1,4 @@
-@lokiDatasourceID = 874
+@lokiDatasourceID = 32
 @prometheusDatasourceID = 875
 @grafana = grafana
 
