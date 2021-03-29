@@ -38,6 +38,12 @@ describe('DerivedFields', () => {
     expect(wrapper.find(Button).filterWhere((button: any) => button.contains('Show example log message')).length).toBe(
       1
     );
+    expect(
+      wrapper
+        .find(Button)
+        .filterWhere((button: any) => button.contains('Show example log message'))
+        .getDOMNode()
+    ).toHaveAttribute('type', 'button');
     expect(wrapper.find(DerivedField).length).toBe(2);
   });
 

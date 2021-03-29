@@ -92,6 +92,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
     background-color: ${theme.colors.bg2};
     padding: ${theme.spacing.md};
+    width: 100%;
   `,
   list: css`
     margin-top: ${theme.spacing.sm};
@@ -130,18 +131,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   error: css`
     color: ${theme.palette.brandDanger};
   `,
-  valueCell: css`
-    overflow: hidden;
-    text-overflow: ellipsis;
-  `,
   valueList: css`
     margin-right: ${theme.spacing.sm};
   `,
   valueListWrapper: css`
-    padding: ${theme.spacing.sm};
-    & + & {
-      border-left: 1px solid ${theme.colors.border2};
-    }
+    border-left: 1px solid ${theme.colors.border2};
+    margin: ${theme.spacing.sm} 0;
+    padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.sm};
   `,
   valueListArea: css`
     display: flex;
@@ -368,17 +364,13 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       return <LoadingPlaceholder text="Loading labels..." />;
     }
     const styles = getStyles(theme);
-    let matcher: RegExp;
     let selectedLabels = labels.filter((label) => label.selected && label.values);
     if (searchTerm) {
       // TODO extract from render() and debounce
-      try {
-        matcher = new RegExp(searchTerm.split('').join('.*'), 'i');
-        selectedLabels = selectedLabels.map((label) => ({
-          ...label,
-          values: label.values?.filter((value) => value.selected || matcher.test(value.name)),
-        }));
-      } catch (error) {}
+      selectedLabels = selectedLabels.map((label) => ({
+        ...label,
+        values: label.values?.filter((value) => value.selected || value.name.includes(searchTerm)),
+      }));
     }
     const selector = buildSelector(this.state.labels);
     const empty = selector === EMPTY_SELECTOR;
@@ -418,7 +410,8 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                     loading={label.loading}
                     active={label.selected}
                     hidden={label.hidden}
-                    facets={label.facets}
+                    //If no facets, we want to show number of all label values
+                    facets={label.facets || label.values?.length}
                     onClick={this.onClickLabel}
                   />
                 </div>
@@ -436,13 +429,13 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                       return null;
                     }
                     return (
-                      <div style={style} className={styles.valueCell}>
+                      <div style={style}>
                         <LokiLabel
                           name={label.name}
                           value={value?.name}
                           active={value?.selected}
                           onClick={this.onClickValue}
-                          searchTerm={matcher}
+                          searchTerm={searchTerm}
                         />
                       </div>
                     );

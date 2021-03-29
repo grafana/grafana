@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 
@@ -122,7 +121,8 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
+	svc := dashboards.NewProvisioningService(hs.SQLStore)
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -226,7 +226,8 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		}
 	}
 
-	err := dashboards.NewService(hs.DataService).DeleteDashboard(dash.Id, c.OrgId)
+	svc := dashboards.NewService(hs.SQLStore)
+	err := svc.DeleteDashboard(dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -262,7 +263,8 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
+	svc := dashboards.NewProvisioningService(hs.SQLStore)
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -288,14 +290,15 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := dashboards.NewService(hs.DataService).SaveDashboard(dashItem, allowUiUpdate)
+	dashSvc := dashboards.NewService(hs.SQLStore)
+	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
 	if err != nil {
-		return dashboardSaveErrorToApiResponse(err)
+		return hs.dashboardSaveErrorToApiResponse(err)
 	}
 
 	if hs.Cfg.EditorsCanAdmin && newDashboard {
 		inFolder := cmd.FolderId > 0
-		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		err := dashSvc.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}
@@ -331,7 +334,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	})
 }
 
-func dashboardSaveErrorToApiResponse(err error) response.Response {
+func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Response {
 	var dashboardErr models.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		if body := dashboardErr.Body(); body != nil {
@@ -356,7 +359,7 @@ func dashboardSaveErrorToApiResponse(err error) response.Response {
 	if ok := errors.As(err, &pluginErr); ok {
 		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name
-		if pluginDef, exist := manager.Plugins[pluginErr.PluginId]; exist {
+		if pluginDef := hs.PluginManager.GetPlugin(pluginErr.PluginId); pluginDef != nil {
 			message = fmt.Sprintf("The dashboard belongs to plugin %s.", pluginDef.Name)
 		}
 		return response.JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
@@ -558,10 +561,10 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 	}
 
 	if options.DiffType == dashdiffs.DiffDelta {
-		return response.Respond(200, result.Delta).Header("Content-Type", "application/json")
+		return response.Respond(200, result.Delta).SetHeader("Content-Type", "application/json")
 	}
 
-	return response.Respond(200, result.Delta).Header("Content-Type", "text/html")
+	return response.Respond(200, result.Delta).SetHeader("Content-Type", "text/html")
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.

@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 )
 
 var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
@@ -56,9 +55,9 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.users.count"] = statsQuery.Result.Users
 	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
 	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
-	metrics["stats.plugins.apps.count"] = len(manager.Apps)
-	metrics["stats.plugins.panels.count"] = len(manager.Panels)
-	metrics["stats.plugins.datasources.count"] = len(manager.DataSources)
+	metrics["stats.plugins.apps.count"] = uss.PluginManager.AppCount()
+	metrics["stats.plugins.panels.count"] = uss.PluginManager.PanelCount()
+	metrics["stats.plugins.datasources.count"] = uss.PluginManager.DataSourceCount()
 	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
 	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
 	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
@@ -114,6 +113,25 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 		}
 	}
 	metrics["stats.ds.other.count"] = dsOtherCount
+
+	esDataSourcesQuery := models.GetDataSourcesByTypeQuery{Type: models.DS_ES}
+	if err := uss.Bus.Dispatch(&esDataSourcesQuery); err != nil {
+		metricsLogger.Error("Failed to get elasticsearch json data", "error", err)
+		return report, err
+	}
+
+	for _, data := range esDataSourcesQuery.Result {
+		esVersion, err := data.JsonData.Get("esVersion").Int()
+		if err != nil {
+			continue
+		}
+
+		statName := fmt.Sprintf("stats.ds.elasticsearch.v%d.count", esVersion)
+
+		count, _ := metrics[statName].(int64)
+
+		metrics[statName] = count + 1
+	}
 
 	metrics["stats.packaging."+uss.Cfg.Packaging+".count"] = 1
 	metrics["stats.distributor."+uss.Cfg.ReportingDistributor+".count"] = 1
@@ -310,8 +328,8 @@ func (uss *UsageStatsService) updateTotalStats() {
 }
 
 func (uss *UsageStatsService) shouldBeReported(dsType string) bool {
-	ds, ok := manager.DataSources[dsType]
-	if !ok {
+	ds := uss.PluginManager.GetDataSource(dsType)
+	if ds == nil {
 		return false
 	}
 

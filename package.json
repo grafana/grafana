@@ -162,7 +162,6 @@
     "jest-matcher-utils": "26.0.0",
     "lerna": "^3.22.1",
     "lint-staged": "10.0.7",
-    "load-grunt-tasks": "5.1.0",
     "mini-css-extract-plugin": "0.9.0",
     "mocha": "7.0.1",
     "module-alias": "2.2.2",
@@ -202,7 +201,7 @@
   },
   "dependencies": {
     "@emotion/core": "10.0.27",
-    "@grafana/aws-sdk": "0.0.2",
+    "@grafana/aws-sdk": "0.0.24",
     "@grafana/slate-react": "0.22.9-grafana",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",
@@ -242,12 +241,14 @@
     "debounce-promise": "3.1.2",
     "emotion": "10.0.27",
     "eventemitter3": "4.0.0",
+    "fast-json-patch": "2.2.1",
     "fast-text-encoding": "^1.0.0",
     "file-saver": "2.0.2",
     "hoist-non-react-statics": "3.3.2",
     "immutable": "3.8.2",
     "is-hotkey": "0.1.6",
     "jquery": "3.5.1",
+    "json-source-map": "0.6.1",
     "jsurl": "^0.1.5",
     "lodash": "4.17.21",
     "lru-cache": "^5.1.1",
@@ -265,6 +266,7 @@
     "re-resizable": "^6.2.0",
     "react": "17.0.1",
     "react-beautiful-dnd": "13.0.0",
+    "react-diff-viewer": "^3.1.1",
     "react-dom": "17.0.1",
     "react-grid-layout": "1.2.0",
     "react-highlight-words": "0.16.0",
@@ -290,16 +292,14 @@
     "slate": "0.47.8",
     "slate-plain-serializer": "0.7.10",
     "tether": "1.4.7",
-    "tether-drop": "https://github.com/torkelo/drop/tarball/master",
+    "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.4.1",
-    "tti-polyfill": "0.2.2",
     "uuid": "8.3.0",
     "visjs-network": "4.25.0",
     "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
-    "caniuse-db": "1.0.30000772",
-    "react-use-measure": "https://github.com/mckn/react-use-measure.git#remove-cjs-export"
+    "caniuse-db": "1.0.30000772"
   },
   "workspaces": {
     "packages": [

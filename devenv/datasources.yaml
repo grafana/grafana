@@ -28,8 +28,6 @@ datasources:
     database: site
     user: grafana
     url: http://localhost:8086
-    jsonData:
-      timeInterval: "15s"
     secureJsonData:
       password: grafana
   
@@ -62,8 +60,6 @@ datasources:
     database: telegraf
     user: grafana
     url: http://localhost:8086
-    jsonData:
-      timeInterval: "10s"
     secureJsonData:
       password: grafana
     

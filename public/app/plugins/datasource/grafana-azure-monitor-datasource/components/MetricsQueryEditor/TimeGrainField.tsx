@@ -3,7 +3,7 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption } from '../common';
+import { findOption } from '../../utils/common';
 import TimegrainConverter from '../../time_grain_converter';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
@@ -31,7 +31,7 @@ const TimeGrainField: React.FC<TimeGrainFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const timeGrains = useMemo(() => {

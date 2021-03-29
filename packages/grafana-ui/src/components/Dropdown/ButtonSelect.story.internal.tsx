@@ -1,33 +1,41 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { action } from '@storybook/addon-actions';
-import { withKnobs, object } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
 import { ButtonSelect } from './ButtonSelect';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 export default {
   title: 'Forms/Select/ButtonSelect',
   component: ButtonSelect,
-  decorators: [withCenteredStory, withKnobs],
+  decorators: [withCenteredStory],
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+  },
+  argTypes: {
+    className: NOOP_CONTROL,
+    options: NOOP_CONTROL,
+    value: NOOP_CONTROL,
+    tooltipContent: NOOP_CONTROL,
+  },
 };
 
-export const Basic: FC = () => {
-  const initialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
-  const value = object<SelectableValue<string>>('Selected Value:', initialState);
-  const options = object<Array<SelectableValue<string>>>('Options:', [
-    initialState,
-    { label: 'Another label', value: 'Another value' },
-  ]);
-
+export const Basic: Story = (args) => {
+  const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };
+  const options: Array<SelectableValue<string>> = [initialValue, { label: 'Another label', value: 'Another value' }];
   return (
     <DashboardStoryCanvas>
-      <UseState initialState={value}>
+      <UseState initialState={initialValue}>
         {(value, updateValue) => {
           return (
             <div style={{ marginLeft: '100px', position: 'relative', display: 'inline-block' }}>
               <ButtonSelect
+                {...args}
                 value={value}
                 options={options}
                 onChange={(value) => {
@@ -42,4 +50,8 @@ export const Basic: FC = () => {
       </UseState>
     </DashboardStoryCanvas>
   );
+};
+Basic.args = {
+  narrow: true,
+  variant: 'default',
 };

@@ -206,6 +206,7 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
           <Button
             variant="secondary"
             icon="plus"
+            type="button"
             onClick={(e) => {
               this.onHeaderAdd();
             }}

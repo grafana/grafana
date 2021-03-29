@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -50,6 +49,7 @@ type RenderingService struct {
 
 	Cfg                *setting.Cfg             `inject:""`
 	RemoteCacheService *remotecache.RemoteCache `inject:""`
+	PluginManager      plugins.Manager          `inject:""`
 }
 
 func (rs *RenderingService) Init() error {
@@ -87,7 +87,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 
 	if rs.pluginAvailable() {
 		rs.log = rs.log.New("renderer", "plugin")
-		rs.pluginInfo = manager.Renderer
+		rs.pluginInfo = rs.PluginManager.Renderer()
 
 		if err := rs.startPlugin(ctx); err != nil {
 			return err
@@ -107,7 +107,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 }
 
 func (rs *RenderingService) pluginAvailable() bool {
-	return manager.Renderer != nil
+	return rs.PluginManager.Renderer() != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {

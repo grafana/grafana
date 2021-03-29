@@ -37,6 +37,11 @@ type Store interface {
 	UpdateAlertDefinitionPaused(*models.UpdateAlertDefinitionPausedCommand) error
 }
 
+// AlertingStore is the database interface used by the Alertmanager service.
+type AlertingStore interface {
+	GetLatestAlertmanagerConfiguration(cmd *models.GetLatestAlertmanagerConfigurationQuery) error
+}
+
 // DBstore stores the alert definitions and instances in the database.
 type DBstore struct {
 	// the base scheduler tick rate; it's used for validating definition interval

@@ -1,4 +1,4 @@
-import { findTemplateVarChanges, getCurrentText, getVariableRefresh, isAllVariable } from './utils';
+import { ensureStringValues, findTemplateVarChanges, getCurrentText, getVariableRefresh, isAllVariable } from './utils';
 import { VariableRefresh } from './types';
 import { UrlQueryMap } from '@grafana/data';
 
@@ -155,5 +155,21 @@ describe('findTemplateVarChanges', () => {
     };
 
     expect(findTemplateVarChanges(a, b)!['var-test']).toEqual(['test']);
+  });
+});
+
+describe('ensureStringValues', () => {
+  it.each`
+    value              | expected
+    ${null}            | ${''}
+    ${undefined}       | ${''}
+    ${{}}              | ${''}
+    ${{ current: {} }} | ${''}
+    ${1}               | ${'1'}
+    ${[1, 2]}          | ${['1', '2']}
+    ${'1'}             | ${'1'}
+    ${['1', '2']}      | ${['1', '2']}
+  `('when called with value:$value then result should be:$expected', ({ value, expected }) => {
+    expect(ensureStringValues(value)).toEqual(expected);
   });
 });

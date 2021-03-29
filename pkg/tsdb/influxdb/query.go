@@ -78,7 +78,29 @@ func (query *Query) renderTags() []string {
 	return res
 }
 
+func isTimeRangeNumeric(tr *plugins.DataTimeRange) bool {
+	if _, err := strconv.ParseInt(tr.From, 10, 64); err != nil {
+		return false
+	}
+	if _, err := strconv.ParseInt(tr.To, 10, 64); err != nil {
+		return false
+	}
+	return true
+}
+
 func (query *Query) renderTimeFilter(queryContext plugins.DataQuery) string {
+	// If from expressions
+	if isTimeRangeNumeric(queryContext.TimeRange) {
+		from, to, err := epochMStoInfluxTime(queryContext.TimeRange)
+		if err == nil {
+			return fmt.Sprintf(" time > %s and time < %s ", from, to)
+		}
+
+		// on error fallback to original time range processing.
+		glog.Warn("failed to parse expected time range in query, falling back to non-expression time range processing", "error", err)
+	}
+
+	// else from dashboard alerting
 	from := "now() - " + queryContext.TimeRange.From
 	to := ""
 
@@ -161,4 +183,18 @@ func (query *Query) renderTz() string {
 		return ""
 	}
 	return fmt.Sprintf(" tz('%s')", tz)
+}
+
+func epochMStoInfluxTime(tr *plugins.DataTimeRange) (string, string, error) {
+	from, err := strconv.ParseInt(tr.From, 10, 64)
+	if err != nil {
+		return "", "", err
+	}
+
+	to, err := strconv.ParseInt(tr.To, 10, 64)
+	if err != nil {
+		return "", "", err
+	}
+
+	return fmt.Sprintf("%dms", from), fmt.Sprintf("%dms", to), nil
 }

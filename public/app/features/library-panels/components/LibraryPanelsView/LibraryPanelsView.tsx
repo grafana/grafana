@@ -1,104 +1,76 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 import { css, cx } from 'emotion';
-import { Button, Icon, Input, stylesFactory, useStyles } from '@grafana/ui';
-import { DateTimeInput, GrafanaTheme } from '@grafana/data';
+import { Pagination, stylesFactory, useStyles } from '@grafana/ui';
+import { GrafanaTheme, LoadingState } from '@grafana/data';
 
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
-import { deleteLibraryPanel, getLibraryPanels } from '../../state/api';
 import { LibraryPanelDTO } from '../../types';
+import { changePage, initialLibraryPanelsViewState, libraryPanelsViewReducer } from './reducer';
+import { asyncDispatcher, deleteLibraryPanel, searchForLibraryPanels } from './actions';
 
 interface LibraryPanelViewProps {
   className?: string;
-  onCreateNewPanel?: () => void;
-  children?: (panel: LibraryPanelDTO, i: number) => JSX.Element | JSX.Element[];
-  onClickCard?: (panel: LibraryPanelDTO) => void;
-  formatDate?: (dateString: DateTimeInput, format?: string) => string;
+  onClickCard: (panel: LibraryPanelDTO) => void;
   showSecondaryActions?: boolean;
   currentPanelId?: string;
+  searchString: string;
 }
 
 export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
-  children,
   className,
-  onCreateNewPanel,
   onClickCard,
-  formatDate,
+  searchString,
   showSecondaryActions,
   currentPanelId: currentPanel,
 }) => {
   const styles = useStyles(getPanelViewStyles);
-  const [searchString, setSearchString] = useState('');
-
-  // Deliberately not using useAsync here as we want to be able to update libraryPanels without
-  // making an additional API request (for example when a user deletes a library panel and we want to update the view to reflect that)
-  const [libraryPanels, setLibraryPanels] = useState<LibraryPanelDTO[] | undefined>(undefined);
-  useEffect(() => {
-    getLibraryPanels().then((panels) => {
-      setLibraryPanels(panels);
-    });
-  }, []);
-
-  const [filteredItems, setFilteredItems] = useState(libraryPanels);
-  useDebounce(
-    () => {
-      setFilteredItems(
-        libraryPanels?.filter(
-          (v) => v.name.toLowerCase().includes(searchString.toLowerCase()) && v.uid !== currentPanel
-        )
-      );
-    },
-    300,
-    [searchString, libraryPanels, currentPanel]
-  );
-
-  const onDeletePanel = async (uid: string) => {
-    try {
-      await deleteLibraryPanel(uid);
-      const panelIndex = libraryPanels!.findIndex((panel) => panel.uid === uid);
-      setLibraryPanels([...libraryPanels!.slice(0, panelIndex), ...libraryPanels!.slice(panelIndex + 1)]);
-    } catch (err) {
-      throw err;
+  const [{ libraryPanels, page, perPage, numberOfPages, loadingState, currentPanelId }, dispatch] = useReducer(
+    libraryPanelsViewReducer,
+    {
+      ...initialLibraryPanelsViewState,
+      currentPanelId: currentPanel,
     }
-  };
+  );
+  const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
+  useDebounce(() => asyncDispatch(searchForLibraryPanels({ searchString, page, perPage, currentPanelId })), 300, [
+    searchString,
+    page,
+    asyncDispatch,
+  ]);
+  const onDelete = ({ uid }: LibraryPanelDTO) =>
+    asyncDispatch(deleteLibraryPanel(uid, { searchString, page, perPage }));
+  const onPageChange = (page: number) => asyncDispatch(changePage({ page }));
 
   return (
     <div className={cx(styles.container, className)}>
-      <div className={styles.searchHeader}>
-        <Input
-          placeholder="Search the panel library"
-          prefix={<Icon name="search" />}
-          value={searchString}
-          autoFocus
-          onChange={(e) => setSearchString(e.currentTarget.value)}
-        ></Input>
-        {/* <Select placeholder="Filter by" onChange={() => {}} width={35} /> */}
-      </div>
       <div className={styles.libraryPanelList}>
-        {libraryPanels === undefined ? (
+        {loadingState === LoadingState.Loading ? (
           <p>Loading library panels...</p>
-        ) : filteredItems?.length! < 1 ? (
+        ) : libraryPanels.length < 1 ? (
           <p>No library panels found.</p>
         ) : (
-          filteredItems?.map((item, i) => (
+          libraryPanels?.map((item, i) => (
             <LibraryPanelCard
               key={`shared-panel=${i}`}
               libraryPanel={item}
-              onDelete={() => onDeletePanel(item.uid)}
+              onDelete={onDelete}
               onClick={onClickCard}
-              formatDate={formatDate}
               showSecondaryActions={showSecondaryActions}
-            >
-              {children?.(item, i)}
-            </LibraryPanelCard>
+            />
           ))
         )}
       </div>
-      {onCreateNewPanel && (
-        <Button icon="plus" className={styles.newPanelButton} onClick={onCreateNewPanel}>
-          Create a new reusable panel
-        </Button>
-      )}
+      {libraryPanels.length ? (
+        <div className={styles.pagination}>
+          <Pagination
+            currentPage={page}
+            numberOfPages={numberOfPages}
+            onNavigate={onPageChange}
+            hideWhenSinglePage={true}
+          />
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -109,13 +81,11 @@ const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       flex-wrap: nowrap;
-      gap: ${theme.spacing.sm};
-      height: 100%;
     `,
     libraryPanelList: css`
-      display: flex;
-      overflow-x: auto;
-      flex-direction: column;
+      max-width: 100%;
+      display: grid;
+      grid-gap: ${theme.spacing.sm};
     `,
     searchHeader: css`
       display: flex;
@@ -123,6 +93,9 @@ const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
     newPanelButton: css`
       margin-top: 10px;
       align-self: flex-start;
+    `,
+    pagination: css`
+      align-self: center;
     `,
   };
 });

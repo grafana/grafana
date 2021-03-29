@@ -40,7 +40,6 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
     Object {
       "getTimeRangeParams": [Function],
       "languageProvider": LokiLanguageProvider {
-        "addLabelValuesToOptions": [Function],
         "cleanText": [Function],
         "datasource": [Circular],
         "fetchSeries": [Function],

@@ -1,39 +1,65 @@
-import { DataSourceInstanceSettings, FieldType, MutableDataFrame, PluginType } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { of } from 'rxjs';
+import {
+  arrowTableToBase64String,
+  DataFrame,
+  DataSourceInstanceSettings,
+  grafanaDataFrameToArrowTable,
+  MutableDataFrame,
+  PluginType,
+} from '@grafana/data';
+import { Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
-
-jest.mock('../../../../../packages/grafana-runtime/src/services/backendSrv.ts', () => ({
-  getBackendSrv: () => backendSrv,
-}));
-
-jest.mock('../../../../../packages/grafana-runtime/src/utils/queryResponse.ts', () => ({
-  toDataQueryResponse: (resp: any) => resp,
-}));
+import { FetchResponse, setBackendSrv, BackendDataSourceResponse } from '@grafana/runtime';
 
 describe('Tempo data source', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('returns trace when queried', async () => {
-    const responseDataFrame = new MutableDataFrame({ fields: [{ name: 'trace', values: ['{}'] }] });
-    setupBackendSrv([responseDataFrame]);
+  it('parses json fields from backend', async () => {
+    setupBackendSrv(
+      new MutableDataFrame({
+        fields: [
+          { name: 'serviceTags', values: ['{"key":"servicetag1","value":"service"}'] },
+          { name: 'logs', values: ['{"timestamp":12345,"fields":[{"key":"count","value":1}]}'] },
+          { name: 'tags', values: ['{"key":"tag1","value":"val1"}'] },
+          { name: 'serviceName', values: ['service'] },
+        ],
+      })
+    );
     const ds = new TempoDatasource(defaultSettings);
     await expect(ds.query({ targets: [{ query: '12345' }] } as any)).toEmitValuesWith((response) => {
-      const field = response[0].data[0].fields[0];
-      expect(field.name).toBe('trace');
-      expect(field.type).toBe(FieldType.trace);
+      const fields = (response[0].data[0] as DataFrame).fields;
+      expect(
+        fields.map((f) => ({
+          name: f.name,
+          values: f.values.toArray(),
+        }))
+      ).toMatchObject([
+        { name: 'serviceTags', values: [{ key: 'servicetag1', value: 'service' }] },
+        { name: 'logs', values: [{ timestamp: 12345, fields: [{ key: 'count', value: 1 }] }] },
+        { name: 'tags', values: [{ key: 'tag1', value: 'val1' }] },
+        { name: 'serviceName', values: ['service'] },
+      ]);
     });
   });
 });
 
-function setupBackendSrv(response: any) {
-  const defaultMock = () => of(createFetchResponse(response));
+function setupBackendSrv(frame: DataFrame) {
+  setBackendSrv({
+    fetch(): Observable<FetchResponse<BackendDataSourceResponse>> {
+      return of(
+        createFetchResponse({
+          results: {
+            refid1: {
+              dataframes: [encode(frame)],
+            },
+          },
+        })
+      );
+    },
+  } as any);
+}
 
-  const fetchMock = jest.spyOn(backendSrv, 'fetch');
-  fetchMock.mockImplementation(defaultMock);
+function encode(frame: DataFrame) {
+  const table = grafanaDataFrameToArrowTable(frame);
+  return arrowTableToBase64String(table);
 }
 
 const defaultSettings: DataSourceInstanceSettings = {

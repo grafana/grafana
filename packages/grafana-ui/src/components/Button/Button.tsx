@@ -208,6 +208,11 @@ export function getPropertiesForVariant(theme: GrafanaTheme, variant: ButtonVari
             outline: none;
             text-decoration: underline;
           }
+
+          &:hover {
+            color: ${theme.colors.linkExternal};
+            text-decoration: underline;
+          }
         `,
       };
 

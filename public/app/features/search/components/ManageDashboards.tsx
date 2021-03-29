@@ -95,13 +95,7 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
     <div className={styles.container}>
       <div>
         <HorizontalGroup justify="space-between">
-          <FilterInput
-            labelClassName="gf-form--has-input-icon"
-            inputClassName="gf-form-input width-20"
-            value={query.query}
-            onChange={onQueryChange}
-            placeholder={'Search dashboards by name'}
-          />
+          <FilterInput value={query.query} onChange={onQueryChange} placeholder={'Search dashboards by name'} />
           <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
         </HorizontalGroup>
       </div>

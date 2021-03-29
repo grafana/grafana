@@ -23,7 +23,7 @@ For more information on developing for the backend:
 
 | package | description |
 | ------- | ----------- |
-| /pkg/bus | The bus is described in more details under [Communication](/contribute/architecture/communication.md) |
+| /pkg/bus | The bus is described in more details under [Communication](/contribute/architecture/backend/communication.md) |
 | /pkg/models | This is where we keep our domain model. This package should not depend on any package outside standard library. It does contain some references within Grafana but that is something we should avoid going forward. |
 | /pkg/registry | Package for managing services. |
 | /pkg/services/alerting | Grafana's alerting services. The alerting engine runs in a separate goroutine and shouldn't depend on anything else within Grafana. |

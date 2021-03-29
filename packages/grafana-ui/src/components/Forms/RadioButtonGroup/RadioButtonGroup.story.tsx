@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import mdx from './RadioButtonGroup.mdx';
 import { RadioButtonGroup } from './RadioButtonGroup';
-import { RadioButtonSize } from './RadioButton';
-import { boolean, select } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
+import { NOOP_CONTROL } from '../../../utils/storybook/noopControl';
 
 export default {
   title: 'Forms/RadioButtonGroup',
@@ -11,18 +11,24 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+  },
+  argTypes: {
+    disabledOptions: {
+      name: 'Disabled item',
+      control: { type: 'select', options: ['', 'graphite', 'prometheus', 'elastic'] },
+    },
+    size: { control: { type: 'select' } },
+    className: NOOP_CONTROL,
+    options: NOOP_CONTROL,
+    value: NOOP_CONTROL,
   },
 };
 
-const sizes: RadioButtonSize[] = ['sm', 'md'];
-
-export const RadioButtons = () => {
+export const RadioButtons: Story = (args) => {
   const [selected, setSelected] = useState('elastic');
-  const BEHAVIOUR_GROUP = 'Behaviour props';
-  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
-  const disabledItem = select('Disabled item', ['', 'graphite', 'prometheus', 'elastic'], '', BEHAVIOUR_GROUP);
-  const VISUAL_GROUP = 'Visual options';
-  const size = select<RadioButtonSize>('Size', sizes, 'md', VISUAL_GROUP);
 
   const options = [
     { label: 'Prometheus', value: 'prometheus' },
@@ -42,23 +48,23 @@ export const RadioButtons = () => {
         <h5>Full width</h5>
         <RadioButtonGroup
           options={options}
-          disabled={disabled}
-          disabledOptions={[disabledItem]}
+          disabled={args.disabled}
+          disabledOptions={args.disabledOptions}
           value={selected}
           onChange={(v) => setSelected(v!)}
-          size={size}
-          fullWidth
+          size={args.size}
+          fullWidth={args.fullWidth}
         />
       </div>
       <div style={{ marginBottom: '32px' }}>
         <h5>Auto width</h5>
         <RadioButtonGroup
           options={options}
-          disabled={disabled}
-          disabledOptions={[disabledItem]}
+          disabled={args.disabled}
+          disabledOptions={args.disabledOptions}
           value={selected}
           onChange={(v) => setSelected(v!)}
-          size={size}
+          size={args.size}
         />
       </div>
       <div style={{ marginBottom: '32px' }}>
@@ -67,9 +73,15 @@ export const RadioButtons = () => {
           options={optionsWithOnlyIcons}
           value={selected}
           onChange={(v) => setSelected(v!)}
-          size={size}
+          size={args.size}
         />
       </div>
     </div>
   );
+};
+RadioButtons.args = {
+  disabled: false,
+  disabledOptions: '',
+  size: 'md',
+  fullWidth: true,
 };

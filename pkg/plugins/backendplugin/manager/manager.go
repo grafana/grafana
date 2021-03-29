@@ -9,9 +9,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -25,7 +27,10 @@ import (
 )
 
 func init() {
-	registry.RegisterServiceWithPriority(&manager{}, registry.MediumHigh)
+	registry.RegisterServiceWithPriority(&manager{
+		logger:  log.New("plugins.backend"),
+		plugins: map[string]backendplugin.Plugin{},
+	}, registry.MediumHigh)
 }
 
 type manager struct {
@@ -35,14 +40,9 @@ type manager struct {
 	pluginsMu              sync.RWMutex
 	plugins                map[string]backendplugin.Plugin
 	logger                 log.Logger
-	pluginSettings         map[string]pluginSettings
 }
 
 func (m *manager) Init() error {
-	m.plugins = make(map[string]backendplugin.Plugin)
-	m.logger = log.New("plugins.backend")
-	m.pluginSettings = extractPluginSettings(m.Cfg)
-
 	return nil
 }
 
@@ -63,11 +63,6 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 		return fmt.Errorf("backend plugin %s already registered", pluginID)
 	}
 
-	pluginSettings := pluginSettings{}
-	if ps, exists := m.pluginSettings[pluginID]; exists {
-		pluginSettings = ps
-	}
-
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", m.Cfg.BuildVersion),
 		fmt.Sprintf("GF_EDITION=%s", m.License.Edition()),
@@ -86,6 +81,8 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 		}
 	}
 
+	hostEnv = append(hostEnv, m.getAWSEnvironmentVariables()...)
+	pluginSettings := getPluginSettings(pluginID, m.Cfg)
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
 
 	pluginLogger := m.logger.New("pluginId", pluginID)
@@ -97,6 +94,23 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	m.plugins[pluginID] = plugin
 	m.logger.Debug("Backend plugin registered", "pluginId", pluginID)
 	return nil
+}
+
+func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
+	p, ok := m.plugins[pluginID]
+	return p, ok
+}
+
+func (m *manager) getAWSEnvironmentVariables() []string {
+	variables := []string{}
+	if m.Cfg.AWSAssumeRoleEnabled {
+		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
+	}
+	if len(m.Cfg.AWSAllowedAuthProviders) > 0 {
+		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(m.Cfg.AWSAllowedAuthProviders, ","))
+	}
+
+	return variables
 }
 
 func (m *manager) GetDataPlugin(pluginID string) interface{} {

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -47,7 +46,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		if plugin, exists := manager.DataSources[ds.Type]; exists {
+		if plugin := hs.PluginManager.GetDataSource(ds.Type); plugin != nil {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 			dsItem.TypeName = plugin.Name
 		} else {
@@ -71,6 +70,9 @@ func GetDataSourceById(c *models.ReqContext) response.Response {
 	if err := bus.Dispatch(&query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
+		}
+		if errors.Is(err, models.ErrDataSourceIdentifierNotSet) {
+			return response.Error(400, "Datasource id is missing", nil)
 		}
 		return response.Error(500, "Failed to query datasources", err)
 	}
@@ -363,8 +365,8 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	}
 
 	// find plugin
-	plugin, ok := manager.DataSources[ds.Type]
-	if !ok {
+	plugin := hs.PluginManager.GetDataSource(ds.Type)
+	if plugin == nil {
 		c.JsonApiErr(500, "Unable to find datasource plugin", err)
 		return
 	}
@@ -428,8 +430,8 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		return response.Error(500, "Unable to load datasource metadata", err)
 	}
 
-	plugin, ok := hs.PluginManager.GetDatasource(ds.Type)
-	if !ok {
+	plugin := hs.PluginManager.GetDataSource(ds.Type)
+	if plugin == nil {
 		return response.Error(500, "Unable to find datasource plugin", err)
 	}
 

@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { css, cx } from 'emotion';
 import { DataQuery, GrafanaTheme } from '@grafana/data';
-import { Icon, Input, stylesFactory, useTheme, FieldValidationMessage } from '@grafana/ui';
+import { FieldValidationMessage, Icon, Input, stylesFactory, useTheme } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   query: DataQuery;
   queries: DataQuery[];
-  dataSourceName: string;
-  inMixedMode?: boolean;
+  dataSourceName?: string;
   disabled?: boolean;
   onChange: (query: DataQuery) => void;
   onClick: (e: React.MouseEvent) => void;
@@ -17,7 +16,6 @@ export interface Props {
 
 export const QueryEditorRowTitle: React.FC<Props> = ({
   dataSourceName,
-  inMixedMode,
   disabled,
   query,
   queries,
@@ -116,7 +114,7 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
           {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
         </>
       )}
-      {inMixedMode && <em className={styles.contextInfo}> ({dataSourceName})</em>}
+      {dataSourceName && <em className={styles.contextInfo}> ({dataSourceName})</em>}
       {disabled && <em className={styles.contextInfo}> Disabled</em>}
 
       {collapsedText && (

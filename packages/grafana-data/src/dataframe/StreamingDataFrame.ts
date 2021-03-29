@@ -3,12 +3,70 @@ import { QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities } from './DataFrameJSON';
 
+// binary search for index of closest value
+function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
+  let mid;
+  lo = lo || 0;
+  hi = hi || arr.length - 1;
+  let bitwise = hi <= 2147483647;
+
+  while (hi - lo > 1) {
+    mid = bitwise ? (lo + hi) >> 1 : Math.floor((lo + hi) / 2);
+
+    if (arr[mid] < num) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+
+  if (num - arr[lo] <= arr[hi] - num) {
+    return lo;
+  }
+
+  return hi;
+}
+
+// mutable circular push
+function circPush(data: number[][], newData: number[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
+  for (let i = 0; i < data.length; i++) {
+    data[i] = data[i].concat(newData[i]);
+  }
+
+  const nlen = data[0].length;
+
+  let sliceIdx = 0;
+
+  if (nlen > maxLength) {
+    sliceIdx = nlen - maxLength;
+  }
+
+  if (maxDelta !== Infinity) {
+    const deltaLookup = data[deltaIdx];
+
+    const low = deltaLookup[sliceIdx];
+    const high = deltaLookup[nlen - 1];
+
+    if (high - low > maxDelta) {
+      sliceIdx = closestIdx(high - maxDelta, deltaLookup, sliceIdx);
+    }
+  }
+
+  if (sliceIdx) {
+    for (let i = 0; i < data.length; i++) {
+      data[i] = data[i].slice(sliceIdx);
+    }
+  }
+
+  return data;
+}
+
 /**
  * @alpha
  */
 export interface StreamingFrameOptions {
   maxLength?: number; // 1000
-  maxSeconds?: number; // how long to keep things
+  maxDelta?: number; // how long to keep things
 }
 
 /**
@@ -25,47 +83,66 @@ export class StreamingDataFrame implements DataFrame {
   fields: Array<Field<any, ArrayVector<any>>> = [];
 
   options: StreamingFrameOptions;
-  private lastUpdateTime = 0;
+
+  length = 0;
   private timeFieldIndex = -1;
 
-  constructor(frame: DataFrame, opts?: StreamingFrameOptions) {
-    this.name = frame.name;
-    this.refId = frame.refId;
-    this.meta = frame.meta;
+  constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
       maxLength: 1000,
+      maxDelta: Infinity,
       ...opts,
     };
 
-    // Keep the existing fields
-    this.fields = frame.fields.map((f) => {
-      if (f.values instanceof ArrayVector) {
-        return f as Field<any, ArrayVector<any>>;
+    this.push(frame);
+  }
+
+  /**
+   * apply the new message to the existing data.  This will replace the existing schema
+   * if a new schema is included in the message, or append data matching the current schema
+   */
+  push(msg: DataFrameJSON) {
+    const { schema, data } = msg;
+    if (schema) {
+      // Keep old values if they are the same shape
+      let oldValues: ArrayVector[] | undefined;
+      if (schema.fields.length === this.fields.length) {
+        let same = true;
+        oldValues = this.fields.map((f, idx) => {
+          const oldField = this.fields[idx];
+          if (f.name !== oldField.name || f.type !== oldField.type) {
+            same = false;
+          }
+          return f.values;
+        });
+        if (!same) {
+          oldValues = undefined;
+        }
       }
-      return {
-        ...f,
-        values: new ArrayVector(f.values.toArray()),
-      };
-    });
 
-    this.timeFieldIndex = this.fields.findIndex((f) => f.type === FieldType.time);
-  }
+      this.name = schema.name;
+      this.refId = schema.refId;
+      this.meta = schema.meta;
 
-  get length() {
-    if (!this.fields.length) {
-      return 0;
-    }
-    return this.fields[0].values.length;
-  }
+      // Create new fields from the schema
+      this.fields = schema.fields.map((f, idx) => {
+        return {
+          config: f.config ?? {},
+          name: f.name,
+          labels: f.labels,
+          type: f.type ?? FieldType.other,
+          values: oldValues ? oldValues[idx] : new ArrayVector(),
+        };
+      });
 
-  update(msg: DataFrameJSON) {
-    if (msg.schema) {
-      // TODO, replace the existing fields
+      this.timeFieldIndex = this.fields.findIndex((f) => f.type === FieldType.time);
     }
 
-    if (msg.data) {
-      const data = msg.data;
+    if (data && data.values.length && data.values[0].length) {
       const { values, entities } = data;
+      if (values.length !== this.fields.length) {
+        throw new Error('push message mismatch');
+      }
 
       if (entities) {
         entities.forEach((ents, i) => {
@@ -76,29 +153,16 @@ export class StreamingDataFrame implements DataFrame {
         });
       }
 
-      this.fields.forEach((f, i) => {
-        f.values.buffer.push(...values[i]);
+      let curValues = this.fields.map((f) => f.values.buffer);
+
+      let appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
+
+      appended.forEach((v, i) => {
+        this.fields[i].values.buffer = v;
       });
 
-      // Shorten the array less frequently than we append
-      const elapsed = Date.now() - this.lastUpdateTime;
-
-      if (elapsed > 5000) {
-        if (this.options.maxSeconds && this.timeFieldIndex >= 0) {
-          // TODO -- check time length
-        }
-        if (this.options.maxLength) {
-          const delta = this.length - this.options.maxLength;
-
-          if (delta > 0) {
-            this.fields.forEach((f) => {
-              f.values.buffer = f.values.buffer.slice(delta);
-            });
-          }
-        }
-      }
-
-      this.lastUpdateTime = Date.now();
+      // Update the frame length
+      this.length = appended[0].length;
     }
   }
 }

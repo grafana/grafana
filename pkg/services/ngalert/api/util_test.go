@@ -16,8 +16,8 @@ func TestToMacaronPath(t *testing.T) {
 			expectedOutputPath: "",
 		},
 		{
-			inputPath:          "/ruler/{DatasourceId}/api/v1/rules/{Namespace}/{Groupname}",
-			expectedOutputPath: "/ruler/:DatasourceId/api/v1/rules/:Namespace/:Groupname",
+			inputPath:          "/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}",
+			expectedOutputPath: "/ruler/:Recipient/api/v1/rules/:Namespace/:Groupname",
 		},
 	}
 	for _, tc := range testCases {

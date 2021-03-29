@@ -12,12 +12,15 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -45,6 +48,9 @@ const (
 const (
 	authProxySyncTTL = 60
 )
+
+// zoneInfo names environment variable for setting the path to look for the timezone database in go
+const zoneInfo = "ZONEINFO"
 
 var (
 	// App settings.
@@ -196,6 +202,7 @@ type Cfg struct {
 	RouterLogging    bool
 	Domain           string
 	CDNRootURL       *url.URL
+	ReadTimeout      time.Duration
 	EnableGzip       bool
 	EnforceDomain    bool
 
@@ -755,6 +762,14 @@ func (cfg *Cfg) validateStaticRootPath() error {
 func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	setHomePath(args)
 
+	// Fix for missing IANA db on Windows
+	_, zoneInfoSet := os.LookupEnv(zoneInfo)
+	if runtime.GOOS == "windows" && !zoneInfoSet {
+		if err := os.Setenv(zoneInfo, filepath.Join(HomePath, "tools", "zoneinfo.zip")); err != nil {
+			cfg.Logger.Error("Can't set ZONEINFO environment variable", "err", err)
+		}
+	}
+
 	iniFile, err := cfg.loadConfiguration(args)
 	if err != nil {
 		return err
@@ -876,7 +891,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readLDAPConfig()
-	cfg.readAWSConfig()
+	cfg.handleAWSConfig()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
@@ -940,10 +955,10 @@ func (cfg *Cfg) readLDAPConfig() {
 	cfg.LDAPAllowSignup = LDAPAllowSignup
 }
 
-func (cfg *Cfg) readAWSConfig() {
+func (cfg *Cfg) handleAWSConfig() {
 	awsPluginSec := cfg.Raw.Section("aws")
 	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
-	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").String()
+	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").MustString("default,keys,credentials")
 	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
 		authProvider = strings.TrimSpace(authProvider)
 		if authProvider != "" {
@@ -951,6 +966,16 @@ func (cfg *Cfg) readAWSConfig() {
 		}
 	}
 	cfg.AWSListMetricsPageLimit = awsPluginSec.Key("list_metrics_page_limit").MustInt(500)
+	// Also set environment variables that can be used by core plugins
+	err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AssumeRoleEnabledEnvVarKeyName), err)
+	}
+
+	err = os.Setenv(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuthProviders)
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
+	}
 }
 
 func (cfg *Cfg) readSessionConfig() {
@@ -1343,6 +1368,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 			return err
 		}
 	}
+
+	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(0)
 
 	return nil
 }

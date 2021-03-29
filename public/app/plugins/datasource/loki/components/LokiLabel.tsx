@@ -14,7 +14,7 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   name: string;
   active?: boolean;
   loading?: boolean;
-  searchTerm?: RegExp;
+  searchTerm?: string;
   value?: string;
   facets?: number;
   onClick?: OnLabelClick;
@@ -24,6 +24,7 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
   ({ name, value, hidden, facets, onClick, className, loading, searchTerm, active, style, ...rest }, ref) => {
     const theme = useTheme();
     const styles = getLabelStyles(theme);
+    const searchWords = searchTerm ? [searchTerm] : [];
 
     const onLabelClick = (event: React.MouseEvent<HTMLElement>) => {
       if (onClick && !hidden) {
@@ -55,7 +56,7 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
         )}
         {...rest}
       >
-        <Highlighter textToHighlight={text} searchWords={[searchTerm]} highlightClassName={styles.matchHighLight} />
+        <Highlighter textToHighlight={text} searchWords={searchWords} highlightClassName={styles.matchHighLight} />
       </span>
     );
   }
@@ -68,7 +69,7 @@ const getLabelStyles = (theme: GrafanaTheme) => ({
     cursor: pointer;
     font-size: ${theme.typography.size.sm};
     line-height: ${theme.typography.lineHeight.xs};
-    border: 1px solid ${theme.colors.border2};
+    background-color: ${theme.colors.bg3};
     vertical-align: baseline;
     color: ${theme.colors.text};
     white-space: nowrap;
@@ -77,8 +78,6 @@ const getLabelStyles = (theme: GrafanaTheme) => ({
     border-radius: ${theme.border.radius.md};
     margin-right: ${theme.spacing.sm};
     margin-bottom: ${theme.spacing.xs};
-    text-overflow: ellipsis;
-    overflow: hidden;
   `,
   loading: css`
     font-weight: ${theme.typography.weight.semibold};
