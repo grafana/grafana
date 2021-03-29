@@ -70,6 +70,7 @@ type proxyTransportCache struct {
 type dataSourceTransport struct {
 	datasourceName string
 	headers        map[string]string
+	queryParams    map[string]string
 	transport      *http.Transport
 	next           http.RoundTripper
 }
@@ -111,7 +112,21 @@ func (d *dataSourceTransport) RoundTrip(req *http.Request) (*http.Response, erro
 		req.Header.Set(key, value)
 	}
 
+	for key, value := range d.queryParams {
+		if req.URL.RawQuery != "" {
+			req.URL.RawQuery = fmt.Sprintf("%s&%s=%s", req.URL.RawQuery, key, value)
+		} else {
+			req.URL.RawQuery = fmt.Sprintf("%s=%s", key, value)
+		}
+	}
+
 	return instrumentRoundtrip(d.datasourceName, d.next).RoundTrip(req)
+}
+
+// AddCustomQueryParams adds custom query params that will appended to the request during the RoundTrip call.
+func (d *dataSourceTransport) AddCustomQueryParams(params map[string]string) *dataSourceTransport {
+	d.queryParams = params
+	return d
 }
 
 type cachedTransport struct {
