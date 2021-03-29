@@ -41,12 +41,12 @@ export const TableCell: FC<Props> = ({
     innerWidth -= tableStyles.lastChildExtraPadding;
   }
 
-  const link: LinkModel<any> | undefined = field.getLinks?.({
+  const link: LinkModel | undefined = field.getLinks?.({
     valueRowIndex: rowIndex,
   })[0];
 
   let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
-  if (link && link.onClick) {
+  if (link?.onClick) {
     onClick = (event) => {
       // Allow opening in new tab
       if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
