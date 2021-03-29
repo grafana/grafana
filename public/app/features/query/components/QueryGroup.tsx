@@ -276,7 +276,14 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { data } = this.state;
 
     if (isSharedDashboardQuery(dsSettings.name)) {
-      return <DashboardQueryEditor queries={options.queries} panelData={data} onChange={this.onQueriesChange} />;
+      return (
+        <DashboardQueryEditor
+          queries={options.queries}
+          panelData={data}
+          onChange={this.onQueriesChange}
+          onRunQueries={onRunQueries}
+        />
+      );
     }
 
     return (
