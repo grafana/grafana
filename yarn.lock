@@ -3455,7 +3455,7 @@
 
 "@grafana/data@7.5.0":
   version "7.5.0"
-  resolved "https://npm.pkg.github.com/download/@grafana/data/7.5.0/951b37761fd20c0a7f44fc605a90733de4a17548fa7cfddd0c61d69b90b96ddb#c20479a95084a69a153b95f74a753e3f533bf943"
+  resolved "https://registry.yarnpkg.com/@grafana/data/-/data-7.5.0.tgz#c20479a95084a69a153b95f74a753e3f533bf943"
   integrity sha512-sIbXcDSoRgR0WecPBOsNLDLlMGelRpmZFoJFVByjqPbVIBY8C3sxUKqffSbI6RmVr1uRiiv+h4TwNBDS89uHlA==
   dependencies:
     "@braintree/sanitize-url" "4.0.0"
@@ -3469,7 +3469,7 @@
 
 "@grafana/e2e-selectors@7.5.0":
   version "7.5.0"
-  resolved "https://npm.pkg.github.com/download/@grafana/e2e-selectors/7.5.0/53f003db306f7e69229b8123ebae9f8d337e1eedf5d5914c05e61bb49b483ded#e53c6e142af717156fa081a6354f15970fbb300f"
+  resolved "https://registry.yarnpkg.com/@grafana/e2e-selectors/-/e2e-selectors-7.5.0.tgz#e53c6e142af717156fa081a6354f15970fbb300f"
   integrity sha512-ravj4DycULMU72UZGDXrZRtVm/1owOaY144/8zq0z1bh6CIDiYhFc/Dj92yKTp5S/FM2nwjzA4NwJz66LfCULA==
   dependencies:
     "@grafana/tsconfig" "^1.0.0-rc1"
@@ -3496,7 +3496,7 @@
 
 "@grafana/runtime@7.5.0":
   version "7.5.0"
-  resolved "https://npm.pkg.github.com/download/@grafana/runtime/7.5.0/fb7747492ce58712d6e9621897786d296fc7eab62efeaf455c87feb528754a65#2da021ae7395e48cb54f0a359994c9926ff22f76"
+  resolved "https://registry.yarnpkg.com/@grafana/runtime/-/runtime-7.5.0.tgz#2da021ae7395e48cb54f0a359994c9926ff22f76"
   integrity sha512-RySlvA/clXs0eHHL8TOrbuYtffZ0Gvs+xxHAswfLGuVckOP8rCPz2l2yyIQwQStdP2L2KuG+JMVco73QYKOohw==
   dependencies:
     "@grafana/data" "7.5.0"
@@ -3533,7 +3533,7 @@
 
 "@grafana/ui@7.5.0":
   version "7.5.0"
-  resolved "https://npm.pkg.github.com/download/@grafana/ui/7.5.0/9cdb136d5e10d635c3389794f6c53e3ee33633470b4bc62dfbe106b691071a75#b070893852426a6f67752735071a222d7ecc7392"
+  resolved "https://registry.yarnpkg.com/@grafana/ui/-/ui-7.5.0.tgz#b070893852426a6f67752735071a222d7ecc7392"
   integrity sha512-36luPhiCQP/StUHVYP5rrT1Wr6n4EIWOjaoC+wajSCVW9lvUS3F7S9JnoUDiPq83bRxRw/EAjw0ShV/7e9SJcQ==
   dependencies:
     "@emotion/core" "10.0.27"
