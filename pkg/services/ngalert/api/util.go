@@ -49,6 +49,8 @@ func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimod
 			switch ds.Type {
 			case "loki", "prometheus":
 				return apimodels.LoTexRulerBackend, nil
+			case "grafana-alertmanager-datasource":
+				return apimodels.AlertmanagerBackend, nil
 			default:
 				return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
 			}
