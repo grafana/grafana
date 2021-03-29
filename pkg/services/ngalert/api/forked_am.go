@@ -74,22 +74,22 @@ func (am *ForkedAMSvc) RouteGetAlertingConfig(ctx *models.ReqContext) response.R
 	return s.RouteGetAlertingConfig(ctx)
 }
 
-func (am *ForkedAMSvc) RouteGetAmAlertGroups(ctx *models.ReqContext) response.Response {
+func (am *ForkedAMSvc) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
 	s, err := am.getService(ctx, am.DatasourceCache)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
 
-	return s.RouteGetAmAlertGroups(ctx)
+	return s.RouteGetAMAlertGroups(ctx)
 }
 
-func (am *ForkedAMSvc) RouteGetAmAlerts(ctx *models.ReqContext) response.Response {
+func (am *ForkedAMSvc) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
 	s, err := am.getService(ctx, am.DatasourceCache)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
 
-	return s.RouteGetAmAlerts(ctx)
+	return s.RouteGetAMAlerts(ctx)
 }
 
 func (am *ForkedAMSvc) RouteGetSilence(ctx *models.ReqContext) response.Response {
@@ -119,11 +119,11 @@ func (am *ForkedAMSvc) RoutePostAlertingConfig(ctx *models.ReqContext, body apim
 	return s.RoutePostAlertingConfig(ctx, body)
 }
 
-func (am *ForkedAMSvc) RoutePostAmAlerts(ctx *models.ReqContext, body apimodels.PostableAlerts) response.Response {
+func (am *ForkedAMSvc) RoutePostAMAlerts(ctx *models.ReqContext, body apimodels.PostableAlerts) response.Response {
 	s, err := am.getService(ctx, am.DatasourceCache)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
 
-	return s.RoutePostAmAlerts(ctx, body)
+	return s.RoutePostAMAlerts(ctx, body)
 }

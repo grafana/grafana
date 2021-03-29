@@ -87,7 +87,7 @@ func (am *LotexAM) RouteGetAlertingConfig(ctx *models.ReqContext) response.Respo
 	)
 }
 
-func (am *LotexAM) RouteGetAmAlertGroups(ctx *models.ReqContext) response.Response {
+func (am *LotexAM) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
 	return am.withReq(
 		ctx, &http.Request{
 			URL: withPath(
@@ -99,7 +99,7 @@ func (am *LotexAM) RouteGetAmAlertGroups(ctx *models.ReqContext) response.Respon
 	)
 }
 
-func (am *LotexAM) RouteGetAmAlerts(ctx *models.ReqContext) response.Response {
+func (am *LotexAM) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
 	return am.withReq(
 		ctx, &http.Request{
 			URL: withPath(
@@ -152,7 +152,7 @@ func (am *LotexAM) RoutePostAlertingConfig(ctx *models.ReqContext, config apimod
 	return am.withReq(ctx, req, messageExtractor)
 }
 
-func (am *LotexAM) RoutePostAmAlerts(ctx *models.ReqContext, alerts apimodels.PostableAlerts) response.Response {
+func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.PostableAlerts) response.Response {
 	yml, err := yaml.Marshal(alerts)
 	if err != nil {
 		return response.Error(500, "Failed marshal postable alerts", err)
