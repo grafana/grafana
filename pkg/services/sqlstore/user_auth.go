@@ -101,8 +101,24 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 		return models.ErrUserNotFound
 	}
 
-	// create authInfo record to link accounts
-	if authQuery.Result == nil && query.AuthModule != "" {
+	// Special case for generic oauth duplicates
+	oauthModule := false
+	if query.AuthModule == "oauth_generic_oauth" && user.Id != 0 {
+		oauthModule = true
+		_, err = x.Id(user.Id).Get(user)
+		if err != nil {
+			return err
+		}
+		cmd2 := &models.UpdateAuthInfoCommand{
+			UserId:     user.Id,
+			AuthModule: query.AuthModule,
+			AuthId:     query.AuthId,
+		}
+		if err := UpdateAuthInfo(cmd2); err != nil {
+			return err
+		}
+	}
+	if !oauthModule && authQuery.Result == nil && query.AuthModule != "" {
 		cmd2 := &models.SetAuthInfoCommand{
 			UserId:     user.Id,
 			AuthModule: query.AuthModule,
@@ -151,6 +167,7 @@ func GetAuthInfo(query *models.GetAuthInfoQuery) error {
 	if err != nil {
 		return err
 	}
+
 	if !has {
 		return models.ErrUserNotFound
 	}
