@@ -59,8 +59,10 @@ export const SigV4AuthSettings: React.FC<HttpSettingsBaseProps> = (props) => {
 
   return (
     <>
-      <h6>SigV4 Auth Details</h6>
-      <ConnectionConfig {...connectionConfigProps}></ConnectionConfig>
+      <div className="gf-form">
+        <h6>SigV4 Auth Details</h6>
+      </div>
+      <ConnectionConfig {...connectionConfigProps} skipHeader skipEndpoint></ConnectionConfig>
     </>
   );
 };
