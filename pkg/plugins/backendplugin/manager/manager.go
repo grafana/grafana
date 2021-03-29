@@ -115,7 +115,7 @@ func (m *manager) getAWSEnvironmentVariables() []string {
 
 func (m *manager) GetDataPlugin(pluginID string) interface{} {
 	plugin := m.plugins[pluginID]
-	if plugin == nil || !plugin.CanHandleDataQueries() {
+	if plugin == nil {
 		return nil
 	}
 

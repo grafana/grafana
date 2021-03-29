@@ -40,10 +40,6 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 	}
 }
 
-func (p *grpcPlugin) CanHandleDataQueries() bool {
-	return false
-}
-
 func (p *grpcPlugin) PluginID() string {
 	return p.descriptor.pluginID
 }
