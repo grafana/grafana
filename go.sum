@@ -797,12 +797,8 @@ github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0U
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gosimple/slug v1.9.0 h1:r5vDcYrFz9BmfIAMC829un9hq7hKM4cHUrsv36LbEqs=
 github.com/gosimple/slug v1.9.0/go.mod h1:AMZ+sOVe65uByN3kgEyf9WEBKBCSS+dJjMX9x4vDJbg=
-github.com/grafana/alerting-api v0.0.0-20210318231719-9499804fc548 h1:KjyaZJhPJ15Ul/+OQr8mbO7kDpU5i7G3r5FGVZKClTQ=
-github.com/grafana/alerting-api v0.0.0-20210318231719-9499804fc548/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
-github.com/grafana/alerting-api v0.0.0-20210323141138-8873de5bf07a h1:OGKDRdmQSXKFJelrJUf9O8Xh0C8u+OQG1NSurcBYpOI=
-github.com/grafana/alerting-api v0.0.0-20210323141138-8873de5bf07a/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
-github.com/grafana/alerting-api v0.0.0-20210323142651-d6515052e2f0 h1:bMYGd71RigZvkLmcdedGdMDJXKJ20luqEQLbqjgAAjI=
-github.com/grafana/alerting-api v0.0.0-20210323142651-d6515052e2f0/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
+github.com/grafana/alerting-api v0.0.0-20210323194814-03a29a4c4c27 h1:DuyuEAHJeI+CMxIyzCVhmHcIeK+sjqberhDUfrgd3PY=
+github.com/grafana/alerting-api v0.0.0-20210323194814-03a29a4c4c27/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
 github.com/grafana/grafana v1.9.2-0.20210308201921-4ce0a49eac03/go.mod h1:AHRRvd4utJGY25J5nW8aL7wZzn/LcJ0z2za9oOp14j4=
 github.com/grafana/grafana-aws-sdk v0.1.0/go.mod h1:+pPo5U+pX0zWimR7YBc7ASeSQfbRkcTyQYqMiAj7G5U=
 github.com/grafana/grafana-aws-sdk v0.2.0 h1:UTBBYwye+ad5YUIlwN7TGxLdz1wXN3Ezhl0pseDGRVA=
@@ -1338,8 +1334,8 @@ github.com/prometheus/alertmanager v0.20.0/go.mod h1:9g2i48FAyZW6BtbsnvHtMHQXl2a
 github.com/prometheus/alertmanager v0.21.0/go.mod h1:h7tJ81NA0VLWvWEayi1QltevFkLF3KxmC/malTcT8Go=
 github.com/prometheus/alertmanager v0.21.1-0.20200911160112-1fdff6b3f939/go.mod h1:imXRHOP6QTsE0fFsIsAV/cXimS32m7gVZOiUj11m6Ig=
 github.com/prometheus/alertmanager v0.21.1-0.20210211203738-a7ca7b1d2951/go.mod h1:6Yc2n2ap5/oP99x1yN6Ho+yL0w8a0oClIR5xxW/JLGs=
-github.com/prometheus/alertmanager v0.21.1-0.20210315141118-bf9c43b57df6 h1:XXfT4HND6ZQtBDsOBuTczE/QeKxn6CZz+mUrfWVAwE0=
-github.com/prometheus/alertmanager v0.21.1-0.20210315141118-bf9c43b57df6/go.mod h1:g6wbBgNXmelfXjJhLLl5NIJDpejM5oEjiSKDsqnTzio=
+github.com/prometheus/alertmanager v0.21.1-0.20210324070758-10757eb5fb78 h1:au9OzjUv3GWdL4s98I84hx38oAs+xxxpv/9n2Xuh6n0=
+github.com/prometheus/alertmanager v0.21.1-0.20210324070758-10757eb5fb78/go.mod h1:g6wbBgNXmelfXjJhLLl5NIJDpejM5oEjiSKDsqnTzio=
 github.com/prometheus/client_golang v0.8.0/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v0.9.2/go.mod h1:OsXs2jCmiKlQ1lTBmv21f2mNfw4xf/QclQDMrYNZzcM=
@@ -1421,7 +1417,6 @@ github.com/prometheus/prometheus v1.8.2-0.20210217141258-a6be548dbc17 h1:VN3p3Nb
 github.com/prometheus/prometheus v1.8.2-0.20210217141258-a6be548dbc17/go.mod h1:dv3B1syqmkrkmo665MPCU6L8PbTXIiUeg/OEQULLNxA=
 github.com/prometheus/statsd_exporter v0.15.0/go.mod h1:Dv8HnkoLQkeEjkIE4/2ndAA7WL1zHKK7WMqFQqu72rw=
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
-github.com/quasilyte/go-ruleguard/dsl/fluent v0.0.0-20201222093424-5d7e62a465d3 h1:eL7x4/zMnlquMxYe7V078BD7MGskZ0daGln+SJCVzuY=
 github.com/quasilyte/go-ruleguard/dsl/fluent v0.0.0-20201222093424-5d7e62a465d3/go.mod h1:P7JlQWFT7jDcFZMtUPQbtGzzzxva3rBn6oIF+LPwFcM=
 github.com/rafaeljusto/redigomock v0.0.0-20190202135759-257e089e14a1/go.mod h1:JaY6n2sDr+z2WTsXkOmNRUfDy6FN0L6Nk7x06ndm4tY=
 github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be h1:ta7tUOvsPHVHGom5hKW5VXNc2xZIkfCKP8iaqOyYtUQ=

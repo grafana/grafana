@@ -3,18 +3,20 @@ import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { AzureMonitorQuery, AzureQueryType, AzureQueryEditorFieldProps, AzureMonitorOption } from '../types';
-import { findOption } from './common';
+import { findOption } from '../utils/common';
 import { Field } from './Field';
 
 interface SubscriptionFieldProps extends AzureQueryEditorFieldProps {
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
 }
 
+const ERROR_SOURCE = 'metrics-subscription';
 const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   datasource,
   query,
   variableOptionGroup,
   onQueryChange,
+  setError,
 }) => {
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
 
@@ -23,32 +25,43 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       return;
     }
 
-    datasource.azureMonitorDatasource.getSubscriptions().then((results) => {
-      const newSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
-      setSubscriptions(newSubscriptions);
+    datasource.azureMonitorDatasource
+      .getSubscriptions()
+      .then((results) => {
+        const newSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
+        setSubscriptions(newSubscriptions);
+        setError(ERROR_SOURCE, undefined);
 
-      // Set a default subscription ID, if we can
-      let newSubscription = query.subscription;
+        // Set a default subscription ID, if we can
+        let newSubscription = query.subscription;
 
-      if (!newSubscription && query.queryType === AzureQueryType.AzureMonitor) {
-        newSubscription = datasource.azureMonitorDatasource.subscriptionId;
-      } else if (!query.subscription && query.queryType === AzureQueryType.LogAnalytics) {
-        newSubscription =
-          datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId ||
-          datasource.azureLogAnalyticsDatasource.subscriptionId;
-      }
+        if (!newSubscription && query.queryType === AzureQueryType.AzureMonitor) {
+          newSubscription = datasource.azureMonitorDatasource.subscriptionId;
+        } else if (!query.subscription && query.queryType === AzureQueryType.LogAnalytics) {
+          newSubscription =
+            datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId ||
+            datasource.azureLogAnalyticsDatasource.subscriptionId;
+        }
 
-      if (!newSubscription && newSubscriptions.length > 0) {
-        newSubscription = newSubscriptions[0].value;
-      }
+        if (!newSubscription && newSubscriptions.length > 0) {
+          newSubscription = newSubscriptions[0].value;
+        }
 
-      newSubscription !== query.subscription &&
-        onQueryChange({
-          ...query,
-          subscription: newSubscription,
-        });
-    });
-  }, []);
+        newSubscription !== query.subscription &&
+          onQueryChange({
+            ...query,
+            subscription: newSubscription,
+          });
+      })
+      .catch((err) => setError(ERROR_SOURCE, err));
+  }, [
+    datasource.azureLogAnalyticsDatasource?.logAnalyticsSubscriptionId,
+    datasource.azureLogAnalyticsDatasource?.subscriptionId,
+    datasource.azureMonitorDatasource,
+    onQueryChange,
+    query,
+    setError,
+  ]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -62,6 +75,8 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
       };
 
       if (query.queryType === AzureQueryType.AzureMonitor) {
+        // TODO: set the fields to undefined so we don't
+        // get "resource group select could not be found" errors
         newQuery.azureMonitor = {
           ...newQuery.azureMonitor,
           resourceGroup: undefined,

@@ -28,7 +28,7 @@ export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = (
     if (error.data && isHandledError(error.data.status)) {
       error.isHandled = true;
     }
-  }, []);
+  }, [error]);
 
   return (
     <>

@@ -111,5 +111,5 @@ const useFieldOverrides = (
         timeZone,
       }),
     };
-  }, [fieldConfigRegistry, timeZone, fieldConfig, series]);
+  }, [fieldConfigRegistry, fieldConfig, data, series, timeZone]);
 };
