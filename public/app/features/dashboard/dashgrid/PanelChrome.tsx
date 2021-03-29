@@ -274,10 +274,12 @@ export class PanelChrome extends Component<Props, State> {
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
     const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
-    const innerPanelHeight = height - headerHeight - chromePadding * 2 - PANEL_BORDER;
+    const scrollableYMargin = plugin.scrollableY ? theme.panelPadding : 0;
+    const innerPanelHeight = height - headerHeight - chromePadding * 2 - PANEL_BORDER - scrollableYMargin;
     const panelContentClassNames = classNames({
       'panel-content': true,
       'panel-content--no-padding': plugin.noPadding,
+      'panel-content--scrollable-y': plugin.scrollableY,
     });
     const panelOptions = panel.getOptions();
 
