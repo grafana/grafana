@@ -42,7 +42,8 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
             options: [
               { value: TableCellDisplayMode.Auto, label: 'Auto' },
               { value: TableCellDisplayMode.ColorText, label: 'Color text' },
-              { value: TableCellDisplayMode.ColorBackground, label: 'Color background' },
+              { value: TableCellDisplayMode.ColorBackground, label: 'Color background (gradient)' },
+              { value: TableCellDisplayMode.ColorBackgroundSolid, label: 'Color background (solid)' },
               { value: TableCellDisplayMode.GradientGauge, label: 'Gradient gauge' },
               { value: TableCellDisplayMode.LcdGauge, label: 'LCD gauge' },
               { value: TableCellDisplayMode.BasicGauge, label: 'Basic gauge' },
