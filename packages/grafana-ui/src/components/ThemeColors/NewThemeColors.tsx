@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import { useTheme } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { HorizontalGroup } from '../Layout/Layout';
-import { createTheme, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
+import { GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
