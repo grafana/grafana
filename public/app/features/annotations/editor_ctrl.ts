@@ -33,12 +33,12 @@ export class AnnotationsEditorCtrl {
     buttonTitle: 'Add Annotation Query',
     infoBox: {
       __html: `<p>Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines
-    and icons on all graph panels. When you hover over an annotation icon you can get event text &amp; tags for
-    the event. You can add annotation events directly from grafana by holding CTRL or CMD + click on graph (or
+    and icons on all graph panels. When you hover over an annotation icon you can get event text and tags for
+    the event. You can add annotation events directly from Grafana by holding Ctrl or CMD + click on graph (or
     drag region). These will be stored in Grafana's annotation database.
   </p>
-  Checkout the
-  <a class='external-link' target='_blank' href='http://docs.grafana.org/reference/annotations/'
+  Check out the
+  <a class='external-link' target='_blank' href='https://grafana.com/docs/grafana/latest/dashboards/annotations/'
     >Annotations documentation</a
   >
   for more information.`,
@@ -86,7 +86,7 @@ export class AnnotationsEditorCtrl {
     });
 
     if (!replaced) {
-      console.warn('updating annotatoin, but not in the dashboard', annotation);
+      console.warn('updating annotation, but not in the dashboard', annotation);
     }
 
     this.currentAnnotation = annotation;
@@ -132,7 +132,7 @@ export class AnnotationsEditorCtrl {
   add() {
     const sameName: any = _.find(this.dashboard.annotations.list, { name: this.currentAnnotation.name });
     if (sameName) {
-      appEvents.emit(AppEvents.alertWarning, ['Validation', 'Annotations with the same name already exists']);
+      appEvents.emit(AppEvents.alertWarning, ['Validation', 'Annotation with the same name already exists']);
       return;
     }
     this.dashboard.annotations.list = [...this.dashboard.annotations.list, this.currentAnnotation];
