@@ -5,7 +5,7 @@ go 1.15
 // Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
 // We need a more current go-mssqldb so we get rid of a version of apache/thrift with vulnerabilities.
 // Also, use our fork with fixes for unimplemented methods (required for Go 1.16).
-replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036
+replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0-20210329063951-ffa78ad82891
 
 // Override k8s.io/client-go outdated dependency, which is an indirect dependency of grafana/loki.
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
@@ -41,6 +41,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/alerting-api v0.0.0-20210323194814-03a29a4c4c27
+	github.com/grafana/go-mssqldb v0.9.1-0.20210329063951-ffa78ad82891 // indirect
 	github.com/grafana/grafana-aws-sdk v0.2.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.89.0
