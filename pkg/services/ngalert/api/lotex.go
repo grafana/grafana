@@ -16,7 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-const legacyRulerPrefix = "/api/prom/rules"
+var dsTypeToRulerPrefix = map[string]string{
+	"prometheus": "/rules",
+	"loki":       "/api/prom/rules",
+}
 
 type LotexRuler struct {
 	log log.Logger
@@ -31,13 +34,17 @@ func NewLotexRuler(proxy *AlertingProxy, log log.Logger) *LotexRuler {
 }
 
 func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+	legacyRulerPrefix, err := r.getPrefix(ctx)
+	if err != nil {
+		return response.Error(500, err.Error(), nil)
+	}
 	return r.withReq(
 		ctx,
 		&http.Request{
 			Method: "DELETE",
 			URL: withPath(
 				*ctx.Req.URL,
-				fmt.Sprintf("/api/prom/rules/%s", ctx.Params("Namespace")),
+				fmt.Sprintf("%s/%s", legacyRulerPrefix, ctx.Params("Namespace")),
 			),
 		},
 		messageExtractor,
@@ -45,6 +52,10 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) res
 }
 
 func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
+	legacyRulerPrefix, err := r.getPrefix(ctx)
+	if err != nil {
+		return response.Error(500, err.Error(), nil)
+	}
 	return r.withReq(
 		ctx,
 		&http.Request{
@@ -64,6 +75,10 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response
 }
 
 func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
+	legacyRulerPrefix, err := r.getPrefix(ctx)
+	if err != nil {
+		return response.Error(500, err.Error(), nil)
+	}
 	return r.withReq(
 		ctx, &http.Request{
 			URL: withPath(
@@ -80,6 +95,10 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 }
 
 func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
+	legacyRulerPrefix, err := r.getPrefix(ctx)
+	if err != nil {
+		return response.Error(500, err.Error(), nil)
+	}
 	return r.withReq(
 		ctx,
 		&http.Request{
@@ -98,6 +117,10 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 }
 
 func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
+	legacyRulerPrefix, err := r.getPrefix(ctx)
+	if err != nil {
+		return response.Error(500, err.Error(), nil)
+	}
 	return r.withReq(
 		ctx,
 		&http.Request{
@@ -111,6 +134,10 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respon
 }
 
 func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.RuleGroupConfig) response.Response {
+	legacyRulerPrefix, err := r.getPrefix(ctx)
+	if err != nil {
+		return response.Error(500, err.Error(), nil)
+	}
 	yml, err := yaml.Marshal(conf)
 	if err != nil {
 		return response.Error(500, "Failed marshal rule group", err)
@@ -127,6 +154,18 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 		ContentLength: ln,
 	}
 	return r.withReq(ctx, req, jsonExtractor(nil))
+}
+
+func (r *LotexRuler) getPrefix(ctx *models.ReqContext) (string, error) {
+	ds, err := r.DataProxy.DatasourceCache.GetDatasource(ctx.ParamsInt64("Recipient"), ctx.SignedInUser, ctx.SkipCache)
+	if err != nil {
+		return "", err
+	}
+	prefix, ok := dsTypeToRulerPrefix[ds.Type]
+	if !ok {
+		return "", fmt.Errorf("unexpected datasource type. expecting loki or prometheus")
+	}
+	return prefix, nil
 }
 
 func withPath(u url.URL, newPath string) *url.URL {
