@@ -37,7 +37,8 @@ type Receiver struct {
 	DatasourceCache datasources.CacheService `inject:""`
 	GrafanaLive     *live.GrafanaLive        `inject:""`
 
-	telegrafConverter *telegraf.Converter
+	telegrafConverterWide         *telegraf.Converter
+	telegrafConverterLabelsColumn *telegraf.Converter
 }
 
 // Init Receiver.
@@ -50,7 +51,8 @@ func (t *Receiver) Init() error {
 	}
 
 	// For now only Telegraf converter (influx format) is supported.
-	t.telegrafConverter = telegraf.NewConverter()
+	t.telegrafConverterWide = telegraf.NewConverter()
+	t.telegrafConverterLabelsColumn = telegraf.NewConverter(telegraf.WithUseLabelsColumn(true))
 	return nil
 }
 
@@ -73,6 +75,11 @@ func (t *Receiver) Handle(ctx *models.ReqContext) {
 	path := ctx.Req.URL.Path
 	path = strings.TrimPrefix(path, "/api/live/telemetry/")
 
+	converter := t.telegrafConverterLabelsColumn
+	if ctx.Req.URL.Query().Get("format") == "wide" {
+		converter = t.telegrafConverterWide
+	}
+
 	body, err := ctx.Req.Body().Bytes()
 	if err != nil {
 		logger.Error("Error reading body", "error", err)
@@ -81,7 +88,7 @@ func (t *Receiver) Handle(ctx *models.ReqContext) {
 	}
 	logger.Debug("Telemetry request body", "body", string(body), "path", path)
 
-	metricFrames, err := t.telegrafConverter.Convert(body)
+	metricFrames, err := converter.Convert(body)
 	if err != nil {
 		logger.Error("Error converting metrics", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
