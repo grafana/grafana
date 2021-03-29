@@ -36,13 +36,21 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
       expression = expression.substr(filterEnd);
     }
 
-    // Unwrap the filter term by removing quotes
-    const quotedTerm = filterTerm.match(/^"((?:[^\\"]|\\")*)"$/);
+    // Unwrap the filter term by removing quotes. In logQL we can use quotes and backticks so we are checking for both.
+    const quotedTerm = filterTerm.match(/"(.*?)"/);
+    const backslashTerm = filterTerm.match(/`(.*?)`/);
+    const term = quotedTerm || backslashTerm;
 
-    if (quotedTerm) {
-      const unwrappedFilterTerm = quotedTerm[1];
+    if (term) {
+      const unwrappedFilterTerm = term[1];
       const regexOperator = filterOperator === '|~';
-      results.push(regexOperator ? unwrappedFilterTerm : escapeRegExp(unwrappedFilterTerm));
+      results.push(
+        regexOperator
+          ? quotedTerm
+            ? unwrappedFilterTerm.replace('\\\\', '\\')
+            : unwrappedFilterTerm
+          : unwrappedFilterTerm
+      );
     } else {
       return [];
     }

@@ -5,12 +5,24 @@ describe('getHighlighterExpressionsFromQuery', () => {
     expect(getHighlighterExpressionsFromQuery('')).toEqual([]);
   });
 
-  it('returns an expression for query with filter', () => {
+  it('returns an expression for query with filter using quotes', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x"')).toEqual(['x']);
   });
 
-  it('returns expressions for query with filter chain', () => {
+  it('returns an expression for query with filter using backticks', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= `x`')).toEqual(['x']);
+  });
+
+  it('returns expressions for query with filter chain using quotes', () => {
     expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" |~ "y"')).toEqual(['x', 'y']);
+  });
+
+  it('returns expressions for query with filter chain using backticks', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= `x` |~ `y`')).toEqual(['x', 'y']);
+  });
+
+  it('returns expressions for query with filter chain using quotes and backticks', () => {
+    expect(getHighlighterExpressionsFromQuery('{foo="bar"} |= "x" |~ `y`')).toEqual(['x', 'y']);
   });
 
   it('returns drops expressions for query with negative filter chain', () => {
