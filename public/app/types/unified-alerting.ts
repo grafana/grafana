@@ -51,13 +51,13 @@ export interface RuleGroup {
 }
 
 export interface RuleNamespace {
-  datasourceName: string;
+  dataSourceName: string;
   name: string;
   groups: RuleGroup[];
 }
 
 export interface RulesSourceResult {
-  datasourceName: string;
+  dataSourceName: string;
   error?: unknown;
   namespaces?: RuleNamespace[];
 }

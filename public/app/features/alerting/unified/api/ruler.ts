@@ -1,20 +1,20 @@
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
-import { datasourceRequest, DataSourceType, getLotexDatasourceByName } from '../utils/datasource';
+import { dataSourceRequest, DataSourceType, getLotexDataSourceByName } from '../utils/datasource';
 import yaml from 'yaml';
 
 function getRulerRulesEndpoint(datasourceName: string) {
-  return getLotexDatasourceByName(datasourceName).type === DataSourceType.Loki ? '/api/prom/rules' : '/rules';
+  return getLotexDataSourceByName(datasourceName).type === DataSourceType.Loki ? '/api/prom/rules' : '/rules';
 }
 
 // upsert a rule group. use this to update rules
 export async function setRulerRuleGroup(
-  datasourceName: string,
+  dataSourceName: string,
   namespace: string,
   group: RulerRuleGroupDTO
 ): Promise<void> {
-  const endpoint = `${getRulerRulesEndpoint(datasourceName)}/${encodeURIComponent(namespace)}`;
+  const endpoint = `${getRulerRulesEndpoint(dataSourceName)}/${encodeURIComponent(namespace)}`;
 
-  await datasourceRequest<RulerRulesConfigDTO>(datasourceName, endpoint, {
+  await dataSourceRequest<RulerRulesConfigDTO>(dataSourceName, endpoint, {
     data: yaml.stringify(group),
     headers: {
       'Content-Type': 'application/yaml',
@@ -24,20 +24,20 @@ export async function setRulerRuleGroup(
 }
 
 // fetch all ruler rule namespaces and included groups
-export async function fetchRulerRules(datasourceName: string): Promise<RulerRulesConfigDTO> {
-  const response = await datasourceRequest<string>(datasourceName, getRulerRulesEndpoint(datasourceName));
+export async function fetchRulerRules(dataSourceName: string): Promise<RulerRulesConfigDTO> {
+  const response = await dataSourceRequest<string>(dataSourceName, getRulerRulesEndpoint(dataSourceName));
   return yaml.parse(response.data);
 }
 
 // fetch rule groups for a particular namespace
 // will throw with { status: 404 } if namespace does not exist
 export async function fetchRulerRulesNamespace(
-  datasourceName: string,
+  dataSourceName: string,
   namespace: string
 ): Promise<RulerRuleGroupDTO[]> {
-  const response = await datasourceRequest<string>(
-    datasourceName,
-    `${getRulerRulesEndpoint(datasourceName)}/${encodeURIComponent(namespace)}`
+  const response = await dataSourceRequest<string>(
+    dataSourceName,
+    `${getRulerRulesEndpoint(dataSourceName)}/${encodeURIComponent(namespace)}`
   );
   return yaml.parse(response.data)[namespace];
 }
@@ -45,13 +45,13 @@ export async function fetchRulerRulesNamespace(
 // fetch a particular rule group
 // will throw with { status: 404 } if rule group does not exist
 export async function fetchRulerRulesGroup(
-  datasourceName: string,
+  dataSourceName: string,
   namespace: string,
   group: string
 ): Promise<RulerRuleGroupDTO> {
-  const response = await datasourceRequest<string>(
-    datasourceName,
-    `${getRulerRulesEndpoint(datasourceName)}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}`
+  const response = await dataSourceRequest<string>(
+    dataSourceName,
+    `${getRulerRulesEndpoint(dataSourceName)}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}`
   );
   return yaml.parse(response.data);
 }

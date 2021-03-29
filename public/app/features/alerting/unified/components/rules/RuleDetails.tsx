@@ -42,7 +42,7 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
         <div className={styles.rightSide}>
           {isCloudRulesSource(rulesSource) && (
             <DetailsField label="Data source">
-              <img className={styles.datasourceIcon} src={rulesSource.meta.info.logos.small} /> {rulesSource.name}
+              <img className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} /> {rulesSource.name}
             </DetailsField>
           )}
         </div>
@@ -71,7 +71,7 @@ export const getStyles = (theme: GrafanaTheme) => ({
   exprRow: css`
     margin-bottom: 46px;
   `,
-  datasourceIcon: css`
+  dataSourceIcon: css`
     width: ${theme.spacing.md};
     height: ${theme.spacing.md};
   `,

@@ -4,7 +4,7 @@ import { Icon, InfoBox, LoadingPlaceholder, useStyles } from '@grafana/ui';
 import React, { FC, useMemo } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RulesGroup } from './RulesGroup';
-import { getRulesDatasources } from '../../utils/datasource';
+import { getRulesDataSources } from '../../utils/datasource';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { SerializedError } from '@reduxjs/toolkit';
 import pluralize from 'pluralize';
@@ -12,54 +12,54 @@ import pluralize from 'pluralize';
 export const SystemOrApplicationAlerts: FC = () => {
   const styles = useStyles(getStyles);
   const rules = useUnifiedAlertingSelector((state) => state.rules);
-  const rulesDatasources = useMemo(getRulesDatasources, []);
+  const rulesDataSources = useMemo(getRulesDataSources, []);
 
   const namespaces = useMemo(
-    (): Array<{ namespace: RuleNamespace; datasource: DataSourceInstanceSettings }> =>
-      rulesDatasources
-        .map((datasource) => rules[datasource.name]?.result?.map((namespace) => ({ namespace, datasource })) || [])
+    (): Array<{ namespace: RuleNamespace; dataSource: DataSourceInstanceSettings }> =>
+      rulesDataSources
+        .map((dataSource) => rules[dataSource.name]?.result?.map((namespace) => ({ namespace, dataSource })) || [])
         .flat()
         // sort groups within namespace
-        .map(({ namespace, datasource }) => ({
+        .map(({ namespace, dataSource }) => ({
           namespace: {
             ...namespace,
             groups: namespace.groups.slice().sort((a, b) => a.name.localeCompare(b.name)),
           },
-          datasource,
+          dataSource,
         }))
         // sort namespaces
         .sort((a, b) => a.namespace.name.localeCompare(b.namespace.name)),
-    [rules, rulesDatasources]
+    [rules, rulesDataSources]
   );
 
   const errors = useMemo(
     () =>
-      rulesDatasources.reduce<Array<{ error: SerializedError; datasource: DataSourceInstanceSettings }>>(
-        (result, datasource) => {
-          const error = rules[datasource.name]?.error;
+      rulesDataSources.reduce<Array<{ error: SerializedError; dataSource: DataSourceInstanceSettings }>>(
+        (result, dataSource) => {
+          const error = rules[dataSource.name]?.error;
           if (error) {
-            return [...result, { datasource, error }];
+            return [...result, { dataSource, error }];
           }
           return result;
         },
         []
       ),
-    [rules, rulesDatasources]
+    [rules, rulesDataSources]
   );
 
-  const datasourcesLoading = useMemo(() => rulesDatasources.filter((ds) => rules[ds.name]?.loading), [
+  const dataSourcesLoading = useMemo(() => rulesDataSources.filter((ds) => rules[ds.name]?.loading), [
     rules,
-    rulesDatasources,
+    rulesDataSources,
   ]);
 
   return (
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
         <h5>System or application</h5>
-        {datasourcesLoading.length ? (
+        {dataSourcesLoading.length ? (
           <LoadingPlaceholder
             className={styles.loader}
-            text={`Loading rules from ${datasourcesLoading.length} ${pluralize('source', datasourcesLoading.length)}`}
+            text={`Loading rules from ${dataSourcesLoading.length} ${pluralize('source', dataSourcesLoading.length)}`}
           />
         ) : (
           <div />
@@ -76,26 +76,26 @@ export const SystemOrApplicationAlerts: FC = () => {
           }
           severity="error"
         >
-          {errors.map(({ datasource, error }) => (
-            <div key={datasource.name}>
-              Failed to load rules from <a href={`datasources/edit/${datasource.id}`}>{datasource.name}</a>:{' '}
+          {errors.map(({ dataSource, error }) => (
+            <div key={dataSource.name}>
+              Failed to load rules from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
               {error.message || 'Unknown error.'}
             </div>
           ))}
         </InfoBox>
       )}
-      {namespaces?.map(({ datasource, namespace }) =>
+      {namespaces?.map(({ dataSource, namespace }) =>
         namespace.groups.map((group) => (
           <RulesGroup
             group={group}
-            key={`${datasource.name}-${namespace.name}-${group.name}`}
+            key={`${dataSource.name}-${namespace.name}-${group.name}`}
             namespace={namespace.name}
-            rulesSource={datasource}
+            rulesSource={dataSource}
           />
         ))
       )}
-      {namespaces?.length === 0 && !datasourcesLoading.length && !!rulesDatasources.length && <p>No rules found.</p>}
-      {!rulesDatasources.length && <p>There are no Prometheus or Loki datasources configured.</p>}
+      {namespaces?.length === 0 && !dataSourcesLoading.length && !!rulesDataSources.length && <p>No rules found.</p>}
+      {!rulesDataSources.length && <p>There are no Prometheus or Loki datas sources configured.</p>}
     </section>
   );
 };

@@ -9,15 +9,15 @@ export enum DataSourceType {
   Prometheus = 'prometheus',
 }
 
-export const RulesDatasourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
+export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
 
 // using ds proxy only temporarily until the new alerting API is running
-export function datasourceRequest<T = any>(
+export function dataSourceRequest<T = any>(
   dataSourceName: string,
   path: string,
   options: Partial<BackendSrvRequest> = {}
 ) {
-  const datasource = getDatasourceByName(dataSourceName);
+  const datasource = getDataSourceByName(dataSourceName);
   if (!datasource) {
     throw new Error(`No datasource calle\d ${dataSourceName} found.`);
   }
@@ -40,27 +40,27 @@ export function datasourceRequest<T = any>(
   return getBackendSrv().fetch<T>(_options).toPromise();
 }
 
-export function getRulesDatasources() {
+export function getRulesDataSources() {
   return getAllDataSources()
-    .filter((ds) => RulesDatasourceTypes.includes(ds.type))
+    .filter((ds) => RulesDataSourceTypes.includes(ds.type))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function getLotexDatasourceByName(datasourceName: string): DataSourceInstanceSettings {
-  const datasource = getDatasourceByName(datasourceName);
-  if (!datasource) {
-    throw new Error(`Datasource ${datasourceName} not found`);
+export function getLotexDataSourceByName(dataSourceName: string): DataSourceInstanceSettings {
+  const dataSource = getDataSourceByName(dataSourceName);
+  if (!dataSource) {
+    throw new Error(`Data source ${dataSourceName} not found`);
   }
-  if (datasource.type !== DataSourceType.Loki && datasource.type !== DataSourceType.Prometheus) {
-    throw new Error(`Unexpected datasource type ${datasource.type}`);
+  if (dataSource.type !== DataSourceType.Loki && dataSource.type !== DataSourceType.Prometheus) {
+    throw new Error(`Unexpected data source type ${dataSource.type}`);
   }
-  return datasource;
+  return dataSource;
 }
 
 export function isCloudRulesSource(rulesSource: RulesSource): rulesSource is DataSourceInstanceSettings {
   return rulesSource !== 'grafana';
 }
 
-export function getDatasourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
+export function getDataSourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
   return getAllDataSources().find((source) => source.name === name);
 }

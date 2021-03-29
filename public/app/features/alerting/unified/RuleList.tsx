@@ -5,13 +5,13 @@ import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { SystemOrApplicationAlerts } from './components/rules/SystemOrApplicationRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchRulesAction } from './state/actions';
-import { getRulesDatasources } from './utils/datasource';
+import { getRulesDataSources } from './utils/datasource';
 
 export const RuleList: FC = () => {
   const dispatch = useDispatch();
 
   // trigger fetch for any rules sources that dont have results and are not currently loading
-  useEffect(() => getRulesDatasources().forEach((ds) => dispatch(fetchRulesAction(ds.name))), []);
+  useEffect(() => getRulesDataSources().forEach((ds) => dispatch(fetchRulesAction(ds.name))), []);
 
   const rules = useUnifiedAlertingSelector((state) => state.rules);
 

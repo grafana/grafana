@@ -2,14 +2,14 @@ import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data'
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 
-let nextDatasourceId = 1;
+let nextDataSourceId = 1;
 
-export const mockDatasource = (partial: Partial<DataSourceInstanceSettings> = {}): DataSourceInstanceSettings => {
-  const id = partial.id ?? nextDatasourceId++;
+export const mockDataSource = (partial: Partial<DataSourceInstanceSettings> = {}): DataSourceInstanceSettings => {
+  const id = partial.id ?? nextDataSourceId++;
 
   return {
     id,
-    uid: `mock-ds-${nextDatasourceId}`,
+    uid: `mock-ds-${nextDataSourceId}`,
     type: 'prometheus',
     name: `Prometheus-${id}`,
     jsonData: {},
@@ -85,7 +85,7 @@ export const mockPromRuleGroup = (partial: Partial<RuleGroup> = {}): RuleGroup =
 
 export const mockPromRuleNamespace = (partial: Partial<RuleNamespace> = {}): RuleNamespace => {
   return {
-    datasourceName: 'Prometheus-1',
+    dataSourceName: 'Prometheus-1',
     name: 'default',
     groups: [mockPromRuleGroup()],
     ...partial,

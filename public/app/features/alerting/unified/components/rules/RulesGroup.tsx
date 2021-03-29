@@ -68,7 +68,7 @@ export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
         <Icon name={isCollapsed ? 'folder-open' : 'folder'} />
         {isCloudRulesSource(rulesSource) && (
           <Tooltip content={rulesSource.name} placement="top">
-            <img className={styles.datasourceIcon} src={rulesSource.meta.info.logos.small} />
+            <img className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} />
           </Tooltip>
         )}
         <h6 className={styles.heading}>
@@ -133,12 +133,12 @@ export const getStyles = (theme: GrafanaTheme) => ({
       margin-bottom: 0;
     }
   `,
-  datasourceIcon: css`
+  dataSourceIcon: css`
     width: ${theme.spacing.md};
     height: ${theme.spacing.md};
     margin-left: ${theme.spacing.md};
   `,
-  datasourceOrigin: css`
+  dataSourceOrigin: css`
     margin-right: 1em;
     color: ${theme.colors.textFaint};
   `,

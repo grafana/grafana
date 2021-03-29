@@ -8,7 +8,7 @@ import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import { getAllDataSources } from './utils/config';
 import { fetchRules } from './api/prometheus';
 import {
-  mockDatasource,
+  mockDataSource,
   mockPromAlert,
   mockPromAlertingRule,
   mockPromRecordingRule,
@@ -24,7 +24,7 @@ jest.mock('./api/prometheus');
 jest.mock('./utils/config');
 
 const mocks = {
-  getAllDatasourcesMock: typeAsJestMock(getAllDataSources),
+  getAllDataSourcesMock: typeAsJestMock(getAllDataSources),
 
   api: {
     fetchRules: typeAsJestMock(fetchRules),
@@ -41,16 +41,16 @@ const renderRuleList = () => {
   );
 };
 
-const datasources = {
-  prom: mockDatasource({
+const dataSources = {
+  prom: mockDataSource({
     name: 'Prometheus',
     type: DataSourceType.Prometheus,
   }),
-  loki: mockDatasource({
+  loki: mockDataSource({
     name: 'Loki',
     type: DataSourceType.Loki,
   }),
-  promBroken: mockDatasource({
+  promBroken: mockDataSource({
     name: 'Prometheus-broken',
     type: DataSourceType.Prometheus,
   }),
@@ -68,15 +68,15 @@ const ui = {
 describe('RuleList', () => {
   afterEach(() => jest.resetAllMocks());
 
-  it('load & show rule groups from multiple cloud datasources', async () => {
-    mocks.getAllDatasourcesMock.mockReturnValue(Object.values(datasources));
+  it('load & show rule groups from multiple cloud data sources', async () => {
+    mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
 
-    mocks.api.fetchRules.mockImplementation((datasourceName: string) => {
-      if (datasourceName === datasources.prom.name) {
+    mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
+      if (dataSourceName === dataSources.prom.name) {
         return Promise.resolve([
           mockPromRuleNamespace({
             name: 'default',
-            datasourceName: datasources.prom.name,
+            dataSourceName: dataSources.prom.name,
             groups: [
               mockPromRuleGroup({
                 name: 'group-2',
@@ -87,11 +87,11 @@ describe('RuleList', () => {
             ],
           }),
         ]);
-      } else if (datasourceName === datasources.loki.name) {
+      } else if (dataSourceName === dataSources.loki.name) {
         return Promise.resolve([
           mockPromRuleNamespace({
             name: 'default',
-            datasourceName: datasources.loki.name,
+            dataSourceName: dataSources.loki.name,
             groups: [
               mockPromRuleGroup({
                 name: 'group-1',
@@ -100,7 +100,7 @@ describe('RuleList', () => {
           }),
           mockPromRuleNamespace({
             name: 'lokins',
-            datasourceName: datasources.loki.name,
+            dataSourceName: dataSources.loki.name,
             groups: [
               mockPromRuleGroup({
                 name: 'group-1',
@@ -108,10 +108,10 @@ describe('RuleList', () => {
             ],
           }),
         ]);
-      } else if (datasourceName === datasources.promBroken.name) {
+      } else if (dataSourceName === dataSources.promBroken.name) {
         return Promise.reject({ message: 'this datasource is broken' } as SerializedError);
       }
-      return Promise.reject(new Error(`unexpected datasourceName: ${datasourceName}`));
+      return Promise.reject(new Error(`unexpected datasourceName: ${dataSourceName}`));
     });
 
     await renderRuleList();
@@ -131,7 +131,7 @@ describe('RuleList', () => {
   });
 
   it('expand rule group, rule and alert details', async () => {
-    mocks.getAllDatasourcesMock.mockReturnValue([datasources.prom]);
+    mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
     mocks.api.fetchRules.mockResolvedValue([
       mockPromRuleNamespace({
         groups: [

@@ -12,5 +12,5 @@ import { withSerializedError } from '../utils/redux';
 
 export const fetchRulesAction = createAsyncThunk(
   'unifiedalerting/fetchRules',
-  (datasourceName: string): Promise<RuleNamespace[]> => withSerializedError(fetchRules(datasourceName))
+  (dataSourceName: string): Promise<RuleNamespace[]> => withSerializedError(fetchRules(dataSourceName))
 );
