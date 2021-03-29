@@ -11,6 +11,8 @@ import {
 export const SigV4AuthSettings: React.FC<HttpSettingsBaseProps> = (props) => {
   const { dataSourceConfig, onChange } = props;
 
+  // The @grafana/aws-sdk ConnectionConfig is designed to be rendered in a ConfigEditor,
+  // taking DataSourcePluginOptionsEditorProps as props. We therefore need to map the props accordingly.
   const connectionConfigProps: ConnectionConfigProps<AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData> = {
     onOptionsChange: (awsDataSourceSettings) => {
       const dataSourceSettings: DataSourceSettings<any, any> = {
