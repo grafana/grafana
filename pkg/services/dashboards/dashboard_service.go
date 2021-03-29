@@ -334,12 +334,12 @@ func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (
 		return nil, err
 	}
 
-	err = bus.Dispatch(cmd)
+	dash, err := dr.dashboardStore.SaveDashboard(*cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return cmd.Result, nil
+	return dash, nil
 }
 
 // UnprovisionDashboard removes info about dashboard being provisioned. Used after provisioning configs are changed
