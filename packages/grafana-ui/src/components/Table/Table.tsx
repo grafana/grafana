@@ -166,8 +166,8 @@ export const Table: FC<Props> = memo((props: Props) => {
   const { fields } = data;
 
   const RenderRow = React.useCallback(
-    ({ index, style }) => {
-      const row = rows[index];
+    ({ index: rowIndex, style }) => {
+      const row = rows[rowIndex];
       prepareRow(row);
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
@@ -180,6 +180,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               onCellFilterAdded={onCellFilterAdded}
               columnIndex={index}
               columnCount={row.cells.length}
+              rowIndex={rowIndex}
             />
           ))}
         </div>
