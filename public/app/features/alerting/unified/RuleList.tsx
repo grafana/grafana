@@ -11,7 +11,7 @@ export const RuleList: FC = () => {
   const dispatch = useDispatch();
 
   // trigger fetch for any rules sources that dont have results and are not currently loading
-  useEffect(() => getRulesDataSources().forEach((ds) => dispatch(fetchRulesAction(ds.name))), []);
+  useEffect(() => getRulesDataSources().forEach((ds) => dispatch(fetchRulesAction(ds.name))), [dispatch]);
 
   const rules = useUnifiedAlertingSelector((state) => state.rules);
 
