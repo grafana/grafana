@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -264,8 +263,8 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 			// Convert row.Rows to dataframe
 			myCs := e.queryResultTransformer.GetConverterList()
-			frame, foo, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
-			spew.Dump(foo)
+			frame, _, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
+			// spew.Dump(foo)
 			if err != nil {
 				errAppendDebug("DB Query error", "db query error", err)
 				return

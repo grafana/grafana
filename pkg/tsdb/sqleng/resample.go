@@ -13,7 +13,12 @@ func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime
 		// if the current field is the time index of the series
 		// set the new value to be added to the new timestamp
 		if fieldIdx == tsSchema.TimeIndex {
-			vals = append(vals, currentTime)
+			switch f.Fields[tsSchema.TimeIndex].Type() {
+			case data.FieldTypeTime:
+				vals = append(vals, currentTime)
+			case data.FieldTypeNullableTime:
+				vals = append(vals, &currentTime)
+			}
 			continue
 		}
 
@@ -60,6 +65,9 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 	if tsSchema.Type == data.TimeSeriesTypeNot {
 		return f, fmt.Errorf("can not fill missing, not timeseries frame")
 	}
+	fmt.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>1 from time %v+ ", qm.TimeRange.From)
+	fmt.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>2 to time %v+ ", qm.TimeRange.To)
+	fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<3 interval %v+", qm.Interval)
 
 	if qm.Interval == 0 {
 		return f, nil
@@ -80,6 +88,7 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 	timeField := f.Fields[tsSchema.TimeIndex]
 
 	for currentTime := qm.TimeRange.From; !currentTime.After(qm.TimeRange.To); currentTime = currentTime.Add(qm.Interval) {
+		fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<4 currentTime %v+", currentTime)
 		initialRowIdx := 0
 		if lastSeenRowIdx > 0 {
 			initialRowIdx = lastSeenRowIdx + 1
@@ -95,7 +104,7 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 			}
 			t, ok := timeField.ConcreteAt(initialRowIdx)
 			if !ok {
-				return f, fmt.Errorf("Time point is nil")
+				return f, fmt.Errorf("time point is nil")
 			}
 			if t.(time.Time).After(currentTime) {
 				nextTime := currentTime.Add(qm.Interval)
@@ -106,6 +115,9 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 				}
 				break
 			}
+			fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<intermidiateRows    %v \n", intermidiateRows)
+			fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<lastSeenRowIdx    %v \n", lastSeenRowIdx)
+
 			intermidiateRows = append(intermidiateRows, initialRowIdx)
 			lastSeenRowIdx = initialRowIdx
 			initialRowIdx++
