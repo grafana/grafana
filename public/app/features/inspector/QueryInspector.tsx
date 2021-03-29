@@ -313,7 +313,9 @@ export class QueryInspector extends PureComponent<Props, State> {
           {!isLoading && haveData && (
             <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
           )}
-          {!isLoading && !haveData && <p className="muted">No request and response collected yet. Hit refresh button</p>}
+          {!isLoading && !haveData && (
+            <p className="muted">No request and response collected yet. Hit refresh button</p>
+          )}
         </div>
       </>
     );
