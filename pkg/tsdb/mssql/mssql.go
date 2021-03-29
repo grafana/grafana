@@ -66,32 +66,36 @@ func ParseURL(u string) (*url.URL, error) {
 }
 
 func generateConnectionString(datasource *models.DataSource) (string, error) {
+	const dfltPort = "0"
 	var addr util.NetworkAddress
 	if datasource.Url != "" {
 		u, err := ParseURL(datasource.Url)
 		if err != nil {
 			return "", err
 		}
-		addr, err = util.SplitHostPortDefault(u.Host, "localhost", "1433")
+		addr, err = util.SplitHostPortDefault(u.Host, "localhost", dfltPort)
 		if err != nil {
 			return "", err
 		}
 	} else {
 		addr = util.NetworkAddress{
 			Host: "localhost",
-			Port: "1433",
+			Port: dfltPort,
 		}
 	}
 
 	logger.Debug("Generating connection string", "url", datasource.Url, "host", addr.Host, "port", addr.Port)
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
-	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
+	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
-		addr.Port,
 		datasource.Database,
 		datasource.User,
 		datasource.DecryptedPassword(),
 	)
+	// Port number 0 means to determine the port automatically, so we can let the driver choose
+	if addr.Port != "0" {
+		connStr += fmt.Sprintf("port=%s;", addr.Port)
+	}
 	if encrypt != "false" {
 		connStr += fmt.Sprintf("encrypt=%s;", encrypt)
 	}
