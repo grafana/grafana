@@ -20,6 +20,7 @@ import (
 )
 
 type AlertmanagerSrv struct {
+	am    Alertmanager
 	store store.AlertingStore
 	log   log.Logger
 }
@@ -348,7 +349,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 		return response.Error(http.StatusInternalServerError, "failed to save Alertmanager configuration", err)
 	}
 
-	// reloadConfigFromDatabase
+	srv.am.ApplyConfig(&body)
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 }
