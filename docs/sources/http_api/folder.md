@@ -45,17 +45,12 @@ Content-Type: application/json
   {
     "id":1,
     "uid": "nErXDvCkzz",
-    "title": "Department ABC",
-    "url": "/dashboards/f/nErXDvCkzz/department-abc",
-    "hasAcl": false,
-    "canSave": true,
-    "canEdit": true,
-    "canAdmin": true,
-    "createdBy": "admin",
-    "created": "2018-01-31T17:43:12+01:00",
-    "updatedBy": "admin",
-    "updated": "2018-01-31T17:43:12+01:00",
-    "version": 1
+    "title": "Department ABC"
+  },
+  {
+    "id":2,
+    "uid": "k3S1cklGk",
+    "title": "Department RND"
   }
 ]
 ```
