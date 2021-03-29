@@ -1,4 +1,4 @@
-﻿import React, { PureComponent } from 'react';
+﻿import React, { PureComponent, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 
 interface Props {
@@ -41,3 +41,18 @@ export class Portal extends PureComponent<Props> {
 export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
   return <Portal {...props} forwardedRef={ref} />;
 });
+
+export const usePortalNode = (root: HTMLElement = document.body): HTMLElement => {
+  const nodeRef = useRef<HTMLElement>(document.createElement('div'));
+
+  useEffect(() => {
+    const node = nodeRef.current;
+    root.appendChild(node);
+
+    return () => {
+      root.removeChild(node);
+    };
+  }, [root]);
+
+  return nodeRef.current;
+};

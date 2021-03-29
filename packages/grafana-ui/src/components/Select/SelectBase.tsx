@@ -24,6 +24,7 @@ import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue, findSelectedValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
+import { usePortalNode } from '../Portal/Portal';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -139,6 +140,7 @@ export function SelectBase<T>({
   value,
   width,
 }: SelectBaseProps<T>) {
+  const portalNode = usePortalNode();
   const theme = useTheme();
   const styles = getSelectStyles(theme);
   const onChangeWithEmpty = useCallback(
@@ -214,6 +216,7 @@ export function SelectBase<T>({
     showAllSelectedWhenOpen,
     tabSelectsValue,
     value: isMulti ? selectedValue : selectedValue?.[0],
+    menuPortalTarget: portalNode,
   };
 
   if (allowCustomValue) {
@@ -323,9 +326,8 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
-          menuPortal: ({ position, width }: any) => ({
-            position,
-            width,
+          menuPortal: (base: any) => ({
+            ...base,
             zIndex: theme.zIndex.dropdown,
           }),
           //These are required for the menu positioning to function
