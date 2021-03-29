@@ -726,10 +726,6 @@ export class DashboardModel {
     }
   }
 
-  setPanelFocus(id: number) {
-    this.meta.focusPanelId = id;
-  }
-
   updateSubmenuVisibility() {
     this.meta.submenuEnabled = (() => {
       if (this.links.length > 0) {
