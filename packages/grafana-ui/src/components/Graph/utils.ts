@@ -123,13 +123,13 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
     if (secPerTick <= 45) {
       return systemDateFormats.interval.second;
     }
-    if (secPerTick <= 7200 || range <= oneDay) {
+    if (range <= oneDay) {
       return systemDateFormats.interval.minute;
     }
     if (secPerTick <= 80000) {
       return systemDateFormats.interval.hour;
     }
-    if (secPerTick <= 2419200 || range <= oneYear) {
+    if (range <= oneYear) {
       return systemDateFormats.interval.day;
     }
     if (secPerTick <= 31536000) {
