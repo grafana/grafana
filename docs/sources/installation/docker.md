@@ -193,7 +193,7 @@ Version | User    | User ID | Group | Group ID
 --------|---------|---------|---------|---------
 < 5.1   | grafana | 104 | grafana | 107
 \>= 5.1  | grafana | 472 | grafana | 472
-\>= 7.3  | grafana | 472 | root | 1
+\>= 7.3  | grafana | 472 | root | 0
 
 There are two possible solutions to this problem. Either you start the new container as the root user and change ownership from `104` to `472`, or you start the upgraded container as user `104`.
 

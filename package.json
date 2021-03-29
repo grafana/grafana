@@ -242,6 +242,7 @@
     "debounce-promise": "3.1.2",
     "emotion": "10.0.27",
     "eventemitter3": "4.0.0",
+    "fast-json-patch": "2.2.1",
     "fast-text-encoding": "^1.0.0",
     "file-saver": "2.0.2",
     "history": "4.10.1",
@@ -249,6 +250,7 @@
     "immutable": "3.8.2",
     "is-hotkey": "0.1.6",
     "jquery": "3.5.1",
+    "json-source-map": "0.6.1",
     "jsurl": "^0.1.5",
     "lodash": "4.17.21",
     "lru-cache": "^5.1.1",
@@ -267,6 +269,7 @@
     "re-resizable": "^6.2.0",
     "react": "17.0.1",
     "react-beautiful-dnd": "13.0.0",
+    "react-diff-viewer": "^3.1.1",
     "react-dom": "17.0.1",
     "react-grid-layout": "1.2.0",
     "react-highlight-words": "0.16.0",
@@ -300,8 +303,7 @@
     "yaml": "^1.10.2"
   },
   "resolutions": {
-    "caniuse-db": "1.0.30000772",
-    "react-use-measure": "https://github.com/mckn/react-use-measure#remove-cjs-export"
+    "caniuse-db": "1.0.30000772"
   },
   "workspaces": {
     "packages": [
