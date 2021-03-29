@@ -4,10 +4,14 @@ import (
     ui "github.com/grafana/grafana/cue/ui:grafanaschema"
 )
 
-// TODO remove "Model: " - expect that models.cue has the #PanelModelFamily
-// form at the level of the file struct. (An "emit value", in CUE parlance)
+// TODO should we remove Family, and make seqs and migrations top-level values?
+// It's easy to do, and arguably increases clarity of this crucial file by
+// reducing one layer of nesting. But it sorta requires understanding that CUE
+// also thinks of an entire file (aka, an "instance") as a struct in order for
+// it to make sense that the file itself is schematized by #PanelFamily. What's
+// the best DX here?
 
-// "Model" is an instance of our #PanelScuemata type. It ensures some key
+// "Family" is an instance of our #PanelFamily type. It ensures some key
 // invariants:
 //
 //   - seqs is an array of arrays. Outer array is major version, inner is minor.
@@ -22,11 +26,10 @@ import (
 // invariants are enforced right now, but they will be before launch.)
 //
 // Grafana won't need to rely on multiple versions of schema until after this
-// system is released with Grafana 8. But we'll need it as soon as Grafana 8 is
-// released - especially for plugins, which have their own cycle, and could need
-// to make breaking changes very shortly after release - so we have to put it in
-// place now.
-Model: {
+// system is released with Grafana 8. But it needs to be in place at the moment
+// Grafana 8 is released - especially for plugins, which have their own release
+// cycle, and could need to make breaking changes very shortly after v8's release.
+Family: {
     seqs: [
         [
             { // v0.0. The actual schema is the contents of this struct.
