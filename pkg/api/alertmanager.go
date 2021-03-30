@@ -103,7 +103,7 @@ type GetDeleteSilenceParams struct {
 }
 
 // swagger:model
-type PostableSilence amv2.PostableSilence
+type PostableSilence = amv2.PostableSilence
 
 // swagger:model
 type GettableSilences amv2.GettableSilences
