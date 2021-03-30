@@ -148,7 +148,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
             <small>You need to save dashboard for the delete to take effect.</small>
           </div>
         }
-        confirmText="Delete Alert"
+        confirmText="Delete alert"
         onDismiss={onDismiss}
         onConfirm={() => {
           delete panel.alert;
