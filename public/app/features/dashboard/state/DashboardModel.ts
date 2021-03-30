@@ -209,7 +209,19 @@ export class DashboardModel {
     }
 
     // get panel save models
-    copy.panels = this.panels
+    copy.panels = this.getPanelSaveModels();
+
+    //  sort by keys
+    copy = sortByKeys(copy);
+    copy.getVariables = () => {
+      return copy.templating.list;
+    };
+
+    return copy;
+  }
+
+  private getPanelSaveModels() {
+    return this.panels
       .filter((panel: PanelModel) => {
         if (panel.type === 'add-panel') {
           return false;
@@ -253,14 +265,6 @@ export class DashboardModel {
 
         return model;
       });
-
-    //  sort by keys
-    copy = sortByKeys(copy);
-    copy.getVariables = () => {
-      return copy.templating.list;
-    };
-
-    return copy;
   }
 
   private updateTemplatingSaveModelClone(
