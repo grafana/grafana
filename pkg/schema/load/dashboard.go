@@ -23,7 +23,14 @@ func defaultOverlay(p BaseLoadPaths) (map[string]load.Source, error) {
 	return overlay, nil
 }
 
-func BaseDashboardScuemata(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
+// BaseDashboardFamily loads the family of schema representing the "Base" variant of
+// a Grafana dashboard: the core-defined dashboard schema that applies universally to
+// all dashboards, independent of any plugins.
+//
+// The returned VersionedCueSchema will always be the oldest schema in the
+// family: the 0.0 schema. schema.Find() provides easy traversal to newer schema
+// versions.
+func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	overlay, err := defaultOverlay(p)
 	if err != nil {
 		return nil, err
@@ -43,8 +50,17 @@ func BaseDashboardScuemata(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	return buildGenericScuemata(famval)
 }
 
+// DistDashboardScuemata loads the family of schema representing the "Dist"
+// variant of a Grafana dashboard: the "Base" variant (see
+// BaseDashboardFamily()), but constrained such that all substructures (e.g.
+// panels) must be valid with respect to the schemas provided by the core
+// plugins that ship with Grafana.
+//
+// The returned VersionedCueSchema will always be the oldest schema in the
+// family: the 0.0 schema. schema.Find() provides easy traversal to newer schema
+// versions.
 func DistDashboardScuemata(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
-	head, err := BaseDashboardScuemata(p)
+	head, err := BaseDashboardFamily(p)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +70,14 @@ func DistDashboardScuemata(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	}
 
 	dj, err := disjunctPanelScuemata(scuemap)
+	if err != nil {
+		return nil, err
+	}
 
 	// Stick this into a dummy struct so that we can unify it into place, as
-	// Value.Fill() can't target definitions. (Need new method based on
-	// cue.Path; there's a CL pending -
-	// https://cue-review.googlesource.com/c/cue/+/9162 - and it should be in
-	// next release of CUE.)
+	// Value.Fill() can't target definitions. Need new method based on cue.Path;
+	// a CL has been merged that creates FillPath and will be in the next
+	// release of CUE.
 	dummy, _ := rt.Compile("mergeStruct", `
 	obj: {}
 	dummy: {
