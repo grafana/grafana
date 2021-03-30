@@ -488,7 +488,7 @@ describe('CloudWatchDatasource', () => {
       const backendErrorResponse = {
         data: {
           message: 'Throttling: exception',
-          results: {
+          results: legacyDataResponseToDataResponse({
             A: {
               error: 'Throttling: exception',
               refId: 'A',
@@ -514,7 +514,7 @@ describe('CloudWatchDatasource', () => {
               refId: 'E',
               meta: {},
             },
-          },
+          }),
         },
       };
 
@@ -694,7 +694,7 @@ describe('CloudWatchDatasource', () => {
 
     const response: any = {
       timings: [null],
-      results: {
+      results: legacyDataResponseToDataResponse({
         A: {
           error: '',
           refId: 'A',
@@ -714,7 +714,7 @@ describe('CloudWatchDatasource', () => {
             },
           ],
         },
-      },
+      }),
     };
 
     it('should return series list', async () => {
@@ -941,11 +941,11 @@ describe('CloudWatchDatasource', () => {
   describeMetricFindQuery('regions()', async (scenario: any) => {
     await scenario.setup(() => {
       scenario.requestResponse = {
-        results: {
+        results: legacyDataResponseToDataResponse({
           metricFindQuery: {
             tables: [{ rows: [['us-east-1', 'us-east-1']] }],
           },
-        },
+        }),
       };
     });
 
@@ -959,11 +959,11 @@ describe('CloudWatchDatasource', () => {
   describeMetricFindQuery('namespaces()', async (scenario: any) => {
     await scenario.setup(() => {
       scenario.requestResponse = {
-        results: {
+        results: legacyDataResponseToDataResponse({
           metricFindQuery: {
             tables: [{ rows: [['AWS/EC2', 'AWS/EC2']] }],
           },
-        },
+        }),
       };
     });
 
@@ -1031,11 +1031,11 @@ describe('CloudWatchDatasource', () => {
   describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', async (scenario: any) => {
     await scenario.setup(() => {
       scenario.requestResponse = {
-        results: {
+        results: legacyDataResponseToDataResponse({
           metricFindQuery: {
             tables: [{ rows: [['i-12345678', 'i-12345678']] }],
           },
-        },
+        }),
       };
     });
 
@@ -1051,7 +1051,7 @@ describe('CloudWatchDatasource', () => {
     async (scenario: any) => {
       await scenario.setup(() => {
         scenario.requestResponse = {
-          results: {
+          results: legacyDataResponseToDataResponse({
             metricFindQuery: {
               tables: [
                 {
@@ -1064,7 +1064,7 @@ describe('CloudWatchDatasource', () => {
                 },
               ],
             },
-          },
+          }),
         };
       });
 
