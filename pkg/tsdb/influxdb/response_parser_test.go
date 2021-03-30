@@ -70,6 +70,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 								"datacenter":     "America",
 								"dc.region.name": "Northeast",
 								"cluster-name":   "Cluster",
+								"/cluster/name/": "Cluster/",
+								"@cluster@name@": "Cluster@",
 							},
 							Values: [][]interface{}{
 								{json.Number("111"), json.Number("222"), json.Number("333")},
@@ -141,6 +143,16 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		result = parser.Parse(response, query)
 
 		require.Equal(t, result.Series[0].Name, "alias Cluster")
+
+		query = &Query{Alias: "alias [[tag_/cluster/name/]]"}
+		result = parser.Parse(response, query)
+
+		require.Equal(t, result.Series[0].Name, "alias Cluster/")
+
+		query = &Query{Alias: "alias [[tag_@cluster@name@]]"}
+		result = parser.Parse(response, query)
+
+		require.Equal(t, result.Series[0].Name, "alias Cluster@")
 	})
 
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {
