@@ -351,6 +351,7 @@ describe('adhoc actions', () => {
   describe('when initAdHocVariableEditor is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const datasources = [
+        { ...createDatasource('default', true), value: null },
         createDatasource('elasticsearch-v1'),
         createDatasource('loki', false),
         createDatasource('influx'),
@@ -367,6 +368,7 @@ describe('adhoc actions', () => {
 
       const expectedDatasources = [
         { text: '', value: '' },
+        { text: 'default (default)', value: null },
         { text: 'elasticsearch-v1', value: 'elasticsearch-v1' },
         { text: 'influx', value: 'influx' },
         { text: 'elasticsearch-v7', value: 'elasticsearch-v7' },
