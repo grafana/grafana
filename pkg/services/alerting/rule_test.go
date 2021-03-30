@@ -28,11 +28,11 @@ func TestAlertRuleFrequencyParsing(t *testing.T) {
 		{input: "10m", result: 600},
 		{input: "1h", result: 3600},
 		{input: "1d", result: 86400},
-		{input: "1o", result: 1},
+		{input: "1o", err: ErrWrongUnitFormat},
 		{input: "0s", err: ErrFrequencyCannotBeZeroOrLess},
 		{input: "0m", err: ErrFrequencyCannotBeZeroOrLess},
 		{input: "0h", err: ErrFrequencyCannotBeZeroOrLess},
-		{input: "0", err: ErrFrequencyCannotBeZeroOrLess},
+		{input: "0", err: ErrWrongUnitFormat},
 		{input: "-1s", err: ErrFrequencyCouldNotBeParsed},
 	}
 
