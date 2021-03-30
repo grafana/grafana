@@ -246,8 +246,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiRecei
 	return integrations, nil
 }
 
-// CreateAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
-func (am *Alertmanager) CreateAlerts(alerts ...*PostableAlert) error {
+// PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
+func (am *Alertmanager) PutAlerts(alerts ...*PostableAlert) error {
 	return am.alerts.PutPostableAlert(alerts...)
 }
 

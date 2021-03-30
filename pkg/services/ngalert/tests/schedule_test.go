@@ -60,7 +60,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	ctx := context.Background()
 
-	st := state.NewStateTracker()
+	st := state.NewStateTracker(schefCfg.Logger)
 	go func() {
 		err := sched.Ticker(ctx, st)
 		require.NoError(t, err)

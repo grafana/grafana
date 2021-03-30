@@ -57,7 +57,7 @@ func init() {
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
 	ng.Log = log.New("ngalert")
-	ng.stateTracker = state.NewStateTracker()
+	ng.stateTracker = state.NewStateTracker(ng.Log)
 	baseInterval := baseIntervalSeconds * time.Second
 
 	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
@@ -69,6 +69,7 @@ func (ng *AlertNG) Init() error {
 		MaxAttempts:  maxAttempts,
 		Evaluator:    eval.Evaluator{Cfg: ng.Cfg},
 		Store:        store,
+		Notifier:     ng.Alertmanager,
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
 
