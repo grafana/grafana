@@ -44,6 +44,7 @@ import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
+const EXEMPLARS_NOT_SUPPORTED = 'Exemplars are not supported in this version of prometheus.';
 const GET_AND_POST_MEDATADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
@@ -62,7 +63,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
-  exemplarErrors: Subject<FetchError> = new Subject();
+  exemplarErrors: Subject<string> = new Subject();
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -238,12 +239,17 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         queries.push(this.createQuery(instantTarget, options, start, end));
         activeTargets.push(instantTarget);
       } else {
-        if (target.exemplar) {
+        // It doesn't make sense to query for exemplars in dashboard if only instant is selected
+        if (target.exemplar && !target.instant) {
           const exemplarTarget = cloneDeep(target);
           exemplarTarget.requestId += '_exemplar';
           target.exemplar = false;
           queries.push(this.createQuery(exemplarTarget, options, start, end));
           activeTargets.push(exemplarTarget);
+          this.exemplarErrors.next();
+        }
+        if (target.exemplar && target.instant) {
+          this.exemplarErrors.next("Exemplars doesn't make sense with instant query.");
         }
         queries.push(this.createQuery(target, options, start, end));
         activeTargets.push(target);
@@ -310,8 +316,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       if (query.exemplar) {
         return this.getExemplars(query).pipe(
-          catchError((err: FetchError) => {
-            this.exemplarErrors.next(err);
+          catchError(() => {
+            this.exemplarErrors.next(EXEMPLARS_NOT_SUPPORTED);
             return of({
               data: [],
               state: LoadingState.Done,
@@ -357,8 +363,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       if (query.exemplar) {
         return this.getExemplars(query).pipe(
-          catchError((err: FetchError) => {
-            this.exemplarErrors.next(err);
+          catchError(() => {
+            this.exemplarErrors.next(EXEMPLARS_NOT_SUPPORTED);
             return of({
               data: [],
               state: LoadingState.Done,
