@@ -98,6 +98,7 @@ Content-Type: application/json
 POST /api/auth/keys HTTP/1.1
 Accept: application/json
 Content-Type: application/json
+X-Grafana-Org-Id: 2
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
@@ -106,6 +107,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "secondsToLive": 86400
 }
 ```
+Header
+- **X-Grafana-Org-Id** - The org to which the created key belongs. It is optional. If it is not set, the created key would belongs to the current context org.
 
 JSON Body schema:
 
