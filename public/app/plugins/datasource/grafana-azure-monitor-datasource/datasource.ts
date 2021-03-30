@@ -76,7 +76,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       }
 
       const queryForType = byType.get(target.queryType);
-      queryForType && queryForType.targets.push(target);
+      queryForType?.targets.push(target);
     }
 
     const observables: Array<Observable<DataQueryResponse>> = Array.from(byType.entries()).map(([queryType, req]) => {
