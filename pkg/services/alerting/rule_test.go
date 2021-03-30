@@ -63,7 +63,6 @@ func TestAlertRuleModel(t *testing.T) {
 	require.Nil(t, err)
 
 	t.Run("Testing alert rule with notification id and uid", func(t *testing.T) {
-
 		json := `
 				{
 					"name": "name2",
@@ -173,7 +172,6 @@ func TestAlertRuleModel(t *testing.T) {
 	})
 
 	t.Run("Testing alert rule which will raise error in case of missing notification id and uid", func(t *testing.T) {
-
 		json := `
 			{
 				"name": "name2",

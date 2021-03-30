@@ -1,15 +1,15 @@
 package alerting
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAlertRuleExtraction(t *testing.T) {
