@@ -93,7 +93,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 }
 
 func toMacronResponse(qdr *backend.QueryDataResponse, order []string) response.Response {
-
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {
 		if res.Error != nil {

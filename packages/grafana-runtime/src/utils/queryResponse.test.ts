@@ -33,12 +33,11 @@ const resWithError = {
     }),
   },
 };
+/* eslint-enable */
 
 const emptyResults = {
-  data: { results: [{ refId: '' } ] },
+  data: { results: [{ refId: '' }] },
 };
-
-/* eslint-enable */
 
 describe('Query Response parser', () => {
   test('should parse output with dataframe', () => {
