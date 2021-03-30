@@ -1,7 +1,6 @@
 import { ComponentClass } from 'react';
 import { KeyValue } from './data';
 import { LiveChannelSupport } from './live';
-import { ModelSchemaInfo } from './schema';
 
 /** Describes plugins life cycle status */
 export enum PluginState {
@@ -178,17 +177,6 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
       this.configPages = [];
     }
     this.configPages.push(tab);
-    return this;
-  }
-
-  // Information about how to validate the required options
-  schema?: ModelSchemaInfo;
-
-  /**
-   * Specify how the plugins stored JSON models can be validated
-   */
-  setModelSchemaInfo(info: ModelSchemaInfo) {
-    this.schema = Object.freeze(info);
     return this;
   }
 
