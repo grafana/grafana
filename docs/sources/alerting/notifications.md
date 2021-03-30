@@ -204,7 +204,7 @@ Example json body:
 
 ### DingDing/DingTalk
 
-[Instructions in Chinese](https://open-doc.dingtalk.com/docs/doc.htm?spm=a219a.7629140.0.0.p2lr6t&treeId=257&articleId=105733&docType=1).
+Here are the [instructions in Chinese](https://developers.dingtalk.com/document/app/custom-robot-access).
 
 In DingTalk PC Client:
 
