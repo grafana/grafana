@@ -32,9 +32,9 @@
           placeholder="5m"
         />
         <info-popover mode="right-absolute">
-          If an alert rule has a configured For and the query violates the configured threshold it will first go from OK
-          to Pending. Going from OK to Pending Grafana will not send any notifications. Once the alert rule has been
-          firing for more than For duration, it will change to Alerting and send alert notifications.
+          If an alert rule has a configured and the query violates the configured threshold, then it goes from OK
+          to Pending. Grafana does not send any notifications for that change. Once the alert rule has been
+          firing for more than For duration, then the alert changes to Alerting and sends alert notifications.
         </info-popover>
       </div>
     </div>
@@ -125,13 +125,13 @@
   </div>
 
   <div class="gf-form-group">
-    <h4 class="section-heading">No Data & Error Handling</h4>
+    <h4 class="section-heading">No data and error handling</h4>
     <div class="gf-form-inline">
       <div class="gf-form">
         <span class="gf-form-label width-15">If no data or all values are null</span>
       </div>
       <div class="gf-form">
-        <span class="gf-form-label query-keyword">SET STATE TO</span>
+        <span class="gf-form-label query-keyword">set state to</span>
         <div class="gf-form-select-wrapper">
           <select
             class="gf-form-input"
@@ -148,7 +148,7 @@
         <span class="gf-form-label width-15">If execution error or timeout</span>
       </div>
       <div class="gf-form">
-        <span class="gf-form-label query-keyword">SET STATE TO</span>
+        <span class="gf-form-label query-keyword">set state to</span>
         <div class="gf-form-select-wrapper">
           <select
             class="gf-form-input"
@@ -195,7 +195,7 @@
       placeholder="Notification message details..."
     ></textarea>
     <info-popover mode="right-absolute">
-      If you want to apply templating to the alert rule name, you must use the following syntax - ${Label}
+      If you want to apply templating to the alert rule name, use the following syntax - ${Label}
     </info-popover>
   </div>
   <div class="gf-form">

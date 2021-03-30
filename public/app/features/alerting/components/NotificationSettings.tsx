@@ -46,8 +46,8 @@ export const NotificationSettings: FC<Props> = ({ currentFormValues, imageRender
         <>
           <Field
             label="Send reminder every"
-            description="Specify how often reminders should be sent, e.g. every 30s, 1m, 10m, 30m or 1h etc.
-            Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently
+            description="Specify how often reminders should be sent, e.g. every 30s, 1m, 10m, 30m', or 1h etc.
+            Alert reminders are sent after rules are evaluated. A reminder can never be sent more frequently
             than a configured alert rule evaluation interval."
           >
             <Input name="frequency" ref={register} width={8} />
