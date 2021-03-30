@@ -1,6 +1,7 @@
 const path = require('path');
 
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
@@ -68,6 +69,13 @@ module.exports = {
     fs: 'empty',
   },
   plugins: [
+    new CopyWebpackPlugin([
+      {
+        context: path.resolve(__dirname, '../../node_modules/iconscout-unicons-tarball/svg/line'),
+        from: '**',
+        to: '../img/icons/unicons/', // inside the public/build folder
+      },
+    ]),
     new MonacoWebpackPlugin({
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
       filename: 'monaco-[name].worker.js',
