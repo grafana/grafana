@@ -143,6 +143,8 @@ In the example below, the panel has three queries (A, B, C). I removed the B que
 
 {{< docs-imagebox img="/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
+> **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
+
 ## Organize fields
 
 Use this transformation to rename, reorder, or hide fields returned by the query.
