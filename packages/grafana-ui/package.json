@@ -31,6 +31,7 @@
     "@grafana/e2e-selectors": "7.5.0-pre.0",
     "@grafana/slate-react": "0.22.9-grafana",
     "@grafana/tsconfig": "^1.0.0-rc1",
+    "@grafana/aws-sdk": "0.0.3",
     "@iconscout/react-unicons": "1.1.4",
     "@popperjs/core": "2.5.4",
     "@sentry/browser": "5.25.0",
