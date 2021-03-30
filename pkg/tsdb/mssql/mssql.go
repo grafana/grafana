@@ -85,7 +85,14 @@ func generateConnectionString(datasource *models.DataSource) (string, error) {
 		}
 	}
 
-	logger.Debug("Generating connection string", "url", datasource.Url, "host", addr.Host, "port", addr.Port)
+	args := []interface{}{
+		"url", datasource.Url, "host", addr.Host,
+	}
+	if addr.Port != "0" {
+		args = append(args, "port", addr.Port)
+	}
+
+	logger.Debug("Generating connection string", args...)
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
 	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
