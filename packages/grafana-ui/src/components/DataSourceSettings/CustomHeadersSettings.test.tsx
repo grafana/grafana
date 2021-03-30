@@ -1,7 +1,7 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { CustomHeadersSettings, Props } from './CustomHeadersSettings';
-import { Button } from '../Button';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 const setup = (propOverrides?: object) => {
   const onChange = jest.fn();
@@ -38,25 +38,40 @@ const setup = (propOverrides?: object) => {
     ...propOverrides,
   };
 
-  return { wrapper: mount(<CustomHeadersSettings {...props} />), onChange };
+  render(<CustomHeadersSettings {...props} />);
+  return { onChange };
 };
+
+function assertRowCount(configuredInputCount: number, passwordInputCount: number) {
+  const inputs = screen.queryAllByPlaceholderText('X-Custom-Header');
+  const passwordInputs = screen.queryAllByPlaceholderText('Header Value');
+  const configuredInputs = screen.queryAllByDisplayValue('configured');
+  expect(inputs.length).toBe(passwordInputs.length + configuredInputs.length);
+
+  expect(passwordInputs).toHaveLength(passwordInputCount);
+  expect(configuredInputs).toHaveLength(configuredInputCount);
+}
 
 describe('Render', () => {
   it('should add a new header', () => {
-    const { wrapper } = setup();
-    const addButton = wrapper.find('Button').at(0);
-    addButton.simulate('click', { preventDefault: () => {} });
-    expect(wrapper.find('FormField').exists()).toBeTruthy();
-    expect(wrapper.find('SecretFormField').exists()).toBeTruthy();
+    setup();
+    const b = screen.getByRole('button', { name: 'Add header' });
+    expect(b).toBeInTheDocument();
+    assertRowCount(0, 0);
+
+    userEvent.click(b);
+    assertRowCount(0, 1);
   });
 
   it('add header button should not submit the form', () => {
-    const { wrapper } = setup();
-    expect(wrapper.find(Button).getDOMNode()).toHaveAttribute('type', 'button');
+    setup();
+    const b = screen.getByRole('button', { name: 'Add header' });
+    expect(b).toBeInTheDocument();
+    expect(b.getAttribute('type')).toBe('button');
   });
 
   it('should remove a header', () => {
-    const { wrapper, onChange } = setup({
+    const { onChange } = setup({
       dataSourceConfig: {
         jsonData: {
           httpHeaderName1: 'X-Custom-Header',
@@ -66,16 +81,20 @@ describe('Render', () => {
         },
       },
     });
-    const removeButton = wrapper.find('Button').at(1);
-    removeButton.simulate('click', { preventDefault: () => {} });
-    expect(wrapper.find('FormField').exists()).toBeFalsy();
-    expect(wrapper.find('SecretFormField').exists()).toBeFalsy();
+    const b = screen.getByRole('button', { name: 'Remove header' });
+    expect(b).toBeInTheDocument();
+
+    assertRowCount(1, 0);
+
+    userEvent.click(b);
+    assertRowCount(0, 0);
+
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0][0].jsonData).toStrictEqual({});
   });
 
   it('should reset a header', () => {
-    const { wrapper } = setup({
+    setup({
       dataSourceConfig: {
         jsonData: {
           httpHeaderName1: 'X-Custom-Header',
@@ -85,9 +104,12 @@ describe('Render', () => {
         },
       },
     });
-    const resetButton = wrapper.find('button').at(0);
-    resetButton.simulate('click', { preventDefault: () => {} });
-    const { isConfigured } = wrapper.find('SecretFormField').props() as any;
-    expect(isConfigured).toBeFalsy();
+
+    const b = screen.getByRole('button', { name: 'Reset' });
+    expect(b).toBeInTheDocument();
+
+    assertRowCount(1, 0);
+    userEvent.click(b);
+    assertRowCount(0, 1);
   });
 });

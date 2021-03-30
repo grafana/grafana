@@ -78,7 +78,13 @@ const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onCha
         onChange={(e) => onChange({ ...header, value: e.target.value })}
         onBlur={onBlur}
       />
-      <Button variant="secondary" size="xs" onClick={(_e) => onRemove(header.id)}>
+      <Button
+        type="button"
+        aria-label="Remove header"
+        variant="secondary"
+        size="xs"
+        onClick={(_e) => onRemove(header.id)}
+      >
         <Icon name="trash-alt" />
       </Button>
     </div>
