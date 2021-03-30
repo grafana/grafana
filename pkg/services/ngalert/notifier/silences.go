@@ -29,6 +29,7 @@ var (
 	ErrSilenceNotFound         = silence.ErrNotFound
 )
 
+// ListSilences retrieves a list of stored silences. It supports a set of labels as filters.
 func (am *Alertmanager) ListSilences(filters []string) (apimodels.GettableSilences, error) {
 	matchers := []*labels.Matcher{}
 	for _, matcherString := range filters {
