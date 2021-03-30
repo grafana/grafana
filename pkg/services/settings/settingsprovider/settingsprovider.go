@@ -45,7 +45,7 @@ func (i *Implementation) Init() (err error) {
 		syncTicker := time.NewTicker(1 * time.Minute)
 		for {
 			<-syncTicker.C
-			logger.Info("Checking for new updates")
+			logger.Debug("Checking for updates")
 
 			err := i.Refresh()
 			if err != nil {
@@ -81,23 +81,23 @@ func (i *Implementation) KeyValue(section, key string) settings.KeyValue {
 }
 
 func (i *Implementation) Refresh() error {
-	settingsBag, err := i.loadAndMergeSettings()
+	newSettingsBag, err := i.loadAndMergeSettings()
 	if err != nil {
 		return err
 	}
 
 	i.RLock()
-	// For each section, check if the section has been updated and trigger reloads
-
 	toReload := map[string]map[string]string{}
 
 	// still does not cover config that exists in the old settings but not in the new
 	// will this reload settings from the filesystem too, and do we want that?
-	for sn, newConfig := range settingsBag {
-		oldConfig, exists := i.settings[sn]
-		if !(exists && reflect.DeepEqual(newConfig, oldConfig)) {
-			logger.Debug("Configuration has changed", "section", sn)
-			toReload[sn] = newConfig
+	for sectionName, newSettings := range newSettingsBag {
+		oldConfig, exists := i.settings[sectionName]
+
+		if !(exists && reflect.DeepEqual(newSettings, oldConfig)) {
+			logger.Debug("Settings have changed", "section", sectionName)
+			toReload[sectionName] = newSettings
+
 		}
 	}
 
@@ -108,7 +108,7 @@ func (i *Implementation) Refresh() error {
 	}
 
 	i.Lock()
-	i.settings = settingsBag
+	i.settings = newSettingsBag
 	i.Unlock()
 
 	i.triggerReload(toReload)
