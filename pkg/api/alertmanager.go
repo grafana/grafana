@@ -96,20 +96,26 @@ type CreateSilenceParams struct {
 	Silence PostableSilence
 }
 
-//swagger:parameters RouteGetSilence RouteDeleteSilence
+// swagger:parameters RouteGetSilence RouteDeleteSilence
 type GetDeleteSilenceParams struct {
 	// in:path
 	SilenceId string
+}
+
+// swagger:parameters RouteGetSilences
+type GetSilencesParams struct {
+	// in:query
+	Filter []string
 }
 
 // swagger:model
 type PostableSilence = amv2.PostableSilence
 
 // swagger:model
-type GettableSilences amv2.GettableSilences
+type GettableSilences = amv2.GettableSilences
 
 // swagger:model
-type GettableSilence amv2.GettableSilence
+type GettableSilence = amv2.GettableSilence
 
 // swagger:model
 type GettableAlerts amv2.GettableAlerts
