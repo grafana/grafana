@@ -44,7 +44,7 @@ If thresholds are set, then the field text is displayed in the appropriate thres
 
 ### Color background (gradient or solid)
 
-If thresholds are set, then the field background displays in the appropriate threshold color. 
+If thresholds are set, then the field background is displayed in the appropriate threshold color. 
 
 {{< docs-imagebox img="/img/docs/tables/color-background.png" max-width="500px" caption="Color background" class="docs-image--no-shadow" >}}
 
