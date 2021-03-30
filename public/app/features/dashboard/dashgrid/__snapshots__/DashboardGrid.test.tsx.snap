@@ -45,7 +45,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
 >
   <div
     className=""
-    id="panel-1"
+    data-panelid="1"
     key="1"
   >
     <Connect(DashboardPanelUnconnected)
@@ -269,7 +269,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
   </div>
   <div
     className=""
-    id="panel-2"
+    data-panelid="2"
     key="2"
   >
     <Connect(DashboardPanelUnconnected)
@@ -493,7 +493,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
   </div>
   <div
     className=""
-    id="panel-3"
+    data-panelid="3"
     key="3"
   >
     <Connect(DashboardPanelUnconnected)
@@ -717,7 +717,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
   </div>
   <div
     className=""
-    id="panel-4"
+    data-panelid="4"
     key="4"
   >
     <Connect(DashboardPanelUnconnected)
