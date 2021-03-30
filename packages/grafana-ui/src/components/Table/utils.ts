@@ -206,15 +206,5 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
 }
 
 export function sortCaseInsensitive(a: Row<any>, b: Row<any>, id: string) {
-  const aLowerCase = a.values[id].toLowerCase();
-  const bLowerCase = b.values[id].toLowerCase();
-
-  if (aLowerCase < bLowerCase) {
-    return -1;
-  }
-  if (aLowerCase > bLowerCase) {
-    return 1;
-  }
-
-  return 0;
+  return a.values[id].localeCompare(b.values[id], undefined, { sensitivity: 'base' });
 }
