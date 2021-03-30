@@ -37,7 +37,7 @@ export const UserInviteForm: FC<Props> = ({}) => {
     try {
       await getBackendSrv().post('/api/org/invites', formData);
     } catch (err) {
-      appEvents.emit(AppEvents.alertError, ['Failed to send invite', err.message]);
+      appEvents.emit(AppEvents.alertError, ['Failed to send invitation.', err.message]);
     }
     locationService.push('/org/users/');
   };
@@ -56,8 +56,8 @@ export const UserInviteForm: FC<Props> = ({}) => {
           <>
             <Field
               invalid={!!errors.loginOrEmail}
-              error={!!errors.loginOrEmail ? 'Email or Username is required' : undefined}
-              label="Email or Username"
+              error={!!errors.loginOrEmail ? 'Email or username is required' : undefined}
+              label="Email or username"
             >
               <Input name="loginOrEmail" placeholder="email@example.com" ref={register({ required: true })} />
             </Field>
