@@ -145,7 +145,7 @@ The macros support copying and pasting from [Chronograph](https://www.influxdata
 Macro example        | Description
 ------------         | -------------
 `v.timeRangeStart`   | Will be replaced by the start of the currently active time selection. For example, *2020-06-11T13:31:00Z*
-`v.timeRangeStop`    | Will be replaced by the end of the currently active time selection. For example, *2020-06-11T14:31:00Z*
+`v.timeRangeEnd`     | Will be replaced by the end of the currently active time selection. For example, *2020-06-11T14:31:00Z*
 `v.windowPeriod`     | Will be replaced with an interval string compatible with Flux that corresponds to Grafana's calculated interval based on the time range of the active time selection. For example, *5s*
 `v.defaultBucket`    | Will be replaced with the data source configuration's "Default Bucket" setting
 `v.organization`     | Will be replaced with the data source configuration's "Organization" setting
