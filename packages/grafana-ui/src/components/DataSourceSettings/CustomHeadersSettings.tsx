@@ -112,27 +112,25 @@ export class CustomHeadersSettings extends PureComponent<Props, State> {
 
   updateSettings = () => {
     const { headers } = this.state;
-    const { jsonData } = this.props.dataSourceConfig;
-    const secureJsonData = this.props.dataSourceConfig.secureJsonData || {};
+    const newSecureJsonData = { ...(this.props.dataSourceConfig.secureJsonData || {}) };
+
+    // we remove every httpHeaderName* field first
+    const newJsonData = Object.fromEntries(
+      Object.entries(this.props.dataSourceConfig.jsonData).filter(([key, val]) => !key.startsWith('httpHeaderName'))
+    );
+
+    // then we add the current httpHeader-fields
     for (const [index, header] of headers.entries()) {
-      jsonData[`httpHeaderName${index + 1}`] = header.name;
+      newJsonData[`httpHeaderName${index + 1}`] = header.name;
       if (!header.configured) {
-        secureJsonData[`httpHeaderValue${index + 1}`] = header.value;
+        newSecureJsonData[`httpHeaderValue${index + 1}`] = header.value;
       }
     }
-    Object.keys(jsonData)
-      .filter(
-        (key) =>
-          key.startsWith('httpHeaderName') && parseInt(key.substring('httpHeaderName'.length), 10) > headers.length
-      )
-      .forEach((key) => {
-        delete jsonData[key];
-      });
 
     this.props.onChange({
       ...this.props.dataSourceConfig,
-      jsonData,
-      secureJsonData,
+      jsonData: newJsonData,
+      secureJsonData: newSecureJsonData,
     });
   };
 
