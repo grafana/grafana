@@ -2,6 +2,7 @@ import {
   DataQueryResponse,
   arrowTableToDataFrame,
   base64StringToArrowTable,
+  KeyValue,
   LoadingState,
   DataQueryError,
   TimeSeries,
@@ -10,22 +11,28 @@ import {
   DataFrame,
   MetricFindValue,
   FieldType,
+  DataQuery,
   DataFrameJSON,
   dataFrameFromJSON,
-  dataFrameToJSON,
 } from '@grafana/data';
 import { FetchResponse } from '../services';
 
 /**
  * Single response object from a backend data source. Properties are optional but response should contain at least
- * an error or a some data (but can contain both).
+ * an error or a some data (but can contain both). Main way to send data is with dataframes attribute as series and
+ * tables data attributes are legacy formats.
  *
  * @internal
  */
 export interface DataResponse {
-  refId?: string;
   error?: string;
+  refId?: string;
   frames?: DataFrameJSON[];
+
+  // Legacy TSDB format...
+  dataframes?: string[]; // base64 encoded arrow tables
+  series?: TimeSeries[];
+  tables?: TableData[];
 }
 
 /**
@@ -34,13 +41,14 @@ export interface DataResponse {
  * @internal
  */
 export interface BackendDataSourceResponse {
-  results: DataResponse[];
+  results: KeyValue<DataResponse>;
 }
 
 /**
  * Parse the results from /api/ds/query into a DataQueryResponse
  *
  * @param res - the HTTP response data.
+ * @param queries - optional DataQuery array that will order the response based on the order of query refId's.
  *
  * @public
  */
@@ -48,29 +56,78 @@ export function toDataQueryResponse(
   res:
     | { data: BackendDataSourceResponse | undefined }
     | FetchResponse<BackendDataSourceResponse | undefined>
-    | DataQueryError
+    | DataQueryError,
+  queries?: DataQuery[]
 ): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
+  // If the response isn't in a correct shape we just ignore the data and pass empty DataQueryResponse.
+  if ((res as FetchResponse).data?.results) {
+    const results = (res as FetchResponse).data.results;
+    const refIDs = queries?.length ? queries.map((q) => q.refId) : Object.keys(results);
+    const data: DataResponse[] = [];
 
-  const response = (res as FetchResponse).data as BackendDataSourceResponse;
+    for (const refId of refIDs) {
+      const dr = results[refId];
+      if (!dr) {
+        continue;
+      }
+      dr.refId = refId;
+      data.push(dr);
+    }
 
-  if (response?.results) {
-    for (const res of response.results) {
-      if (res.error) {
-        rsp.state = LoadingState.Error;
-        rsp.error = {
-          refId: res.refId,
-          message: res.error,
-        };
+    for (const dr of data) {
+      if (dr.error) {
+        if (!rsp.error) {
+          rsp.error = {
+            refId: dr.refId,
+            message: dr.error,
+          };
+          rsp.state = LoadingState.Error;
+        }
       }
 
-      if (res.frames) {
-        for (const js of res.frames) {
+      if (dr.frames?.length) {
+        for (const js of dr.frames) {
           const df = dataFrameFromJSON(js);
           if (!df.refId) {
-            df.refId = res.refId;
+            df.refId = dr.refId;
           }
           rsp.data.push(df);
+        }
+        continue; // the other tests are legacy
+      }
+
+      if (dr.series?.length) {
+        for (const s of dr.series) {
+          if (!s.refId) {
+            s.refId = dr.refId;
+          }
+          rsp.data.push(toDataFrame(s));
+        }
+      }
+
+      if (dr.tables?.length) {
+        for (const s of dr.tables) {
+          if (!s.refId) {
+            s.refId = dr.refId;
+          }
+          rsp.data.push(toDataFrame(s));
+        }
+      }
+
+      if (dr.dataframes) {
+        for (const b64 of dr.dataframes) {
+          try {
+            const t = base64StringToArrowTable(b64);
+            const f = arrowTableToDataFrame(t);
+            if (!f.refId) {
+              f.refId = dr.refId;
+            }
+            rsp.data.push(f);
+          } catch (err) {
+            rsp.state = LoadingState.Error;
+            rsp.error = toDataQueryError(err);
+          }
         }
       }
     }
@@ -140,57 +197,4 @@ export function frameToMetricFindValue(frame: DataFrame): MetricFindValue[] {
     }
   }
   return values;
-}
-
-export interface LegacyDataResponse {
-  refId?: string;
-  error?: string;
-
-  // Legacy TSDB format...
-  dataframes?: string[]; // base64 encoded arrow tables
-  series?: TimeSeries[];
-  tables?: TableData[];
-}
-
-/**
- * ONLY needed for tests right now!
- */
-export function legacyDataResponseToDataResponse(legacy: Record<string, LegacyDataResponse | any>): DataResponse[] {
-  const res: DataResponse[] = [];
-
-  for (const [key, dr] of Object.entries(legacy)) {
-    const converted: DataResponse = {
-      refId: key,
-      error: dr.error,
-      frames: [],
-    };
-    res.push(converted);
-
-    if (dr.series?.length) {
-      for (const s of dr.series) {
-        const df = toDataFrame(s);
-        converted.frames!.push(dataFrameToJSON(df));
-      }
-    }
-
-    if (dr.tables?.length) {
-      for (const s of dr.tables) {
-        const df = toDataFrame(s);
-        converted.frames!.push(dataFrameToJSON(df));
-      }
-    }
-
-    if (dr.dataframes) {
-      for (const b64 of dr.dataframes) {
-        const t = base64StringToArrowTable(b64);
-        const f = arrowTableToDataFrame(t);
-        if (!f.refId) {
-          f.refId = dr.refId;
-        }
-        converted.frames!.push(dataFrameToJSON(f));
-      }
-    }
-  }
-
-  return res;
 }

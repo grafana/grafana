@@ -10,7 +10,6 @@ import { Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
 import { FetchResponse, setBackendSrv, BackendDataSourceResponse } from '@grafana/runtime';
-import { legacyDataResponseToDataResponse } from '@grafana/runtime/src/utils/queryResponse';
 
 describe('Tempo data source', () => {
   it('parses json fields from backend', async () => {
@@ -47,11 +46,11 @@ function setupBackendSrv(frame: DataFrame) {
     fetch(): Observable<FetchResponse<BackendDataSourceResponse>> {
       return of(
         createFetchResponse({
-          results: legacyDataResponseToDataResponse({
+          results: {
             refid1: {
               dataframes: [encode(frame)],
             },
-          }),
+          },
         })
       );
     },

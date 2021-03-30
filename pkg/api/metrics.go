@@ -39,7 +39,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		}
 	}
 
-	var refIDs []string
 	var ds *models.DataSource
 	for i, query := range reqDTO.Queries {
 		hs.log.Debug("Processing metrics query", "query", query)
@@ -59,11 +58,9 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 				return hs.handleGetDataSourceError(err, datasourceID)
 			}
 		}
-		refID := query.Get("refId").MustString("A")
-		refIDs = append(refIDs, refID)
 
 		request.Queries = append(request.Queries, plugins.DataSubQuery{
-			RefID:         refID,
+			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
 			QueryType:     query.Get("queryType").MustString(""),
@@ -89,10 +86,10 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "error converting results", err)
 	}
-	return toMacronResponse(qdr, refIDs)
+	return toMacronResponse(qdr)
 }
 
-func toMacronResponse(qdr *backend.QueryDataResponse, order []string) response.Response {
+func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {
 		if res.Error != nil {
@@ -100,12 +97,7 @@ func toMacronResponse(qdr *backend.QueryDataResponse, order []string) response.R
 		}
 	}
 
-	results := backend.QueryDataResults{
-		Order:   order,
-		Results: qdr.Responses,
-	}
-
-	return response.JSONStreaming(statusCode, results)
+	return response.JSONStreaming(statusCode, qdr)
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
@@ -117,8 +109,6 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 		User:      c.SignedInUser,
 		Queries:   make([]plugins.DataSubQuery, 0, len(reqDTO.Queries)),
 	}
-
-	var refIDs []string
 
 	for _, query := range reqDTO.Queries {
 		hs.log.Debug("Processing metrics query", "query", query)
@@ -137,11 +127,9 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 				return hs.handleGetDataSourceError(err, datasourceID)
 			}
 		}
-		refID := query.Get("refId").MustString("A")
-		refIDs = append(refIDs, refID)
 
 		request.Queries = append(request.Queries, plugins.DataSubQuery{
-			RefID:         refID,
+			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMS:    query.Get("intervalMs").MustInt64(1000),
 			QueryType:     query.Get("queryType").MustString(""),
@@ -157,7 +145,7 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 	if err != nil {
 		return response.Error(500, "expression request error", err)
 	}
-	return toMacronResponse(qdr, refIDs)
+	return toMacronResponse(qdr)
 }
 
 func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *response.NormalResponse {

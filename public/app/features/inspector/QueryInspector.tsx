@@ -206,7 +206,7 @@ export class QueryInspector extends PureComponent<Props, State> {
 
   getNrOfOpenNodes = () => {
     if (this.state.allNodesExpanded === null) {
-      return 4; // 4 is default, ie when state is null
+      return 3; // 3 is default, ie when state is null
     } else if (this.state.allNodesExpanded) {
       return 20;
     }

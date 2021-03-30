@@ -25,7 +25,6 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
 import { CustomVariableModel, initialVariableModelState, VariableHide } from '../../../../features/variables/types';
-import { legacyDataResponseToDataResponse } from '@grafana/runtime/src/utils/queryResponse';
 
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
@@ -83,14 +82,14 @@ describe('CloudWatchDatasource', () => {
   describe('When getting log groups', () => {
     it('should return log groups as an array of strings', async () => {
       const response = {
-        results: legacyDataResponseToDataResponse({
+        results: {
           A: {
             dataframes: [
               'QVJST1cxAAD/////GAEAABAAAAAAAAoADgAMAAsABAAKAAAAFAAAAAAAAAEDAAoADAAAAAgABAAKAAAACAAAAFgAAAACAAAAKAAAAAQAAAB8////CAAAAAwAAAAAAAAAAAAAAAUAAAByZWZJZAAAAJz///8IAAAAFAAAAAkAAABsb2dHcm91cHMAAAAEAAAAbmFtZQAAAAABAAAAGAAAAAAAEgAYABQAEwASAAwAAAAIAAQAEgAAABQAAABMAAAAUAAAAAAABQFMAAAAAQAAAAwAAAAIAAwACAAEAAgAAAAIAAAAGAAAAAwAAABsb2dHcm91cE5hbWUAAAAABAAAAG5hbWUAAAAAAAAAAAQABAAEAAAADAAAAGxvZ0dyb3VwTmFtZQAAAAD/////mAAAABQAAAAAAAAADAAWABQAEwAMAAQADAAAAGAGAAAAAAAAFAAAAAAAAAMDAAoAGAAMAAgABAAKAAAAFAAAAEgAAAAhAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAiAAAAAAAAACIAAAAAAAAANgFAAAAAAAAAAAAAAEAAAAhAAAAAAAAAAAAAAAAAAAAAAAAADIAAABiAAAAkQAAALwAAADuAAAAHwEAAFQBAACHAQAAtQEAAOoBAAAbAgAASgIAAHQCAAClAgAA1QIAABADAABEAwAAdgMAAKMDAADXAwAACQQAAEAEAAB3BAAAlwQAAK0EAAC8BAAA+wQAAEIFAABhBQAAeAUAAJIFAAC0BQAA1gUAAC9hd3MvY29udGFpbmVyaW5zaWdodHMvZGV2MzAzLXdvcmtzaG9wL2FwcGxpY2F0aW9uL2F3cy9jb250YWluZXJpbnNpZ2h0cy9kZXYzMDMtd29ya3Nob3AvZGF0YXBsYW5lL2F3cy9jb250YWluZXJpbnNpZ2h0cy9kZXYzMDMtd29ya3Nob3AvZmxvd2xvZ3MvYXdzL2NvbnRhaW5lcmluc2lnaHRzL2RldjMwMy13b3Jrc2hvcC9ob3N0L2F3cy9jb250YWluZXJpbnNpZ2h0cy9kZXYzMDMtd29ya3Nob3AvcGVyZm9ybWFuY2UvYXdzL2NvbnRhaW5lcmluc2lnaHRzL2RldjMwMy13b3Jrc2hvcC9wcm9tZXRoZXVzL2F3cy9jb250YWluZXJpbnNpZ2h0cy9lY29tbWVyY2Utc29ja3Nob3AvYXBwbGljYXRpb24vYXdzL2NvbnRhaW5lcmluc2lnaHRzL2Vjb21tZXJjZS1zb2Nrc2hvcC9kYXRhcGxhbmUvYXdzL2NvbnRhaW5lcmluc2lnaHRzL2Vjb21tZXJjZS1zb2Nrc2hvcC9ob3N0L2F3cy9jb250YWluZXJpbnNpZ2h0cy9lY29tbWVyY2Utc29ja3Nob3AvcGVyZm9ybWFuY2UvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1wZXJmL2FwcGxpY2F0aW9uL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tcGVyZi9kYXRhcGxhbmUvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1wZXJmL2hvc3QvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1wZXJmL3BlcmZvcm1hbmNlL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tcGVyZi9wcm9tZXRoZXVzL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tcHJvZC11cy1lYXN0LTEvcGVyZm9ybWFuY2UvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1zdGFnaW5nL2FwcGxpY2F0aW9uL2F3cy9jb250YWluZXJpbnNpZ2h0cy93YXRjaGRlbW8tc3RhZ2luZy9kYXRhcGxhbmUvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1zdGFnaW5nL2hvc3QvYXdzL2NvbnRhaW5lcmluc2lnaHRzL3dhdGNoZGVtby1zdGFnaW5nL3BlcmZvcm1hbmNlL2F3cy9lY3MvY29udGFpbmVyaW5zaWdodHMvYnVnYmFzaC1lYzIvcGVyZm9ybWFuY2UvYXdzL2Vjcy9jb250YWluZXJpbnNpZ2h0cy9lY3MtZGVtb3dvcmtzaG9wL3BlcmZvcm1hbmNlL2F3cy9lY3MvY29udGFpbmVyaW5zaWdodHMvZWNzLXdvcmtzaG9wLWRldi9wZXJmb3JtYW5jZS9hd3MvZWtzL2RldjMwMy13b3Jrc2hvcC9jbHVzdGVyL2F3cy9ldmVudHMvY2xvdWR0cmFpbC9hd3MvZXZlbnRzL2Vjcy9hd3MvbGFtYmRhL2N3c3luLW15Y2FuYXJ5LWZhYzk3ZGVkLWYxMzQtNDk5YS05ZDcxLTRjM2JlMWY2MzE4Mi9hd3MvbGFtYmRhL2N3c3luLXdhdGNoLWxpbmtjaGVja3MtZWY3ZWYyNzMtNWRhMi00NjYzLWFmNTQtZDJmNTJkNTViMDYwL2Vjcy9lY3MtY3dhZ2VudC1kYWVtb24tc2VydmljZS9lY3MvZWNzLWRlbW8tbGltaXRUYXNrQ2xvdWRUcmFpbC9EZWZhdWx0TG9nR3JvdXBjb250YWluZXItaW5zaWdodHMtcHJvbWV0aGV1cy1iZXRhY29udGFpbmVyLWluc2lnaHRzLXByb21ldGhldXMtZGVtbwAAEAAAAAwAFAASAAwACAAEAAwAAAAQAAAALAAAADwAAAAAAAMAAQAAACgBAAAAAAAAoAAAAAAAAABgBgAAAAAAAAAAAAAAAAAAAAAAAAAACgAMAAAACAAEAAoAAAAIAAAAWAAAAAIAAAAoAAAABAAAAHz///8IAAAADAAAAAAAAAAAAAAABQAAAHJlZklkAAAAnP///wgAAAAUAAAACQAAAGxvZ0dyb3VwcwAAAAQAAABuYW1lAAAAAAEAAAAYAAAAAAASABgAFAATABIADAAAAAgABAASAAAAFAAAAEwAAABQAAAAAAAFAUwAAAABAAAADAAAAAgADAAIAAQACAAAAAgAAAAYAAAADAAAAGxvZ0dyb3VwTmFtZQAAAAAEAAAAbmFtZQAAAAAAAAAABAAEAAQAAAAMAAAAbG9nR3JvdXBOYW1lAAAAAEgBAABBUlJPVzE=',
             ],
             refId: 'A',
           },
-        }),
+        },
       };
       const { ds } = getTestContext({ response });
       const expectedLogGroups = [
@@ -342,7 +341,7 @@ describe('CloudWatchDatasource', () => {
 
     const response: any = {
       timings: [null],
-      results: legacyDataResponseToDataResponse({
+      results: {
         A: {
           type: 'Metrics',
           error: '',
@@ -362,7 +361,7 @@ describe('CloudWatchDatasource', () => {
             },
           ],
         },
-      }),
+      },
     };
 
     it('should generate the correct query', async () => {
@@ -488,7 +487,7 @@ describe('CloudWatchDatasource', () => {
       const backendErrorResponse = {
         data: {
           message: 'Throttling: exception',
-          results: legacyDataResponseToDataResponse({
+          results: {
             A: {
               error: 'Throttling: exception',
               refId: 'A',
@@ -514,7 +513,7 @@ describe('CloudWatchDatasource', () => {
               refId: 'E',
               meta: {},
             },
-          }),
+          },
         },
       };
 
@@ -694,7 +693,7 @@ describe('CloudWatchDatasource', () => {
 
     const response: any = {
       timings: [null],
-      results: legacyDataResponseToDataResponse({
+      results: {
         A: {
           error: '',
           refId: 'A',
@@ -714,7 +713,7 @@ describe('CloudWatchDatasource', () => {
             },
           ],
         },
-      }),
+      },
     };
 
     it('should return series list', async () => {
@@ -941,11 +940,11 @@ describe('CloudWatchDatasource', () => {
   describeMetricFindQuery('regions()', async (scenario: any) => {
     await scenario.setup(() => {
       scenario.requestResponse = {
-        results: legacyDataResponseToDataResponse({
+        results: {
           metricFindQuery: {
             tables: [{ rows: [['us-east-1', 'us-east-1']] }],
           },
-        }),
+        },
       };
     });
 
@@ -959,11 +958,11 @@ describe('CloudWatchDatasource', () => {
   describeMetricFindQuery('namespaces()', async (scenario: any) => {
     await scenario.setup(() => {
       scenario.requestResponse = {
-        results: legacyDataResponseToDataResponse({
+        results: {
           metricFindQuery: {
             tables: [{ rows: [['AWS/EC2', 'AWS/EC2']] }],
           },
-        }),
+        },
       };
     });
 
@@ -1031,11 +1030,11 @@ describe('CloudWatchDatasource', () => {
   describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', async (scenario: any) => {
     await scenario.setup(() => {
       scenario.requestResponse = {
-        results: legacyDataResponseToDataResponse({
+        results: {
           metricFindQuery: {
             tables: [{ rows: [['i-12345678', 'i-12345678']] }],
           },
-        }),
+        },
       };
     });
 
@@ -1051,7 +1050,7 @@ describe('CloudWatchDatasource', () => {
     async (scenario: any) => {
       await scenario.setup(() => {
         scenario.requestResponse = {
-          results: legacyDataResponseToDataResponse({
+          results: {
             metricFindQuery: {
               tables: [
                 {
@@ -1064,7 +1063,7 @@ describe('CloudWatchDatasource', () => {
                 },
               ],
             },
-          }),
+          },
         };
       });
 

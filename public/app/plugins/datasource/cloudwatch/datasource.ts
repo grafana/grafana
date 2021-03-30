@@ -188,7 +188,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     return this.awsRequest(DS_QUERY_ENDPOINT, requestParams).pipe(
       mergeMap((response: TSDBResponse) => {
-        const dataQueryResponse = toDataQueryResponse({ data: response });
+        const dataQueryResponse = toDataQueryResponse({ data: response }, options.targets);
         const channelName: string = dataQueryResponse.data[0].meta.custom.channelName;
         const channel = getGrafanaLiveSrv().getChannel({
           scope: LiveChannelScope.Plugin,

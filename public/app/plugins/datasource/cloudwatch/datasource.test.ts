@@ -4,7 +4,6 @@ import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 import { CloudWatchDatasource } from './datasource';
-import { legacyDataResponseToDataResponse } from '@grafana/runtime/src/utils/queryResponse';
 
 describe('datasource', () => {
   describe('query', () => {
@@ -46,10 +45,10 @@ describe('datasource', () => {
     it('should return the same length of data as result', async () => {
       const { datasource } = setup({
         data: {
-          results: legacyDataResponseToDataResponse({
+          results: {
             a: { refId: 'a', series: [{ name: 'cpu', points: [1, 1] }], meta: {} },
             b: { refId: 'b', series: [{ name: 'memory', points: [2, 2] }], meta: {} },
-          }),
+          },
         },
       });
 
