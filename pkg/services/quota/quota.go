@@ -64,7 +64,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 				}
 				continue
 			}
-			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target}
+			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target, TargetConditions: scope.TargetConditions}
 			if err := bus.Dispatch(&query); err != nil {
 				return true, err
 			}
@@ -75,7 +75,12 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 			if !c.IsSignedIn {
 				continue
 			}
-			query := models.GetOrgQuotaByTargetQuery{OrgId: c.OrgId, Target: scope.Target, Default: scope.DefaultLimit}
+			query := models.GetOrgQuotaByTargetQuery{
+				OrgId:            c.OrgId,
+				Target:           scope.Target,
+				TargetConditions: scope.TargetConditions,
+				Default:          scope.DefaultLimit,
+			}
 			if err := bus.Dispatch(&query); err != nil {
 				return true, err
 			}
@@ -93,7 +98,12 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 			if !c.IsSignedIn || c.UserId == 0 {
 				continue
 			}
-			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit}
+			query := models.GetUserQuotaByTargetQuery{
+				UserId:           c.UserId,
+				Target:           scope.Target,
+				TargetConditions: scope.TargetConditions,
+				Default:          scope.DefaultLimit,
+			}
 			if err := bus.Dispatch(&query); err != nil {
 				return true, err
 			}
@@ -118,40 +128,107 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 	switch target {
 	case "user":
 		scopes = append(scopes,
-			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.User},
-			models.QuotaScope{Name: "org", Target: "org_user", DefaultLimit: qs.Cfg.Quota.Org.User},
+			models.QuotaScope{
+				Name:             "global",
+				Target:           target,
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.Global.User,
+			},
+			models.QuotaScope{
+				Name:             "org",
+				Target:           "org_user",
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.Org.User,
+			},
 		)
 		return scopes, nil
 	case "org":
 		scopes = append(scopes,
-			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Org},
-			models.QuotaScope{Name: "user", Target: "org_user", DefaultLimit: qs.Cfg.Quota.User.Org},
+			models.QuotaScope{
+				Name:             "global",
+				Target:           target,
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.Global.Org,
+			},
+			models.QuotaScope{
+				Name:             "user",
+				Target:           "org_user",
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.User.Org,
+			},
 		)
 		return scopes, nil
 	case "dashboard":
 		scopes = append(scopes,
-			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Dashboard},
-			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.Dashboard},
+			models.QuotaScope{
+				Name:             "global",
+				Target:           target,
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.Global.Dashboard,
+			},
+			models.QuotaScope{
+				Name:             "org",
+				Target:           target,
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.Org.Dashboard,
+			},
 		)
 		return scopes, nil
 	case "data_source":
 		scopes = append(scopes,
-			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.DataSource},
-			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.DataSource},
+			models.QuotaScope{
+				Name:             "global",
+				Target:           target,
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.Global.DataSource,
+			},
+			models.QuotaScope{
+				Name:             "org",
+				Target:           target,
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.Org.DataSource,
+			},
 		)
 		return scopes, nil
 	case "api_key":
 		scopes = append(scopes,
-			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.ApiKey},
-			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.ApiKey},
+			models.QuotaScope{
+				Name:             "global",
+				Target:           target,
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.Global.ApiKey,
+			},
+			models.QuotaScope{
+				Name:             "org",
+				Target:           target,
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.Org.ApiKey,
+			},
 		)
 		return scopes, nil
 	case "session":
 		scopes = append(scopes,
-			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Session},
+			models.QuotaScope{
+				Name:             "global",
+				Target:           target,
+				TargetConditions: qs.getQuotaScopeConditions(target),
+				DefaultLimit:     qs.Cfg.Quota.Global.Session,
+			},
 		)
 		return scopes, nil
 	default:
 		return scopes, ErrInvalidQuotaTarget
+	}
+}
+
+// get any extra conditions that are required to properly
+// determine the quota for a given target
+func (qs *QuotaService) getQuotaScopeConditions(target string) string {
+	switch target {
+	case "dashboard":
+		// do not count folders towards dashboard quota
+		return "AND is_folder = 0"
+	default:
+		return ""
 	}
 }

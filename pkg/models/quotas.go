@@ -18,9 +18,10 @@ type Quota struct {
 }
 
 type QuotaScope struct {
-	Name         string
-	Target       string
-	DefaultLimit int64
+	Name             string
+	Target           string
+	TargetConditions string
+	DefaultLimit     int64
 }
 
 type OrgQuotaDTO struct {
@@ -44,10 +45,11 @@ type GlobalQuotaDTO struct {
 }
 
 type GetOrgQuotaByTargetQuery struct {
-	Target  string
-	OrgId   int64
-	Default int64
-	Result  *OrgQuotaDTO
+	Target           string
+	TargetConditions string
+	OrgId            int64
+	Default          int64
+	Result           *OrgQuotaDTO
 }
 
 type GetOrgQuotasQuery struct {
@@ -56,10 +58,11 @@ type GetOrgQuotasQuery struct {
 }
 
 type GetUserQuotaByTargetQuery struct {
-	Target  string
-	UserId  int64
-	Default int64
-	Result  *UserQuotaDTO
+	Target           string
+	TargetConditions string
+	UserId           int64
+	Default          int64
+	Result           *UserQuotaDTO
 }
 
 type GetUserQuotasQuery struct {
@@ -68,9 +71,10 @@ type GetUserQuotasQuery struct {
 }
 
 type GetGlobalQuotaByTargetQuery struct {
-	Target  string
-	Default int64
-	Result  *GlobalQuotaDTO
+	Target           string
+	TargetConditions string
+	Default          int64
+	Result           *GlobalQuotaDTO
 }
 
 type UpdateOrgQuotaCmd struct {
