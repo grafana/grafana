@@ -17,7 +17,9 @@ import { css } from 'emotion';
 import { getAllDataSources, getPromAndLokiDataSources } from '../utils/config';
 import { fetchRulerRules } from '../api/ruler';
 
-interface Props extends FormAPI<any> {}
+interface Props extends FormAPI<any> {
+  setFolder: ({ namespace, group }: { namespace: string; group: string }) => void;
+}
 
 enum ALERT_TYPE {
   THRESHOLD = 'threshold',
@@ -38,7 +40,7 @@ const alertTypeOptions: SelectableValue[] = [
   },
 ];
 
-const AlertTypeSection: FC<Props> = ({ register, control, watch }) => {
+const AlertTypeSection: FC<Props> = ({ register, control, watch, setFolder }) => {
   const styles = getStyles(config.theme);
 
   const alertType = watch('type') as SelectableValue;
@@ -67,8 +69,10 @@ const AlertTypeSection: FC<Props> = ({ register, control, watch }) => {
           name="folder"
           options={folderOptions}
           control={control}
-          onSelect={(val: string) => {
-            console.log(val);
+          changeOnSelect={false}
+          onSelect={(value: string) => {
+            const [namespace, group] = value.split(' > ');
+            setFolder({ namespace, group });
           }}
         />
       </Field>
@@ -105,19 +109,25 @@ const useFolderSelectOptions = (datasource: SelectableValue) => {
 
   useEffect(() => {
     if (datasource?.value) {
-      fetchRulerRules(datasource?.value).then((namespaces) => {
-        console.log(namespaces);
-        const options = Object.entries(namespaces).map(([namespace, group]) => {
-          return {
-            label: namespace,
-            value: namespace,
-            items: group.map(({ name }) => {
-              return { label: name, value: `${namespace} > ${name}` };
-            }),
-          };
+      fetchRulerRules(datasource?.value)
+        .then((namespaces) => {
+          console.log(namespaces);
+          const options: CascaderOption[] = Object.entries(namespaces).map(([namespace, group]) => {
+            return {
+              label: namespace,
+              value: namespace,
+              items: group.map(({ name }) => {
+                return { label: name, value: `${namespace} > ${name}` };
+              }),
+            };
+          });
+          setFolderOptions(options);
+        })
+        .catch((error) => {
+          if (error.status === 404) {
+            setFolderOptions([{ label: 'No folders found', value: '' }]);
+          }
         });
-        setFolderOptions(options);
-      });
     }
   }, [datasource?.value]);
 

@@ -1,11 +1,12 @@
-import React, { FC } from 'react';
-import { PageToolbar, ToolbarButton, stylesFactory, Form } from '@grafana/ui';
-
+import React, { FC, useState } from 'react';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { PageToolbar, ToolbarButton, stylesFactory, Form } from '@grafana/ui';
 import { css } from 'emotion';
+
 import { config } from 'app/core/config';
 import AlertTypeSection from './components/AlertTypeSection';
 import AlertConditionsSection from './components/AlertConditionsSection';
+import AlertDetails from './components/AlertDetails';
 import Expression from './components/Expression';
 
 import { fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
@@ -21,6 +22,8 @@ interface AlertRuleFormFields {
   datasource: SelectableValue;
   expression: string;
   timeUnit: SelectableValue;
+  labels: Array<{ key: string; value: string }>;
+  annotations: Array<{ key: SelectableValue; value: string }>;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -48,32 +51,51 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 const AlertEditor: FC<Props> = () => {
   const styles = getStyles(config.theme);
 
+  const [folder, setFolder] = useState<{ namespace: string; group: string }>();
+
   const handleSubmit = (alertRule: AlertRuleFormFields) => {
-    const { name, expression, forTime, folder, datasource, timeUnit } = alertRule;
-    const [namespace, groupName] = folder?.value;
-    fetchRulerRulesNamespace(datasource?.value, namespace)
-      .then((ruleGroup) => {
-        const group: RulerRuleGroupDTO = ruleGroup.find(({ name }) => name === groupName) || {
-          name: groupName,
-          rules: [] as RulerRuleDTO[],
-        };
-        const alertRule: RulerRuleDTO = {
-          alert: name,
-          expr: expression,
-          for: `${forTime}${timeUnit.value}`,
-        };
+    const { name, expression, forTime, datasource, timeUnit, labels, annotations } = alertRule;
+    const { namespace, group: groupName } = folder || {};
+    if (namespace && groupName) {
+      fetchRulerRulesNamespace(datasource?.value, namespace)
+        .then((ruleGroup) => {
+          const group: RulerRuleGroupDTO = ruleGroup.find(({ name }) => name === groupName) || {
+            name: groupName,
+            rules: [] as RulerRuleDTO[],
+          };
+          const alertRule: RulerRuleDTO = {
+            alert: name,
+            expr: expression,
+            for: `${forTime}${timeUnit.value}`,
+            labels: labels.reduce((acc, { key, value }) => {
+              if (key && value) {
+                acc[key] = value;
+              }
+              return acc;
+            }, {} as Record<string, string>),
+            annotations: annotations.reduce((acc, { key, value }) => {
+              if (key && value) {
+                acc[key.value] = value;
+              }
+              return acc;
+            }, {} as Record<string, string>),
+          };
 
-        group.rules = group?.rules.concat(alertRule);
-
-        return setRulerRuleGroup(datasource?.value, namespace, group);
-      })
-      .then(() => {
-        console.log('Alert rule saved successfully');
-      })
-      .catch((error) => console.error(error));
+          group.rules = group?.rules.concat(alertRule);
+          return setRulerRuleGroup(datasource?.value, namespace, group);
+        })
+        .then(() => {
+          console.log('Alert rule saved successfully');
+        })
+        .catch((error) => console.error(error));
+    }
   };
   return (
-    <Form onSubmit={handleSubmit} className={styles.fullWidth}>
+    <Form
+      onSubmit={handleSubmit}
+      className={styles.fullWidth}
+      defaultValues={{ labels: [{ key: '', value: '' }], annotations: [{ key: {}, value: '' }] }}
+    >
       {(formApi) => (
         <>
           <PageToolbar title="Create alert rule" pageIcon="bell">
@@ -84,10 +106,10 @@ const AlertEditor: FC<Props> = () => {
             <ToolbarButton variant="destructive">Cancel</ToolbarButton>
           </PageToolbar>
           <div className={styles.formWrapper}>
-            <AlertTypeSection {...formApi} />
+            <AlertTypeSection {...formApi} setFolder={setFolder} />
             <Expression {...formApi} />
             <AlertConditionsSection {...formApi} />
-            {/* <AlertDetails {...formApi} /> */}
+            <AlertDetails {...formApi} />
           </div>
         </>
       )}
