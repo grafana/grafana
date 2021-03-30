@@ -11,6 +11,8 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.18.8
 
+replace github.com/prometheus/alertmanager => github.com/gotjosh/alertmanager v0.21.1-0.20210329182206-9ab7cef7510e
+
 require (
 	cloud.google.com/go/storage v1.14.0
 	github.com/BurntSushi/toml v0.3.1
@@ -40,7 +42,7 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
-	github.com/grafana/alerting-api v0.0.0-20210323194814-03a29a4c4c27
+	github.com/grafana/alerting-api v0.0.0-20210330162237-0b5408c529a8
 	github.com/grafana/grafana-aws-sdk v0.3.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.89.0
