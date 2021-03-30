@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -52,26 +51,20 @@ func TestAlertRuleFrequencyParsing(t *testing.T) {
 
 func TestAlertRuleModel(t *testing.T) {
 	sqlstore.InitTestDB(t)
-	Convey("Testing alert rule", t, func() {
-		RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
-			return &FakeCondition{}, nil
-		})
+	RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
+		return &FakeCondition{}, nil
+	})
 
-		Convey("should return err for empty string", func() {
-			_, err := getTimeDurationStringToSeconds("")
-			So(err, ShouldNotBeNil)
-		})
+	firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
+	err := sqlstore.CreateAlertNotificationCommand(&firstNotification)
+	require.Nil(t, err)
+	secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
+	err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
+	require.Nil(t, err)
 
-		Convey("can construct alert rule model", func() {
-			firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
-			err := sqlstore.CreateAlertNotificationCommand(&firstNotification)
-			So(err, ShouldBeNil)
-			secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
-			err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
-			So(err, ShouldBeNil)
+	t.Run("Testing alert rule with notification id and uid", func(t *testing.T) {
 
-			Convey("with notification id and uid", func() {
-				json := `
+		json := `
 				{
 					"name": "name2",
 					"description": "desc2",
@@ -92,33 +85,30 @@ func TestAlertRuleModel(t *testing.T) {
 				}
 				`
 
-				alertJSON, jsonErr := simplejson.NewJson([]byte(json))
-				So(jsonErr, ShouldBeNil)
+		alertJSON, jsonErr := simplejson.NewJson([]byte(json))
+		require.Nil(t, jsonErr)
 
-				alert := &models.Alert{
-					Id:          1,
-					OrgId:       1,
-					DashboardId: 1,
-					PanelId:     1,
+		alert := &models.Alert{
+			Id:          1,
+			OrgId:       1,
+			DashboardId: 1,
+			PanelId:     1,
 
-					Settings: alertJSON,
-				}
+			Settings: alertJSON,
+		}
 
-				alertRule, err := NewRuleFromDBAlert(alert, false)
-				So(err, ShouldBeNil)
+		alertRule, err := NewRuleFromDBAlert(alert, false)
+		require.Nil(t, err)
 
-				So(len(alertRule.Conditions), ShouldEqual, 1)
-				So(len(alertRule.Notifications), ShouldEqual, 2)
+		require.Len(t, alertRule.Conditions, 1)
+		require.Len(t, alertRule.Notifications, 2)
 
-				Convey("Can read Id and Uid notifications (translate Id to Uid)", func() {
-					So(alertRule.Notifications, ShouldContain, "notifier2")
-					So(alertRule.Notifications, ShouldContain, "notifier1")
-				})
-			})
-		})
+		require.Contains(t, alertRule.Notifications, "notifier2")
+		require.Contains(t, alertRule.Notifications, "notifier1")
+	})
 
-		Convey("with non existing notification id", func() {
-			json := `
+	t.Run("Testing alert rule with non existing notification id", func(t *testing.T) {
+		json := `
 				{
 					"name": "name3",
 					"description": "desc3",
@@ -134,28 +124,26 @@ func TestAlertRuleModel(t *testing.T) {
 				}
 				`
 
-			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
-			So(jsonErr, ShouldBeNil)
+		alertJSON, jsonErr := simplejson.NewJson([]byte(json))
+		require.Nil(t, jsonErr)
 
-			alert := &models.Alert{
-				Id:          1,
-				OrgId:       1,
-				DashboardId: 1,
-				PanelId:     1,
+		alert := &models.Alert{
+			Id:          1,
+			OrgId:       1,
+			DashboardId: 1,
+			PanelId:     1,
 
-				Settings: alertJSON,
-			}
+			Settings: alertJSON,
+		}
 
-			alertRule, err := NewRuleFromDBAlert(alert, false)
-			Convey("swallows the error", func() {
-				So(err, ShouldBeNil)
-				So(alertRule.Notifications, ShouldNotContain, "999")
-				So(alertRule.Notifications, ShouldContain, "notifier2")
-			})
-		})
+		alertRule, err := NewRuleFromDBAlert(alert, false)
+		require.Nil(t, err)
+		require.NotContains(t, alertRule.Notifications, "999")
+		require.Contains(t, alertRule.Notifications, "notifier2")
+	})
 
-		Convey("can construct alert rule model with invalid frequency", func() {
-			json := `
+	t.Run("Testing alert rule which can construct alert rule model with invalid frequency", func(t *testing.T) {
+		json := `
 			{
 				"name": "name2",
 				"description": "desc2",
@@ -166,26 +154,27 @@ func TestAlertRuleModel(t *testing.T) {
 				"notifications": []
 			}`
 
-			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
-			So(jsonErr, ShouldBeNil)
+		alertJSON, jsonErr := simplejson.NewJson([]byte(json))
+		require.Nil(t, jsonErr)
 
-			alert := &models.Alert{
-				Id:          1,
-				OrgId:       1,
-				DashboardId: 1,
-				PanelId:     1,
-				Frequency:   0,
+		alert := &models.Alert{
+			Id:          1,
+			OrgId:       1,
+			DashboardId: 1,
+			PanelId:     1,
+			Frequency:   0,
 
-				Settings: alertJSON,
-			}
+			Settings: alertJSON,
+		}
 
-			alertRule, err := NewRuleFromDBAlert(alert, false)
-			So(err, ShouldBeNil)
-			So(alertRule.Frequency, ShouldEqual, 60)
-		})
+		alertRule, err := NewRuleFromDBAlert(alert, false)
+		require.Nil(t, err)
+		require.EqualValues(t, alertRule.Frequency, 60)
+	})
 
-		Convey("raise error in case of missing notification id and uid", func() {
-			json := `
+	t.Run("Testing alert rule which will raise error in case of missing notification id and uid", func(t *testing.T) {
+
+		json := `
 			{
 				"name": "name2",
 				"description": "desc2",
@@ -204,22 +193,21 @@ func TestAlertRuleModel(t *testing.T) {
 			}
 			`
 
-			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
-			So(jsonErr, ShouldBeNil)
+		alertJSON, jsonErr := simplejson.NewJson([]byte(json))
+		require.Nil(t, jsonErr)
 
-			alert := &models.Alert{
-				Id:          1,
-				OrgId:       1,
-				DashboardId: 1,
-				PanelId:     1,
-				Frequency:   0,
+		alert := &models.Alert{
+			Id:          1,
+			OrgId:       1,
+			DashboardId: 1,
+			PanelId:     1,
+			Frequency:   0,
 
-				Settings: alertJSON,
-			}
+			Settings: alertJSON,
+		}
 
-			_, err := NewRuleFromDBAlert(alert, false)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "alert validation error: Neither id nor uid is specified in 'notifications' block, type assertion to string failed AlertId: 1 PanelId: 1 DashboardId: 1")
-		})
+		_, err := NewRuleFromDBAlert(alert, false)
+		require.NotNil(t, err)
+		require.EqualValues(t, err.Error(), "alert validation error: Neither id nor uid is specified in 'notifications' block, type assertion to string failed AlertId: 1 PanelId: 1 DashboardId: 1")
 	})
 }
