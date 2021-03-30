@@ -77,6 +77,7 @@ func (ng *AlertNG) Init() error {
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
 		Store:           store,
+		RuleStore:       store,
 		Alertmanager:    ng.Alertmanager,
 	}
 	api.RegisterAPIEndpoints()
@@ -109,4 +110,7 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	addAlertDefinitionVersionMigrations(mg)
 	// Create alert_instance table
 	alertInstanceMigration(mg)
+	// Create alert_rule
+	addAlertRuleMigrations(mg)
+	addAlertRuleVersionMigrations(mg)
 }

@@ -19,6 +19,9 @@ var TimeNow = time.Now
 // AlertDefinitionMaxTitleLength is the maximum length of the alert definition titles
 const AlertDefinitionMaxTitleLength = 190
 
+// AlertRuleMaxTitleLength is the maximum length of the alert definition titles
+const AlertRuleMaxTitleLength = 190
+
 // ErrEmptyTitleError is an error returned if the alert definition title is empty
 var ErrEmptyTitleError = errors.New("title is empty")
 
