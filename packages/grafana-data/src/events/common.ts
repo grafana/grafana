@@ -5,14 +5,14 @@ import { BusEventWithPayload } from './types';
 export interface DataHoverPayload {
   raw: any; // Original mouse event (includes pageX etc)
 
-  x: Record<string, number>; // { time: 5678 },
-  y: Record<string, number>; // { __fixed: 123, lengthft: 456 }  // each axis|scale gets a value
+  x: Record<string, any>; // { time: 5678 },
+  y: Record<string, any>; // { __fixed: 123, lengthft: 456 }  // each axis|scale gets a value
 
   data?: DataFrame; // source data
   rowIndex?: number; // the hover row
   columnIndex?: number; // the hover column
 
-  // Drag events
+  // When dragging, this will capture the original state
   down?: Omit<DataHoverPayload, 'down'>;
 }
 
