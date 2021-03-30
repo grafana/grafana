@@ -58,7 +58,7 @@ func TestDashboardValidity(t *testing.T) {
 	// TODO FIXME remove this once we actually have dashboard schema filled in
 	// enough that the tests pass, lol
 	t.Skip()
-	validdir := os.DirFS(filepath.Join("testdata", "dashboards", "valid"))
+	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "dashboards"))
 
 	dash, err := BaseDashboardScuemata(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
@@ -78,11 +78,11 @@ func TestDashboardValidity(t *testing.T) {
 			require.NoError(t, err, "failed to open dashboard file")
 
 			t.Run("base", func(t *testing.T) {
-				_, err := schema.SearchAndValidate(dash, schema.Resource{Value: b})
+				_, err := schema.SearchAndValidate(dash, b)
 				require.NoError(t, err, "dashboard failed validation")
 			})
 			t.Run("dist", func(t *testing.T) {
-				_, err := schema.SearchAndValidate(ddash, schema.Resource{Value: b})
+				_, err := schema.SearchAndValidate(ddash, b)
 				require.NoError(t, err, "dashboard failed validation")
 			})
 		})

@@ -2,17 +2,7 @@
 // (actually this is a handwritten mockup with explanatory comments right now,
 // but it's representative!)
 
-import { ModelSchemaInfo } from '@grafana/data';
 import { TableCellDisplayMode, TableSortByFieldState } from '@grafana/ui';
-
-// Only the latest schema version is translated to TypeScript, on the premise
-// that either the dashboard loading process, or (eventually) CUE-defined
-// migrations ensure that bulk of the frontend application only ever
-// need directly consider the most recent version of the schema.
-export const schemaInfo: ModelSchemaInfo = {
-  version: Object.freeze([1, 0]),
-  changed: '2021/03/25',
-};
 
 export interface PanelOptions {
   frameIndex: number;

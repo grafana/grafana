@@ -1,6 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
-import { schemaInfo, PanelOptions, PanelFieldConfig, defatulPanelOptions, defatulPanelFieldConfig } from './models.gen';
+import { schemaInfo, PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { TableCellDisplayMode } from '@grafana/ui';
 
@@ -33,7 +33,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
               { label: 'right', value: 'right' },
             ],
           },
-          defaultValue: defatulPanelFieldConfig.align,
+          defaultValue: defaultPanelFieldConfig.align,
         })
         .addSelect({
           path: 'displayMode',
@@ -51,13 +51,13 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
               { value: TableCellDisplayMode.Image, label: 'Image' },
             ],
           },
-          defaultValue: defatulPanelFieldConfig.displayMode,
+          defaultValue: defaultPanelFieldConfig.displayMode,
         })
         .addBooleanSwitch({
           path: 'filterable',
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
-          defaultValue: defatulPanelFieldConfig.filterable,
+          defaultValue: defaultPanelFieldConfig.filterable,
         });
     },
   })
@@ -66,6 +66,6 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
       path: 'showHeader',
       name: 'Show header',
       description: "To display table's header or not to display",
-      defaultValue: defatulPanelOptions.showHeader,
+      defaultValue: defaultPanelOptions.showHeader,
     });
   });
