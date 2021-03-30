@@ -13,9 +13,8 @@ import (
 
 // corePlugin represents a plugin that's part of Grafana core.
 type corePlugin struct {
-	isDataPlugin bool
-	pluginID     string
-	logger       log.Logger
+	pluginID string
+	logger   log.Logger
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
@@ -44,10 +43,6 @@ func (cp *corePlugin) Logger() log.Logger {
 	return cp.logger
 }
 
-func (cp *corePlugin) CanHandleDataQueries() bool {
-	return cp.isDataPlugin
-}
-
 func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	// TODO: Inline the adapter, since it shouldn't be necessary
@@ -57,7 +52,6 @@ func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (cp *corePlugin) Start(ctx context.Context) error {
-	cp.isDataPlugin = cp.QueryDataHandler != nil
 	return nil
 }
 

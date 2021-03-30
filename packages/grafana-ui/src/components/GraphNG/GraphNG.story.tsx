@@ -1,38 +1,42 @@
 import { FieldColorModeId, toDataFrame, dateTime } from '@grafana/data';
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { GraphNG } from './GraphNG';
-import { LegendDisplayMode } from '../VizLegend/types';
+import { GraphNG, GraphNGProps } from './GraphNG';
+import { LegendDisplayMode, LegendPlacement } from '../VizLegend/types';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { useTheme } from '../../themes';
-import { text, select } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 export default {
   title: 'Visualizations/GraphNG',
   component: GraphNG,
   decorators: [withCenteredStory],
   parameters: {
-    docs: {},
+    knobs: {
+      disable: true,
+    },
+  },
+  argTypes: {
+    legendDisplayMode: { control: { type: 'radio', options: ['table', 'list', 'hidden'] } },
+    placement: { control: { type: 'radio', options: ['bottom', 'right'] } },
+    timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
+    width: { control: { type: 'range', min: 200, max: 800 } },
+    height: { control: { type: 'range', min: 200, max: 800 } },
+    className: NOOP_CONTROL,
+    timeRange: NOOP_CONTROL,
+    data: NOOP_CONTROL,
+    legend: NOOP_CONTROL,
+    fields: NOOP_CONTROL,
   },
 };
 
-const getKnobs = () => {
-  return {
-    unit: text('Unit', 'short'),
-    legendPlacement: select(
-      'Legend placement',
-      {
-        bottom: 'bottom',
-        right: 'right',
-      },
-      'bottom'
-    ),
-  };
-};
-
-export const Lines: React.FC = () => {
-  const { unit, legendPlacement } = getKnobs();
-
+interface StoryProps extends GraphNGProps {
+  legendDisplayMode: string;
+  placement: LegendPlacement;
+  unit: string;
+}
+export const Lines: Story<StoryProps> = ({ placement, unit, legendDisplayMode, ...args }) => {
   const theme = useTheme();
   const seriesA = toDataFrame({
     target: 'SeriesA',
@@ -51,19 +55,34 @@ export const Lines: React.FC = () => {
 
   return (
     <GraphNG
+      {...args}
       data={data}
-      width={600}
-      height={400}
-      timeRange={{
-        from: dateTime(1546372800000),
-        to: dateTime(1546380000000),
-        raw: {
-          from: dateTime(1546372800000),
-          to: dateTime(1546380000000),
-        },
+      legend={{
+        displayMode:
+          legendDisplayMode === 'hidden'
+            ? LegendDisplayMode.Hidden
+            : legendDisplayMode === 'table'
+            ? LegendDisplayMode.Table
+            : LegendDisplayMode.List,
+        placement: placement,
+        calcs: [],
       }}
-      legend={{ displayMode: LegendDisplayMode.List, placement: legendPlacement, calcs: [] }}
-      timeZone="browser"
     />
   );
+};
+Lines.args = {
+  width: 600,
+  height: 400,
+  timeRange: {
+    from: dateTime(1546372800000),
+    to: dateTime(1546380000000),
+    raw: {
+      from: dateTime(1546372800000),
+      to: dateTime(1546380000000),
+    },
+  },
+  legendDisplayMode: 'list',
+  placement: 'bottom',
+  unit: 'short',
+  timeZone: 'browser',
 };
