@@ -16,7 +16,7 @@ import (
 
 func TestPrometheus(t *testing.T) {
 	json, _ := simplejson.NewJson([]byte(`
-		{ "customQueryParameters": "custom=param"}
+		{ "customQueryParameters": "custom=par/am&second=f oo"}
 	`))
 	dsInfo := &models.DataSource{
 		JsonData: json,
@@ -122,7 +122,7 @@ func TestPrometheus(t *testing.T) {
 			return rt, nil
 		}
 		_, _ = executor.DataQuery(context.Background(), dsInfo, query)
-		require.Equal(t, "custom=param", queryParams)
+		require.Equal(t, "custom=par%2Fam&second=f+oo", queryParams)
 	})
 }
 

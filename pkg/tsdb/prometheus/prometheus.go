@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -42,10 +43,22 @@ func (transport *prometheusTransport) RoundTrip(req *http.Request) (*http.Respon
 		req.SetBasicAuth(transport.username, transport.password)
 	}
 
-	if req.URL.RawQuery != "" {
-		req.URL.RawQuery = fmt.Sprintf("%s&%s", req.URL.RawQuery, transport.customQueryParameters)
-	} else {
-		req.URL.RawQuery = transport.customQueryParameters
+	if transport.customQueryParameters != "" {
+		params := url.Values{}
+		for _, param := range strings.Split(transport.customQueryParameters, "&") {
+			parts := strings.Split(param, "=")
+			if len(parts) == 1 {
+				// This is probably a mistake on the users part in defining the params but we don't want to crash.
+				params.Add(parts[0], "")
+			} else {
+				params.Add(parts[0], parts[1])
+			}
+		}
+		if req.URL.RawQuery != "" {
+			req.URL.RawQuery = fmt.Sprintf("%s&%s", req.URL.RawQuery, params.Encode())
+		} else {
+			req.URL.RawQuery = params.Encode()
+		}
 	}
 
 	return transport.Transport.RoundTrip(req)
