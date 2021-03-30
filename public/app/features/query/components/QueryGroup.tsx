@@ -1,31 +1,32 @@
-// Libraries
 import React, { PureComponent } from 'react';
-// Components
+import { Subscription, Unsubscribable } from 'rxjs';
+import { css } from 'emotion';
 import { Button, CustomScrollbar, HorizontalGroup, Icon, Modal, stylesFactory, Tooltip } from '@grafana/ui';
-import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
-import { QueryEditorRows } from './QueryEditorRows';
-// Services
-import { backendSrv } from 'app/core/services/backend_srv';
+import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import config from 'app/core/config';
-// Types
 import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
+  EventBusExtended,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { backendSrv } from 'app/core/services/backend_srv';
+import { QueryEditorRows } from './QueryEditorRows';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
-import { Unsubscribable } from 'rxjs';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
-import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { css } from 'emotion';
 import { QueryGroupOptions } from 'app/types';
+import { VariablesChangedEvent } from '../../../types/events';
+import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
+import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
 
 interface Props {
   queryRunner: PanelQueryRunner;
@@ -33,6 +34,7 @@ interface Props {
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
   onOptionsChange: (options: QueryGroupOptions) => void;
+  dashboardEvents?: EventBusExtended;
 }
 
 interface State {
@@ -51,6 +53,8 @@ export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
   querySubscription: Unsubscribable | null;
+  private readonly eventsSubscription?: Subscription;
+  private readonly templateSrv: TemplateSrv;
 
   state: State = {
     isLoadingHelp: false,
@@ -66,26 +70,71 @@ export class QueryGroup extends PureComponent<Props, State> {
     },
   };
 
+  constructor(props: Props) {
+    super(props);
+    this.templateSrv = getTemplateSrv();
+    this.variableChanged = this.variableChanged.bind(this);
+    this.eventsSubscription = new Subscription();
+    if (props.dashboardEvents) {
+      this.eventsSubscription.add(props.dashboardEvents.subscribe(VariablesChangedEvent, this.variableChanged));
+    }
+  }
+
   async componentDidMount() {
-    const { queryRunner, options } = this.props;
+    const { queryRunner } = this.props;
 
     this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
-    try {
-      const ds = await this.dataSourceSrv.get(options.dataSource.name);
-      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
-      this.setState({ dataSource: ds, dsSettings });
-    } catch (error) {
-      console.log('failed to load data source', error);
-    }
+    await this.loadDatasource();
   }
 
   componentWillUnmount() {
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;
+    }
+
+    if (this.eventsSubscription) {
+      this.eventsSubscription.unsubscribe();
+    }
+  }
+
+  async variableChanged(event: VariablesChangedEvent) {
+    const interpolatedNames = [this.getDatasourceInterpolatedName(this.props)]
+      .concat(this.getMixedDatasourceInterpolatedNames(this.props))
+      .filter((q) => Boolean(q));
+
+    if (interpolatedNames.includes(event.payload.name)) {
+      await this.loadDatasource();
+    }
+  }
+
+  getDatasourceInterpolatedName(props: Props) {
+    if (props.options.dataSource.name === MIXED_DATASOURCE_NAME) {
+      return null;
+    }
+
+    return this.templateSrv.getVariableName(this.props.options.dataSource.name ?? '');
+  }
+
+  getMixedDatasourceInterpolatedNames(props: Props) {
+    if (props.options.dataSource.name !== MIXED_DATASOURCE_NAME) {
+      return [];
+    }
+
+    return props.options.queries.map((q) => this.templateSrv.getVariableName(q.datasource ?? ''));
+  }
+
+  async loadDatasource() {
+    const { options } = this.props;
+    try {
+      const ds = await this.dataSourceSrv.get(options.dataSource.name);
+      const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
+      this.setState({ dataSource: ds, dsSettings });
+    } catch (error) {
+      console.log('failed to load data source', error);
     }
   }
 

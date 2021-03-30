@@ -1,4 +1,5 @@
 import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaTheme, TimeRange } from '@grafana/data';
+import { VariableModel } from '../features/variables/types';
 
 /**
  * Event Payloads
@@ -183,4 +184,8 @@ export class HideModalEvent extends BusEventBase {
 
 export class DashboardSavedEvent extends BusEventBase {
   static type = 'dashboard-saved';
+}
+
+export class VariablesChangedEvent extends BusEventWithPayload<VariableModel> {
+  static type = 'variables-changed';
 }

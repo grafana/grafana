@@ -10,6 +10,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getVariable } from '../state/selectors';
 import { DataSourceVariableModel } from '../types';
 import { changeVariableEditorExtended } from '../editor/reducer';
+import { VariablesChangedEvent } from '../../../types/events';
 
 export interface DataSourceVariableActionDependencies {
   getDatasourceSrv: typeof getDatasourceSrv;
@@ -30,6 +31,10 @@ export const updateDataSourceVariableOptions = (
 
   dispatch(createDataSourceOptions(toVariablePayload(identifier, { sources, regex })));
   await dispatch(validateVariableSelectionState(identifier));
+  const dash = getState().dashboard.getModel();
+  if (dash) {
+    dash.events.publish(new VariablesChangedEvent(variableInState));
+  }
 };
 
 export const initDataSourceVariableEditor = (

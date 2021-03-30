@@ -1,12 +1,12 @@
-// Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import _ from 'lodash';
-// Utils & Services
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader, getTemplateSrv } from '@grafana/runtime';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ErrorBoundaryAlert, HorizontalGroup, InfoBox } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import {
   DataQuery,
   DataSourceApi,
@@ -26,8 +26,8 @@ import {
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
-import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from 'app/features/dashboard/state';
+import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
 
 interface Props {
   data: PanelData;
@@ -150,7 +150,11 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
 
     // check if we need to load another datasource
-    if (datasource && loadedDataSourceIdentifier !== this.getQueryDataSourceIdentifier()) {
+    if (
+      (datasource && loadedDataSourceIdentifier !== this.getQueryDataSourceIdentifier()) ||
+      this.hasDatasourceSettingsChanged(this.props, prevProps) ||
+      this.hasMixedDatasourceChanged(this.props, prevProps)
+    ) {
       if (this.angularQueryEditor) {
         this.angularQueryEditor.destroy();
         this.angularQueryEditor = null;
@@ -165,6 +169,20 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
     this.renderAngularQueryEditor();
   }
+
+  hasDatasourceSettingsChanged = (props: Props, prevProps: Props) => {
+    return props.dsSettings !== prevProps.dsSettings;
+  };
+
+  hasMixedDatasourceChanged = (props: Props, prevProps: Props) => {
+    if (props.dsSettings.name !== MIXED_DATASOURCE_NAME) {
+      return false;
+    }
+
+    const prevInterpolatedNames = prevProps.queries.map((q) => q.datasource ?? '').filter((q) => Boolean(q));
+    const interpolatedNames = props.queries.map((q) => q.datasource ?? '').filter((q) => Boolean(q));
+    return prevInterpolatedNames !== interpolatedNames;
+  };
 
   renderAngularQueryEditor = () => {
     if (!this.element) {
@@ -336,7 +354,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
     const editor = this.renderPluginEditor();
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
-
     return (
       <div aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow

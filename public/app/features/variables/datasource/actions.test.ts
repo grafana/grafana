@@ -16,6 +16,8 @@ import { addVariable, setCurrentVariableValue } from '../state/sharedReducer';
 import { changeVariableEditorExtended } from '../editor/reducer';
 import { datasourceBuilder } from '../shared/testing/builders';
 import { getDataSourceInstanceSetting } from '../shared/testing/helpers';
+import { VariablesChangedEvent } from '../../../types/events';
+import { DataSourceVariableModel } from '../types';
 
 interface Args {
   sources?: DataSourceInstanceSettings[];
@@ -47,8 +49,14 @@ describe('data source actions', () => {
           sources,
           query: 'mock-data-id',
         });
+        const publish = jest.fn();
+        const preloadedState: any = {
+          dashboard: {
+            getModel: () => ({ processRepeats: jest.fn(), startRefresh: jest.fn(), events: { publish } }),
+          },
+        };
 
-        const tester = await reduxTester<RootReducerType>()
+        const tester = await reduxTester<RootReducerType>({ preloadedState })
           .givenRootReducer(getRootReducer())
           .whenActionIsDispatched(
             addVariable(toVariablePayload(datasource, { global: false, index: 0, model: datasource }))
@@ -79,6 +87,10 @@ describe('data source actions', () => {
         expect(getListMock).toHaveBeenCalledTimes(1);
         expect(getListMock).toHaveBeenCalledWith({ metrics: true, variables: false });
         expect(getDatasourceSrvMock).toHaveBeenCalledTimes(1);
+        expect(publish).toHaveBeenCalledTimes(1);
+        expect(publish).toHaveBeenCalledWith(
+          new VariablesChangedEvent({ ...datasource, global: false, index: 0, regex: '' } as DataSourceVariableModel)
+        );
       });
     });
 

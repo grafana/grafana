@@ -1,11 +1,14 @@
 import React, { PureComponent } from 'react';
-import { QueryGroup } from 'app/features/query/components/QueryGroup';
-import { PanelModel } from '../../state';
 import { getLocationSrv } from '@grafana/runtime';
-import { QueryGroupOptions } from 'app/types';
 import { DataQuery } from '@grafana/data';
 
+import { QueryGroup } from 'app/features/query/components/QueryGroup';
+import { DashboardModel, PanelModel } from '../../state';
+import { QueryGroupOptions } from 'app/types';
+
 interface Props {
+  /** Current dashboard */
+  dashboard: DashboardModel;
   /** Current panel */
   panel: PanelModel;
   /** Added here to make component re-render when queries change from outside */
@@ -13,10 +16,6 @@ interface Props {
 }
 
 export class PanelEditorQueries extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props);
-  }
-
   buildQueryOptions(panel: PanelModel): QueryGroupOptions {
     return {
       dataSource: {
@@ -58,7 +57,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
   };
 
   render() {
-    const { panel } = this.props;
+    const { panel, dashboard } = this.props;
     const options = this.buildQueryOptions(panel);
 
     return (
@@ -68,6 +67,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
         onRunQueries={this.onRunQueries}
         onOpenQueryInspector={this.onOpenQueryInspector}
         onOptionsChange={this.onOptionsChange}
+        dashboardEvents={dashboard.events}
       />
     );
   }

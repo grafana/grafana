@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 /** @internal */
 export function useForceUpdate() {
-  const [value, setValue] = useState(0); // integer state
-  return () => setValue(value + 1); // update the state to force render
+  // @ts-ignore ignoring the return value and using the callback setter instead
+  const [_, setValue] = useState(0); // integer state
+  return () => setValue((v) => v + 1); // update the state to force render
 }

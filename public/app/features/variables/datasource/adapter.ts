@@ -25,7 +25,7 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
       }
       return false;
     },
-    setValue: async (variable, option, emitChanges = false) => {
+    setValue: async (variable, option, emitChanges = true) => {
       await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
