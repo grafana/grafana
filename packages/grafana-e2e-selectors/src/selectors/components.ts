@@ -84,7 +84,7 @@ export const Components = {
     Query: {
       content: 'Panel inspector Query content',
       refreshButton: 'Panel inspector Query refresh button',
-      jsonRefIds: () => '.json-formatter-string', // the refIds
+      jsonObjectKeys: () => '.json-formatter-key',
     },
   },
   Tab: {

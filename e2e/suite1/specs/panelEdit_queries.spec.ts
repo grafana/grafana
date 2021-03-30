@@ -73,8 +73,8 @@ e2e.scenario({
     // Disable / enable row
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
-      expect(keys[length - 2].innerText).equals('"B"');
-      expect(keys[length - 1].innerText).equals('"A"');
+      expect(keys[length - 2].innerText).equals('A:');
+      expect(keys[length - 1].innerText).equals('B:');
     });
 
     // Disable row with refId A
@@ -84,7 +84,7 @@ e2e.scenario({
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
-      expect(keys[length - 1].innerText).equals('"B"');
+      expect(keys[length - 1].innerText).equals('B:');
     });
 
     // Enable row with refId B
@@ -94,8 +94,8 @@ e2e.scenario({
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
-      expect(keys[length - 2].innerText).equals('"B"');
-      expect(keys[length - 1].innerText).equals('"A"');
+      expect(keys[length - 2].innerText).equals('A:');
+      expect(keys[length - 1].innerText).equals('B:');
     });
   },
 });
@@ -107,7 +107,7 @@ const expectInspectorResultAndClose = (expectCallBack: (keys: any[]) => void) =>
 
   e2e().wait('@apiPostQuery');
 
-  e2e.components.PanelInspector.Query.jsonRefIds()
+  e2e.components.PanelInspector.Query.jsonObjectKeys()
     .should('be.visible')
     .within((keys: any) => expectCallBack(keys));
 
