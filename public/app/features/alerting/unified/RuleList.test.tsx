@@ -15,7 +15,7 @@ import {
   mockPromRuleGroup,
   mockPromRuleNamespace,
 } from './mocks';
-import { DataSourceType } from './utils/datasource';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { SerializedError } from '@reduxjs/toolkit';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import userEvent from '@testing-library/user-event';
@@ -110,20 +110,33 @@ describe('RuleList', () => {
         ]);
       } else if (dataSourceName === dataSources.promBroken.name) {
         return Promise.reject({ message: 'this datasource is broken' } as SerializedError);
+      } else if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+        return Promise.resolve([
+          mockPromRuleNamespace({
+            name: '',
+            dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+            groups: [
+              mockPromRuleGroup({
+                name: 'grafana-group',
+              }),
+            ],
+          }),
+        ]);
       }
       return Promise.reject(new Error(`unexpected datasourceName: ${dataSourceName}`));
     });
 
     await renderRuleList();
 
-    await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(4));
     const groups = await ui.ruleGroup.findAll();
-    expect(groups).toHaveLength(4);
+    expect(groups).toHaveLength(5);
 
-    expect(groups[0]).toHaveTextContent('default > group-1');
+    expect(groups[0]).toHaveTextContent('grafana-group');
     expect(groups[1]).toHaveTextContent('default > group-1');
-    expect(groups[2]).toHaveTextContent('default > group-2');
-    expect(groups[3]).toHaveTextContent('lokins > group-1');
+    expect(groups[2]).toHaveTextContent('default > group-1');
+    expect(groups[3]).toHaveTextContent('default > group-2');
+    expect(groups[4]).toHaveTextContent('lokins > group-1');
 
     const errors = await ui.cloudRulesSourceErrors.find();
 
@@ -132,66 +145,72 @@ describe('RuleList', () => {
 
   it('expand rule group, rule and alert details', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
-    mocks.api.fetchRules.mockResolvedValue([
-      mockPromRuleNamespace({
-        groups: [
-          mockPromRuleGroup({
-            name: 'group-1',
-          }),
-          mockPromRuleGroup({
-            name: 'group-2',
-            rules: [
-              mockPromRecordingRule({
-                name: 'recordingrule',
+    mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
+      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+        return Promise.resolve([]);
+      } else {
+        return Promise.resolve([
+          mockPromRuleNamespace({
+            groups: [
+              mockPromRuleGroup({
+                name: 'group-1',
               }),
-              mockPromAlertingRule({
-                name: 'alertingrule',
-                labels: {
-                  severity: 'warning',
-                  foo: 'bar',
-                },
-                query: 'topk(5, foo)[5m]',
-                annotations: {
-                  message: 'great alert',
-                },
-                alerts: [
-                  mockPromAlert({
-                    labels: {
-                      foo: 'bar',
-                      severity: 'warning',
-                    },
-                    value: '2e+10',
-                    annotations: {
-                      message: 'first alert message',
-                    },
+              mockPromRuleGroup({
+                name: 'group-2',
+                rules: [
+                  mockPromRecordingRule({
+                    name: 'recordingrule',
                   }),
-                  mockPromAlert({
+                  mockPromAlertingRule({
+                    name: 'alertingrule',
                     labels: {
-                      foo: 'baz',
-                      severity: 'error',
+                      severity: 'warning',
+                      foo: 'bar',
                     },
-                    value: '3e+11',
+                    query: 'topk(5, foo)[5m]',
                     annotations: {
-                      message: 'first alert message',
+                      message: 'great alert',
                     },
+                    alerts: [
+                      mockPromAlert({
+                        labels: {
+                          foo: 'bar',
+                          severity: 'warning',
+                        },
+                        value: '2e+10',
+                        annotations: {
+                          message: 'first alert message',
+                        },
+                      }),
+                      mockPromAlert({
+                        labels: {
+                          foo: 'baz',
+                          severity: 'error',
+                        },
+                        value: '3e+11',
+                        annotations: {
+                          message: 'first alert message',
+                        },
+                      }),
+                    ],
+                  }),
+                  mockPromAlertingRule({
+                    name: 'p-rule',
+                    alerts: [],
+                    state: PromAlertingRuleState.Pending,
+                  }),
+                  mockPromAlertingRule({
+                    name: 'i-rule',
+                    alerts: [],
+                    state: PromAlertingRuleState.Inactive,
                   }),
                 ],
               }),
-              mockPromAlertingRule({
-                name: 'p-rule',
-                alerts: [],
-                state: PromAlertingRuleState.Pending,
-              }),
-              mockPromAlertingRule({
-                name: 'i-rule',
-                alerts: [],
-                state: PromAlertingRuleState.Inactive,
-              }),
             ],
           }),
-        ],
-      }),
-    ]);
+        ]);
+      }
+    });
 
     await renderRuleList();
 
