@@ -72,16 +72,19 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     }
 
     renderLink(variable: VariableWithOptions) {
+      const { picker } = this.props;
       const linkText = formatVariableLabel(variable);
       const tags = getSelectedTags(variable);
       const loading = variable.state === LoadingState.Loading;
+      const disabled = Boolean(picker.id && picker.id !== variable.id);
 
       return (
         <VariableLink
           text={linkText}
           tags={tags}
-          onClick={this.onShowOptions}
           loading={loading}
+          disabled={disabled}
+          onClick={this.onShowOptions}
           onCancel={this.onCancel}
         />
       );

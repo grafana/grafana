@@ -1,5 +1,5 @@
 import React, { FC, MouseEvent, useCallback } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import { getTagColorsFromName, Icon, Tooltip, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { GrafanaTheme } from '@grafana/data';
@@ -7,33 +7,37 @@ import { GrafanaTheme } from '@grafana/data';
 import { VariableTag } from '../../types';
 
 interface Props {
-  onClick: () => void;
   text: string;
   tags: VariableTag[];
   loading: boolean;
+  disabled: boolean;
+  onClick: () => void;
   onCancel: () => void;
 }
 
-export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, tags, text, onCancel }) => {
+export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, tags, text, onCancel, disabled }) => {
   const styles = useStyles(getStyles);
   const onClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
       event.stopPropagation();
       event.preventDefault();
-      propsOnClick();
+      if (!disabled && !loading) {
+        propsOnClick();
+        return;
+      }
     },
-    [propsOnClick]
+    [propsOnClick, disabled, loading]
   );
 
-  if (loading) {
+  if (loading || disabled) {
     return (
       <div
-        className={styles.container}
+        className={cx(styles.container, styles.loading)}
         aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(`${text}`)}
         title={text}
       >
         <VariableLinkText tags={tags} text={text} />
-        <LoadingIndicator onCancel={onCancel} />
+        {loading && <LoadingIndicator onCancel={onCancel} />}
       </div>
     );
   }
@@ -110,6 +114,9 @@ const getStyles = (theme: GrafanaTheme) => ({
     .label-tag {
       margin: 0 5px;
     }
+  `,
+  loading: css`
+    cursor: not-allowed;
   `,
   textAndTags: css`
     overflow: hidden;
