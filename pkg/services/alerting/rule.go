@@ -3,7 +3,7 @@ package alerting
 import (
 	"errors"
 	"fmt"
-	"regexp"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -12,12 +12,22 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+var unitMultiplier = map[string]int{
+	"s": 1,
+	"m": 60,
+	"h": 3600,
+	"d": 86400,
+}
+
 var (
 	// ErrFrequencyCannotBeZeroOrLess frequency cannot be below zero
 	ErrFrequencyCannotBeZeroOrLess = errors.New(`"evaluate every" cannot be zero or below`)
 
 	// ErrFrequencyCouldNotBeParsed frequency cannot be parsed
 	ErrFrequencyCouldNotBeParsed = errors.New(`"evaluate every" field could not be parsed`)
+
+	// ErrWrongUnitFormat wrong unit format
+	ErrWrongUnitFormat = fmt.Errorf(`time unit not supported. supported units: %s`, reflect.ValueOf(unitMultiplier).MapKeys())
 )
 
 // Rule is the in-memory version of an alert rule.
@@ -72,20 +82,18 @@ func (e ValidationError) Error() string {
 	return fmt.Sprintf("alert validation error: %s", extraInfo)
 }
 
-var (
-	valueFormatRegex = regexp.MustCompile(`^\d+`)
-	unitFormatRegex  = regexp.MustCompile(`\w{1}$`)
-)
-
-var unitMultiplier = map[string]int{
-	"s": 1,
-	"m": 60,
-	"h": 3600,
-	"d": 86400,
-}
-
 func getTimeDurationStringToSeconds(str string) (int64, error) {
-	multiplier := 1
+	// Check if frequency lacks unit
+	if isDigitRegex.MatchString(str) {
+		return 0, ErrWrongUnitFormat
+	}
+
+	unit := unitFormatRegex.FindAllString(str, 1)[0]
+	if _, ok := unitMultiplier[unit]; !ok {
+		return 0, ErrWrongUnitFormat
+	}
+
+	multiplier := unitMultiplier[unit]
 
 	matches := valueFormatRegex.FindAllString(str, 1)
 
@@ -100,12 +108,6 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 
 	if value == 0 {
 		return 0, ErrFrequencyCannotBeZeroOrLess
-	}
-
-	unit := unitFormatRegex.FindAllString(str, 1)[0]
-
-	if val, ok := unitMultiplier[unit]; ok {
-		multiplier = val
 	}
 
 	return int64(value * multiplier), nil
