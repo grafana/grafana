@@ -60,10 +60,7 @@ export function transform(
     refId: transformOptions.target.refId,
     valueWithRefId: transformOptions.target.valueWithRefId,
     meta: {
-      /**
-       * Fix for showing of Prometheus results in Explore table.
-       * We want to show result of instant query always in table and result of range query based on target.runAll;
-       */
+      // Fix for showing of Prometheus results in Explore table
       preferredVisualisationType: transformOptions.query.instant ? 'table' : 'graph',
     },
   };
