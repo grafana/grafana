@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -346,17 +345,33 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 	}()
 
 	if resp.StatusCode/100 == 2 {
-		sn.log.Debug("Sending Slack API request succeeded", "statuscode", resp.Status)
-		// TODO: Decode response body and verify there's no error included
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body: %w", err)
+		}
+
+		var rslt map[string]interface{}
+		if err := json.Unmarshal(body, &rslt); err != nil {
+			return fmt.Errorf("failed to decode response body: %w", err)
+		}
+
+		if !rslt["ok"].(bool) {
+			errMsg := rslt["error"].(string)
+			sn.log.Warn("Sending Slack API request failed", "statusCode", resp.Status, "err", errMsg)
+			return fmt.Errorf("failed to make Slack API request: %s", errMsg)
+		}
+
+		sn.log.Debug("Sending Slack API request succeeded", "statusCode", resp.Status)
+
 		return nil
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
-	sn.log.Error("Slack API request failed", "statusCode", resp.Status, "body", string(body))
+	sn.log.Warn("Slack API request failed", "statusCode", resp.Status, "body", string(body))
 	return fmt.Errorf("request to Slack API failed with status code %d", resp.Status)
 }
 
