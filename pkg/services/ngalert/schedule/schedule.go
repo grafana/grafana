@@ -336,7 +336,7 @@ func (sch *schedule) SaveAlertStates(states []state.AlertState) {
 	}
 }
 
-func (sch *schedule) WarmStateCache() {
+func (sch *schedule) WarmStateCache(st *state.StateTracker) {
 	sch.log.Info("warming cache for startup")
 	cmd := models.ListAlertInstancesQuery{}
 	if err := sch.store.ListAlertInstances(&cmd); err != nil {
@@ -367,6 +367,7 @@ func (sch *schedule) WarmStateCache() {
 		}
 		states = append(states, stateForEntry)
 	}
+	st.Put(states)
 }
 
 func translateInstanceState(state models.InstanceStateType) eval.State {

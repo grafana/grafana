@@ -270,11 +270,11 @@ func printEntryDiff(a, b AlertState, t *testing.T) {
 	}
 	if len(a.Results) != len(b.Results) {
 		t.Log(fmt.Sprintf("a: %d b: %d", len(a.Results), len(b.Results)))
-		t.Log(fmt.Sprintf("a"))
+		t.Log("a")
 		for i := 0; i < len(a.Results); i++ {
 			t.Log(fmt.Sprintf("%v\n", a.Results[i]))
 		}
-		t.Log(fmt.Sprintf("b"))
+		t.Log("b")
 		for i := 0; i < len(b.Results); i++ {
 			t.Log(fmt.Sprintf("%v\n", b.Results[i]))
 		}
