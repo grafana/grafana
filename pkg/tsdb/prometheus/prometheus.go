@@ -23,32 +23,40 @@ import (
 )
 
 type PrometheusExecutor struct {
-	Transport http.RoundTripper
-
-	intervalCalculator interval.Calculator
+	baseRoundTripperFactory func(dsInfo *models.DataSource) (http.RoundTripper, error)
+	intervalCalculator      interval.Calculator
 }
 
-type basicAuthTransport struct {
+type prometheusTransport struct {
 	Transport http.RoundTripper
 
-	username string
-	password string
+	hasBasicAuth bool
+	username     string
+	password     string
+
+	customQueryParameters string
 }
 
-func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.SetBasicAuth(bat.username, bat.password)
-	return bat.Transport.RoundTrip(req)
+func (transport *prometheusTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if transport.hasBasicAuth {
+		req.SetBasicAuth(transport.username, transport.password)
+	}
+
+	if req.URL.RawQuery != "" {
+		req.URL.RawQuery = fmt.Sprintf("%s&%s", req.URL.RawQuery, transport.customQueryParameters)
+	} else {
+		req.URL.RawQuery = transport.customQueryParameters
+	}
+
+	return transport.Transport.RoundTrip(req)
 }
 
 func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	transport, err := dsInfo.GetHttpTransport()
-	if err != nil {
-		return nil, err
-	}
-
 	return &PrometheusExecutor{
-		Transport:          transport,
 		intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+		baseRoundTripperFactory: func(ds *models.DataSource) (http.RoundTripper, error) {
+			return ds.GetHttpTransport()
+		},
 	}, nil
 }
 
@@ -62,17 +70,23 @@ func init() {
 }
 
 func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
-	cfg := api.Config{
-		Address:      dsInfo.Url,
-		RoundTripper: e.Transport,
+	// Would make sense to cache this but executor is recreated on every alert request anyway.
+	transport, err := e.baseRoundTripperFactory(dsInfo)
+	if err != nil {
+		return nil, err
 	}
 
-	if dsInfo.BasicAuth {
-		cfg.RoundTripper = basicAuthTransport{
-			Transport: e.Transport,
-			username:  dsInfo.BasicAuthUser,
-			password:  dsInfo.DecryptedBasicAuthPassword(),
-		}
+	promTransport := &prometheusTransport{
+		Transport:             transport,
+		hasBasicAuth:          dsInfo.BasicAuth,
+		username:              dsInfo.BasicAuthUser,
+		password:              dsInfo.DecryptedBasicAuthPassword(),
+		customQueryParameters: dsInfo.JsonData.Get("customQueryParameters").MustString(""),
+	}
+
+	cfg := api.Config{
+		Address:      dsInfo.Url,
+		RoundTripper: promTransport,
 	}
 
 	client, err := api.NewClient(cfg)
