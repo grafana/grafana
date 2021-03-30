@@ -93,7 +93,7 @@ import (
 // swagger:parameters RouteCreateSilence
 type CreateSilenceParams struct {
 	// in:body
-	Body SilenceBody
+	Silence PostableSilence
 }
 
 //swagger:parameters RouteGetSilence RouteDeleteSilence
@@ -103,10 +103,7 @@ type GetDeleteSilenceParams struct {
 }
 
 // swagger:model
-type SilenceBody struct {
-	Id string `json:"id"`
-	amv2.Silence
-}
+type PostableSilence amv2.PostableSilence
 
 // swagger:model
 type GettableSilences amv2.GettableSilences
