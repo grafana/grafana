@@ -322,6 +322,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'value1' }, { label: 'value2' }],
           label: 'Label values for "job"',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });
@@ -357,7 +358,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-label-values');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'baz' }], label: 'Label values for "bar"' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'baz' }], label: 'Label values for "bar"', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label suggestions on aggregation context and metric w/ selector', async () => {

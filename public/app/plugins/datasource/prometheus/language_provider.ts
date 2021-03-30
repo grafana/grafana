@@ -381,6 +381,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         suggestions.push({
           label: `Label values for "${labelKey}"${limitInfo}`,
           items: labelValues[labelKey].map(wrapLabel),
+          searchFunctionType: SearchFunctionType.Fuzzy,
         });
       }
     } else {
