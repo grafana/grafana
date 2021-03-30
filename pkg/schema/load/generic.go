@@ -2,8 +2,39 @@ package load
 
 import (
 	"cuelang.org/go/cue"
+	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
 )
+
+// getBaseScuemata attempts to load the base scuemata family and schema
+// definitions on which all Grafana scuemata rely.
+//
+// TODO probably cache this or something
+func getBaseScuemata(p BaseLoadPaths) (*cue.Instance, error) {
+	overlay := make(map[string]load.Source)
+	if err := toOverlay("/grafana", p.BaseCueFS, overlay); err != nil {
+		return nil, err
+	}
+
+	cfg := &load.Config{
+		Overlay: overlay,
+		Package: "scuemata",
+		// TODO Semantics of loading instances is quite confusing. This has to
+		// be set to "/" in order for the overlay to be searched and have all
+		// files loaded in the cue/scuemata directory. (This isn't necessary
+		// when loading individual .cue files.) But anchoring a search at root
+		// seems like we're begging for vulnerabilities where Grafana can read
+		// and print out anything on the filesystem, which can be a disclosure
+		// problem, unless we're absolutely sure the search is within a virtual
+		// filesystem. Which i'm not.
+		//
+		// And no, changing the toOverlay() to have a subpath and the
+		// load.Instances to mirror that subpath does not allow us to get rid of
+		// this "/".
+		// Dir: "/",
+	}
+	return rt.Build(load.Instances([]string{"/grafana/cue/scuemata"}, cfg)[0])
+}
 
 type scuemata struct {
 	first schema.VersionedCueSchema
@@ -33,7 +64,7 @@ func (df *scuemata) First() schema.VersionedCueSchema {
 func buildGenericScuemata(famval cue.Value) (schema.Fam, error) {
 	// TODO verify subsumption by #SchemaFamily; renders many
 	// error checks below unnecessary
-	majiter, err := famval.Lookup("seqs").List()
+	majiter, err := famval.Lookup("lineages").List()
 	if err != nil {
 		return nil, err
 	}
@@ -171,9 +202,9 @@ func implicitMigration(v cue.Value, next schema.VersionedCueSchema) migrationFun
 }
 
 func buildSchemaFamily(famval cue.Value) (*schema.Family, error) {
-	// TODO verify subsumption by #SchemaFamily; renders many
+	// TODO verify subsumption by #Family; renders many
 	// error checks below unnecessary
-	majiter, err := famval.Lookup("seqs").List()
+	majiter, err := famval.Lookup("lineages").List()
 	if err != nil {
 		return nil, err
 	}

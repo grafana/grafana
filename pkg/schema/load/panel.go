@@ -121,18 +121,23 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.Fam, error) {
 		return nil, err
 	}
 
-	cfg := &load.Config{
-		Overlay: overlay,
-		Package: "scuemata",
-	}
+	// cfg := &load.Config{
+	// 	Overlay: overlay,
+	// 	Package: "scuemata",
+	// }
 
-	built, err := rt.Build(load.Instances([]string{"/cue/scuemata/scuemata.cue"}, cfg)[0])
+	// built, err := rt.Build(load.Instances([]string{"/cue/scuemata/scuemata.cue"}, cfg)[0])
+	// if err != nil {
+	// 	return nil, err
+	// }
+	base, err := getBaseScuemata(p)
 	if err != nil {
 		return nil, err
 	}
-	pmf := built.Value().LookupPath(cue.MakePath(cue.Def("#PanelModelFamily")))
+
+	pmf := base.Value().LookupPath(cue.MakePath(cue.Def("#PanelFamily")))
 	if !pmf.Exists() {
-		return nil, errors.New("could not locate #PanelModelFamily definition")
+		return nil, errors.New("could not locate #PanelFamily definition")
 	}
 
 	all := make(map[string]schema.Fam)
@@ -178,22 +183,18 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.Fam, error) {
 		}
 
 		li := load.Instances([]string{filepath.Join("/", dpath, "models.cue")}, cfg)
-		built := cue.Build(li)
-		// TODO this is a silly check...right?
-		if len(built) != 1 {
-			return fmt.Errorf("expected exactly one instance, got %v", len(built))
+		imod, err := rt.Build(li[0])
+		if err != nil {
+			return err
 		}
-		imod := built[0]
 
-		// Verify that there exists a Model declaration in the models.cue file...
-		// TODO Best (?) ergonomics for entire models.cue file to emit a struct
-		// compliant with #PanelModelFamily
-		pmod := imod.Lookup("Model")
+		// Get the Family declaration in the models.cue file...
+		pmod := imod.Value().LookupPath(cue.MakePath(cue.Str("Family")))
 		if !pmod.Exists() {
-			return fmt.Errorf("%s does not contain a declaration of its models at path 'Model'", path)
+			return fmt.Errorf("%s does not contain a declaration of its models at path 'Family'", path)
 		}
 
-		// Ensure the declared value is subsumed by/correct wrt #PanelModelFamily
+		// Ensure the declared value is subsumed by/correct wrt #PanelFamily
 		if err := pmf.Subsume(pmod); err != nil {
 			return err
 		}

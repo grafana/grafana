@@ -3,52 +3,31 @@ package scuemata
 // A family is a collection of schemas that specify a single kind of object,
 // allowing evolution of the canonical schema for that kind of object over time.
 //
-// The schemas are organized into a list of Seqs, which are themselves ordered
-// lists of schemas where each schema within a Seq is backwards compatible with
-// the schema that precedes it.
+// The schemas are organized into a list of Lineages, which are themselves ordered
+// lists of schemas where each schema with its predecessor in the lineage.
 //
 // If it is desired to define a schema with a breaking schema relative to its
-// predecessors, a new Seq must be created, as well as a Migration that defines
-// a mapping from the most recent schema in the old Seq to the new schema.
+// predecessors, a new Lineage must be created, as well as a Migration that defines
+// a mapping to the new schema from the latest schema in prior Lineage.
 //
 // The version number of a schema is not controlled by the schema itself, but by
-// its position in the seqs - e.g., the first schema in the first seq is 0.0
+// its position in the list of lineages - e.g., 0.0 corresponds to the first
+// schema in the first lineage.
 #Family: {
-	seqs: [#Seq, ...#Seq]
-    migrations: [...#Migration]
-	let lseq = seqs[len(seqs)-1]
-	latest: #LastSchema & { _p: lseq }
+	lineages: [#Lineage, ...#Lineage]
+	migrations: [...#Migration]
+	let lseq = lineages[len(lineages)-1]
+	latest: #LastSchema & {_p: lseq}
 }
 
-// A Seq is a list containing an ordered series of schemas that all describe a
-// single kind of object, and each schema is backwards compatible with its
-// predecessor.
-#Seq: [{...}, ...{...}]
+// A Lineage is a non-empty list containing an ordered series of schemas that
+// all describe a single kind of object, where each schema is backwards
+// compatible with its predecessor.
+#Lineage: [{...}, ...{...}]
 
-
-#SchemaLineage: [{...}, ...{...}]
 #LastSchema: {
-    _p: #SchemaLineage
-    _p[len(_p)-1]
-}
-
-// Individual schema governing a panel plugin.
-//
-// These keys do not appear directly in any real JSON artifact; rather, they are
-// composed into panel structures as they are defined within the larger
-// Dashboard schema.
-#PanelSchema: {
-    PanelOptions: {...}
-    PanelFieldConfig: {...}
-}
-
-// Schema sequence of panel schema
-#PanelSeq: [#PanelSchema, ...#PanelSchema]
-
-// Panel plugin-specific SchemaFamily
-#PanelFamily: {
-    seqs: [#PanelSeq, ...#PanelSeq]
-    migrations: [...#Migration]
+	_p: #Lineage
+	_p[len(_p)-1]
 }
 
 // A Migration defines a relation between two schemas, "_from" and "_to". The
@@ -74,8 +53,8 @@ package scuemata
 // of paths in _from, so that migrations of larger schema can focus narrowly on
 // the points of actual change.
 #Migration: {
-    from: {...}
-    to: {...}
-    rel: {...}
-    result: to & rel
+	from: {...}
+	to: {...}
+	rel: {...}
+	result: to & rel
 }

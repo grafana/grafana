@@ -36,7 +36,7 @@ func BaseDashboardScuemata(p BaseLoadPaths) (schema.Fam, error) {
 		return nil, err
 	}
 
-	famval := inst.Lookup("dashboardFamily")
+	famval := inst.Value().LookupPath(cue.MakePath(cue.Str("Family")))
 	if !famval.Exists() {
 		return nil, errors.New("dashboard schema family did not exist at expected path in expected file")
 	}
