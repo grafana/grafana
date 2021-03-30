@@ -347,7 +347,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/alerting/list',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList')
+        () => import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleListIndex')
       ),
     },
     {
