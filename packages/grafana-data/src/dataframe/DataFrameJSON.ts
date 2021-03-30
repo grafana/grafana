@@ -196,6 +196,8 @@ export function dataFrameFromJSON(dto: DataFrameJSON): DataFrame {
 }
 
 /**
+ * This converts DataFrame to a json representation with distinct schema+data
+ *
  * @alpha
  */
 export function dataFrameToJSON(frame: DataFrame): DataFrameJSON {
