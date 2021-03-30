@@ -155,7 +155,7 @@ export interface LegacyDataResponse {
 /**
  * ONLY needed for tests right now!
  */
-export function legacyDataResponseToDataResponse(legacy: Record<string, LegacyDataResponse>): DataResponse[] {
+export function legacyDataResponseToDataResponse(legacy: Record<string, LegacyDataResponse | any>): DataResponse[] {
   const res: DataResponse[] = [];
 
   for (const [key, dr] of Object.entries(legacy)) {

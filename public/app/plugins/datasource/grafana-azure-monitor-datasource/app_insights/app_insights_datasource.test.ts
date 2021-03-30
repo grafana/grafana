@@ -3,6 +3,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setBackendSrv } from '@grafana/runtime';
 import AppInsightsDatasource from './app_insights_datasource';
+import { legacyDataResponseToDataResponse } from '@grafana/runtime/src/utils/queryResponse';
 import { of } from 'rxjs';
 
 const templateSrv = new TemplateSrv();
@@ -150,7 +151,7 @@ describe('AppInsightsDatasource', () => {
 
     describe('with no grouping', () => {
       const response: any = {
-        results: {
+        results: legacyDataResponseToDataResponse({
           A: {
             refId: 'A',
             meta: {},
@@ -162,7 +163,7 @@ describe('AppInsightsDatasource', () => {
             ],
             tables: null,
           },
-        },
+        }),
       };
 
       beforeEach(() => {
@@ -191,7 +192,7 @@ describe('AppInsightsDatasource', () => {
 
     describe('with grouping', () => {
       const response: any = {
-        results: {
+        results: legacyDataResponseToDataResponse({
           A: {
             refId: 'A',
             meta: {},
@@ -203,7 +204,7 @@ describe('AppInsightsDatasource', () => {
             ],
             tables: null,
           },
-        },
+        }),
       };
 
       beforeEach(() => {
@@ -254,7 +255,7 @@ describe('AppInsightsDatasource', () => {
 
     describe('and with a single value', () => {
       const response: any = {
-        results: {
+        results: legacyDataResponseToDataResponse({
           A: {
             refId: 'A',
             meta: {},
@@ -266,7 +267,7 @@ describe('AppInsightsDatasource', () => {
             ],
             tables: null,
           },
-        },
+        }),
       };
 
       beforeEach(() => {
@@ -296,7 +297,7 @@ describe('AppInsightsDatasource', () => {
 
     describe('and with an interval group and without a segment group by', () => {
       const response: any = {
-        results: {
+        results: legacyDataResponseToDataResponse({
           A: {
             refId: 'A',
             meta: {},
@@ -311,7 +312,7 @@ describe('AppInsightsDatasource', () => {
             ],
             tables: null,
           },
-        },
+        }),
       };
 
       beforeEach(() => {
@@ -345,7 +346,7 @@ describe('AppInsightsDatasource', () => {
 
     describe('and with a group by', () => {
       const response: any = {
-        results: {
+        results: legacyDataResponseToDataResponse({
           A: {
             refId: 'A',
             meta: {},
@@ -367,7 +368,7 @@ describe('AppInsightsDatasource', () => {
             ],
             tables: null,
           },
-        },
+        }),
       };
 
       describe('and with no alias specified', () => {
