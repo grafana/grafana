@@ -84,8 +84,8 @@ func (e ValidationError) Error() string {
 
 func getTimeDurationStringToSeconds(str string) (int64, error) {
 	// Check if frequency lacks unit
-	if isDigitRegex.MatchString(str) {
-		return 0, ErrWrongUnitFormat
+	if isDigitRegex.MatchString(str) || str == "" {
+		return 0, ErrFrequencyCouldNotBeParsed
 	}
 
 	unit := unitFormatRegex.FindAllString(str, 1)[0]

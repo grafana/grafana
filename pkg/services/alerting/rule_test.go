@@ -32,7 +32,8 @@ func TestAlertRuleFrequencyParsing(t *testing.T) {
 		{input: "0s", err: ErrFrequencyCannotBeZeroOrLess},
 		{input: "0m", err: ErrFrequencyCannotBeZeroOrLess},
 		{input: "0h", err: ErrFrequencyCannotBeZeroOrLess},
-		{input: "0", err: ErrWrongUnitFormat},
+		{input: "0", err: ErrFrequencyCouldNotBeParsed},
+		{input: "", err: ErrFrequencyCouldNotBeParsed},
 		{input: "-1s", err: ErrFrequencyCouldNotBeParsed},
 	}
 
