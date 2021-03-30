@@ -1,8 +1,7 @@
 package live
 
 import (
-	"context"
-	"fmt"
+	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -48,10 +47,6 @@ func newPluginContextGetter(pluginContextProvider *plugincontext.Provider) *plug
 	}
 }
 
-func (g *pluginContextGetter) GetPluginContext(ctx context.Context, pluginID string, datasourceUID string) (backend.PluginContext, bool, error) {
-	user, ok := getContextSignedUser(ctx)
-	if !ok {
-		return backend.PluginContext{}, false, fmt.Errorf("no signed user found in context")
-	}
+func (g *pluginContextGetter) GetPluginContext(user *models.SignedInUser, pluginID string, datasourceUID string) (backend.PluginContext, bool, error) {
 	return g.PluginContextProvider.Get(pluginID, datasourceUID, user)
 }

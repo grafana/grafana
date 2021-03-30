@@ -3,12 +3,15 @@ package live
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -140,12 +143,36 @@ func (g *GrafanaLive) Init() error {
 
 		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
 			logger.Debug("Client wants to subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			handler, err := g.GetChannelHandler(client.Context(), e.Channel)
+			user, ok := getContextSignedUser(client.Context())
+			if !ok {
+				logger.Error("Unauthenticated live connection")
+				cb(centrifuge.SubscribeReply{}, centrifuge.ErrorInternal)
+				return
+			}
+			handler, addr, err := g.GetChannelHandler(user, e.Channel)
 			if err != nil {
 				logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 				cb(centrifuge.SubscribeReply{}, err)
 			} else {
-				cb(handler.OnSubscribe(client, e))
+				reply, allowed, err := handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
+					Channel: e.Channel,
+					Path:    addr.Path,
+				})
+				if err != nil {
+					cb(centrifuge.SubscribeReply{}, centrifuge.ErrorInternal)
+					return
+				}
+				if !allowed {
+					cb(centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied)
+					return
+				}
+				cb(centrifuge.SubscribeReply{
+					Options: centrifuge.SubscribeOptions{
+						Presence:  reply.Presence,
+						JoinLeave: reply.JoinLeave,
+						Recover:   reply.Recover,
+					},
+				}, nil)
 			}
 		})
 
@@ -154,12 +181,35 @@ func (g *GrafanaLive) Init() error {
 		// allows some simple prototypes to work quickly.
 		client.OnPublish(func(e centrifuge.PublishEvent, cb centrifuge.PublishCallback) {
 			logger.Debug("Client wants to publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
-			handler, err := g.GetChannelHandler(client.Context(), e.Channel)
+			user, ok := getContextSignedUser(client.Context())
+			if !ok {
+				logger.Error("Unauthenticated live connection")
+				cb(centrifuge.PublishReply{}, centrifuge.ErrorInternal)
+				return
+			}
+			handler, addr, err := g.GetChannelHandler(user, e.Channel)
 			if err != nil {
 				logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 				cb(centrifuge.PublishReply{}, err)
 			} else {
-				cb(handler.OnPublish(client, e))
+				reply, allowed, err := handler.OnPublish(client.Context(), user, models.PublishEvent{
+					Channel: e.Channel,
+					Path:    addr.Path,
+				})
+				if err != nil {
+					cb(centrifuge.PublishReply{}, centrifuge.ErrorInternal)
+					return
+				}
+				if !allowed {
+					cb(centrifuge.PublishReply{}, centrifuge.ErrorPermissionDenied)
+					return
+				}
+				cb(centrifuge.PublishReply{
+					Options: centrifuge.PublishOptions{
+						HistorySize: reply.HistorySize,
+						HistoryTTL:  reply.HistoryTTL,
+					},
+				}, nil)
 			}
 		})
 
@@ -205,19 +255,19 @@ func (g *GrafanaLive) Init() error {
 }
 
 // GetChannelHandler gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandler(ctx context.Context, channel string) (models.ChannelHandler, error) {
+func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, ChannelAddress, error) {
+	// Parse the identifier ${scope}/${namespace}/${path}
+	addr := ParseChannelAddress(channel)
+	if !addr.IsValid() {
+		return nil, ChannelAddress{}, fmt.Errorf("invalid channel: %q", channel)
+	}
+
 	g.channelsMu.RLock()
 	c, ok := g.channels[channel]
 	g.channelsMu.RUnlock() // defer? but then you can't lock further down
 	if ok {
 		logger.Debug("Found cached channel handler", "channel", channel)
-		return c, nil
-	}
-
-	// Parse the identifier ${scope}/${namespace}/${path}
-	addr := ParseChannelAddress(channel)
-	if !addr.IsValid() {
-		return nil, fmt.Errorf("invalid channel: %q", channel)
+		return c, addr, nil
 	}
 
 	g.channelsMu.Lock()
@@ -225,48 +275,48 @@ func (g *GrafanaLive) GetChannelHandler(ctx context.Context, channel string) (mo
 	c, ok = g.channels[channel] // may have filled in while locked
 	if ok {
 		logger.Debug("Found cached channel handler", "channel", channel)
-		return c, nil
+		return c, addr, nil
 	}
 
-	getter, err := g.GetChannelHandlerFactory(ctx, addr.Scope, addr.Namespace)
+	getter, err := g.GetChannelHandlerFactory(user, addr.Scope, addr.Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("error getting channel handler factory: %w", err)
+		return nil, addr, fmt.Errorf("error getting channel handler factory: %w", err)
 	}
 
 	// First access will initialize.
 	c, err = getter.GetHandlerForPath(addr.Path)
 	if err != nil {
-		return nil, fmt.Errorf("error getting handler for path: %w", err)
+		return nil, addr, fmt.Errorf("error getting handler for path: %w", err)
 	}
 
 	logger.Info("Initialized channel handler", "channel", channel, "address", addr)
 	g.channels[channel] = c
-	return c, nil
+	return c, addr, nil
 }
 
 // GetChannelHandlerFactory gets a ChannelHandlerFactory for a namespace.
 // It gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, scope string, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) GetChannelHandlerFactory(user *models.SignedInUser, scope string, namespace string) (models.ChannelHandlerFactory, error) {
 	switch scope {
 	case ScopeGrafana:
-		return g.handleGrafanaScope(ctx, namespace)
+		return g.handleGrafanaScope(user, namespace)
 	case ScopePlugin:
-		return g.handlePluginScope(ctx, namespace)
+		return g.handlePluginScope(user, namespace)
 	case ScopeDatasource:
-		return g.handleDatasourceScope(ctx, namespace)
+		return g.handleDatasourceScope(user, namespace)
 	default:
 		return nil, fmt.Errorf("invalid scope: %q", scope)
 	}
 }
 
-func (g *GrafanaLive) handleGrafanaScope(_ context.Context, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handleGrafanaScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
 	if p, ok := g.GrafanaScope.Features[namespace]; ok {
 		return p, nil
 	}
 	return nil, fmt.Errorf("unknown feature: %q", namespace)
 }
 
-func (g *GrafanaLive) handlePluginScope(_ context.Context, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
 	// Temporary hack until we have a more generic solution later on
 	if namespace == "cloudwatch" {
 		return &cloudwatch.LogQueryRunnerSupplier{
@@ -287,11 +337,7 @@ func (g *GrafanaLive) handlePluginScope(_ context.Context, namespace string) (mo
 	), nil
 }
 
-func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, namespace string) (models.ChannelHandlerFactory, error) {
-	user, ok := getContextSignedUser(ctx)
-	if !ok {
-		return nil, fmt.Errorf("no signed user found in context")
-	}
+func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
 	ds, err := g.DatasourceCache.GetDatasourceByUID(namespace, user, false)
 	if err != nil {
 		return nil, fmt.Errorf("error getting datasource: %w", err)
@@ -318,6 +364,31 @@ func (g *GrafanaLive) Publish(channel string, data []byte) error {
 // IsEnabled returns true if the Grafana Live feature is enabled.
 func (g *GrafanaLive) IsEnabled() bool {
 	return g.Cfg.IsLiveEnabled()
+}
+
+func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
+	addr := ParseChannelAddress(cmd.Channel)
+	if !addr.IsValid() {
+		return response.Error(http.StatusBadRequest, "Bad channel address", nil)
+	}
+
+	logger.Debug("Publish API cmd", "cmd", cmd)
+
+	channelHandler, addr, err := g.GetChannelHandler(ctx.SignedInUser, cmd.Channel)
+	if err != nil {
+		logger.Error("Error getting channels handler", "error", err, "channel", cmd.Channel)
+		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+	}
+
+	_, allowed, err := channelHandler.OnPublish(ctx.Req.Context(), ctx.SignedInUser, models.PublishEvent{Channel: cmd.Channel, Path: addr.Path, Data: cmd.Data})
+	if err != nil {
+		logger.Error("Error calling OnPublish", "error", err, "channel", cmd.Channel)
+		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+	}
+	if !allowed {
+		return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
+	}
+	return response.JSON(200, dtos.LivePublishResponse{})
 }
 
 // Write to the standard log15 logger

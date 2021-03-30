@@ -20,7 +20,7 @@ type PresenceGetter interface {
 }
 
 type PluginContextGetter interface {
-	GetPluginContext(ctx context.Context, pluginID string, datasourceUID string) (backend.PluginContext, bool, error)
+	GetPluginContext(user *models.SignedInUser, pluginID string, datasourceUID string) (backend.PluginContext, bool, error)
 }
 
 type StreamRunner interface {
@@ -83,40 +83,39 @@ type PluginPathRunner struct {
 }
 
 // OnSubscribe passes control to a plugin.
-func (r *PluginPathRunner) OnSubscribe(client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-	pCtx, found, err := r.pluginContextGetter.GetPluginContext(client.Context(), r.pluginID, r.datasourceUID)
+func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, bool, error) {
+	pCtx, found, err := r.pluginContextGetter.GetPluginContext(user, r.pluginID, r.datasourceUID)
 	if err != nil {
 		logger.Error("Get plugin context error", "error", err, "path", r.path)
-		return centrifuge.SubscribeReply{}, err
+		return models.SubscribeReply{}, false, err
 	}
 	if !found {
 		logger.Error("Plugin context not found", "path", r.path)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		return models.SubscribeReply{}, false, centrifuge.ErrorInternal
 	}
-	resp, err := r.handler.CanSubscribeToStream(client.Context(), &backend.SubscribeToStreamRequest{
+	resp, err := r.handler.CanSubscribeToStream(ctx, &backend.SubscribeToStreamRequest{
 		PluginContext: pCtx,
 		Path:          r.path,
 	})
 	if err != nil {
 		logger.Error("Plugin CanSubscribeToStream call error", "error", err, "path", r.path)
-		return centrifuge.SubscribeReply{}, err
+		return models.SubscribeReply{}, false, err
 	}
 	if !resp.OK {
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
+		return models.SubscribeReply{}, false, nil
 	}
 	err = r.streamManager.SubmitStream(e.Channel, r.path, pCtx, r.handler)
 	if err != nil {
 		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
-		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
+		return models.SubscribeReply{}, false, centrifuge.ErrorInternal
 	}
-	return centrifuge.SubscribeReply{
-		Options: centrifuge.SubscribeOptions{
-			Presence: true,
-		},
-	}, nil
+	return models.SubscribeReply{
+		Presence: true,
+	}, true, nil
 }
 
 // OnPublish passes control to a plugin.
-func (r *PluginPathRunner) OnPublish(_ *centrifuge.Client, _ centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-	return centrifuge.PublishReply{}, fmt.Errorf("not implemented yet")
+func (r *PluginPathRunner) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, bool, error) {
+	// TODO: pass control to a plugin.
+	return models.PublishReply{}, false, fmt.Errorf("not implemented yet")
 }

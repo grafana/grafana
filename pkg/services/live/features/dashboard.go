@@ -1,9 +1,9 @@
 package features
 
 import (
+	"context"
 	"encoding/json"
 
-	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -26,20 +26,16 @@ func (h *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
-func (h *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-	return centrifuge.SubscribeReply{
-		Options: centrifuge.SubscribeOptions{
-			Presence:  true,
-			JoinLeave: true,
-		},
-	}, nil
+func (h *DashboardHandler) OnSubscribe(ctx context.Context, _ *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, bool, error) {
+	return models.SubscribeReply{
+		Presence:  true,
+		JoinLeave: true,
+	}, true, nil
 }
 
 // OnPublish is called when someone begins to edit a dashoard
-func (h *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-	return centrifuge.PublishReply{
-		Options: centrifuge.PublishOptions{},
-	}, nil
+func (h *DashboardHandler) OnPublish(ctx context.Context, _ *models.SignedInUser, e models.PublishEvent) (models.PublishReply, bool, error) {
+	return models.PublishReply{}, true, nil
 }
 
 // DashboardSaved should broadcast to the appropriate stream

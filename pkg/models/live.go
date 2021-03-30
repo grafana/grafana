@@ -1,17 +1,43 @@
 package models
 
-import "github.com/centrifugal/centrifuge"
+import (
+	"context"
+	"encoding/json"
+	"time"
+)
 
 // ChannelPublisher writes data into a channel. Note that pemissions are not checked.
 type ChannelPublisher func(channel string, data []byte) error
 
+type SubscribeEvent struct {
+	Channel string
+	Path    string
+}
+
+type SubscribeReply struct {
+	Presence  bool
+	JoinLeave bool
+	Recover   bool
+}
+
+type PublishEvent struct {
+	Channel string
+	Path    string
+	Data    json.RawMessage
+}
+
+type PublishReply struct {
+	HistorySize int
+	HistoryTTL  time.Duration
+}
+
 // ChannelHandler defines the core channel behavior
 type ChannelHandler interface {
 	// OnSubscribe is called when a client wants to subscribe to a channel
-	OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error)
+	OnSubscribe(ctx context.Context, user *SignedInUser, e SubscribeEvent) (SubscribeReply, bool, error)
 
 	// OnPublish is called when a client writes a message to the channel websocket.
-	OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error)
+	OnPublish(ctx context.Context, user *SignedInUser, e PublishEvent) (PublishReply, bool, error)
 }
 
 // ChannelHandlerFactory should be implemented by all core features.

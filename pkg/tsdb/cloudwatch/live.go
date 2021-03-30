@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/servicequotas"
 	"github.com/aws/aws-sdk-go/service/servicequotas/servicequotasiface"
-	"github.com/centrifugal/centrifuge"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -57,12 +56,12 @@ func (s *LogQueryRunnerSupplier) GetHandlerForPath(path string) (models.ChannelH
 }
 
 // OnSubscribe publishes results from the corresponding CloudWatch Logs query to the provided channel
-func (r *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+func (r *logQueryRunner) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, bool, error) {
 	r.runningMu.Lock()
 	defer r.runningMu.Unlock()
 
 	if _, ok := r.running[e.Channel]; ok {
-		return centrifuge.SubscribeReply{}, nil
+		return models.SubscribeReply{}, true, nil
 	}
 
 	r.running[e.Channel] = true
@@ -72,12 +71,12 @@ func (r *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 		}
 	}()
 
-	return centrifuge.SubscribeReply{}, nil
+	return models.SubscribeReply{}, true, nil
 }
 
 // OnPublish checks if a message from the websocket can be broadcast on this channel
-func (r *logQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-	return centrifuge.PublishReply{}, fmt.Errorf("can not publish")
+func (r *logQueryRunner) OnPublish(ctx context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, bool, error) {
+	return models.PublishReply{}, false, nil
 }
 
 func (r *logQueryRunner) publishResults(channelName string) error {
