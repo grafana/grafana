@@ -171,6 +171,11 @@ module.exports = {
         // include: MONACO_DIR, // https://github.com/react-monaco-editor/react-monaco-editor
         use: ['style-loader', 'css-loader'],
       },
+      // for pre-caching SVGs as part of the JS bundles
+      {
+        test: /\.svg$/,
+        use: 'raw-loader',
+      },
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         loader: 'file-loader',
