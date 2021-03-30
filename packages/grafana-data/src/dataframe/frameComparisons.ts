@@ -4,6 +4,7 @@ import { DataFrame } from '../types/dataFrame';
  * Returns true if both frames have the same list of fields and configs.
  * Field may have diferent names, labels and values but share the same structure
  *
+ * @example
  * To compare multiple frames use:
  * ```
  * compareArrayValues(a, b, framesHaveSameStructure);
