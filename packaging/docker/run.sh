@@ -69,8 +69,8 @@ if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then
     IFS=$OLDIFS
     if [[ $plugin =~ .*\;.* ]]; then
         pluginUrl=$(echo "$plugin" | cut -d';' -f 1)
-        pluginWithoutUrl=$(echo "$plugin" | cut -d';' -f 2)
-        grafana-cli --pluginUrl "${pluginUrl}" --pluginsDir "${GF_PATHS_PLUGINS}" plugins install ${pluginWithoutUrl}
+        pluginInstallFolder=$(echo "$plugin" | cut -d';' -f 2)
+        grafana-cli --pluginUrl ${pluginUrl} --pluginsDir "${GF_PATHS_PLUGINS}" plugins install "${pluginInstallFolder}"
     else
         grafana-cli --pluginsDir "${GF_PATHS_PLUGINS}" plugins install ${plugin}
     fi
