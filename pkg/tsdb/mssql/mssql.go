@@ -66,11 +66,11 @@ func ParseURL(u string) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(datasource *models.DataSource) (string, error) {
+func generateConnectionString(dataSource *models.DataSource) (string, error) {
 	const dfltPort = "0"
 	var addr util.NetworkAddress
-	if datasource.Url != "" {
-		u, err := ParseURL(datasource.Url)
+	if dataSource.Url != "" {
+		u, err := ParseURL(dataSource.Url)
 		if err != nil {
 			return "", err
 		}
@@ -86,7 +86,7 @@ func generateConnectionString(datasource *models.DataSource) (string, error) {
 	}
 
 	args := []interface{}{
-		"url", datasource.Url, "host", addr.Host,
+		"url", dataSource.Url, "host", addr.Host,
 	}
 	if addr.Port != "0" {
 		args = append(args, "port", addr.Port)
@@ -96,9 +96,9 @@ func generateConnectionString(datasource *models.DataSource) (string, error) {
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
 	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
-		datasource.Database,
-		datasource.User,
-		datasource.DecryptedPassword(),
+		dataSource.Database,
+		dataSource.User,
+		dataSource.DecryptedPassword(),
 	)
 	// Port number 0 means to determine the port automatically, so we can let the driver choose
 	if addr.Port != "0" {
