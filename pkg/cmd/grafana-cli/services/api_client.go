@@ -29,7 +29,7 @@ func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plug
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
 			return models.Plugin{}, errutil.Wrap(
-				fmt.Sprintf("Failed to find requested plugin, check if the plugin_id: %s is correct", pluginId), err)
+				fmt.Sprintf("Failed to find requested plugin, check if the plugin_id (%s) is correct", pluginId), err)
 		}
 		return models.Plugin{}, errutil.Wrap("Failed to send request", err)
 	}
