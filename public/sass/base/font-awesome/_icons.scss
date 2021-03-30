@@ -985,6 +985,12 @@
 .#{$fa-css-prefix}-btc:before {
   content: $fa-var-btc;
 }
+
+.#{$fa-css-prefix}-ethereum:before,
+.#{$fa-css-prefix}-eth:before {
+  content: $fa-var-eth;
+}
+
 .#{$fa-css-prefix}-file:before {
   content: $fa-var-file;
 }

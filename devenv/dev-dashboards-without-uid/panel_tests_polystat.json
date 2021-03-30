@@ -438,6 +438,10 @@
               "value": "currencyμBTC"
             },
             {
+              "text": "Ethereum (Ξ)",
+              "value": "currencyETH"
+            },
+            {
               "text": "Vietnamese Dong (VND)",
               "value": "currencyVND"
             }
@@ -1549,6 +1553,10 @@
               "value": "currencyBTC"
             },
             {
+              "text": "Ethereum (Ξ)",
+              "value": "currencyETH"
+            },
+            {
               "text": "Vietnamese Dong (VND)",
               "value": "currencyVND"
             }
@@ -2638,6 +2646,10 @@
             {
               "text": "Bitcoin (฿)",
               "value": "currencyBTC"
+            },
+            {
+              "text": "Ethereum (Ξ)",
+              "value": "currencyETH"
             },
             {
               "text": "Vietnamese Dong (VND)",
