@@ -35,8 +35,10 @@ export interface ThemePaletteBase<TColor> {
 
   formComponent: {
     background: string;
-    disabledBackground: string;
+    text: string;
     border: string;
+    disabledBackground: string;
+    disabledText: string;
   };
 
   hoverFactor: number;
@@ -107,6 +109,8 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   formComponent = {
     background: this.background.layer0,
     border: this.border.layer1,
+    text: this.text.primary,
+    disabledText: this.text.disabled,
     disabledBackground: colors.gray10,
   };
 
@@ -170,7 +174,9 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   formComponent = {
     background: this.background.layer1,
     border: this.border.layer1,
+    text: this.text.primary,
     disabledBackground: colors.gray95,
+    disabledText: this.text.disabled,
   };
 
   contrastThreshold = 3;
