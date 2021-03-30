@@ -8,9 +8,10 @@ run cd /usr/local/src && git clone https://github.com/graphite-project/graphite-
 run cd /usr/local/src && git clone https://github.com/graphite-project/carbon.git
 run cd /usr/local/src && git clone https://github.com/graphite-project/whisper.git
 
+run pip install twisted==13.2.0 && pip install sphinx==1.5.2 && pip install cairocffi==0.9.0
 run cd /usr/local/src/whisper && git checkout master && python setup.py install
-run cd /usr/local/src/carbon && git checkout 0.9.x && pip install -r requirements.txt; python setup.py install
-run cd /usr/local/src/graphite-web && git checkout 0.9.x && pip install -r requirements.txt; python check-dependencies.py; python setup.py install
+run cd /usr/local/src/carbon && git checkout 0.9.x && pip install -r requirements.txt && python setup.py install
+run cd /usr/local/src/graphite-web && git checkout 0.9.x && pip install -r requirements.txt && python check-dependencies.py && python setup.py install
 
 # Add graphite config
 add ./files/initial_data.json /opt/graphite/webapp/graphite/initial_data.json
