@@ -170,6 +170,7 @@ export function legacyDataResponseToDataResponse(legacy: Record<string, LegacyDa
       error: dr.error,
       frames: [],
     };
+    res.push(converted);
 
     if (dr.series?.length) {
       for (const s of dr.series) {

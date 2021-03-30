@@ -43,7 +43,7 @@ require (
 	github.com/grafana/alerting-api v0.0.0-20210323194814-03a29a4c4c27
 	github.com/grafana/grafana-aws-sdk v0.2.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.89.1-0.20210326213118-13dc4e74d05c
+	github.com/grafana/grafana-plugin-sdk-go v0.89.1-0.20210329235909-b01b3474161b
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-hclog v0.15.0
