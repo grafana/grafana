@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"golang.org/x/sync/errgroup"
 
 	"github.com/benbjohnson/clock"
@@ -319,17 +321,62 @@ func (sch *schedule) SendAlerts(alerts []*notifier.PostableAlert) error {
 func (sch *schedule) SaveAlertStates(states []state.AlertState) {
 	sch.log.Debug("saving alert states", "count", len(states))
 	for _, s := range states {
+		lastEvalResult := s.Results[:len(s.Results)-1]
 		cmd := models.SaveAlertInstanceCommand{
 			DefinitionOrgID: s.OrgID,
 			DefinitionUID:   s.UID,
 			Labels:          models.InstanceLabels(s.Labels),
 			State:           models.InstanceStateType(s.State.String()),
-			LastEvalTime:    s.EvaluatedAt,
+			LastEvalTime:    lastEvalResult[0].EvaluationTime,
 		}
 		err := sch.store.SaveAlertInstance(&cmd)
 		if err != nil {
 			sch.log.Error("failed to save alert state", "uid", s.UID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String())
 		}
+	}
+}
+
+func (sch *schedule) WarmStateCache() {
+	sch.log.Info("warming cache for startup")
+	cmd := models.ListAlertInstancesQuery{}
+	if err := sch.store.ListAlertInstances(&cmd); err != nil {
+		sch.log.Error("unable to fetch previous state", "msg", err.Error())
+	}
+	var states []state.AlertState
+	for _, entry := range cmd.Result {
+		s, _, err := entry.Labels.StringAndHash()
+		if err != nil {
+			sch.log.Debug("unable to convert InstanceLabels to data.Labels", "uid", entry.DefinitionUID, "msg", err.Error())
+		}
+
+		lbs, err := data.LabelsFromString(s)
+		if err != nil {
+			sch.log.Debug("unable to convert InstanceLabels string to data.Labels", "uid", entry.DefinitionUID, "msg", err.Error())
+		}
+
+		stateForEntry := state.AlertState{
+			UID:                entry.DefinitionUID,
+			OrgID:              entry.DefinitionOrgID,
+			CacheId:            "",
+			Labels:             lbs,
+			State:              translateInstanceState(entry.CurrentState),
+			Results:            nil,
+			StartsAt:           entry.CurrentStateSince,
+			EndsAt:             time.Time{},
+			LastEvaluationTime: entry.LastEvalTime,
+		}
+		states = append(states, stateForEntry)
+	}
+}
+
+func translateInstanceState(state models.InstanceStateType) eval.State {
+	switch {
+	case state == models.InstanceStateFiring:
+		return eval.Alerting
+	case state == models.InstanceStateNormal:
+		return eval.Normal
+	default:
+		return eval.Error
 	}
 }
 

@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -12,8 +13,8 @@ func FromAlertStateToPostableAlerts(firingStates []state.AlertState) []*notifier
 		alerts = append(alerts, &notifier.PostableAlert{
 			PostableAlert: models.PostableAlert{
 				Annotations: models.LabelSet{}, //TODO: add annotations to evaluation results, add them to the state struct, and then set them before sending to the notifier
-				StartsAt:    state.StartsAt,
-				EndsAt:      state.EndsAt,
+				StartsAt:    strfmt.DateTime(state.StartsAt),
+				EndsAt:      strfmt.DateTime(state.EndsAt),
 				Alert: models.Alert{
 					Labels: models.LabelSet(state.Labels),
 				},
