@@ -3,6 +3,7 @@ package settingsprovider
 import (
 	"reflect"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
@@ -27,16 +28,31 @@ type settingsBag map[string]map[string]string
 
 type Implementation struct {
 	sync.RWMutex
-	FileCfg  *setting.Cfg       `inject:""`
-	SQLStore *sqlstore.SQLStore `inject:""`
-	settings settingsBag
+	FileCfg        *setting.Cfg       `inject:""`
+	SQLStore       *sqlstore.SQLStore `inject:""`
+	settings       settingsBag
+	reloadHandlers map[string][]settings.ReloadHandler
 }
 
 func (i *Implementation) Init() (err error) {
 	i.settings, err = i.loadAndMergeSettings()
+	i.reloadHandlers = map[string][]settings.ReloadHandler{}
 	if err != nil {
 		return err
 	}
+
+	go func() {
+		syncTicker := time.NewTicker(1 * time.Minute)
+		for {
+			<-syncTicker.C
+			logger.Info("Checking for new updates")
+
+			err := i.Refresh()
+			if err != nil {
+				logger.Error("Error while refreshing settings", "error", err.Error())
+			}
+		}
+	}()
 
 	return
 }
@@ -70,14 +86,24 @@ func (i *Implementation) Refresh() error {
 		return err
 	}
 
-	var hasBeenUpdated bool
 	i.RLock()
-	if !reflect.DeepEqual(i.settings, settingsBag) {
-		hasBeenUpdated = true
+	// For each section, check if the section has been updated and trigger reloads
+
+	toReload := map[string]map[string]string{}
+
+	// still does not cover config that exists in the old settings but not in the new
+	// will this reload settings from the filesystem too, and do we want that?
+	for sn, newConfig := range settingsBag {
+		oldConfig, exists := i.settings[sn]
+		if !(exists && reflect.DeepEqual(newConfig, oldConfig)) {
+			logger.Debug("Configuration has changed", "section", sn)
+			toReload[sn] = newConfig
+		}
 	}
+
 	i.RUnlock()
 
-	if !hasBeenUpdated {
+	if len(toReload) == 0 {
 		return nil
 	}
 
@@ -85,7 +111,37 @@ func (i *Implementation) Refresh() error {
 	i.settings = settingsBag
 	i.Unlock()
 
+	i.triggerReload(toReload)
+
 	return nil
+}
+
+func (i *Implementation) triggerFullReload() {
+	for section, handlers := range i.reloadHandlers {
+		for _, h := range handlers {
+			h.Reload(i.Section(section))
+		}
+	}
+}
+
+func (i *Implementation) triggerReload(bag settingsBag) {
+	for sectionName, config := range bag {
+		if handlers, exists := i.reloadHandlers[sectionName]; exists {
+			logger.Debug("Reloading services using", "section", sectionName)
+			for _, h := range handlers {
+				h.Reload(buildSection(config))
+			}
+		}
+	}
+}
+
+func (i *Implementation) RegisterReloadHandler(section string, h settings.ReloadHandler) {
+	i.RLock()
+	defer i.RUnlock()
+
+	handlers := i.reloadHandlers[section]
+	handlers = append(handlers, h)
+	i.reloadHandlers[section] = handlers
 }
 
 func (i *Implementation) loadAndMergeSettings() (settingsBag, error) {

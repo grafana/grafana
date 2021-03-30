@@ -13,6 +13,7 @@ type Provider interface {
 	// Section returns a settings section
 	// abstraction for the given section name.
 	Section(section string) Section
+	RegisterReloadHandler(section string, handler ReloadHandler)
 }
 
 // Section is a settings section copy
@@ -21,7 +22,6 @@ type Section interface {
 	// KeyValue returns a key-value
 	// abstraction for the given key.
 	KeyValue(key string) KeyValue
-	Reload() error
 }
 
 // KeyValue represents a settings key-value
@@ -41,4 +41,8 @@ type KeyValue interface {
 	// MustDuration returns the value's time.Duration
 	// representation. Otherwise returns the given default.
 	MustDuration(defaultVal time.Duration) time.Duration
+}
+
+type ReloadHandler interface {
+	Reload(section Section) error
 }

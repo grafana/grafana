@@ -33,7 +33,3 @@ type passthroughSection struct {
 func (p passthroughSection) KeyValue(key string) settings.KeyValue {
 	return p.impl.KeyValue(p.section, key)
 }
-
-func (p passthroughSection) Reload() error {
-	return p.impl.Refresh()
-}
