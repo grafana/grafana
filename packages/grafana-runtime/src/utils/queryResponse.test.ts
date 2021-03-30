@@ -1,10 +1,9 @@
 import { toDataFrameDTO } from '@grafana/data';
 import { legacyDataResponseToDataResponse, toDataQueryResponse } from './queryResponse';
 
-/* eslint-disable */
 const resp = {
   data: {
-    results: legacyDataResponseToDataResponse( {
+    results: legacyDataResponseToDataResponse({
       A: {
         refId: 'A',
         dataframes: [
@@ -33,7 +32,6 @@ const resWithError = {
     }),
   },
 };
-/* eslint-enable */
 
 const emptyResults = {
   data: { results: [{ refId: '' }] },
