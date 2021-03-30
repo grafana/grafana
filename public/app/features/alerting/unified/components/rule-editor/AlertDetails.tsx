@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { FieldSet, FormAPI } from '@grafana/ui';
 import LabelsField from './LabelsField';
-import AnnotationsField from './rules/AnnotationsField';
+import AnnotationsField from './AnnotationsField';
 
 interface Props extends FormAPI<{}> {}
 

@@ -4,12 +4,12 @@ import { PageToolbar, ToolbarButton, stylesFactory, Form } from '@grafana/ui';
 import { css } from 'emotion';
 
 import { config } from 'app/core/config';
-import AlertTypeSection from './components/AlertTypeSection';
-import AlertConditionsSection from './components/AlertConditionsSection';
-import AlertDetails from './components/AlertDetails';
-import Expression from './components/Expression';
+import AlertTypeSection from './AlertTypeSection';
+import AlertConditionsSection from '../AlertConditionsSection';
+import AlertDetails from './AlertDetails';
+import Expression from './Expression';
 
-import { fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
+import { fetchRulerRulesNamespace, setRulerRuleGroup } from '../../api/ruler';
 import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting/dto';
 
 type Props = {};
@@ -48,7 +48,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const AlertEditor: FC<Props> = () => {
+const AlertRuleForm: FC<Props> = () => {
   const styles = getStyles(config.theme);
 
   const [folder, setFolder] = useState<{ namespace: string; group: string }>();
@@ -117,4 +117,4 @@ const AlertEditor: FC<Props> = () => {
   );
 };
 
-export default AlertEditor;
+export default AlertRuleForm;

@@ -374,14 +374,20 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/alerting/new',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/unified/AlertEditor')
+        () =>
+          import(
+            /* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/unified/components/rule-editor/AlertRuleForm'
+          )
       ),
     },
     {
       path: '/alerting/:id/edit',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/unified/AlertEditor')
+        () =>
+          import(
+            /* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/unified/components/rule-editor/AlertRuleForm'
+          )
       ),
     },
     {

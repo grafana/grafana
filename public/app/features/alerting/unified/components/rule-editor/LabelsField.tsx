@@ -4,13 +4,15 @@ import { GrafanaTheme } from '@grafana/data';
 import { config } from 'app/core/config';
 import { css, cx } from 'emotion';
 
-interface Props extends Pick<FormAPI<{}>, 'register' | 'control'> {}
+interface Props extends Pick<FormAPI<{}>, 'register' | 'control'> {
+  className?: string;
+}
 
 const LabelsField = (props: Props) => {
   const styles = getStyles(config.theme);
   const { register, control } = props;
   return (
-    <>
+    <div className={props.className}>
       <Label>Custom Labels</Label>
       <FieldArray control={control} name="labels">
         {({ fields, append, remove }) => {
@@ -69,7 +71,7 @@ const LabelsField = (props: Props) => {
           );
         }}
       </FieldArray>
-    </>
+    </div>
   );
 };
 

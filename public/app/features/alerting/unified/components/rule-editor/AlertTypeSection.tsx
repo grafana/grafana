@@ -14,8 +14,8 @@ import {
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 
-import { getAllDataSources, getPromAndLokiDataSources } from '../utils/config';
-import { fetchRulerRules } from '../api/ruler';
+import { getAllDataSources, getPromAndLokiDataSources } from '../../utils/config';
+import { fetchRulerRules } from '../../api/ruler';
 
 interface Props extends FormAPI<any> {
   setFolder: ({ namespace, group }: { namespace: string; group: string }) => void;
