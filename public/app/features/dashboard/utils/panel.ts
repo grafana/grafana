@@ -4,7 +4,7 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { TimeRange, AppEvents, rangeUtil, dateMath } from '@grafana/data';
+import { TimeRange, AppEvents, rangeUtil, dateMath, PanelData } from '@grafana/data';
 
 // Utils
 import { isString as _isString } from 'lodash';
@@ -19,6 +19,7 @@ import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
+import { getTimeSrv } from '../services/TimeSrv';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -154,4 +155,10 @@ export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: nu
   const chromePadding = panel.plugin && panel.plugin.noPadding ? 0 : config.theme.panelPadding * 2;
   const headerHeight = panel.hasTitle() ? config.theme.panelHeaderHeight : 0;
   return containerHeight - headerHeight - chromePadding - PANEL_BORDER;
+}
+
+export function timeRangeChanged(panel: PanelModel, data: PanelData): boolean {
+  const { timeRange: currentRange } = applyPanelTimeOverrides(panel, getTimeSrv().timeRange());
+  const previousRange = data.timeRange;
+  return previousRange.raw.from !== currentRange.raw.from || previousRange.raw.to !== currentRange.raw.to;
 }

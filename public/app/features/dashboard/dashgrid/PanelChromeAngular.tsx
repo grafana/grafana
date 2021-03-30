@@ -17,6 +17,7 @@ import { getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@graf
 import { PANEL_BORDER } from 'app/core/constants';
 import { selectors } from '@grafana/e2e-selectors';
 import { RenderEvent } from 'app/types/events';
+import { timeRangeChanged } from '../utils/panel';
 
 interface OwnProps {
   panel: PanelModel;
@@ -141,6 +142,11 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
         this.scopeProps.size.width = this.getInnerPanelWidth();
         panel.render();
       }
+    }
+
+    if (timeRangeChanged(this.props.panel, this.state.data)) {
+      console.log('refreshing due to time range changed: ', panel.id);
+      panel.refresh();
     }
   }
 

@@ -7,7 +7,7 @@ import { PanelHeader } from './PanelHeader/PanelHeader';
 import { ErrorBoundary } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
-import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
+import { applyPanelTimeOverrides, timeRangeChanged } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
 import config from 'app/core/config';
 // Types
@@ -106,6 +106,11 @@ export class PanelChrome extends Component<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     const { isInView } = this.props;
+
+    if (timeRangeChanged(this.props.panel, this.state.data)) {
+      console.log('refreshing due to time range changed: ', this.props.panel.id);
+      return this.onRefresh();
+    }
 
     // View state has changed
     if (isInView !== prevProps.isInView) {
