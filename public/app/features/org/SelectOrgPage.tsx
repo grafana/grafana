@@ -38,8 +38,8 @@ export const SelectOrgPage: FC = () => {
       <Page.Contents>
         <div>
           <p>
-            You have been invited to another organization! Please select which organization you want to use right now.
-            You can change this later at any time.
+            You have been invited to another organization! Please select which organization
+            that you want to use right now. You can change this later at any time.
           </p>
           <HorizontalGroup wrap>
             {orgs &&
