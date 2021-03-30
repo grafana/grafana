@@ -25,7 +25,7 @@
     "@grafana/data": "7.5.0-pre.0",
     "@grafana/ui": "7.5.0-pre.0",
     "@grafana/e2e-selectors": "7.5.0-pre.0",
-    "systemjs": "6.8.2",
+    "systemjs": "6.8.3",
     "systemjs-css-extra": "github:grafana/systemjs-css-extra",
     "history": "4.10.1"
   },
