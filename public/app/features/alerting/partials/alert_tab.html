@@ -20,6 +20,7 @@
           type="text"
           ng-model="ctrl.alert.frequency"
           ng-blur="ctrl.checkFrequency()"
+          ng-pattern="^\d+([dhms])$
         />
       </div>
       <div class="gf-form max-width-11">
@@ -30,6 +31,7 @@
           ng-model="ctrl.alert.for"
           spellcheck="false"
           placeholder="5m"
+          ng-pattern="^\d+([dhms])$"
         />
         <info-popover mode="right-absolute">
           If an alert rule has a configured and the query violates the configured threshold, then it goes from OK
