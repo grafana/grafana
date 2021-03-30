@@ -8,6 +8,20 @@ datasources:
     jsonData:
       graphiteVersion: "1.1"
 
+  - name: gdev-graphite-1.0
+    type: graphite
+    access: proxy
+    url: http://localhost:8280
+    jsonData:
+      graphiteVersion: "1.0"
+
+  - name: gdev-graphite-0.9
+    type: graphite
+    access: proxy
+    url: http://localhost:8380
+    jsonData:
+      graphiteVersion: "0.9"
+
   - name: gdev-prometheus
     type: prometheus
     access: proxy
@@ -30,7 +44,7 @@ datasources:
     url: http://localhost:8086
     secureJsonData:
       password: grafana
-  
+
   - name: gdev-influxdb2
     type: influxdb
     access: proxy
@@ -62,7 +76,7 @@ datasources:
     url: http://localhost:8086
     secureJsonData:
       password: grafana
-    
+
   - name: gdev-opentsdb
     type: opentsdb
     access: proxy
