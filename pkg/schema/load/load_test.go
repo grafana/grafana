@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/grafana/grafana"
@@ -20,7 +19,7 @@ var p BaseLoadPaths = BaseLoadPaths{
 
 // Basic well-formedness tests on core scuemata.
 func TestScuemataBasics(t *testing.T) {
-	all := make(map[string]schema.Fam)
+	all := make(map[string]schema.VersionedCueSchema)
 
 	dash, err := BaseDashboardScuemata(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
@@ -30,12 +29,12 @@ func TestScuemataBasics(t *testing.T) {
 	require.NoError(t, err, "error while loading dist dashboard scuemata")
 	all["distdash"] = ddash
 
-	for set, fam := range all {
+	for set, sch := range all {
 		t.Run(set, func(t *testing.T) {
-			sch := fam.First()
-			if reflect.ValueOf(sch).IsNil() {
+			if sch == nil {
 				t.Error("scuemata linked to empty chain")
 			}
+
 			maj, min := sch.Version()
 			t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
 				cv := sch.CUE()
@@ -79,11 +78,11 @@ func TestDashboardValidity(t *testing.T) {
 			require.NoError(t, err, "failed to open dashboard file")
 
 			t.Run("base", func(t *testing.T) {
-				_, err := dash.Validate(schema.Resource{Value: b})
+				_, err := schema.SearchAndValidate(dash, schema.Resource{Value: b})
 				require.NoError(t, err, "dashboard failed validation")
 			})
 			t.Run("dist", func(t *testing.T) {
-				_, err := ddash.Validate(schema.Resource{Value: b})
+				_, err := schema.SearchAndValidate(ddash, schema.Resource{Value: b})
 				require.NoError(t, err, "dashboard failed validation")
 			})
 		})

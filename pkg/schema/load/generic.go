@@ -31,37 +31,12 @@ func getBaseScuemata(p BaseLoadPaths) (*cue.Instance, error) {
 		// And no, changing the toOverlay() to have a subpath and the
 		// load.Instances to mirror that subpath does not allow us to get rid of
 		// this "/".
-		// Dir: "/",
+		Dir: "/",
 	}
 	return rt.Build(load.Instances([]string{"/grafana/cue/scuemata"}, cfg)[0])
 }
 
-type scuemata struct {
-	first schema.VersionedCueSchema
-}
-
-func (df *scuemata) Validate(r schema.Resource) (schema.VersionedCueSchema, error) {
-	arr := schema.AsArray(df)
-
-	// Work from latest to earliest
-	var err error
-	for o := len(arr) - 1; o >= 0; o-- {
-		for i := len(arr[o]) - 1; i >= 0; i-- {
-			if err = arr[o][i].Validate(r); err == nil {
-				return arr[o][i], nil
-			}
-		}
-	}
-
-	// TODO sloppy, return more than last error
-	return nil, err
-}
-
-func (df *scuemata) First() schema.VersionedCueSchema {
-	return df.first
-}
-
-func buildGenericScuemata(famval cue.Value) (schema.Fam, error) {
+func buildGenericScuemata(famval cue.Value) (schema.VersionedCueSchema, error) {
 	// TODO verify subsumption by #SchemaFamily; renders many
 	// error checks below unnecessary
 	majiter, err := famval.Lookup("lineages").List()
@@ -69,10 +44,8 @@ func buildGenericScuemata(famval cue.Value) (schema.Fam, error) {
 		return nil, err
 	}
 
-	scuem := &scuemata{}
-
 	var major int
-	var lastgvs *genericVersionedSchema
+	var first, lastgvs *genericVersionedSchema
 	for majiter.Next() {
 		var minor int
 		miniter, _ := majiter.Value().List()
@@ -101,7 +74,7 @@ func buildGenericScuemata(famval cue.Value) (schema.Fam, error) {
 
 				// TODO impl
 			} else {
-				scuem.first = gvs
+				first = gvs
 			}
 			lastgvs = gvs
 			minor++
@@ -109,7 +82,7 @@ func buildGenericScuemata(famval cue.Value) (schema.Fam, error) {
 		major++
 	}
 
-	return scuem, nil
+	return first, nil
 }
 
 type genericVersionedSchema struct {
@@ -155,6 +128,10 @@ func (gvs *genericVersionedSchema) Version() (major int, minor int) {
 
 // Returns the next VersionedCueSchema
 func (gvs *genericVersionedSchema) Successor() schema.VersionedCueSchema {
+	if gvs.next == nil {
+		// Untyped nil, allows `<sch> == nil` checks to work as people expect
+		return nil
+	}
 	return gvs.next
 }
 
@@ -199,72 +176,4 @@ func implicitMigration(v cue.Value, next schema.VersionedCueSchema) migrationFun
 		}
 		return w, next, w.Err()
 	}
-}
-
-func buildSchemaFamily(famval cue.Value) (*schema.Family, error) {
-	// TODO verify subsumption by #Family; renders many
-	// error checks below unnecessary
-	majiter, err := famval.Lookup("lineages").List()
-	if err != nil {
-		return nil, err
-	}
-	var major int
-	var lastgvs *genericVersionedSchema
-	fam := &schema.Family{}
-	for majiter.Next() {
-		var minor int
-		miniter, _ := majiter.Value().List()
-		var seq schema.Seq
-		for miniter.Next() {
-			gvs := &genericVersionedSchema{
-				actual: miniter.Value(),
-				major:  major,
-				minor:  minor,
-				// This gets overwritten on all but the very final schema
-				migration: terminalMigrationFunc,
-			}
-
-			if minor != 0 {
-				lastgvs.next = gvs
-				// TODO Verify that this schema is backwards compat with prior.
-				// Create an implicit migration operation on the prior schema.
-				lastgvs.migration = implicitMigration(gvs.actual, gvs)
-			} else if major != 0 {
-				lastgvs.next = gvs
-				// x.0. There should exist an explicit migration definition;
-				// load it up and ready it for use, and place it on the final
-				// schema in the prior sequence.
-				//
-				// Also...should at least try to make sure it's pointing at the
-				// expected schema, to maintain our invariants?
-
-				// TODO impl
-			}
-			lastgvs = gvs
-			seq = append(seq, gvs)
-			minor++
-		}
-		major++
-		fam.Seqs = append(fam.Seqs, seq)
-	}
-
-	// TODO stupid pointers not being references, fixme
-	for o, seq := range fam.Seqs {
-		for i, gen := range seq {
-			var next *genericVersionedSchema
-			if len(seq) == i+1 {
-				if len(fam.Seqs) == o+1 {
-					continue
-				}
-				next = fam.Seqs[o+1][0].(*genericVersionedSchema)
-			} else {
-				next = seq[i+1].(*genericVersionedSchema)
-			}
-			gvs := gen.(*genericVersionedSchema)
-			gvs.next = next
-			fam.Seqs[o][i] = gvs
-		}
-	}
-
-	return fam, nil
 }

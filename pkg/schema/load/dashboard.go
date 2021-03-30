@@ -3,7 +3,6 @@ package load
 import (
 	"errors"
 	"fmt"
-	"reflect"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
@@ -24,7 +23,7 @@ func defaultOverlay(p BaseLoadPaths) (map[string]load.Source, error) {
 	return overlay, nil
 }
 
-func BaseDashboardScuemata(p BaseLoadPaths) (schema.Fam, error) {
+func BaseDashboardScuemata(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	overlay, err := defaultOverlay(p)
 	if err != nil {
 		return nil, err
@@ -44,8 +43,8 @@ func BaseDashboardScuemata(p BaseLoadPaths) (schema.Fam, error) {
 	return buildGenericScuemata(famval)
 }
 
-func DistDashboardScuemata(p BaseLoadPaths) (schema.Fam, error) {
-	base, err := BaseDashboardScuemata(p)
+func DistDashboardScuemata(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
+	head, err := BaseDashboardScuemata(p)
 	if err != nil {
 		return nil, err
 	}
@@ -70,27 +69,27 @@ func DistDashboardScuemata(p BaseLoadPaths) (schema.Fam, error) {
 	filled := dummy.Value().Fill(dj, "obj")
 	ddj := filled.LookupPath(cue.MakePath(cue.Str("dummy")))
 
-	var prev *compositeDashboardSchema
-	scuem, sch := &scuemata{}, base.First()
-	for !reflect.ValueOf(sch).IsNil() {
+	var first, prev *compositeDashboardSchema
+	for head != nil {
 		cds := &compositeDashboardSchema{
-			base:      sch,
-			actual:    sch.CUE().Unify(ddj),
+			base:      head,
+			actual:    head.CUE().Unify(ddj),
 			panelFams: scuemap,
 			// TODO migrations
 			migration: terminalMigrationFunc,
 		}
 
 		if prev == nil {
-			scuem.first = cds
+			first = cds
 		} else {
 			prev.next = cds
 		}
+
 		prev = cds
-		sch = sch.Successor()
+		head = head.Successor()
 	}
 
-	return scuem, nil
+	return first, nil
 }
 
 type compositeDashboardSchema struct {
@@ -99,7 +98,7 @@ type compositeDashboardSchema struct {
 	actual    cue.Value
 	next      *compositeDashboardSchema
 	migration migrationFunc
-	panelFams map[string]schema.Fam
+	panelFams map[string]schema.VersionedCueSchema
 }
 
 // Validate checks that the resource is correct with respect to the schema.
@@ -137,6 +136,10 @@ func (cds *compositeDashboardSchema) Version() (major int, minor int) {
 
 // Returns the next VersionedCueSchema
 func (cds *compositeDashboardSchema) Successor() schema.VersionedCueSchema {
+	if cds.next == nil {
+		// Untyped nil, allows `<sch> == nil` checks to work as people expect
+		return nil
+	}
 	return cds.next
 }
 
@@ -152,17 +155,13 @@ func (cds *compositeDashboardSchema) Migrate(x schema.Resource) (schema.Resource
 
 func (cds *compositeDashboardSchema) LatestPanelSchemaFor(id string) (schema.VersionedCueSchema, error) {
 	// So much slop rn, but it's OK because i FINALLY know where this is going!
-	fam, has := cds.panelFams[id]
+	psch, has := cds.panelFams[id]
 	if !has {
 		// TODO typed errors
 		return nil, fmt.Errorf("unknown panel plugin type %q", id)
 	}
 
-	latest, err := schema.Find(fam.First(), schema.Latest())
-	if err != nil {
-		return nil, err
-	}
-
+	latest := schema.Find(psch, schema.Latest())
 	sch := &genericVersionedSchema{
 		actual: cds.base.CUE().LookupPath(panelSubpath).Unify(mapPanelModel(id, latest)),
 	}

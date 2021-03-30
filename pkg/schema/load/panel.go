@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"path/filepath"
-	"reflect"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
@@ -58,7 +57,7 @@ func (ps *panelSchema) Migrate(x schema.Resource) (schema.Resource, schema.Versi
 
 // Returns a disjunction of structs representing each panel schema version
 // (post-mapping from on-disk #PanelModel form) from each scuemata in the map.
-func disjunctPanelScuemata(scuemap map[string]schema.Fam) (cue.Value, error) {
+func disjunctPanelScuemata(scuemap map[string]schema.VersionedCueSchema) (cue.Value, error) {
 	partsi, err := rt.Compile("panelDisjunction", `
 	allPanels: [Name=_]: {}
 	parts: or([for v in allPanels { v }])
@@ -68,11 +67,8 @@ func disjunctPanelScuemata(scuemap map[string]schema.Fam) (cue.Value, error) {
 	}
 
 	parts := partsi.Value()
-	for id, fam := range scuemap {
-		sch := fam.First()
-
-		// TODO lol, be better
-		for !reflect.ValueOf(sch).IsNil() {
+	for id, sch := range scuemap {
+		for sch != nil {
 			cv := mapPanelModel(id, sch)
 
 			mjv, miv := sch.Version()
@@ -112,7 +108,7 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 	return inter.Value().Fill(vcs.CUE(), "in", "model").Lookup("result")
 }
 
-func readPanelModels(p BaseLoadPaths) (map[string]schema.Fam, error) {
+func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {
 	overlay := make(map[string]load.Source)
 	if err := toOverlay("/", p.BaseCueFS, overlay); err != nil {
 		return nil, err
@@ -140,7 +136,7 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.Fam, error) {
 		return nil, errors.New("could not locate #PanelFamily definition")
 	}
 
-	all := make(map[string]schema.Fam)
+	all := make(map[string]schema.VersionedCueSchema)
 	err = fs.WalkDir(p.DistPluginCueFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
