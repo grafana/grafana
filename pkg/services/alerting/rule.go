@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -18,6 +19,11 @@ var unitMultiplier = map[string]int{
 	"h": 3600,
 	"d": 86400,
 }
+
+var (
+	valueFormatRegex = regexp.MustCompile(`^\d+`)
+	isDigitRegex     = regexp.MustCompile(`^[0-9]+$`)
+)
 
 var (
 	// ErrFrequencyCannotBeZeroOrLess frequency cannot be below zero

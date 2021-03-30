@@ -14,9 +14,7 @@ import (
 )
 
 var (
-	valueFormatRegex = regexp.MustCompile(`^\d+`)
-	unitFormatRegex  = regexp.MustCompile(`[a-z]+`)
-	isDigitRegex     = regexp.MustCompile(`^[0-9]+$`)
+	unitFormatRegex = regexp.MustCompile(`[a-z]+`)
 )
 
 // DashAlertExtractor extracts alerts from the dashboard json.
