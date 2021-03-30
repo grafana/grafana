@@ -60,8 +60,8 @@ const GetEnterprise: React.FC = () => {
       <h2 style={titleStyles}>Get Grafana Enterprise</h2>
       <CallToAction />
       <p style={{ paddingTop: '12px' }}>
-        You can use the trial version for free for 30 days. We will remind you about it{' '}
-        five days before the trial period ends.
+        You can use the trial version for free for 30 days. We will remind you about it five days before the trial
+        period ends.
       </p>
     </div>
   );
