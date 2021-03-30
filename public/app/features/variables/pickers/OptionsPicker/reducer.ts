@@ -7,7 +7,7 @@ import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { containsSearchFilter } from '../../utils';
 
 export interface ToggleOption {
-  option: VariableOption;
+  option?: VariableOption;
   forceSelect: boolean;
   clearOthers: boolean;
 }
@@ -148,23 +148,28 @@ const optionsPickerSlice = createSlice({
     toggleOption: (state, action: PayloadAction<ToggleOption>): OptionsPickerState => {
       const { option, clearOthers, forceSelect } = action.payload;
       const { multi, selectedValues } = state;
-      const selected = !selectedValues.find((o) => o.value === option.value);
 
-      if (option.value === ALL_VARIABLE_VALUE || !multi || clearOthers) {
-        if (selected || forceSelect) {
-          state.selectedValues = [{ ...option, selected: true }];
-        } else {
-          state.selectedValues = [];
+      if (option) {
+        const selected = !selectedValues.find((o) => o.value === option.value);
+
+        if (option.value === ALL_VARIABLE_VALUE || !multi || clearOthers) {
+          if (selected || forceSelect) {
+            state.selectedValues = [{ ...option, selected: true }];
+          } else {
+            state.selectedValues = [];
+          }
+          return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
         }
-        return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
+        if (forceSelect || selected) {
+          state.selectedValues.push({ ...option, selected: true });
+          return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
+        }
+
+        state.selectedValues = selectedValues.filter((o) => o.value !== option.value);
+      } else {
+        state.selectedValues = [];
       }
 
-      if (forceSelect || selected) {
-        state.selectedValues.push({ ...option, selected: true });
-        return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
-      }
-
-      state.selectedValues = selectedValues.filter((o) => o.value !== option.value);
       return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
     },
     toggleTag: (state, action: PayloadAction<VariableTag>): OptionsPickerState => {
