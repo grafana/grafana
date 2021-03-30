@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 )
 
@@ -32,7 +33,7 @@ var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
 	SkipConvey("MSSQL", t, func() {
-		x := InitMSSQLTestDB(t)
+		x := initMSSQLTestDB(t)
 
 		origXormEngine := sqleng.NewXormEngine
 		sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
@@ -1161,13 +1162,70 @@ func TestTransformQueryError(t *testing.T) {
 	}
 }
 
-func InitMSSQLTestDB(t *testing.T) *xorm.Engine {
+func TestGenerateConnectionString(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		dataSource *models.DataSource
+		expConnStr string
+	}{
+		{
+			desc: "From URL w/ port",
+			dataSource: &models.DataSource{
+				Url:      "localhost:1001",
+				Database: "database",
+				User:     "user",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;port=1001;",
+		},
+		// When no port is specified, the driver should be allowed to choose
+		{
+			desc: "From URL w/o port",
+			dataSource: &models.DataSource{
+				Url:      "localhost",
+				Database: "database",
+				User:     "user",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;",
+		},
+		// Port 0 should be equivalent to not specifying a port, i.e. let the driver choose
+		{
+			desc: "From URL w port 0",
+			dataSource: &models.DataSource{
+				Url:      "localhost:0",
+				Database: "database",
+				User:     "user",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;",
+		},
+		{
+			desc: "Defaults",
+			dataSource: &models.DataSource{
+				Database: "database",
+				User:     "user",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			connStr, err := generateConnectionString(tc.dataSource)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expConnStr, connStr)
+		})
+	}
+}
+
+func initMSSQLTestDB(t *testing.T) *xorm.Engine {
+	t.Helper()
+
 	testDB := sqlutil.MSSQLTestDB()
 	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
 		serverIP, 1))
-	if err != nil {
-		t.Fatalf("Failed to init mssql db %v", err)
-	}
+	require.NoError(t, err)
 
 	x.DatabaseTZ = time.UTC
 	x.TZLocation = time.UTC
