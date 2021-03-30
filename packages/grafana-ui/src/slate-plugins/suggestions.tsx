@@ -290,6 +290,7 @@ const handleTypeahead = async (
       if (!group.items) {
         return group;
       }
+      // Falling back to deprecated prefixMatch to support backwards compatibility with plugins using this property
       const searchFunctionType =
         group.searchFunctionType || (group.prefixMatch ? SearchFunctionType.Prefix : SearchFunctionType.Word);
       const searchFunction = SearchFunctionMap[searchFunctionType];
@@ -312,6 +313,7 @@ const handleTypeahead = async (
           if (item.sortText === undefined) {
             return item.sortValue !== undefined ? item.sortValue : item.label;
           } else {
+            // Falling back to deprecated sortText to support backwards compatibility with plugins using this property
             return item.sortText || item.label;
           }
         });
