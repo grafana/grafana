@@ -29,33 +29,18 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 	authQuery := &models.GetAuthInfoQuery{}
 
 	// Try to find the user by auth module and id first
-	authQuery.AuthModule = query.AuthModule
-	authQuery.AuthId = query.AuthId
+	if query.AuthModule != "" && query.AuthId != "" {
+		authQuery.AuthModule = query.AuthModule
+		authQuery.AuthId = query.AuthId
 
-	err = GetAuthInfo(authQuery)
-	if !errors.Is(err, models.ErrUserNotFound) {
-		if err != nil {
-			return err
-		}
-
-		// if user id was specified and doesn't match the user_auth entry, remove it
-		if query.UserId != 0 && query.UserId != authQuery.Result.UserId {
-			err = DeleteAuthInfo(&models.DeleteAuthInfoCommand{
-				UserAuth: authQuery.Result,
-			})
-			if err != nil {
-				sqlog.Error("Error removing user_auth entry", "error", err)
-			}
-
-			authQuery.Result = nil
-		} else {
-			has, err = x.Id(authQuery.Result.UserId).Get(user)
+		err = GetAuthInfo(authQuery)
+		if !errors.Is(err, models.ErrUserNotFound) {
 			if err != nil {
 				return err
 			}
 
-			if !has {
-				// if the user has been deleted then remove the entry
+			// if user id was specified and doesn't match the user_auth entry, remove it
+			if query.UserId != 0 && query.UserId != authQuery.Result.UserId {
 				err = DeleteAuthInfo(&models.DeleteAuthInfoCommand{
 					UserAuth: authQuery.Result,
 				})
@@ -64,6 +49,23 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 				}
 
 				authQuery.Result = nil
+			} else {
+				has, err = x.Id(authQuery.Result.UserId).Get(user)
+				if err != nil {
+					return err
+				}
+
+				if !has {
+					// if the user has been deleted then remove the entry
+					err = DeleteAuthInfo(&models.DeleteAuthInfoCommand{
+						UserAuth: authQuery.Result,
+					})
+					if err != nil {
+						sqlog.Error("Error removing user_auth entry", "error", err)
+					}
+
+					authQuery.Result = nil
+				}
 			}
 		}
 	}
@@ -102,6 +104,7 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 	// Special case for generic oauth duplicates
 	if query.AuthModule == "oauth_generic_oauth" && user.Id != 0 {
 		authQuery.UserId = user.Id
+		authQuery.AuthModule = query.AuthModule
 		_ = GetAuthInfo(authQuery)
 	}
 	if authQuery.Result == nil && query.AuthModule != "" {
