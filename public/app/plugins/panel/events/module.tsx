@@ -2,7 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 import { EventsPanel } from './EventsPanel';
 import { EventsPanelOptions } from './types';
 
-export const plugin = new PanelPlugin<EventsPanelOptions>(EventsPanel).setPanelOptions(builder => {
+export const plugin = new PanelPlugin<EventsPanelOptions>(EventsPanel).setPanelOptions((builder) => {
   builder.addTextInput({
     path: 'feedUrl',
     name: 'URL',
