@@ -374,12 +374,12 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 		}
 	}()
 
-	if resp.StatusCode/100 == 2 {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("failed to read response body: %w", err)
-		}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
 
+	if resp.StatusCode/100 == 2 {
 		var rslt map[string]interface{}
 		// Slack responds to some requests with a JSON document, that might contain an error
 		if err := json.Unmarshal(body, &rslt); err == nil {
@@ -394,11 +394,6 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 		sn.log.Debug("Sending Slack API request succeeded", "url", sn.url.String(), "statusCode", resp.Status)
 
 		return nil
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
 	}
 
 	sn.log.Warn("Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status, "body", string(body))
