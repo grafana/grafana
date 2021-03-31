@@ -2,6 +2,7 @@ import * as Bowser from 'bowser';
 
 import { DashboardModel, PanelModel } from '../../state';
 import { DashboardExporter } from '../DashExportModal';
+import { TargetsSanitizer } from './sanitizers/TargetsSanitizer';
 import { UrlSanitizer } from './sanitizers/UrlSanitizer';
 import { CollectorData, CollectorItem, CollectorWorkers, Sanitizer } from './types';
 
@@ -22,7 +23,7 @@ export function getCollectorWorkers(): CollectorWorker[] {
 }
 
 export function getCollectorSanitizers(): Sanitizer[] {
-  return [new UrlSanitizer('UrlSanitizer')];
+  return [new UrlSanitizer('UrlSanitizer'), new TargetsSanitizer('TargetsSanitizer')];
 }
 
 export enum CollectorType {

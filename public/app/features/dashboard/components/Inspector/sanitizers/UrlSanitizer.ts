@@ -1,8 +1,13 @@
 import { lowerCase } from 'lodash';
 import { CollectorItem, CollectorWorkers, Sanitizer } from '../types';
+import { copyAndSanitize, SanitizeContext } from './utils';
 
 export class UrlSanitizer implements Sanitizer {
-  constructor(readonly id: string, private readonly replaceWith = '******') {}
+  private context: SanitizeContext;
+
+  constructor(readonly id: string, replaceWith = '******') {
+    this.context = { replaceWith, shouldReplace };
+  }
 
   canSanitize(item: CollectorItem): boolean {
     switch (item.id) {
@@ -19,9 +24,7 @@ export class UrlSanitizer implements Sanitizer {
     switch (item.id) {
       case CollectorWorkers.panelJson:
       case CollectorWorkers.dashboard:
-        const target: Record<string, any> = {};
-        copyWithoutUrls(this.replaceWith, item.data, target);
-        return target;
+        return copyAndSanitize(item.data, this.context);
 
       default:
         return item.data;
@@ -29,42 +32,14 @@ export class UrlSanitizer implements Sanitizer {
   }
 }
 
-const copyWithoutUrls = (replaceWith: string, source: Record<string, any>, target: Record<string, any>) => {
-  for (const key in source) {
-    if (!Object.prototype.hasOwnProperty.call(source, key)) {
-      continue;
-    }
-
-    const value = source[key];
-
-    if (typeof value === 'object') {
-      const valueTarget = {};
-      copyWithoutUrls(replaceWith, value, valueTarget);
-      target[key] = valueTarget;
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      target[key] = value.map((v) => {
-        const valueTarget = {};
-        copyWithoutUrls(replaceWith, v, valueTarget);
-        return valueTarget;
-      });
-      continue;
-    }
-
-    if (typeof value === 'string' && lowerCase(key) === 'url') {
-      target[key] = replaceWith;
-      continue;
-    }
-
-    if (typeof value === 'string' && isUrl(value)) {
-      target[key] = replaceWith;
-      continue;
-    }
-
-    target[key] = value;
+const shouldReplace = (key: string, value: any): boolean => {
+  if (typeof value === 'string' && lowerCase(key) === 'url') {
+    return true;
   }
+  if (typeof value === 'string' && isUrl(value)) {
+    return true;
+  }
+  return false;
 };
 
 const protocolAndDomainRE = /^(?:\w+:)?\/\/(\S+)$/;
