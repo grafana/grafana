@@ -308,10 +308,13 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 
 func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Response {
 	silenceID := c.Params(":SilenceId")
-	srv.log.Info("RouteGetSilence: ", "SilenceId", silenceID)
 	gettableSilence, err := srv.am.GetSilence(silenceID)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to get silence", err)
+		if errors.Is(err, notifier.ErrSilenceNotFound) {
+			return response.Error(http.StatusNotFound, err.Error(), nil)
+		}
+		// any other error here should be an unexpected failure and thus an internal error
+		return response.Error(http.StatusInternalServerError, err.Error(), nil)
 	}
 	return response.JSON(http.StatusOK, gettableSilence)
 }
