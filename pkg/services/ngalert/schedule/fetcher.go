@@ -6,9 +6,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func (sch *schedule) fetchAllDetails(now time.Time) []*models.AlertDefinition {
-	q := models.ListAlertDefinitionsQuery{}
-	err := sch.store.GetAlertDefinitions(&q)
+func (sch *schedule) fetchAllDetails(now time.Time) []*models.AlertRule {
+	q := models.ListAlertRulesQuery{}
+	err := sch.ruleStore.GetAlertRulesForScheduling(&q)
 	if err != nil {
 		sch.log.Error("failed to fetch alert definitions", "now", now, "err", err)
 		return nil
