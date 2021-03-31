@@ -1,4 +1,4 @@
-package ngalert
+package store
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-func addAlertDefinitionMigrations(mg *migrator.Migrator) {
+func AddAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
 	mg.AddMigration("delete alert_definition table", migrator.NewDropTableMigration("alert_definition"))
 
 	alertDefinition := migrator.Table{
@@ -52,7 +52,7 @@ func addAlertDefinitionMigrations(mg *migrator.Migrator) {
 	}))
 }
 
-func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
+func AddAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("delete alert_definition_version table", migrator.NewDropTableMigration("alert_definition_version"))
 
 	alertDefinitionVersion := migrator.Table{
@@ -83,7 +83,7 @@ func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 		Mysql("ALTER TABLE alert_definition_version MODIFY data MEDIUMTEXT;"))
 }
 
-func alertInstanceMigration(mg *migrator.Migrator) {
+func AlertInstanceMigration(mg *migrator.Migrator) {
 	alertInstance := migrator.Table{
 		Name: "alert_instance",
 		Columns: []*migrator.Column{
@@ -106,4 +106,28 @@ func alertInstanceMigration(mg *migrator.Migrator) {
 	mg.AddMigration("create alert_instance table", migrator.NewAddTableMigration(alertInstance))
 	mg.AddMigration("add index in alert_instance table on def_org_id, def_uid and current_state columns", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[0]))
 	mg.AddMigration("add index in alert_instance table on def_org_id, current_state columns", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[1]))
+}
+
+func SilenceMigration(mg *migrator.Migrator) {
+	silence := migrator.Table{
+		Name: "silence",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 190, Nullable: false, Default: "0"},
+			{Name: "comment", Type: migrator.DB_NVarchar, Length: 190, Nullable: true},
+			{Name: "created_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: true},
+			{Name: "matchers", Type: migrator.DB_Text, Nullable: false},
+			{Name: "ends_at", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "starts_at", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "updated_at", Type: migrator.DB_DateTime, Nullable: true},
+			{Name: "status", Type: migrator.DB_NVarchar, Length: 8, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id", "uid"}, Type: migrator.IndexType},
+		},
+	}
+
+	mg.AddMigration("create_silence_table", migrator.NewAddTableMigration(silence))
+	mg.AddMigration("add unique index in silence on org_id and uid columns", migrator.NewAddIndexMigration(silence, silence.Indices[0]))
 }
