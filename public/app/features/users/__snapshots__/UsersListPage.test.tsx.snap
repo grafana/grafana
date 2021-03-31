@@ -25,6 +25,16 @@ exports[`Render should render List page 1`] = `
       onRoleChange={[Function]}
       users={Array []}
     />
+    <div
+      className="css-przcpu"
+    >
+      <Pagination
+        currentPage={1}
+        hideWhenSinglePage={true}
+        numberOfPages={0}
+        onNavigate={[MockFunction]}
+      />
+    </div>
   </PageContents>
 </Page>
 `;
