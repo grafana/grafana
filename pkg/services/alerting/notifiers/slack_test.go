@@ -24,7 +24,7 @@ func TestSlackNotifier(t *testing.T) {
 				}
 
 				_, err = NewSlackNotifier(model)
-				So(err, ShouldBeError, "alert validation error: Could not find url property in settings")
+				So(err, ShouldBeError, "alert validation error: token must be specified when using the Slack chat API")
 			})
 
 			//nolint:goconst
@@ -47,15 +47,15 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(slackNotifier.Name, ShouldEqual, "ops")
 				So(slackNotifier.Type, ShouldEqual, "slack")
-				So(slackNotifier.URL, ShouldEqual, "http://google.com")
-				So(slackNotifier.Recipient, ShouldEqual, "")
-				So(slackNotifier.Username, ShouldEqual, "")
-				So(slackNotifier.IconEmoji, ShouldEqual, "")
-				So(slackNotifier.IconURL, ShouldEqual, "")
-				So(slackNotifier.MentionUsers, ShouldResemble, []string{})
-				So(slackNotifier.MentionGroups, ShouldResemble, []string{})
-				So(slackNotifier.MentionChannel, ShouldEqual, "")
-				So(slackNotifier.Token, ShouldEqual, "")
+				So(slackNotifier.url.String(), ShouldEqual, "http://google.com")
+				So(slackNotifier.recipient, ShouldEqual, "")
+				So(slackNotifier.username, ShouldEqual, "")
+				So(slackNotifier.iconEmoji, ShouldEqual, "")
+				So(slackNotifier.iconURL, ShouldEqual, "")
+				So(slackNotifier.mentionUsers, ShouldResemble, []string{})
+				So(slackNotifier.mentionGroups, ShouldResemble, []string{})
+				So(slackNotifier.mentionChannel, ShouldEqual, "")
+				So(slackNotifier.token, ShouldEqual, "")
 			})
 
 			Convey("from settings with Recipient, Username, IconEmoji, IconUrl, MentionUsers, MentionGroups, MentionChannel, and Token", func() {
@@ -86,15 +86,15 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(slackNotifier.Name, ShouldEqual, "ops")
 				So(slackNotifier.Type, ShouldEqual, "slack")
-				So(slackNotifier.URL, ShouldEqual, "http://google.com")
-				So(slackNotifier.Recipient, ShouldEqual, "#ds-opentsdb")
-				So(slackNotifier.Username, ShouldEqual, "Grafana Alerts")
-				So(slackNotifier.IconEmoji, ShouldEqual, ":smile:")
-				So(slackNotifier.IconURL, ShouldEqual, "https://grafana.com/img/fav32.png")
-				So(slackNotifier.MentionUsers, ShouldResemble, []string{"user1", "user2"})
-				So(slackNotifier.MentionGroups, ShouldResemble, []string{"group1", "group2"})
-				So(slackNotifier.MentionChannel, ShouldEqual, "here")
-				So(slackNotifier.Token, ShouldEqual, "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX")
+				So(slackNotifier.url.String(), ShouldEqual, "http://google.com")
+				So(slackNotifier.recipient, ShouldEqual, "#ds-opentsdb")
+				So(slackNotifier.username, ShouldEqual, "Grafana Alerts")
+				So(slackNotifier.iconEmoji, ShouldEqual, ":smile:")
+				So(slackNotifier.iconURL, ShouldEqual, "https://grafana.com/img/fav32.png")
+				So(slackNotifier.mentionUsers, ShouldResemble, []string{"user1", "user2"})
+				So(slackNotifier.mentionGroups, ShouldResemble, []string{"group1", "group2"})
+				So(slackNotifier.mentionChannel, ShouldEqual, "here")
+				So(slackNotifier.token, ShouldEqual, "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX")
 			})
 
 			Convey("from settings with Recipient, Username, IconEmoji, IconUrl, MentionUsers, MentionGroups, MentionChannel, and Secured Token", func() {
@@ -129,15 +129,15 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(slackNotifier.Name, ShouldEqual, "ops")
 				So(slackNotifier.Type, ShouldEqual, "slack")
-				So(slackNotifier.URL, ShouldEqual, "http://google.com")
-				So(slackNotifier.Recipient, ShouldEqual, "#ds-opentsdb")
-				So(slackNotifier.Username, ShouldEqual, "Grafana Alerts")
-				So(slackNotifier.IconEmoji, ShouldEqual, ":smile:")
-				So(slackNotifier.IconURL, ShouldEqual, "https://grafana.com/img/fav32.png")
-				So(slackNotifier.MentionUsers, ShouldResemble, []string{"user1", "user2"})
-				So(slackNotifier.MentionGroups, ShouldResemble, []string{"group1", "group2"})
-				So(slackNotifier.MentionChannel, ShouldEqual, "here")
-				So(slackNotifier.Token, ShouldEqual, "xenc-XXXXXXXX-XXXXXXXX-XXXXXXXXXX")
+				So(slackNotifier.url.String(), ShouldEqual, "http://google.com")
+				So(slackNotifier.recipient, ShouldEqual, "#ds-opentsdb")
+				So(slackNotifier.username, ShouldEqual, "Grafana Alerts")
+				So(slackNotifier.iconEmoji, ShouldEqual, ":smile:")
+				So(slackNotifier.iconURL, ShouldEqual, "https://grafana.com/img/fav32.png")
+				So(slackNotifier.mentionUsers, ShouldResemble, []string{"user1", "user2"})
+				So(slackNotifier.mentionGroups, ShouldResemble, []string{"group1", "group2"})
+				So(slackNotifier.mentionChannel, ShouldEqual, "here")
+				So(slackNotifier.token, ShouldEqual, "xenc-XXXXXXXX-XXXXXXXX-XXXXXXXXXX")
 			})
 
 			Convey("with channel recipient with spaces should return an error", func() {
@@ -157,7 +157,7 @@ func TestSlackNotifier(t *testing.T) {
 
 				_, err = NewSlackNotifier(model)
 
-				So(err, ShouldBeError, "alert validation error: Recipient on invalid format: \"#open tsdb\"")
+				So(err, ShouldBeError, "alert validation error: recipient on invalid format: \"#open tsdb\"")
 			})
 
 			Convey("with user recipient with spaces should return an error", func() {
@@ -177,7 +177,7 @@ func TestSlackNotifier(t *testing.T) {
 
 				_, err = NewSlackNotifier(model)
 
-				So(err, ShouldBeError, "alert validation error: Recipient on invalid format: \"@user name\"")
+				So(err, ShouldBeError, "alert validation error: recipient on invalid format: \"@user name\"")
 			})
 
 			Convey("with user recipient with uppercase letters should return an error", func() {
@@ -197,7 +197,7 @@ func TestSlackNotifier(t *testing.T) {
 
 				_, err = NewSlackNotifier(model)
 
-				So(err, ShouldBeError, "alert validation error: Recipient on invalid format: \"@User\"")
+				So(err, ShouldBeError, "alert validation error: recipient on invalid format: \"@User\"")
 			})
 
 			Convey("with Slack ID for recipient should work", func() {
@@ -219,7 +219,7 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				slackNotifier := not.(*SlackNotifier)
 
-				So(slackNotifier.Recipient, ShouldEqual, "1ABCDE")
+				So(slackNotifier.recipient, ShouldEqual, "1ABCDE")
 			})
 		})
 	})

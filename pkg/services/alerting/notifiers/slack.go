@@ -397,7 +397,7 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 	}
 
 	sn.log.Warn("Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status, "body", string(body))
-	return fmt.Errorf("request to Slack API failed with status code %d", resp.Status)
+	return fmt.Errorf("request to Slack API failed with status code %d", resp.StatusCode)
 }
 
 func (sn *SlackNotifier) slackFileUpload(evalContext *alerting.EvalContext, log log.Logger, recipient, token string) error {
