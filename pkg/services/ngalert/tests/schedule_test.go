@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
@@ -76,10 +77,13 @@ func TestAlertingTicker(t *testing.T) {
 
 	// change alert rule interval to three seconds
 	var threeSecInterval int64 = 3
-	err := dbstore.UpdateAlertRule(&models.UpdateAlertRuleCommand{
-		UID:             alerts[0].UID,
-		IntervalSeconds: &threeSecInterval,
-		OrgID:           alerts[0].OrgID,
+	err := dbstore.UpsertAlertRules([]store.UpsertRule{
+		{
+			New: models.AlertRule{
+				IntervalSeconds: threeSecInterval,
+			},
+			Existing: alerts[0],
+		},
 	})
 	require.NoError(t, err)
 	t.Logf("alert rule: %v interval reset to: %d", alerts[0].GetKey(), threeSecInterval)
@@ -102,7 +106,7 @@ func TestAlertingTicker(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})
 
-	err = dbstore.DeleteAlertRuleByUID(&models.DeleteAlertRuleByUIDCommand{UID: alerts[1].UID, OrgID: alerts[1].OrgID})
+	err = dbstore.DeleteAlertRuleByUID(alerts[1].OrgID, alerts[1].UID)
 	require.NoError(t, err)
 	t.Logf("alert rule: %v deleted", alerts[1].GetKey())
 
@@ -127,33 +131,6 @@ func TestAlertingTicker(t *testing.T) {
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[2].GetKey()}
 	t.Run(fmt.Sprintf("on 7th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
-	})
-
-	// pause alert rule
-	err = dbstore.UpdateAlertRulePaused(&models.UpdateAlertRulePausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: true})
-	require.NoError(t, err)
-	t.Logf("alert rule: %v paused", alerts[2].GetKey())
-
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{}
-	t.Run(fmt.Sprintf("on 8th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
-		tick := advanceClock(t, mockedClock)
-		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
-	})
-
-	expectedAlertRulesStopped = []models.AlertRuleKey{alerts[2].GetKey()}
-	t.Run(fmt.Sprintf("on 8th tick alert rules: %s should be stopped", concatenate(expectedAlertRulesStopped)), func(t *testing.T) {
-		assertStopRun(t, stopAppliedCh, expectedAlertRulesStopped...)
-	})
-
-	// unpause alert rule
-	err = dbstore.UpdateAlertRulePaused(&models.UpdateAlertRulePausedCommand{UIDs: []string{alerts[2].UID}, OrgID: alerts[2].OrgID, Paused: false})
-	require.NoError(t, err)
-	t.Logf("alert rule: %v unpaused", alerts[2].GetKey())
-
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[0].GetKey(), alerts[2].GetKey()}
-	t.Run(fmt.Sprintf("on 9th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})

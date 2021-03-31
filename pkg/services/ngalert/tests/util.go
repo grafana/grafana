@@ -63,32 +63,33 @@ func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
 func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertRule {
-	cmd := store.UpsertRule{
-		New: models.AlertRule{
-			OrgID:     1,
-			Title:     fmt.Sprintf("an alert definition %d", rand.Intn(1000)),
-			Condition: "A",
-			Data: []models.AlertQuery{
-				{
-					Model: json.RawMessage(`{
-							"datasource": "__expr__",
-							"type":"math",
-							"expression":"2 + 2 > 1"
-						}`),
-					RelativeTimeRange: models.RelativeTimeRange{
-						From: models.Duration(5 * time.Hour),
-						To:   models.Duration(3 * time.Hour),
-					},
-					RefID: "A",
+	d := rand.Intn(1000)
+	rule := models.AlertRule{
+		OrgID:     1,
+		UID:       fmt.Sprintf("%d", d),
+		Title:     fmt.Sprintf("an alert definition %d", d),
+		Condition: "A",
+		Data: []models.AlertQuery{
+			{
+				Model: json.RawMessage(`{
+						"datasource": "__expr__",
+						"type":"math",
+						"expression":"2 + 2 > 1"
+					}`),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(5 * time.Hour),
+					To:   models.Duration(3 * time.Hour),
 				},
+				RefID: "A",
 			},
-			IntervalSeconds: intervalSeconds,
 		},
+		IntervalSeconds: intervalSeconds,
 	}
+	cmd := store.UpsertRule{New: rule}
 	err := dbstore.UpsertAlertRules([]store.UpsertRule{cmd})
 	require.NoError(t, err)
-	t.Logf("alert definition: %v with interval: %d created", cmd.Result.GetKey(), intervalSeconds)
-	return cmd.Result
+	t.Logf("alert definition: %v with interval: %d created", rule.GetKey(), intervalSeconds)
+	return &rule
 }
 
 // createTestAlertDefinition creates a dummy alert definition to be used by the tests.
