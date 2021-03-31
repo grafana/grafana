@@ -27,6 +27,7 @@ export function getCollectorWorkers(): CollectorWorker[] {
     new GrafanaCollectorWorker('GrafanaCollectorWorker', 'Grafana'),
     new DashboardJsonCollectorWorker('DashboardJsonCollectorWorker', 'Dashboard JSON'),
     new PanelJsonCollectorWorker('PanelJsonCollectorWorker', 'Panel JSON'),
+    new PanelDataCollectorWorker('PanelDataCollectorWorker', 'Panel Data'),
   ];
 }
 
@@ -98,7 +99,7 @@ abstract class BaseWorker implements CollectorWorker {
     const item = this.getDefaultResult();
 
     if (!this.canCollect(options.type)) {
-      return item;
+      return { ...item, data: { error: 'Calling collect on a worker that can not collect' } };
     }
 
     let data;
@@ -180,6 +181,24 @@ export class PanelJsonCollectorWorker extends BaseWorker {
       const { panel } = options;
       if (panel) {
         return panel.getSaveModel();
+      }
+
+      return { error: 'Missing panel' };
+    });
+  }
+}
+
+export class PanelDataCollectorWorker extends BaseWorker {
+  canCollect(type: CollectorType): boolean {
+    return type === CollectorType.Panel;
+  }
+
+  async collect(options: CollectorOptions): Promise<CollectorItem> {
+    return await this.safelyCollect(options, async () => {
+      const { panel } = options;
+
+      if (panel) {
+        return panel.getQueryRunner().getLastResult() ?? { error: 'Missing lastResult' };
       }
 
       return { error: 'Missing panel' };
