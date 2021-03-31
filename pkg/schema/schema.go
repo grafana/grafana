@@ -144,8 +144,7 @@ func Find(s VersionedCueSchema, opt SearchOption) VersionedCueSchema {
 
 	switch {
 	case p.latest:
-		for s != nil {
-			s = s.Successor()
+		for ; s.Successor() != nil; s = s.Successor() {
 		}
 		return s
 

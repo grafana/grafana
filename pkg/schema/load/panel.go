@@ -117,15 +117,6 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 		return nil, err
 	}
 
-	// cfg := &load.Config{
-	// 	Overlay: overlay,
-	// 	Package: "scuemata",
-	// }
-
-	// built, err := rt.Build(load.Instances([]string{"/cue/scuemata/scuemata.cue"}, cfg)[0])
-	// if err != nil {
-	// 	return nil, err
-	// }
 	base, err := getBaseScuemata(p)
 	if err != nil {
 		return nil, err

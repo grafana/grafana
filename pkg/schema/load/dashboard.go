@@ -203,5 +203,6 @@ func (cds *compositeDashboardSchema) basePanelValue() cue.Value {
 // TO REPRESENT COMPOSITIONAL SCHEMA FAMILY PRIOR TO GRAFANA 8. UPDATING WILL
 // SHOULD BE TRIVIAL, BUT IT WILL CAUSE BREAKAGES.
 type CompositeDashboardSchema interface {
+	schema.VersionedCueSchema
 	LatestPanelSchemaFor(id string) (schema.VersionedCueSchema, error)
 }
