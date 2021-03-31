@@ -38,9 +38,9 @@ func getBaseScuemata(p BaseLoadPaths) (*cue.Instance, error) {
 }
 
 func buildGenericScuemata(famval cue.Value) (schema.VersionedCueSchema, error) {
-	// TODO verify subsumption by #SchemaFamily; renders many
+	// TODO verify subsumption by #Family; renders many
 	// error checks below unnecessary
-	majiter, err := famval.Lookup("lineages").List()
+	majiter, err := famval.LookupPath(cue.MakePath(cue.Str("lineages"))).List()
 	if err != nil {
 		return nil, err
 	}

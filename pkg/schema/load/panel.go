@@ -13,48 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/schema"
 )
 
-// TODO a proper approach to this type would probably include responsibility for
-// moving between the declared and composed forms of panel plugin schema
-type panelSchema struct {
-	actual    cue.Value
-	major     int
-	minor     int
-	next      *panelSchema
-	migration migrationFunc
-}
-
-func (ps *panelSchema) Validate(r schema.Resource) error {
-	rv, err := rt.Compile("resource", r.Value)
-	if err != nil {
-		return err
-	}
-	return ps.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
-}
-
-func (ps *panelSchema) ApplyDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-func (ps *panelSchema) TrimDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-func (ps *panelSchema) CUE() cue.Value {
-	return ps.actual
-}
-
-func (ps *panelSchema) Version() (major int, minor int) {
-	return ps.major, ps.minor
-}
-
-func (ps *panelSchema) Successor() (schema.VersionedCueSchema, bool) {
-	panic("not implemented")
-}
-
-func (ps *panelSchema) Migrate(x schema.Resource) (schema.Resource, schema.VersionedCueSchema, error) {
-	panic("not implemented")
-}
-
 // Returns a disjunction of structs representing each panel schema version
 // (post-mapping from on-disk #PanelModel form) from each scuemata in the map.
 func disjunctPanelScuemata(scuemap map[string]schema.VersionedCueSchema) (cue.Value, error) {
@@ -105,7 +63,7 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 	`, id, maj, min))
 
 	// TODO validate, especially with #PanelModel
-	return inter.Value().Fill(vcs.CUE(), "in", "model").Lookup("result")
+	return inter.Value().Fill(vcs.CUE(), "in", "model").LookupPath(cue.MakePath(cue.Str(("result"))))
 }
 
 func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {
@@ -154,7 +112,7 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 		}
 
 		jmap := make(map[string]interface{})
-		json.Unmarshal(b, &jmap)
+		err = json.Unmarshal(b, &jmap)
 		if err != nil {
 			return err
 		}

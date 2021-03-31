@@ -188,14 +188,6 @@ func (cds *compositeDashboardSchema) LatestPanelSchemaFor(id string) (schema.Ver
 	return sch, nil
 }
 
-func (cds *compositeDashboardSchema) basePanelValue() cue.Value {
-	v := cds.base.CUE().LookupPath(panelSubpath)
-	if !v.Exists() {
-		panic("could not find Panel object in dashboard schema")
-	}
-	return v
-}
-
 // One-off special interface for dashboard composite schema, until the composite
 // dashboard schema pattern is fully generalized.
 //
