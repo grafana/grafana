@@ -14,7 +14,9 @@ func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
 	var env []string
 	for k, v := range ps {
 		key := fmt.Sprintf("%s_%s", prefix, strings.ToUpper(k))
-		v = checkForOverrides(key, v)
+		if value := os.Getenv(key); value != "" {
+			v = value
+		}
 
 		env = append(env, fmt.Sprintf("%s_%s=%s", prefix, strings.ToUpper(k), v))
 	}
@@ -22,13 +24,6 @@ func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
 	env = append(env, hostEnv...)
 
 	return env
-}
-
-func checkForOverrides(key string, v string) string {
-	if value := os.Getenv(key); value != "" {
-		v = value
-	}
-	return v
 }
 
 func getPluginSettings(plugID string, cfg *setting.Cfg) pluginSettings {
