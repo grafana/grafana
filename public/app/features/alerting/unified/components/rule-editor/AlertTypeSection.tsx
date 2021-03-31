@@ -4,9 +4,10 @@ import { Cascader, FieldSet, Field, Input, InputControl, stylesFactory, Select, 
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 
-import { getAllDataSources, getPromAndLokiDataSources } from '../../utils/config';
+import { getAllDataSources } from '../../utils/config';
 import { fetchRulerRules } from '../../api/ruler';
 import { AlertRuleFormMethods } from './AlertRuleForm';
+import { getRulesDataSources } from '../../utils/datasource';
 
 interface Props extends AlertRuleFormMethods {
   setFolder: ({ namespace, group }: { namespace: string; group: string }) => void;
@@ -84,7 +85,7 @@ const useDatasourceSelectOptions = (alertType: SelectableValue) => {
     if (alertType?.value === ALERT_TYPE.THRESHOLD) {
       options = getAllDataSources().filter(({ type }) => type !== 'datasource');
     } else if (alertType?.value === ALERT_TYPE.SYSTEM) {
-      options = getPromAndLokiDataSources();
+      options = getRulesDataSources();
     }
     setDataSourceOptions(
       options.map(({ name, type }) => {

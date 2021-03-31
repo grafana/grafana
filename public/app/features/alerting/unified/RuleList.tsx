@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
-import { Icon, InfoBox, useStyles } from '@grafana/ui';
+import { Icon, InfoBox, useStyles, Button } from '@grafana/ui';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
@@ -68,6 +68,12 @@ export const RuleList: FC = () => {
           ))}
         </InfoBox>
       )}
+      <div className={styles.buttonsContainer}>
+        <div />
+        <a href="/alerting/new">
+          <Button icon="plus">New alert rule</Button>
+        </a>
+      </div>
       {dispatched && !loading && !haveResults && <NoRulesSplash />}
       {haveResults && <ThresholdRules />}
       {haveResults && <SystemOrApplicationRules />}
@@ -79,5 +85,10 @@ const getStyles = (theme: GrafanaTheme) => ({
   iconError: css`
     color: ${theme.palette.red};
     margin-right: ${theme.spacing.md};
+  `,
+  buttonsContainer: css`
+    margin-bottom: ${theme.spacing.md};
+    display: flex;
+    justify-content: space-between;
   `,
 });

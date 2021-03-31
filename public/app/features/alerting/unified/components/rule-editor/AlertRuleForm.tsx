@@ -10,7 +10,7 @@ import AlertDetails from './AlertDetails';
 import Expression from './Expression';
 
 import { fetchRulerRulesNamespace, setRulerRuleGroup } from '../../api/ruler';
-import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting/dto';
+import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 type Props = {};
 
