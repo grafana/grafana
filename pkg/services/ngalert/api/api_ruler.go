@@ -160,7 +160,6 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 			} else {
 				ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r))
 				configs[namespace][r.RuleGroup] = ruleGroupConfig
-
 			}
 		}
 	}
