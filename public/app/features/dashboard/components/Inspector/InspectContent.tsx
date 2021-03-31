@@ -65,36 +65,12 @@ export const InspectContent: React.FC<Props> = ({
     <Drawer
       title={`Inspect: ${title || 'Panel'}`}
       subtitle={
-        <>
-          {/*temporary placement for debug purposes*/}
-          <Button
-            type="button"
-            title="Download Sanitized Data"
-            icon="bug"
-            onClick={() => {
-              new InspectCollector()
-                .collect({
-                  dashboard,
-                  panel,
-                  workers: getCollectorWorkers(),
-                  sanitizers: getCollectorSanitizers(),
-                  type: CollectorType.Panel,
-                })
-                .then((items) => {
-                  console.log(items);
-                  const data = inspectPackager().package(items);
-                  inspectDownloader().startDownload(data);
-                });
-            }}
-          />
-          {/*temporary placement for debug purposes*/}
-          <InspectSubtitle
-            tabs={tabs}
-            tab={activeTab}
-            data={data}
-            onSelectTab={(item) => setCurrentTab(item.value || InspectTab.Data)}
-          />
-        </>
+        <InspectSubtitle
+          tabs={tabs}
+          tab={activeTab}
+          data={data}
+          onSelectTab={(item) => setCurrentTab(item.value || InspectTab.Data)}
+        />
       }
       width="50%"
       onClose={onClose}
@@ -122,6 +98,32 @@ export const InspectContent: React.FC<Props> = ({
           {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} timeZone={dashboard.getTimezone()} />}
           {data && activeTab === InspectTab.Query && (
             <QueryInspector panel={panel} data={data.series} onRefreshQuery={() => panel.refresh()} />
+          )}
+          {data && activeTab === InspectTab.Share && (
+            <>
+              <Button
+                type="button"
+                title="Download Sanitized Data"
+                icon="bug"
+                onClick={() => {
+                  new InspectCollector()
+                    .collect({
+                      dashboard,
+                      panel,
+                      workers: getCollectorWorkers(),
+                      sanitizers: getCollectorSanitizers(),
+                      type: CollectorType.Panel,
+                    })
+                    .then((items) => {
+                      console.log(items);
+                      const data = inspectPackager().package(items);
+                      inspectDownloader().startDownload(data);
+                    });
+                }}
+              >
+                Download Sanitized Data
+              </Button>
+            </>
           )}
         </TabContent>
       </CustomScrollbar>
