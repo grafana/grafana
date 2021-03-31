@@ -261,6 +261,10 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       const tags = this.templateSrv.replace(options.annotation.tags);
       return this.events({ range: options.range, tags: tags }).then((results: any) => {
         const list = [];
+        if (!_.isArray(results.data)) {
+          console.error(`Unable to get annotations from ${results.url}.`);
+          return [];
+        }
         for (let i = 0; i < results.data.length; i++) {
           const e = results.data[i];
 

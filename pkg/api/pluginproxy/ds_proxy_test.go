@@ -69,6 +69,11 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					Path:    "api/restricted",
 					ReqRole: models.ROLE_ADMIN,
 				},
+				{
+					Path: "api/body",
+					URL:  "http://www.test.com",
+					Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
+				},
 			},
 		}
 
@@ -134,6 +139,18 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
 			assert.Equal(t, "http://localhost/asd", req.URL.String())
+		})
+
+		t.Run("When matching route path and has dynamic body", func(t *testing.T) {
+			ctx, req := setUp()
+			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/body", &setting.Cfg{})
+			require.NoError(t, err)
+			proxy.route = plugin.Routes[5]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+
+			content, err := ioutil.ReadAll(req.Body)
+			require.NoError(t, err)
+			require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
 		})
 
 		t.Run("Validating request", func(t *testing.T) {
