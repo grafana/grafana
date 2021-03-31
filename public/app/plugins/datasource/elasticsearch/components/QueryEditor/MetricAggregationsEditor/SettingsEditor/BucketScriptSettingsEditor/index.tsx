@@ -36,7 +36,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
     if (!value.pipelineVariables?.length) {
       dispatch(addPipelineVariable());
     }
-  }, []);
+  }, [dispatch, value.pipelineVariables?.length]);
 
   return (
     <>

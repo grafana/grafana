@@ -40,6 +40,10 @@ func (m *Manager) Init() error {
 }
 
 func (m *Manager) IsDisabled() bool {
+	if m.Cfg == nil {
+		return true
+	}
+
 	_, exists := m.Cfg.FeatureToggles["accesscontrol"]
 	return !exists
 }

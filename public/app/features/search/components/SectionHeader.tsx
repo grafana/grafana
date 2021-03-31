@@ -37,7 +37,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
         onToggleChecked(section);
       }
     },
-    [section]
+    [onToggleChecked, section]
   );
 
   return (

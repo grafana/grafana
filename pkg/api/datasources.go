@@ -71,6 +71,9 @@ func GetDataSourceById(c *models.ReqContext) response.Response {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
 		}
+		if errors.Is(err, models.ErrDataSourceIdentifierNotSet) {
+			return response.Error(400, "Datasource id is missing", nil)
+		}
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
@@ -237,7 +240,7 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 	err = bus.Dispatch(&cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
-			return response.Error(500, "Failed to update datasource. Reload new version and try again", err)
+			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
 		}
 		return response.Error(500, "Failed to update datasource", err)
 	}

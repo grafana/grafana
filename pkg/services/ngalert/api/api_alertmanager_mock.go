@@ -595,7 +595,7 @@ func (mock AlertmanagerApiMock) RouteGetAlertingConfig(c *models.ReqContext) res
 
 func (mock AlertmanagerApiMock) RouteGetAMAlertGroups(c *models.ReqContext) response.Response {
 	recipient := c.Params(":Recipient")
-	mock.log.Info("RouteGetAmAlertGroups: ", "Recipient", recipient)
+	mock.log.Info("RouteGetAMAlertGroups: ", "Recipient", recipient)
 	now := time.Now()
 	result := apimodels.AlertGroups{
 		&amv2.AlertGroup{
@@ -716,7 +716,7 @@ func (mock AlertmanagerApiMock) RouteGetAMAlertGroups(c *models.ReqContext) resp
 
 func (mock AlertmanagerApiMock) RouteGetAMAlerts(c *models.ReqContext) response.Response {
 	recipient := c.Params(":Recipient")
-	mock.log.Info("RouteGetAmAlerts: ", "Recipient", recipient)
+	mock.log.Info("RouteGetAMAlerts: ", "Recipient", recipient)
 	now := time.Now()
 	result := apimodels.GettableAlerts{
 		&amv2.GettableAlert{
@@ -885,7 +885,7 @@ func (mock AlertmanagerApiMock) RoutePostAlertingConfig(c *models.ReqContext, bo
 
 func (mock AlertmanagerApiMock) RoutePostAMAlerts(c *models.ReqContext, body apimodels.PostableAlerts) response.Response {
 	recipient := c.Params(":Recipient")
-	mock.log.Info("RoutePostAmAlerts: ", "Recipient", recipient)
-	mock.log.Info("RoutePostAmAlerts: ", "body", body)
+	mock.log.Info("RoutePostAMAlerts: ", "Recipient", recipient)
+	mock.log.Info("RoutePostAMAlerts: ", "body", body)
 	return response.JSON(http.StatusOK, util.DynMap{"message": "alerts created"})
 }

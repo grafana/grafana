@@ -41,7 +41,7 @@ const upsamplingTypes: Array<SelectableValue<string>> = [
 ];
 
 const mathPlaceholder =
-  'Math operations on one more queries, you reference the query by ${refId} ie. $A, $B, $C etc\n' +
+  'Math operations on one more queries, you reference the query by ${refId}, such as $A, $B, $C etc\n' +
   'Example: $A + $B\n' +
   'Available functions: abs(), log(), nan(), inf(), null()';
 

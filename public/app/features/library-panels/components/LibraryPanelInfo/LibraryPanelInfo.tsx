@@ -1,6 +1,6 @@
 import { DateTimeInput, GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useStyles } from '@grafana/ui';
-import { OptionsGroup } from 'app/features/dashboard/components/PanelEditor/OptionsGroup';
+import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { PanelModel } from 'app/features/dashboard/state';
 import { css } from 'emotion';
 import React from 'react';
@@ -14,7 +14,7 @@ export const LibraryPanelInformation: React.FC<Props> = ({ panel, formatDate }) 
   const styles = useStyles(getStyles);
 
   return (
-    <OptionsGroup title="Reusable panel information" id="Shared Panel Info" key="Shared Panel Info">
+    <OptionsPaneCategory title="Reusable panel information" id="Shared Panel Info" key="Shared Panel Info">
       {panel.libraryPanel.uid && (
         <p className={styles.libraryPanelInfo}>
           {`Used on ${panel.libraryPanel.meta.connectedDashboards} `}
@@ -33,7 +33,7 @@ export const LibraryPanelInformation: React.FC<Props> = ({ panel, formatDate }) 
           {panel.libraryPanel.meta.updatedBy.name}
         </p>
       )}
-    </OptionsGroup>
+    </OptionsPaneCategory>
   );
 };
 

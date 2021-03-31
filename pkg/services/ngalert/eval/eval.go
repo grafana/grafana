@@ -54,22 +54,23 @@ type ExecutionResults struct {
 }
 
 // Results is a slice of evaluated alert instances states.
-type Results []result
+type Results []Result
 
-// result contains the evaluated state of an alert instance
+// Result contains the evaluated State of an alert instance
 // identified by its labels.
-type result struct {
-	Instance data.Labels
-	State    state // Enum
+type Result struct {
+	Instance    data.Labels
+	State       State // Enum
+	EvaluatedAt time.Time
 }
 
-// state is an enum of the evaluation state for an alert instance.
-type state int
+// State is an enum of the evaluation State for an alert instance.
+type State int
 
 const (
 	// Normal is the eval state for an alert instance condition
 	// that evaluated to false.
-	Normal state = iota
+	Normal State = iota
 
 	// Alerting is the eval state for an alert instance condition
 	// that evaluated to true (Alerting).
@@ -84,7 +85,7 @@ const (
 	Error
 )
 
-func (s state) String() string {
+func (s State) String() string {
 	return [...]string{"Normal", "Alerting", "NoData", "Error"}[s]
 }
 
@@ -173,9 +174,9 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 }
 
 // evaluateExecutionResult takes the ExecutionResult, and returns a frame where
-// each column is a string type that holds a string representing its state.
-func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
-	evalResults := make([]result, 0)
+// each column is a string type that holds a string representing its State.
+func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, error) {
+	evalResults := make([]Result, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
 		rowLen, err := f.RowLen()
@@ -206,22 +207,23 @@ func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("expected nullable float64 but got type %T", f.Fields[0].Type())}
 		}
 
-		var state state
-		switch {
-		case err != nil:
-			state = Error
-		case val == nil:
-			state = NoData
-		case *val == 0:
-			state = Normal
-		default:
-			state = Alerting
+		r := Result{
+			Instance:    f.Fields[0].Labels,
+			EvaluatedAt: ts,
 		}
 
-		evalResults = append(evalResults, result{
-			Instance: f.Fields[0].Labels,
-			State:    state,
-		})
+		switch {
+		case err != nil:
+			r.State = Error
+		case val == nil:
+			r.State = NoData
+		case *val == 0:
+			r.State = Normal
+		default:
+			r.State = Alerting
+		}
+
+		evalResults = append(evalResults, r)
 	}
 	return evalResults, nil
 }
@@ -273,7 +275,7 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
 
-	evalResults, err := evaluateExecutionResult(execResult)
+	evalResults, err := evaluateExecutionResult(execResult, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate results: %w", err)
 	}

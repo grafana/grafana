@@ -4,7 +4,8 @@ go 1.15
 
 // Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
 // We need a more current go-mssqldb so we get rid of a version of apache/thrift with vulnerabilities.
-replace github.com/denisenkom/go-mssqldb => github.com/denisenkom/go-mssqldb v0.0.0-20200620013148-b91950f658ec
+// Also, use our fork with fixes for unimplemented methods (required for Go 1.16).
+replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036
 
 // Override k8s.io/client-go outdated dependency, which is an indirect dependency of grafana/loki.
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
@@ -14,7 +15,7 @@ require (
 	cloud.google.com/go/storage v1.14.0
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
-	github.com/aws/aws-sdk-go v1.38.2
+	github.com/aws/aws-sdk-go v1.38.7
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
@@ -40,7 +41,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/alerting-api v0.0.0-20210323194814-03a29a4c4c27
-	github.com/grafana/grafana-aws-sdk v0.2.0
+	github.com/grafana/grafana-aws-sdk v0.3.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.89.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
@@ -61,7 +62,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.21.1-0.20210315141118-bf9c43b57df6
+	github.com/prometheus/alertmanager v0.21.1-0.20210324070758-10757eb5fb78
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.19.0
