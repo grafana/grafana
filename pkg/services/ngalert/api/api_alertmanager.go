@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -26,18 +25,9 @@ type AlertmanagerSrv struct {
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, body apimodels.SilenceBody) response.Response {
-	cmd := ngmodels.SaveSilenceCommand{
-		UID:   body.Id,
-		OrgID: c.SignedInUser.OrgId,
-	}
-	cmd.Comment = body.Comment
-	cmd.CreatedBy = body.CreatedBy
-	cmd.EndsAt = body.EndsAt
-	cmd.Matchers = body.Matchers
-	cmd.StartsAt = body.StartsAt
-	if err := srv.store.SaveSilence(&cmd); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to create silence", err)
-	}
+	recipient := c.Params(":Recipient")
+	srv.log.Info("RouteCreateSilence: ", "Recipient", recipient)
+	srv.log.Info("RouteCreateSilence: ", "body", body)
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "silence created"})
 }
 
@@ -48,14 +38,9 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
 	silenceID := c.Params(":SilenceId")
-	srv.log.Info("RouteGetSilence: ", "SilenceId", silenceID)
-	q := ngmodels.DeleteSilenceByUIDCommand{OrgID: c.SignedInUser.OrgId, UID: silenceID}
-	if err := srv.store.DeleteSilenceByUID(&q); err != nil {
-		if errors.Is(err, ngmodels.ErrSilenceNotFound) {
-			return response.Error(http.StatusNotFound, "silence not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "failed to delete silence", err)
-	}
+	srv.log.Info("RouteDeleteSilence: ", "SilenceId", silenceID)
+	recipient := c.Params(":Recipient")
+	srv.log.Info("RouteDeleteSilence: ", "Recipient", recipient)
 	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
 }
 
@@ -310,26 +295,92 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Response {
 	silenceID := c.Params(":SilenceId")
 	srv.log.Info("RouteGetSilence: ", "SilenceId", silenceID)
-	q := ngmodels.GetSilenceByUIDQuery{OrgID: c.SignedInUser.OrgId, UID: silenceID}
-	if err := srv.store.GetSilenceByUID(&q); err != nil {
-		if errors.Is(err, ngmodels.ErrSilenceNotFound) {
-			return response.Error(http.StatusNotFound, "silence not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "failed to get silence", err)
+	recipient := c.Params(":Recipient")
+	srv.log.Info("RouteGetSilence: ", "Recipient", recipient)
+	now := time.Now()
+	result := apimodels.GettableSilence{
+		ID: stringPtr("id"),
+		Status: &amv2.SilenceStatus{
+			State: stringPtr("active"),
+		},
+		UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
+		Silence: amv2.Silence{
+			Comment:   stringPtr("comment"),
+			CreatedBy: stringPtr("created by"),
+			EndsAt:    timePtr(strfmt.DateTime(now.Add(time.Hour))),
+			StartsAt:  timePtr(strfmt.DateTime(now)),
+			Matchers: []*amv2.Matcher{
+				{
+					IsRegex: boolPtr(false),
+					Name:    stringPtr("name"),
+					Value:   stringPtr("value"),
+				},
+				{
+					IsRegex: boolPtr(false),
+					Name:    stringPtr("name2"),
+					Value:   stringPtr("value2"),
+				},
+			},
+		},
 	}
-
-	return response.JSON(http.StatusOK, q.Result.ToGettableSilence())
+	return response.JSON(http.StatusOK, result)
 }
 
 func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Response {
-	q := ngmodels.GetSilencesQuery{OrgID: c.SignedInUser.OrgId}
-	if err := srv.store.GetOrgSilences(&q); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to get silences", err)
-	}
-	result := apimodels.GettableSilences{}
-	for _, s := range q.Result {
-		gettableSilence := s.ToGettableSilence()
-		result = append(result, &gettableSilence)
+	recipient := c.Params(":Recipient")
+	srv.log.Info("RouteGetSilences: ", "Recipient", recipient)
+	now := time.Now()
+	result := apimodels.GettableSilences{
+		&amv2.GettableSilence{
+			ID: stringPtr("silence1"),
+			Status: &amv2.SilenceStatus{
+				State: stringPtr("active"),
+			},
+			UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
+			Silence: amv2.Silence{
+				Comment:   stringPtr("silence1 comment"),
+				CreatedBy: stringPtr("silence1 created by"),
+				EndsAt:    timePtr(strfmt.DateTime(now.Add(time.Hour))),
+				StartsAt:  timePtr(strfmt.DateTime(now)),
+				Matchers: []*amv2.Matcher{
+					{
+						IsRegex: boolPtr(false),
+						Name:    stringPtr("silence1 name"),
+						Value:   stringPtr("silence1 value"),
+					},
+					{
+						IsRegex: boolPtr(true),
+						Name:    stringPtr("silence1 name2"),
+						Value:   stringPtr("silence1 value2"),
+					},
+				},
+			},
+		},
+		&amv2.GettableSilence{
+			ID: stringPtr("silence2"),
+			Status: &amv2.SilenceStatus{
+				State: stringPtr("pending"),
+			},
+			UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
+			Silence: amv2.Silence{
+				Comment:   stringPtr("silence2 comment"),
+				CreatedBy: stringPtr("silence2 created by"),
+				EndsAt:    timePtr(strfmt.DateTime(now.Add(time.Hour))),
+				StartsAt:  timePtr(strfmt.DateTime(now)),
+				Matchers: []*amv2.Matcher{
+					{
+						IsRegex: boolPtr(false),
+						Name:    stringPtr("silence2 name"),
+						Value:   stringPtr("silence2 value"),
+					},
+					{
+						IsRegex: boolPtr(true),
+						Name:    stringPtr("silence2 name2"),
+						Value:   stringPtr("silence2 value2"),
+					},
+				},
+			},
+		},
 	}
 	return response.JSON(http.StatusOK, result)
 }
