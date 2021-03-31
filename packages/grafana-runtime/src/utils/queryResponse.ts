@@ -28,7 +28,6 @@ export interface DataResponse {
   frames?: DataFrameJSON[];
 
   // Legacy TSDB format...
-  dataframes?: string[]; // base64 encoded arrow tables
   series?: TimeSeries[];
   tables?: TableData[];
 }
