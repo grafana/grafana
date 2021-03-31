@@ -179,7 +179,7 @@
     "postcss-loader": "3.0.0",
     "postcss-reporter": "6.0.1",
     "prettier": "2.2.1",
-    "raw-loader": "^4.0.2",
+    "raw-loader": "4.0.2",
     "react-hot-loader": "4.8.0",
     "react-select-event": "^5.1.0",
     "react-test-renderer": "16.12.0",
