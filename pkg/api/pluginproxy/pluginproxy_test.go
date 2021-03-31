@@ -1,10 +1,12 @@
 package pluginproxy
 
 import (
+	"io/ioutil"
 	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -147,6 +149,38 @@ func TestPluginProxy(t *testing.T) {
 			route,
 		)
 		assert.Equal(t, "https://example.com", req.URL.String())
+	})
+
+	t.Run("When getting templated body", func(t *testing.T) {
+		route := &plugins.AppPluginRoute{
+			Path: "api/body",
+			URL:  "http://www.test.com",
+			Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
+		}
+
+		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+			query.Result = &models.PluginSetting{
+				JsonData: map[string]interface{}{
+					"dynamicUrl": "https://dynamic.grafana.com",
+				},
+				SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{"key": "123"}),
+			}
+			return nil
+		})
+
+		req := getPluginProxiedRequest(
+			t,
+			&models.ReqContext{
+				SignedInUser: &models.SignedInUser{
+					Login: "test_user",
+				},
+			},
+			&setting.Cfg{SendUserHeader: true},
+			route,
+		)
+		content, err := ioutil.ReadAll(req.Body)
+		require.NoError(t, err)
+		require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
 	})
 }
 

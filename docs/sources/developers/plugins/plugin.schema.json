@@ -350,6 +350,10 @@
             "type": "array",
             "description": "For data source plugins. Route headers adds HTTP headers to the proxied request."
           },
+          "body": {
+            "type": "object",
+            "description": "For data source plugins. Route headers set the body content and length to the proxied request."
+          },
           "tokenAuth": {
             "type": "object",
             "description": "For data source plugins. Token authentication section used with an OAuth API.",

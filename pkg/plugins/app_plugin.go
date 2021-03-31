@@ -35,6 +35,7 @@ type AppPluginRoute struct {
 	Headers      []AppPluginRouteHeader   `json:"headers"`
 	TokenAuth    *JwtTokenAuth            `json:"tokenAuth"`
 	JwtTokenAuth *JwtTokenAuth            `json:"jwtTokenAuth"`
+	Body         json.RawMessage          `json:"body"`
 }
 
 // AppPluginRouteHeader describes an HTTP header that is forwarded with
