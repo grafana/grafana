@@ -3,7 +3,7 @@ import * as Bowser from 'bowser';
 import { DashboardModel, PanelModel } from '../../state';
 import { DashboardExporter } from '../DashExportModal';
 import { UrlSanitizer } from './sanitizers/UrlSanitizer';
-import { CollectorItem, CollectorWorkers, Sanitizer } from './types';
+import { CollectorData, CollectorItem, CollectorWorkers, Sanitizer } from './types';
 
 export interface CollectorWorker {
   canCollect: (type: CollectorType) => boolean;
@@ -27,7 +27,7 @@ export function getCollectorSanitizers(): Sanitizer[] {
 
 export enum CollectorType {
   Dashboard = 'dashboard', // when sharing data for a whole dashboard
-  Panel = 'Panel', // when sharing data for a panel only
+  Panel = 'panel', // when sharing data for a panel only
 }
 
 export interface CollectorOptions {
@@ -84,7 +84,7 @@ abstract class BaseWorker implements CollectorWorker {
 
   protected async safelyCollect(
     options: CollectorOptions,
-    callback: () => Promise<Record<string, any>>
+    callback: () => Promise<CollectorData>
   ): Promise<CollectorItem> {
     const item = this.getDefaultResult();
 

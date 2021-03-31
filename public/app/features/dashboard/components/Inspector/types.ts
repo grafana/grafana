@@ -1,13 +1,14 @@
+export interface CollectorData extends Record<string, any> {}
 export interface Sanitizer {
   id: string;
   canSanitize: (item: CollectorItem) => boolean;
-  sanitize: (item: CollectorItem) => Record<string, any>;
+  sanitize: (item: CollectorItem) => CollectorData;
 }
 
 export interface CollectorItem {
   id: string;
   name: string;
-  data: Record<string, any>;
+  data: CollectorData;
 }
 
 export enum CollectorWorkers {

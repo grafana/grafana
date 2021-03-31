@@ -59,6 +59,9 @@ export const useInspectTabs = (
     if (dashboard.meta.canEdit && supportsDataQuery(plugin)) {
       tabs.push({ label: 'Query', value: InspectTab.Query });
     }
+
+    tabs.push({ label: 'Share', value: InspectTab.Share });
+
     return tabs;
   }, [plugin, metaDs, dashboard, error]);
 };
