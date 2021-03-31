@@ -12,6 +12,8 @@ import {
   MetricFindValue,
   FieldType,
   DataQuery,
+  DataFrameJSON,
+  dataFrameFromJSON,
 } from '@grafana/data';
 import { FetchResponse } from '../services';
 
@@ -25,8 +27,10 @@ import { FetchResponse } from '../services';
 export interface DataResponse {
   error?: string;
   refId?: string;
-  // base64 encoded arrow tables
-  dataframes?: string[];
+  frames?: DataFrameJSON[];
+
+  // Legacy TSDB format...
+  dataframes?: string[]; // base64 encoded arrow tables
   series?: TimeSeries[];
   tables?: TableData[];
 }
@@ -59,9 +63,7 @@ export function toDataQueryResponse(
   // If the response isn't in a correct shape we just ignore the data and pass empty DataQueryResponse.
   if ((res as FetchResponse).data?.results) {
     const results = (res as FetchResponse).data.results;
-    const resultIDs = Object.keys(results);
-    const refIDs = queries ? queries.map((q) => q.refId) : resultIDs;
-    const usedResultIDs = new Set<string>(resultIDs);
+    const refIDs = queries?.length ? queries.map((q) => q.refId) : Object.keys(results);
     const data: DataResponse[] = [];
 
     for (const refId of refIDs) {
@@ -70,21 +72,7 @@ export function toDataQueryResponse(
         continue;
       }
       dr.refId = refId;
-      usedResultIDs.delete(refId);
       data.push(dr);
-    }
-
-    // Add any refIds that do not match the query targets
-    if (usedResultIDs.size) {
-      for (const refId of usedResultIDs) {
-        const dr = results[refId];
-        if (!dr) {
-          continue;
-        }
-        dr.refId = refId;
-        usedResultIDs.delete(refId);
-        data.push(dr);
-      }
     }
 
     for (const dr of data) {
@@ -96,6 +84,17 @@ export function toDataQueryResponse(
           };
           rsp.state = LoadingState.Error;
         }
+      }
+
+      if (dr.frames?.length) {
+        for (const js of dr.frames) {
+          const df = dataFrameFromJSON(js);
+          if (!df.refId) {
+            df.refId = dr.refId;
+          }
+          rsp.data.push(df);
+        }
+        continue; // the other tests are legacy
       }
 
       if (dr.series?.length) {

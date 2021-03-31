@@ -43,7 +43,7 @@ require (
 	github.com/grafana/alerting-api v0.0.0-20210330162237-0b5408c529a8
 	github.com/grafana/grafana-aws-sdk v0.3.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.89.0
+	github.com/grafana/grafana-plugin-sdk-go v0.90.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-hclog v0.15.0
@@ -65,7 +65,7 @@ require (
 	github.com/prometheus/alertmanager v0.21.1-0.20210331075806-bc7b16d61afd
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.19.0
+	github.com/prometheus/common v0.20.0
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.0
@@ -88,7 +88,7 @@ require (
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
 	gonum.org/v1/gonum v0.8.2
 	google.golang.org/api v0.42.0
-	google.golang.org/grpc v1.36.0
+	google.golang.org/grpc v1.36.1
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/ini.v1 v1.62.0
 	gopkg.in/ldap.v3 v3.0.2
