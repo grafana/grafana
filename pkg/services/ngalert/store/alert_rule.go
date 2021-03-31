@@ -236,7 +236,6 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				IntervalSeconds:  r.New.IntervalSeconds,
 				NoDataState:      r.New.NoDataState,
 				ExecErrState:     r.New.ExecErrState,
-				// Receivers:           r.New.Receivers,
 			})
 		}
 
@@ -414,7 +413,6 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 					RuleGroup:       cmd.RuleGroup,
 					NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
 					ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
-					// Receivers:           r.GrafanaManagedAlert.Receivers,
 				},
 			}
 

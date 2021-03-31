@@ -52,8 +52,6 @@ type AlertRule struct {
 	RuleGroup       string
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
-	// Receivers are used for migrating notification channels of existing alerts
-	// Receivers []string
 }
 
 // AlertRuleKey is the alert definition identifier
@@ -102,9 +100,6 @@ type AlertRuleVersion struct {
 	IntervalSeconds int64
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
-	// Receivers are used for migrating notification channels of existing alerts
-	// do we still need this?
-	// Receivers []string
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
