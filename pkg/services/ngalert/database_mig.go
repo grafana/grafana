@@ -125,8 +125,8 @@ func addAlertRuleMigrations(mg *migrator.Migrator) {
 			// the following fields will correspond to a dashboard (or folder) UIID
 			{Name: "namespace_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "rule_group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: models.NoData.String()},
-			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: models.AlertingErrState.String()},
+			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.NoData.String())},
+			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.AlertingErrState.String())},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id", "title"}, Type: migrator.UniqueIndex},
@@ -164,8 +164,8 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			{Name: "condition", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "data", Type: migrator.DB_Text, Nullable: false},
 			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: models.NoData.String()},
-			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: models.AlertingErrState.String()},
+			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.NoData.String())},
+			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.AlertingErrState.String())},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex},
