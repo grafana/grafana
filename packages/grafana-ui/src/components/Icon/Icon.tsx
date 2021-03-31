@@ -51,52 +51,54 @@ import i040 from '!!raw-loader!../../../../../public/img/icons/unicons/sync.svg'
 import i041 from '!!raw-loader!../../../../../public/img/icons/unicons/monitor.svg';
 import i042 from '!!raw-loader!../../../../../public/img/icons/unicons/trash-alt.svg';
 
+const iconRoot = '/public/img/icons/';
+
 function cacheItem(content: string, path: string) {
-  cacheStore[path] = { content, status: 'loaded', queue: [] };
+  cacheStore[iconRoot + path] = { content, status: 'loaded', queue: [] };
 }
 
-cacheItem(i001, '/public/img/icons/unicons/bars.svg');
-cacheItem(i002, '/public/img/icons/unicons/times.svg');
-cacheItem(i003, '/public/img/icons/unicons/search.svg');
-cacheItem(i004, '/public/img/icons/unicons/plus.svg');
-cacheItem(i005, '/public/img/icons/unicons/apps.svg');
-cacheItem(i006, '/public/img/icons/unicons/folder-plus.svg');
-cacheItem(i007, '/public/img/icons/unicons/import.svg');
-cacheItem(i008, '/public/img/icons/unicons/home-alt.svg');
-cacheItem(i009, '/public/img/icons/unicons/sitemap.svg');
-cacheItem(i010, '/public/img/icons/unicons/presentation-play.svg');
-cacheItem(i011, '/public/img/icons/unicons/camera.svg');
-cacheItem(i012, '/public/img/icons/unicons/compass.svg');
-cacheItem(i013, '/public/img/icons/unicons/bell.svg');
-cacheItem(i014, '/public/img/icons/unicons/list-ul.svg');
-cacheItem(i015, '/public/img/icons/unicons/comment-alt-share.svg');
-cacheItem(i016, '/public/img/icons/unicons/cog.svg');
-cacheItem(i017, '/public/img/icons/unicons/database.svg');
-cacheItem(i018, '/public/img/icons/unicons/user.svg');
-cacheItem(i019, '/public/img/icons/unicons/users-alt.svg');
-cacheItem(i020, '/public/img/icons/unicons/plug.svg');
-cacheItem(i021, '/public/img/icons/unicons/sliders-v-alt.svg');
-cacheItem(i022, '/public/img/icons/unicons/key-skeleton-alt.svg');
-cacheItem(i023, '/public/img/icons/unicons/shield.svg');
-cacheItem(i024, '/public/img/icons/unicons/building.svg');
-cacheItem(i025, '/public/img/icons/unicons/graph-bar.svg');
-cacheItem(i026, '/public/img/icons/unicons/unlock.svg');
-cacheItem(i027, '/public/img/icons/unicons/lock.svg');
-cacheItem(i028, '/public/img/icons/unicons/arrow-from-right.svg');
-cacheItem(i029, '/public/img/icons/unicons/question-circle.svg');
-cacheItem(i030, '/public/img/icons/unicons/document-info.svg');
-cacheItem(i031, '/public/img/icons/unicons/comments-alt.svg');
-cacheItem(i032, '/public/img/icons/unicons/keyboard.svg');
-cacheItem(i033, '/public/img/icons/unicons/star.svg');
-cacheItem(i034, '/public/img/icons/unicons/share-alt.svg');
-cacheItem(i035, '/public/img/icons/mono/panel-add.svg');
-cacheItem(i036, '/public/img/icons/unicons/save.svg');
-cacheItem(i037, '/public/img/icons/unicons/clock-nine.svg');
-cacheItem(i038, '/public/img/icons/unicons/angle-down.svg');
-cacheItem(i039, '/public/img/icons/unicons/search-minus.svg');
-cacheItem(i040, '/public/img/icons/unicons/sync.svg');
-cacheItem(i041, '/public/img/icons/unicons/monitor.svg');
-cacheItem(i042, '/public/img/icons/unicons/trash-alt.svg');
+cacheItem(i001, 'unicons/bars.svg');
+cacheItem(i002, 'unicons/times.svg');
+cacheItem(i003, 'unicons/search.svg');
+cacheItem(i004, 'unicons/plus.svg');
+cacheItem(i005, 'unicons/apps.svg');
+cacheItem(i006, 'unicons/folder-plus.svg');
+cacheItem(i007, 'unicons/import.svg');
+cacheItem(i008, 'unicons/home-alt.svg');
+cacheItem(i009, 'unicons/sitemap.svg');
+cacheItem(i010, 'unicons/presentation-play.svg');
+cacheItem(i011, 'unicons/camera.svg');
+cacheItem(i012, 'unicons/compass.svg');
+cacheItem(i013, 'unicons/bell.svg');
+cacheItem(i014, 'unicons/list-ul.svg');
+cacheItem(i015, 'unicons/comment-alt-share.svg');
+cacheItem(i016, 'unicons/cog.svg');
+cacheItem(i017, 'unicons/database.svg');
+cacheItem(i018, 'unicons/user.svg');
+cacheItem(i019, 'unicons/users-alt.svg');
+cacheItem(i020, 'unicons/plug.svg');
+cacheItem(i021, 'unicons/sliders-v-alt.svg');
+cacheItem(i022, 'unicons/key-skeleton-alt.svg');
+cacheItem(i023, 'unicons/shield.svg');
+cacheItem(i024, 'unicons/building.svg');
+cacheItem(i025, 'unicons/graph-bar.svg');
+cacheItem(i026, 'unicons/unlock.svg');
+cacheItem(i027, 'unicons/lock.svg');
+cacheItem(i028, 'unicons/arrow-from-right.svg');
+cacheItem(i029, 'unicons/question-circle.svg');
+cacheItem(i030, 'unicons/document-info.svg');
+cacheItem(i031, 'unicons/comments-alt.svg');
+cacheItem(i032, 'unicons/keyboard.svg');
+cacheItem(i033, 'unicons/star.svg');
+cacheItem(i034, 'unicons/share-alt.svg');
+cacheItem(i035, 'mono/panel-add.svg');
+cacheItem(i036, 'unicons/save.svg');
+cacheItem(i037, 'unicons/clock-nine.svg');
+cacheItem(i038, 'unicons/angle-down.svg');
+cacheItem(i039, 'unicons/search-minus.svg');
+cacheItem(i040, 'unicons/sync.svg');
+cacheItem(i041, 'unicons/monitor.svg');
+cacheItem(i042, 'unicons/trash-alt.svg');
 
 const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'reusable-panel'];
 
@@ -152,7 +154,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const svgHgt = svgSize;
     const svgWid = name?.startsWith('gf-bar-align') ? 16 : name?.startsWith('gf-interp') ? 30 : svgSize;
     const subDir = getIconSubDir(name, type);
-    const svgPath = `/public/img/icons/${subDir}/${name}.svg`;
+    const svgPath = `${iconRoot}${subDir}/${name}.svg`;
 
     return (
       <div className={styles.container} {...divElementProps} ref={ref}>
