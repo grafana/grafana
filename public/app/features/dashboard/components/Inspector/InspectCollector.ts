@@ -2,18 +2,7 @@ import * as Bowser from 'bowser';
 
 import { DashboardModel, PanelModel } from '../../state';
 import { DashboardExporter } from '../DashExportModal';
-
-export interface Sanitizer {
-  id: string;
-  canSanitize: (item: CollectorItem) => boolean;
-  sanitize: (item: CollectorItem) => Record<string, any>;
-}
-
-export interface CollectorItem {
-  id: string;
-  name: string;
-  data: Record<string, any>;
-}
+import { CollectorItem, CollectorWorkers, Sanitizer } from './types';
 
 export interface CollectorWorker {
   canCollect: (type: CollectorType) => boolean;
@@ -22,12 +11,12 @@ export interface CollectorWorker {
 
 export function getCollectorWorkers(): CollectorWorker[] {
   return [
-    new OSCollectorWorker('OSCollectorWorker', 'OS'),
-    new BrowserCollectorWorker('BrowserCollectorWorker', 'Browser'),
-    new GrafanaCollectorWorker('GrafanaCollectorWorker', 'Grafana'),
-    new DashboardJsonCollectorWorker('DashboardJsonCollectorWorker', 'Dashboard JSON'),
-    new PanelJsonCollectorWorker('PanelJsonCollectorWorker', 'Panel JSON'),
-    new PanelDataCollectorWorker('PanelDataCollectorWorker', 'Panel Data'),
+    new OSCollectorWorker(CollectorWorkers.os, 'OS'),
+    new BrowserCollectorWorker(CollectorWorkers.browser, 'Browser'),
+    new GrafanaCollectorWorker(CollectorWorkers.grafana, 'Grafana'),
+    new DashboardJsonCollectorWorker(CollectorWorkers.dashboard, 'Dashboard JSON'),
+    new PanelJsonCollectorWorker(CollectorWorkers.panelJson, 'Panel JSON'),
+    new PanelDataCollectorWorker(CollectorWorkers.panelData, 'Panel Data'),
   ];
 }
 
