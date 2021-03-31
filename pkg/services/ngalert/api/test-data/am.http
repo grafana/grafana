@@ -94,12 +94,16 @@ content-type: application/json
 
 ###
 # get silences
+# @name getSilences
 GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences
 
 
 ###
+@silenceID = {{getSilences.response.body.$.[0].id}}
+
+###
 # get silence
-GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silence/just-testing
+GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silence/{{silenceID}}
 
 ###
 # get silence - unknown
