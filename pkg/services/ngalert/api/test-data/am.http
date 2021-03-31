@@ -111,7 +111,7 @@ GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silence/un
 
 ###
 # delete silence
-DELETE http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silence/just-testing
+DELETE http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silence/{{silenceID}}
 
 ###
 # delete silence - unknown
