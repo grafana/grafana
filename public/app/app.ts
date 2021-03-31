@@ -22,13 +22,7 @@ import {
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import {
-  registerEchoBackend,
-  setEchoSrv,
-  setPanelRenderer,
-  setQueryRunnerFactory,
-  getTemplateSrv,
-} from '@grafana/runtime';
+import { registerEchoBackend, setEchoSrv, setPanelRenderer, setQueryRunnerFactory } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -47,6 +41,7 @@ import { AngularApp } from './angular/AngularApp';
 import { PanelRenderer } from './features/panel/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
+import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -90,8 +85,7 @@ export class GrafanaApp {
     locationUtil.initialize({
       config,
       getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
-      // @ts-ignore
-      buildParamsFromVariables: getTemplateSrv().fillVariableValuesForUrl,
+      getVariablesUrlParams: getVariablesUrlParams,
     });
 
     // intercept anchor clicks and forward it to custom history instead of relying on browser's history
