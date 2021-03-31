@@ -26,6 +26,7 @@ export function getCollectorWorkers(): CollectorWorker[] {
     new OSCollectorWorker('OSCollectorWorker', 'OS'),
     new GrafanaCollectorWorker('GrafanaCollectorWorker', 'Grafana'),
     new DashboardJsonCollectorWorker('DashboardJsonCollectorWorker', 'Dashboard JSON'),
+    new PanelJsonCollectorWorker('PanelJsonCollectorWorker', 'Panel JSON'),
   ];
 }
 
@@ -81,6 +82,35 @@ abstract class BaseWorker implements CollectorWorker {
 
   abstract canCollect(type: CollectorType): boolean;
   abstract collect(options: CollectorOptions): Promise<CollectorItem>;
+
+  protected getDefaultResult(): CollectorItem {
+    return {
+      id: this.id,
+      name: this.name,
+      data: {},
+    };
+  }
+
+  protected async safelyCollect(
+    options: CollectorOptions,
+    callback: () => Promise<Record<string, any>>
+  ): Promise<CollectorItem> {
+    const item = this.getDefaultResult();
+
+    if (!this.canCollect(options.type)) {
+      return item;
+    }
+
+    let data;
+    try {
+      data = await callback();
+    } catch (e) {
+      data = e;
+      console.error(e);
+    }
+
+    return { ...item, data };
+  }
 }
 
 export class BrowserCollectorWorker extends BaseWorker {
@@ -89,19 +119,7 @@ export class BrowserCollectorWorker extends BaseWorker {
   }
 
   async collect(options: CollectorOptions): Promise<CollectorItem> {
-    let data;
-    try {
-      data = Bowser.getParser(window.navigator.userAgent).getBrowser();
-    } catch (e) {
-      data = e;
-      console.error(e);
-    }
-
-    return {
-      id: this.id,
-      name: this.name,
-      data,
-    };
+    return await this.safelyCollect(options, async () => Bowser.getParser(window.navigator.userAgent).getBrowser());
   }
 }
 
@@ -111,19 +129,7 @@ export class OSCollectorWorker extends BaseWorker {
   }
 
   async collect(options: CollectorOptions): Promise<CollectorItem> {
-    let data;
-    try {
-      data = Bowser.getParser(window.navigator.userAgent).getOS();
-    } catch (e) {
-      data = e;
-      console.error(e);
-    }
-
-    return {
-      id: this.id,
-      name: this.name,
-      data,
-    };
+    return await this.safelyCollect(options, async () => Bowser.getParser(window.navigator.userAgent).getOS());
   }
 }
 
@@ -133,20 +139,10 @@ export class GrafanaCollectorWorker extends BaseWorker {
   }
 
   async collect(options: CollectorOptions): Promise<CollectorItem> {
-    let data;
-    try {
+    return await this.safelyCollect(options, async () => {
       const grafanaBootData: any = (window as any).grafanaBootData;
-      data = grafanaBootData?.settings?.buildInfo ?? {};
-    } catch (e) {
-      data = e;
-      console.error(e);
-    }
-
-    return {
-      id: this.id,
-      name: this.name,
-      data,
-    };
+      return grafanaBootData?.settings?.buildInfo ?? {};
+    });
   }
 }
 
@@ -162,21 +158,31 @@ export class DashboardJsonCollectorWorker extends BaseWorker {
     return true;
   }
 
-  async collect({ dashboard }: CollectorOptions): Promise<CollectorItem> {
-    let data;
-    try {
+  async collect(options: CollectorOptions): Promise<CollectorItem> {
+    return await this.safelyCollect(options, async () => {
+      const { dashboard } = options;
       if (dashboard) {
-        data = await this.exporter.makeExportable(dashboard);
+        return await this.exporter.makeExportable(dashboard);
       }
-    } catch (e) {
-      data = e;
-      console.error(e);
-    }
 
-    return {
-      id: this.id,
-      name: this.name,
-      data,
-    };
+      return { error: 'Missing dashboard' };
+    });
+  }
+}
+
+export class PanelJsonCollectorWorker extends BaseWorker {
+  canCollect(type: CollectorType): boolean {
+    return type === CollectorType.Panel;
+  }
+
+  async collect(options: CollectorOptions): Promise<CollectorItem> {
+    return await this.safelyCollect(options, async () => {
+      const { panel } = options;
+      if (panel) {
+        return panel.getSaveModel();
+      }
+
+      return { error: 'Missing panel' };
+    });
   }
 }
