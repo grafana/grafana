@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
+import { Button, CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
 import { getPanelInspectorStyles } from 'app/features/inspector/styles';
 import { InspectMetadataTab } from 'app/features/inspector/InspectMetadataTab';
 import { InspectSubtitle } from 'app/features/inspector/InspectSubtitle';
@@ -13,6 +13,7 @@ import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 import { InspectTab } from 'app/features/inspector/types';
 import { DashboardModel, PanelModel } from '../../state';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
+import { CollectorType, getCollectorSanitizers, getCollectorWorkers, InspectCollector } from './InspectCollector';
 
 interface Props {
   dashboard: DashboardModel;
@@ -63,12 +64,32 @@ export const InspectContent: React.FC<Props> = ({
     <Drawer
       title={`Inspect: ${title || 'Panel'}`}
       subtitle={
-        <InspectSubtitle
-          tabs={tabs}
-          tab={activeTab}
-          data={data}
-          onSelectTab={(item) => setCurrentTab(item.value || InspectTab.Data)}
-        />
+        <>
+          {/*temporary placement for debug purposes*/}
+          <Button
+            type="button"
+            title="Download Sanitized Data"
+            icon="bug"
+            onClick={() => {
+              console.log(
+                new InspectCollector().collect({
+                  dashboard,
+                  panel,
+                  workers: getCollectorWorkers(),
+                  sanitizers: getCollectorSanitizers(),
+                  type: CollectorType.Panel,
+                })
+              );
+            }}
+          />
+          {/*temporary placement for debug purposes*/}
+          <InspectSubtitle
+            tabs={tabs}
+            tab={activeTab}
+            data={data}
+            onSelectTab={(item) => setCurrentTab(item.value || InspectTab.Data)}
+          />
+        </>
       }
       width="50%"
       onClose={onClose}

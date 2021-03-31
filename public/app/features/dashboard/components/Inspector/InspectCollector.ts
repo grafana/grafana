@@ -1,9 +1,11 @@
+import * as Bowser from 'bowser';
+
 import { DashboardModel, PanelModel } from '../../state';
 
 export interface Sanitizer {
   id: string;
   canSanitize: (item: CollectorItem) => boolean;
-  sanitize: (item: CollectorItem) => CollectorItem;
+  sanitize: (item: CollectorItem) => Record<string, any>;
 }
 
 export interface CollectorItem {
@@ -13,11 +15,12 @@ export interface CollectorItem {
 }
 
 export interface CollectorWorker {
+  canCollect: (type: CollectorType) => boolean;
   collect: (options: CollectorOptions) => CollectorItem;
 }
 
 export function getCollectorWorkers(): CollectorWorker[] {
-  return [];
+  return [new BrowserCollectorWorker('BrowserCollectorWorker', 'Browser')];
 }
 
 export function getCollectorSanitizers(): Sanitizer[] {
@@ -33,6 +36,7 @@ export interface CollectorOptions {
   dashboard: DashboardModel;
   panel?: PanelModel;
   type: CollectorType;
+  workers: CollectorWorker[];
   sanitizers: Sanitizer[];
 }
 
@@ -42,6 +46,55 @@ export interface Collector {
 
 export class InspectCollector implements Collector {
   collect(options: CollectorOptions): CollectorItem[] {
-    return [];
+    const { workers, sanitizers, type } = options;
+    const items: CollectorItem[] = [];
+
+    for (const worker of workers) {
+      if (!worker.canCollect(type)) {
+        continue;
+      }
+
+      const item = worker.collect(options);
+      for (const sanitizer of sanitizers) {
+        if (!sanitizer.canSanitize(item)) {
+          continue;
+        }
+
+        item.data = sanitizer.sanitize(item);
+      }
+
+      items.push(item);
+    }
+
+    return items;
+  }
+}
+
+abstract class BaseWorker implements CollectorWorker {
+  constructor(protected readonly id: string, protected readonly name: string) {}
+
+  abstract canCollect(type: CollectorType): boolean;
+  abstract collect(options: CollectorOptions): CollectorItem;
+}
+
+export class BrowserCollectorWorker extends BaseWorker {
+  canCollect(type: CollectorType): boolean {
+    return true;
+  }
+
+  collect(options: CollectorOptions): CollectorItem {
+    let data;
+    try {
+      data = Bowser.getParser(window.navigator.userAgent).getBrowser();
+    } catch (e) {
+      data = e;
+      console.error(e);
+    }
+
+    return {
+      id: this.id,
+      name: this.name,
+      data,
+    };
   }
 }
