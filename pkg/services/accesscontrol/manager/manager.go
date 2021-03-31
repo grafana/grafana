@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeder"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -46,12 +45,4 @@ func (m *Manager) IsDisabled() bool {
 
 	_, exists := m.Cfg.FeatureToggles["accesscontrol"]
 	return !exists
-}
-
-func (m *Manager) AddMigration(mg *migrator.Migrator) {
-	if m.IsDisabled() {
-		return
-	}
-
-	database.AddAccessControlMigrations(mg)
 }
