@@ -1,4 +1,7 @@
-// NOTE: this will be auto-generated from models.cue
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// NOTE: This file will be auto generated from models.cue
+// It is currenty hand written but will serve as the target for cuetsy
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 export enum AxisPlacement {
   Auto = 'auto',
