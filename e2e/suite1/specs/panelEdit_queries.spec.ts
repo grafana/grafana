@@ -73,8 +73,13 @@ e2e.scenario({
     // Disable / enable row
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
-      expect(keys[length - 2].innerText).equals('A:');
-      expect(keys[length - 1].innerText).equals('B:');
+      const resultIds = new Set<string>([
+        keys[length - 2].innerText, // last 2
+        keys[length - 1].innerText, // last 2
+      ]);
+
+      expect(resultIds.has('A:')).equals(true);
+      expect(resultIds.has('B:')).equals(true);
     });
 
     // Disable row with refId A
@@ -94,8 +99,13 @@ e2e.scenario({
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
-      expect(keys[length - 2].innerText).equals('A:');
-      expect(keys[length - 1].innerText).equals('B:');
+      const resultIds = new Set<string>([
+        keys[length - 2].innerText, // last 2
+        keys[length - 1].innerText, // last 2
+      ]);
+
+      expect(resultIds.has('A:')).equals(true);
+      expect(resultIds.has('B:')).equals(true);
     });
   },
 });
