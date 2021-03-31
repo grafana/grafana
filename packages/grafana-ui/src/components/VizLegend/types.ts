@@ -31,11 +31,5 @@ export interface VizLegendItem {
   fieldIndex?: DataFrameFieldIndex;
 }
 
-export interface VizLegendOptions {
-  displayMode: LegendDisplayMode;
-  placement: LegendPlacement;
-  calcs: string[];
-}
-
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
 export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
