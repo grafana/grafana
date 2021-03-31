@@ -32,7 +32,7 @@ content-type: application/json
 
 ###
 # get silences - no silences
-GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences?Filter=foo&Filter=bar
+GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences?Filter=foo="bar"&Filter=bar="foo"
 
 ###
 # create silence
