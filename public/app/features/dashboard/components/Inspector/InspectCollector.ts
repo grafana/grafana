@@ -3,16 +3,18 @@ import * as Bowser from 'bowser';
 import { DashboardModel, PanelModel } from '../../state';
 import { DashboardExporter } from '../DashExportModal';
 
+export interface CollectorData extends Record<string, any> {}
+
 export interface Sanitizer {
   id: string;
   canSanitize: (item: CollectorItem) => boolean;
-  sanitize: (item: CollectorItem) => Record<string, any>;
+  sanitize: (item: CollectorItem) => CollectorData;
 }
 
 export interface CollectorItem {
   id: string;
   name: string;
-  data: Record<string, any>;
+  data: CollectorData;
 }
 
 export interface CollectorWorker {
@@ -37,7 +39,7 @@ export function getCollectorSanitizers(): Sanitizer[] {
 
 export enum CollectorType {
   Dashboard = 'dashboard', // when sharing data for a whole dashboard
-  Panel = 'Panel', // when sharing data for a panel only
+  Panel = 'panel', // when sharing data for a panel only
 }
 
 export interface CollectorOptions {
@@ -94,7 +96,7 @@ abstract class BaseWorker implements CollectorWorker {
 
   protected async safelyCollect(
     options: CollectorOptions,
-    callback: () => Promise<Record<string, any>>
+    callback: () => Promise<CollectorData>
   ): Promise<CollectorItem> {
     const item = this.getDefaultResult();
 
