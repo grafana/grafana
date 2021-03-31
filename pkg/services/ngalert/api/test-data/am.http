@@ -1,6 +1,6 @@
 @lokiDatasourceID = 32
 @prometheusDatasourceID = 875
-@grafana = grafan
+@grafana = grafana
 
 # unsupported loki backend
 GET http://admin:admin@localhost:3000/alertmanager/{{lokiDatasourceID}}/config/api/v1/alerts
