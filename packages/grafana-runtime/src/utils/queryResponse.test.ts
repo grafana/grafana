@@ -1,7 +1,6 @@
 import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
 import { toDataQueryResponse } from './queryResponse';
 
-/* eslint-disable */
 const resp = {
   data: {
     results: {
@@ -37,8 +36,6 @@ const resWithError = {
 const emptyResults = {
   data: { results: { '': { refId: '' } } },
 };
-
-/* eslint-enable */
 
 describe('Query Response parser', () => {
   test('should parse output with dataframe', () => {
@@ -235,7 +232,7 @@ describe('Query Response parser', () => {
     const queries: DataQuery[] = [{ refId: 'A' }, { refId: 'B' }];
 
     const ids = (toDataQueryResponse(resp, queries).data as DataFrame[]).map((f) => f.refId);
-    expect(ids).toEqual(['A', 'B', 'X']);
+    expect(ids).toEqual(['A', 'B']);
   });
 
   test('resultWithError', () => {

@@ -35,7 +35,7 @@ func init() {
 }
 
 // WrapTransformData creates and executes transform requests
-func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery) (plugins.DataResponse, error) {
+func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery) (*backend.QueryDataResponse, error) {
 	sdkReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			OrgID: query.User.OrgId,
@@ -46,7 +46,7 @@ func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery
 	for _, q := range query.Queries {
 		modelJSON, err := q.Model.MarshalJSON()
 		if err != nil {
-			return plugins.DataResponse{}, err
+			return nil, err
 		}
 		sdkReq.Queries = append(sdkReq.Queries, backend.DataQuery{
 			JSON:          modelJSON,
@@ -60,30 +60,7 @@ func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery
 			},
 		})
 	}
-	pbRes, err := s.TransformData(ctx, sdkReq)
-	if err != nil {
-		return plugins.DataResponse{}, err
-	}
-
-	tR := plugins.DataResponse{
-		Results: make(map[string]plugins.DataQueryResult, len(pbRes.Responses)),
-	}
-	for refID, res := range pbRes.Responses {
-		tRes := plugins.DataQueryResult{
-			RefID:      refID,
-			Dataframes: plugins.NewDecodedDataFrames(res.Frames),
-		}
-		// if len(res.JsonMeta) != 0 {
-		// 	tRes.Meta = simplejson.NewFromAny(res.JsonMeta)
-		// }
-		if res.Error != nil {
-			tRes.Error = res.Error
-			tRes.ErrorString = res.Error.Error()
-		}
-		tR.Results[refID] = tRes
-	}
-
-	return tR, nil
+	return s.TransformData(ctx, sdkReq)
 }
 
 // TransformData takes Queries which are either expressions nodes
@@ -214,37 +191,6 @@ func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) 
 	if err != nil {
 		return nil, err
 	}
-	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
-	// Only error, Series, and encoded Dataframes responses are mapped.
-	responses := make(map[string]backend.DataResponse, len(tsdbRes.Results))
-	for refID, res := range tsdbRes.Results {
-		pRes := backend.DataResponse{}
-		if res.Error != nil {
-			pRes.Error = res.Error
-		}
 
-		if res.Dataframes != nil {
-			decoded, err := res.Dataframes.Decoded()
-			if err != nil {
-				return nil, err
-			}
-			pRes.Frames = decoded
-			responses[refID] = pRes
-			continue
-		}
-
-		for _, series := range res.Series {
-			frame, err := plugins.SeriesToFrame(series)
-			frame.RefID = refID
-			if err != nil {
-				return nil, err
-			}
-			pRes.Frames = append(pRes.Frames, frame)
-		}
-
-		responses[refID] = pRes
-	}
-	return &backend.QueryDataResponse{
-		Responses: responses,
-	}, nil
+	return tsdbRes.ToBackendDataResponse()
 }
