@@ -35,7 +35,7 @@ export const VariableValuesPreview: React.FunctionComponent<VariableValuesPrevie
         {previewOptions.map((o, index) => (
           <InlineFieldRow key={`${o.value}-${index}`} className={styles.optionContainer}>
             <InlineLabel aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption}>
-              {o.text}
+              <div className={styles.label}>{o.text}</div>
             </InlineLabel>
           </InlineFieldRow>
         ))}
@@ -62,6 +62,12 @@ function getStyles(theme: GrafanaTheme) {
     optionContainer: css`
       margin-left: ${theme.spacing.xs};
       margin-bottom: ${theme.spacing.xs};
+    `,
+    label: css`
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 50vw;
     `,
   };
 }
