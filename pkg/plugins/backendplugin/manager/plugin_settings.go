@@ -2,6 +2,7 @@ package manager
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -10,9 +11,14 @@ import (
 type pluginSettings map[string]string
 
 func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
-	env := []string{}
+	var env []string
 	for k, v := range ps {
-		env = append(env, fmt.Sprintf("%s_%s=%s", prefix, strings.ToUpper(k), v))
+		key := fmt.Sprintf("%s_%s", prefix, strings.ToUpper(k))
+		if value := os.Getenv(key); value != "" {
+			v = value
+		}
+
+		env = append(env, fmt.Sprintf("%s=%s", key, v))
 	}
 
 	env = append(env, hostEnv...)
