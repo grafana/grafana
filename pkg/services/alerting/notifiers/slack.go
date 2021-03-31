@@ -355,9 +355,9 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 			Renegotiation: tls.RenegotiateFreelyAsClient,
 		},
 		Proxy: http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
+		DialContext: (&net.Dialer{
 			Timeout: 30 * time.Second,
-		}).Dial,
+		}).DialContext,
 		TLSHandshakeTimeout: 5 * time.Second,
 	}
 	netClient := &http.Client{
