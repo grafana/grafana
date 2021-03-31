@@ -41,7 +41,7 @@ Currently only Organization Admins can create reports.
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/img/docs/enterprise/reports-create-new-8.0.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Layout and orientation
 
