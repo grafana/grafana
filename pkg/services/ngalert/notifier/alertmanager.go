@@ -243,7 +243,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiRecei
 		case "email":
 			frequency, err := time.ParseDuration(r.Frequency)
 			if err != nil {
-				return nil, fmt.Errorf("unable to parse receiver duration %s, %w", r.Frequency, err)
+				return nil, fmt.Errorf("unable to parse receiver frequency %s, %w", r.Frequency, err)
 			}
 			notification := models.AlertNotification{
 				Uid:                   r.Uid,

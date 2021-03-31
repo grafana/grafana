@@ -27,9 +27,17 @@ type AlertmanagerSrv struct {
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
 	silenceID, err := srv.am.CreateSilence(&postableSilence)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to create silences", err)
+		if errors.Is(err, notifier.ErrSilenceNotFound) {
+			return response.Error(http.StatusNotFound, err.Error(), nil)
+		}
+
+		if errors.Is(err, notifier.ErrCreateSilenceBadPayload) {
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
+		}
+
+		return response.Error(http.StatusInternalServerError, "failed to create silence", err)
 	}
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": fmt.Sprintf("silence %s created", silenceID)})
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": "silence created", "id": silenceID})
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
@@ -308,7 +316,11 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 	filters := c.QueryStrings("Filter")
 	gettableSilences, err := srv.am.ListSilences(filters)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to get silences", err)
+		if errors.Is(err, notifier.ErrListSilencesBadPayload) {
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
+		}
+		// any other error here should be an unexpected failure and thus an internal error
+		return response.Error(http.StatusInternalServerError, err.Error(), nil)
 	}
 	return response.JSON(http.StatusOK, gettableSilences)
 }
