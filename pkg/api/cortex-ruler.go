@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/common/model"
@@ -68,7 +69,7 @@ type NamespaceConfig struct {
 	// in:path
 	Namespace string
 	// in:body
-	Body RuleGroupConfig
+	Body PostableRuleGroupConfig
 }
 
 // swagger:parameters RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig
@@ -87,21 +88,21 @@ type PathRouleGroupConfig struct {
 
 // swagger:model
 type RuleGroupConfigResponse struct {
-	RuleGroupConfig
+	GettableRuleGroupConfig
 }
 
 // swagger:model
-type NamespaceConfigResponse map[string][]RuleGroupConfig
+type NamespaceConfigResponse map[string][]GettableRuleGroupConfig
 
 // swagger:model
-type RuleGroupConfig struct {
-	Name     string             `yaml:"name" json:"name"`
-	Interval model.Duration     `yaml:"interval,omitempty" json:"interval,omitempty"`
-	Rules    []ExtendedRuleNode `yaml:"rules" json:"rules"`
+type PostableRuleGroupConfig struct {
+	Name     string                     `yaml:"name" json:"name"`
+	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
+	Rules    []PostableExtendedRuleNode `yaml:"rules" json:"rules"`
 }
 
-func (c *RuleGroupConfig) UnmarshalJSON(b []byte) error {
-	type plain RuleGroupConfig
+func (c *PostableRuleGroupConfig) UnmarshalJSON(b []byte) error {
+	type plain PostableRuleGroupConfig
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
 		return err
 	}
@@ -110,7 +111,7 @@ func (c *RuleGroupConfig) UnmarshalJSON(b []byte) error {
 }
 
 // Type requires validate has been called and just checks the first rule type
-func (c *RuleGroupConfig) Type() (backend Backend) {
+func (c *PostableRuleGroupConfig) Type() (backend Backend) {
 	for _, rule := range c.Rules {
 		switch rule.Type() {
 		case GrafanaManagedRule:
@@ -122,7 +123,53 @@ func (c *RuleGroupConfig) Type() (backend Backend) {
 	return
 }
 
-func (c *RuleGroupConfig) validate() error {
+func (c *PostableRuleGroupConfig) validate() error {
+	var hasGrafRules, hasLotexRules bool
+	for _, rule := range c.Rules {
+		switch rule.Type() {
+		case GrafanaManagedRule:
+			hasGrafRules = true
+		case LoTexManagedRule:
+			hasLotexRules = true
+		}
+	}
+
+	if hasGrafRules && hasLotexRules {
+		return fmt.Errorf("cannot mix Grafana & Prometheus style rules")
+	}
+	return nil
+}
+
+// swagger:model
+type GettableRuleGroupConfig struct {
+	Name     string                     `yaml:"name" json:"name"`
+	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
+	Rules    []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
+}
+
+func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {
+	type plain GettableRuleGroupConfig
+	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
+		return err
+	}
+
+	return c.validate()
+}
+
+// Type requires validate has been called and just checks the first rule type
+func (c *GettableRuleGroupConfig) Type() (backend Backend) {
+	for _, rule := range c.Rules {
+		switch rule.Type() {
+		case GrafanaManagedRule:
+			return GrafanaBackend
+		case LoTexManagedRule:
+			return LoTexRulerBackend
+		}
+	}
+	return
+}
+
+func (c *GettableRuleGroupConfig) validate() error {
 	var hasGrafRules, hasLotexRules bool
 	for _, rule := range c.Rules {
 		switch rule.Type() {
@@ -155,22 +202,52 @@ const (
 	LoTexManagedRule
 )
 
-type ExtendedRuleNode struct {
+type PostableExtendedRuleNode struct {
 	// note: this works with yaml v3 but not v2 (the inline tag isn't accepted on pointers in v2)
 	*ApiRuleNode `yaml:",inline"`
 	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
-	GrafanaManagedAlert *ExtendedUpsertAlertDefinitionCommand `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
+	GrafanaManagedAlert *PostableGrafanaRule `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
 
-func (n *ExtendedRuleNode) Type() RuleType {
+func (n *PostableExtendedRuleNode) Type() RuleType {
 	if n.ApiRuleNode != nil {
 		return LoTexManagedRule
 	}
 	return GrafanaManagedRule
 }
 
-func (n *ExtendedRuleNode) UnmarshalJSON(b []byte) error {
-	type plain ExtendedRuleNode
+func (n *PostableExtendedRuleNode) UnmarshalJSON(b []byte) error {
+	type plain PostableExtendedRuleNode
+	if err := json.Unmarshal(b, (*plain)(n)); err != nil {
+		return err
+	}
+
+	if n.ApiRuleNode != nil && n.GrafanaManagedAlert != nil {
+		return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
+	}
+	if n.ApiRuleNode == nil && n.GrafanaManagedAlert == nil {
+		return fmt.Errorf("cannot have empty rule")
+	}
+
+	return nil
+}
+
+type GettableExtendedRuleNode struct {
+	// note: this works with yaml v3 but not v2 (the inline tag isn't accepted on pointers in v2)
+	*ApiRuleNode `yaml:",inline"`
+	//GrafanaManagedAlert yaml.Node `yaml:"grafana_alert,omitempty"`
+	GrafanaManagedAlert *GettableGrafanaRule `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
+}
+
+func (n *GettableExtendedRuleNode) Type() RuleType {
+	if n.ApiRuleNode != nil {
+		return LoTexManagedRule
+	}
+	return GrafanaManagedRule
+}
+
+func (n *GettableExtendedRuleNode) UnmarshalJSON(b []byte) error {
+	type plain GettableExtendedRuleNode
 	if err := json.Unmarshal(b, (*plain)(n)); err != nil {
 		return err
 	}
@@ -203,18 +280,36 @@ const (
 	KeepLastStateErrState ExecutionErrorState = "KeepLastState"
 )
 
-// ExtendedUpsertAlertDefinitionCommand extends UpsertAlertDefinitionCommand
-// with properties of grafana dashboard alerts
 // swagger:model
-type ExtendedUpsertAlertDefinitionCommand struct {
-	models.UpdateAlertDefinitionCommand
-	NoDataState         NoDataState            `json:"no_data_state" yaml:"no_data_state"`
-	ExecutionErrorState ExecutionErrorState    `json:"exec_err_state" yaml:"exec_err_state"`
-	Settings            map[string]interface{} `json:"settings" yaml:"settings"`
-	// Receivers are optional and used for migrating notification channels of existing alerts
-	Receivers []string `json:"receivers" yaml:"receivers"`
-	// internal state
-	FolderUID      string   `json:"-" yaml:"-"`
-	DatasourceUIDs []string `json:"-" yaml:"-"`
-	RuleGroupUID   string   `json:"-" yaml:"-"`
+type PostableGrafanaRule struct {
+	OrgID        int64               `json:"-" yaml:"-"`
+	Title        string              `json:"title" yaml:"title"`
+	Condition    string              `json:"condition" yaml:"condition"`
+	Data         []models.AlertQuery `json:"data" yaml:"data"`
+	UID          string              `json:"uid" yaml:"uid"`
+	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
+	// Receivers are used for migrating notification channels of existing alerts
+	// Do we still need this?
+	// Receivers []string
+}
+
+// swagger:model
+type GettableGrafanaRule struct {
+	ID              int64               `json:"id" yaml:"id"`
+	OrgID           int64               `json:"orgId" yaml:"orgId"`
+	Title           string              `json:"title" yaml:"title"`
+	Condition       string              `json:"condition" yaml:"condition"`
+	Data            []models.AlertQuery `json:"data" yaml:"data"`
+	Updated         time.Time           `json:"updated" yaml:"updated"`
+	IntervalSeconds int64               `json:"intervalSeconds" yaml:"intervalSeconds"`
+	Version         int64               `json:"version" yaml:"version"`
+	UID             string              `json:"uid" yaml:"uid"`
+	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
+	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
+	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
+	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
+	// Receivers are used for migrating notification channels of existing alerts
+	// Do we still need this?
+	// Receivers []string
 }
