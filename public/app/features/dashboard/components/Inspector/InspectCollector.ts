@@ -1,6 +1,7 @@
 import * as Bowser from 'bowser';
 
 import { DashboardModel, PanelModel } from '../../state';
+import { DashboardExporter } from '../DashExportModal';
 
 export interface Sanitizer {
   id: string;
@@ -16,7 +17,7 @@ export interface CollectorItem {
 
 export interface CollectorWorker {
   canCollect: (type: CollectorType) => boolean;
-  collect: (options: CollectorOptions) => CollectorItem;
+  collect: (options: CollectorOptions) => Promise<CollectorItem>;
 }
 
 export function getCollectorWorkers(): CollectorWorker[] {
@@ -24,6 +25,7 @@ export function getCollectorWorkers(): CollectorWorker[] {
     new BrowserCollectorWorker('BrowserCollectorWorker', 'Browser'),
     new OSCollectorWorker('OSCollectorWorker', 'OS'),
     new GrafanaCollectorWorker('GrafanaCollectorWorker', 'Grafana'),
+    new DashboardJsonCollectorWorker('DashboardJsonCollectorWorker', 'Dashboard JSON'),
   ];
 }
 
@@ -45,11 +47,11 @@ export interface CollectorOptions {
 }
 
 export interface Collector {
-  collect: (options: CollectorOptions) => CollectorItem[];
+  collect: (options: CollectorOptions) => Promise<CollectorItem[]>;
 }
 
 export class InspectCollector implements Collector {
-  collect(options: CollectorOptions): CollectorItem[] {
+  async collect(options: CollectorOptions): Promise<CollectorItem[]> {
     const { workers, sanitizers, type } = options;
     const items: CollectorItem[] = [];
 
@@ -58,7 +60,7 @@ export class InspectCollector implements Collector {
         continue;
       }
 
-      const item = worker.collect(options);
+      const item = await worker.collect(options);
       for (const sanitizer of sanitizers) {
         if (!sanitizer.canSanitize(item)) {
           continue;
@@ -78,7 +80,7 @@ abstract class BaseWorker implements CollectorWorker {
   constructor(protected readonly id: string, protected readonly name: string) {}
 
   abstract canCollect(type: CollectorType): boolean;
-  abstract collect(options: CollectorOptions): CollectorItem;
+  abstract collect(options: CollectorOptions): Promise<CollectorItem>;
 }
 
 export class BrowserCollectorWorker extends BaseWorker {
@@ -86,7 +88,7 @@ export class BrowserCollectorWorker extends BaseWorker {
     return true;
   }
 
-  collect(options: CollectorOptions): CollectorItem {
+  async collect(options: CollectorOptions): Promise<CollectorItem> {
     let data;
     try {
       data = Bowser.getParser(window.navigator.userAgent).getBrowser();
@@ -108,7 +110,7 @@ export class OSCollectorWorker extends BaseWorker {
     return true;
   }
 
-  collect(options: CollectorOptions): CollectorItem {
+  async collect(options: CollectorOptions): Promise<CollectorItem> {
     let data;
     try {
       data = Bowser.getParser(window.navigator.userAgent).getOS();
@@ -130,11 +132,42 @@ export class GrafanaCollectorWorker extends BaseWorker {
     return true;
   }
 
-  collect(options: CollectorOptions): CollectorItem {
+  async collect(options: CollectorOptions): Promise<CollectorItem> {
     let data;
     try {
       const grafanaBootData: any = (window as any).grafanaBootData;
       data = grafanaBootData?.settings?.buildInfo ?? {};
+    } catch (e) {
+      data = e;
+      console.error(e);
+    }
+
+    return {
+      id: this.id,
+      name: this.name,
+      data,
+    };
+  }
+}
+
+export class DashboardJsonCollectorWorker extends BaseWorker {
+  private readonly exporter: DashboardExporter;
+
+  constructor(protected readonly id: string, protected readonly name: string) {
+    super(id, name);
+    this.exporter = new DashboardExporter();
+  }
+
+  canCollect(type: CollectorType): boolean {
+    return true;
+  }
+
+  async collect({ dashboard }: CollectorOptions): Promise<CollectorItem> {
+    let data;
+    try {
+      if (dashboard) {
+        data = await this.exporter.makeExportable(dashboard);
+      }
     } catch (e) {
       data = e;
       console.error(e);

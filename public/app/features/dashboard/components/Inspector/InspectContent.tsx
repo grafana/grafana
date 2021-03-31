@@ -71,15 +71,15 @@ export const InspectContent: React.FC<Props> = ({
             title="Download Sanitized Data"
             icon="bug"
             onClick={() => {
-              console.log(
-                new InspectCollector().collect({
+              new InspectCollector()
+                .collect({
                   dashboard,
                   panel,
                   workers: getCollectorWorkers(),
                   sanitizers: getCollectorSanitizers(),
                   type: CollectorType.Panel,
                 })
-              );
+                .then((items) => console.log(items));
             }}
           />
           {/*temporary placement for debug purposes*/}
