@@ -1,4 +1,4 @@
-module.exports = function getBabelConfig() {
+module.exports = function getBabelConfig(options) {
   return {
     cacheDirectory: true,
     babelrc: false,
@@ -8,11 +8,9 @@ module.exports = function getBabelConfig() {
       [
         '@babel/preset-env',
         {
-          targets: {
-            browsers: 'last 3 versions',
-          },
+          browserslistEnv: process.env.BABEL_ENV || options.BABEL_ENV || 'production',
           useBuiltIns: 'entry',
-          corejs: 3,
+          corejs: '3.10',
           modules: false,
         },
       ],
