@@ -42,7 +42,7 @@ content-type: application/json
 {
   "comment": "string",
   "createdBy": "string",
-  "endsAt": "2021-04-01 16:22:05.400",
+  "endsAt": "2021-03-31T14:17:04.419Z",
   "id": "just-testing",
   "matchers": [
     {
@@ -51,7 +51,7 @@ content-type: application/json
       "value": "string"
     }
   ],
-  "startsAt": "2021-03-31 16:22:05.400"
+  "startsAt": "2021-03-31T13:17:04.419Z"
 }
 
 ###
