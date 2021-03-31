@@ -21,4 +21,4 @@ This section discusses the hardware and software requirements as well as the pro
 Refer to [Upgrade Grafana]({{< relref "upgrading.md" >}}) topic. If you need to restart Grafana, refer to the [Restart Grafana]({{< relref "Restart-grafana.md" >}})
 topic for detailed information.
 
-If you want to install Grafana Enterprise, follow the instructions for installing Grafana on your particular operating system and then refer to [Activate an Enterprise license]({{< relref "activate-license.md" >}}). 
+If you want to install Grafana Enterprise, follow the instructions for installing Grafana on your system of choice and then refer to [Activate an Enterprise license]({{< relref "../enterprise/activate-license.md" >}}). 
