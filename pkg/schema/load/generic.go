@@ -155,9 +155,9 @@ var terminalMigrationFunc = func(x interface{}) (cue.Value, schema.VersionedCueS
 }
 
 // panic if called
-var panicMigrationFunc = func(x interface{}) (cue.Value, schema.VersionedCueSchema, error) {
-	panic("migrations are not yet implemented")
-}
+// var panicMigrationFunc = func(x interface{}) (cue.Value, schema.VersionedCueSchema, error) {
+// 	panic("migrations are not yet implemented")
+// }
 
 // Creates a func to perform a "migration" that simply unifies the input
 // artifact (which is expected to have already have been validated against an
