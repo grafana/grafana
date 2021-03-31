@@ -55,9 +55,9 @@ class Options
     renderDecoration: defaultRenderDecoration,
   })
   implements OptionsFormat {
-  readonly onlyIn!: (node: Node) => boolean;
-  readonly getSyntax!: (node: Node) => string;
-  readonly renderDecoration!: (
+  declare readonly onlyIn: (node: Node) => boolean;
+  declare readonly getSyntax: (node: Node) => string;
+  declare readonly renderDecoration: (
     {
       decoration,
       children,
