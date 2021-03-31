@@ -326,7 +326,7 @@
             "name": "Silence",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/PostableSilence"
+              "$ref": "#/definitions/postableSilence"
             }
           },
           {
@@ -1637,7 +1637,7 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "GettableSilences": {
-      "$ref": "#/definitions/gettableSilences"
+      "$ref": "#/definitions/GettableSilences"
     },
     "GettableUserConfig": {
       "type": "object",
