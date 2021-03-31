@@ -11,26 +11,26 @@ import (
 func Test_Rule_Marshaling(t *testing.T) {
 	for _, tc := range []struct {
 		desc  string
-		input ExtendedRuleNode
+		input PostableExtendedRuleNode
 		err   bool
 	}{
 		{
 			desc: "success lotex",
-			input: ExtendedRuleNode{
+			input: PostableExtendedRuleNode{
 				ApiRuleNode: &ApiRuleNode{},
 			},
 		},
 		{
 			desc: "success grafana",
-			input: ExtendedRuleNode{
-				GrafanaManagedAlert: &ExtendedUpsertAlertDefinitionCommand{},
+			input: PostableExtendedRuleNode{
+				GrafanaManagedAlert: &PostableGrafanaRule{},
 			},
 		},
 		{
 			desc: "failure mixed",
-			input: ExtendedRuleNode{
+			input: PostableExtendedRuleNode{
 				ApiRuleNode:         &ApiRuleNode{},
-				GrafanaManagedAlert: &ExtendedUpsertAlertDefinitionCommand{},
+				GrafanaManagedAlert: &PostableGrafanaRule{},
 			},
 			err: true,
 		},
@@ -39,7 +39,7 @@ func Test_Rule_Marshaling(t *testing.T) {
 			encoded, err := json.Marshal(tc.input)
 			require.Nil(t, err)
 
-			var out ExtendedRuleNode
+			var out PostableExtendedRuleNode
 			err = json.Unmarshal(encoded, &out)
 
 			if tc.err {
@@ -55,19 +55,19 @@ func Test_Rule_Marshaling(t *testing.T) {
 func Test_Rule_Group_Marshaling(t *testing.T) {
 	for _, tc := range []struct {
 		desc  string
-		input RuleGroupConfig
+		input PostableRuleGroupConfig
 		err   bool
 	}{
 		{
 			desc: "success lotex",
-			input: RuleGroupConfig{
+			input: PostableRuleGroupConfig{
 				Name:     "foo",
 				Interval: 0,
-				Rules: []ExtendedRuleNode{
-					ExtendedRuleNode{
+				Rules: []PostableExtendedRuleNode{
+					PostableExtendedRuleNode{
 						ApiRuleNode: &ApiRuleNode{},
 					},
-					ExtendedRuleNode{
+					PostableExtendedRuleNode{
 						ApiRuleNode: &ApiRuleNode{},
 					},
 				},
@@ -75,29 +75,29 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 		},
 		{
 			desc: "success grafana",
-			input: RuleGroupConfig{
+			input: PostableRuleGroupConfig{
 				Name:     "foo",
 				Interval: 0,
-				Rules: []ExtendedRuleNode{
-					ExtendedRuleNode{
-						GrafanaManagedAlert: &ExtendedUpsertAlertDefinitionCommand{},
+				Rules: []PostableExtendedRuleNode{
+					PostableExtendedRuleNode{
+						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
-					ExtendedRuleNode{
-						GrafanaManagedAlert: &ExtendedUpsertAlertDefinitionCommand{},
+					PostableExtendedRuleNode{
+						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
 				},
 			},
 		},
 		{
 			desc: "failure mixed",
-			input: RuleGroupConfig{
+			input: PostableRuleGroupConfig{
 				Name:     "foo",
 				Interval: 0,
-				Rules: []ExtendedRuleNode{
-					ExtendedRuleNode{
-						GrafanaManagedAlert: &ExtendedUpsertAlertDefinitionCommand{},
+				Rules: []PostableExtendedRuleNode{
+					PostableExtendedRuleNode{
+						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
-					ExtendedRuleNode{
+					PostableExtendedRuleNode{
 						ApiRuleNode: &ApiRuleNode{},
 					},
 				},
@@ -109,7 +109,7 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 			encoded, err := json.Marshal(tc.input)
 			require.Nil(t, err)
 
-			var out RuleGroupConfig
+			var out PostableRuleGroupConfig
 			err = json.Unmarshal(encoded, &out)
 
 			if tc.err {
@@ -125,19 +125,19 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 func Test_Rule_Group_Type(t *testing.T) {
 	for _, tc := range []struct {
 		desc     string
-		input    RuleGroupConfig
+		input    PostableRuleGroupConfig
 		expected Backend
 	}{
 		{
 			desc: "success lotex",
-			input: RuleGroupConfig{
+			input: PostableRuleGroupConfig{
 				Name:     "foo",
 				Interval: 0,
-				Rules: []ExtendedRuleNode{
-					ExtendedRuleNode{
+				Rules: []PostableExtendedRuleNode{
+					PostableExtendedRuleNode{
 						ApiRuleNode: &ApiRuleNode{},
 					},
-					ExtendedRuleNode{
+					PostableExtendedRuleNode{
 						ApiRuleNode: &ApiRuleNode{},
 					},
 				},
@@ -146,15 +146,15 @@ func Test_Rule_Group_Type(t *testing.T) {
 		},
 		{
 			desc: "success grafana",
-			input: RuleGroupConfig{
+			input: PostableRuleGroupConfig{
 				Name:     "foo",
 				Interval: 0,
-				Rules: []ExtendedRuleNode{
-					ExtendedRuleNode{
-						GrafanaManagedAlert: &ExtendedUpsertAlertDefinitionCommand{},
+				Rules: []PostableExtendedRuleNode{
+					PostableExtendedRuleNode{
+						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
-					ExtendedRuleNode{
-						GrafanaManagedAlert: &ExtendedUpsertAlertDefinitionCommand{},
+					PostableExtendedRuleNode{
+						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
 				},
 			},

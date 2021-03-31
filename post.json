@@ -40,61 +40,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "AlertDefinition": {
-   "properties": {
-    "condition": {
-     "type": "string",
-     "x-go-name": "Condition"
-    },
-    "data": {
-     "items": {
-      "$ref": "#/definitions/AlertQuery"
-     },
-     "type": "array",
-     "x-go-name": "Data"
-    },
-    "id": {
-     "format": "int64",
-     "type": "integer",
-     "x-go-name": "ID"
-    },
-    "intervalSeconds": {
-     "format": "int64",
-     "type": "integer",
-     "x-go-name": "IntervalSeconds"
-    },
-    "orgId": {
-     "format": "int64",
-     "type": "integer",
-     "x-go-name": "OrgID"
-    },
-    "paused": {
-     "type": "boolean",
-     "x-go-name": "Paused"
-    },
-    "title": {
-     "type": "string",
-     "x-go-name": "Title"
-    },
-    "uid": {
-     "type": "string",
-     "x-go-name": "UID"
-    },
-    "updated": {
-     "format": "date-time",
-     "type": "string",
-     "x-go-name": "Updated"
-    },
-    "version": {
-     "format": "int64",
-     "type": "integer",
-     "x-go-name": "Version"
-    }
-   },
-   "title": "AlertDefinition is the model for alert definitions in Alerting NG.",
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
-  },
   "AlertDiscovery": {
    "properties": {
     "alerts": {
@@ -611,107 +556,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "ExtendedRuleNode": {
-   "properties": {
-    "alert": {
-     "type": "string",
-     "x-go-name": "Alert"
-    },
-    "annotations": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object",
-     "x-go-name": "Annotations"
-    },
-    "expr": {
-     "type": "string",
-     "x-go-name": "Expr"
-    },
-    "for": {
-     "$ref": "#/definitions/Duration"
-    },
-    "grafana_alert": {
-     "$ref": "#/definitions/ExtendedUpsertAlertDefinitionCommand"
-    },
-    "labels": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object",
-     "x-go-name": "Labels"
-    },
-    "record": {
-     "type": "string",
-     "x-go-name": "Record"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-  },
-  "ExtendedUpsertAlertDefinitionCommand": {
-   "description": "ExtendedUpsertAlertDefinitionCommand extends UpsertAlertDefinitionCommand\nwith properties of grafana dashboard alerts",
-   "properties": {
-    "Result": {
-     "$ref": "#/definitions/AlertDefinition"
-    },
-    "condition": {
-     "type": "string",
-     "x-go-name": "Condition"
-    },
-    "data": {
-     "items": {
-      "$ref": "#/definitions/AlertQuery"
-     },
-     "type": "array",
-     "x-go-name": "Data"
-    },
-    "exec_err_state": {
-     "enum": [
-      "Alerting",
-      "KeepLastState"
-     ],
-     "type": "string",
-     "x-go-name": "ExecutionErrorState"
-    },
-    "intervalSeconds": {
-     "format": "int64",
-     "type": "integer",
-     "x-go-name": "IntervalSeconds"
-    },
-    "no_data_state": {
-     "enum": [
-      "Alerting",
-      "NoData",
-      "KeepLastState",
-      "OK"
-     ],
-     "type": "string",
-     "x-go-name": "NoDataState"
-    },
-    "receivers": {
-     "description": "Receivers are optional and used for migrating notification channels of existing alerts",
-     "items": {
-      "type": "string"
-     },
-     "type": "array",
-     "x-go-name": "Receivers"
-    },
-    "settings": {
-     "additionalProperties": {
-      "type": "object"
-     },
-     "type": "object",
-     "x-go-name": "Settings"
-    },
-    "title": {
-     "type": "string",
-     "x-go-name": "Title"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-  },
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
@@ -826,6 +670,44 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
+  "GettableExtendedRuleNode": {
+   "properties": {
+    "alert": {
+     "type": "string",
+     "x-go-name": "Alert"
+    },
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "Annotations"
+    },
+    "expr": {
+     "type": "string",
+     "x-go-name": "Expr"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
+    },
+    "grafana_alert": {
+     "$ref": "#/definitions/GettableGrafanaRule"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "Labels"
+    },
+    "record": {
+     "type": "string",
+     "x-go-name": "Record"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+  },
   "GettableGrafanaReceiver": {
    "$ref": "#/definitions/AlertNotification"
   },
@@ -837,6 +719,102 @@
      },
      "type": "array",
      "x-go-name": "GrafanaManagedReceivers"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+  },
+  "GettableGrafanaRule": {
+   "properties": {
+    "condition": {
+     "type": "string",
+     "x-go-name": "Condition"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array",
+     "x-go-name": "Data"
+    },
+    "exec_err_state": {
+     "enum": [
+      "Alerting",
+      "KeepLastState"
+     ],
+     "type": "string",
+     "x-go-name": "ExecErrState"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "ID"
+    },
+    "intervalSeconds": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "IntervalSeconds"
+    },
+    "namespace_uid": {
+     "type": "string",
+     "x-go-name": "NamespaceUID"
+    },
+    "no_data_state": {
+     "enum": [
+      "Alerting",
+      "NoData",
+      "KeepLastState",
+      "OK"
+     ],
+     "type": "string",
+     "x-go-name": "NoDataState"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "OrgID"
+    },
+    "rule_group": {
+     "type": "string",
+     "x-go-name": "RuleGroup"
+    },
+    "title": {
+     "type": "string",
+     "x-go-name": "Title"
+    },
+    "uid": {
+     "type": "string",
+     "x-go-name": "UID"
+    },
+    "updated": {
+     "format": "date-time",
+     "type": "string",
+     "x-go-name": "Updated"
+    },
+    "version": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "Version"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+  },
+  "GettableRuleGroupConfig": {
+   "properties": {
+    "interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "rules": {
+     "items": {
+      "$ref": "#/definitions/GettableExtendedRuleNode"
+     },
+     "type": "array",
+     "x-go-name": "Rules"
     }
    },
    "type": "object",
@@ -1106,7 +1084,7 @@
   "NamespaceConfigResponse": {
    "additionalProperties": {
     "items": {
-     "$ref": "#/definitions/RuleGroupConfig"
+     "$ref": "#/definitions/GettableRuleGroupConfig"
     },
     "type": "array"
    },
@@ -1435,6 +1413,44 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
+  "PostableExtendedRuleNode": {
+   "properties": {
+    "alert": {
+     "type": "string",
+     "x-go-name": "Alert"
+    },
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "Annotations"
+    },
+    "expr": {
+     "type": "string",
+     "x-go-name": "Expr"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
+    },
+    "grafana_alert": {
+     "$ref": "#/definitions/PostableGrafanaRule"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "Labels"
+    },
+    "record": {
+     "type": "string",
+     "x-go-name": "Record"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+  },
   "PostableGrafanaReceiver": {
    "$ref": "#/definitions/CreateAlertNotificationCommand"
   },
@@ -1451,7 +1467,72 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "PostableSilence": {},
+  "PostableGrafanaRule": {
+   "properties": {
+    "condition": {
+     "type": "string",
+     "x-go-name": "Condition"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array",
+     "x-go-name": "Data"
+    },
+    "exec_err_state": {
+     "enum": [
+      "Alerting",
+      "KeepLastState"
+     ],
+     "type": "string",
+     "x-go-name": "ExecErrState"
+    },
+    "namespace_uid": {
+     "type": "string",
+     "x-go-name": "UID"
+    },
+    "no_data_state": {
+     "enum": [
+      "Alerting",
+      "NoData",
+      "KeepLastState",
+      "OK"
+     ],
+     "type": "string",
+     "x-go-name": "NoDataState"
+    },
+    "title": {
+     "type": "string",
+     "x-go-name": "Title"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+  },
+  "PostableRuleGroupConfig": {
+   "properties": {
+    "interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "rules": {
+     "items": {
+      "$ref": "#/definitions/PostableExtendedRuleNode"
+     },
+     "type": "array",
+     "x-go-name": "Rules"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+  },
+  "PostableSilence": {
+   "$ref": "#/definitions/postableSilence"
+  },
   "PostableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -1774,26 +1855,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "RuleGroupConfig": {
-   "properties": {
-    "interval": {
-     "$ref": "#/definitions/Duration"
-    },
-    "name": {
-     "type": "string",
-     "x-go-name": "Name"
-    },
-    "rules": {
-     "items": {
-      "$ref": "#/definitions/ExtendedRuleNode"
-     },
-     "type": "array",
-     "x-go-name": "Rules"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
-  },
   "RuleGroupConfigResponse": {
    "properties": {
     "interval": {
@@ -1805,7 +1866,7 @@
     },
     "rules": {
      "items": {
-      "$ref": "#/definitions/ExtendedRuleNode"
+      "$ref": "#/definitions/GettableExtendedRuleNode"
      },
      "type": "array",
      "x-go-name": "Rules"
@@ -2156,36 +2217,6 @@
    "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object",
    "x-go-package": "net/url"
-  },
-  "UpdateAlertDefinitionCommand": {
-   "properties": {
-    "Result": {
-     "$ref": "#/definitions/AlertDefinition"
-    },
-    "condition": {
-     "type": "string",
-     "x-go-name": "Condition"
-    },
-    "data": {
-     "items": {
-      "$ref": "#/definitions/AlertQuery"
-     },
-     "type": "array",
-     "x-go-name": "Data"
-    },
-    "intervalSeconds": {
-     "format": "int64",
-     "type": "integer",
-     "x-go-name": "IntervalSeconds"
-    },
-    "title": {
-     "type": "string",
-     "x-go-name": "Title"
-    }
-   },
-   "title": "UpdateAlertDefinitionCommand is the query for updating an existing alert definition.",
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3240,7 +3271,7 @@
       "in": "body",
       "name": "Silence",
       "schema": {
-       "$ref": "#/definitions/PostableSilence"
+       "$ref": "#/definitions/postableSilence"
       }
      },
      {
@@ -3615,7 +3646,7 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/RuleGroupConfig"
+       "$ref": "#/definitions/PostableRuleGroupConfig"
       }
      }
     ],
