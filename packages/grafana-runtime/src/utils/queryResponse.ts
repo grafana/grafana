@@ -1,7 +1,5 @@
 import {
   DataQueryResponse,
-  arrowTableToDataFrame,
-  base64StringToArrowTable,
   KeyValue,
   LoadingState,
   DataQueryError,
@@ -112,22 +110,6 @@ export function toDataQueryResponse(
             s.refId = dr.refId;
           }
           rsp.data.push(toDataFrame(s));
-        }
-      }
-
-      if (dr.dataframes) {
-        for (const b64 of dr.dataframes) {
-          try {
-            const t = base64StringToArrowTable(b64);
-            const f = arrowTableToDataFrame(t);
-            if (!f.refId) {
-              f.refId = dr.refId;
-            }
-            rsp.data.push(f);
-          } catch (err) {
-            rsp.state = LoadingState.Error;
-            rsp.error = toDataQueryError(err);
-          }
         }
       }
     }

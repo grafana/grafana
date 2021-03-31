@@ -13,7 +13,6 @@ function shouldExclude(filename) {
     'debug',
     'lru-cache',
     'yallist',
-    'apache-arrow',
     'react-hook-form',
     'rc-trigger',
     '@iconscout/react-unicons',

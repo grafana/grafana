@@ -1,11 +1,4 @@
-import {
-  AppEvents,
-  applyFieldOverrides,
-  arrowTableToDataFrame,
-  base64StringToArrowTable,
-  DataSourceApi,
-  dateMath,
-} from '@grafana/data';
+import { AppEvents, applyFieldOverrides, DataSourceApi, dateMath, MutableDataFrame } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import store from 'app/core/store';
@@ -233,8 +226,7 @@ async function buildAlertDefinition(state: AlertDefinitionState) {
 
 function handleBase64Response(frames: string[]) {
   const dataFrames = frames.map((instance) => {
-    const table = base64StringToArrowTable(instance);
-    return arrowTableToDataFrame(table);
+    return new MutableDataFrame(); // ????????????????????
   });
 
   return applyFieldOverrides({
