@@ -526,18 +526,6 @@ def shellcheck_step():
         ],
     }
 
-def dashboard_schemas_check():
-    return {
-        'name': 'check-dashboard-schemas',
-        'image': build_image,
-        'depends_on': [
-            'initialize',
-        ],
-        'commands': [
-            'cue export --out openapi -o - ./dashboard-schemas/...',
-        ],
-    }
-
 def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
     deps = [
         'build-backend',
@@ -547,7 +535,6 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
         'test-frontend',
         'codespell',
         'shellcheck',
-        'check-dashboard-schemas',
     ]
     if include_enterprise2:
         sfx = '-enterprise2'
