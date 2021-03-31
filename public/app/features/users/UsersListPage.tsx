@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel, renderMarkdown } from '@grafana/data';
-import { css } from 'emotion';
+import { HorizontalGroup, Pagination, VerticalGroup } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
@@ -13,7 +13,6 @@ import { loadInvitees, loadUsers, removeUser, updateUser } from './state/actions
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getInvitees, getUsers, getUsersSearchQuery, getUsersSearchPage } from './state/selectors';
 import { setUsersSearchQuery, setUsersSearchPage } from './state/reducers';
-import { Pagination } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -91,25 +90,21 @@ export class UsersListPage extends PureComponent<Props, State> {
       return <InviteesTable invitees={invitees} />;
     } else {
       return (
-        <>
+        <VerticalGroup spacing="md">
           <UsersTable
             users={paginatedUsers}
             onRoleChange={(role, user) => this.onRoleChange(role, user)}
             onRemoveUser={(user) => this.props.removeUser(user.userId)}
           />
-          <div
-            className={css`
-              padding-top: 20px;
-            `}
-          >
+          <HorizontalGroup justify="flex-end">
             <Pagination
               onNavigate={setUsersSearchPage}
               currentPage={this.props.searchPage}
               numberOfPages={totalPages}
               hideWhenSinglePage={true}
             />
-          </div>
-        </>
+          </HorizontalGroup>
+        </VerticalGroup>
       );
     }
   }
