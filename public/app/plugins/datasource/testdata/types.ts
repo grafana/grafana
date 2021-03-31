@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/data';
+import { DataQuery, FieldConfig } from '@grafana/data';
 
 export interface Scenario {
   id: string;
@@ -27,6 +27,7 @@ export interface TestDataQuery extends DataQuery {
   levelColumn?: boolean;
   channel?: string; // for grafana live
   nodes?: NodesQuery;
+  dsFieldConfig?: FieldConfig;
 }
 
 export interface NodesQuery {

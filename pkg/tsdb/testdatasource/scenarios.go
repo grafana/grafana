@@ -191,6 +191,55 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	p.queryMux.HandleFunc("", p.handleFallbackScenario)
 }
 
+// addDsFieldConfig decorates field with field config provided from the query editor
+func addDsFieldConfig(field *data.Field, model *simplejson.Json) {
+	dsFieldConfig, err := model.Get("dsFieldConfig").Map()
+	hasDsFieldConfig := err == nil
+
+	if !hasDsFieldConfig {
+		return
+	}
+
+	fieldConfig := data.FieldConfig{}
+
+	for key, element := range dsFieldConfig {
+		if key == "displayName" {
+			dn, ok := element.(string)
+			if ok {
+				fieldConfig.DisplayNameFromDS = dn
+			}
+		}
+		if key == "unit" {
+			unit, ok := element.(string)
+			if ok {
+				fieldConfig.Unit = unit
+			}
+		}
+		if key == "decimals" {
+			val, err := element.(json.Number).Int64()
+			if err == nil {
+				val := uint16(val)
+				fieldConfig.Decimals = &val
+
+			}
+		}
+		if key == "min" || key == "max" {
+			val, err := element.(json.Number).Int64()
+			if err == nil {
+				val := data.ConfFloat64(val)
+				if key == "min" {
+					fieldConfig.Min = &val
+				}
+				if key == "max" {
+					fieldConfig.Max = &val
+				}
+			}
+
+		}
+	}
+	field.SetConfig(&fieldConfig)
+}
+
 // handleFallbackScenario handles the scenario where queryType is not set and fallbacks to scenarioId.
 func (p *testDataPlugin) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	scenarioQueries := map[string][]backend.DataQuery{}
@@ -266,9 +315,11 @@ func (p *testDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Contex
 
 		frame := newSeriesForQuery(q, model, 0)
 		outsideTime := q.TimeRange.From.Add(-1 * time.Hour)
+		valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{10})
+		addDsFieldConfig(valueField, model)
 		frame.Fields = data.Fields{
 			data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{outsideTime}),
-			data.NewField(data.TimeSeriesValueFieldName, nil, []float64{10}),
+			valueField,
 		}
 
 		respD := resp.Responses[q.RefID]
@@ -318,6 +369,7 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 			valueField.Append(value)
 		}
 
+		addDsFieldConfig(valueField, model)
 		frame.Fields = data.Fields{timeField, valueField}
 
 		respD := resp.Responses[q.RefID]
@@ -354,9 +406,13 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 			return resp, nil
 		}
 
+		valueField := data.NewField(frameNameForQuery(q, model, 0), nil, []*float64{})
+		addDsFieldConfig(valueField, model)
+
 		frame := data.NewFrame("",
 			data.NewField("time", nil, []*time.Time{}),
-			data.NewField(frameNameForQuery(q, model, 0), nil, []*float64{}))
+			valueField,
+		)
 		startTime := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 		endTime := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 		var step int64 = 0
@@ -489,9 +545,13 @@ func (p *testDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.
 
 	for _, q := range req.Queries {
 		respD := resp.Responses[q.RefID]
-		frame := randomHeatmapData(q, func(index int) float64 {
+		frame, err := randomHeatmapData(q, func(index int) float64 {
 			return math.Exp2(float64(index))
 		})
+
+		if err != nil {
+			return nil, err
+		}
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
 	}
@@ -504,9 +564,12 @@ func (p *testDataPlugin) handleLinearHeatmapBucketDataScenario(ctx context.Conte
 
 	for _, q := range req.Queries {
 		respD := resp.Responses[q.RefID]
-		frame := randomHeatmapData(q, func(index int) float64 {
+		frame, err := randomHeatmapData(q, func(index int) float64 {
 			return float64(index * 10)
 		})
+		if err != nil {
+			return nil, err
+		}
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
 	}
@@ -518,15 +581,23 @@ func (p *testDataPlugin) handleTableStaticScenario(ctx context.Context, req *bac
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+
 		timeWalkerMs := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 		step := q.Interval.Milliseconds()
+
+		valueField := data.NewField("Value", nil, []float64{})
+		addDsFieldConfig(valueField, model)
 
 		frame := data.NewFrame(q.RefID,
 			data.NewField("Time", nil, []time.Time{}),
 			data.NewField("Message", nil, []string{}),
 			data.NewField("Description", nil, []string{}),
-			data.NewField("Value", nil, []float64{}),
+			valueField,
 		)
 
 		for i := int64(0); i < 10 && timeWalkerMs < to; i++ {
@@ -666,9 +737,12 @@ func randomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 		timeWalkerMs += query.Interval.Milliseconds()
 	}
 
+	valueField := data.NewField(frameNameForQuery(query, model, index), parseLabels(model), floatVec)
+	addDsFieldConfig(valueField, model)
+
 	return data.NewFrame("",
 		data.NewField("time", nil, timeVec),
-		data.NewField(frameNameForQuery(query, model, index), parseLabels(model), floatVec),
+		valueField,
 	)
 }
 
@@ -679,9 +753,12 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 	walker := model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := 2.5
 
+	valueField := data.NewField("Value", nil, []*float64{})
+	addDsFieldConfig(valueField, model)
+
 	frame := data.NewFrame(query.RefID,
 		data.NewField("Time", nil, []*time.Time{}),
-		data.NewField("Value", nil, []*float64{}),
+		valueField,
 		data.NewField("Min", nil, []*float64{}),
 		data.NewField("Max", nil, []*float64{}),
 		data.NewField("Info", nil, []*string{}),
@@ -766,7 +843,7 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) (*data.
 	frame := newSeriesForQuery(query, model, 0)
 	frame.Fields = fields
 	frame.Fields[1].Labels = parseLabels(model)
-
+	addDsFieldConfig(frame.Fields[1], model)
 	return frame, nil
 }
 
@@ -848,14 +925,22 @@ func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Fr
 	frame := newSeriesForQuery(query, model, 0)
 	frame.Fields = fields
 	frame.Fields[1].Labels = parseLabels(model)
-
+	addDsFieldConfig(frame.Fields[1], model)
 	return frame, nil
 }
 
-func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) float64) *data.Frame {
+func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) float64) (*data.Frame, error) {
+	model, err := simplejson.NewJson(query.JSON)
+
+	if err != nil {
+		return nil, fmt.Errorf("error reading query")
+	}
+
 	frame := data.NewFrame("data", data.NewField("time", nil, []*time.Time{}))
 	for i := 0; i < 10; i++ {
-		frame.Fields = append(frame.Fields, data.NewField(strconv.FormatInt(int64(fnBucketGen(i)), 10), nil, []*float64{}))
+		valueField := data.NewField(strconv.FormatInt(int64(fnBucketGen(i)), 10), nil, []*float64{})
+		addDsFieldConfig(valueField, model)
+		frame.Fields = append(frame.Fields, valueField)
 	}
 
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
@@ -872,7 +957,7 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 		timeWalkerMs += query.Interval.Milliseconds() * 50
 	}
 
-	return frame
+	return frame, nil
 }
 
 func newSeriesForQuery(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
