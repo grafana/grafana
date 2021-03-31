@@ -18,14 +18,15 @@ import (
 )
 
 type AlertmanagerApiService interface {
-	RouteCreateSilence(*models.ReqContext, apimodels.SilenceBody) response.Response
-	RouteDeleteAlertingConfig(*models.ReqContext) response.Response
+	RouteCreateSilence(*models.ReqContext, apimodels.CreateSilenceParams) response.Response
+	RouteGetSilences(*models.ReqContext) response.Response
+	RouteGetSilence(*models.ReqContext) response.Response
 	RouteDeleteSilence(*models.ReqContext) response.Response
+
+	RouteDeleteAlertingConfig(*models.ReqContext) response.Response
 	RouteGetAMAlertGroups(*models.ReqContext) response.Response
 	RouteGetAMAlerts(*models.ReqContext) response.Response
 	RouteGetAlertingConfig(*models.ReqContext) response.Response
-	RouteGetSilence(*models.ReqContext) response.Response
-	RouteGetSilences(*models.ReqContext) response.Response
 	RoutePostAMAlerts(*models.ReqContext, apimodels.PostableAlerts) response.Response
 	RoutePostAlertingConfig(*models.ReqContext, apimodels.PostableUserConfig) response.Response
 }
@@ -36,29 +37,44 @@ type AlertmanagerApiBase struct {
 
 func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Post(toMacaronPath("/alertmanager/{Recipient}/api/v2/silences"), binding.Bind(apimodels.SilenceBody{}), routing.Wrap(srv.RouteCreateSilence))
-		group.Delete(toMacaronPath("/alertmanager/{Recipient}/config/api/v1/alerts"), routing.Wrap(srv.RouteDeleteAlertingConfig))
+		// Silences
+		group.Post(toMacaronPath("/alertmanager/{Recipient}/api/v2/silences"), binding.Bind(apimodels.CreateSilenceParams{}), routing.Wrap(srv.RouteCreateSilence))
+		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/silences"), routing.Wrap(srv.RouteGetSilences))
+		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteGetSilence))
 		group.Delete(toMacaronPath("/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteDeleteSilence))
+
+		// Alerts
 		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/alerts/groups"), routing.Wrap(srv.RouteGetAMAlertGroups))
 		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/alerts"), routing.Wrap(srv.RouteGetAMAlerts))
-		group.Get(toMacaronPath("/alertmanager/{Recipient}/config/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertingConfig))
-		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteGetSilence))
-		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/silences"), routing.Wrap(srv.RouteGetSilences))
 		group.Post(toMacaronPath("/alertmanager/{Recipient}/api/v2/alerts"), binding.Bind(apimodels.PostableAlerts{}), routing.Wrap(srv.RoutePostAMAlerts))
+
+		// Configuration
+		group.Delete(toMacaronPath("/alertmanager/{Recipient}/config/api/v1/alerts"), routing.Wrap(srv.RouteDeleteAlertingConfig))
+		group.Get(toMacaronPath("/alertmanager/{Recipient}/config/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertingConfig))
 		group.Post(toMacaronPath("/alertmanager/{Recipient}/config/api/v1/alerts"), binding.Bind(apimodels.PostableUserConfig{}), routing.Wrap(srv.RoutePostAlertingConfig))
 	})
 }
 
-func (base AlertmanagerApiBase) RouteCreateSilence(c *models.ReqContext, body apimodels.SilenceBody) response.Response {
+func (base AlertmanagerApiBase) RouteCreateSilence(c *models.ReqContext, params apimodels.CreateSilenceParams) response.Response {
 	recipient := c.Params(":Recipient")
 	base.log.Info("RouteCreateSilence: ", "Recipient", recipient)
-	base.log.Info("RouteCreateSilence: ", "body", body)
+	base.log.Info("RouteCreateSilence: ", "params", params)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
-func (base AlertmanagerApiBase) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
+func (base AlertmanagerApiBase) RouteGetSilences(c *models.ReqContext) response.Response {
 	recipient := c.Params(":Recipient")
-	base.log.Info("RouteDeleteAlertingConfig: ", "Recipient", recipient)
+	base.log.Info("RouteGetSilences: ", "Recipient", recipient)
+	filter := c.Params(":Filter")
+	base.log.Info("RouteGetSilences: ", "params", filter)
+	return response.Error(http.StatusNotImplemented, "", nil)
+}
+
+func (base AlertmanagerApiBase) RouteGetSilence(c *models.ReqContext) response.Response {
+	silenceId := c.Params(":SilenceId")
+	base.log.Info("RouteGetSilence: ", "SilenceId", silenceId)
+	recipient := c.Params(":Recipient")
+	base.log.Info("RouteGetSilence: ", "Recipient", recipient)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
@@ -67,6 +83,12 @@ func (base AlertmanagerApiBase) RouteDeleteSilence(c *models.ReqContext) respons
 	base.log.Info("RouteDeleteSilence: ", "SilenceId", silenceId)
 	recipient := c.Params(":Recipient")
 	base.log.Info("RouteDeleteSilence: ", "Recipient", recipient)
+	return response.Error(http.StatusNotImplemented, "", nil)
+}
+
+func (base AlertmanagerApiBase) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
+	recipient := c.Params(":Recipient")
+	base.log.Info("RouteDeleteAlertingConfig: ", "Recipient", recipient)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
@@ -85,20 +107,6 @@ func (base AlertmanagerApiBase) RouteGetAMAlerts(c *models.ReqContext) response.
 func (base AlertmanagerApiBase) RouteGetAlertingConfig(c *models.ReqContext) response.Response {
 	recipient := c.Params(":Recipient")
 	base.log.Info("RouteGetAlertingConfig: ", "Recipient", recipient)
-	return response.Error(http.StatusNotImplemented, "", nil)
-}
-
-func (base AlertmanagerApiBase) RouteGetSilence(c *models.ReqContext) response.Response {
-	silenceId := c.Params(":SilenceId")
-	base.log.Info("RouteGetSilence: ", "SilenceId", silenceId)
-	recipient := c.Params(":Recipient")
-	base.log.Info("RouteGetSilence: ", "Recipient", recipient)
-	return response.Error(http.StatusNotImplemented, "", nil)
-}
-
-func (base AlertmanagerApiBase) RouteGetSilences(c *models.ReqContext) response.Response {
-	recipient := c.Params(":Recipient")
-	base.log.Info("RouteGetSilences: ", "Recipient", recipient)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
