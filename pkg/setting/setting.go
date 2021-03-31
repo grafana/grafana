@@ -301,6 +301,17 @@ type Cfg struct {
 	SAMLEnabled             bool
 	SAMLSingleLogoutEnabled bool
 
+	// JWT Auth
+	JWTAuthEnabled       bool
+	JWTAuthHeaderName    string
+	JWTAuthEmailClaim    string
+	JWTAuthUsernameClaim string
+	JWTAuthExpectClaims  string
+	JWTAuthJWKSetURL     string
+	JWTAuthCacheTTL      time.Duration
+	JWTAuthKeyFile       string
+	JWTAuthJWKSetFile    string
+
 	// Dataproxy
 	SendUserHeader bool
 
@@ -1178,6 +1189,18 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	authBasic := iniFile.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 	cfg.BasicAuthEnabled = BasicAuthEnabled
+
+	// JWT auth
+	authJWT := iniFile.Section("auth.jwt")
+	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
+	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
+	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
+	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
+	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")
+	cfg.JWTAuthJWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
+	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
+	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
+	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
 
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)

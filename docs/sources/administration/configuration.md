@@ -799,6 +799,12 @@ Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/A
 
 <hr />
 
+## [auth.jwt]
+
+Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
+
+<hr />
+
 ## [smtp]
 
 Email server settings.
