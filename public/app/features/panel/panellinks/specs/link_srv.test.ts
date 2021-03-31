@@ -120,10 +120,8 @@ describe('linkSrv', () => {
         ({ url, appSubUrl, expected }) => {
           locationUtil.initialize({
             config: { appSubUrl } as any,
-            // @ts-ignore
-            buildParamsFromVariables: () => {},
-            // @ts-ignore
-            getTimeRangeForUrl: () => {},
+            getVariablesUrlParams: (() => {}) as any,
+            getTimeRangeForUrl: (() => {}) as any,
           });
 
           const link = linkSrv.getDataLinkUIModel(
