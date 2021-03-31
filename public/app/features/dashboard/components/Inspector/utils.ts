@@ -1,5 +1,5 @@
 import { saveAs } from 'file-saver';
-import { CollectorItem } from './InspectCollector';
+import { CollectorItem } from './types';
 import { safeStringifyValue } from '../../../../core/utils/explore';
 
 export interface Packager {
