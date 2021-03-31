@@ -18,7 +18,7 @@ func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
 			v = value
 		}
 
-		env = append(env, fmt.Sprintf("%s_%s=%s", prefix, strings.ToUpper(k), v))
+		env = append(env, fmt.Sprintf("%s=%s", key, v))
 	}
 
 	env = append(env, hostEnv...)
