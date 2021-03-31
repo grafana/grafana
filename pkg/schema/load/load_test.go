@@ -31,9 +31,7 @@ func TestScuemataBasics(t *testing.T) {
 
 	for set, sch := range all {
 		t.Run(set, func(t *testing.T) {
-			if sch == nil {
-				t.Error("scuemata linked to empty chain")
-			}
+			require.NotNil(t, sch, "scuemata for %q linked to empty chain", set)
 
 			maj, min := sch.Version()
 			t.Run(fmt.Sprintf("%v.%v", maj, min), func(t *testing.T) {
