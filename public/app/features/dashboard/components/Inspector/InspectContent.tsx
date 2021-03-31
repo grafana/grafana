@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Button, CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
+import { CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
 import { getPanelInspectorStyles } from 'app/features/inspector/styles';
 import { InspectMetadataTab } from 'app/features/inspector/InspectMetadataTab';
 import { InspectSubtitle } from 'app/features/inspector/InspectSubtitle';
@@ -13,8 +13,7 @@ import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
 import { InspectTab } from 'app/features/inspector/types';
 import { DashboardModel, PanelModel } from '../../state';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
-import { CollectorType, getCollectorSanitizers, getCollectorWorkers, InspectCollector } from './InspectCollector';
-import { inspectDownloader, inspectPackager } from './utils';
+import { InspectShareTab } from 'app/features/inspector/InspectShareTab';
 
 interface Props {
   dashboard: DashboardModel;
@@ -99,32 +98,7 @@ export const InspectContent: React.FC<Props> = ({
           {data && activeTab === InspectTab.Query && (
             <QueryInspector panel={panel} data={data.series} onRefreshQuery={() => panel.refresh()} />
           )}
-          {data && activeTab === InspectTab.Share && (
-            <>
-              <Button
-                type="button"
-                title="Download Sanitized Data"
-                icon="bug"
-                onClick={() => {
-                  new InspectCollector()
-                    .collect({
-                      dashboard,
-                      panel,
-                      workers: getCollectorWorkers(),
-                      sanitizers: getCollectorSanitizers(),
-                      type: CollectorType.Panel,
-                    })
-                    .then((items) => {
-                      console.log(items);
-                      const data = inspectPackager().package(items);
-                      inspectDownloader().startDownload(data);
-                    });
-                }}
-              >
-                Download Sanitized Data
-              </Button>
-            </>
-          )}
+          {data && activeTab === InspectTab.Share && <InspectShareTab dashboard={dashboard} panel={panel} />}
         </TabContent>
       </CustomScrollbar>
     </Drawer>
