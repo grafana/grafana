@@ -144,7 +144,7 @@ func NewSlackNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
 	if token == "" && apiURL.String() == slackAPIEndpoint {
 		return nil, alerting.ValidationError{
-			Reason: fmt.Sprintf("token must be specified when using the Slack chat API"),
+			Reason: "token must be specified when using the Slack chat API",
 		}
 	}
 
