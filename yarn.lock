@@ -2073,6 +2073,13 @@
   dependencies:
     "@babel/helper-plugin-utils" "^7.0.0"
 
+"@babel/plugin-transform-react-constant-elements@7.13.13":
+  version "7.13.13"
+  resolved "https://registry.yarnpkg.com/@babel/plugin-transform-react-constant-elements/-/plugin-transform-react-constant-elements-7.13.13.tgz#0208b1d942bf939cd4f7aa5b255d42602aa4a920"
+  integrity sha512-SNJU53VM/SjQL0bZhyU+f4kJQz7bQQajnrZRSaU21hruG/NWY41AEM9AWXeXX90pYr/C2yAmTgI6yW3LlLrAUQ==
+  dependencies:
+    "@babel/helper-plugin-utils" "^7.13.0"
+
 "@babel/plugin-transform-react-display-name@^7.12.1":
   version "7.12.1"
   resolved "https://registry.yarnpkg.com/@babel/plugin-transform-react-display-name/-/plugin-transform-react-display-name-7.12.1.tgz#1cbcd0c3b1d6648c55374a22fc9b6b7e5341c00d"

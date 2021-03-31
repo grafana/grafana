@@ -74,6 +74,7 @@
     "@babel/plugin-proposal-class-properties": "7.13.0",
     "@babel/plugin-proposal-private-methods": "7.13.0",
     "@babel/plugin-proposal-object-rest-spread": "7.13.8",
+    "@babel/plugin-transform-react-constant-elements": "7.13.13",
     "@babel/preset-env": "7.13.12",
     "@babel/preset-react": "7.13.13",
     "@babel/preset-typescript": "7.13.0",

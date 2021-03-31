@@ -23,7 +23,12 @@ module.exports = function getBabelConfig() {
           allowDeclareFields: true,
         },
       ],
-      '@babel/preset-react',
+      [
+        '@babel/preset-react',
+        {
+          runtime: 'automatic',
+        },
+      ],
     ],
     plugins: [
       [
@@ -36,6 +41,8 @@ module.exports = function getBabelConfig() {
       ['@babel/plugin-proposal-class-properties', { loose: true }],
       ['@babel/plugin-proposal-private-methods', { loose: true }],
       ['@babel/plugin-proposal-object-rest-spread', { loose: true }],
+      // Waiting with this need to refactoring timeSrv & locationUtil.init
+      // '@babel/plugin-transform-react-constant-elements',
       '@babel/plugin-proposal-nullish-coalescing-operator',
       '@babel/plugin-proposal-optional-chaining',
       '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
