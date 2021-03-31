@@ -1,6 +1,6 @@
 import { DataSourceSettings, GrafanaTheme } from '@grafana/data';
 import { FeatureInfoBox, useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React, { FC } from 'react';
 import { config } from 'app/core/config';
 import { GrafanaEdition } from '@grafana/data/src/types/config';

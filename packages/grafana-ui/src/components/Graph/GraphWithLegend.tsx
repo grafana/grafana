@@ -1,7 +1,7 @@
 // Libraries
 
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GraphSeriesValue } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';

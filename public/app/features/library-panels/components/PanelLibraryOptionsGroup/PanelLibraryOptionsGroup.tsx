@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Button, stylesFactory, useStyles } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state';

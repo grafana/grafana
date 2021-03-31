@@ -1,5 +1,6 @@
-import React, { FC, ReactNode, useState } from 'react';
-import { css, cx } from 'emotion';
+/** @jsx jsx */
+import { jsx, css } from '@emotion/react';
+import { FC, ReactNode, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '../../themes';
 import { Icon } from '..';
@@ -13,41 +14,37 @@ export interface Props {
 export const CollapsableSection: FC<Props> = ({ label, isOpen, children }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles(collapsableSectionStyles);
-  const headerClass = cx({
-    [styles.header]: true,
-    [styles.headerCollapsed]: !open,
-  });
-
+  const headerStyle = open ? styles.header : styles.headerCollapsed;
   const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
 
   return (
     <div>
-      <div onClick={() => toggleOpen(!open)} className={headerClass} title={tooltip}>
+      <div onClick={() => toggleOpen(!open)} css={headerStyle} title={tooltip}>
         {label}
-        <Icon name={open ? 'angle-down' : 'angle-right'} size="xl" className={styles.icon} />
+        <Icon name={open ? 'angle-down' : 'angle-right'} size="xl" css={styles.icon} />
       </div>
-      {open && <div className={styles.content}>{children}</div>}
+      {open && <div css={styles.content}>{children}</div>}
     </div>
   );
 };
 
 const collapsableSectionStyles = (theme: GrafanaTheme) => {
-  return {
-    header: css`
-      display: flex;
-      justify-content: space-between;
-      font-size: ${theme.typography.size.lg};
-      line-height: ${theme.spacing.base * 5}px;
-      cursor: pointer;
-    `,
-    headerCollapsed: css`
-      border-bottom: 1px solid ${theme.colors.border2};
-    `,
-    icon: css`
-      color: ${theme.colors.textWeak};
-    `,
-    content: css`
-      padding: ${theme.spacing.md} 0;
-    `,
-  };
+  const header = css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: theme.typography.size.lg,
+    padding: `${theme.spacing.xs} 0`,
+    cursor: 'pointer',
+  });
+  const headerCollapsed = css(header, {
+    borderBottom: `1px solid ${theme.colors.border2}`,
+  });
+  const icon = css({
+    color: theme.colors.textWeak,
+  });
+  const content = css({
+    padding: `${theme.spacing.md} 0`,
+  });
+
+  return { header, headerCollapsed, icon, content };
 };

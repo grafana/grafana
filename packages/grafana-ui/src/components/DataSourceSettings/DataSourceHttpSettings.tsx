@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { BasicAuthSettings } from './BasicAuthSettings';
 import { HttpProxySettings } from './HttpProxySettings';

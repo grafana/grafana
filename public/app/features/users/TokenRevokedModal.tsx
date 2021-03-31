@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, InfoBox, Portal, stylesFactory, useTheme } from '@grafana/ui';
 import { getModalStyles } from '@grafana/ui/src/components/Modal/getModalStyles';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 
 interface Props {

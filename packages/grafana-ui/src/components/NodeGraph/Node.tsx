@@ -2,7 +2,7 @@ import React, { MouseEvent, memo } from 'react';
 import { NodeDatum } from './types';
 import { stylesFactory, useTheme } from '../../themes';
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
 const nodeR = 40;
