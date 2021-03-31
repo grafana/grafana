@@ -20,6 +20,7 @@ export enum LogLevel {
   error = 'error',
   info = 'info',
   information = 'info',
+  informational = 'info',
   notice = 'info',
   dbug = 'debug',
   debug = 'debug',
@@ -62,6 +63,7 @@ export interface LogRowModel {
   // Actual log line
   entry: string;
   hasAnsi: boolean;
+  hasUnescapedContent: boolean;
   labels: Labels;
   logLevel: LogLevel;
   raw: string;

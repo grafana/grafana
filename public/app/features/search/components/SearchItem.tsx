@@ -5,7 +5,7 @@ import { TagList, Card, useStyles, Icon, IconName } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
-import { SEARCH_ITEM_HEIGHT } from '../constants';
+import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
 
 export interface Props {
   item: DashboardSectionItem;
@@ -27,9 +27,12 @@ const getIconFromMeta = (meta = ''): IconName => {
 
 export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
   const styles = useStyles(getStyles);
-  const tagSelected = useCallback((tag: string, event: React.MouseEvent<HTMLElement>) => {
-    onTagSelected(tag);
-  }, []);
+  const tagSelected = useCallback(
+    (tag: string, event: React.MouseEvent<HTMLElement>) => {
+      onTagSelected(tag);
+    },
+    [onTagSelected]
+  );
 
   const toggleItem = useCallback(
     (event: React.MouseEvent) => {
@@ -38,7 +41,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         onToggleChecked(item);
       }
     },
-    [item]
+    [item, onToggleChecked]
   );
 
   const folderTitle = item.folderTitle || 'General';
@@ -76,6 +79,7 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
       padding: ${theme.spacing.sm} ${theme.spacing.md};
+      margin-bottom: ${SEARCH_ITEM_MARGIN}px;
     `,
     metaContainer: css`
       display: flex;

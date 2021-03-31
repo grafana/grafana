@@ -12,9 +12,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-
 	"xorm.io/core"
 )
 
@@ -22,26 +21,23 @@ func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "PostgresService",
 		InitPriority: registry.Low,
-		Instance:     &postgresService{},
+		Instance:     &PostgresService{},
 	})
 }
 
-type postgresService struct {
+type PostgresService struct {
 	Cfg        *setting.Cfg `inject:""`
 	logger     log.Logger
 	tlsManager tlsSettingsProvider
 }
 
-func (s *postgresService) Init() error {
+func (s *PostgresService) Init() error {
 	s.logger = log.New("tsdb.postgres")
 	s.tlsManager = newTLSManager(s.logger, s.Cfg.DataPath)
-	tsdb.RegisterTsdbQueryEndpoint("postgres", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return s.newPostgresQueryEndpoint(ds)
-	})
 	return nil
 }
 
-func (s *postgresService) newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+func (s *PostgresService) NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	s.logger.Debug("Creating Postgres query endpoint")
 
 	cnnstr, err := s.generateConnectionString(datasource)
@@ -53,7 +49,7 @@ func (s *postgresService) newPostgresQueryEndpoint(datasource *models.DataSource
 		s.logger.Debug("getEngine", "connection", cnnstr)
 	}
 
-	config := sqleng.SqlQueryEndpointConfiguration{
+	config := sqleng.DataPluginConfiguration{
 		DriverName:        "postgres",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
@@ -66,7 +62,7 @@ func (s *postgresService) newPostgresQueryEndpoint(datasource *models.DataSource
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	endpoint, err := sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb),
+	plugin, err := sqleng.NewDataPlugin(config, &queryResultTransformer, newPostgresMacroEngine(timescaledb),
 		s.logger)
 	if err != nil {
 		s.logger.Error("Failed connecting to Postgres", "err", err)
@@ -74,7 +70,7 @@ func (s *postgresService) newPostgresQueryEndpoint(datasource *models.DataSource
 	}
 
 	s.logger.Debug("Successfully connected to Postgres")
-	return endpoint, err
+	return plugin, nil
 }
 
 // escape single quotes and backslashes in Postgres connection string parameters.
@@ -82,10 +78,9 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-func (s *postgresService) generateConnectionString(datasource *models.DataSource) (string, error) {
+func (s *PostgresService) generateConnectionString(datasource *models.DataSource) (string, error) {
 	var host string
 	var port int
-	var err error
 	if strings.HasPrefix(datasource.Url, "/") {
 		host = datasource.Url
 		s.logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
@@ -141,7 +136,8 @@ type postgresQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
+	plugins.DataRowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 

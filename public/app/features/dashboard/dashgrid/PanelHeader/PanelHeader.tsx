@@ -28,7 +28,7 @@ export interface Props {
 
 export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, data, alertState, dashboard }) => {
   const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
-  const title = panel.replaceVariables(panel.title, {}, 'text');
+  const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
 
   return (
@@ -48,6 +48,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
             return (
               <div className="panel-title">
                 <PanelHeaderNotices frames={data.series} panelId={panel.id} />
+                {panel.libraryPanel && <Icon name="reusable-panel" style={{ marginRight: '4px' }} />}
                 {alertState ? (
                   <Icon
                     name={alertState === 'alerting' ? 'heart-break' : 'heart'}

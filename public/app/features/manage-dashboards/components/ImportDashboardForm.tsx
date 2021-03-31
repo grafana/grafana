@@ -10,8 +10,8 @@ import {
   InputControl,
   Legend,
 } from '@grafana/ui';
+import { DataSourcePicker } from '@grafana/runtime';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
 
@@ -49,7 +49,7 @@ export const ImportDashboardForm: FC<Props> = ({
     if (isSubmitted && (errors.title || errors.uid)) {
       onSubmit(getValues({ nest: true }), {} as any);
     }
-  }, [errors]);
+  }, [errors, getValues, isSubmitted, onSubmit]);
 
   return (
     <>
@@ -68,7 +68,6 @@ export const ImportDashboardForm: FC<Props> = ({
         <InputControl
           as={FolderPicker}
           name="folder"
-          useNewForms
           enableCreateNew
           initialFolderId={initialFolderId}
           control={control}

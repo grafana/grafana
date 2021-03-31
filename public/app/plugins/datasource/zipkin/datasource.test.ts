@@ -3,7 +3,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { ZipkinDatasource } from './datasource';
-import { jaegerTrace, zipkinResponse } from './utils/testData';
+import { traceFrameFields, zipkinResponse } from './utils/testData';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -16,14 +16,14 @@ describe('ZipkinDatasource', () => {
       setupBackendSrv(zipkinResponse);
       const ds = new ZipkinDatasource(defaultSettings);
       await expect(ds.query({ targets: [{ query: '12345' }] } as any)).toEmitValuesWith((val) => {
-        expect(val[0].data[0].fields[0].values.get(0)).toEqual(jaegerTrace);
+        expect(val[0].data[0].fields).toMatchObject(traceFrameFields);
       });
     });
     it('runs query with traceId that includes special characters', async () => {
       setupBackendSrv(zipkinResponse);
       const ds = new ZipkinDatasource(defaultSettings);
       await expect(ds.query({ targets: [{ query: 'a/b' }] } as any)).toEmitValuesWith((val) => {
-        expect(val[0].data[0].fields[0].values.get(0)).toEqual(jaegerTrace);
+        expect(val[0].data[0].fields).toMatchObject(traceFrameFields);
       });
     });
   });

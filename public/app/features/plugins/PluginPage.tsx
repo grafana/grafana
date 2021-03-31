@@ -1,7 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
 import find from 'lodash/find';
 // Types
 import {
@@ -18,8 +16,8 @@ import {
   PluginType,
   UrlQueryMap,
 } from '@grafana/data';
-import { AppNotificationSeverity, CoreEvents, StoreState } from 'app/types';
-import { Alert, InfoBox, Tooltip } from '@grafana/ui';
+import { AppNotificationSeverity } from 'app/types';
+import { Alert, InfoBox, Tooltip, PluginSignatureBadge } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
@@ -30,55 +28,13 @@ import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
 import { appEvents } from 'app/core/core';
 import { config } from 'app/core/config';
-import { ContextSrv } from '../../core/services/context_srv';
+import { contextSrv } from '../../core/services/context_srv';
 import { css } from 'emotion';
-import { PluginSignatureBadge } from './PluginSignatureBadge';
 import { selectors } from '@grafana/e2e-selectors';
+import { ShowModalEvent } from 'app/types/events';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-export function getLoadingNav(): NavModel {
-  const node = {
-    text: 'Loading...',
-    icon: 'icon-gf icon-gf-panel',
-  };
-  return {
-    node: node,
-    main: node,
-  };
-}
-
-export function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
-  return getPluginSettings(pluginId).then((info) => {
-    if (info.type === PluginType.app) {
-      return importAppPlugin(info);
-    }
-    if (info.type === PluginType.datasource) {
-      return importDataSourcePlugin(info);
-    }
-    if (info.type === PluginType.panel) {
-      return importPanelPlugin(pluginId).then((plugin) => {
-        // Panel Meta does not have the *full* settings meta
-        return getPluginSettings(pluginId).then((meta) => {
-          plugin.meta = {
-            ...meta, // Set any fields that do not exist
-            ...plugin.meta,
-          };
-          return plugin;
-        });
-      });
-    }
-    if (info.type === PluginType.renderer) {
-      return Promise.resolve({ meta: info } as GrafanaPlugin);
-    }
-    return Promise.reject('Unknown Plugin type: ' + info.type);
-  });
-}
-
-interface Props {
-  pluginId: string;
-  query: UrlQueryMap;
-  path: string; // the URL path
-  $contextSrv: ContextSrv;
-}
+interface Props extends GrafanaRouteComponentProps<{ pluginId: string }, UrlQueryMap> {}
 
 interface State {
   loading: boolean;
@@ -102,10 +58,10 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const { pluginId, path, query, $contextSrv } = this.props;
+    const { location, queryParams } = this.props;
     const { appSubUrl } = config;
 
-    const plugin = await loadPlugin(pluginId);
+    const plugin = await loadPlugin(this.props.match.params.pluginId);
 
     if (!plugin) {
       this.setState({
@@ -115,7 +71,13 @@ class PluginPage extends PureComponent<Props, State> {
       return; // 404
     }
 
-    const { defaultPage, nav } = getPluginTabsNav(plugin, appSubUrl, path, query, $contextSrv.hasRole('Admin'));
+    const { defaultPage, nav } = getPluginTabsNav(
+      plugin,
+      appSubUrl,
+      location.pathname,
+      queryParams,
+      contextSrv.hasRole('Admin')
+    );
 
     this.setState({
       loading: false,
@@ -126,8 +88,8 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const prevPage = prevProps.query.page as string;
-    const page = this.props.query.page as string;
+    const prevPage = prevProps.queryParams.page as string;
+    const page = this.props.queryParams.page as string;
 
     if (prevPage !== page) {
       const { nav, defaultPage } = this.state;
@@ -146,7 +108,7 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   renderBody() {
-    const { query } = this.props;
+    const { queryParams } = this.props;
     const { plugin, nav } = this.state;
 
     if (!plugin) {
@@ -159,7 +121,7 @@ class PluginPage extends PureComponent<Props, State> {
       if (plugin.configPages) {
         for (const tab of plugin.configPages) {
           if (tab.id === active.id) {
-            return <tab.body plugin={plugin} query={query} />;
+            return <tab.body plugin={plugin} query={queryParams} />;
           }
         }
       }
@@ -180,10 +142,12 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   showUpdateInfo = () => {
-    appEvents.emit(CoreEvents.showModal, {
-      src: 'public/app/features/plugins/partials/update_instructions.html',
-      model: this.state.plugin!.meta,
-    });
+    appEvents.publish(
+      new ShowModalEvent({
+        src: 'public/app/features/plugins/partials/update_instructions.html',
+        model: this.state.plugin!.meta,
+      })
+    );
   };
 
   renderVersionInfo(meta: PluginMeta) {
@@ -337,8 +301,7 @@ class PluginPage extends PureComponent<Props, State> {
 
   render() {
     const { loading, nav, plugin } = this.state;
-    const { $contextSrv } = this.props;
-    const isAdmin = $contextSrv.hasRole('Admin');
+    const isAdmin = contextSrv.hasRole('Admin');
 
     return (
       <Page navModel={nav} aria-label={selectors.pages.PluginPage.page}>
@@ -400,7 +363,7 @@ function getPluginTabsNav(
       if (plugin.angularConfigCtrl) {
         pages.push({
           text: 'Config',
-          icon: 'gicon gicon-cog',
+          icon: 'cog',
           url: `${appSubUrl}${path}?page=${PAGE_ID_CONFIG_CTRL}`,
           id: PAGE_ID_CONFIG_CTRL,
         });
@@ -426,7 +389,7 @@ function getPluginTabsNav(
       if (find(meta.includes, { type: PluginIncludeType.dashboard })) {
         pages.push({
           text: 'Dashboards',
-          icon: 'gicon gicon-dashboard',
+          icon: 'apps',
           url: `${appSubUrl}${path}?page=${PAGE_ID_DASHBOARDS}`,
           id: PAGE_ID_DASHBOARDS,
         });
@@ -491,10 +454,42 @@ function getPluginIcon(type: string) {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  pluginId: state.location.routeParams.pluginId,
-  query: state.location.query,
-  path: state.location.path,
-});
+export function getLoadingNav(): NavModel {
+  const node = {
+    text: 'Loading...',
+    icon: 'icon-gf icon-gf-panel',
+  };
+  return {
+    node: node,
+    main: node,
+  };
+}
 
-export default hot(module)(connect(mapStateToProps)(PluginPage));
+export function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
+  return getPluginSettings(pluginId).then((info) => {
+    if (info.type === PluginType.app) {
+      return importAppPlugin(info);
+    }
+    if (info.type === PluginType.datasource) {
+      return importDataSourcePlugin(info);
+    }
+    if (info.type === PluginType.panel) {
+      return importPanelPlugin(pluginId).then((plugin) => {
+        // Panel Meta does not have the *full* settings meta
+        return getPluginSettings(pluginId).then((meta) => {
+          plugin.meta = {
+            ...meta, // Set any fields that do not exist
+            ...plugin.meta,
+          };
+          return plugin;
+        });
+      });
+    }
+    if (info.type === PluginType.renderer) {
+      return Promise.resolve({ meta: info } as GrafanaPlugin);
+    }
+    return Promise.reject('Unknown Plugin type: ' + info.type);
+  });
+}
+
+export default PluginPage;

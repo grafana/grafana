@@ -21,6 +21,7 @@ export interface LegendProps extends VizLegendBaseProps, VizLegendTableProps {
 }
 
 export interface VizLegendItem {
+  getItemKey?: () => string;
   label: string;
   color: string;
   yAxis: number;

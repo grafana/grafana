@@ -63,7 +63,7 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, 
         </div>
       </TooltipContainer>
     );
-  }, [time, tags, text]);
+  }, [onMouseEnter, onMouseLeave, styles, time, text, tags]);
 
   return (
     <>

@@ -1,15 +1,17 @@
 import React, { FC, useMemo, useState } from 'react';
-import { getFrameDisplayName, GrafanaTheme, PanelData, SelectableValue, toDataFrame } from '@grafana/data';
-import { Select, stylesFactory, Table, useTheme } from '@grafana/ui';
 import { css } from 'emotion';
+import { getFrameDisplayName, GrafanaTheme, PanelData, SelectableValue } from '@grafana/data';
+import { Button, Select, stylesFactory, Table, useTheme } from '@grafana/ui';
+import { EmptyState } from './EmptyState';
 
 interface Props {
-  data?: PanelData;
+  data: PanelData;
   width: number;
   height: number;
+  onRunQueries: () => void;
 }
 
-export const PreviewQueryTab: FC<Props> = ({ data, height, width }) => {
+export const PreviewQueryTab: FC<Props> = ({ data, height, onRunQueries, width }) => {
   const [currentSeries, setSeries] = useState<number>(0);
   const theme = useTheme();
   const styles = getStyles(theme, height);
@@ -24,8 +26,16 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, width }) => {
   // Select padding
   const padding = 16;
 
-  if (!data?.series?.length) {
-    return <Table data={toDataFrame([])} height={height} width={width} />;
+  if (!data) {
+    return (
+      <EmptyState title="Run queries to view data.">
+        <Button onClick={onRunQueries}>Run queries</Button>
+      </EmptyState>
+    );
+  }
+
+  if (!data.series) {
+    return null;
   }
 
   if (data.series.length > 1) {
@@ -48,12 +58,14 @@ export const PreviewQueryTab: FC<Props> = ({ data, height, width }) => {
       </div>
     );
   }
+
   return <Table data={data.series[0]} height={height} width={width} />;
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme, height: number) => {
   return {
     wrapper: css`
+      label: preview-wrapper;
       height: ${height}px;
     `,
     selectWrapper: css`

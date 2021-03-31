@@ -1,7 +1,6 @@
-import { updateLocation } from 'app/core/actions';
 import config from 'app/core/config';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { ThunkResult, LdapUser, UserSession, UserDTO } from 'app/types';
 
 import {
@@ -74,8 +73,7 @@ export function setUserPassword(userId: number, password: string): ThunkResult<v
 export function disableUser(userId: number): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().post(`/api/admin/users/${userId}/disable`);
-    // dispatch(loadAdminUserPage(userId));
-    dispatch(updateLocation({ path: '/admin/users' }));
+    locationService.push('/admin/users');
   };
 }
 
@@ -89,7 +87,7 @@ export function enableUser(userId: number): ThunkResult<void> {
 export function deleteUser(userId: number): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().delete(`/api/admin/users/${userId}`);
-    dispatch(updateLocation({ path: '/admin/users' }));
+    locationService.push('/admin/users');
   };
 }
 

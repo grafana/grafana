@@ -16,9 +16,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 
 	cwapi "github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -67,36 +67,36 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 				}),
 			},
 		}
-		tr := makeCWRequest(t, req, addr)
+		result := makeCWRequest(t, req, addr)
 
-		assert.Equal(t, tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"A": {
-					RefId: "A",
-					Meta: simplejson.NewFromAny(map[string]interface{}{
+		dataFrames := plugins.NewDecodedDataFrames(data.Frames{
+			&data.Frame{
+				RefID: "A",
+				Fields: []*data.Field{
+					data.NewField("text", nil, []string{"Test_MetricName"}),
+					data.NewField("value", nil, []string{"Test_MetricName"}),
+				},
+				Meta: &data.FrameMeta{
+					Custom: map[string]interface{}{
 						"rowCount": float64(1),
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"Test_MetricName",
-									"Test_MetricName",
-								},
-							},
-						},
 					},
 				},
 			},
-		}, tr)
+		})
+
+		// Have to call this so that dataFrames.encoded is non-nil, for the comparison
+		// In the future we should use gocmp instead and ignore this field
+		_, err := dataFrames.Encoded()
+		require.NoError(t, err)
+
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
+				"A": {
+					RefID:      "A",
+					Dataframes: dataFrames,
+				},
+			},
+		}, result)
 	})
 }
 
@@ -130,9 +130,10 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 		}
 		tr := makeCWRequest(t, req, addr)
 
-		dataFrames := tsdb.NewDecodedDataFrames(data.Frames{
+		dataFrames := plugins.NewDecodedDataFrames(data.Frames{
 			&data.Frame{
-				Name: "logGroups",
+				Name:  "logGroups",
+				RefID: "A",
 				Fields: []*data.Field{
 					data.NewField("logGroupName", nil, []*string{}),
 				},
@@ -145,10 +146,10 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 		// In the future we should use gocmp instead and ignore this field
 		_, err := dataFrames.Encoded()
 		require.NoError(t, err)
-		assert.Equal(t, tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
+		assert.Equal(t, plugins.DataResponse{
+			Results: map[string]plugins.DataQueryResult{
 				"A": {
-					RefId:      "A",
+					RefID:      "A",
 					Dataframes: dataFrames,
 				},
 			},
@@ -156,7 +157,7 @@ func TestQueryCloudWatchLogs(t *testing.T) {
 	})
 }
 
-func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) tsdb.Response {
+func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) plugins.DataResponse {
 	t.Helper()
 
 	buf := bytes.Buffer{}
@@ -179,7 +180,7 @@ func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) tsdb.Respo
 	require.NoError(t, err)
 	require.Equal(t, 200, resp.StatusCode)
 
-	var tr tsdb.Response
+	var tr plugins.DataResponse
 	err = json.Unmarshal(buf.Bytes(), &tr)
 	require.NoError(t, err)
 

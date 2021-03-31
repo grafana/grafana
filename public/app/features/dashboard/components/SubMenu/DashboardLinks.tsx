@@ -6,7 +6,7 @@ import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 
 import { DashboardModel } from '../../state';
 import { DashboardLink } from '../../state/DashboardModel';
-import { iconMap } from '../DashLinks/DashLinksEditorCtrl';
+import { linkIconMap } from '../LinksSettings/LinkSettingsEdit';
 import { useEffectOnce } from 'react-use';
 import { CoreEvents } from 'app/types';
 import { selectors } from '@grafana/e2e-selectors';
@@ -17,10 +17,6 @@ export interface Props {
 }
 
 export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
-  if (!links.length) {
-    return null;
-  }
-
   // Emulate forceUpdate (https://reactjs.org/docs/hooks-faq.html#is-there-something-like-forceupdate)
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -31,6 +27,17 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
       dashboard.off(CoreEvents.timeRangeUpdated, forceUpdate);
     };
   });
+
+  useEffectOnce(() => {
+    dashboard.on(CoreEvents.submenuVisibilityChanged, forceUpdate);
+    return () => {
+      dashboard.off(CoreEvents.submenuVisibilityChanged, forceUpdate);
+    };
+  });
+
+  if (!links.length) {
+    return null;
+  }
 
   return (
     <>
@@ -50,7 +57,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
             rel="noreferrer"
             aria-label={selectors.components.DashboardLinks.link}
           >
-            <Icon name={iconMap[link.icon] as IconName} style={{ marginRight: '4px' }} />
+            <Icon name={linkIconMap[link.icon] as IconName} style={{ marginRight: '4px' }} />
             <span>{sanitize(linkInfo.title)}</span>
           </a>
         );

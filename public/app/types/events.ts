@@ -1,5 +1,4 @@
 import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaTheme, TimeRange } from '@grafana/data';
-import { DashboardModel } from 'app/features/dashboard/state';
 
 /**
  * Event Payloads
@@ -23,7 +22,7 @@ export interface ShowModalPayload {
 }
 
 export interface ShowModalReactPayload {
-  component: React.ComponentType;
+  component: React.ComponentType<any>;
   props?: any;
 }
 
@@ -84,14 +83,7 @@ export interface PanelChangeViewPayload {}
  */
 
 export const dashLinksUpdated = eventFactory('dash-links-updated');
-export const dashboardSaved = eventFactory<DashboardModel>('dashboard-saved');
-export const removePanel = eventFactory<number>('remove-panel');
 export const searchQuery = eventFactory('search-query');
-
-export const showModal = eventFactory<ShowModalPayload>('show-modal');
-export const showConfirmModal = eventFactory<ShowConfirmModalPayload>('confirm-modal');
-export const hideModal = eventFactory('hide-modal');
-export const showModalReact = eventFactory<ShowModalReactPayload>('show-modal-react');
 
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
 export const dsRequestError = eventFactory<any>('ds-request-error');
@@ -99,11 +91,7 @@ export const dsRequestError = eventFactory<any>('ds-request-error');
 export const toggleSidemenuMobile = eventFactory('toggle-sidemenu-mobile');
 export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');
 
-export const playlistStarted = eventFactory('playlist-started');
-export const playlistStopped = eventFactory('playlist-stopped');
-
 export const toggleKioskMode = eventFactory<ToggleKioskModePayload>('toggle-kiosk-mode');
-export const toggleViewMode = eventFactory('toggle-view-mode');
 
 export const timeRangeUpdated = eventFactory<TimeRange>('time-range-updated');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
@@ -159,4 +147,40 @@ export class RenderEvent extends BusEventBase {
 
 export class ThemeChangedEvent extends BusEventWithPayload<GrafanaTheme> {
   static type = 'theme-changed';
+}
+
+export class ZoomOutEvent extends BusEventWithPayload<number> {
+  static type = 'zoom-out';
+}
+
+export enum ShiftTimeEventPayload {
+  Left = -1,
+  Right = 1,
+}
+export class ShiftTimeEvent extends BusEventWithPayload<ShiftTimeEventPayload> {
+  static type = 'shift-time';
+}
+
+export class RemovePanelEvent extends BusEventWithPayload<number> {
+  static type = 'remove-panel';
+}
+
+export class ShowModalEvent extends BusEventWithPayload<ShowModalPayload> {
+  static type = 'show-modal';
+}
+
+export class ShowConfirmModalEvent extends BusEventWithPayload<ShowConfirmModalPayload> {
+  static type = 'show-confirm-modal';
+}
+
+export class ShowModalReactEvent extends BusEventWithPayload<ShowModalReactPayload> {
+  static type = 'show-react-modal';
+}
+
+export class HideModalEvent extends BusEventBase {
+  static type = 'hide-modal';
+}
+
+export class DashboardSavedEvent extends BusEventBase {
+  static type = 'dashboard-saved';
 }

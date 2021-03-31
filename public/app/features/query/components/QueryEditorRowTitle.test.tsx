@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { QueryEditorRowTitle, Props } from './QueryEditorRowTitle';
+import { Props, QueryEditorRowTitle } from './QueryEditorRowTitle';
 
 function renderScenario(overrides: Partial<Props>) {
   const props: Props = {
@@ -16,7 +16,6 @@ function renderScenario(overrides: Partial<Props>) {
       },
     ],
     dataSourceName: 'hello',
-    inMixedMode: false,
     disabled: false,
     onChange: jest.fn(),
     onClick: jest.fn(),

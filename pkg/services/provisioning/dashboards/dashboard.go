@@ -6,8 +6,10 @@ import (
 	"os"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -22,7 +24,7 @@ type DashboardProvisioner interface {
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(string) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(string, dashboards.Store, plugins.DataRequestHandler) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -32,16 +34,15 @@ type Provisioner struct {
 }
 
 // New returns a new DashboardProvisioner
-func New(configDirectory string) (*Provisioner, error) {
+func New(configDirectory string, store dashboards.Store, reqHandler plugins.DataRequestHandler) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
 	cfgReader := &configReader{path: configDirectory, log: logger}
 	configs, err := cfgReader.readConfig()
-
 	if err != nil {
 		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}
 
-	fileReaders, err := getFileReaders(configs, logger)
+	fileReaders, err := getFileReaders(configs, logger, store)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
@@ -115,13 +116,14 @@ func (provider *Provisioner) GetAllowUIUpdatesFromConfig(name string) bool {
 	return false
 }
 
-func getFileReaders(configs []*config, logger log.Logger) ([]*FileReader, error) {
+func getFileReaders(configs []*config, logger log.Logger, store dashboards.Store) ([]*FileReader, error) {
 	var readers []*FileReader
 
 	for _, config := range configs {
 		switch config.Type {
 		case "file":
-			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name))
+			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name),
+				store)
 			if err != nil {
 				return nil, errutil.Wrapf(err, "Failed to create file reader for config %v", config.Name)
 			}

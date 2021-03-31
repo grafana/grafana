@@ -25,10 +25,10 @@ export interface StatPanelOptions extends SingleStatBaseOptions {
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
-  includeOrientation = true,
-  includeFieldMatcher = true,
-  includeTextSizes = true
+  includeFieldMatcher = true
 ) {
+  const valueOptionsCategory = ['Value options'];
+
   builder.addRadio({
     path: 'reduceOptions.values',
     name: 'Show',
@@ -39,6 +39,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
         { value: true, label: 'All values' },
       ],
     },
+    category: valueOptionsCategory,
     defaultValue: false,
   });
 
@@ -46,6 +47,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
     path: 'reduceOptions.limit',
     name: 'Limit',
     description: 'Max number of rows to display',
+    category: valueOptionsCategory,
     settings: {
       placeholder: '5000',
       integer: true,
@@ -60,6 +62,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
     path: 'reduceOptions.calcs',
     name: 'Calculation',
     description: 'Choose a reducer function / calculation',
+    category: valueOptionsCategory,
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
     defaultValue: [ReducerID.lastNotNull],
     // Hides it when all values mode is on
@@ -71,6 +74,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
       path: 'reduceOptions.fields',
       name: 'Fields',
       description: 'Select the fields that should be included in the panel',
+      category: valueOptionsCategory,
       settings: {
         allowCustomValue: true,
         options: [],
@@ -94,48 +98,52 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
       defaultValue: '',
     });
   }
+}
 
-  if (includeOrientation) {
-    builder.addRadio({
-      path: 'orientation',
-      name: 'Orientation',
-      description: 'Stacking direction in case of multiple series or fields',
-      settings: {
-        options: [
-          { value: VizOrientation.Auto, label: 'Auto' },
-          { value: VizOrientation.Horizontal, label: 'Horizontal' },
-          { value: VizOrientation.Vertical, label: 'Vertical' },
-        ],
-      },
-      defaultValue: VizOrientation.Auto,
-    });
-  }
+export function addOrientationOption<T extends SingleStatBaseOptions>(
+  builder: PanelOptionsEditorBuilder<T>,
+  category?: string[]
+) {
+  builder.addRadio({
+    path: 'orientation',
+    name: 'Orientation',
+    description: 'Layout orientation',
+    category,
+    settings: {
+      options: [
+        { value: VizOrientation.Auto, label: 'Auto' },
+        { value: VizOrientation.Horizontal, label: 'Horizontal' },
+        { value: VizOrientation.Vertical, label: 'Vertical' },
+      ],
+    },
+    defaultValue: VizOrientation.Auto,
+  });
+}
 
-  if (includeTextSizes) {
-    builder.addNumberInput({
-      path: 'text.titleSize',
-      category: ['Text size'],
-      name: 'Title',
-      settings: {
-        placeholder: 'Auto',
-        integer: false,
-        min: 1,
-        max: 200,
-      },
-      defaultValue: undefined,
-    });
+export function addTextSizeOptions<T extends SingleStatBaseOptions>(builder: PanelOptionsEditorBuilder<T>) {
+  builder.addNumberInput({
+    path: 'text.titleSize',
+    category: ['Text size'],
+    name: 'Title',
+    settings: {
+      placeholder: 'Auto',
+      integer: false,
+      min: 1,
+      max: 200,
+    },
+    defaultValue: undefined,
+  });
 
-    builder.addNumberInput({
-      path: 'text.valueSize',
-      category: ['Text size'],
-      name: 'Value',
-      settings: {
-        placeholder: 'Auto',
-        integer: false,
-        min: 1,
-        max: 200,
-      },
-      defaultValue: undefined,
-    });
-  }
+  builder.addNumberInput({
+    path: 'text.valueSize',
+    category: ['Text size'],
+    name: 'Value',
+    settings: {
+      placeholder: 'Auto',
+      integer: false,
+      min: 1,
+      max: 200,
+    },
+    defaultValue: undefined,
+  });
 }

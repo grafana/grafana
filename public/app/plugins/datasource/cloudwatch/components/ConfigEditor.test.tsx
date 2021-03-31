@@ -1,6 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import ConfigEditor, { Props } from './ConfigEditor';
+import { AwsAuthType } from '@grafana/aws-sdk';
+import { ConfigEditor, Props } from './ConfigEditor';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
@@ -46,7 +47,7 @@ const setup = (propOverrides?: object) => {
         externalId: '',
         database: '',
         customMetricsNamespaces: '',
-        authType: 'keys',
+        authType: AwsAuthType.Keys,
         defaultRegion: 'us-east-2',
         timeField: '@timestamp',
       },

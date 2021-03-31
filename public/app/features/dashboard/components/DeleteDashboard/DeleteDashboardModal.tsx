@@ -4,6 +4,7 @@ import sumBy from 'lodash/sumBy';
 import { Modal, ConfirmModal, HorizontalGroup, Button } from '@grafana/ui';
 import { DashboardModel, PanelModel } from '../../state';
 import { useDashboardDelete } from './useDashboardDelete';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 type DeleteDashboardModalProps = {
   hideModal(): void;
@@ -12,7 +13,13 @@ type DeleteDashboardModalProps = {
 
 export const DeleteDashboardModal: React.FC<DeleteDashboardModalProps> = ({ hideModal, dashboard }) => {
   const isProvisioned = dashboard.meta.provisioned;
-  const { onRestoreDashboard } = useDashboardDelete(dashboard.uid);
+  const { onDeleteDashboard } = useDashboardDelete(dashboard.uid);
+
+  const [, onConfirm] = useAsyncFn(async () => {
+    await onDeleteDashboard();
+    hideModal();
+  }, [hideModal]);
+
   const modalBody = getModalBody(dashboard.panels, dashboard.title);
 
   if (isProvisioned) {
@@ -23,7 +30,7 @@ export const DeleteDashboardModal: React.FC<DeleteDashboardModalProps> = ({ hide
     <ConfirmModal
       isOpen={true}
       body={modalBody}
-      onConfirm={onRestoreDashboard}
+      onConfirm={onConfirm}
       onDismiss={hideModal}
       title="Delete"
       icon="trash-alt"

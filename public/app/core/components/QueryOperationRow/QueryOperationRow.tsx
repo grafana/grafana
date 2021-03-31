@@ -120,7 +120,6 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       margin-bottom: ${theme.spacing.md};
-      white-space: nowrap;
     `,
     header: css`
       padding: ${theme.spacing.xs} ${theme.spacing.sm};
@@ -130,6 +129,7 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      white-space: nowrap;
     `,
     dragIcon: css`
       cursor: drag;

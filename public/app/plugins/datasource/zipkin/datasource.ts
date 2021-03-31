@@ -67,22 +67,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
 
 function responseToDataQueryResponse(response: { data: ZipkinSpan[] }): DataQueryResponse {
   return {
-    data: [
-      new MutableDataFrame({
-        fields: [
-          {
-            name: 'trace',
-            type: FieldType.trace,
-            // There is probably better mapping than just putting everything in as a single value but that's how
-            // we do it with jaeger and is the simplest right now.
-            values: response?.data ? [transformResponse(response?.data)] : [],
-          },
-        ],
-        meta: {
-          preferredVisualisationType: 'trace',
-        },
-      }),
-    ],
+    data: response?.data ? [transformResponse(response?.data)] : [],
   };
 }
 

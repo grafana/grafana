@@ -11,7 +11,7 @@ import {
 
 import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from './types';
 import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveMeasurementsObserver } from '@grafana/runtime';
-import { Observable, of } from 'rxjs';
+import { Observable, of, merge } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
 let counter = 100;
@@ -51,8 +51,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       return queries[0];
     }
     if (queries.length > 1) {
-      // HELP!!!
-      return queries[0];
+      return merge(...queries);
     }
     return of(); // nothing
   }

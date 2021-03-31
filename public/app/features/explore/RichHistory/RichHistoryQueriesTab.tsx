@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { css } from 'emotion';
-import { uniqBy, debounce } from 'lodash';
+import { uniqBy } from 'lodash';
 
 // Types
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
@@ -21,6 +21,7 @@ import {
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { useDebounce } from 'react-use';
 
 export interface Props {
   queries: RichHistoryQuery[];
@@ -139,6 +140,7 @@ export function RichHistoryQueriesTab(props: Props) {
   const [timeFilter, setTimeFilter] = useState<[number, number]>([0, retentionPeriod]);
   const [filteredQueries, setFilteredQueries] = useState<RichHistoryQuery[]>([]);
   const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearchInput, setDebouncedSearchInput] = useState('');
 
   const theme = useTheme();
   const styles = getStyles(theme, height);
@@ -146,19 +148,12 @@ export function RichHistoryQueriesTab(props: Props) {
   const datasourcesRetrievedFromQueryHistory = uniqBy(queries, 'datasourceName').map((d) => d.datasourceName);
   const listOfDatasources = createDatasourcesList(datasourcesRetrievedFromQueryHistory);
 
-  const filterAndSortQueriesDebounced = useCallback(
-    debounce((searchValue: string) => {
-      setFilteredQueries(
-        filterAndSortQueries(
-          queries,
-          sortOrder,
-          datasourceFilters?.map((d) => d.value) as string[] | null,
-          searchValue,
-          timeFilter
-        )
-      );
-    }, 300),
-    [timeFilter, queries, sortOrder, datasourceFilters]
+  useDebounce(
+    () => {
+      setDebouncedSearchInput(searchInput);
+    },
+    300,
+    [searchInput]
   );
 
   useEffect(() => {
@@ -167,11 +162,11 @@ export function RichHistoryQueriesTab(props: Props) {
         queries,
         sortOrder,
         datasourceFilters?.map((d) => d.value) as string[] | null,
-        searchInput,
+        debouncedSearchInput,
         timeFilter
       )
     );
-  }, [timeFilter, queries, sortOrder, datasourceFilters]);
+  }, [timeFilter, queries, sortOrder, datasourceFilters, debouncedSearchInput]);
 
   /* mappedQueriesToHeadings is an object where query headings (stringified dates/data sources)
    * are keys and arrays with queries that belong to that headings are values.
@@ -215,13 +210,10 @@ export function RichHistoryQueriesTab(props: Props) {
           )}
           <div className={styles.filterInput}>
             <FilterInput
-              labelClassName="gf-form--has-input-icon gf-form--grow"
-              inputClassName="gf-form-input"
               placeholder="Search queries"
               value={searchInput}
               onChange={(value: string) => {
                 setSearchInput(value);
-                filterAndSortQueriesDebounced(value);
               }}
             />
           </div>

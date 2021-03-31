@@ -144,7 +144,7 @@ export class LivePanel extends PureComponent<Props, State> {
     const json = this.props.options?.json;
     if (json) {
       const rsp = await channel.publish(json);
-      console.log('GOT', rsp);
+      console.log('onPublishClicked (response from publish)', rsp);
     } else {
       console.log('nothing to publish');
     }

@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Pie chart v2",
   "id": "piechart",
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
     "author": {

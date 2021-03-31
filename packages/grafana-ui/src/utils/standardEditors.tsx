@@ -32,6 +32,7 @@ import {
   StringValueEditor,
   StringArrayEditor,
   SelectValueEditor,
+  MultiSelectValueEditor,
   TimeZonePicker,
 } from '../components';
 import { ValueMappingsValueEditor } from '../components/OptionsUI/mappings';
@@ -220,7 +221,7 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, decimals, displayName, noValue, color, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, color, noValue, thresholds, mappings, links];
 };
 
 /**
@@ -269,6 +270,13 @@ export const getStandardOptionEditors = () => {
     name: 'Select',
     description: 'Allows option selection',
     editor: SelectValueEditor as any,
+  };
+
+  const multiSelect: StandardEditorsRegistryItem<any> = {
+    id: 'multi-select',
+    name: 'Multi select',
+    description: 'Allows for multiple option selection',
+    editor: MultiSelectValueEditor as any,
   };
 
   const radio: StandardEditorsRegistryItem<any> = {
@@ -354,5 +362,6 @@ export const getStandardOptionEditors = () => {
     timeZone,
     fieldColor,
     color,
+    multiSelect,
   ];
 };

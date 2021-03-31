@@ -62,6 +62,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     display: flex;
     white-space: nowrap;
     align-items: center;
+    flex-grow: 1;
   `,
   value: css`
     text-align: right;

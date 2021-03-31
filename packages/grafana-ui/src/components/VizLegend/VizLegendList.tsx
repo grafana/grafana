@@ -29,21 +29,26 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
     );
   }
 
-  const renderItem = (item: VizLegendItem, index: number) => {
-    return <span className={styles.item}>{itemRenderer!(item, index)}</span>;
-  };
-
-  const getItemKey = (item: VizLegendItem) => `${item.label}`;
+  const getItemKey = (item: VizLegendItem) => `${item.getItemKey ? item.getItemKey() : item.label}`;
 
   switch (placement) {
-    case 'right':
+    case 'right': {
+      const renderItem = (item: VizLegendItem, index: number) => {
+        return <span className={styles.itemRight}>{itemRenderer!(item, index)}</span>;
+      };
+
       return (
         <div className={cx(styles.rightWrapper, className)}>
-          <List items={items} renderItem={renderItem} getItemKey={getItemKey} className={className} />
+          <List items={items} renderItem={renderItem} getItemKey={getItemKey} />
         </div>
       );
+    }
     case 'bottom':
-    default:
+    default: {
+      const renderItem = (item: VizLegendItem, index: number) => {
+        return <span className={styles.itemBottom}>{itemRenderer!(item, index)}</span>;
+      };
+
       return (
         <div className={cx(styles.bottomWrapper, className)}>
           <div className={styles.section}>
@@ -62,34 +67,44 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
           </div>
         </div>
       );
+    }
   }
 };
 
 VizLegendList.displayName = 'VizLegendList';
 
-const getStyles = (theme: GrafanaTheme) => ({
-  item: css`
+const getStyles = (theme: GrafanaTheme) => {
+  const itemStyles = css`
     padding-right: 10px;
     display: flex;
     font-size: ${theme.typography.size.sm};
     white-space: nowrap;
-    margin-bottom: ${theme.spacing.xs};
-  `,
-  rightWrapper: css`
-    padding-left: ${theme.spacing.sm};
-  `,
-  bottomWrapper: css`
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    width: 100%;
-    padding-left: ${theme.spacing.md};
-  `,
-  section: css`
-    display: flex;
-  `,
-  sectionRight: css`
-    justify-content: flex-end;
-    flex-grow: 1;
-  `,
-});
+  `;
+
+  return {
+    itemBottom: itemStyles,
+    itemRight: cx(
+      itemStyles,
+      css`
+        margin-bottom: ${theme.spacing.xs};
+      `
+    ),
+    rightWrapper: css`
+      padding-left: ${theme.spacing.sm};
+    `,
+    bottomWrapper: css`
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      width: 100%;
+      padding-left: ${theme.spacing.md};
+    `,
+    section: css`
+      display: flex;
+    `,
+    sectionRight: css`
+      justify-content: flex-end;
+      flex-grow: 1;
+    `,
+  };
+};

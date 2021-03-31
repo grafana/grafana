@@ -114,16 +114,16 @@ const getStyles = (theme: GrafanaTheme) => {
 
   const titleStyles = `
       font-size: ${typography.size.lg};
-      padding-left: ${spacing.sm};      
+      padding-left: ${spacing.sm};
       white-space: nowrap;
       text-overflow: ellipsis;
-      overflow: hidden;      
+      overflow: hidden;
       max-width: 240px;
 
       // clear default button styles
       background: none;
-      border: none;      
-      
+      border: none;
+
       @media ${styleMixins.mediaUp(theme.breakpoints.xl)} {
         max-width: unset;
       }
@@ -135,7 +135,7 @@ const getStyles = (theme: GrafanaTheme) => {
       background: ${theme.colors.dashboardBg};
       justify-content: flex-end;
       flex-wrap: wrap;
-      padding: 0 ${spacing.md} ${spacing.sm} ${spacing.md};
+      padding: 0 ${spacing.sm} ${spacing.sm} ${spacing.md};
     `,
     toolbarLeft: css`
       display: flex;

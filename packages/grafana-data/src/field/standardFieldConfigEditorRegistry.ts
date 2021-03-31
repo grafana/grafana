@@ -5,7 +5,7 @@ import { DataFrame, InterpolateFunction, VariableSuggestionsScope, VariableSugge
 import { EventBus } from '../events';
 
 export interface StandardEditorContext<TOptions> {
-  data?: DataFrame[]; // All results
+  data: DataFrame[]; // All results
   replaceVariables?: InterpolateFunction;
   eventBus?: EventBus;
   getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];

@@ -10,7 +10,7 @@ import * as MonoIcon from './assets';
 import { customIcons } from './custom';
 import { SvgProps } from './assets/types';
 
-const alwaysMonoIcons = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add'];
+const alwaysMonoIcons: IconName[] = ['grafana', 'favorite', 'heart-break', 'heart', 'panel-add', 'reusable-panel'];
 
 export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   name: IconName;
@@ -36,7 +36,7 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-function getIconComponent(name: string, type: string): ComponentType<SvgProps> {
+function getIconComponent(name: IconName, type: string): ComponentType<SvgProps> {
   if (alwaysMonoIcons.includes(name)) {
     type = 'mono';
   }

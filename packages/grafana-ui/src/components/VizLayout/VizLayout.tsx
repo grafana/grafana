@@ -29,13 +29,14 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     width: `${width}px`,
     height: `${height}px`,
   };
+  const [legendRef, legendMeasure] = useMeasure();
 
   if (!legend) {
     return <div style={containerStyle}>{children(width, height)}</div>;
   }
 
   const { placement, maxHeight, maxWidth } = legend.props;
-  const [legendRef, legendMeasure] = useMeasure();
+
   let size: VizSize | null = null;
 
   const vizStyle: CSSProperties = {
@@ -64,7 +65,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   }
 
   // This happens when position is switched from bottom to right
-  // Then we preserve old with for one render cycle until lenged is measured in it's new position
+  // Then we preserve old with for one render cycle until legend is measured in it's new position
   if (size?.width === 0) {
     size.width = width;
   }
@@ -93,9 +94,9 @@ interface VizSize {
  */
 export interface VizLayoutLegendProps {
   placement: LegendPlacement;
+  children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: string;
-  children: React.ReactNode;
 }
 
 /**

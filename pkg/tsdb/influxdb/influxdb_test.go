@@ -12,14 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestInfluxDBExecutor_createRequest(t *testing.T) {
+func TestExecutor_createRequest(t *testing.T) {
 	datasource := &models.DataSource{
 		Url:      "http://awesome-influxdb:1337",
 		Database: "awesome-db",
 		JsonData: simplejson.New(),
 	}
 	query := "SELECT awesomeness FROM somewhere"
-	e := &InfluxDBExecutor{
+	e := &Executor{
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
 	}

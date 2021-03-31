@@ -5,7 +5,6 @@ import { Unsubscribable } from 'rxjs';
 import {
   CoreApp,
   DataQuery,
-  DataQueryError,
   DataQueryRequest,
   DataSourceApi,
   dateMath,
@@ -156,13 +155,7 @@ export function buildQueryTransaction(
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
     maxDataPoints: queryOptions.maxDataPoints,
-    exploreMode: undefined,
     liveStreaming: queryOptions.liveStreaming,
-    /**
-     * @deprecated (external API) showingGraph and showingTable are always set to true and set to true
-     */
-    showingGraph: true,
-    showingTable: true,
   };
 
   return {
@@ -428,14 +421,6 @@ export const getValueWithRefId = (value?: any): any => {
   return undefined;
 };
 
-export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]): DataQueryError | undefined => {
-  if (!errors) {
-    return undefined;
-  }
-
-  return errors.filter((error) => (error && error.refId ? false : true))[0];
-};
-
 export const getRefIds = (value: any): string[] => {
   if (!value) {
     return [];
@@ -484,11 +469,6 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
 }
-
-export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {
-  const refId = getValueWithRefId(queryErrors);
-  return refId ? undefined : getFirstQueryErrorWithoutRefId(queryErrors);
-};
 
 export const copyStringToClipboard = (string: string) => {
   const el = document.createElement('textarea');
