@@ -49,9 +49,11 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
 	silenceID := c.Params(":SilenceId")
-	srv.log.Info("RouteDeleteSilence: ", "SilenceId", silenceID)
 	if err := srv.am.DeleteSilence(silenceID); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to delete silences", err)
+		if errors.Is(err, notifier.ErrSilenceNotFound) {
+			return response.Error(http.StatusNotFound, err.Error(), nil)
+		}
+		return response.Error(http.StatusInternalServerError, err.Error(), nil)
 	}
 	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
 }
