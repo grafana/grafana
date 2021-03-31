@@ -20,7 +20,10 @@ export interface CollectorWorker {
 }
 
 export function getCollectorWorkers(): CollectorWorker[] {
-  return [new BrowserCollectorWorker('BrowserCollectorWorker', 'Browser')];
+  return [
+    new BrowserCollectorWorker('BrowserCollectorWorker', 'Browser'),
+    new OSCollectorWorker('OSCollectorWorker', 'OS'),
+  ];
 }
 
 export function getCollectorSanitizers(): Sanitizer[] {
@@ -86,6 +89,28 @@ export class BrowserCollectorWorker extends BaseWorker {
     let data;
     try {
       data = Bowser.getParser(window.navigator.userAgent).getBrowser();
+    } catch (e) {
+      data = e;
+      console.error(e);
+    }
+
+    return {
+      id: this.id,
+      name: this.name,
+      data,
+    };
+  }
+}
+
+export class OSCollectorWorker extends BaseWorker {
+  canCollect(type: CollectorType): boolean {
+    return true;
+  }
+
+  collect(options: CollectorOptions): CollectorItem {
+    let data;
+    try {
+      data = Bowser.getParser(window.navigator.userAgent).getOS();
     } catch (e) {
       data = e;
       console.error(e);
