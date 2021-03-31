@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
@@ -78,7 +78,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 func Load(rawConfig string) (*api.PostableUserConfig, error) {
 	cfg := &api.PostableUserConfig{}
 
-	if err := yaml.UnmarshalStrict([]byte(rawConfig), cfg); err != nil {
+	if err := yaml.Unmarshal([]byte(rawConfig), cfg); err != nil {
 		return nil, errors.Wrap(err, "unable to parse Alertmanager configuration")
 	}
 
