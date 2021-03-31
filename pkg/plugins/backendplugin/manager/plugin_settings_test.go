@@ -54,8 +54,8 @@ func TestPluginSettings(t *testing.T) {
 			sort.Strings(env)
 			require.Len(t, env, 3)
 			require.EqualValues(t, []string{"GF_PLUGIN_KEY1=sth", "GF_PLUGIN_KEY2=value2", "GF_VERSION=6.7.0"}, env)
-
 		})
+
 		t.Run("Config variable doesn't match env variable ", func(t *testing.T) {
 			_ = os.Setenv("GF_PLUGIN_KEY3", "value3")
 			t.Cleanup(func() {
@@ -67,8 +67,8 @@ func TestPluginSettings(t *testing.T) {
 			sort.Strings(env)
 			require.Len(t, env, 3)
 			require.EqualValues(t, []string{"GF_PLUGIN_KEY1=value1", "GF_PLUGIN_KEY2=value2", "GF_VERSION=6.7.0"}, env)
-
 		})
+
 		t.Run("Should override missing config variable with environment variable ", func(t *testing.T) {
 			cfg := &setting.Cfg{
 				PluginSettings: setting.PluginSettings{
