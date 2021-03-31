@@ -18,6 +18,7 @@ type SubscribeReply struct {
 	Presence  bool
 	JoinLeave bool
 	Recover   bool
+	Data      json.RawMessage
 }
 
 type PublishEvent struct {

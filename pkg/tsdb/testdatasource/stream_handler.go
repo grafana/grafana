@@ -70,6 +70,16 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 		data.NewField("Max", nil, make([]float64, 1)),
 	)
 
+	schema, err := data.FrameToJSON(frame, true, false)
+	if err != nil {
+		return err
+	}
+	if err := sender.Send(&backend.StreamPacket{
+		Header: schema,
+	}); err != nil {
+		return err
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -87,7 +97,7 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 			frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
 			frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
 
-			bytes, err := data.FrameToJSON(frame, true, true)
+			bytes, err := data.FrameToJSON(frame, false, true)
 			if err != nil {
 				logger.Warn("unable to marshal line", "error", err)
 				continue

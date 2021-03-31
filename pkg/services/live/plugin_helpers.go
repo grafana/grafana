@@ -2,22 +2,38 @@ package live
 
 import (
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/live/schema"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 )
 
-type pluginChannelPublisher struct {
-	node *centrifuge.Node
+type pluginPacketSender struct {
+	node        *centrifuge.Node
+	schemaCache *schema.Cache
 }
 
-func newPluginChannelPublisher(node *centrifuge.Node) *pluginChannelPublisher {
-	return &pluginChannelPublisher{node: node}
+func newPluginPacketSender(node *centrifuge.Node, schemaCache *schema.Cache) *pluginPacketSender {
+	return &pluginPacketSender{node: node, schemaCache: schemaCache}
 }
 
-func (p *pluginChannelPublisher) Publish(channel string, data []byte) error {
-	_, err := p.node.Publish(channel, data)
+func (p *pluginPacketSender) Send(channel string, packet *backend.StreamPacket) error {
+	if packet.Type == 0 {
+		// Custom logic for data frame packet processing.
+		if packet.Header != nil {
+			_ = p.schemaCache.Update(channel, packet.Header)
+			_, _ = p.node.Publish(channel, packet.Header)
+			if packet.Payload != nil {
+				_, _ = p.node.Publish(channel, packet.Payload)
+			}
+			return nil
+		}
+		_, err := p.node.Publish(channel, packet.Payload)
+		return err
+	}
+	// For all other packet types just send a payload.
+	_, err := p.node.Publish(channel, packet.Payload)
 	return err
 }
 

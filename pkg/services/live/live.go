@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/features"
+	"github.com/grafana/grafana/pkg/services/live/schema"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 )
@@ -70,6 +71,7 @@ type GrafanaLive struct {
 
 	contextGetter *pluginContextGetter
 	streamManager *features.StreamManager
+	schemaCache   *schema.Cache
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -119,10 +121,11 @@ func (g *GrafanaLive) Init() error {
 	g.node = node
 
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
+	g.schemaCache = schema.NewCache()
 
-	channelPublisher := newPluginChannelPublisher(node)
+	packetSender := newPluginPacketSender(node, g.schemaCache)
 	presenceGetter := newPluginPresenceGetter(node)
-	g.streamManager = features.NewStreamManager(channelPublisher, presenceGetter)
+	g.streamManager = features.NewStreamManager(packetSender, presenceGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
@@ -171,6 +174,7 @@ func (g *GrafanaLive) Init() error {
 						Presence:  reply.Presence,
 						JoinLeave: reply.JoinLeave,
 						Recover:   reply.Recover,
+						Data:      reply.Data,
 					},
 				}, nil)
 			}
@@ -334,6 +338,7 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 		g.streamManager,
 		g.contextGetter,
 		streamHandler,
+		g.schemaCache,
 	), nil
 }
 
@@ -352,6 +357,7 @@ func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace
 		g.streamManager,
 		g.contextGetter,
 		streamHandler,
+		g.schemaCache,
 	), nil
 }
 

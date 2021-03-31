@@ -2,6 +2,7 @@ package features
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/centrifugal/centrifuge"
@@ -9,10 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-//go:generate mockgen -destination=mock.go -package=features github.com/grafana/grafana/pkg/services/live/features ChannelPublisher,PresenceGetter,PluginContextGetter,StreamRunner
+//go:generate mockgen -destination=mock.go -package=features github.com/grafana/grafana/pkg/services/live/features StreamPacketSender,PresenceGetter,PluginContextGetter,StreamRunner,SchemaCache
 
-type ChannelPublisher interface {
-	Publish(channel string, data []byte) error
+type StreamPacketSender interface {
+	Send(channel string, packet *backend.StreamPacket) error
 }
 
 type PresenceGetter interface {
@@ -27,17 +28,26 @@ type StreamRunner interface {
 	RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error
 }
 
-type streamSender struct {
-	channel          string
-	channelPublisher ChannelPublisher
+type SchemaCache interface {
+	Update(channel string, schema json.RawMessage) error
+	Get(channel string) (json.RawMessage, bool, error)
+	Delete(channel string) error
 }
 
-func newStreamSender(channel string, publisher ChannelPublisher) *streamSender {
-	return &streamSender{channel: channel, channelPublisher: publisher}
+type streamSender struct {
+	channel      string
+	packetSender StreamPacketSender
+}
+
+func newStreamSender(channel string, packetSender StreamPacketSender) *streamSender {
+	return &streamSender{
+		channel:      channel,
+		packetSender: packetSender,
+	}
 }
 
 func (p *streamSender) Send(packet *backend.StreamPacket) error {
-	return p.channelPublisher.Publish(p.channel, packet.Payload)
+	return p.packetSender.Send(p.channel, packet)
 }
 
 // PluginRunner can handle streaming operations for channels belonging to plugins.
@@ -47,16 +57,18 @@ type PluginRunner struct {
 	pluginContextGetter PluginContextGetter
 	handler             backend.StreamHandler
 	streamManager       *StreamManager
+	schemaCache         SchemaCache
 }
 
 // NewPluginRunner creates new PluginRunner.
-func NewPluginRunner(pluginID string, datasourceUID string, streamManager *StreamManager, pluginContextGetter PluginContextGetter, handler backend.StreamHandler) *PluginRunner {
+func NewPluginRunner(pluginID string, datasourceUID string, streamManager *StreamManager, pluginContextGetter PluginContextGetter, handler backend.StreamHandler, schemaCache SchemaCache) *PluginRunner {
 	return &PluginRunner{
 		pluginID:            pluginID,
 		datasourceUID:       datasourceUID,
 		pluginContextGetter: pluginContextGetter,
 		handler:             handler,
 		streamManager:       streamManager,
+		schemaCache:         schemaCache,
 	}
 }
 
@@ -69,6 +81,7 @@ func (m *PluginRunner) GetHandlerForPath(path string) (models.ChannelHandler, er
 		streamManager:       m.streamManager,
 		handler:             m.handler,
 		pluginContextGetter: m.pluginContextGetter,
+		schemaCache:         m.schemaCache,
 	}, nil
 }
 
@@ -80,6 +93,7 @@ type PluginPathRunner struct {
 	streamManager       *StreamManager
 	handler             backend.StreamHandler
 	pluginContextGetter PluginContextGetter
+	schemaCache         SchemaCache
 }
 
 // OnSubscribe passes control to a plugin.
@@ -104,14 +118,29 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 	if !resp.OK {
 		return models.SubscribeReply{}, false, nil
 	}
-	err = r.streamManager.SubmitStream(e.Channel, r.path, pCtx, r.handler)
+	result, err := r.streamManager.SubmitStream(ctx, e.Channel, r.path, pCtx, r.handler)
 	if err != nil {
 		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
 		return models.SubscribeReply{}, false, centrifuge.ErrorInternal
 	}
-	return models.SubscribeReply{
+
+	reply := models.SubscribeReply{
 		Presence: true,
-	}, true, nil
+	}
+
+	if result.StreamExists {
+		schema, ok, err := r.schemaCache.Get(e.Channel)
+		if err != nil {
+			logger.Error("Error getting schema for a channel", "error", err, "channel", e.Channel)
+			return models.SubscribeReply{}, false, centrifuge.ErrorInternal
+		}
+		if !ok {
+			logger.Error("No schema for existing stream", "error", err, "channel", e.Channel)
+			return models.SubscribeReply{}, false, centrifuge.ErrorInternal
+		}
+		reply.Data = schema
+	}
+	return reply, true, nil
 }
 
 // OnPublish passes control to a plugin.

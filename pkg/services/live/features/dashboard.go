@@ -33,7 +33,7 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, _ *models.SignedInUs
 	}, true, nil
 }
 
-// OnPublish is called when someone begins to edit a dashoard
+// OnPublish is called when someone begins to edit a dashboard
 func (h *DashboardHandler) OnPublish(ctx context.Context, _ *models.SignedInUser, e models.PublishEvent) (models.PublishReply, bool, error) {
 	return models.PublishReply{}, true, nil
 }
