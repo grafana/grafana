@@ -3,15 +3,6 @@ module.exports = function getBabelConfig() {
     cacheDirectory: true,
     babelrc: false,
     // Note: order is top-to-bottom and/or left-to-right
-    plugins: [
-      ['@babel/plugin-proposal-class-properties', { loose: true }],
-      ['@babel/plugin-proposal-private-methods', { loose: true }],
-      ['@babel/plugin-proposal-object-rest-spread', { loose: true }],
-      '@babel/plugin-proposal-nullish-coalescing-operator',
-      '@babel/plugin-proposal-optional-chaining',
-      '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
-      'angularjs-annotate',
-    ],
     // Note: order is bottom-to-top and/or right-to-left
     presets: [
       [
@@ -29,9 +20,25 @@ module.exports = function getBabelConfig() {
         '@babel/preset-typescript',
         {
           allowNamespaces: true,
+          allowDeclareFields: true,
         },
       ],
       '@babel/preset-react',
+    ],
+    plugins: [
+      // [
+      //   require('@rtsao/plugin-proposal-class-properties'),
+      //   {
+      //     loose: true,
+      //   },
+      // ],
+      ['@babel/plugin-proposal-class-properties', { loose: true }],
+      // ['@babel/plugin-proposal-private-methods', { loose: true }],
+      // ['@babel/plugin-proposal-object-rest-spread', { loose: true }],
+      '@babel/plugin-proposal-nullish-coalescing-operator',
+      '@babel/plugin-proposal-optional-chaining',
+      '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
+      'angularjs-annotate',
     ],
   };
 };
