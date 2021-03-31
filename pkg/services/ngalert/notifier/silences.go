@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	apimodels "github.com/grafana/alerting-api/pkg/api"
@@ -10,18 +9,9 @@ import (
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/silence"
-	"github.com/prometheus/alertmanager/silence/silencepb"
-	"github.com/prometheus/alertmanager/types"
 )
 
 var (
-	// Taken from https://github.com/prometheus/alertmanager/blob/9ab7cef7510e66c2f38775e76c758165133b9536/api/v2/api.go#L527-L533
-	silenceStateOrder = map[types.SilenceState]int{
-		types.SilenceStateActive:  1,
-		types.SilenceStatePending: 2,
-		types.SilenceStateExpired: 3,
-	}
-
 	ErrGetSilencesInternal     = errors.New("unable to retrieve silence(s) due to an internal error")
 	ErrDeleteSilenceInternal   = errors.New("unable to delete silence due to an internal error")
 	ErrCreateSilenceBadPayload = errors.New("unable to create silence")
@@ -129,63 +119,4 @@ func (am *Alertmanager) DeleteSilence(silenceID string) error {
 	}
 
 	return nil
-}
-
-// Taken from https://github.com/prometheus/alertmanager/blob/9ab7cef7510e66c2f38775e76c758165133b9536/api/v2/api.go#L565-L589
-// checkSilenceMatchesFilterLabels returns true if
-// a given silence matches a list of matchers.
-// A silence matches a filter (list of matchers) if
-// for all matchers in the filter, there exists a matcher in the silence
-// such that their names, types, and values are equivalent.
-func checkSilenceMatchesFilterLabels(s *silencepb.Silence, matchers []*labels.Matcher) bool {
-	for _, matcher := range matchers {
-		found := false
-		for _, m := range s.Matchers {
-			if matcher.Name == m.Name &&
-				(matcher.Type == labels.MatchEqual && m.Type == silencepb.Matcher_EQUAL ||
-					matcher.Type == labels.MatchRegexp && m.Type == silencepb.Matcher_REGEXP ||
-					matcher.Type == labels.MatchNotEqual && m.Type == silencepb.Matcher_NOT_EQUAL ||
-					matcher.Type == labels.MatchNotRegexp && m.Type == silencepb.Matcher_NOT_REGEXP) &&
-				matcher.Value == m.Pattern {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-
-	return true
-}
-
-// Taken from https://github.com/prometheus/alertmanager/blob/9ab7cef7510e66c2f38775e76c758165133b9536/api/v2/api.go#L535-L563
-// sortSilences sorts first according to the state "active, pending, expired"
-// then by end time or start time depending on the state.
-// active silences should show the next to expire first
-// pending silences are ordered based on which one starts next
-// expired are ordered based on which one expired most recently
-func sortSilences(sils apimodels.GettableSilences) {
-	sort.Slice(sils, func(i, j int) bool {
-		state1 := types.SilenceState(*sils[i].Status.State)
-		state2 := types.SilenceState(*sils[j].Status.State)
-		if state1 != state2 {
-			return silenceStateOrder[state1] < silenceStateOrder[state2]
-		}
-		switch state1 {
-		case types.SilenceStateActive:
-			endsAt1 := time.Time(*sils[i].Silence.EndsAt)
-			endsAt2 := time.Time(*sils[j].Silence.EndsAt)
-			return endsAt1.Before(endsAt2)
-		case types.SilenceStatePending:
-			startsAt1 := time.Time(*sils[i].Silence.StartsAt)
-			startsAt2 := time.Time(*sils[j].Silence.StartsAt)
-			return startsAt1.Before(startsAt2)
-		case types.SilenceStateExpired:
-			endsAt1 := time.Time(*sils[i].Silence.EndsAt)
-			endsAt2 := time.Time(*sils[j].Silence.EndsAt)
-			return endsAt1.After(endsAt2)
-		}
-		return false
-	})
 }
