@@ -20,16 +20,15 @@ func ParseInterval(inp string) (time.Duration, error) {
 		return dur, nil
 	}
 
-	num := time.Duration(dur)
 	switch period {
 	case "d":
-		return num * time.Hour * 24, nil
+		return dur * time.Hour * 24, nil
 	case "w":
-		return num * time.Hour * 24 * 7, nil
+		return dur * time.Hour * 24 * 7, nil
 	case "M":
-		return num * time.Hour * 730, nil
+		return dur * time.Hour * 730, nil
 	case "y":
-		return num * time.Hour * 8760, nil
+		return dur * time.Hour * 8760, nil
 	}
 
 	return 0, fmt.Errorf("invalid interval %q", inp)
