@@ -1,9 +1,9 @@
 import { combineReducers } from 'redux';
 import { createAsyncMapSlice } from '../utils/redux';
-import { fetchAlertManagerConfigAction, fetchRulesAction } from './actions';
+import { fetchAlertManagerConfigAction, fetchPromRulesAction } from './actions';
 
 export const reducer = combineReducers({
-  rules: createAsyncMapSlice('rules', fetchRulesAction, (dataSourceName) => dataSourceName).reducer,
+  promRules: createAsyncMapSlice('promRules', fetchPromRulesAction, (dataSourceName) => dataSourceName).reducer,
   amConfigs: createAsyncMapSlice(
     'amConfigs',
     fetchAlertManagerConfigAction,

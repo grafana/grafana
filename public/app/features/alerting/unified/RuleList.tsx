@@ -7,8 +7,8 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { SystemOrApplicationRules } from './components/rules/SystemOrApplicationRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchRulesFromAllSourcesAction } from './state/actions';
-import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
+import { getAllRulesSourceNames, getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { css } from '@emotion/css';
 import { ThresholdRules } from './components/rules/ThresholdRules';
 
@@ -17,12 +17,14 @@ export const RuleList: FC = () => {
   const styles = useStyles(getStyles);
   const rulesDataSources = useMemo(getRulesDataSources, []);
 
-  // trigger fetch for any rules sources that dont have results and are not currently loading
   useEffect(() => {
-    dispatch(fetchRulesFromAllSourcesAction());
+    getAllRulesSourceNames().map((name) => {
+      dispatch(fetchPromRulesAction(name));
+      dispatch(fetchRulerRulesAction(name));
+    });
   }, [dispatch]);
 
-  const rules = useUnifiedAlertingSelector((state) => state.rules);
+  const rules = useUnifiedAlertingSelector((state) => state.promRules);
 
   const requests = Object.values(rules);
   const dispatched = !!requests.find((r) => r.dispatched);

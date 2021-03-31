@@ -11,7 +11,7 @@ import { initialAsyncRequestState } from '../../utils/redux';
 export const ThresholdRules: FC = () => {
   const styles = useStyles(getStyles);
   const { loading, result } = useUnifiedAlertingSelector(
-    (state) => state.rules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState
+    (state) => state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState
   );
 
   const namespaces = useMemo(

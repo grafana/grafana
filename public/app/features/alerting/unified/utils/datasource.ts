@@ -35,6 +35,10 @@ export function getLotexDataSourceByName(dataSourceName: string): DataSourceInst
   return dataSource;
 }
 
+export function getAllRulesSourceNames(): string[] {
+  return [...getRulesDataSources().map((r) => r.name), GRAFANA_RULES_SOURCE_NAME];
+}
+
 export function isCloudRulesSource(rulesSource: RulesSource): rulesSource is DataSourceInstanceSettings {
   return rulesSource !== GRAFANA_RULES_SOURCE_NAME;
 }

@@ -10,7 +10,7 @@ import pluralize from 'pluralize';
 
 export const SystemOrApplicationRules: FC = () => {
   const styles = useStyles(getStyles);
-  const rules = useUnifiedAlertingSelector((state) => state.rules);
+  const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
 
   const namespaces = useMemo(
