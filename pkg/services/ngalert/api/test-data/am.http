@@ -32,7 +32,7 @@ content-type: application/json
 
 ###
 # get silences - no silences
-GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences
+GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences?Filter=foo&Filter=bar
 
 ###
 # create silence
@@ -42,7 +42,7 @@ content-type: application/json
 {
   "comment": "string",
   "createdBy": "string",
-  "endsAt": "2021-03-23T16:22:05.400Z",
+  "endsAt": "2021-04-01 16:22:05.400",
   "id": "just-testing",
   "matchers": [
     {
@@ -51,7 +51,7 @@ content-type: application/json
       "value": "string"
     }
   ],
-  "startsAt": "2021-03-23T16:22:05.400Z"
+  "startsAt": "2021-03-31 16:22:05.400"
 }
 
 ###

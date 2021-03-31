@@ -24,11 +24,12 @@ type AlertmanagerSrv struct {
 	log   log.Logger
 }
 
-func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, body apimodels.SilenceBody) response.Response {
-	recipient := c.Params(":Recipient")
-	srv.log.Info("RouteCreateSilence: ", "Recipient", recipient)
-	srv.log.Info("RouteCreateSilence: ", "body", body)
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "silence created"})
+func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
+	silenceID, err := srv.am.CreateSilence(&postableSilence)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to create silences", err)
+	}
+	return response.JSON(http.StatusAccepted, util.DynMap{"message": fmt.Sprintf("silence %s created", silenceID)})
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
@@ -39,8 +40,9 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
 	silenceID := c.Params(":SilenceId")
 	srv.log.Info("RouteDeleteSilence: ", "SilenceId", silenceID)
-	recipient := c.Params(":Recipient")
-	srv.log.Info("RouteDeleteSilence: ", "Recipient", recipient)
+	if err := srv.am.DeleteSilence(silenceID); err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to delete silences", err)
+	}
 	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
 }
 
@@ -295,94 +297,20 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Respo
 func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Response {
 	silenceID := c.Params(":SilenceId")
 	srv.log.Info("RouteGetSilence: ", "SilenceId", silenceID)
-	recipient := c.Params(":Recipient")
-	srv.log.Info("RouteGetSilence: ", "Recipient", recipient)
-	now := time.Now()
-	result := apimodels.GettableSilence{
-		ID: stringPtr("id"),
-		Status: &amv2.SilenceStatus{
-			State: stringPtr("active"),
-		},
-		UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
-		Silence: amv2.Silence{
-			Comment:   stringPtr("comment"),
-			CreatedBy: stringPtr("created by"),
-			EndsAt:    timePtr(strfmt.DateTime(now.Add(time.Hour))),
-			StartsAt:  timePtr(strfmt.DateTime(now)),
-			Matchers: []*amv2.Matcher{
-				{
-					IsRegex: boolPtr(false),
-					Name:    stringPtr("name"),
-					Value:   stringPtr("value"),
-				},
-				{
-					IsRegex: boolPtr(false),
-					Name:    stringPtr("name2"),
-					Value:   stringPtr("value2"),
-				},
-			},
-		},
+	gettableSilence, err := srv.am.GetSilence(silenceID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to get silence", err)
 	}
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, gettableSilence)
 }
 
 func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Response {
-	recipient := c.Params(":Recipient")
-	srv.log.Info("RouteGetSilences: ", "Recipient", recipient)
-	now := time.Now()
-	result := apimodels.GettableSilences{
-		&amv2.GettableSilence{
-			ID: stringPtr("silence1"),
-			Status: &amv2.SilenceStatus{
-				State: stringPtr("active"),
-			},
-			UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
-			Silence: amv2.Silence{
-				Comment:   stringPtr("silence1 comment"),
-				CreatedBy: stringPtr("silence1 created by"),
-				EndsAt:    timePtr(strfmt.DateTime(now.Add(time.Hour))),
-				StartsAt:  timePtr(strfmt.DateTime(now)),
-				Matchers: []*amv2.Matcher{
-					{
-						IsRegex: boolPtr(false),
-						Name:    stringPtr("silence1 name"),
-						Value:   stringPtr("silence1 value"),
-					},
-					{
-						IsRegex: boolPtr(true),
-						Name:    stringPtr("silence1 name2"),
-						Value:   stringPtr("silence1 value2"),
-					},
-				},
-			},
-		},
-		&amv2.GettableSilence{
-			ID: stringPtr("silence2"),
-			Status: &amv2.SilenceStatus{
-				State: stringPtr("pending"),
-			},
-			UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
-			Silence: amv2.Silence{
-				Comment:   stringPtr("silence2 comment"),
-				CreatedBy: stringPtr("silence2 created by"),
-				EndsAt:    timePtr(strfmt.DateTime(now.Add(time.Hour))),
-				StartsAt:  timePtr(strfmt.DateTime(now)),
-				Matchers: []*amv2.Matcher{
-					{
-						IsRegex: boolPtr(false),
-						Name:    stringPtr("silence2 name"),
-						Value:   stringPtr("silence2 value"),
-					},
-					{
-						IsRegex: boolPtr(true),
-						Name:    stringPtr("silence2 name2"),
-						Value:   stringPtr("silence2 value2"),
-					},
-				},
-			},
-		},
+	filters := c.QueryStrings("Filter")
+	gettableSilences, err := srv.am.ListSilences(filters)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to get silences", err)
 	}
-	return response.JSON(http.StatusOK, result)
+	return response.JSON(http.StatusOK, gettableSilences)
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {

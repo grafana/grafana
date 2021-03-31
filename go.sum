@@ -1333,6 +1333,7 @@ github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f/go.mod h1:hoL
 github.com/prometheus/alertmanager v0.18.0/go.mod h1:WcxHBl40VSPuOaqWae6l6HpnEOVRIycEJ7i9iYkadEE=
 github.com/prometheus/alertmanager v0.19.0/go.mod h1:Eyp94Yi/T+kdeb2qvq66E3RGuph5T/jm/RBVh4yz1xo=
 github.com/prometheus/alertmanager v0.20.0/go.mod h1:9g2i48FAyZW6BtbsnvHtMHQXl2aVtrORKwKVCQ+nbrg=
+github.com/prometheus/alertmanager v0.21.0 h1:qK51JcUR9l/unhawGA9F9B64OCYfcGewhPNprem/Acc=
 github.com/prometheus/alertmanager v0.21.0/go.mod h1:h7tJ81NA0VLWvWEayi1QltevFkLF3KxmC/malTcT8Go=
 github.com/prometheus/alertmanager v0.21.1-0.20200911160112-1fdff6b3f939/go.mod h1:imXRHOP6QTsE0fFsIsAV/cXimS32m7gVZOiUj11m6Ig=
 github.com/prometheus/alertmanager v0.21.1-0.20210211203738-a7ca7b1d2951/go.mod h1:6Yc2n2ap5/oP99x1yN6Ho+yL0w8a0oClIR5xxW/JLGs=
