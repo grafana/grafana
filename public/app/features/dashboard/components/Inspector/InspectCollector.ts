@@ -22,8 +22,8 @@ export interface CollectorWorker {
 
 export function getCollectorWorkers(): CollectorWorker[] {
   return [
-    new BrowserCollectorWorker('BrowserCollectorWorker', 'Browser'),
     new OSCollectorWorker('OSCollectorWorker', 'OS'),
+    new BrowserCollectorWorker('BrowserCollectorWorker', 'Browser'),
     new GrafanaCollectorWorker('GrafanaCollectorWorker', 'Grafana'),
     new DashboardJsonCollectorWorker('DashboardJsonCollectorWorker', 'Dashboard JSON'),
     new PanelJsonCollectorWorker('PanelJsonCollectorWorker', 'Panel JSON'),
@@ -36,8 +36,8 @@ export function getCollectorSanitizers(): Sanitizer[] {
 }
 
 export enum CollectorType {
-  Dashboard = 'dashboard',
-  Panel = 'Panel',
+  Dashboard = 'dashboard', // when sharing data for a whole dashboard
+  Panel = 'Panel', // when sharing data for a panel only
 }
 
 export interface CollectorOptions {
