@@ -115,25 +115,6 @@ type GetAlertRuleByUIDQuery struct {
 	Result *AlertRule
 }
 
-// DeleteAlertRuleByUIDCommand is the command for deleting an alert rule
-type DeleteAlertRuleByUIDCommand struct {
-	UID   string
-	OrgID int64
-}
-
-// DeleteNamespaceAlertRulesCommand is the command for deleting namespace alert rules
-type DeleteNamespaceAlertRulesCommand struct {
-	OrgID        int64
-	NamespaceUID string
-}
-
-// DeleteRuleGroupAlertRulesCommand is the command for deleting namespace alert rules
-type DeleteRuleGroupAlertRulesCommand struct {
-	OrgID        int64
-	NamespaceUID string
-	RuleGroup    string
-}
-
 // ListAlertRulesQuery is the query for listing alert rules
 type ListAlertRulesQuery struct {
 	OrgID int64

@@ -27,10 +27,7 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
 	}
-	if err := srv.store.DeleteNamespaceAlertRules(&ngmodels.DeleteNamespaceAlertRulesCommand{
-		OrgID:        c.SignedInUser.OrgId,
-		NamespaceUID: namespaceUID,
-	}); err != nil {
+	if err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespaceUID); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to delete namespace alert rules", err)
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
@@ -43,11 +40,7 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
 	}
 	ruleGroup := c.Params(":Groupname")
-	if err := srv.store.DeleteRuleGroupAlertRules(&ngmodels.DeleteRuleGroupAlertRulesCommand{
-		OrgID:        c.SignedInUser.OrgId,
-		NamespaceUID: namespaceUID,
-		RuleGroup:    ruleGroup,
-	}); err != nil {
+	if err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespaceUID, ruleGroup); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to delete group alert rules", err)
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
@@ -72,8 +65,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 	ruleGroupConfigs := make(map[string]apimodels.GettableRuleGroupConfig)
 	for _, r := range q.Result {
 		ruleGroupConfig, ok := ruleGroupConfigs[r.RuleGroup]
-		switch ok {
-		case false:
+		if !ok {
 			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
 			ruleGroupConfigs[r.RuleGroup] = apimodels.GettableRuleGroupConfig{
 				Name:     r.RuleGroup,
@@ -82,7 +74,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 					toGettableExtendedRuleNode(*r),
 				},
 			}
-		case true:
+		} else {
 			ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r))
 			ruleGroupConfigs[r.RuleGroup] = ruleGroupConfig
 		}
@@ -144,8 +136,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 			return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", r.NamespaceUID), err)
 		}
 		_, ok := configs[namespace]
-		switch ok {
-		case false:
+		if !ok {
 			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
 			configs[namespace] = make(map[string]apimodels.GettableRuleGroupConfig)
 			configs[namespace][r.RuleGroup] = apimodels.GettableRuleGroupConfig{
@@ -155,10 +146,9 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 					toGettableExtendedRuleNode(*r),
 				},
 			}
-		case true:
+		} else {
 			ruleGroupConfig, ok := configs[namespace][r.RuleGroup]
-			switch ok {
-			case false:
+			if !ok {
 				ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
 				configs[namespace][r.RuleGroup] = apimodels.GettableRuleGroupConfig{
 					Name:     r.RuleGroup,
@@ -167,9 +157,10 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 						toGettableExtendedRuleNode(*r),
 					},
 				}
-			case true:
+			} else {
 				ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r))
 				configs[namespace][r.RuleGroup] = ruleGroupConfig
+
 			}
 		}
 	}

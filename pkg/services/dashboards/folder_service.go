@@ -100,7 +100,6 @@ func (dr *dashboardServiceImpl) GetFolderByUID(uid string) (*models.Folder, erro
 func (dr *dashboardServiceImpl) GetFolderBySlug(slug string) (*models.Folder, error) {
 	query := models.GetDashboardQuery{OrgId: dr.orgId, Slug: slug}
 	dashFolder, err := getFolder(query)
-
 	if err != nil {
 		return nil, toFolderError(err)
 	}
