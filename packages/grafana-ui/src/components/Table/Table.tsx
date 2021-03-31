@@ -27,6 +27,7 @@ import { Icon } from '../Icon/Icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Filter } from './Filter';
 import { TableCell } from './TableCell';
+import ClipboardButtonStoryInternal from '../ClipboardButton/ClipboardButton.story.internal';
 
 const COLUMN_MIN_WIDTH = 150;
 
@@ -180,7 +181,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               onCellFilterAdded={onCellFilterAdded}
               columnIndex={index}
               columnCount={row.cells.length}
-              rowIndex={rowIndex}
+              dataRowIndex={row.index}
             />
           ))}
         </div>
