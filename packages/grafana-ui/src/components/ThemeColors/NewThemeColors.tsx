@@ -160,7 +160,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
             padding: 8px;
             font-weight: 500;
             &:hover {
-              background: ${theme.palette.getHoverBackground(color.main)};
+              background: ${theme.palette.getHoverColor(color.main)};
             }
           `}
         >

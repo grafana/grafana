@@ -15,6 +15,7 @@ export interface ThemePaletteBase<TColor> {
   warning: TColor;
 
   text: {
+    strong: string;
     primary: string;
     secondary: string;
     disabled: string;
@@ -49,8 +50,8 @@ export interface ThemePaletteBase<TColor> {
 export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
   /** Returns a text color for the background */
   getContrastText(background: string): string;
-  /* Retruns a hover color for any background */
-  getHoverBackground(background: string): string;
+  /* Retruns a hover color for any default color */
+  getHoverColor(defaultColor: string): string;
 }
 
 export type ThemePaletteInput = DeepPartial<ThemePaletteBase<ThemePaletteColor>>;
@@ -59,6 +60,7 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'dark';
 
   text = {
+    strong: colors.white,
     primary: 'rgba(255, 255, 255, 0.75)',
     secondary: 'rgba(255, 255, 255, 0.50)',
     disabled: 'rgba(255, 255, 255, 0.3)',
@@ -153,6 +155,7 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   text = {
+    strong: colors.black,
     primary: 'rgba(0, 0, 0, 0.87)',
     secondary: 'rgba(0, 0, 0, 0.54)',
     disabled: 'rgba(0, 0, 0, 0.38)',
@@ -203,12 +206,12 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
 
   function getContrastText(background: string) {
     const contrastText =
-      getContrastRatio(background, dark.text.primary) >= contrastThreshold ? colors.white : colors.black;
+      getContrastRatio(background, dark.text.primary) >= contrastThreshold ? dark.text.strong : light.text.strong;
     // todo, need color framework
     return contrastText;
   }
 
-  function getHoverBackground(color: string) {
+  function getHoverColor(color: string) {
     return emphasize(color, hoverFactor);
   }
 
@@ -239,7 +242,7 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
       success: getRichColor({ color: success, name: 'success' }),
       warning: getRichColor({ color: warning, name: 'warning' }),
       getContrastText,
-      getHoverBackground,
+      getHoverColor,
     },
     other
   );
