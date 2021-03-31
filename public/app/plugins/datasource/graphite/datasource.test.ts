@@ -251,7 +251,7 @@ describe('graphiteDatasource', () => {
       });
     });
 
-    it('tags response is invalid', async () => {
+    it('and tags response is invalid', async () => {
       fetchMock.mockImplementation((options: any) => {
         return of(createFetchResponse('zzzzzzz'));
       });
