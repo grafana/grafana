@@ -49,7 +49,7 @@ type CueSchema interface {
 	// somewhere on a Family's sequence of schemata.
 	Migrate(Resource) (Resource, VersionedCueSchema, error)
 
-	// Successor returns the CueSchema to which this CueSchema can migrate a
+	// Successor returns the VersionedCueSchema to which this CueSchema can migrate a
 	// Resource.
 	Successor() VersionedCueSchema
 
@@ -108,6 +108,7 @@ func AsArray(sch VersionedCueSchema) [][]VersionedCueSchema {
 	var ret [][]VersionedCueSchema
 	var flat []VersionedCueSchema
 
+	// two loops. lazy day, today
 	for sch != nil {
 		flat = append(flat, sch)
 		sch = sch.Successor()

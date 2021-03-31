@@ -50,7 +50,7 @@ func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	return buildGenericScuemata(famval)
 }
 
-// DistDashboardScuemata loads the family of schema representing the "Dist"
+// DistDashboardFamily loads the family of schema representing the "Dist"
 // variant of a Grafana dashboard: the "Base" variant (see
 // BaseDashboardFamily()), but constrained such that all substructures (e.g.
 // panels) must be valid with respect to the schemas provided by the core
@@ -59,7 +59,7 @@ func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 // The returned VersionedCueSchema will always be the oldest schema in the
 // family: the 0.0 schema. schema.Find() provides easy traversal to newer schema
 // versions.
-func DistDashboardScuemata(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
+func DistDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	head, err := BaseDashboardFamily(p)
 	if err != nil {
 		return nil, err

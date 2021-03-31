@@ -21,7 +21,7 @@ var p BaseLoadPaths = BaseLoadPaths{
 func TestScuemataBasics(t *testing.T) {
 	all := make(map[string]schema.VersionedCueSchema)
 
-	dash, err := BaseDashboardScuemata(p)
+	dash, err := BaseDashboardFamily(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
 	all["basedash"] = dash
 
@@ -58,7 +58,7 @@ func TestDashboardValidity(t *testing.T) {
 	t.Skip()
 	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "dashboards"))
 
-	dash, err := BaseDashboardScuemata(p)
+	dash, err := BaseDashboardFamily(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
 
 	ddash, err := DistDashboardScuemata(p)

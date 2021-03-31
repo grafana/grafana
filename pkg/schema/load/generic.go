@@ -19,14 +19,15 @@ func getBaseScuemata(p BaseLoadPaths) (*cue.Instance, error) {
 	cfg := &load.Config{
 		Overlay: overlay,
 		Package: "scuemata",
-		// TODO Semantics of loading instances is quite confusing. This has to
-		// be set to "/" in order for the overlay to be searched and have all
-		// files loaded in the cue/scuemata directory. (This isn't necessary
-		// when loading individual .cue files.) But anchoring a search at root
-		// seems like we're begging for vulnerabilities where Grafana can read
-		// and print out anything on the filesystem, which can be a disclosure
-		// problem, unless we're absolutely sure the search is within a virtual
-		// filesystem. Which i'm not.
+		// TODO Semantics of loading instances is quite confusing. This 'Dir'
+		// field is a case in point. It must be set to "/" in order for the
+		// overlay to be searched and have all files loaded in the cue/scuemata
+		// directory. (This isn't necessary when loading individual .cue files.)
+		// But anchoring a search at root seems like we're begging for
+		// vulnerabilities where Grafana can read and print out anything on the
+		// filesystem, which can be a disclosure problem, unless we're
+		// absolutely sure the search is within a virtual filesystem. Which i'm
+		// not.
 		//
 		// And no, changing the toOverlay() to have a subpath and the
 		// load.Instances to mirror that subpath does not allow us to get rid of
