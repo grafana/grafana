@@ -845,9 +845,7 @@
   "GettableSilence": {
    "$ref": "#/definitions/gettableSilence"
   },
-  "GettableSilences": {
-   "$ref": "#/definitions/gettableSilences"
-  },
+  "GettableSilences": {},
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -3240,7 +3238,7 @@
       "in": "body",
       "name": "Silence",
       "schema": {
-       "$ref": "#/definitions/PostableSilence"
+       "$ref": "#/definitions/postableSilence"
       }
      },
      {
