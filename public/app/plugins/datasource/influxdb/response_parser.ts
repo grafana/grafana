@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 export default class ResponseParser {
   parse(query: string, results: { results: any }) {
-    if (!results || results.results.length === 0) {
+    if (!results?.results || results.results.length === 0) {
       return [];
     }
 
