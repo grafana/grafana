@@ -19,13 +19,13 @@ import (
 
 type AlertmanagerApiService interface {
 	RouteCreateSilence(*models.ReqContext, apimodels.PostableSilence) response.Response
-	RouteDeleteAlertingConfig(*models.ReqContext) response.Response
 	RouteDeleteSilence(*models.ReqContext) response.Response
+	RouteDeleteAlertingConfig(*models.ReqContext) response.Response
 	RouteGetAMAlertGroups(*models.ReqContext) response.Response
 	RouteGetAMAlerts(*models.ReqContext) response.Response
 	RouteGetAlertingConfig(*models.ReqContext) response.Response
-	RouteGetSilence(*models.ReqContext) response.Response
 	RouteGetSilences(*models.ReqContext) response.Response
+	RouteGetSilence(*models.ReqContext) response.Response
 	RoutePostAMAlerts(*models.ReqContext, apimodels.PostableAlerts) response.Response
 	RoutePostAlertingConfig(*models.ReqContext, apimodels.PostableUserConfig) response.Response
 }
@@ -52,13 +52,23 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 func (base AlertmanagerApiBase) RouteCreateSilence(c *models.ReqContext, body apimodels.PostableSilence) response.Response {
 	recipient := c.Params(":Recipient")
 	base.log.Info("RouteCreateSilence: ", "Recipient", recipient)
-	base.log.Info("RouteCreateSilence: ", "body", body)
+	base.log.Info("RouteCreateSilence: ", "params", body)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
-func (base AlertmanagerApiBase) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
+func (base AlertmanagerApiBase) RouteGetSilences(c *models.ReqContext) response.Response {
 	recipient := c.Params(":Recipient")
-	base.log.Info("RouteDeleteAlertingConfig: ", "Recipient", recipient)
+	base.log.Info("RouteGetSilences: ", "Recipient", recipient)
+	filter := c.Params(":Filter")
+	base.log.Info("RouteGetSilences: ", "params", filter)
+	return response.Error(http.StatusNotImplemented, "", nil)
+}
+
+func (base AlertmanagerApiBase) RouteGetSilence(c *models.ReqContext) response.Response {
+	silenceId := c.Params(":SilenceId")
+	base.log.Info("RouteGetSilence: ", "SilenceId", silenceId)
+	recipient := c.Params(":Recipient")
+	base.log.Info("RouteGetSilence: ", "Recipient", recipient)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
@@ -67,6 +77,12 @@ func (base AlertmanagerApiBase) RouteDeleteSilence(c *models.ReqContext) respons
 	base.log.Info("RouteDeleteSilence: ", "SilenceId", silenceId)
 	recipient := c.Params(":Recipient")
 	base.log.Info("RouteDeleteSilence: ", "Recipient", recipient)
+	return response.Error(http.StatusNotImplemented, "", nil)
+}
+
+func (base AlertmanagerApiBase) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
+	recipient := c.Params(":Recipient")
+	base.log.Info("RouteDeleteAlertingConfig: ", "Recipient", recipient)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
@@ -85,20 +101,6 @@ func (base AlertmanagerApiBase) RouteGetAMAlerts(c *models.ReqContext) response.
 func (base AlertmanagerApiBase) RouteGetAlertingConfig(c *models.ReqContext) response.Response {
 	recipient := c.Params(":Recipient")
 	base.log.Info("RouteGetAlertingConfig: ", "Recipient", recipient)
-	return response.Error(http.StatusNotImplemented, "", nil)
-}
-
-func (base AlertmanagerApiBase) RouteGetSilence(c *models.ReqContext) response.Response {
-	silenceId := c.Params(":SilenceId")
-	base.log.Info("RouteGetSilence: ", "SilenceId", silenceId)
-	recipient := c.Params(":Recipient")
-	base.log.Info("RouteGetSilence: ", "Recipient", recipient)
-	return response.Error(http.StatusNotImplemented, "", nil)
-}
-
-func (base AlertmanagerApiBase) RouteGetSilences(c *models.ReqContext) response.Response {
-	recipient := c.Params(":Recipient")
-	base.log.Info("RouteGetSilences: ", "Recipient", recipient)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
