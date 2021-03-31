@@ -105,7 +105,7 @@ func init() {
 				PropertyName: "mentionChannel",
 			},
 			{
-				Label:        "URL",
+				Label:        "Webhook URL",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Placeholder:  "Optionally provide a Slack incoming webhook URL for sending messages, in this case the token isn't necessary",
