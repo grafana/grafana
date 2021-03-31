@@ -11,8 +11,6 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
 replace k8s.io/client-go => k8s.io/client-go v0.18.8
 
-replace github.com/prometheus/alertmanager => github.com/gotjosh/alertmanager v0.21.1-0.20210329182206-9ab7cef7510e
-
 require (
 	cloud.google.com/go/storage v1.14.0
 	github.com/BurntSushi/toml v0.3.1
@@ -64,7 +62,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.21.1-0.20210324070758-10757eb5fb78
+	github.com/prometheus/alertmanager v0.21.1-0.20210331075806-bc7b16d61afd
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.19.0

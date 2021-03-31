@@ -50,7 +50,7 @@ func (am *Alertmanager) ListSilences(filters []string) (apimodels.GettableSilenc
 
 	sils := apimodels.GettableSilences{}
 	for _, ps := range psils {
-		if !checkSilenceMatchesFilterLabels(ps, matchers) {
+		if !v2.CheckSilenceMatchesFilterLabels(ps, matchers) {
 			continue
 		}
 		silence, err := v2.GettableSilenceFromProto(ps)
@@ -61,7 +61,7 @@ func (am *Alertmanager) ListSilences(filters []string) (apimodels.GettableSilenc
 		sils = append(sils, &silence)
 	}
 
-	sortSilences(sils)
+	v2.SortSilences(sils)
 
 	return sils, nil
 }
