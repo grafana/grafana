@@ -1,3 +1,5 @@
+import { CollectorOptions, CollectorType } from './InspectCollector';
+
 export interface CollectorData extends Record<string, any> {}
 export interface Sanitizer {
   id: string;
@@ -18,4 +20,9 @@ export enum CollectorWorkers {
   dashboard = 'DashboardJsonCollectorWorker',
   panelJson = 'PanelJsonCollectorWorker',
   panelData = 'PanelDataCollectorWorker',
+}
+
+export interface CollectorWorker {
+  canCollect: (type: CollectorType) => boolean;
+  collect: (options: CollectorOptions) => Promise<CollectorItem>;
 }
