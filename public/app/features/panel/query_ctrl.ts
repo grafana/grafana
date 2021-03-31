@@ -11,7 +11,7 @@ export class QueryCtrl {
   isLastQuery: boolean;
 
   constructor(public $scope: any, public $injector: auto.IInjectorService) {
-    this.panel = $scope.ctrl.panelCtrl.panel;
+    this.panel = this.panelCtrl?.panel ?? $scope.ctrl.panelCtrl.panel;
     this.isLastQuery = _.indexOf(this.panel.targets, this.target) === this.panel.targets.length - 1;
   }
 
