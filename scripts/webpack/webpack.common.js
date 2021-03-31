@@ -6,7 +6,7 @@ const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 class CopyUniconsPlugin {
   apply(compiler) {
     compiler.hooks.afterEnvironment.tap('CopyUniconsPlugin', () => {
-      let destDir = path.resolve(__dirname, '../../public//img/icons/unicons');
+      let destDir = path.resolve(__dirname, '../../public/img/icons/unicons');
 
       if (!fs.pathExistsSync(destDir)) {
         let srcDir = path.resolve(__dirname, '../../node_modules/iconscout-unicons-tarball/svg/line');
