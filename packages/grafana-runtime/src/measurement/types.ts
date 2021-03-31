@@ -4,7 +4,7 @@ import { DataFrame } from '@grafana/data';
  * @alpha -- experimental
  */
 export interface MeasurementsQuery {
-  key?: string;
+  key?: string; // TODO!!!!! not used!!!!
   fields?: string[]; // only include the fields with these names
 }
 
@@ -15,6 +15,6 @@ export interface MeasurementsQuery {
  */
 export interface LiveMeasurements {
   getData(query?: MeasurementsQuery): DataFrame[];
-  getKeys(): string[];
+  getKeys(): string[]; // TODO!!!!! not used!!!!
   ensureCapacity(size: number): void;
 }
