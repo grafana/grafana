@@ -98,12 +98,7 @@ func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool,
 			if !c.IsSignedIn || c.UserId == 0 {
 				continue
 			}
-			query := models.GetUserQuotaByTargetQuery{
-				UserId:           c.UserId,
-				Target:           scope.Target,
-				TargetConditions: scope.TargetConditions,
-				Default:          scope.DefaultLimit,
-			}
+			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit}
 			if err := bus.Dispatch(&query); err != nil {
 				return true, err
 			}
@@ -128,34 +123,14 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 	switch target {
 	case "user":
 		scopes = append(scopes,
-			models.QuotaScope{
-				Name:             "global",
-				Target:           target,
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.Global.User,
-			},
-			models.QuotaScope{
-				Name:             "org",
-				Target:           "org_user",
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.Org.User,
-			},
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.User},
+			models.QuotaScope{Name: "org", Target: "org_user", DefaultLimit: qs.Cfg.Quota.Org.User},
 		)
 		return scopes, nil
 	case "org":
 		scopes = append(scopes,
-			models.QuotaScope{
-				Name:             "global",
-				Target:           target,
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.Global.Org,
-			},
-			models.QuotaScope{
-				Name:             "user",
-				Target:           "org_user",
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.User.Org,
-			},
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Org},
+			models.QuotaScope{Name: "user", Target: "org_user", DefaultLimit: qs.Cfg.Quota.User.Org},
 		)
 		return scopes, nil
 	case "dashboard":
@@ -176,44 +151,19 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 		return scopes, nil
 	case "data_source":
 		scopes = append(scopes,
-			models.QuotaScope{
-				Name:             "global",
-				Target:           target,
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.Global.DataSource,
-			},
-			models.QuotaScope{
-				Name:             "org",
-				Target:           target,
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.Org.DataSource,
-			},
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.DataSource},
+			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.DataSource},
 		)
 		return scopes, nil
 	case "api_key":
 		scopes = append(scopes,
-			models.QuotaScope{
-				Name:             "global",
-				Target:           target,
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.Global.ApiKey,
-			},
-			models.QuotaScope{
-				Name:             "org",
-				Target:           target,
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.Org.ApiKey,
-			},
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.ApiKey},
+			models.QuotaScope{Name: "org", Target: target, DefaultLimit: qs.Cfg.Quota.Org.ApiKey},
 		)
 		return scopes, nil
 	case "session":
 		scopes = append(scopes,
-			models.QuotaScope{
-				Name:             "global",
-				Target:           target,
-				TargetConditions: qs.getQuotaScopeConditions(target),
-				DefaultLimit:     qs.Cfg.Quota.Global.Session,
-			},
+			models.QuotaScope{Name: "global", Target: target, DefaultLimit: qs.Cfg.Quota.Global.Session},
 		)
 		return scopes, nil
 	default:
@@ -221,8 +171,8 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 	}
 }
 
-// get any extra conditions that are required to properly
-// determine the quota for a given target
+// Get any extra conditions that are required to properly determine the quota for a given target.
+// The string must be raw SQL compatible.
 func (qs *QuotaService) getQuotaScopeConditions(target string) string {
 	switch target {
 	case "dashboard":

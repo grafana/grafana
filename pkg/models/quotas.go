@@ -58,11 +58,10 @@ type GetOrgQuotasQuery struct {
 }
 
 type GetUserQuotaByTargetQuery struct {
-	Target           string
-	TargetConditions string
-	UserId           int64
-	Default          int64
-	Result           *UserQuotaDTO
+	Target  string
+	UserId  int64
+	Default int64
+	Result  *UserQuotaDTO
 }
 
 type GetUserQuotasQuery struct {
