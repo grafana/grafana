@@ -1,3 +1,4 @@
+import { lowerCase } from 'lodash';
 import { CollectorItem, CollectorWorkers, Sanitizer } from '../types';
 
 export class UrlSanitizer implements Sanitizer {
@@ -49,6 +50,11 @@ const copyWithoutUrls = (replaceWith: string, source: Record<string, any>, targe
         copyWithoutUrls(replaceWith, v, valueTarget);
         return valueTarget;
       });
+      continue;
+    }
+
+    if (typeof value === 'string' && lowerCase(key) === 'url') {
+      target[key] = replaceWith;
       continue;
     }
 
