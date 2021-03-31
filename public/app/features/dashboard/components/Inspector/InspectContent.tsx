@@ -14,6 +14,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { DashboardModel, PanelModel } from '../../state';
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { CollectorType, getCollectorSanitizers, getCollectorWorkers, InspectCollector } from './InspectCollector';
+import { inspectDownloader, inspectPackager } from './utils';
 
 interface Props {
   dashboard: DashboardModel;
@@ -79,7 +80,11 @@ export const InspectContent: React.FC<Props> = ({
                   sanitizers: getCollectorSanitizers(),
                   type: CollectorType.Panel,
                 })
-                .then((items) => console.log(items));
+                .then((items) => {
+                  console.log(items);
+                  const data = inspectPackager().package(items);
+                  inspectDownloader().startDownload(data);
+                });
             }}
           />
           {/*temporary placement for debug purposes*/}

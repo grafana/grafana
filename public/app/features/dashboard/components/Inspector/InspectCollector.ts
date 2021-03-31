@@ -196,7 +196,6 @@ export class PanelDataCollectorWorker extends BaseWorker {
   async collect(options: CollectorOptions): Promise<CollectorItem> {
     return await this.safelyCollect(options, async () => {
       const { panel } = options;
-
       if (panel) {
         return panel.getQueryRunner().getLastResult() ?? { error: 'Missing lastResult' };
       }
