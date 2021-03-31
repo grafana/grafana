@@ -15,9 +15,9 @@ export const UserInvitePage: FC<Props> = ({ navModel }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        <h3 className="page-sub-heading">Invite User</h3>
+        <h3 className="page-sub-heading">Invite user</h3>
         <div className="p-b-2">
-          Send invite or add existing Grafana user to the organization
+          Send invitation or add existing Grafana user to the organization.
           <span className="highlight-word"> {contextSrv.user.orgName}</span>
         </div>
         <UserInviteForm />
