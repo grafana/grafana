@@ -4,32 +4,25 @@ import { MeasurementCollector } from './collector';
 describe('MeasurementCollector', () => {
   it('should collect values', () => {
     const collector = new MeasurementCollector();
-    collector.addBatch({
-      batch: [
-        {
-          key: 'aaa',
-          schema: {
-            fields: [
-              { name: 'time', type: FieldType.time },
-              { name: 'value', type: FieldType.number },
-            ],
-          },
-          data: {
-            values: [
-              [100, 200],
-              [1, 2],
-            ],
-          },
-        },
-        {
-          key: 'aaa',
-          data: { values: [[300], [3]] },
-        },
-        {
-          key: 'aaa',
-          data: { values: [[400], [4]] },
-        },
-      ],
+    collector.append({
+      schema: {
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'value', type: FieldType.number },
+        ],
+      },
+      data: {
+        values: [
+          [100, 200],
+          [1, 2],
+        ],
+      },
+    });
+    collector.append({
+      data: { values: [[300], [3]] },
+    });
+    collector.append({
+      data: { values: [[400], [4]] },
     });
 
     const frames = collector.getData();

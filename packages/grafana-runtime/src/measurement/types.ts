@@ -1,16 +1,4 @@
-import { DataFrame, DataFrameJSON } from '@grafana/data';
-
-/**
- * List of Measurements sent in a batch
- *
- * @alpha -- experimental
- */
-export interface MeasurementBatch {
-  /**
-   * List of measurements to process
-   */
-  batch: DataFrameJSON[];
-}
+import { DataFrame } from '@grafana/data';
 
 /**
  * @alpha -- experimental

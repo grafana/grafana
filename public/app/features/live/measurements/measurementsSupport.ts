@@ -21,7 +21,7 @@ export class LiveMeasurementsSupport implements LiveChannelSupport {
         collector,
         config: {
           path,
-          processMessage: collector.addBatch, // << this converts the stream from a single event to the whole cache
+          processMessage: collector.append, // << this converts the stream from a single event to the whole cache
           getController: () => collector,
           canPublish: () => true,
         },

@@ -13,19 +13,19 @@ export function registerLiveFeatures() {
       path: 'random-2s-stream',
       description: 'Random stream with points every 2s',
       getController: () => random2s,
-      processMessage: random2s.addBatch,
+      processMessage: random2s.append,
     },
     {
       path: 'random-flakey-stream',
       description: 'Random stream with flakey data points',
       getController: () => randomFlakey,
-      processMessage: randomFlakey.addBatch,
+      processMessage: randomFlakey.append,
     },
     {
       path: 'random-20Hz-stream',
       description: 'Random stream with points in 20Hz',
       getController: () => random20Hz,
-      processMessage: random20Hz.addBatch,
+      processMessage: random20Hz.append,
     },
   ];
 

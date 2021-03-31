@@ -1,5 +1,5 @@
 import { DataFrame, DataFrameJSON, StreamingDataFrame, StreamingFrameOptions } from '@grafana/data';
-import { MeasurementBatch, LiveMeasurements, MeasurementsQuery } from './types';
+import { LiveMeasurements, MeasurementsQuery } from './types';
 
 /**
  * This will collect
@@ -62,24 +62,15 @@ export class MeasurementCollector implements LiveMeasurements {
   // Collector
   //------------------------------------------------------
 
-  addBatch = (msg: MeasurementBatch) => {
-    // HACK!  sending one message from the backend, not a batch
-    if (!msg.batch) {
-      const df: DataFrameJSON = msg as any;
-      msg = { batch: [df] };
-      console.log('NOTE converting message to batch');
-    }
+  append = (measure: DataFrameJSON) => {
+    const key = measure.key ?? measure.schema?.name ?? '';
 
-    for (const measure of msg.batch) {
-      const key = measure.key ?? measure.schema?.name ?? '';
-
-      let s = this.measurements.get(key);
-      if (s) {
-        s.push(measure);
-      } else {
-        s = new StreamingDataFrame(measure, this.config); //
-        this.measurements.set(key, s);
-      }
+    let s = this.measurements.get(key);
+    if (s) {
+      s.push(measure);
+    } else {
+      s = new StreamingDataFrame(measure, this.config); //
+      this.measurements.set(key, s);
     }
     return this;
   };
