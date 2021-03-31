@@ -304,12 +304,16 @@ export class TimeSrv {
   }
 }
 
-let singleton: TimeSrv = new TimeSrv(contextSrv);
+let singleton: TimeSrv | undefined;
 
 export function setTimeSrv(srv: TimeSrv) {
   singleton = srv;
 }
 
 export function getTimeSrv(): TimeSrv {
+  if (!singleton) {
+    singleton = new TimeSrv(contextSrv);
+  }
+
   return singleton;
 }
