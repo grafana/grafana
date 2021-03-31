@@ -16,6 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// AlertRuleMaxTitleLength is the maximum length of the alert rule title
+const AlertRuleMaxTitleLength = 190
+
+// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
+const AlertRuleMaxRuleGroupNameLength = 190
+
 type UpdateRuleGroupCmd struct {
 	OrgID           int64
 	NamespaceUID    string
@@ -368,6 +374,11 @@ func (st DBstore) ValidateAlertRule(alertRule ngmodels.AlertRule, requireData bo
 	// enfore max name length in SQLite
 	if len(alertRule.Title) > AlertRuleMaxTitleLength {
 		return fmt.Errorf("name length should not be greater than %d", AlertRuleMaxTitleLength)
+	}
+
+	// enfore max name length in SQLite
+	if len(alertRule.RuleGroup) > AlertRuleMaxRuleGroupNameLength {
+		return fmt.Errorf("name length should not be greater than %d", AlertRuleMaxRuleGroupNameLength)
 	}
 
 	if alertRule.OrgID == 0 {
