@@ -347,9 +347,9 @@ func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace
 	if err != nil {
 		return nil, fmt.Errorf("error getting datasource: %w", err)
 	}
-	streamHandler, err := g.getStreamPlugin(ds.Name)
+	streamHandler, err := g.getStreamPlugin(ds.Type)
 	if err != nil {
-		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
+		return nil, fmt.Errorf("can't find stream plugin: %s", ds.Type)
 	}
 	return features.NewPluginRunner(
 		ds.Type,
