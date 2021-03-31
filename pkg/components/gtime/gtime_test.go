@@ -18,9 +18,9 @@ func TestParseInterval(t *testing.T) {
 		{inp: "1d", duration: 24 * time.Hour},
 		{inp: "1w", duration: 168 * time.Hour},
 		{inp: "2w", duration: 2 * 168 * time.Hour},
-		{inp: "1M", duration: 730 * time.Hour},
+		{inp: "1M", duration: 744 * time.Hour},
 		{inp: "1y", duration: 8760 * time.Hour},
-		{inp: "5y", duration: 5 * 8760 * time.Hour},
+		{inp: "5y", duration: 43824 * time.Hour},
 		{inp: "invalid-duration", err: regexp.MustCompile(`^time: invalid duration "?invalid-duration"?$`)},
 	}
 	for i, tc := range tcs {

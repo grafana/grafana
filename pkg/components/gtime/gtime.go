@@ -10,7 +10,7 @@ import (
 var dateUnitPattern = regexp.MustCompile(`^(\d+)([dwMy])$`)
 
 // ParseInterval parses an interval with support for all units that Grafana uses.
-// An interval is relative the current wall time.
+// An interval is relative to the current wall time.
 func ParseInterval(inp string) (time.Duration, error) {
 	dur, period, err := parse(inp)
 	if err != nil {
@@ -20,15 +20,20 @@ func ParseInterval(inp string) (time.Duration, error) {
 		return dur, nil
 	}
 
+	num := int(dur)
+
+	// Use UTC to ensure that the interval is deterministic, and daylight saving
+	// doesn't cause surprises
+	now := time.Now().UTC()
 	switch period {
 	case "d":
-		return dur * time.Hour * 24, nil
+		return now.AddDate(0, 0, num).Sub(now), nil
 	case "w":
-		return dur * time.Hour * 24 * 7, nil
+		return now.AddDate(0, 0, num*7).Sub(now), nil
 	case "M":
-		return dur * time.Hour * 730, nil
+		return now.AddDate(0, num, 0).Sub(now), nil
 	case "y":
-		return dur * time.Hour * 8760, nil
+		return now.AddDate(num, 0, 0).Sub(now), nil
 	}
 
 	return 0, fmt.Errorf("invalid interval %q", inp)
