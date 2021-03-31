@@ -17,8 +17,8 @@ import (
 )
 
 var dsTypeToRulerPrefix = map[string]string{
-	"prometheus": "/rules",
-	"loki":       "/api/prom/rules",
+	"prometheus": "/api/v1/rules",
+	"loki":       "/loki/api/v1/rules",
 }
 
 type LotexRuler struct {
