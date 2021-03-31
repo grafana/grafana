@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
-import { Field, FieldSet, Input, Select, useStyles, Label, FormAPI, InputControl } from '@grafana/ui';
+import { Field, FieldSet, Input, Select, useStyles, Label, InputControl } from '@grafana/ui';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
+import { AlertRuleFormMethods } from './AlertRuleForm';
 
-type Props = FormAPI<any>;
+type Props = AlertRuleFormMethods;
 
 enum TIME_OPTIONS {
   seconds = 's',

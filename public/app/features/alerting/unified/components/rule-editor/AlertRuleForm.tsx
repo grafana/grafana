@@ -1,11 +1,11 @@
 import React, { FC, useState } from 'react';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { PageToolbar, ToolbarButton, stylesFactory, Form } from '@grafana/ui';
+import { PageToolbar, ToolbarButton, stylesFactory, Form, FormAPI } from '@grafana/ui';
 import { css } from 'emotion';
 
 import { config } from 'app/core/config';
 import AlertTypeSection from './AlertTypeSection';
-import AlertConditionsSection from '../AlertConditionsSection';
+import AlertConditionsSection from './AlertConditionsSection';
 import AlertDetails from './AlertDetails';
 import Expression from './Expression';
 
@@ -19,12 +19,14 @@ interface AlertRuleFormFields {
   type: SelectableValue;
   folder: SelectableValue;
   forTime: string;
-  datasource: SelectableValue;
+  dataSource: SelectableValue;
   expression: string;
   timeUnit: SelectableValue;
   labels: Array<{ key: string; value: string }>;
   annotations: Array<{ key: SelectableValue; value: string }>;
 }
+
+export type AlertRuleFormMethods = FormAPI<AlertRuleFormFields>;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -54,10 +56,10 @@ const AlertRuleForm: FC<Props> = () => {
   const [folder, setFolder] = useState<{ namespace: string; group: string }>();
 
   const handleSubmit = (alertRule: AlertRuleFormFields) => {
-    const { name, expression, forTime, datasource, timeUnit, labels, annotations } = alertRule;
+    const { name, expression, forTime, dataSource, timeUnit, labels, annotations } = alertRule;
     const { namespace, group: groupName } = folder || {};
     if (namespace && groupName) {
-      fetchRulerRulesNamespace(datasource?.value, namespace)
+      fetchRulerRulesNamespace(dataSource?.value, namespace)
         .then((ruleGroup) => {
           const group: RulerRuleGroupDTO = ruleGroup.find(({ name }) => name === groupName) || {
             name: groupName,
@@ -82,7 +84,7 @@ const AlertRuleForm: FC<Props> = () => {
           };
 
           group.rules = group?.rules.concat(alertRule);
-          return setRulerRuleGroup(datasource?.value, namespace, group);
+          return setRulerRuleGroup(dataSource?.value, namespace, group);
         })
         .then(() => {
           console.log('Alert rule saved successfully');

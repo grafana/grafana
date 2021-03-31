@@ -1,23 +1,14 @@
 import React, { FC, useState, useEffect } from 'react';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import {
-  Cascader,
-  FieldSet,
-  Field,
-  Input,
-  InputControl,
-  stylesFactory,
-  Select,
-  FormAPI,
-  CascaderOption,
-} from '@grafana/ui';
+import { Cascader, FieldSet, Field, Input, InputControl, stylesFactory, Select, CascaderOption } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 
 import { getAllDataSources, getPromAndLokiDataSources } from '../../utils/config';
 import { fetchRulerRules } from '../../api/ruler';
+import { AlertRuleFormMethods } from './AlertRuleForm';
 
-interface Props extends FormAPI<any> {
+interface Props extends AlertRuleFormMethods {
   setFolder: ({ namespace, group }: { namespace: string; group: string }) => void;
 }
 
@@ -40,25 +31,30 @@ const alertTypeOptions: SelectableValue[] = [
   },
 ];
 
-const AlertTypeSection: FC<Props> = ({ register, control, watch, setFolder }) => {
+const AlertTypeSection: FC<Props> = ({ register, control, watch, setFolder, errors }) => {
   const styles = getStyles(config.theme);
 
   const alertType = watch('type') as SelectableValue;
-  const datasource = watch('datasource') as SelectableValue;
+  const datasource = watch('dataSource') as SelectableValue;
   const dataSourceOptions = useDatasourceSelectOptions(alertType);
   const folderOptions = useFolderSelectOptions(datasource);
 
   return (
     <FieldSet label="Alert type">
-      <Field className={styles.formInput} label="Alert name">
-        <Input ref={register({ required: true })} name="name" />
+      <Field
+        className={styles.formInput}
+        label="Alert name"
+        error={errors?.name?.message}
+        invalid={!!errors.name?.message}
+      >
+        <Input ref={register({ required: { value: true, message: 'Must enter an alert name' } })} name="name" />
       </Field>
       <div className={styles.flexRow}>
-        <Field label="Alert type" className={styles.formInput}>
+        <Field label="Alert type" className={styles.formInput} error={errors.type?.message}>
           <InputControl as={Select} name="type" options={alertTypeOptions} control={control} />
         </Field>
         <Field className={styles.formInput} label="Select data source">
-          <InputControl as={Select} name="datasource" options={dataSourceOptions} control={control} />
+          <InputControl as={Select} name="dataSource" options={dataSourceOptions} control={control} />
         </Field>
       </div>
       <Field className={styles.formInput}>
@@ -111,7 +107,6 @@ const useFolderSelectOptions = (datasource: SelectableValue) => {
     if (datasource?.value) {
       fetchRulerRules(datasource?.value)
         .then((namespaces) => {
-          console.log(namespaces);
           const options: CascaderOption[] = Object.entries(namespaces).map(([namespace, group]) => {
             return {
               label: namespace,
