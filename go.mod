@@ -40,7 +40,7 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
-	github.com/grafana/alerting-api v0.0.0-20210323194814-03a29a4c4c27
+	github.com/grafana/alerting-api v0.0.0-20210330162237-0b5408c529a8
 	github.com/grafana/grafana-aws-sdk v0.3.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.89.0
@@ -62,7 +62,7 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.21.1-0.20210324070758-10757eb5fb78
+	github.com/prometheus/alertmanager v0.21.1-0.20210331075806-bc7b16d61afd
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.19.0

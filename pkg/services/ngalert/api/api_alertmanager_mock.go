@@ -523,7 +523,7 @@ type AlertmanagerApiMock struct {
 	log log.Logger
 }
 
-func (mock AlertmanagerApiMock) RouteCreateSilence(c *models.ReqContext, body apimodels.SilenceBody) response.Response {
+func (mock AlertmanagerApiMock) RouteCreateSilence(c *models.ReqContext, body apimodels.CreateSilenceParams) response.Response {
 	recipient := c.Params(":Recipient")
 	mock.log.Info("RouteCreateSilence: ", "Recipient", recipient)
 	mock.log.Info("RouteCreateSilence: ", "body", body)
