@@ -171,5 +171,12 @@
     "matches": ["public/app/features/variables/**/*", "public/app/features/templating/**/*"],
     "action": "updateLabel",
     "addLabel": "area/dashboard/templating"
+  },
+  {
+    "type": "author",
+    "name": "pr/external",
+    "notMemberOf": { "org": "grafana" },
+    "action": "updateLabel",
+    "addLabel": "pr/external"
   }
 ]
