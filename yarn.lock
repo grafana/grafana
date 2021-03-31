@@ -3866,7 +3866,7 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
-"@leeoniya/react-inlinesvg@github.com/grafana/react-inlinesvg.git#static-cacheStore":
+"@leeoniya/react-inlinesvg@2.2.4":
   version "2.2.4"
   resolved "https://registry.yarnpkg.com/@leeoniya/react-inlinesvg/-/react-inlinesvg-2.2.4.tgz#b1f226136945fc692ea37f5a889e6545c9334336"
   integrity sha512-6zaOOjYjrTC/D6tQKIPmoh+T+8d7h2kCZYbbSjEYt2Sz0OtPZw44v+MKVXiRHVYrlODgT1viJbrUmrSH0k7wOA==

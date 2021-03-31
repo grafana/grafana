@@ -205,7 +205,7 @@
     "@emotion/core": "10.0.27",
     "@grafana/aws-sdk": "0.0.24",
     "@grafana/slate-react": "0.22.9-grafana",
-    "@leeoniya/react-inlinesvg": "github.com/grafana/react-inlinesvg.git#static-cacheStore",
+    "@leeoniya/react-inlinesvg": "2.2.4",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",
     "@sentry/browser": "5.25.0",
