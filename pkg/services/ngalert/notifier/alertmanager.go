@@ -2,9 +2,14 @@ package notifier
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
+	"github.com/grafana/grafana/pkg/models"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/alerting-api/pkg/api"
@@ -20,7 +25,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -61,7 +66,10 @@ func init() {
 }
 
 func (am *Alertmanager) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts
+	if am.Settings == nil {
+		return true
+	}
+	return !am.Settings.IsNgAlertEnabled()
 }
 
 func (am *Alertmanager) Init() (err error) {
@@ -146,7 +154,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 
 func (am *Alertmanager) getConfigFromDatabase() (*api.PostableUserConfig, error) {
 	// First, let's get the configuration we need from the database.
-	q := &models.GetLatestAlertmanagerConfigurationQuery{}
+	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{}
 	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
 		return nil, err
 	}
@@ -233,7 +241,22 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiRecei
 	for i, r := range receiver.GrafanaManagedReceivers {
 		switch r.Type {
 		case "email":
-			n, err := channels.NewEmailNotifier(r.Result)
+			frequency, err := time.ParseDuration(r.Frequency)
+			if err != nil {
+				return nil, fmt.Errorf("unable to parse receiver frequency %s, %w", r.Frequency, err)
+			}
+			notification := models.AlertNotification{
+				Uid:                   r.Uid,
+				Name:                  r.Name,
+				Type:                  r.Type,
+				IsDefault:             r.IsDefault,
+				SendReminder:          r.SendReminder,
+				DisableResolveMessage: r.DisableResolveMessage,
+				Frequency:             frequency,
+				Settings:              r.Settings,
+				SecureSettings:        securejsondata.GetEncryptedJsonData(r.SecureSettings),
+			}
+			n, err := channels.NewEmailNotifier(&notification)
 			if err != nil {
 				return nil, err
 			}
