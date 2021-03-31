@@ -80,19 +80,25 @@ func (st *StateTracker) set(stateEntry AlertState) {
 	st.stateCache.cacheMap[stateEntry.CacheId] = stateEntry
 }
 
-func (st *StateTracker) get(stateId string) AlertState {
+func (st *StateTracker) Get(stateId string) AlertState {
 	st.stateCache.mu.Lock()
 	defer st.stateCache.mu.Unlock()
 	return st.stateCache.cacheMap[stateId]
+}
+
+//Used to ensure a clean cache on startup
+func (st *StateTracker) ResetCache() {
+	st.stateCache.mu.Lock()
+	defer st.stateCache.mu.Unlock()
+	st.stateCache.cacheMap = make(map[string]AlertState)
 }
 
 func (st *StateTracker) ProcessEvalResults(uid string, results eval.Results, condition ngModels.Condition) []AlertState {
 	st.Log.Info("state tracker processing evaluation results", "uid", uid, "resultCount", len(results))
 	var changedStates []AlertState
 	for _, result := range results {
-		if s, ok := st.setNextState(uid, condition.OrgID, result); ok {
-			changedStates = append(changedStates, s)
-		}
+		s, _ := st.setNextState(uid, condition.OrgID, result)
+		changedStates = append(changedStates, s)
 	}
 	st.Log.Debug("returning changed states to scheduler", "count", len(changedStates))
 	return changedStates
@@ -194,25 +200,9 @@ func (a AlertState) Equals(b AlertState) bool {
 		a.CacheId == b.CacheId &&
 		a.Labels.String() == b.Labels.String() &&
 		a.State.String() == b.State.String() &&
-		resultsEquals(a.Results, b.Results) &&
 		a.StartsAt == b.StartsAt &&
 		a.EndsAt == b.EndsAt &&
 		a.LastEvaluationTime == b.LastEvaluationTime
-}
-
-func resultsEquals(a, b []StateEvaluation) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, s := range a {
-		if s.EvaluationState.String() != b[i].EvaluationState.String() {
-			return false
-		}
-		if !s.EvaluationTime.Equal(b[i].EvaluationTime) {
-			return false
-		}
-	}
-	return true
 }
 
 func (st *StateTracker) Put(states []AlertState) {

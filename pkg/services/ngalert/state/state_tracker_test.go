@@ -224,24 +224,27 @@ func TestProcessEvalResults(t *testing.T) {
 			st := NewStateTracker(log.New("test_state_tracker"))
 			_ = st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
 			for _, entry := range tc.expectedCacheEntries {
-				if !entry.Equals(st.get(entry.CacheId)) {
+				if !entry.Equals(st.Get(entry.CacheId)) {
 					t.Log(tc.desc)
-					printEntryDiff(entry, st.get(entry.CacheId), t)
+					printEntryDiff(entry, st.Get(entry.CacheId), t)
 				}
-				assert.True(t, entry.Equals(st.get(entry.CacheId)))
+				assert.True(t, entry.Equals(st.Get(entry.CacheId)))
 			}
 		})
 
-		t.Run("the correct number of entries are added to the cache", func(t *testing.T) {
+		t.Run("the expected number of entries are added to the cache", func(t *testing.T) {
 			st := NewStateTracker(log.New("test_state_tracker"))
 			st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
 			assert.Equal(t, len(tc.expectedCacheEntries), len(st.stateCache.cacheMap))
 		})
 
-		t.Run("the correct number of states are returned to the caller", func(t *testing.T) {
+		//This test, as configured, does not quite represent the behavior of the system.
+		//It is expected that each batch of evaluation results will have only one result
+		//for a unique set of labels.
+		t.Run("the expected number of states are returned to the caller", func(t *testing.T) {
 			st := NewStateTracker(log.New("test_state_tracker"))
 			results := st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
-			assert.Equal(t, tc.expectedReturnedStateCount, len(results))
+			assert.Equal(t, len(tc.evalResults), len(results))
 		})
 	}
 }
