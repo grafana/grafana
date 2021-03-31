@@ -1,8 +1,9 @@
 import { makeEdgesDataFrame, makeNodesDataFrame, processNodes } from './utils';
+import lightTheme from '../../themes/light';
 
 describe('processNodes', () => {
   it('handles empty args', async () => {
-    expect(processNodes()).toEqual({ nodes: [], edges: [] });
+    expect(processNodes(undefined, undefined, lightTheme)).toEqual({ nodes: [], edges: [] });
   });
 
   it('returns proper nodes and edges', async () => {
@@ -13,7 +14,8 @@ describe('processNodes', () => {
           [0, 1],
           [0, 2],
           [1, 2],
-        ])
+        ]),
+        lightTheme
       )
     ).toEqual({
       nodes: [
@@ -28,6 +30,7 @@ describe('processNodes', () => {
               value: 0.5,
             },
           ],
+          color: 'rgb(213, 172, 32)',
           dataFrameRowIndex: 0,
           id: '0',
           incoming: 0,
@@ -47,6 +50,7 @@ describe('processNodes', () => {
               value: 0.5,
             },
           ],
+          color: 'rgb(213, 172, 32)',
           dataFrameRowIndex: 1,
           id: '1',
           incoming: 1,
@@ -66,6 +70,7 @@ describe('processNodes', () => {
               value: 0.5,
             },
           ],
+          color: 'rgb(213, 172, 32)',
           dataFrameRowIndex: 2,
           id: '2',
           incoming: 2,

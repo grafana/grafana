@@ -212,7 +212,7 @@ export function getFieldColorModeForField(field: Field): FieldColorMode {
 }
 
 /** @beta */
-export function getFieldColorMode(mode?: FieldColorModeId): FieldColorMode {
+export function getFieldColorMode(mode?: FieldColorModeId | string): FieldColorMode {
   return fieldColorModeRegistry.get(mode ?? FieldColorModeId.Thresholds);
 }
 
