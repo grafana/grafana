@@ -23,6 +23,6 @@ TableFieldOptions: {
 
 
 TableSortByFieldState: {
-  displayName: string;
-  desc?: bool;
+  displayName: string
+  desc?: bool
 } @cuetsy(targetType="interface")

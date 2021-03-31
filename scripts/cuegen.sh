@@ -28,7 +28,9 @@ mkdir -p cue/ui cue/data
 rm -f {cue/ui/gen.cue,cue/data/gen.cue}
 
 # TODO decide if multiple or single files seems like better ergonomics
+# shellcheck disable=SC2046
 cue def -s $(find packages/grafana-ui -type f -name "*.cue") > cue/ui/gen.cue
+# shellcheck disable=SC2046
 cue def -s $(find packages/grafana-data -type f -name "*.cue") > cue/data/gen.cue
 
 # Horrible hack to remove import statements. 
