@@ -160,7 +160,7 @@
     "html-webpack-harddisk-plugin": "1.0.1",
     "html-webpack-plugin": "3.2.0",
     "husky": "4.2.1",
-    "iconscout-unicons-tarball": "https://github.com/Iconscout/unicons/tarball/d0859416ab8d8e60dcfa1c0b50716874fcf11778",
+    "iconscout-unicons-tarball": "https://github.com/grafana/icons/tarball/14e6856f7ce5a44d3e722b40c225482663cbfd66",
     "jest": "26.6.3",
     "jest-canvas-mock": "2.3.0",
     "jest-date-mock": "1.0.8",

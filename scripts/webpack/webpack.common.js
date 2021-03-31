@@ -9,7 +9,7 @@ class CopyUniconsPlugin {
       let destDir = path.resolve(__dirname, '../../public/img/icons/unicons');
 
       if (!fs.pathExistsSync(destDir)) {
-        let srcDir = path.resolve(__dirname, '../../node_modules/iconscout-unicons-tarball/svg/line');
+        let srcDir = path.resolve(__dirname, '../../node_modules/iconscout-unicons-tarball/unicons/svg/line');
         fs.copySync(srcDir, destDir);
       }
     });
