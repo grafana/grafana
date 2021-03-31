@@ -63,8 +63,14 @@ export class ExplorePaneContainerUnconnected extends React.PureComponent<Props &
   }
 
   componentWillUnmount() {
+    const { path } = this.props;
     this.exploreEvents.removeAllListeners();
-    this.props.cleanupPaneAction({ exploreId: this.props.exploreId });
+
+    // We run cleanup only if we are still in explore and we are just closing single pane.
+    // When navigating out of explore parent does the cleanup.
+    if (path.match(/\/explore$/)) {
+      this.props.cleanupPaneAction({ exploreId: this.props.exploreId });
+    }
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -72,7 +78,12 @@ export class ExplorePaneContainerUnconnected extends React.PureComponent<Props &
   }
 
   refreshExplore = (prevUrlQuery: string) => {
-    const { exploreId, urlQuery } = this.props;
+    const { exploreId, urlQuery, path } = this.props;
+
+    // Make sure we don't refresh after navigating outside as this would be called before parent unmounts
+    if (!path.match(/\/explore$/)) {
+      return;
+    }
 
     // Update state from url only if it changed and only if the change wasn't initialised by redux to prevent any loops
     if (urlQuery !== prevUrlQuery && urlQuery !== lastSavedUrl[exploreId]) {
@@ -99,6 +110,7 @@ const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const urlQuery = state.location.query[exploreId] as string;
+  const path = state.location.path;
   const urlState = parseUrlState(urlQuery);
   const timeZone = getTimeZone(state.user);
 
@@ -116,6 +128,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
     initialRange,
     originPanelId,
     urlQuery,
+    path,
   };
 }
 
