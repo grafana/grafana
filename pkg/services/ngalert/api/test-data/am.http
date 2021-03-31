@@ -42,8 +42,46 @@ content-type: application/json
 {
   "comment": "string",
   "createdBy": "string",
-  "endsAt": "2021-03-31T14:17:04.419Z",
-  "id": "just-testing",
+  "endsAt": "2023-03-31T14:17:04.419Z",
+  "matchers": [
+    {
+      "isRegex": true,
+      "name": "string",
+      "value": "string"
+    }
+  ],
+  "startsAt": "2021-03-31T13:17:04.419Z"
+}
+
+###
+# update silence - does not exist
+POST http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences
+content-type: application/json
+
+{
+  "id": "something",
+  "comment": "string",
+  "createdBy": "string",
+  "endsAt": "2023-03-31T14:17:04.419Z",
+  "matchers": [
+    {
+      "isRegex": true,
+      "name": "string",
+      "value": "string"
+    }
+  ],
+  "startsAt": "2021-03-31T13:17:04.419Z"
+}
+
+###
+# create silence - bad paylaad - start time must be before end time
+POST http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences
+content-type: application/json
+
+{
+  "comment": "string",
+  "createdBy": "string",
+  "endsAt": "2019-03-31T14:17:04.419Z",
   "matchers": [
     {
       "isRegex": true,
