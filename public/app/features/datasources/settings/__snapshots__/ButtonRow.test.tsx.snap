@@ -40,7 +40,7 @@ exports[`Render should render with buttons enabled 1`] = `
     onClick={[Function]}
     type="submit"
   >
-    Save & Test
+    Save & test
   </button>
   <button
     aria-label="Data source settings page Delete button"

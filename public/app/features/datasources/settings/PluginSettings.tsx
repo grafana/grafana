@@ -46,7 +46,7 @@ export class PluginSettings extends PureComponent<Props> {
 
     if (!plugin.components.ConfigEditor) {
       // React editor is not specified, let's render angular editor
-      // How to apprach this better? Introduce ReactDataSourcePlugin interface and typeguard it here?
+      // How to approach this better? Introduce ReactDataSourcePlugin interface and typeguard it here?
       const loader = getAngularLoader();
       const template = '<plugin-component type="datasource-config-ctrl" />';
 

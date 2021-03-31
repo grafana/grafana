@@ -88,10 +88,10 @@ class DashboardImportUnConnected extends PureComponent<Props> {
               <Field invalid={!!errors.gcomDashboard} error={errors.gcomDashboard && errors.gcomDashboard.message}>
                 <Input
                   name="gcomDashboard"
-                  placeholder="Grafana.com dashboard url or id"
+                  placeholder="Grafana.com dashboard URL or ID"
                   type="text"
                   ref={register({
-                    required: 'A Grafana dashboard url or id is required',
+                    required: 'A Grafana dashboard URL or ID is required',
                     validate: validateGcomDashboard,
                   })}
                   addonAfter={<Button type="submit">Load</Button>}
@@ -109,7 +109,7 @@ class DashboardImportUnConnected extends PureComponent<Props> {
                   <TextArea
                     name="dashboardJson"
                     ref={register({
-                      required: 'Need a dashboard json model',
+                      required: 'Need a dashboard JSON model',
                       validate: validateDashboardJson,
                     })}
                     rows={10}

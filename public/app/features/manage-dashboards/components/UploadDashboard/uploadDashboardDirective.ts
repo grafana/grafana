@@ -33,7 +33,7 @@ export function uploadDashboardDirective() {
               console.error(err);
               appEvents.emit(AppEvents.alertError, [
                 'Import failed',
-                'JSON -> JS Serialization failed: ' + err.message,
+                'JSON -> JS serialization failed: ' + err.message,
               ]);
               return;
             }
@@ -62,7 +62,7 @@ export function uploadDashboardDirective() {
         // Something
         elem[0].addEventListener('change', file_selected, false);
       } else {
-        appEvents.emit(AppEvents.alertError, ['Oops', 'The HTML5 File APIs are not fully supported in this browser']);
+        appEvents.emit(AppEvents.alertError, ['Oops', 'The HTML5 file APIs are not fully supported in this browser']);
       }
     },
   };

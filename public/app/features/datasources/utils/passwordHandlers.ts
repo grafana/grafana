@@ -11,7 +11,7 @@ export enum PasswordFieldEnum {
 }
 
 /**
- * Basic shape for settings controllers in at the moment mostly angular datasource plugins.
+ * Basic shape for settings controllers in at the moment mostly angular data source plugins.
  */
 export type Ctrl = {
   current: {

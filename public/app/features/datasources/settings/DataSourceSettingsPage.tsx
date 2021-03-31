@@ -128,8 +128,8 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
   renderIsReadOnlyMessage() {
     return (
       <InfoBox severity="info">
-        This datasource was added by config and cannot be modified using the UI. Please contact your server admin to
-        update this datasource.
+        This data source was added by config and cannot be modified using the UI. Please contact your server admin to
+        update this data source.
       </InfoBox>
     );
   }
@@ -197,7 +197,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
       }
     }
 
-    return <div>Page Not Found: {page}</div>;
+    return <div>Page not found: {page}</div>;
   }
 
   renderSettings() {

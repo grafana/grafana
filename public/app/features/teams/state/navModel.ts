@@ -6,7 +6,7 @@ export function buildNavModel(team: Team): NavModelItem {
   const navModel = {
     img: team.avatarUrl,
     id: 'team-' + team.id,
-    subTitle: 'Manage members & settings',
+    subTitle: 'Manage members and settings',
     url: '',
     text: team.name,
     breadcrumbs: [{ title: 'Teams', url: 'org/teams' }],

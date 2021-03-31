@@ -79,7 +79,7 @@ export class PanelQueryRunner {
         let processedData = data;
 
         if (withFieldConfig) {
-          // Apply field defaults & overrides
+          // Apply field defaults and overrides
           const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
           const timeZone = data.request?.timezone ?? 'browser';
 
@@ -162,7 +162,7 @@ export class PanelQueryRunner {
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
 
-      // Attach the datasource name to each query
+      // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
         if (!query.datasource) {
           query.datasource = ds.name;

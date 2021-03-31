@@ -98,7 +98,7 @@ export const testDataSource = (
         let message = '';
 
         if (err.statusText) {
-          message = 'HTTP Error ' + err.statusText;
+          message = 'HTTP error ' + err.statusText;
         } else {
           message = err.message;
         }

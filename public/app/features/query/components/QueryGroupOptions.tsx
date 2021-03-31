@@ -250,7 +250,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
               width={9}
               tooltip={
                 <>
-                  The evaluated Interval that is sent to data source and is used in <code>$__interval</code> and{' '}
+                  The evaluated interval that is sent to data source and is used in <code>$__interval</code> and{' '}
                   <code>$__interval_ms</code>
                 </>
               }
