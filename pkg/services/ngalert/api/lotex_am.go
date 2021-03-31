@@ -32,7 +32,7 @@ func NewLotexAM(proxy *AlertingProxy, log log.Logger) *LotexAM {
 	}
 }
 
-func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimodels.SilenceBody) response.Response {
+func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimodels.CreateSilenceParams) response.Response {
 	blob, err := json.Marshal(silenceBody)
 	if err != nil {
 		return response.Error(500, "Failed marshal silence", err)
