@@ -8,10 +8,10 @@ module.exports = function getBabelConfig(options) {
       [
         '@babel/preset-env',
         {
+          bugfixes: true,
           browserslistEnv: process.env.BABEL_ENV || options.BABEL_ENV || 'production',
           useBuiltIns: 'entry',
           corejs: '3.10',
-          modules: false,
         },
       ],
       [
