@@ -204,6 +204,7 @@
     "zone.js": "0.7.8"
   },
   "dependencies": {
+    "@babel/plugin-transform-runtime": "^7.13.10",
     "@emotion/core": "10.0.27",
     "@grafana/aws-sdk": "0.0.3",
     "@grafana/slate-react": "0.22.9-grafana",
@@ -236,7 +237,7 @@
     "classnames": "2.2.6",
     "clipboard": "2.0.4",
     "common-tags": "^1.8.0",
-    "core-js": "3.6.4",
+    "core-js": "3.10.0",
     "d3": "5.15.0",
     "d3-force": "^2.1.1",
     "d3-scale-chromatic": "1.5.0",
