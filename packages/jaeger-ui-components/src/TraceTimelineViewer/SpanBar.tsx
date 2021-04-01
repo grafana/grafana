@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import cx from 'classnames';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import _groupBy from 'lodash/groupBy';
 import React from 'react';
 import { compose, onlyUpdateForKeys, withProps, withState } from 'recompose';

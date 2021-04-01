@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import {
   Button,
   ConfirmButton,

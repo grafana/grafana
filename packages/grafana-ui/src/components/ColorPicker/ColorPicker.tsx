@@ -6,7 +6,7 @@ import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from '
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { withTheme, stylesFactory } from '../../themes';
 import { ColorPickerTrigger } from './ColorPickerTrigger';
 

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import { Button, HorizontalGroup, stylesFactory, TextArea, useTheme, VerticalGroup } from '@grafana/ui';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';

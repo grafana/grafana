@@ -15,7 +15,7 @@ import {
 import { Select } from '../Select/Select';
 import { ColorValueEditor } from './color';
 import { useStyles, useTheme } from '../../themes/ThemeContext';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Field } from '../Forms/Field';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 

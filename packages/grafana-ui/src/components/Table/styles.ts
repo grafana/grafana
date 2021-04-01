@@ -1,4 +1,4 @@
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { styleMixins, stylesFactory } from '../../themes';
 import { getScrollbarWidth } from '../../utils';

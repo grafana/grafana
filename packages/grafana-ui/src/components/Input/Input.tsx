@@ -1,6 +1,6 @@
 import React, { HTMLProps, ReactNode } from 'react';
 import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { stylesFactory, useTheme } from '../../themes';
 import { Spinner } from '../Spinner/Spinner';

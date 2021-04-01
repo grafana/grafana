@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import {
   CodeEditor,

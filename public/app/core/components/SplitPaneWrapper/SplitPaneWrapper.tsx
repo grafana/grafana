@@ -1,6 +1,6 @@
 import React, { createRef, MutableRefObject, PureComponent, ReactNode } from 'react';
 import SplitPane from 'react-split-pane';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';

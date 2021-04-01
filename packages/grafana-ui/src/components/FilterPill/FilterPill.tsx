@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { stylesFactory, ThemeContext } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { IconButton } from '../IconButton/IconButton';
 import { IconName } from '../../types';
 

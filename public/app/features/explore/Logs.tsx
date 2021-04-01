@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
 

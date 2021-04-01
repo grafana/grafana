@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { ConfirmButton, ConfirmModal, Button } from '@grafana/ui';
 import { UserSession } from 'app/types';
 

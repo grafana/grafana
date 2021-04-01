@@ -1,6 +1,6 @@
 import React, { FC, PropsWithChildren, useCallback, useEffect } from 'react';
 import { Portal } from '../Portal/Portal';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { useTheme } from '../../themes';
 import { IconName } from '../../types';
 import { getModalStyles } from './getModalStyles';

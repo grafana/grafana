@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { useTheme } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { HorizontalGroup } from '../Layout/Layout';

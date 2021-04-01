@@ -1,7 +1,7 @@
 import React from 'react';
 import { number, select } from '@storybook/addon-knobs';
 import { List } from './List';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 import { InlineList } from './InlineList';
 

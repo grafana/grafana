@@ -1,5 +1,5 @@
 import { GrafanaTheme, isDateTime, TimeOption, TimeRange, TimeZone } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import React, { memo, useState } from 'react';
 import { useMedia } from 'react-use';
 import { stylesFactory, useTheme } from '../../../themes';

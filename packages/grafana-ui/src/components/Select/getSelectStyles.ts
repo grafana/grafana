@@ -1,5 +1,5 @@
 import { stylesFactory } from '../../themes/stylesFactory';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 
 export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {

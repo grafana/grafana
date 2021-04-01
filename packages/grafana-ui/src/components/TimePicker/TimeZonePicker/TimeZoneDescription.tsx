@@ -1,5 +1,5 @@
 import React, { PropsWithChildren, useMemo } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, TimeZoneInfo } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
 

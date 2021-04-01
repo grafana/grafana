@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { stylesFactory, useTheme, Tab, TabsBar } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue, PanelData, getValueFormat, formattedValueToString } from '@grafana/data';
 import { InspectTab } from '../inspector/types';

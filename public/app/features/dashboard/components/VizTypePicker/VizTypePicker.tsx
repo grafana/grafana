@@ -4,7 +4,7 @@ import config from 'app/core/config';
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { EmptySearchResult, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 export interface Props {
   current: PanelPluginMeta;

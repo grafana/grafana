@@ -2,7 +2,7 @@ import React from 'react';
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { VisualizationButton } from './VisualizationButton';
 import { OptionsPaneOptions } from './OptionsPaneOptions';

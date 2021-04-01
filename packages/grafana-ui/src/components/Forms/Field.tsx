@@ -1,7 +1,7 @@
 import React, { HTMLAttributes } from 'react';
 import { Label } from './Label';
 import { stylesFactory, useTheme } from '../../themes';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { FieldValidationMessage } from './FieldValidationMessage';
 import { getChildId } from '../../utils/children';

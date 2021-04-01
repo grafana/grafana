@@ -1,6 +1,6 @@
 import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/data';
 import React, { useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Button } from '../../Button/Button';
 import cloneDeep from 'lodash/cloneDeep';
 import { Modal } from '../../Modal/Modal';

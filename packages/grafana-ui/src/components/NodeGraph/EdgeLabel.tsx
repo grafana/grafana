@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { EdgeDatum, NodeDatum } from './types';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import tinycolor from 'tinycolor2';

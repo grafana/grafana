@@ -14,7 +14,7 @@
 
 import cx from 'classnames';
 import * as React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import GraphTicks from './GraphTicks';
 import Scrubber from './Scrubber';

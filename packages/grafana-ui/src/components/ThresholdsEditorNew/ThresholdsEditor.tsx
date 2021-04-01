@@ -1,5 +1,5 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import {
   Threshold,
   sortThresholds,

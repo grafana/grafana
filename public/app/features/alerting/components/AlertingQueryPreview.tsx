@@ -1,6 +1,6 @@
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DataFrame, DataQuery, GrafanaTheme, PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';

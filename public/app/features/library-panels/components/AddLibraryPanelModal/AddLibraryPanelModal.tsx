@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, Field, Input, Modal, useStyles } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { PanelModel } from '../../../dashboard/state';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { usePanelSave } from '../../utils/usePanelSave';
 
 interface Props {

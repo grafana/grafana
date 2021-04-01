@@ -1,5 +1,5 @@
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 import { useTheme } from '../../themes';
 import { IconName } from '../../types/icon';

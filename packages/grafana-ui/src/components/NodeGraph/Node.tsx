@@ -1,5 +1,5 @@
 import React, { MouseEvent, memo } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 import cx from 'classnames';
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';

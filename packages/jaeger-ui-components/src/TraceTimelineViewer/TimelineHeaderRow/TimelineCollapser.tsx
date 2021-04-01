@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { IconButton } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React from 'react';
 import { createStyle } from '../../Theme';
 

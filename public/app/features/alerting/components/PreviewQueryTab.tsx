@@ -1,5 +1,5 @@
 import React, { FC, useMemo, useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { getFrameDisplayName, GrafanaTheme, PanelData, SelectableValue } from '@grafana/data';
 import { Button, Select, stylesFactory, Table, useTheme } from '@grafana/ui';
 import { EmptyState } from './EmptyState';

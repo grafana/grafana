@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '../Button';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { HorizontalGroup } from '..';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({

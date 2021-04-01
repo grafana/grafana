@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { TimeRange, TimeOption, TimeZone } from '@grafana/data';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeOption } from './TimeRangeOption';

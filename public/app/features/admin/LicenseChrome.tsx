@@ -1,6 +1,6 @@
 import React from 'react';
 import { stylesFactory, useTheme } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 
 const title = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };

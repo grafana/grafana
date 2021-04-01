@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { NavModel } from '@grafana/data';
 import Page from '../../core/components/Page/Page';
 import { LicenseChrome } from './LicenseChrome';

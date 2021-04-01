@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { Icon, Input, RadioButtonGroup, CustomScrollbar, useStyles, Button } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';

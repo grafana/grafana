@@ -1,6 +1,6 @@
 import { Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
 import { DataSourcePicker } from '@grafana/runtime';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 import { ExemplarTraceIdDestination } from '../types';
 

@@ -2,7 +2,7 @@ import { DateTimeInput, GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useStyles } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { PanelModel } from 'app/features/dashboard/state';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React from 'react';
 
 interface Props {

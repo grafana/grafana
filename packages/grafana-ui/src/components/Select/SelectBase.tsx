@@ -10,7 +10,7 @@ import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable
 
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';

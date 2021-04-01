@@ -8,7 +8,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { PluginError, PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface ConnectedProps {
   errors: PluginError[];

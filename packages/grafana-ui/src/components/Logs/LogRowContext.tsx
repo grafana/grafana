@@ -1,6 +1,6 @@
 import React, { useContext, useRef, useState, useLayoutEffect, useEffect } from 'react';
 import { GrafanaTheme, DataQueryError, LogRowModel, textUtil } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 import { Alert } from '../Alert/Alert';
 import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';

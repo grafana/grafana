@@ -1,5 +1,5 @@
 import { Button } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React from 'react';
 import { ExemplarTraceIdDestination } from '../types';
 import ExemplarSetting from './ExemplarSetting';

@@ -175,6 +175,8 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       'moment',
       'slate',
       'emotion',
+      '@emotion/react',
+      '@emotion/css',
       'prismjs',
       'slate-plain-serializer',
       '@grafana/slate-react',

@@ -1,5 +1,5 @@
 import React, { Dispatch, FC, FormEvent, SetStateAction } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { SortPicker } from 'app/core/components/Select/SortPicker';

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Modal, stylesFactory } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { dashboardWatcher } from './dashboardWatcher';
 import { config } from '@grafana/runtime';
 import { DashboardEvent, DashboardEventAction } from './types';

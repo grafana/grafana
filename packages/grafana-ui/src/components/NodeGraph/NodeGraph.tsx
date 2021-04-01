@@ -11,7 +11,7 @@ import { useZoom } from './useZoom';
 import { Bounds, Config, defaultConfig, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { stylesFactory, useTheme } from '../../themes';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';

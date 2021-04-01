@@ -2,7 +2,7 @@ import React from 'react';
 import _ from 'lodash';
 import { useStyles, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Diff } from './utils';
 
 type DiffProps = {

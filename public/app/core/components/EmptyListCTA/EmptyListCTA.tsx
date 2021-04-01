@@ -1,5 +1,5 @@
 import React, { MouseEvent, useContext } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { CallToActionCard, Icon, IconName, LinkButton, ThemeContext } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 

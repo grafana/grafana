@@ -1,7 +1,7 @@
 import React, { useState, useCallback, ChangeEvent, FunctionComponent } from 'react';
 import SliderComponent from 'rc-slider';
-import { cx } from 'emotion';
-import { Global } from '@emotion/core';
+import { cx } from '@emotion/css';
+import { Global } from '@emotion/react';
 import { useTheme } from '../../themes/ThemeContext';
 import { getStyles } from './styles';
 import { SliderProps } from './types';

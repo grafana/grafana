@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 import {
   DataFrame,

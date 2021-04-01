@@ -1,5 +1,5 @@
 import React, { forwardRef, ButtonHTMLAttributes } from 'react';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { styleMixins, useStyles } from '../../themes';
 import { IconName } from '../../types/icon';

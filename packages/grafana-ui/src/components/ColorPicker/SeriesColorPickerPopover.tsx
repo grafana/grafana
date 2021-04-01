@@ -3,7 +3,7 @@ import React, { FunctionComponent } from 'react';
 import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { PopoverContentProps } from '../Tooltip/Tooltip';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { withTheme, useStyles } from '../../themes';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopoverContentProps {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 // @ts-ignore
 import RCCascader from 'rc-cascader';

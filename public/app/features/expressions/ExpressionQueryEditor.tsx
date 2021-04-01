@@ -1,6 +1,6 @@
 // Libraries
 import React, { PureComponent, ChangeEvent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
 import { SelectableValue, ReducerID, QueryEditorProps } from '@grafana/data';

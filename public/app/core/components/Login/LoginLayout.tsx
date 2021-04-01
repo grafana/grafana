@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { cx, css, keyframes } from 'emotion';
+import { cx, css, keyframes } from '@emotion/css';
 import { useStyles } from '@grafana/ui';
 import { Branding } from '../Branding/Branding';
 import { GrafanaTheme } from '@grafana/data';

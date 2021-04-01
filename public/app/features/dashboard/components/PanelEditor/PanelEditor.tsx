@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { Prompt } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme } from '@grafana/data';

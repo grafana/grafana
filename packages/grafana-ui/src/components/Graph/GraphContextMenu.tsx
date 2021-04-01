@@ -14,7 +14,7 @@ import { useTheme } from '../../themes';
 import { HorizontalGroup } from '../Layout/Layout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { MenuGroup, MenuGroupProps } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
 

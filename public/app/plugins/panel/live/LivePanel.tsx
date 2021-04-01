@@ -18,7 +18,7 @@ import {
 import { TablePanel } from '../table/TablePanel';
 import { LivePanelOptions, MessageDisplayMode } from './types';
 import { config, getGrafanaLiveSrv, MeasurementCollector } from '@grafana/runtime';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 // Ignoring because I couldn't get @types/react-select work with Torkel's fork
 // @ts-ignore

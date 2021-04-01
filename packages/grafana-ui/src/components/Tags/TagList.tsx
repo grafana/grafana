@@ -1,5 +1,5 @@
 import React, { FC, memo } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { OnTagClick, Tag } from './Tag';
 
 export interface Props {

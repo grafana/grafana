@@ -8,7 +8,7 @@ import { useAsyncFn } from 'react-use';
 import { getBackendSrv } from '@grafana/runtime';
 import { UrlQueryValue } from '@grafana/data';
 import { Form, Field, Input, Button, Legend } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 interface OrgNameDTO {

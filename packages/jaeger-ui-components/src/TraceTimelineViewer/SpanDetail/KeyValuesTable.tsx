@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 import jsonMarkup from 'json-markup';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import CopyIcon from '../../common/CopyIcon';

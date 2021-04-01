@@ -8,7 +8,7 @@ import { RadialGradient } from '@visx/gradient';
 import { localPoint } from '@visx/event';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { VizLegend, VizLegendItem } from '..';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';

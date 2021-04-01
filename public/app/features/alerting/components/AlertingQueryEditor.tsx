@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { RefreshPicker, stylesFactory } from '@grafana/ui';
 

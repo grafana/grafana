@@ -23,7 +23,7 @@ import {
   standardTransformersRegistry,
 } from '@grafana/data';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from '../../state';

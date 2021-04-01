@@ -15,7 +15,7 @@
 import React from 'react';
 import cx from 'classnames';
 import IoAndroidOpen from 'react-icons/lib/io/android-open';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { createStyle } from '../Theme';
 

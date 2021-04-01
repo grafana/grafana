@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';

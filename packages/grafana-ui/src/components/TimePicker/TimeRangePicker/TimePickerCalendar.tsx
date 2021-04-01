@@ -1,5 +1,5 @@
 import React, { FormEvent, memo, useCallback } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { dateTime, DateTime, dateTimeParse, GrafanaTheme, TimeZone } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../../themes';

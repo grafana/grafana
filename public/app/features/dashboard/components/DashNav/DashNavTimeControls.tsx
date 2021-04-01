@@ -1,7 +1,7 @@
 // Libraries
 import React, { Component } from 'react';
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 // Types
 import { DashboardModel } from '../../state';

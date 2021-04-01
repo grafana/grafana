@@ -1,5 +1,5 @@
 import React, { CSSProperties, ReactNode } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useStyles, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 

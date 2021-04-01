@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { stylesFactory, useTheme, Select, Button, Switch, Field } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import appEvents from 'app/core/app_events';

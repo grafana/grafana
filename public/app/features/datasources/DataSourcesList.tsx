@@ -5,7 +5,7 @@ import React, { FC } from 'react';
 import { DataSourceSettings } from '@grafana/data';
 import { LayoutMode } from '../../core/components/LayoutSelector/LayoutSelector';
 import { Card, Tag, useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 export interface Props {
   dataSources: DataSourceSettings[];

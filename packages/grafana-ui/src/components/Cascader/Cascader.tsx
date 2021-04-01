@@ -5,7 +5,7 @@ import RCCascader from 'rc-cascader';
 import { Select } from '../Select/Select';
 import { Input } from '../Input/Input';
 import { SelectableValue } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { onChangeCascader } from './optionMappings';
 import memoizeOne from 'memoize-one';
 

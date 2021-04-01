@@ -1,7 +1,7 @@
 import React, { CSSProperties, FC, ReactNode, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import RcDrawer from 'rc-drawer';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';

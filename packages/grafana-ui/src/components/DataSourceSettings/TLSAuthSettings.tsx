@@ -1,6 +1,6 @@
 import React from 'react';
 import { KeyValue } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
 import { CertificationKey } from './CertificationKey';
