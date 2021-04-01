@@ -3,7 +3,6 @@ import { NodesMarker } from './types';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
-import { Icon } from '..';
 
 const nodeR = 40;
 
@@ -41,8 +40,10 @@ export const Marker = memo(function Marker(props: {
     >
       <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
       <g>
-        <foreignObject x={node.x - 24} y={node.y - 25} width="48" height="50">
-          <Icon size={'xxxl'} name={'plus'} />
+        <foreignObject x={node.x - 25} y={node.y - 25} width="50" height="50">
+          <div style={{ width: 50, height: 50, textAlign: 'center', display: 'flex', alignItems: 'center' }}>
+            <span>{marker.count} more nodes</span>
+          </div>
         </foreignObject>
       </g>
     </g>

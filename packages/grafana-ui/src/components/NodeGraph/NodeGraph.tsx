@@ -64,7 +64,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 // This is mainly for performance reasons.
-const defaultNodeCountLimit = 100;
+const defaultNodeCountLimit = 7;
 
 interface Props {
   dataFrames: DataFrame[];

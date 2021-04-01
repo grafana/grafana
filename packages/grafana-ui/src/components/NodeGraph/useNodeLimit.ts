@@ -113,17 +113,18 @@ function collectMarkerStats(
   edgesMap: Record<string, EdgeDatumLayout[]>
 ): NodesMarker[] {
   return markers.map((marker) => {
-    const nodesToCount = [];
+    const nodesToCount: Record<string, NodeDatum> = {};
     let stack = [marker];
     while (stack.length > 0) {
       let current = stack.shift()!;
 
       // We are showing this node so not going to count it as hidden.
-      if (visibleNodes[current!.id]) {
+      if (visibleNodes[current.id] || nodesToCount[current.id]) {
         continue;
       }
 
-      nodesToCount.push(current);
+      nodesToCount[current.id] = current;
+
       const edges = edgesMap[current.id] || [];
 
       const connectedNodes = edges.map((e) => {
@@ -135,7 +136,7 @@ function collectMarkerStats(
 
     return {
       node: marker,
-      count: nodesToCount.length,
+      count: Object.keys(nodesToCount).length,
     };
   });
 }
