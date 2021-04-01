@@ -145,6 +145,30 @@ func TestConditionsCmdExecute(t *testing.T) {
 			},
 		},
 		{
+			name: "single query and single condition - empty series",
+			vars: mathexp.Vars{
+				"A": mathexp.Results{
+					Values: []mathexp.Value{
+						valBasedSeries(),
+					},
+				},
+			},
+			conditionsCmd: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						QueryRefID: "A",
+						Reducer:    classicReducer("avg"),
+						Operator:   "and",
+						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
+					},
+				}},
+			resultNumber: func() mathexp.Number {
+				v := valBasedNumber(nil)
+				v.SetMeta([]EvalMatch{{Metric: "NoData"}})
+				return v
+			},
+		},
+		{
 			name: "single query and two conditions",
 			vars: mathexp.Vars{
 				"A": mathexp.Results{

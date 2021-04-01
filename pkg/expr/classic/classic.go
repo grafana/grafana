@@ -112,8 +112,6 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 
 		thisCondFiring := firingCount > 0
 		thisCondNoData := nilReducedCount > 0
-		firingCount = 0
-		nilReducedCount = 0
 
 		if i == 0 {
 			firing = thisCondFiring
@@ -134,6 +132,9 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 			})
 			noDataFound = true
 		}
+
+		firingCount = 0
+		nilReducedCount = 0
 	}
 
 	num := mathexp.NewNumber("", nil)
