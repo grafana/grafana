@@ -8,6 +8,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -163,6 +164,8 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 		}
 		result.Results = res.Frames
 	}
+
+	spew.Dump(result.Results)
 
 	if len(result.Results) == 0 {
 		err = fmt.Errorf("no GEL results")

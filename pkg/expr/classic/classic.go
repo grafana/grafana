@@ -79,6 +79,7 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 	for i, c := range ccc.Conditions {
 		querySeriesSet := vars[c.QueryRefID]
 		nilReducedCount := 0
+		firingCount := 0
 		for _, val := range querySeriesSet.Values {
 			series, ok := val.(mathexp.Series)
 			if !ok {
@@ -105,26 +106,33 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 					match.Labels = reducedNum.GetLabels().Copy()
 				}
 				matches = append(matches, match)
-			}
-
-			if i == 0 {
-				firing = evalRes
-				noDataFound = thisCondNoDataFound
-			}
-
-			if c.Operator == "or" {
-				firing = firing || evalRes
-				noDataFound = noDataFound || thisCondNoDataFound
-			} else {
-				firing = firing && evalRes
-				noDataFound = noDataFound && thisCondNoDataFound
+				firingCount++
 			}
 		}
+
+		if i == 0 {
+			firing = firingCount > 0
+			noDataFound = nilReducedCount > 0
+		}
+
+		if c.Operator == "or" {
+			firing = firing || firingCount > 0
+			noDataFound = noDataFound || nilReducedCount > 0
+		} else {
+			firing = firing && firingCount > 0
+			noDataFound = noDataFound && nilReducedCount > 0
+		}
+
 		if len(querySeriesSet.Values) == nilReducedCount {
 			matches = append(matches, EvalMatch{
 				Metric: "NoData",
 			})
+			noDataFound = true
 		}
+
+		firingCount = 0
+		nilReducedCount = 0
+
 	}
 
 	num := mathexp.NewNumber("", nil)
