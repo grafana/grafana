@@ -82,9 +82,10 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 					return err
 				}
 
-				transitionedStates := stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
-				sch.saveAlertStates(transitionedStates)
-				alerts := FromAlertStateToPostableAlerts(transitionedStates)
+				processedStates := stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
+				sch.saveAlertStates(processedStates)
+				alerts := FromAlertStateToPostableAlerts(processedStates)
+				sch.log.Debug("sending alerts to notifier", "count", len(alerts))
 				err = sch.sendAlerts(alerts)
 				if err != nil {
 					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts), "err", err)
