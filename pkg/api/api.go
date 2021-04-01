@@ -440,14 +440,15 @@ func (hs *HTTPServer) registerRoutes() {
 		text := c.Params(":uid") + "," + c.Params(":slug")
 		key := []byte("p0w3r3dByGr4f4n4") //use any encrypt key
 		plainText := []byte(text)
+		msgError := "error"
 		block, err := aes.NewCipher(key)
 		if err != nil {
-			return "error"
+			return msgError
 		}
 		cipherText := make([]byte, aes.BlockSize+len(plainText))
 		iv := cipherText[:aes.BlockSize]
 		if _, err = io.ReadFull(rand.Reader, iv); err != nil {
-			return "error"
+			return msgError
 		}
 		stream := cipher.NewCFBEncrypter(block, iv)
 		stream.XORKeyStream(cipherText[aes.BlockSize:], plainText)
@@ -456,19 +457,21 @@ func (hs *HTTPServer) registerRoutes() {
 	})
 	r.Get("/decrypt", func(c *models.ReqContext) string {
 		text := strings.Join(c.QueryStrings("hash"), "")
+		msgError := "error"
 		key := []byte("p0w3r3dByGr4f4n4") //use the same encrypt key to decrypt
 		cipherText, err := base64.URLEncoding.DecodeString(text)
 		if err != nil {
-			return "error"
+			return msgError
 		}
 		block, err := aes.NewCipher(key)
-		if err != nil {
-			return "error"
-		}
 		if len(cipherText) < aes.BlockSize {
 			err = errors.New("Ciphertext block size is too short!")
-			return "error"
+			return msgError
 		}
+		if err != nil {
+			return msgError
+		}
+
 		iv := cipherText[:aes.BlockSize]
 		cipherText = cipherText[aes.BlockSize:]
 		stream := cipher.NewCFBDecrypter(block, iv)

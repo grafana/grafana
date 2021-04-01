@@ -77,7 +77,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		decodedmess := string(cipherText)
 		s := strings.Split(decodedmess, ",")
 		validSharedUid = s[0] == c.Params(":uid")
-		if validSharedUid == false {
+		if !validSharedUid {
 			return response.Error(403, "Access denied to this dashboard, invalid shareduid.", nil)
 		}
 	}
@@ -104,7 +104,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	if canView, err := guardian.CanView(); err != nil || !canView {
 		//apply patch
 		canView, err := guardian.CanView()
-		if validSharedUid == true {
+		if validSharedUid {
 			canView = true
 		}
 		if err != nil || !canView {
