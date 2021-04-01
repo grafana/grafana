@@ -1,0 +1,14 @@
+--- grafana-6.2.5/public/app/core/services/backend_srv.ts	2019-06-25 14:56:19.000000000 -0300
++++ grafana-trunk/changes/public/app/core/services/backend_srv.ts	2019-10-03 15:52:25.812013278 -0300
+@@ -255,7 +255,10 @@
+   }
+ 
+   getDashboardByUid(uid: string) {
+-    return this.get(`/api/dashboards/uid/${uid}`);
++    const shareduid = location.search.match('shareduid')
++      ? `?shareduid=${new URL(location.href).searchParams.get('shareduid')}`
++      : '';
++    return this.get(`/api/dashboards/uid/${uid}${shareduid}`);
+   }
+ 
+   getFolderByUid(uid: string) {

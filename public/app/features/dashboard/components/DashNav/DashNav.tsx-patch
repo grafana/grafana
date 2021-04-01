@@ -1,0 +1,173 @@
+--- grafana-6.2.5/public/app/features/dashboard/components/DashNav/DashNav.tsx	2019-06-25 14:56:19.000000000 -0300
++++ grafana-trunk/changes/public/app/features/dashboard/components/DashNav/DashNav.tsx	2019-10-03 15:52:25.169015076 -0300
+@@ -39,10 +39,16 @@
+   timePickerEl: HTMLElement;
+   timepickerCmp: AngularComponent;
+   playlistSrv: PlaylistSrv;
++  isShared: boolean;
+ 
+   constructor(props: Props) {
+     super(props);
+     this.playlistSrv = this.props.$injector.get('playlistSrv');
++    this.isShared = window.location.search
++      .slice(1)
++      .split('&')
++      .map(x => x.split('='))
++      .some(([key, value]) => key === 'shareduid');
+   }
+ 
+   componentDidMount() {
+@@ -52,6 +58,11 @@
+     const scopeProps = { dashboard: this.props.dashboard };
+ 
+     this.timepickerCmp = loader.load(this.timePickerEl, scopeProps, template);
++
++    if (this.isShared) {
++      appEvents.emit('toggle-sidemenu-visibility', false);
++      $('sidemenu.sidemenu').css('display', 'none');
++    }
+   }
+ 
+   componentWillUnmount() {
+@@ -138,32 +149,35 @@
+ 
+   renderDashboardTitleSearchButton() {
+     const { dashboard } = this.props;
++    const isShared = this.isShared;
+ 
+     const folderTitle = dashboard.meta.folderTitle;
+     const haveFolder = dashboard.meta.folderId > 0;
+ 
+-    return (
+-      <>
+-        <div>
+-          <div className="navbar-page-btn">
+-            {!this.isInFullscreenOrSettings && <i className="gicon gicon-dashboard" />}
+-            {haveFolder && (
+-              <>
+-                <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
+-                  {folderTitle}
++    return isShared
++      ? <div className="navbar__spacer" />
++      : (
++          <>
++            <div>
++              <div className="navbar-page-btn">
++                {!this.isInFullscreenOrSettings && <i className="gicon gicon-dashboard" />}
++                {haveFolder && (
++                  <>
++                    <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
++                      {folderTitle}
++                    </a>
++                    <i className="fa fa-chevron-right navbar-page-btn__folder-icon" />
++                  </>
++                )}
++                <a onClick={this.onDahboardNameClick}>
++                  {dashboard.title} <i className="fa fa-caret-down navbar-page-btn__search" />
+                 </a>
+-                <i className="fa fa-chevron-right navbar-page-btn__folder-icon" />
+-              </>
+-            )}
+-            <a onClick={this.onDahboardNameClick}>
+-              {dashboard.title} <i className="fa fa-caret-down navbar-page-btn__search" />
+-            </a>
+-          </div>
+-        </div>
+-        {this.isSettings && <span className="navbar-settings-title">&nbsp;/ Settings</span>}
+-        <div className="navbar__spacer" />
+-      </>
+-    );
++              </div>
++            </div>
++            {this.isSettings && <span className="navbar-settings-title">&nbsp;/ Settings</span>}
++            <div className="navbar__spacer" />
++          </>
++        );
+   }
+ 
+   get isInFullscreenOrSettings() {
+@@ -190,6 +204,7 @@
+     const { dashboard, onAddPanel, location } = this.props;
+     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
+     const { snapshot } = dashboard;
++    const isShared = this.isShared;
+     const snapshotUrl = snapshot && snapshot.originalUrl;
+     return (
+       <div className="navbar">
+@@ -220,7 +235,7 @@
+         )}
+ 
+         <div className="navbar-buttons navbar-buttons--actions">
+-          {canSave && (
++          {canSave && !isShared && (
+             <DashNavButton
+               tooltip="Add panel"
+               classSuffix="add-panel"
+@@ -229,7 +244,7 @@
+             />
+           )}
+ 
+-          {canStar && (
++          {canStar && !isShared && (
+             <DashNavButton
+               tooltip="Mark as favorite"
+               classSuffix="star"
+@@ -238,7 +253,7 @@
+             />
+           )}
+ 
+-          {canShare && (
++          {canShare && !isShared && (
+             <DashNavButton
+               tooltip="Share dashboard"
+               classSuffix="share"
+@@ -247,11 +262,11 @@
+             />
+           )}
+ 
+-          {canSave && (
++          {canSave && !isShared && (
+             <DashNavButton tooltip="Save dashboard" classSuffix="save" icon="fa fa-save" onClick={this.onSave} />
+           )}
+ 
+-          {snapshotUrl && (
++          {snapshotUrl && !isShared && (
+             <DashNavButton
+               tooltip="Open original dashboard"
+               classSuffix="snapshot-origin"
+@@ -260,7 +275,7 @@
+             />
+           )}
+ 
+-          {showSettings && (
++          {showSettings && !isShared && (
+             <DashNavButton
+               tooltip="Dashboard settings"
+               classSuffix="settings"
+@@ -270,14 +285,18 @@
+           )}
+         </div>
+ 
+-        <div className="navbar-buttons navbar-buttons--tv">
+-          <DashNavButton
+-            tooltip="Cycle view mode"
+-            classSuffix="tv"
+-            icon="fa fa-desktop"
+-            onClick={this.onToggleTVMode}
+-          />
+-        </div>
++        { !isShared && (
++            <div className="navbar-buttons navbar-buttons--tv">
++              <DashNavButton
++                tooltip="Cycle view mode"
++                classSuffix="tv"
++                icon="fa fa-desktop"
++                onClick={this.onToggleTVMode}
++              />
++            </div>
++          )
++        }
++
+ 
+         {!dashboard.timepicker.hidden && (
+           <div className="navbar-buttons">

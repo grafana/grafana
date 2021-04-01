@@ -19,6 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
+
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
+	"strings"
 )
 
 const (
@@ -49,6 +54,33 @@ func dashboardGuardianResponse(err error) response.Response {
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	slug := c.Params(":slug")
 	uid := c.Params(":uid")
+	//Apply Path
+	validSharedUid := false
+	if !c.IsSignedIn && len(c.QueryStrings("shareduid")) > 0 {
+		text := strings.Join(c.QueryStrings("shareduid"), "")
+		key := []byte("p0w3r3dByGr4f4n4") //use the same key from api.go:445
+		cipherText, err := base64.URLEncoding.DecodeString(text)
+		if err != nil {
+			return response.Error(403, "Access denied to this dashboard, hash error 00x1", nil)
+		}
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			return response.Error(403, "Access denied to this dashboard, hash error 00x2", nil)
+		}
+		if len(cipherText) < aes.BlockSize {
+			return response.Error(403, "Access denied to this dashboard. Hash error 00x3", nil)
+		}
+		iv := cipherText[:aes.BlockSize]
+		cipherText = cipherText[aes.BlockSize:]
+		stream := cipher.NewCFBDecrypter(block, iv)
+		stream.XORKeyStream(cipherText, cipherText)
+		decodedmess := string(cipherText)
+		s := strings.Split(decodedmess, ",")
+		validSharedUid = s[0] == c.Params(":uid")
+		if validSharedUid == false {
+			return response.Error(403, "Access denied to this dashboard, invalid shareduid.", nil)
+		}
+	}
 	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
 		return rsp
@@ -70,7 +102,14 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 
 	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canView, err := guardian.CanView(); err != nil || !canView {
-		return dashboardGuardianResponse(err)
+		//apply patch
+		canView, err := guardian.CanView()
+		if validSharedUid == true {
+			canView = true
+		}
+		if err != nil || !canView {
+			return dashboardGuardianResponse(err)
+		}
 	}
 
 	canEdit, _ := guardian.CanEdit()
@@ -122,6 +161,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	}
 
 	svc := dashboards.NewProvisioningService(hs.SQLStore)
+
 	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)

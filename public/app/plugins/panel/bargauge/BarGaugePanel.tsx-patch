@@ -1,0 +1,22 @@
+--- grafana-6.2.5/public/app/plugins/panel/bargauge/BarGaugePanel.tsx	2019-06-25 14:56:19.000000000 -0300
++++ grafana-trunk/changes/public/app/plugins/panel/bargauge/BarGaugePanel.tsx	2019-10-03 15:52:25.579013929 -0300
+@@ -17,6 +17,10 @@
+     const { fieldOptions } = options;
+     const { field, display } = value;
+ 
++    const maxValue = (typeof field.max === "number") ? field.max : this.getValues().reduce((maxResult, d) => (
++      d.display.numeric <= maxResult ? maxResult : Math.ceil(Number(d.display.text))
++    ), -Infinity);
++
+     return (
+       <BarGauge
+         value={display}
+@@ -28,7 +32,7 @@
+         itemSpacing={this.getItemSpacing()}
+         displayMode={options.displayMode}
+         minValue={field.min}
+-        maxValue={field.max}
++        maxValue={maxValue}
+       />
+     );
+   };

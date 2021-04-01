@@ -51,8 +51,14 @@ export function addCustomRightAction(content: DashNavButtonModel) {
 type Props = OwnProps & DispatchProps;
 
 class DashNav extends PureComponent<Props> {
+  isShared: boolean;
   constructor(props: Props) {
     super(props);
+    this.isShared = window.location.search
+      .slice(1)
+      .split('&')
+      .map((x) => x.split('='))
+      .some(([key, value]) => key === 'shareduid');
   }
 
   onFolderNameClick = () => {
@@ -113,13 +119,14 @@ class DashNav extends PureComponent<Props> {
   renderLeftActionsButton() {
     const { dashboard, kioskMode } = this.props;
     const { canStar, canShare, isStarred } = dashboard.meta;
+    const isShared = this.isShared;
     const buttons: ReactNode[] = [];
 
     if (kioskMode !== KioskMode.Off || this.isPlaylistRunning()) {
       return [];
     }
 
-    if (canStar) {
+    if (canStar && !isShared) {
       buttons.push(
         <DashNavButton
           tooltip="Mark as favorite"
@@ -132,7 +139,7 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
-    if (canShare) {
+    if (canShare && !isShared) {
       buttons.push(
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
@@ -168,11 +175,9 @@ class DashNav extends PureComponent<Props> {
 
   renderTimeControls() {
     const { dashboard, updateTimeZoneForSession, hideTimePicker } = this.props;
-
     if (hideTimePicker) {
       return null;
     }
-
     return (
       <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
     );
@@ -183,6 +188,7 @@ class DashNav extends PureComponent<Props> {
     const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
+    const isShared = this.isShared;
     const buttons: ReactNode[] = [];
     const tvButton = (
       <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
@@ -191,12 +197,11 @@ class DashNav extends PureComponent<Props> {
     if (this.isPlaylistRunning()) {
       return [this.renderPlaylistControls(), this.renderTimeControls()];
     }
-
     if (kioskMode === KioskMode.TV) {
       return [this.renderTimeControls(), tvButton];
     }
 
-    if (canEdit && !isFullscreen) {
+    if (canEdit && !isFullscreen && !isShared) {
       buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
       buttons.push(
         <ModalsController key="button-save">
@@ -216,7 +221,7 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
-    if (snapshotUrl) {
+    if (snapshotUrl && !isShared) {
       buttons.push(
         <ToolbarButton
           tooltip="Open original dashboard"
@@ -227,16 +232,13 @@ class DashNav extends PureComponent<Props> {
       );
     }
 
-    if (showSettings) {
+    if (showSettings && !isShared) {
       buttons.push(
         <ToolbarButton tooltip="Dashboard settings" icon="cog" onClick={this.onOpenSettings} key="button-settings" />
       );
     }
 
     this.addCustomContent(customRightActions, buttons);
-
-    buttons.push(this.renderTimeControls());
-    buttons.push(tvButton);
     return buttons;
   }
 
@@ -247,14 +249,14 @@ class DashNav extends PureComponent<Props> {
   render() {
     const { dashboard, isFullscreen } = this.props;
     const onGoBack = isFullscreen ? this.onClose : undefined;
-
+    const isShared = this.isShared;
     return (
       <PageToolbar
         pageIcon={isFullscreen ? undefined : 'apps'}
         title={dashboard.title}
         parent={dashboard.meta.folderTitle}
-        onClickTitle={this.onDashboardNameClick}
-        onClickParent={this.onFolderNameClick}
+        onClickTitle={isShared ? undefined : this.onDashboardNameClick}
+        onClickParent={isShared ? undefined : this.onFolderNameClick}
         onGoBack={onGoBack}
         leftItems={this.renderLeftActionsButton()}
       >

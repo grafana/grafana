@@ -2,8 +2,11 @@
 package api
 
 import (
-	"time"
-
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
+	"errors"
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -12,6 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"io"
+	"strings"
+	"time"
 )
 
 var plog = log.New("api")
@@ -428,6 +434,48 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/ldap/:username", routing.Wrap(hs.GetUserFromLDAP))
 		adminRoute.Get("/ldap/status", routing.Wrap(hs.GetLDAPStatus))
 	}, reqGrafanaAdmin)
+
+	//Patch
+	r.Get("/encrypt/:uid/:slug", func(c *models.ReqContext) string {
+		text := c.Params(":uid") + "," + c.Params(":slug")
+		key := []byte("p0w3r3dByGr4f4n4") //use any encrypt key
+		plainText := []byte(text)
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			return "error"
+		}
+		cipherText := make([]byte, aes.BlockSize+len(plainText))
+		iv := cipherText[:aes.BlockSize]
+		if _, err = io.ReadFull(rand.Reader, iv); err != nil {
+			return "error"
+		}
+		stream := cipher.NewCFBEncrypter(block, iv)
+		stream.XORKeyStream(cipherText[aes.BlockSize:], plainText)
+		encmess := base64.URLEncoding.EncodeToString(cipherText)
+		return encmess
+	})
+	r.Get("/decrypt", func(c *models.ReqContext) string {
+		text := strings.Join(c.QueryStrings("hash"), "")
+		key := []byte("p0w3r3dByGr4f4n4") //use the same encrypt key to decrypt
+		cipherText, err := base64.URLEncoding.DecodeString(text)
+		if err != nil {
+			return "error"
+		}
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			return "error"
+		}
+		if len(cipherText) < aes.BlockSize {
+			err = errors.New("Ciphertext block size is too short!")
+			return "error"
+		}
+		iv := cipherText[:aes.BlockSize]
+		cipherText = cipherText[aes.BlockSize:]
+		stream := cipher.NewCFBDecrypter(block, iv)
+		stream.XORKeyStream(cipherText, cipherText)
+		decodedmess := string(cipherText)
+		return decodedmess
+	})
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)

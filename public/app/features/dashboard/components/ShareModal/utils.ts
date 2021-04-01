@@ -1,8 +1,8 @@
 import { config } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { createShortLink } from 'app/core/utils/shortLinks';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { PanelModel, dateTime, urlUtil } from '@grafana/data';
-
 export function buildParams(useCurrentTimeRange: boolean, selectedTheme?: string, panel?: PanelModel) {
   let params = urlUtil.getUrlSearchParams();
 
@@ -51,6 +51,20 @@ export async function buildShareUrl(
     return await createShortLink(shareUrl);
   }
   return shareUrl;
+}
+
+export async function buildPublicShareUrl(dashboard: DashboardModel, shortenUrl?: boolean) {
+  const baseUrl = buildBaseUrl();
+  let publicShareUrl = '';
+  await fetch(`/encrypt/${dashboard.uid}/${dashboard.meta.slug}`)
+    .then((res) => res.text())
+    .then((token) => {
+      publicShareUrl = `${baseUrl}?shareduid=${token}`;
+    });
+  if (shortenUrl) {
+    return await createShortLink(publicShareUrl);
+  }
+  return publicShareUrl;
 }
 
 export function buildSoloUrl(useCurrentTimeRange: boolean, selectedTheme?: string, panel?: PanelModel) {

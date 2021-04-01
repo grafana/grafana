@@ -3,7 +3,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Field, RadioButtonGroup, Switch, ClipboardButton, Icon, InfoBox, Input, FieldSet } from '@grafana/ui';
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { buildImageUrl, buildShareUrl } from './utils';
+import { buildImageUrl, buildShareUrl, buildPublicShareUrl } from './utils';
 import { appEvents } from 'app/core/core';
 import config from 'app/core/config';
 
@@ -23,6 +23,7 @@ export interface State {
   useShortUrl: boolean;
   selectedTheme: string;
   shareUrl: string;
+  publicShareUrl: string;
   imageUrl: string;
 }
 
@@ -34,6 +35,7 @@ export class ShareLink extends PureComponent<Props, State> {
       useShortUrl: false,
       selectedTheme: 'current',
       shareUrl: '',
+      publicShareUrl: '',
       imageUrl: '',
     };
   }
@@ -54,13 +56,16 @@ export class ShareLink extends PureComponent<Props, State> {
   }
 
   buildUrl = async () => {
-    const { panel } = this.props;
+    const { panel, dashboard } = this.props;
     const { useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
 
     const shareUrl = await buildShareUrl(useCurrentTimeRange, selectedTheme, panel, useShortUrl);
+
+    const publicShareUrl = await buildPublicShareUrl(dashboard, useShortUrl);
+
     const imageUrl = buildImageUrl(useCurrentTimeRange, selectedTheme, panel);
 
-    this.setState({ shareUrl, imageUrl });
+    this.setState({ shareUrl, imageUrl, publicShareUrl });
   };
 
   onUseCurrentTimeRangeChange = () => {
@@ -83,10 +88,14 @@ export class ShareLink extends PureComponent<Props, State> {
     return this.state.shareUrl;
   };
 
+  getPublicShareUrl = () => {
+    return this.state.publicShareUrl;
+  };
+
   render() {
     const { panel } = this.props;
     const isRelativeTime = this.props.dashboard ? this.props.dashboard.time.to === 'now' : false;
-    const { useCurrentTimeRange, useShortUrl, selectedTheme, shareUrl, imageUrl } = this.state;
+    const { useCurrentTimeRange, useShortUrl, selectedTheme, shareUrl, publicShareUrl, imageUrl } = this.state;
     const selectors = e2eSelectors.pages.SharePanelModal;
 
     return (
@@ -115,13 +124,27 @@ export class ShareLink extends PureComponent<Props, State> {
               <Field label="Shorten URL">
                 <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />
               </Field>
-
               <Field label="Link URL">
                 <Input
                   value={shareUrl}
                   readOnly
                   addonAfter={
                     <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
+                      <Icon name="copy" /> Copy
+                    </ClipboardButton>
+                  }
+                />
+              </Field>
+              <Field label="Link Public URL">
+                <Input
+                  value={publicShareUrl}
+                  readOnly
+                  addonAfter={
+                    <ClipboardButton
+                      variant="primary"
+                      getText={this.getPublicShareUrl}
+                      onClipboardCopy={this.onShareUrlCopy}
+                    >
                       <Icon name="copy" /> Copy
                     </ClipboardButton>
                   }
