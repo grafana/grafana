@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -87,7 +88,7 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 			frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
 			frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
 
-			bytes, err := data.FrameToJSON(frame, true, true)
+			bytes, err := jsoniter.Marshal(frame) // schema + points
 			if err != nil {
 				logger.Warn("unable to marshal line", "error", err)
 				continue

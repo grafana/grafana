@@ -57,7 +57,7 @@ func init() {
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
 	ng.Log = log.New("ngalert")
-	ng.stateTracker = state.NewStateTracker()
+	ng.stateTracker = state.NewStateTracker(ng.Log)
 	baseInterval := baseIntervalSeconds * time.Second
 
 	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
@@ -69,6 +69,7 @@ func (ng *AlertNG) Init() error {
 		MaxAttempts:  maxAttempts,
 		Evaluator:    eval.Evaluator{Cfg: ng.Cfg},
 		Store:        store,
+		Notifier:     ng.Alertmanager,
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
 
@@ -80,6 +81,7 @@ func (ng *AlertNG) Init() error {
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
 		Store:           store,
+		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
 	}
 	api.RegisterAPIEndpoints()
@@ -98,7 +100,6 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	// Check also about expressions?
 	return !ng.Cfg.IsNgAlertEnabled()
 }
 
@@ -108,8 +109,11 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	if ng.IsDisabled() {
 		return
 	}
-	addAlertDefinitionMigrations(mg)
-	addAlertDefinitionVersionMigrations(mg)
+	store.AddAlertDefinitionMigrations(mg, defaultIntervalSeconds)
+	store.AddAlertDefinitionVersionMigrations(mg)
 	// Create alert_instance table
-	alertInstanceMigration(mg)
+	store.AlertInstanceMigration(mg)
+
+	// Create silence table
+	store.SilenceMigration(mg)
 }
