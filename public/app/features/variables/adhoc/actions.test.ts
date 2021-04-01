@@ -409,7 +409,7 @@ describe('adhoc actions', () => {
   describe('when changeVariableDatasource is dispatched with datasource', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'elasticsearch';
-      const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
+      const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
       const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource('influxdb').build();
 
       getDatasource.mockRestore();
