@@ -83,6 +83,7 @@
             "model": {
               "alias": "just-testing",
               "datasource": "gdev-testdata",
+              "datasourceUid": "000000004",
               "intervalMs": 1000,
               "maxDataPoints": 100,
               "orgId": 0,
