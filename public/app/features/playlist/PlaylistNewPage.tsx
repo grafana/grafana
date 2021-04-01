@@ -34,7 +34,7 @@ export const PlaylistNewPage: FC<Props> = ({ navModel }) => {
         <h3 className={styles.subHeading}>New Playlist</h3>
 
         <p className={styles.description}>
-          A playlist rotates through a pre-selected list of Dashboards. A Playlist can be a great way to build
+          A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build
           situational awareness, or just show off your metrics to your team or visitors.
         </p>
 

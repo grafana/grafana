@@ -193,7 +193,11 @@ export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
       continue;
     }
 
-    if (typeof firstValue[firstValueKey] !== 'string' && typeof firstValue[firstValueKey] !== 'number') {
+    if (
+      firstValue[firstValueKey] !== null &&
+      typeof firstValue[firstValueKey] !== 'string' &&
+      typeof firstValue[firstValueKey] !== 'number'
+    ) {
       continue;
     }
 

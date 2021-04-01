@@ -59,12 +59,9 @@ type Results []Result
 // Result contains the evaluated State of an alert instance
 // identified by its labels.
 type Result struct {
-	Instance data.Labels
-	State    State // Enum
-	// StartAt is the time at which we first saw this state
-	StartAt time.Time
-	// FiredAt is the time at which we first transitioned to a firing state
-	FiredAt time.Time
+	Instance    data.Labels
+	State       State // Enum
+	EvaluatedAt time.Time
 }
 
 // State is an enum of the evaluation State for an alert instance.
@@ -211,8 +208,8 @@ func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, 
 		}
 
 		r := Result{
-			Instance: f.Fields[0].Labels,
-			StartAt:  ts,
+			Instance:    f.Fields[0].Labels,
+			EvaluatedAt: ts,
 		}
 
 		switch {
@@ -223,7 +220,6 @@ func evaluateExecutionResult(results *ExecutionResults, ts time.Time) (Results, 
 		case *val == 0:
 			r.State = Normal
 		default:
-			r.FiredAt = ts
 			r.State = Alerting
 		}
 
