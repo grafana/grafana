@@ -225,7 +225,6 @@
     "@types/react-virtualized-auto-sizer": "1.0.0",
     "@types/uuid": "8.3.0",
     "@welldone-software/why-did-you-render": "4.0.6",
-    "abortcontroller-polyfill": "1.4.0",
     "angular": "1.8.2",
     "angular-bindonce": "0.3.1",
     "angular-route": "1.8.2",
@@ -300,8 +299,7 @@
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "1.4.1",
     "uuid": "8.3.0",
-    "visjs-network": "4.25.0",
-    "whatwg-fetch": "3.1.0"
+    "visjs-network": "4.25.0"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"

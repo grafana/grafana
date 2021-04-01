@@ -1,10 +1,6 @@
 import 'symbol-observable';
 import 'core-js';
 import 'regenerator-runtime/runtime';
-
-import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
-import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'; // fetch polyfill needed for PhantomJs rendering
-
 import 'file-saver';
 import 'jquery';
 import _ from 'lodash';
