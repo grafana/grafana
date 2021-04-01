@@ -86,6 +86,7 @@ func (ccc *ConditionsCmd) Execute(ctx context.Context, vars mathexp.Vars) (mathe
 			}
 
 			reducedNum := c.Reducer.Reduce(series)
+
 			// TODO handle error / no data signals
 			thisCondNoDataFound := reducedNum.GetFloat64Value() == nil
 

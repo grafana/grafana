@@ -14,7 +14,7 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler strin
 	if newSeriesLength <= 0 {
 		return s, fmt.Errorf("the series cannot be sampled further; the time range is shorter than the interval")
 	}
-	resampled := NewSeries(refID, s.GetLabels(), s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullable, newSeriesLength+1)
+	resampled := NewSeries(refID, s.GetLabels(), s.TimeIdx, true, s.ValueIdx, true, newSeriesLength+1)
 	bookmark := 0
 	var lastSeen *float64
 	idx := 0
@@ -57,16 +57,17 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler strin
 			}
 		} else { // downsampling
 			fVec := data.NewField("", s.GetLabels(), vals)
+			ff := Float64Field(*fVec)
 			var tmp *float64
 			switch downsampler {
 			case "sum":
-				tmp = Sum(fVec)
+				tmp = Sum(&ff)
 			case "mean":
-				tmp = Avg(fVec)
+				tmp = Avg(&ff)
 			case "min":
-				tmp = Min(fVec)
+				tmp = Min(&ff)
 			case "max":
-				tmp = Max(fVec)
+				tmp = Max(&ff)
 			default:
 				return s, fmt.Errorf("downsampling %v not implemented", downsampler)
 			}
