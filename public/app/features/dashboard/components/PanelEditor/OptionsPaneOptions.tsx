@@ -4,7 +4,7 @@ import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';

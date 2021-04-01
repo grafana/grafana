@@ -15,7 +15,7 @@
 import * as React from 'react';
 import cx from 'classnames';
 import IoAndroidLocate from 'react-icons/lib/io/android-locate';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import * as markers from './TracePageSearchBar.markers';
 import UiFindInput from '../common/UiFindInput';

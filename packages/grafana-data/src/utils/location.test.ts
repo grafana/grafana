@@ -4,10 +4,8 @@ describe('locationUtil', () => {
   beforeAll(() => {
     locationUtil.initialize({
       config: { appSubUrl: '/subUrl' } as any,
-      // @ts-ignore
-      buildParamsFromVariables: () => {},
-      // @ts-ignore
-      getTimeRangeForUrl: () => {},
+      getVariablesUrlParams: (() => {}) as any,
+      getTimeRangeForUrl: (() => {}) as any,
     });
   });
 

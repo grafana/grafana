@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { ConfirmButton, RadioButtonGroup, Icon } from '@grafana/ui';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 
 interface Props {
   isGrafanaAdmin: boolean;

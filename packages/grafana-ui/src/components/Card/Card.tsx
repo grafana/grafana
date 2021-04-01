@@ -1,5 +1,5 @@
 import React, { memo, cloneElement, FC, HTMLAttributes, ReactNode, useCallback } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, styleMixins, stylesFactory } from '../../themes';
 import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';

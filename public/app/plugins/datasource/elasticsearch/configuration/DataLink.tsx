@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { VariableSuggestion } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, LegacyForms, DataLinkInput, stylesFactory } from '@grafana/ui';

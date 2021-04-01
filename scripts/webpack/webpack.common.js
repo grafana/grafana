@@ -2,6 +2,7 @@ const fs = require('fs-extra');
 const path = require('path');
 
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const getBabelConfig = require('./babel.config');
 
 class CopyUniconsPlugin {
   apply(compiler) {
@@ -143,9 +144,7 @@ module.exports = {
         use: [
           {
             loader: 'babel-loader',
-            options: {
-              presets: [['@babel/preset-env']],
-            },
+            options: getBabelConfig(),
           },
         ],
       },
