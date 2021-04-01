@@ -12,7 +12,7 @@ import { optionPickerFactory } from '../pickers';
 export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariableModel> => {
   return {
     id: 'constant',
-    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
+    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share.',
     name: 'Constant',
     initialState: initialConstantVariableModelState,
     reducer: constantVariableReducer,

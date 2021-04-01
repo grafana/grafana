@@ -383,7 +383,7 @@ describe('adhoc actions', () => {
   describe('when changeVariableDatasource is dispatched with unsupported datasource', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'mysql';
-      const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
+      const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
       const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource('influxdb').build();
 
       getDatasource.mockRestore();
@@ -400,7 +400,7 @@ describe('adhoc actions', () => {
         changeVariableProp(toVariablePayload(variable, { propName: 'datasource', propValue: datasource })),
         changeVariableEditorExtended({
           propName: 'infoText',
-          propValue: 'This datasource does not support adhoc filters yet.',
+          propValue: 'This data source does not support ad hoc filters yet.',
         })
       );
     });
@@ -409,7 +409,7 @@ describe('adhoc actions', () => {
   describe('when changeVariableDatasource is dispatched with datasource', () => {
     it('then correct actions are dispatched', async () => {
       const datasource = 'elasticsearch';
-      const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
+      const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
       const variable = adHocBuilder().withId('Filters').withName('Filters').withDatasource('influxdb').build();
 
       getDatasource.mockRestore();

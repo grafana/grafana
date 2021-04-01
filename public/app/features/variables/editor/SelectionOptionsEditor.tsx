@@ -42,7 +42,7 @@ export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorPro
 
   return (
     <VerticalGroup spacing="none">
-      <VariableSectionHeader name="Selection Options" />
+      <VariableSectionHeader name="Selection options" />
       <InlineFieldRow>
         <VariableSwitchField
           value={variable.multi}

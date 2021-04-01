@@ -263,7 +263,7 @@ export const processVariable = (
       }
     }
 
-    // for variables that aren't updated via url or refresh let's simulate the same state changes
+    // for variables that aren't updated via URL or refresh, let's simulate the same state changes
     dispatch(completeVariableLoading(identifier));
   };
 };
@@ -296,7 +296,7 @@ export const setOptionFromUrl = (
     if (!variableFromState) {
       throw new Error(`Couldn't find variable with name: ${variable.name}`);
     }
-    // Simple case. Value in url matches existing options text or value.
+    // Simple case. Value in URL matches existing options text or value.
     let option = variableFromState.options.find((op) => {
       return op.text === stringUrlValue || op.value === stringUrlValue;
     });
@@ -327,13 +327,13 @@ export const setOptionFromUrl = (
         }, []);
       }
 
-      // It is possible that we did not match the value to any existing option. In that case the url value will be
+      // It is possible that we did not match the value to any existing option. In that case the URL value will be
       // used anyway for both text and value.
       option = { text: defaultText, value: defaultValue, selected: false };
     }
 
     if (isMulti(variableFromState)) {
-      // In case variable is multiple choice, we cast to array to preserve the same behaviour as when selecting
+      // In case variable is multiple choice, we cast to array to preserve the same behavior as when selecting
       // the option directly, which will return even single value in an array.
       option = alignCurrentWithMulti(
         { text: castArray(option.text), value: castArray(option.value), selected: false },

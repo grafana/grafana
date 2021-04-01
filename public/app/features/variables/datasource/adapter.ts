@@ -13,8 +13,8 @@ import { optionPickerFactory } from '../pickers';
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
     id: 'datasource',
-    description: 'Enabled you to dynamically switch the datasource for multiple panels',
-    name: 'Datasource',
+    description: 'Enabled you to dynamically switch the data source for multiple panels.',
+    name: 'Data source',
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,
     picker: optionPickerFactory<DataSourceVariableModel>(),

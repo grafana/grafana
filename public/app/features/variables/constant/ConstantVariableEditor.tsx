@@ -28,7 +28,7 @@ export class ConstantVariableEditor extends PureComponent<Props> {
   render() {
     return (
       <VerticalGroup spacing="xs">
-        <VariableSectionHeader name="Constant Options" />
+        <VariableSectionHeader name="Constant options" />
         <VariableTextField
           value={this.props.variable.query}
           name="Value"

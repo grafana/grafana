@@ -24,7 +24,7 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
 
   return (
     <VerticalGroup spacing="xs">
-      <VariableSectionHeader name="Text Options" />
+      <VariableSectionHeader name="Text options" />
       <VariableTextField
         value={query}
         name="Default value"

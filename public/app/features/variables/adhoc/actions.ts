@@ -85,7 +85,7 @@ export const changeVariableDatasource = (datasource?: string): ThunkResult<void>
     const { editor } = getState().templating;
     const variable = getVariable(editor.id, getState());
 
-    const loadingText = 'Adhoc filters are applied automatically to all queries that target this datasource';
+    const loadingText = 'Ad hoc filters are applied automatically to all queries that target this data source';
 
     dispatch(
       changeVariableEditorExtended({
@@ -101,7 +101,7 @@ export const changeVariableDatasource = (datasource?: string): ThunkResult<void>
       dispatch(
         changeVariableEditorExtended({
           propName: 'infoText',
-          propValue: 'This datasource does not support adhoc filters yet.',
+          propValue: 'This data source does not support ad hoc filters yet.',
         })
       );
     }

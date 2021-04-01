@@ -119,7 +119,7 @@ export class VariableQueryRunner {
         .runRequest(runnerArgs, request)
         .pipe(
           filter(() => {
-            // lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
+            // Lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
             const afterUid = getState().templating.transaction.uid;
             return beforeUid === afterUid;
           }),
