@@ -93,6 +93,31 @@ describe('Render', () => {
     expect(onChange.mock.calls[0][0].jsonData).toStrictEqual({});
   });
 
+  it('when removing a just-created header, it should clean up secureJsonData', () => {
+    const { onChange } = setup({
+      dataSourceConfig: {
+        jsonData: {
+          httpHeaderName1: 'name1',
+        },
+        secureJsonData: {
+          httpHeaderValue1: 'value1',
+        },
+      },
+    });
+
+    // we remove the row
+    const removeButton = screen.getByRole('button', { name: 'Remove header' });
+    expect(removeButton).toBeInTheDocument();
+    userEvent.click(removeButton);
+    assertRowCount(0, 0);
+    expect(onChange).toHaveBeenCalled();
+
+    // and we verify the onChange-data
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1];
+    expect(lastCall[0].jsonData).not.toHaveProperty('httpHeaderName1');
+    expect(lastCall[0].secureJsonData).not.toHaveProperty('httpHeaderValue1');
+  });
+
   it('should reset a header', () => {
     setup({
       dataSourceConfig: {
