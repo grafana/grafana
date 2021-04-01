@@ -57,16 +57,17 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler strin
 			}
 		} else { // downsampling
 			fVec := data.NewField("", s.GetLabels(), vals)
+			ff := Float64Field(*fVec)
 			var tmp *float64
 			switch downsampler {
 			case "sum":
-				tmp = Sum(fVec)
+				tmp = Sum(&ff)
 			case "mean":
-				tmp = Avg(fVec)
+				tmp = Avg(&ff)
 			case "min":
-				tmp = Min(fVec)
+				tmp = Min(&ff)
 			case "max":
-				tmp = Max(fVec)
+				tmp = Max(&ff)
 			default:
 				return s, fmt.Errorf("downsampling %v not implemented", downsampler)
 			}
