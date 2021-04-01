@@ -9521,12 +9521,12 @@ ccount@^1.0.0:
   resolved "https://registry.yarnpkg.com/ccount/-/ccount-1.1.0.tgz#246687debb6014735131be8abab2d93898f8d043"
   integrity sha512-vlNK021QdI7PNeiUh/lKkC/mNHHfV0m/Ad5JoI0TYtlBnJAslM/JIkm/tGC88bkLIwO6OQ5uV6ztS6kVAtCDlg==
 
-centrifuge@^2.6.4:
-  version "2.6.4"
-  resolved "https://registry.yarnpkg.com/centrifuge/-/centrifuge-2.6.4.tgz#41a456c100cdf3ebf51ad1fb075de91126342ee5"
-  integrity sha512-jvPENcPQkYgSx9WItbt2QfTtMBPNGBb9yQM91oZ6XGGsRmuDs8glvWyxGGueoTgTcCGpuTSfbUCWTlnnbRKW4A==
+centrifuge@^2.7.3:
+  version "2.7.3"
+  resolved "https://registry.yarnpkg.com/centrifuge/-/centrifuge-2.7.3.tgz#991e872838a62a363de9afee10aeea166a1c14c4"
+  integrity sha512-0WqBbF/Iol9ziJcGCIPrJi7U+sZ8y7liq19CZ0XcY+GmKybvdjWm+XkupRSupzRZus5BAtH97wdFFZItFOjIfQ==
   dependencies:
-    protobufjs "^6.9.0"
+    protobufjs "^6.10.2"
 
 chalk@2.4.2, chalk@^2.0.0, chalk@^2.0.1, chalk@^2.1.0, chalk@^2.3.0, chalk@^2.3.1, chalk@^2.3.2, chalk@^2.4.1, chalk@^2.4.2:
   version "2.4.2"
@@ -20977,10 +20977,10 @@ proto-list@~1.2.1:
   resolved "https://registry.yarnpkg.com/proto-list/-/proto-list-1.2.4.tgz#212d5bfe1318306a420f6402b8e26ff39647a849"
   integrity sha1-IS1b/hMYMGpCD2QCuOJv85ZHqEk=
 
-protobufjs@^6.9.0:
-  version "6.10.1"
-  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-6.10.1.tgz#e6a484dd8f04b29629e9053344e3970cccf13cd2"
-  integrity sha512-pb8kTchL+1Ceg4lFd5XUpK8PdWacbvV5SK2ULH2ebrYtl4GjJmS24m6CKME67jzV53tbJxHlnNOSqQHbTsR9JQ==
+protobufjs@^6.10.2:
+  version "6.10.2"
+  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-6.10.2.tgz#b9cb6bd8ec8f87514592ba3fdfd28e93f33a469b"
+  integrity sha512-27yj+04uF6ya9l+qfpH187aqEzfCF4+Uit0I9ZBQVqK09hk/SQzKa2MUqUpXaVa7LOFRg1TSSr3lVxGOk6c0SQ==
   dependencies:
     "@protobufjs/aspromise" "^1.1.2"
     "@protobufjs/base64" "^1.1.2"
