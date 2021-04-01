@@ -10,6 +10,8 @@ import (
 )
 
 func TestParseInterval(t *testing.T) {
+	daysInMonth, daysInYear := calculateDays()
+
 	tcs := []struct {
 		inp      string
 		duration time.Duration
@@ -18,9 +20,9 @@ func TestParseInterval(t *testing.T) {
 		{inp: "1d", duration: 24 * time.Hour},
 		{inp: "1w", duration: 168 * time.Hour},
 		{inp: "2w", duration: 2 * 168 * time.Hour},
-		{inp: "1M", duration: 744 * time.Hour},
-		{inp: "1y", duration: 8760 * time.Hour},
-		{inp: "5y", duration: 43824 * time.Hour},
+		{inp: "1M", duration: time.Duration(daysInMonth * 24 * int(time.Hour))},
+		{inp: "1y", duration: time.Duration(daysInYear * 24 * int(time.Hour))},
+		{inp: "5y", duration: time.Duration(calculateDays5y() * 24 * int(time.Hour))},
 		{inp: "invalid-duration", err: regexp.MustCompile(`^time: invalid duration "?invalid-duration"?$`)},
 	}
 	for i, tc := range tcs {
@@ -66,4 +68,35 @@ func TestParseDuration(t *testing.T) {
 			}
 		})
 	}
+}
+
+func calculateDays() (int, int) {
+	now := time.Now().UTC()
+	currentYear, currentMonth, _ := now.Date()
+
+	firstDayOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, time.UTC)
+	daysInMonth := firstDayOfMonth.AddDate(0, 1, -1).Day()
+
+	t1 := time.Date(currentYear, 1, 1, 0, 0, 0, 0, time.UTC)
+	t2 := time.Date(currentYear+1, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	daysInYear := int(t2.Sub(t1).Hours() / 24)
+
+	return daysInMonth, daysInYear
+}
+
+func calculateDays5y() int {
+	now := time.Now().UTC()
+	currentYear, _, _ := now.Date()
+
+	var daysInYear int
+
+	for i := 0; i < 5; i++ {
+		t1 := time.Date(currentYear+i, 1, 1, 0, 0, 0, 0, time.UTC)
+		t2 := time.Date(currentYear+i+1, 1, 1, 0, 0, 0, 0, time.UTC)
+
+		daysInYear = daysInYear + int(t2.Sub(t1).Hours()/24)
+	}
+
+	return daysInYear
 }
