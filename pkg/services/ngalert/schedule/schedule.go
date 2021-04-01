@@ -240,7 +240,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 		select {
 		case tick := <-sch.heartbeat.C:
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-			alertDefinitions := sch.fetchAllDetails()
+			alertDefinitions := sch.fetchAllDetails(tick)
 			sch.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
 
 			// registeredDefinitions is a map used for finding deleted alert definitions
