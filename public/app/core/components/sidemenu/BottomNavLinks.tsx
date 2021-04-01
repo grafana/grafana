@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import appEvents from '../../app_events';
 import { User } from '../../services/context_srv';
 import { NavModelItem } from '@grafana/data';
