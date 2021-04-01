@@ -17,13 +17,13 @@ export interface PerformanceBackendOptions {
  * Reports performance metrics to given url (TODO)
  */
 export class PerformanceBackend implements EchoBackend<PerformanceEvent, PerformanceBackendOptions> {
-  private buffer: PerformanceEvent[] = [];
+  private buffer: PerformanceEventPayload[] = [];
   supportedEvents = [EchoEventType.Performance];
 
   constructor(public options: PerformanceBackendOptions) {}
 
   addEvent = (e: EchoEvent) => {
-    this.buffer.push(e);
+    this.buffer.push(e.payload);
   };
 
   flush = () => {

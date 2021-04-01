@@ -131,7 +131,10 @@ function initEchoSrv() {
       const paintMetrics = performance.getEntriesByType('paint');
 
       for (const metric of paintMetrics) {
-        reportPerformance(`frontend_boot_${metric.name}`, Math.round(metric.startTime + metric.duration));
+        reportPerformance(
+          `frontend_boot_${metric.name}_time_milliseconds`,
+          Math.round(metric.startTime + metric.duration)
+        );
       }
 
       const loadMetric = performance.getEntriesByName(loadMetricName)[0];
@@ -150,10 +153,6 @@ function initEchoSrv() {
       })
     );
   }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    reportPerformance('dcl', Math.round(performance.now()));
-  });
 }
 
 function addClassIfNoOverlayScrollbar() {
