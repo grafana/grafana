@@ -41,7 +41,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   if (isSearching) {
     mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
 
-    // If searching for angular panel then we need to add notice that results are limited
+    // If searching for angular panel, then we need to add notice that results are limited
     if (props.plugin.angularPanelCtrl) {
       mainBoxElements.push(
         <div className={styles.searchNotice} key="Search notice">
@@ -60,7 +60,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
             <AngularPanelOptions plugin={plugin} dashboard={dashboard} panel={panel} key="AngularOptions" />
           );
         }
-        // Then add all panel & field defaults
+        // Then add all panel and field defaults
         for (const item of vizOptions) {
           mainBoxElements.push(item.render());
         }

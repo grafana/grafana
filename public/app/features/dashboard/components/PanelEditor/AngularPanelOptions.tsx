@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 
-// Utils & Services
+// Utils and services
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 
 // Types
@@ -69,7 +69,7 @@ export class AngularPanelOptionsUnconnected extends PureComponent<Props> {
 
     const scope = angularPanelComponent.getScope();
 
-    // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
+    // When full page reloading in edit mode the angular panel has on fully compiled and instantiated yet
     if (!scope.$$childHead) {
       setTimeout(() => {
         this.forceUpdate();

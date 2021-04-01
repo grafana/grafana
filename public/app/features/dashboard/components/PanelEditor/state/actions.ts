@@ -131,7 +131,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
       updateDuplicateLibraryPanels(panel, dashboard!, dispatch);
 
-      // restore the source panel id before we update source panel
+      // restore the source panel ID before we update source panel
       modifiedSaveModel.id = sourcePanel.id;
 
       sourcePanel.restoreModel(modifiedSaveModel);

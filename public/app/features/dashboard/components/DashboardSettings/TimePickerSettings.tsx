@@ -67,7 +67,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
         />
         <Field
           label="Now delay now"
-          description="Enter 1m to ignore the last minute (because it can contain incomplete metrics)"
+          description="Enter 1m to ignore the last minute. It might contain incomplete metrics."
         >
           <Input
             invalid={!this.state.isNowDelayValid}

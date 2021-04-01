@@ -15,7 +15,7 @@ export const VersionHistoryTable: React.FC<VersionsTableProps> = ({ versions, on
         <th className="width-4"></th>
         <th className="width-4">Version</th>
         <th className="width-14">Date</th>
-        <th className="width-10">Updated By</th>
+        <th className="width-10">Updated by</th>
         <th>Notes</th>
         <th></th>
       </tr>

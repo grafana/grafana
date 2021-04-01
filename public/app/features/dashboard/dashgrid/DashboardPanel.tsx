@@ -112,7 +112,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     const { isViewing, plugin } = this.props;
     const { isLazy } = this.state;
 
-    // if we have not loaded plugin exports yet, wait
+    // If we have not loaded plugin exports yet, wait
     if (!plugin) {
       return null;
     }

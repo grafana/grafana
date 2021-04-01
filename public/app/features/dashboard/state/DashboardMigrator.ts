@@ -91,7 +91,7 @@ export class DashboardMigrator {
 
     // schema version 3 changes
     if (oldVersion < 3) {
-      // ensure panel ids
+      // ensure panel IDs
       let maxId = this.dashboard.getNextPanelId();
       panelUpgrades.push((panel: any) => {
         if (!panel.id) {
@@ -116,7 +116,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 6) {
-      // move pulldowns to new schema
+      // move drop-downs to new schema
       const annotations: any = _.find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {

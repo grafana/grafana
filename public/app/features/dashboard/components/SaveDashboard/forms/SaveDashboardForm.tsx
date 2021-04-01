@@ -55,7 +55,7 @@ export const SaveDashboardForm: React.FC<SaveDashboardFormProps> = ({ dashboard,
             )}
             {(hasVariableChanged || hasTimeChanged) && <div className="gf-form-group" />}
 
-            <TextArea name="message" ref={register} placeholder="Add a note to describe your changes..." autoFocus />
+            <TextArea name="message" ref={register} placeholder="Add a note to describe your changes." autoFocus />
           </div>
 
           <HorizontalGroup>

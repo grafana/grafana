@@ -51,7 +51,7 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardFormProps & { isNew?: bo
 
   const validateDashboardName = (getFormValues: () => SaveDashboardAsFormDTO) => async (dashboardName: string) => {
     if (dashboardName && dashboardName === getFormValues().$folder.title?.trim()) {
-      return 'Dashboard name cannot be the same as folder';
+      return 'Dashboard name cannot be the same as folder name';
     }
     try {
       await validationSrv.validateNewDashboardName(getFormValues().$folder.id, dashboardName);

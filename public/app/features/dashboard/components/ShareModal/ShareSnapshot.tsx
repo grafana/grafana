@@ -210,13 +210,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       <>
         <div>
           <p className="share-modal-info-text">
-            A snapshot is an instant way to share an interactive dashboard publicly. When created, we{' '}
-            <strong>strip sensitive data</strong> like queries (metric, template and annotation) and panel links,
-            leaving only the visible metric data and series names embedded into your dashboard.
+            A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive
+            data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data
+            and series names embedded in your dashboard.
           </p>
           <p className="share-modal-info-text">
-            Keep in mind, your <strong>snapshot can be viewed by anyone</strong> that has the link and can reach the
-            URL. Share wisely.
+            Keep in mind, your snapshot <em>can be viewed by anyone</em> that has the link and can access the URL. Share
+            wisely.
           </p>
         </div>
         <Field label="Snapshot name">
@@ -227,7 +227,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         </Field>
         <Field
           label="Timeout (seconds)"
-          description="You may need to configure the timeout value if it takes a long time to collect your dashboard's
+          description="You might need to configure the timeout value if it takes a long time to collect your dashboard
             metrics."
         >
           <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
@@ -270,7 +270,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         <div className="pull-right" style={{ padding: '5px' }}>
           Did you make a mistake?{' '}
           <LinkButton variant="link" target="_blank" onClick={this.deleteSnapshot}>
-            delete snapshot.
+            Delete snapshot.
           </LinkButton>
         </div>
       </>
@@ -281,8 +281,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-header">
         <p className="share-modal-info-text">
-          The snapshot has now been deleted. If you have already accessed it once, it might take up to an hour before it
-          is removed from browser caches or CDN caches.
+          The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before
+          before it is removed from browser caches or CDN caches.
         </p>
       </div>
     );

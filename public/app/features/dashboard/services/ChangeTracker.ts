@@ -86,7 +86,7 @@ export class ChangeTracker {
       return true;
     }
 
-    //Ignore changes if the user has been signed out
+    // Ignore changes if the user has been signed out
     if (!contextSrv.isSignedIn) {
       return true;
     }
