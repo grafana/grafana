@@ -1,4 +1,13 @@
-import { DataFrame, Field, FieldCache, FieldType, ArrayVector, MutableDataFrame } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  Field,
+  FieldCache,
+  FieldType,
+  getFieldColorModeForField,
+  GrafanaTheme,
+  MutableDataFrame,
+} from '@grafana/data';
 import { EdgeDatum, NodeDatum } from './types';
 import { NodeGraphDataFrameFieldNames } from './index';
 
@@ -36,6 +45,7 @@ export function getNodeFields(nodes: DataFrame) {
     secondaryStat: fieldsCache.getFieldByName(DataFrameFieldNames.secondaryStat),
     arc: findFieldsByPrefix(nodes, DataFrameFieldNames.arc),
     details: findFieldsByPrefix(nodes, DataFrameFieldNames.detail),
+    color: fieldsCache.getFieldByName(DataFrameFieldNames.color),
   };
 }
 
@@ -65,12 +75,17 @@ export enum DataFrameFieldNames {
   target = 'target',
   detail = 'detail__',
   arc = 'arc__',
+  color = 'color',
 }
 
 /**
  * Transform nodes and edges dataframes into array of objects that the layout code can then work with.
  */
-export function processNodes(nodes?: DataFrame, edges?: DataFrame): { nodes: NodeDatum[]; edges: EdgeDatum[] } {
+export function processNodes(
+  nodes: DataFrame | undefined,
+  edges: DataFrame | undefined,
+  theme: GrafanaTheme
+): { nodes: NodeDatum[]; edges: EdgeDatum[] } {
   if (!nodes) {
     return { nodes: [], edges: [] };
   }
@@ -96,6 +111,7 @@ export function processNodes(nodes?: DataFrame, edges?: DataFrame): { nodes: Nod
             color: f.config.color?.fixedColor || '',
           };
         }),
+        color: nodeFields.color ? getColor(nodeFields.color, index, theme) : '',
       };
       return acc;
     }, {}) || {};
@@ -167,6 +183,7 @@ function makeNode(index: number) {
     arc__errors: 0.5,
     mainStat: 0.1,
     secondaryStat: 2,
+    color: 0.5,
   };
 }
 
@@ -201,6 +218,12 @@ function nodesFrame() {
       values: new ArrayVector(),
       type: FieldType.number,
       config: { color: { fixedColor: 'red' } },
+    },
+
+    [NodeGraphDataFrameFieldNames.color]: {
+      values: new ArrayVector(),
+      type: FieldType.number,
+      config: { color: { mode: 'continuous-GrYlRd' } },
     },
   };
 
@@ -251,4 +274,12 @@ function edgesFrame() {
     })),
     meta: { preferredVisualisationType: 'nodeGraph' },
   });
+}
+
+function getColor(field: Field, index: number, theme: GrafanaTheme): string {
+  if (!field.config.color) {
+    return field.values.get(index);
+  }
+
+  return getFieldColorModeForField(field).getCalculator(field, theme)(0, field.values.get(index));
 }
