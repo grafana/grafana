@@ -6,12 +6,12 @@ import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { makeValue, SlatePrism, useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { Rule, RulesSource } from 'app/types/unified-alerting';
+import { RulesSource } from 'app/types/unified-alerting';
 import { DataSourceType, isCloudRulesSource } from '../utils/datasource';
 import { Well } from './Well';
 
 interface Props {
-  rule: Rule;
+  query: string;
   rulesSource: RulesSource;
 }
 
@@ -34,15 +34,15 @@ export const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }
   return <Editor plugins={plugins} value={slateValue} readOnly={true} />;
 };
 
-export const RuleQuery: FC<Props> = ({ rule, rulesSource }) => {
+export const RuleQuery: FC<Props> = ({ query, rulesSource }) => {
   const styles = useStyles(getStyles);
 
   return (
     <Well className={cx(styles.well, 'slate-query-field')}>
       {isCloudRulesSource(rulesSource) ? (
-        <HighlightedQuery expr={rule.query} language={rulesSource.type === DataSourceType.Loki ? 'logql' : 'promql'} />
+        <HighlightedQuery expr={query} language={rulesSource.type === DataSourceType.Loki ? 'logql' : 'promql'} />
       ) : (
-        rule.query
+        query
       )}
     </Well>
   );

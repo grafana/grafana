@@ -7,21 +7,25 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { SystemOrApplicationRules } from './components/rules/SystemOrApplicationRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
-import { getAllRulesSourceNames, getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { fetchAllPromAndRulerRules } from './state/actions';
+import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from './utils/datasource';
 import { css } from '@emotion/css';
 import { ThresholdRules } from './components/rules/ThresholdRules';
+import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
+import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 
 export const RuleList: FC = () => {
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
   const rulesDataSources = useMemo(getRulesDataSources, []);
 
+  // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
   useEffect(() => {
-    getAllRulesSourceNames().map((name) => {
-      dispatch(fetchPromRulesAction(name));
-      dispatch(fetchRulerRulesAction(name));
-    });
+    dispatch(fetchAllPromAndRulerRules());
+    const interval = setInterval(() => dispatch(fetchAllPromAndRulerRules()), RULE_LIST_POLL_INTERVAL_MS);
+    return () => {
+      clearInterval(interval);
+    };
   }, [dispatch]);
 
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
@@ -29,7 +33,7 @@ export const RuleList: FC = () => {
   const requests = Object.values(rules);
   const dispatched = !!requests.find((r) => r.dispatched);
   const loading = !!requests.find((r) => r.loading);
-  const haveResults = !!requests.find((r) => !r.loading && r.dispatched && (r.result?.length || !!r.error));
+  const haveResults = !!requests.find((r) => r.dispatched && (r.result?.length || !!r.error));
 
   const cloudErrors = useMemo(
     () =>
@@ -47,6 +51,20 @@ export const RuleList: FC = () => {
   );
 
   const grafanaError = rules[GRAFANA_RULES_SOURCE_NAME]?.error;
+
+  const combinedNamespaces = useCombinedRuleNamespaces();
+  const [thresholdNamespaces, systemNamespaces] = useMemo(() => {
+    const sorted = combinedNamespaces
+      .map((namespace) => ({
+        ...namespace,
+        groups: namespace.groups.sort((a, b) => a.name.localeCompare(b.name)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return [
+      sorted.filter((ns) => ns.rulesSource === GRAFANA_RULES_SOURCE_NAME),
+      sorted.filter((ns) => isCloudRulesSource(ns.rulesSource)),
+    ];
+  }, [combinedNamespaces]);
 
   return (
     <AlertingPageWrapper pageId="alert-list" isLoading={loading && !haveResults}>
@@ -77,8 +95,8 @@ export const RuleList: FC = () => {
         </a>
       </div>
       {dispatched && !loading && !haveResults && <NoRulesSplash />}
-      {haveResults && <ThresholdRules />}
-      {haveResults && <SystemOrApplicationRules />}
+      {haveResults && <ThresholdRules namespaces={thresholdNamespaces} />}
+      {haveResults && <SystemOrApplicationRules namespaces={systemNamespaces} />}
     </AlertingPageWrapper>
   );
 };

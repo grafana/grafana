@@ -1,35 +1,21 @@
 import { css } from '@emotion/css';
-import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { LoadingPlaceholder, useStyles } from '@grafana/ui';
 import React, { FC, useMemo } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RulesGroup } from './RulesGroup';
-import { getRulesDataSources } from '../../utils/datasource';
-import { RuleNamespace } from 'app/types/unified-alerting';
+import { getRulesDataSources, getRulesSourceName } from '../../utils/datasource';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import pluralize from 'pluralize';
 
-export const SystemOrApplicationRules: FC = () => {
+interface Props {
+  namespaces: CombinedRuleNamespace[];
+}
+
+export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
   const styles = useStyles(getStyles);
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
-
-  const namespaces = useMemo(
-    (): Array<{ namespace: RuleNamespace; dataSource: DataSourceInstanceSettings }> =>
-      rulesDataSources
-        .map((dataSource) => rules[dataSource.name]?.result?.map((namespace) => ({ namespace, dataSource })) || [])
-        .flat()
-        // sort groups within namespace
-        .map(({ namespace, dataSource }) => ({
-          namespace: {
-            ...namespace,
-            groups: namespace.groups.slice().sort((a, b) => a.name.localeCompare(b.name)),
-          },
-          dataSource,
-        }))
-        // sort namespaces
-        .sort((a, b) => a.namespace.name.localeCompare(b.namespace.name)),
-    [rules, rulesDataSources]
-  );
 
   const dataSourcesLoading = useMemo(() => rulesDataSources.filter((ds) => rules[ds.name]?.loading), [
     rules,
@@ -50,13 +36,13 @@ export const SystemOrApplicationRules: FC = () => {
         )}
       </div>
 
-      {namespaces?.map(({ dataSource, namespace }) =>
-        namespace.groups.map((group) => (
+      {namespaces.map(({ rulesSource, name, groups }) =>
+        groups.map((group) => (
           <RulesGroup
             group={group}
-            key={`${dataSource.name}-${namespace.name}-${group.name}`}
-            namespace={namespace.name}
-            rulesSource={dataSource}
+            key={`${getRulesSourceName(rulesSource)}-${name}-${group.name}`}
+            namespace={name}
+            rulesSource={rulesSource}
           />
         ))
       )}

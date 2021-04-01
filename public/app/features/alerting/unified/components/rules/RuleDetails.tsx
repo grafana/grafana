@@ -1,4 +1,4 @@
-import { Rule, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import React, { FC } from 'react';
 import { useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
@@ -12,14 +12,16 @@ import { AlertInstancesTable } from './AlertInstancesTable';
 import { DetailsField } from './DetailsField';
 
 interface Props {
-  rule: Rule;
+  rule: CombinedRule;
   rulesSource: RulesSource;
 }
 
 export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
   const styles = useStyles(getStyles);
 
-  const annotations = Object.entries((isAlertingRule(rule) && rule.annotations) || {});
+  const { promRule } = rule;
+
+  const annotations = Object.entries(rule.annotations);
 
   return (
     <div>
@@ -31,7 +33,7 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
             </DetailsField>
           )}
           <DetailsField label="Expression" className={cx({ [styles.exprRow]: !!annotations.length })} horizontal={true}>
-            <RuleQuery rule={rule} rulesSource={rulesSource} />
+            <RuleQuery query={rule.query} rulesSource={rulesSource} />
           </DetailsField>
           {annotations.map(([key, value]) => (
             <DetailsField key={key} label={key} horizontal={true}>
@@ -47,9 +49,9 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
           )}
         </div>
       </div>
-      {isAlertingRule(rule) && !!rule.alerts?.length && (
+      {promRule && isAlertingRule(promRule) && !!promRule.alerts?.length && (
         <DetailsField label="Matching instances" horizontal={true}>
-          <AlertInstancesTable instances={rule.alerts} />
+          <AlertInstancesTable instances={promRule.alerts} />
         </DetailsField>
       )}
     </div>

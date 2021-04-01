@@ -24,7 +24,7 @@ function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
     return {
       result: state.result,
       loading: true,
-      error: undefined,
+      error: state.error,
       dispatched: true,
       requestId: action.meta.requestId,
     };
@@ -34,6 +34,7 @@ function requestStateReducer<T, ThunkArg = void, ThunkApiConfig = {}>(
         ...state,
         result: action.payload as Draft<T>,
         loading: false,
+        error: undefined,
       };
     }
   } else if (asyncThunk.rejected.match(action)) {

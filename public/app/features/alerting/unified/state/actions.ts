@@ -1,10 +1,12 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { ThunkResult } from 'app/types';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { fetchRules } from '../api/prometheus';
 import { fetchAlertManagerConfig } from '../api/alertmanager';
 import { fetchRulerRules } from '../api/ruler';
+import { getAllRulesSourceNames } from '../utils/datasource';
 import { withSerializedError } from '../utils/redux';
 
 export const fetchPromRulesAction = createAsyncThunk(
@@ -21,13 +23,20 @@ export const fetchAlertManagerConfigAction = createAsyncThunk(
 export const fetchRulerRulesAction = createAsyncThunk(
   'unifiedalerting/fetchRulerRules',
   (rulesSourceName: string): Promise<RulerRulesConfigDTO | null> => {
-    return withSerializedError(
-      fetchRulerRules(rulesSourceName).catch((e) => {
-        if (e.status === 500 && e.data?.message?.includes('mapping values are not allowed in this context')) {
-          return;
-        }
-        return e;
-      })
-    );
+    return withSerializedError(fetchRulerRules(rulesSourceName));
   }
 );
+
+export function fetchAllPromAndRulerRules(force = false): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const { promRules, rulerRules } = getStore().unifiedAlerting;
+    getAllRulesSourceNames().map((name) => {
+      if (force || !promRules[name]?.loading) {
+        dispatch(fetchPromRulesAction(name));
+      }
+      if (force || !rulerRules[name]?.loading) {
+        dispatch(fetchRulerRulesAction(name));
+      }
+    });
+  };
+}

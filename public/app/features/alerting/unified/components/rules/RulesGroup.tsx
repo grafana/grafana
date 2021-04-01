@@ -1,4 +1,4 @@
-import { RuleGroup, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, useMemo, useState, Fragment } from 'react';
 import { Icon, Tooltip, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -8,13 +8,14 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { StateColoredText } from '../StateColoredText';
 import { CollapseToggle } from '../CollapseToggle';
 import { RulesTable } from './RulesTable';
-import { isCloudRulesSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { ActionIcon } from './ActionIcon';
 import pluralize from 'pluralize';
+import { useHasRuler } from '../../hooks/useHasRuler';
 interface Props {
   namespace: string;
   rulesSource: RulesSource;
-  group: RuleGroup;
+  group: CombinedRuleGroup;
 }
 
 export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
@@ -22,12 +23,14 @@ export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
 
   const [isCollapsed, setIsCollapsed] = useState(true);
 
+  const hasRuler = useHasRuler(rulesSource);
+
   const stats = useMemo(
     (): Record<PromAlertingRuleState, number> =>
       group.rules.reduce<Record<PromAlertingRuleState, number>>(
         (stats, rule) => {
-          if (isAlertingRule(rule)) {
-            stats[rule.state] += 1;
+          if (rule.promRule && isAlertingRule(rule.promRule)) {
+            stats[rule.promRule.state] += 1;
           }
           return stats;
         },
@@ -54,6 +57,14 @@ export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
         {stats[PromAlertingRuleState.Pending]} pending
       </StateColoredText>
     );
+  }
+
+  const actionIcons: React.ReactNode[] = [];
+  if (hasRuler) {
+    actionIcons.push(<ActionIcon key="edit" icon="pen" tooltip="edit" />);
+  }
+  if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
+    actionIcons.push(<ActionIcon key="manage-perms" icon="lock" tooltip="manage permissions" />);
   }
 
   return (
@@ -88,11 +99,12 @@ export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
             </>
           )}
         </div>
-        <div className={styles.actionsSeparator}>|</div>
-        <div className={styles.actionIcons}>
-          <ActionIcon icon="pen" tooltip="edit" />
-          <ActionIcon icon="lock" tooltip="manage permissions" />
-        </div>
+        {!!actionIcons.length && (
+          <>
+            <div className={styles.actionsSeparator}>|</div>
+            <div className={styles.actionIcons}>{actionIcons}</div>
+          </>
+        )}
       </div>
       {!isCollapsed && <RulesTable rulesSource={rulesSource} namespace={namespace} group={group} />}
     </div>

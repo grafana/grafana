@@ -39,6 +39,14 @@ export function getAllRulesSourceNames(): string[] {
   return [...getRulesDataSources().map((r) => r.name), GRAFANA_RULES_SOURCE_NAME];
 }
 
+export function getAllRulesSources(): RulesSource[] {
+  return [...getRulesDataSources(), GRAFANA_RULES_SOURCE_NAME];
+}
+
+export function getRulesSourceName(rulesSource: RulesSource): string {
+  return isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
+}
+
 export function isCloudRulesSource(rulesSource: RulesSource): rulesSource is DataSourceInstanceSettings {
   return rulesSource !== GRAFANA_RULES_SOURCE_NAME;
 }
@@ -47,13 +55,9 @@ export function getDataSourceByName(name: string): DataSourceInstanceSettings<Da
   return getAllDataSources().find((source) => source.name === name);
 }
 
-export function getDatasourceAPIId(dataSourceName: string): string {
-  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+export function getDatasourceAPIId(datasourceName: string) {
+  if (datasourceName === GRAFANA_RULES_SOURCE_NAME) {
     return GRAFANA_RULES_SOURCE_NAME;
   }
-  const ds = getDataSourceByName(dataSourceName);
-  if (!ds) {
-    throw new Error(`Data source ${dataSourceName} not found`);
-  }
-  return String(ds.id);
+  return String(datasourceName);
 }
