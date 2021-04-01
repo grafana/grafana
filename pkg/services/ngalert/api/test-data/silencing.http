@@ -3,7 +3,7 @@
 ### 2. Create an Alerting rule based on the devenv Prometheus datasource
 ### 3. Manipulate Silences
 
-### First, let's double check how our alertmanager configuration looks like
+### Let's double check how our alertmanager configuration looks like
 POST http://admin:admin@localhost:3000/alertmanager/grafana/config/api/v1/alerts
 content-type: application/json
 
@@ -43,7 +43,7 @@ content-type: application/json
 ### Now let's verify it's there.
 GET http://admin:admin@localhost:3000/alertmanager/grafana/config/api/v1/alerts
 
-### First, let's create some rules for evaluation. If you need to update, include the "uid" as part of the "grafana_alert" key.
+###  Let's create some rules for evaluation. If you need to update, include the "uid" as part of the "grafana_alert" key.
 POST http://admin:admin@localhost:3000/ruler/grafana/api/v1/rules/demo
 content-type: application/json
 
