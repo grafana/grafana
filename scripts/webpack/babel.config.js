@@ -1,4 +1,4 @@
-module.exports = function getBabelConfig(options) {
+module.exports = function getBabelConfig(options = {}) {
   return {
     cacheDirectory: true,
     babelrc: false,
