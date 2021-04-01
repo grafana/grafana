@@ -19,7 +19,7 @@ type FrontendMetricsRecorder func(event FrontendMetricEvent)
 // MFrontendLoadTime is a metric summary of alert execution duration
 var FrontendMetrics map[string]FrontendMetricsRecorder = map[string]FrontendMetricsRecorder{}
 
-func registerFronterSummary(name string, help string) {
+func registerFrontendSummary(name string, help string) {
 	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
 
 	summary := prometheus.NewSummary(prometheus.SummaryOpts{
@@ -37,7 +37,7 @@ func registerFronterSummary(name string, help string) {
 }
 
 func initFrontendMetrics() {
-	registerFronterSummary("frontend_boot_load_time_milliseconds", "Frontend boot time measurement")
-	registerFronterSummary("frontend_boot_first_paint_time_milliseconds", "Frontend boot first paint")
-	registerFronterSummary("frontend_boot_js_done_time_milliseconds", "Frontend boot initial js load")
+	registerFrontendSummary("frontend_boot_load_time_milliseconds", "Frontend boot time measurement")
+	registerFrontendSummary("frontend_boot_first_paint_time_milliseconds", "Frontend boot first paint")
+	registerFrontendSummary("frontend_boot_js_done_time_milliseconds", "Frontend boot initial js load")
 }
