@@ -78,7 +78,7 @@ func TestServer_Run_Error(t *testing.T) {
 	}
 
 	err := s.Run()
-	require.Equal(t, testErr, err)
+	require.ErrorIs(t, err, testErr)
 	require.NotZero(t, s.ExitCode(err))
 }
 
@@ -108,7 +108,6 @@ func TestServer_Shutdown(t *testing.T) {
 		s.Shutdown("test interrupt")
 	}()
 	err := s.Run()
-	require.Equal(t, context.Canceled, err)
+	require.NoError(t, err)
 	require.Zero(t, s.ExitCode(err))
-	require.Equal(t, "test interrupt", s.shutdownReason)
 }

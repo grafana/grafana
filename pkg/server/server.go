@@ -115,11 +115,10 @@ type Server struct {
 	childRoutines    *errgroup.Group
 	log              log.Logger
 	cfg              *setting.Cfg
-	shutdownReason   string
 	shutdownOnce     sync.Once
 	shutdownFinished chan struct{}
 	isInitialized    bool
-	mtx              sync.RWMutex
+	mtx              sync.Mutex
 	listener         net.Listener
 
 	configFile  string
@@ -174,9 +173,11 @@ func (s *Server) init() error {
 
 // Run initializes and starts services. This will block until all services have
 // exited. To initiate shutdown, call the Shutdown method in another goroutine.
-func (s *Server) Run() (err error) {
-	if err = s.init(); err != nil {
-		return
+func (s *Server) Run() error {
+	defer close(s.shutdownFinished)
+
+	if err := s.init(); err != nil {
+		return err
 	}
 
 	services := s.serviceRegistry.GetServices()
@@ -201,37 +202,22 @@ func (s *Server) Run() (err error) {
 			default:
 			}
 			err := service.Run(s.context)
-			if err != nil {
-				if !errors.Is(err, context.Canceled) {
-					// Server has crashed.
-					s.log.Error("Stopped "+descriptor.Name, "reason", err)
-				} else {
-					s.log.Debug("Stopped "+descriptor.Name, "reason", err)
-				}
-
-				return err
+			// Do not return context.Canceled error since errgroup.Group only
+			// returns the first error to the caller - thus we can miss a more
+			// interesting error.
+			if err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("Stopped "+descriptor.Name, "reason", err)
+				return fmt.Errorf("%s run error: %w", descriptor.Name, err)
 			}
-
+			s.log.Debug("Stopped "+descriptor.Name, "reason", err)
 			return nil
 		})
 	}
 
-	defer func() {
-		s.log.Debug("Waiting on services...")
-		if waitErr := s.childRoutines.Wait(); waitErr != nil {
-			if !errors.Is(waitErr, context.Canceled) {
-				s.log.Error("A service failed", "err", waitErr)
-			}
-			if err == nil {
-				err = waitErr
-			}
-		}
-		close(s.shutdownFinished)
-	}()
-
 	s.notifySystemd("READY=1")
 
-	return nil
+	s.log.Debug("Waiting on services...")
+	return s.childRoutines.Wait()
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
@@ -240,13 +226,8 @@ func (s *Server) Run() (err error) {
 func (s *Server) Shutdown(reason string) {
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
-		s.mtx.Lock()
-		s.shutdownReason = reason
-		s.mtx.Unlock()
-
-		// call cancel func to stop services.
+		// Call cancel func to stop services.
 		s.shutdownFn()
-
 		// Can introduce termination timeout here if needed over incoming Context,
 		// but this will require changing Shutdown method signature to accept context
 		// and return an error - caller can exit with code > 0 then.
@@ -257,20 +238,11 @@ func (s *Server) Shutdown(reason string) {
 
 // ExitCode returns an exit code for a given error.
 func (s *Server) ExitCode(runError error) int {
-	// Lock required mostly to make go race detector happy.
-	s.mtx.RLock()
-	shutdownReason := s.shutdownReason
-	s.mtx.RUnlock()
-
-	var code int
-
-	isCleanShutdown := errors.Is(runError, context.Canceled) && shutdownReason != ""
-	if !isCleanShutdown {
-		code = 1
-		s.log.Error("Server shutdown", "reason", runError)
+	if runError != nil {
+		s.log.Error("Server shutdown", "error", runError)
+		return 1
 	}
-
-	return code
+	return 0
 }
 
 // writePIDFile retrieves the current process ID and writes it to file.
