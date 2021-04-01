@@ -23,7 +23,9 @@ import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/event
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
   if (ask !== false) {
-    const text2 = panel.alert ? 'Panel includes an alert rule. removing the panel will also remove the alert rule' : undefined;
+    const text2 = panel.alert
+      ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
+      : undefined;
     const confirmText = panel.alert ? 'YES' : undefined;
 
     appEvents.publish(

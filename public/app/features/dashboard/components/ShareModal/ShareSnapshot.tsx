@@ -210,13 +210,13 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       <>
         <div>
           <p className="share-modal-info-text">
-            A snapshot is an instant way to share an interactive dashboard publicly. When created, we{' '}
-            strip sensitive data like queries (metric, template, and annotation) and panel links,
-            leaving only the visible metric data and series names embedded in your dashboard.
+            A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive
+            data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data
+            and series names embedded in your dashboard.
           </p>
           <p className="share-modal-info-text">
-            Keep in mind, your snapshot <emphasis>can be viewed by anyone</emphasis> that has the link 
-            and can access the URL. Share wisely.
+            Keep in mind, your snapshot <em>can be viewed by anyone</em> that has the link and can access the URL. Share
+            wisely.
           </p>
         </div>
         <Field label="Snapshot name">
@@ -281,7 +281,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-header">
         <p className="share-modal-info-text">
-          The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour
+          The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before
           before it is removed from browser caches or CDN caches.
         </p>
       </div>

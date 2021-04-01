@@ -26,8 +26,8 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
     <>
       <h3 className="dashboard-settings__header">JSON Model</h3>
       <div className="dashboard-settings__subheader">
-        The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, 
-        panel settings, layout, queries, and so on.
+        The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel
+        settings, layout, queries, and so on.
       </div>
 
       <div>

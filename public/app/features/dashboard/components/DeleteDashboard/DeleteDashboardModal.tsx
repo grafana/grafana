@@ -45,7 +45,7 @@ const getModalBody = (panels: PanelModel[], title: string) => {
     <>
       <p>Do you want to delete this dashboard?</p>
       <p>
-        This dashboard contains {totalAlerts} alert{totalAlerts > 1 ? 's' : ''}. Deleting this dashboard also
+        This dashboard contains {totalAlerts} alert{totalAlerts > 1 ? 's' : ''}. Deleting this dashboard also deletes
         deletes those alerts
       </p>
     </>
@@ -69,8 +69,8 @@ const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): voi
     `}
   >
     <p>
-      This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config
-      file to delete it.
+      This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file
+      to delete it.
     </p>
     <p>
       <i>
