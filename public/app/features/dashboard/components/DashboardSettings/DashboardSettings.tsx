@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory } from '@grafana/ui';
 import config from 'app/core/config';

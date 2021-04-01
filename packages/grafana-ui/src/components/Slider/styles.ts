@@ -1,8 +1,8 @@
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
-import { css as cssCore } from '@emotion/core';
-import { css } from 'emotion';
+import { css as cssCore } from '@emotion/react';
+import { css } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
 export const getFocusStyle = (theme: GrafanaTheme) => css`

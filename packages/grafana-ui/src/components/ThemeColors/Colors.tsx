@@ -1,5 +1,5 @@
 import React from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import darkTheme from '../../themes/dark';
 import lightTheme from '../../themes/light';
 import { useStyles } from '../../themes';

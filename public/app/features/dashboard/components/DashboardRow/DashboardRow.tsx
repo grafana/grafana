@@ -52,7 +52,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
   onDelete = () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Delete Row',
+        title: 'Delete row',
         text: 'Are you sure you want to remove this row and all its panels?',
         altActionText: 'Delete row only',
         icon: 'trash-alt',

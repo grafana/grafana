@@ -118,7 +118,4 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	// Create alert_rule
 	store.AddAlertRuleMigrations(mg, defaultIntervalSeconds)
 	store.AddAlertRuleVersionMigrations(mg)
-
-	// Create silence table
-	store.SilenceMigration(mg)
 }
