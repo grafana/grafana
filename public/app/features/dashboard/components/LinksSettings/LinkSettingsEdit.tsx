@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { CollapsableSection, Button, TagsInput, Select, Field, Input, Checkbox } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { LinkSettingsMode } from '../DashboardSettings/LinksSettings';

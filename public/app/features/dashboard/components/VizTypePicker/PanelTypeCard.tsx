@@ -1,7 +1,7 @@
 import React from 'react';
 import { GrafanaTheme, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { Badge, BadgeProps, IconButton, PluginSignatureBadge, styleMixins, useStyles } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {

@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
 
