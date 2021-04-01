@@ -415,6 +415,7 @@ datasources:
       postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false
 ```
+>**Note:** In the above code, the `postgresVersion` value of `10` refers to version PotgreSQL 10 and above.
 
 If you encounter metric request errors or other issues:
 - Make sure your data source YAML file parameters exactly match the example. This includes parameter names and use of quotation marks.
