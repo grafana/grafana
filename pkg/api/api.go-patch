@@ -1,0 +1,80 @@
+--- grafana-6.2.5/pkg/api/api.go	2019-06-25 14:56:19.000000000 -0300
++++ grafana-trunk/changes/pkg/api/api.go	2019-10-03 15:52:25.953012883 -0300
+@@ -1,12 +1,19 @@
+ package api
+ 
+ import (
++	"crypto/aes"
++	"crypto/cipher"
++	"crypto/rand"
++	"encoding/base64"
++	"errors"
+ 	"github.com/go-macaron/binding"
+ 	"github.com/grafana/grafana/pkg/api/avatar"
+ 	"github.com/grafana/grafana/pkg/api/dtos"
+ 	"github.com/grafana/grafana/pkg/api/routing"
+ 	"github.com/grafana/grafana/pkg/middleware"
+ 	m "github.com/grafana/grafana/pkg/models"
++	"io"
++	"strings"
+ )
+ 
+ func (hs *HTTPServer) registerRoutes() {
+@@ -411,4 +418,57 @@
+ 
+ 	// streams
+ 	//r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
++
++
++	r.Get("/encrypt/:uid/:slug", func(c *m.ReqContext) string {
++		text := c.Params(":uid") + "," + c.Params(":slug")
++		key := []byte("p0w3r3d12345By67890pS3rv1c3s1012")
++		plainText := []byte(text)
++
++		block, err := aes.NewCipher(key)
++		if err != nil {
++			return "error"
++		}
++
++		cipherText := make([]byte, aes.BlockSize+len(plainText))
++		iv := cipherText[:aes.BlockSize]
++		if _, err = io.ReadFull(rand.Reader, iv); err != nil {
++			return "error"
++		}
++
++		stream := cipher.NewCFBEncrypter(block, iv)
++		stream.XORKeyStream(cipherText[aes.BlockSize:], plainText)
++
++		encmess := base64.URLEncoding.EncodeToString(cipherText)
++		return encmess
++	})
++
++	r.Get("/decrypt", func(c *m.ReqContext) string {
++		text := strings.Join(c.QueryStrings("hash"), "")
++		key := []byte("p0w3r3d12345By67890pS3rv1c3s1012")
++
++		cipherText, err := base64.URLEncoding.DecodeString(text)
++		if err != nil {
++			return "error"
++		}
++
++		block, err := aes.NewCipher(key)
++		if err != nil {
++			return "error"
++		}
++
++		if len(cipherText) < aes.BlockSize {
++			err = errors.New("Ciphertext block size is too short!")
++			return "error"
++		}
++
++		iv := cipherText[:aes.BlockSize]
++		cipherText = cipherText[aes.BlockSize:]
++
++		stream := cipher.NewCFBDecrypter(block, iv)
++		stream.XORKeyStream(cipherText, cipherText)
++
++		decodedmess := string(cipherText)
++		return decodedmess
++	})
+ }

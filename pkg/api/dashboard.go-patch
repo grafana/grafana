@@ -1,0 +1,76 @@
+--- grafana-6.2.5/pkg/api/dashboard.go	2019-06-25 14:56:19.000000000 -0300
++++ grafana-trunk/changes/pkg/api/dashboard.go	2019-10-03 15:52:25.953012883 -0300
+@@ -21,6 +21,11 @@
+ 	"github.com/grafana/grafana/pkg/services/guardian"
+ 	"github.com/grafana/grafana/pkg/setting"
+ 	"github.com/grafana/grafana/pkg/util"
++
++	"crypto/aes"
++	"crypto/cipher"
++	"encoding/base64"
++	"strings"
+ )
+ 
+ const (
+@@ -49,13 +54,60 @@
+ }
+ 
+ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
++	validSharedUid := false
++	if c.IsSignedIn == false && len(c.QueryStrings("shareduid")) > 0 {
++		text := strings.Join(c.QueryStrings("shareduid"), "")
++		key := []byte("p0w3r3d12345By67890pS3rv1c3s1012")
++
++		cipherText, err := base64.URLEncoding.DecodeString(text)
++		if err != nil {
++			return Error(403, "Access denied to this dashboard, hash error 00x1", nil)
++		}
++
++		block, err := aes.NewCipher(key)
++		if err != nil {
++			return Error(403, "Access denied to this dashboard, hash error 00x2", nil)
++		}
++
++		if len(cipherText) < aes.BlockSize {
++			return Error(403, "Access denied to this dashboard. Hash error 00x3", nil)
++		}
++
++		iv := cipherText[:aes.BlockSize]
++		cipherText = cipherText[aes.BlockSize:]
++
++		stream := cipher.NewCFBDecrypter(block, iv)
++		stream.XORKeyStream(cipherText, cipherText)
++
++		decodedmess := string(cipherText)
++
++		s := strings.Split(decodedmess, ",")
++
++		validSharedUid = s[0] == c.Params(":uid")
++		if validSharedUid == false {
++			return Error(403, "Access denied to this dashboard, invalid shareduid.", nil)
++		}
++	}
++
+ 	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+ 	if rsp != nil {
+ 		return rsp
+ 	}
+ 
+ 	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
+-	if canView, err := guardian.CanView(); err != nil || !canView {
++
++	/*
++    if canView, err := guardian.CanView(); err != nil || !canView {
++		return dashboardGuardianResponse(err)
++	}
++    */
++
++	canView, err := guardian.CanView()
++	if validSharedUid == true {
++		canView = true
++	}
++
++	if err != nil || !canView {
+ 		return dashboardGuardianResponse(err)
+ 	}
+ 

@@ -19,6 +19,12 @@ export const SideMenu: FC = React.memo(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
   }, []);
 
+  const isShared = query.get('shareduid');
+
+  if (isShared) {
+    return null;
+  }
+
   if (kiosk !== null) {
     return null;
   }
@@ -40,5 +46,4 @@ export const SideMenu: FC = React.memo(() => {
     </div>
   );
 });
-
 SideMenu.displayName = 'SideMenu';

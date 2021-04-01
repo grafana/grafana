@@ -1,0 +1,9 @@
+--- grafana-6.2.5/public/app/plugins/panel/bargauge/types.ts	2019-06-25 14:56:19.000000000 -0300
++++ grafana-trunk/changes/public/app/plugins/panel/bargauge/types.ts	2019-10-03 15:52:25.579013929 -0300
+@@ -19,5 +19,5 @@
+ export const defaults: BarGaugeOptions = {
+   displayMode: 'lcd',
+   orientation: VizOrientation.Horizontal,
+-  fieldOptions: standardGaugeFieldOptions,
++  fieldOptions: { ...standardGaugeFieldOptions, defaults: { ...standardGaugeFieldOptions.defaults, max: undefined } },
+ };
