@@ -24,7 +24,7 @@ describe('Tempo data source', () => {
       })
     );
     const ds = new TempoDatasource(defaultSettings);
-    await expect(ds.query({ targets: [{ query: '12345' }] } as any)).toEmitValuesWith((response) => {
+    await expect(ds.query({ targets: [{ refId: 'refid1' }] } as any)).toEmitValuesWith((response) => {
       const fields = (response[0].data[0] as DataFrame).fields;
       expect(
         fields.map((f) => ({

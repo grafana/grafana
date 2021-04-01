@@ -56,7 +56,7 @@ export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
             }}
           >
             <div className={styles.text}>
-              Or skip the effort and get {mainDS} (and {extraDS}) as fully managed, scalable and hosted data sources
+              Or skip the effort and get {mainDS} (and {extraDS}) as fully-managed, scalable, and hosted data sources
               from Grafana Labs with the{' '}
               <a
                 className="external-link"
