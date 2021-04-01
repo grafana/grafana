@@ -1,0 +1,187 @@
+### These set of request accomplish the following:
+### 1. Create an Alertmanager configuration
+### 2. Create an Alerting rule based on the devenv Prometheus datasource
+### 3. Manipulate Silences
+
+### First, let's double check how our alertmanager configuration looks like
+POST http://admin:admin@localhost:3000/alertmanager/grafana/config/api/v1/alerts
+content-type: application/json
+
+{
+  "template_files": {},
+  "alertmanager_config": {
+    "global": {},
+    "inhibit_rules": [],
+    "receivers": [
+      {
+        "name": "grafana_managed",
+        "grafana_managed_receiver_configs": [
+          {
+            "name": "demo_email_93874",
+            "isDefault": true,
+            "frequency": "30s",
+            "settings": {
+              "addresses": "someone@grafana.com"
+            },
+            "type": "email",
+            "uid": ""
+          }
+        ]
+      }
+    ],
+    "route": {
+      "receiver": "grafana_managed",
+      "routes": [],
+      "group_wait": "1s",
+      "group_interval": "1s",
+      "repeat_interval": "1s"
+    },
+    "template": []
+  }
+}
+
+### Now let's verify it's there.
+GET http://admin:admin@localhost:3000/alertmanager/grafana/config/api/v1/alerts
+
+### First, let's create some rules for evaluation. If you need to update, include the "uid" as part of the "grafana_alert" key.
+POST http://admin:admin@localhost:3000/ruler/grafana/api/v1/rules/demo
+content-type: application/json
+
+{
+  "name": "demo-alerts-for-demo",
+  "interval": "10s",
+  "rules": [
+    {
+      "grafana_alert": {
+        "title": "DemoAlert",
+        "condition": "condition",
+        "data": [
+          {
+            "refId": "A",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 300,
+              "to": 0
+            },
+            "model": {
+              "datasource": "gdev-prometheus",
+              "datasourceUid": "<CHANGE-ME-TO-BE-THE-UID>",
+              "expr": "sum by (handler, job, instance) (http_requests_total)",
+              "hide": false,
+              "interval": "",
+              "intervalMs": 1000,
+              "legendFormat": "",
+              "maxDataPoints": 100,
+              "refId": "A"
+            }
+          },
+          {
+            "refId": "reduced",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "model": {
+              "datasource": "__expr__",
+              "datasourceUid": "-100",
+              "expression": "A",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "reducer": "mean",
+              "refId": "reduced",
+              "type": "reduce"
+            }
+          },
+          {
+            "refId": "condition",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "model": {
+              "datasource": "__expr__",
+              "datasourceUid": "-100",
+              "expression": "$reduced < 10",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "refId": "condition",
+              "type": "math"
+            }
+          }
+            ]
+      }
+    }
+  ]
+}
+
+### Then, let's make sure our rules are there.
+GET http://admin:admin@localhost:3000/ruler/grafana/api/v1/rules
+
+### While that runs, let's play around with silences.
+### Create a Silence
+POST http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silences
+content-type: application/json
+
+{
+  "comment": "alerting squad +1",
+  "createdBy": "josh",
+  "startsAt": "2021-03-31T13:17:04.419Z",
+  "endsAt": "2023-03-31T14:17:04.419Z",
+  "matchers": [
+    {
+      "isRegex": true,
+      "name": "instance",
+      "value": "prometheus"
+    }
+  ]
+}
+### Show it to me
+GET http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silence/<CHANGE-ME>
+
+### Update its end date
+POST http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silences
+content-type: application/json
+
+{
+  "id": "<CHANGE-ME>",
+  "comment": "alert on me",
+  "createdBy": "josh",
+  "startsAt": "2021-03-31T13:17:04.419Z",
+  "endsAt": "2024-03-31T14:17:04.419Z",
+  "matchers": [
+    {
+      "isRegex": true,
+      "name": "instance",
+      "value": "prometheus"
+    }
+  ]
+}
+
+### Show me all the silences we've got so far.
+GET http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silences
+content-type: application/json
+
+### Remove it - if we try again, it'll tell us is already expired
+DELETE http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silence/eafcacf6-632a-4244-809a-a3e4013262fc
+
+### Now, create another silence that we're actually going to use
+POST http://admin:admin@localhost:3000/alertmanager/grafana/api/v2/silences
+content-type: application/json
+
+{
+  "comment": "an actual silence that will get stuff muted",
+  "createdBy": "josh",
+  "startsAt": "2021-03-31T13:17:04.419Z",
+  "endsAt": "2024-03-31T14:17:04.419Z",
+  "matchers": [
+    {
+      "isRegex": false,
+      "name": "instance",
+      "value": "prometheus"
+    }
+  ]
+}
