@@ -2,7 +2,7 @@ import React, { memo, MutableRefObject, useCallback, useMemo, useState, MouseEve
 import cx from 'classnames';
 import useMeasure from 'react-use/lib/useMeasure';
 import { usePanning } from './usePanning';
-import { EdgeDatum, NodeDatum } from './types';
+import { EdgeDatum, NodeDatum, NodesMarker } from './types';
 import { Node } from './Node';
 import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
@@ -18,6 +18,7 @@ import { useContextMenu } from './useContextMenu';
 import { processNodes } from './utils';
 import { Icon } from '..';
 import { useNodeLimit } from './useNodeLimit';
+import { Marker } from './Marker';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -63,7 +64,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 // This is mainly for performance reasons.
-const defaultNodeCountLimit = 1500;
+const defaultNodeCountLimit = 100;
 
 interface Props {
   dataFrames: DataFrame[];
@@ -79,10 +80,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
   // sure they are visible on top of everything else
-  const [nodeHover, setNodeHover] = useState<string | undefined>(undefined);
-  const clearNodeHover = useCallback(() => setNodeHover(undefined), [setNodeHover]);
-  const [edgeHover, setEdgeHover] = useState<string | undefined>(undefined);
-  const clearEdgeHover = useCallback(() => setEdgeHover(undefined), [setEdgeHover]);
+  const { nodeHover, setNodeHover, clearNodeHover, edgeHover, setEdgeHover, clearEdgeHover } = useHover();
 
   const firstNodesDataFrame = nodesDataFrames[0];
   const firstEdgesDataFrame = edgesDataFrames[0];
@@ -94,24 +92,32 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     firstNodesDataFrame,
   ]);
 
-  const { nodes: rawNodes, edges: rawEdges } = useNodeLimit(processed.nodes, processed.edges, nodeCountLimit);
-  const hiddenNodesCount = processed.nodes.length - rawNodes.length;
+  // May seem weird that we do layout first and then limit the nodes shown but the problem is we want to keep the node
+  // position stable which means we need the full layout first and then just visually hide the nodes. As hiding/showing
+  // nodes should not have effect on layout it should not be recalculated.
+  const layout = useLayout(processed.nodes, processed.edges, config);
 
-  const { nodes, edges, bounds } = useLayout(rawNodes, rawEdges, config);
+  const [focusedNode, setFocusedNode] = useState<NodeDatum>();
+  const { nodes, edges, markers } = useNodeLimit(layout.nodes, layout.edges, nodeCountLimit, focusedNode);
+  const hiddenNodesCount = processed.nodes.length - nodes.length;
+
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
-    bounds
+    layout.bounds
   );
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
   const styles = getStyles(useTheme());
 
+  // This cannot be inline func or it will create infinite render cycle.
+  const topLevelRef = useCallback(
+    (r) => {
+      measureRef(r);
+      (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
+    },
+    [measureRef, zoomRef]
+  );
+
   return (
-    <div
-      ref={(r) => {
-        measureRef(r);
-        (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
-      }}
-      className={styles.wrapper}
-    >
+    <div ref={topLevelRef} className={styles.wrapper}>
       <svg
         ref={panRef}
         viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
@@ -137,6 +143,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
             onClick={onNodeOpen}
             hoveringId={nodeHover}
           />
+
+          <Markers markers={markers || []} onClick={(e, m) => setFocusedNode(m.node)} />
           {/*We split the labels from edges so that they are shown on top of everything else*/}
           <EdgeLabels edges={edges} nodeHoveringId={nodeHover} edgeHoveringId={edgeHover} />
         </g>
@@ -165,7 +173,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   );
 }
 
-// These 3 components are here as a perf optimisation to prevent going through all nodes and edges on every pan/zoom.
+// These components are here as a perf optimisation to prevent going through all nodes and edges on every pan/zoom.
 
 interface NodesProps {
   nodes: NodeDatum[];
@@ -186,6 +194,20 @@ const Nodes = memo(function Nodes(props: NodesProps) {
           onClick={props.onClick}
           hovering={props.hoveringId === n.id}
         />
+      ))}
+    </>
+  );
+});
+
+interface MarkersProps {
+  markers: NodesMarker[];
+  onClick: (event: MouseEvent<SVGElement>, marker: NodesMarker) => void;
+}
+const Markers = memo(function Nodes(props: MarkersProps) {
+  return (
+    <>
+      {props.markers.map((m) => (
+        <Marker key={'marker-' + m.node.id} marker={m} onClick={props.onClick} />
       ))}
     </>
   );
@@ -247,4 +269,13 @@ function usePanAndZoom(bounds: Bounds) {
   });
   const { position, isPanning } = panningState;
   return { zoomRef: ref, panRef, position, isPanning, scale, onStepDown, onStepUp, isMaxZoom: isMax, isMinZoom: isMin };
+}
+
+function useHover() {
+  const [nodeHover, setNodeHover] = useState<string | undefined>(undefined);
+  const clearNodeHover = useCallback(() => setNodeHover(undefined), [setNodeHover]);
+  const [edgeHover, setEdgeHover] = useState<string | undefined>(undefined);
+  const clearEdgeHover = useCallback(() => setEdgeHover(undefined), [setEdgeHover]);
+
+  return { nodeHover, setNodeHover, clearNodeHover, edgeHover, setEdgeHover, clearEdgeHover };
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { forceSimulation, forceLink, forceCollide, forceX } from 'd3-force';
-import { EdgeDatum, NodeDatum } from './types';
+import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
 
 export interface Config {
   linkDistance: number;
@@ -29,9 +29,9 @@ export function useLayout(
   rawNodes: NodeDatum[],
   rawEdges: EdgeDatum[],
   config: Config = defaultConfig
-): { bounds: Bounds; nodes: NodeDatum[]; edges: EdgeDatum[] } {
+): { bounds: Bounds; nodes: NodeDatum[]; edges: EdgeDatumLayout[] } {
   const [nodes, setNodes] = useState<NodeDatum[]>([]);
-  const [edges, setEdges] = useState<EdgeDatum[]>([]);
+  const [edges, setEdges] = useState<EdgeDatumLayout[]>([]);
 
   // TODO the use effect is probably not needed here right now, but may make sense later if we decide to move the layout
   // to webworker or just postpone until other things are rendered. Also right now it memoizes this for us.
@@ -75,7 +75,8 @@ export function useLayout(
     // We do centering here instead of using centering force to keep this more stable
     centerNodes(rawNodesCopy);
     setNodes(rawNodesCopy);
-    setEdges(rawEdgesCopy);
+    // The forceSimulation modifies the edges
+    setEdges(rawEdgesCopy as EdgeDatumLayout[]);
   }, [config, rawNodes, rawEdges]);
 
   return {
@@ -110,7 +111,7 @@ function initializePositions(
 
   const nodesMap = nodes.reduce((acc, node) => ({ ...acc, [node.id]: node }), {} as Record<string, NodeDatum>);
   const edgesMap = edges.reduce((acc, edge) => {
-    const sourceId = edge.source as number;
+    const sourceId = edge.source;
     return {
       ...acc,
       [sourceId]: [...(acc[sourceId] || []), edge],
@@ -119,8 +120,14 @@ function initializePositions(
 
   let roots = nodes.filter((n) => n.incoming === 0);
 
+  // For things like service maps we assume there is some root (client) node but if there is none then selecting
+  // any node as a starting point should work the same.
+  if (!roots.length) {
+    roots = [nodes[0]];
+  }
+
   let secondLevelRoots = roots.reduce<NodeDatum[]>(
-    (acc, r) => [...acc, ...(edgesMap[r.id] ? edgesMap[r.id].map((e) => nodesMap[e.target as number]) : [])],
+    (acc, r) => [...acc, ...(edgesMap[r.id] ? edgesMap[r.id].map((e) => nodesMap[e.target]) : [])],
     []
   );
 
@@ -147,7 +154,7 @@ function initializePositions(
         // Move to next Y position for next node
         y += nodeYSpacing;
         if (edgesMap[node.id]) {
-          nextGraphLevel.push(...edgesMap[node.id].map((edge) => nodesMap[edge.target as number]));
+          nextGraphLevel.push(...edgesMap[node.id].map((edge) => nodesMap[edge.target]));
         }
       }
 

@@ -52,6 +52,7 @@ export const Node = memo(function Node(props: {
 
   return (
     <g
+      data-node-id={node.id}
       className={styles.mainGroup}
       onMouseEnter={() => {
         onMouseEnter(node.id);
