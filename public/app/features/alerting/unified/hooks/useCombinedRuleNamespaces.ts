@@ -17,11 +17,6 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
         const rulerRules = rulerRulesResponses[rulesSourceName]?.result || {};
         const namespaces: Record<string, CombinedRuleNamespace> = {};
 
-        if (rulesSourceName === 'Prometheus') {
-          console.log('prom', promRules);
-          console.log('ruler', rulerRules);
-        }
-
         // first get all the ruler rules in
         Object.entries(rulerRules).forEach(([namespaceName, groups]) => {
           namespaces[namespaceName] = {

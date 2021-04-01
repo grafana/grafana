@@ -11,6 +11,7 @@ import Expression from './Expression';
 
 import { fetchRulerRulesNamespace, setRulerRuleGroup } from '../../api/ruler';
 import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { locationService } from '@grafana/runtime';
 
 type Props = {};
 
@@ -57,6 +58,7 @@ const AlertRuleForm: FC<Props> = () => {
 
   const handleSubmit = (alertRule: AlertRuleFormFields) => {
     const { name, expression, forTime, dataSource, timeUnit, labels, annotations } = alertRule;
+    console.log('saving', alertRule);
     const { namespace, group: groupName } = folder || {};
     if (namespace && groupName) {
       fetchRulerRulesNamespace(dataSource?.value, namespace)
@@ -88,6 +90,7 @@ const AlertRuleForm: FC<Props> = () => {
         })
         .then(() => {
           console.log('Alert rule saved successfully');
+          locationService.push('/alerting/list');
         })
         .catch((error) => console.error(error));
     }
@@ -105,7 +108,11 @@ const AlertRuleForm: FC<Props> = () => {
               Save
             </ToolbarButton>
             <ToolbarButton variant="primary">Save and exit</ToolbarButton>
-            <ToolbarButton variant="destructive">Cancel</ToolbarButton>
+            <a href="/alerting/list">
+              <ToolbarButton variant="destructive" type="button">
+                Cancel
+              </ToolbarButton>
+            </a>
           </PageToolbar>
           <div className={styles.formWrapper}>
             <AlertTypeSection {...formApi} setFolder={setFolder} />

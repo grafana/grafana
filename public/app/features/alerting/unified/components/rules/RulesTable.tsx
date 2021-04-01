@@ -15,6 +15,7 @@ import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { useDispatch } from 'react-redux';
 import { deleteRuleAction } from '../../state/actions';
+import { useHasRuler } from '../../hooks/useHasRuler';
 
 interface Props {
   namespace: string;
@@ -25,6 +26,8 @@ interface Props {
 export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
   const { rules } = group;
   const dispatch = useDispatch();
+
+  const hasRuler = useHasRuler(rulesSource);
 
   const styles = useStyles(getStyles);
   const tableStyles = useStyles(getAlertTableStyles);
@@ -86,6 +89,11 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
               seenKeys.push(key);
               const isExpanded = expandedKeys.includes(key);
               const { promRule, rulerRule } = rule;
+              const statuses = [
+                promRule?.health,
+                hasRuler && promRule && !rulerRule ? 'deleting' : '',
+                hasRuler && rulerRule && !promRule ? 'creating' : '',
+              ].filter((x) => !!x);
               return (
                 <Fragment key={key}>
                   <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
@@ -102,7 +110,7 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
                     </td>
                     <td>{promRule && isAlertingRule(promRule) ? <StateTag status={promRule.state} /> : 'n/a'}</td>
                     <td>{rule.name}</td>
-                    <td>{promRule?.health || 'n/a'}</td>
+                    <td>{statuses.join(', ') || 'n/a'}</td>
                     <td>
                       {promRule?.lastEvaluation && promRule.evaluationTime ? (
                         <>
