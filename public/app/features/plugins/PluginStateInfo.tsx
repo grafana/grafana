@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { AlphaNotice } from '@grafana/ui';
 import { PluginState } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface Props {
   state?: PluginState;

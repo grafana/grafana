@@ -1,7 +1,21 @@
+const fs = require('fs-extra');
 const path = require('path');
 
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const getBabelConfig = require('./babel.config');
+
+class CopyUniconsPlugin {
+  apply(compiler) {
+    compiler.hooks.afterEnvironment.tap('CopyUniconsPlugin', () => {
+      let destDir = path.resolve(__dirname, '../../public/img/icons/unicons');
+
+      if (!fs.pathExistsSync(destDir)) {
+        let srcDir = path.resolve(__dirname, '../../node_modules/iconscout-unicons-tarball/unicons/svg/line');
+        fs.copySync(srcDir, destDir);
+      }
+    });
+  }
+}
 
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
@@ -17,7 +31,6 @@ function shouldExclude(filename) {
     'apache-arrow',
     'react-hook-form',
     'rc-trigger',
-    '@iconscout/react-unicons',
     'monaco-editor',
   ];
   for (const package of packagesToProcessbyBabel) {
@@ -69,6 +82,7 @@ module.exports = {
     fs: 'empty',
   },
   plugins: [
+    new CopyUniconsPlugin(),
     new MonacoWebpackPlugin({
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
       filename: 'monaco-[name].worker.js',
@@ -169,6 +183,11 @@ module.exports = {
         test: /\.css$/,
         // include: MONACO_DIR, // https://github.com/react-monaco-editor/react-monaco-editor
         use: ['style-loader', 'css-loader'],
+      },
+      // for pre-caching SVGs as part of the JS bundles
+      {
+        test: /\.svg$/,
+        use: 'raw-loader',
       },
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
