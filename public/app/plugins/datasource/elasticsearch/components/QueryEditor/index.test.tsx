@@ -79,7 +79,7 @@ describe('QueryEditor', () => {
 
       render(<QueryEditor query={query} datasource={{} as ElasticDatasource} onChange={noop} onRunQuery={noop} />);
 
-      expect(screen.getByLabelText('Alias')).not.toBeDisabled();
+      expect(screen.getByLabelText('Alias')).toBeEnabled();
     });
   });
 });
