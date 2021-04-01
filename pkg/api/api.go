@@ -6,7 +6,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
-	"errors"
+
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -464,12 +464,11 @@ func (hs *HTTPServer) registerRoutes() {
 			return msgError
 		}
 		block, err := aes.NewCipher(key)
-		if len(cipherText) < aes.BlockSize {
-			err = errors.New("Ciphertext block size is too short!")
-			return msgError
-		}
 		if err != nil {
 			return msgError
+		}
+		if len(cipherText) < aes.BlockSize {
+			return "Ciphertext block size is too short!"
 		}
 
 		iv := cipherText[:aes.BlockSize]
