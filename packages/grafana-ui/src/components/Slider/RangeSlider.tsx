@@ -1,7 +1,7 @@
 import React, { FunctionComponent } from 'react';
 import { Range as RangeComponent, createSliderWithTooltip } from 'rc-slider';
-import { cx } from 'emotion';
-import { Global } from '@emotion/core';
+import { cx } from '@emotion/css';
+import { Global } from '@emotion/react';
 import { useTheme } from '../../themes/ThemeContext';
 import { getStyles } from './styles';
 import { RangeSliderProps } from './types';
