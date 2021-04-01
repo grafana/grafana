@@ -123,7 +123,7 @@ function initEchoSrv() {
   setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
 
   window.addEventListener('load', (e) => {
-    const loadMetricName = 'frontend_boot_load_time_milliseconds';
+    const loadMetricName = 'frontend_boot_load_time_seconds';
 
     if (performance && performance.getEntriesByType) {
       performance.mark(loadMetricName);
@@ -132,13 +132,13 @@ function initEchoSrv() {
 
       for (const metric of paintMetrics) {
         reportPerformance(
-          `frontend_boot_${metric.name}_time_milliseconds`,
-          Math.round(metric.startTime + metric.duration)
+          `frontend_boot_${metric.name}_time_seconds`,
+          Math.round(metric.startTime + metric.duration) / 1000
         );
       }
 
       const loadMetric = performance.getEntriesByName(loadMetricName)[0];
-      reportPerformance(loadMetric.name, Math.round(loadMetric.startTime + loadMetric.duration));
+      reportPerformance(loadMetric.name, Math.round(loadMetric.startTime + loadMetric.duration) / 1000);
     }
   });
 

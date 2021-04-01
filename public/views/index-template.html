@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/grafana.[[ .Theme ]].<%= webpack.hash %>.css" />
 
     <script nonce="[[.Nonce]]">
-      performance.mark('frontend_boot_css_time_milliseconds');
+      performance.mark('frontend_boot_css_time_seconds');
     </script>
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -315,9 +315,9 @@
       type="text/javascript"
     ></script>
     <% } %> <% } %>
-    
+
     <script nonce="[[.Nonce]]">
-      performance.mark('frontend_boot_js_done_time_milliseconds');
+      performance.mark('frontend_boot_js_done_time_seconds');
     </script>
   </body>
 </html>

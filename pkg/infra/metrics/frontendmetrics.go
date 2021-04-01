@@ -19,25 +19,25 @@ type FrontendMetricsRecorder func(event FrontendMetricEvent)
 // MFrontendLoadTime is a metric summary of alert execution duration
 var FrontendMetrics map[string]FrontendMetricsRecorder = map[string]FrontendMetricsRecorder{}
 
-func registerFrontendSummary(name string, help string) {
-	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
+func registerFrontendHistogram(name string, help string) {
+	defBuckets := []float64{.1, .25, .5, 1, 1.5, 2, 5, 10, 20, 40}
 
-	summary := prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:       name,
-		Help:       help,
-		Objectives: objectiveMap,
-		Namespace:  ExporterName,
+	histogram := prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:      name,
+		Help:      help,
+		Buckets:   defBuckets,
+		Namespace: ExporterName,
 	})
 
 	FrontendMetrics[name] = func(event FrontendMetricEvent) {
-		summary.Observe(event.Value)
+		histogram.Observe(event.Value)
 	}
 
-	prometheus.MustRegister(summary)
+	prometheus.MustRegister(histogram)
 }
 
 func initFrontendMetrics() {
-	registerFrontendSummary("frontend_boot_load_time_milliseconds", "Frontend boot time measurement")
-	registerFrontendSummary("frontend_boot_first_paint_time_milliseconds", "Frontend boot first paint")
-	registerFrontendSummary("frontend_boot_js_done_time_milliseconds", "Frontend boot initial js load")
+	registerFrontendHistogram("frontend_boot_load_time_seconds", "Frontend boot time measurement")
+	registerFrontendHistogram("frontend_boot_first_paint_time_seconds", "Frontend boot first paint")
+	registerFrontendHistogram("frontend_boot_js_done_time_seconds", "Frontend boot initial js load")
 }
