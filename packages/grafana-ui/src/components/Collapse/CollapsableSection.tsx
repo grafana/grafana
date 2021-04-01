@@ -1,6 +1,5 @@
-/** @jsx jsx */
-import { jsx, css } from '@emotion/react';
-import { FC, ReactNode, useState } from 'react';
+import React, { FC, ReactNode, useState } from 'react';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '../../themes';
 import { Icon } from '..';
@@ -19,11 +18,11 @@ export const CollapsableSection: FC<Props> = ({ label, isOpen, children }) => {
 
   return (
     <div>
-      <div onClick={() => toggleOpen(!open)} css={headerStyle} title={tooltip}>
+      <div onClick={() => toggleOpen(!open)} className={headerStyle} title={tooltip}>
         {label}
-        <Icon name={open ? 'angle-down' : 'angle-right'} size="xl" css={styles.icon} />
+        <Icon name={open ? 'angle-down' : 'angle-right'} size="xl" className={styles.icon} />
       </div>
-      {open && <div css={styles.content}>{children}</div>}
+      {open && <div className={styles.content}>{children}</div>}
     </div>
   );
 };
