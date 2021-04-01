@@ -16,7 +16,7 @@ import (
 // TimeNow makes it possible to test usage of time
 var TimeNow = time.Now
 
-// AlertDefinitionMaxTitleLength is the maximum length of the alert definition titles
+// AlertDefinitionMaxTitleLength is the maximum length of the alert definition title
 const AlertDefinitionMaxTitleLength = 190
 
 // ErrEmptyTitleError is an error returned if the alert definition title is empty
@@ -26,20 +26,28 @@ var ErrEmptyTitleError = errors.New("title is empty")
 type Store interface {
 	DeleteAlertDefinitionByUID(*models.DeleteAlertDefinitionByUIDCommand) error
 	GetAlertDefinitionByUID(*models.GetAlertDefinitionByUIDQuery) error
-	GetAlertDefinitions(query *models.ListAlertDefinitionsQuery) error
-	GetOrgAlertDefinitions(query *models.ListAlertDefinitionsQuery) error
+	GetAlertDefinitions(*models.ListAlertDefinitionsQuery) error
+	GetOrgAlertDefinitions(*models.ListAlertDefinitionsQuery) error
 	SaveAlertDefinition(*models.SaveAlertDefinitionCommand) error
 	UpdateAlertDefinition(*models.UpdateAlertDefinitionCommand) error
 	GetAlertInstance(*models.GetAlertInstanceQuery) error
-	ListAlertInstances(cmd *models.ListAlertInstancesQuery) error
-	SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error
+	ListAlertInstances(*models.ListAlertInstancesQuery) error
+	SaveAlertInstance(*models.SaveAlertInstanceCommand) error
 	ValidateAlertDefinition(*models.AlertDefinition, bool) error
 	UpdateAlertDefinitionPaused(*models.UpdateAlertDefinitionPausedCommand) error
 }
 
 // AlertingStore is the database interface used by the Alertmanager service.
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(cmd *models.GetLatestAlertmanagerConfigurationQuery) error
+	GetLatestAlertmanagerConfiguration(*models.GetLatestAlertmanagerConfigurationQuery) error
+	GetAlertmanagerConfiguration(*models.GetAlertmanagerConfigurationQuery) error
+	SaveAlertmanagerConfiguration(*models.SaveAlertmanagerConfigurationCmd) error
+	GetOrgSilences(*models.GetSilencesQuery) error
+	GetSilenceByUID(*models.GetSilenceByUIDQuery) error
+	GetSilenceByID(*models.GetSilenceByIDQuery) error
+	SaveSilence(*models.SaveSilenceCommand) error
+	DeleteSilenceByUID(*models.DeleteSilenceByUIDCommand) error
+	DeleteSilenceByID(*models.DeleteSilenceByIDCommand) error
 }
 
 // DBstore stores the alert definitions and instances in the database.
