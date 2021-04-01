@@ -9,6 +9,10 @@ function shouldExclude(filename) {
     return false;
   }
 
+  if (filename.indexOf(`.worker`) > 0) {
+    return true;
+  }
+
   const packagesToProcessbyBabel = [
     'debug',
     'lru-cache',
@@ -175,6 +179,10 @@ module.exports = {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         loader: 'file-loader',
         options: { name: 'static/img/[name].[hash:8].[ext]' },
+      },
+      {
+        test: /centrifuge\.worker\.(js|ts)$/,
+        use: { loader: 'worker-loader' },
       },
     ],
   },
