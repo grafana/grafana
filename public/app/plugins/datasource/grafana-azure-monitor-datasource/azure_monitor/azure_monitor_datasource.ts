@@ -10,6 +10,8 @@ import {
   AzureMonitorResourceGroupsResponse,
   AzureQueryType,
   AzureMonitorMetricsMetadataResponse,
+  AzureMetricQuery,
+  AggregationType,
 } from '../types';
 import {
   DataSourceInstanceSettings,
@@ -17,10 +19,13 @@ import {
   MetricFindValue,
   DataQueryResponse,
   DataQueryRequest,
+  TimeRange,
 } from '@grafana/data';
 import { getBackendSrv, DataSourceWithBackend, getTemplateSrv, FetchResponse } from '@grafana/runtime';
 import { from, Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
+
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 const defaultDropdownValue = 'select';
 
@@ -34,10 +39,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   url: string;
   cloudName: string;
   supportedMetricNamespaces: string[] = [];
+  timeSrv: TimeSrv;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
 
+    this.timeSrv = getTimeSrv();
     this.subscriptionId = instanceSettings.jsonData.subscriptionId;
     this.cloudName = instanceSettings.jsonData.cloudName || 'azuremonitor';
     this.baseUrl = `/${this.cloudName}/subscriptions`;
@@ -84,12 +91,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       for (const df of res.data) {
         const metricQuery = metricQueries[df.refId]?.azureMonitor;
         if (metricQuery) {
-          const url = `https://portal.azure.com/#blade/Microsoft_Azure_MonitoringAz/MetricsV4/Referer/MetricsExplorer/ResourceId/%2Fsubscriptions%2F${
-            this.subscriptionId
-          }%2FresourceGroups%2F${metricQuery.resourceGroup}%2Fproviders%2F${metricQuery.metricNamespace?.replace(
-            '/',
-            '%2F'
-          )}%2F${metricQuery.resourceName}`;
+          const url = this.buildAzurePortalUrl(metricQuery, this.subscriptionId, this.timeSrv.timeRange());
 
           for (const field of df.fields) {
             field.config.links = [
@@ -104,6 +106,43 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       }
     }
     return res;
+  }
+
+  stringifyAzurePortalUrlParam(value: string | object): string {
+    const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+    return encodeURIComponent(stringValue);
+  }
+
+  buildAzurePortalUrl(metricQuery: AzureMetricQuery, subscriptionId: string, timeRange: TimeRange) {
+    const chartDef = this.stringifyAzurePortalUrlParam({
+      v2charts: [
+        {
+          metrics: [
+            {
+              resourceMetadata: {
+                id: `/subscriptions/${subscriptionId}/resourceGroups/${metricQuery.resourceGroup}/providers/${metricQuery.metricDefinition}/${metricQuery.resourceName}`,
+              },
+              name: metricQuery.metricName,
+              aggregationType: AggregationType[metricQuery.aggregation as any],
+              namespace: metricQuery.metricNamespace,
+              metricVisualization: {
+                displayName: metricQuery.metricName,
+                resourceDisplayName: metricQuery.resourceName,
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const timeContext = this.stringifyAzurePortalUrlParam({
+      absolute: {
+        startTime: timeRange.from,
+        endTime: timeRange.to,
+      },
+    });
+
+    return `https://portal.azure.com/#blade/Microsoft_Azure_MonitoringAz/MetricsV4/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
