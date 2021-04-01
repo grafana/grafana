@@ -24,15 +24,7 @@ function shouldExclude(filename) {
     return false;
   }
 
-  const packagesToProcessbyBabel = [
-    'debug',
-    'lru-cache',
-    'yallist',
-    'apache-arrow',
-    'react-hook-form',
-    'rc-trigger',
-    'monaco-editor',
-  ];
+  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'react-hook-form', 'rc-trigger', 'monaco-editor'];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
       return false;
