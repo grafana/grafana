@@ -1,12 +1,6 @@
 import { AnyAction } from 'redux';
 
-import {
-  getRootReducer,
-  getTemplatingAndLocationRootReducer,
-  getTemplatingRootReducer,
-  RootReducerType,
-  TemplatingAndLocationReducerType,
-} from './helpers';
+import { getRootReducer, getTemplatingRootReducer, RootReducerType, TemplatingReducerType } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -66,8 +60,7 @@ import { expect } from '../../../../test/lib/common';
 import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { LocationState } from 'app/types';
+import { setDataSourceSrv, setLocationService } from '@grafana/runtime';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -152,11 +145,12 @@ describe('shared actions', () => {
       const list = [query, constant, datasource, custom, textbox];
       const preloadedState = {
         templating: ({} as unknown) as TemplatingState,
-        location: ({ query: {} } as unknown) as LocationState,
       };
+      const locationService: any = { getSearchObject: () => ({}) };
+      setLocationService(locationService);
 
-      const tester = await reduxTester<TemplatingAndLocationReducerType>({ preloadedState })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
@@ -209,13 +203,14 @@ describe('shared actions', () => {
 
       const list = [stats, substats];
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
+      const locationService: any = { getSearchObject: () => query };
+      setLocationService(locationService);
       const preloadedState = {
         templating: ({} as unknown) as TemplatingState,
-        location: ({ query } as unknown) as LocationState,
       };
 
-      const tester = await reduxTester<TemplatingAndLocationReducerType>({ preloadedState })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);

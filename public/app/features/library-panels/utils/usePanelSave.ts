@@ -1,54 +1,29 @@
 import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
-import { AppEvents } from '@grafana/data';
-import appEvents from 'app/core/app_events';
+
 import { PanelModel } from 'app/features/dashboard/state';
-import { addLibraryPanel, updateLibraryPanel } from '../state/api';
-
-const saveLibraryPanels = (panel: any, folderId: number) => {
-  if (!panel.libraryPanel) {
-    return Promise.reject();
-  }
-
-  if (panel.libraryPanel && panel.libraryPanel.uid === undefined) {
-    panel.libraryPanel.name = panel.title;
-    return addLibraryPanel(panel, folderId!);
-  }
-
-  return updateLibraryPanel(panel, folderId!);
-};
+import {
+  createPanelLibraryErrorNotification,
+  createPanelLibrarySuccessNotification,
+  saveAndRefreshLibraryPanel,
+} from '../utils';
+import { notifyApp } from 'app/core/actions';
 
 export const usePanelSave = () => {
+  const dispatch = useDispatch();
   const [state, saveLibraryPanel] = useAsyncFn(async (panel: PanelModel, folderId: number) => {
-    let panelSaveModel = panel.getSaveModel();
-    panelSaveModel = {
-      libraryPanel: {
-        name: panel.title,
-        uid: undefined,
-      },
-      ...panelSaveModel,
-    };
-    const savedPanel = await saveLibraryPanels(panelSaveModel, folderId);
-    panel.restoreModel({
-      ...savedPanel.model,
-      libraryPanel: {
-        uid: savedPanel.uid,
-        name: savedPanel.name,
-        meta: savedPanel.meta,
-      },
-    });
-    panel.refresh();
-    return savedPanel;
+    return await saveAndRefreshLibraryPanel(panel, folderId);
   }, []);
 
   useEffect(() => {
     if (state.error) {
-      appEvents.emit(AppEvents.alertError, [`Error saving library panel: "${state.error.message}"`]);
+      dispatch(notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${state.error.message}"`)));
     }
     if (state.value) {
-      appEvents.emit(AppEvents.alertSuccess, ['Library panel saved']);
+      dispatch(notifyApp(createPanelLibrarySuccessNotification('Library panel saved')));
     }
-  }, [state]);
+  }, [dispatch, state]);
 
   return { state, saveLibraryPanel };
 };

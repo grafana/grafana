@@ -290,6 +290,8 @@ describe('areMetricFindValues', () => {
     ${[{ text: { foo: 1 } }]}    | ${false}
     ${[{ text: Symbol('foo') }]} | ${false}
     ${[{ text: true }]}          | ${false}
+    ${[{ text: null }]}          | ${true}
+    ${[{ value: null }]}         | ${true}
     ${[]}                        | ${true}
     ${[{ text: '' }]}            | ${true}
     ${[{ Text: '' }]}            | ${true}

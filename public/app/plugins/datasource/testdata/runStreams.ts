@@ -9,12 +9,15 @@ import {
   CSVReader,
   Field,
   LoadingState,
+  StreamingDataFrame,
+  DataFrameSchema,
+  DataFrameData,
 } from '@grafana/data';
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
 
-export const defaultQuery: StreamingQuery = {
+export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
   speed: 250, // ms
   spread: 3.5,
@@ -23,7 +26,7 @@ export const defaultQuery: StreamingQuery = {
 };
 
 export function runStream(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-  const query = defaults(target.stream, defaultQuery);
+  const query = defaults(target.stream, defaultStreamQuery);
   if ('signal' === query.type) {
     return runSignalStream(target, query, req);
   }
@@ -45,22 +48,23 @@ export function runSignalStream(
     const streamId = `signal-${req.panelId}-${target.refId}`;
     const maxDataPoints = req.maxDataPoints || 1000;
 
-    const data = new CircularDataFrame({
-      append: 'tail',
-      capacity: maxDataPoints,
-    });
-    data.refId = target.refId;
-    data.name = target.alias || 'Signal ' + target.refId;
-    data.addField({ name: 'time', type: FieldType.time });
-    data.addField({ name: 'value', type: FieldType.number });
+    const schema: DataFrameSchema = {
+      refId: target.refId,
+      name: target.alias || 'Signal ' + target.refId,
+      fields: [
+        { name: 'time', type: FieldType.time },
+        { name: 'value', type: FieldType.number },
+      ],
+    };
 
     const { spread, speed, bands = 0, noise } = query;
-
     for (let i = 0; i < bands; i++) {
       const suffix = bands > 1 ? ` ${i + 1}` : '';
-      data.addField({ name: 'Min' + suffix, type: FieldType.number });
-      data.addField({ name: 'Max' + suffix, type: FieldType.number });
+      schema.fields.push({ name: 'Min' + suffix, type: FieldType.number });
+      schema.fields.push({ name: 'Max' + suffix, type: FieldType.number });
     }
+
+    const frame = new StreamingDataFrame({ schema }, { maxLength: maxDataPoints });
 
     let value = Math.random() * 100;
     let timeoutId: any = null;
@@ -68,9 +72,9 @@ export function runSignalStream(
     const addNextRow = (time: number) => {
       value += (Math.random() - 0.5) * spread;
 
-      let idx = 0;
-      data.fields[idx++].values.add(time);
-      data.fields[idx++].values.add(value);
+      const data: DataFrameData = {
+        values: [[time], [value]],
+      };
 
       let min = value;
       let max = value;
@@ -79,9 +83,12 @@ export function runSignalStream(
         min = min - Math.random() * noise;
         max = max + Math.random() * noise;
 
-        data.fields[idx++].values.add(min);
-        data.fields[idx++].values.add(max);
+        data.values.push([min]);
+        data.values.push([max]);
       }
+
+      const event = { data };
+      return frame.push(event);
     };
 
     // Fill the buffer on init
@@ -96,11 +103,10 @@ export function runSignalStream(
     const pushNextEvent = () => {
       addNextRow(Date.now());
       subscriber.next({
-        data: [data],
+        data: [frame],
         key: streamId,
         state: LoadingState.Streaming,
       });
-
       timeoutId = setTimeout(pushNextEvent, speed);
     };
 

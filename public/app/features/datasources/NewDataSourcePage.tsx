@@ -2,7 +2,7 @@ import React, { FC, PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import { DataSourcePluginMeta, NavModel } from '@grafana/data';
-import { Button, LinkButton, List } from '@grafana/ui';
+import { Button, LinkButton, List, PluginSignatureBadge } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import Page from 'app/core/components/Page/Page';
@@ -11,7 +11,6 @@ import { addDataSource, loadDataSourcePlugins } from './state/actions';
 import { getDataSourcePlugins } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { setDataSourceTypeSearchQuery } from './state/reducers';
-import { PluginSignatureBadge } from '../plugins/PluginSignatureBadge';
 import { Card } from 'app/core/components/Card/Card';
 import { PluginsErrorsInfo } from '../plugins/PluginsErrorsInfo';
 
@@ -104,8 +103,8 @@ class NewDataSourcePage extends PureComponent<Props> {
               <>
                 <br />
                 <p>
-                  Note that <strong>unsigned front-end datasource plugins</strong> are still usable, but this is subject
-                  to change in the upcoming releases of Grafana
+                  Note that unsigned front-end data source plugins are still usable, but this is subject to change in
+                  the upcoming releases of Grafana.
                 </p>
               </>
             </PluginsErrorsInfo>

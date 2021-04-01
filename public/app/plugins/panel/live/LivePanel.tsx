@@ -18,7 +18,7 @@ import {
 import { TablePanel } from '../table/TablePanel';
 import { LivePanelOptions, MessageDisplayMode } from './types';
 import { config, getGrafanaLiveSrv, MeasurementCollector } from '@grafana/runtime';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 
@@ -144,7 +144,7 @@ export class LivePanel extends PureComponent<Props, State> {
     const json = this.props.options?.json;
     if (json) {
       const rsp = await channel.publish(json);
-      console.log('GOT', rsp);
+      console.log('onPublishClicked (response from publish)', rsp);
     } else {
       console.log('nothing to publish');
     }

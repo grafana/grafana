@@ -9,7 +9,7 @@ import { PageContents } from './PageContents';
 import { CustomScrollbar, useStyles } from '@grafana/ui';
 import { GrafanaTheme, NavModel } from '@grafana/data';
 import { Branding } from '../Branding/Branding';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;

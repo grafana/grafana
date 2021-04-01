@@ -1599,7 +1599,6 @@ describe('PrometheusDatasource', () => {
 });
 
 describe('PrometheusDatasource for POST', () => {
-  //   const ctx = new helpers.ServiceTestContext();
   const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',

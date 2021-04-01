@@ -1,7 +1,7 @@
 import config from '../../../core/config';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { updateLocation, updateNavIndex } from 'app/core/actions';
+import { updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { DataSourcePluginCategory, ThunkResult, ThunkDispatch } from 'app/types';
@@ -21,7 +21,7 @@ import {
 } from './reducers';
 import { buildCategories } from './buildCategories';
 import { getDataSource, getDataSourceMeta } from './selectors';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
@@ -98,7 +98,7 @@ export const testDataSource = (
         let message = '';
 
         if (err.statusText) {
-          message = 'HTTP Error ' + err.statusText;
+          message = 'HTTP error ' + err.statusText;
         } else {
           message = err.message;
         }
@@ -146,7 +146,7 @@ export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
     }
 
     const result = await getBackendSrv().post('/api/datasources', newInstance);
-    dispatch(updateLocation({ path: `/datasources/edit/${result.id}` }));
+    locationService.push(`/datasources/edit/${result.id}`);
   };
 }
 
@@ -170,9 +170,11 @@ export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<vo
 export function deleteDataSource(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dataSource = getStore().dataSources.dataSource;
+
     await getBackendSrv().delete(`/api/datasources/${dataSource.id}`);
     await updateFrontendSettings();
-    dispatch(updateLocation({ path: '/datasources' }));
+
+    locationService.push('/datasources');
   };
 }
 

@@ -102,8 +102,11 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 		elem.Set("gridPos", panelAsJSON.Get("gridPos").MustMap())
 		elem.Set("id", panelAsJSON.Get("id").MustInt64())
 		elem.Set("libraryPanel", map[string]interface{}{
-			"uid":  libraryPanelInDB.UID,
-			"name": libraryPanelInDB.Name,
+			"uid":         libraryPanelInDB.UID,
+			"name":        libraryPanelInDB.Name,
+			"type":        libraryPanelInDB.Type,
+			"description": libraryPanelInDB.Description,
+			"version":     libraryPanelInDB.Version,
 			"meta": map[string]interface{}{
 				"canEdit":             libraryPanelInDB.Meta.CanEdit,
 				"connectedDashboards": libraryPanelInDB.Meta.ConnectedDashboards,
@@ -219,6 +222,13 @@ func (lps *LibraryPanelService) DisconnectLibraryPanelsForDashboard(c *models.Re
 	return lps.disconnectLibraryPanelsForDashboard(c, dash.Id, panelCount)
 }
 
+func (lps *LibraryPanelService) DeleteLibraryPanelsInFolder(c *models.ReqContext, folderUID string) error {
+	if !lps.IsEnabled() {
+		return nil
+	}
+	return lps.deleteLibraryPanelsInFolder(c, folderUID)
+}
+
 // AddMigration defines database migrations.
 // If Panel Library is not enabled does nothing.
 func (lps *LibraryPanelService) AddMigration(mg *migrator.Migrator) {
@@ -234,11 +244,14 @@ func (lps *LibraryPanelService) AddMigration(mg *migrator.Migrator) {
 			{Name: "folder_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "type", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "description", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "model", Type: migrator.DB_Text, Nullable: false},
 			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "created_by", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated_by", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "version", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"org_id", "folder_id", "name"}, Type: migrator.UniqueIndex},

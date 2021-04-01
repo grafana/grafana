@@ -1,5 +1,5 @@
 import React, { HTMLProps } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';

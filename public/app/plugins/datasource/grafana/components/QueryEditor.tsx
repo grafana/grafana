@@ -43,7 +43,7 @@ export class QueryEditor extends PureComponent<Props> {
       ...query,
       measurements: {
         ...query.measurements,
-        name: sel?.value,
+        key: sel?.value,
       },
     });
     onRunQuery();
@@ -128,22 +128,22 @@ export class QueryEditor extends PureComponent<Props> {
 
       let foundName = false;
       if (info) {
-        for (const name of info.getDistinctNames()) {
+        for (const name of info.getKeys()) {
           names.push({
             value: name,
             label: name,
           });
-          if (name === measurements.name) {
+          if (name === measurements.key) {
             foundName = true;
           }
         }
       }
 
-      if (measurements.name && !foundName) {
+      if (measurements.key && !foundName) {
         names.push({
-          label: measurements.name,
-          value: measurements.name,
-          description: `Frames with name ${measurements.name}`,
+          label: measurements.key,
+          value: measurements.key,
+          description: `Frames with key ${measurements.key}`,
         });
       }
     }
@@ -167,22 +167,6 @@ export class QueryEditor extends PureComponent<Props> {
         </div>
         {channel && (
           <>
-            <div className="gf-form">
-              <InlineField label="Measurement" grow={true} labelWidth={labelWidth}>
-                <Select
-                  options={names}
-                  value={names.find((v) => v.value === measurements?.name) || names[0]}
-                  onChange={this.onMeasurementNameChanged}
-                  allowCustomValue={true}
-                  backspaceRemovesValue={true}
-                  placeholder="Filter by name"
-                  isClearable={true}
-                  noOptionsMessage="Filter by name"
-                  formatCreateLabel={(input: string) => `Show: ${input}`}
-                  isSearchable={true}
-                />
-              </InlineField>
-            </div>
             <div className="gf-form">
               <InlineField label="Fields" grow={true} labelWidth={labelWidth}>
                 <Select

@@ -1208,17 +1208,12 @@ describe('ElasticResponse', () => {
   });
 
   describe('simple logs query and count', () => {
-    const targets: any = [
+    const targets: ElasticsearchQuery[] = [
       {
         refId: 'A',
         metrics: [{ type: 'count', id: '1' }],
         bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
-        context: 'explore',
-        interval: '10s',
-        isLogsQuery: true,
         key: 'Q-1561369883389-0.7611823271062786-0',
-        liveStreaming: false,
-        maxDataPoints: 1620,
         query: 'hello AND message',
         timeField: '@timestamp',
       },
@@ -1249,6 +1244,7 @@ describe('ElasticResponse', () => {
                 _source: {
                   '@timestamp': '2019-06-24T09:51:19.765Z',
                   host: 'djisaodjsoad',
+                  number: 1,
                   message: 'hello, i am a message',
                   level: 'debug',
                   fields: {
@@ -1268,6 +1264,7 @@ describe('ElasticResponse', () => {
                 _source: {
                   '@timestamp': '2019-06-24T09:52:19.765Z',
                   host: 'dsalkdakdop',
+                  number: 2,
                   message: 'hello, i am also message',
                   level: 'error',
                   fields: {
@@ -1348,6 +1345,22 @@ describe('ElasticResponse', () => {
       const fieldCache = new FieldCache(result.data[0]);
       const field = fieldCache.getFieldByName('level');
       expect(field?.values.toArray()).toEqual(['debug', 'info']);
+    });
+
+    it('should correctly guess field types', () => {
+      const result = new ElasticResponse(targets, response).getLogs();
+      const logResults = result.data[0] as MutableDataFrame;
+
+      const fields = logResults.fields.map((f) => {
+        return {
+          name: f.name,
+          type: f.type,
+        };
+      });
+
+      expect(fields).toContainEqual({ name: '@timestamp', type: 'time' });
+      expect(fields).toContainEqual({ name: 'number', type: 'number' });
+      expect(fields).toContainEqual({ name: 'message', type: 'string' });
     });
   });
 });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { CustomHeadersSettings, Props } from './CustomHeadersSettings';
+import { Button } from '../Button';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -46,6 +47,11 @@ describe('Render', () => {
     addButton.simulate('click', { preventDefault: () => {} });
     expect(wrapper.find('FormField').exists()).toBeTruthy();
     expect(wrapper.find('SecretFormField').exists()).toBeTruthy();
+  });
+
+  it('add header button should not submit the form', () => {
+    const wrapper = setup();
+    expect(wrapper.find(Button).getDOMNode()).toHaveAttribute('type', 'button');
   });
 
   it('should remove a header', () => {

@@ -4,7 +4,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { useMemo } from 'react';
 import { supportsDataQuery } from '../PanelEditor/utils';
-import { InspectTab } from './types';
+import { InspectTab } from 'app/features/inspector/types';
 
 /**
  * Given PanelData return first data source supporting metadata inspector
@@ -34,8 +34,8 @@ export const useDatasourceMetadata = (data?: PanelData) => {
  * Configures tabs for PanelInspector
  */
 export const useInspectTabs = (
-  plugin: PanelPlugin,
   dashboard: DashboardModel,
+  plugin: PanelPlugin | undefined | null,
   error?: DataQueryError,
   metaDs?: DataSourceApi
 ) => {

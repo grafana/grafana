@@ -3,9 +3,10 @@ import { PopoverContent } from '../Tooltip/Tooltip';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { ToolbarButtonVariant, ToolbarButton } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useStyles } from '../../themes/ThemeContext';
-import { Menu, MenuItemsGroup } from '../Menu/Menu';
+import { Menu } from '../Menu/Menu';
+import { MenuItem } from '../Menu/MenuItem';
 
 export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   className?: string;
@@ -41,14 +42,6 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
     setIsOpen(false);
   };
 
-  const menuGroup: MenuItemsGroup = {
-    items: options.map((item) => ({
-      label: (item.label || item.value) as string,
-      onClick: () => onChangeInternal(item),
-      active: item.value === value?.value,
-    })),
-  };
-
   return (
     <>
       <ToolbarButton
@@ -64,7 +57,17 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
       {isOpen && (
         <div className={styles.menuWrapper}>
           <ClickOutsideWrapper onClick={onCloseMenu} parent={document}>
-            <Menu items={[menuGroup]} />
+            <Menu>
+              {options.map((item) => (
+                <MenuItem
+                  key={`${item.value}`}
+                  label={(item.label || item.value) as string}
+                  ariaLabel={(item.label || item.value) as string}
+                  onClick={() => onChangeInternal(item)}
+                  active={item.value === value?.value}
+                />
+              ))}
+            </Menu>
           </ClickOutsideWrapper>
         </div>
       )}

@@ -4,6 +4,7 @@ export * from './CircularDataFrame';
 export * from './MutableDataFrame';
 export * from './processDataFrame';
 export * from './dimensions';
-export * from './ArrowDataFrame';
 export * from './ArrayDataFrame';
+export * from './DataFrameJSON';
+export * from './StreamingDataFrame';
 export * from './frameComparisons';

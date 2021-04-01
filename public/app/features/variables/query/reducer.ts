@@ -19,8 +19,9 @@ import {
   NONE_VARIABLE_TEXT,
   NONE_VARIABLE_VALUE,
   VariablePayload,
+  initialVariablesState,
+  VariablesState,
 } from '../state/types';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
 interface VariableOptionsUpdate {
   templatedRegex: string;

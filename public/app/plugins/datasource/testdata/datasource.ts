@@ -4,8 +4,6 @@ import { delay } from 'rxjs/operators';
 import {
   AnnotationEvent,
   ArrayDataFrame,
-  arrowTableToDataFrame,
-  base64StringToArrowTable,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -22,7 +20,6 @@ import {
   getLiveMeasurementsObserver,
   getTemplateSrv,
   TemplateSrv,
-  toDataQueryError,
 } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { runStream } from './runStreams';
@@ -61,9 +58,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         case 'grafana_api':
           streams.push(runGrafanaAPI(target, options));
           break;
-        case 'arrow':
-          streams.push(runArrowFile(target, options));
-          break;
         case 'annotations':
           streams.push(this.annotationDataTopicTest(target, options));
           break;
@@ -94,13 +88,11 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-    return new Observable<DataQueryResponse>((observer) => {
-      const events = this.buildFakeAnnotationEvents(req.range, 10);
-      const dataFrame = new ArrayDataFrame(events);
-      dataFrame.meta = { dataTopic: DataTopic.Annotations };
+    const events = this.buildFakeAnnotationEvents(req.range, 10);
+    const dataFrame = new ArrayDataFrame(events);
+    dataFrame.meta = { dataTopic: DataTopic.Annotations };
 
-      observer.next({ key: target.refId, data: [dataFrame] });
-    });
+    return of({ key: target.refId, data: [dataFrame] }).pipe(delay(100));
   }
 
   buildFakeAnnotationEvents(range: TimeRange, count: number): AnnotationEvent[] {
@@ -148,7 +140,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 
   variablesQuery(target: TestDataQuery, options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-    const query = target.stringInput;
+    const query = target.stringInput ?? '';
     const interpolatedQuery = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '*', options: options.scopedVars })
@@ -178,24 +170,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 }
 
-function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-  let data: DataFrame[] = [];
-  if (target.stringInput && target.stringInput.length > 10) {
-    try {
-      const table = base64StringToArrowTable(target.stringInput);
-      const frame = arrowTableToDataFrame(table);
-      frame.refId = target.refId;
-      data = [frame];
-    } catch (e) {
-      console.warn('Error reading saved arrow', e);
-      const error = toDataQueryError(e);
-      error.refId = target.refId;
-      return of({ state: LoadingState.Error, error, data });
-    }
-  }
-  return of({ state: LoadingState.Done, data, key: req.requestId + target.refId });
-}
-
 function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
   const url = `/api/${target.stringInput}`;
   return from(
@@ -222,7 +196,7 @@ function runGrafanaLiveQuery(
   }
   return getLiveMeasurementsObserver(
     {
-      scope: LiveChannelScope.Grafana,
+      scope: LiveChannelScope.Plugin,
       namespace: 'testdata',
       path: target.channel,
     },

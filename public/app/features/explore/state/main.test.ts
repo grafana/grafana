@@ -2,14 +2,14 @@ import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { exploreReducer, navigateToExplore, splitCloseAction } from './main';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { PanelModel } from 'app/features/dashboard/state';
-import { updateLocation } from '../../../core/actions';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { ExploreUrlState } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
-  const url = 'http://www.someurl.com';
+  const url = '/explore';
   const panel: Partial<PanelModel> = {
     datasource: 'mocked datasource',
     targets: [{ refId: 'A' }],
@@ -41,9 +41,8 @@ describe('navigateToExplore', () => {
     describe('and openInNewWindow is undefined', () => {
       const openInNewWindow: (url: string) => void = (undefined as unknown) as (url: string) => void;
       it('then it should dispatch correct actions', async () => {
-        const { dispatchedActions, url } = await getNavigateToExploreContext(openInNewWindow);
-
-        expect(dispatchedActions).toEqual([updateLocation({ path: url, query: {} })]);
+        const { url } = await getNavigateToExploreContext(openInNewWindow);
+        expect(locationService.getLocation().pathname).toEqual(url);
       });
 
       it('then getDataSourceSrv should have been once', async () => {

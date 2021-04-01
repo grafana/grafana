@@ -1,9 +1,9 @@
 import { AppEvents, locationUtil } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { FolderState, ThunkResult } from 'app/types';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel } from 'app/types/acl';
-import { updateLocation, updateNavIndex } from 'app/core/actions';
+import { updateNavIndex } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import appEvents from 'app/core/app_events';
 import { loadFolder, loadFolderPermissions } from './reducers';
@@ -25,15 +25,14 @@ export function saveFolder(folder: FolderState): ThunkResult<void> {
 
     // this should be redux action at some point
     appEvents.emit(AppEvents.alertSuccess, ['Folder saved']);
-
-    dispatch(updateLocation({ path: `${res.url}/settings` }));
+    locationService.push(`${res.url}/settings`);
   };
 }
 
 export function deleteFolder(uid: string): ThunkResult<void> {
   return async (dispatch) => {
     await backendSrv.delete(`/api/folders/${uid}`);
-    dispatch(updateLocation({ path: `dashboards` }));
+    locationService.push('/dashboards');
   };
 }
 
@@ -120,9 +119,9 @@ export function addFolderPermission(newItem: NewDashboardAclItem): ThunkResult<v
 }
 
 export function createNewFolder(folderName: string): ThunkResult<void> {
-  return async (dispatch) => {
+  return async () => {
     const newFolder = await getBackendSrv().post('/api/folders', { title: folderName });
     appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
-    dispatch(updateLocation({ path: locationUtil.stripBaseFromUrl(newFolder.url) }));
+    locationService.push(locationUtil.stripBaseFromUrl(newFolder.url));
   };
 }

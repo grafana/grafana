@@ -11,7 +11,7 @@ import InfluxDatasource from './datasource';
 export class InfluxQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  datasource: InfluxDatasource;
+  declare datasource: InfluxDatasource;
   queryModel: InfluxQueryModel;
   queryBuilder: any;
   groupBySegment: any;
@@ -81,6 +81,13 @@ export class InfluxQueryCtrl extends QueryCtrl {
    */
   onChange = (target: InfluxQuery) => {
     this.target.query = target.query;
+  };
+
+  // only called from raw-mode influxql-editor
+  onRawInfluxQLChange = (target: InfluxQuery) => {
+    this.target.query = target.query;
+    this.target.resultFormat = target.resultFormat;
+    this.target.alias = target.alias;
   };
 
   onRunQuery = () => {

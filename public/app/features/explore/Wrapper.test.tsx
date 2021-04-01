@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Wrapper from './Wrapper';
 import { configureStore } from '../../store/configureStore';
 import { Provider } from 'react-redux';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import {
   ArrayDataFrame,
   DataQueryResponse,
@@ -17,13 +17,14 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { setTimeSrv } from '../dashboard/services/TimeSrv';
 import { from, Observable } from 'rxjs';
-import { updateLocation } from '../../core/reducers/location';
 import { LokiDatasource } from '../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../plugins/datasource/loki/types';
 import { fromPairs } from 'lodash';
 import { EnhancedStore } from '@reduxjs/toolkit';
 import userEvent from '@testing-library/user-event';
 import { splitOpen } from './state/main';
+import { Route, Router } from 'react-router-dom';
+import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 
 type Mock = jest.Mock;
 
@@ -44,14 +45,14 @@ describe('Wrapper', () => {
   });
 
   it('inits url and renders editor but does not call query on empty url', async () => {
-    const { datasources, store } = setup();
+    const { datasources } = setup();
 
     // Wait for rendering the editor
     await screen.findByText(/Editor/i);
 
     // At this point url should be initialised to some defaults
-    expect(store.getState().location.query).toEqual({
-      orgId: '1',
+    expect(locationService.getSearchObject()).toEqual({
+      orgId: 1,
       left: JSON.stringify(['now-1h', 'now', 'loki', {}]),
     });
     expect(datasources.loki.query).not.toBeCalled();
@@ -72,8 +73,8 @@ describe('Wrapper', () => {
     await screen.findByText(`loki Editor input: { label="value"}`);
 
     // We did not change the url
-    expect(store.getState().location.query).toEqual({
-      orgId: '1',
+    expect(locationService.getSearchObject()).toEqual({
+      orgId: 1,
       ...query,
     });
 
@@ -92,18 +93,16 @@ describe('Wrapper', () => {
 
   it('handles url change and runs the new query', async () => {
     const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-    const { datasources, store } = setup({ query });
+    const { datasources } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the logs
     await screen.findByText(/custom log line/i);
 
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse('different log'));
-    store.dispatch(
-      updateLocation({
-        path: '/explore',
-        query: { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]) },
-      })
-    );
+
+    locationService.partial({
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]),
+    });
 
     // Editor renders the new query
     await screen.findByText(`loki Editor input: { label="different"}`);
@@ -113,19 +112,17 @@ describe('Wrapper', () => {
 
   it('handles url change and runs the new query with different datasource', async () => {
     const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-    const { datasources, store } = setup({ query });
+    const { datasources } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the logs
     await screen.findByText(/custom log line/i);
     await screen.findByText(`loki Editor input: { label="value"}`);
 
     (datasources.elastic.query as Mock).mockReturnValueOnce(makeMetricsQueryResponse());
-    store.dispatch(
-      updateLocation({
-        path: '/explore',
-        query: { left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]) },
-      })
-    );
+
+    locationService.partial({
+      left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]),
+    });
 
     // Editor renders the new query
     await screen.findByText(`elastic Editor input: other query`);
@@ -135,7 +132,7 @@ describe('Wrapper', () => {
 
   it('handles changing the datasource manually', async () => {
     const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-    const { datasources, store } = setup({ query });
+    const { datasources } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the editor
     await screen.findByText(/Editor/i);
@@ -143,8 +140,8 @@ describe('Wrapper', () => {
 
     await screen.findByText('elastic Editor input:');
     expect(datasources.elastic.query).not.toBeCalled();
-    expect(store.getState().location.query).toEqual({
-      orgId: '1',
+    expect(locationService.getSearchObject()).toEqual({
+      orgId: 1,
       left: JSON.stringify(['now-1h', 'now', 'elastic', {}]),
     });
   });
@@ -166,7 +163,7 @@ describe('Wrapper', () => {
       right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
     };
 
-    const { datasources, store } = setup({ query });
+    const { datasources } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     (datasources.elastic.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
@@ -185,8 +182,8 @@ describe('Wrapper', () => {
     await screen.findByText(`elastic Editor input: error`);
 
     // We did not change the url
-    expect(store.getState().location.query).toEqual({
-      orgId: '1',
+    expect(locationService.getSearchObject()).toEqual({
+      orgId: 1,
       ...query,
     });
 
@@ -221,19 +218,14 @@ describe('Wrapper', () => {
     const query = {
       left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
     };
-    const { datasources, store } = setup({ query });
+    const { datasources } = setup({ query });
     (datasources.loki.query as Mock).mockReturnValue(makeLogsQueryResponse());
     (datasources.elastic.query as Mock).mockReturnValue(makeLogsQueryResponse());
 
-    store.dispatch(
-      updateLocation({
-        path: '/explore',
-        query: {
-          left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-          right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
-        },
-      })
-    );
+    locationService.partial({
+      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+      right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
+    });
 
     // Editor renders the new query
     await screen.findByText(`loki Editor input: { label="value"}`);
@@ -305,19 +297,22 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
     timeZone: 'utc',
   };
 
-  store.getState().location.path = '/explore';
+  locationService.push({ pathname: '/explore' });
+
   if (options?.query) {
-    store.getState().location = {
-      ...store.getState().location,
-      query: options.query,
-    };
+    locationService.partial(options.query);
   }
+
+  const route = { component: Wrapper };
 
   render(
     <Provider store={store}>
-      <Wrapper />
+      <Router history={locationService.getHistory()}>
+        <Route path="/explore" exact render={(props) => <GrafanaRoute {...props} route={route as any} />} />
+      </Router>
     </Provider>
   );
+
   return { datasources: fromPairs(dsSettings.map((d) => [d.api.name, d.api])), store };
 }
 

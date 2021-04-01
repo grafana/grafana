@@ -1,9 +1,6 @@
 import React from 'react';
-import { hot } from 'react-hot-loader';
-import { compose } from 'redux';
 import { connect, ConnectedProps } from 'react-redux';
 import memoizeOne from 'memoize-one';
-import { withTheme } from '@grafana/ui';
 import { DataQuery, ExploreUrlState, EventBusExtended, EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import store from 'app/core/store';
@@ -22,17 +19,19 @@ import {
 import { getTimeZone } from '../profile/state/selectors';
 import Explore from './Explore';
 
-type PropsFromRedux = ConnectedProps<typeof connector>;
-interface Props extends PropsFromRedux {
+interface OwnProps {
   exploreId: ExploreId;
+  urlQuery: string;
   split: boolean;
 }
+
+interface Props extends OwnProps, ConnectedProps<typeof connector> {}
 
 /**
  * This component is responsible for handling initialization of an Explore pane and triggering synchronization
  * of state based on URL changes and preventing any infinite loops.
  */
-export class ExplorePaneContainerUnconnected extends React.PureComponent<Props & ConnectedProps<typeof connector>> {
+export class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
   el: any;
   exploreEvents: EventBusExtended;
 
@@ -97,9 +96,8 @@ export class ExplorePaneContainerUnconnected extends React.PureComponent<Props &
 const ensureQueriesMemoized = memoizeOne(ensureQueries);
 const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
-  const urlQuery = state.location.query[exploreId] as string;
-  const urlState = parseUrlState(urlQuery);
+function mapStateToProps(state: StoreState, props: OwnProps) {
+  const urlState = parseUrlState(props.urlQuery);
   const timeZone = getTimeZone(state.user);
 
   const { datasource, queries, range: urlRange, originPanelId } = (urlState || {}) as ExploreUrlState;
@@ -110,12 +108,11 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
     : getTimeRange(timeZone, DEFAULT_RANGE);
 
   return {
-    initialized: state.explore[exploreId]?.initialized,
+    initialized: state.explore[props.exploreId]?.initialized,
     initialDatasource,
     initialQueries,
     initialRange,
     originPanelId,
-    urlQuery,
   };
 }
 
@@ -127,4 +124,4 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const ExplorePaneContainer = compose(hot(module), connector, withTheme)(ExplorePaneContainerUnconnected);
+export const ExplorePaneContainer = connector(ExplorePaneContainerUnconnected);

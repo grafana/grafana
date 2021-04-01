@@ -1,14 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import cloneDeep from 'lodash/cloneDeep';
 import { default as lodashDefaults } from 'lodash/defaults';
-
 import { LoadingState, VariableType } from '@grafana/data';
 import { VariableModel, VariableOption, VariableWithOptions } from '../types';
-import { AddVariable, getInstanceState, VariablePayload } from './types';
+import { AddVariable, getInstanceState, VariablePayload, initialVariablesState, VariablesState } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
-import { initialVariablesState, VariablesState } from './variablesReducer';
 import { isQuery } from '../guard';
+import { ensureStringValues } from '../utils';
 
 const sharedReducerSlice = createSlice({
   name: 'templating/shared',
@@ -101,7 +100,7 @@ const sharedReducerSlice = createSlice({
     },
     changeVariableType: (state: VariablesState, action: PayloadAction<VariablePayload<{ newType: VariableType }>>) => {
       const { id } = action.payload;
-      const { label, name, index } = state[id];
+      const { label, name, index, description } = state[id];
 
       state[id] = {
         ...cloneDeep(variableAdapters.get(action.payload.data.newType).initialState),
@@ -109,6 +108,7 @@ const sharedReducerSlice = createSlice({
         label,
         name,
         index,
+        description,
       };
     },
     setCurrentVariableValue: (
@@ -120,10 +120,12 @@ const sharedReducerSlice = createSlice({
       }
 
       const instanceState = getInstanceState<VariableWithOptions>(state, action.payload.id);
-      const current = { ...action.payload.data.option };
+      const { option } = action.payload.data;
+      const current = { ...option, text: ensureStringValues(option?.text), value: ensureStringValues(option?.value) };
 
       instanceState.current = current;
       instanceState.options = instanceState.options.map((option) => {
+        option.value = ensureStringValues(option.value);
         let selected = false;
         if (Array.isArray(current.value)) {
           for (let index = 0; index < current.value.length; index++) {

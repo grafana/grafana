@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/go-macaron/binding"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -32,10 +33,7 @@ func (lps *LibraryPanelService) registerAPIEndpoints() {
 func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd createLibraryPanelCommand) response.Response {
 	panel, err := lps.createLibraryPanel(c, cmd)
 	if err != nil {
-		if errors.Is(err, errLibraryPanelAlreadyExists) {
-			return response.Error(400, errLibraryPanelAlreadyExists.Error(), err)
-		}
-		return response.Error(500, "Failed to create library panel", err)
+		return toLibraryPanelError(err, "Failed to create library panel")
 	}
 
 	return response.JSON(200, util.DynMap{"result": panel})
@@ -43,11 +41,9 @@ func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd createLi
 
 // connectHandler handles POST /api/library-panels/:uid/dashboards/:dashboardId.
 func (lps *LibraryPanelService) connectHandler(c *models.ReqContext) response.Response {
-	if err := lps.connectDashboard(c, c.Params(":uid"), c.ParamsInt64(":dashboardId")); err != nil {
-		if errors.Is(err, errLibraryPanelNotFound) {
-			return response.Error(404, errLibraryPanelNotFound.Error(), err)
-		}
-		return response.Error(500, "Failed to connect library panel", err)
+	err := lps.connectDashboard(c, c.Params(":uid"), c.ParamsInt64(":dashboardId"))
+	if err != nil {
+		return toLibraryPanelError(err, "Failed to connect library panel")
 	}
 
 	return response.Success("Library panel connected")
@@ -57,10 +53,7 @@ func (lps *LibraryPanelService) connectHandler(c *models.ReqContext) response.Re
 func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) response.Response {
 	err := lps.deleteLibraryPanel(c, c.Params(":uid"))
 	if err != nil {
-		if errors.Is(err, errLibraryPanelNotFound) {
-			return response.Error(404, errLibraryPanelNotFound.Error(), err)
-		}
-		return response.Error(500, "Failed to delete library panel", err)
+		return toLibraryPanelError(err, "Failed to delete library panel")
 	}
 
 	return response.Success("Library panel deleted")
@@ -70,13 +63,7 @@ func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) response.Res
 func (lps *LibraryPanelService) disconnectHandler(c *models.ReqContext) response.Response {
 	err := lps.disconnectDashboard(c, c.Params(":uid"), c.ParamsInt64(":dashboardId"))
 	if err != nil {
-		if errors.Is(err, errLibraryPanelNotFound) {
-			return response.Error(404, errLibraryPanelNotFound.Error(), err)
-		}
-		if errors.Is(err, errLibraryPanelDashboardNotFound) {
-			return response.Error(404, errLibraryPanelDashboardNotFound.Error(), err)
-		}
-		return response.Error(500, "Failed to disconnect library panel", err)
+		return toLibraryPanelError(err, "Failed to disconnect library panel")
 	}
 
 	return response.Success("Library panel disconnected")
@@ -86,10 +73,7 @@ func (lps *LibraryPanelService) disconnectHandler(c *models.ReqContext) response
 func (lps *LibraryPanelService) getHandler(c *models.ReqContext) response.Response {
 	libraryPanel, err := lps.getLibraryPanel(c, c.Params(":uid"))
 	if err != nil {
-		if errors.Is(err, errLibraryPanelNotFound) {
-			return response.Error(404, errLibraryPanelNotFound.Error(), err)
-		}
-		return response.Error(500, "Failed to get library panel", err)
+		return toLibraryPanelError(err, "Failed to get library panel")
 	}
 
 	return response.JSON(200, util.DynMap{"result": libraryPanel})
@@ -97,9 +81,9 @@ func (lps *LibraryPanelService) getHandler(c *models.ReqContext) response.Respon
 
 // getAllHandler handles GET /api/library-panels/.
 func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) response.Response {
-	libraryPanels, err := lps.getAllLibraryPanels(c, c.QueryInt64("limit"))
+	libraryPanels, err := lps.getAllLibraryPanels(c, c.QueryInt("perPage"), c.QueryInt("page"), c.Query("name"), c.Query("excludeUid"))
 	if err != nil {
-		return response.Error(500, "Failed to get library panels", err)
+		return toLibraryPanelError(err, "Failed to get library panels")
 	}
 
 	return response.JSON(200, util.DynMap{"result": libraryPanels})
@@ -109,10 +93,7 @@ func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) response.Res
 func (lps *LibraryPanelService) getConnectedDashboardsHandler(c *models.ReqContext) response.Response {
 	dashboardIDs, err := lps.getConnectedDashboards(c, c.Params(":uid"))
 	if err != nil {
-		if errors.Is(err, errLibraryPanelNotFound) {
-			return response.Error(404, errLibraryPanelNotFound.Error(), err)
-		}
-		return response.Error(500, "Failed to get connected dashboards", err)
+		return toLibraryPanelError(err, "Failed to get connected dashboards")
 	}
 
 	return response.JSON(200, util.DynMap{"result": dashboardIDs})
@@ -122,14 +103,33 @@ func (lps *LibraryPanelService) getConnectedDashboardsHandler(c *models.ReqConte
 func (lps *LibraryPanelService) patchHandler(c *models.ReqContext, cmd patchLibraryPanelCommand) response.Response {
 	libraryPanel, err := lps.patchLibraryPanel(c, cmd, c.Params(":uid"))
 	if err != nil {
-		if errors.Is(err, errLibraryPanelAlreadyExists) {
-			return response.Error(400, errLibraryPanelAlreadyExists.Error(), err)
-		}
-		if errors.Is(err, errLibraryPanelNotFound) {
-			return response.Error(404, errLibraryPanelNotFound.Error(), err)
-		}
-		return response.Error(500, "Failed to update library panel", err)
+		return toLibraryPanelError(err, "Failed to update library panel")
 	}
 
 	return response.JSON(200, util.DynMap{"result": libraryPanel})
+}
+
+func toLibraryPanelError(err error, message string) response.Response {
+	if errors.Is(err, errLibraryPanelAlreadyExists) {
+		return response.Error(400, errLibraryPanelAlreadyExists.Error(), err)
+	}
+	if errors.Is(err, errLibraryPanelNotFound) {
+		return response.Error(404, errLibraryPanelNotFound.Error(), err)
+	}
+	if errors.Is(err, errLibraryPanelDashboardNotFound) {
+		return response.Error(404, errLibraryPanelDashboardNotFound.Error(), err)
+	}
+	if errors.Is(err, errLibraryPanelVersionMismatch) {
+		return response.Error(412, errLibraryPanelVersionMismatch.Error(), err)
+	}
+	if errors.Is(err, models.ErrFolderNotFound) {
+		return response.Error(404, models.ErrFolderNotFound.Error(), err)
+	}
+	if errors.Is(err, models.ErrFolderAccessDenied) {
+		return response.Error(403, models.ErrFolderAccessDenied.Error(), err)
+	}
+	if errors.Is(err, errLibraryPanelHasConnectedDashboards) {
+		return response.Error(403, errLibraryPanelHasConnectedDashboards.Error(), err)
+	}
+	return response.Error(500, message, err)
 }

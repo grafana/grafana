@@ -4,15 +4,13 @@ import { hot } from 'react-hot-loader';
 import { Button, LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
 import { NavModel } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { updateLocation } from '../../core/actions';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { connect } from 'react-redux';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 
 export interface Props {
   navModel: NavModel;
-  updateLocation: typeof updateLocation;
 }
 
 interface State {
@@ -33,7 +31,7 @@ export class CreateTeam extends PureComponent<Props, State> {
 
     const result = await getBackendSrv().post('/api/teams', { name, email });
     if (result.teamId) {
-      this.props.updateLocation({ path: `/org/teams/edit/${result.teamId}` });
+      locationService.push(`/org/teams/edit/${result.teamId}`);
     }
   };
 
@@ -99,8 +97,4 @@ function mapStateToProps(state: StoreState) {
   };
 }
 
-const mapDispatchToProps = {
-  updateLocation,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(CreateTeam));
+export default hot(module)(connect(mapStateToProps)(CreateTeam));

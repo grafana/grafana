@@ -17,7 +17,7 @@ import memoize from 'lru-memoize';
 import { getConfigValue } from '../utils/config/get-config';
 import { getParent } from './span';
 import { TNil } from '../types';
-import { TraceSpan, TraceLink, TraceKeyValuePair, Trace } from '@grafana/data';
+import { TraceSpan, TraceLink, TraceKeyValuePair, Trace } from '../types/trace';
 
 const parameterRegExp = /#\{([^{}]*)\}/g;
 

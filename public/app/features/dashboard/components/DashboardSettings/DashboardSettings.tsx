@@ -1,11 +1,10 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, CustomScrollbar, Icon, IconName, PageToolbar, stylesFactory } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { updateLocation } from 'app/core/actions';
 import { DashboardModel } from '../../state/DashboardModel';
 import { SaveDashboardButton, SaveDashboardAsButton } from '../SaveDashboard/SaveDashboardButton';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
@@ -16,9 +15,10 @@ import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
 import { GrafanaTheme } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+
 export interface Props {
   dashboard: DashboardModel;
-  updateLocation: typeof updateLocation;
   editview: string;
 }
 
@@ -31,17 +31,11 @@ export interface SettingsPage {
 
 export class DashboardSettings extends PureComponent<Props> {
   onClose = () => {
-    this.props.updateLocation({
-      query: { editview: null },
-      partial: true,
-    });
+    locationService.partial({ editview: null });
   };
 
-  onChangePage = (id: string) => {
-    this.props.updateLocation({
-      query: { editview: id },
-      partial: true,
-    });
+  onChangePage = (editview: string) => {
+    locationService.partial({ editview });
   };
 
   getPages(): SettingsPage[] {

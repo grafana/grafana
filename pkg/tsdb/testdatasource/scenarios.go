@@ -2,6 +2,7 @@ package testdatasource
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -150,7 +151,7 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	p.registerScenario(&Scenario{
 		ID:      string(arrowQuery),
 		Name:    "Load Apache Arrow Data",
-		handler: p.handleClientSideScenario,
+		handler: p.handleArrowScenario,
 	})
 
 	p.registerScenario(&Scenario{
@@ -267,8 +268,8 @@ func (p *testDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Contex
 		frame := newSeriesForQuery(q, model, 0)
 		outsideTime := q.TimeRange.From.Add(-1 * time.Hour)
 		frame.Fields = data.Fields{
-			data.NewField("time", nil, []time.Time{outsideTime}),
-			data.NewField("value", nil, []float64{10}),
+			data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{outsideTime}),
+			data.NewField(data.TimeSeriesValueFieldName, nil, []float64{10}),
 		}
 
 		respD := resp.Responses[q.RefID]
@@ -285,42 +286,40 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 	for _, q := range req.Queries {
 		model, err := simplejson.NewJson(q.JSON)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("error reading query")
 		}
 		points := model.Get("points").MustArray()
 
 		frame := newSeriesForQuery(q, model, 0)
-		startTime := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
-		endTime := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 
-		timeVec := make([]*time.Time, 0)
-		floatVec := make([]*float64, 0)
+		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
+		timeField.Name = data.TimeSeriesTimeFieldName
+		valueField.Name = data.TimeSeriesValueFieldName
 
 		for _, val := range points {
 			pointValues := val.([]interface{})
 
-			var value float64
+			var value *float64
 
-			if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
-				value = valueFloat
+			if pointValues[0] != nil {
+				if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
+					value = &valueFloat
+				}
 			}
 
 			timeInt, err := strconv.ParseInt(string(pointValues[1].(json.Number)), 10, 64)
 			if err != nil {
 				continue
 			}
+
 			t := time.Unix(timeInt/int64(1e+3), (timeInt%int64(1e+3))*int64(1e+6))
 
-			if timeInt >= startTime && timeInt <= endTime {
-				timeVec = append(timeVec, &t)
-				floatVec = append(floatVec, &value)
-			}
+			timeField.Append(t)
+			valueField.Append(value)
 		}
 
-		frame.Fields = data.Fields{
-			data.NewField("time", nil, timeVec),
-			data.NewField("value", nil, floatVec),
-		}
+		frame.Fields = data.Fields{timeField, valueField}
 
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
@@ -484,6 +483,30 @@ func (p *testDataPlugin) handleServerError500Scenario(ctx context.Context, req *
 
 func (p *testDataPlugin) handleClientSideScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	return backend.NewQueryDataResponse(), nil
+}
+
+func (p *testDataPlugin) handleArrowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			return nil, err
+		}
+
+		respD := resp.Responses[q.RefID]
+		frame, err := doArrowQuery(q, model)
+		if err != nil {
+			return nil, err
+		}
+		if frame == nil {
+			continue
+		}
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
 }
 
 func (p *testDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -797,8 +820,8 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 	}
 
 	return data.Fields{
-		data.NewField("time", nil, timeVec),
-		data.NewField("value", nil, floatVec),
+		data.NewField(data.TimeSeriesTimeFieldName, nil, timeVec),
+		data.NewField(data.TimeSeriesValueFieldName, nil, floatVec),
 	}, nil
 }
 
@@ -875,6 +898,18 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 	}
 
 	return frame
+}
+
+func doArrowQuery(query backend.DataQuery, model *simplejson.Json) (*data.Frame, error) {
+	encoded := model.Get("stringInput").MustString("")
+	if encoded == "" {
+		return nil, nil
+	}
+	arrow, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, err
+	}
+	return data.UnmarshalArrowFrame(arrow)
 }
 
 func newSeriesForQuery(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {

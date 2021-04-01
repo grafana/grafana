@@ -48,21 +48,14 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
   }
 
   const firstFrame = data.series[0];
-  if (!firstFrame.fields.find((f) => f.type === FieldType.string)) {
+  if (!firstFrame.fields.some((f) => f.type === FieldType.string)) {
     return (
       <div className="panel-empty">
         <p>Bar charts requires a string field</p>
       </div>
     );
   }
-  if (
-    firstFrame.fields.reduce((acc, f) => {
-      if (f.type === FieldType.number) {
-        return acc + 1;
-      }
-      return acc;
-    }, 0) < 2
-  ) {
+  if (!firstFrame.fields.some((f) => f.type === FieldType.number)) {
     return (
       <div className="panel-empty">
         <p>No numeric fields found</p>
