@@ -1,11 +1,4 @@
-import {
-  arrowTableToBase64String,
-  DataFrame,
-  DataSourceInstanceSettings,
-  grafanaDataFrameToArrowTable,
-  MutableDataFrame,
-  PluginType,
-} from '@grafana/data';
+import { DataFrame, dataFrameToJSON, DataSourceInstanceSettings, MutableDataFrame, PluginType } from '@grafana/data';
 import { Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
@@ -48,18 +41,13 @@ function setupBackendSrv(frame: DataFrame) {
         createFetchResponse({
           results: {
             refid1: {
-              dataframes: [encode(frame)],
+              frames: [dataFrameToJSON(frame)],
             },
           },
         })
       );
     },
   } as any);
-}
-
-function encode(frame: DataFrame) {
-  const table = grafanaDataFrameToArrowTable(frame);
-  return arrowTableToBase64String(table);
 }
 
 const defaultSettings: DataSourceInstanceSettings = {
