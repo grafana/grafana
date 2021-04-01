@@ -1,9 +1,8 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import cloneDeep from 'lodash/cloneDeep';
 import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload } from '../state/types';
+import { toVariablePayload, VariablesState } from '../state/types';
 import { adHocVariableReducer, filterAdded, filterRemoved, filtersRestored, filterUpdated } from './reducer';
-import { VariablesState } from '../state/variablesReducer';
 import { AdHocVariableFilter, AdHocVariableModel } from '../types';
 import { createAdHocVariableAdapter } from './adapter';
 

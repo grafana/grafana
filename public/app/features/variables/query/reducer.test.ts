@@ -8,9 +8,8 @@ import {
 } from './reducer';
 import { QueryVariableModel, VariableSort } from '../types';
 import cloneDeep from 'lodash/cloneDeep';
-import { VariablesState } from '../state/variablesReducer';
 import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload } from '../state/types';
+import { toVariablePayload, VariablesState } from '../state/types';
 import { createQueryVariableAdapter } from './adapter';
 import { MetricFindValue } from '@grafana/data';
 

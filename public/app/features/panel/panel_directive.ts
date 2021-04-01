@@ -1,4 +1,3 @@
-import angular from 'angular';
 // @ts-ignore
 import baron from 'baron';
 import { PanelEvents } from '@grafana/data';
@@ -6,14 +5,13 @@ import { PanelModel } from '../dashboard/state';
 import { PanelCtrl } from './panel_ctrl';
 import { Subscription } from 'rxjs';
 import { RefreshEvent, RenderEvent } from 'app/types/events';
-
-const module = angular.module('grafana.directives');
+import { coreModule } from 'app/core/core_module';
 
 const panelTemplate = `
   <ng-transclude class="panel-height-helper"></ng-transclude>
 `;
 
-module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
+coreModule.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
   return {
     restrict: 'E',
     template: panelTemplate,

@@ -1,8 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { CustomVariableModel, initialVariableModelState, VariableOption } from '../types';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, getInstanceState, VariablePayload } from '../state/types';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
+  getInstanceState,
+  VariablePayload,
+  initialVariablesState,
+  VariablesState,
+} from '../state/types';
 
 export const initialCustomVariableModelState: CustomVariableModel = {
   ...initialVariableModelState,
