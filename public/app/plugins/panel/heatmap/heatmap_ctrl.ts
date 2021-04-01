@@ -17,6 +17,8 @@ import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 import { DataProcessor } from '../graph/data_processor';
 import { LegacyResponseData, PanelEvents, DataFrame, rangeUtil } from '@grafana/data';
 import { CoreEvents } from 'app/types';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
 const Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -125,8 +127,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   processor: DataProcessor; // Shared with graph panel
 
   /** @ngInject */
-  constructor($scope: any, $injector: auto.IInjectorService) {
+  constructor($scope: any, $injector: auto.IInjectorService, templateSrv: TemplateSrv, timeSrv: TimeSrv) {
     super($scope, $injector);
+
     this.selectionActivated = false;
 
     _.defaultsDeep(this.panel, panelDefaults);
