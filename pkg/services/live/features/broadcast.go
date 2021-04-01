@@ -28,7 +28,7 @@ func (b *BroadcastRunner) OnSubscribe(ctx context.Context, _ *models.SignedInUse
 // OnPublish is called when a client wants to broadcast on the websocket
 func (b *BroadcastRunner) OnPublish(ctx context.Context, _ *models.SignedInUser, e models.PublishEvent) (models.PublishReply, bool, error) {
 	return models.PublishReply{
-		HistorySize: 1, // The last message is saved for 10 min.
-		HistoryTTL:  10 * time.Minute,
+		StreamSize: 1, // The last message is saved for 10 min.
+		StreamTTL:  10 * time.Minute,
 	}, true, nil
 }

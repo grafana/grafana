@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/features"
-	"github.com/grafana/grafana/pkg/services/live/schema"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 )
@@ -71,7 +70,6 @@ type GrafanaLive struct {
 
 	contextGetter *pluginContextGetter
 	streamManager *features.StreamManager
-	schemaCache   *schema.Cache
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -121,9 +119,7 @@ func (g *GrafanaLive) Init() error {
 	g.node = node
 
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
-	g.schemaCache = schema.NewCache()
-
-	packetSender := newPluginPacketSender(node, g.schemaCache)
+	packetSender := newPluginPacketSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
 	g.streamManager = features.NewStreamManager(packetSender, presenceGetter)
 
@@ -208,12 +204,22 @@ func (g *GrafanaLive) Init() error {
 					cb(centrifuge.PublishReply{}, centrifuge.ErrorPermissionDenied)
 					return
 				}
-				cb(centrifuge.PublishReply{
+				centrifugeReply := centrifuge.PublishReply{
 					Options: centrifuge.PublishOptions{
-						HistorySize: reply.HistorySize,
-						HistoryTTL:  reply.HistoryTTL,
+						HistorySize: reply.StreamSize,
+						HistoryTTL:  reply.StreamTTL,
 					},
-				}, nil)
+				}
+				if !reply.Fallthrough {
+					// At this moment Centrifuge does not pass any information
+					// to a client about publication so simply returning empty
+					// PublishResult is fine. This can change in future though.
+					// Returning empty PublishResult here gives Centrifuge a tip
+					// that there is no need to publish data to a channel since
+					// application decided to publish by itself.
+					centrifugeReply.Result = &centrifuge.PublishResult{}
+				}
+				cb(centrifugeReply, nil)
 			}
 		})
 
@@ -334,11 +340,10 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 	}
 	return features.NewPluginRunner(
 		namespace,
-		"",
+		"", // No instance uid for non-datasource plugins.
 		g.streamManager,
 		g.contextGetter,
 		streamHandler,
-		g.schemaCache,
 	), nil
 }
 
@@ -357,7 +362,6 @@ func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace
 		g.streamManager,
 		g.contextGetter,
 		streamHandler,
-		g.schemaCache,
 	), nil
 }
 
@@ -386,13 +390,20 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 	}
 
-	_, allowed, err := channelHandler.OnPublish(ctx.Req.Context(), ctx.SignedInUser, models.PublishEvent{Channel: cmd.Channel, Path: addr.Path, Data: cmd.Data})
+	resp, allowed, err := channelHandler.OnPublish(ctx.Req.Context(), ctx.SignedInUser, models.PublishEvent{Channel: cmd.Channel, Path: addr.Path, Data: cmd.Data})
 	if err != nil {
 		logger.Error("Error calling OnPublish", "error", err, "channel", cmd.Channel)
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 	}
 	if !allowed {
 		return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
+	}
+	if resp.Fallthrough {
+		_, err = g.node.Publish(cmd.Channel, cmd.Data)
+		if err != nil {
+			logger.Error("Error publish to channel", "error", err, "channel", cmd.Channel)
+			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
+		}
 	}
 	return response.JSON(200, dtos.LivePublishResponse{})
 }

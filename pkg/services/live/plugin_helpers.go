@@ -2,7 +2,6 @@ package live
 
 import (
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/live/schema"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -10,29 +9,14 @@ import (
 )
 
 type pluginPacketSender struct {
-	node        *centrifuge.Node
-	schemaCache *schema.Cache
+	node *centrifuge.Node
 }
 
-func newPluginPacketSender(node *centrifuge.Node, schemaCache *schema.Cache) *pluginPacketSender {
-	return &pluginPacketSender{node: node, schemaCache: schemaCache}
+func newPluginPacketSender(node *centrifuge.Node) *pluginPacketSender {
+	return &pluginPacketSender{node: node}
 }
 
 func (p *pluginPacketSender) Send(channel string, packet *backend.StreamPacket) error {
-	if packet.Type == 0 {
-		// Custom logic for data frame packet processing.
-		if packet.Header != nil {
-			_ = p.schemaCache.Update(channel, packet.Header)
-			_, _ = p.node.Publish(channel, packet.Header)
-			if packet.Payload != nil {
-				_, _ = p.node.Publish(channel, packet.Payload)
-			}
-			return nil
-		}
-		_, err := p.node.Publish(channel, packet.Payload)
-		return err
-	}
-	// For all other packet types just send a payload.
 	_, err := p.node.Publish(channel, packet.Payload)
 	return err
 }

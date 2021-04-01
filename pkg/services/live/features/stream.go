@@ -80,7 +80,7 @@ func (s *StreamManager) watchStream(ctx context.Context, cancelFn func(), sr str
 			}
 			numNoSubscribersChecks++
 			if numNoSubscribersChecks >= s.maxChecks {
-				logger.Info("Stop stream since no active subscribers", "channel", sr.Channel, "path", sr.Path)
+				logger.Debug("Stop stream since no active subscribers", "channel", sr.Channel, "path", sr.Path)
 				s.stopStream(sr, cancelFn)
 				return
 			}
@@ -106,7 +106,7 @@ func (s *StreamManager) runStream(ctx context.Context, sr streamRequest) {
 		)
 		if err != nil {
 			if errors.Is(ctx.Err(), context.Canceled) {
-				logger.Info("Stream cleanly finished", "path", sr.Path)
+				logger.Debug("Stream cleanly finished", "path", sr.Path)
 				return
 			}
 			logger.Error("Error running stream, retrying", "path", sr.Path, "error", err)
@@ -122,7 +122,6 @@ var errClosed = errors.New("stream manager closed")
 func (s *StreamManager) registerStream(ctx context.Context, sr submitRequest) {
 	s.mu.Lock()
 	if _, ok := s.streams[sr.streamRequest.Channel]; ok {
-		logger.Debug("Skip running new stream (already exists)", "path", sr.streamRequest.Path)
 		s.mu.Unlock()
 		sr.responseCh <- submitResponse{Result: submitResult{StreamExists: true}}
 		return

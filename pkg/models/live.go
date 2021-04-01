@@ -6,14 +6,16 @@ import (
 	"time"
 )
 
-// ChannelPublisher writes data into a channel. Note that pemissions are not checked.
+// ChannelPublisher writes data into a channel. Note that permissions are not checked.
 type ChannelPublisher func(channel string, data []byte) error
 
+// SubscribeEvent contains subscription data.
 type SubscribeEvent struct {
 	Channel string
 	Path    string
 }
 
+// SubscribeReply is a reaction to SubscribeEvent.
 type SubscribeReply struct {
 	Presence  bool
 	JoinLeave bool
@@ -21,15 +23,24 @@ type SubscribeReply struct {
 	Data      json.RawMessage
 }
 
+// PublishEvent contains publication data.
 type PublishEvent struct {
 	Channel string
 	Path    string
 	Data    json.RawMessage
 }
 
+// PublishReply is a reaction to PublishEvent.
 type PublishReply struct {
-	HistorySize int
-	HistoryTTL  time.Duration
+	// By default, it's a handler responsibility to publish data
+	// into a stream upon OnPublish but setting Fallthrough to true
+	// will make Grafana Live publish data itself (i.e. stream handler
+	// just works as permission proxy in this case).
+	Fallthrough bool
+	// StreamSize sets a stream size.
+	StreamSize int
+	// StreamTTL with seconds (!) resolution.
+	StreamTTL time.Duration
 }
 
 // ChannelHandler defines the core channel behavior
