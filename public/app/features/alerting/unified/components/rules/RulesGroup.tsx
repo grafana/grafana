@@ -18,7 +18,7 @@ interface Props {
   group: CombinedRuleGroup;
 }
 
-export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
+export const RulesGroup: FC<Props> = React.memo(({ group, namespace, rulesSource }) => {
   const styles = useStyles(getStyles);
 
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -109,7 +109,9 @@ export const RulesGroup: FC<Props> = ({ group, namespace, rulesSource }) => {
       {!isCollapsed && <RulesTable rulesSource={rulesSource} namespace={namespace} group={group} />}
     </div>
   );
-};
+});
+
+RulesGroup.displayName = 'RulesGroup';
 
 export const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`

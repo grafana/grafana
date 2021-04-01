@@ -40,7 +40,6 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
     );
 
   const deleteRule = (rule: RulerRuleDTO) => {
-    console.log('delete rule', rule);
     dispatch(
       deleteRuleAction({
         ruleSourceName: getRulesSourceName(rulesSource),

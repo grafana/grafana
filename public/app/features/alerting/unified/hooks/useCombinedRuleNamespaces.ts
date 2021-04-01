@@ -1,24 +1,39 @@
-import { CombinedRule, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
-import { useMemo } from 'react';
+import { CombinedRule, CombinedRuleNamespace, Rule, RuleNamespace } from 'app/types/unified-alerting';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { useMemo, useRef } from 'react';
 import { getAllRulesSources, isCloudRulesSource } from '../utils/datasource';
 import { isAlertingRule, isAlertingRulerRule } from '../utils/rules';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
+
+interface CacheValue {
+  promRules?: RuleNamespace[];
+  rulerRules?: RulerRulesConfigDTO | null;
+  result: CombinedRuleNamespace[];
+}
 
 // this little monster combines prometheus rules and ruler rules to produce a unfied data structure
 export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
   const promRulesResponses = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRulesResponses = useUnifiedAlertingSelector((state) => state.rulerRules);
 
+  // cache results per rules source, so we only recalculate those for which results have actually changed
+  const cache = useRef<Record<string, CacheValue>>({});
+
   return useMemo(() => {
-    return getAllRulesSources()
+    const retv = getAllRulesSources()
       .map((rulesSource): CombinedRuleNamespace[] => {
         const rulesSourceName = isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
         const promRules = promRulesResponses[rulesSourceName]?.result;
-        const rulerRules = rulerRulesResponses[rulesSourceName]?.result || {};
+        const rulerRules = rulerRulesResponses[rulesSourceName]?.result;
+
+        const cached = cache.current[rulesSourceName];
+        if (cached && cached.promRules === promRules && cached.rulerRules === rulerRules) {
+          return cached.result;
+        }
         const namespaces: Record<string, CombinedRuleNamespace> = {};
 
         // first get all the ruler rules in
-        Object.entries(rulerRules).forEach(([namespaceName, groups]) => {
+        Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
           namespaces[namespaceName] = {
             rulesSource,
             name: namespaceName,
@@ -65,9 +80,9 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
             }
 
             group.rules.forEach((rule) => {
-              const existingRule = combinedGroup!.rules.find(
-                (existingRule) => isCombinedRuleEqualToPromRule(existingRule, rule) && !existingRule.promRule
-              );
+              const existingRule = combinedGroup!.rules.find((existingRule) => {
+                return !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule);
+              });
               if (existingRule) {
                 existingRule.promRule = rule;
               } else {
@@ -83,18 +98,23 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
           });
         });
 
-        return Object.values(namespaces);
+        const result = Object.values(namespaces);
+        cache.current[rulesSourceName] = { promRules, rulerRules, result };
+        return result;
       })
       .flat();
+    return retv;
   }, [promRulesResponses, rulerRulesResponses]);
 }
 
 function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule): boolean {
-  return (
-    combinedRule.name === rule.name &&
-    JSON.stringify([hashQuery(combinedRule.query), combinedRule.labels, combinedRule.annotations]) ===
+  if (combinedRule.name === rule.name) {
+    return (
+      JSON.stringify([hashQuery(combinedRule.query), combinedRule.labels, combinedRule.annotations]) ===
       JSON.stringify([hashQuery(rule.query), rule.labels || {}, isAlertingRule(rule) ? rule.annotations || {} : {}])
-  );
+    );
+  }
+  return false;
 }
 
 // there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
