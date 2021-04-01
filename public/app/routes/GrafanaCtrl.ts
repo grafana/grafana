@@ -5,7 +5,6 @@ import $ from 'jquery';
 // Utils and servies
 import { colors } from '@grafana/ui';
 import {
-  getTemplateSrv,
   setBackendSrv,
   setDataSourceSrv,
   setLegacyAngularInjector,
@@ -16,7 +15,6 @@ import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
-import { TimeSrv, setTimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 
@@ -27,7 +25,7 @@ import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { IRootScopeService, IAngularEvent, auto } from 'angular';
-import { AppEvent, locationUtil } from '@grafana/data';
+import { AppEvent } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initGrafanaLive } from 'app/features/live/live';
 
@@ -40,7 +38,6 @@ export class GrafanaCtrl {
     utilSrv: UtilSrv,
     $rootScope: GrafanaRootScope,
     contextSrv: ContextSrv,
-    timeSrv: TimeSrv,
     linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
     dashboardSrv: DashboardSrv,
@@ -51,19 +48,11 @@ export class GrafanaCtrl {
     setAngularLoader(angularLoader);
     setBackendSrv(backendSrv);
     setDataSourceSrv(datasourceSrv);
-    setTimeSrv(timeSrv);
     setLinkSrv(linkSrv);
     setDashboardSrv(dashboardSrv);
     setLegacyAngularInjector($injector);
 
     datasourceSrv.init(config.datasources, config.defaultDatasource);
-
-    locationUtil.initialize({
-      config,
-      getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
-      // @ts-ignore
-      buildParamsFromVariables: getTemplateSrv().fillVariableValuesForUrl,
-    });
 
     setLocationSrv(locationService);
 

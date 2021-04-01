@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -187,6 +188,44 @@ type DataTimeSeries struct {
 type DataResponse struct {
 	Results map[string]DataQueryResult `json:"results"`
 	Message string                     `json:"message,omitempty"`
+}
+
+// ToBackendDataResponse converts the legacy format to the standard SDK format
+func (r DataResponse) ToBackendDataResponse() (*backend.QueryDataResponse, error) {
+	qdr := &backend.QueryDataResponse{
+		Responses: make(map[string]backend.DataResponse, len(r.Results)),
+	}
+
+	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
+	// Only error, Series, and encoded Dataframes responses are mapped.
+	for refID, res := range r.Results {
+		pRes := backend.DataResponse{}
+		if res.Error != nil {
+			pRes.Error = res.Error
+		}
+
+		if res.Dataframes != nil {
+			decoded, err := res.Dataframes.Decoded()
+			if err != nil {
+				return qdr, err
+			}
+			pRes.Frames = decoded
+			qdr.Responses[refID] = pRes
+			continue
+		}
+
+		for _, series := range res.Series {
+			frame, err := SeriesToFrame(series)
+			if err != nil {
+				return nil, err
+			}
+			frame.RefID = refID
+			pRes.Frames = append(pRes.Frames, frame)
+		}
+
+		qdr.Responses[refID] = pRes
+	}
+	return qdr, nil
 }
 
 type DataPlugin interface {

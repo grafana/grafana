@@ -35,10 +35,6 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-func boolPtr(b bool) *bool {
-	return &b
-}
-
 func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
 	recipient := ctx.Params("Recipient")
 	if recipient == apimodels.GrafanaBackend.String() {
