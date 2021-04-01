@@ -25,7 +25,6 @@ const AlertRuleMaxRuleGroupNameLength = 190
 type UpdateRuleGroupCmd struct {
 	OrgID           int64
 	NamespaceUID    string
-	RuleGroup       string
 	RuleGroupConfig apimodels.PostableRuleGroupConfig
 }
 
@@ -391,10 +390,11 @@ func (st DBstore) ValidateAlertRule(alertRule ngmodels.AlertRule, requireData bo
 // UpdateRuleGroup creates new rules and updates and/or deletes existing rules
 func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		ruleGroup := cmd.RuleGroupConfig.Name
 		q := &ngmodels.ListRuleGroupAlertRulesQuery{
 			OrgID:        cmd.OrgID,
 			NamespaceUID: cmd.NamespaceUID,
-			RuleGroup:    cmd.RuleGroup,
+			RuleGroup:    ruleGroup,
 		}
 		if err := st.GetRuleGroupAlertRules(q); err != nil {
 			return err
@@ -421,7 +421,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 					UID:             r.GrafanaManagedAlert.UID,
 					IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
 					NamespaceUID:    cmd.NamespaceUID,
-					RuleGroup:       cmd.RuleGroup,
+					RuleGroup:       ruleGroup,
 					NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
 					ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
 				},
