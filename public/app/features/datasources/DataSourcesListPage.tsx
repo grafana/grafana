@@ -37,7 +37,7 @@ export interface Props {
 }
 
 const emptyListModel = {
-  title: 'There are no data sources defined yet',
+  title: 'No data sources defined',
   buttonIcon: 'database' as IconName,
   buttonLink: 'datasources/new',
   buttonTitle: 'Add data source',

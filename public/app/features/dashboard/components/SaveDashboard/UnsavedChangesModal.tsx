@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, HorizontalGroup, Modal, VerticalGroup } from '@grafana/ui';
 import { SaveDashboardButton } from './SaveDashboardButton';
 import { DashboardModel } from '../../state';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface UnsavedChangesModalProps {
   dashboard: DashboardModel;
