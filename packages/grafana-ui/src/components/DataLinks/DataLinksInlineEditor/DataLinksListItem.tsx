@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { DataFrame, DataLink, GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../../themes';
 import { HorizontalGroup, VerticalGroup } from '../../Layout/Layout';

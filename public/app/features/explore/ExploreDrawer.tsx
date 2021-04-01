@@ -1,7 +1,7 @@
 // Libraries
 import React from 'react';
 import { Resizable, ResizeCallback } from 're-resizable';
-import { css, cx, keyframes } from 'emotion';
+import { css, cx, keyframes } from '@emotion/css';
 
 // Services & Utils
 import { stylesFactory, useTheme } from '@grafana/ui';

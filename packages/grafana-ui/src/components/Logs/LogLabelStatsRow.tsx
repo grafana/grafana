@@ -1,5 +1,5 @@
 import React, { FunctionComponent, useContext } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 import { ThemeContext } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';
