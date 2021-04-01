@@ -91,7 +91,7 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
     const { isAdding } = this.state;
 
     return hasUnsavedFolderChange ? (
-      <h5>You have changed folder, please save to view permissions.</h5>
+      <h5>You have changed a folder, please save to view permissions.</h5>
     ) : (
       <div>
         <div className="page-action-bar">
@@ -101,7 +101,7 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
           </Tooltip>
           <div className="page-action-bar__spacer" />
           <Button className="pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
-            Add Permission
+            Add permission
           </Button>
         </div>
         <SlideDown in={isAdding}>
