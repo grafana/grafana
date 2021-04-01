@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
@@ -77,15 +76,7 @@ func TestAlertingTicker(t *testing.T) {
 
 	// change alert rule interval to three seconds
 	var threeSecInterval int64 = 3
-	err := dbstore.UpsertAlertRules([]store.UpsertRule{
-		{
-			New: models.AlertRule{
-				IntervalSeconds: threeSecInterval,
-			},
-			Existing: alerts[0],
-		},
-	})
-	require.NoError(t, err)
+	alerts[0] = updateTestAlertRuleIntervalSeconds(t, dbstore, alerts[0], threeSecInterval)
 	t.Logf("alert rule: %v interval reset to: %d", alerts[0].GetKey(), threeSecInterval)
 
 	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[1].GetKey()}
@@ -106,7 +97,7 @@ func TestAlertingTicker(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})
 
-	err = dbstore.DeleteAlertRuleByUID(alerts[1].OrgID, alerts[1].UID)
+	err := dbstore.DeleteAlertRuleByUID(alerts[1].OrgID, alerts[1].UID)
 	require.NoError(t, err)
 	t.Logf("alert rule: %v deleted", alerts[1].GetKey())
 
