@@ -81,6 +81,8 @@ func (ng *AlertNG) Init() error {
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
 		Store:           store,
+		RuleStore:       store,
+		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
 	}
 	api.RegisterAPIEndpoints()
@@ -99,7 +101,6 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	// Check also about expressions?
 	return !ng.Cfg.IsNgAlertEnabled()
 }
 
@@ -109,8 +110,15 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	if ng.IsDisabled() {
 		return
 	}
-	addAlertDefinitionMigrations(mg)
-	addAlertDefinitionVersionMigrations(mg)
+	store.AddAlertDefinitionMigrations(mg, defaultIntervalSeconds)
+	store.AddAlertDefinitionVersionMigrations(mg)
 	// Create alert_instance table
-	alertInstanceMigration(mg)
+	store.AlertInstanceMigration(mg)
+
+	// Create alert_rule
+	store.AddAlertRuleMigrations(mg, defaultIntervalSeconds)
+	store.AddAlertRuleVersionMigrations(mg)
+
+	// Create silence table
+	store.SilenceMigration(mg)
 }

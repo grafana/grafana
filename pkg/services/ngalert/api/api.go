@@ -30,6 +30,10 @@ var timeNow = time.Now
 
 type Alertmanager interface {
 	ApplyConfig(config *apimodels.PostableUserConfig) error
+	CreateSilence(ps *apimodels.PostableSilence) (string, error)
+	DeleteSilence(silenceID string) error
+	GetSilence(silenceID string) (apimodels.GettableSilence, error)
+	ListSilences(filters []string) (apimodels.GettableSilences, error)
 }
 
 // API handlers.
@@ -40,6 +44,8 @@ type API struct {
 	DataService     *tsdb.Service
 	Schedule        schedule.ScheduleService
 	Store           store.Store
+	RuleStore       store.RuleStore
+	AlertingStore   store.AlertingStore
 	DataProxy       *datasourceproxy.DatasourceProxyService
 	Alertmanager    Alertmanager
 }
@@ -53,7 +59,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		AlertmanagerApiMock{log: logger},
+		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
 	))
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
@@ -63,7 +69,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		RulerApiMock{log: logger},
+		RulerSrv{store: api.RuleStore, log: logger},
 	))
 	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
 
