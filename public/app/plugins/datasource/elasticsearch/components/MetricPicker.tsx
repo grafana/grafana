@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { describeMetric } from '../utils';

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { DataQuery, GrafanaTheme } from '@grafana/data';
 import { FieldValidationMessage, Icon, Input, stylesFactory, useTheme } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';

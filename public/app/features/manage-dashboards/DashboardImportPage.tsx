@@ -1,6 +1,6 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { AppEvents, NavModel } from '@grafana/data';
 import { Button, stylesFactory, Input, TextArea, Field, Form, Legend, FileUpload } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
