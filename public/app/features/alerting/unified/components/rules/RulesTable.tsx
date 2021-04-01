@@ -1,5 +1,5 @@
 import { GrafanaTheme, rangeUtil } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { ConfirmModal, useStyles } from '@grafana/ui';
 import { CombinedRuleGroup, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, Fragment, useState } from 'react';
 import { hashRulerRule, isAlertingRule } from '../../utils/rules';
@@ -34,20 +34,25 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
 
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
+  const [ruleToDelete, setRuleToDelete] = useState<RulerRuleDTO>();
+
   const toggleExpandedState = (ruleKey: string) =>
     setExpandedKeys(
       expandedKeys.includes(ruleKey) ? expandedKeys.filter((key) => key !== ruleKey) : [...expandedKeys, ruleKey]
     );
 
-  const deleteRule = (rule: RulerRuleDTO) => {
-    dispatch(
-      deleteRuleAction({
-        ruleSourceName: getRulesSourceName(rulesSource),
-        groupName: group.name,
-        namespace,
-        ruleHash: hashRulerRule(rule),
-      })
-    );
+  const deleteRule = () => {
+    if (ruleToDelete) {
+      dispatch(
+        deleteRuleAction({
+          ruleSourceName: getRulesSourceName(rulesSource),
+          groupName: group.name,
+          namespace,
+          ruleHash: hashRulerRule(ruleToDelete),
+        })
+      );
+      setRuleToDelete(undefined);
+    }
   };
 
   if (!rules.length) {
@@ -130,7 +135,7 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
                       )}
                       {!!rulerRule && <ActionIcon icon="pen" tooltip="edit rule" />}
                       {!!rulerRule && (
-                        <ActionIcon icon="trash-alt" tooltip="delete rule" onClick={() => deleteRule(rulerRule)} />
+                        <ActionIcon icon="trash-alt" tooltip="delete rule" onClick={() => setRuleToDelete(rulerRule)} />
                       )}
                     </td>
                   </tr>
@@ -152,6 +157,17 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
           })()}
         </tbody>
       </table>
+      {!!ruleToDelete && (
+        <ConfirmModal
+          isOpen={true}
+          title="Delete rule"
+          body="Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
+          confirmText="Yes, delete"
+          icon="exclamation-triangle"
+          onConfirm={deleteRule}
+          onDismiss={() => setRuleToDelete(undefined)}
+        />
+      )}
     </div>
   );
 };
