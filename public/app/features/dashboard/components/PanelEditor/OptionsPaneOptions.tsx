@@ -188,5 +188,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     background: ${theme.colors.bg1};
     border: 1px solid ${theme.colors.border1};
     margin-bottom: ${theme.spacing.md};
+    flex-grow: 1;
   `,
 });
