@@ -16,7 +16,7 @@ type FrontendMetricEvent struct {
 // FrontendMetricsRecorder handles the recording of the event, ie passes it to a prometheus metric
 type FrontendMetricsRecorder func(event FrontendMetricEvent)
 
-// MFrontendLoadTime is a metric summary of alert execution duration
+// FrontendMetrics contains all the valid frontend metrics and a handler function for recording events
 var FrontendMetrics map[string]FrontendMetricsRecorder = map[string]FrontendMetricsRecorder{}
 
 func registerFrontendHistogram(name string, help string) {
