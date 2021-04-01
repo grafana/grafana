@@ -10,7 +10,7 @@ import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@gra
 // Types
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {

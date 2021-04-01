@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import sumBy from 'lodash/sumBy';
 import { Modal, ConfirmModal, HorizontalGroup, Button } from '@grafana/ui';
 import { DashboardModel, PanelModel } from '../../state';

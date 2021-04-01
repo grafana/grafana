@@ -1,5 +1,5 @@
 import React, { FC, useEffect } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles } from '@grafana/ui';
 import { AlertTab } from 'app/features/alerting/AlertTab';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';

@@ -1,6 +1,6 @@
 // Libraries
 import React, { FC } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 // Components
 import { UserSignup } from './UserSignup';

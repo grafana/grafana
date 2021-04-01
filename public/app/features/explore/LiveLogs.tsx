@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
 import { LogMessageAnsi, Themeable, withTheme, getLogRowStyles, Icon } from '@grafana/ui';

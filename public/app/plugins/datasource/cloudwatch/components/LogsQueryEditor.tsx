@@ -8,7 +8,7 @@ import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchLogsQueryField } from './LogsQueryField';
 import CloudWatchLink from './CloudWatchLink';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
   allowCustomValue?: boolean;

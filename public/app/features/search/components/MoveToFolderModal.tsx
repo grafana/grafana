@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Button, HorizontalGroup, Modal, stylesFactory, useTheme } from '@grafana/ui';
 import { AppEvents, GrafanaTheme } from '@grafana/data';
 import { FolderInfo } from 'app/types';

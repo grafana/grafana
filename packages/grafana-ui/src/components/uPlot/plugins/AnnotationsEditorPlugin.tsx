@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { SelectionPlugin } from './SelectionPlugin';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Button } from '../../Button';
 import useClickAway from 'react-use/lib/useClickAway';
 
