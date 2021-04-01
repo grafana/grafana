@@ -53,10 +53,10 @@ module.exports = {
       prismjs: path.resolve(__dirname, '../../node_modules/prismjs'),
     },
     modules: [
-      'node_modules',
-      path.resolve('public'),
       // we need full path to root node_modules for grafana-enterprise symlink to work
       path.resolve('node_modules'),
+      'node_modules',
+      path.resolve('public'),
     ],
   },
   stats: {

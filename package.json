@@ -269,6 +269,7 @@
     "re-resizable": "^6.2.0",
     "react": "17.0.1",
     "react-beautiful-dnd": "13.0.0",
+    "react-color": "2.18.0",
     "react-diff-viewer": "^3.1.1",
     "react-dom": "17.0.1",
     "react-grid-layout": "1.2.0",
