@@ -120,6 +120,10 @@ describe('grafanaGraph', () => {
     ctrl = new GraphCtrl(
       {
         $on: () => {},
+        $parent: {
+          panel: GraphCtrl.prototype.panel,
+          dashboard: GraphCtrl.prototype.dashboard,
+        },
       },
       {
         get: () => {},

@@ -2,7 +2,7 @@ import React from 'react';
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory, useTheme } from '../../themes';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { ColorPickerTrigger } from '../ColorPicker/ColorPickerTrigger';
 
 export interface Props {

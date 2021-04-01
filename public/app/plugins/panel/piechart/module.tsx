@@ -3,8 +3,10 @@ import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions } from './types';
 import { addStandardDataReduceOptions } from '../stat/types';
 import { LegendDisplayMode, PieChartType, PieChartLabels, PieChartLegendValues } from '@grafana/ui';
+import { PieChartPanelChangedHandler } from './migrations';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
+  .setPanelChangeHandler(PieChartPanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -20,7 +22,7 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
     },
   })
   .setPanelOptions((builder) => {
-    addStandardDataReduceOptions(builder, false);
+    addStandardDataReduceOptions(builder);
 
     builder
       .addRadio({

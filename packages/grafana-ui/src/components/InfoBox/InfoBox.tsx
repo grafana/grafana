@@ -1,5 +1,5 @@
 import React from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
@@ -88,7 +88,6 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme, severity: AlertVari
     padding: ${theme.spacing.md};
     border-radius: ${theme.border.radius.md};
     position: relative;
-    box-shadow: 0 0 30px 10px rgba(0, 0, 0, ${theme.isLight ? 0.05 : 0.2});
     z-index: 0;
 
     &:before {

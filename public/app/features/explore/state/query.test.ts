@@ -114,7 +114,7 @@ describe('running queries', () => {
 describe('reducer', () => {
   describe('scanning', () => {
     it('should start scanning', () => {
-      const initialState = {
+      const initialState: ExploreItemState = {
         ...makeExplorePaneState(),
         scanning: false,
       };

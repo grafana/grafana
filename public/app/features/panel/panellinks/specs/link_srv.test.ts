@@ -19,19 +19,13 @@ describe('linkSrv', () => {
   let templateSrv: TemplateSrv;
 
   function initLinkSrv() {
-    const timer = {
-      register: jest.fn(),
-      cancel: jest.fn(),
-      cancelAll: jest.fn(),
-    };
-
     const _dashboard: any = {
       time: { from: 'now-6h', to: 'now' },
       getTimezone: jest.fn(() => 'browser'),
       timeRangeUpdated: () => {},
     };
 
-    const timeSrv = new TimeSrv(jest.fn() as any, timer, {} as any);
+    const timeSrv = new TimeSrv({} as any);
     timeSrv.init(_dashboard);
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;
@@ -126,10 +120,8 @@ describe('linkSrv', () => {
         ({ url, appSubUrl, expected }) => {
           locationUtil.initialize({
             config: { appSubUrl } as any,
-            // @ts-ignore
-            buildParamsFromVariables: () => {},
-            // @ts-ignore
-            getTimeRangeForUrl: () => {},
+            getVariablesUrlParams: (() => {}) as any,
+            getTimeRangeForUrl: (() => {}) as any,
           });
 
           const link = linkSrv.getDataLinkUIModel(
@@ -422,6 +414,30 @@ describe('getDataFrameVars', () => {
           origin: VariableOrigin.Fields,
         },
       ]);
+    });
+  });
+
+  describe('when called with multiple DataFrames', () => {
+    it('it should not return any suggestions', () => {
+      const frame1 = toDataFrame({
+        name: 'server1',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', type: FieldType.number, values: [10, 11, 12] },
+        ],
+      });
+
+      const frame2 = toDataFrame({
+        name: 'server2',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3] },
+          { name: 'value', type: FieldType.number, values: [10, 11, 12] },
+        ],
+      });
+
+      const suggestions = getDataFrameVars([frame1, frame2]);
+
+      expect(suggestions).toEqual([]);
     });
   });
 });

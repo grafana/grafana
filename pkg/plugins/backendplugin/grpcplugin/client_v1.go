@@ -63,6 +63,14 @@ func (c *clientV1) CallResource(ctx context.Context, req *backend.CallResourceRe
 	return backendplugin.ErrMethodNotImplemented
 }
 
+func (c *clientV1) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (c *clientV1) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	return backendplugin.ErrMethodNotImplemented
+}
+
 type datasourceV1QueryFunc func(ctx context.Context, req *datasourceV1.DatasourceRequest) (*datasourceV1.DatasourceResponse, error)
 
 func (fn datasourceV1QueryFunc) Query(ctx context.Context, req *datasourceV1.DatasourceRequest) (*datasourceV1.DatasourceResponse, error) {

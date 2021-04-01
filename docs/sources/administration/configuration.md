@@ -268,6 +268,11 @@ Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana 
 For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
 `http://cdn.myserver.com/grafana-oss/7.4.0/public/build/app.<hash>.js`.
 
+### read_timeout
+
+Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
+`0` means there is no timeout for reading the request.
+
 <hr />
 
 ## [database]
@@ -791,6 +796,12 @@ If this option is disabled, the **Assume Role** and the **External Id** field ar
 ### list_metrics_page_limit
 
 Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) option to load metrics for custom namespaces in the CloudWatch data source. By default, the page limit is 500.
+
+<hr />
+
+## [auth.jwt]
+
+Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
 
 <hr />
 

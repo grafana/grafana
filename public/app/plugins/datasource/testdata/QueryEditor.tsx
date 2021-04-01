@@ -13,9 +13,10 @@ import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario, NodesQuery } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { CSVWaveEditor } from './components/CSVWaveEditor';
-import { defaultQuery } from './constants';
+import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 import { NodeGraphEditor } from './components/NodeGraphEditor';
+import { defaultStreamQuery } from './runStreams';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
 const endpoints = [
@@ -58,20 +59,33 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       return;
     }
 
-    const update = { ...query, scenarioId: item.value! };
+    // Clear model from existing props that belong to other scenarios
+    const update: TestDataQuery = {
+      scenarioId: item.value!,
+      refId: query.refId,
+      alias: query.alias,
+    };
 
     if (scenario.stringInput) {
       update.stringInput = scenario.stringInput;
     }
 
-    if (scenario.id === 'grafana_api') {
-      update.stringInput = 'datasources';
-    } else if (scenario.id === 'streaming_client') {
-      update.stringInput = '';
-    } else if (scenario.id === 'live') {
-      if (!update.channel) {
+    switch (scenario.id) {
+      case 'grafana_api':
+        update.stringInput = 'datasources';
+        break;
+      case 'streaming_client':
+        update.stream = defaultStreamQuery;
+        break;
+      case 'live':
         update.channel = 'random-2s-stream'; // default stream
-      }
+        break;
+      case 'predictable_pulse':
+        update.pulseWave = defaultPulseQuery;
+        break;
+      case 'predictable_csv_wave':
+        update.csvWave = defaultCSVWaveQuery;
+        break;
     }
 
     onUpdate(update);

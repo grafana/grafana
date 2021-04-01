@@ -294,6 +294,8 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 			Cfg:                    cfg,
 			License:                license,
 			PluginRequestValidator: validator,
+			logger:                 log.New("test"),
+			plugins:                map[string]backendplugin.Plugin{},
 		},
 	}
 
@@ -333,10 +335,6 @@ func (tp *testPlugin) PluginID() string {
 
 func (tp *testPlugin) Logger() log.Logger {
 	return tp.logger
-}
-
-func (tp *testPlugin) CanHandleDataQueries() bool {
-	return false
 }
 
 func (tp *testPlugin) Start(ctx context.Context) error {
@@ -391,6 +389,14 @@ func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourc
 		return tp.CallResourceHandlerFunc(ctx, req, sender)
 	}
 
+	return backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
 	return backendplugin.ErrMethodNotImplemented
 }
 

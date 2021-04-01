@@ -1,10 +1,12 @@
-import { Reducer } from 'redux';
-import { PayloadAction, Action } from '@reduxjs/toolkit';
+import { Action } from 'redux';
+import { AnyAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
+
+type GrafanaReducer<S = any, A extends Action = AnyAction> = (state: S, action: A) => S;
 
 export interface Given<State> {
   givenReducer: (
-    reducer: Reducer<State, PayloadAction<any> | Action<any>>,
+    reducer: GrafanaReducer<State, AnyAction>,
     state: State,
     showDebugOutput?: boolean,
     disableDeepFreeze?: boolean
@@ -12,13 +14,13 @@ export interface Given<State> {
 }
 
 export interface When<State> {
-  whenActionIsDispatched: (action: PayloadAction<any> | Action<any>) => Then<State>;
+  whenActionIsDispatched: (action: AnyAction) => Then<State>;
 }
 
 export interface Then<State> {
   thenStateShouldEqual: (state: State) => When<State>;
   thenStatePredicateShouldEqual: (predicate: (resultingState: State) => boolean) => When<State>;
-  whenActionIsDispatched: (action: PayloadAction<any> | Action<any>) => Then<State>;
+  whenActionIsDispatched: (action: AnyAction) => Then<State>;
 }
 
 interface ObjectType extends Object {
@@ -56,13 +58,13 @@ export const deepFreeze = <T>(obj: T): T => {
 interface ReducerTester<State> extends Given<State>, When<State>, Then<State> {}
 
 export const reducerTester = <State>(): Given<State> => {
-  let reducerUnderTest: Reducer<State, PayloadAction<any>>;
+  let reducerUnderTest: GrafanaReducer<State, AnyAction>;
   let resultingState: State;
   let initialState: State;
   let showDebugOutput = false;
 
   const givenReducer = (
-    reducer: Reducer<State, PayloadAction<any>>,
+    reducer: GrafanaReducer<State, AnyAction>,
     state: State,
     debug = false,
     disableDeepFreeze = false
@@ -77,7 +79,7 @@ export const reducerTester = <State>(): Given<State> => {
     return instance;
   };
 
-  const whenActionIsDispatched = (action: PayloadAction<any>): Then<State> => {
+  const whenActionIsDispatched = (action: AnyAction): Then<State> => {
     resultingState = reducerUnderTest(resultingState || initialState, action);
 
     return instance;

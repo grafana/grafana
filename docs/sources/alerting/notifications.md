@@ -59,7 +59,7 @@ Hipchat | `hipchat` | yes, external only | no
 [Kafka](#kafka) | `kafka` | yes, external only | no
 Line | `line` | yes, external only | no
 Microsoft Teams | `teams` | yes, external only | no
-OpsGenie | `opsgenie` | yes, external only | yes
+[Opsgenie](#opsgenie) | `opsgenie` | yes, external only | yes
 [Pagerduty](#pagerduty) | `pagerduty` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 [Pushover](#pushover) | `pushover` | yes | no
@@ -110,6 +110,19 @@ Mention Channel | Optionally mention either all channel members or just active o
 Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination. If you use the `chat.postMessage` Slack API endpoint, this is required.
 
 If you are using the token for a slack bot, then you have to invite the bot to the channel you want to send notifications and add the channel to the recipient field.
+
+### Opsgenie
+
+To setup Opsgenie you will need an API Key and the Alert API Url. These can be obtained by configuring a new [Grafana Integration](https://docs.opsgenie.com/docs/grafana-integration).
+
+Setting | Description
+--------|------------
+Alert API URL | The API URL for your Opsgenie instance. This will normally be either `https://api.opsgenie.com` or, for EU customers, `https://api.eu.opsgenie.com`.
+API Key | The API Key as provided by Opsgenie for your configured Grafana integration.
+Override priority | Configures the alert priority using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4`, or `P5`. Default is `False`.
+Send notification tags as | Specify how you would like [Notification Tags]({{< relref "create-alerts.md/#notifications" >}}) delivered to Opsgenie. They can be delivered as `Tags`, `Extra Properties` or both. Default is Tags. See note below for more information.
+
+> **Note:** When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. If you prefer to receive the notifications tags as key/values under Extra Properties in Opsgenie then change the `Send notification tags as` to either `Extra Properties` or `Tags & Extra Properties`.
 
 ### PagerDuty
 
@@ -191,23 +204,21 @@ Example json body:
 
 ### DingDing/DingTalk
 
-[Instructions in Chinese](https://open-doc.dingtalk.com/docs/doc.htm?spm=a219a.7629140.0.0.p2lr6t&treeId=257&articleId=105733&docType=1).
+DingTalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported. Refer to the [configuration instructions](https://developers.dingtalk.com/document/app/custom-robot-access) in Chinese language.
 
 In DingTalk PC Client:
 
 1. Click "more" icon on upper right of the panel.
 
-1. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
+2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 
-1. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
+3. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
 
-1. In the next new panel named "robot detail", click "Add" button.
+4. In the next new panel named "robot detail", click "Add" button.
 
-1. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
+5. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
 
-1. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
-
-DingTalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported.
+6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
 
 ### Kafka
 

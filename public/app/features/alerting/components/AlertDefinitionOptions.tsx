@@ -1,5 +1,5 @@
 import React, { FC, FormEvent, useMemo } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Field, Input, Select, Tab, TabContent, TabsBar, TextArea, useStyles } from '@grafana/ui';
 import { AlertDefinition, QueryGroupOptions } from 'app/types';
@@ -39,7 +39,7 @@ export const AlertDefinitionOptions: FC<Props> = ({
         <Field label="Title">
           <Input width={25} name="title" value={alertDefinition.title} onChange={onChange} />
         </Field>
-        <Field label="Description" description="What does the alert do and why was it created">
+        <Field label="Description" description="What does the alert do? Why was it created?">
           <TextArea
             rows={5}
             width={25}

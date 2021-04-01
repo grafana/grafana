@@ -15,7 +15,8 @@ import Centrifuge, {
   SubscribeSuccessContext,
   SubscriptionEvents,
   UnsubscribeContext,
-} from 'centrifuge/dist/centrifuge.protobuf';
+} from 'centrifuge/dist/centrifuge';
+
 import { Subject, of, merge } from 'rxjs';
 
 /**

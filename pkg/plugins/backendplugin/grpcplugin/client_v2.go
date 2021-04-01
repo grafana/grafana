@@ -23,6 +23,7 @@ type clientV2 struct {
 	grpcplugin.DiagnosticsClient
 	grpcplugin.ResourceClient
 	grpcplugin.DataClient
+	grpcplugin.StreamClient
 	pluginextensionv2.RendererPlugin
 }
 
@@ -38,6 +39,11 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	rawData, err := rpcClient.Dispense("data")
+	if err != nil {
+		return nil, err
+	}
+
+	rawStream, err := rpcClient.Dispense("stream")
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +72,12 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
+	if rawStream != nil {
+		if plugin, ok := rawStream.(grpcplugin.StreamClient); ok {
+			c.StreamClient = plugin
+		}
+	}
+
 	if rawRenderer != nil {
 		if plugin, ok := rawRenderer.(pluginextensionv2.RendererPlugin); ok {
 			c.RendererPlugin = plugin
@@ -76,6 +88,7 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		client := &Client{
 			DataPlugin:     c.DataClient,
 			RendererPlugin: c.RendererPlugin,
+			StreamClient:   c.StreamClient,
 		}
 		if err := descriptor.startFns.OnStart(descriptor.pluginID, client, logger); err != nil {
 			return nil, err
@@ -153,6 +166,48 @@ func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 		}
 
 		if err := sender.Send(backend.FromProto().CallResourceResponse(protoResp)); err != nil {
+			return err
+		}
+	}
+}
+
+func (c *clientV2) CanSubscribeToStream(ctx context.Context, req *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+	if c.StreamClient == nil {
+		return nil, backendplugin.ErrMethodNotImplemented
+	}
+	protoResp, err := c.StreamClient.CanSubscribeToStream(ctx, backend.ToProto().SubscribeToStreamRequest(req))
+	if err != nil {
+		return nil, err
+	}
+	return backend.FromProto().SubscribeToStreamResponse(protoResp), nil
+}
+
+func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	if c.StreamClient == nil {
+		return backendplugin.ErrMethodNotImplemented
+	}
+
+	protoReq := backend.ToProto().RunStreamRequest(req)
+	protoStream, err := c.StreamClient.RunStream(ctx, protoReq)
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return backendplugin.ErrMethodNotImplemented
+		}
+		return errutil.Wrap("Failed to call resource", err)
+	}
+
+	for {
+		protoResp, err := protoStream.Recv()
+		if err != nil {
+			if status.Code(err) == codes.Unimplemented {
+				return backendplugin.ErrMethodNotImplemented
+			}
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return errutil.Wrap("failed to receive call resource response", err)
+		}
+		if err := sender.Send(backend.FromProto().StreamPacket(protoResp)); err != nil {
 			return err
 		}
 	}

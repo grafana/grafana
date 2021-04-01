@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -47,6 +48,9 @@ const (
 const (
 	authProxySyncTTL = 60
 )
+
+// zoneInfo names environment variable for setting the path to look for the timezone database in go
+const zoneInfo = "ZONEINFO"
 
 var (
 	// App settings.
@@ -198,6 +202,7 @@ type Cfg struct {
 	RouterLogging    bool
 	Domain           string
 	CDNRootURL       *url.URL
+	ReadTimeout      time.Duration
 	EnableGzip       bool
 	EnforceDomain    bool
 
@@ -295,6 +300,17 @@ type Cfg struct {
 	// SAML Auth
 	SAMLEnabled             bool
 	SAMLSingleLogoutEnabled bool
+
+	// JWT Auth
+	JWTAuthEnabled       bool
+	JWTAuthHeaderName    string
+	JWTAuthEmailClaim    string
+	JWTAuthUsernameClaim string
+	JWTAuthExpectClaims  string
+	JWTAuthJWKSetURL     string
+	JWTAuthCacheTTL      time.Duration
+	JWTAuthKeyFile       string
+	JWTAuthJWKSetFile    string
 
 	// Dataproxy
 	SendUserHeader bool
@@ -757,6 +773,14 @@ func (cfg *Cfg) validateStaticRootPath() error {
 func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	setHomePath(args)
 
+	// Fix for missing IANA db on Windows
+	_, zoneInfoSet := os.LookupEnv(zoneInfo)
+	if runtime.GOOS == "windows" && !zoneInfoSet {
+		if err := os.Setenv(zoneInfo, filepath.Join(HomePath, "tools", "zoneinfo.zip")); err != nil {
+			cfg.Logger.Error("Can't set ZONEINFO environment variable", "err", err)
+		}
+	}
+
 	iniFile, err := cfg.loadConfiguration(args)
 	if err != nil {
 		return err
@@ -1166,6 +1190,18 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 	cfg.BasicAuthEnabled = BasicAuthEnabled
 
+	// JWT auth
+	authJWT := iniFile.Section("auth.jwt")
+	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
+	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
+	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
+	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
+	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")
+	cfg.JWTAuthJWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
+	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
+	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
+	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
+
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 	cfg.AuthProxyEnabled = AuthProxyEnabled
@@ -1355,6 +1391,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 			return err
 		}
 	}
+
+	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(0)
 
 	return nil
 }

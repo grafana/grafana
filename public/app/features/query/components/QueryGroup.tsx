@@ -24,7 +24,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
@@ -276,7 +276,14 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { data } = this.state;
 
     if (isSharedDashboardQuery(dsSettings.name)) {
-      return <DashboardQueryEditor queries={options.queries} panelData={data} onChange={this.onQueriesChange} />;
+      return (
+        <DashboardQueryEditor
+          queries={options.queries}
+          panelData={data}
+          onChange={this.onQueriesChange}
+          onRunQueries={onRunQueries}
+        />
+      );
     }
 
     return (

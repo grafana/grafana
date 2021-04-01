@@ -2,7 +2,7 @@ import React, { Fragment, FunctionComponent, useEffect } from 'react';
 import { Input, InlineLabel } from '@grafana/ui';
 import { MetricAggregationAction } from '../../state/types';
 import { changeMetricAttribute } from '../../state/actions';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { AddRemove } from '../../../../AddRemove';
 import { useStatelessReducer, useDispatch } from '../../../../../hooks/useStatelessReducer';
 import { MetricPicker } from '../../../../MetricPicker';
@@ -36,7 +36,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
     if (!value.pipelineVariables?.length) {
       dispatch(addPipelineVariable());
     }
-  }, []);
+  }, [dispatch, value.pipelineVariables?.length]);
 
   return (
     <>
