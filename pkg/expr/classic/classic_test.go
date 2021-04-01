@@ -145,6 +145,35 @@ func TestConditionsCmdExecute(t *testing.T) {
 			},
 		},
 		{
+			name: "single query and two conditions",
+			vars: mathexp.Vars{
+				"A": mathexp.Results{
+					Values: []mathexp.Value{
+						valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
+					},
+				},
+			},
+			conditionsCmd: &ConditionsCmd{
+				Conditions: []condition{
+					{
+						QueryRefID: "A",
+						Reducer:    classicReducer("max"),
+						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
+					},
+					{
+						QueryRefID: "A",
+						Reducer:    classicReducer("min"),
+						Operator:   "or",
+						Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 12},
+					},
+				}},
+			resultNumber: func() mathexp.Number {
+				v := valBasedNumber(ptr.Float64(1))
+				v.SetMeta([]EvalMatch{{Value: ptr.Float64(40)}, {Value: ptr.Float64(30)}})
+				return v
+			},
+		},
+		{
 			name: "single query and single condition - multiple series (one true, one not == true)",
 			vars: mathexp.Vars{
 				"A": mathexp.Results{
