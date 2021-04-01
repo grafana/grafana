@@ -1,15 +1,14 @@
 import { css } from 'emotion';
 import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
-import { Icon, InfoBox, LoadingPlaceholder, useStyles } from '@grafana/ui';
+import { LoadingPlaceholder, useStyles } from '@grafana/ui';
 import React, { FC, useMemo } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RulesGroup } from './RulesGroup';
 import { getRulesDataSources } from '../../utils/datasource';
 import { RuleNamespace } from 'app/types/unified-alerting';
-import { SerializedError } from '@reduxjs/toolkit';
 import pluralize from 'pluralize';
 
-export const SystemOrApplicationAlerts: FC = () => {
+export const SystemOrApplicationRules: FC = () => {
   const styles = useStyles(getStyles);
   const rules = useUnifiedAlertingSelector((state) => state.rules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
@@ -32,21 +31,6 @@ export const SystemOrApplicationAlerts: FC = () => {
     [rules, rulesDataSources]
   );
 
-  const errors = useMemo(
-    () =>
-      rulesDataSources.reduce<Array<{ error: SerializedError; dataSource: DataSourceInstanceSettings }>>(
-        (result, dataSource) => {
-          const error = rules[dataSource.name]?.error;
-          if (error) {
-            return [...result, { dataSource, error }];
-          }
-          return result;
-        },
-        []
-      ),
-    [rules, rulesDataSources]
-  );
-
   const dataSourcesLoading = useMemo(() => rulesDataSources.filter((ds) => rules[ds.name]?.loading), [
     rules,
     rulesDataSources,
@@ -65,25 +49,7 @@ export const SystemOrApplicationAlerts: FC = () => {
           <div />
         )}
       </div>
-      {errors && (
-        <InfoBox
-          data-testid="cloud-rulessource-errors"
-          title={
-            <h4>
-              <Icon className={styles.iconError} name="exclamation-triangle" size="xl" />
-              Errors loading rules
-            </h4>
-          }
-          severity="error"
-        >
-          {errors.map(({ dataSource, error }) => (
-            <div key={dataSource.name}>
-              Failed to load rules from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
-              {error.message || 'Unknown error.'}
-            </div>
-          ))}
-        </InfoBox>
-      )}
+
       {namespaces?.map(({ dataSource, namespace }) =>
         namespace.groups.map((group) => (
           <RulesGroup
@@ -107,10 +73,6 @@ const getStyles = (theme: GrafanaTheme) => ({
   sectionHeader: css`
     display: flex;
     justify-content: space-between;
-  `,
-  iconError: css`
-    color: ${theme.palette.red};
-    margin-right: ${theme.spacing.md};
   `,
   wrapper: css`
     margin-bottom: ${theme.spacing.xl};

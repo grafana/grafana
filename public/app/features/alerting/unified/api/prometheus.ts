@@ -12,7 +12,7 @@ export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[
     })
     .toPromise();
 
-  if (response.status === 200 && response.data.status === 'success') {
+  if (response.status === 200 && (response.data.status === 'success' || response.data.status === '')) {
     const nsMap: { [key: string]: RuleNamespace } = {};
     response.data.data.groups.forEach((group) => {
       if (!nsMap[group.file]) {

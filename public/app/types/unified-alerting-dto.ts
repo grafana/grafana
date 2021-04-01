@@ -59,7 +59,7 @@ export interface PromRuleGroupDTO {
 }
 
 export interface PromResponse<T> {
-  status: 'success' | 'error';
+  status: 'success' | 'error' | ''; // mocks return empty string
   data: T;
   errorType?: string;
   error?: string;

@@ -123,6 +123,13 @@ func (mock PrometheusApiMock) RouteGetRuleStatuses(c *models.ReqContext) respons
 									Value:    "",
 								},
 							},
+							Rule: apimodels.Rule{
+								Type: "alerting",
+								Labels: map[string]string{
+									"severity": "warning",
+									"cluster":  "error",
+								},
+							},
 						},
 					},
 				},
