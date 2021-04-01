@@ -111,6 +111,5 @@ func getTitleFromTemplateData(data *template.Data) string {
 }
 
 func (en *EmailNotifier) SendResolved() bool {
-	// TODO: implement this.
-	return true
+	return false
 }

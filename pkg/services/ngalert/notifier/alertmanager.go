@@ -183,6 +183,7 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	}
 
 	// With the templates persisted, create the template list using the paths.
+	// TODO: Add the default template from Prometheus Alertmanager.
 	tmpl, err := template.FromGlobs(paths...)
 	if err != nil {
 		return err
@@ -236,38 +237,52 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*api.PostableApiReceive
 	return integrationsMap, nil
 }
 
+type NotificationChannel interface {
+	notify.Notifier
+	notify.ResolvedSender
+}
+
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiReceiver, _ *template.Template) ([]notify.Integration, error) {
+func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
 	var integrations []notify.Integration
 
 	for i, r := range receiver.GrafanaManagedReceivers {
+		cfg, err := getAlertNotificationModel(r)
+		if err != nil {
+			return nil, err
+		}
+		var n NotificationChannel
 		switch r.Type {
 		case "email":
-			frequency, err := time.ParseDuration(r.Frequency)
-			if err != nil {
-				return nil, fmt.Errorf("unable to parse receiver frequency %s, %w", r.Frequency, err)
-			}
-			notification := models.AlertNotification{
-				Uid:                   r.Uid,
-				Name:                  r.Name,
-				Type:                  r.Type,
-				IsDefault:             r.IsDefault,
-				SendReminder:          r.SendReminder,
-				DisableResolveMessage: r.DisableResolveMessage,
-				Frequency:             frequency,
-				Settings:              r.Settings,
-				SecureSettings:        securejsondata.GetEncryptedJsonData(r.SecureSettings),
-			}
-			n, err := channels.NewEmailNotifier(&notification)
-			if err != nil {
-				return nil, err
-			}
-
-			integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
+			n, err = channels.NewEmailNotifier(cfg)
+		case "pagerduty":
+			n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
 		}
+		if err != nil {
+			return nil, err
+		}
+		integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
 	}
 
 	return integrations, nil
+}
+
+func getAlertNotificationModel(r *api.PostableGrafanaReceiver) (*models.AlertNotification, error) {
+	frequency, err := time.ParseDuration(r.Frequency)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse receiver frequency %s, %w", r.Frequency, err)
+	}
+	return &models.AlertNotification{
+		Uid:                   r.Uid,
+		Name:                  r.Name,
+		Type:                  r.Type,
+		IsDefault:             r.IsDefault,
+		SendReminder:          r.SendReminder,
+		DisableResolveMessage: r.DisableResolveMessage,
+		Frequency:             frequency,
+		Settings:              r.Settings,
+		SecureSettings:        securejsondata.GetEncryptedJsonData(r.SecureSettings),
+	}, nil
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
