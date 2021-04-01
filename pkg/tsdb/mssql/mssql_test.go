@@ -174,16 +174,17 @@ func TestMSSQL(t *testing.T) {
 				So(*frames[0].Fields[23].At(0).(*string), ShouldEqual, uuid)
 			})
 		})
+
 		Convey("Given a table with metrics that lacks data for some series ", func() {
 			sql := `
-						IF OBJECT_ID('dbo.[metric]', 'U') IS NOT NULL
-							DROP TABLE dbo.[metric]
+							IF OBJECT_ID('dbo.[metric]', 'U') IS NOT NULL
+								DROP TABLE dbo.[metric]
 
-						CREATE TABLE [metric] (
-							time datetime,
-							value int
-						)
-					`
+							CREATE TABLE [metric] (
+								time datetime,
+								value int
+							)
+						`
 
 			_, err := sess.Exec(sql)
 			So(err, ShouldBeNil)
@@ -232,15 +233,16 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				points := queryResult.Series[0].Points
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
 				// without fill this should result in 4 buckets
-				So(len(points), ShouldEqual, 4)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 4)
 
 				dt := fromStart
 
 				for i := 0; i < 2; i++ {
-					aValue := points[i][0].Float64
-					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
+					aValue := *frames[0].Fields[1].At(i).(*float64)
+					aTime := *frames[0].Fields[0].At(i).(*time.Time)
 					So(aValue, ShouldEqual, 15)
 					So(aTime, ShouldEqual, dt)
 					dt = dt.Add(5 * time.Minute)
@@ -249,8 +251,8 @@ func TestMSSQL(t *testing.T) {
 				// adjust for 10 minute gap between first and second set of points
 				dt = dt.Add(10 * time.Minute)
 				for i := 2; i < 4; i++ {
-					aValue := points[i][0].Float64
-					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
+					aValue := *frames[0].Fields[1].At(i).(*float64)
+					aTime := *frames[0].Fields[0].At(i).(*time.Time)
 					So(aValue, ShouldEqual, 20)
 					So(aTime, ShouldEqual, dt)
 					dt = dt.Add(5 * time.Minute)
@@ -279,34 +281,35 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				points := queryResult.Series[0].Points
-				So(len(points), ShouldEqual, 7)
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 7)
 
 				dt := fromStart
 
 				for i := 0; i < 2; i++ {
-					aValue := points[i][0].Float64
-					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
+					aValue := *frames[0].Fields[1].At(i).(*float64)
+					aTime := *frames[0].Fields[0].At(i).(*time.Time)
 					So(aValue, ShouldEqual, 15)
 					So(aTime, ShouldEqual, dt)
 					dt = dt.Add(5 * time.Minute)
 				}
 
 				// check for NULL values inserted by fill
-				So(points[2][0].Valid, ShouldBeFalse)
-				So(points[3][0].Valid, ShouldBeFalse)
+				So(frames[0].Fields[1].At(2).(*float64), ShouldEqual, nil)
+				So(frames[0].Fields[1].At(3).(*float64), ShouldEqual, nil)
 
 				// adjust for 10 minute gap between first and second set of points
 				dt = dt.Add(10 * time.Minute)
 				for i := 4; i < 6; i++ {
-					aValue := points[i][0].Float64
-					aTime := time.Unix(int64(points[i][1].Float64)/1000, 0)
+					aValue := *frames[0].Fields[1].At(i).(*float64)
+					aTime := *frames[0].Fields[0].At(i).(*time.Time)
 					So(aValue, ShouldEqual, 20)
 					So(aTime, ShouldEqual, dt)
 					dt = dt.Add(5 * time.Minute)
 				}
 
-				So(points[6][0].Valid, ShouldBeFalse)
+				So(frames[0].Fields[1].At(6).(*float64), ShouldEqual, nil)
 			})
 
 			Convey("When doing a metric query using timeGroup and $__interval", func() {
@@ -338,11 +341,15 @@ func TestMSSQL(t *testing.T) {
 					resp, err := endpoint.DataQuery(context.Background(), nil, query)
 					So(err, ShouldBeNil)
 					queryResult := resp.Results["A"]
+
+					frames, _ := queryResult.Dataframes.Decoded()
+					So(len(frames), ShouldEqual, 1)
+
 					So(queryResult.Error, ShouldBeNil)
 					So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 ORDER BY 1")
+					So(frames[0].Meta.ExecutedQueryString, ShouldEqual, "SELECT FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 ORDER BY 1")
 				})
 			})
-
 			Convey("When doing a metric query using timeGroup with float fill enabled", func() {
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
@@ -365,8 +372,10 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				points := queryResult.Series[0].Points
-				So(points[3][0].Float64, ShouldEqual, 1.5)
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[0].Len(), ShouldEqual, 7)
+				So(*frames[0].Fields[1].At(3).(*float64), ShouldEqual, 1.5)
 			})
 		})
 
@@ -437,7 +446,7 @@ func TestMSSQL(t *testing.T) {
 			_, err = sess.InsertMulti(series)
 			So(err, ShouldBeNil)
 
-			Convey("When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in milliseconds", func() {
+			Convey("When doing a metric query using epoch (int64) as time column and value column (int64) should return metric with time in time.Time", func() {
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
 						{
@@ -455,11 +464,12 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(*frames[0].Fields[0].At(0).(*time.Time), ShouldEqual, tInitial)
 			})
 
-			Convey("When doing a metric query using epoch (int64 nullable) as time column and value column (int64 nullable) should return metric with time in milliseconds", func() {
+			Convey("When doing a metric query using epoch (int64 nullable) as time column and value column (int64 nullable) should return metric with time in time.Time", func() {
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
 						{
@@ -477,11 +487,12 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(*frames[0].Fields[0].At(0).(*time.Time), ShouldEqual, tInitial)
 			})
 
-			Convey("When doing a metric query using epoch (float64) as time column and value column (float64) should return metric with time in milliseconds", func() {
+			Convey("When doing a metric query using epoch (float64) as time column and value column (float64) should return metric with time in time.Time", func() {
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
 						{
@@ -499,11 +510,12 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(*frames[0].Fields[0].At(0).(*time.Time), ShouldEqual, tInitial)
 			})
 
-			Convey("When doing a metric query using epoch (float64 nullable) as time column and value column (float64 nullable) should return metric with time in milliseconds", func() {
+			Convey("When doing a metric query using epoch (float64 nullable) as time column and value column (float64 nullable) should return metric with time in time.Time", func() {
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
 						{
@@ -521,11 +533,12 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(*frames[0].Fields[0].At(0).(*time.Time), ShouldEqual, tInitial)
 			})
 
-			Convey("When doing a metric query using epoch (int32) as time column and value column (int32) should return metric with time in milliseconds", func() {
+			Convey("When doing a metric query using epoch (int32) as time column and value column (int32) should return metric with time in time.Time", func() {
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
 						{
@@ -543,11 +556,12 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(*frames[0].Fields[0].At(0).(*time.Time), ShouldEqual, tInitial)
 			})
 
-			Convey("When doing a metric query using epoch (int32 nullable) as time column and value column (int32 nullable) should return metric with time in milliseconds", func() {
+			Convey("When doing a metric query using epoch (int32 nullable) as time column and value column (int32 nullable) should return metric with time in time.Time", func() {
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
 						{
@@ -565,11 +579,12 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(tInitial.UnixNano()/1e6))
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(*frames[0].Fields[0].At(0).(*time.Time), ShouldEqual, tInitial)
 			})
 
-			Convey("When doing a metric query using epoch (float32) as time column and value column (float32) should return metric with time in milliseconds", func() {
+			Convey("When doing a metric query using epoch (float32) as time column and value column (float32) should return metric with time in time.Time", func() {
 				query := plugins.DataQuery{
 					Queries: []plugins.DataSubQuery{
 						{
@@ -587,8 +602,9 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float32(tInitial.Unix()))*1e3)
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(*frames[0].Fields[0].At(0).(*time.Time), ShouldEqual, tInitial)
 			})
 
 			Convey("When doing a metric query using epoch (float32 nullable) as time column and value column (float32 nullable) should return metric with time in milliseconds", func() {
@@ -609,8 +625,10 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				So(len(queryResult.Series), ShouldEqual, 1)
-				So(queryResult.Series[0].Points[0][1].Float64, ShouldEqual, float64(float32(tInitial.Unix()))*1e3)
+				frames, _ := queryResult.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+
+				So(*frames[0].Fields[0].At(0).(*time.Time), ShouldEqual, time.Unix(0, int64(float64(float32(tInitial.Unix()))*1e3)*int64(time.Millisecond)))
 			})
 
 			Convey("When doing a metric query grouping by time and select metric column should return correct series", func() {
@@ -631,526 +649,531 @@ func TestMSSQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				So(queryResult.Error, ShouldBeNil)
 
-				So(len(queryResult.Series), ShouldEqual, 2)
+				frames, err := queryResult.Dataframes.Decoded()
+				So(err, ShouldBeNil)
+				So(len(frames), ShouldEqual, 2)
+
 				So(queryResult.Series[0].Name, ShouldEqual, "Metric A - value one")
 				So(queryResult.Series[1].Name, ShouldEqual, "Metric B - value one")
 			})
-
-			Convey("When doing a metric query grouping by time should return correct series", func() {
-				query := plugins.DataQuery{
-					Queries: []plugins.DataSubQuery{
-						{
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
-								"format": "time_series",
-							}),
-							RefID: "A",
-						},
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				So(err, ShouldBeNil)
-				queryResult := resp.Results["A"]
-				So(queryResult.Error, ShouldBeNil)
-
-				So(len(queryResult.Series), ShouldEqual, 2)
-				So(queryResult.Series[0].Name, ShouldEqual, "valueOne")
-				So(queryResult.Series[1].Name, ShouldEqual, "valueTwo")
-			})
-
-			Convey("When doing a metric query with metric column and multiple value columns", func() {
-				query := plugins.DataQuery{
-					Queries: []plugins.DataSubQuery{
-						{
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT $__timeEpoch(time), measurement, valueOne, valueTwo FROM metric_values ORDER BY 1",
-								"format": "time_series",
-							}),
-							RefID: "A",
-						},
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				So(err, ShouldBeNil)
-				queryResult := resp.Results["A"]
-				So(queryResult.Error, ShouldBeNil)
-
-				So(len(queryResult.Series), ShouldEqual, 4)
-				So(queryResult.Series[0].Name, ShouldEqual, "Metric A valueOne")
-				So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
-				So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
-				So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
-			})
-
-			Convey("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func() {
-				sqleng.Interpolate = origInterpolate
-				timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: fromStart}
-				query := plugins.DataQuery{
-					TimeRange: &timeRange,
-					Queries: []plugins.DataSubQuery{
-						{
-							DataSource: &models.DataSource{JsonData: simplejson.New()},
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": `SELECT time FROM metric_values WHERE time > $__timeFrom() OR time < $__timeFrom() OR 1 < $__unixEpochFrom() OR $__unixEpochTo() > 1 ORDER BY 1`,
-								"format": "time_series",
-							}),
-							RefID: "A",
-						},
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				So(err, ShouldBeNil)
-				queryResult := resp.Results["A"]
-				So(queryResult.Error, ShouldBeNil)
-				So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
-			})
-
-			Convey("Given a stored procedure that takes @from and @to in epoch time", func() {
-				sql := `
-							IF object_id('sp_test_epoch') IS NOT NULL
-								DROP PROCEDURE sp_test_epoch
-						`
-
-				_, err := sess.Exec(sql)
-				So(err, ShouldBeNil)
-
-				sql = `
-							CREATE PROCEDURE sp_test_epoch(
-								@from 		int,
-								@to 			int,
-								@interval nvarchar(50) = '5m',
-								@metric 	nvarchar(200) = 'ALL'
-							)	AS
-							BEGIN
-								DECLARE @dInterval int
-								SELECT @dInterval = 300
-
-								IF @interval = '10m'
-									SELECT @dInterval = 600
-
-								SELECT
-									CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
-									measurement as metric,
-									avg(valueOne) as valueOne,
-									avg(valueTwo) as valueTwo
-								FROM
-									metric_values
-								WHERE
-									time BETWEEN DATEADD(s, @from, '1970-01-01') AND DATEADD(s, @to, '1970-01-01') AND
-									(@metric = 'ALL' OR measurement = @metric)
-								GROUP BY
-									CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
-									measurement
-								ORDER BY 1
-							END
-						`
-
-				_, err = sess.Exec(sql)
-				So(err, ShouldBeNil)
-
-				Convey("When doing a metric query using stored procedure should return correct result", func() {
-					sqleng.Interpolate = origInterpolate
-					query := plugins.DataQuery{
-						Queries: []plugins.DataSubQuery{
-							{
-								DataSource: &models.DataSource{JsonData: simplejson.New()},
-								Model: simplejson.NewFromAny(map[string]interface{}{
-									"rawSql": `DECLARE
-												@from int = $__unixEpochFrom(),
-												@to int = $__unixEpochTo()
-
-												EXEC dbo.sp_test_epoch @from, @to`,
-									"format": "time_series",
-								}),
-								RefID: "A",
+			/*
+					Convey("When doing a metric query grouping by time should return correct series", func() {
+						query := plugins.DataQuery{
+							Queries: []plugins.DataSubQuery{
+								{
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": "SELECT $__timeEpoch(time), valueOne, valueTwo FROM metric_values ORDER BY 1",
+										"format": "time_series",
+									}),
+									RefID: "A",
+								},
 							},
-						},
-						TimeRange: &plugins.DataTimeRange{
-							From: "1521117000000",
-							To:   "1521122100000",
-						},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						So(err, ShouldBeNil)
+						queryResult := resp.Results["A"]
+						So(queryResult.Error, ShouldBeNil)
+
+						So(len(queryResult.Series), ShouldEqual, 2)
+						So(queryResult.Series[0].Name, ShouldEqual, "valueOne")
+						So(queryResult.Series[1].Name, ShouldEqual, "valueTwo")
+					})
+
+					Convey("When doing a metric query with metric column and multiple value columns", func() {
+						query := plugins.DataQuery{
+							Queries: []plugins.DataSubQuery{
+								{
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": "SELECT $__timeEpoch(time), measurement, valueOne, valueTwo FROM metric_values ORDER BY 1",
+										"format": "time_series",
+									}),
+									RefID: "A",
+								},
+							},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						So(err, ShouldBeNil)
+						queryResult := resp.Results["A"]
+						So(queryResult.Error, ShouldBeNil)
+
+						So(len(queryResult.Series), ShouldEqual, 4)
+						So(queryResult.Series[0].Name, ShouldEqual, "Metric A valueOne")
+						So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
+						So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
+						So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
+					})
+
+					Convey("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func() {
+						sqleng.Interpolate = origInterpolate
+						timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: fromStart}
+						query := plugins.DataQuery{
+							TimeRange: &timeRange,
+							Queries: []plugins.DataSubQuery{
+								{
+									DataSource: &models.DataSource{JsonData: simplejson.New()},
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": `SELECT time FROM metric_values WHERE time > $__timeFrom() OR time < $__timeFrom() OR 1 < $__unixEpochFrom() OR $__unixEpochTo() > 1 ORDER BY 1`,
+										"format": "time_series",
+									}),
+									RefID: "A",
+								},
+							},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						So(err, ShouldBeNil)
+						queryResult := resp.Results["A"]
+						So(queryResult.Error, ShouldBeNil)
+						So(queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString(), ShouldEqual, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1")
+					})
+
+					Convey("Given a stored procedure that takes @from and @to in epoch time", func() {
+						sql := `
+									IF object_id('sp_test_epoch') IS NOT NULL
+										DROP PROCEDURE sp_test_epoch
+								`
+
+						_, err := sess.Exec(sql)
+						So(err, ShouldBeNil)
+
+						sql = `
+									CREATE PROCEDURE sp_test_epoch(
+										@from 		int,
+										@to 			int,
+										@interval nvarchar(50) = '5m',
+										@metric 	nvarchar(200) = 'ALL'
+									)	AS
+									BEGIN
+										DECLARE @dInterval int
+										SELECT @dInterval = 300
+
+										IF @interval = '10m'
+											SELECT @dInterval = 600
+
+										SELECT
+											CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
+											measurement as metric,
+											avg(valueOne) as valueOne,
+											avg(valueTwo) as valueTwo
+										FROM
+											metric_values
+										WHERE
+											time BETWEEN DATEADD(s, @from, '1970-01-01') AND DATEADD(s, @to, '1970-01-01') AND
+											(@metric = 'ALL' OR measurement = @metric)
+										GROUP BY
+											CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
+											measurement
+										ORDER BY 1
+									END
+								`
+
+						_, err = sess.Exec(sql)
+						So(err, ShouldBeNil)
+
+						Convey("When doing a metric query using stored procedure should return correct result", func() {
+							sqleng.Interpolate = origInterpolate
+							query := plugins.DataQuery{
+								Queries: []plugins.DataSubQuery{
+									{
+										DataSource: &models.DataSource{JsonData: simplejson.New()},
+										Model: simplejson.NewFromAny(map[string]interface{}{
+											"rawSql": `DECLARE
+														@from int = $__unixEpochFrom(),
+														@to int = $__unixEpochTo()
+
+														EXEC dbo.sp_test_epoch @from, @to`,
+											"format": "time_series",
+										}),
+										RefID: "A",
+									},
+								},
+								TimeRange: &plugins.DataTimeRange{
+									From: "1521117000000",
+									To:   "1521122100000",
+								},
+							}
+
+							resp, err := endpoint.DataQuery(context.Background(), nil, query)
+							queryResult := resp.Results["A"]
+							So(err, ShouldBeNil)
+							So(queryResult.Error, ShouldBeNil)
+
+							So(len(queryResult.Series), ShouldEqual, 4)
+							So(queryResult.Series[0].Name, ShouldEqual, "Metric A valueOne")
+							So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
+							So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
+							So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
+						})
+					})
+
+					Convey("Given a stored procedure that takes @from and @to in datetime", func() {
+						sql := `
+									IF object_id('sp_test_datetime') IS NOT NULL
+										DROP PROCEDURE sp_test_datetime
+								`
+
+						_, err := sess.Exec(sql)
+						So(err, ShouldBeNil)
+
+						sql = `
+									CREATE PROCEDURE sp_test_datetime(
+										@from 		datetime,
+										@to 			datetime,
+										@interval nvarchar(50) = '5m',
+										@metric 	nvarchar(200) = 'ALL'
+									)	AS
+									BEGIN
+										DECLARE @dInterval int
+										SELECT @dInterval = 300
+
+										IF @interval = '10m'
+											SELECT @dInterval = 600
+
+										SELECT
+											CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
+											measurement as metric,
+											avg(valueOne) as valueOne,
+											avg(valueTwo) as valueTwo
+										FROM
+											metric_values
+										WHERE
+											time BETWEEN @from AND @to AND
+											(@metric = 'ALL' OR measurement = @metric)
+										GROUP BY
+											CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
+											measurement
+										ORDER BY 1
+									END
+								`
+
+						_, err = sess.Exec(sql)
+						So(err, ShouldBeNil)
+
+						Convey("When doing a metric query using stored procedure should return correct result", func() {
+							sqleng.Interpolate = origInterpolate
+							query := plugins.DataQuery{
+								Queries: []plugins.DataSubQuery{
+									{
+										DataSource: &models.DataSource{JsonData: simplejson.New()},
+										Model: simplejson.NewFromAny(map[string]interface{}{
+											"rawSql": `DECLARE
+														@from int = $__unixEpochFrom(),
+														@to int = $__unixEpochTo()
+
+														EXEC dbo.sp_test_epoch @from, @to`,
+											"format": "time_series",
+										}),
+										RefID: "A",
+									},
+								},
+								TimeRange: &plugins.DataTimeRange{
+									From: "1521117000000",
+									To:   "1521122100000",
+								},
+							}
+
+							resp, err := endpoint.DataQuery(context.Background(), nil, query)
+							queryResult := resp.Results["A"]
+							So(err, ShouldBeNil)
+							So(queryResult.Error, ShouldBeNil)
+
+							So(len(queryResult.Series), ShouldEqual, 4)
+							So(queryResult.Series[0].Name, ShouldEqual, "Metric A valueOne")
+							So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
+							So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
+							So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
+						})
+					})
+				})
+
+				Convey("Given a table with event data", func() {
+					sql := `
+							IF OBJECT_ID('dbo.[event]', 'U') IS NOT NULL
+								DROP TABLE dbo.[event]
+
+							CREATE TABLE [event] (
+								time_sec int,
+								description nvarchar(100),
+								tags nvarchar(100),
+							)
+						`
+
+					_, err := sess.Exec(sql)
+					So(err, ShouldBeNil)
+
+					type event struct {
+						TimeSec     int64
+						Description string
+						Tags        string
 					}
 
-					resp, err := endpoint.DataQuery(context.Background(), nil, query)
-					queryResult := resp.Results["A"]
-					So(err, ShouldBeNil)
-					So(queryResult.Error, ShouldBeNil)
-
-					So(len(queryResult.Series), ShouldEqual, 4)
-					So(queryResult.Series[0].Name, ShouldEqual, "Metric A valueOne")
-					So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
-					So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
-					So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
-				})
-			})
-
-			Convey("Given a stored procedure that takes @from and @to in datetime", func() {
-				sql := `
-							IF object_id('sp_test_datetime') IS NOT NULL
-								DROP PROCEDURE sp_test_datetime
-						`
-
-				_, err := sess.Exec(sql)
-				So(err, ShouldBeNil)
-
-				sql = `
-							CREATE PROCEDURE sp_test_datetime(
-								@from 		datetime,
-								@to 			datetime,
-								@interval nvarchar(50) = '5m',
-								@metric 	nvarchar(200) = 'ALL'
-							)	AS
-							BEGIN
-								DECLARE @dInterval int
-								SELECT @dInterval = 300
-
-								IF @interval = '10m'
-									SELECT @dInterval = 600
-
-								SELECT
-									CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
-									measurement as metric,
-									avg(valueOne) as valueOne,
-									avg(valueTwo) as valueTwo
-								FROM
-									metric_values
-								WHERE
-									time BETWEEN @from AND @to AND
-									(@metric = 'ALL' OR measurement = @metric)
-								GROUP BY
-									CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
-									measurement
-								ORDER BY 1
-							END
-						`
-
-				_, err = sess.Exec(sql)
-				So(err, ShouldBeNil)
-
-				Convey("When doing a metric query using stored procedure should return correct result", func() {
-					sqleng.Interpolate = origInterpolate
-					query := plugins.DataQuery{
-						Queries: []plugins.DataSubQuery{
-							{
-								DataSource: &models.DataSource{JsonData: simplejson.New()},
-								Model: simplejson.NewFromAny(map[string]interface{}{
-									"rawSql": `DECLARE
-												@from int = $__unixEpochFrom(),
-												@to int = $__unixEpochTo()
-
-												EXEC dbo.sp_test_epoch @from, @to`,
-									"format": "time_series",
-								}),
-								RefID: "A",
-							},
-						},
-						TimeRange: &plugins.DataTimeRange{
-							From: "1521117000000",
-							To:   "1521122100000",
-						},
+					events := []*event{}
+					for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), 60*time.Minute, 25*time.Minute) {
+						events = append(events, &event{
+							TimeSec:     t.Unix(),
+							Description: "Someone deployed something",
+							Tags:        "deploy",
+						})
+						events = append(events, &event{
+							TimeSec:     t.Add(5 * time.Minute).Unix(),
+							Description: "New support ticket registered",
+							Tags:        "ticket",
+						})
 					}
 
-					resp, err := endpoint.DataQuery(context.Background(), nil, query)
-					queryResult := resp.Results["A"]
-					So(err, ShouldBeNil)
-					So(queryResult.Error, ShouldBeNil)
+					for _, e := range events {
+						sql = fmt.Sprintf(`
+								INSERT [event] (time_sec, description, tags)
+								VALUES(%d, '%s', '%s')
+							`, e.TimeSec, e.Description, e.Tags)
 
-					So(len(queryResult.Series), ShouldEqual, 4)
-					So(queryResult.Series[0].Name, ShouldEqual, "Metric A valueOne")
-					So(queryResult.Series[1].Name, ShouldEqual, "Metric A valueTwo")
-					So(queryResult.Series[2].Name, ShouldEqual, "Metric B valueOne")
-					So(queryResult.Series[3].Name, ShouldEqual, "Metric B valueTwo")
-				})
-			})
+						_, err = sess.Exec(sql)
+						So(err, ShouldBeNil)
+					}
+
+					Convey("When doing an annotation query of deploy events should return expected result", func() {
+						query := plugins.DataQuery{
+							Queries: []plugins.DataSubQuery{
+								{
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": "SELECT time_sec as time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC",
+										"format": "table",
+									}),
+									RefID: "Deploys",
+								},
+							},
+							TimeRange: &plugins.DataTimeRange{
+								From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+								To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
+							},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						queryResult := resp.Results["Deploys"]
+						So(err, ShouldBeNil)
+						frames, _ := queryResult.Dataframes.Decoded()
+						So(len(frames), ShouldEqual, 1)
+						So(frames[0].Fields[0].Len(), ShouldEqual, 3)
+					})
+
+					Convey("When doing an annotation query of ticket events should return expected result", func() {
+						query := plugins.DataQuery{
+							Queries: []plugins.DataSubQuery{
+								{
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": "SELECT time_sec as time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC",
+										"format": "table",
+									}),
+									RefID: "Tickets",
+								},
+							},
+							TimeRange: &plugins.DataTimeRange{
+								From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
+								To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
+							},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						queryResult := resp.Results["Tickets"]
+						So(err, ShouldBeNil)
+						frames, _ := queryResult.Dataframes.Decoded()
+						So(len(frames), ShouldEqual, 1)
+						So(frames[0].Fields[0].Len(), ShouldEqual, 3)
+					})
+
+					Convey("When doing an annotation query with a time column in datetime format", func() {
+						dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+						dtFormat := "2006-01-02 15:04:05.999999999"
+
+						query := plugins.DataQuery{
+							Queries: []plugins.DataSubQuery{
+								{
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": fmt.Sprintf(`SELECT
+												CAST('%s' AS DATETIME) as time,
+												'message' as text,
+												'tag1,tag2' as tags
+											`, dt.Format(dtFormat)),
+										"format": "table",
+									}),
+									RefID: "A",
+								},
+							},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						So(err, ShouldBeNil)
+						queryResult := resp.Results["A"]
+						So(queryResult.Error, ShouldBeNil)
+
+						frames, _ := queryResult.Dataframes.Decoded()
+						So(len(frames), ShouldEqual, 1)
+						So(frames[0].Fields[0].Len(), ShouldEqual, 1)
+
+						// Should be in milliseconds
+						So(frames[0].Fields[0].At(0).(float64), ShouldEqual, float64(dt.UnixNano()/1e6))
+					})
+
+					Convey("When doing an annotation query with a time column in epoch second format should return ms", func() {
+						dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+
+						query := plugins.DataQuery{
+							Queries: []plugins.DataSubQuery{
+								{
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": fmt.Sprintf(`SELECT
+												 %d as time,
+												'message' as text,
+												'tag1,tag2' as tags
+											`, dt.Unix()),
+										"format": "table",
+									}),
+									RefID: "A",
+								},
+							},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						So(err, ShouldBeNil)
+						queryResult := resp.Results["A"]
+						So(queryResult.Error, ShouldBeNil)
+
+						frames, _ := queryResult.Dataframes.Decoded()
+						So(len(frames), ShouldEqual, 1)
+						So(frames[0].Fields[0].Len(), ShouldEqual, 1)
+
+						// Should be in milliseconds
+						// So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
+					})
+
+					Convey("When doing an annotation query with a time column in epoch second format (int) should return ms", func() {
+						dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+
+						query := plugins.DataQuery{
+							Queries: []plugins.DataSubQuery{
+								{
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": fmt.Sprintf(`SELECT
+												 cast(%d as int) as time,
+												'message' as text,
+												'tag1,tag2' as tags
+											`, dt.Unix()),
+										"format": "table",
+									}),
+									RefID: "A",
+								},
+							},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						So(err, ShouldBeNil)
+						queryResult := resp.Results["A"]
+						So(queryResult.Error, ShouldBeNil)
+
+						frames, _ := queryResult.Dataframes.Decoded()
+						So(len(frames), ShouldEqual, 1)
+						So(frames[0].Fields[0].Len(), ShouldEqual, 1)
+
+						// Should be in milliseconds
+						// So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
+					})
+
+					Convey("When doing an annotation query with a time column in epoch millisecond format should return ms", func() {
+						dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
+
+						query := plugins.DataQuery{
+							Queries: []plugins.DataSubQuery{
+								{
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": fmt.Sprintf(`SELECT
+												 %d as time,
+												'message' as text,
+												'tag1,tag2' as tags
+											`, dt.Unix()*1000),
+										"format": "table",
+									}),
+									RefID: "A",
+								},
+							},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						So(err, ShouldBeNil)
+						queryResult := resp.Results["A"]
+						So(queryResult.Error, ShouldBeNil)
+
+						frames, _ := queryResult.Dataframes.Decoded()
+						So(len(frames), ShouldEqual, 1)
+						So(frames[0].Fields[0].Len(), ShouldEqual, 1)
+
+						// Should be in milliseconds
+						// So(columns[0].(float64), ShouldEqual, float64(dt.Unix()*1000))
+					})
+
+					Convey("When doing an annotation query with a time column holding a bigint null value should return nil", func() {
+						query := plugins.DataQuery{
+							Queries: []plugins.DataSubQuery{
+								{
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": `SELECT
+												 cast(null as bigint) as time,
+												'message' as text,
+												'tag1,tag2' as tags
+											`,
+										"format": "table",
+									}),
+									RefID: "A",
+								},
+							},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						So(err, ShouldBeNil)
+						queryResult := resp.Results["A"]
+						So(queryResult.Error, ShouldBeNil)
+
+						frames, _ := queryResult.Dataframes.Decoded()
+						So(len(frames), ShouldEqual, 1)
+						So(frames[0].Fields[0].Len(), ShouldEqual, 1)
+
+						// Should be in milliseconds
+						// So(columns[0], ShouldBeNil)
+					})
+
+					Convey("When doing an annotation query with a time column holding a datetime null value should return nil", func() {
+						query := plugins.DataQuery{
+							Queries: []plugins.DataSubQuery{
+								{
+									Model: simplejson.NewFromAny(map[string]interface{}{
+										"rawSql": `SELECT
+												 cast(null as datetime) as time,
+												'message' as text,
+												'tag1,tag2' as tags
+											`,
+										"format": "table",
+									}),
+									RefID: "A",
+								},
+							},
+						}
+
+						resp, err := endpoint.DataQuery(context.Background(), nil, query)
+						So(err, ShouldBeNil)
+						queryResult := resp.Results["A"]
+						So(queryResult.Error, ShouldBeNil)
+
+						frames, _ := queryResult.Dataframes.Decoded()
+						So(len(frames), ShouldEqual, 1)
+						So(frames[0].Fields[0].Len(), ShouldEqual, 1)
+
+						// Should be in milliseconds
+						// So(columns[0], ShouldBeNil)
+					})
+			*/
 		})
 
-		Convey("Given a table with event data", func() {
-			sql := `
-					IF OBJECT_ID('dbo.[event]', 'U') IS NOT NULL
-						DROP TABLE dbo.[event]
-
-					CREATE TABLE [event] (
-						time_sec int,
-						description nvarchar(100),
-						tags nvarchar(100),
-					)
-				`
-
-			_, err := sess.Exec(sql)
-			So(err, ShouldBeNil)
-
-			type event struct {
-				TimeSec     int64
-				Description string
-				Tags        string
-			}
-
-			events := []*event{}
-			for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), 60*time.Minute, 25*time.Minute) {
-				events = append(events, &event{
-					TimeSec:     t.Unix(),
-					Description: "Someone deployed something",
-					Tags:        "deploy",
-				})
-				events = append(events, &event{
-					TimeSec:     t.Add(5 * time.Minute).Unix(),
-					Description: "New support ticket registered",
-					Tags:        "ticket",
-				})
-			}
-
-			for _, e := range events {
-				sql = fmt.Sprintf(`
-						INSERT [event] (time_sec, description, tags)
-						VALUES(%d, '%s', '%s')
-					`, e.TimeSec, e.Description, e.Tags)
-
-				_, err = sess.Exec(sql)
-				So(err, ShouldBeNil)
-			}
-
-			Convey("When doing an annotation query of deploy events should return expected result", func() {
-				query := plugins.DataQuery{
-					Queries: []plugins.DataSubQuery{
-						{
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT time_sec as time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC",
-								"format": "table",
-							}),
-							RefID: "Deploys",
-						},
-					},
-					TimeRange: &plugins.DataTimeRange{
-						From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
-						To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				queryResult := resp.Results["Deploys"]
-				So(err, ShouldBeNil)
-				frames, _ := queryResult.Dataframes.Decoded()
-				So(len(frames), ShouldEqual, 1)
-				So(frames[0].Fields[0].Len(), ShouldEqual, 3)
-			})
-
-			Convey("When doing an annotation query of ticket events should return expected result", func() {
-				query := plugins.DataQuery{
-					Queries: []plugins.DataSubQuery{
-						{
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": "SELECT time_sec as time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='ticket' ORDER BY 1 ASC",
-								"format": "table",
-							}),
-							RefID: "Tickets",
-						},
-					},
-					TimeRange: &plugins.DataTimeRange{
-						From: fmt.Sprintf("%v", fromStart.Add(-20*time.Minute).Unix()*1000),
-						To:   fmt.Sprintf("%v", fromStart.Add(40*time.Minute).Unix()*1000),
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				queryResult := resp.Results["Tickets"]
-				So(err, ShouldBeNil)
-				frames, _ := queryResult.Dataframes.Decoded()
-				So(len(frames), ShouldEqual, 1)
-				So(frames[0].Fields[0].Len(), ShouldEqual, 3)
-			})
-
-			Convey("When doing an annotation query with a time column in datetime format", func() {
-				dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
-				dtFormat := "2006-01-02 15:04:05.999999999"
-
-				query := plugins.DataQuery{
-					Queries: []plugins.DataSubQuery{
-						{
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": fmt.Sprintf(`SELECT
-										CAST('%s' AS DATETIME) as time,
-										'message' as text,
-										'tag1,tag2' as tags
-									`, dt.Format(dtFormat)),
-								"format": "table",
-							}),
-							RefID: "A",
-						},
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				So(err, ShouldBeNil)
-				queryResult := resp.Results["A"]
-				So(queryResult.Error, ShouldBeNil)
-
-				frames, _ := queryResult.Dataframes.Decoded()
-				So(len(frames), ShouldEqual, 1)
-				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
-
-				// Should be in milliseconds
-				So(frames[0].Fields[0].At(0).(float64), ShouldEqual, float64(dt.UnixNano()/1e6))
-			})
-
-			Convey("When doing an annotation query with a time column in epoch second format should return ms", func() {
-				dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
-
-				query := plugins.DataQuery{
-					Queries: []plugins.DataSubQuery{
-						{
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": fmt.Sprintf(`SELECT
-										 %d as time,
-										'message' as text,
-										'tag1,tag2' as tags
-									`, dt.Unix()),
-								"format": "table",
-							}),
-							RefID: "A",
-						},
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				So(err, ShouldBeNil)
-				queryResult := resp.Results["A"]
-				So(queryResult.Error, ShouldBeNil)
-
-				frames, _ := queryResult.Dataframes.Decoded()
-				So(len(frames), ShouldEqual, 1)
-				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
-
-				// Should be in milliseconds
-				// So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
-			})
-
-			Convey("When doing an annotation query with a time column in epoch second format (int) should return ms", func() {
-				dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
-
-				query := plugins.DataQuery{
-					Queries: []plugins.DataSubQuery{
-						{
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": fmt.Sprintf(`SELECT
-										 cast(%d as int) as time,
-										'message' as text,
-										'tag1,tag2' as tags
-									`, dt.Unix()),
-								"format": "table",
-							}),
-							RefID: "A",
-						},
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				So(err, ShouldBeNil)
-				queryResult := resp.Results["A"]
-				So(queryResult.Error, ShouldBeNil)
-
-				frames, _ := queryResult.Dataframes.Decoded()
-				So(len(frames), ShouldEqual, 1)
-				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
-
-				// Should be in milliseconds
-				// So(columns[0].(int64), ShouldEqual, dt.Unix()*1000)
-			})
-
-			Convey("When doing an annotation query with a time column in epoch millisecond format should return ms", func() {
-				dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
-
-				query := plugins.DataQuery{
-					Queries: []plugins.DataSubQuery{
-						{
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": fmt.Sprintf(`SELECT
-										 %d as time,
-										'message' as text,
-										'tag1,tag2' as tags
-									`, dt.Unix()*1000),
-								"format": "table",
-							}),
-							RefID: "A",
-						},
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				So(err, ShouldBeNil)
-				queryResult := resp.Results["A"]
-				So(queryResult.Error, ShouldBeNil)
-
-				frames, _ := queryResult.Dataframes.Decoded()
-				So(len(frames), ShouldEqual, 1)
-				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
-
-				// Should be in milliseconds
-				// So(columns[0].(float64), ShouldEqual, float64(dt.Unix()*1000))
-			})
-
-			Convey("When doing an annotation query with a time column holding a bigint null value should return nil", func() {
-				query := plugins.DataQuery{
-					Queries: []plugins.DataSubQuery{
-						{
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": `SELECT
-										 cast(null as bigint) as time,
-										'message' as text,
-										'tag1,tag2' as tags
-									`,
-								"format": "table",
-							}),
-							RefID: "A",
-						},
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				So(err, ShouldBeNil)
-				queryResult := resp.Results["A"]
-				So(queryResult.Error, ShouldBeNil)
-
-				frames, _ := queryResult.Dataframes.Decoded()
-				So(len(frames), ShouldEqual, 1)
-				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
-
-				// Should be in milliseconds
-				// So(columns[0], ShouldBeNil)
-			})
-
-			Convey("When doing an annotation query with a time column holding a datetime null value should return nil", func() {
-				query := plugins.DataQuery{
-					Queries: []plugins.DataSubQuery{
-						{
-							Model: simplejson.NewFromAny(map[string]interface{}{
-								"rawSql": `SELECT
-										 cast(null as datetime) as time,
-										'message' as text,
-										'tag1,tag2' as tags
-									`,
-								"format": "table",
-							}),
-							RefID: "A",
-						},
-					},
-				}
-
-				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				So(err, ShouldBeNil)
-				queryResult := resp.Results["A"]
-				So(queryResult.Error, ShouldBeNil)
-
-				frames, _ := queryResult.Dataframes.Decoded()
-				So(len(frames), ShouldEqual, 1)
-				So(frames[0].Fields[0].Len(), ShouldEqual, 1)
-
-				// Should be in milliseconds
-				// So(columns[0], ShouldBeNil)
-			})
-		})
 	})
 }
 

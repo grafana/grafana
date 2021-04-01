@@ -177,6 +177,7 @@ func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql
 }
 
 func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", strings.ToLower(err.Error()))
 	return err
 }
 

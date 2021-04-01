@@ -65,9 +65,6 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 	if tsSchema.Type == data.TimeSeriesTypeNot {
 		return f, fmt.Errorf("can not fill missing, not timeseries frame")
 	}
-	fmt.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>1 from time %v+ ", qm.TimeRange.From)
-	fmt.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>2 to time %v+ ", qm.TimeRange.To)
-	fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<3 interval %v+", qm.Interval)
 
 	if qm.Interval == 0 {
 		return f, nil
@@ -88,7 +85,6 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 	timeField := f.Fields[tsSchema.TimeIndex]
 
 	for currentTime := qm.TimeRange.From; !currentTime.After(qm.TimeRange.To); currentTime = currentTime.Add(qm.Interval) {
-		fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<4 currentTime %v+", currentTime)
 		initialRowIdx := 0
 		if lastSeenRowIdx > 0 {
 			initialRowIdx = lastSeenRowIdx + 1
@@ -115,20 +111,15 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 				}
 				break
 			}
-			fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<intermidiateRows    %v \n", intermidiateRows)
-			fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<lastSeenRowIdx    %v \n", lastSeenRowIdx)
 
 			intermidiateRows = append(intermidiateRows, initialRowIdx)
 			lastSeenRowIdx = initialRowIdx
 			initialRowIdx++
 		}
 
-		if currentTime.Add(qm.Interval).After(qm.TimeRange.To) && len(intermidiateRows) == 0 {
-			break
-		}
-
 		// no intermidiate points; set values following fill missing mode
 		fieldVals := getRowFillValues(f, tsSchema, currentTime, qm.FillMissing, intermidiateRows, lastSeenRowIdx)
+
 		resampledFrame.InsertRow(resampledRowidx, fieldVals...)
 		resampledRowidx++
 	}
