@@ -1,7 +1,7 @@
 +++
 title = "Explore"
 keywords = ["explore", "loki", "logs"]
-aliases = ["/docs/grafana/latest/features/explore/"]
+aliases = ["/docs/grafana/next/features/explore/"]
 weight = 90
 +++
 
@@ -17,7 +17,7 @@ If you just want to explore your data and do not want to create a dashboard, the
 
 ## Start exploring
 
-In order to access Explore, you must have an editor or an administrator role. Refer to [Organization roles](https://grafana.com/docs/grafana/latest/permissions/organization_roles/) for more information on what each role has access to.
+In order to access Explore, you must have an editor or an administrator role. Refer to [Organization roles](https://grafana.com/docs/grafana/next/permissions/organization_roles/) for more information on what each role has access to.
 
 To access Explore:
 
