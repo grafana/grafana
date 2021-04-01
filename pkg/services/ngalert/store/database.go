@@ -16,7 +16,7 @@ import (
 // TimeNow makes it possible to test usage of time
 var TimeNow = time.Now
 
-// AlertDefinitionMaxTitleLength is the maximum length of the alert definition titles
+// AlertDefinitionMaxTitleLength is the maximum length of the alert definition title
 const AlertDefinitionMaxTitleLength = 190
 
 // ErrEmptyTitleError is an error returned if the alert definition title is empty

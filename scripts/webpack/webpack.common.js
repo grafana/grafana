@@ -1,6 +1,7 @@
 const path = require('path');
 
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const getBabelConfig = require('./babel.config');
 
 // https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
 function shouldExclude(filename) {
@@ -129,9 +130,7 @@ module.exports = {
         use: [
           {
             loader: 'babel-loader',
-            options: {
-              presets: [['@babel/preset-env']],
-            },
+            options: getBabelConfig(),
           },
         ],
       },
