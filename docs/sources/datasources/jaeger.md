@@ -57,7 +57,7 @@ You can link to Jaeger trace from logs in Loki by configuring a derived field wi
 
 ## Configure the data source with provisioning
 
-You can set up the data source via config files with Grafana’s provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
+You can set up the data source via configuration files with Grafana’s provisioning system. Refer to [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}) for information on various settings and how it works.
 
 Here is an example with basic auth and trace-to-logs field.
 
