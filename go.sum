@@ -796,6 +796,10 @@ github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0U
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gosimple/slug v1.9.0 h1:r5vDcYrFz9BmfIAMC829un9hq7hKM4cHUrsv36LbEqs=
 github.com/gosimple/slug v1.9.0/go.mod h1:AMZ+sOVe65uByN3kgEyf9WEBKBCSS+dJjMX9x4vDJbg=
+github.com/grafana/alerting-api v0.0.0-20210323194814-03a29a4c4c27 h1:DuyuEAHJeI+CMxIyzCVhmHcIeK+sjqberhDUfrgd3PY=
+github.com/grafana/alerting-api v0.0.0-20210323194814-03a29a4c4c27/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
+github.com/grafana/alerting-api v0.0.0-20210331135037-3294563b51bb h1:Hj25Whc/TRv0hSLm5VN0FJ5R4yZ6M4ycRcBgu7bsEAc=
+github.com/grafana/alerting-api v0.0.0-20210331135037-3294563b51bb/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
 github.com/grafana/alerting-api v0.0.0-20210330162237-0b5408c529a8 h1:okhEX26LU7AGN/3C8NDWfdjBmKclvoFvJz9o/LsNcK8=
 github.com/grafana/alerting-api v0.0.0-20210330162237-0b5408c529a8/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
 github.com/grafana/alerting-api v0.0.0-20210331130828-17c19ddf88ee h1:jpZdUOta4PK3CH3+2UCuzqn1SGZ+dQj+dWH45B0c1aI=

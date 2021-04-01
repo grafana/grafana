@@ -133,7 +133,7 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respon
 	)
 }
 
-func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.RuleGroupConfig) response.Response {
+func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
 	legacyRulerPrefix, err := r.getPrefix(ctx)
 	if err != nil {
 		return response.Error(500, err.Error(), nil)

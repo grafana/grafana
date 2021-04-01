@@ -14,6 +14,7 @@ var (
 )
 
 // AlertDefinition is the model for alert definitions in Alerting NG.
+// Legacy model; It will be removed in v8
 type AlertDefinition struct {
 	ID              int64        `xorm:"pk autoincr 'id'" json:"id"`
 	OrgID           int64        `xorm:"org_id" json:"orgId"`
@@ -56,6 +57,7 @@ func (alertDefinition *AlertDefinition) PreSave(timeNow func() time.Time) error 
 }
 
 // AlertDefinitionVersion is the model for alert definition versions in Alerting NG.
+// Legacy model; It will be removed in v8
 type AlertDefinitionVersion struct {
 	ID                 int64  `xorm:"pk autoincr 'id'"`
 	AlertDefinitionID  int64  `xorm:"alert_definition_id"`
@@ -72,6 +74,7 @@ type AlertDefinitionVersion struct {
 }
 
 // GetAlertDefinitionByUIDQuery is the query for retrieving/deleting an alert definition by UID and organisation ID.
+// Legacy model; It will be removed in v8
 type GetAlertDefinitionByUIDQuery struct {
 	UID   string
 	OrgID int64
@@ -80,12 +83,14 @@ type GetAlertDefinitionByUIDQuery struct {
 }
 
 // DeleteAlertDefinitionByUIDCommand is the command for deleting an alert definition
+// Legacy model; It will be removed in v8
 type DeleteAlertDefinitionByUIDCommand struct {
 	UID   string
 	OrgID int64
 }
 
 // SaveAlertDefinitionCommand is the query for saving a new alert definition.
+// Legacy model; It will be removed in v8
 type SaveAlertDefinitionCommand struct {
 	Title           string       `json:"title"`
 	OrgID           int64        `json:"-"`
@@ -97,6 +102,7 @@ type SaveAlertDefinitionCommand struct {
 }
 
 // UpdateAlertDefinitionCommand is the query for updating an existing alert definition.
+// Legacy model; It will be removed in v8
 type UpdateAlertDefinitionCommand struct {
 	Title           string       `json:"title"`
 	OrgID           int64        `json:"-"`
@@ -108,14 +114,8 @@ type UpdateAlertDefinitionCommand struct {
 	Result *AlertDefinition
 }
 
-// EvalAlertConditionCommand is the command for evaluating a condition
-type EvalAlertConditionCommand struct {
-	Condition string       `json:"condition"`
-	Data      []AlertQuery `json:"data"`
-	Now       time.Time    `json:"now"`
-}
-
 // ListAlertDefinitionsQuery is the query for listing alert definitions
+// Legacy model; It will be removed in v8
 type ListAlertDefinitionsQuery struct {
 	OrgID int64 `json:"-"`
 
@@ -123,6 +123,7 @@ type ListAlertDefinitionsQuery struct {
 }
 
 // UpdateAlertDefinitionPausedCommand is the command for updating an alert definitions
+// Legacy model; It will be removed in v8
 type UpdateAlertDefinitionPausedCommand struct {
 	OrgID  int64    `json:"-"`
 	UIDs   []string `json:"uids"`
@@ -131,20 +132,10 @@ type UpdateAlertDefinitionPausedCommand struct {
 	ResultCount int64
 }
 
-// Condition contains backend expressions and queries and the RefID
-// of the query or expression that will be evaluated.
-type Condition struct {
-	// Condition is the RefID of the query or expression from
-	// the Data property to get the results for.
-	Condition string `json:"condition"`
-	OrgID     int64  `json:"-"`
-
-	// Data is an array of data source queries and/or server side expressions.
-	Data []AlertQuery `json:"data"`
-}
-
-// IsValid checks the condition's validity.
-func (c Condition) IsValid() bool {
-	// TODO search for refIDs in QueriesAndExpressions
-	return len(c.Data) != 0
+// EvalAlertConditionCommand is the command for evaluating a condition
+// Legacy model; It will be removed in v8
+type EvalAlertConditionCommand struct {
+	Condition string       `json:"condition"`
+	Data      []AlertQuery `json:"data"`
+	Now       time.Time    `json:"now"`
 }

@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -106,6 +107,77 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 	mg.AddMigration("create alert_instance table", migrator.NewAddTableMigration(alertInstance))
 	mg.AddMigration("add index in alert_instance table on def_org_id, def_uid and current_state columns", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[0]))
 	mg.AddMigration("add index in alert_instance table on def_org_id, current_state columns", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[1]))
+}
+
+func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
+	alertRule := migrator.Table{
+		Name: "alert_rule",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "condition", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "data", Type: migrator.DB_Text, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", defaultIntervalSeconds)},
+			{Name: "version", Type: migrator.DB_Int, Nullable: false, Default: "0"},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			// the following fields will correspond to a dashboard (or folder) UIID
+			{Name: "namespace_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "rule_group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.NoData.String())},
+			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.AlertingErrState.String())},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id", "title"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"org_id", "uid"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"org_id", "namespace_uid", "rule_group"}, Type: migrator.IndexType},
+		},
+	}
+	// create table
+	mg.AddMigration("create alert_rule table", migrator.NewAddTableMigration(alertRule))
+
+	// create indices
+	mg.AddMigration("add index in alert_rule on org_id and title columns", migrator.NewAddIndexMigration(alertRule, alertRule.Indices[0]))
+	mg.AddMigration("add index in alert_rule on org_id and uid columns", migrator.NewAddIndexMigration(alertRule, alertRule.Indices[1]))
+	mg.AddMigration("add index in alert_rule on org_id, namespace_uid, group_uid columns", migrator.NewAddIndexMigration(alertRule, alertRule.Indices[2]))
+
+	mg.AddMigration("alter alert_rule table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE alert_rule MODIFY data MEDIUMTEXT;"))
+}
+
+func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
+	alertRuleVersion := migrator.Table{
+		Name: "alert_rule_version",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "rule_org_id", Type: migrator.DB_BigInt},
+			{Name: "rule_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
+			// the following fields will correspond to a dashboard (or folder) UID
+			{Name: "rule_namespace_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "rule_group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "parent_version", Type: migrator.DB_Int, Nullable: false},
+			{Name: "restored_from", Type: migrator.DB_Int, Nullable: false},
+			{Name: "version", Type: migrator.DB_Int, Nullable: false},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "condition", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "data", Type: migrator.DB_Text, Nullable: false},
+			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "no_data_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.NoData.String())},
+			{Name: "exec_err_state", Type: migrator.DB_NVarchar, Length: 15, Nullable: false, Default: fmt.Sprintf("'%s'", models.AlertingErrState.String())},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"rule_org_id", "rule_uid", "version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"rule_org_id", "rule_namespace_uid", "rule_group"}, Type: migrator.IndexType},
+		},
+	}
+	mg.AddMigration("create alert_rule_version table", migrator.NewAddTableMigration(alertRuleVersion))
+	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_uid and version columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersion.Indices[0]))
+	mg.AddMigration("add index in alert_rule_version table on rule_org_id, rule_namespace_uid and rule_group columns", migrator.NewAddIndexMigration(alertRuleVersion, alertRuleVersion.Indices[1]))
+
+	mg.AddMigration("alter alert_rule_version table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE alert_rule_version MODIFY data MEDIUMTEXT;"))
 }
 
 func SilenceMigration(mg *migrator.Migrator) {

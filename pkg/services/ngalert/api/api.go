@@ -44,6 +44,7 @@ type API struct {
 	DataService     *tsdb.Service
 	Schedule        schedule.ScheduleService
 	Store           store.Store
+	RuleStore       store.RuleStore
 	AlertingStore   store.AlertingStore
 	DataProxy       *datasourceproxy.DatasourceProxyService
 	Alertmanager    Alertmanager
@@ -68,7 +69,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		RulerApiMock{log: logger},
+		RulerSrv{store: api.RuleStore, log: logger},
 	))
 	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
 
