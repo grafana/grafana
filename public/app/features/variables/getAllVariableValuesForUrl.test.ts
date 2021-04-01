@@ -1,7 +1,7 @@
 import { setTemplateSrv } from '@grafana/runtime';
 import { variableAdapters } from './adapters';
 import { createQueryVariableAdapter } from './query/adapter';
-import { getAllVariableValuesForUrl } from './getAllVariableValuesForUrl';
+import { getVariablesUrlParams } from './getAllVariableValuesForUrl';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
 
 describe('getAllVariableValuesForUrl', () => {
@@ -26,7 +26,7 @@ describe('getAllVariableValuesForUrl', () => {
     });
 
     it('should set multiple url params', () => {
-      let params: any = getAllVariableValuesForUrl();
+      let params: any = getVariablesUrlParams();
       expect(params['var-test']).toMatchObject(['val1', 'val2']);
     });
   });
@@ -48,7 +48,7 @@ describe('getAllVariableValuesForUrl', () => {
     });
 
     it('should not include template variable value in url', () => {
-      const params = getAllVariableValuesForUrl();
+      const params = getVariablesUrlParams();
       expect(params['var-test']).toBe(undefined);
     });
   });
@@ -71,7 +71,7 @@ describe('getAllVariableValuesForUrl', () => {
     });
 
     it('should not include template variable value in url', () => {
-      const params = getAllVariableValuesForUrl();
+      const params = getVariablesUrlParams();
       expect(params['var-test']).toBe(undefined);
     });
   });
@@ -82,7 +82,7 @@ describe('getAllVariableValuesForUrl', () => {
     });
 
     it('should set scoped value as url params', () => {
-      const params = getAllVariableValuesForUrl({
+      const params = getVariablesUrlParams({
         test: { value: 'val1', text: 'val1text' },
       });
       expect(params['var-test']).toBe('val1');
@@ -95,7 +95,7 @@ describe('getAllVariableValuesForUrl', () => {
     });
 
     it('should not set scoped value as url params', () => {
-      const params = getAllVariableValuesForUrl({
+      const params = getVariablesUrlParams({
         test: { name: 'test', value: 'val1', text: 'val1text', skipUrlSync: true },
       });
       expect(params['var-test']).toBe(undefined);

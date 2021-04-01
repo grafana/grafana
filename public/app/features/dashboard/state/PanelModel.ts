@@ -29,7 +29,7 @@ import {
   RenderEvent,
 } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
-import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
+import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import {
   filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
@@ -530,7 +530,8 @@ export class PanelModel implements DataConfigSource {
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
-    const allVariablesParams = getAllVariableValuesForUrl(vars);
+
+    const allVariablesParams = getVariablesUrlParams(vars);
     const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
     const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
 

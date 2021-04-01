@@ -24,7 +24,7 @@ import {
   VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
+import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 
 const timeRangeVars = [
   {
@@ -280,7 +280,7 @@ export class LinkSrv implements LinkService {
     if (link.includeVars) {
       params = {
         ...params,
-        ...getAllVariableValuesForUrl(),
+        ...getVariablesUrlParams(),
       };
     }
 
