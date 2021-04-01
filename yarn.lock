@@ -3326,13 +3326,6 @@
   resolved "https://registry.yarnpkg.com/@icons/material/-/material-0.2.4.tgz#e90c9f71768b3736e76d7dd6783fc6c2afa88bc8"
   integrity sha512-QPcGmICAPbGLGb6F/yNf/KzKqvFx8z5qx3D1yFqVAjoFmXK35EgyW+cJ57Te3CNsmzblwtzakLGFqHPqrfb4Tw==
 
-"@iconscout/react-unicons@1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@iconscout/react-unicons/-/react-unicons-1.1.4.tgz#30731707e1baa49ab1c3198a5e0121be86b8928a"
-  integrity sha512-lhTSU3nKvzt1OwsRfFyK194QcQbE1Q4rRm6d5BOnKyZB+SN4qRv7tS4wLQgwk/pQyzn14Qw70nGA+tuKLRqcJg==
-  dependencies:
-    react ">=15.0.0 <17.0.0"
-
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@istanbuljs/load-nyc-config/-/load-nyc-config-1.1.0.tgz#fd3db1d59ecf7cf121e80650bb86712f9b55eced"
@@ -22036,15 +22029,6 @@ react@17.0.1:
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
-
-"react@>=15.0.0 <17.0.0":
-  version "16.13.1"
-  resolved "https://registry.yarnpkg.com/react/-/react-16.13.1.tgz#2e818822f1a9743122c063d6410d85c1e3afe48e"
-  integrity sha512-YMZQQq32xHLX0bz5Mnibv1/LHb3Sqzngu7xstSM+vrkE5Kzr9xE0yMByK5kMoTK30YVJE61WfbxIFFvfeDKT1w==
-  dependencies:
-    loose-envify "^1.1.0"
-    object-assign "^4.1.1"
-    prop-types "^15.6.2"
 
 reactcss@^1.2.0:
   version "1.2.3"
