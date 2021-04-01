@@ -184,7 +184,7 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 	}
 
 	req.Header.Set("User-Agent", "Grafana")
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-ndjson")
 
 	if c.ds.BasicAuth {
 		clientLog.Debug("Request configured to use basic authentication")

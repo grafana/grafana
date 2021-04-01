@@ -330,7 +330,7 @@ A list of cookies that are stripped from the outgoing data source and alerting r
 ## [caching]
 
 > **Note:** Available in Grafana Enterprise v7.5 and later versions.
-> **Note:** Redis and memcached sections are in the defaults.ini setting, but Redis and Memcached backends are unavailable in Grafana Enterprise v7.5
+> **Note:** The Memcached cache backend is unavailable in Grafana Enterprise v7.5.
 
 When query caching is enabled, Grafana temporarily stores the results of data source queries and serves cached responses to similar requests.
 

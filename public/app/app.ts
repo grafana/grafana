@@ -1,5 +1,5 @@
 import 'symbol-observable';
-import 'core-js/stable';
+import 'core-js';
 import 'regenerator-runtime/runtime';
 
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
@@ -13,6 +13,7 @@ import React from 'react';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
+  locationUtil,
   setLocale,
   setTimeZoneResolver,
   standardEditorsRegistry,
@@ -39,6 +40,8 @@ import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks
 import { AngularApp } from './angular/AngularApp';
 import { PanelRenderer } from './features/panel/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
+import { getTimeSrv } from './features/dashboard/services/TimeSrv';
+import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -78,6 +81,12 @@ export class GrafanaApp {
 
     setQueryRunnerFactory(() => new QueryRunner());
     setVariableQueryRunner(new VariableQueryRunner());
+
+    locationUtil.initialize({
+      config,
+      getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
+      getVariablesUrlParams: getVariablesUrlParams,
+    });
 
     // intercept anchor clicks and forward it to custom history instead of relying on browser's history
     document.addEventListener('click', interceptLinkClicks);

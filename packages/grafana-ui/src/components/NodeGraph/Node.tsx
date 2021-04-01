@@ -1,9 +1,10 @@
 import React, { MouseEvent, memo } from 'react';
-import { NodeDatum } from './types';
-import { stylesFactory, useTheme } from '../../themes';
-import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
+import cx from 'classnames';
+import { getColorForTheme, GrafanaTheme } from '@grafana/data';
+import { NodeDatum } from './types';
+import { stylesFactory, useTheme } from '../../themes';
 
 const nodeR = 40;
 
@@ -33,6 +34,22 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     overflow: hidden;
     white-space: nowrap;
     background-color: ${tinycolor(theme.colors.bodyBg).setAlpha(0.6).toHex8String()};
+    width: 100px;
+  `,
+
+  statsText: css`
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 70px;
+  `,
+
+  textHovering: css`
+    width: 200px;
+    & span {
+      background-color: ${tinycolor(theme.colors.bodyBg).setAlpha(0.8).toHex8String()};
+    }
   `,
 }));
 
@@ -66,19 +83,25 @@ export const Node = memo(function Node(props: {
     >
       <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
       {hovering && <circle className={styles.hoverCircle} r={nodeR - 3} cx={node.x} cy={node.y} strokeWidth={2} />}
-      <ResponseTypeCircle node={node} />
+      <ColorCircle node={node} />
       <g className={styles.text}>
-        <text x={node.x} y={node.y - 5} textAnchor={'middle'}>
-          {node.mainStat}
-        </text>
-        <text x={node.x} y={node.y + 10} textAnchor={'middle'}>
-          {node.secondaryStat}
-        </text>
-        <foreignObject x={node.x - 50} y={node.y + nodeR + 5} width="100" height="30">
-          <div className={styles.titleText}>
-            {node.title}
+        <foreignObject x={node.x - (hovering ? 100 : 35)} y={node.y - 15} width={hovering ? '200' : '70'} height="30">
+          <div className={cx(styles.statsText, hovering && styles.textHovering)}>
+            <span>{node.mainStat}</span>
             <br />
-            {node.subTitle}
+            <span>{node.secondaryStat}</span>
+          </div>
+        </foreignObject>
+        <foreignObject
+          x={node.x - (hovering ? 100 : 50)}
+          y={node.y + nodeR + 5}
+          width={hovering ? '200' : '100'}
+          height="30"
+        >
+          <div className={cx(styles.titleText, hovering && styles.textHovering)}>
+            <span>{node.title}</span>
+            <br />
+            <span>{node.subTitle}</span>
           </div>
         </foreignObject>
       </g>
@@ -87,9 +110,9 @@ export const Node = memo(function Node(props: {
 });
 
 /**
- * Shows the outer segmented circle with different color for each response type.
+ * Shows the outer segmented circle with different colors based on the supplied data.
  */
-function ResponseTypeCircle(props: { node: NodeDatum }) {
+function ColorCircle(props: { node: NodeDatum }) {
   const { node } = props;
   const fullStat = node.arcSections.find((s) => s.value === 1);
   const theme = useTheme();
@@ -109,6 +132,10 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
   }
 
   const nonZero = node.arcSections.filter((s) => s.value !== 0);
+  if (nonZero.length === 0) {
+    // Fallback if no arc is defined
+    return <circle fill="none" stroke={node.color} strokeWidth={2} r={nodeR} cx={node.x} cy={node.y} />;
+  }
 
   const { elements } = nonZero.reduce(
     (acc, section) => {
