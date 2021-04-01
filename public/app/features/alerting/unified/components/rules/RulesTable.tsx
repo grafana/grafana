@@ -2,7 +2,7 @@ import { GrafanaTheme, rangeUtil } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { CombinedRuleGroup, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, Fragment, useState } from 'react';
-import { isAlertingRule } from '../../utils/rules';
+import { hashRulerRule, isAlertingRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from '@emotion/css';
 import { TimeToNow } from '../TimeToNow';
@@ -11,7 +11,10 @@ import { RuleDetails } from './RuleDetails';
 import { getAlertTableStyles } from '../../styles/table';
 import { ActionIcon } from './ActionIcon';
 import { createExploreLink } from '../../utils/misc';
-import { isCloudRulesSource } from '../../utils/datasource';
+import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { useDispatch } from 'react-redux';
+import { deleteRuleAction } from '../../state/actions';
 
 interface Props {
   namespace: string;
@@ -19,8 +22,9 @@ interface Props {
   rulesSource: RulesSource;
 }
 
-export const RulesTable: FC<Props> = ({ group, rulesSource }) => {
+export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
   const { rules } = group;
+  const dispatch = useDispatch();
 
   const styles = useStyles(getStyles);
   const tableStyles = useStyles(getAlertTableStyles);
@@ -31,6 +35,18 @@ export const RulesTable: FC<Props> = ({ group, rulesSource }) => {
     setExpandedKeys(
       expandedKeys.includes(ruleKey) ? expandedKeys.filter((key) => key !== ruleKey) : [...expandedKeys, ruleKey]
     );
+
+  const deleteRule = (rule: RulerRuleDTO) => {
+    console.log('delete rule', rule);
+    dispatch(
+      deleteRuleAction({
+        ruleSourceName: getRulesSourceName(rulesSource),
+        groupName: group.name,
+        namespace,
+        ruleHash: hashRulerRule(rule),
+      })
+    );
+  };
 
   if (!rules.length) {
     return <div className={styles.wrapper}>Folder is empty.</div>;
@@ -62,20 +78,20 @@ export const RulesTable: FC<Props> = ({ group, rulesSource }) => {
         <tbody>
           {(() => {
             const seenKeys: string[] = [];
-            return rules.map((rule, idx) => {
+            return rules.map((rule, ruleIdx) => {
               let key = JSON.stringify([rule.promRule?.type, rule.labels, rule.query, rule.name, rule.annotations]);
               if (seenKeys.includes(key)) {
-                key += `-${idx}`;
+                key += `-${ruleIdx}`;
               }
               seenKeys.push(key);
               const isExpanded = expandedKeys.includes(key);
               const { promRule, rulerRule } = rule;
               return (
                 <Fragment key={key}>
-                  <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
+                  <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
                     <td className={styles.relative}>
                       <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
-                      {!(idx === rules.length - 1) && (
+                      {!(ruleIdx === rules.length - 1) && (
                         <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
                       )}
                       <CollapseToggle
@@ -106,13 +122,15 @@ export const RulesTable: FC<Props> = ({ group, rulesSource }) => {
                         />
                       )}
                       {!!rulerRule && <ActionIcon icon="pen" tooltip="edit rule" />}
-                      {!!rulerRule && <ActionIcon icon="trash-alt" tooltip="delete rule" />}
+                      {!!rulerRule && (
+                        <ActionIcon icon="trash-alt" tooltip="delete rule" onClick={() => deleteRule(rulerRule)} />
+                      )}
                     </td>
                   </tr>
                   {isExpanded && (
-                    <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
+                    <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
                       <td className={styles.relative}>
-                        {!(idx === rules.length - 1) && (
+                        {!(ruleIdx === rules.length - 1) && (
                           <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
                         )}
                       </td>

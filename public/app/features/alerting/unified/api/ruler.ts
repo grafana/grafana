@@ -45,6 +45,14 @@ export async function fetchRulerRulesGroup(
   );
 }
 
+export async function deleteRulerRulesGroup(dataSourceName: string, namespace: string, groupName: string) {
+  return getBackendSrv().delete(
+    `/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}/${encodeURIComponent(
+      groupName
+    )}`
+  );
+}
+
 // false in case ruler is not supported. this is weird, but we'll work on it
 async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
   try {

@@ -1,4 +1,4 @@
-import { CombinedRule, CombinedRuleNamespace, Rule, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
 import { useMemo } from 'react';
 import { getAllRulesSources, isCloudRulesSource } from '../utils/datasource';
 import { isAlertingRule, isAlertingRulerRule } from '../utils/rules';
@@ -16,6 +16,11 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
         const promRules = promRulesResponses[rulesSourceName]?.result;
         const rulerRules = rulerRulesResponses[rulesSourceName]?.result || {};
         const namespaces: Record<string, CombinedRuleNamespace> = {};
+
+        if (rulesSourceName === 'Prometheus') {
+          console.log('prom', promRules);
+          console.log('ruler', rulerRules);
+        }
 
         // first get all the ruler rules in
         Object.entries(rulerRules).forEach(([namespaceName, groups]) => {
@@ -66,8 +71,7 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
 
             group.rules.forEach((rule) => {
               const existingRule = combinedGroup!.rules.find(
-                (existingRule) =>
-                  isCombinedRuleEqualToPromRule(rulesSource, existingRule, rule) && !existingRule.promRule
+                (existingRule) => isCombinedRuleEqualToPromRule(existingRule, rule) && !existingRule.promRule
               );
               if (existingRule) {
                 existingRule.promRule = rule;
@@ -90,25 +94,22 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
   }, [promRulesResponses, rulerRulesResponses]);
 }
 
-function isCombinedRuleEqualToPromRule(rulesSource: RulesSource, combinedRule: CombinedRule, rule: Rule): boolean {
+function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule): boolean {
   return (
     combinedRule.name === rule.name &&
-    JSON.stringify([hashQuery(rulesSource, combinedRule.query), combinedRule.labels, combinedRule.annotations]) ===
-      JSON.stringify([
-        hashQuery(rulesSource, rule.query),
-        rule.labels || {},
-        isAlertingRule(rule) ? rule.annotations || {} : {},
-      ])
+    JSON.stringify([hashQuery(combinedRule.query), combinedRule.labels, combinedRule.annotations]) ===
+      JSON.stringify([hashQuery(rule.query), rule.labels || {}, isAlertingRule(rule) ? rule.annotations || {} : {}])
   );
 }
 
-// it seems loki prom endpoint can return query surrounded with parens, while ruler endpoint does not
-function hashQuery(rulesSource: RulesSource, query: string) {
-  if (isCloudRulesSource(rulesSource) && rulesSource.type === 'loki') {
-    if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
-      query = query.substr(1, query.length - 2);
-    }
-    query = query.replace(/\s/g, '');
+// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
+function hashQuery(query: string) {
+  // one of them might be wrapped in parens
+  if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
+    query = query.substr(1, query.length - 2);
   }
-  return query;
+  // whitespace could be added or removed
+  query = query.replace(/\s|\n/g, '');
+  // labels matchers can be reordered, so sort the enitre string, esentially comparing just hte character counts
+  return query.split('').sort().join('');
 }

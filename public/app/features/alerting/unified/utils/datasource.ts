@@ -47,7 +47,7 @@ export function getRulesSourceName(rulesSource: RulesSource): string {
   return isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
 }
 
-export function isCloudRulesSource(rulesSource: RulesSource): rulesSource is DataSourceInstanceSettings {
+export function isCloudRulesSource(rulesSource: RulesSource | string): rulesSource is DataSourceInstanceSettings {
   return rulesSource !== GRAFANA_RULES_SOURCE_NAME;
 }
 

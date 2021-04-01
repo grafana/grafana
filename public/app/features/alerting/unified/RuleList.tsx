@@ -12,7 +12,7 @@ import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } fr
 import { css } from '@emotion/css';
 import { ThresholdRules } from './components/rules/ThresholdRules';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
-import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
+// simport { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 
 export const RuleList: FC = () => {
   const dispatch = useDispatch();
@@ -22,10 +22,10 @@ export const RuleList: FC = () => {
   // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
   useEffect(() => {
     dispatch(fetchAllPromAndRulerRules());
-    const interval = setInterval(() => dispatch(fetchAllPromAndRulerRules()), RULE_LIST_POLL_INTERVAL_MS);
+    /*const interval = setInterval(() => dispatch(fetchAllPromAndRulerRules()), RULE_LIST_POLL_INTERVAL_MS);
     return () => {
       clearInterval(interval);
-    };
+    };*/
   }, [dispatch]);
 
   const rules = useUnifiedAlertingSelector((state) => state.promRules);

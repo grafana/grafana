@@ -84,3 +84,10 @@ export interface CombinedRuleNamespace {
   name: string;
   groups: CombinedRuleGroup[];
 }
+
+export interface RuleLocation {
+  ruleSourceName: string;
+  namespace: string;
+  groupName: string;
+  ruleHash: number;
+}

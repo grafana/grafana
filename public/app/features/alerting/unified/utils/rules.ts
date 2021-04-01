@@ -7,6 +7,7 @@ import {
 import { Alert, AlertingRule, RecordingRule, Rule } from 'app/types/unified-alerting';
 import { AsyncRequestState } from './redux';
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
+import { hash } from './misc';
 
 export function isAlertingRule(rule: Rule): rule is AlertingRule {
   return rule.type === PromRuleType.Alerting;
@@ -30,4 +31,8 @@ export function alertInstanceKey(alert: Alert): string {
 
 export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
   return resp.error && resp.error?.message === RULER_NOT_SUPPORTED_MSG;
+}
+
+export function hashRulerRule(rule: RulerRuleDTO): number {
+  return hash(JSON.stringify(rule));
 }
