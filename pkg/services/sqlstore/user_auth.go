@@ -105,7 +105,12 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 	if query.AuthModule == "oauth_generic_oauth" && user.Id != 0 {
 		authQuery.UserId = user.Id
 		authQuery.AuthModule = query.AuthModule
-		_ = GetAuthInfo(authQuery)
+		err = GetAuthInfo(authQuery)
+		if !errors.Is(err, models.ErrUserNotFound) {
+			if err != nil {
+				return err
+			}
+		}
 	}
 	if authQuery.Result == nil && query.AuthModule != "" {
 		cmd2 := &models.SetAuthInfoCommand{
