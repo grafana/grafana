@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"sync"
 
@@ -17,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+var ProvisioningServicePriority = registry.Low
+
 type ProvisioningService interface {
 	ProvisionDatasources() error
 	ProvisionPlugins() error
@@ -24,6 +27,17 @@ type ProvisioningService interface {
 	ProvisionDashboards() error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
+}
+
+// InitProvisioner will be automatically added by the Provisioning Service
+// to its internal list in order to dynamically execute on Init
+type InitProvisioner interface {
+	// To identify provisioners when building the dependency graph
+	GetProvisionerUID() string
+	// List of provisioners to start prior to this one
+	GetDependencies() []string
+	// Perform the provisioning of the yaml files located in configDir
+	Provision(configDir string) error
 }
 
 func init() {
@@ -35,7 +49,7 @@ func init() {
 			datasources.Provision,
 			plugins.Provision,
 		),
-		InitPriority: registry.Low,
+		InitPriority: ProvisioningServicePriority,
 	})
 }
 
@@ -59,6 +73,7 @@ type provisioningServiceImpl struct {
 	RequestHandler          plugifaces.DataRequestHandler `inject:""`
 	SQLStore                *sqlstore.SQLStore            `inject:""`
 	PluginManager           plugifaces.Manager            `inject:""`
+	initProvisioners        []InitProvisioner
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
@@ -81,6 +96,12 @@ func (ps *provisioningServiceImpl) Init() error {
 	}
 
 	err = ps.ProvisionNotifications()
+	if err != nil {
+		return err
+	}
+
+	ps.PopulateInitProvisioners()
+	err = ps.LaunchInitProvisioners()
 	if err != nil {
 		return err
 	}
@@ -172,4 +193,32 @@ func (ps *provisioningServiceImpl) cancelPolling() {
 		ps.pollingCtxCancel()
 	}
 	ps.pollingCtxCancel = nil
+}
+
+// PopulateInitProvisioners goes through the registry searching for
+// InitProvisioner compliant services
+func (ps *provisioningServiceImpl) PopulateInitProvisioners() {
+	services := registry.GetServices()
+	for _, s := range services {
+		if registry.IsDisabled(s.Instance) {
+			continue
+		}
+		if prov, ok := interface{}(s.Instance).(InitProvisioner); ok {
+			ps.initProvisioners = append(ps.initProvisioners, prov)
+		}
+	}
+}
+
+// LaunchInitProvisioners launches the provisioners scheduling
+// them based on their dependencies
+func (ps *provisioningServiceImpl) LaunchInitProvisioners() error {
+	accessControlPath := filepath.Join(ps.Cfg.ProvisioningPath, "accesscontrol")
+	// ToDo create dependencies graph
+	for _, prov := range ps.initProvisioners {
+		err := prov.Provision(accessControlPath)
+		if err != nil {
+			return fmt.Errorf("Alert provisioning error: %w", err)
+		}
+	}
+	return nil
 }

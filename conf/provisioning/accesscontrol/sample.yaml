@@ -1,0 +1,46 @@
+roles:
+  - name: FullEditor
+    uid: fulleditor1
+    version: 1
+    orgId: 1
+    permissions:
+      - action: "users:read"
+        scope: "users"
+      - action: "users:create"
+        scope: "users"
+      - action: "reports:read"
+        scope: "reports"
+      - action: "reports:edit"
+        scope: "reports"
+    teams:
+      - FullEditors
+  - name: FullEditor
+    uid: fulleditor1
+    version: 1
+    orgId: 0
+    permissions:
+      - action: "users:read"
+        scope: "users"
+      - action: "users:create"
+        scope: "users"
+      - action: "reports:read"
+        scope: "reports"
+      - action: "reports:edit"
+        scope: "reports"
+    teams:
+      - FullEditors
+  - name: UserEditor
+    uid: usereditor1
+    version: 1
+    orgId: 1
+    permissions:
+      - action: "users:read"
+        scope: "users"
+      - action: "users:create"
+        scope: "users"
+      - action: "reports:read"
+        scope: "reports"
+      - action: "reports:edit"
+        scope: "reports"
+    teams:
+      - UserEditors
