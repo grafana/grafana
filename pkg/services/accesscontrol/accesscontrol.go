@@ -8,7 +8,7 @@ import (
 
 type AccessControl interface {
 	Evaluator
-	Store
+	GetUserPermissions(ctx context.Context, user *models.SignedInUser, roles []string) ([]*Permission, error)
 }
 
 type Evaluator interface {
