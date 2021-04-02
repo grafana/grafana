@@ -12,12 +12,15 @@ if (process.env.NODE_ENV !== 'production') {
 module.exports = {
   stories: stories,
   addons: [
-    '@storybook/addon-docs',
-    '@storybook/addon-controls',
+    {
+      name: '@storybook/addon-essentials',
+      options: {
+        backgrounds: false,
+      },
+    },
     '@storybook/addon-knobs',
-    '@storybook/addon-actions',
-    'storybook-dark-mode/register',
     '@storybook/addon-storysource',
+    'storybook-dark-mode',
   ],
   reactOptions: {
     fastRefresh: true,

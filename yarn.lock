@@ -23456,10 +23456,10 @@ store2@^2.12.0:
   resolved "https://registry.yarnpkg.com/store2/-/store2-2.12.0.tgz#e1f1b7e1a59b6083b2596a8d067f6ee88fd4d3cf"
   integrity sha512-7t+/wpKLanLzSnQPX8WAcuLCCeuSHoWdQuh9SB3xD0kNOM38DNf+0Oa+wmvxmYueRzkmh6IcdKFtvTa+ecgPDw==
 
-storybook-dark-mode@1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/storybook-dark-mode/-/storybook-dark-mode-1.0.4.tgz#848e5ee6c5dd6180d15c533380c8b35579ec4975"
-  integrity sha512-4ZQh6scu/WlUycAMNbkNyF/9fN2bI/sJvNdPZoBa1b2X1UtsgzUeHRCGWcLsTpoiaPgPE/+eT077PuYHm5sYLQ==
+storybook-dark-mode@1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/storybook-dark-mode/-/storybook-dark-mode-1.0.7.tgz#d2fbd7c1669fc394a9b73ca18fcb6db649a8394b"
+  integrity sha512-RcTTk26Irr+2AP7nNU+v11LXkpbcnNjpfuk3gaxQ57BqTS6mbr0hmE7H1dIW6t1ipckUz6fH3YOWp9Pe0LqJSQ==
   dependencies:
     fast-deep-equal "^3.0.0"
     memoizerific "^1.11.3"
