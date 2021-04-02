@@ -7,6 +7,7 @@ export const getStyles = stylesFactory(() => ({
     flex-direction: column;
     align-content: center;
     align-items: center;
+    width: 100%;
   `,
   contentPadding: css`
     padding-top: 20px;

@@ -9,8 +9,8 @@ export const trackingOptions = [
 ];
 
 export const rdsTrackingOptions = [
-  { key: TrackingOptions.none, value: Messages.form.trackingOptions.none },
-  { key: TrackingOptions.pgStatements, value: Messages.form.trackingOptions.pgStatements },
+  { value: TrackingOptions.none, label: Messages.form.trackingOptions.none },
+  { value: TrackingOptions.pgStatements, label: Messages.form.trackingOptions.pgStatements },
 ];
 
 export const schemaOptions: SelectableValue[] = [

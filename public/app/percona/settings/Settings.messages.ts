@@ -16,6 +16,9 @@ export const Messages = {
     sttLink: `${GUI_DOC_URL}#security-threat-tool`,
     sttTooltip: 'Enable Security Threat Tool and get updated checks from Percona.',
     dbaasLabel: 'DBaaS',
+    azureDiscoverLabel: 'Microsoft Azure monitoring',
+    azureDiscoverTooltip: 'Option to enable/disable Microsoft Azure DB instanced  discovery and monitoring',
+    azureDiscoverLink: `${HOW_TO_DOC_URL}/configure.html#microsoft-azure-feature-toggle`,
     dbaasTooltip: 'Read-only option to show if DBaaS features are enabled.',
     publicAddressLabel: 'Public Address',
     publicAddressTooltip: 'Public Address to this PMM server.',
@@ -23,6 +26,11 @@ export const Messages = {
     alertingLabel: 'Integrated Alerting',
     alertingTooltip: 'Option to enable/disable Integrated Alerting features.',
     alertingLink: `${HOW_TO_DOC_URL}/configure.html#integrated-alerting`,
+    technicalPreviewLegend: 'Technical preview features',
+    technicalPreviewDescription:
+      'These are technical preview features, not recommended to be used in production environments. Read more\n' +
+      '                  about feature status',
+    technicalPreviewLinkText: 'here',
   },
   alertmanager: {
     action: 'Apply Alertmanager settings',

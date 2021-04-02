@@ -3,23 +3,23 @@ import DiscoveryService from './Discovery.service';
 import Credentials from './components/Credentials/Credentials';
 import Instances from './components/Instances/Instances';
 import { getStyles } from './Discovery.styles';
-import { DiscoverySearchPanelProps } from './Discovery.types';
+import { DiscoverySearchPanelProps, Instance } from './Discovery.types';
+import { AzureCredentialsForm } from './components/Credentials/Credentials.types';
 import { logger } from '@percona/platform-core';
 
 const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
   const styles = getStyles();
 
-  const [instances, setInstances] = useState([] as any);
-  const [credentials, setCredentials] = useState({ aws_secret_key: '', aws_access_key: '' });
+  const [instances, setInstances] = useState<Instance[]>([]);
+  const [credentials, setCredentials] = useState<AzureCredentialsForm>({});
   const [loading, startLoading] = useState(false);
 
   useEffect(() => {
     const updateInstances = async () => {
       try {
-        const result = await DiscoveryService.discoveryRDS(credentials);
-
+        const result = await DiscoveryService.discoveryAzure(credentials);
         if (result) {
-          setInstances(result.rds_instances);
+          setInstances(result.azure_database_instance);
         }
       } catch (e) {
         logger.error(e);
@@ -28,7 +28,12 @@ const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
       }
     };
 
-    if (credentials.aws_secret_key && credentials.aws_access_key) {
+    if (
+      credentials.azure_client_id &&
+      credentials.azure_client_secret &&
+      credentials.azure_tenant_id &&
+      credentials.azure_subscription_id
+    ) {
       startLoading(true);
       updateInstances();
     }

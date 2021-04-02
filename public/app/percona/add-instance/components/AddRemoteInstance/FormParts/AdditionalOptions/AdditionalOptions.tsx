@@ -32,12 +32,12 @@ export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
   );
 };
 
-export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> = ({ isRDS }) => (
+export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> = ({ isRDS, isAzure }) => (
   <>
     <RadioButtonGroupField
       name="tracking"
       data-qa="tracking-options-radio-button-group"
-      options={isRDS ? rdsTrackingOptions : trackingOptions}
+      options={isRDS || isAzure ? rdsTrackingOptions : trackingOptions}
       label={Messages.form.labels.trackingOptions}
     />
   </>
@@ -87,7 +87,10 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
         <>
           <CheckboxField label={Messages.form.labels.additionalOptions.tls} name="tls" />
           <CheckboxField label={Messages.form.labels.additionalOptions.tlsSkipVerify} name="tls_skip_verify" />
-          <PostgreSQLAdditionalOptions isRDS={remoteInstanceCredentials.isRDS} />
+          <PostgreSQLAdditionalOptions
+            isRDS={remoteInstanceCredentials.isRDS}
+            isAzure={remoteInstanceCredentials.isAzure}
+          />
           {remoteInstanceCredentials.isRDS ? (
             <>
               <CheckboxField
@@ -99,6 +102,12 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
                 name="disable_enhanced_metrics"
               />
             </>
+          ) : null}
+          {remoteInstanceCredentials.isAzure ? (
+            <CheckboxField
+              label={Messages.form.labels.additionalOptions.azureDatabaseExporter}
+              name="azure_database_exporter"
+            />
           ) : null}
         </>
       );
@@ -123,6 +132,12 @@ export const getAdditionalOptions = (type: InstanceTypes, remoteInstanceCredenti
                 name="disable_enhanced_metrics"
               />
             </>
+          ) : null}
+          {remoteInstanceCredentials.isAzure ? (
+            <CheckboxField
+              label={Messages.form.labels.additionalOptions.azureDatabaseExporter}
+              name="azure_database_exporter"
+            />
           ) : null}
         </>
       );

@@ -1,30 +1,37 @@
 import { apiManagement } from 'app/percona/shared/helpers/api';
-import { RemoteInstanceExternalservicePayload, TrackingOptions } from './AddRemoteInstance.types';
+import {
+  RemoteInstanceExternalservicePayload,
+  RemoteInstancePayload,
+  TrackingOptions,
+} from './AddRemoteInstance.types';
 import { InstanceTypes } from '../../panel.types';
 
 class AddRemoteInstanceService {
-  static async addMysql(body: any) {
-    return apiManagement.post<any, any>('/MySQL/Add', body);
+  static async addMysql(body: RemoteInstancePayload) {
+    return apiManagement.post<any, RemoteInstancePayload>('/MySQL/Add', body);
   }
 
-  static async addPostgresql(body: any) {
-    return apiManagement.post<any, any>('/PostgreSQL/Add', body);
+  static async addPostgresql(body: RemoteInstancePayload) {
+    return apiManagement.post<any, RemoteInstancePayload>('/PostgreSQL/Add', body);
   }
 
-  static async addProxysql(body: any) {
-    return apiManagement.post<any, any>('/ProxySQL/Add', body);
+  static async addProxysql(body: RemoteInstancePayload) {
+    return apiManagement.post<any, RemoteInstancePayload>('/ProxySQL/Add', body);
   }
 
-  static async addHaproxy(body: any) {
-    return apiManagement.post<any, any>('/HAProxy/Add', body);
+  static async addHaproxy(body: RemoteInstancePayload) {
+    return apiManagement.post<any, RemoteInstancePayload>('/HAProxy/Add', body);
   }
 
-  static async addMongodb(body: any) {
-    return apiManagement.post<any, any>('/MongoDB/Add', body);
+  static async addMongodb(body: RemoteInstancePayload) {
+    return apiManagement.post<any, RemoteInstancePayload>('/MongoDB/Add', body);
   }
 
-  static async addRDS(body: any) {
-    return apiManagement.post<any, any>('/RDS/Add', body);
+  static async addRDS(body: RemoteInstancePayload) {
+    return apiManagement.post<any, RemoteInstancePayload>('/RDS/Add', body);
+  }
+  static async addAzure(body: RemoteInstancePayload) {
+    return apiManagement.post<any, RemoteInstancePayload>('/azure/AzureDatabase/Add', body);
   }
 
   static async addExternal(body: any) {
@@ -53,7 +60,7 @@ class AddRemoteInstanceService {
 
 export default AddRemoteInstanceService;
 
-export const toPayload = (values: any, discoverName?: string) => {
+export const toPayload = (values: any, discoverName?: string): RemoteInstancePayload => {
   const data = { ...values };
 
   if (values.custom_labels) {
@@ -69,15 +76,15 @@ export const toPayload = (values: any, discoverName?: string) => {
       }, {});
   }
 
-  if (data.isRDS && data.tracking === TrackingOptions.pgStatements) {
-    data.qan_postgresql_pgstatements = true;
-  } else if (!data.isRDS && data.tracking === TrackingOptions.pgStatements) {
-    data.qan_postgresql_pgstatements_agent = true;
-  } else if (!data.isRDS && data.tracking === TrackingOptions.pgMonitor) {
-    data.qan_postgresql_pgstatmonitor_agent = true;
+  if (!values.isAzure) {
+    if (data.isRDS && data.tracking === TrackingOptions.pgStatements) {
+      data.qan_postgresql_pgstatements = true;
+    } else if (!data.isRDS && data.tracking === TrackingOptions.pgStatements) {
+      data.qan_postgresql_pgstatements_agent = true;
+    } else if (!data.isRDS && data.tracking === TrackingOptions.pgMonitor) {
+      data.qan_postgresql_pgstatmonitor_agent = true;
+    }
   }
-
-  delete data.tracking;
 
   data.service_name = data.serviceName;
   delete data.serviceName;
@@ -86,15 +93,19 @@ export const toPayload = (values: any, discoverName?: string) => {
     data.service_name = data.address;
   }
 
-  if (data.add_node === undefined) {
+  if (!values.isAzure && data.add_node === undefined) {
     data.add_node = {
       node_name: data.service_name,
       node_type: 'REMOTE_NODE',
     };
   }
 
-  if (discoverName) {
+  if (values.isRDS && discoverName) {
     data.engine = discoverName;
+  }
+
+  if (values.isAzure && discoverName) {
+    data.type = discoverName;
   }
 
   if (!data.pmm_agent_id) {
@@ -106,7 +117,15 @@ export const toPayload = (values: any, discoverName?: string) => {
     data.rds_exporter = true;
   }
 
+  if (values.isAzure) {
+    data.node_name = data.service_name;
+    if (data.tracking === TrackingOptions.pgStatements || data.qan_mysql_perfschema) {
+      data.qan = true;
+    }
+  }
+
   data.metrics_mode = 1;
+  delete data.tracking;
 
   return data;
 };

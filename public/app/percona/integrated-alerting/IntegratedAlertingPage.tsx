@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { Breadcrumb } from 'app/core/components/Breadcrumb';
@@ -12,6 +12,7 @@ import { getLocationSrv } from '@grafana/runtime';
 import { UrlQueryValue } from '@grafana/data';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
+import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 
 const tabComponentMap = [
   {
@@ -81,6 +82,7 @@ const IntegratedAlertingPage: FC = () => {
   return (
     <div className={styles.integratedAlertingWrapper}>
       <Breadcrumb pageModel={PAGE_MODEL} />
+      <TechnicalPreview />
       <TabsBar>
         {PAGE_TABS.map(tab => (
           <Tab key={tab.id} label={tab.title} active={tab.id === activeTab} onChangeTab={() => selectTab(tab.id)} />

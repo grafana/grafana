@@ -12,6 +12,7 @@ import { DEFAULT_TAB, PAGE_MODEL } from './DBaaS.constants';
 import { UrlQueryValue } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
+import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 
 export const DBaaS: FC = () => {
   const styles = useStyles(getStyles);
@@ -62,6 +63,7 @@ export const DBaaS: FC = () => {
 
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
+      <TechnicalPreview />
       <div className={styles.panelContentWrapper}>
         <TabsBar>
           {tabs.map((tab, index) => (

@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
 import { Button } from '@grafana/ui';
 import { cx } from 'emotion';
 import AddRemoteInstance from './components/AddRemoteInstance/AddRemoteInstance';
 import Discovery from './components/Discovery/Discovery';
+import AzureDiscovery from './components/AzureDiscovery/Discovery';
 import { AddInstance } from './components/AddInstance/AddInstance';
 import { getStyles } from './panel.styles';
 import { Messages } from './components/AddRemoteInstance/AddRemoteInstance.messages';
@@ -13,6 +13,7 @@ import { PAGE_MODEL } from './panel.constants';
 
 const availableInstanceTypes = [
   InstanceTypes.rds,
+  InstanceTypes.azure,
   InstanceTypes.postgresql,
   InstanceTypes.mysql,
   InstanceTypes.proxysql,
@@ -31,19 +32,21 @@ const AddInstancePanel = () => {
   const InstanceForm = useMemo(
     () => () => (
       <>
-        <div className={styles.content}>
-          <Button
-            variant="secondary"
-            onClick={() => selectInstance({ type: '' })}
-            className={styles.returnButton}
-            icon="arrow-left"
-          >
-            {Messages.form.buttons.toMenu}
-          </Button>
-        </div>
-        {selectedInstance.type === InstanceTypes.rds ? (
-          <Discovery selectInstance={selectInstance} />
-        ) : (
+        {selectedInstance.type !== InstanceTypes.rds && selectedInstance.type !== InstanceTypes.azure && (
+          <div className={styles.content}>
+            <Button
+              variant="secondary"
+              onClick={() => selectInstance({ type: '' })}
+              className={styles.returnButton}
+              icon="arrow-left"
+            >
+              {Messages.form.buttons.toMenu}
+            </Button>
+          </div>
+        )}
+        {selectedInstance.type === InstanceTypes.rds && <Discovery selectInstance={selectInstance} />}
+        {selectedInstance.type === InstanceTypes.azure && <AzureDiscovery selectInstance={selectInstance} />}
+        {selectedInstance.type !== InstanceTypes.rds && selectedInstance.type !== InstanceTypes.azure && (
           <AddRemoteInstance instance={selectedInstance} selectInstance={selectInstance} />
         )}
       </>
@@ -60,10 +63,4 @@ const AddInstancePanel = () => {
   );
 };
 
-const AddPanel = () => (
-  <Router>
-    <Route path="*" component={AddInstancePanel} />
-  </Router>
-);
-
-export default AddPanel;
+export default AddInstancePanel;

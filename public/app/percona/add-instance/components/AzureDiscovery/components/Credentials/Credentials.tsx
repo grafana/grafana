@@ -5,13 +5,13 @@ import { Button, useTheme } from '@grafana/ui';
 import { getStyles } from './Credentials.styles';
 import { SECURITY_CREDENTIALS_DOC_LINK } from './Credentials.constants';
 import { Messages } from './Credentials.messages';
-import { CredentialsForm, CredentialsProps } from './Credentials.types';
+import { AzureCredentialsForm, CredentialsProps } from './Credentials.types';
 
 const Credentials: FC<CredentialsProps> = ({ onSetCredentials, selectInstance }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
-  const onSubmit = useCallback((values: CredentialsForm) => {
+  const onSubmit = useCallback((values: AzureCredentialsForm) => {
     onSetCredentials({ ...values });
   }, []);
 
@@ -22,16 +22,32 @@ const Credentials: FC<CredentialsProps> = ({ onSetCredentials, selectInstance })
         <form onSubmit={handleSubmit} className={styles.instanceForm}>
           <div className={styles.searchPanel}>
             <TextInputField
-              name={Messages.form.fields.awsAccessKey.name}
-              placeholder={Messages.form.fields.awsAccessKey.placeholder}
-              label={Messages.form.fields.awsAccessKey.label}
+              name={Messages.form.fields.clientId.name}
+              placeholder={Messages.form.fields.clientId.placeholder}
+              label={Messages.form.fields.clientId.label}
               validators={[validators.required]}
               fieldClassName={styles.credentialsField}
             />
             <PasswordInputField
-              name={Messages.form.fields.awsSecretKey.name}
-              placeholder={Messages.form.fields.awsSecretKey.placeholder}
-              label={Messages.form.fields.awsSecretKey.label}
+              name={Messages.form.fields.clientSecret.name}
+              placeholder={Messages.form.fields.clientSecret.placeholder}
+              label={Messages.form.fields.clientSecret.label}
+              validators={[validators.required]}
+              fieldClassName={styles.credentialsField}
+            />
+          </div>
+          <div className={styles.searchPanel}>
+            <TextInputField
+              name={Messages.form.fields.tenantId.name}
+              placeholder={Messages.form.fields.tenantId.placeholder}
+              label={Messages.form.fields.tenantId.label}
+              validators={[validators.required]}
+              fieldClassName={styles.credentialsField}
+            />
+            <TextInputField
+              name={Messages.form.fields.subscriptionId.name}
+              placeholder={Messages.form.fields.subscriptionId.placeholder}
+              label={Messages.form.fields.subscriptionId.label}
               validators={[validators.required]}
               fieldClassName={styles.credentialsField}
             />
