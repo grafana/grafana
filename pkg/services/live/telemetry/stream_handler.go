@@ -2,7 +2,6 @@ package telemetry
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -22,13 +21,13 @@ func (p *testStreamHandler) SubscribeStream(_ context.Context, req *backend.Subs
 	if err != nil {
 		return nil, err
 	}
-	if !ok {
-		return nil, fmt.Errorf("schema not found: %v", err)
-	}
-	return &backend.SubscribeStreamResponse{
+	response := &backend.SubscribeStreamResponse{
 		Status: backend.SubscribeStreamStatusOK,
-		Data:   schema,
-	}, nil
+	}
+	if ok {
+		response.Data = schema
+	}
+	return response, nil
 }
 
 func (p *testStreamHandler) PublishStream(_ context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
