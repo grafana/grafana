@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -576,6 +577,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.m.Use(OrgRedirect(sc.cfg))
 
 		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)
+		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*models.FakeJWTService)
 		sc.remoteCacheService = ctxHdlr.RemoteCache
 
 		sc.defaultHandler = func(c *models.ReqContext) {
@@ -611,6 +613,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	}
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
+	authJWTSvc := models.NewFakeJWTService()
 	ctxHdlr := &contexthandler.ContextHandler{}
 
 	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
@@ -629,6 +632,10 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 		{
 			Name:     rendering.ServiceName,
 			Instance: renderSvc,
+		},
+		{
+			Name:     jwt.ServiceName,
+			Instance: authJWTSvc,
 		},
 		{
 			Name:     contexthandler.ServiceName,

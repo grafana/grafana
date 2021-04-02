@@ -8,7 +8,8 @@ import { useAsyncFn } from 'react-use';
 import { getBackendSrv } from '@grafana/runtime';
 import { UrlQueryValue } from '@grafana/data';
 import { Form, Field, Input, Button, Legend } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 interface OrgNameDTO {
   orgName: string;
@@ -30,11 +31,12 @@ const removeOrgUser = async (orgUser: OrgUser, orgId: UrlQueryValue) => {
   return await getBackendSrv().delete('/api/orgs/' + orgId + '/users/' + orgUser.userId);
 };
 
-export const AdminEditOrgPage: FC = () => {
+interface Props extends GrafanaRouteComponentProps<{ id: string }> {}
+
+export const AdminEditOrgPage: FC<Props> = ({ match }) => {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const navModel = getNavModel(navIndex, 'global-orgs');
-
-  const orgId = useSelector((state: StoreState) => state.location.routeParams.id);
+  const orgId = parseInt(match.params.id, 10);
 
   const [users, setUsers] = useState<OrgUser[]>([]);
 
@@ -44,7 +46,7 @@ export const AdminEditOrgPage: FC = () => {
   useEffect(() => {
     fetchOrg();
     fetchOrgUsers().then((res) => setUsers(res));
-  }, []);
+  }, [fetchOrg, fetchOrgUsers]);
 
   const updateOrgName = async (name: string) => {
     return await getBackendSrv().put('/api/orgs/' + orgId, { ...orgState.value, name });
@@ -54,7 +56,7 @@ export const AdminEditOrgPage: FC = () => {
     <Page navModel={navModel}>
       <Page.Contents>
         <>
-          <Legend>Edit Organization</Legend>
+          <Legend>Edit organization</Legend>
 
           {orgState.value && (
             <Form
@@ -77,7 +79,7 @@ export const AdminEditOrgPage: FC = () => {
               margin-top: 20px;
             `}
           >
-            <Legend>Organization Users</Legend>
+            <Legend>Organization users</Legend>
             {!!users.length && (
               <UsersTable
                 users={users}

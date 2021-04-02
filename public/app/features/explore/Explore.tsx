@@ -1,6 +1,6 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -17,7 +17,6 @@ import {
   RawTimeRange,
   TimeZone,
   LogsModel,
-  TraceViewData,
   DataFrame,
 } from '@grafana/data';
 
@@ -32,17 +31,15 @@ import { updateTimeRange } from './state/time';
 import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
-import { getFirstNonQueryRowSpecificError } from 'app/core/utils/explore';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
-import { ErrorContainer } from './ErrorContainer';
-//TODO:unification
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 import { NodeGraphContainer } from './NodeGraphContainer';
+import { ResponseErrorContainer } from './ResponseErrorContainer';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -292,15 +289,8 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
     return (
-      // We expect only one trace at the moment to be in the dataframe
       // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames[0] && (
-        <TraceView
-          exploreId={exploreId}
-          trace={dataFrames[0].fields[0].values.get(0) as TraceViewData | undefined}
-          splitOpenFn={splitOpen}
-        />
-      )
+      dataFrames.length && <TraceView exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
     );
   }
 
@@ -323,12 +313,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
-
-    // gets an error without a refID, so non-query-row-related error, like a connection error
-    const queryErrors =
-      queryResponse.state === LoadingState.Error && queryResponse.error ? [queryResponse.error] : undefined;
-    const queryError = getFirstNonQueryRowSpecificError(queryErrors);
-
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
@@ -352,7 +336,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 onClickQueryInspectorButton={this.toggleShowQueryInspector}
               />
             </div>
-            <ErrorContainer queryError={queryError} />
+            <ResponseErrorContainer exploreId={exploreId} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {

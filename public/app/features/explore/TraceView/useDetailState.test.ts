@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react-hooks';
-import { TraceLog } from '@grafana/data';
 import { useDetailState } from './useDetailState';
+import { TraceLog } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 
 describe('useDetailState', () => {
   it('toggles detail', async () => {

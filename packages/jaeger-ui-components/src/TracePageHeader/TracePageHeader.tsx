@@ -17,7 +17,7 @@ import _get from 'lodash/get';
 import _maxBy from 'lodash/maxBy';
 import _values from 'lodash/values';
 import MdKeyboardArrowRight from 'react-icons/lib/md/keyboard-arrow-right';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import SpanGraph from './SpanGraph';
@@ -27,7 +27,7 @@ import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { getTraceName } from '../model/trace-viewer';
 import { TNil } from '../types';
-import { Trace } from '@grafana/data';
+import { Trace } from '../types/trace';
 import { formatDatetime, formatDuration } from '../utils/date';
 import { getTraceLinks } from '../model/link-patterns';
 

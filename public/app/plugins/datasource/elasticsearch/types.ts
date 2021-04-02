@@ -59,7 +59,6 @@ export interface ElasticsearchAggregation {
 }
 
 export interface ElasticsearchQuery extends DataQuery {
-  isLogsQuery?: boolean;
   alias?: string;
   query?: string;
   bucketAggs?: BucketAggregation[];

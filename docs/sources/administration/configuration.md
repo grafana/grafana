@@ -266,7 +266,12 @@ Path where the socket should be created when `protocol=socket`. Make sure that G
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
 
 For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
-`http://cdn.myserver.com/grafana-oss/v7.4.0/public/build/app.<hash>.js`.
+`http://cdn.myserver.com/grafana-oss/7.4.0/public/build/app.<hash>.js`.
+
+### read_timeout
+
+Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
+`0` means there is no timeout for reading the request.
 
 <hr />
 
@@ -780,13 +785,23 @@ You can configure core and external AWS plugins.
 
 Specify what authentication providers the AWS plugins allow. For a list of allowed providers, refer to the data-source configuration page for a given plugin. If you configure a plugin by provisioning, only providers that are specified in `allowed_auth_providers` are allowed.
 
-Options: `default` (AWS SDK default), `keys` (Access and secret key), `credentials` (Credentials file), `ec2_IAM_role` (EC2 IAM role)
+Options: `default` (AWS SDK default), `keys` (Access and secret key), `credentials` (Credentials file), `ec2_iam_role` (EC2 IAM role)
 
 ### assume_role_enabled
 
 Set to `false` to disable AWS authentication from using an assumed role with temporary security credentials. For details about assume roles, refer to the AWS API reference documentation about the [AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) operation.
 
 If this option is disabled, the **Assume Role** and the **External Id** field are removed from the AWS data source configuration page. If the plugin is configured using provisioning, it is possible to use an assumed role as long as `assume_role_enabled` is set to `true`.
+
+### list_metrics_page_limit
+
+Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) option to load metrics for custom namespaces in the CloudWatch data source. By default, the page limit is 500.
+
+<hr />
+
+## [auth.jwt]
+
+Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
 
 <hr />
 
@@ -1081,6 +1096,12 @@ This setting should be expressed as a duration. Examples: 6h (hours), 10d (days)
 Configures max number of alert annotations that Grafana stores. Default value is 0, which keeps all alert annotations.
 
 <hr>
+
+## [annotations]
+
+### cleanupjob_batchsize
+
+Configures the batch size for the annotation clean-up job. This setting is used for dashboard, API, and alert annotations.
 
 ## [annotations.dashboard]
 
@@ -1507,7 +1528,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`,`ngalert`
+Keys of alpha features to enable, separated by space. Available alpha features are: `ngalert`
 
 ## [date_formats]
 

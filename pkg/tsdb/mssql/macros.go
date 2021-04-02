@@ -7,26 +7,28 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/gtime"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
-type msSqlMacroEngine struct {
-	*sqleng.SqlMacroEngineBase
-	timeRange *tsdb.TimeRange
-	query     *tsdb.Query
+type msSQLMacroEngine struct {
+	*sqleng.SQLMacroEngineBase
+	timeRange plugins.DataTimeRange
+	query     plugins.DataSubQuery
 }
 
-func newMssqlMacroEngine() sqleng.SqlMacroEngine {
-	return &msSqlMacroEngine{SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase()}
+func newMssqlMacroEngine() sqleng.SQLMacroEngine {
+	return &msSQLMacroEngine{SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase()}
 }
 
-func (m *msSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *msSQLMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
+	sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
+	// TODO: Return any error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
@@ -50,7 +52,7 @@ func (m *msSqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRa
 	return sql, nil
 }
 
-func (m *msSqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
+func (m *msSQLMacroEngine) evaluateMacro(name string, args []string) (string, error) {
 	switch name {
 	case "__time":
 		if len(args) == 0 {

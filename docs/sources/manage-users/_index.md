@@ -17,8 +17,8 @@ Grafana Server Admins are user accounts that have the Grafana Admin option set t
 
 Server Admins can:
 
-- [Manage users]({{< relref "server-admin-manage-users.md" >}})
-- [Manage organizations]({{< relref "server-admin-manage-orgs.md" >}})
+- [Manage users]({{< relref "server-admin/server-admin-manage-users.md" >}})
+- [Manage organizations]({{< relref "server-admin/server-admin-manage-orgs.md" >}})
 
 ## Organization
 
@@ -36,7 +36,7 @@ Organization Admins can:
 
 ## Teams
 
-Teams are groups of users within the same organization. Teams allow you to grant permissions for a group of users. They are most often used to manage [permissions for folders and dashboards]({{< relref "../permissions/dashboard_folder_permissions.md" >}}). Enterprise users can use them to apply [data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}).
+Teams are groups of users within the same organization. Teams allow you to grant permissions for a group of users. They are most often used to manage [permissions for folders and dashboards]({{< relref "../permissions/dashboard-folder-permissions.md" >}}). Enterprise users can use them to apply [data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}).
 
 Teams are mostly managed by Organization Admins. However, if the Grafana server setting [editors_can_admin]({{< relref "../administration/configuration.md#editors_can_admin" >}}) is applied, then users who are assigned the Team Admin role can also manage teams in their organization and users assigned to their teams.
 
@@ -47,9 +47,9 @@ Team Admins can [Manage teams]({{< relref "manage-teams/index.md" >}}).
 Users are named accounts in Grafana with granted permissions to access resources throughout Grafana. All users can manage their own accounts to a limited extent.
 
 Users can:
-- [View and edit user profile](user-admin/user-profile.md)
-- [Change password](user-admin/change-your-password.md)
-- [Switch organizations](user-admin/switch-org.md)
+- [View and edit user profile]({{< relref "user-admin/user-profile.md" >}})
+- [Change password]({{< relref "user-admin/change-your-password.md" >}})
+- [Switch organizations]({{< relref "user-admin/switch-org.md" >}})
 
 ## Learn more
 

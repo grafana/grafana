@@ -12,12 +12,15 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -46,6 +49,9 @@ const (
 	authProxySyncTTL = 60
 )
 
+// zoneInfo names environment variable for setting the path to look for the timezone database in go
+const zoneInfo = "ZONEINFO"
+
 var (
 	// App settings.
 	Env              = Dev
@@ -70,8 +76,6 @@ var (
 	CustomInitPath = "conf/custom.ini"
 
 	// HTTP server options
-	HttpAddr, HttpPort             string
-	CertFile, KeyFile              string
 	DataProxyLogging               bool
 	DataProxyTimeout               int
 	DataProxyTLSHandshakeTimeout   int
@@ -80,8 +84,6 @@ var (
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
 	StaticRootPath                 string
-	EnableGzip                     bool
-	EnforceDomain                  bool
 
 	// Security settings.
 	SecretKey              string
@@ -141,11 +143,8 @@ var (
 	appliedEnvOverrides          []string
 
 	// analytics
-	ReportingEnabled     bool
-	ReportingDistributor string
-	CheckForUpdates      bool
-	GoogleAnalyticsId    string
-	GoogleTagManagerId   string
+	GoogleAnalyticsId  string
+	GoogleTagManagerId string
 
 	// LDAP
 	LDAPEnabled           bool
@@ -190,6 +189,10 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
+	CertFile         string
+	KeyFile          string
+	HTTPAddr         string
+	HTTPPort         string
 	AppURL           string
 	AppSubURL        string
 	ServeFromSubPath bool
@@ -199,6 +202,9 @@ type Cfg struct {
 	RouterLogging    bool
 	Domain           string
 	CDNRootURL       *url.URL
+	ReadTimeout      time.Duration
+	EnableGzip       bool
+	EnforceDomain    bool
 
 	// build
 	BuildVersion string
@@ -276,6 +282,7 @@ type Cfg struct {
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
+	AWSListMetricsPageLimit int
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -293,6 +300,17 @@ type Cfg struct {
 	// SAML Auth
 	SAMLEnabled             bool
 	SAMLSingleLogoutEnabled bool
+
+	// JWT Auth
+	JWTAuthEnabled       bool
+	JWTAuthHeaderName    string
+	JWTAuthEmailClaim    string
+	JWTAuthUsernameClaim string
+	JWTAuthExpectClaims  string
+	JWTAuthJWKSetURL     string
+	JWTAuthCacheTTL      time.Duration
+	JWTAuthKeyFile       string
+	JWTAuthJWKSetFile    string
 
 	// Dataproxy
 	SendUserHeader bool
@@ -318,6 +336,7 @@ type Cfg struct {
 	HiddenUsers           map[string]struct{}
 
 	// Annotations
+	AnnotationCleanupJobBatchSize      int64
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
@@ -335,6 +354,11 @@ type Cfg struct {
 
 	Env string
 
+	// Analytics
+	CheckForUpdates      bool
+	ReportingDistributor string
+	ReportingEnabled     bool
+
 	// LDAP
 	LDAPEnabled     bool
 	LDAPAllowSignup bool
@@ -349,6 +373,8 @@ type Cfg struct {
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
+
+	ImageUploadProvider string
 }
 
 // IsLiveEnabled returns if grafana live should be enabled
@@ -471,6 +497,9 @@ func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
 }
 
 func (cfg *Cfg) readAnnotationSettings() {
+	section := cfg.Raw.Section("annotations")
+	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
+
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 	alertingSection := cfg.Raw.Section("alerting")
@@ -744,6 +773,14 @@ func (cfg *Cfg) validateStaticRootPath() error {
 func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	setHomePath(args)
 
+	// Fix for missing IANA db on Windows
+	_, zoneInfoSet := os.LookupEnv(zoneInfo)
+	if runtime.GOOS == "windows" && !zoneInfoSet {
+		if err := os.Setenv(zoneInfo, filepath.Join(HomePath, "tools", "zoneinfo.zip")); err != nil {
+			cfg.Logger.Error("Can't set ZONEINFO environment variable", "err", err)
+		}
+	}
+
 	iniFile, err := cfg.loadConfiguration(args)
 	if err != nil {
 		return err
@@ -821,13 +858,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
-	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
+	cfg.CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
-	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
-	ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
-	if len(ReportingDistributor) >= 100 {
-		ReportingDistributor = ReportingDistributor[:100]
+	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
+	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
+	if len(cfg.ReportingDistributor) >= 100 {
+		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
 
 	if err := readAlertingSettings(iniFile); err != nil {
@@ -865,7 +902,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readLDAPConfig()
-	cfg.readAWSConfig()
+	cfg.handleAWSConfig()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
@@ -888,7 +925,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	imageUploadingSection := iniFile.Section("external_image_storage")
-	ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
+	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
+	ImageUploadProvider = cfg.ImageUploadProvider
 
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
@@ -928,15 +966,26 @@ func (cfg *Cfg) readLDAPConfig() {
 	cfg.LDAPAllowSignup = LDAPAllowSignup
 }
 
-func (cfg *Cfg) readAWSConfig() {
+func (cfg *Cfg) handleAWSConfig() {
 	awsPluginSec := cfg.Raw.Section("aws")
 	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
-	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").String()
+	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").MustString("default,keys,credentials")
 	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
 		authProvider = strings.TrimSpace(authProvider)
 		if authProvider != "" {
 			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
 		}
+	}
+	cfg.AWSListMetricsPageLimit = awsPluginSec.Key("list_metrics_page_limit").MustInt(500)
+	// Also set environment variables that can be used by core plugins
+	err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AssumeRoleEnabledEnvVarKeyName), err)
+	}
+
+	err = os.Setenv(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuthProviders)
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
 	}
 }
 
@@ -1141,6 +1190,18 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 	cfg.BasicAuthEnabled = BasicAuthEnabled
 
+	// JWT auth
+	authJWT := iniFile.Section("auth.jwt")
+	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
+	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
+	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
+	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
+	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")
+	cfg.JWTAuthJWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
+	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
+	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
+	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
+
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 	cfg.AuthProxyEnabled = AuthProxyEnabled
@@ -1295,13 +1356,13 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 
 	if protocolStr == "https" {
 		cfg.Protocol = HTTPSScheme
-		CertFile = server.Key("cert_file").String()
-		KeyFile = server.Key("cert_key").String()
+		cfg.CertFile = server.Key("cert_file").String()
+		cfg.KeyFile = server.Key("cert_key").String()
 	}
 	if protocolStr == "h2" {
 		cfg.Protocol = HTTP2Scheme
-		CertFile = server.Key("cert_file").String()
-		KeyFile = server.Key("cert_key").String()
+		cfg.CertFile = server.Key("cert_file").String()
+		cfg.KeyFile = server.Key("cert_key").String()
 	}
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme
@@ -1309,12 +1370,12 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 
 	cfg.Domain = valueAsString(server, "domain", "localhost")
-	HttpAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
-	HttpPort = valueAsString(server, "http_port", "3000")
+	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
+	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
-	EnableGzip = server.Key("enable_gzip").MustBool(false)
-	EnforceDomain = server.Key("enforce_domain").MustBool(false)
+	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)
+	cfg.EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	staticRoot := valueAsString(server, "static_root_path", "")
 	StaticRootPath = makeAbsolute(staticRoot, HomePath)
 	cfg.StaticRootPath = StaticRootPath
@@ -1330,6 +1391,8 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 			return err
 		}
 	}
+
+	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(0)
 
 	return nil
 }

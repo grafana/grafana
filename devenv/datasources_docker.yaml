@@ -29,8 +29,6 @@ datasources:
     database: site
     user: grafana
     url: http://influxdb:8086
-    jsonData:
-      timeInterval: "15s"
     secureJsonData:
       password: grafana
 
@@ -45,14 +43,22 @@ datasources:
       organization: myorg
       defaultBucket: mybucket
       
+  - name: gdev-influxdb2-influxql
+    type: influxdb
+    access: proxy
+    database: site
+    url: http://influxdb2:8086
+    jsonData:
+      httpHeaderName1: "Authorization"
+    secureJsonData:
+      httpHeaderValue1: "Token mytoken"
+
   - name: gdev-influxdb-telegraf
     type: influxdb
     access: proxy
     database: telegraf
     user: grafana
-    url: http://telegraf:8086
-    jsonData:
-      timeInterval: "10s"
+    url: http://influxdb:8086
     secureJsonData:
       password: grafana
 

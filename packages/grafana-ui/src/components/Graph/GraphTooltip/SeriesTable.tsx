@@ -1,7 +1,7 @@
 import React from 'react';
 import { stylesFactory } from '../../../themes/stylesFactory';
 import { GrafanaTheme, GraphSeriesValue } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { SeriesIcon } from '../../VizLegend/SeriesIcon';
 import { useTheme } from '../../../themes';
 
@@ -75,8 +75,16 @@ export const SeriesTable: React.FC<SeriesTableProps> = ({ timestamp, series }) =
           {timestamp}
         </div>
       )}
-      {series.map((s) => {
-        return <SeriesTableRow isActive={s.isActive} label={s.label} color={s.color} value={s.value} key={s.label} />;
+      {series.map((s, i) => {
+        return (
+          <SeriesTableRow
+            isActive={s.isActive}
+            label={s.label}
+            color={s.color}
+            value={s.value}
+            key={`${s.label}-${i}`}
+          />
+        );
       })}
     </>
   );

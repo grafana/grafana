@@ -6,52 +6,54 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
 type timeSeriesQuery struct {
 	client             es.Client
-	tsdbQuery          *tsdb.TsdbQuery
-	intervalCalculator tsdb.IntervalCalculator
+	tsdbQuery          plugins.DataQuery
+	intervalCalculator interval.Calculator
 }
 
-var newTimeSeriesQuery = func(client es.Client, tsdbQuery *tsdb.TsdbQuery, intervalCalculator tsdb.IntervalCalculator) *timeSeriesQuery {
+var newTimeSeriesQuery = func(client es.Client, dataQuery plugins.DataQuery,
+	intervalCalculator interval.Calculator) *timeSeriesQuery {
 	return &timeSeriesQuery{
 		client:             client,
-		tsdbQuery:          tsdbQuery,
+		tsdbQuery:          dataQuery,
 		intervalCalculator: intervalCalculator,
 	}
 }
 
-func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
+func (e *timeSeriesQuery) execute() (plugins.DataResponse, error) {
 	tsQueryParser := newTimeSeriesQueryParser()
 	queries, err := tsQueryParser.parse(e.tsdbQuery)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	ms := e.client.MultiSearch()
 
 	from := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetFromAsMsEpoch())
 	to := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetToAsMsEpoch())
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
 	for _, q := range queries {
 		if err := e.processQuery(q, ms, from, to, result); err != nil {
-			return nil, err
+			return plugins.DataResponse{}, err
 		}
 	}
 
 	req, err := ms.Build()
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 
 	rp := newResponseParser(res.Responses, queries, res.DebugInfo)
@@ -59,13 +61,15 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 }
 
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
-	result *tsdb.Response) error {
+	result plugins.DataResponse) error {
 	minInterval, err := e.client.GetMinInterval(q.Interval)
 	if err != nil {
 		return err
 	}
-	interval := e.intervalCalculator.Calculate(e.tsdbQuery.TimeRange, minInterval)
+	interval := e.intervalCalculator.Calculate(*e.tsdbQuery.TimeRange, minInterval)
+
 	b := ms.Search(interval, q.IndexPatternOverride)
+
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
 	filters.AddDateRangeFilter(e.client.GetTimeField(), to, from, es.DateFormatEpochMS)
@@ -76,8 +80,8 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	if len(q.BucketAggs) == 0 {
 		if len(q.Metrics) == 0 || q.Metrics[0].Type != "raw_document" {
-			result.Results[q.RefID] = &tsdb.QueryResult{
-				RefId:       q.RefID,
+			result.Results[q.RefID] = plugins.DataQueryResult{
+				RefID:       q.RefID,
 				Error:       fmt.Errorf("invalid query, missing metrics and aggregations"),
 				ErrorString: "invalid query, missing metrics and aggregations",
 			}
@@ -307,7 +311,7 @@ func newTimeSeriesQueryParser() *timeSeriesQueryParser {
 	return &timeSeriesQueryParser{}
 }
 
-func (p *timeSeriesQueryParser) parse(tsdbQuery *tsdb.TsdbQuery) ([]*Query, error) {
+func (p *timeSeriesQueryParser) parse(tsdbQuery plugins.DataQuery) ([]*Query, error) {
 	queries := make([]*Query, 0)
 	for _, q := range tsdbQuery.Queries {
 		model := q.Model
@@ -336,7 +340,7 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery *tsdb.TsdbQuery) ([]*Query, erro
 			Metrics:              metrics,
 			Alias:                alias,
 			Interval:             interval,
-			RefID:                q.RefId,
+			RefID:                q.RefID,
 		})
 	}
 

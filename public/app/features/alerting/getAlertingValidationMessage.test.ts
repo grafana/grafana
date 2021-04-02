@@ -28,8 +28,8 @@ describe('getAlertingValidationMessage', () => {
         getInstanceSettings: (() => {}) as any,
       };
       const targets: ElasticsearchQuery[] = [
-        { refId: 'A', query: '@hostname:$hostname', isLogsQuery: false },
-        { refId: 'B', query: '@instance:instance', isLogsQuery: false },
+        { refId: 'A', query: '@hostname:$hostname' },
+        { refId: 'B', query: '@instance:instance' },
       ];
       const transformations: DataTransformerConfig[] = [];
 
@@ -95,8 +95,8 @@ describe('getAlertingValidationMessage', () => {
         },
       };
       const targets: ElasticsearchQuery[] = [
-        { refId: 'A', query: '@hostname:$hostname', isLogsQuery: false },
-        { refId: 'B', query: '@instance:$instance', isLogsQuery: false },
+        { refId: 'A', query: '@hostname:$hostname' },
+        { refId: 'B', query: '@instance:$instance' },
       ];
       const transformations: DataTransformerConfig[] = [];
 
@@ -124,8 +124,8 @@ describe('getAlertingValidationMessage', () => {
         },
       };
       const targets: ElasticsearchQuery[] = [
-        { refId: 'A', query: '@hostname:hostname', isLogsQuery: false },
-        { refId: 'B', query: '@instance:instance', isLogsQuery: false },
+        { refId: 'A', query: '@hostname:hostname' },
+        { refId: 'B', query: '@instance:instance' },
       ];
       const transformations: DataTransformerConfig[] = [];
 
@@ -153,8 +153,8 @@ describe('getAlertingValidationMessage', () => {
         },
       };
       const targets: ElasticsearchQuery[] = [
-        { refId: 'A', query: '@hostname:hostname', isLogsQuery: false },
-        { refId: 'B', query: '@instance:instance', isLogsQuery: false },
+        { refId: 'A', query: '@hostname:hostname' },
+        { refId: 'B', query: '@instance:instance' },
       ];
       const transformations: DataTransformerConfig[] = [{ id: 'A', options: null }];
 

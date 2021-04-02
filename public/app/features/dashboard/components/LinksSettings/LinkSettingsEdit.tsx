@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { CollapsableSection, Button, TagsInput, Select, Field, Input, Checkbox } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { LinkSettingsMode } from '../DashboardSettings/LinksSettings';
@@ -98,7 +98,7 @@ export const LinkSettingsEdit: React.FC<LinkSettingsEditProps> = ({ mode, editLi
       )}
       {linkSettings.type === 'link' && (
         <>
-          <Field label="Url">
+          <Field label="URL">
             <Input name="url" value={linkSettings.url} onChange={onChange} />
           </Field>
           <Field label="Tooltip">

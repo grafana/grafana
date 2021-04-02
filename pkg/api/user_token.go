@@ -132,7 +132,7 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 		return response.Error(400, "Cannot revoke active user auth token", nil)
 	}
 
-	err = hs.AuthTokenService.RevokeToken(c.Req.Context(), token)
+	err = hs.AuthTokenService.RevokeToken(c.Req.Context(), token, false)
 	if err != nil {
 		if errors.Is(err, models.ErrUserTokenNotFound) {
 			return response.Error(404, "User auth token not found", err)

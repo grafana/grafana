@@ -18,15 +18,15 @@ import {
   clearUserError,
   clearUserMappingInfo,
 } from '../state/actions';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-interface Props {
+interface Props extends GrafanaRouteComponentProps<{}, { username: string }> {
   navModel: NavModel;
   ldapConnectionInfo: LdapConnectionInfo;
   ldapUser: LdapUser;
   ldapSyncInfo: SyncInfo;
   ldapError: LdapError;
   userError?: LdapError;
-  username?: string;
 
   loadLdapState: typeof loadLdapState;
   loadLdapSyncStatus: typeof loadLdapSyncStatus;
@@ -45,12 +45,14 @@ export class LdapPage extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const { username, clearUserMappingInfo, loadUserMapping } = this.props;
+    const { clearUserMappingInfo, queryParams } = this.props;
     await clearUserMappingInfo();
     await this.fetchLDAPStatus();
-    if (username) {
-      await loadUserMapping(username);
+
+    if (queryParams.username) {
+      await this.fetchUserMapping(queryParams.username);
     }
+
     this.setState({ isLoading: false });
   }
 
@@ -77,7 +79,7 @@ export class LdapPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { ldapUser, userError, ldapError, ldapSyncInfo, ldapConnectionInfo, navModel, username } = this.props;
+    const { ldapUser, userError, ldapError, ldapSyncInfo, ldapConnectionInfo, navModel, queryParams } = this.props;
     const { isLoading } = this.state;
 
     return (
@@ -106,7 +108,7 @@ export class LdapPage extends PureComponent<Props, State> {
                   type="text"
                   id="username"
                   name="username"
-                  defaultValue={username}
+                  defaultValue={queryParams.username}
                 />
                 <button type="submit" className="btn btn-primary">
                   Run
@@ -134,7 +136,6 @@ export class LdapPage extends PureComponent<Props, State> {
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'ldap'),
-  username: state.location.routeParams.user,
   ldapConnectionInfo: state.ldap.connectionInfo,
   ldapUser: state.ldap.user,
   ldapSyncInfo: state.ldap.syncInfo,

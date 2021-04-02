@@ -54,6 +54,11 @@ function mockDataFrame() {
   return preparePlotFrame([df1, df2]);
 }
 
+jest.mock('@grafana/data', () => ({
+  ...(jest.requireActual('@grafana/data') as any),
+  DefaultTimeZone: 'utc',
+}));
+
 describe('GraphNG utils', () => {
   describe('preparePlotConfigBuilder', () => {
     const frame = mockDataFrame();

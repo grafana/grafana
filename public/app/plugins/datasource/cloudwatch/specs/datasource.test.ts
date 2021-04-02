@@ -2,6 +2,7 @@ import { interval, of, throwError } from 'rxjs';
 import {
   DataFrame,
   DataQueryErrorType,
+  DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
   dateMath,
@@ -11,7 +12,14 @@ import {
 import * as redux from 'app/store/store';
 import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CloudWatchLogsQuery, CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, LogAction } from '../types';
+import {
+  CloudWatchJsonData,
+  CloudWatchLogsQuery,
+  CloudWatchLogsQueryStatus,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  LogAction,
+} from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
@@ -46,7 +54,7 @@ function getTestContext({ response = {}, throws = false, templateSrv = new Templ
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1' },
     name: 'TestDatasource',
-  } as DataSourceInstanceSettings;
+  } as DataSourceInstanceSettings<CloudWatchJsonData>;
 
   const timeSrv = {
     time: { from: '2016-12-31 15:00:00Z', to: '2016-12-31 16:00:00Z' },
@@ -295,7 +303,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should call the replace method on provided log groups', () => {
       const { ds } = getTestContext();
-      const replaceSpy = jest.spyOn(ds, 'replace').mockImplementation((target: string) => target);
+      const replaceSpy = jest.spyOn(ds, 'replace').mockImplementation((target?: string) => target ?? '');
       ds.makeLogActionRequest('StartQuery', [
         {
           queryString: 'test query string',
@@ -419,7 +427,7 @@ describe('CloudWatchDatasource', () => {
 
     it.each(['pNN.NN', 'p9', 'p99.', 'p99.999'])('should cancel query for invalid extended statistics (%s)', (stat) => {
       const { ds } = getTestContext({ response });
-      const query = {
+      const query: DataQueryRequest<CloudWatchQuery> = ({
         range: defaultTimeRange,
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
@@ -436,7 +444,7 @@ describe('CloudWatchDatasource', () => {
             period: '60s',
           },
         ],
-      };
+      } as unknown) as DataQueryRequest<CloudWatchQuery>;
 
       expect(ds.query.bind(ds, query)).toThrow(/Invalid extended statistics/);
     });

@@ -12,7 +12,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +24,7 @@ func TestNewClient(t *testing.T) {
 			JsonData: simplejson.NewFromAny(make(map[string]interface{})),
 		}
 
-		_, err := NewClient(context.Background(), ds, nil)
+		_, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
 		require.Error(t, err)
 	})
 
@@ -34,7 +35,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		_, err := NewClient(context.Background(), ds, nil)
+		_, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
 		require.Error(t, err)
 	})
 
@@ -46,7 +47,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		_, err := NewClient(context.Background(), ds, nil)
+		_, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
 		require.Error(t, err)
 	})
 
@@ -58,7 +59,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		c, err := NewClient(context.Background(), ds, nil)
+		c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
 		require.NoError(t, err)
 		assert.Equal(t, 2, c.GetVersion())
 	})
@@ -71,7 +72,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		c, err := NewClient(context.Background(), ds, nil)
+		c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
 		require.NoError(t, err)
 		assert.Equal(t, 5, c.GetVersion())
 	})
@@ -84,7 +85,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		c, err := NewClient(context.Background(), ds, nil)
+		c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
 		require.NoError(t, err)
 		assert.Equal(t, 56, c.GetVersion())
 	})
@@ -97,7 +98,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		c, err := NewClient(context.Background(), ds, nil)
+		c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
 		require.NoError(t, err)
 		assert.Equal(t, 60, c.GetVersion())
 	})
@@ -110,7 +111,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		c, err := NewClient(context.Background(), ds, nil)
+		c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
 		require.NoError(t, err)
 		assert.Equal(t, 70, c.GetVersion())
 	})
@@ -364,7 +365,7 @@ func createMultisearchForTest(t *testing.T, c Client, indexPatternOverride strin
 	t.Helper()
 
 	msb := c.MultiSearch()
-	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"}, indexPatternOverride)
+	s := msb.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"}, indexPatternOverride)
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
 		a.Interval = "$__interval"
 
@@ -400,7 +401,7 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 
 			sc.requestBody = bytes.NewBuffer(buf)
 
-			rw.Header().Set("Content-Type", "application/json")
+			rw.Header().Set("Content-Type", "application/x-ndjson")
 			_, err = rw.Write([]byte(sc.responseBody))
 			require.NoError(t, err)
 			rw.WriteHeader(sc.responseStatus)
@@ -411,7 +412,7 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 		fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
 		toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-		timeRange := tsdb.NewTimeRange(fromStr, toStr)
+		timeRange := plugins.NewDataTimeRange(fromStr, toStr)
 
 		c, err := NewClient(context.Background(), ds, timeRange)
 		require.NoError(t, err)

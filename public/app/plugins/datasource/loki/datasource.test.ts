@@ -469,7 +469,9 @@ describe('LokiDatasource', () => {
               },
               {
                 stream: {
+                  label: '', // empty value gets filtered
                   label2: 'value2',
+                  label3: ' ', // whitespace value gets trimmed then filtered
                 },
                 values: [['1549024057498000000', 'hello 2']],
               },
@@ -529,16 +531,6 @@ describe('LokiDatasource', () => {
         const res = await ds.metricFindQuery('incorrect_query');
 
         expect(res).toEqual([]);
-      });
-    });
-
-    mocks.forEach((mock, index) => {
-      it(`should return label names according to provided rangefor Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
-
-        const res = await ds.metricFindQuery('label_names()', { range: { from: new Date(2), to: new Date(3) } });
-
-        expect(res).toEqual([{ text: 'label1' }]);
       });
     });
   });

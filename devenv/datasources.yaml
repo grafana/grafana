@@ -8,6 +8,20 @@ datasources:
     jsonData:
       graphiteVersion: "1.1"
 
+  - name: gdev-graphite-1.0
+    type: graphite
+    access: proxy
+    url: http://localhost:8280
+    jsonData:
+      graphiteVersion: "1.0"
+
+  - name: gdev-graphite-0.9
+    type: graphite
+    access: proxy
+    url: http://localhost:8380
+    jsonData:
+      graphiteVersion: "0.9"
+
   - name: gdev-prometheus
     type: prometheus
     access: proxy
@@ -28,11 +42,9 @@ datasources:
     database: site
     user: grafana
     url: http://localhost:8086
-    jsonData:
-      timeInterval: "15s"
     secureJsonData:
       password: grafana
-  
+
   - name: gdev-influxdb2
     type: influxdb
     access: proxy
@@ -46,17 +58,25 @@ datasources:
       organization: myorg
       defaultBucket: mybucket
 
+  - name: gdev-influxdb2-influxql
+    type: influxdb
+    access: proxy
+    database: site
+    url: http://localhost:8087
+    jsonData:
+      httpHeaderName1: "Authorization"
+    secureJsonData:
+      httpHeaderValue1: "Token mytoken"
+
   - name: gdev-influxdb-telegraf
     type: influxdb
     access: proxy
     database: telegraf
     user: grafana
     url: http://localhost:8086
-    jsonData:
-      timeInterval: "10s"
     secureJsonData:
       password: grafana
-    
+
   - name: gdev-opentsdb
     type: opentsdb
     access: proxy
@@ -268,4 +288,11 @@ datasources:
     uid: gdev-zipkin
     access: proxy
     url: http://localhost:9411
+    editable: false
+
+  - name: gdev-tempo
+    type: tempo
+    uid: gdev-tempo
+    access: proxy
+    url: http://localhost:3101
     editable: false

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
@@ -27,6 +27,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     tabContent: css`
       padding: ${theme.spacing.md};
       background-color: ${theme.colors.bodyBg};
+      height: 100%;
     `,
     close: css`
       position: absolute;

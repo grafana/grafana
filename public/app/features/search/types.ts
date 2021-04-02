@@ -96,10 +96,11 @@ export enum SearchLayout {
   Folders = 'folders',
 }
 
-export interface RouteParams {
+export interface SearchQueryParams {
   query?: string | null;
   sort?: string | null;
   starred?: boolean | null;
   tag?: string[] | null;
   layout?: SearchLayout | null;
+  folder?: string | null;
 }

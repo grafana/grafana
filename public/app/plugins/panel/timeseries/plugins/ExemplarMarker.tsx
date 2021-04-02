@@ -9,7 +9,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { FieldLinkList, Portal, TooltipContainer, useStyles } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useRef, useState } from 'react';
 
 interface ExemplarMarkerProps {

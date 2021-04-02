@@ -107,18 +107,14 @@ describe('running queries', () => {
       .givenThunk(cancelQueries)
       .whenThunkIsDispatched(exploreId);
 
-    expect(dispatchedActions).toEqual([
-      scanStopAction({ exploreId }),
-      cancelQueriesAction({ exploreId }),
-      expect.anything(),
-    ]);
+    expect(dispatchedActions).toEqual([scanStopAction({ exploreId }), cancelQueriesAction({ exploreId })]);
   });
 });
 
 describe('reducer', () => {
   describe('scanning', () => {
     it('should start scanning', () => {
-      const initialState = {
+      const initialState: ExploreItemState = {
         ...makeExplorePaneState(),
         scanning: false,
       };

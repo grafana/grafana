@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,7 +12,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	exec := &OpenTsdbExecutor{}
 
 	t.Run("Build metric with downsampling enabled", func(t *testing.T) {
-		query := &tsdb.Query{
+		query := plugins.DataSubQuery{
 			Model: simplejson.New(),
 		}
 
@@ -32,7 +32,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	})
 
 	t.Run("Build metric with downsampling disabled", func(t *testing.T) {
-		query := &tsdb.Query{
+		query := plugins.DataSubQuery{
 			Model: simplejson.New(),
 		}
 
@@ -51,7 +51,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	})
 
 	t.Run("Build metric with downsampling enabled with params", func(t *testing.T) {
-		query := &tsdb.Query{
+		query := plugins.DataSubQuery{
 			Model: simplejson.New(),
 		}
 
@@ -71,7 +71,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	})
 
 	t.Run("Build metric with tags with downsampling disabled", func(t *testing.T) {
-		query := &tsdb.Query{
+		query := plugins.DataSubQuery{
 			Model: simplejson.New(),
 		}
 
@@ -102,7 +102,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	})
 
 	t.Run("Build metric with rate enabled but counter disabled", func(t *testing.T) {
-		query := &tsdb.Query{
+		query := plugins.DataSubQuery{
 			Model: simplejson.New(),
 		}
 
@@ -134,7 +134,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	})
 
 	t.Run("Build metric with rate and counter enabled", func(t *testing.T) {
-		query := &tsdb.Query{
+		query := plugins.DataSubQuery{
 			Model: simplejson.New(),
 		}
 

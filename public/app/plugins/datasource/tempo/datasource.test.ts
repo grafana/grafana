@@ -1,82 +1,65 @@
-import { TempoDatasource, TempoQuery } from './datasource';
-import { DataQueryRequest, DataSourceInstanceSettings, FieldType, PluginType, dateTime } from '@grafana/data';
-import { BackendSrv, BackendSrvRequest, getBackendSrv, setBackendSrv } from '@grafana/runtime';
+import {
+  arrowTableToBase64String,
+  DataFrame,
+  DataSourceInstanceSettings,
+  grafanaDataFrameToArrowTable,
+  MutableDataFrame,
+  PluginType,
+} from '@grafana/data';
+import { Observable, of } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { TempoDatasource } from './datasource';
+import { FetchResponse, setBackendSrv, BackendDataSourceResponse } from '@grafana/runtime';
 
-describe('JaegerDatasource', () => {
-  it('returns trace when queried', async () => {
-    await withMockedBackendSrv(makeBackendSrvMock('12345'), async () => {
-      const ds = new TempoDatasource(defaultSettings);
-      const response = await ds.query(defaultQuery).toPromise();
-      const field = response.data[0].fields[0];
-      expect(field.name).toBe('trace');
-      expect(field.type).toBe(FieldType.trace);
-      expect(field.values.get(0)).toEqual({
-        traceId: '12345',
-      });
-    });
-  });
-
-  it('returns trace when traceId with special characters is queried', async () => {
-    await withMockedBackendSrv(makeBackendSrvMock('a/b'), async () => {
-      const ds = new TempoDatasource(defaultSettings);
-      const query = {
-        ...defaultQuery,
-        targets: [
-          {
-            query: 'a/b',
-            refId: '1',
-          },
+describe('Tempo data source', () => {
+  it('parses json fields from backend', async () => {
+    setupBackendSrv(
+      new MutableDataFrame({
+        fields: [
+          { name: 'serviceTags', values: ['{"key":"servicetag1","value":"service"}'] },
+          { name: 'logs', values: ['{"timestamp":12345,"fields":[{"key":"count","value":1}]}'] },
+          { name: 'tags', values: ['{"key":"tag1","value":"val1"}'] },
+          { name: 'serviceName', values: ['service'] },
         ],
-      };
-      const response = await ds.query(query).toPromise();
-      const field = response.data[0].fields[0];
-      expect(field.name).toBe('trace');
-      expect(field.type).toBe(FieldType.trace);
-      expect(field.values.get(0)).toEqual({
-        traceId: 'a/b',
-      });
-    });
-  });
-
-  it('returns empty response if trace id is not specified', async () => {
-    const ds = new TempoDatasource(defaultSettings);
-    const response = await ds
-      .query({
-        ...defaultQuery,
-        targets: [],
       })
-      .toPromise();
-    const field = response.data[0].fields[0];
-    expect(field.name).toBe('trace');
-    expect(field.type).toBe(FieldType.trace);
-    expect(field.values.length).toBe(0);
+    );
+    const ds = new TempoDatasource(defaultSettings);
+    await expect(ds.query({ targets: [{ refId: 'refid1' }] } as any)).toEmitValuesWith((response) => {
+      const fields = (response[0].data[0] as DataFrame).fields;
+      expect(
+        fields.map((f) => ({
+          name: f.name,
+          values: f.values.toArray(),
+        }))
+      ).toMatchObject([
+        { name: 'serviceTags', values: [{ key: 'servicetag1', value: 'service' }] },
+        { name: 'logs', values: [{ timestamp: 12345, fields: [{ key: 'count', value: 1 }] }] },
+        { name: 'tags', values: [{ key: 'tag1', value: 'val1' }] },
+        { name: 'serviceName', values: ['service'] },
+      ]);
+    });
   });
 });
 
-function makeBackendSrvMock(traceId: string) {
-  return {
-    datasourceRequest(options: BackendSrvRequest): Promise<any> {
-      expect(options.url.substr(options.url.length - 17, options.url.length)).toBe(
-        `/api/traces/${encodeURIComponent(traceId)}`
-      );
-      return Promise.resolve({
-        data: {
-          data: [
-            {
-              traceId,
+function setupBackendSrv(frame: DataFrame) {
+  setBackendSrv({
+    fetch(): Observable<FetchResponse<BackendDataSourceResponse>> {
+      return of(
+        createFetchResponse({
+          results: {
+            refid1: {
+              dataframes: [encode(frame)],
             },
-          ],
-        },
-      });
+          },
+        })
+      );
     },
-  } as any;
+  } as any);
 }
 
-async function withMockedBackendSrv(srv: BackendSrv, fn: () => Promise<void>) {
-  const oldSrv = getBackendSrv();
-  setBackendSrv(srv);
-  await fn();
-  setBackendSrv(oldSrv);
+function encode(frame: DataFrame) {
+  const table = grafanaDataFrameToArrowTable(frame);
+  return arrowTableToBase64String(table);
 }
 
 const defaultSettings: DataSourceInstanceSettings = {
@@ -93,27 +76,4 @@ const defaultSettings: DataSourceInstanceSettings = {
     baseUrl: '',
   },
   jsonData: {},
-};
-
-const defaultQuery: DataQueryRequest<TempoQuery> = {
-  requestId: '1',
-  dashboardId: 0,
-  interval: '0',
-  intervalMs: 10,
-  panelId: 0,
-  scopedVars: {},
-  range: {
-    from: dateTime().subtract(1, 'h'),
-    to: dateTime(),
-    raw: { from: '1h', to: 'now' },
-  },
-  timezone: 'browser',
-  app: 'explore',
-  startTime: 0,
-  targets: [
-    {
-      query: '12345',
-      refId: '1',
-    },
-  ],
 };

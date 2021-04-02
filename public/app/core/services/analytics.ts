@@ -1,18 +1,28 @@
 import $ from 'jquery';
-import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { locationService } from '@grafana/runtime';
 
 export class Analytics {
-  /** @ngInject */
-  constructor(private $rootScope: GrafanaRootScope, private $location: any) {}
+  private gaId?: string;
+  private ga?: any;
 
-  gaInit() {
+  constructor() {
+    this.track = this.track.bind(this);
+    this.gaId = (config as any).googleAnalyticsId;
+    this.init();
+  }
+
+  init() {
+    if (!this.gaId) {
+      return;
+    }
+
     $.ajax({
       url: 'https://www.google-analytics.com/analytics.js',
       dataType: 'script',
       cache: true,
     });
+
     const ga = ((window as any).ga =
       (window as any).ga ||
       // this had the equivalent of `eslint-disable-next-line prefer-arrow/prefer-arrow-functions`
@@ -22,24 +32,21 @@ export class Analytics {
     ga.l = +new Date();
     ga('create', (config as any).googleAnalyticsId, 'auto');
     ga('set', 'anonymizeIp', true);
+    this.ga = ga;
     return ga;
   }
 
-  init() {
-    this.$rootScope.$on('$viewContentLoaded', () => {
-      const track = { page: `${config.appSubUrl ?? ''}${this.$location.url()}` };
-      const ga = (window as any).ga || this.gaInit();
-      ga('set', track);
-      ga('send', 'pageview');
-    });
+  track() {
+    if (!this.ga) {
+      return;
+    }
+
+    const location = locationService.getLocation();
+    const track = { page: `${config.appSubUrl ?? ''}${location.pathname}${location.search}${location.hash}` };
+
+    this.ga('set', track);
+    this.ga('send', 'pageview');
   }
 }
 
-/** @ngInject */
-function startAnalytics(googleAnalyticsSrv: Analytics) {
-  if ((config as any).googleAnalyticsId) {
-    googleAnalyticsSrv.init();
-  }
-}
-
-coreModule.service('googleAnalyticsSrv', Analytics).run(startAnalytics);
+export const analyticsService = new Analytics();

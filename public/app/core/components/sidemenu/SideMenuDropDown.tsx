@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import _ from 'lodash';
 import DropDownChild from './DropDownChild';
 import { NavModelItem } from '@grafana/data';
+import { Link } from '@grafana/ui';
 
 interface Props {
   link: NavModelItem;
@@ -15,13 +16,20 @@ const SideMenuDropDown: FC<Props> = (props) => {
     childrenLinks = _.filter(link.children, (item) => !item.hideFromMenu);
   }
 
+  const linkContent = <span className="sidemenu-item-text">{link.text}</span>;
+  const anchor = link.url ? (
+    <Link href={link.url} onClick={onHeaderClick} className="side-menu-header-link">
+      {linkContent}
+    </Link>
+  ) : (
+    <a onClick={onHeaderClick} className="side-menu-header-link">
+      {linkContent}
+    </a>
+  );
+
   return (
     <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">
-      <li className="side-menu-header">
-        <a className="side-menu-header-link" href={link.url} onClick={onHeaderClick}>
-          <span className="sidemenu-item-text">{link.text}</span>
-        </a>
-      </li>
+      <li className="side-menu-header">{anchor}</li>
       {childrenLinks.map((child, index) => {
         return <DropDownChild child={child} key={`${child.url}-${index}`} />;
       })}

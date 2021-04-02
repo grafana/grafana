@@ -1,9 +1,9 @@
 import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, DataSourcePicker } from '@grafana/runtime';
 import { DataSourceInstanceSettings, LoadingState, SelectableValue } from '@grafana/data';
 
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
@@ -23,7 +23,6 @@ import { VariableTextField } from '../editor/VariableTextField';
 import { VariableSwitchField } from '../editor/VariableSwitchField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 

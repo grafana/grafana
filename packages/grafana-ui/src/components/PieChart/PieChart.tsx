@@ -1,17 +1,19 @@
-import React, { FC } from 'react';
-import { DisplayValue, FALLBACK_COLOR, formattedValueToString, GrafanaTheme } from '@grafana/data';
+import React, { FC, ReactNode } from 'react';
+import { DisplayValue, FALLBACK_COLOR, FieldDisplay, formattedValueToString, GrafanaTheme } from '@grafana/data';
 import { useStyles, useTheme } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
-import Pie, { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
+import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
 import { Group } from '@visx/group';
 import { RadialGradient } from '@visx/gradient';
 import { localPoint } from '@visx/event';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { VizLegend, VizLegendItem } from '..';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
+import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
+import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
 
 export enum PieChartLabels {
   Name = 'name',
@@ -27,10 +29,11 @@ export enum PieChartLegendValues {
 interface SvgProps {
   height: number;
   width: number;
-  values: DisplayValue[];
+  fieldDisplayValues: FieldDisplay[];
   pieType: PieChartType;
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
+  onSeriesColorChange?: (label: string, color: string) => void;
 }
 export interface Props extends SvgProps {
   legendOptions?: PieChartLegendOptions;
@@ -52,20 +55,29 @@ const defaultLegendOptions: PieChartLegendOptions = {
   values: [PieChartLegendValues.Percent],
 };
 
-export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptions, width, height, ...restProps }) => {
-  const getLegend = (values: DisplayValue[], legendOptions: PieChartLegendOptions) => {
+export const PieChart: FC<Props> = ({
+  fieldDisplayValues,
+  legendOptions = defaultLegendOptions,
+  onSeriesColorChange,
+  width,
+  height,
+  ...restProps
+}) => {
+  const getLegend = (fields: FieldDisplay[], legendOptions: PieChartLegendOptions) => {
     if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
       return undefined;
     }
+    const values = fields.map((v) => v.display);
     const total = values.reduce((acc, item) => item.numeric + acc, 0);
 
-    const legendItems = values.map<VizLegendItem>((value) => {
+    const legendItems = values.map<VizLegendItem>((value, idx) => {
       return {
         label: value.title ?? '',
         color: value.color ?? FALLBACK_COLOR,
         yAxis: 1,
+        getItemKey: () => (value.title ?? '') + idx,
         getDisplayValues: () => {
-          const valuesToShow = legendOptions.values;
+          const valuesToShow = legendOptions.values ?? [];
           let displayValues = [];
 
           if (valuesToShow.includes(PieChartLegendValues.Value)) {
@@ -90,21 +102,28 @@ export const PieChart: FC<Props> = ({ values, legendOptions = defaultLegendOptio
     });
 
     return (
-      <VizLegend items={legendItems} placement={legendOptions.placement} displayMode={legendOptions.displayMode} />
+      <VizLegend
+        items={legendItems}
+        onSeriesColorChange={onSeriesColorChange}
+        placement={legendOptions.placement}
+        displayMode={legendOptions.displayMode}
+      />
     );
   };
 
   return (
-    <VizLayout width={width} height={height} legend={getLegend(values, legendOptions)}>
+    <VizLayout width={width} height={height} legend={getLegend(fieldDisplayValues, legendOptions)}>
       {(vizWidth: number, vizHeight: number) => {
-        return <PieChartSvg width={vizWidth} height={vizHeight} values={values} {...restProps} />;
+        return (
+          <PieChartSvg width={vizWidth} height={vizHeight} fieldDisplayValues={fieldDisplayValues} {...restProps} />
+        );
       }}
     </VizLayout>
   );
 };
 
 export const PieChartSvg: FC<SvgProps> = ({
-  values,
+  fieldDisplayValues,
   pieType,
   width,
   height,
@@ -114,44 +133,37 @@ export const PieChartSvg: FC<SvgProps> = ({
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
   const styles = useStyles(getStyles);
-  const { tooltipData, tooltipLeft, tooltipTop, tooltipOpen, showTooltip, hideTooltip } = useTooltip<DisplayValue>();
+  const tooltip = useTooltip<DisplayValue>();
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
     detectBounds: true,
     scroll: true,
   });
 
-  if (values.length < 0) {
+  if (fieldDisplayValues.length < 0) {
     return <div>No data</div>;
   }
 
-  const getValue = (d: DisplayValue) => d.numeric;
+  const getValue = (d: FieldDisplay) => d.display.numeric;
   const getGradientId = (color: string) => `${componentInstanceId}-${color}`;
   const getGradientColor = (color: string) => {
     return `url(#${getGradientId(color)})`;
   };
 
-  const onMouseMoveOverArc = (event: any, datum: any) => {
-    const coords = localPoint(event.target.ownerSVGElement, event);
-    showTooltip({
-      tooltipLeft: coords!.x,
-      tooltipTop: coords!.y,
-      tooltipData: datum,
-    });
-  };
-
   const showLabel = displayLabels.length > 0;
-  const total = values.reduce((acc, item) => item.numeric + acc, 0);
+  const total = fieldDisplayValues.reduce((acc, item) => item.display.numeric + acc, 0);
   const layout = getPieLayout(width, height, pieType);
+  const colors = [
+    ...new Set(fieldDisplayValues.map((fieldDisplayValue) => fieldDisplayValue.display.color ?? FALLBACK_COLOR)),
+  ];
 
   return (
     <div className={styles.container}>
       <svg width={layout.size} height={layout.size} ref={containerRef}>
         <Group top={layout.position} left={layout.position}>
-          {values.map((value) => {
-            const color = value.color ?? FALLBACK_COLOR;
+          {colors.map((color) => {
             return (
               <RadialGradient
-                key={value.color}
+                key={color}
                 id={getGradientId(color)}
                 from={getGradientColorFrom(color, theme)}
                 to={getGradientColorTo(color, theme)}
@@ -165,7 +177,7 @@ export const PieChartSvg: FC<SvgProps> = ({
             );
           })}
           <Pie
-            data={values}
+            data={fieldDisplayValues}
             pieValue={getValue}
             outerRadius={layout.outerRadius}
             innerRadius={layout.innerRadius}
@@ -174,47 +186,95 @@ export const PieChartSvg: FC<SvgProps> = ({
           >
             {(pie) => {
               return pie.arcs.map((arc) => {
-                return (
-                  <g
-                    key={arc.data.title}
-                    className={styles.svgArg}
-                    onMouseMove={(event) => onMouseMoveOverArc(event, arc.data)}
-                    onMouseOut={hideTooltip}
-                  >
-                    <path
-                      d={pie.path({ ...arc })!}
-                      fill={useGradients ? getGradientColor(arc.data.color ?? FALLBACK_COLOR) : arc.data.color}
-                      stroke={theme.colors.panelBg}
-                      strokeWidth={1}
-                    />
-                    {showLabel && (
-                      <PieLabel
-                        arc={arc}
-                        outerRadius={layout.outerRadius}
-                        innerRadius={layout.innerRadius}
-                        displayLabels={displayLabels}
-                        total={total}
-                        color={theme.colors.text}
-                      />
-                    )}
-                  </g>
-                );
+                const color = arc.data.display.color ?? FALLBACK_COLOR;
+                const label = showLabel ? (
+                  <PieLabel
+                    arc={arc}
+                    outerRadius={layout.outerRadius}
+                    innerRadius={layout.innerRadius}
+                    displayLabels={displayLabels}
+                    total={total}
+                    color={theme.colors.text}
+                  />
+                ) : undefined;
+                if (arc.data.hasLinks && arc.data.getLinks) {
+                  return (
+                    <DataLinksContextMenu config={arc.data.field} key={arc.index} links={arc.data.getLinks}>
+                      {(api) => (
+                        <PieSlice
+                          tooltip={tooltip}
+                          arc={arc}
+                          pie={pie}
+                          fill={getGradientColor(color)}
+                          openMenu={api.openMenu}
+                        >
+                          {label}
+                        </PieSlice>
+                      )}
+                    </DataLinksContextMenu>
+                  );
+                } else {
+                  return (
+                    <PieSlice key={arc.index} tooltip={tooltip} arc={arc} pie={pie} fill={getGradientColor(color)}>
+                      {label}
+                    </PieSlice>
+                  );
+                }
               });
             }}
           </Pie>
         </Group>
       </svg>
-      {tooltipOpen && (
-        <TooltipInPortal key={Math.random()} top={tooltipTop} left={tooltipLeft}>
-          {tooltipData!.title} {formattedValueToString(tooltipData!)}
+      {tooltip.tooltipOpen && (
+        <TooltipInPortal
+          key={Math.random()}
+          top={tooltip.tooltipTop}
+          className={styles.tooltipPortal}
+          left={tooltip.tooltipLeft}
+        >
+          {tooltip.tooltipData!.title} {formattedValueToString(tooltip.tooltipData!)}
         </TooltipInPortal>
       )}
     </div>
   );
 };
 
+const PieSlice: FC<{
+  children: ReactNode;
+  arc: PieArcDatum<FieldDisplay>;
+  pie: ProvidedProps<FieldDisplay>;
+  fill: string;
+  tooltip: UseTooltipParams<DisplayValue>;
+  openMenu?: (event: React.MouseEvent<SVGElement>) => void;
+}> = ({ arc, children, pie, openMenu, fill, tooltip }) => {
+  const theme = useTheme();
+  const styles = useStyles(getStyles);
+
+  const onMouseMoveOverArc = (event: any, datum: any) => {
+    const coords = localPoint(event.target.ownerSVGElement, event);
+    tooltip.showTooltip({
+      tooltipLeft: coords!.x,
+      tooltipTop: coords!.y,
+      tooltipData: datum,
+    });
+  };
+
+  return (
+    <g
+      key={arc.data.display.title}
+      className={styles.svgArg}
+      onMouseMove={(event) => onMouseMoveOverArc(event, arc.data.display)}
+      onMouseOut={tooltip.hideTooltip}
+      onClick={openMenu}
+    >
+      <path d={pie.path({ ...arc })!} fill={fill} stroke={theme.colors.panelBg} strokeWidth={1} />
+      {children}
+    </g>
+  );
+};
+
 const PieLabel: FC<{
-  arc: PieArcDatum<DisplayValue>;
+  arc: PieArcDatum<FieldDisplay>;
   outerRadius: number;
   innerRadius: number;
   displayLabels: PieChartLabels[];
@@ -246,17 +306,17 @@ const PieLabel: FC<{
       >
         {displayLabels.includes(PieChartLabels.Name) && (
           <tspan x={labelX} dy="1.2em">
-            {arc.data.title}
+            {arc.data.display.title}
           </tspan>
         )}
         {displayLabels.includes(PieChartLabels.Value) && (
           <tspan x={labelX} dy="1.2em">
-            {formattedValueToString(arc.data)}
+            {formattedValueToString(arc.data.display)}
           </tspan>
         )}
         {displayLabels.includes(PieChartLabels.Percent) && (
           <tspan x={labelX} dy="1.2em">
-            {((arc.data.numeric / total) * 100).toFixed(0) + '%'}
+            {((arc.data.display.numeric / total) * 100).toFixed(0) + '%'}
           </tspan>
         )}
       </text>
@@ -264,7 +324,7 @@ const PieLabel: FC<{
   );
 };
 
-function getLabelPos(arc: PieArcDatum<DisplayValue>, outerRadius: number, innerRadius: number) {
+function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerRadius: number) {
   const r = (outerRadius + innerRadius) / 2;
   const a = (+arc.startAngle + +arc.endAngle) / 2 - Math.PI / 2;
   return [Math.cos(a) * r, Math.sin(a) * r];
@@ -323,6 +383,9 @@ const getStyles = (theme: GrafanaTheme) => {
       &:hover {
         transform: scale3d(1.03, 1.03, 1);
       }
+    `,
+    tooltipPortal: css`
+      z-index: 1050;
     `,
   };
 };
