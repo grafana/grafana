@@ -245,6 +245,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   targetTextChanged() {
     this.updateModelTarget();
+    this.parseTarget();
     this.refresh();
   }
 

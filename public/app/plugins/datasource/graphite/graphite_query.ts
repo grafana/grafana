@@ -34,10 +34,7 @@ export default class GraphiteQuery {
     this.tags = [];
     this.seriesByTagUsed = false;
     this.error = null;
-
-    if (this.target.textEditor) {
-      return;
-    }
+    this.target.syntaxError = null;
 
     const parser = new Parser(this.target.target);
     const astNode = parser.getAst();
@@ -48,7 +45,12 @@ export default class GraphiteQuery {
 
     if (astNode.type === 'error') {
       this.error = astNode.message + ' at position: ' + astNode.pos;
+      this.target.syntaxError = astNode.message + ' at position: ' + astNode.pos;
       this.target.textEditor = true;
+    }
+
+    if (this.target.textEditor) {
+      return;
     }
 
     try {
