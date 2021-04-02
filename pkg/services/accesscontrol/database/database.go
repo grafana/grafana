@@ -599,8 +599,8 @@ func getRoleById(sess *sqlstore.DBSession, roleId int64, orgId int64) (*accessco
 }
 
 func getRoleByUID(sess *sqlstore.DBSession, uid string, orgId int64) (*accesscontrol.RoleDTO, error) {
-	role := accesscontrol.Role{OrgID: orgId, UID: uid}
-	has, err := sess.Get(&role)
+	role := accesscontrol.Role{}
+	has, err := sess.Where("uid=? AND org_id=?", uid, orgId).Get(&role)
 	if !has {
 		return nil, accesscontrol.ErrRoleNotFound
 	}
