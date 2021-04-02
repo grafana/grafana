@@ -45,8 +45,10 @@ export const dataSourceVariableSlice = createSlice({
           continue;
         }
 
-        if (source.isDefault && regex?.exec('default')) {
-          options.push({ text: 'default', value: 'default', selected: false });
+        if (source.isDefault) {
+          if ((regex === undefined) || (regex && regex.exec('default'))) {
+            options.push({ text: 'default', value: 'default', selected: false });
+          }
         }
 
         if (regex && !regex.exec(source.name)) {

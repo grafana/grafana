@@ -66,8 +66,8 @@ describe('dataSourceVariableReducer', () => {
           ['0']: ({
             ...initialState['0'],
             options: [
-              { text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false },
               { text: 'default', value: 'default', selected: false },
+              { text: 'pretty cool plugin-1', value: 'pretty cool plugin-1', selected: false },
             ],
           } as unknown) as DataSourceVariableModel,
         });
