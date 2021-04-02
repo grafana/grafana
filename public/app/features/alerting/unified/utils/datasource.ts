@@ -18,6 +18,12 @@ export function getRulesDataSources() {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+export function getAlertManagerDataSources() {
+  return getAllDataSources()
+    .filter((ds) => ds.type === DataSourceType.Alertmanager)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export function getLotexDataSourceByName(dataSourceName: string): DataSourceInstanceSettings {
   const dataSource = getDataSourceByName(dataSourceName);
   if (!dataSource) {
@@ -30,7 +36,7 @@ export function getLotexDataSourceByName(dataSourceName: string): DataSourceInst
 }
 
 export function isCloudRulesSource(rulesSource: RulesSource): rulesSource is DataSourceInstanceSettings {
-  return rulesSource !== 'grafana';
+  return rulesSource !== GRAFANA_RULES_SOURCE_NAME;
 }
 
 export function getDataSourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
@@ -38,8 +44,8 @@ export function getDataSourceByName(name: string): DataSourceInstanceSettings<Da
 }
 
 export function getDatasourceAPIId(dataSourceName: string): string {
-  if (dataSourceName === 'grafana') {
-    return 'grafana';
+  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return GRAFANA_RULES_SOURCE_NAME;
   }
   const ds = getDataSourceByName(dataSourceName);
   if (!ds) {
