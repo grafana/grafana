@@ -116,9 +116,11 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		rawFor := jsonAlert.Get("for").MustString()
 		var forValue time.Duration
 		if rawFor != "" {
-			unit := unitFormatRegex.FindAllString(rawFor, 1)[0]
-			if _, ok := unitMultiplier[unit]; !ok {
-				return nil, ValidationError{Reason: ErrWrongUnitFormat.Error()}
+			if rawFor != "0" {
+				unit := unitFormatRegex.FindAllString(rawFor, 1)[0]
+				if _, ok := unitMultiplier[unit]; !ok {
+					return nil, ValidationError{Reason: ErrWrongUnitFormat.Error()}
+				}
 			}
 			forValue, err = time.ParseDuration(rawFor)
 			if err != nil {
