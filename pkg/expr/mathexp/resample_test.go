@@ -78,6 +78,34 @@ func TestResampleSeries(t *testing.T) {
 			}),
 		},
 		{
+			name:        "resample series: downsampling (mean / pad) (no-nullable)",
+			interval:    time.Second * 5,
+			downsampler: "mean",
+			upsampler:   "pad",
+			timeRange: backend.TimeRange{
+				From: time.Unix(0, 0),
+				To:   time.Unix(16, 0),
+			},
+			seriesToResample: makeNoNullSeries("", nil, noNullTP{
+				time.Unix(2, 0), 2,
+			}, noNullTP{
+				time.Unix(4, 0), 3,
+			}, noNullTP{
+				time.Unix(7, 0), 1,
+			}, noNullTP{
+				time.Unix(9, 0), 2,
+			}),
+			series: makeSeriesNullableTime("", nil, nullTimeTP{
+				unixTimePointer(0, 0), nil,
+			}, nullTimeTP{
+				unixTimePointer(5, 0), float64Pointer(2.5),
+			}, nullTimeTP{
+				unixTimePointer(10, 0), float64Pointer(1.5),
+			}, nullTimeTP{
+				unixTimePointer(15, 0), float64Pointer(2),
+			}),
+		},
+		{
 			name:        "resample series: downsampling (max / fillna)",
 			interval:    time.Second * 5,
 			downsampler: "max",

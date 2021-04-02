@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
@@ -46,7 +46,7 @@ const UserListAdminPageUnConnected: React.FC<Props> = (props) => {
               <Input
                 width={40}
                 type="text"
-                placeholder="Search user by login, email or name"
+                placeholder="Search user by login, email, or name."
                 tabIndex={1}
                 autoFocus={true}
                 value={query}

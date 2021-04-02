@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { mount } from 'enzyme';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 
 import TimelineViewingLayer, { getStyles } from './TimelineViewingLayer';
 

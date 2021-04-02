@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, LogLevel } from '@grafana/data';
 import { styleMixins, stylesFactory } from '../../themes';
 

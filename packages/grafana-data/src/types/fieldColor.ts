@@ -13,7 +13,7 @@ export enum FieldColorModeId {
  */
 export interface FieldColor {
   /** The main color scheme mode */
-  mode: FieldColorModeId;
+  mode: FieldColorModeId | string;
   /** Stores the fixed color value if mode is fixed */
   fixedColor?: string;
   /** Some visualizations need to know how to assign a series color from by value color schemes */

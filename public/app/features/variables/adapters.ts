@@ -4,7 +4,6 @@ import { Registry, UrlQueryValue, VariableType } from '@grafana/data';
 
 import { VariableModel, VariableOption } from './types';
 import { VariableEditorProps } from './editor/types';
-import { VariablesState } from './state/variablesReducer';
 import { VariablePickerProps } from './pickers/types';
 import { createQueryVariableAdapter } from './query/adapter';
 import { createCustomVariableAdapter } from './custom/adapter';
@@ -14,6 +13,7 @@ import { createDataSourceVariableAdapter } from './datasource/adapter';
 import { createIntervalVariableAdapter } from './interval/adapter';
 import { createAdHocVariableAdapter } from './adhoc/adapter';
 import { createSystemVariableAdapter } from './system/adapter';
+import { VariablesState } from './state/types';
 
 export interface VariableAdapter<Model extends VariableModel> {
   id: VariableType;

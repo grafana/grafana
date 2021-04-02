@@ -18,6 +18,7 @@ Provider | Support | Role mapping | Team sync<br> *(Enterprise only)* | Active s
 [GitHub OAuth]({{< relref "github.md" >}})         | v2.0+ | - | v6.3+ | -
 [GitLab OAuth]({{< relref "gitlab.md" >}})         | v5.3+ | - | v6.4+ | -
 [Google OAuth]({{< relref "google.md" >}})         | v2.0+ | - | - | -
+[JWT]({{< relref "jwt.md" >}})                     | v8.0+ | - | - | -
 [LDAP]({{< relref "ldap.md" >}})                   | v2.1+ | v2.1+ | v5.3+ | v6.3+
 [Okta OAuth]({{< relref "okta.md" >}})             | v7.0+ | v7.0+ | v7.0+ | -
 [SAML]({{< relref "../enterprise/saml.md" >}}) (Enterprise only)    | v6.3+ | v7.0+ | v7.0+ | -
@@ -122,7 +123,7 @@ oauth_auto_login = true
 
 ### Hide sign-out menu
 
-Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy.
+Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy or JWT authentication.
 
 ```bash
 [auth]

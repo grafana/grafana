@@ -45,7 +45,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
     { label: 'OK', value: 'ok' },
     { label: 'Not OK', value: 'not_ok' },
     { label: 'Alerting', value: 'alerting' },
-    { label: 'No Data', value: 'no_data' },
+    { label: 'No data', value: 'no_data' },
     { label: 'Paused', value: 'paused' },
     { label: 'Pending', value: 'pending' },
   ];

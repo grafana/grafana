@@ -2,10 +2,14 @@ package notifier
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
-	"sort"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
+	"github.com/grafana/grafana/pkg/models"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/alerting-api/pkg/api"
@@ -14,16 +18,14 @@ import (
 	"github.com/prometheus/alertmanager/nflog"
 	"github.com/prometheus/alertmanager/nflog/nflogpb"
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/silence"
-	"github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -33,6 +35,8 @@ import (
 
 const (
 	workingDir = "alerting"
+	// How long should we keep silences and notification entries on-disk after they've served their purpose.
+	retentionNotificationsAndSilences = 5 * 24 * time.Hour
 )
 
 type Alertmanager struct {
@@ -51,7 +55,8 @@ type Alertmanager struct {
 	dispatcher   *dispatch.Dispatcher
 	dispatcherWG sync.WaitGroup
 
-	stageMetrics *notify.Metrics
+	stageMetrics      *notify.Metrics
+	dispatcherMetrics *dispatch.DispatcherMetrics
 
 	reloadConfigMtx sync.Mutex
 }
@@ -61,7 +66,10 @@ func init() {
 }
 
 func (am *Alertmanager) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts
+	if am.Settings == nil {
+		return true
+	}
+	return !am.Settings.IsNgAlertEnabled()
 }
 
 func (am *Alertmanager) Init() (err error) {
@@ -69,18 +77,19 @@ func (am *Alertmanager) Init() (err error) {
 	r := prometheus.NewRegistry()
 	am.marker = types.NewMarker(r)
 	am.stageMetrics = notify.NewMetrics(r)
+	am.dispatcherMetrics = dispatch.NewDispatcherMetrics(r)
 	am.Store = store.DBstore{SQLStore: am.SQLStore}
 
 	am.notificationLog, err = nflog.New(
-		nflog.WithRetention(time.Hour*24),                         //TODO: This is a setting.
-		nflog.WithSnapshot(filepath.Join("dir", "notifications")), //TODO: This should be a setting
+		nflog.WithRetention(retentionNotificationsAndSilences),
+		nflog.WithSnapshot(filepath.Join(am.WorkingDirPath(), "notifications")),
 	)
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize the notification log component of alerting")
 	}
 	am.silences, err = silence.New(silence.Options{
-		SnapshotFile: filepath.Join("dir", "silences"), //TODO: This is a setting
-		Retention:    time.Hour * 24,                   //TODO: This is also a setting
+		SnapshotFile: filepath.Join(am.WorkingDirPath(), "silences"),
+		Retention:    retentionNotificationsAndSilences,
 	})
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize the silencing component of alerting")
@@ -145,7 +154,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 
 func (am *Alertmanager) getConfigFromDatabase() (*api.PostableUserConfig, error) {
 	// First, let's get the configuration we need from the database.
-	q := &models.GetLatestAlertmanagerConfigurationQuery{}
+	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{}
 	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
 		return nil, err
 	}
@@ -196,8 +205,7 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	am.StopAndWait()
 	//TODO: Verify this is correct
 	route := dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
-	//TODO: This needs the metrics
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), nil)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), am.dispatcherMetrics)
 
 	am.dispatcherWG.Add(1)
 	go func() {
@@ -233,7 +241,22 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiRecei
 	for i, r := range receiver.GrafanaManagedReceivers {
 		switch r.Type {
 		case "email":
-			n, err := channels.NewEmailNotifier(r.Result)
+			frequency, err := time.ParseDuration(r.Frequency)
+			if err != nil {
+				return nil, fmt.Errorf("unable to parse receiver frequency %s, %w", r.Frequency, err)
+			}
+			notification := models.AlertNotification{
+				Uid:                   r.Uid,
+				Name:                  r.Name,
+				Type:                  r.Type,
+				IsDefault:             r.IsDefault,
+				SendReminder:          r.SendReminder,
+				DisableResolveMessage: r.DisableResolveMessage,
+				Frequency:             frequency,
+				Settings:              r.Settings,
+				SecureSettings:        securejsondata.GetEncryptedJsonData(r.SecureSettings),
+			}
+			n, err := channels.NewEmailNotifier(&notification)
 			if err != nil {
 				return nil, err
 			}
@@ -245,70 +268,10 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiRecei
 	return integrations, nil
 }
 
-// CreateAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
-func (am *Alertmanager) CreateAlerts(alerts ...*PostableAlert) error {
+// PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
+func (am *Alertmanager) PutAlerts(alerts ...*PostableAlert) error {
 	return am.alerts.PutPostableAlert(alerts...)
 }
-
-func (am *Alertmanager) ListSilences(matchers []*labels.Matcher) ([]types.Silence, error) {
-	pbsilences, _, err := am.silences.Query()
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to query for the list of silences")
-	}
-	r := []types.Silence{}
-	for _, pbs := range pbsilences {
-		s, err := silenceFromProto(pbs)
-		if err != nil {
-			return nil, errors.Wrap(err, "unable to marshal silence")
-		}
-
-		sms := make(map[string]string)
-		for _, m := range s.Matchers {
-			sms[m.Name] = m.Value
-		}
-
-		if !matchFilterLabels(matchers, sms) {
-			continue
-		}
-
-		r = append(r, *s)
-	}
-
-	var active, pending, expired []types.Silence
-	for _, s := range r {
-		switch s.Status.State {
-		case types.SilenceStateActive:
-			active = append(active, s)
-		case types.SilenceStatePending:
-			pending = append(pending, s)
-		case types.SilenceStateExpired:
-			expired = append(expired, s)
-		}
-	}
-
-	sort.Slice(active, func(i int, j int) bool {
-		return active[i].EndsAt.Before(active[j].EndsAt)
-	})
-	sort.Slice(pending, func(i int, j int) bool {
-		return pending[i].EndsAt.Before(pending[j].EndsAt)
-	})
-	sort.Slice(expired, func(i int, j int) bool {
-		return expired[i].EndsAt.After(expired[j].EndsAt)
-	})
-
-	// Initialize silences explicitly to an empty list (instead of nil)
-	// So that it does not get converted to "null" in JSON.
-	silences := []types.Silence{}
-	silences = append(silences, active...)
-	silences = append(silences, pending...)
-	silences = append(silences, expired...)
-
-	return silences, nil
-}
-
-func (am *Alertmanager) GetSilence(silence *types.Silence)    {}
-func (am *Alertmanager) CreateSilence(silence *types.Silence) {}
-func (am *Alertmanager) DeleteSilence(silence *types.Silence) {}
 
 // createReceiverStage creates a pipeline of stages for a receiver.
 func (am *Alertmanager) createReceiverStage(name string, integrations []notify.Integration, wait func() time.Duration, notificationLog notify.NotificationLog) notify.Stage {
@@ -341,64 +304,4 @@ func timeoutFunc(d time.Duration) time.Duration {
 		d = notify.MinTimeout
 	}
 	return d + waitFunc()
-}
-
-// copied from the Alertmanager
-func silenceFromProto(s *silencepb.Silence) (*types.Silence, error) {
-	sil := &types.Silence{
-		ID:        s.Id,
-		StartsAt:  s.StartsAt,
-		EndsAt:    s.EndsAt,
-		UpdatedAt: s.UpdatedAt,
-		Status: types.SilenceStatus{
-			State: types.CalcSilenceState(s.StartsAt, s.EndsAt),
-		},
-		Comment:   s.Comment,
-		CreatedBy: s.CreatedBy,
-	}
-	for _, m := range s.Matchers {
-		var t labels.MatchType
-		switch m.Type {
-		case silencepb.Matcher_EQUAL:
-			t = labels.MatchEqual
-		case silencepb.Matcher_REGEXP:
-			t = labels.MatchRegexp
-		case silencepb.Matcher_NOT_EQUAL:
-			t = labels.MatchNotEqual
-		case silencepb.Matcher_NOT_REGEXP:
-			t = labels.MatchNotRegexp
-		}
-		matcher, err := labels.NewMatcher(t, m.Name, m.Pattern)
-		if err != nil {
-			return nil, err
-		}
-
-		sil.Matchers = append(sil.Matchers, matcher)
-	}
-
-	return sil, nil
-}
-
-func matchFilterLabels(matchers []*labels.Matcher, sms map[string]string) bool {
-	for _, m := range matchers {
-		v, prs := sms[m.Name]
-		switch m.Type {
-		case labels.MatchNotRegexp, labels.MatchNotEqual:
-			if m.Value == "" && prs {
-				continue
-			}
-			if !m.Matches(v) {
-				return false
-			}
-		default:
-			if m.Value == "" && !prs {
-				continue
-			}
-			if !m.Matches(v) {
-				return false
-			}
-		}
-	}
-
-	return true
 }
