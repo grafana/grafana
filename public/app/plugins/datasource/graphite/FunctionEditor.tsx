@@ -69,7 +69,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
                   style={{ cursor: 'pointer' }}
                 >
                   {this.props.func.def.unknown && (
-                    <Tooltip content="The function may not supported in this version of Graphite." placement="bottom">
+                    <Tooltip content="This function is not on the list of supported functions." placement="bottom">
                       <Icon name="exclamation-triangle" size="xs" />
                     </Tooltip>
                   )}
