@@ -87,7 +87,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Connected;
         delete this.currentStatus.error;
-        this.sendStatus();
+        this.sendStatus(ctx.data);
       },
       unsubscribe: (ctx: UnsubscribeContext) => {
         this.currentStatus.timestamp = Date.now();
