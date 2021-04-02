@@ -62,7 +62,7 @@ describe('MetricsResolution::', () => {
 
   it('Changes input values when changing resolution', () => {
     const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
-    let radio = root.find(dataQa('resolutions-radio-button')).at(2)
+    let radio = root.find(dataQa('resolutions-radio-button')).at(2);
 
     radio.simulate('click');
 

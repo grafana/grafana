@@ -1,7 +1,7 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import { DBaaS } from './DBaaS';
-import {useSelector} from "react-redux";
+import { useSelector } from 'react-redux';
 
 jest.mock('app/core/app_events');
 jest.mock('./components/Kubernetes/Kubernetes.hooks');
@@ -22,7 +22,7 @@ describe('DBaaS::', () => {
       return callback({ location: { routeParams: { tab: 'alerts' }, path: '/integrated-alerting/alerts' } });
     });
   });
-  
+
   it('renders tabs correctly', () => {
     const root = mount(<DBaaS />);
     const tabs = root.find('ul');

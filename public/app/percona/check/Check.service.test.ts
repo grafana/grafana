@@ -5,7 +5,6 @@ import { activeCheckStub, alertsStub } from './__mocks__/stubs';
 
 jest.mock('axios');
 
-
 describe('CheckService::', () => {
   it('should properly convert Alerts to ActiveChecks', () => {
     const activeChecks = processData(alertsStub as Alert[]);

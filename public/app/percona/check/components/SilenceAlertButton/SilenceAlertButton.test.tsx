@@ -8,8 +8,6 @@ import { CheckService } from 'app/percona/check/Check.service';
 import { makeSilencePayload } from './SilenceAlertButton.utils';
 import { LoaderButton } from '@percona/platform-core';
 
-
-
 jest.mock('../../Check.service');
 
 jest.mock('./SilenceAlertButton.utils', () => ({

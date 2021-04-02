@@ -2,8 +2,7 @@ import React from 'react';
 import { act } from 'react-dom/test-utils';
 import { mount } from 'enzyme';
 import { SettingsPanel } from './Settings';
-import {useSelector} from "react-redux";
-
+import { useSelector } from 'react-redux';
 
 jest.mock('app/percona/shared/components/hooks/parameters.hook');
 jest.mock('react-redux', () => ({
@@ -23,7 +22,7 @@ describe('SettingsPanel::', () => {
       return callback({ location: { routeParams: { tab: 'alerts' }, path: '/integrated-alerting/alerts' } });
     });
   });
-  
+
   it('Renders correctly without rendering hidden tab', async () => {
     let root;
 

@@ -3,8 +3,6 @@ import { mount } from 'enzyme';
 import { PlatformLogin } from './PlatformLogin';
 import { LoggedIn } from './LoggedIn/LoggedIn';
 
-
-
 describe('Platform login::', () => {
   it('Should show a login form if an undefined email is passed', () => {
     const root = mount(<PlatformLogin getSettings={jest.fn()} userEmail={undefined} />);

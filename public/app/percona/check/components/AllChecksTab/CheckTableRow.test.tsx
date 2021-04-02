@@ -5,8 +5,6 @@ import { CheckTableRow } from './CheckTableRow';
 import { Messages } from './AllChecksTab.messages';
 import { LoaderButton } from '@percona/platform-core';
 
-
-
 const originalConsoleError = jest.fn();
 
 const runAllPromises = () => new Promise(setImmediate);

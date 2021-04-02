@@ -1,7 +1,5 @@
 import { toExternalServicePayload, toPayload } from './AddRemoteInstance.service';
 
-
-
 describe('AddRemoteInstanceService:: ', () => {
   it('should properly convert remote external service form to a payload', () => {
     const data = {

@@ -1,7 +1,5 @@
 import { getInstanceData } from './AddRemoteInstance.tools';
 
-
-
 describe('Get instance data:: ', () => {
   it('should return correct one when isRDS is false', () => {
     const instanceType = 'postgresql';

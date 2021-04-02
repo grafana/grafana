@@ -648,6 +648,13 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           SafeDynamicImport(import(/* webpackChunkName: "AddInstancePage" */ 'app/percona/add-instance/panel')),
       },
     })
+    .when('/settings', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "SettingsPage" */ 'app/percona/settings/Settings')),
+      },
+    })
     .when('/alerting/notification/new', {
       template: '<react-container />',
       resolve: {

@@ -4,8 +4,6 @@ import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { AGENTS_COLUMNS, NODES_COLUMNS, SERVICES_COLUMNS } from './Inventory.constants';
 import { InventoryDataService } from './Inventory.tools';
 
-
-
 // FIXME: types
 describe('Inventory tables', () => {
   it('Agents table renders correct with right data', () => {

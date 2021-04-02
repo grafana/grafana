@@ -6,8 +6,6 @@ import { TableDataAlertDetails } from 'app/percona/check/components/Table';
 import { SEVERITY } from 'app/percona/check/CheckPanel.constants';
 import { Messages } from '../../CheckPanel.messages';
 
-
-
 describe('TableDataAlertDetails::', () => {
   it('should correctly render the severity level', () => {
     const detailsItem = activeCheckStub[0].details[0];

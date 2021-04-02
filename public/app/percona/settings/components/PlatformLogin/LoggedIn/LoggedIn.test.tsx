@@ -4,8 +4,6 @@ import { Button } from '@grafana/ui';
 import { LoggedIn } from './LoggedIn';
 import { PlatformLoginService } from '../PlatformLogin.service';
 
-
-
 describe('LoggedIn::', () => {
   it('Should show the passed email correctly', () => {
     const testEmail = 'test@email';
