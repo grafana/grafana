@@ -454,7 +454,7 @@ export interface DataQuery {
    */
   datasource?: string | null;
 
-  syntaxError: string;
+  syntaxError?: string;
 }
 
 export enum DataQueryErrorType {
