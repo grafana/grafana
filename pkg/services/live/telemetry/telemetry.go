@@ -117,8 +117,9 @@ func (t *Receiver) Handle(ctx *models.ReqContext) {
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		_, ok, _ := t.cache.Get(mf.Key())
 		_ = t.cache.Update(mf.Key(), frameSchema)
-		frameData, err := data.FrameToJSON(mf.Frame(), false, true)
+		frameData, err := data.FrameToJSON(mf.Frame(), !ok, true)
 		if err != nil {
 			logger.Error("Error marshaling Frame to JSON", "error", err)
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
