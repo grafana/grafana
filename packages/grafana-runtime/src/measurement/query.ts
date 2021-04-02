@@ -21,6 +21,9 @@ export interface LiveDataFilter {
   fields?: string[];
 }
 
+/**
+ * @alpha
+ */
 export interface LiveDataStreamOptions {
   key?: string;
   addr: LiveChannelAddress;
@@ -30,6 +33,8 @@ export interface LiveDataStreamOptions {
 
 /**
  * Continue executing requests as long as `getNextQuery` returns a query
+ *
+ * @alpha
  */
 export function getLiveDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse> {
   if (!isValidLiveChannelAddress(options.addr)) {
