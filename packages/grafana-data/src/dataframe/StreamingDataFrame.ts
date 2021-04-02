@@ -42,7 +42,7 @@ function circPush(data: number[][], newData: number[][], maxLength = Infinity, d
     sliceIdx = nlen - maxLength;
   }
 
-  if (maxDelta !== Infinity) {
+  if (maxDelta !== Infinity && deltaIdx >= 0) {
     const deltaLookup = data[deltaIdx];
 
     const low = deltaLookup[sliceIdx];

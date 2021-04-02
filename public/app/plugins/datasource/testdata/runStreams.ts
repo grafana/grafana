@@ -16,6 +16,7 @@ import {
 
 import { TestDataQuery, StreamingQuery } from './types';
 import { getRandomLine } from './LogIpsum';
+import { perf } from '@grafana/runtime/src/measurement/perf'; // not exported
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -68,6 +69,7 @@ export function runSignalStream(
 
     let value = Math.random() * 100;
     let timeoutId: any = null;
+    let lastSent = -1;
 
     const addNextRow = (time: number) => {
       value += (Math.random() - 0.5) * spread;
@@ -102,11 +104,17 @@ export function runSignalStream(
 
     const pushNextEvent = () => {
       addNextRow(Date.now());
-      subscriber.next({
-        data: [frame],
-        key: streamId,
-        state: LoadingState.Streaming,
-      });
+
+      const elapsed = perf.last - lastSent;
+      if (elapsed > 1000 || perf.ok) {
+        subscriber.next({
+          data: [frame],
+          key: streamId,
+          state: LoadingState.Streaming,
+        });
+        lastSent = perf.last;
+      }
+
       timeoutId = setTimeout(pushNextEvent, speed);
     };
 
