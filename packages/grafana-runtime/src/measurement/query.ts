@@ -16,6 +16,7 @@ import { getGrafanaLiveSrv } from '../services/live';
 
 import { Observable, of } from 'rxjs';
 import { toDataQueryError } from '../utils/queryResponse';
+import { perf } from './perf';
 
 export interface LiveDataFilter {
   fields?: string[];
@@ -49,6 +50,7 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
     let data: StreamingDataFrame | undefined = undefined;
     let state = LoadingState.Loading;
     const { key, filter } = options;
+    let last = perf.last;
 
     const process = (msg: DataFrameJSON) => {
       if (!data) {
@@ -67,7 +69,11 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
         };
       }
 
-      subscriber.next({ state, data: [filtered], key });
+      const elapsed = perf.last - last;
+      if (elapsed > 1000 || perf.ok) {
+        subscriber.next({ state, data: [filtered], key });
+        last = perf.last;
+      }
     };
 
     const sub = live
