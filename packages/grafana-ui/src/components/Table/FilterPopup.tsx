@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Field, GrafanaTheme, SelectableValue } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 import { TableStyles } from './styles';
 import { stylesFactory, useStyles } from '../../themes';

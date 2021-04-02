@@ -1,12 +1,20 @@
 import React, { PureComponent } from 'react';
 
-import { Select, Field, Form, Button, RadioButtonGroup, FieldSet, TimeZonePicker } from '@grafana/ui';
+import {
+  Select,
+  Field,
+  Form,
+  Button,
+  RadioButtonGroup,
+  FieldSet,
+  TimeZonePicker,
+} from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { config } from '@grafana/runtime';
+import { PreferencesService } from 'app/core/services/PreferencesService';
 
 export interface Props {
   resourceUri: string;
@@ -26,11 +34,12 @@ const themes: SelectableValue[] = [
 ];
 
 export class SharedPreferences extends PureComponent<Props, State> {
-  backendSrv = backendSrv;
+  service: PreferencesService;
 
   constructor(props: Props) {
     super(props);
 
+    this.service = new PreferencesService(props.resourceUri);
     this.state = {
       homeDashboardId: 0,
       theme: '',
@@ -40,7 +49,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const prefs = await backendSrv.get(`/api/${this.props.resourceUri}/preferences`);
+    const prefs = await this.service.load();
     const dashboards = await backendSrv.search({ starred: true });
     const defaultDashboardHit: DashboardSearchHit = {
       id: 0,
@@ -76,12 +85,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   onSubmitForm = async () => {
     const { homeDashboardId, theme, timezone } = this.state;
-
-    await backendSrv.put(`/api/${this.props.resourceUri}/preferences`, {
-      homeDashboardId,
-      theme,
-      timezone,
-    });
+    this.service.update({ homeDashboardId, theme, timezone });
     window.location.reload();
   };
 
@@ -109,7 +113,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   render() {
     const { theme, timezone, homeDashboardId, dashboards } = this.state;
-    const homePage = config.homePage;
 
     return (
       <Form onSubmit={this.onSubmitForm}>
@@ -125,12 +128,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
             <Field
               label={'Home Dashboard'}
-              description={
-                Boolean(homePage)
-                  ? 'The home page has been set by the administrator.'
-                  : 'Not finding dashboard you want? Star it first, then it should appear in this select box.'
-              }
-              disabled={Boolean(homePage)}
+              description='Not finding dashboard you want? Star it first, then it should appear in this select box.'
             >
               <Select
                 value={dashboards.find((dashboard) => dashboard.id === homeDashboardId)}

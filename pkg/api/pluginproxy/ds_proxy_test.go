@@ -69,6 +69,11 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 					Path:    "api/restricted",
 					ReqRole: models.ROLE_ADMIN,
 				},
+				{
+					Path: "api/body",
+					URL:  "http://www.test.com",
+					Body: []byte(`{ "url": "{{.JsonData.dynamicUrl}}", "secret": "{{.SecureJsonData.key}}"	}`),
+				},
 			},
 		}
 
@@ -134,6 +139,18 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 
 			assert.Equal(t, "http://localhost/asd", req.URL.String())
+		})
+
+		t.Run("When matching route path and has dynamic body", func(t *testing.T) {
+			ctx, req := setUp()
+			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "api/body", &setting.Cfg{})
+			require.NoError(t, err)
+			proxy.route = plugin.Routes[5]
+			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
+
+			content, err := ioutil.ReadAll(req.Body)
+			require.NoError(t, err)
+			require.Equal(t, `{ "url": "https://dynamic.grafana.com", "secret": "123"	}`, string(content))
 		})
 
 		t.Run("Validating request", func(t *testing.T) {
@@ -527,7 +544,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 	type setUpCfg struct {
 		headers map[string]string
-		writeCb func(w http.ResponseWriter)
+		writeCb func(w http.ResponseWriter, r *http.Request)
 	}
 
 	setUp := func(t *testing.T, cfgs ...setUpCfg) (*models.ReqContext, *models.DataSource) {
@@ -539,7 +556,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 			for _, cfg := range cfgs {
 				if cfg.writeCb != nil {
 					t.Log("Writing response via callback")
-					cfg.writeCb(w)
+					cfg.writeCb(w, r)
 					written = true
 				}
 			}
@@ -607,7 +624,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 
 	t.Run("Data source returns status code 401", func(t *testing.T) {
 		ctx, ds := setUp(t, setUpCfg{
-			writeCb: func(w http.ResponseWriter) {
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(401)
 				w.Header().Set("www-authenticate", `Basic realm="Access to the server"`)
 				_, err := w.Write([]byte("Not authenticated"))
@@ -623,6 +640,28 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		require.NoError(t, writeErr)
 		assert.Equal(t, 400, proxy.ctx.Resp.Status(), "Status code 401 should be converted to 400")
 		assert.Empty(t, proxy.ctx.Resp.Header().Get("www-authenticate"))
+	})
+
+	t.Run("Data source should handle proxy path url encoding correctly", func(t *testing.T) {
+		var req *http.Request
+		ctx, ds := setUp(t, setUpCfg{
+			writeCb: func(w http.ResponseWriter, r *http.Request) {
+				req = r
+				w.WriteHeader(200)
+				_, err := w.Write([]byte("OK"))
+				require.NoError(t, err)
+			},
+		})
+
+		ctx.Req.Request = httptest.NewRequest("GET", "/api/datasources/proxy/1/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", nil)
+		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/%2Ftest%2Ftest%2F", &setting.Cfg{})
+		require.NoError(t, err)
+
+		proxy.HandleRequest()
+
+		require.NoError(t, writeErr)
+		require.NotNil(t, req)
+		require.Equal(t, "/path/%2Ftest%2Ftest%2F?query=%2Ftest%2Ftest%2F", req.RequestURI)
 	})
 }
 

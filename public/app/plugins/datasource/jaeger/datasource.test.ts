@@ -1,78 +1,50 @@
+import { DataQueryRequest, DataSourceInstanceSettings, dateTime, FieldType, PluginType } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { of, throwError } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { JaegerDatasource, JaegerQuery } from './datasource';
 import {
-  DataQueryRequest,
-  DataSourceInstanceSettings,
-  FieldType,
-  PluginType,
-  dateTime,
-  ArrayVector,
-} from '@grafana/data';
-import { BackendSrv, BackendSrvRequest, getBackendSrv, setBackendSrv } from '@grafana/runtime';
-import { testResponse } from './testResponse';
+  testResponse,
+  testResponseDataFrameFields,
+  testResponseNodesFields,
+  testResponseEdgesFields,
+} from './testResponse';
+
+jest.mock('@grafana/runtime', () => ({
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('JaegerDatasource', () => {
-  it('returns trace when queried', async () => {
-    await withMockedBackendSrv(makeBackendSrvMock('12345'), async () => {
-      const ds = new JaegerDatasource(defaultSettings);
-      const response = await ds.query(defaultQuery).toPromise();
-      expect(response.data[0].fields).toMatchObject(
-        [
-          { name: 'traceID', values: ['3fa414edcef6ad90', '3fa414edcef6ad90'] },
-          { name: 'spanID', values: ['3fa414edcef6ad90', '0f5c1808567e4403'] },
-          { name: 'parentSpanID', values: [undefined, '3fa414edcef6ad90'] },
-          { name: 'operationName', values: ['HTTP GET - api_traces_traceid', '/tempopb.Querier/FindTraceByID'] },
-          { name: 'serviceName', values: ['tempo-querier', 'tempo-querier'] },
-          {
-            name: 'serviceTags',
-            values: [
-              [
-                { key: 'cluster', type: 'string', value: 'ops-tools1' },
-                { key: 'container', type: 'string', value: 'tempo-query' },
-              ],
-              [
-                { key: 'cluster', type: 'string', value: 'ops-tools1' },
-                { key: 'container', type: 'string', value: 'tempo-query' },
-              ],
-            ],
-          },
-          { name: 'startTime', values: [1605873894680.409, 1605873894680.587] },
-          { name: 'duration', values: [1049.141, 1.847] },
-          { name: 'logs', values: [[], []] },
-          {
-            name: 'tags',
-            values: [
-              [
-                { key: 'sampler.type', type: 'string', value: 'probabilistic' },
-                { key: 'sampler.param', type: 'float64', value: 1 },
-              ],
-              [
-                { key: 'component', type: 'string', value: 'gRPC' },
-                { key: 'span.kind', type: 'string', value: 'client' },
-              ],
-            ],
-          },
-          { name: 'warnings', values: [undefined, undefined] },
-          { name: 'stackTraces', values: [undefined, undefined] },
-        ].map((f) => ({ ...f, values: new ArrayVector<any>(f.values) }))
-      );
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns trace and graph when queried', async () => {
+    setupFetchMock({ data: [testResponse] });
+
+    const ds = new JaegerDatasource(defaultSettings);
+    const response = await ds.query(defaultQuery).toPromise();
+    expect(response.data.length).toBe(3);
+    expect(response.data[0].fields).toMatchObject(testResponseDataFrameFields);
+    expect(response.data[1].fields).toMatchObject(testResponseNodesFields);
+    expect(response.data[2].fields).toMatchObject(testResponseEdgesFields);
   });
 
   it('returns trace when traceId with special characters is queried', async () => {
-    await withMockedBackendSrv(makeBackendSrvMock('a/b'), async () => {
-      const ds = new JaegerDatasource(defaultSettings);
-      const query = {
-        ...defaultQuery,
-        targets: [
-          {
-            query: 'a/b',
-            refId: '1',
-          },
-        ],
-      };
-      await ds.query(query).toPromise();
-      // there is expect makeBackendSrvMock checking correct encoding
-    });
+    const mock = setupFetchMock({ data: [testResponse] });
+    const ds = new JaegerDatasource(defaultSettings);
+    const query = {
+      ...defaultQuery,
+      targets: [
+        {
+          query: 'a/b',
+          refId: '1',
+        },
+      ],
+    };
+    await ds.query(query).toPromise();
+    expect(mock).toBeCalledWith({ url: `${defaultSettings.url}/api/traces/a%2Fb` });
   });
 
   it('returns empty response if trace id is not specified', async () => {
@@ -93,120 +65,75 @@ describe('JaegerDatasource', () => {
 describe('when performing testDataSource', () => {
   describe('and call succeeds', () => {
     it('should return successfully', async () => {
-      const backendSrvMock = makeTestDatasourceMock(
-        Promise.resolve({
-          statusText: 'OK',
-          status: 200,
-          data: {
-            data: ['service1'],
-          },
-        })
-      );
+      setupFetchMock({ data: ['service1'] });
 
-      await withMockedBackendSrv(backendSrvMock, async () => {
-        const ds = new JaegerDatasource(defaultSettings);
-        const response = await ds.testDatasource();
-        expect(response.status).toEqual('success');
-        expect(response.message).toBe('Data source connected and services found.');
-      });
+      const ds = new JaegerDatasource(defaultSettings);
+      const response = await ds.testDatasource();
+      expect(response.status).toEqual('success');
+      expect(response.message).toBe('Data source connected and services found.');
     });
   });
 
   describe('and call succeeds, but returns no services', () => {
     it('should display an error', async () => {
-      const backendSrvMock = makeTestDatasourceMock(
-        Promise.resolve({
-          statusText: 'OK',
-          status: 200,
-        })
-      );
+      setupFetchMock(undefined);
 
-      await withMockedBackendSrv(backendSrvMock, async () => {
-        const ds = new JaegerDatasource(defaultSettings);
-        const response = await ds.testDatasource();
-        expect(response.status).toEqual('error');
-        expect(response.message).toBe(
-          'Data source connected, but no services received. Verify that Jaeger is configured properly.'
-        );
-      });
+      const ds = new JaegerDatasource(defaultSettings);
+      const response = await ds.testDatasource();
+      expect(response.status).toEqual('error');
+      expect(response.message).toBe(
+        'Data source connected, but no services received. Verify that Jaeger is configured properly.'
+      );
     });
   });
 
   describe('and call returns error with message', () => {
     it('should return the formatted error', async () => {
-      const backendSrvMock = {
-        datasourceRequest(options: BackendSrvRequest): Promise<any> {
-          return Promise.reject({
-            statusText: 'Not found',
-            status: 404,
-            data: {
-              message: '404 page not found',
-            },
-          });
-        },
-      } as BackendSrv;
+      setupFetchMock(
+        undefined,
+        throwError({
+          statusText: 'Not found',
+          status: 404,
+          data: {
+            message: '404 page not found',
+          },
+        })
+      );
 
-      await withMockedBackendSrv(backendSrvMock, async () => {
-        const ds = new JaegerDatasource(defaultSettings);
-        const response = await ds.testDatasource();
-        expect(response.status).toEqual('error');
-        expect(response.message).toBe('Jaeger: Not found. 404. 404 page not found');
-      });
+      const ds = new JaegerDatasource(defaultSettings);
+      const response = await ds.testDatasource();
+      expect(response.status).toEqual('error');
+      expect(response.message).toBe('Jaeger: Not found. 404. 404 page not found');
     });
   });
 
   describe('and call returns error without message', () => {
     it('should return JSON error', async () => {
-      const backendSrvMock = {
-        datasourceRequest(options: BackendSrvRequest): Promise<any> {
-          return Promise.reject({
-            statusText: 'Bad gateway',
-            status: 502,
-            data: {
-              errors: ['Could not connect to Jaeger backend'],
-            },
-          });
-        },
-      } as BackendSrv;
+      setupFetchMock(
+        undefined,
+        throwError({
+          statusText: 'Bad gateway',
+          status: 502,
+          data: {
+            errors: ['Could not connect to Jaeger backend'],
+          },
+        })
+      );
 
-      await withMockedBackendSrv(backendSrvMock, async () => {
-        const ds = new JaegerDatasource(defaultSettings);
-        const response = await ds.testDatasource();
-        expect(response.status).toEqual('error');
-        expect(response.message).toBe('Jaeger: Bad gateway. 502. {"errors":["Could not connect to Jaeger backend"]}');
-      });
+      const ds = new JaegerDatasource(defaultSettings);
+      const response = await ds.testDatasource();
+      expect(response.status).toEqual('error');
+      expect(response.message).toBe('Jaeger: Bad gateway. 502. {"errors":["Could not connect to Jaeger backend"]}');
     });
   });
 });
 
-function makeTestDatasourceMock(result: Promise<any>) {
-  return {
-    datasourceRequest(options: BackendSrvRequest): Promise<any> {
-      return result;
-    },
-  } as BackendSrv;
-}
+function setupFetchMock(response: any, mock?: any) {
+  const defaultMock = () => mock ?? of(createFetchResponse(response));
 
-function makeBackendSrvMock(traceId: string) {
-  return {
-    datasourceRequest(options: BackendSrvRequest): Promise<any> {
-      expect(options.url.substr(options.url.length - 17, options.url.length)).toBe(
-        `/api/traces/${encodeURIComponent(traceId)}`
-      );
-      return Promise.resolve({
-        data: {
-          data: [testResponse],
-        },
-      });
-    },
-  } as any;
-}
-
-async function withMockedBackendSrv(srv: BackendSrv, fn: () => Promise<void>) {
-  const oldSrv = getBackendSrv();
-  setBackendSrv(srv);
-  await fn();
-  setBackendSrv(oldSrv);
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
+  fetchMock.mockImplementation(defaultMock);
+  return fetchMock;
 }
 
 const defaultSettings: DataSourceInstanceSettings = {
@@ -214,6 +141,7 @@ const defaultSettings: DataSourceInstanceSettings = {
   uid: '0',
   type: 'tracing',
   name: 'jaeger',
+  url: 'http://grafana.com',
   meta: {
     id: 'jaeger',
     name: 'jaeger',

@@ -28,8 +28,8 @@ type TestingApiBase struct {
 
 func (api *API) RegisterTestingApiEndpoints(srv TestingApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Get(toMacaronPath("/api/v1/receiver/test"), binding.Bind(apimodels.ExtendedReceiver{}), routing.Wrap(srv.RouteTestReceiverConfig))
-		group.Get(toMacaronPath("/api/v1/rule/test"), binding.Bind(apimodels.TestRulePayload{}), routing.Wrap(srv.RouteTestRuleConfig))
+		group.Post(toMacaronPath("/api/v1/receiver/test"), binding.Bind(apimodels.ExtendedReceiver{}), routing.Wrap(srv.RouteTestReceiverConfig))
+		group.Post(toMacaronPath("/api/v1/rule/test"), binding.Bind(apimodels.TestRulePayload{}), routing.Wrap(srv.RouteTestRuleConfig))
 	})
 }
 

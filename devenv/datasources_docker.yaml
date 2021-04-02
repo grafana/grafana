@@ -29,8 +29,6 @@ datasources:
     database: site
     user: grafana
     url: http://influxdb:8086
-    jsonData:
-      timeInterval: "15s"
     secureJsonData:
       password: grafana
 
@@ -60,9 +58,7 @@ datasources:
     access: proxy
     database: telegraf
     user: grafana
-    url: http://telegraf:8086
-    jsonData:
-      timeInterval: "10s"
+    url: http://influxdb:8086
     secureJsonData:
       password: grafana
 

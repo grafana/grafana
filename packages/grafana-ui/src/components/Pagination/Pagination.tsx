@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { stylesFactory } from '../../themes';
 import { Button, ButtonVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
@@ -13,9 +13,11 @@ interface Props {
   numberOfPages: number;
   /** Callback function for fetching the selected page  */
   onNavigate: (toPage: number) => void;
+  /** When set to true and the pagination result is only one page it will not render the pagination at all */
+  hideWhenSinglePage?: boolean;
 }
 
-export const Pagination: React.FC<Props> = ({ currentPage, numberOfPages, onNavigate }) => {
+export const Pagination: React.FC<Props> = ({ currentPage, numberOfPages, onNavigate, hideWhenSinglePage }) => {
   const styles = getStyles();
   const pages = [...new Array(numberOfPages).keys()];
 
@@ -70,6 +72,10 @@ export const Pagination: React.FC<Props> = ({ currentPage, numberOfPages, onNavi
     }
     return pagesToRender;
   }, []);
+
+  if (hideWhenSinglePage && numberOfPages <= 1) {
+    return null;
+  }
 
   return (
     <div className={styles.container}>

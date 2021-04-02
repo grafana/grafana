@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { connect, MapDispatchToProps } from 'react-redux';
-import { css, cx, keyframes } from 'emotion';
+import { css, cx, keyframes } from '@emotion/css';
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
 import { locationService } from '@grafana/runtime';
 import { Icon, IconButton, styleMixins, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { DateTimeInput, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 
 import config from 'app/core/config';
 import store from 'app/core/store';
@@ -140,9 +140,9 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
       {addPanelView ? (
         <LibraryPanelsView
           className={styles.libraryPanelsWrapper}
-          formatDate={(dateString: DateTimeInput) => dashboard.formatDate(dateString, 'L')}
           onClickCard={(panel) => onAddLibraryPanel(panel)}
           showSecondaryActions={false}
+          searchString={''}
         />
       ) : (
         <div className={styles.actionsWrapper}>

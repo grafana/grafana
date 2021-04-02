@@ -83,7 +83,7 @@ export interface DataFrameSchema {
   /**
    * Field definition without any metadata
    */
-  fields?: FieldSchema[];
+  fields: FieldSchema[];
 }
 
 /**
@@ -192,5 +192,31 @@ export function dataFrameFromJSON(dto: DataFrameJSON): DataFrame {
     ...schema,
     fields,
     length,
+  };
+}
+
+/**
+ * This converts DataFrame to a json representation with distinct schema+data
+ *
+ * @alpha
+ */
+export function dataFrameToJSON(frame: DataFrame): DataFrameJSON {
+  const data: DataFrameData = {
+    values: [],
+  };
+  const schema: DataFrameSchema = {
+    refId: frame.refId,
+    meta: frame.meta,
+    name: frame.name,
+    fields: frame.fields.map((f) => {
+      const { values, ...sfield } = f;
+      data.values.push(values.toArray());
+      return sfield;
+    }),
+  };
+
+  return {
+    schema,
+    data,
   };
 }

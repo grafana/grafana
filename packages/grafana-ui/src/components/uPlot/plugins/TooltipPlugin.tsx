@@ -29,7 +29,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
   const plotContext = usePlotContext();
   const graphContext = useGraphNGContext();
 
-  let xField = graphContext.getXAxisField(otherProps.data);
+  let xField = graphContext.getXAxisField();
   if (!xField) {
     return null;
   }
@@ -60,8 +60,9 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
         if (mode === 'single' && originFieldIndex !== null) {
           const field = otherProps.data[originFieldIndex.frameIndex].fields[originFieldIndex.fieldIndex];
           const plotSeries = plotContext.getSeries();
-
           const fieldFmt = field.display || getDisplayProcessor({ field, timeZone });
+          const value = fieldFmt(plotContext.data[focusedSeriesIdx!][focusedPointIdx]);
+
           tooltip = (
             <SeriesTable
               series={[
@@ -69,7 +70,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
                   // TODO: align with uPlot typings
                   color: (plotSeries[focusedSeriesIdx!].stroke as any)(),
                   label: getFieldDisplayName(field, otherProps.data[originFieldIndex.frameIndex]),
-                  value: fieldFmt(field.values.get(focusedPointIdx)).text,
+                  value: value ? formattedValueToString(value) : null,
                 },
               ]}
               timestamp={xVal}
@@ -78,38 +79,34 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
         }
 
         if (mode === 'multi') {
+          let series: SeriesTableRowProps[] = [];
           const plotSeries = plotContext.getSeries();
 
-          let series: SeriesTableRowProps[] = [];
-
-          let frames = otherProps.data;
-
-          for (let i = 0; i < frames.length; i++) {
-            let fields = frames[i].fields;
-
-            for (let j = 0; j < fields.length; j++) {
-              let f = fields[j];
-
-              // skipping xField, time fields, non-numeric, and hidden fields
-              if (
-                f === xField ||
-                f.type === FieldType.time ||
-                f.type !== FieldType.number ||
-                f.config.custom?.hideFrom?.tooltip
-              ) {
-                continue;
-              }
-
-              series.push({
-                // TODO: align with uPlot typings
-                color: (plotSeries[j].stroke as any)!(),
-                label: getFieldDisplayName(f, otherProps.data[i]),
-                value: formattedValueToString(f.display!(f.values.get(focusedPointIdx!))),
-                isActive: originFieldIndex
-                  ? originFieldIndex.frameIndex === i && originFieldIndex.fieldIndex === j
-                  : false,
-              });
+          for (let i = 0; i < plotSeries.length; i++) {
+            const dataFrameFieldIndex = graphContext.mapSeriesIndexToDataFrameFieldIndex(i);
+            const frame = otherProps.data[dataFrameFieldIndex.frameIndex];
+            const field = otherProps.data[dataFrameFieldIndex.frameIndex].fields[dataFrameFieldIndex.fieldIndex];
+            if (
+              field === xField ||
+              field.type === FieldType.time ||
+              field.type !== FieldType.number ||
+              field.config.custom?.hideFrom?.tooltip
+            ) {
+              continue;
             }
+
+            const value = field.display!(plotContext.data[i][focusedPointIdx]);
+
+            series.push({
+              // TODO: align with uPlot typings
+              color: (plotSeries[i].stroke as any)!(),
+              label: getFieldDisplayName(field, frame),
+              value: value ? formattedValueToString(value) : null,
+              isActive: originFieldIndex
+                ? dataFrameFieldIndex.frameIndex === originFieldIndex.frameIndex &&
+                  dataFrameFieldIndex.fieldIndex === originFieldIndex.fieldIndex
+                : false,
+            });
           }
 
           tooltip = <SeriesTable series={series} timestamp={xVal} />;

@@ -5,7 +5,7 @@ import RCCascader from 'rc-cascader';
 import { Select } from '../Select/Select';
 import { Input } from '../Input/Input';
 import { SelectableValue } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { onChangeCascader } from './optionMappings';
 import memoizeOne from 'memoize-one';
 
@@ -105,7 +105,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
       if (optionPath.indexOf(initValue) === optionPath.length - 1) {
         return {
           rcValue: optionPath,
-          activeLabel: option.singleLabel || '',
+          activeLabel: this.props.displayAllSelectedLevels ? option.label : option.singleLabel || '',
         };
       }
     }
@@ -132,7 +132,7 @@ export class Cascader extends React.PureComponent<CascaderProps, CascaderState> 
   onSelect = (obj: SelectableValue<string[]>) => {
     const valueArray = obj.value || [];
     this.setState({
-      activeLabel: obj.singleLabel || '',
+      activeLabel: this.props.displayAllSelectedLevels ? obj.label : obj.singleLabel || '',
       rcValue: valueArray,
       isSearching: false,
     });

@@ -6,16 +6,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/benbjohnson/clock"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"golang.org/x/sync/errgroup"
 )
 
 // timeNow makes it possible to test usage of time
@@ -23,7 +26,7 @@ var timeNow = time.Now
 
 // ScheduleService handles scheduling
 type ScheduleService interface {
-	Ticker(context.Context) error
+	Ticker(context.Context, *state.StateTracker) error
 	Pause() error
 	Unpause() error
 
@@ -33,8 +36,7 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
-func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.AlertDefinitionKey,
-	evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
+func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.AlertDefinitionKey, evalCh <-chan *evalContext, stopCh <-chan struct{}, stateTracker *state.StateTracker) error {
 	sch.log.Debug("alert definition routine started", "key", key)
 
 	evalRunning := false
@@ -64,9 +66,9 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 				}
 
 				condition := models.Condition{
-					RefID:                 alertDefinition.Condition,
-					OrgID:                 alertDefinition.OrgID,
-					QueriesAndExpressions: alertDefinition.Data,
+					Condition: alertDefinition.Condition,
+					OrgID:     alertDefinition.OrgID,
+					Data:      alertDefinition.Data,
 				}
 				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
 				end = timeNow()
@@ -77,12 +79,18 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 					return err
 				}
 				for _, r := range results {
-					sch.log.Debug("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					sch.log.Info("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 					cmd := models.SaveAlertInstanceCommand{DefinitionOrgID: key.OrgID, DefinitionUID: key.DefinitionUID, State: models.InstanceStateType(r.State.String()), Labels: models.InstanceLabels(r.Instance), LastEvalTime: ctx.now}
 					err := sch.store.SaveAlertInstance(&cmd)
 					if err != nil {
 						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
 					}
+				}
+				transitionedStates := stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
+				alerts := FromAlertStateToPostableAlerts(transitionedStates)
+				err = sch.SendAlerts(alerts)
+				if err != nil {
+					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts), "err", err)
 				}
 				return nil
 			}
@@ -110,6 +118,11 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 			return grafanaCtx.Err()
 		}
 	}
+}
+
+// Notifier handles the delivery of alert notifications to the end user
+type Notifier interface {
+	PutAlerts(alerts ...*notifier.PostableAlert) error
 }
 
 type schedule struct {
@@ -142,6 +155,8 @@ type schedule struct {
 	store store.Store
 
 	dataService *tsdb.Service
+
+	notifier Notifier
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -154,6 +169,7 @@ type SchedulerCfg struct {
 	StopAppliedFunc func(models.AlertDefinitionKey)
 	Evaluator       eval.Evaluator
 	Store           store.Store
+	Notifier        Notifier
 }
 
 // NewScheduler returns a new schedule.
@@ -171,6 +187,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
 		evaluator:       cfg.Evaluator,
 		store:           cfg.Store,
 		dataService:     dataService,
+		notifier:        cfg.Notifier,
 	}
 	return &sch
 }
@@ -217,7 +234,7 @@ func (sch *schedule) Unpause() error {
 	return nil
 }
 
-func (sch *schedule) Ticker(grafanaCtx context.Context) error {
+func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.StateTracker) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
 	for {
 		select {
@@ -250,7 +267,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context) error {
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return sch.definitionRoutine(ctx, key, definitionInfo.evalCh, definitionInfo.stopCh)
+						return sch.definitionRoutine(ctx, key, definitionInfo.evalCh, definitionInfo.stopCh, stateTracker)
 					})
 				}
 
@@ -298,6 +315,10 @@ func (sch *schedule) Ticker(grafanaCtx context.Context) error {
 			return err
 		}
 	}
+}
+
+func (sch *schedule) SendAlerts(alerts []*notifier.PostableAlert) error {
+	return sch.notifier.PutAlerts(alerts...)
 }
 
 type alertDefinitionRegistry struct {

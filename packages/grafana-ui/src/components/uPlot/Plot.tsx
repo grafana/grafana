@@ -31,6 +31,14 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
       return;
     }
 
+    // 0. Exit if the data set length is different than number of series expected to render
+    // This may happen when GraphNG has not synced config yet with the aligned frame. Alignment happens before the render
+    // in the getDerivedStateFromProps, while the config creation happens in componentDidUpdate, causing one more render
+    // of the UPlotChart if the config needs to be updated.
+    if (currentConfig.current.series.length !== props.data.length) {
+      return;
+    }
+
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (isConfigReady && !plotInstance.current) {
       plotInstance.current = initializePlot(props.data, currentConfig.current, canvasRef.current);
