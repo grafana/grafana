@@ -156,16 +156,15 @@ export interface LiveChannelAddress {
  * @alpha -- experimental
  */
 export function parseLiveChannelAddress(id: string): LiveChannelAddress | undefined {
-  if (!id?.length) {
-    return undefined;
-  }
-  let parts = id.trim().split('/');
-  if (parts.length >= 3) {
-    return {
-      scope: parts[0] as LiveChannelScope,
-      namespace: parts[1],
-      path: parts.slice(2).join('/'),
-    };
+  if (id?.length) {
+    let parts = id.trim().split('/');
+    if (parts.length >= 3) {
+      return {
+        scope: parts[0] as LiveChannelScope,
+        namespace: parts[1],
+        path: parts.slice(2).join('/'),
+      };
+    }
   }
   return undefined;
 }
