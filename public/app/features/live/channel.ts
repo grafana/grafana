@@ -53,17 +53,15 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       throw new Error('Channel already initalized: ' + this.id);
     }
     this.config = config;
-    const prepare = config.processMessage ? config.processMessage : (v: any) => v;
 
     const events: SubscriptionEvents = {
-      // This means a message was received from the server
+      // Called when a message is recieved from the socket
       publish: (ctx: PublicationContext) => {
         try {
-          const message = prepare(ctx.data);
-          if (message) {
+          if (ctx.data) {
             this.stream.next({
               type: LiveChannelEventType.Message,
-              message,
+              message: ctx.data,
             });
           }
 
@@ -117,8 +115,12 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
     return events;
   }
 
-  private sendStatus() {
-    this.stream.next({ ...this.currentStatus });
+  private sendStatus(message?: any) {
+    const copy = { ...this.currentStatus };
+    if (message) {
+      copy.message = message;
+    }
+    this.stream.next(copy);
   }
 
   /**

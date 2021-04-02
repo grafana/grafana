@@ -14,13 +14,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import {
-  DataSourceWithBackend,
-  getBackendSrv,
-  getLiveMeasurementsObserver,
-  getTemplateSrv,
-  TemplateSrv,
-} from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv, getLiveDataStream, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
@@ -194,12 +188,12 @@ function runGrafanaLiveQuery(
   if (!target.channel) {
     throw new Error(`Missing channel config`);
   }
-  return getLiveMeasurementsObserver(
-    {
+  return getLiveDataStream({
+    addr: {
       scope: LiveChannelScope.Plugin,
       namespace: 'testdata',
       path: target.channel,
     },
-    `testStream.${liveQueryCounter++}`
-  );
+    key: `testStream.${liveQueryCounter++}`,
+  });
 }
