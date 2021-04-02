@@ -392,7 +392,11 @@ func (tp *testPlugin) CallResource(ctx context.Context, req *backend.CallResourc
 	return backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *testPlugin) CanSubscribeToStream(ctx context.Context, request *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+func (tp *testPlugin) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 

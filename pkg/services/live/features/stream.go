@@ -11,14 +11,14 @@ import (
 
 // StreamManager manages streams from Grafana to plugins.
 type StreamManager struct {
-	mu               sync.RWMutex
-	streams          map[string]struct{}
-	presenceGetter   PresenceGetter
-	channelPublisher ChannelPublisher
-	registerCh       chan streamRequest
-	closedCh         chan struct{}
-	checkInterval    time.Duration
-	maxChecks        int
+	mu             sync.RWMutex
+	streams        map[string]struct{}
+	presenceGetter PresenceGetter
+	packetSender   StreamPacketSender
+	registerCh     chan submitRequest
+	closedCh       chan struct{}
+	checkInterval  time.Duration
+	maxChecks      int
 }
 
 // StreamManagerOption modifies StreamManager behavior (used for tests for example).
@@ -38,15 +38,15 @@ const (
 )
 
 // NewStreamManager creates new StreamManager.
-func NewStreamManager(chPublisher ChannelPublisher, presenceGetter PresenceGetter, opts ...StreamManagerOption) *StreamManager {
+func NewStreamManager(packetSender StreamPacketSender, presenceGetter PresenceGetter, opts ...StreamManagerOption) *StreamManager {
 	sm := &StreamManager{
-		streams:          make(map[string]struct{}),
-		channelPublisher: chPublisher,
-		presenceGetter:   presenceGetter,
-		registerCh:       make(chan streamRequest),
-		closedCh:         make(chan struct{}),
-		checkInterval:    defaultCheckInterval,
-		maxChecks:        defaultMaxChecks,
+		streams:        make(map[string]struct{}),
+		packetSender:   packetSender,
+		presenceGetter: presenceGetter,
+		registerCh:     make(chan submitRequest),
+		closedCh:       make(chan struct{}),
+		checkInterval:  defaultCheckInterval,
+		maxChecks:      defaultMaxChecks,
 	}
 	for _, opt := range opts {
 		opt(sm)
@@ -80,7 +80,7 @@ func (s *StreamManager) watchStream(ctx context.Context, cancelFn func(), sr str
 			}
 			numNoSubscribersChecks++
 			if numNoSubscribersChecks >= s.maxChecks {
-				logger.Info("Stop stream since no active subscribers", "channel", sr.Channel, "path", sr.Path)
+				logger.Debug("Stop stream since no active subscribers", "channel", sr.Channel, "path", sr.Path)
 				s.stopStream(sr, cancelFn)
 				return
 			}
@@ -102,11 +102,11 @@ func (s *StreamManager) runStream(ctx context.Context, sr streamRequest) {
 				PluginContext: sr.PluginContext,
 				Path:          sr.Path,
 			},
-			newStreamSender(sr.Channel, s.channelPublisher),
+			newStreamSender(sr.Channel, s.packetSender),
 		)
 		if err != nil {
 			if errors.Is(ctx.Err(), context.Canceled) {
-				logger.Info("Stream cleanly finished", "path", sr.Path)
+				logger.Debug("Stream cleanly finished", "path", sr.Path)
 				return
 			}
 			logger.Error("Error running stream, retrying", "path", sr.Path, "error", err)
@@ -117,20 +117,22 @@ func (s *StreamManager) runStream(ctx context.Context, sr streamRequest) {
 	}
 }
 
-func (s *StreamManager) registerStream(ctx context.Context, sr streamRequest) {
+var errClosed = errors.New("stream manager closed")
+
+func (s *StreamManager) registerStream(ctx context.Context, sr submitRequest) {
 	s.mu.Lock()
-	if _, ok := s.streams[sr.Channel]; ok {
-		logger.Debug("Skip running new stream (already exists)", "path", sr.Path)
+	if _, ok := s.streams[sr.streamRequest.Channel]; ok {
 		s.mu.Unlock()
+		sr.responseCh <- submitResponse{Result: submitResult{StreamExists: true}}
 		return
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	s.streams[sr.Channel] = struct{}{}
+	s.streams[sr.streamRequest.Channel] = struct{}{}
 	s.mu.Unlock()
-
-	go s.watchStream(ctx, cancel, sr)
-	s.runStream(ctx, sr)
+	sr.responseCh <- submitResponse{Result: submitResult{StreamExists: false}}
+	go s.watchStream(ctx, cancel, sr.streamRequest)
+	s.runStream(ctx, sr.streamRequest)
 }
 
 // Run StreamManager till context canceled.
@@ -153,21 +155,53 @@ type streamRequest struct {
 	StreamRunner  StreamRunner
 }
 
+type submitRequest struct {
+	responseCh    chan submitResponse
+	streamRequest streamRequest
+}
+
+type submitResult struct {
+	StreamExists bool
+}
+
+type submitResponse struct {
+	Error  error
+	Result submitResult
+}
+
 // SubmitStream submits stream handler in StreamManager to manage.
 // The stream will be opened and kept till channel has active subscribers.
-func (s *StreamManager) SubmitStream(channel string, path string, pCtx backend.PluginContext, streamRunner StreamRunner) error {
+func (s *StreamManager) SubmitStream(ctx context.Context, channel string, path string, pCtx backend.PluginContext, streamRunner StreamRunner) (*submitResult, error) {
+	req := submitRequest{
+		responseCh: make(chan submitResponse, 1),
+		streamRequest: streamRequest{
+			Channel:       channel,
+			Path:          path,
+			PluginContext: pCtx,
+			StreamRunner:  streamRunner,
+		},
+	}
+
+	// Send submit request.
 	select {
+	case s.registerCh <- req:
 	case <-s.closedCh:
 		close(s.registerCh)
-		return nil
-	case s.registerCh <- streamRequest{
-		Channel:       channel,
-		Path:          path,
-		PluginContext: pCtx,
-		StreamRunner:  streamRunner,
-	}:
-	case <-time.After(time.Second):
-		return errors.New("timeout")
+		return nil, errClosed
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
-	return nil
+
+	// Wait for submit response.
+	select {
+	case resp := <-req.responseCh:
+		if resp.Error != nil {
+			return nil, resp.Error
+		}
+		return &resp.Result, nil
+	case <-s.closedCh:
+		return nil, errClosed
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
