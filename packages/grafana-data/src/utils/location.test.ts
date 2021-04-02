@@ -26,10 +26,12 @@ describe('locationUtil', () => {
   });
 
   describe('strip base when appSubUrl configured', () => {
-    locationUtil.initialize({
-      config: { appSubUrl: '/subUrl' } as any,
-      getVariablesUrlParams: (() => {}) as any,
-      getTimeRangeForUrl: (() => {}) as any,
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: { appSubUrl: '/subUrl' } as any,
+        getVariablesUrlParams: (() => {}) as any,
+        getTimeRangeForUrl: (() => {}) as any,
+      });
     });
     test('relative url', () => {
       const urlWithoutMaster = locationUtil.stripBaseFromUrl('/subUrl/grafana/');
@@ -42,10 +44,12 @@ describe('locationUtil', () => {
   });
 
   describe('strip base when appSubUrl not configured', () => {
-    locationUtil.initialize({
-      config: {} as any,
-      getVariablesUrlParams: (() => {}) as any,
-      getTimeRangeForUrl: (() => {}) as any,
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: {} as any,
+        getVariablesUrlParams: (() => {}) as any,
+        getTimeRangeForUrl: (() => {}) as any,
+      });
     });
 
     test('relative url', () => {
