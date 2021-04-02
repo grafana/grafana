@@ -5,7 +5,7 @@ import { getAllDataSources } from './config';
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
 
 export enum DataSourceType {
-  Alertmanager = 'grafana-alertmanager-datasource',
+  Alertmanager = 'alertmanager',
   Loki = 'loki',
   Prometheus = 'prometheus',
 }
@@ -37,9 +37,13 @@ export function getDataSourceByName(name: string): DataSourceInstanceSettings<Da
   return getAllDataSources().find((source) => source.name === name);
 }
 
-export function getDatasourceAPIId(datasourceName: string) {
-  if (datasourceName === 'grafana') {
+export function getDatasourceAPIId(dataSourceName: string): string {
+  if (dataSourceName === 'grafana') {
     return 'grafana';
   }
-  return String(getLotexDataSourceByName(datasourceName).id);
+  const ds = getDataSourceByName(dataSourceName);
+  if (!ds) {
+    throw new Error(`Data source ${dataSourceName} not found`);
+  }
+  return String(ds.id);
 }
