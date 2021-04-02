@@ -38,5 +38,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Re
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Response {
-	return nil
+	recipient := c.Params(":Recipient")
+	srv.log.Info("RouteGetRuleStatuses: ", "Recipient", recipient)
+	return response.Error(http.StatusNotImplemented, "", nil)
 }
