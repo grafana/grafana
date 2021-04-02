@@ -1,14 +1,13 @@
-package pluginapiserver
+package apigrpc
 
 import (
 	"context"
 	"fmt"
 	"net"
 
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginapi"
-
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/server"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,15 +19,15 @@ import (
 )
 
 var (
-	logger = log.New("pluginapiserver")
+	logger = log.New("api_grpc")
 )
 
 func init() {
-	registry.RegisterServiceWithPriority(&PluginAPIServer{}, registry.Low)
+	registry.RegisterServiceWithPriority(&GRPCAPIServer{}, registry.Low)
 }
 
-// PluginAPIServer ...
-type PluginAPIServer struct {
+// GRPCAPIServer ...
+type GRPCAPIServer struct {
 	Cfg             *setting.Cfg             `inject:""`
 	PluginManager   *manager.PluginManager   `inject:""`
 	Bus             bus.Bus                  `inject:""`
@@ -38,11 +37,11 @@ type PluginAPIServer struct {
 }
 
 // Init Receiver.
-func (s *PluginAPIServer) Init() error {
-	logger.Info("PluginAPIServer initialization")
+func (s *GRPCAPIServer) Init() error {
+	logger.Info("GRPCAPIServer initialization")
 
 	if !s.IsEnabled() {
-		logger.Debug("PluginAPIServer not enabled, skipping initialization")
+		logger.Debug("GRPCAPIServer not enabled, skipping initialization")
 		return nil
 	}
 
@@ -54,7 +53,7 @@ func (s *PluginAPIServer) Init() error {
 
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	pluginapi.RegisterPublisherServer(grpcServer, newPluginGRPCServer())
+	server.RegisterGrafanaServer(grpcServer, s)
 	go func() {
 		err := grpcServer.Serve(lis)
 		if err != nil {
@@ -64,21 +63,10 @@ func (s *PluginAPIServer) Init() error {
 	return nil
 }
 
-type pluginGRPCServer struct{}
-
-func newPluginGRPCServer() *pluginGRPCServer {
-	return &pluginGRPCServer{}
-}
-
-func (p pluginGRPCServer) Publish(ctx context.Context, request *pluginapi.PublishRequest) (*pluginapi.PublishResponse, error) {
-	// TODO: check request permissions, publish to a channel.
-	return &pluginapi.PublishResponse{}, nil
-}
-
 // Run Receiver.
-func (s *PluginAPIServer) Run(ctx context.Context) error {
+func (s *GRPCAPIServer) Run(ctx context.Context) error {
 	if !s.IsEnabled() {
-		logger.Debug("PluginAPIServer feature not enabled, skipping initialization of Telemetry Receiver")
+		logger.Debug("Live feature not enabled, skipping initialization of GRPC server")
 		return nil
 	}
 	<-ctx.Done()
@@ -86,6 +74,16 @@ func (s *PluginAPIServer) Run(ctx context.Context) error {
 }
 
 // IsEnabled returns true if the Grafana Live feature is enabled.
-func (s *PluginAPIServer) IsEnabled() bool {
+func (s *GRPCAPIServer) IsEnabled() bool {
 	return s.Cfg.IsLiveEnabled() // turn on when Live on for now.
+}
+
+func (s GRPCAPIServer) PublishStream(_ context.Context, request *server.PublishStreamRequest) (*server.PublishStreamResponse, error) {
+	// TODO: check request permissions, publish to a channel.
+	logger.Debug("Publish data to a channel", "channel", request.Channel, "data", string(request.Data))
+	err := s.GrafanaLive.Publish(request.Channel, request.Data)
+	if err != nil {
+		return nil, err
+	}
+	return &server.PublishStreamResponse{}, nil
 }
