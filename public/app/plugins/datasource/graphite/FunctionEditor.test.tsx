@@ -23,9 +23,9 @@ describe('FunctionEditor', () => {
     const component = mount(
       <FunctionEditor
         func={mockFunctionDescriptor('foo')}
-        onMoveLeft={jest.fn()}
-        onMoveRight={jest.fn()}
-        onRemove={jest.fn()}
+        onMoveLeft={() => {}}
+        onMoveRight={() => {}}
+        onRemove={() => {}}
       />
     );
     const label = component.find('span');
