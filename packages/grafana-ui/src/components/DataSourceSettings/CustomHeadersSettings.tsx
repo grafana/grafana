@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import uniqueId from 'lodash/uniqueId';
 import { DataSourceSettings } from '@grafana/data';
 import { Button } from '../Button';

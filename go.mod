@@ -19,7 +19,7 @@ require (
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
-	github.com/centrifugal/centrifuge v0.15.0
+	github.com/centrifugal/centrifuge v0.16.0
 	github.com/cortexproject/cortex v1.4.1-0.20201022071705-85942c5703cf
 	github.com/crewjam/saml v0.4.6-0.20201227203850-bca570abb2ce
 	github.com/davecgh/go-spew v1.1.1
@@ -40,7 +40,7 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
-	github.com/grafana/alerting-api v0.0.0-20210331130828-17c19ddf88ee
+	github.com/grafana/alerting-api v0.0.0-20210331135037-3294563b51bb
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.90.0

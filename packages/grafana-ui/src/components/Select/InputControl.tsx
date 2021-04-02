@@ -2,7 +2,7 @@ import React from 'react';
 import { useTheme } from '../../themes/ThemeContext';
 import { sharedInputStyle } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
