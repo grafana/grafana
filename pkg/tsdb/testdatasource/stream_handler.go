@@ -37,12 +37,18 @@ func (p *testStreamHandler) SubscribeStream(_ context.Context, req *backend.Subs
 		return nil, err
 	}
 	p.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
-	return &backend.SubscribeStreamResponse{OK: true, Schema: schema, Keepalive: true}, nil
+	return &backend.SubscribeStreamResponse{
+		Status:       backend.SubscribeStreamStatusOK,
+		Data:         schema,
+		UseRunStream: true,
+	}, nil
 }
 
 func (p *testStreamHandler) PublishStream(_ context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	p.logger.Debug("Attempt to publish into stream", "path", req.Path, "user", req.PluginContext.User)
-	return &backend.PublishStreamResponse{OK: false}, nil
+	return &backend.PublishStreamResponse{
+		Status: backend.PublishStreamStatusPermissionDenied,
+	}, nil
 }
 
 func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
@@ -104,7 +110,7 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 			}
 
 			packet := &backend.StreamPacket{
-				Payload: bytes,
+				Data: bytes,
 			}
 			if err := sender.Send(packet); err != nil {
 				return err

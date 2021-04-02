@@ -108,6 +108,7 @@ func (g *GrafanaLive) Init() error {
 
 	// cfg.LogLevel = centrifuge.LogLevelDebug
 	cfg.LogHandler = handleLog
+	cfg.LogLevel = centrifuge.LogLevelError
 
 	// Node is the core object in Centrifuge library responsible for many useful
 	// things. For example Node allows to publish messages to channels from server
@@ -153,18 +154,23 @@ func (g *GrafanaLive) Init() error {
 				logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 				cb(centrifuge.SubscribeReply{}, err)
 			} else {
-				reply, allowed, err := handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
+				reply, status, err := handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
 					Channel: e.Channel,
 					Path:    addr.Path,
 				})
 				if err != nil {
+					logger.Error("Error calling channel handler subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 					cb(centrifuge.SubscribeReply{}, centrifuge.ErrorInternal)
 					return
 				}
-				if !allowed {
-					cb(centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied)
+				if status != backend.SubscribeStreamStatusOK {
+					// using HTTP error codes for WS errors too.
+					code, text := subscribeStatusToHTTPError(status)
+					logger.Debug("Return custom subscribe error", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "code", code)
+					cb(centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(code), Message: text})
 					return
 				}
+				logger.Debug("Client subscribed", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 				cb(centrifuge.SubscribeReply{
 					Options: centrifuge.SubscribeOptions{
 						Presence:  reply.Presence,
@@ -192,33 +198,38 @@ func (g *GrafanaLive) Init() error {
 				logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 				cb(centrifuge.PublishReply{}, err)
 			} else {
-				reply, allowed, err := handler.OnPublish(client.Context(), user, models.PublishEvent{
+				reply, status, err := handler.OnPublish(client.Context(), user, models.PublishEvent{
 					Channel: e.Channel,
 					Path:    addr.Path,
 				})
 				if err != nil {
+					logger.Error("Error calling channel handler publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 					cb(centrifuge.PublishReply{}, centrifuge.ErrorInternal)
 					return
 				}
-				if !allowed {
-					cb(centrifuge.PublishReply{}, centrifuge.ErrorPermissionDenied)
+				if status != backend.PublishStreamStatusOK {
+					// using HTTP error codes for WS errors too.
+					code, text := publishStatusToHTTPError(status)
+					logger.Debug("Return custom publish error", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "code", code)
+					cb(centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text})
 					return
 				}
 				centrifugeReply := centrifuge.PublishReply{
 					Options: centrifuge.PublishOptions{
-						HistorySize: reply.StreamSize,
-						HistoryTTL:  reply.StreamTTL,
+						HistorySize: reply.HistorySize,
+						HistoryTTL:  reply.HistoryTTL,
 					},
 				}
-				if !reply.Fallthrough {
-					// At this moment Centrifuge does not pass any information
-					// to a client about publication so simply returning empty
-					// PublishResult is fine. This can change in future though.
-					// Returning empty PublishResult here gives Centrifuge a tip
-					// that there is no need to publish data to a channel since
-					// application decided to publish by itself.
-					centrifugeReply.Result = &centrifuge.PublishResult{}
+				if reply.Data != nil {
+					result, err := g.node.Publish(e.Channel, reply.Data)
+					if err != nil {
+						logger.Error("Error publishing", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
+						cb(centrifuge.PublishReply{}, centrifuge.ErrorInternal)
+						return
+					}
+					centrifugeReply.Result = &result
 				}
+				logger.Debug("Publication successful", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 				cb(centrifugeReply, nil)
 			}
 		})
@@ -262,6 +273,30 @@ func (g *GrafanaLive) Init() error {
 	g.RouteRegister.Get("/live/ws", g.WebsocketHandler)
 
 	return nil
+}
+
+func subscribeStatusToHTTPError(status backend.SubscribeStreamStatus) (int, string) {
+	switch status {
+	case backend.SubscribeStreamStatusNotFound:
+		return http.StatusNotFound, http.StatusText(http.StatusNotFound)
+	case backend.SubscribeStreamStatusPermissionDenied:
+		return http.StatusForbidden, http.StatusText(http.StatusForbidden)
+	default:
+		log.Warn("unknown subscribe status", "status", status)
+		return http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)
+	}
+}
+
+func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) {
+	switch status {
+	case backend.PublishStreamStatusNotFound:
+		return http.StatusNotFound, http.StatusText(http.StatusNotFound)
+	case backend.PublishStreamStatusPermissionDenied:
+		return http.StatusForbidden, http.StatusText(http.StatusForbidden)
+	default:
+		log.Warn("unknown publish status", "status", status)
+		return http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)
+	}
 }
 
 // GetChannelHandler gives thread-safe access to the channel.
@@ -382,7 +417,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		return response.Error(http.StatusBadRequest, "Bad channel address", nil)
 	}
 
-	logger.Debug("Publish API cmd", "cmd", cmd)
+	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserId, "cmd", cmd)
 
 	channelHandler, addr, err := g.GetChannelHandler(ctx.SignedInUser, cmd.Channel)
 	if err != nil {
@@ -390,22 +425,24 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 	}
 
-	resp, allowed, err := channelHandler.OnPublish(ctx.Req.Context(), ctx.SignedInUser, models.PublishEvent{Channel: cmd.Channel, Path: addr.Path, Data: cmd.Data})
+	reply, status, err := channelHandler.OnPublish(ctx.Req.Context(), ctx.SignedInUser, models.PublishEvent{Channel: cmd.Channel, Path: addr.Path, Data: cmd.Data})
 	if err != nil {
 		logger.Error("Error calling OnPublish", "error", err, "channel", cmd.Channel)
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 	}
-	if !allowed {
-		return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
+	if status != backend.PublishStreamStatusOK {
+		code, text := publishStatusToHTTPError(status)
+		return response.Error(code, text, nil)
 	}
-	if resp.Fallthrough {
+	if reply.Data != nil {
 		_, err = g.node.Publish(cmd.Channel, cmd.Data)
 		if err != nil {
 			logger.Error("Error publish to channel", "error", err, "channel", cmd.Channel)
 			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 		}
 	}
-	return response.JSON(200, dtos.LivePublishResponse{})
+	logger.Debug("Publication successful", "user", ctx.SignedInUser.UserId, "channel", cmd.Channel)
+	return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
 }
 
 // Write to the standard log15 logger

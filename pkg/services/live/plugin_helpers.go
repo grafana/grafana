@@ -17,7 +17,7 @@ func newPluginPacketSender(node *centrifuge.Node) *pluginPacketSender {
 }
 
 func (p *pluginPacketSender) Send(channel string, packet *backend.StreamPacket) error {
-	_, err := p.node.Publish(channel, packet.Payload)
+	_, err := p.node.Publish(channel, packet.Data)
 	return err
 }
 
