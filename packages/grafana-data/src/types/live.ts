@@ -159,19 +159,15 @@ export function parseLiveChannelAddress(id: string): LiveChannelAddress | undefi
   if (!id?.length) {
     return undefined;
   }
-  const idx0 = id.indexOf('/');
-  if (idx0 < 1) {
-    return undefined;
+  let parts = id.trim().split('/');
+  if (parts.length >= 3) {
+    return {
+      scope: parts[0] as LiveChannelScope,
+      namespace: parts[1],
+      path: parts.slice(2).join('/'),
+    };
   }
-  const idx1 = id.indexOf('/', idx0 + 1);
-  if (idx1 < idx0) {
-    return undefined;
-  }
-  return {
-    scope: id.substring(0, idx0) as LiveChannelScope,
-    namespace: id.substring(idx0 + 1, idx1),
-    path: id.substring(idx1 + 1).trimEnd(),
-  };
+  return undefined;
 }
 
 /**
