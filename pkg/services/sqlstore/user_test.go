@@ -480,41 +480,6 @@ func TestUserDataAccess(t *testing.T) {
 
 	ss = InitTestDB(t)
 
-	t.Run("Testing DB - users with generic oauth tokens", func(t *testing.T) {
-		// Since previous tests were destructive
-		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
-			return &models.CreateUserCommand{
-				Email:      fmt.Sprint("user", i, "@test.com"),
-				Name:       fmt.Sprint("user", i),
-				Login:      fmt.Sprint("loginuser", i),
-				IsDisabled: false,
-			}
-		})
-
-		// Find a user to set tokens on
-		login := "loginuser0"
-
-		// Expect to pass since there's a matching login user
-		getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-		query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "oauth_generic_oauth", AuthId: ""}
-		err := GetUserByAuthInfo(query)
-		getTime = time.Now
-
-		require.Nil(t, err)
-		require.Equal(t, query.Result.Login, login)
-
-		// Should throw a "user not found" error since there's no matching login user
-		getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-		query = &models.GetUserByAuthInfoQuery{Login: "aloginuser", AuthModule: "oauth_generic_oauth", AuthId: ""}
-		err = GetUserByAuthInfo(query)
-		getTime = time.Now
-
-		require.NotNil(t, err)
-		require.Nil(t, query.Result)
-	})
-
-	ss = InitTestDB(t)
-
 	t.Run("Testing DB - search users", func(t *testing.T) {
 		// Since previous tests were destructive
 		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
