@@ -84,6 +84,7 @@ func (ng *AlertNG) Init() error {
 		RuleStore:       store,
 		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
+		StateTracker:    ng.stateTracker,
 	}
 	api.RegisterAPIEndpoints()
 
