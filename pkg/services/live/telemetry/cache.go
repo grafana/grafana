@@ -3,17 +3,23 @@ package telemetry
 import (
 	"encoding/json"
 	"sync"
+	"time"
 )
 
 // Cache is a simple schema cache.
 type Cache struct {
 	mu      sync.RWMutex
+	start   time.Time
+	last    time.Time
+	count   int64
 	schemas map[string]json.RawMessage
 }
 
 // NewCache creates new Cache.
 func NewCache() *Cache {
 	return &Cache{
+		start:   time.Now(),
+		last:    time.Now(),
 		schemas: map[string]json.RawMessage{},
 	}
 }
@@ -22,6 +28,7 @@ func NewCache() *Cache {
 func (c *Cache) Update(channel string, schema json.RawMessage) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.last = time.Now()
 	c.schemas[channel] = schema
 	return nil
 }

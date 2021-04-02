@@ -7,17 +7,20 @@ import (
 )
 
 type testStreamHandler struct {
-	cache *Cache
+	cache *Cache2
 }
 
-func newTelemetryStreamHandler(cache *Cache) *testStreamHandler {
+func newTelemetryStreamHandler(cache *Cache2) *testStreamHandler {
 	return &testStreamHandler{
 		cache: cache,
 	}
 }
 
 func (p *testStreamHandler) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	schema, ok, err := p.cache.Get(req.Path)
+	logger.Info("subscribe", "XXX", req.PluginContext)
+	cache := p.cache.GetOrCreate("aaa")
+
+	schema, ok, err := cache.Get(req.Path)
 	if err != nil {
 		return nil, err
 	}

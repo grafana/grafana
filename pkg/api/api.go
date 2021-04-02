@@ -402,14 +402,16 @@ func (hs *HTTPServer) registerRoutes() {
 
 		if hs.Live.IsEnabled() {
 			apiRoute.Post("/live/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
+
+			// POST influx line protocol
+			apiRoute.Post("/live/push/*", hs.LiveTelemetry.Handle)
+
+			// HACK get info
+			apiRoute.Get("/live/push", routing.Wrap(hs.LiveTelemetry.HandleList))
 		}
 
 		// short urls
 		apiRoute.Post("/short-urls", bind(dtos.CreateShortURLCmd{}), routing.Wrap(hs.createShortURL))
-
-		if hs.Live.IsEnabled() {
-			apiRoute.Post("/live/push/*", hs.LiveTelemetry.Handle)
-		}
 	}, reqSignedIn)
 
 	// admin api
