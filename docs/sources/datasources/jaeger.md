@@ -54,3 +54,35 @@ Use the trace selector to pick particular trace from all traces logged in the ti
 ## Linking Trace ID from logs
 
 You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) documentation for details.
+
+## Configure the data source with provisioning
+
+You can set up the data source via configuration files with Grafana’s provisioning system. Refer to [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}) for information on various settings and how it works.
+
+Here is an example with basic auth and trace-to-logs field.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Jaeger
+    type: jaeger
+    uid: jaeger-spectra
+    access: proxy
+    url: http://localhost:16686/
+    basicAuth: true
+    basicAuthUser: my_user
+    editable: true
+    isDefault: false
+    jsonData:
+        tracesToLogs:
+            # Field with internal link pointing to a Loki data source in Grafana.
+            # datasourceUid value must match the `datasourceUid` value of the Loki data source.
+            datasourceUid: loki
+            tags:
+              - cluster
+              - hostname
+              - namespace
+              - pod
+    secureJsonData:
+        basicAuthPassword: my_password
