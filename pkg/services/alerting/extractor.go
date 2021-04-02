@@ -119,12 +119,12 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			if rawFor != "0" {
 				unit := unitFormatRegex.FindAllString(rawFor, 1)[0]
 				if _, ok := unitMultiplier[unit]; !ok {
-					return nil, ValidationError{Reason: ErrWrongUnitFormat.Error()}
+					return nil, ValidationError{Reason: fmt.Sprintf("Could not parse for field, error: %s", ErrWrongUnitFormat.Error())}
 				}
 			}
 			forValue, err = time.ParseDuration(rawFor)
 			if err != nil {
-				return nil, ValidationError{Reason: "Could not parse for"}
+				return nil, ValidationError{Reason: "Could not parse for field"}
 			}
 		}
 
