@@ -1,5 +1,5 @@
 import React from 'react';
-import { PopoverController, Popover, ClickOutsideWrapper } from '@grafana/ui';
+import { PopoverController, Popover, ClickOutsideWrapper, Icon, Tooltip } from '@grafana/ui';
 import { FunctionDescriptor, FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
 
 interface FunctionEditorProps extends FunctionEditorControlsProps {
@@ -68,6 +68,11 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
                   onClick={popperProps.show ? hidePopper : showPopper}
                   style={{ cursor: 'pointer' }}
                 >
+                  {this.props.func.def.unknown && (
+                    <Tooltip content="The function may not supported in this version of Graphite." placement="bottom">
+                      <Icon name="exclamation-triangle" size="xs" />
+                    </Tooltip>
+                  )}
                   {this.props.func.def.name}
                 </span>
               </ClickOutsideWrapper>
