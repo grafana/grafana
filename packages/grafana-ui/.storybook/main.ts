@@ -30,6 +30,7 @@ module.exports = {
       shouldExtractLiteralValuesFromEnum: true,
       shouldRemoveUndefinedFromOptional: true,
       propFilter: (prop: any) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
+      savePropValueAsString: true,
     },
   },
   webpackFinal: async (config: any, { configType }: any) => {
