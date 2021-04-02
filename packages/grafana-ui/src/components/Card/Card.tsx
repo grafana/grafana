@@ -146,7 +146,6 @@ export const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled =
     color: ${theme.colors.textStrong};
     background: ${theme.colors.bg2};
     border-radius: ${theme.border.radius.sm};
-    padding: ${theme.spacing.md};
     position: relative;
     pointer-events: ${disabled ? 'none' : 'auto'};
     margin-bottom: ${theme.spacing.sm};
@@ -263,6 +262,7 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
     innerLink: css`
       display: flex;
       width: 100%;
+      padding: ${theme.spacing.md};
     `,
     tagList: css`
       max-width: 50%;
