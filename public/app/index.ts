@@ -8,4 +8,7 @@ if ((window as any).public_cdn_path) {
 }
 
 import app from './app';
-app.init();
+
+(async () => {
+  await app.init();
+})();

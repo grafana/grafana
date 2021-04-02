@@ -2,7 +2,7 @@ import { getTheme } from '@grafana/ui';
 import { ThemeChangedEvent } from 'app/types/events';
 import appEvents from '../app_events';
 import { config } from '../config';
-import { PreferencesService } from './PreferencesService';
+import { UserPreferencesService } from './PreferencesService';
 
 export async function toggleTheme(runtimeOnly: boolean) {
   const currentTheme = config.theme;
@@ -33,10 +33,9 @@ export async function toggleTheme(runtimeOnly: boolean) {
   }
 
   // Persist new theme
-  const service = new PreferencesService('user');
-  const currentPref = await service.load();
+  const currentPref = await UserPreferencesService.load();
 
-  await service.update({
+  await UserPreferencesService.update({
     ...currentPref,
     theme: newTheme.type,
   });

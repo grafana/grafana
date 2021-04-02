@@ -12,3 +12,5 @@ export class PreferencesService {
     return backendSrv.get<UserPreferencesDTO>(`/api/${this.resourceUri}/preferences`);
   }
 }
+
+export const UserPreferencesService = new PreferencesService('user');

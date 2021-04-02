@@ -42,6 +42,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   verifyEmailEnabled = false;
   oauth: any;
   homePage = '';
+  homeUrl = '/';
   disableUserSignUp = false;
   loginHint: any;
   passwordHint: any;

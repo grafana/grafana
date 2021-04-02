@@ -22,7 +22,14 @@ import {
 } from '@grafana/data';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
-import { registerEchoBackend, setEchoSrv, setPanelRenderer, setQueryRunnerFactory, locationService, config } from '@grafana/runtime';
+import {
+  registerEchoBackend,
+  setEchoSrv,
+  setPanelRenderer,
+  setQueryRunnerFactory,
+  locationService,
+  config,
+} from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -42,6 +49,7 @@ import { PanelRenderer } from './features/panel/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
+import { UserPreferencesService } from './core/services/PreferencesService';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -64,12 +72,13 @@ export class GrafanaApp {
     this.angularApp = new AngularApp();
   }
 
-  init() {
+  async init() {
     initEchoSrv();
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
     setPanelRenderer(PanelRenderer);
     setTimeZoneResolver(() => config.bootData.user.timezone);
+    await resolveHomePage();
     // Important that extensions are initialized before store
     initExtensions();
     configureStore();
@@ -90,14 +99,6 @@ export class GrafanaApp {
 
     // intercept anchor clicks and forward it to custom history instead of relying on browser's history
     document.addEventListener('click', interceptLinkClicks);
-    const homePage: string = config.homePage;
-    const isHomePage: Boolean = locationUtil.stripBaseFromUrl(window.location.pathname) === '/';
-
-    // if config has a homePage specified redirect there
-    if (Boolean(homePage) && isHomePage) {
-      const newUrl = locationUtil.stripBaseFromUrl(homePage);
-      locationService.replace(newUrl);
-    }
 
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;
@@ -168,5 +169,20 @@ function addClassIfNoOverlayScrollbar() {
     document.body.classList.add('no-overlay-scrollbar');
   }
 }
+async function resolveHomePage() {
+  const homePage: string = config.homePage;
+  const userPrefs = await UserPreferencesService.load();
+  const baseUrl = config.appSubUrl || '';
+  const isHomePage = locationUtil.stripBaseFromUrl(window.location.pathname) === '/';
 
+  // When user hasn't configured home dashboard and the config has home page settings -> redirect to that page
+  if (userPrefs.homeDashboardId === 0 && Boolean(homePage)) {
+    const newUrl = locationUtil.stripBaseFromUrl(homePage);
+    config.homeUrl = `${baseUrl}${newUrl}`;
+
+    if (isHomePage) {
+      locationService.replace(newUrl);
+    }
+  }
+}
 export default new GrafanaApp();

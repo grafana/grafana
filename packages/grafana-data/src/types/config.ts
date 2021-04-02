@@ -130,4 +130,5 @@ export interface GrafanaConfig {
   dateFormats?: SystemDateFormatSettings;
   sentry: SentryConfig;
   customTheme?: any;
+  homeUrl: string;
 }

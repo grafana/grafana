@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { FC, useCallback } from 'react';
 import appEvents from '../../app_events';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
@@ -12,10 +12,6 @@ export const SideMenu: FC = React.memo(() => {
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const kiosk = query.get('kiosk') as KioskMode;
-  const homeUrl = useMemo(() => {
-    const baseUrl = config.appSubUrl || '/';
-    return Boolean(config.homePage) ? `${baseUrl}${config.homePage}` : baseUrl;
-  }, []);
 
   const toggleSideMenuSmallBreakpoint = useCallback(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
@@ -27,7 +23,7 @@ export const SideMenu: FC = React.memo(() => {
 
   return (
     <div className="sidemenu" data-testid="sidemenu">
-      <a href={homeUrl} className="sidemenu__logo" key="logo">
+      <a href={config.homeUrl} className="sidemenu__logo" key="logo">
         <Branding.MenuLogo />
       </a>
       <div className="sidemenu__logo_small_breakpoint" onClick={toggleSideMenuSmallBreakpoint} key="hamburger">

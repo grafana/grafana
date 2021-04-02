@@ -1,14 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import {
-  Select,
-  Field,
-  Form,
-  Button,
-  RadioButtonGroup,
-  FieldSet,
-  TimeZonePicker,
-} from '@grafana/ui';
+import { Select, Field, Form, Button, RadioButtonGroup, FieldSet, TimeZonePicker } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -128,7 +120,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
             <Field
               label={'Home Dashboard'}
-              description='Not finding dashboard you want? Star it first, then it should appear in this select box.'
+              description="Not finding dashboard you want? Star it first, then it should appear in this select box."
             >
               <Select
                 value={dashboards.find((dashboard) => dashboard.id === homeDashboardId)}
