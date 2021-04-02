@@ -1,12 +1,15 @@
 package api
 
 import (
+	"errors"
+	"net/http"
 	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/settings"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,6 +40,21 @@ func AdminGetSettings(c *models.ReqContext) response.Response {
 	}
 
 	return response.JSON(200, settings)
+}
+
+func (hs *HTTPServer) AdminUpsertSettings(c *models.ReqContext, cmd models.UpsertSettingsCommand) response.Response {
+	if err := hs.SettingsProvider.Update(cmd.Settings); err != nil {
+		switch {
+		case errors.Is(err, settings.ErrInvalidConfiguration):
+			return response.Error(http.StatusBadRequest, "Invalid settings", err)
+		case errors.Is(err, settings.ErrOperationNotPermitted):
+			return response.Error(http.StatusForbidden, "Settings update not permitted", err)
+		default:
+			return response.Error(http.StatusInternalServerError, err.Error(), err)
+		}
+	}
+
+	return response.Success("Settings updated")
 }
 
 func AdminGetStats(c *models.ReqContext) response.Response {

@@ -1,20 +1,28 @@
 package settingsprovider
 
 import (
+	"fmt"
 	"reflect"
+	"regexp"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/settings"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	logger = log.New("settingsprovider")
-)
+var logger = log.New("settingsprovider")
+
+// updateRegexpRules defines a set of rules
+// used to validate which settings can be
+// updated through the exposed settings API.
+var updateRegexpRules = []string{
+	`auth.saml..*`,
+}
 
 func init() {
 	registry.Register(&registry.Descriptor{
@@ -24,13 +32,11 @@ func init() {
 	})
 }
 
-type settingsBag map[string]map[string]string
-
 type Implementation struct {
 	sync.RWMutex
 	FileCfg        *setting.Cfg       `inject:""`
 	SQLStore       *sqlstore.SQLStore `inject:""`
-	settings       settingsBag
+	settings       models.SettingsBag
 	reloadHandlers map[string][]settings.ReloadHandler
 }
 
@@ -47,7 +53,7 @@ func (i *Implementation) Init() (err error) {
 			<-syncTicker.C
 			logger.Debug("Checking for updates")
 
-			err := i.Refresh()
+			err := i.refresh()
 			if err != nil {
 				logger.Error("Error while refreshing settings", "error", err.Error())
 			}
@@ -55,6 +61,45 @@ func (i *Implementation) Init() (err error) {
 	}()
 
 	return
+}
+
+func (i *Implementation) Update(bag models.SettingsBag) error {
+	if err := i.validateUpdate(bag); err != nil {
+		return err
+	}
+
+	if err := i.refreshWithBag(bag); err != nil {
+		return fmt.Errorf("%s - %w", err.Error(), settings.ErrInvalidConfiguration)
+	}
+
+	return nil
+}
+
+func (i *Implementation) validateUpdate(changes models.SettingsBag) error {
+	for section, keyvalues := range changes {
+		for key := range keyvalues {
+			if !i.isPermitted(section, key) {
+				return fmt.Errorf(
+					"section: %s, key: %s - %w",
+					section, key, settings.ErrOperationNotPermitted,
+				)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (i *Implementation) isPermitted(section, key string) bool {
+	for _, rule := range updateRegexpRules {
+		sectionKey := fmt.Sprintf("%s.%s", section, key)
+
+		match, err := regexp.MatchString(rule, sectionKey)
+		if err == nil && match {
+			return true
+		}
+	}
+	return false
 }
 
 func (i *Implementation) Section(name string) settings.Section {
@@ -80,10 +125,24 @@ func (i *Implementation) KeyValue(section, key string) settings.KeyValue {
 	return keyValue{key: key, value: value}
 }
 
-func (i *Implementation) Refresh() error {
+func (i *Implementation) refresh() error {
+	return i.refreshWithBag(nil)
+}
+
+func (i *Implementation) refreshWithBag(bag models.SettingsBag) error {
 	newSettingsBag, err := i.loadAndMergeSettings()
 	if err != nil {
 		return err
+	}
+
+	for section, keyvalues := range bag {
+		for key, value := range keyvalues {
+			if _, ok := newSettingsBag[section]; !ok {
+				newSettingsBag[section] = make(map[string]string)
+			}
+
+			newSettingsBag[section][key] = value
+		}
 	}
 
 	i.RLock()
@@ -111,28 +170,22 @@ func (i *Implementation) Refresh() error {
 	i.settings = newSettingsBag
 	i.Unlock()
 
-	i.triggerReload(toReload)
-
-	return nil
+	return i.triggerReload(toReload)
 }
 
-func (i *Implementation) triggerFullReload() {
-	for section, handlers := range i.reloadHandlers {
-		for _, h := range handlers {
-			h.Reload(i.Section(section))
-		}
-	}
-}
-
-func (i *Implementation) triggerReload(bag settingsBag) {
+func (i *Implementation) triggerReload(bag models.SettingsBag) error {
 	for sectionName, config := range bag {
 		if handlers, exists := i.reloadHandlers[sectionName]; exists {
 			logger.Debug("Reloading services using", "section", sectionName)
 			for _, h := range handlers {
-				h.Reload(buildSection(config))
+				if err := h.Reload(buildSection(config)); err != nil {
+					return err
+				}
 			}
 		}
 	}
+
+	return nil
 }
 
 func (i *Implementation) RegisterReloadHandler(section string, h settings.ReloadHandler) {
@@ -144,8 +197,8 @@ func (i *Implementation) RegisterReloadHandler(section string, h settings.Reload
 	i.reloadHandlers[section] = handlers
 }
 
-func (i *Implementation) loadAndMergeSettings() (settingsBag, error) {
-	bag := make(settingsBag)
+func (i *Implementation) loadAndMergeSettings() (models.SettingsBag, error) {
+	bag := make(models.SettingsBag)
 
 	// Settings from INI file
 	for _, section := range i.FileCfg.Raw.Sections() {
@@ -163,8 +216,7 @@ func (i *Implementation) loadAndMergeSettings() (settingsBag, error) {
 	}
 
 	for _, dbSetting := range dbSettings {
-		_, ok := bag[dbSetting.Section]
-		if !ok {
+		if _, ok := bag[dbSetting.Section]; !ok {
 			bag[dbSetting.Section] = make(map[string]string)
 		}
 
