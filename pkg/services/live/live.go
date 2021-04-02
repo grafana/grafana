@@ -390,7 +390,7 @@ func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) 
 		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
 	}
 	return features.NewPluginRunner(
-		namespace,
+		"live-push",
 		"", // No instance uid for non-datasource plugins.
 		g.streamManager,
 		g.contextGetter,
