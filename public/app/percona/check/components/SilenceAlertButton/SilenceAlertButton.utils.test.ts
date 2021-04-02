@@ -1,5 +1,4 @@
-/* eslint-disable no-restricted-imports */
-import moment from 'moment';
+import moment from 'moment/moment';
 import { activeCheckStub } from 'app/percona/check/__mocks__/stubs';
 import { makeSilencePayload } from './SilenceAlertButton.utils';
 
