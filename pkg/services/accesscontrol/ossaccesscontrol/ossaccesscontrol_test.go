@@ -51,13 +51,15 @@ func overrideAccessControlInRegistry(t testing.TB, cfg *setting.Cfg) OSSAccessCo
 }
 
 type evaluatingPermissionsTestCase struct {
-	desc string
-	user struct {
-		name           string
-		orgRole        models.RoleType
-		isGrafanaAdmin bool
-	}
+	desc      string
+	user      userTestCase
 	endpoints []endpointTestCase
+}
+
+type userTestCase struct {
+	name           string
+	orgRole        models.RoleType
+	isGrafanaAdmin bool
 }
 
 type endpointTestCase struct {
@@ -69,11 +71,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 	testCases := []evaluatingPermissionsTestCase{
 		{
 			desc: "should successfully evaluate access to the endpoint",
-			user: struct {
-				name           string
-				orgRole        models.RoleType
-				isGrafanaAdmin bool
-			}{
+			user: userTestCase{
 				name:           "testuser",
 				orgRole:        models.ROLE_EDITOR,
 				isGrafanaAdmin: false,
@@ -92,8 +90,9 @@ func TestEvaluatingPermissions(t *testing.T) {
 			user := &models.SignedInUser{
 				UserId:         1,
 				OrgId:          1,
-				OrgRole:        models.ROLE_EDITOR,
-				IsGrafanaAdmin: false,
+				Name:           tc.user.name,
+				OrgRole:        tc.user.orgRole,
+				IsGrafanaAdmin: tc.user.isGrafanaAdmin,
 			}
 
 			for _, endpoint := range tc.endpoints {
