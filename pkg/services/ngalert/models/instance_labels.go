@@ -78,9 +78,6 @@ func (t *tupleLabels) sortBtKey() {
 
 // labelsToTupleLabels converts Labels (map[string]string) to tupleLabels.
 func labelsToTupleLabels(l InstanceLabels) tupleLabels {
-	if l == nil {
-		return nil
-	}
 	t := make(tupleLabels, 0, len(l))
 	for k, v := range l {
 		t = append(t, tupleLabel{k, v})
