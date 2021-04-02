@@ -6,6 +6,8 @@ import { Observable } from 'rxjs';
  *   ${scope}/${namespace}/${path}
  *
  * The scope drives how the namespace is used and controlled
+ *
+ * @alpha
  */
 export enum LiveChannelScope {
   DataSource = 'ds', // namespace = data source ID
@@ -16,7 +18,7 @@ export enum LiveChannelScope {
 /**
  * @alpha -- experimental
  */
-export interface LiveChannelConfig<TMessage = any, TController = any> {
+export interface LiveChannelConfig {
   /**
    * The path definition.  either static, or it may contain variables identifed with {varname}
    */
@@ -37,12 +39,6 @@ export interface LiveChannelConfig<TMessage = any, TController = any> {
    * The function will return true/false if the current user can publish
    */
   canPublish?: () => boolean;
-
-  /** convert the raw stream message into a message that should be broadcast */
-  processMessage?: (msg: any) => TMessage;
-
-  /** some channels are managed by an explicit interface */
-  getController?: () => TController;
 }
 
 export enum LiveChannelConnectionState {
@@ -87,6 +83,11 @@ export interface LiveChannelStatusEvent {
    * As long as the `shutdown` flag is not set, the connection will try to reestablish
    */
   state: LiveChannelConnectionState;
+
+  /**
+   * When joining a channel, there may be an initial packet in the subscribe method
+   */
+  message?: any;
 
   /**
    * The last error.
@@ -150,6 +151,34 @@ export interface LiveChannelAddress {
 }
 
 /**
+ * Return an address from a string
+ *
+ * @alpha -- experimental
+ */
+export function parseLiveChannelAddress(id: string): LiveChannelAddress | undefined {
+  if (!id || id.length) {
+    return undefined;
+  }
+  const idx0 = id.indexOf('/');
+  if (idx0 < 1) {
+    return undefined;
+  }
+  const idx1 = id.indexOf('/', idx0 + 1);
+  if (idx1 < 1) {
+    return undefined;
+  }
+  const idx2 = id.indexOf('/', idx1 + 1);
+  if (idx2 < 1) {
+    return undefined;
+  }
+  return {
+    scope: id.substring(0, idx0) as LiveChannelScope,
+    namespace: id.substring(idx0 + 1, idx1),
+    path: id.substring(idx2),
+  };
+}
+
+/**
  * Check if the address has a scope, namespace, and path
  */
 export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is LiveChannelAddress {
@@ -173,7 +202,7 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
   config?: LiveChannelConfig;
 
   /**
-   * Watch all events in this channel
+   * Watch for messages in a channel
    */
   getStream: () => Observable<LiveChannelEvent<TMessage>>;
 
@@ -192,7 +221,7 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
   publish?: (msg: TPublish) => Promise<any>;
 
   /**
-   * This will close and terminate this channel
+   * Close and terminate the channel for everyone
    */
   disconnect: () => void;
 }
