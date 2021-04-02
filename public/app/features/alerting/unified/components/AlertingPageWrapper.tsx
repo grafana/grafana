@@ -8,13 +8,14 @@ import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 
 interface Props {
+  pageId: string;
   isLoading?: boolean;
 }
 
-export const AlertingPageWrapper: FC<Props> = ({ children, isLoading }) => {
+export const AlertingPageWrapper: FC<Props> = ({ children, pageId, isLoading }) => {
   const navModel = getNavModel(
     useSelector((state: StoreState) => state.navIndex),
-    'alert-list'
+    pageId
   );
 
   const styles = useStyles(getStyles);

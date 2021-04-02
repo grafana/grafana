@@ -47,7 +47,7 @@ export const RuleList: FC = () => {
   const grafanaError = rules[GRAFANA_RULES_SOURCE_NAME]?.error;
 
   return (
-    <AlertingPageWrapper isLoading={loading && !haveResults}>
+    <AlertingPageWrapper pageId="alert-list" isLoading={loading && !haveResults}>
       {(cloudErrors || grafanaError) && (
         <InfoBox
           data-testid="cloud-rulessource-errors"
