@@ -142,7 +142,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       },
     });
 
-    return `https://portal.azure.com/#blade/Microsoft_Azure_MonitoringAz/MetricsV4/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
+    return `https://portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
