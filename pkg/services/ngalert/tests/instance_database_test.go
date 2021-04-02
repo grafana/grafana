@@ -54,6 +54,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 			DefinitionOrgID: alertDefinition2.OrgID,
 			DefinitionUID:   alertDefinition2.UID,
 			State:           models.InstanceStateNormal,
+			Labels:          models.InstanceLabels{},
 		}
 		err := dbstore.SaveAlertInstance(saveCmd)
 		require.NoError(t, err)
