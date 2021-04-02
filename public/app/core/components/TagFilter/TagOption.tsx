@@ -7,7 +7,7 @@ import { OptionProps } from 'react-select/src/components/Option';
 import { TagBadge } from './TagBadge';
 
 // https://github.com/JedWatson/react-select/issues/3038
-interface ExtendedOptionProps extends OptionProps<any> {
+interface ExtendedOptionProps extends OptionProps<any, any> {
   data: any;
 }
 

@@ -6,7 +6,7 @@ import { stylesFactory, withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { Icon } from '../Icon/Icon';
 
-interface ExtendedGroupProps extends GroupProps<any>, Themeable {
+interface ExtendedGroupProps extends Omit<GroupProps<any, any>, 'theme'>, Themeable {
   data: {
     label: string;
     expanded: boolean;

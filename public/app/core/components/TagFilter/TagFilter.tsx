@@ -1,8 +1,7 @@
 // Libraries
 import React, { FC } from 'react';
 import { css } from '@emotion/css';
-// @ts-ignore
-import { components } from '@torkelo/react-select';
+import { components } from 'react-select';
 import { AsyncSelect, stylesFactory, useTheme, resetSelectStyles, Icon } from '@grafana/ui';
 import { escapeStringForRegex, GrafanaTheme } from '@grafana/data';
 // Components
