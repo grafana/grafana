@@ -281,6 +281,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
     }
 
     if (currentValue != null) {
+      // null || undefined
       const isFirst = calcs.firstNotNull === null;
       if (isFirst) {
         calcs.firstNotNull = currentValue;
