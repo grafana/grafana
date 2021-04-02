@@ -332,6 +332,13 @@
      "type": "array",
      "x-go-name": "InhibitRules"
     },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/Receiver"
+     },
+     "type": "array",
+     "x-go-name": "Receivers"
+    },
     "route": {
      "$ref": "#/definitions/Route"
     },
@@ -813,10 +820,10 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "GettableSilence": {},
-  "GettableSilences": {
-   "$ref": "#/definitions/gettableSilences"
+  "GettableSilence": {
+   "$ref": "#/definitions/gettableSilence"
   },
+  "GettableSilences": {},
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -1521,9 +1528,7 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "PostableSilence": {
-   "$ref": "#/definitions/postableSilence"
-  },
+  "PostableSilence": {},
   "PostableUserConfig": {
    "properties": {
     "alertmanager_config": {

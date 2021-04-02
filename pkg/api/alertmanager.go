@@ -275,6 +275,7 @@ type Config struct {
 	Global       *config.GlobalConfig  `yaml:"global,omitempty" json:"global,omitempty"`
 	Route        *config.Route         `yaml:"route,omitempty" json:"route,omitempty"`
 	InhibitRules []*config.InhibitRule `yaml:"inhibit_rules,omitempty" json:"inhibit_rules,omitempty"`
+	Receivers    []*config.Receiver    `yaml:"-" json:"receivers,omitempty"`
 	Templates    []string              `yaml:"templates" json:"templates"`
 }
 
