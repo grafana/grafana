@@ -21,9 +21,17 @@ export function interceptLinkClicks(e: MouseEvent) {
       // Ensure old angular urls with no starting '/' are handled the same as before
       // That is they where seen as being absolute from app root
       if (href[0] !== '/') {
+        try {
+          const external = new URL(href);
+          if (external.origin !== window.location.origin) {
+            window.location.href = external.toString();
+            return;
+          }
+        } catch (e) {
+          console.warn(e);
+        }
         href = `/${href}`;
       }
-
       locationService.push(href);
     }
   }
