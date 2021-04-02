@@ -93,6 +93,7 @@ func (ng *AlertNG) Init() error {
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
+	ng.schedule.WarmStateCache(ng.stateTracker)
 	return ng.schedule.Ticker(ctx, ng.stateTracker)
 }
 

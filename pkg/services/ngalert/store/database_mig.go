@@ -94,6 +94,7 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 			{Name: "labels_hash", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "current_state", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "current_state_since", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "current_state_end", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "last_eval_time", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		PrimaryKeys: []string{"def_org_id", "def_uid", "labels_hash"},
