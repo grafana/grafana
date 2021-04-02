@@ -49,7 +49,6 @@ export default class GraphiteQuery {
     if (astNode.type === 'error') {
       this.error = astNode.message + ' at position: ' + astNode.pos;
       this.target.textEditor = true;
-      return;
     }
 
     try {

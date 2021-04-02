@@ -19,6 +19,7 @@ import {
   AbsoluteTimeRange,
   LoadingState,
   EventBusExtended,
+  DataQueryError,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -116,7 +117,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   renderQueryEditor = () => {
     const { datasourceInstance, history, query, exploreEvents, range, queryResponse, exploreId } = this.props;
 
-    const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
+    const queryErrors = this.getQueryErrors(query, queryResponse);
 
     const ReactQueryEditor = this.setReactQueryEditor();
 
@@ -172,14 +173,23 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     }
   }, 500);
 
+  getQueryErrors(query: DataQuery, queryResponse: PanelData): DataQueryError[] {
+    if (query.syntaxError) {
+      return [{ message: query.syntaxError }];
+    } else if (queryResponse.error && queryResponse.error.refId === query.refId) {
+      // We show error without refId in ResponseErrorContainer so this condition needs to match se we don't loose errors.
+      return [queryResponse.error];
+    } else {
+      return [];
+    }
+  }
+
   render() {
     const { datasourceInstance, query, queryResponse, latency } = this.props;
 
     const canToggleEditorModes = has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const isNotStarted = queryResponse.state === LoadingState.NotStarted;
-
-    // We show error without refId in ResponseErrorContainer so this condition needs to match se we don't loose errors.
-    const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
+    const queryErrors = this.getQueryErrors(query, queryResponse);
 
     return (
       <>

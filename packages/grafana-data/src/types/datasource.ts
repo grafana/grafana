@@ -453,6 +453,8 @@ export interface DataQuery {
    * For non mixed scenarios this is undefined.
    */
   datasource?: string | null;
+
+  syntaxError: string;
 }
 
 export enum DataQueryErrorType {
