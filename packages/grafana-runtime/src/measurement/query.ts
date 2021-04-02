@@ -45,9 +45,12 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
     let state = LoadingState.Loading;
     const { key, filter } = options;
 
+    console.log('INIT!!!', options);
+
     const process = (msg: DataFrameJSON) => {
       if (!data) {
         data = new StreamingDataFrame(msg, options.buffer);
+        console.log('FIRST', data);
       } else {
         data.push(msg);
       }

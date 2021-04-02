@@ -156,7 +156,7 @@ export interface LiveChannelAddress {
  * @alpha -- experimental
  */
 export function parseLiveChannelAddress(id: string): LiveChannelAddress | undefined {
-  if (!id || id.length) {
+  if (!id?.length) {
     return undefined;
   }
   const idx0 = id.indexOf('/');
@@ -164,17 +164,13 @@ export function parseLiveChannelAddress(id: string): LiveChannelAddress | undefi
     return undefined;
   }
   const idx1 = id.indexOf('/', idx0 + 1);
-  if (idx1 < 1) {
-    return undefined;
-  }
-  const idx2 = id.indexOf('/', idx1 + 1);
-  if (idx2 < 1) {
+  if (idx1 < idx0) {
     return undefined;
   }
   return {
     scope: id.substring(0, idx0) as LiveChannelScope,
     namespace: id.substring(idx0 + 1, idx1),
-    path: id.substring(idx2),
+    path: id.substring(idx1 + 1).trimEnd(),
   };
 }
 
