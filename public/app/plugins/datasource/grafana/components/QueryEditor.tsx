@@ -2,8 +2,7 @@ import defaults from 'lodash/defaults';
 
 import React, { PureComponent } from 'react';
 import { InlineField, Select, FeatureInfoBox } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, LiveChannelScope, FeatureState } from '@grafana/data';
-import { getLiveMeasurements, LiveMeasurements } from '@grafana/runtime';
+import { QueryEditorProps, SelectableValue, FeatureState, getFrameDisplayName } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 
@@ -37,21 +36,38 @@ export class QueryEditor extends PureComponent<Props> {
     onRunQuery();
   };
 
-  onMeasurementNameChanged = (sel: SelectableValue<string>) => {
+  onFieldNamesChange = (item: SelectableValue<string>) => {
     const { onChange, query, onRunQuery } = this.props;
+    let fields: string[] = [];
+    if (Array.isArray(item)) {
+      fields = item.map((v) => v.value);
+    } else if (item.value) {
+      fields = [item.value];
+    }
+
     onChange({
       ...query,
-      measurements: {
-        ...query.measurements,
-        key: sel?.value,
+      filter: {
+        ...query.filter,
+        fields,
       },
     });
     onRunQuery();
   };
 
   renderMeasurementsQuery() {
-    let { channel, measurements } = this.props.query;
-    const channels: Array<SelectableValue<string>> = [];
+    const { data } = this.props;
+    let { channel, filter } = this.props.query;
+    const channels: Array<SelectableValue<string>> = [
+      {
+        value: 'plugin/testdata/random-2s-stream',
+        label: 'plugin/testdata/random-2s-stream',
+      },
+      {
+        value: 'plugin/testdata/random-flakey-stream',
+        label: 'plugin/testdata/random-flakey-stream',
+      },
+    ];
     let currentChannel = channels.find((c) => c.value === channel);
     if (channel && !currentChannel) {
       currentChannel = {
@@ -62,42 +78,33 @@ export class QueryEditor extends PureComponent<Props> {
       channels.push(currentChannel);
     }
 
-    if (!measurements) {
-      measurements = {};
-    }
-    const names: Array<SelectableValue<string>> = [
-      { value: '', label: 'All measurements', description: 'Show every measurement streamed to this channel' },
-    ];
-
-    let info: LiveMeasurements | undefined = undefined;
-    if (channel) {
-      info = getLiveMeasurements({
-        scope: LiveChannelScope.Grafana,
-        namespace: 'measurements',
-        path: channel,
-      });
-
-      let foundName = false;
-      if (info) {
-        for (const name of info.getKeys()) {
-          names.push({
-            value: name,
-            label: name,
-          });
-          if (name === measurements.key) {
-            foundName = true;
+    const distinctFields = new Set<string>();
+    const fields: Array<SelectableValue<string>> = [];
+    if (data && data.series?.length) {
+      for (const frame of data.series) {
+        for (const field of frame.fields) {
+          if (distinctFields.has(field.name) || !field.name) {
+            continue;
           }
+          fields.push({
+            value: field.name,
+            label: field.name,
+            description: `(${getFrameDisplayName(frame)} / ${field.type})`,
+          });
+          distinctFields.add(field.name);
         }
-      } else {
-        console.log('NO INFO for', channel);
       }
-
-      if (measurements.key && !foundName) {
-        names.push({
-          label: measurements.key,
-          value: measurements.key,
-          description: `Frames with key ${measurements.key}`,
-        });
+    }
+    if (filter?.fields) {
+      for (const f of filter.fields) {
+        if (!distinctFields.has(f)) {
+          fields.push({
+            value: f,
+            label: `${f} (not loaded)`,
+            description: `Configured, but not found in the query results`,
+          });
+          distinctFields.add(f);
+        }
       }
     }
 
@@ -120,18 +127,19 @@ export class QueryEditor extends PureComponent<Props> {
         </div>
         {channel && (
           <div className="gf-form">
-            <InlineField label="Measurement" grow={true} labelWidth={labelWidth}>
+            <InlineField label="Fields" grow={true} labelWidth={labelWidth}>
               <Select
-                options={names}
-                value={names.find((v) => v.value === measurements?.key) || names[0]}
-                onChange={this.onMeasurementNameChanged}
+                options={fields}
+                value={filter?.fields || []}
+                onChange={this.onFieldNamesChange}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}
-                placeholder="Filter by name"
+                placeholder="All fields"
                 isClearable={true}
-                noOptionsMessage="Filter by name"
-                formatCreateLabel={(input: string) => `Show: ${input}`}
+                noOptionsMessage="Unable to list all fields"
+                formatCreateLabel={(input: string) => `Field: ${input}`}
                 isSearchable={true}
+                isMulti={true}
               />
             </InlineField>
           </div>

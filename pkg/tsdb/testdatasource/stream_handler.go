@@ -35,12 +35,12 @@ func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunS
 	switch request.Path {
 	case "random-2s-stream":
 		conf = testStreamConfig{
-			Interval: 200 * time.Millisecond,
+			Interval: 2 * time.Second,
 		}
 	case "random-flakey-stream":
 		conf = testStreamConfig{
-			Interval: 200 * time.Millisecond,
-			Drop:     0.6,
+			Interval: 100 * time.Millisecond,
+			Drop:     0.75, // keep 25%
 		}
 	case "random-20Hz-stream":
 		conf = testStreamConfig{
