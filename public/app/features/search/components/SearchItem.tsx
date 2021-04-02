@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { TagList, Card, useStyles, Icon, IconName } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';

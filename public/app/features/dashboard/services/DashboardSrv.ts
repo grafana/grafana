@@ -71,7 +71,7 @@ export class DashboardSrv {
 coreModule.service('dashboardSrv', DashboardSrv);
 
 //
-// Code below is to export the service to react components
+// Code below is to export the service to React components
 //
 
 let singletonInstance: DashboardSrv;

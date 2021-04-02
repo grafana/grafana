@@ -18,7 +18,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';

@@ -6,11 +6,12 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
-  LiveChannelScope,
+  parseLiveChannelAddress,
+  StreamingFrameOptions,
 } from '@grafana/data';
 
 import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from './types';
-import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveMeasurementsObserver } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, toDataQueryResponse, getLiveDataStream } from '@grafana/runtime';
 import { Observable, of, merge } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 
@@ -22,24 +23,31 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   }
 
   query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
+    const buffer: StreamingFrameOptions = {
+      maxLength: request.maxDataPoints ?? 500,
+    };
+
+    if (request.rangeRaw?.to === 'now') {
+      const elapsed = request.range.to.valueOf() - request.range.from.valueOf();
+      buffer.maxDelta = elapsed;
+    }
+
     const queries: Array<Observable<DataQueryResponse>> = [];
     for (const target of request.targets) {
       if (target.hide) {
         continue;
       }
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
-        const { channel, measurements } = target;
+        const { channel, filter } = target;
         if (channel) {
+          const addr = parseLiveChannelAddress(channel);
           queries.push(
-            getLiveMeasurementsObserver(
-              {
-                scope: LiveChannelScope.Grafana,
-                namespace: 'measurements',
-                path: channel,
-              },
-              `${request.requestId}.${counter++}`,
-              measurements
-            )
+            getLiveDataStream({
+              key: `${request.requestId}.${counter++}`,
+              addr: addr!,
+              filter,
+              buffer,
+            })
           );
         }
       } else {
