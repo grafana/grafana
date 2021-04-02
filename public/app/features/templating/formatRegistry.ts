@@ -93,7 +93,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
     {
       id: 'csv',
       name: 'Csv',
-      description: 'Comma separated values',
+      description: 'Comma-separated values',
       formatter: ({ value }) => {
         if (isArray(value)) {
           return value.join(',');
@@ -123,7 +123,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
     {
       id: 'percentencode',
       name: 'Percent encode',
-      description: 'Useful for url escaping values',
+      description: 'Useful for URL escaping values',
       formatter: ({ value }) => {
         // like glob, but url escaped
         if (isArray(value)) {
@@ -193,7 +193,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
     {
       id: 'glob',
       name: 'Glob',
-      description: 'Format multi valued variables using glob syntax, example {value1,value2}',
+      description: 'Format multi-valued variables using glob syntax, example {value1,value2}',
       formatter: ({ value }) => {
         if (isArray(value) && value.length > 1) {
           return '{' + value.join(',') + '}';
@@ -204,7 +204,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
     {
       id: 'text',
       name: 'Text',
-      description: 'Format variables in their text representation. Example in multi variable scenario A + B + C.',
+      description: 'Format variables in their text representation. Example in multi-variable scenario A + B + C.',
       formatter: (options, variable) => {
         if (typeof options.text === 'string') {
           return options.value === ALL_VARIABLE_VALUE ? ALL_VARIABLE_TEXT : options.text;
@@ -221,9 +221,9 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
     },
     {
       id: 'queryparam',
-      name: 'Query Parameter',
+      name: 'Query parameter',
       description:
-        'Format variables as url parameter. Example in multi variable scenario A + B + C => var-foo=A&var-foo=B&var-foo=C.',
+        'Format variables as URL parameters. Example in multi-variable scenario A + B + C => var-foo=A&var-foo=B&var-foo=C.',
       formatter: (options, variable) => {
         const { name, type } = variable;
         const adapter = variableAdapters.get(type);

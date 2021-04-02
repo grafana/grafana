@@ -1,10 +1,12 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
-  "plugins": ["no-only-tests"],
+  "plugins": ["no-only-tests", "@emotion"],
   "rules": {
     "no-only-tests/no-only-tests": "error",
-    "react/prop-types": "off"
+    "react/prop-types": "off",
+    "@emotion/jsx-import": "error",
+    "@emotion/pkg-renaming": "error"
   },
   "overrides": [
     {

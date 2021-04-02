@@ -1,7 +1,7 @@
 import React from 'react';
 import { config } from '@grafana/runtime';
 import { renderHook } from '@testing-library/react-hooks';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { mount } from 'enzyme';
 import { memoizedStyleCreators, mockThemeContext, useStyles } from './ThemeContext';
 

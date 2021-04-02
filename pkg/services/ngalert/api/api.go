@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -30,6 +29,10 @@ var timeNow = time.Now
 
 type Alertmanager interface {
 	ApplyConfig(config *apimodels.PostableUserConfig) error
+	CreateSilence(ps *apimodels.PostableSilence) (string, error)
+	DeleteSilence(silenceID string) error
+	GetSilence(silenceID string) (apimodels.GettableSilence, error)
+	ListSilences(filters []string) (apimodels.GettableSilences, error)
 }
 
 // API handlers.
@@ -40,6 +43,8 @@ type API struct {
 	DataService     *tsdb.Service
 	Schedule        schedule.ScheduleService
 	Store           store.Store
+	RuleStore       store.RuleStore
+	AlertingStore   store.AlertingStore
 	DataProxy       *datasourceproxy.DatasourceProxyService
 	Alertmanager    Alertmanager
 }
@@ -53,7 +58,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		AlertmanagerApiMock{log: logger},
+		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
 	))
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
@@ -63,7 +68,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		RulerApiMock{log: logger},
+		RulerSrv{store: api.RuleStore, log: logger},
 	))
 	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
 
@@ -125,14 +130,9 @@ func (api *API) conditionEvalEndpoint(c *models.ReqContext, cmd ngmodels.EvalAle
 	}
 
 	frame := evalResults.AsDataFrame()
-	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
-	instances, err := df.Encoded()
-	if err != nil {
-		return response.Error(400, "Failed to encode result dataframes", err)
-	}
 
-	return response.JSON(200, util.DynMap{
-		"instances": instances,
+	return response.JSONStreaming(200, util.DynMap{
+		"instances": []*data.Frame{&frame},
 	})
 }
 
@@ -156,17 +156,8 @@ func (api *API) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Respo
 	}
 	frame := evalResults.AsDataFrame()
 
-	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
-	if err != nil {
-		return response.Error(400, "Failed to instantiate Dataframes from the decoded frames", err)
-	}
-
-	instances, err := df.Encoded()
-	if err != nil {
-		return response.Error(400, "Failed to encode result dataframes", err)
-	}
-	return response.JSON(200, util.DynMap{
-		"instances": instances,
+	return response.JSONStreaming(200, util.DynMap{
+		"instances": []*data.Frame{&frame},
 	})
 }
 

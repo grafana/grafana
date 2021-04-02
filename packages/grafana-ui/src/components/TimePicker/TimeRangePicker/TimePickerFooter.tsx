@@ -1,5 +1,5 @@
 import React, { FC, useState, useCallback } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { TimeZone, GrafanaTheme, getTimeZoneInfo } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../../themes';
 import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
