@@ -31,6 +31,9 @@ const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
 
+  // To be considered a time series query, the last bucked aggregation must be a Date Histogram
+  const isTimeSeriesQuery = value.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
+
   return (
     <>
       <InlineFieldRow>
@@ -45,7 +48,12 @@ const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
             portalOrigin="elasticsearch"
           />
         </InlineField>
-        <InlineField label="Alias" labelWidth={15}>
+        <InlineField
+          label="Alias"
+          labelWidth={15}
+          disabled={!isTimeSeriesQuery}
+          tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
+        >
           <Input
             id={`ES-query-${value.refId}_alias`}
             placeholder="Alias Pattern"
