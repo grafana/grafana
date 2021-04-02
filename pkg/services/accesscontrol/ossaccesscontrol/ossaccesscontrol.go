@@ -40,7 +40,7 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 }
 
 func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
-	return evaluator.Evaluate(ac, ctx, user, permission, scope...)
+	return evaluator.Evaluate(ctx, ac, user, permission, scope...)
 }
 
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser, roles []string) ([]*accesscontrol.Permission, error) {

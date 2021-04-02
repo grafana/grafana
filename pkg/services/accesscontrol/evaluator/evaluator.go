@@ -11,7 +11,7 @@ import (
 
 const roleGrafanaAdmin = "Grafana Admin"
 
-func Evaluate(ac accesscontrol.AccessControl, ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
+func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
 	roles := []string{string(user.OrgRole)}
 	for _, role := range user.OrgRole.Children() {
 		roles = append(roles, string(role))
