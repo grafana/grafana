@@ -2,15 +2,13 @@ package features
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-//go:generate mockgen -destination=mock.go -package=features github.com/grafana/grafana/pkg/services/live/features StreamPacketSender,PresenceGetter,PluginContextGetter,StreamRunner,SchemaCache
+//go:generate mockgen -destination=mock.go -package=features github.com/grafana/grafana/pkg/services/live/features StreamPacketSender,PresenceGetter,PluginContextGetter,StreamRunner
 
 type StreamPacketSender interface {
 	Send(channel string, packet *backend.StreamPacket) error
@@ -26,12 +24,6 @@ type PluginContextGetter interface {
 
 type StreamRunner interface {
 	RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error
-}
-
-type SchemaCache interface {
-	Update(channel string, schema json.RawMessage) error
-	Get(channel string) (json.RawMessage, bool, error)
-	Delete(channel string) error
 }
 
 type streamSender struct {
@@ -57,18 +49,16 @@ type PluginRunner struct {
 	pluginContextGetter PluginContextGetter
 	handler             backend.StreamHandler
 	streamManager       *StreamManager
-	schemaCache         SchemaCache
 }
 
 // NewPluginRunner creates new PluginRunner.
-func NewPluginRunner(pluginID string, datasourceUID string, streamManager *StreamManager, pluginContextGetter PluginContextGetter, handler backend.StreamHandler, schemaCache SchemaCache) *PluginRunner {
+func NewPluginRunner(pluginID string, datasourceUID string, streamManager *StreamManager, pluginContextGetter PluginContextGetter, handler backend.StreamHandler) *PluginRunner {
 	return &PluginRunner{
 		pluginID:            pluginID,
 		datasourceUID:       datasourceUID,
 		pluginContextGetter: pluginContextGetter,
 		handler:             handler,
 		streamManager:       streamManager,
-		schemaCache:         schemaCache,
 	}
 }
 
@@ -81,7 +71,6 @@ func (m *PluginRunner) GetHandlerForPath(path string) (models.ChannelHandler, er
 		streamManager:       m.streamManager,
 		handler:             m.handler,
 		pluginContextGetter: m.pluginContextGetter,
-		schemaCache:         m.schemaCache,
 	}, nil
 }
 
@@ -93,58 +82,73 @@ type PluginPathRunner struct {
 	streamManager       *StreamManager
 	handler             backend.StreamHandler
 	pluginContextGetter PluginContextGetter
-	schemaCache         SchemaCache
 }
 
 // OnSubscribe passes control to a plugin.
-func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, bool, error) {
+func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	pCtx, found, err := r.pluginContextGetter.GetPluginContext(user, r.pluginID, r.datasourceUID)
 	if err != nil {
 		logger.Error("Get plugin context error", "error", err, "path", r.path)
-		return models.SubscribeReply{}, false, err
+		return models.SubscribeReply{}, 0, err
 	}
 	if !found {
 		logger.Error("Plugin context not found", "path", r.path)
-		return models.SubscribeReply{}, false, centrifuge.ErrorInternal
+		return models.SubscribeReply{}, 0, centrifuge.ErrorInternal
 	}
-	resp, err := r.handler.CanSubscribeToStream(ctx, &backend.SubscribeToStreamRequest{
+	resp, err := r.handler.SubscribeStream(ctx, &backend.SubscribeStreamRequest{
 		PluginContext: pCtx,
 		Path:          r.path,
 	})
 	if err != nil {
 		logger.Error("Plugin CanSubscribeToStream call error", "error", err, "path", r.path)
-		return models.SubscribeReply{}, false, err
+		return models.SubscribeReply{}, 0, err
 	}
-	if !resp.OK {
-		return models.SubscribeReply{}, false, nil
+	if resp.Status != backend.SubscribeStreamStatusOK {
+		return models.SubscribeReply{}, resp.Status, nil
 	}
-	result, err := r.streamManager.SubmitStream(ctx, e.Channel, r.path, pCtx, r.handler)
-	if err != nil {
-		logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
-		return models.SubscribeReply{}, false, centrifuge.ErrorInternal
+
+	if resp.UseRunStream {
+		submitResult, err := r.streamManager.SubmitStream(ctx, e.Channel, r.path, pCtx, r.handler)
+		if err != nil {
+			logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
+			return models.SubscribeReply{}, 0, centrifuge.ErrorInternal
+		}
+		if submitResult.StreamExists {
+			logger.Debug("Skip running new stream (already exists)", "path", r.path)
+		} else {
+			logger.Debug("Running a new keepalive stream", "path", r.path)
+		}
 	}
 
 	reply := models.SubscribeReply{
-		Presence: true,
+		Presence: resp.UseRunStream, // only enable presence for streams with UseRunStream on at the moment.
+		Data:     resp.Data,
 	}
-
-	if result.StreamExists {
-		schema, ok, err := r.schemaCache.Get(e.Channel)
-		if err != nil {
-			logger.Error("Error getting schema for a channel", "error", err, "channel", e.Channel)
-			return models.SubscribeReply{}, false, centrifuge.ErrorInternal
-		}
-		if !ok {
-			logger.Error("No schema for existing stream", "error", err, "channel", e.Channel)
-			return models.SubscribeReply{}, false, centrifuge.ErrorInternal
-		}
-		reply.Data = schema
-	}
-	return reply, true, nil
+	return reply, backend.SubscribeStreamStatusOK, nil
 }
 
 // OnPublish passes control to a plugin.
-func (r *PluginPathRunner) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, bool, error) {
-	// TODO: pass control to a plugin.
-	return models.PublishReply{}, false, fmt.Errorf("not implemented yet")
+func (r *PluginPathRunner) OnPublish(ctx context.Context, user *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+	pCtx, found, err := r.pluginContextGetter.GetPluginContext(user, r.pluginID, r.datasourceUID)
+	if err != nil {
+		logger.Error("Get plugin context error", "error", err, "path", r.path)
+		return models.PublishReply{}, 0, err
+	}
+	if !found {
+		logger.Error("Plugin context not found", "path", r.path)
+		return models.PublishReply{}, 0, centrifuge.ErrorInternal
+	}
+	resp, err := r.handler.PublishStream(ctx, &backend.PublishStreamRequest{
+		PluginContext: pCtx,
+		Path:          r.path,
+		Data:          e.Data,
+	})
+	if err != nil {
+		logger.Error("Plugin CanSubscribeToStream call error", "error", err, "path", r.path)
+		return models.PublishReply{}, 0, err
+	}
+	if resp.Status != backend.PublishStreamStatusOK {
+		return models.PublishReply{}, resp.Status, nil
+	}
+	return models.PublishReply{Data: resp.Data}, backend.PublishStreamStatusOK, nil
 }

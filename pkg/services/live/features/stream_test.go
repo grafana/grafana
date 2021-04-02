@@ -67,7 +67,7 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 		require.Equal(t, "test", req.Path)
 		close(startedCh)
 		err := sender.Send(&backend.StreamPacket{
-			Payload: []byte("test"),
+			Data: []byte("test"),
 		})
 		require.NoError(t, err)
 		<-ctx.Done()
