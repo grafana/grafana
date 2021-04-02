@@ -1,16 +1,9 @@
 // Libraries
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
-
-// Ignoring because I couldn't get @types/react-select work with Torkel's fork
-// @ts-ignore
-import { default as ReactSelect, components } from '@torkelo/react-select';
-// @ts-ignore
-import Creatable from '@torkelo/react-select/creatable';
-// @ts-ignore
-import { CreatableProps } from 'react-select';
-// @ts-ignore
-import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
+import { default as ReactSelect, components } from 'react-select';
+import Creatable from 'react-select/creatable';
+import { default as ReactAsyncSelect } from 'react-select/async';
 
 // Components
 import { SelectOption } from './SelectOption';
@@ -115,11 +108,11 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
       widthClass = 'width-' + width;
     }
 
-    let SelectComponent: ReactSelect | Creatable = ReactSelect;
+    let SelectComponent = ReactSelect;
     const creatableOptions: any = {};
 
     if (allowCustomValue) {
-      SelectComponent = Creatable;
+      SelectComponent = Creatable as any;
       creatableOptions.formatCreateLabel = formatCreateLabel ?? ((input: string) => input);
     }
 
@@ -223,6 +216,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
       <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
         {(onOpenMenuInternal, onCloseMenuInternal) => {
           return (
+            //@ts-expect-error
             <ReactAsyncSelect
               captureMenuScroll={false}
               classNamePrefix="gf-form-select-box"
