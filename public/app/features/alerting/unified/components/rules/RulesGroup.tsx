@@ -2,7 +2,7 @@ import { RuleGroup, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, useMemo, useState, Fragment } from 'react';
 import { Icon, Tooltip, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { isAlertingRule } from '../../utils/rules';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { StateColoredText } from '../StateColoredText';

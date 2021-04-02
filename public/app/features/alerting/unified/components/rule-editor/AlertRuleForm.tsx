@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { PageToolbar, ToolbarButton, stylesFactory, Form, FormAPI } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { config } from 'app/core/config';
 import AlertTypeSection from './AlertTypeSection';

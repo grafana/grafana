@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { Well } from './Well';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useStyles } from '@grafana/ui';
 
 const wellableAnnotationKeys = ['message', 'description'];

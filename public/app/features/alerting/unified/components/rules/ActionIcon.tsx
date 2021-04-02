@@ -2,7 +2,7 @@ import { Icon, IconName, useStyles, Tooltip } from '@grafana/ui';
 import { PopoverContent } from '@grafana/ui/src/components/Tooltip/Tooltip';
 import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip/PopoverController';
 import React, { FC } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface Props {
   tooltip: PopoverContent;

@@ -4,7 +4,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types/store';
 import { useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 
 interface Props {

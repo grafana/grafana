@@ -1,7 +1,7 @@
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 type Props = {

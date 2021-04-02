@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Field, FieldArray, FormAPI, Input, InlineLabel, IconButton, Label, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { config } from 'app/core/config';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 interface Props extends Pick<FormAPI<{}>, 'register' | 'control'> {
   className?: string;

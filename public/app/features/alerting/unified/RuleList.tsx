@@ -9,7 +9,7 @@ import { SystemOrApplicationRules } from './components/rules/SystemOrApplication
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchRulesFromAllSourcesAction } from './state/actions';
 import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { ThresholdRules } from './components/rules/ThresholdRules';
 
 export const RuleList: FC = () => {

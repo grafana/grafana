@@ -4,7 +4,7 @@ import { RuleGroup, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, Fragment, useState } from 'react';
 import { isAlertingRule, ruleKey } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { TimeToNow } from '../TimeToNow';
 import { StateTag } from '../StateTag';
 import { RuleDetails } from './RuleDetails';

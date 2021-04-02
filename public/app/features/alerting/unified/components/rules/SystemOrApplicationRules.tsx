@@ -1,4 +1,4 @@
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
 import { LoadingPlaceholder, useStyles } from '@grafana/ui';
 import React, { FC, useMemo } from 'react';

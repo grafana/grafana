@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Field, FieldSet, Input, Select, useStyles, Label, InputControl } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { AlertRuleFormMethods } from './AlertRuleForm';
 

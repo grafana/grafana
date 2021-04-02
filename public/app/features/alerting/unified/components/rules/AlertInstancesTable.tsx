@@ -1,7 +1,7 @@
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { AlertingRule } from 'app/types/unified-alerting';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import React, { FC, Fragment, useState } from 'react';
 import { getAlertTableStyles } from '../../styles/table';
 import { alertInstanceKey } from '../../utils/rules';

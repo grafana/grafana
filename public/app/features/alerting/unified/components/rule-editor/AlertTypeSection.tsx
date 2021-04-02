@@ -2,7 +2,7 @@ import React, { FC, useState, useEffect } from 'react';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Cascader, FieldSet, Field, Input, InputControl, stylesFactory, Select, CascaderOption } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { getAllDataSources } from '../../utils/config';
 import { fetchRulerRules } from '../../api/ruler';

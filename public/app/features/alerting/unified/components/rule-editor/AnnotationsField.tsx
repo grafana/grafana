@@ -13,7 +13,7 @@ import {
 } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { config } from 'app/core/config';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 interface Props extends FormAPI<any> {}
 
