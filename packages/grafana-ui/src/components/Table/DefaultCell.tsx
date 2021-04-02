@@ -35,6 +35,12 @@ function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: Disp
     return tableStyles.buildCellContainerStyle(displayValue.color);
   }
 
+  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
+    const bgColor = tinycolor(displayValue.color);
+    const textColor = getTextColorForBackground(displayValue.color!);
+    return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString());
+  }
+
   if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
     const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
     const bgColor2 = tinycolor(displayValue.color)
