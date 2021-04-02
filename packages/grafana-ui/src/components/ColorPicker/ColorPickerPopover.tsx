@@ -4,7 +4,7 @@ import { PopoverContentProps } from '../Tooltip/Tooltip';
 import SpectrumPalette from './SpectrumPalette';
 import { Themeable } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme, GrafanaThemeType, getColorForTheme } from '@grafana/data';
 import { stylesFactory, withTheme } from '../../themes';
 
