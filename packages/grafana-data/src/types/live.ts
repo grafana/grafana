@@ -13,6 +13,7 @@ export enum LiveChannelScope {
   DataSource = 'ds', // namespace = data source ID
   Plugin = 'plugin', // namespace = plugin name (singleton works for apps too)
   Grafana = 'grafana', // namespace = feature
+  Push = 'push', // namespace = id
 }
 
 /**
