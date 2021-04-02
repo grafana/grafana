@@ -180,27 +180,3 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("alter alert_rule_version table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_rule_version MODIFY data MEDIUMTEXT;"))
 }
-
-func SilenceMigration(mg *migrator.Migrator) {
-	silence := migrator.Table{
-		Name: "silence",
-		Columns: []*migrator.Column{
-			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 190, Nullable: false, Default: "0"},
-			{Name: "comment", Type: migrator.DB_NVarchar, Length: 190, Nullable: true},
-			{Name: "created_by", Type: migrator.DB_NVarchar, Length: 190, Nullable: true},
-			{Name: "matchers", Type: migrator.DB_Text, Nullable: false},
-			{Name: "ends_at", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "starts_at", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "updated_at", Type: migrator.DB_DateTime, Nullable: true},
-			{Name: "status", Type: migrator.DB_NVarchar, Length: 8, Nullable: false},
-		},
-		Indices: []*migrator.Index{
-			{Cols: []string{"org_id", "uid"}, Type: migrator.IndexType},
-		},
-	}
-
-	mg.AddMigration("create_silence_table", migrator.NewAddTableMigration(silence))
-	mg.AddMigration("add unique index in silence on org_id and uid columns", migrator.NewAddIndexMigration(silence, silence.Indices[0]))
-}
