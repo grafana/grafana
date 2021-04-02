@@ -7,4 +7,6 @@ const (
 	ScopePlugin = "plugin"
 	// ScopeDatasource passes control to a datasource plugin.
 	ScopeDatasource = "ds"
+	// ScopePush ...
+	ScopePush = "push"
 )

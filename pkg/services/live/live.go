@@ -349,6 +349,8 @@ func (g *GrafanaLive) GetChannelHandlerFactory(user *models.SignedInUser, scope 
 		return g.handlePluginScope(user, namespace)
 	case ScopeDatasource:
 		return g.handleDatasourceScope(user, namespace)
+	case ScopePush:
+		return g.handlePushScope(user, namespace)
 	default:
 		return nil, fmt.Errorf("invalid scope: %q", scope)
 	}
@@ -370,6 +372,20 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 		}, nil
 	}
 	streamHandler, err := g.getStreamPlugin(namespace)
+	if err != nil {
+		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
+	}
+	return features.NewPluginRunner(
+		namespace,
+		"", // No instance uid for non-datasource plugins.
+		g.streamManager,
+		g.contextGetter,
+		streamHandler,
+	), nil
+}
+
+func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
+	streamHandler, err := g.getStreamPlugin("live-push")
 	if err != nil {
 		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
 	}

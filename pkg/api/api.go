@@ -408,7 +408,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Post("/short-urls", bind(dtos.CreateShortURLCmd{}), routing.Wrap(hs.createShortURL))
 
 		if hs.Live.IsEnabled() {
-			apiRoute.Post("/live/telemetry/*", hs.LiveTelemetry.Handle)
+			apiRoute.Post("/live/push/*", hs.LiveTelemetry.Handle)
 		}
 	}, reqSignedIn)
 

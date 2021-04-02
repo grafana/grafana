@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+
 	"github.com/grafana/grafana-live-sdk/telemetry/telegraf"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -21,7 +24,7 @@ import (
 )
 
 var (
-	logger = log.New("telemetry")
+	logger = log.New("live_push")
 )
 
 func init() {
@@ -37,6 +40,7 @@ type Receiver struct {
 	DatasourceCache datasources.CacheService `inject:""`
 	GrafanaLive     *live.GrafanaLive        `inject:""`
 
+	cache                         *Cache
 	telegrafConverterWide         *telegraf.Converter
 	telegrafConverterLabelsColumn *telegraf.Converter
 }
@@ -53,6 +57,16 @@ func (t *Receiver) Init() error {
 	// For now only Telegraf converter (influx format) is supported.
 	t.telegrafConverterWide = telegraf.NewConverter()
 	t.telegrafConverterLabelsColumn = telegraf.NewConverter(telegraf.WithUseLabelsColumn(true))
+
+	t.cache = NewCache()
+
+	factory := coreplugin.New(backend.ServeOpts{
+		StreamHandler: newTelemetryStreamHandler(t.cache),
+	})
+	err := t.PluginManager.BackendPluginManager.Register("live-push", factory)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -73,7 +87,7 @@ func (t *Receiver) IsEnabled() bool {
 
 func (t *Receiver) Handle(ctx *models.ReqContext) {
 	path := ctx.Req.URL.Path
-	path = strings.TrimPrefix(path, "/api/live/telemetry/")
+	path = strings.TrimPrefix(path, "/api/live/push/")
 
 	converter := t.telegrafConverterWide
 	if ctx.Req.URL.Query().Get("format") == "labels_column" {
@@ -96,14 +110,22 @@ func (t *Receiver) Handle(ctx *models.ReqContext) {
 	}
 
 	for _, mf := range metricFrames {
-		frameData, err := data.FrameToJSON(mf.Frame(), true, true)
+		frame := mf.Frame()
+		frameSchema, err := data.FrameToJSON(frame, true, false)
+		if err != nil {
+			logger.Error("Error marshaling Frame to Schema", "error", err)
+			ctx.Resp.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		_ = t.cache.Update(mf.Key(), frameSchema)
+		frameData, err := data.FrameToJSON(mf.Frame(), false, true)
 		if err != nil {
 			logger.Error("Error marshaling Frame to JSON", "error", err)
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		// TODO: need a proper path validation (but for now pass it as part of channel name).
-		channel := fmt.Sprintf("telemetry/%s/%s", path, mf.Key())
+		channel := fmt.Sprintf("push/%s/%s", path, mf.Key())
 		logger.Debug("publish data to channel", "channel", channel, "data", string(frameData))
 		err = t.GrafanaLive.Publish(channel, frameData)
 		if err != nil {
