@@ -130,6 +130,7 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
                         <ActionIcon
                           icon="compass"
                           tooltip="view in explore"
+                          target="__blank"
                           href={createExploreLink(rulesSource.name, rule.query)}
                         />
                       )}
