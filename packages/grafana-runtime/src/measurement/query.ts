@@ -50,8 +50,7 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
     let data: StreamingDataFrame | undefined = undefined;
     let state = LoadingState.Loading;
     const { key, filter } = options;
-    let last = -1; //
-    let dropped = 0;
+    let last = perf.now;
 
     const process = (msg: DataFrameJSON) => {
       if (!data) {
@@ -70,16 +69,11 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
         };
       }
 
-      const now = Date.now();
-      const elapsed = now - last;
-      if (elapsed > 1000 || perf.fps > 15) {
+      const elapsed = perf.now - last;
+
+      if (elapsed > 1000 || perf.budget <= 1.05) {
         subscriber.next({ state, data: [filtered], key });
-        last = now;
-        dropped = 0;
-      } else {
-        if (dropped++ % 5 === 0) {
-          console.log('DROPPING MESSAGE!!!', dropped);
-        }
+        last = perf.now;
       }
     };
 

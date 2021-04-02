@@ -1,12 +1,19 @@
+let lastUpdate = Date.now();
+
 export const perf = {
-  fps: 0,
+  budget: 1,
+  now: lastUpdate,
   ok: true,
 };
 
-let lastUpdate = Date.now();
+// target is 20hz (50ms), but we poll at 100ms to smooth out jitter
+const it = 100;
+
 function measure() {
   let now = Date.now();
-  perf.fps = 1e3 / (now - lastUpdate);
+  perf.now = now;
+  perf.budget = (now - lastUpdate) / it;
   lastUpdate = now;
 }
-setInterval(measure, 50); // 20hz
+
+setInterval(measure, it); // 20hz
