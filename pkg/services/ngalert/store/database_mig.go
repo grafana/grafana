@@ -94,7 +94,6 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 			{Name: "labels_hash", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "current_state", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "current_state_since", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "current_state_end", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "last_eval_time", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		PrimaryKeys: []string{"def_org_id", "def_uid", "labels_hash"},
@@ -108,6 +107,9 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 	mg.AddMigration("create alert_instance table", migrator.NewAddTableMigration(alertInstance))
 	mg.AddMigration("add index in alert_instance table on def_org_id, def_uid and current_state columns", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[0]))
 	mg.AddMigration("add index in alert_instance table on def_org_id, current_state columns", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[1]))
+	mg.AddMigration("add column current_state_end to alert_instance", migrator.NewAddColumnMigration(alertInstance, &migrator.Column{
+		Name: "current_state_end", Type: migrator.DB_BigInt, Nullable: false, Default: "0",
+	}))
 }
 
 func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
