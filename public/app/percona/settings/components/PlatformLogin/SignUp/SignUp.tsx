@@ -1,4 +1,4 @@
-import { CheckboxField, LoaderButton, PasswordInputField, TextInputField } from '@percona/platform-core';
+import { CheckboxField, LoaderButton, TextInputField } from '@percona/platform-core';
 import React, { FC } from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
 
@@ -11,19 +11,12 @@ import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from '../PlatformLogin.const
 import { Messages } from '../PlatformLogin.messages';
 import { PlatformLoginService } from '../PlatformLogin.service';
 import { getStyles } from '../PlatformLogin.styles';
-import { Credentials, LoginFormProps } from '../types';
-
-const passwordValidators = [
-  validators.required,
-  validators.containBothCases,
-  validators.containNumbers,
-  validators.minLength(8),
-];
+import { SignUpCredentials, LoginFormProps } from '../types';
 
 export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
   const styles = getStyles(useTheme());
 
-  const handleSignUpFormSubmit = async (credentials: Credentials) => {
+  const handleSignUpFormSubmit = async (credentials: SignUpCredentials) => {
     try {
       await PlatformLoginService.signUp(credentials);
 
@@ -48,7 +41,7 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
     </span>
   );
 
-  const SignUpForm: FC<FormRenderProps<Credentials>> = ({ pristine, submitting, valid, handleSubmit }) => (
+  const SignUpForm: FC<FormRenderProps<SignUpCredentials>> = ({ pristine, submitting, valid, handleSubmit }) => (
     <form data-qa="sign-up-form" className={styles.form} onSubmit={handleSubmit}>
       <legend className={styles.legend}>{Messages.signUp}</legend>
       <TextInputField
@@ -58,11 +51,18 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         validators={[validators.required, validators.validateEmail]}
         showErrorOnBlur
       />
-      <PasswordInputField
-        data-qa="sign-up-password-input"
-        name="password"
-        label={Messages.passwordLabel}
-        validators={passwordValidators}
+      <TextInputField
+        data-qa="sign-up-first-name-input"
+        name="firstName"
+        label={Messages.firstNameLabel}
+        validators={[validators.required]}
+        showErrorOnBlur
+      />
+      <TextInputField
+        data-qa="sign-up-last-name-input"
+        name="lastName"
+        label={Messages.lastNameLabel}
+        validators={[validators.required]}
         showErrorOnBlur
       />
       <CheckboxField
