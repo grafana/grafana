@@ -1,4 +1,4 @@
-import Centrifuge from 'centrifuge/dist/centrifuge.protobuf';
+import Centrifuge from 'centrifuge/dist/centrifuge';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
 import { BehaviorSubject } from 'rxjs';
 import { LiveChannel, LiveChannelScope, LiveChannelAddress } from '@grafana/data';
