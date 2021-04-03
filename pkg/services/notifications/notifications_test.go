@@ -16,9 +16,10 @@ func TestNotificationService(t *testing.T) {
 	}
 	ns.Cfg.StaticRootPath = "../../../public/"
 	ns.Cfg.Smtp.Enabled = true
-	ns.Cfg.Smtp.TemplatesPattern = "emails/*.html"
+	ns.Cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
 	ns.Cfg.Smtp.FromAddress = "from@address.com"
 	ns.Cfg.Smtp.FromName = "Grafana Admin"
+	ns.Cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
 	ns.Bus = bus.New()
 
 	err := ns.Init()
@@ -29,8 +30,10 @@ func TestNotificationService(t *testing.T) {
 		require.NoError(t, err)
 
 		sentMsg := <-ns.mailQueue
-		assert.Contains(t, sentMsg.Body, "body")
+		assert.Contains(t, sentMsg.Body["text/html"], "body")
+		assert.NotContains(t, sentMsg.Body["text/plain"], "body")
 		assert.Equal(t, "Reset your Grafana password - asd@asd.com", sentMsg.Subject)
-		assert.NotContains(t, sentMsg.Body, "Subject")
+		assert.NotContains(t, sentMsg.Body["text/html"], "Subject")
+		assert.NotContains(t, sentMsg.Body["text/plain"], "Subject")
 	})
 }

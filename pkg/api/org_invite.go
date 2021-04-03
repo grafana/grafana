@@ -69,7 +69,7 @@ func AddOrgInvite(c *models.ReqContext, inviteDto dtos.AddInviteForm) response.R
 	if inviteDto.SendEmail && util.IsEmail(inviteDto.LoginOrEmail) {
 		emailCmd := models.SendEmailCommand{
 			To:       []string{inviteDto.LoginOrEmail},
-			Template: "new_user_invite.html",
+			Template: "new_user_invite",
 			Data: map[string]interface{}{
 				"Name":      util.StringsFallback2(cmd.Name, cmd.Email),
 				"OrgName":   c.OrgName,
@@ -111,7 +111,7 @@ func inviteExistingUserToOrg(c *models.ReqContext, user *models.User, inviteDto 
 	if inviteDto.SendEmail && util.IsEmail(user.Email) {
 		emailCmd := models.SendEmailCommand{
 			To:       []string{user.Email},
-			Template: "invited_to_org.html",
+			Template: "invited_to_org",
 			Data: map[string]interface{}{
 				"Name":      user.NameOrFallback(),
 				"OrgName":   c.OrgName,
