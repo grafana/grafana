@@ -1,4 +1,4 @@
-import { DataQueryError, LoadingState, PanelData } from '@grafana/data';
+import { compareArrayValues, compareDataFrameStructures, DataQueryError, LoadingState, PanelData } from '@grafana/data';
 import { useEffect, useRef, useState } from 'react';
 import { PanelModel } from '../../state';
 import { Unsubscribable } from 'rxjs';
@@ -23,7 +23,15 @@ export const usePanelLatestData = (panel: PanelModel, options: GetDataOptions): 
       .getQueryRunner()
       .getData(options)
       .subscribe({
-        next: (data) => setLatestData(data),
+        next: (data) => {
+          if (latestData) {
+            const same = compareArrayValues(latestData.series, data.series, compareDataFrameStructures);
+            if (same) {
+              return; // do not refresh data
+            }
+          }
+          setLatestData(data);
+        },
       });
 
     return () => {
