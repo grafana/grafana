@@ -1,6 +1,23 @@
 import UrlBuilder from './url_builder';
 
 describe('AzureMonitorUrlBuilder', () => {
+  describe('when metric definition is Microsoft.NetApp/netAppAccounts/capacityPools/volumes', () => {
+    it('should build the getMetricNamespaces url in the even longer format', () => {
+      const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
+        '',
+        'sub1',
+        'rg',
+        'Microsoft.NetApp/netAppAccounts/capacityPools/volumes',
+        'rn1/rn2/rn3',
+        '2017-05-01-preview'
+      );
+      expect(url).toBe(
+        '/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
+          'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview'
+      );
+    });
+  });
+
   describe('when metric definition is Microsoft.Sql/servers/databases', () => {
     it('should build the getMetricNamespaces url in the longer format', () => {
       const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
@@ -31,6 +48,24 @@ describe('AzureMonitorUrlBuilder', () => {
       expect(url).toBe(
         '/sub1/resourceGroups/rg/providers/Microsoft.Sql/servers/rn/' +
           'providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview'
+      );
+    });
+  });
+
+  describe('when metric definition is Microsoft.NetApp/netAppAccounts/capacityPools/volumes and the metricNamespace is default', () => {
+    it('should build the getMetricNames url in the even longer format', () => {
+      const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
+        '',
+        'sub1',
+        'rg',
+        'Microsoft.NetApp/netAppAccounts/capacityPools/volumes',
+        'rn1/rn2/rn3',
+        'default',
+        '2017-05-01-preview'
+      );
+      expect(url).toBe(
+        '/sub1/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/' +
+          'providers/microsoft.insights/metricdefinitions?api-version=2017-05-01-preview&metricnamespace=default'
       );
     });
   });
