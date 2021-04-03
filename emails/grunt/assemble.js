@@ -9,7 +9,7 @@ module.exports = function () {
     },
     html: {
       options: {
-        layout: 'templates/layouts/default.html'
+        layout: 'templates/layouts/default.html',
       },
       src: ['templates/*.html'],
       dest: 'dist/',
@@ -20,6 +20,6 @@ module.exports = function () {
       },
       src: ['templates/*.txt'],
       dest: 'dist/',
-    }
+    },
   };
 };
