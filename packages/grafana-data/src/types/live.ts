@@ -156,7 +156,7 @@ export interface LiveChannelAddress {
  *
  * @alpha -- experimental
  */
-export function parseLiveChannelAddress(id: string): LiveChannelAddress | undefined {
+export function parseLiveChannelAddress(id?: string): LiveChannelAddress | undefined {
   if (id?.length) {
     let parts = id.trim().split('/');
     if (parts.length >= 3) {

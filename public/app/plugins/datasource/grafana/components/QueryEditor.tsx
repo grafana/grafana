@@ -1,8 +1,8 @@
 import defaults from 'lodash/defaults';
 
 import React, { PureComponent } from 'react';
-import { InlineField, Select, FeatureInfoBox } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, FeatureState, dataFrameFromJSON } from '@grafana/data';
+import { InlineField, Select, FeatureInfoBox, Input } from '@grafana/ui';
+import { QueryEditorProps, SelectableValue, FeatureState, dataFrameFromJSON, rangeUtil } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -101,8 +101,36 @@ export class QueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
+  checkAndUpdateBuffer = (txt: string) => {
+    const { onChange, query, onRunQuery } = this.props;
+    let buffer: number | undefined;
+    if (txt) {
+      try {
+        buffer = rangeUtil.intervalToSeconds(txt) * 1000;
+      } catch (err) {
+        console.warn('ERROR', err);
+      }
+    }
+    onChange({
+      ...query,
+      buffer,
+    });
+    onRunQuery();
+  };
+
+  handleEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') {
+      return;
+    }
+    this.checkAndUpdateBuffer((e.target as any).value);
+  };
+
+  handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    this.checkAndUpdateBuffer(e.target.value);
+  };
+
   renderMeasurementsQuery() {
-    let { channel, filter } = this.props.query;
+    let { channel, filter, buffer } = this.props.query;
     let { channels, channelFields } = this.state;
     let currentChannel = channels.find((c) => c.value === channel);
     if (channel && !currentChannel) {
@@ -144,6 +172,11 @@ export class QueryEditor extends PureComponent<Props, State> {
       }
     }
 
+    let formattedTime = '';
+    if (buffer) {
+      formattedTime = rangeUtil.secondsToHms(buffer / 1000);
+    }
+
     return (
       <>
         <div className="gf-form">
@@ -176,6 +209,16 @@ export class QueryEditor extends PureComponent<Props, State> {
                 formatCreateLabel={(input: string) => `Field: ${input}`}
                 isSearchable={true}
                 isMulti={true}
+              />
+            </InlineField>
+            <InlineField label="Buffer">
+              <Input
+                placeholder="Auto"
+                width={12}
+                defaultValue={formattedTime}
+                onKeyDown={this.handleEnterKey}
+                onBlur={this.handleBlur}
+                spellCheck={false}
               />
             </InlineField>
           </div>
