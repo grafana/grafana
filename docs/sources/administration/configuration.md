@@ -1201,18 +1201,22 @@ Configure Grafana's Jaeger client for distributed tracing.
 You can also use the standard `JAEGER_*` environment variables to configure
 Jaeger. See the table at the end of https://www.jaegertracing.io/docs/1.16/client-features/
 for the full list. Environment variables will override any settings provided here.
+These environment variables follow the `GF_<section>` convention above,
+i.e. `JAEGER_SAMPLER_TYPE` becomes `GF_TRACING_JAEGER_SAMPLER_TYPE`.
 
 ### address
 
 The host:port destination for reporting spans. (ex: `localhost:6831`)
 
-Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
+Can be set with the environment variables `GF_TRACING_JAEGER_AGENT_HOST`
+and `GF_TRACING_JAEGER_AGENT_PORT`.
 
 ### always_included_tag
 
 Comma-separated list of tags to include in all new spans, such as `tag1:value1,tag2:value2`.
 
-Can be set with the environment variable `JAEGER_TAGS` (use `=` instead of `:` with the environment variable).
+Can be set with the environment variable `GF_TRACING_JAEGER_TAGS`
+(use `=` instead of `:` with the environment variable).
 
 ### sampler_type
 
@@ -1222,7 +1226,7 @@ Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `rem
 
 Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-configuration for details on the different tracing types.
 
-Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
+Can be set with the environment variable `GF_TRACING_JAEGER_SAMPLER_TYPE`.
 
 ### sampler_param
 
@@ -1237,7 +1241,7 @@ This is the sampler configuration parameter. Depending on the value of `sampler_
   and indicates the initial sampling rate before the actual one
   is received from the mothership
 
-May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+May be set with the environment variable `GF_TRACING_JAEGER_SAMPLER_PARAM`.
 
 ### sampling_server_url
 
@@ -1249,7 +1253,7 @@ Default value is `false`.
 
 Controls whether or not to use Zipkin's span propagation format (with `x-b3-` HTTP headers). By default, Jaeger's format is used.
 
-Can be set with the environment variable and value `JAEGER_PROPAGATION=b3`.
+Can be set with the environment variable and value `GF_TRACING_JAEGER_PROPAGATION=b3`.
 
 ### disable_shared_zipkin_spans
 
