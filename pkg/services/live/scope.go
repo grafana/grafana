@@ -7,6 +7,6 @@ const (
 	ScopePlugin = "plugin"
 	// ScopeDatasource passes control to a datasource plugin.
 	ScopeDatasource = "ds"
-	// ScopePush ...
-	ScopePush = "push"
+	// ScopeStream is a managed data frame stream
+	ScopeStream = "stream"
 )

@@ -2,14 +2,11 @@ package telemetry
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana-live-sdk/telemetry/telegraf"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -42,7 +39,6 @@ type Receiver struct {
 	DatasourceCache datasources.CacheService `inject:""`
 	GrafanaLive     *live.GrafanaLive        `inject:""`
 
-	cache                         *Cache2
 	telegrafConverterWide         *telegraf.Converter
 	telegrafConverterLabelsColumn *telegraf.Converter
 }
@@ -60,12 +56,10 @@ func (t *Receiver) Init() error {
 	t.telegrafConverterWide = telegraf.NewConverter()
 	t.telegrafConverterLabelsColumn = telegraf.NewConverter(telegraf.WithUseLabelsColumn(true))
 
-	t.cache = NewCache2()
-
 	factory := coreplugin.New(backend.ServeOpts{
-		StreamHandler: newTelemetryStreamHandler(t.cache),
+		//	StreamHandler: newTelemetryStreamHandler(t.streams),
 	})
-	err := t.PluginManager.BackendPluginManager.Register("live-push", factory)
+	err := t.PluginManager.BackendPluginManager.Register("managed-stream-fake-plugin", factory)
 	if err != nil {
 		return err
 	}
@@ -87,34 +81,21 @@ func (t *Receiver) IsEnabled() bool {
 	return t.Cfg.IsLiveEnabled() // turn on when Live on for now.
 }
 
-func (t *Receiver) HandleList(ctx *models.ReqContext) response.Response {
-
-	info := util.DynMap{}
-
-	for k, v := range t.cache.ids {
-		sub := util.DynMap{}
-		for sK, sV := range v.schemas {
-			sub[sK] = sV
-		}
-		info[k] = sub
-	}
-
-	return response.JSONStreaming(200, info)
-}
-
 func (t *Receiver) Handle(ctx *models.ReqContext) {
 	slug := ctx.Req.URL.Path
 	slug = strings.TrimPrefix(slug, "/api/live/push/")
-	// TODO should not be called "path" since it is just one slug?
-
 	if len(slug) < 1 || strings.Contains(slug, "/") {
 		logger.Error("invalid slug", "slug", slug)
 		ctx.Resp.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	cache := t.cache.GetOrCreate(slug)
-
+	stream, err := t.GrafanaLive.GetManagedStream(slug)
+	if err != nil {
+		logger.Error("Error getting stram", "error", err)
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	converter := t.telegrafConverterWide
 	if ctx.Req.URL.Query().Get("format") == "labels_column" {
 		converter = t.telegrafConverterLabelsColumn
@@ -136,27 +117,24 @@ func (t *Receiver) Handle(ctx *models.ReqContext) {
 	}
 
 	for _, mf := range metricFrames {
-		frame := mf.Frame()
-		frameSchema, err := data.FrameToJSON(frame, true, false)
+		res, err := stream.Push(mf.Key(), mf.Frame())
 		if err != nil {
-			logger.Error("Error marshaling Frame to Schema", "error", err)
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		_, ok, _ := cache.Get(mf.Key())
-		_ = cache.Update(mf.Key(), frameSchema)
-		frameData, err := data.FrameToJSON(mf.Frame(), !ok, true)
+
+		frameData, err := data.FrameToJSON(res.Frame, res.SchemaChanged, true)
 		if err != nil {
 			logger.Error("Error marshaling Frame to JSON", "error", err)
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+
 		// TODO: need a proper path validation (but for now pass it as part of channel name).
-		channel := fmt.Sprintf("push/%s/%s", slug, mf.Key())
-		logger.Debug("publish data to channel", "channel", channel, "data", string(frameData))
-		err = t.GrafanaLive.Publish(channel, frameData)
+		logger.Debug("publish data to channel", "channel", res.Channel, "data", string(frameData))
+		err = t.GrafanaLive.Publish(res.Channel, frameData)
 		if err != nil {
-			logger.Error("Error publishing to a channel", "error", err, "channel", channel)
+			logger.Error("Error publishing to a channel", "error", err, "channel", res.Channel)
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}

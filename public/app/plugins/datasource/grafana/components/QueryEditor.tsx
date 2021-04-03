@@ -5,12 +5,20 @@ import { InlineField, Select, FeatureInfoBox } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, FeatureState, getFrameDisplayName } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
+import { getBackendSrv } from '@grafana/runtime';
 
 type Props = QueryEditorProps<GrafanaDatasource, GrafanaQuery>;
 
 const labelWidth = 12;
 
-export class QueryEditor extends PureComponent<Props> {
+interface State {
+  channels: Array<SelectableValue<string>>;
+  channelFields: Record<string, string[]>;
+}
+
+export class QueryEditor extends PureComponent<Props, State> {
+  state: State = { channels: [], channelFields: {} };
+
   queryTypes: Array<SelectableValue<GrafanaQueryType>> = [
     {
       label: 'Random Walk',
@@ -23,6 +31,36 @@ export class QueryEditor extends PureComponent<Props> {
       description: 'Stream real-time measurements from Grafana',
     },
   ];
+
+  loadChannelInfo() {
+    console.log('reading server info');
+    getBackendSrv()
+      .fetch({ url: 'api/live/list' })
+      .subscribe({
+        next: (v: any) => {
+          console.log('GOT', v);
+          const channelInfo = v.data?.channels as any[];
+          if (channelInfo?.length) {
+            const channelFields: Record<string, string[]> = {};
+            const channels: Array<SelectableValue<string>> = channelInfo.map((c) => {
+              if (c.data) {
+                console.log('LIST fields');
+              }
+              return {
+                value: c.channel,
+                label: c.channel,
+              };
+            });
+
+            this.setState({ channelFields, channels });
+          }
+        },
+      });
+  }
+
+  componentDidMount() {
+    this.loadChannelInfo();
+  }
 
   onQueryTypeChange = (sel: SelectableValue<GrafanaQueryType>) => {
     const { onChange, query, onRunQuery } = this.props;
@@ -58,16 +96,7 @@ export class QueryEditor extends PureComponent<Props> {
   renderMeasurementsQuery() {
     const { data } = this.props;
     let { channel, filter } = this.props.query;
-    const channels: Array<SelectableValue<string>> = [
-      {
-        value: 'plugin/testdata/random-2s-stream',
-        label: 'plugin/testdata/random-2s-stream',
-      },
-      {
-        value: 'plugin/testdata/random-flakey-stream',
-        label: 'plugin/testdata/random-flakey-stream',
-      },
-    ];
+    let { channels } = this.state;
     let currentChannel = channels.find((c) => c.value === channel);
     if (channel && !currentChannel) {
       currentChannel = {
@@ -75,7 +104,7 @@ export class QueryEditor extends PureComponent<Props> {
         label: channel,
         description: `Connected to ${channel}`,
       };
-      channels.push(currentChannel);
+      channels = [currentChannel, ...channels];
     }
 
     const distinctFields = new Set<string>();

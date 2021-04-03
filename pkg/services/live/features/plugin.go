@@ -91,9 +91,11 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 		found bool
 		err   error
 	)
-	if r.pluginID == "live-push" {
+	if r.pluginID == "managed-stream-fake-plugin" {
 		// TODO: properly register core plugin.
-		pCtx = backend.PluginContext{}
+		pCtx = backend.PluginContext{
+			PluginID: e.Channel,
+		}
 		found = true
 	} else {
 		pCtx, found, err = r.pluginContextGetter.GetPluginContext(user, r.pluginID, r.datasourceUID)

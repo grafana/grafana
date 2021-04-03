@@ -406,8 +406,8 @@ func (hs *HTTPServer) registerRoutes() {
 			// POST influx line protocol
 			apiRoute.Post("/live/push/*", hs.LiveTelemetry.Handle)
 
-			// HACK get info
-			apiRoute.Get("/live/push", routing.Wrap(hs.LiveTelemetry.HandleList))
+			// List avaliable streams and fields
+			apiRoute.Get("/live/list", routing.Wrap(hs.Live.HandleListHTTP))
 		}
 
 		// short urls

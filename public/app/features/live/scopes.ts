@@ -154,11 +154,11 @@ export class GrafanaLivePluginScope extends GrafanaLiveScope {
   }
 }
 
-export class GrafanaLivePushScope extends GrafanaLiveScope {
+export class GrafanaLiveStreamScope extends GrafanaLiveScope {
   names?: Array<SelectableValue<string>>;
 
   constructor() {
-    super(LiveChannelScope.Push);
+    super(LiveChannelScope.Stream);
   }
 
   async getChannelSupport(namespace: string) {
