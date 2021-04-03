@@ -25,13 +25,19 @@ const (
 	InstanceStateFiring InstanceStateType = "Alerting"
 	// InstanceStateNormal is for a normal alert.
 	InstanceStateNormal InstanceStateType = "Normal"
+	// InstanceStateNoData is for an alert with no data.
+	InstanceStateNoData InstanceStateType = "NoData"
+	// InstanceStateError is for a erroring alert.
+	InstanceStateError InstanceStateType = "Error"
 )
 
 // IsValid checks that the value of InstanceStateType is a valid
 // string.
 func (i InstanceStateType) IsValid() bool {
 	return i == InstanceStateFiring ||
-		i == InstanceStateNormal
+		i == InstanceStateNormal ||
+		i == InstanceStateNoData ||
+		i == InstanceStateError
 }
 
 // SaveAlertInstanceCommand is the query for saving a new alert instance.
