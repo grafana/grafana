@@ -1,7 +1,6 @@
 package live
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,31 +9,26 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // ManagedStream holds the state of a managed stream
 type ManagedStream struct {
-	mu      sync.RWMutex
-	start   time.Time
-	last    time.Time
-	slug    string
-	schemas map[string]json.RawMessage
-}
-
-type PushResult struct {
-	Frame         *data.Frame
-	SchemaChanged bool
-	Channel       string
+	mu        sync.RWMutex
+	start     time.Time
+	slug      string
+	last      map[string]json.RawMessage
+	publisher models.ChannelPublisher
 }
 
 // NewCache creates new Cache.
-func NewManagedStream(id string) *ManagedStream {
+func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStream {
 	return &ManagedStream{
-		slug:    id,
-		start:   time.Now(),
-		last:    time.Now(),
-		schemas: map[string]json.RawMessage{},
+		slug:      id,
+		start:     time.Now(),
+		last:      map[string]json.RawMessage{},
+		publisher: publisher,
 	}
 }
 
@@ -43,8 +37,8 @@ func (s *ManagedStream) ListChannels(prefix string) []util.DynMap {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	info := make([]util.DynMap, 0, len(s.schemas))
-	for k, v := range s.schemas {
+	info := make([]util.DynMap, 0, len(s.last))
+	for k, v := range s.last {
 		ch := util.DynMap{}
 		ch["channel"] = prefix + k
 		ch["data"] = v
@@ -54,47 +48,53 @@ func (s *ManagedStream) ListChannels(prefix string) []util.DynMap {
 }
 
 // Push send data to the stream and optionally process it
-func (s *ManagedStream) Push(path string, frame *data.Frame) (PushResult, error) {
-	res := PushResult{
-		Frame: frame, // for now it is the same frame, but it may need to fix order, join, apply field config, etc
-	}
-
-	schema, err := data.FrameToJSON(frame, true, false)
+func (s *ManagedStream) Push(path string, frame *data.Frame) error {
+	// Keep schema + data for last packet
+	packet, err := data.FrameToJSON(frame, true, true)
 	if err != nil {
 		logger.Error("Error marshaling Frame to Schema", "error", err)
-		return res, err
+		return err
 	}
 
-	existing, ok := s.GetSchema(path)
-	if !ok || !bytes.Equal(schema, existing) {
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		s.schemas[path] = schema
-		res.SchemaChanged = true
+	// Locks until we totally finish?
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, exists := s.last[path]
+	s.last[path] = packet
+
+	// when the packet already exits, only send the data
+	if exists {
+		packet, err = data.FrameToJSON(frame, false, true)
+		if err != nil {
+			logger.Error("Error marshaling Frame to JSON", "error", err)
+			return err
+		}
 	}
 
 	// The channel this will be posted into
-	res.Channel = fmt.Sprintf("stream/%s/%s", s.slug, path)
-	return res, nil
+	channel := fmt.Sprintf("stream/%s/%s", s.slug, path)
+	logger.Debug("publish data to channel", "channel", channel, "data", string(packet))
+	return s.publisher(channel, packet)
 }
 
 // GetSchema retrieves schema for a channel.
-func (s *ManagedStream) GetSchema(path string) (json.RawMessage, bool) {
+func (s *ManagedStream) GetLastPacket(path string) (json.RawMessage, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	schema, ok := s.schemas[path]
+	schema, ok := s.last[path]
 	return schema, ok
 }
 
 func (s *ManagedStream) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	logger.Info("subscribe", "CTX", ctx, "XXX", req.PluginContext)
 
-	schema, ok := s.GetSchema(req.Path)
+	packet, ok := s.GetLastPacket(req.Path)
 	response := &backend.SubscribeStreamResponse{
 		Status: backend.SubscribeStreamStatusOK,
 	}
 	if ok {
-		response.Data = schema
+		response.Data = packet
 	}
 	return response, nil
 }

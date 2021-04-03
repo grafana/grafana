@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 
 	"github.com/grafana/grafana-live-sdk/telemetry/telegraf"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -117,24 +116,8 @@ func (t *Receiver) Handle(ctx *models.ReqContext) {
 	}
 
 	for _, mf := range metricFrames {
-		res, err := stream.Push(mf.Key(), mf.Frame())
+		err := stream.Push(mf.Key(), mf.Frame())
 		if err != nil {
-			ctx.Resp.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		frameData, err := data.FrameToJSON(res.Frame, res.SchemaChanged, true)
-		if err != nil {
-			logger.Error("Error marshaling Frame to JSON", "error", err)
-			ctx.Resp.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		// TODO: need a proper path validation (but for now pass it as part of channel name).
-		logger.Debug("publish data to channel", "channel", res.Channel, "data", string(frameData))
-		err = t.GrafanaLive.Publish(res.Channel, frameData)
-		if err != nil {
-			logger.Error("Error publishing to a channel", "error", err, "channel", res.Channel)
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
 		}

@@ -494,7 +494,7 @@ func (g *GrafanaLive) HandleListHTTP(ctx *models.ReqContext) response.Response {
 func (g *GrafanaLive) GetManagedStream(id string) (*ManagedStream, error) {
 	s, ok := g.streams[id]
 	if !ok {
-		s = NewManagedStream(id)
+		s = NewManagedStream(id, g.Publish)
 		g.streamsMu.Lock()
 		defer g.streamsMu.Unlock()
 		g.streams[id] = s

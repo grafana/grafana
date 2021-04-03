@@ -7,23 +7,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var noopPublisher = func(p string, b []byte) error {
+	return nil
+}
+
 func TestNewCache(t *testing.T) {
-	c := NewManagedStream("a")
+	c := NewManagedStream("a", noopPublisher)
 	require.NotNil(t, c)
 }
 
 func TestCache_Get(t *testing.T) {
-	c := NewManagedStream("a")
-	_, ok := c.GetSchema("test")
+	c := NewManagedStream("a", noopPublisher)
+	_, ok := c.GetLastPacket("test")
 	require.False(t, ok)
-	res, err := c.Push("test", data.NewFrame("hello"))
+	err := c.Push("test", data.NewFrame("hello"))
 	require.NoError(t, err)
-	require.Equal(t, "stream/a/test", res.Channel)
 
-	s, ok := c.GetSchema("test")
+	s, ok := c.GetLastPacket("test")
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, `{"schema":{"name":"hello","fields":[]}}`, string(s))
+	require.Equal(t, `{"schema":{"name":"hello","fields":[]},"data":{"values":[]}}`, string(s))
 }
 
 // func TestCache_Delete(t *testing.T) {

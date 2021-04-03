@@ -2,7 +2,7 @@ import defaults from 'lodash/defaults';
 
 import React, { PureComponent } from 'react';
 import { InlineField, Select, FeatureInfoBox } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, FeatureState, getFrameDisplayName } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, FeatureState, getFrameDisplayName, dataFrameFromJSON } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -44,7 +44,12 @@ export class QueryEditor extends PureComponent<Props, State> {
             const channelFields: Record<string, string[]> = {};
             const channels: Array<SelectableValue<string>> = channelInfo.map((c) => {
               if (c.data) {
-                console.log('LIST fields');
+                const distinctFields = new Set<string>();
+                const frame = dataFrameFromJSON(c.data);
+                for (const f of frame.fields) {
+                  distinctFields.add(f.name);
+                }
+                console.log('LIST fields', distinctFields);
               }
               return {
                 value: c.channel,
