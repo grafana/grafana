@@ -184,12 +184,9 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	// TODO check quota
 	// TODO validate UID uniqueness in the payload
 
-	ruleGroup := ruleGroupConfig.Name
-
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,
 		NamespaceUID:    namespaceUID,
-		RuleGroup:       ruleGroup,
 		RuleGroupConfig: ruleGroupConfig,
 	}); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)

@@ -74,7 +74,7 @@
         "condition": "B",
         "data": [
           {
-            "refId": "query",
+            "refId": "A",
             "queryType": "",
             "relativeTimeRange": {
               "from": 18000,
@@ -82,7 +82,7 @@
             },
             "model": {
               "alias": "just-testing",
-              "datasource": "000000004",
+              "datasource": "gdev-testdata",
               "datasourceUid": "000000004",
               "intervalMs": 1000,
               "maxDataPoints": 100,
