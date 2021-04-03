@@ -106,7 +106,7 @@ func (t *Receiver) Handle(ctx *models.ReqContext) {
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	logger.Debug("Telemetry request body", "body", string(body), "path", slug)
+	logger.Debug("Telemetry request body", "path", slug, "body", len(body)) //string(body) )
 
 	metricFrames, err := converter.Convert(body)
 	if err != nil {
@@ -114,6 +114,9 @@ func (t *Receiver) Handle(ctx *models.ReqContext) {
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	// TODO -- make sure all packets are combined together!
+	// interval = "1s" vs flush_interval = "5s"
 
 	for _, mf := range metricFrames {
 		err := stream.Push(mf.Key(), mf.Frame())

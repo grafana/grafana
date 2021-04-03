@@ -74,7 +74,7 @@ func (s *ManagedStream) Push(path string, frame *data.Frame) error {
 
 	// The channel this will be posted into
 	channel := fmt.Sprintf("stream/%s/%s", s.slug, path)
-	logger.Debug("publish data to channel", "channel", channel, "data", string(packet))
+	logger.Debug("publish data to channel", "channel", channel) //, "data", string(packet))
 	return s.publisher(channel, packet)
 }
 

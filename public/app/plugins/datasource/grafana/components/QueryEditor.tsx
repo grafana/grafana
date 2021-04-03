@@ -2,7 +2,7 @@ import defaults from 'lodash/defaults';
 
 import React, { PureComponent } from 'react';
 import { InlineField, Select, FeatureInfoBox } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, FeatureState, getFrameDisplayName, dataFrameFromJSON } from '@grafana/data';
+import { QueryEditorProps, SelectableValue, FeatureState, dataFrameFromJSON } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
 import { getBackendSrv } from '@grafana/runtime';
@@ -13,7 +13,7 @@ const labelWidth = 12;
 
 interface State {
   channels: Array<SelectableValue<string>>;
-  channelFields: Record<string, string[]>;
+  channelFields: Record<string, Array<SelectableValue<string>>>;
 }
 
 export class QueryEditor extends PureComponent<Props, State> {
@@ -41,7 +41,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           console.log('GOT', v);
           const channelInfo = v.data?.channels as any[];
           if (channelInfo?.length) {
-            const channelFields: Record<string, string[]> = {};
+            const channelFields: Record<string, Array<SelectableValue<string>>> = {};
             const channels: Array<SelectableValue<string>> = channelInfo.map((c) => {
               if (c.data) {
                 const distinctFields = new Set<string>();
@@ -49,7 +49,10 @@ export class QueryEditor extends PureComponent<Props, State> {
                 for (const f of frame.fields) {
                   distinctFields.add(f.name);
                 }
-                console.log('LIST fields', distinctFields);
+                channelFields[c.channel] = Array.from(distinctFields).map((n) => ({
+                  value: n,
+                  label: n,
+                }));
               }
               return {
                 value: c.channel,
@@ -99,9 +102,8 @@ export class QueryEditor extends PureComponent<Props, State> {
   };
 
   renderMeasurementsQuery() {
-    const { data } = this.props;
     let { channel, filter } = this.props.query;
-    let { channels } = this.state;
+    let { channels, channelFields } = this.state;
     let currentChannel = channels.find((c) => c.value === channel);
     if (channel && !currentChannel) {
       currentChannel = {
@@ -113,22 +115,22 @@ export class QueryEditor extends PureComponent<Props, State> {
     }
 
     const distinctFields = new Set<string>();
-    const fields: Array<SelectableValue<string>> = [];
-    if (data && data.series?.length) {
-      for (const frame of data.series) {
-        for (const field of frame.fields) {
-          if (distinctFields.has(field.name) || !field.name) {
-            continue;
-          }
-          fields.push({
-            value: field.name,
-            label: field.name,
-            description: `(${getFrameDisplayName(frame)} / ${field.type})`,
-          });
-          distinctFields.add(field.name);
-        }
-      }
-    }
+    const fields: Array<SelectableValue<string>> = channel ? channelFields[channel] ?? [] : [];
+    // if (data && data.series?.length) {
+    //   for (const frame of data.series) {
+    //     for (const field of frame.fields) {
+    //       if (distinctFields.has(field.name) || !field.name) {
+    //         continue;
+    //       }
+    //       fields.push({
+    //         value: field.name,
+    //         label: field.name,
+    //         description: `(${getFrameDisplayName(frame)} / ${field.type})`,
+    //       });
+    //       distinctFields.add(field.name);
+    //     }
+    //   }
+    // }
     if (filter?.fields) {
       for (const f of filter.fields) {
         if (!distinctFields.has(f)) {
