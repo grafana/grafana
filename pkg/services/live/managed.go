@@ -99,12 +99,12 @@ func (s *ManagedStream) SubscribeStream(ctx context.Context, req *backend.Subscr
 	return response, nil
 }
 
-func (p *ManagedStream) PublishStream(_ context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (s *ManagedStream) PublishStream(_ context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	return &backend.PublishStreamResponse{
 		Status: backend.PublishStreamStatusPermissionDenied,
 	}, nil
 }
 
-func (p *ManagedStream) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (s *ManagedStream) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
 	return nil
 }
