@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"golang.org/x/sync/errgroup"
 
 	"github.com/benbjohnson/clock"
@@ -29,6 +31,7 @@ type ScheduleService interface {
 	Ticker(context.Context, *state.StateTracker) error
 	Pause() error
 	Unpause() error
+	WarmStateCache(*state.StateTracker)
 
 	// the following are used by tests only used for tests
 	evalApplied(models.AlertDefinitionKey, time.Time)
@@ -78,17 +81,12 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
-				for _, r := range results {
-					sch.log.Info("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
-					cmd := models.SaveAlertInstanceCommand{DefinitionOrgID: key.OrgID, DefinitionUID: key.DefinitionUID, State: models.InstanceStateType(r.State.String()), Labels: models.InstanceLabels(r.Instance), LastEvalTime: ctx.now}
-					err := sch.store.SaveAlertInstance(&cmd)
-					if err != nil {
-						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
-					}
-				}
-				transitionedStates := stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
-				alerts := FromAlertStateToPostableAlerts(transitionedStates)
-				err = sch.SendAlerts(alerts)
+
+				processedStates := stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
+				sch.saveAlertStates(processedStates)
+				alerts := FromAlertStateToPostableAlerts(processedStates)
+				sch.log.Debug("sending alerts to notifier", "count", len(alerts))
+				err = sch.sendAlerts(alerts)
 				if err != nil {
 					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts), "err", err)
 				}
@@ -312,13 +310,88 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 			}
 		case <-grafanaCtx.Done():
 			err := dispatcherGroup.Wait()
+			sch.saveAlertStates(stateTracker.GetAll())
 			return err
 		}
 	}
 }
 
-func (sch *schedule) SendAlerts(alerts []*notifier.PostableAlert) error {
+func (sch *schedule) sendAlerts(alerts []*notifier.PostableAlert) error {
 	return sch.notifier.PutAlerts(alerts...)
+}
+
+func (sch *schedule) saveAlertStates(states []state.AlertState) {
+	sch.log.Debug("saving alert states", "count", len(states))
+	for _, s := range states {
+		cmd := models.SaveAlertInstanceCommand{
+			DefinitionOrgID:   s.OrgID,
+			DefinitionUID:     s.UID,
+			Labels:            models.InstanceLabels(s.Labels),
+			State:             models.InstanceStateType(s.State.String()),
+			LastEvalTime:      s.LastEvaluationTime,
+			CurrentStateSince: s.StartsAt,
+			CurrentStateEnd:   s.EndsAt,
+		}
+		err := sch.store.SaveAlertInstance(&cmd)
+		if err != nil {
+			sch.log.Error("failed to save alert state", "uid", s.UID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
+		}
+	}
+}
+
+func dataLabelsFromInstanceLabels(il models.InstanceLabels) data.Labels {
+	lbs := data.Labels{}
+	for k, v := range il {
+		lbs[k] = v
+	}
+	return lbs
+}
+
+func (sch *schedule) WarmStateCache(st *state.StateTracker) {
+	sch.log.Info("warming cache for startup")
+	st.ResetCache()
+
+	orgIdsCmd := models.FetchUniqueOrgIdsQuery{}
+	if err := sch.store.FetchOrgIds(&orgIdsCmd); err != nil {
+		sch.log.Error("unable to fetch orgIds", "msg", err.Error())
+	}
+
+	var states []state.AlertState
+	for _, orgIdResult := range orgIdsCmd.Result {
+		cmd := models.ListAlertInstancesQuery{
+			DefinitionOrgID: orgIdResult.DefinitionOrgID,
+		}
+		if err := sch.store.ListAlertInstances(&cmd); err != nil {
+			sch.log.Error("unable to fetch previous state", "msg", err.Error())
+		}
+		for _, entry := range cmd.Result {
+			lbs := dataLabelsFromInstanceLabels(entry.Labels)
+			stateForEntry := state.AlertState{
+				UID:                entry.DefinitionUID,
+				OrgID:              entry.DefinitionOrgID,
+				CacheId:            fmt.Sprintf("%s %s", entry.DefinitionUID, lbs),
+				Labels:             lbs,
+				State:              translateInstanceState(entry.CurrentState),
+				Results:            []state.StateEvaluation{},
+				StartsAt:           entry.CurrentStateSince,
+				EndsAt:             entry.CurrentStateEnd,
+				LastEvaluationTime: entry.LastEvalTime,
+			}
+			states = append(states, stateForEntry)
+		}
+	}
+	st.Put(states)
+}
+
+func translateInstanceState(state models.InstanceStateType) eval.State {
+	switch {
+	case state == models.InstanceStateFiring:
+		return eval.Alerting
+	case state == models.InstanceStateNormal:
+		return eval.Normal
+	default:
+		return eval.Error
+	}
 }
 
 type alertDefinitionRegistry struct {

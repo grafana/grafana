@@ -23,7 +23,7 @@ export const updateQueryVariableOptions = (
       }
       const datasource = await getDataSourceSrv().get(variableInState.datasource ?? '');
 
-      // we need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
+      // We need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
       // variable will have the wrong current value as input
       await new Promise((resolve, reject) => {
         const subscription: Subscription = new Subscription();

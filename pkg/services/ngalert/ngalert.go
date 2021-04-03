@@ -81,6 +81,8 @@ func (ng *AlertNG) Init() error {
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
 		Store:           store,
+		RuleStore:       store,
+		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
 	}
 	api.RegisterAPIEndpoints()
@@ -91,6 +93,7 @@ func (ng *AlertNG) Init() error {
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
+	ng.schedule.WarmStateCache(ng.stateTracker)
 	return ng.schedule.Ticker(ctx, ng.stateTracker)
 }
 
@@ -99,7 +102,6 @@ func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
-	// Check also about expressions?
 	return !ng.Cfg.IsNgAlertEnabled()
 }
 
@@ -109,8 +111,12 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	if ng.IsDisabled() {
 		return
 	}
-	addAlertDefinitionMigrations(mg)
-	addAlertDefinitionVersionMigrations(mg)
+	store.AddAlertDefinitionMigrations(mg, defaultIntervalSeconds)
+	store.AddAlertDefinitionVersionMigrations(mg)
 	// Create alert_instance table
-	alertInstanceMigration(mg)
+	store.AlertInstanceMigration(mg)
+
+	// Create alert_rule
+	store.AddAlertRuleMigrations(mg, defaultIntervalSeconds)
+	store.AddAlertRuleVersionMigrations(mg)
 }

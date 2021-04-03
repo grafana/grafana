@@ -17,7 +17,7 @@ export const LinkSettingsHeader: React.FC<LinkSettingsHeaderProps> = ({ onNavCli
       <HorizontalGroup align="center" justify="space-between">
         <h3>
           <span onClick={onNavClick} className={isEditing ? 'pointer' : ''}>
-            Dashboard Links
+            Dashboard links
           </span>
           {isEditing && (
             <span>
