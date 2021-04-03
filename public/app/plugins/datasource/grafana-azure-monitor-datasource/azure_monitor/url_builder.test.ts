@@ -1,7 +1,7 @@
 import UrlBuilder from './url_builder';
 
 describe('AzureMonitorUrlBuilder', () => {
-  describe('when metric definition is Microsoft.Sql/servers/databases', () => {
+  describe('when metric definition is Microsoft.Sql/servers/databases and the metricNamespace is default', () => {
     it('should build the getMetricNames url in the longer format', () => {
       const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
         '',
@@ -19,7 +19,7 @@ describe('AzureMonitorUrlBuilder', () => {
     });
   });
 
-  describe('when metric definition is Microsoft.Sql/servers', () => {
+  describe('when metric definition is Microsoft.Sql/servers and the metricNamespace is default', () => {
     it('should build the getMetricNames url in the shorter format', () => {
       const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
         '',
@@ -37,7 +37,7 @@ describe('AzureMonitorUrlBuilder', () => {
     });
   });
 
-  describe('when metric definition is Microsoft.Storage/storageAccounts/blobServices', () => {
+  describe('when metric definition is Microsoft.Storage/storageAccounts/blobServices and the metricNamespace is default', () => {
     it('should build the getMetricNames url in the longer format', () => {
       const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
         '',
@@ -55,7 +55,7 @@ describe('AzureMonitorUrlBuilder', () => {
     });
   });
 
-  describe('when metric definition is Microsoft.Storage/storageAccounts/fileServices', () => {
+  describe('when metric definition is Microsoft.Storage/storageAccounts/fileServices and the metricNamespace is default', () => {
     it('should build the getMetricNames url in the longer format', () => {
       const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
         '',
@@ -73,7 +73,7 @@ describe('AzureMonitorUrlBuilder', () => {
     });
   });
 
-  describe('when metric definition is Microsoft.Storage/storageAccounts/tableServices', () => {
+  describe('when metric definition is Microsoft.Storage/storageAccounts/tableServices and the metricNamespace is default', () => {
     it('should build the getMetricNames url in the longer format', () => {
       const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
         '',
@@ -91,7 +91,7 @@ describe('AzureMonitorUrlBuilder', () => {
     });
   });
 
-  describe('when metric definition is Microsoft.Storage/storageAccounts/queueServices', () => {
+  describe('when metric definition is Microsoft.Storage/storageAccounts/queueServices and the metricNamespace is default', () => {
     it('should build the getMetricNames url in the longer format', () => {
       const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
         '',
