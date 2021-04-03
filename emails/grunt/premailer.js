@@ -12,7 +12,7 @@ module.exports = {
         dest: '../public/emails/', // Destination path prefix.
       },
     ],
-  },  
+  },
   txt: {
     options: {
       verbose: true,
