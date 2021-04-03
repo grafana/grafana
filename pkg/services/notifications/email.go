@@ -17,7 +17,7 @@ type Message struct {
 	SingleEmail   bool
 	From          string
 	Subject       string
-	Body          string
+	Body          map[string]string
 	Info          string
 	ReplyTo       []string
 	EmbeddedFiles []string

@@ -2,15 +2,24 @@ module.exports = function () {
   'use strict';
   return {
     options: {
-      layout: 'templates/layouts/default.html',
       partials: ['templates/partials/*.hbs'],
       helpers: ['templates/helpers/**/*.js'],
       data: [],
       flatten: true,
     },
-    pages: {
+    html: {
+      options: {
+        layout: 'templates/layouts/default.html'
+      },
       src: ['templates/*.html'],
       dest: 'dist/',
     },
+    txt: {
+      options: {
+        ext: '.txt',
+      },
+      src: ['templates/*.txt'],
+      dest: 'dist/',
+    }
   };
 };

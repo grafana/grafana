@@ -869,7 +869,11 @@ Default is `false`.
 
 ### templates_pattern
 
-Default is `emails/*.html`.
+Enter a comma-separated list of template patterns. Default is `emails/*.html, emails/*.txt`.
+
+### content_types
+
+Enter a comma-separated list of content types that should be included in the emails that are sent. The content types should be ordered according descending preference. Default is `text/html`.
 
 <hr>
 

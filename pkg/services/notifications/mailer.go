@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -78,7 +79,15 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (int, error) {
 			m.SetAddressHeader("Reply-To", replyTo, "")
 		}
 
-		m.SetBody("text/html", msg.Body)
+		/* loop over content types from settings in reverse order as they are ordered in according to descending
+		preference while the alternatives should be ordered according to ascending preference */
+		for i := len(ns.Cfg.Smtp.ContentTypes) - 1; i >= 0; i-- {
+			if i == len(ns.Cfg.Smtp.ContentTypes)-1 {
+				m.SetBody(ns.Cfg.Smtp.ContentTypes[i], msg.Body[ns.Cfg.Smtp.ContentTypes[i]])
+			} else {
+				m.AddAlternative(ns.Cfg.Smtp.ContentTypes[i], msg.Body[ns.Cfg.Smtp.ContentTypes[i]])
+			}
+		}
 
 		innerError := dialer.DialAndSend(m)
 		emailsSentTotal.Inc()
@@ -163,18 +172,25 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		return nil, models.ErrSmtpNotEnabled
 	}
 
-	var buffer bytes.Buffer
-	var err error
-
 	data := cmd.Data
 	if data == nil {
 		data = make(map[string]interface{}, 10)
 	}
 
 	setDefaultTemplateData(data, nil)
-	err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
-	if err != nil {
-		return nil, err
+
+	body := make(map[string]string)
+	for _, contentType := range ns.Cfg.Smtp.ContentTypes {
+		var buffer bytes.Buffer
+		var err error
+
+		fileExtension := util.GetFileExtensionByContentType(contentType)
+		err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
+		if err != nil {
+			return nil, err
+		}
+
+		body[contentType] = buffer.String()
 	}
 
 	subject := cmd.Subject
@@ -207,7 +223,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		SingleEmail:   cmd.SingleEmail,
 		From:          addr.String(),
 		Subject:       subject,
-		Body:          buffer.String(),
+		Body:          body,
 		EmbeddedFiles: cmd.EmbeddedFiles,
 		AttachedFiles: buildAttachedFiles(cmd.AttachedFiles),
 		ReplyTo:       cmd.ReplyTo,

@@ -11,7 +11,7 @@ type SendEmailAttachFile struct {
 	Content []byte
 }
 
-// SendEmailCommand is command for sending emails
+// SendEmailCommand is the command for sending emails
 type SendEmailCommand struct {
 	To            []string
 	SingleEmail   bool
@@ -24,7 +24,7 @@ type SendEmailCommand struct {
 	AttachedFiles []*SendEmailAttachFile
 }
 
-// SendEmailCommandSync is command for sending emails in sync
+// SendEmailCommandSync is the command for sending emails synchronously
 type SendEmailCommandSync struct {
 	SendEmailCommand
 }

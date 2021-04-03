@@ -6,7 +6,7 @@
 ## Tasks
 
 - npm run build (default task will build new inlines email templates)
-- npm start (will build on source html or css change)
+- npm start (will build on source html, txt or css change)
 
 ## Result
 
