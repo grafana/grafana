@@ -2,7 +2,7 @@ import React, { HTMLProps, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import useClickAway from 'react-use/lib/useClickAway';
 import { SelectableValue } from '@grafana/data';
-import { Select } from '../Forms/Legacy/Select/Select';
+import { AsyncSelect, Select } from '../Select/Select';
 
 export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: SelectableValue<T>;
@@ -12,6 +12,9 @@ export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onC
   width: number;
   noOptionsMessage?: string;
   allowCustomValue?: boolean;
+  loadOptions?: ((filter: string) => Promise<Array<SelectableValue<T>>>) | undefined;
+  defaultOptions?: Array<SelectableValue<T>> | boolean;
+  isAsync?: boolean;
 }
 
 export function SegmentSelect<T>({
@@ -22,6 +25,9 @@ export function SegmentSelect<T>({
   width,
   noOptionsMessage = '',
   allowCustomValue = false,
+  loadOptions = undefined,
+  isAsync = false,
+  defaultOptions = [],
   ...rest
 }: React.PropsWithChildren<Props<T>>) {
   const ref = useRef<HTMLDivElement>(null);
@@ -39,6 +45,29 @@ export function SegmentSelect<T>({
     }
   });
 
+  if (isAsync) {
+    return (
+      <div {...rest} ref={ref}>
+        <AsyncSelect
+          className={cx(
+            css`
+              width: ${width > 120 ? width : 120}px;
+            `
+          )}
+          defaultOptions={defaultOptions}
+          loadOptions={loadOptions}
+          noOptionsMessage={noOptionsMessage}
+          placeholder=""
+          autoFocus={true}
+          isOpen={true}
+          onChange={onChange}
+          value={value}
+          allowCustomValue={allowCustomValue}
+        />
+      </div>
+    );
+  }
+
   return (
     <div {...rest} ref={ref}>
       <Select
@@ -47,7 +76,7 @@ export function SegmentSelect<T>({
             width: ${width > 120 ? width : 120}px;
           `
         )}
-        noOptionsMessage={() => noOptionsMessage}
+        noOptionsMessage={noOptionsMessage}
         placeholder=""
         autoFocus={true}
         isOpen={true}

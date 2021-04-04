@@ -7,7 +7,9 @@ import { getSegmentStyles } from './styles';
 import { InlineLabel } from '../Forms/InlineLabel';
 import { useStyles } from '../../themes';
 
-export interface SegmentSyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
+export interface SegmentSyncProps<T>
+  extends SegmentProps<T>,
+    Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange' | 'isAsync' | 'loadOptions' | 'defaultOptions'> {
   value?: T | SelectableValue<T>;
   onChange: (item: SelectableValue<T>) => void;
   options: Array<SelectableValue<T>>;

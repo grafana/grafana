@@ -14,6 +14,7 @@ export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HT
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
   onChange: (item: SelectableValue<T>) => void;
+  defaultOptions?: Array<SelectableValue<T>> | boolean;
 }
 
 export function SegmentAsync<T>({
@@ -25,6 +26,7 @@ export function SegmentAsync<T>({
   allowCustomValue,
   disabled,
   placeholder,
+  defaultOptions,
   ...rest
 }: React.PropsWithChildren<SegmentAsyncProps<T>>) {
   const [state, fetchOptions] = useAsyncFn(loadOptions, [loadOptions]);
@@ -61,6 +63,9 @@ export function SegmentAsync<T>({
   return (
     <SegmentSelect
       {...rest}
+      isAsync={true}
+      defaultOptions={defaultOptions}
+      loadOptions={fetchOptions}
       value={value && !_.isObject(value) ? { value } : value}
       options={state.value ?? []}
       width={width}
