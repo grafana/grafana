@@ -107,11 +107,18 @@ type UpdateOrgUserCommand struct {
 // QUERIES
 
 type GetOrgUsersQuery struct {
-	OrgId int64
-	Query string
-	Limit int
+	OrgId  int64
+	Query  string
+	Limit  int
+	Page   int
+	Result SearchOrgUserQueryResult
+}
 
-	Result []*OrgUserDTO
+type SearchOrgUserQueryResult struct {
+	TotalCount int64         `json:"totalCount"`
+	Users      []*OrgUserDTO `json:"users"`
+	Page       int           `json:"page"`
+	PerPage    int           `json:"perPage"`
 }
 
 // ----------------------

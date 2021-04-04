@@ -306,7 +306,7 @@ func TestUserDataAccess(t *testing.T) {
 						err = GetOrgUsersForTest(query)
 						So(err, ShouldBeNil)
 
-						So(len(query.Result), ShouldEqual, 1)
+						So(len(query.Result.Users), ShouldEqual, 1)
 
 						permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgId}
 						err = GetDashboardAclInfoList(permQuery)
@@ -605,13 +605,13 @@ func TestUserDataAccess(t *testing.T) {
 }
 
 func GetOrgUsersForTest(query *models.GetOrgUsersQuery) error {
-	query.Result = make([]*models.OrgUserDTO, 0)
+	query.Result.Users = make([]*models.OrgUserDTO, 0)
 	sess := x.Table("org_user")
 	sess.Join("LEFT ", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
 	sess.Where("org_user.org_id=?", query.OrgId)
 	sess.Cols("org_user.org_id", "org_user.user_id", "user.email", "user.login", "org_user.role")
 
-	err := sess.Find(&query.Result)
+	err := sess.Find(&query.Result.Users)
 	return err
 }
 

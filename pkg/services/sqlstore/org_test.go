@@ -144,7 +144,7 @@ func TestAccountDataAccess(t *testing.T) {
 					err = GetOrgUsers(&orgUsersQuery)
 					So(err, ShouldBeNil)
 
-					So(orgUsersQuery.Result[1].Role, ShouldEqual, models.ROLE_ADMIN)
+					So(orgUsersQuery.Result.Users[1].Role, ShouldEqual, models.ROLE_ADMIN)
 				})
 
 				Convey("Can get logged in user projection", func() {
@@ -174,8 +174,8 @@ func TestAccountDataAccess(t *testing.T) {
 					err := GetOrgUsers(&query)
 
 					So(err, ShouldBeNil)
-					So(len(query.Result), ShouldEqual, 2)
-					So(query.Result[0].Role, ShouldEqual, "Admin")
+					So(len(query.Result.Users), ShouldEqual, 2)
+					So(query.Result.Users[0].Role, ShouldEqual, "Admin")
 				})
 
 				Convey("Can get organization users with query", func() {
@@ -186,8 +186,8 @@ func TestAccountDataAccess(t *testing.T) {
 					err := GetOrgUsers(&query)
 
 					So(err, ShouldBeNil)
-					So(len(query.Result), ShouldEqual, 1)
-					So(query.Result[0].Email, ShouldEqual, ac1.Email)
+					So(len(query.Result.Users), ShouldEqual, 1)
+					So(query.Result.Users[0].Email, ShouldEqual, ac1.Email)
 				})
 
 				Convey("Can get organization users with query and limit", func() {
@@ -199,8 +199,8 @@ func TestAccountDataAccess(t *testing.T) {
 					err := GetOrgUsers(&query)
 
 					So(err, ShouldBeNil)
-					So(len(query.Result), ShouldEqual, 1)
-					So(query.Result[0].Email, ShouldEqual, ac1.Email)
+					So(len(query.Result.Users), ShouldEqual, 1)
+					So(query.Result.Users[0].Email, ShouldEqual, ac1.Email)
 				})
 
 				Convey("Can set using org", func() {
@@ -278,7 +278,7 @@ func TestAccountDataAccess(t *testing.T) {
 					query := models.GetOrgUsersQuery{OrgId: ac1.OrgId}
 					err = GetOrgUsers(&query)
 					So(err, ShouldBeNil)
-					So(len(query.Result), ShouldEqual, 3)
+					So(len(query.Result.Users), ShouldEqual, 3)
 
 					dash1 := insertTestDashboard(t, sqlStore, "1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
 					dash2 := insertTestDashboard(t, sqlStore, "2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
@@ -317,6 +317,38 @@ func TestAccountDataAccess(t *testing.T) {
 						})
 					})
 				})
+
+			})
+		})
+
+		Convey("Given multiple saved users", func() {
+			setting.AutoAssignOrg = true
+			setting.AutoAssignOrgId = 1
+			setting.AutoAssignOrgRole = "Viewer"
+			for i := 0; i < 5; i++ {
+				_, err := sqlStore.CreateUser(
+					context.Background(), models.CreateUserCommand{
+						Email: fmt.Sprint("ying", i, "@test.com"),
+						Name:  fmt.Sprint("ying", i, " name"),
+						Login: fmt.Sprint("ying", i),
+					})
+				So(err, ShouldBeNil)
+			}
+
+			Convey("Can return the first page of users and a total count", func() {
+				query := models.GetOrgUsersQuery{OrgId: int64(setting.AutoAssignOrgId), Limit: 3, Page: 1}
+				err := GetOrgUsers(&query)
+				So(err, ShouldBeNil)
+				So(len(query.Result.Users), ShouldEqual, 3)
+				So(query.Result.TotalCount, ShouldEqual, 5)
+			})
+
+			Convey("Can return the second page of users and a total count", func() {
+				query := models.GetOrgUsersQuery{OrgId: int64(setting.AutoAssignOrgId), Limit: 3, Page: 2}
+				err := GetOrgUsers(&query)
+				So(err, ShouldBeNil)
+				So(len(query.Result.Users), ShouldEqual, 2)
+				So(query.Result.TotalCount, ShouldEqual, 5)
 			})
 		})
 	})

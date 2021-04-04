@@ -55,17 +55,11 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) response.Response {
 
 // GET /api/org/users
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
-		OrgId: c.OrgId,
-		Query: c.Query("query"),
-		Limit: c.QueryInt("limit"),
-	}, c.SignedInUser)
-
+	result, err := hs.GetUsers(c)
 	if err != nil {
 		return response.Error(500, "Failed to get users for current organization", err)
 	}
-
-	return response.JSON(200, result)
+	return response.JSON(200, result.Users)
 }
 
 // GET /api/org/users/lookup
@@ -79,19 +73,14 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 		return response.Error(403, "Permission denied", nil)
 	}
 
-	orgUsers, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
-		OrgId: c.OrgId,
-		Query: c.Query("query"),
-		Limit: c.QueryInt("limit"),
-	}, c.SignedInUser)
-
+	queryResult, err := hs.GetUsers(c)
 	if err != nil {
 		return response.Error(500, "Failed to get users for current organization", err)
 	}
 
 	result := make([]*dtos.UserLookupDTO, 0)
 
-	for _, u := range orgUsers {
+	for _, u := range queryResult.Users {
 		result = append(result, &dtos.UserLookupDTO{
 			UserID:    u.UserId,
 			Login:     u.Login,
@@ -124,19 +113,47 @@ func isOrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) (bool, error) {
 	return isAdminOfTeamsQuery.Result, nil
 }
 
+func (hs *HTTPServer) GetUsers(c *models.ReqContext) (models.SearchOrgUserQueryResult, error) {
+	// take perpage, then if perpage not valid, take limit. If neither perpage nor limit is valid, put default limit 1000
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = c.QueryInt("limit")
+		if perPage <= 0 {
+			perPage = 1000
+		}
+	}
+	page := c.QueryInt("page")
+	if page < 1 {
+		page = 1
+	}
+
+	searchQuery := c.Query("query")
+
+	query := &models.GetOrgUsersQuery{
+		OrgId: c.OrgId,
+		Query: searchQuery,
+		Limit: perPage,
+		Page:  page,
+	}
+	var err error
+	query.Result.Users, err = hs.getOrgUsersHelper(query, c.SignedInUser)
+
+	query.Result.Page = page
+	query.Result.PerPage = perPage
+
+	return query.Result, err
+}
+
 // GET /api/orgs/:orgId/users
 func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
-	result, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
-		OrgId: c.ParamsInt64(":orgId"),
-		Query: "",
-		Limit: 0,
-	}, c.SignedInUser)
+	c.OrgId = c.ParamsInt64(":orgId")
+	result, err := hs.GetUsers(c)
 
 	if err != nil {
 		return response.Error(500, "Failed to get users for organization", err)
 	}
 
-	return response.JSON(200, result)
+	return response.JSON(200, result.Users)
 }
 
 func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
@@ -144,13 +161,12 @@ func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedIn
 		return nil, err
 	}
 
-	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
-	for _, user := range query.Result {
+	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result.Users))
+	for _, user := range query.Result.Users {
 		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
 			continue
 		}
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
-
 		filteredUsers = append(filteredUsers, user)
 	}
 

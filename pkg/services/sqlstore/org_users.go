@@ -95,8 +95,9 @@ func UpdateOrgUser(cmd *models.UpdateOrgUserCommand) error {
 }
 
 func GetOrgUsers(query *models.GetOrgUsersQuery) error {
-	query.Result = make([]*models.OrgUserDTO, 0)
-
+	query.Result = models.SearchOrgUserQueryResult{
+		Users: make([]*models.OrgUserDTO, 0),
+	}
 	sess := x.Table("org_user")
 	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
 
@@ -117,7 +118,8 @@ func GetOrgUsers(query *models.GetOrgUsersQuery) error {
 	}
 
 	if query.Limit > 0 {
-		sess.Limit(query.Limit, 0)
+		offset := query.Limit * (query.Page - 1)
+		sess.Limit(query.Limit, offset)
 	}
 
 	sess.Cols(
@@ -131,15 +133,18 @@ func GetOrgUsers(query *models.GetOrgUsersQuery) error {
 	)
 	sess.Asc("user.email", "user.login")
 
-	if err := sess.Find(&query.Result); err != nil {
+	if err := sess.Find(&query.Result.Users); err != nil {
 		return err
 	}
 
-	for _, user := range query.Result {
+	for _, user := range query.Result.Users {
 		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
 	}
 
-	return nil
+	user := models.OrgUser{}
+	count, err := x.Count(&user)
+	query.Result.TotalCount = count
+	return err
 }
 
 func RemoveOrgUser(cmd *models.RemoveOrgUserCommand) error {
