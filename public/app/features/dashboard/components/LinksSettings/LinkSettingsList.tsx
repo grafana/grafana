@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { DeleteButton, Icon, IconButton, Tag, useTheme } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { arrayMove } from 'app/core/utils/arrayMove';
@@ -36,13 +36,13 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, s
       {dashboard.links.length === 0 ? (
         <EmptyListCTA
           onClick={setupNew}
-          title="There are no dashboard links added yet"
+          title="No dashboard links added yet"
           buttonIcon="link"
-          buttonTitle="Add Dashboard Link"
-          infoBoxTitle="What are Dashboard Links?"
+          buttonTitle="Add dashboard link"
+          infoBoxTitle="What are dashboard links?"
           infoBox={{
             __html:
-              '<p>Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header.</p>',
+              '<p>Dashboard links allow you to place links to other dashboards and web sites directly below the dashboard header.</p>',
           }}
         />
       ) : (

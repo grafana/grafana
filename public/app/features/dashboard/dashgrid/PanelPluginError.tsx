@@ -39,7 +39,7 @@ export function getPanelPluginLoadError(meta: PanelPluginMeta, err: any): PanelP
       const text = (
         <>
           Check the server startup logs for more information. <br />
-          If this plugin was loaded from git, make sure it was compiled.
+          If this plugin was loaded from Git, then make sure it was compiled.
         </>
       );
       return <PanelPluginError title={`Error loading: ${meta.id}`} text={text} />;

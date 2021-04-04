@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { stylesFactory } from '../../themes';
 import { Button, ButtonVariant } from '../Button';
 import { Icon } from '../Icon/Icon';

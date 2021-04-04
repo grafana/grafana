@@ -15,6 +15,8 @@ The primary use case for expressions is for the upcoming next version of Grafana
 
 > **Note:** Expressions do not work with current Grafana alerting.
 
+> **Note:** Expressions do not work with dashboard variables.
+
 Expressions are meant to augment data sources by enabling queries from different data sources to be combined or by providing operations unavailable in a data source.
 
 > **Note:** When possible, you should do data processing inside the data source. Copying data from storage to the Grafana server for processing is inefficient, so expressions are targeted at lightweight data processing.

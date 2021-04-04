@@ -2,7 +2,7 @@ import React from 'react';
 import { Icon, getSvgSize } from '../Icon/Icon';
 import { IconName, IconSize, IconType } from '../../types/icon';
 import { stylesFactory } from '../../themes/stylesFactory';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { useTheme } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
