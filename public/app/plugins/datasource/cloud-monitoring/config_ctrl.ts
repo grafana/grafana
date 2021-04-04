@@ -10,9 +10,12 @@ export interface JWT {
 
 export class CloudMonitoringConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/cloud-monitoring/partials/config.html';
+
+  // Set through angular bindings
+  declare current: any;
+  declare meta: any;
+
   datasourceSrv: DatasourceSrv;
-  current: any;
-  meta: any;
   jsonText: string;
   validationErrors: string[] = [];
   inputDataValid: boolean;

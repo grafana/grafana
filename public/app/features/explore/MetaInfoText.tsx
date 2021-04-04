@@ -1,5 +1,5 @@
 import React, { memo, useContext } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, ThemeContext } from '@grafana/ui';
 
