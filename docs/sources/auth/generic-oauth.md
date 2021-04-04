@@ -238,3 +238,57 @@ Config:
 ```bash
 role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor' || 'Viewer'
 ```
+
+### Role/Orgs mapping
+
+You can define the `role_org_attribute_mappings_file` attribute to assign different roles for different organizations to user based on claims in the JWT token. Also you can specify if the user would have the Grafana Admin flag.  
+
+grafana.ini:
+```bash
+role_org_attribute_mappings_file = /etc/grafana/mapping.json
+```
+
+Example `/etc/grafana/mapping.json`:
+```json
+{
+  "roleOrgsPathMappings": [
+    {
+      "path": "contains(groups[*], 'grafana_admin')",
+      "data": [
+        {
+          "isGrafanaAdmin": true
+        }
+      ]
+    },
+    {
+      "path": "contains(groups[*], 'test1_admin_test2_editor')",
+      "data": [
+        {
+          "role": "Admin",
+          "orgs": [
+            "test1"
+          ]
+        },
+        {
+          "role": "Editor",
+          "orgs": [
+            "test2"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "contains(groups[*], 'test1_test2_admin')",
+      "data": [
+        {
+          "role": "Admin",
+          "orgs": [
+            "test1",
+            "test2"
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
