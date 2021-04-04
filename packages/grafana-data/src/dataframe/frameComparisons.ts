@@ -37,7 +37,7 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipPrope
 
     if (skipProperties) {
       aKeys = aKeys.filter((k) => skipProperties.indexOf(k) < 0);
-      bKeys = aKeys.filter((k) => skipProperties.indexOf(k) < 0);
+      bKeys = bKeys.filter((k) => skipProperties.indexOf(k) < 0);
     }
     if (aKeys.length !== bKeys.length) {
       return false;
