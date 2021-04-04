@@ -2,8 +2,8 @@ package manager
 
 import (
 	"context"
-	"github.com/gobwas/glob"
 
+	"github.com/gobwas/glob"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
