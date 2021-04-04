@@ -108,7 +108,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 Header
-- **X-Grafana-Org-Id** - The org to which the created key belongs. It is optional. If it is not set, the created key would belongs to the current context org.
+- **X-Grafana-Org-Id** - An optional property that specifies the org to which the created key belongs. If it is not set, the created key belongs to the current context org.
 
 JSON Body schema:
 
