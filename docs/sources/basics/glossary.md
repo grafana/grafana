@@ -2,7 +2,7 @@
 title = "Glossary"
 description = "Grafana glossary"
 keywords = ["grafana", "intro", "glossary", "dictionary"]
-aliases = ["/docs/grafana/latest/guides/glossary"]
+aliases = ["/docs/grafana/latest/guides/glossary", "/docs/grafana/latest/getting-started/glossary"]
 weight = 800
 +++
 
