@@ -83,7 +83,7 @@ func (am *LotexAM) RouteGetAlertingConfig(ctx *models.ReqContext) response.Respo
 				amConfigPath,
 			),
 		},
-		jsonExtractor(&apimodels.GettableUserConfig{}),
+		yamlExtractor(&apimodels.GettableUserConfig{}),
 	)
 }
 
