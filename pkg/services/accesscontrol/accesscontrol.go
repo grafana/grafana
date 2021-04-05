@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 )
 
 type AccessControl interface {
+	registry.CanBeDisabled
 	Evaluator
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser, roles []string) ([]*Permission, error)
 }

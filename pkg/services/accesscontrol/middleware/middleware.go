@@ -8,13 +8,12 @@ import (
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, string, ...string) macaron.Handler {
 	return func(fallback macaron.Handler, permission string, scopes ...string) macaron.Handler {
-		if svc, ok := ac.(registry.CanBeDisabled); ok && svc.IsDisabled() {
+		if ac.IsDisabled() {
 			return fallback
 		}
 
