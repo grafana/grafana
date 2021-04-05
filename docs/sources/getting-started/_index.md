@@ -8,9 +8,7 @@ aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
 
 This section provides a high-level look at Grafana, the Grafana process, and Grafana features. It's a good place to learn how to use the Grafana software.
 
-## What is Grafana?
-
-Grafana is open source visualization and analytics software. It allows you to query, visualize, alert on, and explore your metrics no matter where they are stored. In plain English, it provides you with tools to turn your time-series database (TSDB) data into beautiful graphs and visualizations.
+{{< docs/shared "basics/what-is-grafana.md" >}}
 
 After creating a dashboard like you do in [Getting started]({{< relref "getting-started.md" >}}), there are many possible things you might do next. It all depends on your needs and your use case.
 
