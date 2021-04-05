@@ -1,5 +1,5 @@
 +++
-title = "Getting started"
+title = "Grafana basics"
 weight = 15
 +++
 
