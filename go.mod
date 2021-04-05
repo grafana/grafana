@@ -101,5 +101,3 @@ require (
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
-
-replace github.com/grafana/alerting-api => /Users/josefk/go/src/github.com/grafana/alerting-api
