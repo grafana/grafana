@@ -23,7 +23,7 @@ module.exports = {
       {
         expand: true, // Enable dynamic expansion.
         cwd: 'dist', // Src matches are relative to this path.
-        src: ['*.txt'], // Actual pattern(s) to match.
+        src: ['*.txt'], // Actual patterns to match.
         dest: '../public/emails/', // Destination path prefix.
       },
     ],
