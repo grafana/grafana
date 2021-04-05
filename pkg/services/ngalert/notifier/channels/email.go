@@ -103,7 +103,7 @@ func getTitleFromTemplateData(data *template.Data) string {
 	if data.Status == string(model.AlertFiring) {
 		title += fmt.Sprintf(":%d", len(data.Alerts.Firing()))
 	}
-	title += "]" + strings.Join(data.GroupLabels.SortedPairs().Values(), " ") + " "
+	title += "] " + strings.Join(data.GroupLabels.SortedPairs().Values(), " ") + " "
 	if len(data.CommonLabels) > len(data.GroupLabels) {
 		title += "(" + strings.Join(data.CommonLabels.Remove(data.GroupLabels.Names()).Values(), " ") + ")"
 	}
