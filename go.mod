@@ -17,7 +17,7 @@ require (
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 	github.com/aws/aws-sdk-go v1.38.12
 	github.com/beevik/etree v1.1.0
-	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
+	github.com/benbjohnson/clock v1.0.3
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
 	github.com/centrifugal/centrifuge v0.16.0
 	github.com/cortexproject/cortex v1.4.1-0.20201022071705-85942c5703cf
@@ -42,6 +42,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/alerting-api v0.0.0-20210331135037-3294563b51bb
 	github.com/grafana/grafana-aws-sdk v0.4.0
+	github.com/grafana/grafana-live-sdk v0.0.4
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.91.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387

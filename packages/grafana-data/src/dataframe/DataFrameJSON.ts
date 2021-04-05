@@ -8,12 +8,6 @@ import { guessFieldTypeFromNameAndValue } from './processDataFrame';
  * @alpha
  */
 export interface DataFrameJSON {
-  /**HACK: this will get removed, but will help transition telegraf streaming
-   *
-   * In telegraf, this will be: ${name}${labels}
-   */
-  key?: string;
-
   /**
    * The schema defines the field type and configuration.
    */
