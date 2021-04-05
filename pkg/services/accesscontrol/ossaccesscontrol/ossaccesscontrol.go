@@ -37,10 +37,12 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 	return !exists
 }
 
+// Evaluate evaluates access to the given resource
 func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
 	return evaluator.Evaluate(ctx, ac, user, permission, scope...)
 }
 
+// GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser, roles []string) ([]*accesscontrol.Permission, error) {
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, legacyRole := range roles {
