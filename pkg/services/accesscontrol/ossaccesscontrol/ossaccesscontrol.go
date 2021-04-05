@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -15,10 +14,6 @@ import (
 type OSSAccessControlService struct {
 	Cfg *setting.Cfg `inject:""`
 	Log log.Logger
-}
-
-func init() {
-	registry.RegisterService(&OSSAccessControlService{})
 }
 
 // Init initializes the OSSAccessControlService.
