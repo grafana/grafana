@@ -175,7 +175,7 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		return response.Error(400, fmt.Sprintf("could find dashboard %v for alert with id %v", getDash.Id, id), err)
 	}
 
-	isGeneralFolder := getDash.Result.FolderId == 0 && getDash.Result.IsFolder == false
+	isGeneralFolder := getDash.Result.FolderId == 0 && !getDash.Result.IsFolder
 
 	var namespaceUID string
 
@@ -192,10 +192,26 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 
 		namespaceUID = getFolder.Result.Uid
 	}
+
+	oldNoData := oldAlert.Settings.Get("noDataState").MustString()
+	noDataSetting, err := transNoData(oldNoData)
+	if err != nil {
+		return response.Error(400, "unrecognized no data option", err)
+	}
+
+	oldExecErr := oldAlert.Settings.Get("executionErrorState").MustString()
+	execErrSetting, err := transExecErr(oldExecErr)
+	if err != nil {
+		return response.Error(400, "unrecognized execution error option", err)
+	}
+
 	rule := ngmodels.AlertRule{
-		Title:     oldAlert.Name,
-		Data:      evalCond.Data,
-		Condition: evalCond.Condition,
+		Title:        oldAlert.Name,
+		Data:         evalCond.Data,
+		Condition:    evalCond.Condition,
+		NoDataState:  noDataSetting,
+		ExecErrState: execErrSetting, // TODO: Translate properly
+
 		// Should Alert rule have interval seconds, or is the group Interval?
 	}
 
@@ -225,4 +241,28 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 	}
 
 	return response.JSON(200, cmd)
+}
+
+func transNoData(s string) (ngmodels.NoDataState, error) {
+	switch s {
+	case "ok":
+		return ngmodels.OK, nil
+	case "no_data":
+		return ngmodels.NoData, nil
+	case "alerting":
+		return ngmodels.Alerting, nil
+	case "keep_state":
+		return ngmodels.KeepLastState, nil
+	}
+	return ngmodels.NoData, fmt.Errorf("unrecognized No Data setting %v", s)
+}
+
+func transExecErr(s string) (ngmodels.ExecutionErrorState, error) {
+	switch s {
+	case "alerting":
+		return ngmodels.AlertingErrState, nil
+	case "KeepLastState":
+		return ngmodels.KeepLastStateErrState, nil
+	}
+	return ngmodels.AlertingErrState, fmt.Errorf("unrecognized Execution Error setting %v", s)
 }
