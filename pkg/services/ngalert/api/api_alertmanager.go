@@ -60,14 +60,15 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Res
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response.Response {
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{}
-	err := srv.store.GetLatestAlertmanagerConfiguration(&query)
-	if err != nil {
+	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return response.Error(http.StatusNotFound, err.Error(), nil)
+		}
 		return response.Error(http.StatusInternalServerError, "failed to get latest configuration", err)
 	}
 
 	cfg := apimodels.PostableUserConfig{}
-	err = yaml.Unmarshal([]byte(query.Result.AlertmanagerConfiguration), &cfg)
-	if err != nil {
+	if err := yaml.Unmarshal([]byte(query.Result.AlertmanagerConfiguration), &cfg); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to unmarshal alertmanager configuration", err)
 	}
 
