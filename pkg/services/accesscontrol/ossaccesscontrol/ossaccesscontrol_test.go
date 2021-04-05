@@ -19,41 +19,21 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
-	ac := overrideAccessControlInRegistry(t, cfg)
+	ac := OSSAccessControlService{
+		Cfg: cfg,
+		Log: log.New("accesscontrol-test"),
+	}
 
 	err := ac.Init()
 	require.NoError(t, err)
 	return &ac
 }
 
-func overrideAccessControlInRegistry(t testing.TB, cfg *setting.Cfg) OSSAccessControlService {
-	t.Helper()
-
-	ac := OSSAccessControlService{
-		Cfg: cfg,
-		Log: log.New("accesscontrol-test"),
-	}
-
-	overrideServiceFunc := func(descriptor registry.Descriptor) (*registry.Descriptor, bool) {
-		if _, ok := descriptor.Instance.(*OSSAccessControlService); ok {
-			return &registry.Descriptor{
-				Name:         "AccessControl",
-				Instance:     &ac,
-				InitPriority: descriptor.InitPriority,
-			}, true
-		}
-		return nil, false
-	}
-
-	registry.RegisterOverride(overrideServiceFunc)
-
-	return ac
-}
-
 type evaluatingPermissionsTestCase struct {
-	desc      string
-	user      userTestCase
-	endpoints []endpointTestCase
+	desc       string
+	user       userTestCase
+	endpoints  []endpointTestCase
+	evalResult bool
 }
 
 type userTestCase struct {
@@ -80,6 +60,19 @@ func TestEvaluatingPermissions(t *testing.T) {
 				{permission: "users.teams:read", scope: []string{"users:self"}},
 				{permission: "users:read", scope: []string{"users:self"}},
 			},
+			evalResult: true,
+		},
+		{
+			desc: "should restrict access to the unauthorized endpoints",
+			user: userTestCase{
+				name:           "testuser",
+				orgRole:        models.ROLE_VIEWER,
+				isGrafanaAdmin: false,
+			},
+			endpoints: []endpointTestCase{
+				{permission: "users:create", scope: []string{"users"}},
+			},
+			evalResult: false,
 		},
 	}
 	for _, tc := range testCases {
@@ -98,7 +91,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 			for _, endpoint := range tc.endpoints {
 				result, err := ac.Evaluate(context.Background(), user, endpoint.permission, endpoint.scope...)
 				require.NoError(t, err)
-				assert.True(t, result)
+				assert.Equal(t, tc.evalResult, result)
 			}
 		})
 	}
