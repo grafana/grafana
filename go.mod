@@ -40,7 +40,7 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
-	github.com/grafana/alerting-api v0.0.0-20210331135037-3294563b51bb
+	github.com/grafana/alerting-api v0.0.0-20210405171311-97906879c771
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 	github.com/grafana/grafana-plugin-sdk-go v0.90.0
@@ -101,3 +101,5 @@ require (
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
+
+replace github.com/grafana/alerting-api => /Users/josefk/go/src/github.com/grafana/alerting-api
