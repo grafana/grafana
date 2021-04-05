@@ -44,7 +44,7 @@ export const usePanelLatestData = (
               const now = Date.now();
               const elapsed = now - lastUpdate;
               if (elapsed < 10000) {
-                return; // avoid updates for 10s if the schema is the same
+                return; // avoid updates if the schema has not changed for 10s
               }
               lastUpdate = now;
             }
