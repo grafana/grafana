@@ -67,10 +67,13 @@ async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
   } catch (e) {
     if (e?.status === 404) {
       return empty;
-    } else if (e?.status === 500 && e?.message?.includes('mapping values are not allowed in this context')) {
+    } else if (e?.status === 500 && e?.data?.message?.includes('mapping values are not allowed in this context')) {
       throw {
         ...e,
-        message: RULER_NOT_SUPPORTED_MSG,
+        data: {
+          ...e?.data,
+          message: RULER_NOT_SUPPORTED_MSG,
+        },
       };
     }
     throw e;
