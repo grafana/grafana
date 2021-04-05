@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	amSilencesPath    = "/api/v2/silences"
-	amSilencePath     = "/api/v2/silence/%s"
-	amAlertGroupsPath = "/api/v2/alerts/groups"
-	amAlertsPath      = "/api/v2/alerts"
+	amSilencesPath    = "/alertmanager/api/v2/silences"
+	amSilencePath     = "/alertmanager/api/v2/silence/%s"
+	amAlertGroupsPath = "/alertmanager/api/v2/alerts/groups"
+	amAlertsPath      = "/alertmanager/api/v2/alerts"
 	amConfigPath      = "/api/v1/alerts"
 )
 
