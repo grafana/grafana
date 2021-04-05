@@ -80,29 +80,30 @@ export function compareArrayValues<T>(a: T[], b: T[], cmp: (a: T, b: T) => boole
   return true;
 }
 
+type Cmp = (valA: any, valB: any) => boolean;
+
+const defaultCmp: Cmp = (a, b) => a === b;
+
 /**
  * Checks if two objects are equal shallowly
  *
  * @beta
  */
-export function shallowCompare<T extends {}>(a: T, b: T, cmp?: (valA: any, valB: any) => boolean) {
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
+export function shallowCompare<T extends {}>(a: T, b: T, cmp: Cmp = defaultCmp) {
   if (a === b) {
     return true;
   }
+
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
 
   if (aKeys.length !== bKeys.length) {
     return false;
   }
 
   for (let key of aKeys) {
-    if (cmp) {
-      //@ts-ignore
-      return cmp(a[key], b[key]);
-    }
     //@ts-ignore
-    if (a[key] !== b[key]) {
+    if (!cmp(a[key], b[key])) {
       return false;
     }
   }
