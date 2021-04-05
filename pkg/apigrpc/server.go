@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"net"
 
+	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/server"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,12 +27,8 @@ func init() {
 
 // GRPCAPIServer ...
 type GRPCAPIServer struct {
-	Cfg             *setting.Cfg             `inject:""`
-	PluginManager   *manager.PluginManager   `inject:""`
-	Bus             bus.Bus                  `inject:""`
-	CacheService    *localcache.CacheService `inject:""`
-	DatasourceCache datasources.CacheService `inject:""`
-	GrafanaLive     *live.GrafanaLive        `inject:""`
+	Cfg         *setting.Cfg      `inject:""`
+	GrafanaLive *live.GrafanaLive `inject:""`
 }
 
 // Init Receiver.
@@ -46,13 +41,17 @@ func (s *GRPCAPIServer) Init() error {
 	}
 
 	// TODO: listen on unix socket or on configured port.
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", 10000))
+	lis, err := net.Listen("tcp", "127.0.0.1:10000")
 	if err != nil {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
 
-	var opts []grpc.ServerOption
-	grpcServer := grpc.NewServer(opts...)
+	authenticator := &Authenticator{}
+
+	grpcServer := grpc.NewServer(
+		grpc.StreamInterceptor(grpcAuth.StreamServerInterceptor(authenticator.Authenticate)),
+		grpc.UnaryInterceptor(grpcAuth.UnaryServerInterceptor(authenticator.Authenticate)),
+	)
 	server.RegisterGrafanaServer(grpcServer, s)
 	go func() {
 		err := grpcServer.Serve(lis)
@@ -78,8 +77,24 @@ func (s *GRPCAPIServer) IsEnabled() bool {
 	return s.Cfg.IsLiveEnabled() // turn on when Live on for now.
 }
 
-func (s GRPCAPIServer) PublishStream(_ context.Context, request *server.PublishStreamRequest) (*server.PublishStreamResponse, error) {
-	// TODO: check request permissions, publish to a channel.
+func (s GRPCAPIServer) PublishStream(ctx context.Context, request *server.PublishStreamRequest) (*server.PublishStreamResponse, error) {
+	identity, ok := GetIdentity(ctx)
+	if !ok {
+		return nil, status.Error(codes.Unauthenticated, "no authentication found")
+	}
+	if identity.Type != IdentityTypeDatasource {
+		return nil, status.Error(codes.Unauthenticated, "unsupported identity type")
+	}
+	channel := live.ParseChannelAddress(request.Channel)
+	if !channel.IsValid() {
+		return nil, status.Error(codes.InvalidArgument, `invalid channel`)
+	}
+	if channel.Scope != live.ScopeDatasource {
+		return nil, status.Error(codes.PermissionDenied, `scope permission denied`)
+	}
+	if identity.DatasourceIdentity.UID != channel.Namespace {
+		return nil, status.Error(codes.PermissionDenied, `namespace permission denied`)
+	}
 	logger.Debug("Publish data to a channel", "channel", request.Channel, "data", string(request.Data))
 	err := s.GrafanaLive.Publish(request.Channel, request.Data)
 	if err != nil {

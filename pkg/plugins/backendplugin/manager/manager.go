@@ -66,6 +66,8 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", m.Cfg.BuildVersion),
 		fmt.Sprintf("GF_EDITION=%s", m.License.Edition()),
+		fmt.Sprintf("GF_GRPC_API_ADDRESS=%s", "127.0.0.1:10000"),
+		fmt.Sprintf("GF_GRPC_API_TOKEN=%s", "token"),
 	}
 
 	if m.License.HasLicense() {
