@@ -120,7 +120,7 @@ Options are identical for both Y-axes.
     - **Value -**  The aggregation type to use for the values. The default is total (summing the values together).
   - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range.
 
-    For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../getting-started/intro-histograms.md" >}}).
+    For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../basics/intro-histograms.md" >}}).
     - **Buckets -** The number of buckets to group the values by. If left empty, then Grafana tries to calculate a suitable number of buckets.
     - **X-Min -** Filters out values from the histogram that are under this minimum limit.
     - **X-Max -** Filters out values that are greater than this maximum limit.
