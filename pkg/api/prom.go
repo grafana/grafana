@@ -41,9 +41,9 @@ type DiscoveryBase struct {
 	// required: true
 	Status string `json:"status"`
 	// required: false
-	ErrorType v1.ErrorType `json:"errorType"`
+	ErrorType v1.ErrorType `json:"errorType,omitempty"`
 	// required: false
-	Error string `json:"error"`
+	Error string `json:"error,omitempty"`
 }
 
 // swagger:model
