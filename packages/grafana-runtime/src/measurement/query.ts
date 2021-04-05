@@ -1,77 +1,120 @@
 import {
+  DataFrame,
+  DataFrameJSON,
   DataQueryResponse,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
   isValidLiveChannelAddress,
   LiveChannelAddress,
+  LiveChannelConnectionState,
+  LiveChannelEvent,
   LoadingState,
+  StreamingDataFrame,
+  StreamingFrameOptions,
 } from '@grafana/data';
-import { LiveMeasurements, MeasurementsQuery } from './types';
 import { getGrafanaLiveSrv } from '../services/live';
 
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { toDataQueryError } from '../utils/queryResponse';
+import { perf } from './perf';
 
-/**
- * @alpha -- experimental
- */
-export function getLiveMeasurements(addr: LiveChannelAddress): LiveMeasurements | undefined {
-  if (!isValidLiveChannelAddress(addr)) {
-    return undefined;
-  }
-
-  const live = getGrafanaLiveSrv();
-  if (!live) {
-    return undefined;
-  }
-
-  const channel = live.getChannel<LiveMeasurements>(addr);
-  const getController = channel?.config?.getController;
-  return getController ? getController() : undefined;
+export interface LiveDataFilter {
+  fields?: string[];
 }
 
 /**
- * When you know the stream will be managed measurements
- *
- * @alpha -- experimental
+ * @alpha
  */
-export function getLiveMeasurementsObserver(
-  addr: LiveChannelAddress,
-  requestId: string,
-  query?: MeasurementsQuery
-): Observable<DataQueryResponse> {
-  const rsp: DataQueryResponse = { data: [] };
-  if (!addr || !addr.path) {
-    return of(rsp); // Address not configured yet
-  }
+export interface LiveDataStreamOptions {
+  key?: string;
+  addr: LiveChannelAddress;
+  buffer?: StreamingFrameOptions;
+  filter?: LiveDataFilter;
+}
 
+/**
+ * Continue executing requests as long as `getNextQuery` returns a query
+ *
+ * @alpha
+ */
+export function getLiveDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse> {
+  if (!isValidLiveChannelAddress(options.addr)) {
+    return of({ error: toDataQueryError('invalid address'), data: [] });
+  }
   const live = getGrafanaLiveSrv();
   if (!live) {
-    // This will only happen with the feature flag is not enabled
-    rsp.error = { message: 'Grafana live is not initalized' };
-    return of(rsp);
+    return of({ error: toDataQueryError('grafana live is not initalized'), data: [] });
   }
 
-  rsp.key = requestId;
-  return live
-    .getChannel<LiveMeasurements>(addr)
-    .getStream()
-    .pipe(
-      map((evt) => {
-        if (isLiveChannelMessageEvent(evt)) {
-          rsp.data = evt.message.getData(query);
-          if (!rsp.data.length) {
-            // ?? skip when data is empty ???
+  return new Observable<DataQueryResponse>((subscriber) => {
+    let data: StreamingDataFrame | undefined = undefined;
+    let state = LoadingState.Loading;
+    const { key, filter } = options;
+    let last = perf.last;
+
+    const process = (msg: DataFrameJSON) => {
+      if (!data) {
+        data = new StreamingDataFrame(msg, options.buffer);
+      } else {
+        data.push(msg);
+      }
+      state = LoadingState.Streaming;
+
+      // TODO?  this *coud* happen only when the schema changes
+      let filtered = data as DataFrame;
+      if (filter?.fields && filter.fields.length) {
+        filtered = {
+          ...data,
+          fields: data.fields.filter((f) => filter.fields!.includes(f.name)),
+        };
+      }
+
+      const elapsed = perf.last - last;
+      if (elapsed > 1000 || perf.ok) {
+        subscriber.next({ state, data: [filtered], key });
+        last = perf.last;
+      }
+    };
+
+    const sub = live
+      .getChannel<DataFrameJSON>(options.addr)
+      .getStream()
+      .subscribe({
+        error: (err: any) => {
+          state = LoadingState.Error;
+          subscriber.next({ state, data: [data], key });
+          sub.unsubscribe(); // close after error
+        },
+        complete: () => {
+          if (state !== LoadingState.Error) {
+            state = LoadingState.Done;
           }
-          delete rsp.error;
-          rsp.state = LoadingState.Streaming;
-        } else if (isLiveChannelStatusEvent(evt)) {
-          if (evt.error != null) {
-            rsp.error = rsp.error;
-            rsp.state = LoadingState.Error;
+          subscriber.next({ state, data: [data], key });
+          subscriber.complete();
+          sub.unsubscribe();
+        },
+        next: (evt: LiveChannelEvent) => {
+          if (isLiveChannelMessageEvent(evt)) {
+            process(evt.message);
+            return;
           }
-        }
-        return { ...rsp }; // send event on all status messages
-      })
-    );
+          if (isLiveChannelStatusEvent(evt)) {
+            if (
+              evt.state === LiveChannelConnectionState.Connected ||
+              evt.state === LiveChannelConnectionState.Pending
+            ) {
+              if (evt.message) {
+                process(evt.message);
+              }
+              return;
+            }
+            console.log('ignore state', evt);
+          }
+        },
+      });
+
+    return () => {
+      sub.unsubscribe();
+    };
+  });
 }

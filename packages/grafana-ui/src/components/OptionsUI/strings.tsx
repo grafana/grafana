@@ -3,7 +3,7 @@ import { FieldConfigEditorProps, StringFieldConfigSettings, GrafanaTheme } from 
 import { Input } from '../Input/Input';
 import { Icon } from '../Icon/Icon';
 import { stylesFactory, getTheme } from '../../themes';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Button } from '../Button';
 
 type Props = FieldConfigEditorProps<string[], StringFieldConfigSettings>;

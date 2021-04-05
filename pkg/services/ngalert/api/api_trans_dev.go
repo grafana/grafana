@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr/translate"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -40,14 +39,9 @@ func (api *API) conditionEvalOldEndpoint(c *models.ReqContext) response.Response
 	}
 
 	frame := evalResults.AsDataFrame()
-	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
-	instances, err := df.Encoded()
-	if err != nil {
-		return response.Error(400, "Failed to encode result dataframes", err)
-	}
 
-	return response.JSON(200, util.DynMap{
-		"instances": instances,
+	return response.JSONStreaming(200, util.DynMap{
+		"instances": []*data.Frame{&frame},
 	})
 }
 
@@ -98,14 +92,9 @@ func (api *API) conditionEvalOldEndpointByID(c *models.ReqContext) response.Resp
 	}
 
 	frame := evalResults.AsDataFrame()
-	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
-	instances, err := df.Encoded()
-	if err != nil {
-		return response.Error(400, "Failed to encode result dataframes", err)
-	}
 
-	return response.JSON(200, util.DynMap{
-		"instances": instances,
+	return response.JSONStreaming(200, util.DynMap{
+		"instances": []*data.Frame{&frame},
 	})
 }
 
