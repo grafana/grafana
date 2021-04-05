@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -38,7 +39,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiService) {
 		group.Get(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"), routing.Wrap(srv.RouteGetRulegGroupConfig))
 		group.Get(toMacaronPath("/ruler/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRulesConfig))
 		group.Post(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}"), binding.Bind(apimodels.PostableRuleGroupConfig{}), routing.Wrap(srv.RoutePostNameRulesConfig))
-	})
+	}, middleware.ReqSignedIn)
 }
 
 func (base RulerApiBase) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {

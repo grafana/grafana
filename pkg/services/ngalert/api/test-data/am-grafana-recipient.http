@@ -1,13 +1,4 @@
-@lokiDatasourceID = 32
-@prometheusDatasourceID = 875
 @grafana = grafana
-
-# unsupported loki backend
-GET http://admin:admin@localhost:3000/alertmanager/{{lokiDatasourceID}}/config/api/v1/alerts
-
-###
-# unsupported cortex backend
-GET http://admin:admin@localhost:3000/alertmanager/{{prometheusDatasourceID}}/config/api/v1/alerts
 
 ###
 # create AM configuration
@@ -96,7 +87,6 @@ content-type: application/json
 # get silences
 # @name getSilences
 GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences
-
 
 ###
 @silenceID = {{getSilences.response.body.$.[0].id}}

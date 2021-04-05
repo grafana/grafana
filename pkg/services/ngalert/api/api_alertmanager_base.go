@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -46,7 +47,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/silences"), routing.Wrap(srv.RouteGetSilences))
 		group.Post(toMacaronPath("/alertmanager/{Recipient}/api/v2/alerts"), binding.Bind(apimodels.PostableAlerts{}), routing.Wrap(srv.RoutePostAMAlerts))
 		group.Post(toMacaronPath("/alertmanager/{Recipient}/config/api/v1/alerts"), binding.Bind(apimodels.PostableUserConfig{}), routing.Wrap(srv.RoutePostAlertingConfig))
-	})
+	}, middleware.ReqSignedIn)
 }
 
 func (base AlertmanagerApiBase) RouteCreateSilence(c *models.ReqContext, body apimodels.PostableSilence) response.Response {
