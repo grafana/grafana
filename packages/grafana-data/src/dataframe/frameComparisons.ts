@@ -43,19 +43,15 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean 
     }
 
     for (const key of aKeys) {
-      if (!cfgB.hasOwnProperty(key)) {
+      if (!(key in cfgB)) {
         return false;
       }
 
       if (key === 'custom') {
         if (!shallowCompare(cfgA[key], cfgB[key])) {
           return false;
-        } else {
-          continue;
         }
-      }
-
-      if (cfgA[key] !== cfgB[key]) {
+      } else if (cfgA[key] !== cfgB[key]) {
         return false;
       }
     }
