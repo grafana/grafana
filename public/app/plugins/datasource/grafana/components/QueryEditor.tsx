@@ -33,7 +33,6 @@ export class QueryEditor extends PureComponent<Props, State> {
   ];
 
   loadChannelInfo() {
-    console.log('reading server info');
     getBackendSrv()
       .fetch({ url: 'api/live/list' })
       .subscribe({

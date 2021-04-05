@@ -61,19 +61,13 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
       }
       state = LoadingState.Streaming;
 
+      // Select the fields we are actually looking at
       if (!filtered || msg.schema) {
         filtered = data;
         if (filter?.fields?.length) {
-          const fields = data.fields.filter((f) => filter.fields!.includes(f.name));
-          console.log(
-            'filtering fields!!!',
-            filter,
-            fields,
-            data.fields.map((f) => f.name)
-          );
           filtered = {
             ...data,
-            fields,
+            fields: data.fields.filter((f) => filter.fields!.includes(f.name)),
           };
         }
       }
@@ -124,7 +118,6 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
       });
 
     return () => {
-      console.log('Query unsubscribe', options.addr);
       sub.unsubscribe();
     };
   });

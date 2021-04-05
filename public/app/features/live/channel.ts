@@ -84,7 +84,6 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
         this.sendStatus();
       },
       subscribe: (ctx: SubscribeSuccessContext) => {
-        console.log('subscribe', ctx);
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Connected;
         delete this.currentStatus.error;
@@ -132,11 +131,16 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       subscriber.next({ ...this.currentStatus });
       const sub = this.stream.subscribe(subscriber);
       return () => {
-        console.log('BEFORE', this.stream.observers.length, this.addr);
         sub.unsubscribe();
-        console.log('CHANNEL unsubscribe!!!', this.stream.observers.length, this.addr);
+        const count = this.stream.observers.length;
+        console.log('unsubscribe stream', this.addr, count);
+
+        // Fully disconnect when no more listeners
+        if (count === 0) {
+          this.disconnect();
+        }
       };
-    }) as any;
+    }) as Observable<LiveChannelEvent<TMessage>>;
   }
 
   /**
