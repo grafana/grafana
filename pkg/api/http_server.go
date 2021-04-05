@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
+	"github.com/go-macaron/cors"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -299,6 +300,10 @@ func (hs *HTTPServer) applyRoutes() {
 
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.macaron
+
+	m.Use(cors.CORS(cors.Options{
+		AllowDomain: []string{"*"},
+	}))
 
 	m.Use(middleware.Logger(hs.Cfg))
 

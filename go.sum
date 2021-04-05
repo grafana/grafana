@@ -410,6 +410,8 @@ github.com/go-logr/logr v0.1.0/go.mod h1:ixOQHD9gLJUVQQ2ZOR7zLEifBX6tGkNJF4QyIY7
 github.com/go-logr/logr v0.2.0/go.mod h1:z6/tIYblkpsD+a4lm/fGIIU9mZ+XfAiaFtq7xTgseGU=
 github.com/go-macaron/binding v0.0.0-20190806013118-0b4f37bab25b h1:U65wj9SF7qUBTGrnt6VxbHCT0Dw8dz4uch52G+5SdfA=
 github.com/go-macaron/binding v0.0.0-20190806013118-0b4f37bab25b/go.mod h1:AG8Z6qkQM8s47aUDJOco/SNwJ8Czif2hMm7rc0abDog=
+github.com/go-macaron/cors v0.0.0-20210206180111-00b7f53a9308 h1:WaAiZUUi6EXvFpHdCZlLFelHiisRHtS7veXTUcNnm18=
+github.com/go-macaron/cors v0.0.0-20210206180111-00b7f53a9308/go.mod h1:r98dHFBQZg2Y3YbiqaQ5YkEJTkYrLSkxWsunlpDddGs=
 github.com/go-macaron/gzip v0.0.0-20160222043647-cad1c6580a07 h1:YSIA98PevNf1NtCa/J6cz7gjzpz99WVAOa9Eg0klKps=
 github.com/go-macaron/gzip v0.0.0-20160222043647-cad1c6580a07/go.mod h1://cJFfDp/70L0oTNAMB+M8Jd0rpuIx/55iARuJ6StwE=
 github.com/go-macaron/inject v0.0.0-20160627170012-d8a0b8677191 h1:NjHlg70DuOkcAMqgt0+XA+NHwtu66MkTVVgR4fFWbcI=
