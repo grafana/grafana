@@ -16,6 +16,7 @@ export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
   const styles = useStyles(getStyles);
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
+  const { rulesFilters } = useUnifiedAlertingSelector((state) => state.filters);
 
   const dataSourcesLoading = useMemo(() => rulesDataSources.filter((ds) => rules[ds.name]?.loading), [
     rules,
