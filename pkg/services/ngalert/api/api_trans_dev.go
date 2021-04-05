@@ -144,9 +144,12 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		return response.Error(400, "missing id", nil)
 	}
 
+	save := c.Query("save") == "true"
+
 	getAlert := &models.GetAlertByIdQuery{
 		Id: id,
 	}
+
 	if err := bus.Dispatch(getAlert); err != nil {
 		return response.Error(400, fmt.Sprintf("could find alert with id %v", id), err)
 	}
@@ -228,6 +231,10 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		OrgID:           oldAlert.OrgId,
 		NamespaceUID:    namespaceUID,
 		RuleGroupConfig: rgc,
+	}
+
+	if !save {
+		return response.JSON(200, cmd)
 	}
 
 	err = api.RuleStore.UpdateRuleGroup(cmd)
