@@ -21,28 +21,35 @@ interface UsePanelLatestData {
 /**
  * Subscribes and returns latest panel data from PanelQueryRunner
  */
-export const usePanelLatestData = (panel: PanelModel, options: GetDataOptions): UsePanelLatestData => {
+export const usePanelLatestData = (
+  panel: PanelModel,
+  options: GetDataOptions,
+  checkSchema?: boolean
+): UsePanelLatestData => {
   const querySubscription = useRef<Unsubscribable>();
   const [latestData, setLatestData] = useState<PanelData>();
 
   useEffect(() => {
-    let lastUpdate = 0;
     let last: DataFrame[] = [];
+    let lastUpdate = 0;
+
     querySubscription.current = panel
       .getQueryRunner()
       .getData(options)
       .subscribe({
         next: (data) => {
-          const sameStructure = compareArrayValues(last, data.series, compareDataFrameStructures);
-          if (sameStructure) {
-            const now = Date.now();
-            const elapsed = now - lastUpdate;
-            if (elapsed < 10000) {
-              return; // skip
+          if (checkSchema) {
+            const sameStructure = compareArrayValues(last, data.series, compareDataFrameStructures);
+            if (sameStructure) {
+              const now = Date.now();
+              const elapsed = now - lastUpdate;
+              if (elapsed < 10000) {
+                return; // avoid updates if the schema has not changed for 10s
+              }
+              lastUpdate = now;
             }
-            lastUpdate = now;
+            last = data.series;
           }
-          last = data.series;
           setLatestData(data);
         },
       });
