@@ -4,8 +4,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-var builtInRoles = []accesscontrol.RoleDTO{
-	{
+var builtInRolesMap = map[string]accesscontrol.RoleDTO{
+	"grafana:builtin:users:read:self": {
 		Name:    "grafana:builtin:users:read:self",
 		Version: 1,
 		Permissions: []accesscontrol.Permission{
@@ -33,12 +33,10 @@ var builtInRoleGrants = map[string][]string{
 
 func getBuiltInRole(role string) *accesscontrol.RoleDTO {
 	var builtInRole accesscontrol.RoleDTO
-	for _, r := range builtInRoles {
-		if r.Name == role {
-			builtInRole = r
-			// Do not modify builtInRoles
-			return &builtInRole
-		}
+	if r, ok := builtInRolesMap[role]; ok {
+		// Do not modify builtInRoles
+		builtInRole = r
+		return &builtInRole
 	}
 	return nil
 }
