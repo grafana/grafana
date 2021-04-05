@@ -257,3 +257,122 @@ email_configs:
 		})
 	}
 }
+
+func Test_GettableUserConfigUnmarshaling(t *testing.T) {
+	for _, tc := range []struct {
+		desc, input string
+		output      GettableUserConfig
+		err         bool
+	}{
+		{
+			desc:   "empty",
+			input:  ``,
+			output: GettableUserConfig{},
+		},
+		{
+			desc: "empty-ish",
+			input: `
+template_files: {}
+alertmanager_config: ""
+`,
+			output: GettableUserConfig{
+				TemplateFiles: map[string]string{},
+			},
+		},
+		{
+			desc: "bad type for template",
+			input: `
+template_files: abc
+alertmanager_config: ""
+`,
+			err: true,
+		},
+		{
+			desc: "existing templates",
+			input: `
+template_files:
+  foo: bar
+alertmanager_config: ""
+`,
+			output: GettableUserConfig{
+				TemplateFiles: map[string]string{"foo": "bar"},
+			},
+		},
+		{
+			desc: "existing templates inline",
+			input: `
+template_files: {foo: bar}
+alertmanager_config: ""
+`,
+			output: GettableUserConfig{
+				TemplateFiles: map[string]string{"foo": "bar"},
+			},
+		},
+		{
+			desc: "existing am config",
+			input: `
+template_files: {foo: bar}
+alertmanager_config: |
+                      route:
+                          receiver: am
+                          continue: false
+                          routes:
+                          - receiver: am
+                            continue: false
+                      templates: []
+                      receivers:
+                      - name: am
+                        email_configs:
+                        - to: foo
+                          from: bar
+                          headers:
+                            Bazz: buzz
+                          text: hi
+                          html: there
+`,
+			output: GettableUserConfig{
+				TemplateFiles: map[string]string{"foo": "bar"},
+				AlertmanagerConfig: GettableApiAlertingConfig{
+					Config: Config{
+						Templates: []string{},
+						Route: &config.Route{
+							Receiver: "am",
+							Routes: []*config.Route{
+								{
+									Receiver: "am",
+								},
+							},
+						},
+					},
+					Receivers: []*GettableApiReceiver{
+						{
+							Receiver: config.Receiver{
+								Name: "am",
+								EmailConfigs: []*config.EmailConfig{{
+									To:   "foo",
+									From: "bar",
+									Headers: map[string]string{
+										"Bazz": "buzz",
+									},
+									Text: "hi",
+									HTML: "there",
+								}},
+							},
+						},
+					},
+				},
+			},
+		},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			var out GettableUserConfig
+			err := yaml.Unmarshal([]byte(tc.input), &out)
+			if tc.err {
+				require.Error(t, err)
+				return
+			}
+			require.Nil(t, err)
+			require.Equal(t, tc.output, out)
+		})
+	}
+}

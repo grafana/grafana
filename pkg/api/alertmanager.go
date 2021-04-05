@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
+	"gopkg.in/yaml.v3"
 )
 
 // swagger:route POST /alertmanager/{Recipient}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -188,6 +189,29 @@ type GettableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
 	AlertmanagerConfig GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 }
+
+func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
+	// cortex/loki actually pass the AM config as a string.
+	type cortexGettableUserConfig struct {
+		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	var tmp cortexGettableUserConfig
+
+	if err := value.Decode(&tmp); err != nil {
+		return err
+	}
+
+	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.AlertmanagerConfig); err != nil {
+		return err
+	}
+
+	c.TemplateFiles = tmp.TemplateFiles
+	return nil
+
+}
+
 type GettableApiAlertingConfig struct {
 	Config `yaml:",inline"`
 
