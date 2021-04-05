@@ -17,7 +17,7 @@ import Centrifuge, {
   UnsubscribeContext,
 } from 'centrifuge/dist/centrifuge';
 
-import { Subject, of, merge } from 'rxjs';
+import { Subject, of, Observable } from 'rxjs';
 
 /**
  * Internal class that maps Centrifuge support to GrafanaLive
@@ -128,7 +128,15 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
    * Get the stream of events and
    */
   getStream() {
-    return merge(of({ ...this.currentStatus }), this.stream.asObservable());
+    return new Observable((subscriber) => {
+      subscriber.next({ ...this.currentStatus });
+      const sub = this.stream.subscribe(subscriber);
+      return () => {
+        console.log('BEFORE', this.stream.observers.length, this.addr);
+        sub.unsubscribe();
+        console.log('CHANNEL unsubscribe!!!', this.stream.observers.length, this.addr);
+      };
+    }) as any;
   }
 
   /**
