@@ -9,6 +9,7 @@ import (
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -477,12 +478,21 @@ func (g *GrafanaLive) HandleListHTTP(ctx *models.ReqContext) response.Response {
 	}
 
 	// Hardcode sample streams
+	frame := data.NewFrame("testdata",
+		data.NewField("Time", nil, make([]time.Time, 0)),
+		data.NewField("Value", nil, make([]float64, 0)),
+		data.NewField("Min", nil, make([]float64, 0)),
+		data.NewField("Max", nil, make([]float64, 0)),
+	)
 	channels = append(channels, util.DynMap{
 		"channel": "plugin/testdata/random-2s-stream",
+		"data":    frame,
 	}, util.DynMap{
 		"channel": "plugin/testdata/random-flakey-stream",
+		"data":    frame,
 	}, util.DynMap{
 		"channel": "plugin/testdata/random-20Hz-stream",
+		"data":    frame,
 	})
 
 	info["channels"] = channels
@@ -490,7 +500,7 @@ func (g *GrafanaLive) HandleListHTTP(ctx *models.ReqContext) response.Response {
 }
 
 // GetManagedStream -- for now this will create new manager for each key.
-// Eventually, the stream behavior will need to be configured explicilty
+// Eventually, the stream behavior will need to be configured explicitly
 func (g *GrafanaLive) GetManagedStream(id string) (*ManagedStream, error) {
 	s, ok := g.streams[id]
 	if !ok {

@@ -91,6 +91,15 @@ export class QueryEditor extends PureComponent<Props, State> {
       fields = [item.value];
     }
 
+    // When adding the first field, also add time (if it exists)
+    if (fields.length === 1 && !query.filter?.fields?.length && query.channel) {
+      const names = this.state.channelFields[query.channel] ?? [];
+      const tf = names.find((f) => f.value === 'time' || f.value === 'Time');
+      if (tf && tf.value && tf.value !== fields[0]) {
+        fields = [tf.value, ...fields];
+      }
+    }
+
     onChange({
       ...query,
       filter: {
