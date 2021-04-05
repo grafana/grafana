@@ -1,16 +1,24 @@
 import defaults from 'lodash/defaults';
 
 import React, { PureComponent } from 'react';
-import { InlineField, Select, FeatureInfoBox } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, FeatureState, getFrameDisplayName } from '@grafana/data';
+import { InlineField, Select, FeatureInfoBox, Input } from '@grafana/ui';
+import { QueryEditorProps, SelectableValue, FeatureState, dataFrameFromJSON, rangeUtil } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
+import { getBackendSrv } from '@grafana/runtime';
 
 type Props = QueryEditorProps<GrafanaDatasource, GrafanaQuery>;
 
 const labelWidth = 12;
 
-export class QueryEditor extends PureComponent<Props> {
+interface State {
+  channels: Array<SelectableValue<string>>;
+  channelFields: Record<string, Array<SelectableValue<string>>>;
+}
+
+export class QueryEditor extends PureComponent<Props, State> {
+  state: State = { channels: [], channelFields: {} };
+
   queryTypes: Array<SelectableValue<GrafanaQueryType>> = [
     {
       label: 'Random Walk',
@@ -23,6 +31,43 @@ export class QueryEditor extends PureComponent<Props> {
       description: 'Stream real-time measurements from Grafana',
     },
   ];
+
+  loadChannelInfo() {
+    getBackendSrv()
+      .fetch({ url: 'api/live/list' })
+      .subscribe({
+        next: (v: any) => {
+          console.log('GOT', v);
+          const channelInfo = v.data?.channels as any[];
+          if (channelInfo?.length) {
+            const channelFields: Record<string, Array<SelectableValue<string>>> = {};
+            const channels: Array<SelectableValue<string>> = channelInfo.map((c) => {
+              if (c.data) {
+                const distinctFields = new Set<string>();
+                const frame = dataFrameFromJSON(c.data);
+                for (const f of frame.fields) {
+                  distinctFields.add(f.name);
+                }
+                channelFields[c.channel] = Array.from(distinctFields).map((n) => ({
+                  value: n,
+                  label: n,
+                }));
+              }
+              return {
+                value: c.channel,
+                label: c.channel,
+              };
+            });
+
+            this.setState({ channelFields, channels });
+          }
+        },
+      });
+  }
+
+  componentDidMount() {
+    this.loadChannelInfo();
+  }
 
   onQueryTypeChange = (sel: SelectableValue<GrafanaQueryType>) => {
     const { onChange, query, onRunQuery } = this.props;
@@ -45,6 +90,15 @@ export class QueryEditor extends PureComponent<Props> {
       fields = [item.value];
     }
 
+    // When adding the first field, also add time (if it exists)
+    if (fields.length === 1 && !query.filter?.fields?.length && query.channel) {
+      const names = this.state.channelFields[query.channel] ?? [];
+      const tf = names.find((f) => f.value === 'time' || f.value === 'Time');
+      if (tf && tf.value && tf.value !== fields[0]) {
+        fields = [tf.value, ...fields];
+      }
+    }
+
     onChange({
       ...query,
       filter: {
@@ -55,19 +109,37 @@ export class QueryEditor extends PureComponent<Props> {
     onRunQuery();
   };
 
+  checkAndUpdateBuffer = (txt: string) => {
+    const { onChange, query, onRunQuery } = this.props;
+    let buffer: number | undefined;
+    if (txt) {
+      try {
+        buffer = rangeUtil.intervalToSeconds(txt) * 1000;
+      } catch (err) {
+        console.warn('ERROR', err);
+      }
+    }
+    onChange({
+      ...query,
+      buffer,
+    });
+    onRunQuery();
+  };
+
+  handleEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') {
+      return;
+    }
+    this.checkAndUpdateBuffer((e.target as any).value);
+  };
+
+  handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    this.checkAndUpdateBuffer(e.target.value);
+  };
+
   renderMeasurementsQuery() {
-    const { data } = this.props;
-    let { channel, filter } = this.props.query;
-    const channels: Array<SelectableValue<string>> = [
-      {
-        value: 'plugin/testdata/random-2s-stream',
-        label: 'plugin/testdata/random-2s-stream',
-      },
-      {
-        value: 'plugin/testdata/random-flakey-stream',
-        label: 'plugin/testdata/random-flakey-stream',
-      },
-    ];
+    let { channel, filter, buffer } = this.props.query;
+    let { channels, channelFields } = this.state;
     let currentChannel = channels.find((c) => c.value === channel);
     if (channel && !currentChannel) {
       currentChannel = {
@@ -75,26 +147,26 @@ export class QueryEditor extends PureComponent<Props> {
         label: channel,
         description: `Connected to ${channel}`,
       };
-      channels.push(currentChannel);
+      channels = [currentChannel, ...channels];
     }
 
     const distinctFields = new Set<string>();
-    const fields: Array<SelectableValue<string>> = [];
-    if (data && data.series?.length) {
-      for (const frame of data.series) {
-        for (const field of frame.fields) {
-          if (distinctFields.has(field.name) || !field.name) {
-            continue;
-          }
-          fields.push({
-            value: field.name,
-            label: field.name,
-            description: `(${getFrameDisplayName(frame)} / ${field.type})`,
-          });
-          distinctFields.add(field.name);
-        }
-      }
-    }
+    const fields: Array<SelectableValue<string>> = channel ? channelFields[channel] ?? [] : [];
+    // if (data && data.series?.length) {
+    //   for (const frame of data.series) {
+    //     for (const field of frame.fields) {
+    //       if (distinctFields.has(field.name) || !field.name) {
+    //         continue;
+    //       }
+    //       fields.push({
+    //         value: field.name,
+    //         label: field.name,
+    //         description: `(${getFrameDisplayName(frame)} / ${field.type})`,
+    //       });
+    //       distinctFields.add(field.name);
+    //     }
+    //   }
+    // }
     if (filter?.fields) {
       for (const f of filter.fields) {
         if (!distinctFields.has(f)) {
@@ -106,6 +178,11 @@ export class QueryEditor extends PureComponent<Props> {
           distinctFields.add(f);
         }
       }
+    }
+
+    let formattedTime = '';
+    if (buffer) {
+      formattedTime = rangeUtil.secondsToHms(buffer / 1000);
     }
 
     return (
@@ -140,6 +217,16 @@ export class QueryEditor extends PureComponent<Props> {
                 formatCreateLabel={(input: string) => `Field: ${input}`}
                 isSearchable={true}
                 isMulti={true}
+              />
+            </InlineField>
+            <InlineField label="Buffer">
+              <Input
+                placeholder="Auto"
+                width={12}
+                defaultValue={formattedTime}
+                onKeyDown={this.handleEnterKey}
+                onBlur={this.handleBlur}
+                spellCheck={false}
               />
             </InlineField>
           </div>

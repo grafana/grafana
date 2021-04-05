@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/live/push"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -87,6 +88,7 @@ type HTTPServer struct {
 	SearchService          *search.SearchService                   `inject:""`
 	ShortURLService        *shorturls.ShortURLService              `inject:""`
 	Live                   *live.GrafanaLive                       `inject:""`
+	LivePushGateway        *push.Gateway                           `inject:""`
 	ContextHandler         *contexthandler.ContextHandler          `inject:""`
 	SQLStore               *sqlstore.SQLStore                      `inject:""`
 	LibraryPanelService    *librarypanels.LibraryPanelService      `inject:""`

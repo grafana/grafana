@@ -6,6 +6,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  isValidLiveChannelAddress,
   parseLiveChannelAddress,
   StreamingFrameOptions,
 } from '@grafana/data';
@@ -23,15 +24,6 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   }
 
   query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
-    const buffer: StreamingFrameOptions = {
-      maxLength: request.maxDataPoints ?? 500,
-    };
-
-    if (request.rangeRaw?.to === 'now') {
-      const elapsed = request.range.to.valueOf() - request.range.from.valueOf();
-      buffer.maxDelta = elapsed;
-    }
-
     const queries: Array<Observable<DataQueryResponse>> = [];
     for (const target of request.targets) {
       if (target.hide) {
@@ -39,17 +31,28 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       }
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
         const { channel, filter } = target;
-        if (channel) {
-          const addr = parseLiveChannelAddress(channel);
-          queries.push(
-            getLiveDataStream({
-              key: `${request.requestId}.${counter++}`,
-              addr: addr!,
-              filter,
-              buffer,
-            })
-          );
+        const addr = parseLiveChannelAddress(channel);
+        if (!isValidLiveChannelAddress(addr)) {
+          continue;
         }
+        const buffer: StreamingFrameOptions = {
+          maxLength: request.maxDataPoints ?? 500,
+        };
+        if (target.buffer) {
+          buffer.maxDelta = target.buffer;
+          buffer.maxLength = buffer.maxLength! * 2; //??
+        } else if (request.rangeRaw?.to === 'now') {
+          buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+        }
+
+        queries.push(
+          getLiveDataStream({
+            key: `${request.requestId}.${counter++}`,
+            addr: addr!,
+            filter,
+            buffer,
+          })
+        );
       } else {
         queries.push(getRandomWalk(request));
       }

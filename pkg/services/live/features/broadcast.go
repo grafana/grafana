@@ -4,9 +4,15 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/models"
+)
+
+var (
+	logger = log.New("live.features") // scoped to all features?
 )
 
 // BroadcastRunner will simply broadcast all events to `grafana/broadcast/*` channels

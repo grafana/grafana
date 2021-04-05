@@ -2,6 +2,7 @@ import { LiveChannelScope, LiveChannelSupport, SelectableValue } from '@grafana/
 import { getDataSourceSrv } from '@grafana/runtime';
 import { config } from 'app/core/config';
 import { loadPlugin } from '../plugins/PluginPage';
+import { LiveMeasurementsSupport } from './measurements/measurementsSupport';
 
 export abstract class GrafanaLiveScope {
   constructor(protected scope: LiveChannelScope) {}
@@ -149,6 +150,32 @@ export class GrafanaLivePluginScope extends GrafanaLiveScope {
         }
       }
     }
+    return (this.names = names);
+  }
+}
+
+export class GrafanaLiveStreamScope extends GrafanaLiveScope {
+  names?: Array<SelectableValue<string>>;
+
+  constructor() {
+    super(LiveChannelScope.Stream);
+  }
+
+  async getChannelSupport(namespace: string) {
+    return new LiveMeasurementsSupport();
+  }
+
+  /**
+   * List the possible values within this scope
+   */
+  async listNamespaces() {
+    if (this.names) {
+      return Promise.resolve(this.names);
+    }
+    const names: Array<SelectableValue<string>> = [];
+
+    // TODO!!!
+
     return (this.names = names);
   }
 }

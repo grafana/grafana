@@ -7,13 +7,14 @@ import (
 // ChannelAddress is the channel ID split by parts.
 type ChannelAddress struct {
 	// Scope is one of available channel scopes:
-	// like ScopeGrafana, ScopePlugin, ScopeDatasource.
+	// like ScopeGrafana, ScopePlugin, ScopeDatasource, ScopeStream.
 	Scope string `json:"scope,omitempty"`
 
 	// Namespace meaning depends on the scope.
 	// * when ScopeGrafana, namespace is a "feature"
 	// * when ScopePlugin, namespace is the plugin name
 	// * when ScopeDatasource, namespace is the datasource uid
+	// * when ScopeStream, namespace is the stream ID.
 	Namespace string `json:"namespace,omitempty"`
 
 	// Within each namespace, the handler can process the path as needed.

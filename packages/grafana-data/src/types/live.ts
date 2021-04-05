@@ -13,6 +13,7 @@ export enum LiveChannelScope {
   DataSource = 'ds', // namespace = data source ID
   Plugin = 'plugin', // namespace = plugin name (singleton works for apps too)
   Grafana = 'grafana', // namespace = feature
+  Stream = 'stream', // namespace = id for the managed data stream
 }
 
 /**
@@ -155,7 +156,7 @@ export interface LiveChannelAddress {
  *
  * @alpha -- experimental
  */
-export function parseLiveChannelAddress(id: string): LiveChannelAddress | undefined {
+export function parseLiveChannelAddress(id?: string): LiveChannelAddress | undefined {
   if (id?.length) {
     let parts = id.trim().split('/');
     if (parts.length >= 3) {

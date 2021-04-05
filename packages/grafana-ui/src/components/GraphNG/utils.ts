@@ -90,6 +90,10 @@ export function preparePlotConfigBuilder(
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
+  if (!xField) {
+    return builder; // empty frame with no options
+  }
+
   let seriesIndex = 0;
 
   if (xField.type === FieldType.time) {

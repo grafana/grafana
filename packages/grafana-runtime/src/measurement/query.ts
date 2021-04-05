@@ -48,6 +48,7 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
 
   return new Observable<DataQueryResponse>((subscriber) => {
     let data: StreamingDataFrame | undefined = undefined;
+    let filtered: DataFrame | undefined = undefined;
     let state = LoadingState.Loading;
     const { key, filter } = options;
     let last = perf.last;
@@ -60,17 +61,20 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
       }
       state = LoadingState.Streaming;
 
-      // TODO?  this *coud* happen only when the schema changes
-      let filtered = data as DataFrame;
-      if (filter?.fields && filter.fields.length) {
-        filtered = {
-          ...data,
-          fields: data.fields.filter((f) => filter.fields!.includes(f.name)),
-        };
+      // Select the fields we are actually looking at
+      if (!filtered || msg.schema) {
+        filtered = data;
+        if (filter?.fields?.length) {
+          filtered = {
+            ...data,
+            fields: data.fields.filter((f) => filter.fields!.includes(f.name)),
+          };
+        }
       }
 
       const elapsed = perf.last - last;
       if (elapsed > 1000 || perf.ok) {
+        filtered.length = data.length; // make sure they stay up-to-date
         subscriber.next({ state, data: [filtered], key });
         last = perf.last;
       }
