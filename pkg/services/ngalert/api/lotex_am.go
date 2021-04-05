@@ -44,8 +44,9 @@ func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimod
 			URL:           withPath(*ctx.Req.URL, amSilencesPath),
 			Body:          body,
 			ContentLength: ln,
+			Header:        map[string][]string{"Content-Type": {"application/json"}},
 		},
-		jsonExtractor(&apimodels.GettableSilence{}),
+		jsonExtractor(nil),
 	)
 }
 
