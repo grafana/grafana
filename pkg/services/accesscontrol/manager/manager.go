@@ -14,10 +14,10 @@ import (
 
 // Manager is the service implementing role based access control.
 type Manager struct {
-	Cfg           *setting.Cfg          `inject:""`
-	RouteRegister routing.RouteRegister `inject:""`
-	Log           log.Logger
-	*database.AccessControlStore
+	Cfg                          *setting.Cfg          `inject:""`
+	RouteRegister                routing.RouteRegister `inject:""`
+	Log                          log.Logger
+	*database.AccessControlStore `inject:""`
 }
 
 func init() {
@@ -40,6 +40,10 @@ func (m *Manager) Init() error {
 }
 
 func (m *Manager) IsDisabled() bool {
+	if m.Cfg == nil {
+		return true
+	}
+
 	_, exists := m.Cfg.FeatureToggles["accesscontrol"]
 	return !exists
 }

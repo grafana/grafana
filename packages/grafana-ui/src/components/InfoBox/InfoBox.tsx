@@ -1,5 +1,5 @@
 import React from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
@@ -68,7 +68,6 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme, severity: AlertVari
     color: ${theme.colors.textSemiWeak};
 
     code {
-      @include font-family-monospace();
       font-size: ${theme.typography.size.sm};
       background-color: ${theme.colors.bg1};
       color: ${theme.colors.text};

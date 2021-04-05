@@ -35,10 +35,10 @@ export const PlaylistEditPage: FC<Props> = ({ navModel, match }) => {
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={loading}>
-        <h3 className={styles.subHeading}>Edit Playlist</h3>
+        <h3 className={styles.subHeading}>Edit playlist</h3>
 
         <p className={styles.description}>
-          A playlist rotates through a pre-selected list of Dashboards. A Playlist can be a great way to build
+          A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build
           situational awareness, or just show off your metrics to your team or visitors.
         </p>
 

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { ThemeContext, LinkButton, CallToActionCard, Icon } from '@grafana/ui';
 
 export const NoDataSourceCallToAction = () => {

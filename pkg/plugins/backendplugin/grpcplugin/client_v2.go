@@ -55,32 +55,32 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 
 	c := clientV2{}
 	if rawDiagnostics != nil {
-		if plugin, ok := rawDiagnostics.(grpcplugin.DiagnosticsClient); ok {
-			c.DiagnosticsClient = plugin
+		if diagnosticsClient, ok := rawDiagnostics.(grpcplugin.DiagnosticsClient); ok {
+			c.DiagnosticsClient = diagnosticsClient
 		}
 	}
 
 	if rawResource != nil {
-		if plugin, ok := rawResource.(grpcplugin.ResourceClient); ok {
-			c.ResourceClient = plugin
+		if resourceClient, ok := rawResource.(grpcplugin.ResourceClient); ok {
+			c.ResourceClient = resourceClient
 		}
 	}
 
 	if rawData != nil {
-		if plugin, ok := rawData.(grpcplugin.DataClient); ok {
-			c.DataClient = instrumentDataClient(plugin)
+		if dataClient, ok := rawData.(grpcplugin.DataClient); ok {
+			c.DataClient = instrumentDataClient(dataClient)
 		}
 	}
 
 	if rawStream != nil {
-		if plugin, ok := rawStream.(grpcplugin.StreamClient); ok {
-			c.StreamClient = plugin
+		if streamClient, ok := rawStream.(grpcplugin.StreamClient); ok {
+			c.StreamClient = streamClient
 		}
 	}
 
 	if rawRenderer != nil {
-		if plugin, ok := rawRenderer.(pluginextensionv2.RendererPlugin); ok {
-			c.RendererPlugin = plugin
+		if rendererPlugin, ok := rawRenderer.(pluginextensionv2.RendererPlugin); ok {
+			c.RendererPlugin = rendererPlugin
 		}
 	}
 
@@ -171,15 +171,26 @@ func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 	}
 }
 
-func (c *clientV2) CanSubscribeToStream(ctx context.Context, req *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+func (c *clientV2) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if c.StreamClient == nil {
 		return nil, backendplugin.ErrMethodNotImplemented
 	}
-	protoResp, err := c.StreamClient.CanSubscribeToStream(ctx, backend.ToProto().SubscribeToStreamRequest(req))
+	protoResp, err := c.StreamClient.SubscribeStream(ctx, backend.ToProto().SubscribeStreamRequest(req))
 	if err != nil {
 		return nil, err
 	}
-	return backend.FromProto().SubscribeToStreamResponse(protoResp), nil
+	return backend.FromProto().SubscribeStreamResponse(protoResp), nil
+}
+
+func (c *clientV2) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	if c.StreamClient == nil {
+		return nil, backendplugin.ErrMethodNotImplemented
+	}
+	protoResp, err := c.StreamClient.PublishStream(ctx, backend.ToProto().PublishStreamRequest(req))
+	if err != nil {
+		return nil, err
+	}
+	return backend.FromProto().PublishStreamResponse(protoResp), nil
 }
 
 func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {

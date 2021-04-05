@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { getPropertiesForButtonSize } from '../commonStyles';
 import { focusCss } from '../../../themes/mixins';
 

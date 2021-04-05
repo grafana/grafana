@@ -17,7 +17,7 @@ exports[`Render should render component 1`] = `
       }
     >
       <FormLabel
-        tooltip="The name is used when you select the data source in panels. The Default data source is preselected in new panels."
+        tooltip="The name is used when you select the data source in panels. The default data source is preselected in new panels."
       >
         Name
       </FormLabel>
