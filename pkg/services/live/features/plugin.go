@@ -86,20 +86,7 @@ type PluginPathRunner struct {
 
 // OnSubscribe passes control to a plugin.
 func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
-	var (
-		pCtx  backend.PluginContext
-		found bool
-		err   error
-	)
-	if r.pluginID == "managed-stream-fake-plugin" {
-		// TODO: properly register core plugin.
-		pCtx = backend.PluginContext{
-			PluginID: e.Channel,
-		}
-		found = true
-	} else {
-		pCtx, found, err = r.pluginContextGetter.GetPluginContext(user, r.pluginID, r.datasourceUID)
-	}
+	pCtx, found, err := r.pluginContextGetter.GetPluginContext(user, r.pluginID, r.datasourceUID)
 	if err != nil {
 		logger.Error("Get plugin context error", "error", err, "path", r.path)
 		return models.SubscribeReply{}, 0, err

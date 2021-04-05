@@ -67,12 +67,10 @@ type GrafanaLive struct {
 	channels   map[string]models.ChannelHandler
 	channelsMu sync.RWMutex
 
-	// Managed Streams
-	streams   map[string]*ManagedStream
-	streamsMu sync.RWMutex
-
 	// The core internal features
 	GrafanaScope CoreGrafanaScope
+
+	ManagedStreamRunner *ManagedStreamRunner
 
 	contextGetter *pluginContextGetter
 	streamManager *features.StreamManager
@@ -138,8 +136,7 @@ func (g *GrafanaLive) Init() error {
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
 
-	// managed streams
-	g.streams = map[string]*ManagedStream{}
+	g.ManagedStreamRunner = NewManagedStreamRunner(g.Publish)
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -393,17 +390,7 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 }
 
 func (g *GrafanaLive) handleStreamScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	streamHandler, err := g.GetManagedStream(namespace)
-	if err != nil {
-		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
-	}
-	return features.NewPluginRunner(
-		"managed-stream-fake-plugin",
-		namespace, // HACK Alert -- use the namespace as instanceid
-		g.streamManager,
-		g.contextGetter,
-		streamHandler,
-	), nil
+	return g.ManagedStreamRunner.GetOrCreateStream(namespace)
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
@@ -470,10 +457,10 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 }
 
 // HandleListHTTP returns metadata so the UI can build a nice form
-func (g *GrafanaLive) HandleListHTTP(ctx *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleListHTTP(_ *models.ReqContext) response.Response {
 	info := util.DynMap{}
 	channels := make([]util.DynMap, 0)
-	for k, v := range g.streams {
+	for k, v := range g.ManagedStreamRunner.Streams() {
 		channels = append(channels, v.ListChannels("stream/"+k+"/")...)
 	}
 
@@ -497,41 +484,4 @@ func (g *GrafanaLive) HandleListHTTP(ctx *models.ReqContext) response.Response {
 
 	info["channels"] = channels
 	return response.JSONStreaming(200, info)
-}
-
-// GetManagedStream -- for now this will create new manager for each key.
-// Eventually, the stream behavior will need to be configured explicitly
-func (g *GrafanaLive) GetManagedStream(id string) (*ManagedStream, error) {
-	s, ok := g.streams[id]
-	if !ok {
-		s = NewManagedStream(id, g.Publish)
-		g.streamsMu.Lock()
-		defer g.streamsMu.Unlock()
-		g.streams[id] = s
-	}
-	return s, nil
-}
-
-// Write to the standard log15 logger
-func handleLog(msg centrifuge.LogEntry) {
-	arr := make([]interface{}, 0)
-	for k, v := range msg.Fields {
-		if v == nil {
-			v = "<nil>"
-		} else if v == "" {
-			v = "<empty>"
-		}
-		arr = append(arr, k, v)
-	}
-
-	switch msg.Level {
-	case centrifuge.LogLevelDebug:
-		loggerCF.Debug(msg.Message, arr...)
-	case centrifuge.LogLevelError:
-		loggerCF.Error(msg.Message, arr...)
-	case centrifuge.LogLevelInfo:
-		loggerCF.Info(msg.Message, arr...)
-	default:
-		loggerCF.Debug(msg.Message, arr...)
-	}
 }

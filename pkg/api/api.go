@@ -404,7 +404,7 @@ func (hs *HTTPServer) registerRoutes() {
 			apiRoute.Post("/live/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
 
 			// POST influx line protocol
-			apiRoute.Post("/live/push/*", hs.LiveTelemetry.Handle)
+			apiRoute.Post("/live/push/:streamId", hs.LivePushGateway.Handle)
 
 			// List available streams and fields
 			apiRoute.Get("/live/list", routing.Wrap(hs.Live.HandleListHTTP))
