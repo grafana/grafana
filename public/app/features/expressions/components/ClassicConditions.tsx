@@ -13,26 +13,30 @@ interface Props {
 
 export const ClassicConditions: FC<Props> = ({ onChange, query, refIds }) => {
   const onConditionChange = (condition: ClassicCondition, index: number) => {
-    query.conditions![index] = condition;
-    onChange({
-      ...query,
-      conditions: [...query.conditions!],
-    });
+    if (query.conditions) {
+      onChange({
+        ...query,
+        conditions: [...query.conditions.slice(0, index), condition, ...query.conditions.slice(index + 1)],
+      });
+    }
   };
 
   const onAddCondition = () => {
-    onChange({
-      ...query,
-      conditions: [...query.conditions!, defaultCondition],
-    });
+    if (query.conditions) {
+      onChange({
+        ...query,
+        conditions: query.conditions.length > 0 ? [...query.conditions, defaultCondition] : [defaultCondition],
+      });
+    }
   };
 
   const onRemoveCondition = (index: number) => {
     if (query.conditions) {
       delete query.conditions[index];
+
       onChange({
         ...query,
-        conditions: [...query.conditions!],
+        conditions: query.conditions.length - 1 > 0 ? [...query.conditions] : [],
       });
     }
   };
@@ -43,6 +47,9 @@ export const ClassicConditions: FC<Props> = ({ onChange, query, refIds }) => {
         <InlineField label="Conditions" labelWidth={14}>
           <div>
             {query.conditions?.map((condition, index) => {
+              if (!condition) {
+                return;
+              }
               return (
                 <Condition
                   key={index}

@@ -1,5 +1,5 @@
 import React, { FC, FormEvent } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
 import alertDef from '../../alerting/state/alertDef';
