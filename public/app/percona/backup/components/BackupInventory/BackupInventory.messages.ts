@@ -6,6 +6,7 @@ export const Messages = {
     location: 'Location',
     vendor: 'Vendor',
     status: 'Status',
+    actions: 'Actions',
   },
   status: {
     invalid: 'Invalid',
@@ -20,4 +21,5 @@ export const Messages = {
     physical: 'Physical',
     logical: 'Logical',
   },
+  add: 'Add',
 };
