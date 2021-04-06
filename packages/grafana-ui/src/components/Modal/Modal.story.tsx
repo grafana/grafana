@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { oneLineTrim } from 'common-tags';
 import { boolean, text } from '@storybook/addon-knobs';
 import { Icon, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import sortBy from 'lodash/sortBy';
 import { PanelProps, GrafanaTheme, dateMath, dateTime } from '@grafana/data';
 import { Card, CustomScrollbar, Icon, stylesFactory, useStyles } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import { useAsync } from 'react-use';
 import alertDef from 'app/features/alerting/state/alertDef';

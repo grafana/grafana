@@ -23,7 +23,7 @@ type RulerApiService interface {
 	RouteGetNamespaceRulesConfig(*models.ReqContext) response.Response
 	RouteGetRulegGroupConfig(*models.ReqContext) response.Response
 	RouteGetRulesConfig(*models.ReqContext) response.Response
-	RoutePostNameRulesConfig(*models.ReqContext, apimodels.RuleGroupConfig) response.Response
+	RoutePostNameRulesConfig(*models.ReqContext, apimodels.PostableRuleGroupConfig) response.Response
 }
 
 type RulerApiBase struct {
@@ -37,7 +37,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApiService) {
 		group.Get(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}"), routing.Wrap(srv.RouteGetNamespaceRulesConfig))
 		group.Get(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"), routing.Wrap(srv.RouteGetRulegGroupConfig))
 		group.Get(toMacaronPath("/ruler/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRulesConfig))
-		group.Post(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}"), binding.Bind(apimodels.RuleGroupConfig{}), routing.Wrap(srv.RoutePostNameRulesConfig))
+		group.Post(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}"), binding.Bind(apimodels.PostableRuleGroupConfig{}), routing.Wrap(srv.RoutePostNameRulesConfig))
 	})
 }
 
@@ -83,7 +83,7 @@ func (base RulerApiBase) RouteGetRulesConfig(c *models.ReqContext) response.Resp
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
-func (base RulerApiBase) RoutePostNameRulesConfig(c *models.ReqContext, body apimodels.RuleGroupConfig) response.Response {
+func (base RulerApiBase) RoutePostNameRulesConfig(c *models.ReqContext, body apimodels.PostableRuleGroupConfig) response.Response {
 	recipient := c.Params(":Recipient")
 	base.log.Info("RoutePostNameRulesConfig: ", "Recipient", recipient)
 	namespace := c.Params(":Namespace")

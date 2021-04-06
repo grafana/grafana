@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { connect, MapDispatchToProps } from 'react-redux';
-import { css, cx, keyframes } from 'emotion';
+import { css, cx, keyframes } from '@emotion/css';
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
 import { locationService } from '@grafana/runtime';

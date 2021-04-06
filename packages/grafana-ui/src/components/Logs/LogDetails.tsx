@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import {
   calculateFieldStats,
   calculateLogsLabelStats,

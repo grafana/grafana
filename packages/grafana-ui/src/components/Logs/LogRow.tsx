@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 
 import {
   LogRowContextRows,
