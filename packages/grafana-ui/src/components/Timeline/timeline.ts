@@ -15,8 +15,8 @@ const font = Math.round(10 * pxRatio) + 'px Roboto';
 
 type WalkCb = (idx: number, offPx: number, dimPx: number) => void;
 
-function walk(laneWidth: number, yIdx: number | null, count: number, dim: number, draw: WalkCb) {
-  distribute(count, laneWidth, laneDistr, yIdx, (i, offPct, dimPct) => {
+function walk(rowHeight: number, yIdx: number | null, count: number, dim: number, draw: WalkCb) {
+  distribute(count, rowHeight, laneDistr, yIdx, (i, offPct, dimPct) => {
     let laneOffPx = dim * offPct;
     let laneWidPx = dim * dimPct;
 
@@ -29,12 +29,9 @@ function walk(laneWidth: number, yIdx: number | null, count: number, dim: number
  */
 export interface TimelineCoreOptions {
   mode: TimelineMode;
-  count: number;
-  laneWidth: number;
-
-  /** used only for grid mode */
-  align?: -1 | 0 | 1;
-  size?: [number, number?]; //[factor: number, max?: number];
+  numSeries: number;
+  rowHeight: number;
+  colWidth?: number;
 
   label: (seriesIdx: number) => string;
   fill: (seriesIdx: number, valueIdx: number, value: any) => CanvasRenderingContext2D['fillStyle'];
@@ -51,10 +48,9 @@ export interface TimelineCoreOptions {
 export function getConfig(opts: TimelineCoreOptions) {
   const {
     mode,
-    count,
-    laneWidth,
-    align = 0,
-    size = [0.6, Infinity],
+    numSeries,
+    rowHeight = 0,
+    colWidth = 0,
     label,
     fill,
     stroke,
@@ -66,7 +62,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   let qt: Quadtree;
 
-  const hoverMarks = Array(count)
+  const hoverMarks = Array(numSeries)
     .fill(null)
     .map(() => {
       let mark = document.createElement('div');
@@ -76,8 +72,9 @@ export function getConfig(opts: TimelineCoreOptions) {
       return mark;
     });
 
-  const hovered: Array<Rect | null> = Array(count).fill(null);
+  const hovered: Array<Rect | null> = Array(numSeries).fill(null);
 
+  const size = [colWidth, 100];
   const gapFactor = 1 - size[0];
   const maxWidth = (size[1] ?? Infinity) * pxRatio;
 
@@ -91,20 +88,20 @@ export function getConfig(opts: TimelineCoreOptions) {
     wid: number,
     hgt: number,
     strokeWidth: number,
-    iy: number,
-    ix: number,
+    seriesIdx: number,
+    valueIdx: number,
     value: any
   ) {
     if (strokeWidth) {
       ctx.beginPath();
       rect(ctx, lft + strokeWidth / 2, top + strokeWidth / 2, wid - strokeWidth, hgt - strokeWidth);
-      ctx.strokeStyle = stroke(iy, ix, value);
+      ctx.strokeStyle = stroke(seriesIdx, valueIdx, value);
       ctx.stroke();
     }
 
     ctx.beginPath();
     rect(ctx, lft, top, wid, hgt);
-    ctx.fillStyle = fill(iy, ix, value);
+    ctx.fillStyle = fill(seriesIdx, valueIdx, value);
     ctx.fill();
 
     qt.add({
@@ -112,8 +109,8 @@ export function getConfig(opts: TimelineCoreOptions) {
       y: round(top - yOff),
       w: wid,
       h: hgt,
-      sidx: iy + 1,
-      didx: ix,
+      sidx: seriesIdx + 1,
+      didx: valueIdx,
     });
   }
 
@@ -128,7 +125,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         rect(u.ctx, u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
         u.ctx.clip();
 
-        walk(laneWidth, sidx - 1, count, yDim, (iy, y0, hgt) => {
+        walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, hgt) => {
           if (mode === TimelineMode.Spans) {
             for (let ix = 0; ix < dataY.length; ix++) {
               if (dataY[ix] != null) {
@@ -165,7 +162,8 @@ export function getConfig(opts: TimelineCoreOptions) {
             let colWid = valToPosX(dataX[1], scaleX, xDim, xOff) - valToPosX(dataX[0], scaleX, xDim, xOff);
             let gapWid = colWid * gapFactor;
             let barWid = round(min(maxWidth, colWid - gapWid) - strokeWidth);
-            let xShift = align === 1 ? 0 : align === -1 ? barWid : barWid / 2;
+            let xShift = barWid / 2;
+            //let xShift = align === 1 ? 0 : align === -1 ? barWid : barWid / 2;
 
             for (let ix = idx0; ix <= idx1; ix++) {
               if (dataY[ix] != null) {
@@ -269,7 +267,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   const setCursor = (u: uPlot) => {
     let cx = round(u.cursor!.left! * pxRatio);
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < numSeries; i++) {
       let found: Rect | null = null;
 
       if (cx >= 0) {
@@ -307,8 +305,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     points: { show: false },
   };
 
-  const yMids: number[] = Array(count).fill(0);
-  const ySplits: number[] = Array(count).fill(0);
+  const yMids: number[] = Array(numSeries).fill(0);
+  const ySplits: number[] = Array(numSeries).fill(0);
 
   return {
     cursor,
@@ -358,7 +356,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     },
 
     ySplits: (u: uPlot) => {
-      walk(laneWidth, null, count, u.bbox.height, (iy, y0, hgt) => {
+      walk(rowHeight, null, numSeries, u.bbox.height, (iy, y0, hgt) => {
         // vertical midpoints of each series' timeline (stored relative to .u-over)
         yMids[iy] = round(y0 + hgt / 2);
         ySplits[iy] = u.posToVal(yMids[iy] / pxRatio, FIXED_UNIT);

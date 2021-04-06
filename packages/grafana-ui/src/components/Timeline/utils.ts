@@ -79,27 +79,17 @@ export function preparePlotConfigBuilder(
     }, 0) + 24;
 
   const opts: TimelineCoreOptions = {
-    count: frame.fields.length - 1, // number of series/lanes
-
     // should expose in panel config
     mode: coreOptions.mode!,
-    laneWidth: 0.9,
-
-    /** used only for Grid mode, should expose in panel config */
-    align: 0,
-    size: [0.9, 100],
-
+    numSeries: frame.fields.length - 1,
+    rowHeight: coreOptions.rowHeight!,
+    colWidth: coreOptions.colWidth,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
-
     fill: colorLookup,
-
     stroke: colorLookup,
-
     getTimeRange,
-
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
-
     // TODO: unimplemeted for now
     onHover: (seriesIdx: number, valueIdx: number) => {
       console.log('hover', { seriesIdx, valueIdx });

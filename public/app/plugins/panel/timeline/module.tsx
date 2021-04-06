@@ -80,9 +80,19 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         defaultValue: BarValueVisibility.Auto,
       })
       .addSliderInput({
-        path: 'barWidth',
-        name: 'Bar width',
-        defaultValue: 0.97,
+        path: 'rowHeight',
+        name: 'Row height',
+        defaultValue: 0.9,
+        settings: {
+          min: 0,
+          max: 1,
+          step: 0.01,
+        },
+      })
+      .addSliderInput({
+        path: 'colWidth',
+        name: 'Column width',
+        defaultValue: 0.9,
         settings: {
           min: 0,
           max: 1,

@@ -18,7 +18,8 @@ export interface TimelineOptions {
   mode: TimelineMode;
   legend: VizLegendOptions;
   showValue: BarValueVisibility;
-  barWidth: number; // laneWidth
+  rowHeight: number;
+  colWidth?: number;
 }
 
 /**
@@ -52,4 +53,6 @@ export enum TimelineMode {
  */
 export interface TimelineProps extends GraphNGProps {
   mode: TimelineMode;
+  rowHeight: number;
+  colWidth?: number;
 }
