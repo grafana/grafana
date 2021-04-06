@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/alerting-api/pkg/api"
+	"github.com/grafana/grafana/pkg/middleware"
 )
 
 type {{classname}}Service interface { {{#operation}}
@@ -24,7 +25,7 @@ type {{classname}}Base struct {
 func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 		group.{{httpMethod}}(toMacaronPath("{{{path}}}"){{#bodyParams}}, binding.Bind(apimodels.{{dataType}}{}){{/bodyParams}}, routing.Wrap(srv.{{nickname}})){{/operation}}{{/operations}}
-	})
+	}, middleware.ReqSignedIn)
 }{{#operation}}
 
 

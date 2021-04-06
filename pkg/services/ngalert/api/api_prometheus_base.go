@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -26,9 +27,9 @@ type PrometheusApiBase struct {
 
 func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Get(toMacaronPath("/prometheus/{Recipient}/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertStatuses))
-		group.Get(toMacaronPath("/prometheus/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRuleStatuses))
-	})
+		group.Get(toMacaronPath("/api/prometheus/{Recipient}/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertStatuses))
+		group.Get(toMacaronPath("/api/prometheus/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRuleStatuses))
+	}, middleware.ReqSignedIn)
 }
 
 func (base PrometheusApiBase) RouteGetAlertStatuses(c *models.ReqContext) response.Response {

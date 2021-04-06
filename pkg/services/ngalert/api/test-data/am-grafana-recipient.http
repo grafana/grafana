@@ -1,42 +1,33 @@
-@lokiDatasourceID = 32
-@prometheusDatasourceID = 875
 @grafana = grafana
-
-# unsupported loki backend
-GET http://admin:admin@localhost:3000/alertmanager/{{lokiDatasourceID}}/config/api/v1/alerts
-
-###
-# unsupported cortex backend
-GET http://admin:admin@localhost:3000/alertmanager/{{prometheusDatasourceID}}/config/api/v1/alerts
 
 ###
 # create AM configuration
-POST http://admin:admin@localhost:3000/alertmanager/{{grafana}}/config/api/v1/alerts
+POST http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/config/api/v1/alerts
 content-type: application/json
 
 < ./post-user-config.json
 
 ###
 # get latest AM configuration
-GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/config/api/v1/alerts
+GET http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/config/api/v1/alerts
 content-type: application/json
 
 ###
 # delete AM configuration
-DELETE http://admin:admin@localhost:3000/alertmanager/{{grafana}}/config/api/v1/alerts
+DELETE http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/config/api/v1/alerts
 
 ###
 # create AM alerts
-POST http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/alerts
+POST http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/alerts
 content-type: application/json
 
 ###
 # get silences - no silences
-GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences?Filter=foo="bar"&Filter=bar="foo"
+GET http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/silences?Filter=foo="bar"&Filter=bar="foo"
 
 ###
 # create silence
-POST http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences
+POST http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/silences
 content-type: application/json
 
 {
@@ -55,7 +46,7 @@ content-type: application/json
 
 ###
 # update silence - does not exist
-POST http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences
+POST http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/silences
 content-type: application/json
 
 {
@@ -75,7 +66,7 @@ content-type: application/json
 
 ###
 # create silence - bad paylaad - start time must be before end time
-POST http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences
+POST http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/silences
 content-type: application/json
 
 {
@@ -95,24 +86,23 @@ content-type: application/json
 ###
 # get silences
 # @name getSilences
-GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silences
-
+GET http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/silences
 
 ###
 @silenceID = {{getSilences.response.body.$.[0].id}}
 
 ###
 # get silence
-GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silence/{{silenceID}}
+GET http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/silence/{{silenceID}}
 
 ###
 # get silence - unknown
-GET http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silence/unknown
+GET http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/silence/unknown
 
 ###
 # delete silence
-DELETE http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silence/{{silenceID}}
+DELETE http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/silence/{{silenceID}}
 
 ###
 # delete silence - unknown
-DELETE http://admin:admin@localhost:3000/alertmanager/{{grafana}}/api/v2/silence/unknown
+DELETE http://admin:admin@localhost:3000/api/alertmanager/{{grafana}}/api/v2/silence/unknown
