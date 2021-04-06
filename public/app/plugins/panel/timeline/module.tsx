@@ -1,12 +1,11 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { TimelinePanel } from './TimelinePanel';
-import { TimelineFieldConfig, BarValueVisibility, graphFieldOptions } from '@grafana/ui';
+import { TimelineOptions, TimelineFieldConfig, BarValueVisibility, graphFieldOptions } from '@grafana/ui';
 import { addHideFrom, addLegendOptions } from '../timeseries/config';
 import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
-import { Options } from './types';
 import { TimelineMode } from '@grafana/ui/src/components/Timeline/types';
 
-export const plugin = new PanelPlugin<Options, TimelineFieldConfig>(TimelinePanel)
+export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(TimelinePanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {

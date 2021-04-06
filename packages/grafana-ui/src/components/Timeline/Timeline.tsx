@@ -156,6 +156,7 @@ class UnthemedTimeline extends React.Component<TimelineProps, GraphNGState> {
         value={{
           mapSeriesIndexToDataFrameFieldIndex: this.mapSeriesIndexToDataFrameFieldIndex,
           dimFields: this.state.dimFields,
+          data: this.state.alignedDataFrame,
         }}
       >
         <VizLayout width={width} height={height}>

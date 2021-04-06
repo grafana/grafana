@@ -15,6 +15,7 @@ export enum BarValueVisibility {
  * @alpha
  */
 export interface TimelineOptions {
+  mode: TimelineMode;
   legend: VizLegendOptions;
   showValue: BarValueVisibility;
   barWidth: number; // laneWidth
