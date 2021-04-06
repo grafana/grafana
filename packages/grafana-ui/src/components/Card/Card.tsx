@@ -37,7 +37,7 @@ const CardInner: FC<CardInnerProps> = ({ children, href }) => {
       {children}
     </a>
   ) : (
-    <>{children}</>
+    <div className={styles.innerLink}>{children}</div>
   );
 };
 

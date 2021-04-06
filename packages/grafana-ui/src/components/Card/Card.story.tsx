@@ -75,7 +75,7 @@ export const WithTags: Story<Props> = ({ disabled }) => {
 
 export const WithMedia: Story<Props> = ({ disabled }) => {
   return (
-    <Card href="https://ops-us-east4.grafana.net/api/prom" heading="1-ops-tools1-fallback" disabled={disabled}>
+    <Card heading="1-ops-tools1-fallback" disabled={disabled}>
       <Card.Meta>
         Prometheus
         <a key="link2" href="https://ops-us-east4.grafana.net/api/prom">
