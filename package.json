@@ -73,8 +73,8 @@
     "@babel/plugin-proposal-optional-chaining": "7.13.12",
     "@babel/plugin-proposal-private-methods": "7.13.0",
     "@babel/plugin-syntax-dynamic-import": "7.8.3",
-    "@babel/plugin-transform-runtime": "^7.13.10",
     "@babel/plugin-transform-react-constant-elements": "7.13.13",
+    "@babel/plugin-transform-runtime": "^7.13.10",
     "@babel/preset-env": "7.13.12",
     "@babel/preset-react": "7.13.13",
     "@babel/preset-typescript": "7.13.0",
@@ -219,7 +219,6 @@
     "@sentry/browser": "5.25.0",
     "@sentry/types": "5.24.2",
     "@sentry/utils": "5.24.2",
-    "react-select": "4.3.0",
     "@types/antlr4": "^4.7.1",
     "@types/braintree__sanitize-url": "4.0.0",
     "@types/common-tags": "^1.8.0",
@@ -287,6 +286,7 @@
     "react-redux": "7.2.0",
     "react-reverse-portal": "^2.0.1",
     "react-router-dom": "^5.2.0",
+    "react-select": "4.3.0",
     "react-sizeme": "2.6.12",
     "react-split-pane": "0.1.89",
     "react-transition-group": "4.4.1",
@@ -308,8 +308,7 @@
     "tinycolor2": "1.4.1",
     "uuid": "8.3.0",
     "visjs-network": "4.25.0",
-    "whatwg-fetch": "3.1.0",
-    "yaml": "^1.10.2"
+    "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"
