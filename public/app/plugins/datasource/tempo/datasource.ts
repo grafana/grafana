@@ -7,6 +7,7 @@ import {
   DataSourceInstanceSettings,
   Field,
   FieldType,
+  MutableDataFrame,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { Observable } from 'rxjs';
@@ -32,6 +33,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery> {
         // Seems like we can't just map the values as the frame we got from backend has some default processing
         // and will stringify the json back when we try to set it. So we create a new field and swap it instead.
         const frame: DataFrame = response.data[0];
+
+        if (!frame) {
+          return emptyDataQueryResponse;
+        }
+
         for (const fieldName of ['serviceTags', 'logs', 'tags']) {
           const field = frame.fields.find((f) => f.name === fieldName);
           if (field) {
@@ -70,3 +76,20 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery> {
     return query.query;
   }
 }
+
+const emptyDataQueryResponse = {
+  data: [
+    new MutableDataFrame({
+      fields: [
+        {
+          name: 'trace',
+          type: FieldType.trace,
+          values: [],
+        },
+      ],
+      meta: {
+        preferredVisualisationType: 'trace',
+      },
+    }),
+  ],
+};

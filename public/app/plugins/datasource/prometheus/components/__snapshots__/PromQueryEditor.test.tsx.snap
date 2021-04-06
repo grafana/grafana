@@ -189,16 +189,8 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           "getPrometheusTime": [MockFunction],
         }
       }
-      onChange={[MockFunction]}
-      query={
-        Object {
-          "exemplar": true,
-          "expr": "",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A",
-        }
-      }
+      isEnabled={true}
+      onChange={[Function]}
     />
   </div>
 </div>
