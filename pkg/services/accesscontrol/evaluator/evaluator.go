@@ -1,4 +1,4 @@
-package manager
+package evaluator
 
 import (
 	"context"
@@ -11,7 +11,8 @@ import (
 
 const roleGrafanaAdmin = "Grafana Admin"
 
-func (m *Manager) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
+// Evaluate evaluates access to the given resource, using provided AccessControl instance
+func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
 	roles := []string{string(user.OrgRole)}
 	for _, role := range user.OrgRole.Children() {
 		roles = append(roles, string(role))
@@ -20,11 +21,7 @@ func (m *Manager) Evaluate(ctx context.Context, user *models.SignedInUser, permi
 		roles = append(roles, roleGrafanaAdmin)
 	}
 
-	res, err := m.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:  user.OrgId,
-		UserID: user.UserId,
-		Roles:  roles,
-	})
+	res, err := ac.GetUserPermissions(ctx, user, roles)
 	if err != nil {
 		return false, err
 	}
