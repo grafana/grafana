@@ -1,9 +1,8 @@
 import React, { FC, useState } from 'react';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { PageToolbar, ToolbarButton, stylesFactory, Form, FormAPI } from '@grafana/ui';
+import { PageToolbar, ToolbarButton, Form, FormAPI, useStyles, CustomScrollbar } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-import { config } from 'app/core/config';
 import AlertTypeSection from './AlertTypeSection';
 import AlertConditionsSection from './AlertConditionsSection';
 import AlertDetails from './AlertDetails';
@@ -29,30 +28,8 @@ interface AlertRuleFormFields {
 
 export type AlertRuleFormMethods = FormAPI<AlertRuleFormFields>;
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    fullWidth: css`
-      width: 100%;
-    `,
-    formWrapper: css`
-      padding: 0 ${theme.spacing.md};
-    `,
-    formInput: css`
-      width: 400px;
-      & + & {
-        margin-left: ${theme.spacing.sm};
-      }
-    `,
-    flexRow: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-    `,
-  };
-});
-
-const AlertRuleForm: FC<Props> = () => {
-  const styles = getStyles(config.theme);
+export const AlertRuleForm: FC<Props> = () => {
+  const styles = useStyles(getStyles);
 
   const [folder, setFolder] = useState<{ namespace: string; group: string }>();
 
@@ -98,27 +75,27 @@ const AlertRuleForm: FC<Props> = () => {
   return (
     <Form
       onSubmit={handleSubmit}
-      className={styles.fullWidth}
+      className={styles.form}
       defaultValues={{ labels: [{ key: '', value: '' }], annotations: [{ key: {}, value: '' }] }}
     >
       {(formApi) => (
         <>
-          <PageToolbar title="Create alert rule" pageIcon="bell">
+          <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
+            <ToolbarButton variant="default">Cancel</ToolbarButton>
             <ToolbarButton variant="primary" type="submit">
               Save
             </ToolbarButton>
             <ToolbarButton variant="primary">Save and exit</ToolbarButton>
-            <a href="/alerting/list">
-              <ToolbarButton variant="destructive" type="button">
-                Cancel
-              </ToolbarButton>
-            </a>
           </PageToolbar>
-          <div className={styles.formWrapper}>
-            <AlertTypeSection {...formApi} setFolder={setFolder} />
-            <Expression {...formApi} />
-            <AlertConditionsSection {...formApi} />
-            <AlertDetails {...formApi} />
+          <div className={styles.contentOutter}>
+            <CustomScrollbar autoHeightMin="100%">
+              <div className={styles.contentInner}>
+                <AlertTypeSection {...formApi} setFolder={setFolder} />
+                <Expression {...formApi} />
+                <AlertConditionsSection {...formApi} />
+                <AlertDetails {...formApi} />
+              </div>
+            </CustomScrollbar>
           </div>
         </>
       )}
@@ -126,4 +103,37 @@ const AlertRuleForm: FC<Props> = () => {
   );
 };
 
-export default AlertRuleForm;
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    toolbar: css`
+      padding-top: ${theme.spacing.sm};
+      padding-bottom: ${theme.spacing.md};
+      border-bottom: solid 1px ${theme.colors.border2};
+    `,
+    form: css`
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    `,
+    contentInner: css`
+      flex: 1;
+      padding: ${theme.spacing.md};
+    `,
+    contentOutter: css`
+      background: ${theme.colors.panelBg};
+      overflow: hidden;
+    `,
+    formInput: css`
+      width: 400px;
+      & + & {
+        margin-left: ${theme.spacing.sm};
+      }
+    `,
+    flexRow: css`
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+    `,
+  };
+};
