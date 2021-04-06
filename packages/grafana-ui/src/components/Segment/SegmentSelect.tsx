@@ -1,5 +1,5 @@
 import React, { HTMLProps, useRef } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import useClickAway from 'react-use/lib/useClickAway';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '../Forms/Legacy/Select/Select';

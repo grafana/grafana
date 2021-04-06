@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { RefreshPicker, stylesFactory } from '@grafana/ui';
 
@@ -56,7 +56,7 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props> {
             />
           </div>
           <QueryGroup
-            queryRunner={queryRunner!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
+            queryRunner={queryRunner!} // if the queryRunner is undefined here, somethings very wrong so it's ok to throw an unhandled error
             options={queryOptions}
             onRunQueries={this.onRunQueries}
             onOptionsChange={this.onQueryOptionsChange}

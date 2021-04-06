@@ -13,9 +13,8 @@ import (
 
 // corePlugin represents a plugin that's part of Grafana core.
 type corePlugin struct {
-	isDataPlugin bool
-	pluginID     string
-	logger       log.Logger
+	pluginID string
+	logger   log.Logger
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
@@ -44,10 +43,6 @@ func (cp *corePlugin) Logger() log.Logger {
 	return cp.logger
 }
 
-func (cp *corePlugin) CanHandleDataQueries() bool {
-	return cp.isDataPlugin
-}
-
 func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	// TODO: Inline the adapter, since it shouldn't be necessary
@@ -57,7 +52,6 @@ func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (cp *corePlugin) Start(ctx context.Context) error {
-	cp.isDataPlugin = cp.QueryDataHandler != nil
 	return nil
 }
 
@@ -93,9 +87,16 @@ func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourc
 	return backendplugin.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) CanSubscribeToStream(ctx context.Context, req *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+func (cp *corePlugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if cp.StreamHandler != nil {
-		return cp.StreamHandler.CanSubscribeToStream(ctx, req)
+		return cp.StreamHandler.SubscribeStream(ctx, req)
+	}
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	if cp.StreamHandler != nil {
+		return cp.StreamHandler.PublishStream(ctx, req)
 	}
 	return nil, backendplugin.ErrMethodNotImplemented
 }

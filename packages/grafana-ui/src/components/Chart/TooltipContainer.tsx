@@ -1,6 +1,6 @@
 import React, { useState, useLayoutEffect, useRef, HTMLAttributes, useMemo } from 'react';
 import { stylesFactory } from '../../themes/stylesFactory';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { useTheme } from '../../themes/ThemeContext';
 import useWindowSize from 'react-use/lib/useWindowSize';
 import { Dimensions2D, GrafanaTheme } from '@grafana/data';

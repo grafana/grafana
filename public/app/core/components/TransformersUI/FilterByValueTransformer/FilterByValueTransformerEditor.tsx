@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import {
   DataTransformerID,
   standardTransformers,

@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"os"
 	"sort"
 	"testing"
 
@@ -40,6 +41,56 @@ func TestPluginSettings(t *testing.T) {
 			sort.Strings(env)
 			require.Len(t, env, 3)
 			require.EqualValues(t, []string{"GF_PLUGIN_KEY1=value1", "GF_PLUGIN_KEY2=value2", "GF_VERSION=6.7.0"}, env)
+		})
+
+		t.Run("Should override config variable with environment variable ", func(t *testing.T) {
+			_ = os.Setenv("GF_PLUGIN_KEY1", "sth")
+			t.Cleanup(func() {
+				_ = os.Unsetenv("GF_PLUGIN_KEY1")
+			})
+
+			ps := getPluginSettings("plugin", cfg)
+			env := ps.ToEnv("GF_PLUGIN", []string{"GF_VERSION=6.7.0"})
+			sort.Strings(env)
+			require.Len(t, env, 3)
+			require.EqualValues(t, []string{"GF_PLUGIN_KEY1=sth", "GF_PLUGIN_KEY2=value2", "GF_VERSION=6.7.0"}, env)
+		})
+
+		t.Run("Config variable doesn't match env variable ", func(t *testing.T) {
+			_ = os.Setenv("GF_PLUGIN_KEY3", "value3")
+			t.Cleanup(func() {
+				_ = os.Unsetenv("GF_PLUGIN_KEY3")
+			})
+
+			ps := getPluginSettings("plugin", cfg)
+			env := ps.ToEnv("GF_PLUGIN", []string{"GF_VERSION=6.7.0"})
+			sort.Strings(env)
+			require.Len(t, env, 3)
+			require.EqualValues(t, []string{"GF_PLUGIN_KEY1=value1", "GF_PLUGIN_KEY2=value2", "GF_VERSION=6.7.0"}, env)
+		})
+
+		t.Run("Should override missing config variable with environment variable ", func(t *testing.T) {
+			cfg := &setting.Cfg{
+				PluginSettings: setting.PluginSettings{
+					"plugin": map[string]string{
+						"key1": "value1",
+						"key2": "",
+					},
+				},
+			}
+
+			ps := getPluginSettings("plugin", cfg)
+			require.Len(t, ps, 2)
+
+			_ = os.Setenv("GF_PLUGIN_KEY2", "sth")
+			t.Cleanup(func() {
+				_ = os.Unsetenv("GF_PLUGIN_KEY1")
+			})
+
+			env := ps.ToEnv("GF_PLUGIN", []string{"GF_VERSION=6.7.0"})
+			sort.Strings(env)
+			require.Len(t, env, 3)
+			require.EqualValues(t, []string{"GF_PLUGIN_KEY1=value1", "GF_PLUGIN_KEY2=sth", "GF_VERSION=6.7.0"}, env)
 		})
 	})
 }
