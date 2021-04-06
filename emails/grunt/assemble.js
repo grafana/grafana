@@ -16,6 +16,7 @@ module.exports = function () {
     },
     txt: {
       options: {
+        layout: 'templates/layouts/default.txt',
         ext: '.txt',
       },
       src: ['templates/*.txt'],
