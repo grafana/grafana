@@ -45,3 +45,5 @@ View your Alert rule:
 
 Go to the Alerts page:
 {{.AlertPageUrl}}
+
+Sent by Grafana v{{.BuildVersion}} (c) 2021 Grafana Labs

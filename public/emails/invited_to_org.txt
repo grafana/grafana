@@ -8,3 +8,5 @@ below your username.
 
 Log in now:
 {{.AppUrl}}
+
+Sent by Grafana v{{.BuildVersion}} (c) 2021 Grafana Labs
