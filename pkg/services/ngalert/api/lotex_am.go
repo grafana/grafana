@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -37,100 +38,102 @@ func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimod
 	if err != nil {
 		return response.Error(500, "Failed marshal silence", err)
 	}
-	body, ln := payload(blob)
 	return am.withReq(
-		ctx, &http.Request{
-			Method:        "POST",
-			URL:           withPath(*ctx.Req.URL, amSilencesPath),
-			Body:          body,
-			ContentLength: ln,
-		},
+		ctx,
+		http.MethodPost,
+		withPath(*ctx.Req.URL, amSilencesPath),
+		bytes.NewBuffer(blob),
 		jsonExtractor(&apimodels.GettableSilence{}),
 	)
 }
 
 func (am *LotexAM) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
 	return am.withReq(
-		ctx, &http.Request{
-			Method: "DELETE",
-			URL: withPath(
-				*ctx.Req.URL,
-				amConfigPath,
-			),
-		},
+		ctx,
+		http.MethodDelete,
+		withPath(
+			*ctx.Req.URL,
+			amConfigPath,
+		),
+		nil,
 		messageExtractor,
 	)
 }
 
 func (am *LotexAM) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
 	return am.withReq(
-		ctx, &http.Request{
-			Method: "DELETE",
-			URL: withPath(
-				*ctx.Req.URL,
-				fmt.Sprintf(amSilencePath, ctx.Params(":SilenceId")),
-			),
-		},
+		ctx,
+		http.MethodDelete,
+		withPath(
+			*ctx.Req.URL,
+			fmt.Sprintf(amSilencePath, ctx.Params(":SilenceId")),
+		),
+		nil,
 		messageExtractor,
 	)
 }
 
 func (am *LotexAM) RouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
 	return am.withReq(
-		ctx, &http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				amConfigPath,
-			),
-		},
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			amConfigPath,
+		),
+		nil,
 		jsonExtractor(&apimodels.GettableUserConfig{}),
 	)
 }
 
 func (am *LotexAM) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
 	return am.withReq(
-		ctx, &http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				amAlertGroupsPath,
-			),
-		},
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			amAlertGroupsPath,
+		),
+		nil,
 		jsonExtractor(&apimodels.AlertGroups{}),
 	)
 }
 
 func (am *LotexAM) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
 	return am.withReq(
-		ctx, &http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				amAlertsPath,
-			),
-		},
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			amAlertsPath,
+		),
+		nil,
 		jsonExtractor(&apimodels.GettableAlerts{}),
 	)
 }
 
 func (am *LotexAM) RouteGetSilence(ctx *models.ReqContext) response.Response {
 	return am.withReq(
-		ctx, &http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				fmt.Sprintf(amSilencePath, ctx.Params(":SilenceId")),
-			),
-		},
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			fmt.Sprintf(amSilencePath, ctx.Params(":SilenceId")),
+		),
+		nil,
 		jsonExtractor(&apimodels.GettableSilence{}),
 	)
 }
 
 func (am *LotexAM) RouteGetSilences(ctx *models.ReqContext) response.Response {
 	return am.withReq(
-		ctx, &http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				amSilencesPath,
-			),
-		},
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			amSilencesPath,
+		),
+		nil,
 		jsonExtractor(&apimodels.GettableSilences{}),
 	)
 }
@@ -140,16 +143,14 @@ func (am *LotexAM) RoutePostAlertingConfig(ctx *models.ReqContext, config apimod
 	if err != nil {
 		return response.Error(500, "Failed marshal alert manager configuration ", err)
 	}
-	body, ln := payload(yml)
 
-	u := withPath(*ctx.Req.URL, amConfigPath)
-	req := &http.Request{
-		Method:        "POST",
-		URL:           u,
-		Body:          body,
-		ContentLength: ln,
-	}
-	return am.withReq(ctx, req, messageExtractor)
+	return am.withReq(
+		ctx,
+		http.MethodPost,
+		withPath(*ctx.Req.URL, amConfigPath),
+		bytes.NewBuffer(yml),
+		messageExtractor,
+	)
 }
 
 func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.PostableAlerts) response.Response {
@@ -157,14 +158,12 @@ func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.Po
 	if err != nil {
 		return response.Error(500, "Failed marshal postable alerts", err)
 	}
-	body, ln := payload(yml)
 
-	u := withPath(*ctx.Req.URL, amAlertsPath)
-	req := &http.Request{
-		Method:        "POST",
-		URL:           u,
-		Body:          body,
-		ContentLength: ln,
-	}
-	return am.withReq(ctx, req, messageExtractor)
+	return am.withReq(
+		ctx,
+		http.MethodPost,
+		withPath(*ctx.Req.URL, amAlertsPath),
+		bytes.NewBuffer(yml),
+		messageExtractor,
+	)
 }

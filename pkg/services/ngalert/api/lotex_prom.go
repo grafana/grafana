@@ -44,12 +44,13 @@ func (p *LotexProm) RouteGetAlertStatuses(ctx *models.ReqContext) response.Respo
 	}
 
 	return p.withReq(
-		ctx, &http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				endpoints.alerts,
-			),
-		},
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			endpoints.alerts,
+		),
+		nil,
 		jsonExtractor(&apimodels.AlertResponse{}),
 	)
 }
@@ -61,12 +62,13 @@ func (p *LotexProm) RouteGetRuleStatuses(ctx *models.ReqContext) response.Respon
 	}
 
 	return p.withReq(
-		ctx, &http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				endpoints.rules,
-			),
-		},
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			endpoints.rules,
+		),
+		nil,
 		jsonExtractor(&apimodels.RuleResponse{}),
 	)
 }

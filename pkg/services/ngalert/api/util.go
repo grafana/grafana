@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 
@@ -85,9 +87,15 @@ type AlertingProxy struct {
 // withReq proxies a different request
 func (p *AlertingProxy) withReq(
 	ctx *models.ReqContext,
-	req *http.Request,
+	method string,
+	u *url.URL,
+	body io.Reader,
 	extractor func([]byte) (interface{}, error),
 ) response.Response {
+	req, err := http.NewRequest(method, u.String(), body)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req.Request = req
 	p.DataProxy.ProxyDatasourceRequestWithID(newCtx, ctx.ParamsInt64("Recipient"))
