@@ -1,8 +1,7 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import { ConfirmButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { action } from '@storybook/addon-actions';
 import { Button } from '../Button';
 import { DeleteButton } from './DeleteButton';
@@ -21,6 +20,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['className'],
+    },
   },
   args: {
     buttonText: 'Edit',
@@ -33,9 +35,8 @@ export default {
   argTypes: {
     confirmVariant: { control: { type: 'select' } },
     size: { control: { type: 'select' } },
-    className: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 interface StoryProps extends Partial<Props> {
   buttonText: string;
