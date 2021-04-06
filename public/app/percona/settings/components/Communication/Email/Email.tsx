@@ -1,41 +1,47 @@
-import { TextInputField, PasswordInputField, validators } from '@percona/platform-core';
+import { TextInputField, PasswordInputField, validators, RadioButtonGroupField } from '@percona/platform-core';
+import { FormApi } from 'final-form';
 import React, { FC, useState } from 'react';
-import { Form } from 'react-final-form';
+import { withTypes } from 'react-final-form';
 
 import { Button, Spinner, useTheme } from '@grafana/ui';
+import { EmailAuthType } from 'app/percona/settings/Settings.types';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 
-import { LoadingCallback } from '../../../Settings.service';
 import { getSettingsStyles } from '../../../Settings.styles';
-import { EmailSettings } from '../../../Settings.types';
 import { Messages } from '../Communication.messages';
 
-export interface EmailProps {
-  settings: EmailSettings;
-  updateSettings: (body: any, callback: LoadingCallback) => void;
-}
+import { emailOptions } from './Email.constants';
+import { EmailProps, FormEmailSettings } from './Email.types';
+import { getInitialValues, cleanupFormValues } from './Email.utils';
 
 export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
   const theme = useTheme();
   const settingsStyles = getSettingsStyles(theme);
   const [loading, setLoading] = useState(false);
 
-  const applyChanges = (values: EmailSettings) => {
+  const applyChanges = (values: FormEmailSettings) =>
     updateSettings(
       {
-        email_alerting_settings: values,
+        email_alerting_settings: cleanupFormValues(values),
       },
       setLoading
     );
+
+  const resetUsernameAndPasswordState = (form: FormApi<FormEmailSettings>) => {
+    form.resetFieldState('username');
+    form.resetFieldState('password');
   };
+
+  const initialValues = getInitialValues(settings);
+  const { Form } = withTypes<FormEmailSettings>();
 
   return (
     <>
       <Form
         onSubmit={applyChanges}
-        initialValues={settings}
-        render={({ handleSubmit, valid, pristine }) => (
-          <form onSubmit={handleSubmit}>
+        initialValues={initialValues}
+        render={({ handleSubmit, valid, pristine, values, form }) => (
+          <form className={settingsStyles.emailForm} onSubmit={handleSubmit}>
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.smarthost.label}</span>
               <LinkTooltip
@@ -46,6 +52,17 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
               />
             </div>
             <TextInputField name="smarthost" validators={[validators.required]} />
+
+            <div className={settingsStyles.labelWrapper}>
+              <span>{Messages.fields.hello.label}</span>
+              <LinkTooltip
+                tooltipText={Messages.fields.hello.tooltipText}
+                link={Messages.fields.hello.tooltipLink}
+                linkText={Messages.fields.hello.tooltipLinkText}
+                icon="info-circle"
+              />
+            </div>
+            <TextInputField validators={[validators.required]} name="hello" />
 
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.from.label}</span>
@@ -59,6 +76,25 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
             <TextInputField name="from" validators={[validators.required]} />
 
             <div className={settingsStyles.labelWrapper}>
+              <span>{Messages.fields.type.label}</span>
+              <LinkTooltip
+                tooltipText={Messages.fields.type.tooltipText}
+                link={Messages.fields.type.tooltipLink}
+                linkText={Messages.fields.type.tooltipLinkText}
+                icon="info-circle"
+              />
+            </div>
+            <RadioButtonGroupField
+              inputProps={{
+                onInput: () => resetUsernameAndPasswordState(form),
+              }}
+              className={settingsStyles.authRadioGroup}
+              options={emailOptions}
+              name="authType"
+              fullWidth
+            />
+
+            <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.username.label}</span>
               <LinkTooltip
                 tooltipText={Messages.fields.username.tooltipText}
@@ -67,7 +103,11 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
                 icon="info-circle"
               />
             </div>
-            <TextInputField name="username" />
+            <TextInputField
+              disabled={values.authType === EmailAuthType.NONE}
+              validators={values.authType === EmailAuthType.NONE ? [] : [validators.required]}
+              name="username"
+            />
 
             <div className={settingsStyles.labelWrapper}>
               <span>{Messages.fields.password.label}</span>
@@ -78,40 +118,11 @@ export const Email: FC<EmailProps> = ({ updateSettings, settings }) => {
                 icon="info-circle"
               />
             </div>
-            <PasswordInputField name="password" />
-
-            <div className={settingsStyles.labelWrapper}>
-              <span>{Messages.fields.hello.label}</span>
-              <LinkTooltip
-                tooltipText={Messages.fields.hello.tooltipText}
-                link={Messages.fields.hello.tooltipLink}
-                linkText={Messages.fields.hello.tooltipLinkText}
-                icon="info-circle"
-              />
-            </div>
-            <TextInputField name="hello" />
-
-            <div className={settingsStyles.labelWrapper}>
-              <span>{Messages.fields.identity.label}</span>
-              <LinkTooltip
-                tooltipText={Messages.fields.identity.tooltipText}
-                link={Messages.fields.identity.tooltipLink}
-                linkText={Messages.fields.identity.tooltipLinkText}
-                icon="info-circle"
-              />
-            </div>
-            <TextInputField name="identity" />
-
-            <div className={settingsStyles.labelWrapper}>
-              <span>{Messages.fields.secret.label}</span>
-              <LinkTooltip
-                tooltipText={Messages.fields.secret.tooltipText}
-                link={Messages.fields.secret.tooltipLink}
-                linkText={Messages.fields.secret.tooltipLinkText}
-                icon="info-circle"
-              />
-            </div>
-            <PasswordInputField name="secret" />
+            <PasswordInputField
+              disabled={values.authType === EmailAuthType.NONE}
+              validators={values.authType === EmailAuthType.NONE ? [] : [validators.required]}
+              name="password"
+            />
 
             <Button
               className={settingsStyles.actionButton}

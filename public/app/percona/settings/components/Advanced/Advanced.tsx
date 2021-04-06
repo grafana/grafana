@@ -10,6 +10,8 @@ import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import validators from 'app/percona/shared/helpers/validators';
 
+import { AdvancedChangePayload } from '../../Settings.types';
+
 import { SECONDS_IN_DAY, MIN_DAYS, MAX_DAYS, TECHNICAL_PREVIEW_DOC_URL } from './Advanced.constants';
 import { getStyles } from './Advanced.styles';
 import { AdvancedProps } from './Advanced.types';
@@ -76,7 +78,7 @@ export const Advanced: FC<AdvancedProps> = ({
   // @ts-ignore
   const applyChanges = ({ retention, telemetry, stt, publicAddress, alerting, azureDiscover }) => {
     const refresh = !!alerting !== alertingEnabled;
-    const body = {
+    const body: AdvancedChangePayload = {
       data_retention: `${+retention * SECONDS_IN_DAY}s`,
       disable_telemetry: !telemetry,
       enable_telemetry: telemetry,

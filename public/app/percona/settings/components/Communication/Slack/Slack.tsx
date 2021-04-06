@@ -3,16 +3,16 @@ import React, { FC, useState } from 'react';
 import { Form } from 'react-final-form';
 
 import { Button, Spinner, useTheme } from '@grafana/ui';
+import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 
 import { LoadingCallback } from '../../../Settings.service';
-import { getSettingsStyles } from '../../../Settings.styles';
-import { SlackSettings } from '../../../Settings.types';
+import { SlackPayload, SlackSettings } from '../../../Settings.types';
 import { Messages } from '../Communication.messages';
 
 export interface SlackProps {
   settings: SlackSettings;
-  updateSettings: (body: any, callback: LoadingCallback) => void;
+  updateSettings: (body: SlackPayload, callback: LoadingCallback) => void;
 }
 
 export const Slack: FC<SlackProps> = ({ updateSettings, settings }) => {

@@ -2,7 +2,6 @@ import { dataQa } from '@percona/platform-core';
 import { ReactWrapper, mount } from 'enzyme';
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 
 import { CheckService } from './Check.service';
 import { CheckPanel } from './CheckPanel';
@@ -91,7 +90,6 @@ describe('CheckPanel::', () => {
     const text = `${Messages.pmmSettings}`;
 
     expect(wrapper.find(dataQa('db-check-panel-settings-link')).text()).toEqual(text);
-
     spy.mockClear();
     wrapper.unmount();
   });

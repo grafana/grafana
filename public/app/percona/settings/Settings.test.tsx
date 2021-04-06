@@ -23,7 +23,6 @@ describe('SettingsPanel::', () => {
       return callback({ location: { routeParams: { tab: 'alerts' }, path: '/integrated-alerting/alerts' } });
     });
   });
-
   it('Renders correctly without rendering hidden tab', async () => {
     let root;
 

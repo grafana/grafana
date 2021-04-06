@@ -5,16 +5,16 @@ import { useSelector } from 'react-redux';
 import { UrlQueryValue } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
 import { Spinner, Tab, TabContent, useTheme } from '@grafana/ui';
+import { PageModel } from 'app/core/components/Breadcrumb';
 import { TabsVertical } from 'app/percona/shared/components/Elements/TabsVertical/TabsVertical';
+import { StoreState } from 'app/types';
 
-import { PageModel } from '../../core/components/Breadcrumb';
-import { StoreState } from '../../types';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 
 import { Messages } from './Settings.messages';
 import { LoadingCallback, SettingsService } from './Settings.service';
 import { getSettingsStyles } from './Settings.styles';
-import { Settings, TabKeys } from './Settings.types';
+import { Settings, TabKeys, SettingsAPIChangePayload } from './Settings.types';
 import { Advanced, AlertManager, Diagnostics, MetricsResolution, PlatformLogin, SSHKey } from './components';
 import { Communication } from './components/Communication/Communication';
 
@@ -107,8 +107,9 @@ export const SettingsPanel: FC = () => {
     [activeTab, settings, advanced, alertManager, communication, metrics, perconaPlatform, ssh]
   );
 
-  const updateSettings = async (body: any, callback: LoadingCallback, refresh?: boolean) => {
-    const response = await SettingsService.setSettings(body, callback);
+  const updateSettings = async (body: SettingsAPIChangePayload, callback: LoadingCallback, refresh?: boolean) => {
+    const response: Settings = await SettingsService.setSettings(body, callback);
+    const { email_alerting_settings: { password = '' } = {} } = body;
 
     if (refresh) {
       window.location.reload();
@@ -117,7 +118,12 @@ export const SettingsPanel: FC = () => {
     }
 
     if (response) {
-      setSettings(response);
+      // password is not being returned by the API, hence this construction
+      const newSettings: Settings = {
+        ...response,
+        alertingSettings: { ...response.alertingSettings, email: { ...response.alertingSettings.email, password } },
+      };
+      setSettings(newSettings);
     }
   };
 
