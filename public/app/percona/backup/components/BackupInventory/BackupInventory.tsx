@@ -3,21 +3,29 @@ import { logger } from '@percona/platform-core';
 import React, { FC, useMemo, useState, useEffect } from 'react';
 import { Column, Row } from 'react-table';
 
+import { Button, useStyles } from '@grafana/ui';
 import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell/ExpandableCell';
+import { DATABASE_LABELS } from 'app/percona/shared/core';
 
+import { AddBackupModal } from './AddBackupModal';
+import { AddBackupFormProps } from './AddBackupModal/AddBackupModal.types';
 import { BackupCreation } from './BackupCreation';
 import { Messages } from './BackupInventory.messages';
 import { BackupInventoryService } from './BackupInventory.service';
+import { getStyles } from './BackupInventory.styles';
 import { Backup } from './BackupInventory.types';
-import { BackupInventoryDetails } from './BackupInventoryDetails/BackupInventoryDetails';
+import { BackupInventoryActions } from './BackupInventoryActions';
+import { BackupInventoryDetails } from './BackupInventoryDetails';
 import { Status } from './Status';
 
 const { columns, noData } = Messages;
-const { name, created, location, vendor, status } = columns;
+const { name, created, location, vendor, status, actions } = columns;
 
 export const BackupInventory: FC = () => {
   const [pending, setPending] = useState(false);
+  const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null);
+  const [backupModalVisible, setBackupModalVisible] = useState(false);
   const [data, setData] = useState<Backup[]>([]);
   const columns = useMemo(
     (): Column[] => [
@@ -30,7 +38,7 @@ export const BackupInventory: FC = () => {
       },
       {
         Header: vendor,
-        accessor: 'vendor',
+        accessor: ({ vendor }: Backup) => DATABASE_LABELS[vendor],
         width: '150px',
       },
       {
@@ -47,9 +55,16 @@ export const BackupInventory: FC = () => {
         accessor: 'status',
         Cell: ({ value }) => <Status status={value} />,
       },
+      {
+        Header: actions,
+        accessor: 'id',
+        Cell: ({ row }) => <BackupInventoryActions onBackup={onBackupClick} backup={row.original as Backup} />,
+        width: '80px',
+      },
     ],
     []
   );
+  const styles = useStyles(getStyles);
 
   const getData = async () => {
     setPending(true);
@@ -75,18 +90,58 @@ export const BackupInventory: FC = () => {
     []
   );
 
+  const onBackupClick = (backup: Backup | null) => {
+    setSelectedBackup(backup);
+    setBackupModalVisible(true);
+  };
+
+  const handleClose = () => {
+    setSelectedBackup(null);
+    setBackupModalVisible(false);
+  };
+
+  const handleBackup = async ({ service, location, backupName, description }: AddBackupFormProps) => {
+    try {
+      await BackupInventoryService.backup(service.value?.id || '', location.value || '', backupName, description);
+      setBackupModalVisible(false);
+      setSelectedBackup(null);
+      getData();
+    } catch (e) {
+      logger.error(e);
+    }
+  };
+
   useEffect(() => {
     getData();
   }, []);
 
   return (
-    <Table
-      data={data}
-      totalItems={data.length}
-      columns={columns}
-      emptyMessage={noData}
-      pendingRequest={pending}
-      renderExpandedRow={renderSelectedSubRow}
-    ></Table>
+    <>
+      <div className={styles.addWrapper}>
+        <Button
+          size="md"
+          icon="plus-square"
+          variant="link"
+          data-qa="backup-add-modal-button"
+          onClick={() => onBackupClick(null)}
+        >
+          {Messages.add}
+        </Button>
+      </div>
+      <Table
+        data={data}
+        totalItems={data.length}
+        columns={columns}
+        emptyMessage={noData}
+        pendingRequest={pending}
+        renderExpandedRow={renderSelectedSubRow}
+      ></Table>
+      <AddBackupModal
+        backup={selectedBackup}
+        isVisible={backupModalVisible}
+        onClose={handleClose}
+        onBackup={handleBackup}
+      />
+    </>
   );
 };
