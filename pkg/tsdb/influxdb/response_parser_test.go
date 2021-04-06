@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,6 +15,12 @@ func responseFromJSON(t *testing.T, text string) *Response {
 	response, err := parseJSON(buf)
 	require.NoError(t, err)
 	return response
+}
+
+func decodedFrames(t *testing.T, result *plugins.DataQueryResult) data.Frames {
+	decoded, err := result.Dataframes.Decoded()
+	require.NoError(t, err)
+	return decoded
 }
 
 func TestInfluxdbResponseParser(t *testing.T) {
@@ -44,18 +52,25 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		result := parser.Parse(response, query)
 
-		require.Len(t, result.Series, 2)
+		decoded := decodedFrames(t, &result)
+		require.Len(t, decoded, 2)
+		frame1 := decoded[0]
+		frame2 := decoded[1]
 
-		require.Len(t, result.Series[0].Points, 3)
-		require.Len(t, result.Series[1].Points, 3)
+		require.Equal(t, frame1.Name, "cpu.mean { datacenter: America }")
+		require.Equal(t, frame2.Name, "cpu.sum { datacenter: America }")
 
-		require.Equal(t, result.Series[0].Points[1][0].Float64, float64(222))
-		require.Equal(t, result.Series[1].Points[1][0].Float64, float64(333))
+		require.Len(t, frame1.Fields, 2)
+		require.Len(t, frame2.Fields, 2)
 
-		require.False(t, result.Series[0].Points[2][0].Valid)
+		require.Equal(t, frame1.Fields[0].Len(), 3)
+		require.Equal(t, frame1.Fields[1].Len(), 3)
+		require.Equal(t, frame2.Fields[0].Len(), 3)
+		require.Equal(t, frame2.Fields[1].Len(), 3)
 
-		require.Equal(t, result.Series[0].Name, "cpu.mean { datacenter: America }")
-		require.Equal(t, result.Series[1].Name, "cpu.sum { datacenter: America }")
+		require.Equal(t, *frame1.Fields[1].At(1).(*float64), 222.0)
+		require.Equal(t, *frame2.Fields[1].At(1).(*float64), 333.0)
+		require.Nil(t, frame1.Fields[1].At(2))
 	})
 
 	t.Run("Influxdb response parser with invalid value-format", func(t *testing.T) {
@@ -88,13 +103,23 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		// the current behavior is that we do not report an error, we turn the invalid value into `nil`
 		require.Nil(t, result.Error)
 		require.Equal(t, result.ErrorString, "")
-		require.Len(t, result.Series, 1)
 
-		require.Len(t, result.Series[0].Points, 3)
+		decoded := decodedFrames(t, &result)
+		require.Len(t, decoded, 1)
 
-		require.Equal(t, result.Series[0].Points[0][0].Float64, float64(50))
-		require.False(t, result.Series[0].Points[1][0].Valid)
-		require.Equal(t, result.Series[0].Points[2][0].Float64, float64(52))
+		frame := decoded[0]
+
+		require.Len(t, frame.Fields, 2)
+
+		field1 := frame.Fields[0]
+		field2 := frame.Fields[1]
+
+		require.Equal(t, field1.Len(), 3)
+		require.Equal(t, field2.Len(), 3)
+
+		require.Equal(t, *field2.At(0).(*float64), 50.0)
+		require.Nil(t, field2.At(1))
+		require.Equal(t, *field2.At(2).(*float64), 52.0)
 	})
 
 	t.Run("Influxdb response parser with invalid timestamp-format", func(t *testing.T) {
@@ -111,6 +136,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 							"values": [
 								[100,50],
 								["hello",51],
+								["hello","hello"],
 								[102,52]
 							]
 						}
@@ -124,15 +150,25 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		result := parser.Parse(response, query)
 
-		// the current behavior is that we do not report an error, we skip the item with the invalid timestmap
+		// the current behavior is that we do not report an error, we skip the item with the invalid timestamp
 		require.Nil(t, result.Error)
 		require.Equal(t, result.ErrorString, "")
-		require.Len(t, result.Series, 1)
 
-		require.Len(t, result.Series[0].Points, 2)
+		decoded := decodedFrames(t, &result)
+		require.Len(t, decoded, 1)
 
-		require.Equal(t, result.Series[0].Points[0][0].Float64, float64(50))
-		require.Equal(t, result.Series[0].Points[1][0].Float64, float64(52))
+		frame := decoded[0]
+
+		require.Len(t, frame.Fields, 2)
+
+		field1 := frame.Fields[0]
+		field2 := frame.Fields[1]
+
+		require.Equal(t, field1.Len(), 2)
+		require.Equal(t, field2.Len(), 2)
+
+		require.Equal(t, *field2.At(0).(*float64), 50.0)
+		require.Equal(t, *field2.At(1).(*float64), 52.0)
 	})
 
 	t.Run("Influxdb response parser with alias", func(t *testing.T) {
@@ -166,74 +202,74 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		query := &Query{Alias: "series alias"}
 		result := parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "series alias")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "series alias")
 
 		query = &Query{Alias: "alias $m $measurement", Measurement: "10m"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias 10m 10m")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias 10m 10m")
 
 		query = &Query{Alias: "alias $col", Measurement: "10m"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias mean")
-		require.Equal(t, result.Series[1].Name, "alias sum")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias mean")
+		require.Equal(t, decodedFrames(t, &result)[1].Name, "alias sum")
 
 		query = &Query{Alias: "alias $tag_datacenter"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias America")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias America")
 
 		query = &Query{Alias: "alias $1"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias upc")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias upc")
 
 		query = &Query{Alias: "alias $5"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias $5")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias $5")
 
 		query = &Query{Alias: "series alias"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "series alias")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "series alias")
 
 		query = &Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias 10m 10m")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias 10m 10m")
 
 		query = &Query{Alias: "alias [[col]]", Measurement: "10m"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias mean")
-		require.Equal(t, result.Series[1].Name, "alias sum")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias mean")
+		require.Equal(t, decodedFrames(t, &result)[1].Name, "alias sum")
 
 		query = &Query{Alias: "alias [[tag_datacenter]]"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias America")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias America")
 
 		query = &Query{Alias: "alias [[tag_dc.region.name]]"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias Northeast")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Northeast")
 
 		query = &Query{Alias: "alias [[tag_cluster-name]]"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias Cluster")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Cluster")
 
 		query = &Query{Alias: "alias [[tag_/cluster/name/]]"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias Cluster/")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Cluster/")
 
 		query = &Query{Alias: "alias [[tag_@cluster@name@]]"}
 		result = parser.Parse(response, query)
 
-		require.Equal(t, result.Series[0].Name, "alias Cluster@")
+		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Cluster@")
 	})
 
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {
@@ -267,10 +303,14 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		result := parser.Parse(response, query)
 
-		require.Len(t, result.Series, 2)
+		decoded := decodedFrames(t, &result)
 
-		require.Len(t, result.Series[0].Points, 3)
-		require.Len(t, result.Series[1].Points, 3)
+		require.Len(t, decoded, 2)
+
+		require.Equal(t, decoded[0].Fields[0].Len(), 3)
+		require.Equal(t, decoded[0].Fields[1].Len(), 3)
+		require.Equal(t, decoded[1].Fields[0].Len(), 3)
+		require.Equal(t, decoded[1].Fields[1].Len(), 3)
 
 		require.Error(t, result.Error)
 		require.Equal(t, result.Error.Error(), "query-timeout limit exceeded")
@@ -289,7 +329,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		result := parser.Parse(response, query)
 
-		require.Len(t, result.Series, 0)
+		require.Nil(t, result.Dataframes)
 
 		require.Error(t, result.Error)
 		require.Equal(t, result.Error.Error(), "error parsing query: found THING")
