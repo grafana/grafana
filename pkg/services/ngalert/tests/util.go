@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	apimodels "github.com/grafana/alerting-api/pkg/api"
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/services/ngalert"
@@ -61,30 +64,89 @@ func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
 	return ng
 }
 
-// createTestAlertDefinition creates a dummy alert definition to be used by the tests.
-func createTestAlertDefinition(t *testing.T, store *store.DBstore, intervalSeconds int64) *models.AlertDefinition {
-	cmd := models.SaveAlertDefinitionCommand{
-		OrgID:     1,
-		Title:     fmt.Sprintf("an alert definition %d", rand.Intn(1000)),
-		Condition: "A",
-		Data: []models.AlertQuery{
-			{
-				Model: json.RawMessage(`{
-						"datasource": "__expr__",
-						"type":"math",
-						"expression":"2 + 2 > 1"
-					}`),
-				RelativeTimeRange: models.RelativeTimeRange{
-					From: models.Duration(5 * time.Hour),
-					To:   models.Duration(3 * time.Hour),
+// createTestAlertRule creates a dummy alert definition to be used by the tests.
+func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertRule {
+	d := rand.Intn(1000)
+	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
+	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
+		OrgID:        1,
+		NamespaceUID: "namespace",
+		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
+			Name:     ruleGroup,
+			Interval: model.Duration(time.Duration(intervalSeconds) * time.Second),
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						OrgID:     1,
+						Title:     fmt.Sprintf("an alert definition %d", d),
+						Condition: "A",
+						Data: []models.AlertQuery{
+							{
+								Model: json.RawMessage(`{
+										"datasource": "__expr__",
+										"type":"math",
+										"expression":"2 + 2 > 1"
+									}`),
+								RelativeTimeRange: models.RelativeTimeRange{
+									From: models.Duration(5 * time.Hour),
+									To:   models.Duration(3 * time.Hour),
+								},
+								RefID: "A",
+							},
+						},
+					},
 				},
-				RefID: "A",
 			},
 		},
-		IntervalSeconds: &intervalSeconds,
-	}
-	err := store.SaveAlertDefinition(&cmd)
+	})
 	require.NoError(t, err)
-	t.Logf("alert definition: %v with interval: %d created", cmd.Result.GetKey(), intervalSeconds)
-	return cmd.Result
+
+	q := models.ListRuleGroupAlertRulesQuery{
+		OrgID:        1,
+		NamespaceUID: "namespace",
+		RuleGroup:    ruleGroup,
+	}
+	err = dbstore.GetRuleGroupAlertRules(&q)
+	require.NoError(t, err)
+	require.NotEmpty(t, q.Result)
+
+	rule := q.Result[0]
+	t.Logf("alert definition: %v with interval: %d created", rule.GetKey(), rule.IntervalSeconds)
+	return rule
+}
+
+// updateTestAlertRule update a dummy alert definition to be used by the tests.
+func updateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, existingRule *models.AlertRule, intervalSeconds int64) *models.AlertRule {
+	cmd := store.UpdateRuleGroupCmd{
+		OrgID:        1,
+		NamespaceUID: "namespace",
+		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
+			Name:     existingRule.RuleGroup,
+			Interval: model.Duration(time.Duration(intervalSeconds) * time.Second),
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						OrgID: 1,
+						UID:   existingRule.UID,
+					},
+				},
+			},
+		},
+	}
+
+	err := dbstore.UpdateRuleGroup(cmd)
+	require.NoError(t, err)
+
+	q := models.ListRuleGroupAlertRulesQuery{
+		OrgID:        1,
+		NamespaceUID: "namespace",
+		RuleGroup:    existingRule.RuleGroup,
+	}
+	err = dbstore.GetRuleGroupAlertRules(&q)
+	require.NoError(t, err)
+	require.NotEmpty(t, q.Result)
+
+	rule := q.Result[0]
+	t.Logf("alert definition: %v with interval: %d created", rule.GetKey(), rule.IntervalSeconds)
+	return rule
 }
