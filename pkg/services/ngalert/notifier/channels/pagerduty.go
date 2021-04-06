@@ -93,64 +93,20 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	key, err := notify.ExtractGroupKey(ctx)
-	if err != nil {
-		return false, err
-	}
-
 	alerts := types.Alerts(as...)
-	eventType := pagerDutyEventTrigger
-	if alerts.Status() == model.AlertResolved {
-		eventType = pagerDutyEventResolve
-	}
-
 	if alerts.Status() == model.AlertResolved && !pn.AutoResolve {
 		pn.log.Info("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.AutoResolve)
 		return true, nil
 	}
 
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: pn.externalUrl}, as, gokit_log.NewNopLogger())
-	var tmplErr error
-	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
-
-	details := make(map[string]string, len(pn.CustomDetails))
-	for k, v := range pn.CustomDetails {
-		detail, err := pn.tmpl.ExecuteTextString(v, data)
-		if err != nil {
-			return false, errors.Wrapf(err, "%q: failed to template %q", k, v)
-		}
-		details[k] = detail
-	}
-	msg := &pagerDutyMessage{
-		Client:      "Grafana",
-		ClientURL:   pn.externalUrl.String(),
-		RoutingKey:  pn.Key,
-		EventAction: eventType,
-		DedupKey:    key.Hash(),
-		Links: []pagerDutyLink{{
-			HRef: pn.externalUrl.String(),
-			Text: "External URL",
-		}},
-		Description: getTitleFromTemplateData(data), // TODO: this can be configurable template.
-		Payload: &pagerDutyPayload{
-			Component:     "Grafana",
-			Summary:       tmpl(pn.Summary),
-			Severity:      tmpl(pn.Severity),
-			CustomDetails: details,
-			Class:         tmpl(pn.Class),
-			Group:         tmpl(pn.Group),
-		},
+	eventType := pagerDutyEventTrigger
+	if alerts.Status() == model.AlertResolved {
+		eventType = pagerDutyEventResolve
 	}
 
-	if hostname, err := os.Hostname(); err == nil {
-		// TODO: should this be configured like in Prometheus AM?
-		msg.Payload.Source = hostname
-	}
+	msg, eventType, err := pn.buildPagerdutyMessage(ctx, alerts, as)
 
-	if tmplErr != nil {
-		return false, errors.Wrap(tmplErr, "failed to template PagerDuty message")
-	}
-	body, err := json.Marshal(&msg)
+	body, err := json.Marshal(msg)
 	if err != nil {
 		return false, errors.Wrap(err, "marshal json")
 	}
@@ -171,6 +127,63 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	return true, nil
+}
+
+func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts model.Alerts, as []*types.Alert) (*pagerDutyMessage, string, error) {
+	key, err := notify.ExtractGroupKey(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+
+	eventType := pagerDutyEventTrigger
+	if alerts.Status() == model.AlertResolved {
+		eventType = pagerDutyEventResolve
+	}
+
+	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: pn.externalUrl}, as, gokit_log.NewNopLogger())
+	var tmplErr error
+	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
+
+	details := make(map[string]string, len(pn.CustomDetails))
+	for k, v := range pn.CustomDetails {
+		detail, err := pn.tmpl.ExecuteTextString(v, data)
+		if err != nil {
+			return nil, "", errors.Wrapf(err, "%q: failed to template %q", k, v)
+		}
+		details[k] = detail
+	}
+
+	msg := &pagerDutyMessage{
+		Client:      "Grafana",
+		ClientURL:   pn.externalUrl.String(),
+		RoutingKey:  pn.Key,
+		EventAction: eventType,
+		DedupKey:    key.Hash(),
+		Links: []pagerDutyLink{{
+			HRef: pn.externalUrl.String(),
+			Text: "External URL",
+		}},
+		Description: getTitleFromTemplateData(data), // TODO: this can be configurable template.
+		Payload: &pagerDutyPayload{
+			Component:     tmpl(pn.Component),
+			Summary:       tmpl(pn.Summary),
+			Severity:      tmpl(pn.Severity),
+			CustomDetails: details,
+			Class:         tmpl(pn.Class),
+			Group:         tmpl(pn.Group),
+		},
+	}
+
+	if hostname, err := os.Hostname(); err == nil {
+		// TODO: should this be configured like in Prometheus AM?
+		msg.Payload.Source = hostname
+	}
+
+	if tmplErr != nil {
+		return nil, "", errors.Wrap(tmplErr, "failed to template PagerDuty message")
+	}
+
+	return msg, eventType, nil
 }
 
 func (pn *PagerdutyNotifier) SendResolved() bool {

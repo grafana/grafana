@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"sync"
 	"time"
@@ -182,8 +181,9 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 		return err
 	}
 
+	paths = append([]string{"templates/default.tmpl"}, paths...)
+
 	// With the templates persisted, create the template list using the paths.
-	// TODO: Add the default template from Prometheus Alertmanager.
 	tmpl, err := template.FromGlobs(paths...)
 	if err != nil {
 		return err
@@ -247,11 +247,20 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiRecei
 	var integrations []notify.Integration
 
 	for i, r := range receiver.GrafanaManagedReceivers {
-		cfg, err := getAlertNotificationModel(r)
-		if err != nil {
-			return nil, err
-		}
-		var n NotificationChannel
+		var (
+			cfg = &models.AlertNotification{
+				Uid:                   r.Uid,
+				Name:                  r.Name,
+				Type:                  r.Type,
+				IsDefault:             r.IsDefault,
+				SendReminder:          r.SendReminder,
+				DisableResolveMessage: r.DisableResolveMessage,
+				Settings:              r.Settings,
+				SecureSettings:        securejsondata.GetEncryptedJsonData(r.SecureSettings),
+			}
+			n   NotificationChannel
+			err error
+		)
 		switch r.Type {
 		case "email":
 			n, err = channels.NewEmailNotifier(cfg)
@@ -265,24 +274,6 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiRecei
 	}
 
 	return integrations, nil
-}
-
-func getAlertNotificationModel(r *api.PostableGrafanaReceiver) (*models.AlertNotification, error) {
-	frequency, err := time.ParseDuration(r.Frequency)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse receiver frequency %s, %w", r.Frequency, err)
-	}
-	return &models.AlertNotification{
-		Uid:                   r.Uid,
-		Name:                  r.Name,
-		Type:                  r.Type,
-		IsDefault:             r.IsDefault,
-		SendReminder:          r.SendReminder,
-		DisableResolveMessage: r.DisableResolveMessage,
-		Frequency:             frequency,
-		Settings:              r.Settings,
-		SecureSettings:        securejsondata.GetEncryptedJsonData(r.SecureSettings),
-	}, nil
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
