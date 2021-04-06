@@ -69,8 +69,13 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
                   style={{ cursor: 'pointer' }}
                 >
                   {this.props.func.def.unknown && (
-                    <Tooltip content="This function is not on the list of supported functions." placement="bottom">
-                      <Icon data-testid="warning-icon" name="exclamation-triangle" size="xs" />
+                    <Tooltip content={<TooltipContent />} placement="bottom">
+                      <Icon
+                        data-testid="warning-icon"
+                        name="exclamation-triangle"
+                        size="xs"
+                        style={{ marginRight: '2px' }}
+                      />
                     </Tooltip>
                   )}
                   {this.props.func.def.name}
@@ -83,5 +88,23 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
     );
   }
 }
+
+const TooltipContent = React.memo(() => {
+  return (
+    <span>
+      This function is not supported. Check your function for typos and{' '}
+      <a
+        target="_blank"
+        className="external-link"
+        rel="noreferrer noopener"
+        href="https://graphite.readthedocs.io/en/latest/functions.html"
+      >
+        read the docs
+      </a>{' '}
+      to see whether you need to upgrade your data source’s version to make this function available.
+    </span>
+  );
+});
+TooltipContent.displayName = 'FunctionEditorTooltipContent';
 
 export { FunctionEditor };
