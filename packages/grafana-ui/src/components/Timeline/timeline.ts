@@ -34,6 +34,7 @@ export interface TimelineCoreOptions {
   rowHeight: number;
   colWidth?: number;
   showValue: BarValueVisibility;
+  isDiscrete: (seriesIdx: number) => boolean;
 
   label: (seriesIdx: number) => string;
   fill: (seriesIdx: number, valueIdx: number, value: any) => CanvasRenderingContext2D['fillStyle'];
@@ -51,6 +52,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   const {
     mode,
     numSeries,
+    isDiscrete,
     rowHeight = 0,
     colWidth = 0,
     showValue,
@@ -81,6 +83,24 @@ export function getConfig(opts: TimelineCoreOptions) {
   const gapFactor = 1 - size[0];
   const maxWidth = (size[1] ?? Infinity) * pxRatio;
 
+  const fillPaths: Map<CanvasRenderingContext2D['fillStyle'], Path2D> = new Map();
+  const strokePaths: Map<CanvasRenderingContext2D['strokeStyle'], Path2D> = new Map();
+
+  function drawBoxes(ctx: CanvasRenderingContext2D) {
+    fillPaths.forEach((fillPath, fillStyle) => {
+      ctx.fillStyle = fillStyle;
+      ctx.fill(fillPath);
+    });
+
+    strokePaths.forEach((strokePath, strokeStyle) => {
+      ctx.strokeStyle = strokeStyle;
+      ctx.stroke(strokePath);
+    });
+
+    fillPaths.clear();
+    strokePaths.clear();
+  }
+
   function putBox(
     ctx: CanvasRenderingContext2D,
     rect: uPlot.RectH,
@@ -93,19 +113,42 @@ export function getConfig(opts: TimelineCoreOptions) {
     strokeWidth: number,
     seriesIdx: number,
     valueIdx: number,
-    value: any
+    value: any,
+    discrete: boolean
   ) {
-    if (strokeWidth) {
-      ctx.beginPath();
-      rect(ctx, lft + strokeWidth / 2, top + strokeWidth / 2, wid - strokeWidth, hgt - strokeWidth);
-      ctx.strokeStyle = stroke(seriesIdx, valueIdx, value);
-      ctx.stroke();
-    }
+    if (discrete) {
+      let fillStyle = fill(seriesIdx + 1, valueIdx, value);
+      let fillPath = fillPaths.get(fillStyle);
 
-    ctx.beginPath();
-    rect(ctx, lft, top, wid, hgt);
-    ctx.fillStyle = fill(seriesIdx, valueIdx, value);
-    ctx.fill();
+      if (fillPath == null) {
+        fillPaths.set(fillStyle, (fillPath = new Path2D()));
+      }
+
+      rect(fillPath, lft, top, wid, hgt);
+
+      if (strokeWidth) {
+        let strokeStyle = stroke(seriesIdx + 1, valueIdx, value);
+        let strokePath = strokePaths.get(strokeStyle);
+
+        if (strokePath == null) {
+          strokePaths.set(strokeStyle, (strokePath = new Path2D()));
+        }
+
+        rect(strokePath, lft + strokeWidth / 2, top + strokeWidth / 2, wid - strokeWidth, hgt - strokeWidth);
+      }
+    } else {
+      ctx.beginPath();
+      rect(ctx, lft, top, wid, hgt);
+      ctx.fillStyle = fill(seriesIdx, valueIdx, value);
+      ctx.fill();
+
+      if (strokeWidth) {
+        ctx.beginPath();
+        rect(ctx, lft + strokeWidth / 2, top + strokeWidth / 2, wid - strokeWidth, hgt - strokeWidth);
+        ctx.strokeStyle = stroke(seriesIdx, valueIdx, value);
+        ctx.stroke();
+      }
+    }
 
     qt.add({
       x: round(lft - xOff),
@@ -123,6 +166,8 @@ export function getConfig(opts: TimelineCoreOptions) {
       sidx,
       (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
         let strokeWidth = round((series.width || 0) * pxRatio);
+
+        let discrete = isDiscrete(sidx);
 
         u.ctx.save();
         rect(u.ctx, u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
@@ -155,7 +200,8 @@ export function getConfig(opts: TimelineCoreOptions) {
                   strokeWidth,
                   iy,
                   ix,
-                  dataY[ix]
+                  dataY[ix],
+                  discrete
                 );
 
                 ix = nextIx - 1;
@@ -185,12 +231,15 @@ export function getConfig(opts: TimelineCoreOptions) {
                   strokeWidth,
                   iy,
                   ix,
-                  dataY[ix]
+                  dataY[ix],
+                  discrete
                 );
               }
             }
           }
         });
+
+        discrete && drawBoxes(u.ctx);
 
         u.ctx.restore();
       }

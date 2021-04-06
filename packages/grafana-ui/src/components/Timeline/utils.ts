@@ -11,6 +11,7 @@ import {
   TimeRange,
   TimeZone,
   classicColors,
+  Field,
 } from '@grafana/data';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { TimelineCoreOptions, getConfig } from './timeline';
@@ -58,10 +59,15 @@ export function preparePlotConfigBuilder(
 ): UPlotConfigBuilder {
   const builder = new UPlotConfigBuilder(getTimeZone);
 
+  const isDiscrete = (field: Field) => {
+    const mode = field.config?.color?.mode;
+    return !(mode && field.display && mode.startsWith('continuous-'));
+  };
+
   const colorLookup = (seriesIdx: number, valueIdx: number, value: any) => {
     const field = frame.fields[seriesIdx];
     const mode = field.config?.color?.mode;
-    if (mode && field.display && (mode === FieldColorModeId.Thresholds || mode?.startsWith('continuous-'))) {
+    if (mode && field.display && (mode === FieldColorModeId.Thresholds || mode.startsWith('continuous-'))) {
       const disp = field.display(value); // will apply color modes
       if (disp.color) {
         return disp.color;
@@ -82,6 +88,7 @@ export function preparePlotConfigBuilder(
     // should expose in panel config
     mode: coreOptions.mode!,
     numSeries: frame.fields.length - 1,
+    isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
     rowHeight: coreOptions.rowHeight!,
     colWidth: coreOptions.colWidth,
     showValue: coreOptions.showValue!,
