@@ -31,7 +31,7 @@ const AmRoutes: FC = () => {
         </InfoBox>
       )}
       {loading && <LoadingPlaceholder text="loading alert manager config..." />}
-      {result && !loading && !error && <code>{JSON.stringify(result, null, 2)}</code>}
+      {result && !loading && !error && <pre>{JSON.stringify(result, null, 2)}</pre>}
     </AlertingPageWrapper>
   );
 };

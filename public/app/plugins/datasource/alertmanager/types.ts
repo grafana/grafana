@@ -1,10 +1,5 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
 
-export type AlertManagerCortexConfigDTO = {
-  template_files: Record<string, string>;
-  alertmanager_config: string;
-};
-
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
   alertmanager_config: AlertmanagerConfig;
