@@ -137,7 +137,7 @@ func (api *API) conditionOldEndpointByID(c *models.ReqContext) response.Response
 	return response.JSON(200, evalCond)
 }
 
-// conditionEvalEndpoint handles POST /api/alert-definitions/ruleGroupByOldID.
+// ruleGroupByOldID handles POST /api/alert-definitions/ruleGroupByOldID.
 func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64("id")
 	if id == 0 {
@@ -237,7 +237,7 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 	rgc := apimodels.PostableRuleGroupConfig{
 		// TODO? Generate new name on conflict?
 		Name:     oldAlert.Name,
-		Interval: model.Duration(oldAlert.Frequency * int64(time.Second)),
+		Interval: adjustInterval(oldAlert.Frequency),
 		Rules: []apimodels.PostableExtendedRuleNode{
 			toPostableExtendedRuleNode(rule),
 		},
@@ -253,6 +253,8 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		return response.JSON(200, cmd)
 	}
 
+	// note: Update rule group will set the Interval within the grafana_alert from
+	// the interval of the group.
 	err = api.RuleStore.UpdateRuleGroup(cmd)
 
 	if err != nil {
@@ -288,4 +290,13 @@ func transExecErr(s string) (ngmodels.ExecutionErrorState, error) {
 		return ngmodels.KeepLastStateErrState, nil
 	}
 	return ngmodels.AlertingErrState, fmt.Errorf("unrecognized Execution Error setting %v", s)
+}
+
+func adjustInterval(freq int64) model.Duration {
+	// 10 corresponds to the SchedulerCfg, but TODO not worrying about fetching for now.
+	var baseFreq int64 = 10
+	if freq <= baseFreq {
+		return model.Duration(time.Second * 10)
+	}
+	return model.Duration(time.Duration((freq - (freq % baseFreq))) * time.Second)
 }
