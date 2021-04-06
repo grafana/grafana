@@ -11,6 +11,7 @@ import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 import { LiveChannelSupport } from './live';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
+import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -167,7 +168,7 @@ export interface DataSourceConstructor<
  * Although this is a class, datasource implementations do not *yet* need to extend it.
  * As such, we can not yet add functions with default implementations.
  */
-export abstract class DataSourceApi<
+abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
@@ -631,3 +632,8 @@ export abstract class LanguageProvider {
   abstract start: () => Promise<Array<Promise<any>>>;
   startTask?: Promise<any[]>;
 }
+
+//@ts-ignore
+DataSourceApi = makeClassES5Compatible(DataSourceApi);
+
+export { DataSourceApi };
