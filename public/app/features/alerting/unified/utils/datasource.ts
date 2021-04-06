@@ -55,13 +55,13 @@ export function getDataSourceByName(name: string): DataSourceInstanceSettings<Da
   return getAllDataSources().find((source) => source.name === name);
 }
 
-export function getDatasourceAPIId(datasourceName: string) {
-  if (datasourceName === GRAFANA_RULES_SOURCE_NAME) {
+export function getDatasourceAPIId(dataSourceName: string) {
+  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
     return GRAFANA_RULES_SOURCE_NAME;
   }
-  const ds = getDataSourceByName(datasourceName);
+  const ds = getDataSourceByName(dataSourceName);
   if (!ds) {
-    throw new Error(`Datasource "${datasourceName}" not found`);
+    throw new Error(`Datasource "${dataSourceName}" not found`);
   }
   return String(ds.id);
 }
