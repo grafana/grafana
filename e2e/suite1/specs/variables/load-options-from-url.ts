@@ -150,14 +150,7 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e().get('.variable-option').should('have.length', 0);
-      });
-
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
-      .should('be.visible')
-      .within(() => {
-        e2e().get('.variable-option').should('have.length', 0);
+        e2e().get('.variable-option').should('have.length', 10);
       });
   });
 });
