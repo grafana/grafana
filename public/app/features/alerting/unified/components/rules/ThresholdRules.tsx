@@ -35,7 +35,7 @@ export const ThresholdRules: FC<Props> = ({ namespaces }) => {
           />
         ))
       )}
-      {namespaces?.length === 0 && !loading && <p>No rules found.</p>}
+      {namespaces?.length === 0 && <p>No rules found.</p>}
     </section>
   );
 };

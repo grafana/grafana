@@ -14,6 +14,7 @@ import { css, cx } from '@emotion/css';
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   navModel: NavModel;
+  contentWidth?: keyof GrafanaTheme['breakpoints'];
 }
 
 export interface PageType extends FC<Props> {
@@ -21,7 +22,7 @@ export interface PageType extends FC<Props> {
   Contents: typeof PageContents;
 }
 
-export const Page: PageType = ({ navModel, children, className, ...otherProps }) => {
+export const Page: PageType = ({ navModel, children, className, contentWidth, ...otherProps }) => {
   const styles = useStyles(getStyles);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export const Page: PageType = ({ navModel, children, className, ...otherProps })
     <div {...otherProps} className={cx(styles.wrapper, className)}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className="page-scrollbar-content">
-          <PageHeader model={navModel} />
+          <PageHeader model={navModel} contentWidth={contentWidth} />
           {children}
           <Footer />
         </div>
