@@ -20,10 +20,10 @@ var builtInRoleGrants = map[string][]string{
 		"Viewer",
 	},
 	"roles:adminUsers:viewer": {
-		"Admin",
+		"Grafana Admin",
 	},
 	"roles:adminUsers:editor": {
-		"Admin",
+		"Grafana Admin",
 	},
 }
 
