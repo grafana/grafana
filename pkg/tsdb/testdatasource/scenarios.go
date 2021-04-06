@@ -2,6 +2,7 @@ package testdatasource
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -150,7 +151,7 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	p.registerScenario(&Scenario{
 		ID:      string(arrowQuery),
 		Name:    "Load Apache Arrow Data",
-		handler: p.handleClientSideScenario,
+		handler: p.handleArrowScenario,
 	})
 
 	p.registerScenario(&Scenario{
@@ -482,6 +483,30 @@ func (p *testDataPlugin) handleServerError500Scenario(ctx context.Context, req *
 
 func (p *testDataPlugin) handleClientSideScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	return backend.NewQueryDataResponse(), nil
+}
+
+func (p *testDataPlugin) handleArrowScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			return nil, err
+		}
+
+		respD := resp.Responses[q.RefID]
+		frame, err := doArrowQuery(q, model)
+		if err != nil {
+			return nil, err
+		}
+		if frame == nil {
+			continue
+		}
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
 }
 
 func (p *testDataPlugin) handleExponentialHeatmapBucketDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -873,6 +898,18 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 	}
 
 	return frame
+}
+
+func doArrowQuery(query backend.DataQuery, model *simplejson.Json) (*data.Frame, error) {
+	encoded := model.Get("stringInput").MustString("")
+	if encoded == "" {
+		return nil, nil
+	}
+	arrow, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, err
+	}
+	return data.UnmarshalArrowFrame(arrow)
 }
 
 func newSeriesForQuery(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {

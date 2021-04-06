@@ -36,7 +36,7 @@ module.exports = (env = {}) =>
           use: [
             {
               loader: 'babel-loader',
-              options: getBabelConfig(),
+              options: getBabelConfig({ BABEL_ENV: 'dev' }),
             },
           ],
         },
