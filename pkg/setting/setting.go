@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/fs"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -206,11 +208,12 @@ type Cfg struct {
 	EnableGzip       bool
 	EnforceDomain    bool
 
-	// GRPC API Server Settings
+	// GRPC API Server Settings.
+	GRPCNetwork  string
+	GRPCAddress  string
+	GRPCUseTLS   bool
 	GRPCCertFile string
 	GRPCKeyFile  string
-	GRPCAddr     string
-	GRPCPort     string
 
 	// build
 	BuildVersion string
@@ -1350,10 +1353,52 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 
 func (cfg *Cfg) readGRPCAPIServerSettings(iniFile *ini.File) error {
 	server := iniFile.Section("grpc_api_server")
+	cfg.GRPCUseTLS = server.Key("use_tls").MustBool(false)
 	cfg.GRPCCertFile = server.Key("cert_file").String()
 	cfg.GRPCKeyFile = server.Key("cert_key").String()
-	cfg.GRPCAddr = valueAsString(server, "addr", "127.0.0.1")
-	cfg.GRPCPort = valueAsString(server, "port", "10000")
+	cfg.GRPCNetwork = valueAsString(server, "network", "unix")
+	cfg.GRPCAddress = valueAsString(server, "address", "")
+	errPrefix := "grpc_api_server:"
+	switch cfg.GRPCNetwork {
+	case "unix":
+		if cfg.GRPCAddress != "" {
+			// Explicitly provided path for unix domain socket.
+			if stat, err := os.Stat(cfg.GRPCAddress); os.IsNotExist(err) {
+				// File does not exist - nice, nothing to do.
+			} else if err != nil {
+				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.GRPCAddress)
+			} else {
+				if stat.Mode()&fs.ModeSocket == 0 {
+					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.GRPCAddress)
+				}
+				// Unix domain socket file, should be safe to remove.
+				err := os.Remove(cfg.GRPCAddress)
+				if err != nil {
+					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.GRPCAddress)
+				}
+			}
+		} else {
+			// Use temporary file path for a unix domain socket.
+			tf, err := ioutil.TempFile("", "gf_grpc_api")
+			if err != nil {
+				return fmt.Errorf("%s error creating tmp file: %v", errPrefix, err)
+			}
+			unixPath := tf.Name()
+			if err := tf.Close(); err != nil {
+				return fmt.Errorf("%s error closing tmp file: %v", errPrefix, err)
+			}
+			if err := os.Remove(unixPath); err != nil {
+				return fmt.Errorf("%s error removing tmp file: %v", errPrefix, err)
+			}
+			cfg.GRPCAddress = unixPath
+		}
+	case "tcp":
+		if cfg.GRPCAddress == "" {
+			cfg.GRPCAddress = "127.0.0.1:10000"
+		}
+	default:
+		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.GRPCNetwork)
+	}
 	return nil
 }
 
