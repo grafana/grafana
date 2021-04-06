@@ -1,12 +1,11 @@
-import { CollectorData, CollectorItem, CollectorWorker } from '../types';
-import { CollectorOptions, CollectorType } from '../InspectCollector';
+import { CollectOptions, CollectorData, CollectorItem, CollectorWorker } from '../types';
 
 export abstract class BaseWorker implements CollectorWorker {
   constructor(protected readonly id: string, protected readonly name: string) {}
 
-  abstract canCollect(type: CollectorType): boolean;
+  abstract canCollect(options: CollectOptions): boolean;
 
-  abstract collect(options: CollectorOptions): Promise<CollectorItem>;
+  abstract collect(options: CollectOptions): Promise<CollectorItem>;
 
   protected getDefaultResult(): CollectorItem {
     return {
@@ -17,12 +16,12 @@ export abstract class BaseWorker implements CollectorWorker {
   }
 
   protected async safelyCollect(
-    options: CollectorOptions,
+    options: CollectOptions,
     callback: () => Promise<CollectorData>
   ): Promise<CollectorItem> {
     const item = this.getDefaultResult();
 
-    if (!this.canCollect(options.type)) {
+    if (!this.canCollect(options)) {
       return { ...item, data: { error: 'Calling collect on a worker that can not collect' } };
     }
 

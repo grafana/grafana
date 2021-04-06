@@ -1,20 +1,15 @@
 import { BaseWorker } from './BaseWorker';
-import { CollectorItem } from '../types';
-import { CollectorOptions, CollectorType } from '../InspectCollector';
+import { CollectOptions, CollectorItem, CollectorType } from '../types';
 
 export class PanelDataCollectorWorker extends BaseWorker {
-  canCollect(type: CollectorType): boolean {
-    return type === CollectorType.Panel;
+  canCollect({ type, panel }: CollectOptions): boolean {
+    return type === CollectorType.Panel && Boolean(panel);
   }
 
-  async collect(options: CollectorOptions): Promise<CollectorItem> {
+  async collect(options: CollectOptions): Promise<CollectorItem> {
     return await this.safelyCollect(options, async () => {
       const { panel } = options;
-      if (panel) {
-        return panel.getQueryRunner().getLastResult() ?? { error: 'Missing lastResult' };
-      }
-
-      return { error: 'Missing panel' };
+      return panel!.getQueryRunner().getLastResult() ?? { error: 'Missing lastResult' };
     });
   }
 }

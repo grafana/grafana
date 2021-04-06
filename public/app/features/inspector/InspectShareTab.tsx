@@ -2,7 +2,6 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, VerticalGroup } from '@grafana/ui';
 
 import {
-  CollectorType,
   getCollectorSanitizers,
   getCollectorWorkers,
   InspectCollector,
@@ -12,6 +11,7 @@ import { DashboardModel, PanelModel } from '../dashboard/state';
 import { CopyToClipboard } from '../../core/components/CopyToClipboard/CopyToClipboard';
 import appEvents from '../../core/app_events';
 import { AppEvents } from '@grafana/data';
+import { CollectorType } from '../dashboard/components/Inspector/types';
 
 interface Props {
   dashboard: DashboardModel;

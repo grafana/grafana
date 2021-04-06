@@ -1,7 +1,7 @@
 import { DashboardModel, PanelModel } from '../../state';
 import { TargetsSanitizer } from './sanitizers/TargetsSanitizer';
 import { UrlSanitizer } from './sanitizers/UrlSanitizer';
-import { CollectorItem, CollectorWorker, CollectorWorkers, Sanitizer } from './types';
+import { CollectorItem, CollectorType, CollectorWorker, CollectorWorkers, Sanitizer } from './types';
 import { BrowserCollectorWorker } from './workers/BrowserCollectorWorker';
 import { OSCollectorWorker } from './workers/OSCollectorWorker';
 import { GrafanaCollectorWorker } from './workers/GrafanaCollectorWorker';
@@ -24,11 +24,6 @@ export function getCollectorSanitizers(): Sanitizer[] {
   return [new UrlSanitizer('UrlSanitizer'), new TargetsSanitizer('TargetsSanitizer')];
 }
 
-export enum CollectorType {
-  Dashboard = 'dashboard', // when sharing data for a whole dashboard
-  Panel = 'panel', // when sharing data for a panel only
-}
-
 export interface CollectorOptions {
   dashboard: DashboardModel;
   panel?: PanelModel;
@@ -43,15 +38,15 @@ export interface Collector {
 
 export class InspectCollector implements Collector {
   async collect(options: CollectorOptions): Promise<CollectorItem[]> {
-    const { workers, sanitizers, type } = options;
+    const { workers, sanitizers, type, dashboard, panel } = options;
     const items: CollectorItem[] = [];
 
     for (const worker of workers) {
-      if (!worker.canCollect(type)) {
+      if (!worker.canCollect({ type, panel, dashboard })) {
         continue;
       }
 
-      const item = await worker.collect(options);
+      const item = await worker.collect({ type, panel, dashboard });
       for (const sanitizer of sanitizers) {
         if (!sanitizer.canSanitize(item)) {
           continue;

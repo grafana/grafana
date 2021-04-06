@@ -1,7 +1,6 @@
 import { BaseWorker } from './BaseWorker';
 import { DashboardExporter } from '../../DashExportModal';
-import { CollectorItem } from '../types';
-import { CollectorOptions, CollectorType } from '../InspectCollector';
+import { CollectOptions, CollectorItem } from '../types';
 
 export class DashboardJsonCollectorWorker extends BaseWorker {
   private readonly exporter: DashboardExporter;
@@ -11,11 +10,11 @@ export class DashboardJsonCollectorWorker extends BaseWorker {
     this.exporter = new DashboardExporter();
   }
 
-  canCollect(type: CollectorType): boolean {
+  canCollect(options: CollectOptions): boolean {
     return true;
   }
 
-  async collect(options: CollectorOptions): Promise<CollectorItem> {
+  async collect(options: CollectOptions): Promise<CollectorItem> {
     return await this.safelyCollect(options, async () => {
       const { dashboard } = options;
       if (dashboard) {

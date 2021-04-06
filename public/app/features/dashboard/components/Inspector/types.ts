@@ -1,4 +1,4 @@
-import { CollectorOptions, CollectorType } from './InspectCollector';
+import { DashboardModel, PanelModel } from '../../state';
 
 export interface CollectorData extends Record<string, any> {}
 export interface Sanitizer {
@@ -22,7 +22,18 @@ export enum CollectorWorkers {
   panelData = 'PanelDataCollectorWorker',
 }
 
+export enum CollectorType {
+  Dashboard = 'dashboard', // when sharing data for a whole dashboard
+  Panel = 'panel', // when sharing data for a panel only
+}
+
+export interface CollectOptions {
+  dashboard: DashboardModel;
+  panel?: PanelModel;
+  type: CollectorType;
+}
+
 export interface CollectorWorker {
-  canCollect: (type: CollectorType) => boolean;
-  collect: (options: CollectorOptions) => Promise<CollectorItem>;
+  canCollect: (options: CollectOptions) => boolean;
+  collect: (options: CollectOptions) => Promise<CollectorItem>;
 }
