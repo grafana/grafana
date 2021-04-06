@@ -54,13 +54,24 @@ export class DatasourceSrv implements DataSourceService {
     // For this we just pick the current or first data source in the variable
     if (nameOrUid[0] === '$') {
       const interpolatedName = this.templateSrv.replace(nameOrUid, {}, variableInterpolation);
-      const dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+
+      let dsSettings;
+
+      if (interpolatedName === 'default') {
+        dsSettings = this.settingsMapByName[this.defaultName];
+      } else {
+        dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+      }
+
       if (!dsSettings) {
         return undefined;
       }
       // The return name or uid needs preservet string containing the variable
       const clone = cloneDeep(dsSettings);
       clone.name = nameOrUid;
+      // A data source being looked up using a variable should not be considered default
+      clone.isDefault = false;
+
       return clone;
     }
 

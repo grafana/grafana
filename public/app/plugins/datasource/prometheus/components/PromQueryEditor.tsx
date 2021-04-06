@@ -41,7 +41,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     // Use default query to prevent undefined input values
-    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '' };
+    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '', exemplar: true };
     const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
     // Query target properties that are fully controlled inputs
@@ -92,7 +92,9 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
   onRunQuery = () => {
     const { query } = this;
-    this.props.onChange(query);
+    // Change of query.hide happens outside of this component and is just passed as prop. We have to update it when running queries.
+    const { hide } = this.props.query;
+    this.props.onChange({ ...query, hide });
     this.props.onRunQuery();
   };
 
@@ -184,7 +186,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             </InlineFormLabel>
           </div>
 
-          <PromExemplarField query={query} onChange={onChange} />
+          <PromExemplarField query={this.query} onChange={onChange} datasource={this.props.datasource} />
         </div>
       </div>
     );

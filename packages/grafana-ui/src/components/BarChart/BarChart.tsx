@@ -105,6 +105,8 @@ class UnthemedBarChart extends React.Component<BarChartProps, BarChartState> {
         config={config}
         onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
+        maxHeight="35%"
+        maxWidth="60%"
         {...legend}
       />
     );

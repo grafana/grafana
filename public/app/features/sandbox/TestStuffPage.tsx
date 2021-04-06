@@ -37,7 +37,7 @@ export const TestStuffPage: FC = () => {
   /**
    * Subscribe to data
    */
-  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
+  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), [queryRunner]);
   const data = useObservable(observable);
 
   return (

@@ -16,6 +16,7 @@ import {
   hideOptions,
   moveOptionsHighlight,
   OptionsPickerState,
+  showOptions,
   toggleOption,
   toggleTag,
   updateOptionsAndFilter,
@@ -25,7 +26,7 @@ import {
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
-import { toVariablePayload } from '../../state/types';
+import { toVariablePayload, VariableIdentifier } from '../../state/types';
 import { containsSearchFilter, getCurrentText } from '../../utils';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
@@ -78,7 +79,7 @@ const setVariable = async (updated: VariableWithMultiSupport) => {
   return;
 };
 
-export const commitChangesToVariable = (callback?: (updated: VariableWithMultiSupport) => void): ThunkResult<void> => {
+export const commitChangesToVariable = (callback?: (updated: any) => void): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const picker = getState().templating.optionsPicker;
     const existing = getVariable<VariableWithMultiSupport>(picker.id, getState());
@@ -98,8 +99,22 @@ export const commitChangesToVariable = (callback?: (updated: VariableWithMultiSu
       return callback(updated);
     }
 
-    return setVariable(updated);
+    return await setVariable(updated);
   };
+};
+
+export const openOptions = ({ id }: VariableIdentifier, callback?: (updated: any) => void): ThunkResult<void> => async (
+  dispatch,
+  getState
+) => {
+  const picker = getState().templating.optionsPicker;
+
+  if (picker.id && picker.id !== id) {
+    await dispatch(commitChangesToVariable(callback));
+  }
+
+  const variable = getVariable<VariableWithMultiSupport>(id, getState());
+  dispatch(showOptions(variable));
 };
 
 export const toggleOptionByHighlight = (clearOthers: boolean, forceSelect = false): ThunkResult<void> => {
@@ -144,7 +159,7 @@ const fetchTagValues = (tagText: string): ThunkResult<Promise<string[]>> => {
 };
 
 const getTimeRange = (variable: QueryVariableModel) => {
-  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+  if (variable.refresh === VariableRefresh.onTimeRangeChanged || variable.refresh === VariableRefresh.onDashboardLoad) {
     return getTimeSrv().timeRange();
   }
   return undefined;

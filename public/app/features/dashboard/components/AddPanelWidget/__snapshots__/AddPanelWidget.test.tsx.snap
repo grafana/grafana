@@ -6,26 +6,45 @@ exports[`Render should render component 1`] = `
 >
   <AddPanelWidgetHandle
     onCancel={[Function]}
-  />
-  <div
-    className="css-1wtsk46"
+    styles={
+      Object {
+        "actionsRow": "css-txvz1e",
+        "actionsWrapper": "css-gxxmom",
+        "backButton": "css-1cdxa9p",
+        "headerRow": "css-1ka09x",
+        "libraryPanelsWrapper": "css-18m13of",
+        "noMargin": "css-u023fv",
+        "wrapper": "css-1sl7nld",
+      }
+    }
   >
-    <AddPanelWidgetCreate
-      onCreate={[Function]}
-      onPasteCopiedPanel={[Function]}
-    />
-    <div>
-      <HorizontalGroup
-        justify="center"
+    Add panel
+  </AddPanelWidgetHandle>
+  <div
+    className="css-gxxmom"
+  >
+    <div
+      className="css-txvz1e"
+    >
+      <div
+        aria-label="Add new panel"
+        onClick={[Function]}
       >
-        <Button
-          onClick={[Function]}
-          size="sm"
-          variant="secondary"
-        >
-          Convert to row
-        </Button>
-      </HorizontalGroup>
+        <Icon
+          name="file-blank"
+          size="xl"
+        />
+        Add an empty panel
+      </div>
+      <div
+        onClick={[Function]}
+      >
+        <Icon
+          name="wrap-text"
+          size="xl"
+        />
+        Add a new row
+      </div>
     </div>
   </div>
 </div>

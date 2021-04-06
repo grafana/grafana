@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import ListView from './ListView';
 import SpanBarRow from './SpanBarRow';
@@ -29,7 +29,7 @@ import {
 import { Accessors } from '../ScrollManager';
 import { getColorByKey } from '../utils/color-generator';
 import { TNil } from '../types';
-import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink } from '../types/trace';
 import TTraceTimeline from '../types/TTraceTimeline';
 
 import { createStyle, Theme, withTheme } from '../Theme';

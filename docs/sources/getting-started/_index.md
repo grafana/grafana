@@ -8,9 +8,7 @@ aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
 
 This section provides a high-level look at Grafana, the Grafana process, and Grafana features. It's a good place to learn how to use the Grafana software.
 
-## What is Grafana?
-
-Grafana is open source visualization and analytics software. It allows you to query, visualize, alert on, and explore your metrics no matter where they are stored. In plain English, it provides you with tools to turn your time-series database (TSDB) data into beautiful graphs and visualizations.
+{{< docs/shared "basics/what-is-grafana.md" >}}
 
 After creating a dashboard like you do in [Getting started]({{< relref "getting-started.md" >}}), there are many possible things you might do next. It all depends on your needs and your use case.
 
@@ -74,16 +72,6 @@ Refer to [Provisioning]({{< relref "../administration/provisioning.md" >}}) for 
 
 When organizations have one Grafana and multiple teams, they often want the ability to both keep things separate and share dashboards. You can create a team of users and then set [permissions]({{< relref "../permissions/_index.md" >}}) on folders, dashboards, and down to the [data source level]({{< relref "../enterprise/datasource_permissions.md" >}}) if you're using [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}).
 
-## Grafana Cloud
+{{< docs/shared "basics/grafana-cloud.md" >}}
 
-Grafana Cloud is a highly available, fast, fully managed OpenSaaS logging and metrics platform. Everything you love about Grafana, but Grafana Labs hosts it for you and handles all the headaches.
-
-[Learn more about Grafana Cloud](https://grafana.com/cloud/) or try the [Grafana Cloud Linux host Quickstart](/docs/grafana-cloud/quickstart/).
-
-## Grafana Enterprise
-
-[Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}) is a commercial edition of Grafana that includes additional features not found in the open source version.
-
-Building on everything you already know and love about Grafana, Grafana Enterprise adds enterprise data sources, advanced authentication options, more permission controls, 24x7x365 support, and training from the core Grafana team.
-
-[Learn more about Grafana Enterprise](https://grafana.com/enterprise). To purchase Enterprise or obtain a trial license, contact the Grafana Labs [Sales Team](https://grafana.com/contact?about=support&topic=Grafana%20Enterprise).
+{{< docs/shared "basics/grafana-enterprise.md" >}}

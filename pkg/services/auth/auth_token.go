@@ -49,7 +49,7 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, err
 	var err error
 	err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var model userAuthToken
-		count, err = dbSession.Where(`created_at > ? AND rotated_at > ?`,
+		count, err = dbSession.Where(`created_at > ? AND rotated_at > ? AND revoked_at = 0`,
 			s.createdAfterParam(),
 			s.rotatedAfterParam()).
 			Count(&model)
@@ -84,6 +84,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.Use
 		CreatedAt:     now,
 		UpdatedAt:     now,
 		SeenAt:        0,
+		RevokedAt:     0,
 		AuthTokenSeen: false,
 	}
 
@@ -108,10 +109,6 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.Use
 
 func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 	hashedToken := hashToken(unhashedToken)
-	if setting.Env == setting.Dev {
-		s.log.Debug("looking up token", "unhashed", unhashedToken, "hashed", hashedToken)
-	}
-
 	var model userAuthToken
 	var exists bool
 	var err error
@@ -129,6 +126,13 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 	if !exists {
 		return nil, models.ErrUserTokenNotFound
+	}
+
+	if model.RevokedAt > 0 {
+		return nil, &models.TokenRevokedError{
+			UserID:  model.UserId,
+			TokenID: model.Id,
+		}
 	}
 
 	if model.CreatedAt <= s.createdAfterParam() || model.RotatedAt <= s.rotatedAfterParam() {
@@ -282,7 +286,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 	return false, nil
 }
 
-func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.UserToken) error {
+func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.UserToken, soft bool) error {
 	if token == nil {
 		return models.ErrUserTokenNotFound
 	}
@@ -293,10 +297,19 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.Us
 	}
 
 	var rowsAffected int64
-	err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		rowsAffected, err = dbSession.Delete(model)
-		return err
-	})
+
+	if soft {
+		model.RevokedAt = getTime().Unix()
+		err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+			rowsAffected, err = dbSession.ID(model.Id).Update(model)
+			return err
+		})
+	} else {
+		err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+			rowsAffected, err = dbSession.Delete(model)
+			return err
+		})
+	}
 
 	if err != nil {
 		return err
@@ -307,7 +320,7 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *models.Us
 		return models.ErrUserTokenNotFound
 	}
 
-	s.log.Debug("user auth token revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent)
+	s.log.Debug("user auth token revoked", "tokenId", model.Id, "userId", model.UserId, "clientIP", model.ClientIp, "userAgent", model.UserAgent, "soft", soft)
 
 	return nil
 }
@@ -384,11 +397,34 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 	result := []*models.UserToken{}
 	err := s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		var tokens []*userAuthToken
-		err := dbSession.Where("user_id = ? AND created_at > ? AND rotated_at > ?",
+		err := dbSession.Where("user_id = ? AND created_at > ? AND rotated_at > ? AND revoked_at = 0",
 			userId,
 			s.createdAfterParam(),
 			s.rotatedAfterParam()).
 			Find(&tokens)
+		if err != nil {
+			return err
+		}
+
+		for _, token := range tokens {
+			var userToken models.UserToken
+			if err := token.toUserToken(&userToken); err != nil {
+				return err
+			}
+			result = append(result, &userToken)
+		}
+
+		return nil
+	})
+
+	return result, err
+}
+
+func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId int64) ([]*models.UserToken, error) {
+	result := []*models.UserToken{}
+	err := s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		var tokens []*userAuthToken
+		err := dbSession.Where("user_id = ? AND revoked_at > 0", userId).Find(&tokens)
 		if err != nil {
 			return err
 		}

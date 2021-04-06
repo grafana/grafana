@@ -2,8 +2,6 @@ import { PromMetricsMetadata } from './types';
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
 
-export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
-
 export const processHistogramLabels = (labels: string[]) => {
   const resultSet: Set<string> = new Set();
   const regexp = new RegExp('_bucket($|:)');

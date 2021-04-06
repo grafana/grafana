@@ -9,7 +9,7 @@ import (
 )
 
 func TestDiscordNotifier(t *testing.T) {
-	Convey("Telegram notifier tests", t, func() {
+	Convey("Discord notifier tests", t, func() {
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

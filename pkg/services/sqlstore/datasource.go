@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetDataSources)
+	bus.AddHandler("sql", GetDataSourcesByType)
 	bus.AddHandler("sql", GetDataSource)
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSource)
@@ -71,8 +73,19 @@ func GetDataSources(query *models.GetDataSourcesQuery) error {
 	} else {
 		sess = x.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
 	}
+
 	query.Result = make([]*models.DataSource, 0)
 	return sess.Find(&query.Result)
+}
+
+// GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
+func GetDataSourcesByType(query *models.GetDataSourcesByTypeQuery) error {
+	if query.Type == "" {
+		return fmt.Errorf("datasource type cannot be empty")
+	}
+
+	query.Result = make([]*models.DataSource, 0)
+	return x.Where("type=?", query.Type).Asc("id").Find(&query.Result)
 }
 
 // GetDefaultDataSource is used to get the default datasource of organization

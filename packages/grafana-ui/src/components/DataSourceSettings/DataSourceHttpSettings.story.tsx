@@ -10,6 +10,7 @@ const settingsMock: DataSourceSettings<any, any> = {
   orgId: 1,
   name: 'gdev-influxdb',
   type: 'influxdb',
+  typeName: 'Influxdb',
   typeLogoUrl: '',
   access: 'direct',
   url: 'http://localhost:8086',

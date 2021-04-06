@@ -60,15 +60,11 @@ const dashbardSlice = createSlice({
       };
     },
     cleanUpDashboard: (state, action: PayloadAction) => {
-      if (state.getModel()) {
-        state.getModel()!.destroy();
-        state.getModel = () => null;
-      }
-
       state.panels = {};
       state.initPhase = DashboardInitPhase.NotStarted;
       state.isInitSlow = false;
       state.initError = null;
+      state.getModel = () => null;
     },
     setDashboardQueriesToUpdateOnLoad: (state, action: PayloadAction<QueriesToUpdateOnDashboardLoad>) => {
       state.modifiedQueries = action.payload;

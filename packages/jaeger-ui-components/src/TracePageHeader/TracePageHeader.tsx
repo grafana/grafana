@@ -17,7 +17,7 @@ import _get from 'lodash/get';
 import _maxBy from 'lodash/maxBy';
 import _values from 'lodash/values';
 import MdKeyboardArrowRight from 'react-icons/lib/md/keyboard-arrow-right';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import SpanGraph from './SpanGraph';
@@ -27,7 +27,7 @@ import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { getTraceName } from '../model/trace-viewer';
 import { TNil } from '../types';
-import { Trace } from '@grafana/data';
+import { Trace } from '../types/trace';
 import { formatDatetime, formatDuration } from '../utils/date';
 import { getTraceLinks } from '../model/link-patterns';
 
@@ -36,10 +36,6 @@ import { createStyle } from '../Theme';
 import { uTxMuted } from '../uberUtilityStyles';
 
 const getStyles = createStyle((theme: Theme) => {
-  const TracePageHeaderOverviewItemValueDetail = css`
-    label: TracePageHeaderOverviewItemValueDetail;
-    color: #aaa;
-  `;
   return {
     TracePageHeader: css`
       label: TracePageHeader;
@@ -117,10 +113,16 @@ const getStyles = createStyle((theme: Theme) => {
       border-bottom: 1px solid #e4e4e4;
       padding: 0.25rem 0.5rem !important;
     `,
-    TracePageHeaderOverviewItemValueDetail,
+    TracePageHeaderOverviewItemValueDetail: cx(
+      css`
+        label: TracePageHeaderOverviewItemValueDetail;
+        color: #aaa;
+      `,
+      'trace-item-value-detail'
+    ),
     TracePageHeaderOverviewItemValue: css`
       label: TracePageHeaderOverviewItemValue;
-      &:hover > .${TracePageHeaderOverviewItemValueDetail} {
+      &:hover > .trace-item-value-detail {
         color: unset;
       }
     `,
@@ -163,13 +165,13 @@ export const HEADER_ITEMS = [
   {
     key: 'timestamp',
     label: 'Trace Start',
-    renderer(trace: Trace, styles?: ReturnType<typeof getStyles>) {
+    renderer(trace: Trace, styles: ReturnType<typeof getStyles>) {
       const dateStr = formatDatetime(trace.startTime);
       const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
       return match ? (
-        <span className={styles?.TracePageHeaderOverviewItemValue}>
+        <span className={styles.TracePageHeaderOverviewItemValue}>
           {match[1]}
-          <span className={styles?.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
+          <span className={styles.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
         </span>
       ) : (
         dateStr

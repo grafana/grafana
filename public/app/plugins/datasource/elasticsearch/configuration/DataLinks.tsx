@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Button, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
 import { DataLinkConfig } from '../types';

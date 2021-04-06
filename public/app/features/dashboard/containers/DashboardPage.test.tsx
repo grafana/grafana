@@ -3,9 +3,11 @@ import { shallow, ShallowWrapper } from 'enzyme';
 import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
-import { notifyApp, updateLocation } from 'app/core/actions';
+import { DashboardInitPhase, DashboardRoutes } from 'app/types';
+import { notifyApp } from 'app/core/actions';
 import { cleanUpDashboardAndVariables } from '../state/actions';
+import { selectors } from '@grafana/e2e-selectors';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 
@@ -53,18 +55,17 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       },
       mount: (propOverrides?: Partial<Props>) => {
         const props: Props = {
-          urlSlug: 'my-dash',
-          $scope: {},
-          urlUid: '11',
-          $injector: {},
-          routeInfo: DashboardRouteInfo.Normal,
+          ...getRouteComponentProps({
+            match: { params: { slug: 'my-dash', uid: '11' } } as any,
+            route: { routeName: DashboardRoutes.Normal } as any,
+          }),
           initPhase: DashboardInitPhase.NotStarted,
           isInitSlow: false,
           initDashboard: jest.fn(),
-          updateLocation: mockToolkitActionCreator(updateLocation),
           notifyApp: mockToolkitActionCreator(notifyApp),
           cleanUpDashboardAndVariables: ctx.cleanUpDashboardAndVariablesMock,
           cancelVariables: jest.fn(),
+          templateVarsChangedInUrl: jest.fn(),
           dashboard: null,
         };
 
@@ -128,7 +129,7 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setProps({
-        urlEditPanelId: '1',
+        queryParams: { editPanel: '1' },
       });
     });
 
@@ -144,7 +145,7 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp({}, { canEdit: false });
       ctx.wrapper?.setProps({
-        urlEditPanelId: '1',
+        queryParams: { editPanel: '1' },
       });
     });
 
@@ -153,16 +154,16 @@ describe('DashboardPage', () => {
       expect(state?.editPanel).toBe(null);
     });
   });
-  dashboardPageScenario('When user goes back to dashboard from view panel', (ctx) => {
+  dashboardPageScenario('When user goes back to dashboard from edit panel', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setState({ scrollTop: 100 });
       ctx.wrapper?.setProps({
-        urlEditPanelId: '1',
+        queryParams: { editPanel: '1' },
       });
       ctx.wrapper?.setProps({
-        urlEditPanelId: undefined,
+        queryParams: {},
       });
     });
 
@@ -186,7 +187,7 @@ describe('DashboardPage', () => {
       ctx.mount();
       ctx.setDashboardProp();
       ctx.wrapper?.setProps({
-        editview: 'settings',
+        queryParams: { editview: 'settings' },
       });
     });
 
@@ -223,7 +224,7 @@ describe('DashboardPage', () => {
         schemaVersion: 17,
       });
       ctx.wrapper?.setProps({
-        urlEditPanelId: '0',
+        queryParams: { editPanel: '0' },
       });
     });
 
@@ -250,37 +251,65 @@ describe('DashboardPage', () => {
     });
   });
 
-  describe('mapStateToProps with editPanel', () => {
-    const props = mapStateToProps({
-      location: {
-        routeParams: {},
-        query: {
-          editPanel: '1',
-        },
-      },
-      panelEditor: {},
-      dashboard: {
-        getModel: () => ({} as DashboardModel),
-      },
-    } as any);
+  dashboardPageScenario('Kiosk mode none', (ctx) => {
+    ctx.setup(() => {
+      ctx.mount({
+        queryParams: {},
+      });
+      ctx.setDashboardProp({
+        panels: [{ id: 0, type: 'graph' }],
+        schemaVersion: 17,
+      });
+    });
 
-    expect(props.urlEditPanelId).toBe('1');
+    it('should not render dashboard navigation ', () => {
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.DashNav.nav}"]`)).toHaveLength(1);
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.SubMenu.submenu}"]`)).toHaveLength(1);
+    });
   });
 
-  describe('mapStateToProps with string edit true', () => {
+  dashboardPageScenario('Kiosk mode tv', (ctx) => {
+    ctx.setup(() => {
+      ctx.mount({
+        queryParams: { kiosk: 'tv' },
+      });
+      ctx.setDashboardProp({
+        panels: [{ id: 0, type: 'graph' }],
+        schemaVersion: 17,
+      });
+    });
+
+    it('should not render dashboard navigation ', () => {
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.DashNav.nav}"]`)).toHaveLength(1);
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.SubMenu.submenu}"]`)).toHaveLength(0);
+    });
+  });
+
+  dashboardPageScenario('Kiosk mode full', (ctx) => {
+    ctx.setup(() => {
+      ctx.mount({
+        queryParams: { kiosk: true },
+      });
+      ctx.setDashboardProp({
+        panels: [{ id: 0, type: 'graph' }],
+        schemaVersion: 17,
+      });
+    });
+
+    it('should not render dashboard navigation and submenu', () => {
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.DashNav.nav}"]`)).toHaveLength(0);
+      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.SubMenu.submenu}"]`)).toHaveLength(0);
+    });
+  });
+
+  describe('mapStateToProps', () => {
     const props = mapStateToProps({
-      location: {
-        routeParams: {},
-        query: {
-          viewPanel: '2',
-        },
-      },
       panelEditor: {},
       dashboard: {
         getModel: () => ({} as DashboardModel),
       },
     } as any);
 
-    expect(props.urlViewPanelId).toBe('2');
+    expect(props.dashboard).toBeDefined();
   });
 });

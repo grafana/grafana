@@ -3,7 +3,9 @@ package pluginproxy
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -56,6 +58,20 @@ func addQueryString(req *http.Request, route *plugins.AppPluginRoute, data templ
 		q.Add(interpolatedName, interpolatedContent)
 	}
 	req.URL.RawQuery = q.Encode()
+
+	return nil
+}
+
+func setBodyContent(req *http.Request, route *plugins.AppPluginRoute, data templateData) error {
+	if route.Body != nil {
+		interpolatedBody, err := interpolateString(string(route.Body), data)
+		if err != nil {
+			return err
+		}
+
+		req.Body = ioutil.NopCloser(strings.NewReader(interpolatedBody))
+		req.ContentLength = int64(len(interpolatedBody))
+	}
 
 	return nil
 }

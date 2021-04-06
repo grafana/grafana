@@ -7,6 +7,7 @@ import {
   DataFrameFieldIndex,
   FieldMatcherID,
   fieldMatchers,
+  FieldType,
   TimeRange,
   TimeZone,
 } from '@grafana/data';
@@ -23,6 +24,9 @@ import { UPlotChart } from '../uPlot/Plot';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
 import { VizLayout } from '../VizLayout/VizLayout';
 
+/**
+ * @internal -- not a public API
+ */
 export const FIXED_UNIT = '__fixed';
 
 export interface GraphNGProps extends Themeable {
@@ -91,7 +95,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     return {
       ...state,
-      data: preparePlotData(frame),
+      data: preparePlotData(frame, [FieldType.string]),
       alignedDataFrame: frame,
       seriesToDataFrameFieldIndexMap: frame.fields.map((f) => f.state!.origin!),
       dimFields,
@@ -173,6 +177,8 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
         config={config}
         onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
+        maxHeight="35%"
+        maxWidth="60%"
         {...legend}
       />
     );
@@ -190,6 +196,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
         value={{
           mapSeriesIndexToDataFrameFieldIndex: this.mapSeriesIndexToDataFrameFieldIndex,
           dimFields: this.state.dimFields,
+          data: this.state.alignedDataFrame,
         }}
       >
         <VizLayout width={width} height={height} legend={this.renderLegend()}>

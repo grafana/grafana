@@ -15,8 +15,10 @@ import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { describeMetric } from './utils';
+import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+
+const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
 
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {
@@ -205,7 +207,7 @@ export class ElasticResponse {
 
               if (metric.type === 'bucket_script') {
                 //Use the formula in the column name
-                metricName = metric.settings?.script || '';
+                metricName = getScriptValue(metric);
               }
             }
 
@@ -304,7 +306,7 @@ export class ElasticResponse {
       if (series.metric && queryDef.isPipelineAggWithMultipleBucketPaths(series.metric)) {
         const agg: any = _.find(target.metrics, { id: series.metricId });
         if (agg && agg.settings.script) {
-          metricName = agg.settings.script;
+          metricName = getScriptValue(agg);
 
           for (const pv of agg.pipelineVariables) {
             const appliedAgg: any = _.find(target.metrics, { id: pv.pipelineAgg });
@@ -373,6 +375,7 @@ export class ElasticResponse {
         _type: hit._type,
         _index: hit._index,
         sort: hit.sort,
+        highlight: hit.highlight,
       };
 
       if (hit._source) {
@@ -422,7 +425,7 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
-    if (this.targets.some((target) => target.metrics?.some((metric) => metric.type === 'raw_data'))) {
+    if (this.targets.some((target) => queryDef.hasMetricOfType(target, 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
     return this.processResponseToSeries();
@@ -438,7 +441,6 @@ export class ElasticResponse {
     logLevelField?: string
   ): DataQueryResponse {
     const dataFrame: DataFrame[] = [];
-
     for (let n = 0; n < this.response.responses.length; n++) {
       const response = this.response.responses[n];
       if (response.error) {
@@ -449,7 +451,7 @@ export class ElasticResponse {
         const { propNames, docs } = flattenHits(response.hits.hits);
         if (docs.length > 0) {
           let series = createEmptyDataFrame(
-            propNames,
+            propNames.map(toNameTypePair(docs)),
             this.targets[0].timeField!,
             isLogsRequest,
             logMessageField,
@@ -459,11 +461,41 @@ export class ElasticResponse {
           // Add a row for each document
           for (const doc of docs) {
             if (logLevelField) {
-              // Remap level field based on the datasource config. This field is then used in explore to figure out the
-              // log level. We may rewrite some actual data in the level field if they are different.
+              // Remap level field based on the datasource config. This field is
+              // then used in explore to figure out the log level. We may rewrite
+              // some actual data in the level field if they are different.
               doc['level'] = doc[logLevelField];
             }
-
+            // When highlighting exists, we need to collect all the highlighted
+            // phrases and add them to the DataFrame's meta.searchWords array.
+            if (doc.highlight) {
+              // There might be multiple words so we need two versions of the
+              // regular expression. One to match gobally, when used with part.match,
+              // it returns and array of matches. The second one is used to capture the
+              // values between the tags.
+              const globalHighlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP, 'g');
+              const highlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP);
+              const newSearchWords = Object.keys(doc.highlight)
+                .flatMap((key) => {
+                  return doc.highlight[key].flatMap((line: string) => {
+                    const matchedPhrases = line.match(globalHighlightWordRegex);
+                    if (!matchedPhrases) {
+                      return [];
+                    }
+                    return matchedPhrases.map((part) => {
+                      const matches = part.match(highlightWordRegex);
+                      return (matches && matches[1]) || null;
+                    });
+                  });
+                })
+                .filter(_.identity);
+              // If meta and searchWords already exists, add the words and
+              // deduplicate otherwise create a new set of search words.
+              const searchWords = series.meta?.searchWords
+                ? _.uniq([...series.meta.searchWords, ...newSearchWords])
+                : [...newSearchWords];
+              series.meta = series.meta ? { ...series.meta, searchWords } : { searchWords };
+            }
             series.add(doc);
           }
           if (isLogsRequest) {
@@ -554,6 +586,7 @@ type Doc = {
   _index: string;
   _source?: any;
   sort?: Array<string | number>;
+  highlight?: Record<string, string[]>;
 };
 
 /**
@@ -575,6 +608,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
       _type: hit._type,
       _index: hit._index,
       sort: hit.sort,
+      highlight: hit.highlight,
       _source: { ...flattened },
       ...flattened,
     };
@@ -601,7 +635,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
  * @param logLevelField
  */
 const createEmptyDataFrame = (
-  propNames: string[],
+  props: Array<[string, FieldType]>,
   timeField: string,
   isLogsRequest: boolean,
   logMessageField?: string,
@@ -637,13 +671,13 @@ const createEmptyDataFrame = (
 
   const fieldNames = series.fields.map((field) => field.name);
 
-  for (const propName of propNames) {
+  for (const [name, type] of props) {
     // Do not duplicate fields. This can mean that we will shadow some fields.
-    if (fieldNames.includes(propName)) {
+    if (fieldNames.includes(name)) {
       continue;
     }
     // Do not add _source field (besides logs) as we are showing each _source field in table instead.
-    if (!isLogsRequest && propName === '_source') {
+    if (!isLogsRequest && name === '_source') {
       continue;
     }
 
@@ -651,8 +685,8 @@ const createEmptyDataFrame = (
       config: {
         filterable: true,
       },
-      name: propName,
-      type: FieldType.string,
+      name,
+      type,
     }).parse = (v: any) => {
       return v || '';
     };
@@ -670,4 +704,24 @@ const addPreferredVisualisationType = (series: any, type: PreferredVisualisation
       });
 
   return s;
+};
+
+const toNameTypePair = (docs: Array<Record<string, any>>) => (propName: string): [string, FieldType] => [
+  propName,
+  guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName]),
+];
+
+/**
+ * Trying to guess data type from its value. This is far from perfect, as in order to have accurate guess
+ * we should have access to the elasticsearch mapping, but it covers the most common use cases for numbers, strings & arrays.
+ */
+const guessType = (value: unknown): FieldType => {
+  switch (typeof value) {
+    case 'number':
+      return FieldType.number;
+    case 'string':
+      return FieldType.string;
+    default:
+      return FieldType.other;
+  }
 };

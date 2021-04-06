@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { PanelModel, PanelPlugin } from '@grafana/data';
 import { DashList } from './DashList';
 import { DashListOptions } from './types';
@@ -48,9 +47,9 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
           return (
             <FolderPicker
               initialFolderId={props.value}
-              useNewForms
               initialTitle="All"
               enableReset={true}
+              permissionLevel="View"
               onChange={({ id }) => props.onChange(id)}
             />
           );

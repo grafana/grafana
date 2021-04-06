@@ -6,8 +6,10 @@ import { fallBackTreshold } from './thresholds';
 import { getScaleCalculator, ColorScaleValue } from './scale';
 import { reduceField } from '../transformations/fieldReducer';
 
+/** @beta */
 export type FieldValueColorCalculator = (value: number, percent: number, Threshold?: Threshold) => string;
 
+/** @beta */
 export interface FieldColorMode extends RegistryItem {
   getCalculator: (field: Field, theme: GrafanaTheme) => FieldValueColorCalculator;
   colors?: string[];
@@ -15,6 +17,7 @@ export interface FieldColorMode extends RegistryItem {
   isByValue?: boolean;
 }
 
+/** @internal */
 export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
   return [
     {
@@ -203,11 +206,13 @@ export class FieldColorSchemeMode implements FieldColorMode {
   }
 }
 
+/** @beta */
 export function getFieldColorModeForField(field: Field): FieldColorMode {
   return fieldColorModeRegistry.get(field.config.color?.mode ?? FieldColorModeId.Thresholds);
 }
 
-export function getFieldColorMode(mode?: FieldColorModeId): FieldColorMode {
+/** @beta */
+export function getFieldColorMode(mode?: FieldColorModeId | string): FieldColorMode {
   return fieldColorModeRegistry.get(mode ?? FieldColorModeId.Thresholds);
 }
 

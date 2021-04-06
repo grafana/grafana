@@ -52,19 +52,22 @@ With Grafana Enterprise, you get access to new features, including:
 - [Auditing]({{< relref "auditing.md" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "request-security.md" >}}) makes it possible to restrict outgoing requests from the Grafana server.
 
-## Enterprise plugins
+## Enterprise data sources
 
-With a Grafana Enterprise license, you get access to premium plugins, including:
+With a Grafana Enterprise license, you get access to premium data sources, including:
 
 - [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
 - [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
 - [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
+- [Gitlab](https://grafana.com/grafana/plugins/grafana-gitlab-datasource)
+- [Jira](https://grafana.com/grafana/plugins/grafana-jira-datasource)
 - [MongoDB](https://grafana.com/grafana/plugins/grafana-mongodb-datasource)
 - [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
 - [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
 - [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
 - [Snowflake](https://grafana.com/grafana/plugins/grafana-snowflake-datasource)
 - [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
+- [Splunk Infrastructure monitoring (SignalFx)](https://grafana.com/grafana/plugins/grafana-splunk-monitoring-datasource)
 - [Wavefront](https://grafana.com/grafana/plugins/grafana-wavefront-datasource)
 
 ## Try Grafana Enterprise

@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, TimeOption } from '@grafana/data';
 import { useTheme, stylesFactory, styleMixins } from '../../../themes';
 import { Icon } from '../../Icon/Icon';

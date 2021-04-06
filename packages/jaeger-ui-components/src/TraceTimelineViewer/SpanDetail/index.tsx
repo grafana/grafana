@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -25,7 +25,7 @@ import CopyIcon from '../../common/CopyIcon';
 import LabeledList from '../../common/LabeledList';
 
 import { TNil } from '../../types';
-import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '@grafana/data';
+import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/trace';
 import AccordianReferences from './AccordianReferences';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';

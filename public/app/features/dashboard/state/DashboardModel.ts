@@ -20,7 +20,7 @@ import {
   TimeZone,
   UrlQueryValue,
 } from '@grafana/data';
-import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
+import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
@@ -34,7 +34,7 @@ export interface CloneOptions {
   message?: string;
 }
 
-type DashboardLinkType = 'link' | 'dashboards';
+export type DashboardLinkType = 'link' | 'dashboards';
 
 export interface DashboardLink {
   icon: string;
@@ -46,6 +46,8 @@ export interface DashboardLink {
   tags: any[];
   searchHits?: any[];
   targetBlank: boolean;
+  keepTime: boolean;
+  includeVars: boolean;
 }
 
 export class DashboardModel {
@@ -92,9 +94,11 @@ export class DashboardModel {
     templating: true, // needs special handling
     originalTime: true,
     originalTemplating: true,
+    originalLibraryPanels: true,
     panelInEdit: true,
     panelInView: true,
     getVariablesFromState: true,
+    formatDate: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -125,6 +129,7 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.panels = _.map(data.panels || [], (panelData: any) => new PanelModel(panelData));
+    this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
     this.resetOriginalTime();
@@ -204,8 +209,33 @@ export class DashboardModel {
     }
 
     // get panel save models
-    copy.panels = this.panels
-      .filter((panel: PanelModel) => panel.type !== 'add-panel')
+    copy.panels = this.getPanelSaveModels();
+
+    //  sort by keys
+    copy = sortByKeys(copy);
+    copy.getVariables = () => {
+      return copy.templating.list;
+    };
+
+    return copy;
+  }
+
+  private getPanelSaveModels() {
+    return this.panels
+      .filter((panel: PanelModel) => {
+        if (panel.type === 'add-panel') {
+          return false;
+        }
+        // skip repeated panels in the saved model
+        if (panel.repeatPanelId) {
+          return false;
+        }
+        // skip repeated rows in the saved model
+        if (panel.repeatedByRow) {
+          return false;
+        }
+        return true;
+      })
       .map((panel: PanelModel) => {
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel
@@ -217,15 +247,24 @@ export class DashboardModel {
         }
 
         return panel.getSaveModel();
+      })
+      .map((model: any) => {
+        // Clear any scopedVars from persisted mode. This cannot be part of getSaveModel as we need to be able to copy
+        // panel models with preserved scopedVars, for example when going into edit mode.
+        delete model.scopedVars;
+
+        // Clear any repeated panels from collapsed rows
+        if (model.type === 'row' && model.panels && model.panels.length > 0) {
+          model.panels = model.panels
+            .filter((rowPanel: PanelModel) => !rowPanel.repeatPanelId)
+            .map((model: PanelModel) => {
+              delete model.scopedVars;
+              return model;
+            });
+        }
+
+        return model;
       });
-
-    //  sort by keys
-    copy = sortByKeys(copy);
-    copy.getVariables = () => {
-      return copy.templating.list;
-    };
-
-    return copy;
   }
 
   private updateTemplatingSaveModelClone(
@@ -721,10 +760,6 @@ export class DashboardModel {
     }
   }
 
-  setPanelFocus(id: number) {
-    this.meta.focusPanelId = id;
-  }
-
   updateSubmenuVisibility() {
     this.meta.submenuEnabled = (() => {
       if (this.links.length > 0) {
@@ -965,7 +1000,7 @@ export class DashboardModel {
     }
 
     // add back navbar height
-    if (kioskMode && kioskMode !== KIOSK_MODE_TV) {
+    if (kioskMode && kioskMode !== KioskMode.TV) {
       visibleHeight += navbarHeight;
     }
 

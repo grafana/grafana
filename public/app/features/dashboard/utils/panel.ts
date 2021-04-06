@@ -16,25 +16,29 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 // Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
-import { CoreEvents } from 'app/types';
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
+import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
   if (ask !== false) {
-    const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : undefined;
+    const text2 = panel.alert
+      ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
+      : undefined;
     const confirmText = panel.alert ? 'YES' : undefined;
 
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Remove Panel',
-      text: 'Are you sure you want to remove this panel?',
-      text2: text2,
-      icon: 'trash-alt',
-      confirmText: confirmText,
-      yesText: 'Remove',
-      onConfirm: () => removePanel(dashboard, panel, false),
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Remove panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'trash-alt',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => removePanel(dashboard, panel, false),
+      })
+    );
     return;
   }
 
@@ -46,18 +50,25 @@ export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => 
 };
 
 export const copyPanel = (panel: PanelModel) => {
-  store.set(LS_PANEL_COPY_KEY, JSON.stringify(panel.getSaveModel()));
-  appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Open Add Panel to paste']);
+  let saveModel = panel;
+  if (panel instanceof PanelModel) {
+    saveModel = panel.getSaveModel();
+  }
+
+  store.set(LS_PANEL_COPY_KEY, JSON.stringify(saveModel));
+  appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Click **Add panel** icon to paste.']);
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
-  appEvents.emit(CoreEvents.showModalReact, {
-    component: ShareModal,
-    props: {
-      dashboard: dashboard,
-      panel: panel,
-    },
-  });
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: ShareModal,
+      props: {
+        dashboard: dashboard,
+        panel: panel,
+      },
+    })
+  );
 };
 
 export const refreshPanel = (panel: PanelModel) => {

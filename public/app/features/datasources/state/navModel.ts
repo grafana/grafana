@@ -83,6 +83,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       password: '',
       readOnly: false,
       type: 'Loading',
+      typeName: 'Loading',
       typeLogoUrl: 'public/img/icn-datasource.svg',
       url: '',
       user: '',

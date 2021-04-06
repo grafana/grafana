@@ -5,7 +5,9 @@ import { ContextMenu } from '../ContextMenu/ContextMenu';
 import { useTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { getEdgeFields, getNodeFields } from './utils';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
+import { MenuGroup } from '../Menu/MenuGroup';
+import { MenuItem } from '../Menu/MenuItem';
 
 /**
  * Hook that contains state of the context menu, both for edges and nodes and provides appropriate component when
@@ -30,11 +32,26 @@ export function useContextMenu(
 
   if (openedNode) {
     const items = getItems(getLinks(nodes, openedNode.node.dataFrameRowIndex));
+    const renderMenuGroupItems = () => {
+      return items?.map((group, index) => (
+        <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+          {(group.items || []).map((item) => (
+            <MenuItem
+              key={`${item.label}`}
+              url={item.url}
+              label={item.label}
+              ariaLabel={item.label}
+              onClick={item.onClick}
+            />
+          ))}
+        </MenuGroup>
+      ));
+    };
     if (items.length) {
       MenuComponent = (
         <ContextMenu
           renderHeader={() => <NodeHeader node={openedNode.node} nodes={nodes} />}
-          items={items}
+          renderMenuItems={renderMenuGroupItems}
           onClose={() => setOpenedNode(undefined)}
           x={openedNode.event.pageX}
           y={openedNode.event.pageY}
@@ -45,11 +62,26 @@ export function useContextMenu(
 
   if (openedEdge) {
     const items = getItems(getLinks(edges, openedEdge.edge.dataFrameRowIndex));
+    const renderMenuGroupItems = () => {
+      return items?.map((group, index) => (
+        <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+          {(group.items || []).map((item) => (
+            <MenuItem
+              key={item.label}
+              url={item.url}
+              label={item.label}
+              ariaLabel={item.label}
+              onClick={item.onClick}
+            />
+          ))}
+        </MenuGroup>
+      ));
+    };
     if (items.length) {
       MenuComponent = (
         <ContextMenu
           renderHeader={() => <EdgeHeader edge={openedEdge.edge} edges={edges} />}
-          items={items}
+          renderMenuItems={renderMenuGroupItems}
           onClose={() => setOpenedEdge(undefined)}
           x={openedEdge.event.pageX}
           y={openedEdge.event.pageY}
@@ -82,8 +114,10 @@ function getItems(links: LinkModel[]) {
   return Object.keys(groups).map((key) => {
     return {
       label: key,
+      ariaLabel: key,
       items: groups[key].map((link) => ({
         label: link.newTitle || link.l.title,
+        ariaLabel: link.newTitle || link.l.title,
         url: link.l.href,
         onClick: link.l.onClick,
       })),

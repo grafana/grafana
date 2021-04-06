@@ -2,6 +2,7 @@ import React from 'react';
 import isNumber from 'lodash/isNumber';
 import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
 import {
+  ArrayVector,
   DataFrame,
   FieldConfig,
   FieldType,
@@ -14,6 +15,7 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { FIXED_UNIT } from './GraphNG';
 import {
@@ -41,13 +43,42 @@ export function mapMouseEventToMode(event: React.MouseEvent): GraphNGLegendEvent
   return GraphNGLegendEventMode.ToggleSelection;
 }
 
-export function preparePlotFrame(data: DataFrame[], dimFields: XYFieldMatchers) {
-  return outerJoinDataFrames({
-    frames: data,
+function applySpanNullsThresholds(frames: DataFrame[]) {
+  for (const frame of frames) {
+    let refField = frame.fields.find((field) => field.type === FieldType.time); // this doesnt need to be time, just any numeric/asc join field
+    let refValues = refField?.values.toArray() as any[];
+
+    for (let i = 0; i < frame.fields.length; i++) {
+      let field = frame.fields[i];
+
+      if (field === refField) {
+        continue;
+      }
+
+      if (field.type === FieldType.number) {
+        let spanNulls = field.config.custom?.spanNulls;
+
+        if (typeof spanNulls === 'number') {
+          field.values = new ArrayVector(nullToUndefThreshold(refValues, field.values.toArray(), spanNulls));
+        }
+      }
+    }
+  }
+
+  return frames;
+}
+
+export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers) {
+  applySpanNullsThresholds(frames);
+
+  let joined = outerJoinDataFrames({
+    frames: frames,
     joinBy: dimFields.x,
     keep: dimFields.y,
     keepOriginIndices: true,
   });
+
+  return joined;
 }
 
 export function preparePlotConfigBuilder(
@@ -61,6 +92,10 @@ export function preparePlotConfigBuilder(
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
+  if (!xField) {
+    return builder; // empty frame with no options
+  }
+
   let seriesIndex = 0;
 
   if (xField.type === FieldType.time) {

@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import coreModule from 'app/core/core_module';
 import { InfluxQuery } from '../types';
-import { SelectableValue, QueryEditorProps } from '@grafana/data';
-import { cx, css } from 'emotion';
+import { SelectableValue } from '@grafana/data';
+import { cx, css } from '@emotion/css';
 import {
   InlineFormLabel,
   LinkButton,
@@ -14,8 +14,16 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import InfluxDatasource from '../datasource';
 
-// @ts-ignore -- complicated since the datasource is not really reactified yet!
-type Props = QueryEditorProps<InfluxDatasource, InfluxQuery>;
+type Props = {
+  onChange: (query: InfluxQuery) => void;
+  onRunQuery: () => void;
+  query: InfluxQuery;
+  // `datasource` is not used internally, but this component is used at some places
+  // directly, where the `datasource` prop has to exist. later, when the whole
+  // query-editor gets converted to react we can stop using this component directly
+  // and then we can probably remove the datasource attribute.
+  datasource: InfluxDatasource;
+};
 
 const samples: Array<SelectableValue<string>> = [
   { label: 'Show buckets', description: 'List the available buckets (table)', value: 'buckets()' },

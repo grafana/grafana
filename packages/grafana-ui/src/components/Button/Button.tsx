@@ -1,5 +1,5 @@
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 import { useTheme } from '../../themes';
 import { IconName } from '../../types/icon';
@@ -206,6 +206,11 @@ export function getPropertiesForVariant(theme: GrafanaTheme, variant: ButtonVari
 
           &:focus {
             outline: none;
+            text-decoration: underline;
+          }
+
+          &:hover {
+            color: ${theme.colors.linkExternal};
             text-decoration: underline;
           }
         `,

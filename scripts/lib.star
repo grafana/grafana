@@ -1,8 +1,8 @@
-grabpl_version = '0.5.38'
-build_image = 'grafana/build-container:1.3.2'
+grabpl_version = '0.5.43'
+build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
-alpine_image = 'alpine:3.12'
+alpine_image = 'alpine:3.13'
 windows_image = 'mcr.microsoft.com/windows:1809'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
@@ -671,7 +671,10 @@ def e2e_tests_server_step(edition, port=3001):
         ],
     }
 
-def e2e_tests_step(edition, port=3001):
+def e2e_tests_step(edition, port=3001, tries=None):
+    cmd = './bin/grabpl e2e-tests --port {}'.format(port)
+    if tries:
+        cmd += ' --tries {}'.format(tries)
     return {
         'name': 'end-to-end-tests' + enterprise2_sfx(edition),
         'image': 'grafana/ci-e2e:12.19.0-1',
@@ -685,7 +688,7 @@ def e2e_tests_step(edition, port=3001):
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
             './node_modules/.bin/cypress install',
-            './bin/grabpl e2e-tests --port {}'.format(port),
+            cmd,
         ],
     }
 

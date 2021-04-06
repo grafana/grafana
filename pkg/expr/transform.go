@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -35,7 +35,7 @@ func init() {
 }
 
 // WrapTransformData creates and executes transform requests
-func (s *Service) WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (s *Service) WrapTransformData(ctx context.Context, query plugins.DataQuery) (*backend.QueryDataResponse, error) {
 	sdkReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			OrgID: query.User.OrgId,
@@ -50,8 +50,8 @@ func (s *Service) WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) 
 		}
 		sdkReq.Queries = append(sdkReq.Queries, backend.DataQuery{
 			JSON:          modelJSON,
-			Interval:      time.Duration(q.IntervalMs) * time.Millisecond,
-			RefID:         q.RefId,
+			Interval:      time.Duration(q.IntervalMS) * time.Millisecond,
+			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 			QueryType:     q.QueryType,
 			TimeRange: backend.TimeRange{
@@ -60,30 +60,7 @@ func (s *Service) WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) 
 			},
 		})
 	}
-	pbRes, err := s.TransformData(ctx, sdkReq)
-	if err != nil {
-		return nil, err
-	}
-
-	tR := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult, len(pbRes.Responses)),
-	}
-	for refID, res := range pbRes.Responses {
-		tRes := &tsdb.QueryResult{
-			RefId:      refID,
-			Dataframes: tsdb.NewDecodedDataFrames(res.Frames),
-		}
-		// if len(res.JsonMeta) != 0 {
-		// 	tRes.Meta = simplejson.NewFromAny(res.JsonMeta)
-		// }
-		if res.Error != nil {
-			tRes.Error = res.Error
-			tRes.ErrorString = res.Error.Error()
-		}
-		tR.Results[refID] = tRes
-	}
-
-	return tR, nil
+	return s.TransformData(ctx, sdkReq)
 }
 
 // TransformData takes Queries which are either expressions nodes
@@ -158,9 +135,9 @@ func hiddenRefIDs(queries []backend.DataQuery) (map[string]struct{}, error) {
 	return hidden, nil
 }
 
-// QueryData is called used to query datasources that are not expression commands, but are used
+// queryData is called used to query datasources that are not expression commands, but are used
 // alongside expressions and/or are the input of an expression command.
-func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) queryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("zero queries found in datasource request")
 	}
@@ -184,15 +161,15 @@ func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.Que
 	}
 
 	// Convert plugin-model (datasource) queries to tsdb queries
-	queries := make([]*tsdb.Query, len(req.Queries))
+	queries := make([]plugins.DataSubQuery, len(req.Queries))
 	for i, query := range req.Queries {
 		sj, err := simplejson.NewJson(query.JSON)
 		if err != nil {
 			return nil, err
 		}
-		queries[i] = &tsdb.Query{
-			RefId:         query.RefID,
-			IntervalMs:    query.Interval.Milliseconds(),
+		queries[i] = plugins.DataSubQuery{
+			RefID:         query.RefID,
+			IntervalMS:    query.Interval.Milliseconds(),
 			MaxDataPoints: query.MaxDataPoints,
 			QueryType:     query.QueryType,
 			DataSource:    getDsInfo.Result,
@@ -201,49 +178,19 @@ func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.Que
 	}
 
 	// For now take Time Range from first query.
-	timeRange := tsdb.NewTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10), strconv.FormatInt(req.Queries[0].TimeRange.To.Unix()*1000, 10))
+	timeRange := plugins.NewDataTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10),
+		strconv.FormatInt(req.Queries[0].TimeRange.To.Unix()*1000, 10))
 
-	tQ := &tsdb.TsdbQuery{
-		TimeRange: timeRange,
+	tQ := plugins.DataQuery{
+		TimeRange: &timeRange,
 		Queries:   queries,
 	}
 
 	// Execute the converted queries
-	tsdbRes, err := tsdb.HandleRequest(ctx, getDsInfo.Result, tQ)
+	tsdbRes, err := s.DataService.HandleRequest(ctx, getDsInfo.Result, tQ)
 	if err != nil {
 		return nil, err
 	}
-	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
-	// Only error, tsdb.Series, and encoded Dataframes responses are mapped.
-	responses := make(map[string]backend.DataResponse, len(tsdbRes.Results))
-	for refID, res := range tsdbRes.Results {
-		pRes := backend.DataResponse{}
-		if res.Error != nil {
-			pRes.Error = res.Error
-		}
 
-		if res.Dataframes != nil {
-			decoded, err := res.Dataframes.Decoded()
-			if err != nil {
-				return nil, err
-			}
-			pRes.Frames = decoded
-			responses[refID] = pRes
-			continue
-		}
-
-		for _, series := range res.Series {
-			frame, err := tsdb.SeriesToFrame(series)
-			frame.RefID = refID
-			if err != nil {
-				return nil, err
-			}
-			pRes.Frames = append(pRes.Frames, frame)
-		}
-
-		responses[refID] = pRes
-	}
-	return &backend.QueryDataResponse{
-		Responses: responses,
-	}, nil
+	return tsdbRes.ToBackendDataResponse()
 }

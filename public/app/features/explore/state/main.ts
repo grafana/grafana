@@ -1,10 +1,8 @@
 import { AnyAction } from 'redux';
-import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DataQuery, ExploreUrlState, serializeStateToUrlParam, TimeRange, UrlQueryMap } from '@grafana/data';
-
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
-import { updateLocation } from '../../../core/actions';
 import { paneReducer } from './explorePane';
 import { createAction } from '@reduxjs/toolkit';
 import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
@@ -62,15 +60,20 @@ export const stateSave = (options?: { replace?: boolean }): ThunkResult<void> =>
   return (dispatch, getState) => {
     const { left, right } = getState().explore;
     const orgId = getState().user.orgId.toString();
-    const urlStates: { [index: string]: string } = { orgId };
+    const urlStates: { [index: string]: string | null } = { orgId };
+
     urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left), true);
+
     if (right) {
       urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right), true);
+    } else {
+      urlStates.right = null;
     }
 
     lastSavedUrl.right = urlStates.right;
     lastSavedUrl.left = urlStates.left;
-    dispatch(updateLocation({ query: urlStates, replace: options?.replace }));
+
+    locationService.partial({ ...urlStates }, options?.replace);
   };
 };
 
@@ -103,7 +106,7 @@ export function splitOpen<T extends DataQuery = any>(options?: {
     }
 
     const urlState = serializeStateToUrlParam(rightUrlState, true);
-    dispatch(updateLocation({ query: { right: urlState }, partial: true }));
+    locationService.partial({ right: urlState }, true);
   };
 }
 
@@ -147,8 +150,7 @@ export const navigateToExplore = (
       return;
     }
 
-    const query = {}; // strips any angular query param
-    dispatch(updateLocation({ path, query }));
+    locationService.push(path!);
   };
 };
 

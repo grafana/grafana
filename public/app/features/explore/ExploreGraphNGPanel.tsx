@@ -27,7 +27,7 @@ import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/times
 import { hideSeriesConfigFactory } from 'app/plugins/panel/timeseries/overrides/hideSeriesConfigFactory';
 import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
@@ -66,7 +66,6 @@ export function ExploreGraphNGPanel({
         drawStyle: DrawStyle.Line,
         fillOpacity: 0,
         pointSize: 5,
-        spanNulls: true,
       },
     },
     overrides: [],

@@ -2,6 +2,7 @@ import React from 'react';
 import { object, select, number, boolean } from '@storybook/addon-knobs';
 import { PieChart, PieChartType } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { FieldConfig } from '@grafana/data';
 
 export default {
   title: 'Visualizations/PieChart',
@@ -9,14 +10,25 @@ export default {
   component: PieChart,
 };
 
+const fieldConfig: FieldConfig = {
+  displayName: '',
+  min: 0,
+  max: 10,
+  decimals: 10,
+  thresholds: {} as any,
+  noValue: 'no value',
+  unit: 'km/s',
+  links: {} as any,
+};
+
 const getKnobs = () => {
   return {
     datapoints: object('datapoints', [
-      { numeric: 100, text: '100', title: 'USA' },
-      { numeric: 200, text: '200', title: 'Canada' },
-      { numeric: 20, text: '20', title: 'Sweden' },
-      { numeric: 50, text: '50', title: 'Spain' },
-      { numeric: 70, text: '70', title: 'Germeny' },
+      { field: fieldConfig, hasLinks: false, name: 'USA', display: { numeric: 100, text: '100', title: 'USA' } },
+      { field: fieldConfig, hasLinks: false, name: 'Canada', display: { numeric: 200, text: '200', title: 'Canada' } },
+      { field: fieldConfig, hasLinks: false, name: 'Sweden', display: { numeric: 20, text: '20', title: 'Sweden' } },
+      { field: fieldConfig, hasLinks: false, name: 'Spain', display: { numeric: 50, text: '50', title: 'Spain' } },
+      { field: fieldConfig, hasLinks: false, name: 'Germany', display: { numeric: 70, text: '70', title: 'Germeny' } },
     ]),
     width: number('Width', 500),
     height: number('Height', 500),
@@ -28,23 +40,13 @@ const getKnobs = () => {
 };
 
 export const basic = () => {
-  const { datapoints, pieType, width, height, showLabelName, showLabelPercent, showLabelValue } = getKnobs();
-  const labelOptions = { showName: showLabelName, showPercent: showLabelPercent, showValue: showLabelValue };
+  const { datapoints, pieType, width, height } = getKnobs();
 
-  return <PieChart width={width} height={height} values={datapoints} pieType={pieType} labelOptions={labelOptions} />;
+  return <PieChart width={width} height={height} fieldDisplayValues={datapoints} pieType={pieType} />;
 };
 
 export const donut = () => {
-  const { datapoints, width, height, showLabelName, showLabelPercent, showLabelValue } = getKnobs();
-  const labelOptions = { showName: showLabelName, showPercent: showLabelPercent, showValue: showLabelValue };
+  const { datapoints, width, height } = getKnobs();
 
-  return (
-    <PieChart
-      width={width}
-      height={height}
-      values={datapoints}
-      pieType={PieChartType.Donut}
-      labelOptions={labelOptions}
-    />
-  );
+  return <PieChart width={width} height={height} fieldDisplayValues={datapoints} pieType={PieChartType.Donut} />;
 };

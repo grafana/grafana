@@ -18,7 +18,7 @@ interface Options {
  * Based on https://github.com/streamich/react-use/blob/master/src/useSlider.ts
  * Returns position x/y coordinates which can be directly used in transform: translate().
  * @param scale Can be used when we want to scale the movement if we are moving a scaled element. We need to do it
- *   here because we don't wont to change the pos when scale changes.
+ *   here because we don't want to change the pos when scale changes.
  * @param bounds If set the panning cannot go outside of those bounds.
  */
 export function usePanning<T extends Element>(
@@ -105,17 +105,18 @@ export function usePanning<T extends Element>(
       });
     };
 
-    if (panRef.current) {
-      panRef.current.addEventListener('mousedown', onPanStart);
-      panRef.current.addEventListener('touchstart', onPanStart);
+    const ref = panRef.current;
+    if (ref) {
+      ref.addEventListener('mousedown', onPanStart);
+      ref.addEventListener('touchstart', onPanStart);
     }
     return () => {
-      if (panRef.current) {
-        panRef.current.removeEventListener('mousedown', onPanStart);
-        panRef.current.removeEventListener('touchstart', onPanStart);
+      if (ref) {
+        ref.removeEventListener('mousedown', onPanStart);
+        ref.removeEventListener('touchstart', onPanStart);
       }
     };
-  }, [scale, bounds?.left, bounds?.right, bounds?.top, bounds?.bottom]);
+  }, [scale, bounds?.left, bounds?.right, bounds?.top, bounds?.bottom, isMounted]);
 
   return { state, ref: panRef };
 }

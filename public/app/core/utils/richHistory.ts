@@ -2,9 +2,11 @@
 import _ from 'lodash';
 
 // Services & Utils
-import { DataQuery, DataSourceApi, dateTimeFormat, AppEvents, urlUtil, ExploreUrlState } from '@grafana/data';
-import appEvents from 'app/core/app_events';
+import { DataQuery, DataSourceApi, dateTimeFormat, urlUtil, ExploreUrlState } from '@grafana/data';
 import store from 'app/core/store';
+import { dispatch } from 'app/store/store';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 
 // Types
 import { RichHistoryQuery } from 'app/types/explore';
@@ -76,7 +78,7 @@ export function addToRichHistory(
       store.setObject(RICH_HISTORY_KEY, updatedHistory);
       return updatedHistory;
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, [error]);
+      dispatch(notifyApp(createErrorNotification(error)));
       return richHistory;
     }
   }
@@ -109,7 +111,7 @@ export function updateStarredInRichHistory(richHistory: RichHistoryQuery[], ts: 
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    appEvents.emit(AppEvents.alertError, [error]);
+    dispatch(notifyApp(createErrorNotification(error)));
     return richHistory;
   }
 }
@@ -131,7 +133,7 @@ export function updateCommentInRichHistory(
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    appEvents.emit(AppEvents.alertError, [error]);
+    dispatch(notifyApp(createErrorNotification(error)));
     return richHistory;
   }
 }
@@ -142,7 +144,7 @@ export function deleteQueryInRichHistory(richHistory: RichHistoryQuery[], ts: nu
     store.setObject(RICH_HISTORY_KEY, updatedHistory);
     return updatedHistory;
   } catch (error) {
-    appEvents.emit(AppEvents.alertError, [error]);
+    dispatch(notifyApp(createErrorNotification(error)));
     return richHistory;
   }
 }

@@ -8,6 +8,8 @@ describe('searchForTags', () => {
     const tags = ['A', 'B'];
     const link: DashboardLink = {
       targetBlank: false,
+      keepTime: false,
+      includeVars: false,
       asDropdown: false,
       icon: 'some icon',
       tags,
@@ -40,6 +42,8 @@ describe('resolveLinks', () => {
   const setupTestContext = (dashboardId: number, searchHitId: number) => {
     const link: DashboardLink = {
       targetBlank: false,
+      keepTime: false,
+      includeVars: false,
       asDropdown: false,
       icon: 'some icon',
       tags: [],

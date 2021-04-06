@@ -1,17 +1,13 @@
 import React from 'react';
-import { boolean } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 import { SeriesColorPicker, ColorPicker } from '@grafana/ui';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { UseState } from '../../utils/storybook/UseState';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
+import { ColorPickerProps } from './ColorPickerPopover';
 import mdx from './ColorPicker.mdx';
-
-const getColorPickerKnobs = () => {
-  return {
-    enableNamedColors: boolean('Enable named colors', false),
-  };
-};
 
 export default {
   title: 'Pickers and Editors/ColorPicker',
@@ -22,12 +18,21 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+  },
+  args: {
+    enableNamedColors: false,
+  },
+  argTypes: {
+    color: NOOP_CONTROL,
+    onChange: NOOP_CONTROL,
+    onColorChange: NOOP_CONTROL,
   },
 };
 
-export const basic = () => {
-  const { enableNamedColors } = getColorPickerKnobs();
-
+export const Basic: Story<ColorPickerProps> = ({ enableNamedColors }) => {
   return (
     <UseState initialState="#00ff00">
       {(selectedColor, updateSelectedColor) => {
@@ -44,9 +49,7 @@ export const basic = () => {
   );
 };
 
-export const seriesColorPicker = () => {
-  const { enableNamedColors } = getColorPickerKnobs();
-
+export const SeriesPicker: Story<ColorPickerProps> = ({ enableNamedColors }) => {
   return (
     <UseState initialState="#00ff00">
       {(selectedColor, updateSelectedColor) => {
