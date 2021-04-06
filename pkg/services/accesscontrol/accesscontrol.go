@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 )
 
 type AccessControl interface {
@@ -15,5 +14,5 @@ type AccessControl interface {
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser, roles []string) ([]*Permission, error)
 
 	// Middleware checks if service disabled or not to switch to fallback authorization.
-	registry.CanBeDisabled
+	IsDisabled() bool
 }
