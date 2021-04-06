@@ -3,7 +3,7 @@ import { PipelineVariable } from '../../aggregations';
 export const defaultPipelineVariable = (name: string): PipelineVariable => ({ name, pipelineAgg: '' });
 
 /**
- * fiven an array of pipeline variables generates a new unique pipeline variable name in the form of `var{n}`.
+ * Given an array of pipeline variables generates a new unique pipeline variable name in the form of `var{n}`.
  * The value for `n` is calculated based on the variables names in pipelineVars matching `var{n}`.
  */
 export const generatePipelineVariableName = (pipelineVars: PipelineVariable[]): string =>

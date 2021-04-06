@@ -56,7 +56,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
           `}
         >
           {value.pipelineVariables!.map((pipelineVar, index) => (
-            // index as a key dowsn't works here since removing an element
+            // index as a key doesn't work here since removing an element
             // in the middle of the list, will cause the next element to obtain the same key as the removed one.
             // this will cause react to "drop" the last element of the list instead of the just removed one,
             // and the default value for the input won't match the model as the DOM won't get updated.
