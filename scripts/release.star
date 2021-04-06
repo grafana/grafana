@@ -22,6 +22,7 @@ load(
     'build_docker_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
+    'redis_integration_tests_step',
     'get_windows_steps',
     'benchmark_ldap_step',
     'ldap_service',
@@ -101,6 +102,9 @@ def get_steps(edition, ver_mode):
         mysql_integration_tests_step(),
     ])
 
+    if include_enterprise2:
+      steps.append(redis_integration_tests_step())
+
     if should_upload:
         steps.append(upload_cdn(edition=edition))
         steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
@@ -125,7 +129,7 @@ def get_steps(edition, ver_mode):
     return steps, windows_steps
 
 def get_oss_pipelines(trigger, ver_mode):
-    services = integration_test_services()
+    services = integration_test_services(edition='oss')
     steps, windows_steps = get_steps(edition='oss', ver_mode=ver_mode)
     return [
         pipeline(
@@ -139,7 +143,7 @@ def get_oss_pipelines(trigger, ver_mode):
     ]
 
 def get_enterprise_pipelines(trigger, ver_mode):
-    services = integration_test_services()
+    services = integration_test_services(edition='enterprise')
     steps, windows_steps = get_steps(edition='enterprise', ver_mode=ver_mode)
     return [
         pipeline(
@@ -153,7 +157,8 @@ def get_enterprise_pipelines(trigger, ver_mode):
     ]
 
 def release_pipelines(ver_mode='release', trigger=None):
-    services = integration_test_services()
+    # 'enterprise' edition services contain both OSS and enterprise services
+    services = integration_test_services(edition='enterprise')
     if not trigger:
         trigger = {
             'ref': ['refs/tags/v*',],
@@ -188,7 +193,7 @@ def release_pipelines(ver_mode='release', trigger=None):
 def test_release_pipelines():
     ver_mode = 'test-release'
 
-    services = integration_test_services()
+    services = integration_test_services(edition='enterprise')
     trigger = {
         'event': ['custom',],
     }
