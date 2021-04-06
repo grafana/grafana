@@ -31,7 +31,7 @@ export function useLayout(
   rawNodes: NodeDatum[],
   rawEdges: EdgeDatum[],
   config: Config = defaultConfig
-): { bounds: Bounds; nodes: NodeDatum[]; edges: EdgeDatumLayout[] } {
+): { nodes: NodeDatum[]; edges: EdgeDatumLayout[] } {
   const [nodes, setNodes] = useState<NodeDatum[]>([]);
   const [edges, setEdges] = useState<EdgeDatumLayout[]>([]);
 
@@ -60,7 +60,6 @@ export function useLayout(
   return {
     nodes,
     edges,
-    bounds: graphBounds(nodes) /* momeoize? loops over all nodes every time and we do it 2 times */,
   };
 }
 
@@ -207,12 +206,9 @@ function initializePositions(
  */
 function centerNodes(nodes: NodeDatum[]) {
   const bounds = graphBounds(nodes);
-  const middleY = bounds.top + (bounds.bottom - bounds.top) / 2;
-  const middleX = bounds.left + (bounds.right - bounds.left) / 2;
-
   for (let node of nodes) {
-    node.x = node.x! - middleX;
-    node.y = node.y! - middleY;
+    node.x = node.x! - bounds.center.x;
+    node.y = node.y! - bounds.center.y;
   }
 }
 
@@ -221,17 +217,21 @@ export interface Bounds {
   right: number;
   bottom: number;
   left: number;
+  center: {
+    x: number;
+    y: number;
+  };
 }
 
 /**
  * Get bounds of the graph meaning the extent of the nodes in all directions.
  */
-function graphBounds(nodes: NodeDatum[]): Bounds {
+export function graphBounds(nodes: NodeDatum[]): Bounds {
   if (nodes.length === 0) {
-    return { top: 0, right: 0, bottom: 0, left: 0 };
+    return { top: 0, right: 0, bottom: 0, left: 0, center: { x: 0, y: 0 } };
   }
 
-  return nodes.reduce(
+  const bounds = nodes.reduce(
     (acc, node) => {
       if (node.x! > acc.right) {
         acc.right = node.x!;
@@ -249,4 +249,15 @@ function graphBounds(nodes: NodeDatum[]): Bounds {
     },
     { top: Infinity, right: -Infinity, bottom: -Infinity, left: Infinity }
   );
+
+  const y = bounds.top + (bounds.bottom - bounds.top) / 2;
+  const x = bounds.left + (bounds.right - bounds.left) / 2;
+
+  return {
+    ...bounds,
+    center: {
+      x,
+      y,
+    },
+  };
 }

@@ -8,7 +8,7 @@ import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
 import { DataFrame, GrafanaTheme, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
-import { Bounds, Config, defaultConfig, useLayout } from './layout';
+import { Bounds, Config, defaultConfig, graphBounds, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { stylesFactory, useTheme } from '../../themes';
 import { css } from 'emotion';
@@ -99,10 +99,14 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
   const [focusedNode, setFocusedNode] = useState<NodeDatum>();
   const { nodes, edges, markers } = useNodeLimit(layout.nodes, layout.edges, nodeCountLimit, config, focusedNode);
+
+  // We do centering here instead of using centering force to keep this more stable
+  const bounds = useMemo(() => graphBounds(nodes), [nodes]);
+
   const hiddenNodesCount = processed.nodes.length - nodes.length;
 
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
-    layout.bounds
+    bounds
   );
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
   const styles = getStyles(useTheme());
