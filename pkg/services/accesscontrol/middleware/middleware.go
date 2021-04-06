@@ -11,8 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func Middleware(ac accesscontrol.AccessControl) func(string, ...string) macaron.Handler {
-	return func(permission string, scopes ...string) macaron.Handler {
+func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, string, ...string) macaron.Handler {
+	return func(fallback macaron.Handler, permission string, scopes ...string) macaron.Handler {
+		if ac.IsDisabled() {
+			return fallback
+		}
+
 		return func(c *models.ReqContext) {
 			for i, scope := range scopes {
 				var buf bytes.Buffer
@@ -37,7 +41,7 @@ func Middleware(ac accesscontrol.AccessControl) func(string, ...string) macaron.
 				return
 			}
 			if !hasAccess {
-				c.Logger.Info("Access denied", "error", err, "userID", c.UserId, "permission", permission, "scopes", scopes)
+				c.Logger.Info("Access denied", "userID", c.UserId, "permission", permission, "scopes", scopes)
 				c.JsonApiErr(http.StatusForbidden, "Forbidden", nil)
 				return
 			}

@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
@@ -81,6 +82,7 @@ type HTTPServer struct {
 	ProvisioningService    provisioning.ProvisioningService        `inject:""`
 	Login                  login.Service                           `inject:""`
 	License                models.Licensing                        `inject:""`
+	AccessControl          accesscontrol.AccessControl             `inject:""`
 	BackendPluginManager   backendplugin.Manager                   `inject:""`
 	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
 	PluginRequestValidator models.PluginRequestValidator           `inject:""`

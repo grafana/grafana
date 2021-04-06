@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	_ "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
-	_ "github.com/grafana/grafana/pkg/services/accesscontrol/manager"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/auth/jwt"
