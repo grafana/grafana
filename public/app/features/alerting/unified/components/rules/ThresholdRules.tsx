@@ -1,30 +1,21 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { LoadingPlaceholder, useStyles } from '@grafana/ui';
-import React, { FC, useMemo } from 'react';
+import React, { FC } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RulesGroup } from './RulesGroup';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { RuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { initialAsyncRequestState } from '../../utils/redux';
 
-export const ThresholdRules: FC = () => {
-  const styles = useStyles(getStyles);
-  const { loading, result } = useUnifiedAlertingSelector(
-    (state) => state.rules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState
-  );
+interface Props {
+  namespaces: CombinedRuleNamespace[];
+}
 
-  const namespaces = useMemo(
-    (): RuleNamespace[] =>
-      (result || [])
-        // sort groups within namespace
-        .map((namespace) => ({
-          ...namespace,
-          groups: namespace.groups.slice().sort((a, b) => a.name.localeCompare(b.name)),
-        }))
-        // sort namespaces
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [result]
+export const ThresholdRules: FC<Props> = ({ namespaces }) => {
+  const styles = useStyles(getStyles);
+  const { loading } = useUnifiedAlertingSelector(
+    (state) => state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState
   );
 
   return (

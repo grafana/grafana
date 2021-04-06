@@ -7,48 +7,85 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { SystemOrApplicationRules } from './components/rules/SystemOrApplicationRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchRulesFromAllSourcesAction } from './state/actions';
-import { getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { fetchAllPromAndRulerRules } from './state/actions';
+import {
+  getAllRulesSourceNames,
+  getRulesDataSources,
+  GRAFANA_RULES_SOURCE_NAME,
+  isCloudRulesSource,
+} from './utils/datasource';
 import { css } from '@emotion/css';
 import { ThresholdRules } from './components/rules/ThresholdRules';
+import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
+import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
+import { isRulerNotSupportedResponse } from './utils/rules';
 
 export const RuleList: FC = () => {
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
-  const rulesDataSources = useMemo(getRulesDataSources, []);
+  const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
 
-  // trigger fetch for any rules sources that dont have results and are not currently loading
+  // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
   useEffect(() => {
-    dispatch(fetchRulesFromAllSourcesAction());
+    dispatch(fetchAllPromAndRulerRules());
+    const interval = setInterval(() => dispatch(fetchAllPromAndRulerRules()), RULE_LIST_POLL_INTERVAL_MS);
+    return () => {
+      clearInterval(interval);
+    };
   }, [dispatch]);
 
-  const rules = useUnifiedAlertingSelector((state) => state.rules);
+  const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
+  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
-  const requests = Object.values(rules);
-  const dispatched = !!requests.find((r) => r.dispatched);
-  const loading = !!requests.find((r) => r.loading);
-  const haveResults = !!requests.find((r) => !r.loading && r.dispatched && (r.result?.length || !!r.error));
-
-  const cloudErrors = useMemo(
-    () =>
-      rulesDataSources.reduce<Array<{ error: SerializedError; dataSource: DataSourceInstanceSettings }>>(
-        (result, dataSource) => {
-          const error = rules[dataSource.name]?.error;
-          if (error) {
-            return [...result, { dataSource, error }];
-          }
-          return result;
-        },
-        []
-      ),
-    [rules, rulesDataSources]
+  const dispatched = rulesDataSourceNames.some(
+    (name) => promRuleRequests[name]?.dispatched || rulerRuleRequests[name]?.dispatched
+  );
+  const loading = rulesDataSourceNames.some(
+    (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
+  );
+  const haveResults = rulesDataSourceNames.some(
+    (name) =>
+      (promRuleRequests[name]?.result?.length && !promRuleRequests[name]?.error) ||
+      (Object.keys(rulerRuleRequests[name]?.result || {}).length && !rulerRuleRequests[name]?.error)
   );
 
-  const grafanaError = rules[GRAFANA_RULES_SOURCE_NAME]?.error;
+  const [promReqeustErrors, rulerRequestErrors] = useMemo(
+    () =>
+      [promRuleRequests, rulerRuleRequests].map((requests) =>
+        getRulesDataSources().reduce<Array<{ error: SerializedError; dataSource: DataSourceInstanceSettings }>>(
+          (result, dataSource) => {
+            const error = requests[dataSource.name]?.error;
+            if (requests[dataSource.name] && error && !isRulerNotSupportedResponse(requests[dataSource.name])) {
+              return [...result, { dataSource, error }];
+            }
+            return result;
+          },
+          []
+        )
+      ),
+    [promRuleRequests, rulerRuleRequests]
+  );
+
+  const grafanaPromError = promRuleRequests[GRAFANA_RULES_SOURCE_NAME]?.error;
+  const grafanaRulerError = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME]?.error;
+
+  const combinedNamespaces = useCombinedRuleNamespaces();
+  const [thresholdNamespaces, systemNamespaces] = useMemo(() => {
+    const sorted = combinedNamespaces
+      .map((namespace) => ({
+        ...namespace,
+        groups: namespace.groups.sort((a, b) => a.name.localeCompare(b.name)),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return [
+      sorted.filter((ns) => ns.rulesSource === GRAFANA_RULES_SOURCE_NAME),
+      sorted.filter((ns) => isCloudRulesSource(ns.rulesSource)),
+    ];
+  }, [combinedNamespaces]);
 
   return (
     <AlertingPageWrapper pageId="alert-list" isLoading={loading && !haveResults}>
-      {(cloudErrors || grafanaError) && (
+      {(promReqeustErrors.length || rulerRequestErrors.length || grafanaPromError) && (
         <InfoBox
           data-testid="cloud-rulessource-errors"
           title={
@@ -59,10 +96,21 @@ export const RuleList: FC = () => {
           }
           severity="error"
         >
-          {grafanaError && <div>Failed to load threshold rules: {grafanaError.message || 'Unknown error.'}</div>}
-          {cloudErrors.map(({ dataSource, error }) => (
+          {grafanaPromError && (
+            <div>Failed to load Grafana threshold rules state: {grafanaPromError.message || 'Unknown error.'}</div>
+          )}
+          {grafanaRulerError && (
+            <div>Failed to load Grafana threshold rules config: {grafanaRulerError.message || 'Unknown error.'}</div>
+          )}
+          {promReqeustErrors.map(({ dataSource, error }) => (
             <div key={dataSource.name}>
-              Failed to load rules from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
+              Failed to load rules state from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
+              {error.message || 'Unknown error.'}
+            </div>
+          ))}
+          {rulerRequestErrors.map(({ dataSource, error }) => (
+            <div key={dataSource.name}>
+              Failed to load rules config from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
               {error.message || 'Unknown error.'}
             </div>
           ))}
@@ -75,8 +123,8 @@ export const RuleList: FC = () => {
         </a>
       </div>
       {dispatched && !loading && !haveResults && <NoRulesSplash />}
-      {haveResults && <ThresholdRules />}
-      {haveResults && <SystemOrApplicationRules />}
+      {haveResults && <ThresholdRules namespaces={thresholdNamespaces} />}
+      {haveResults && <SystemOrApplicationRules namespaces={systemNamespaces} />}
     </AlertingPageWrapper>
   );
 };

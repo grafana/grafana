@@ -10,16 +10,22 @@ interface Props {
 
   tooltipPlacement?: TooltipPlacement;
   href?: string;
+  target?: string;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
 }
 
-export const ActionIcon: FC<Props> = ({ tooltip, icon, href, tooltipPlacement = 'top' }) => {
+export const ActionIcon: FC<Props> = ({ tooltip, icon, href, target, onClick, tooltipPlacement = 'top' }) => {
   const iconEl = <Icon className={useStyles(getStyle)} name={icon} />;
 
   return (
     <Tooltip content={tooltip} placement={tooltipPlacement}>
       {(() => {
-        if (href) {
-          return <a href={href}>{iconEl}</a>;
+        if (href || onClick) {
+          return (
+            <a href={href} onClick={onClick} target={target}>
+              {iconEl}
+            </a>
+          );
         }
         return iconEl;
       })()}

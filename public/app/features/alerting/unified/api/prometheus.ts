@@ -12,24 +12,18 @@ export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[
     })
     .toPromise();
 
-  if (response.status === 200 && (response.data.status === 'success' || response.data.status === '')) {
-    const nsMap: { [key: string]: RuleNamespace } = {};
-    response.data.data.groups.forEach((group) => {
-      if (!nsMap[group.file]) {
-        nsMap[group.file] = {
-          dataSourceName,
-          name: group.file,
-          groups: [group],
-        };
-      } else {
-        nsMap[group.file].groups.push(group);
-      }
-    });
+  const nsMap: { [key: string]: RuleNamespace } = {};
+  response.data.data.groups.forEach((group) => {
+    if (!nsMap[group.file]) {
+      nsMap[group.file] = {
+        dataSourceName,
+        name: group.file,
+        groups: [group],
+      };
+    } else {
+      nsMap[group.file].groups.push(group);
+    }
+  });
 
-    return Object.values(nsMap);
-  } else if (response.status === 404) {
-    return [];
-  } else {
-    throw new Error(`http error status=${response.status} body=${JSON.stringify(response.data)}`);
-  }
+  return Object.values(nsMap);
 }

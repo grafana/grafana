@@ -8,7 +8,6 @@ import { alertInstanceKey } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
 import { CollapseToggle } from '../CollapseToggle';
 import { StateTag } from '../StateTag';
-import { ActionButton } from './ActionButton';
 import { AlertInstanceDetails } from './AlertInstanceDetails';
 
 interface Props {
@@ -33,7 +32,6 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
         <col className={styles.colState} />
         <col />
         <col />
-        <col />
       </colgroup>
       <thead>
         <tr>
@@ -41,7 +39,6 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
           <th>State</th>
           <th>Labels</th>
           <th>Created</th>
-          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -65,14 +62,11 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
                   <AlertLabels labels={instance.labels} />
                 </td>
                 <td className={styles.createdCell}>{instance.activeAt.substr(0, 19).replace('T', ' ')}</td>
-                <td>
-                  <ActionButton icon="bell-slash">Silence</ActionButton>
-                </td>
               </tr>
               {isExpanded && (
                 <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                   <td></td>
-                  <td colSpan={4}>
+                  <td colSpan={3}>
                     <AlertInstanceDetails instance={instance} />
                   </td>
                 </tr>

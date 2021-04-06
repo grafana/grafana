@@ -35,7 +35,19 @@ export function getLotexDataSourceByName(dataSourceName: string): DataSourceInst
   return dataSource;
 }
 
-export function isCloudRulesSource(rulesSource: RulesSource): rulesSource is DataSourceInstanceSettings {
+export function getAllRulesSourceNames(): string[] {
+  return [...getRulesDataSources().map((r) => r.name), GRAFANA_RULES_SOURCE_NAME];
+}
+
+export function getAllRulesSources(): RulesSource[] {
+  return [...getRulesDataSources(), GRAFANA_RULES_SOURCE_NAME];
+}
+
+export function getRulesSourceName(rulesSource: RulesSource): string {
+  return isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
+}
+
+export function isCloudRulesSource(rulesSource: RulesSource | string): rulesSource is DataSourceInstanceSettings {
   return rulesSource !== GRAFANA_RULES_SOURCE_NAME;
 }
 
@@ -43,13 +55,13 @@ export function getDataSourceByName(name: string): DataSourceInstanceSettings<Da
   return getAllDataSources().find((source) => source.name === name);
 }
 
-export function getDatasourceAPIId(dataSourceName: string): string {
+export function getDatasourceAPIId(dataSourceName: string) {
   if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
     return GRAFANA_RULES_SOURCE_NAME;
   }
   const ds = getDataSourceByName(dataSourceName);
   if (!ds) {
-    throw new Error(`Data source ${dataSourceName} not found`);
+    throw new Error(`Datasource "${dataSourceName}" not found`);
   }
   return String(ds.id);
 }

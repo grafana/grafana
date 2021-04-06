@@ -1,6 +1,7 @@
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { getDatasourceAPIId } from '../utils/datasource';
 import { getBackendSrv } from '@grafana/runtime';
+import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 
 // upsert a rule group. use this to update rules
 export async function setRulerRuleGroup(
@@ -15,19 +16,18 @@ export async function setRulerRuleGroup(
 }
 
 // fetch all ruler rule namespaces and included groups
-export async function fetchRulerRules(dataSourceName: string): Promise<RulerRulesConfigDTO> {
-  return getBackendSrv().get(`/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`);
+export async function fetchRulerRules(dataSourceName: string) {
+  return rulerGetRequest<RulerRulesConfigDTO>(`/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`, {});
 }
 
 // fetch rule groups for a particular namespace
 // will throw with { status: 404 } if namespace does not exist
-export async function fetchRulerRulesNamespace(
-  dataSourceName: string,
-  namespace: string
-): Promise<RulerRuleGroupDTO[]> {
-  return getBackendSrv()
-    .get(`/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`)
-    .then((result) => result[namespace]);
+export async function fetchRulerRulesNamespace(dataSourceName: string, namespace: string) {
+  const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(
+    `/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+    {}
+  );
+  return result[namespace] || [];
 }
 
 // fetch a particular rule group
@@ -36,10 +36,46 @@ export async function fetchRulerRulesGroup(
   dataSourceName: string,
   namespace: string,
   group: string
-): Promise<RulerRuleGroupDTO> {
-  return getBackendSrv().get(
+): Promise<RulerRuleGroupDTO | null> {
+  return rulerGetRequest<RulerRuleGroupDTO | null>(
     `/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}/${encodeURIComponent(
       group
+    )}`,
+    null
+  );
+}
+
+export async function deleteRulerRulesGroup(dataSourceName: string, namespace: string, groupName: string) {
+  return getBackendSrv().delete(
+    `/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}/${encodeURIComponent(
+      groupName
     )}`
   );
+}
+
+// false in case ruler is not supported. this is weird, but we'll work on it
+async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
+  try {
+    const response = await getBackendSrv()
+      .fetch<T>({
+        url,
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      })
+      .toPromise();
+    return response.data;
+  } catch (e) {
+    if (e?.status === 404) {
+      return empty;
+    } else if (e?.status === 500 && e?.data?.message?.includes('mapping values are not allowed in this context')) {
+      throw {
+        ...e,
+        data: {
+          ...e?.data,
+          message: RULER_NOT_SUPPORTED_MSG,
+        },
+      };
+    }
+    throw e;
+  }
 }

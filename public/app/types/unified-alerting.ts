@@ -1,7 +1,7 @@
 /* Prometheus internal models */
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { PromAlertingRuleState, PromRuleType } from './unified-alerting-dto';
+import { PromAlertingRuleState, PromRuleType, RulerRuleDTO, Labels, Annotations } from './unified-alerting-dto';
 
 export type Alert = {
   activeAt: string;
@@ -25,7 +25,7 @@ export interface AlertingRule extends RuleBase {
   labels: {
     [key: string]: string;
   };
-  annotations: {
+  annotations?: {
     [key: string]: string;
   };
   state: PromAlertingRuleState;
@@ -63,3 +63,31 @@ export interface RulesSourceResult {
 }
 
 export type RulesSource = DataSourceInstanceSettings | 'grafana';
+
+// combined prom and ruler result
+export interface CombinedRule {
+  name: string;
+  query: string;
+  labels: Labels;
+  annotations: Annotations;
+  promRule?: Rule;
+  rulerRule?: RulerRuleDTO;
+}
+
+export interface CombinedRuleGroup {
+  name: string;
+  rules: CombinedRule[];
+}
+
+export interface CombinedRuleNamespace {
+  rulesSource: RulesSource;
+  name: string;
+  groups: CombinedRuleGroup[];
+}
+
+export interface RuleLocation {
+  ruleSourceName: string;
+  namespace: string;
+  groupName: string;
+  ruleHash: number;
+}

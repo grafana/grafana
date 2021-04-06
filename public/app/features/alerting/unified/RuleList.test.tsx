@@ -140,7 +140,7 @@ describe('RuleList', () => {
 
     const errors = await ui.cloudRulesSourceErrors.find();
 
-    expect(errors).toHaveTextContent('Failed to load rules from Prometheus-broken: this datasource is broken');
+    expect(errors).toHaveTextContent('Failed to load rules state from Prometheus-broken: this datasource is broken');
   });
 
   it('expand rule group, rule and alert details', async () => {
