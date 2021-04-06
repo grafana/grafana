@@ -820,9 +820,7 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "GettableSilence": {
-   "$ref": "#/definitions/gettableSilence"
-  },
+  "GettableSilence": {},
   "GettableSilences": {},
   "GettableUserConfig": {
    "properties": {
@@ -2959,7 +2957,7 @@
   "version": "1.0.0"
  },
  "paths": {
-  "/alertmanager/{Recipient}/api/v2/alerts": {
+  "/api/alertmanager/{Recipient}/api/v2/alerts": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetAMAlerts",
@@ -3072,7 +3070,7 @@
     ]
    }
   },
-  "/alertmanager/{Recipient}/api/v2/alerts/groups": {
+  "/api/alertmanager/{Recipient}/api/v2/alerts/groups": {
    "get": {
     "description": "get alertmanager alerts",
     "operationId": "RouteGetAMAlertGroups",
@@ -3145,7 +3143,7 @@
     ]
    }
   },
-  "/alertmanager/{Recipient}/api/v2/silence/{SilenceId}": {
+  "/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}": {
    "delete": {
     "description": "delete silence",
     "operationId": "RouteDeleteSilence",
@@ -3219,7 +3217,7 @@
     ]
    }
   },
-  "/alertmanager/{Recipient}/api/v2/silences": {
+  "/api/alertmanager/{Recipient}/api/v2/silences": {
    "get": {
     "description": "get silences",
     "operationId": "RouteGetSilences",
@@ -3266,7 +3264,7 @@
       "in": "body",
       "name": "Silence",
       "schema": {
-       "$ref": "#/definitions/postableSilence"
+       "$ref": "#/definitions/PostableSilence"
       }
      },
      {
@@ -3296,7 +3294,7 @@
     ]
    }
   },
-  "/alertmanager/{Recipient}/config/api/v1/alerts": {
+  "/api/alertmanager/{Recipient}/config/api/v1/alerts": {
    "delete": {
     "description": "deletes the Alerting config for a tenant",
     "operationId": "RouteDeleteAlertingConfig",
@@ -3395,83 +3393,7 @@
     ]
    }
   },
-  "/api/v1/receiver/test": {
-   "post": {
-    "consumes": [
-     "application/json"
-    ],
-    "description": "Test receiver",
-    "operationId": "RouteTestReceiverConfig",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/ExtendedReceiver"
-      }
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "Success",
-      "schema": {
-       "$ref": "#/definitions/Success"
-      }
-     },
-     "412": {
-      "description": "SmtpNotEnabled",
-      "schema": {
-       "$ref": "#/definitions/SmtpNotEnabled"
-      }
-     },
-     "500": {
-      "description": "Failure",
-      "schema": {
-       "$ref": "#/definitions/Failure"
-      }
-     }
-    },
-    "tags": [
-     "testing"
-    ]
-   }
-  },
-  "/api/v1/rule/test": {
-   "post": {
-    "consumes": [
-     "application/json"
-    ],
-    "description": "Test rule",
-    "operationId": "RouteTestRuleConfig",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/TestRulePayload"
-      }
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "TestRuleResponse",
-      "schema": {
-       "$ref": "#/definitions/TestRuleResponse"
-      }
-     }
-    },
-    "tags": [
-     "testing"
-    ]
-   }
-  },
-  "/prometheus/{Recipient}/api/v1/alerts": {
+  "/api/prometheus/{Recipient}/api/v1/alerts": {
    "get": {
     "description": "gets the current alerts",
     "operationId": "RouteGetAlertStatuses",
@@ -3497,7 +3419,7 @@
     ]
    }
   },
-  "/prometheus/{Recipient}/api/v1/rules": {
+  "/api/prometheus/{Recipient}/api/v1/rules": {
    "get": {
     "description": "gets the evaluation statuses of all rules",
     "operationId": "RouteGetRuleStatuses",
@@ -3523,7 +3445,7 @@
     ]
    }
   },
-  "/ruler/{Recipient}/api/v1/rules": {
+  "/api/ruler/{Recipient}/api/v1/rules": {
    "get": {
     "description": "List rule groups",
     "operationId": "RouteGetRulesConfig",
@@ -3552,7 +3474,7 @@
     ]
    }
   },
-  "/ruler/{Recipient}/api/v1/rules/{Namespace}": {
+  "/api/ruler/{Recipient}/api/v1/rules/{Namespace}": {
    "delete": {
     "description": "Delete namespace",
     "operationId": "RouteDeleteNamespaceRulesConfig",
@@ -3658,7 +3580,7 @@
     ]
    }
   },
-  "/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}": {
+  "/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}": {
    "delete": {
     "description": "Delete rule group",
     "operationId": "RouteDeleteRuleGroupConfig",
@@ -3732,6 +3654,82 @@
     },
     "tags": [
      "ruler"
+    ]
+   }
+  },
+  "/api/v1/receiver/test": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Test receiver",
+    "operationId": "RouteTestReceiverConfig",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/ExtendedReceiver"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "schema": {
+       "$ref": "#/definitions/Success"
+      }
+     },
+     "412": {
+      "description": "SmtpNotEnabled",
+      "schema": {
+       "$ref": "#/definitions/SmtpNotEnabled"
+      }
+     },
+     "500": {
+      "description": "Failure",
+      "schema": {
+       "$ref": "#/definitions/Failure"
+      }
+     }
+    },
+    "tags": [
+     "testing"
+    ]
+   }
+  },
+  "/api/v1/rule/test": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Test rule",
+    "operationId": "RouteTestRuleConfig",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/TestRulePayload"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "TestRuleResponse",
+      "schema": {
+       "$ref": "#/definitions/TestRuleResponse"
+      }
+     }
+    },
+    "tags": [
+     "testing"
     ]
    }
   }
