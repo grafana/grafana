@@ -11,19 +11,21 @@ import {
   stringOverrideProcessor,
 } from '@grafana/data';
 import {
+  AxisConfig,
   AxisPlacement,
   BarAlignment,
   DrawStyle,
   GraphFieldConfig,
   graphFieldOptions,
+  GraphGradientMode,
+  LegendDisplayMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
   ScaleDistribution,
   ScaleDistributionConfig,
-  GraphGradientMode,
-  LegendDisplayMode,
-  AxisConfig,
+  StackingConfig,
+  StackingMode,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
@@ -39,6 +41,8 @@ export const defaultGraphConfig: GraphFieldConfig = {
   fillOpacity: 0,
   gradientMode: GraphGradientMode.None,
   barAlignment: BarAlignment.Center,
+  stackingMode: StackingMode.None,
+  stackingGroup: 'A',
 };
 
 export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
@@ -180,6 +184,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         });
 
       addAxisConfig(builder, cfg);
+      addStackingConfig(builder, cfg);
       addHideFrom(builder);
     },
   };
@@ -316,5 +321,26 @@ export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOpti
         allowMultiple: true,
       },
       showIf: (currentConfig) => currentConfig.legend.displayMode !== LegendDisplayMode.Hidden,
+    });
+}
+
+export function addStackingConfig(builder: FieldConfigEditorBuilder<StackingConfig>, cfg: StackingConfig) {
+  builder
+    .addRadio({
+      path: 'stackingMode',
+      name: 'Type',
+      category: ['Stacking'],
+      defaultValue: cfg.stackingMode,
+      settings: {
+        options: graphFieldOptions.stacking,
+      },
+    })
+    .addTextInput({
+      path: 'stackingGroup',
+      name: 'Group',
+      category: ['Stacking'],
+      defaultValue: cfg.stackingGroup,
+      hideFromDefaults: true,
+      showIf: (c) => c.stackingMode !== StackingMode.None,
     });
 }

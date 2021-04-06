@@ -187,11 +187,20 @@ export enum StackingMode {
 /**
  * @alpha
  */
+export interface StackingConfig {
+  stackingMode?: StackingMode;
+  stackingGroup?: string;
+}
+
+/**
+ * @alpha
+ */
 export interface GraphFieldConfig
   extends LineConfig,
     FillConfig,
     PointsConfig,
     AxisConfig,
+    StackingConfig,
     BarConfig,
     HideableFieldConfig {
   drawStyle?: DrawStyle;
@@ -240,4 +249,10 @@ export const graphFieldOptions = {
     { label: 'Hue', value: GraphGradientMode.Hue },
     //  { label: 'Color scheme', value: GraphGradientMode.Scheme },
   ] as Array<SelectableValue<GraphGradientMode>>,
+
+  stacking: [
+    { label: 'None', value: StackingMode.None },
+    { label: 'Standard', value: StackingMode.Standard },
+    { label: 'Percent(TODO)', value: StackingMode.Percent },
+  ] as Array<SelectableValue<StackingMode>>,
 };

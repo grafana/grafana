@@ -35,12 +35,9 @@ export function buildPlotConfig(props: PlotProps, plugins: Record<string, PlotPl
 
 /** @internal */
 
-export function preparePlotData(
-  frame: DataFrame,
-  ignoreFieldTypes?: FieldType[],
-  stacking = StackingMode.None
-): AlignedData {
+export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]): AlignedData {
   const result: any[] = [];
+  const stackingGroups: Record<string, number[]> = {};
 
   for (let i = 0; i < frame.fields.length; i++) {
     const f = frame.fields[i];
@@ -60,26 +57,42 @@ export function preparePlotData(
     if (ignoreFieldTypes && ignoreFieldTypes.indexOf(f.type) > -1) {
       continue;
     }
+    if (f.config.custom.stackingMode !== StackingMode.None && f.config.custom.stackingGroup) {
+      if (!stackingGroups[f.config.custom.stackingGroup]) {
+        stackingGroups[f.config.custom.stackingGroup] = [result.length];
+      } else {
+        stackingGroups[f.config.custom.stackingGroup].push(result.length);
+      }
+    }
     result.push(f.values.toArray());
   }
 
-  if (stacking === StackingMode.None) {
+  // Stacking
+  if (Object.keys(stackingGroups).length !== 0) {
+    // array or stacking groups
+    const groups = Object.keys(stackingGroups);
+
+    for (let i = 0; i < groups.length; i++) {
+      // stacking group key
+      const group = groups[i];
+      // series indexes within results array
+      const seriesIdxs = stackingGroups[group];
+
+      for (let j = 1; j < seriesIdxs.length; j++) {
+        // series to stack
+        const currentlyStacking = result[seriesIdxs[j]];
+        // stacking on top of
+        const stackBase = result[seriesIdxs[j - 1]];
+
+        for (let k = 0; k < stackBase.length; k++) {
+          const v = stackBase[k];
+          currentlyStacking[k] += v === null || v === undefined ? 0 : +v;
+        }
+      }
+    }
     return result as AlignedData;
   }
-
-  // TODO: percent stacking
-  const acc = Array(result[0].length).fill(0);
-  const stacked = [];
-
-  for (let i = 1; i < result.length; i++) {
-    for (let j = 0; j < result[i].length; j++) {
-      const v = result[i][j];
-      acc[j] += v === null || v === undefined ? 0 : +v;
-    }
-    stacked.push([...acc]);
-  }
-
-  return [result[0]].concat(result) as AlignedData;
+  return result as AlignedData;
 }
 
 // Dev helpers

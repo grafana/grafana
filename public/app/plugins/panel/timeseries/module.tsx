@@ -1,5 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
-import { StackingMode, GraphFieldConfig } from '@grafana/ui';
+import { GraphFieldConfig } from '@grafana/ui';
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
@@ -25,17 +25,4 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
     });
 
     addLegendOptions(builder);
-
-    builder.addRadio({
-      path: 'stacking',
-      name: 'Stacking',
-      settings: {
-        options: [
-          { value: StackingMode.None, label: 'None' },
-          { value: StackingMode.Standard, label: 'Standard' },
-          { value: StackingMode.Percent, label: 'Percent' },
-        ],
-      },
-      defaultValue: StackingMode.None,
-    });
   });
