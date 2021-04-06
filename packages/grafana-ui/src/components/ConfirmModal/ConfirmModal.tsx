@@ -1,5 +1,5 @@
 import React, { FC, useContext } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Modal } from '../Modal/Modal';
 import { IconName } from '../../types/icon';
 import { Button } from '../Button';

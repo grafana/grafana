@@ -1,6 +1,6 @@
 import { DataSourceSettings, GrafanaTheme } from '@grafana/data';
 import { FeatureInfoBox, useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React, { FC } from 'react';
 import { config } from 'app/core/config';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
@@ -56,7 +56,7 @@ export const CloudInfoBox: FC<Props> = ({ dataSource }) => {
             }}
           >
             <div className={styles.text}>
-              Or skip the effort and get {mainDS} (and {extraDS}) as fully managed, scalable and hosted data sources
+              Or skip the effort and get {mainDS} (and {extraDS}) as fully-managed, scalable, and hosted data sources
               from Grafana Labs with the{' '}
               <a
                 className="external-link"

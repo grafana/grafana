@@ -26,7 +26,7 @@ import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../typ
 import { CloudWatchDatasource } from '../datasource';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { CloudWatchLanguageProvider } from '../language_provider';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { ExploreId } from 'app/types';
 import { dispatch } from 'app/store/store';
 import { notifyApp } from 'app/core/actions';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { GrafanaTheme, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { Badge, BadgeProps, IconButton, PluginSignatureBadge, styleMixins, useStyles } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
@@ -146,19 +146,19 @@ function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): BadgeProps | nu
       return {
         text: 'Deprecated',
         color: 'red',
-        tooltip: `${panel.name} panel is deprecated`,
+        tooltip: `${panel.name} Panel is deprecated`,
       };
     case PluginState.alpha:
       return {
         text: 'Alpha',
         color: 'blue',
-        tooltip: `${panel.name} panel is experimental`,
+        tooltip: `${panel.name} Panel is experimental`,
       };
     case PluginState.beta:
       return {
         text: 'Beta',
         color: 'blue',
-        tooltip: `${panel.name} panel is in beta`,
+        tooltip: `${panel.name} Panel is in beta`,
       };
     default:
       return null;

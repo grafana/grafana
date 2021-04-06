@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { HorizontalGroup, Portal, Tag, TooltipContainer, useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface AnnotationMarkerProps {
   time: string;

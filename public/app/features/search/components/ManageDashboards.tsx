@@ -1,5 +1,5 @@
 import React, { FC, memo, useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { HorizontalGroup, stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
