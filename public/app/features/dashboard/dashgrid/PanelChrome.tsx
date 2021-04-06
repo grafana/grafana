@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary } from '@grafana/ui';
+import { CustomScrollbar, ErrorBoundary } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -274,39 +274,37 @@ export class PanelChrome extends Component<Props, State> {
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
     const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
-    const scrollableYMargin = plugin.scrollableY ? theme.panelPadding : 0;
-    const innerPanelHeight = height - headerHeight - chromePadding * 2 - PANEL_BORDER - scrollableYMargin;
+    const innerPanelHeight = height - headerHeight - chromePadding * 2 - PANEL_BORDER;
     const panelContentClassNames = classNames({
       'panel-content': true,
       'panel-content--no-padding': plugin.noPadding,
-      'panel-content--scrollable-y': plugin.scrollableY,
     });
     const panelOptions = panel.getOptions();
 
-    return (
-      <>
-        <div className={panelContentClassNames}>
-          <PanelComponent
-            id={panel.id}
-            data={data}
-            title={panel.title}
-            timeRange={timeRange}
-            timeZone={this.props.dashboard.getTimezone()}
-            options={panelOptions}
-            fieldConfig={panel.fieldConfig}
-            transparent={panel.transparent}
-            width={panelWidth}
-            height={innerPanelHeight}
-            renderCounter={renderCounter}
-            replaceVariables={panel.replaceVariables}
-            onOptionsChange={this.onOptionsChange}
-            onFieldConfigChange={this.onFieldConfigChange}
-            onChangeTimeRange={this.onChangeTimeRange}
-            eventBus={dashboard.events}
-          />
-        </div>
-      </>
+    const panelContent = (
+      <div className={panelContentClassNames}>
+        <PanelComponent
+          id={panel.id}
+          data={data}
+          title={panel.title}
+          timeRange={timeRange}
+          timeZone={this.props.dashboard.getTimezone()}
+          options={panelOptions}
+          fieldConfig={panel.fieldConfig}
+          transparent={panel.transparent}
+          width={panelWidth}
+          height={innerPanelHeight}
+          renderCounter={renderCounter}
+          replaceVariables={panel.replaceVariables}
+          onOptionsChange={this.onOptionsChange}
+          onFieldConfigChange={this.onFieldConfigChange}
+          onChangeTimeRange={this.onChangeTimeRange}
+          eventBus={dashboard.events}
+        />
+      </div>
     );
+
+    return plugin.scrollableY ? <CustomScrollbar autoHeightMin="100%">{panelContent}</CustomScrollbar> : panelContent;
   }
 
   hasOverlayHeader() {
