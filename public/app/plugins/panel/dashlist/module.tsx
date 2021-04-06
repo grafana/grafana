@@ -6,6 +6,7 @@ import React from 'react';
 import { TagsInput } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<DashListOptions>(DashList)
+  .setScrollable()
   .setPanelOptions((builder) => {
     builder
       .addBooleanSwitch({

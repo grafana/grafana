@@ -200,7 +200,7 @@ export class PanelPlugin<
     return this;
   }
 
-  setScrollable(scrollableY = false) {
+  setScrollable(scrollableY = true) {
     this.scrollableY = scrollableY;
     return this;
   }
