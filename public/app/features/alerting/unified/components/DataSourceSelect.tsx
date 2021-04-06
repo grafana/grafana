@@ -26,6 +26,7 @@ const DataSourceSelect: FC<Props> = ({ alertType, className, control, onChange, 
         control={control}
         name={'dataSource'}
         options={dataSourceOptions}
+        isClearable={true}
       />
     );
   } else if (onChange) {

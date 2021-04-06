@@ -1,6 +1,6 @@
 import React, { FormEvent } from 'react';
 import { useDispatch } from 'react-redux';
-import { Icon, Input, Label, RadioButtonGroup, useStyles } from '@grafana/ui';
+import { Button, Icon, Input, Label, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
 
@@ -11,8 +11,8 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 const RulesFilter = () => {
   const dispatch = useDispatch();
   const { rulesFilters } = useUnifiedAlertingSelector((state) => state.filters);
-  const { dataSource, alertState } = rulesFilters;
-  const { setDataSource, setQueryString, setAlertState } = rulesFiltersSlice.actions;
+  const { dataSource, alertState, queryString } = rulesFilters;
+  const { setDataSource, setQueryString, setAlertState, clearFilters } = rulesFiltersSlice.actions;
   const styles = useStyles(getStyles);
   const stateOptions = [
     { label: 'Firing', value: 'firing' },
@@ -34,18 +34,32 @@ const RulesFilter = () => {
         <DataSourceSelect value={dataSource} onChange={handleDataSourceChange} />
       </div>
       <div className={styles.flexRow}>
-        <div>
+        <div className={styles.rowChild}>
           <Label>Search by name or label</Label>
-          <Input className={styles.inputWidth} prefix={searchIcon} onChange={handleQueryStringChange} />
+          <Input
+            className={styles.inputWidth}
+            prefix={searchIcon}
+            onChange={handleQueryStringChange}
+            value={queryString}
+          />
         </div>
-        <RadioButtonGroup
-          options={stateOptions}
-          value={alertState}
-          onChange={(value: string) => {
-            dispatch(setAlertState(value));
-          }}
-        />
+        <div className={styles.rowChild}>
+          <RadioButtonGroup
+            options={stateOptions}
+            value={alertState}
+            onChange={(value: string) => {
+              dispatch(setAlertState(value));
+            }}
+          />
+        </div>
       </div>
+      {(dataSource || alertState || queryString) && (
+        <div className={styles.clearButton}>
+          <Button fullWidth={false} icon="times" variant="secondary" onClick={() => dispatch(clearFilters())}>
+            Clear filters
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
@@ -55,6 +69,10 @@ const getStyles = (theme: GrafanaTheme) => {
     container: css`
       display: flex;
       flex-direction: column;
+
+      & > div {
+        margin-bottom: ${theme.spacing.sm};
+      }
     `,
     inputWidth: css`
       width: 340px;
@@ -63,8 +81,16 @@ const getStyles = (theme: GrafanaTheme) => {
     flexRow: css`
       display: flex;
       flex-direction: row;
-      justify-content: space-between;
+      justify-content: flex;
       align-items: flex-end;
+    `,
+    rowChild: css`
+      & + & {
+        margin-left: ${theme.spacing.sm};
+      }
+    `,
+    clearButton: css`
+      align-self: flex-end;
     `,
   };
 };

@@ -3,6 +3,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { LoadingPlaceholder, useStyles } from '@grafana/ui';
 import React, { FC, useMemo } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { useFilteredRules } from '../../hooks/useFilteredRules';
 import { RulesGroup } from './RulesGroup';
 import { getRulesDataSources, getRulesSourceName } from '../../utils/datasource';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -17,6 +18,10 @@ export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
   const { rulesFilters } = useUnifiedAlertingSelector((state) => state.filters);
+
+  const filteredRules = useFilteredRules(namespaces);
+
+  console.log({ filteredRules });
 
   const dataSourcesLoading = useMemo(() => rulesDataSources.filter((ds) => rules[ds.name]?.loading), [
     rules,
@@ -37,17 +42,17 @@ export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
         )}
       </div>
 
-      {namespaces.map(({ rulesSource, name, groups }) =>
+      {filteredRules?.map(({ rulesSource, namespace, groups }) =>
         groups.map((group) => (
           <RulesGroup
             group={group}
             key={`${getRulesSourceName(rulesSource)}-${name}-${group.name}`}
-            namespace={name}
+            namespace={namespace}
             rulesSource={rulesSource}
           />
         ))
       )}
-      {namespaces?.length === 0 && !!rulesDataSources.length && <p>No rules found.</p>}
+      {filteredRules?.length === 0 && !dataSourcesLoading.length && !!rulesDataSources.length && <p>No rules found.</p>}
       {!rulesDataSources.length && <p>There are no Prometheus or Loki datas sources configured.</p>}
     </section>
   );
