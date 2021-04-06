@@ -1,4 +1,4 @@
-grabpl_version = '0.5.43'
+grabpl_version = '0.5.48'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -799,6 +799,23 @@ def mysql_integration_tests_step():
         ],
     }
 
+def redis_integration_tests_step():
+    return {
+        'name': 'redis-integration-tests',
+        'image': build_image,
+        'depends_on': [
+            'test-backend',
+            'test-frontend',
+        ],
+        'environment': {
+            'REDIS_URL': 'redis://redis:6379/0',
+        },
+        'commands': [
+            './bin/dockerize -wait tcp://redis:6379/0 -timeout 120s',
+            './bin/grabpl integration-tests',
+        ],
+    }
+
 def release_canary_npm_packages_step(edition):
     if edition in ('enterprise', 'enterprise2'):
         return None
@@ -856,15 +873,20 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     else:
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
+    dependencies = [
+        'package' + enterprise2_sfx(edition),
+        'end-to-end-tests' + enterprise2_sfx(edition),
+        'mysql-integration-tests',
+        'postgres-integration-tests',
+    ]
+
+    if edition in ('enterprise', 'enterprise2'):
+      dependencies.append('redis-integration-tests')
+
     return {
         'name': 'upload-packages' + enterprise2_sfx(edition),
         'image': publish_image,
-        'depends_on': [
-            'package' + enterprise2_sfx(edition),
-            'end-to-end-tests' + enterprise2_sfx(edition),
-            'mysql-integration-tests',
-            'postgres-integration-tests',
-        ],
+        'depends_on': dependencies,
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': {
                 'from_secret': 'gcp_key',
@@ -1047,8 +1069,8 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
 
     return steps
 
-def integration_test_services():
-   return [
+def integration_test_services(edition):
+    services = [
         {
             'name': 'postgres',
             'image': 'postgres:12.3-alpine',
@@ -1069,3 +1091,12 @@ def integration_test_services():
             },
         },
     ]
+
+    if edition in ('enterprise', 'enterprise2'):
+        services.append({
+            'name': 'redis',
+            'image': 'redis:6.2.1-alpine',
+            'environment': {},
+        })
+
+    return services

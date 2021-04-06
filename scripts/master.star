@@ -20,6 +20,7 @@ load(
     'build_docker_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
+    'redis_integration_tests_step',
     'get_windows_steps',
     'benchmark_ldap_step',
     'ldap_service',
@@ -77,6 +78,12 @@ def get_steps(edition, is_downstream=False):
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=publish),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
+    ])
+
+    if include_enterprise2:
+      steps.append(redis_integration_tests_step())
+
+    steps.extend([
         release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         deploy_to_kubernetes_step(edition=edition, is_downstream=is_downstream),
@@ -104,7 +111,7 @@ def get_steps(edition, is_downstream=False):
     return steps, windows_steps, publish_steps
 
 def master_pipelines(edition):
-    services = integration_test_services()
+    services = integration_test_services(edition)
     trigger = {
         'event': ['push',],
         'branch': 'master',
