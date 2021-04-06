@@ -1,6 +1,6 @@
 // Libraries
 import React, { memo } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 // Types
 import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';

@@ -1,6 +1,6 @@
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) => ({
   color:

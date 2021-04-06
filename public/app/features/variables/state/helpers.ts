@@ -1,9 +1,9 @@
 import { combineReducers } from '@reduxjs/toolkit';
 import { LoadingState } from '@grafana/data';
 
-import { NEW_VARIABLE_ID } from './types';
+import { NEW_VARIABLE_ID, VariablesState } from './types';
 import { VariableHide, VariableModel } from '../types';
-import { VariablesState } from './variablesReducer';
+
 import { VariableAdapter } from '../adapters';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 import { templatingReducers, TemplatingState } from './reducers';

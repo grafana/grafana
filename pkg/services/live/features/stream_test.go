@@ -24,10 +24,10 @@ func TestStreamManager_Run(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockChannelPublisher := NewMockChannelPublisher(mockCtrl)
+	mockPacketSender := NewMockStreamPacketSender(mockCtrl)
 	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
 
-	manager := NewStreamManager(mockChannelPublisher, mockPresenceGetter)
+	manager := NewStreamManager(mockPacketSender, mockPresenceGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -44,10 +44,10 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockChannelPublisher := NewMockChannelPublisher(mockCtrl)
+	mockPacketSender := NewMockStreamPacketSender(mockCtrl)
 	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
 
-	manager := NewStreamManager(mockChannelPublisher, mockPresenceGetter)
+	manager := NewStreamManager(mockPacketSender, mockPresenceGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -58,7 +58,7 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 	startedCh := make(chan struct{})
 	doneCh := make(chan struct{})
 
-	mockChannelPublisher.EXPECT().Publish("test", []byte("test")).Times(1)
+	mockPacketSender.EXPECT().Send("test", gomock.Any()).Times(1)
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
@@ -67,7 +67,7 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 		require.Equal(t, "test", req.Path)
 		close(startedCh)
 		err := sender.Send(&backend.StreamPacket{
-			Payload: []byte("test"),
+			Data: []byte("test"),
 		})
 		require.NoError(t, err)
 		<-ctx.Done()
@@ -75,12 +75,14 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 		return ctx.Err()
 	}).Times(1)
 
-	err := manager.SubmitStream("test", "test", backend.PluginContext{}, mockStreamRunner)
+	result, err := manager.SubmitStream(context.Background(), "test", "test", backend.PluginContext{}, mockStreamRunner)
 	require.NoError(t, err)
+	require.False(t, result.StreamExists)
 
 	// try submit the same.
-	err = manager.SubmitStream("test", "test", backend.PluginContext{}, mockStreamRunner)
+	result, err = manager.SubmitStream(context.Background(), "test", "test", backend.PluginContext{}, mockStreamRunner)
 	require.NoError(t, err)
+	require.True(t, result.StreamExists)
 
 	waitWithTimeout(t, startedCh, time.Second)
 	require.Len(t, manager.streams, 1)
@@ -92,11 +94,11 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockChannelPublisher := NewMockChannelPublisher(mockCtrl)
+	mockPacketSender := NewMockStreamPacketSender(mockCtrl)
 	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
 
 	manager := NewStreamManager(
-		mockChannelPublisher,
+		mockPacketSender,
 		mockPresenceGetter,
 		WithCheckConfig(10*time.Millisecond, 3),
 	)
@@ -120,7 +122,7 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 		return ctx.Err()
 	}).Times(1)
 
-	err := manager.SubmitStream("test", "test", backend.PluginContext{}, mockStreamRunner)
+	_, err := manager.SubmitStream(context.Background(), "test", "test", backend.PluginContext{}, mockStreamRunner)
 	require.NoError(t, err)
 
 	waitWithTimeout(t, startedCh, time.Second)

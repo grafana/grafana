@@ -18,7 +18,7 @@ import (
 )
 
 type AlertmanagerApiService interface {
-	RouteCreateSilence(*models.ReqContext, apimodels.SilenceBody) response.Response
+	RouteCreateSilence(*models.ReqContext, apimodels.PostableSilence) response.Response
 	RouteDeleteAlertingConfig(*models.ReqContext) response.Response
 	RouteDeleteSilence(*models.ReqContext) response.Response
 	RouteGetAMAlertGroups(*models.ReqContext) response.Response
@@ -36,7 +36,7 @@ type AlertmanagerApiBase struct {
 
 func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Post(toMacaronPath("/alertmanager/{Recipient}/api/v2/silences"), binding.Bind(apimodels.SilenceBody{}), routing.Wrap(srv.RouteCreateSilence))
+		group.Post(toMacaronPath("/alertmanager/{Recipient}/api/v2/silences"), binding.Bind(apimodels.PostableSilence{}), routing.Wrap(srv.RouteCreateSilence))
 		group.Delete(toMacaronPath("/alertmanager/{Recipient}/config/api/v1/alerts"), routing.Wrap(srv.RouteDeleteAlertingConfig))
 		group.Delete(toMacaronPath("/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteDeleteSilence))
 		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/alerts/groups"), routing.Wrap(srv.RouteGetAMAlertGroups))
@@ -49,7 +49,7 @@ func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 	})
 }
 
-func (base AlertmanagerApiBase) RouteCreateSilence(c *models.ReqContext, body apimodels.SilenceBody) response.Response {
+func (base AlertmanagerApiBase) RouteCreateSilence(c *models.ReqContext, body apimodels.PostableSilence) response.Response {
 	recipient := c.Params(":Recipient")
 	base.log.Info("RouteCreateSilence: ", "Recipient", recipient)
 	base.log.Info("RouteCreateSilence: ", "body", body)

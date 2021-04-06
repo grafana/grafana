@@ -1,7 +1,7 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
 
-import { NullValueMode, Field, FieldState, FieldCalcs } from '../types/index';
+import { NullValueMode, Field, FieldState, FieldCalcs, FieldType } from '../types/index';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export enum ReducerID {
@@ -260,6 +260,8 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   const data = field.values;
   calcs.count = data.length;
 
+  const isNumberField = field.type === FieldType.number || FieldType.time;
+
   for (let i = 0; i < data.length; i++) {
     let currentValue = data.get(i);
 
@@ -278,13 +280,14 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
       }
     }
 
-    if (currentValue !== null && currentValue !== undefined) {
+    if (currentValue != null) {
+      // null || undefined
       const isFirst = calcs.firstNotNull === null;
       if (isFirst) {
         calcs.firstNotNull = currentValue;
       }
 
-      if (isNumber(currentValue)) {
+      if (isNumberField) {
         calcs.sum += currentValue;
         calcs.allIsNull = false;
         calcs.nonNullCount++;
