@@ -82,6 +82,7 @@ type HTTPServer struct {
 	ProvisioningService    provisioning.ProvisioningService        `inject:""`
 	Login                  login.Service                           `inject:""`
 	License                models.Licensing                        `inject:""`
+	AccessControl          accesscontrol.AccessControl             `inject:""`
 	BackendPluginManager   backendplugin.Manager                   `inject:""`
 	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
 	PluginRequestValidator models.PluginRequestValidator           `inject:""`

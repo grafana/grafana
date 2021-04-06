@@ -14,9 +14,10 @@ import (
 
 func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, string, ...string) macaron.Handler {
 	return func(fallback macaron.Handler, permission string, scopes ...string) macaron.Handler {
-		if svc, ok := ac.(registry.CanBeDisabled); ok && svc.IsDisabled() {
+		if ac.IsDisabled() {
 			return fallback
 		}
+
 		return func(c *models.ReqContext) {
 			for i, scope := range scopes {
 				var buf bytes.Buffer

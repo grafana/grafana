@@ -70,6 +70,9 @@ func (st *StateTracker) getOrCreate(uid string, orgId int64, result eval.Result)
 		State:   result.State,
 		Results: []StateEvaluation{},
 	}
+	if result.State == eval.Alerting {
+		newState.StartsAt = result.EvaluatedAt
+	}
 	st.stateCache.cacheMap[idString] = newState
 	return newState
 }
