@@ -15,6 +15,7 @@ type pluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.StreamHandler
 }
 
 type grpcPlugin struct {
@@ -37,10 +38,6 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 			},
 		}, nil
 	}
-}
-
-func (p *grpcPlugin) CanHandleDataQueries() bool {
-	return false
 }
 
 func (p *grpcPlugin) PluginID() string {
@@ -103,38 +100,61 @@ func (p *grpcPlugin) Exited() bool {
 	return true
 }
 
-func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
 		p.mutex.RUnlock()
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, false
 	}
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()
+	return pluginClient, true
+}
 
+func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
 	return pluginClient.CollectMetrics(ctx)
 }
 
 func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	p.mutex.RLock()
-	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
-		p.mutex.RUnlock()
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	pluginClient := p.pluginClient
-	p.mutex.RUnlock()
-
 	return pluginClient.CheckHealth(ctx, req)
 }
 
 func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	p.mutex.RLock()
-	if p.client == nil || p.client.Exited() || p.pluginClient == nil {
-		p.mutex.RUnlock()
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
 		return backendplugin.ErrPluginUnavailable
 	}
-	pluginClient := p.pluginClient
-	p.mutex.RUnlock()
-
 	return pluginClient.CallResource(ctx, req, sender)
+}
+
+func (p *grpcPlugin) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.SubscribeStream(ctx, request)
+}
+
+func (p *grpcPlugin) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.PublishStream(ctx, request)
+}
+
+func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.RunStream(ctx, req, sender)
 }

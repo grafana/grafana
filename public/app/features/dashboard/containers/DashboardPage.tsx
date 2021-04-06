@@ -216,7 +216,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     if (!panel) {
       // Panel not found
-      this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
+      this.props.notifyApp(createErrorNotification(`Panel with ID ${urlPanelId} not found`));
       // Clear url state
       locationService.partial({ editPanel: null, viewPanel: null });
       return;
@@ -344,7 +344,13 @@ export class DashboardPage extends PureComponent<Props, State> {
       <div className="dashboard-container">
         {kioskMode !== KioskMode.Full && (
           <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
-            <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} onAddPanel={this.onAddPanel} />
+            <DashNav
+              dashboard={dashboard}
+              isFullscreen={!!viewPanel}
+              onAddPanel={this.onAddPanel}
+              kioskMode={kioskMode}
+              hideTimePicker={dashboard.timepicker.hidden}
+            />
           </div>
         )}
 

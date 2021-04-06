@@ -7,18 +7,18 @@ import { ExploreQueryInspector } from './ExploreQueryInspector';
 
 type ExploreQueryInspectorProps = ComponentProps<typeof ExploreQueryInspector>;
 
-jest.mock('../dashboard/components/Inspector/styles', () => ({
+jest.mock('../inspector/styles', () => ({
   getPanelInspectorStyles: () => ({}),
 }));
 
 jest.mock('app/core/services/backend_srv', () => ({
-  getBackendSrv: () => ({
+  backendSrv: {
     getInspectorStream: () =>
       new Observable((subscriber) => {
         subscriber.next(response());
         subscriber.next(response(true));
       }) as any,
-  }),
+  },
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -38,6 +38,7 @@ const setup = () => {
       series: [],
       timeRange: {} as TimeRange,
     },
+    runQueries: jest.fn(),
   };
 
   return render(<ExploreQueryInspector {...props} />);

@@ -17,10 +17,6 @@ export interface Props {
 }
 
 export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
-  if (!links.length) {
-    return null;
-  }
-
   // Emulate forceUpdate (https://reactjs.org/docs/hooks-faq.html#is-there-something-like-forceupdate)
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -31,6 +27,10 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
       dashboard.off(CoreEvents.timeRangeUpdated, forceUpdate);
     };
   });
+
+  if (!links.length) {
+    return null;
+  }
 
   return (
     <>

@@ -4,10 +4,10 @@ import {
   GrafanaTheme,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
 import { InlineFormLabel, TagsInput, useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React from 'react';
-import { DataSourcePicker } from './Select/DataSourcePicker';
 
 export interface TraceToLogsOptions {
   datasourceUid?: string;

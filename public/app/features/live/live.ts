@@ -1,4 +1,4 @@
-import Centrifuge from 'centrifuge/dist/centrifuge.protobuf';
+import Centrifuge from 'centrifuge/dist/centrifuge';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
 import { BehaviorSubject } from 'rxjs';
 import { LiveChannel, LiveChannelScope, LiveChannelAddress } from '@grafana/data';
@@ -8,6 +8,7 @@ import {
   grafanaLiveCoreFeatures,
   GrafanaLiveDataSourceScope,
   GrafanaLivePluginScope,
+  GrafanaLiveStreamScope,
 } from './scopes';
 import { registerLiveFeatures } from './features';
 
@@ -52,6 +53,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       [LiveChannelScope.Grafana]: grafanaLiveCoreFeatures,
       [LiveChannelScope.DataSource]: new GrafanaLiveDataSourceScope(),
       [LiveChannelScope.Plugin]: new GrafanaLivePluginScope(),
+      [LiveChannelScope.Stream]: new GrafanaLiveStreamScope(),
     };
 
     // Register global listeners

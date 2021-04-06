@@ -1,6 +1,6 @@
 import React from 'react';
 import config from 'app/core/config';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 

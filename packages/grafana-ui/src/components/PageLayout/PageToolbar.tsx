@@ -1,5 +1,5 @@
 import React, { FC, ReactNode } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '../../themes/ThemeContext';
 import { IconName } from '../../types';
@@ -135,7 +135,7 @@ const getStyles = (theme: GrafanaTheme) => {
       background: ${theme.colors.dashboardBg};
       justify-content: flex-end;
       flex-wrap: wrap;
-      padding: 0 ${spacing.md} ${spacing.sm} ${spacing.md};
+      padding: 0 ${spacing.sm} ${spacing.sm} ${spacing.md};
     `,
     toolbarLeft: css`
       display: flex;

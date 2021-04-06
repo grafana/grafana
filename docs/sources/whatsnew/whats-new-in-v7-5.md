@@ -10,8 +10,6 @@ list = false
 
 # What’s new in Grafana v7.5
 
-> **Note:** This is content for a beta version of Grafana. It will be updated several times before the stable release.
-
 This topic includes the release notes for Grafana v7.5. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Grafana OSS features
@@ -148,3 +146,13 @@ For more information on Grafana Enterprise licensing and restrictions, refer to 
 ## Breaking changes
 
 There are no known breaking changes in this release.
+
+## Updated configuration
+
+```
+[server]
+read_timeout = 0
+```
+
+Sets the maximum time using a duration format (5s/5m/5ms) before timing out read of an incoming request and closing idle connections.
+`0` means there is no timeout for reading the request.

@@ -1,6 +1,6 @@
 import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { InlineSegmentGroup, Segment, SegmentAsync, useTheme } from '@grafana/ui';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import React, { FunctionComponent } from 'react';
 import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
 import { useDispatch } from '../../../hooks/useStatelessReducer';

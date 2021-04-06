@@ -6,7 +6,7 @@ import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 import { locationService } from '@grafana/runtime';
 
 export const useDashboardDelete = (uid: string) => {
-  const [state, onRestoreDashboard] = useAsyncFn(() => deleteDashboard(uid, false), []);
+  const [state, onDeleteDashboard] = useAsyncFn(() => deleteDashboard(uid, false), []);
 
   useEffect(() => {
     if (state.value) {
@@ -15,5 +15,5 @@ export const useDashboardDelete = (uid: string) => {
     }
   }, [state]);
 
-  return { state, onRestoreDashboard };
+  return { state, onDeleteDashboard };
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTheme } from '../../themes/ThemeContext';
 import { getInputStyles } from '../Input/Input';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 
 export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsWithChildren<any>>((props, ref) => {
   const { children } = props;

@@ -82,6 +82,7 @@ export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
+export { PanelChrome, PanelChromeProps, PanelPadding, PanelChromeType } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
 export { VizLegendItem, LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/types';
 export { VizLegend } from './VizLegend/VizLegend';
@@ -180,6 +181,7 @@ export { Card, Props as CardProps, ContainerProps, CardInnerProps, getCardStyles
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 
 export { ButtonSelect } from './Dropdown/ButtonSelect';
+export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 
 // Legacy forms
 

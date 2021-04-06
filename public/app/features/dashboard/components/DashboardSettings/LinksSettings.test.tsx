@@ -155,7 +155,7 @@ describe('LinksSettings', () => {
 
     userEvent.click(screen.getByText('Link'));
 
-    expect(screen.queryByText('Url')).toBeInTheDocument();
+    expect(screen.queryByText('URL')).toBeInTheDocument();
     expect(screen.queryByText('Tooltip')).toBeInTheDocument();
     expect(screen.queryByText('Icon')).toBeInTheDocument();
 

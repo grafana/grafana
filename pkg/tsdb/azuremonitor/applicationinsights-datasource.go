@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
@@ -27,8 +26,9 @@ import (
 
 // ApplicationInsightsDatasource calls the application insights query API.
 type ApplicationInsightsDatasource struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
+	httpClient    *http.Client
+	dsInfo        *models.DataSource
+	pluginManager plugins.Manager
 }
 
 // ApplicationInsightsQuery is the model that holds the information
@@ -102,7 +102,10 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQu
 		azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
 		timeGrain := insightsJSONModel.TimeGrain
 		timeGrains := insightsJSONModel.AllowedTimeGrainsMs
-		if timeGrain == "auto" {
+
+		// Previous versions of the query model don't specify a time grain, so we
+		// need to fallback to a default value
+		if timeGrain == "auto" || timeGrain == "" {
 			timeGrain, err = setAutoTimeGrain(query.IntervalMS, timeGrains)
 			if err != nil {
 				return nil, err
@@ -210,8 +213,8 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
 	// find plugin
-	plugin, ok := manager.DataSources[dsInfo.Type]
-	if !ok {
+	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
 	}
 

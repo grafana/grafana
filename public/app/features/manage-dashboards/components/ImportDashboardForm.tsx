@@ -10,8 +10,8 @@ import {
   InputControl,
   Legend,
 } from '@grafana/ui';
+import { DataSourcePicker } from '@grafana/runtime';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
 
@@ -49,7 +49,7 @@ export const ImportDashboardForm: FC<Props> = ({
     if (isSubmitted && (errors.title || errors.uid)) {
       onSubmit(getValues({ nest: true }), {} as any);
     }
-  }, [errors]);
+  }, [errors, getValues, isSubmitted, onSubmit]);
 
   return (
     <>
@@ -74,9 +74,9 @@ export const ImportDashboardForm: FC<Props> = ({
         />
       </Field>
       <Field
-        label="Unique identifier (uid)"
-        description="The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
-                The uid allows having consistent URL’s for accessing dashboards so changing the title of a dashboard will not break any
+        label="Unique identifier (UID)"
+        description="The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
+                The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any
                 bookmarked links to that dashboard."
         invalid={!!errors.uid}
         error={errors.uid && errors.uid.message}
