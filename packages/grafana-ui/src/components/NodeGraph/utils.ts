@@ -97,6 +97,7 @@ export function processNodes(
           return {
             value: f.values.get(index),
             color: f.config.color?.fixedColor || '',
+            name: f.config.displayName || 'unknown',
           };
         }),
       };

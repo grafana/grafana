@@ -6,7 +6,7 @@ import { VizLegendList } from './VizLegendList';
 /**
  * @public
  */
-export const VizLegend: React.FunctionComponent<LegendProps> = ({
+export function VizLegend<T>({
   items,
   displayMode,
   sortBy: sortKey,
@@ -16,7 +16,7 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   onSeriesColorChange,
   placement,
   className,
-}) => {
+}: LegendProps<T>) {
   switch (displayMode) {
     case LegendDisplayMode.Table:
       return (

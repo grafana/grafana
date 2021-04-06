@@ -11,6 +11,7 @@ export type NodeDatum = SimulationNodeDatum & {
   arcSections: Array<{
     value: number;
     color: string;
+    name: string;
   }>;
 };
 

@@ -1,25 +1,25 @@
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
 
-export interface VizLegendBaseProps {
+export interface VizLegendBaseProps<T = {}> {
   placement: LegendPlacement;
   className?: string;
-  items: VizLegendItem[];
-  itemRenderer?: (item: VizLegendItem, index: number) => JSX.Element;
+  items: Array<VizLegendItem<T>>;
+  itemRenderer?: (item: VizLegendItem<T>, index: number) => JSX.Element;
   onSeriesColorChange?: SeriesColorChangeHandler;
-  onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
+  onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLElement>) => void;
 }
 
-export interface VizLegendTableProps extends VizLegendBaseProps {
+export interface VizLegendTableProps<T = {}> extends VizLegendBaseProps<T> {
   sortBy?: string;
   sortDesc?: boolean;
   onToggleSort?: (sortBy: string) => void;
 }
 
-export interface LegendProps extends VizLegendBaseProps, VizLegendTableProps {
+export interface LegendProps<T> extends VizLegendBaseProps<T>, VizLegendTableProps<T> {
   displayMode: LegendDisplayMode;
 }
 
-export interface VizLegendItem {
+export interface VizLegendItem<T = {}> {
   getItemKey?: () => string;
   label: string;
   color: string;
@@ -28,6 +28,7 @@ export interface VizLegendItem {
   // displayValues?: DisplayValue[];
   getDisplayValues?: () => DisplayValue[];
   fieldIndex?: DataFrameFieldIndex;
+  data?: T;
 }
 
 export enum LegendDisplayMode {

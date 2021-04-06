@@ -1,4 +1,4 @@
-import React, { memo, MutableRefObject, useCallback, useMemo, useState, MouseEvent } from 'react';
+import React, { memo, MouseEvent, MutableRefObject, useCallback, useMemo, useState } from 'react';
 import cx from 'classnames';
 import useMeasure from 'react-use/lib/useMeasure';
 import { usePanning } from './usePanning';
@@ -6,7 +6,7 @@ import { EdgeDatum, NodeDatum, NodesMarker } from './types';
 import { Node } from './Node';
 import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
-import { DataFrame, GrafanaTheme, LinkModel } from '@grafana/data';
+import { DataFrame, getColorForTheme, GrafanaTheme, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
 import { Bounds, Config, defaultConfig, graphBounds, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
@@ -16,7 +16,7 @@ import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
 import { processNodes } from './utils';
-import { Icon } from '..';
+import { Icon, LegendDisplayMode, VizLegend } from '..';
 import { useNodeLimit } from './useNodeLimit';
 import { Marker } from './Marker';
 
@@ -109,7 +109,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     bounds
   );
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
-  const styles = getStyles(useTheme());
+  const theme = useTheme();
+  const styles = getStyles(theme);
 
   // This cannot be inline func or it will create infinite render cycle.
   const topLevelRef = useCallback(
@@ -166,6 +167,28 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
           disableZoomIn={isMaxZoom}
           disableZoomOut={isMinZoom}
         />
+        <div>
+          {nodes.length && (
+            <VizLegend<{ index: number }>
+              displayMode={LegendDisplayMode.List}
+              placement={'right'}
+              items={nodes[0].arcSections.map((s, index) => {
+                return {
+                  label: s.name,
+                  color: getColorForTheme(s.color, theme),
+                  yAxis: 0,
+                  data: { index },
+                };
+              })}
+              onLabelClick={(item) => {
+                setConfig({
+                  ...config,
+                  sort: item.data!.index,
+                });
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {hiddenNodesCount > 0 && (

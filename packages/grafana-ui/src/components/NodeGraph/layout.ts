@@ -10,6 +10,8 @@ export interface Config {
   forceCollide: number;
   tick: number;
   gridLayout: boolean;
+  // Atm index in the nodes arc section
+  sort: number;
 }
 
 export const defaultConfig: Config = {
@@ -20,6 +22,7 @@ export const defaultConfig: Config = {
   forceCollide: 100,
   tick: 300,
   gridLayout: false,
+  sort: 0,
 };
 
 /**
@@ -106,7 +109,7 @@ function gridLayout(nodes: NodeDatum[], config: Config /* TODO for selecting the
   const perRow = 4;
 
   nodes.sort((node1, node2) => {
-    return node1.arcSections[0].value - node2.arcSections[0].value;
+    return node2.arcSections[config.sort].value - node1.arcSections[config.sort].value;
   });
 
   for (const [index, node] of nodes.entries()) {
