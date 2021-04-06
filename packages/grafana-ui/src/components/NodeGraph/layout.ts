@@ -9,6 +9,7 @@ export interface Config {
   forceXStrength: number;
   forceCollide: number;
   tick: number;
+  gridLayout: boolean;
 }
 
 export const defaultConfig: Config = {
@@ -18,6 +19,7 @@ export const defaultConfig: Config = {
   forceXStrength: 0.02,
   forceCollide: 100,
   tick: 300,
+  gridLayout: false,
 };
 
 /**
@@ -44,36 +46,12 @@ export function useLayout(
     const rawNodesCopy = rawNodes.map((n) => ({ ...n }));
     const rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
 
-    // Start withs some hardcoded positions so it starts laid out from left to right
-    let { roots, secondLevelRoots } = initializePositions(rawNodesCopy, rawEdgesCopy);
+    if (config.gridLayout) {
+      gridLayout(rawNodesCopy, config);
+    } else {
+      defaultLayout(rawNodesCopy, rawEdgesCopy, config);
+    }
 
-    // There always seems to be one or more root nodes each with single edge and we want to have them static on the
-    // left neatly in something like grid layout
-    [...roots, ...secondLevelRoots].forEach((n, index) => {
-      n.fx = n.x;
-    });
-
-    const simulation = forceSimulation(rawNodesCopy)
-      .force(
-        'link',
-        forceLink(rawEdgesCopy)
-          .id((d: any) => d.id)
-          .distance(config.linkDistance)
-          .strength(config.linkStrength)
-      )
-      // to keep the left to right layout we add force that pulls all nodes to right but because roots are fixed it will
-      // apply only to non root nodes
-      .force('x', forceX(config.forceX).strength(config.forceXStrength))
-      // Make sure nodes don't overlap
-      .force('collide', forceCollide(config.forceCollide));
-
-    // 300 ticks for the simulation are recommended but less would probably work too, most movement is done in first
-    // few iterations and then all the forces gets smaller https://github.com/d3/d3-force#simulation_alphaDecay
-    simulation.tick(config.tick);
-    simulation.stop();
-
-    // We do centering here instead of using centering force to keep this more stable
-    centerNodes(rawNodesCopy);
     setNodes(rawNodesCopy);
     // The forceSimulation modifies the edges
     setEdges(rawEdgesCopy as EdgeDatumLayout[]);
@@ -84,6 +62,60 @@ export function useLayout(
     edges,
     bounds: graphBounds(nodes) /* momeoize? loops over all nodes every time and we do it 2 times */,
   };
+}
+
+/**
+ * Use d3 force layout to lay the nodes in a sensible way. This function modifies the nodes adding the x,y positions
+ * and also fills in node references in edges instead of node ids.
+ */
+function defaultLayout(nodes: NodeDatum[], edges: EdgeDatum[], config: Config) {
+  // Start withs some hardcoded positions so it starts laid out from left to right
+  let { roots, secondLevelRoots } = initializePositions(nodes, edges);
+
+  // There always seems to be one or more root nodes each with single edge and we want to have them static on the
+  // left neatly in something like grid layout
+  [...roots, ...secondLevelRoots].forEach((n, index) => {
+    n.fx = n.x;
+  });
+
+  const simulation = forceSimulation(nodes)
+    .force(
+      'link',
+      forceLink(edges)
+        .id((d: any) => d.id)
+        .distance(config.linkDistance)
+        .strength(config.linkStrength)
+    )
+    // to keep the left to right layout we add force that pulls all nodes to right but because roots are fixed it will
+    // apply only to non root nodes
+    .force('x', forceX(config.forceX).strength(config.forceXStrength))
+    // Make sure nodes don't overlap
+    .force('collide', forceCollide(config.forceCollide));
+
+  // 300 ticks for the simulation are recommended but less would probably work too, most movement is done in first
+  // few iterations and then all the forces gets smaller https://github.com/d3/d3-force#simulation_alphaDecay
+  simulation.tick(config.tick);
+  simulation.stop();
+
+  // We do centering here instead of using centering force to keep this more stable
+  centerNodes(nodes);
+}
+
+function gridLayout(nodes: NodeDatum[], config: Config /* TODO for selecting the sort */) {
+  const spacingVertical = 140;
+  const spacingHorizontal = 120;
+  const perRow = 4;
+
+  nodes.sort((node1, node2) => {
+    return node1.arcSections[0].value - node2.arcSections[0].value;
+  });
+
+  for (const [index, node] of nodes.entries()) {
+    const row = Math.floor(index / perRow);
+    const column = index % perRow;
+    node.x = -180 + column * spacingHorizontal;
+    node.y = -60 + row * spacingVertical;
+  }
 }
 
 /**

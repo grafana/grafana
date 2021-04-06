@@ -98,7 +98,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const layout = useLayout(processed.nodes, processed.edges, config);
 
   const [focusedNode, setFocusedNode] = useState<NodeDatum>();
-  const { nodes, edges, markers } = useNodeLimit(layout.nodes, layout.edges, nodeCountLimit, focusedNode);
+  const { nodes, edges, markers } = useNodeLimit(layout.nodes, layout.edges, nodeCountLimit, config, focusedNode);
   const hiddenNodesCount = processed.nodes.length - nodes.length;
 
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
@@ -128,14 +128,16 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
           style={{ transform: `scale(${scale}) translate(${Math.floor(position.x)}px, ${Math.floor(position.y)}px)` }}
         >
           <EdgeArrowMarker />
-          <Edges
-            edges={edges}
-            nodeHoveringId={nodeHover}
-            edgeHoveringId={edgeHover}
-            onClick={onEdgeOpen}
-            onMouseEnter={setEdgeHover}
-            onMouseLeave={clearEdgeHover}
-          />
+          {!config.gridLayout && (
+            <Edges
+              edges={edges}
+              nodeHoveringId={nodeHover}
+              edgeHoveringId={edgeHover}
+              onClick={onEdgeOpen}
+              onMouseEnter={setEdgeHover}
+              onMouseLeave={clearEdgeHover}
+            />
+          )}
           <Nodes
             nodes={nodes}
             onMouseEnter={setNodeHover}
@@ -146,7 +148,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
 
           <Markers markers={markers || []} onClick={(e, m) => setFocusedNode(m.node)} />
           {/*We split the labels from edges so that they are shown on top of everything else*/}
-          <EdgeLabels edges={edges} nodeHoveringId={nodeHover} edgeHoveringId={edgeHover} />
+          {!config.gridLayout && <EdgeLabels edges={edges} nodeHoveringId={nodeHover} edgeHoveringId={edgeHover} />}
         </g>
       </svg>
 

@@ -70,7 +70,10 @@ export enum DataFrameFieldNames {
 /**
  * Transform nodes and edges dataframes into array of objects that the layout code can then work with.
  */
-export function processNodes(nodes?: DataFrame, edges?: DataFrame): { nodes: NodeDatum[]; edges: EdgeDatum[] } {
+export function processNodes(
+  nodes?: DataFrame,
+  edges?: DataFrame
+): { nodes: NodeDatum[]; edges: EdgeDatum[]; legend?: any } {
   if (!nodes) {
     return { nodes: [], edges: [] };
   }
@@ -128,6 +131,12 @@ export function processNodes(nodes?: DataFrame, edges?: DataFrame): { nodes: Nod
   return {
     nodes: Object.values(nodesMap),
     edges: edgesMapped || [],
+    legend: nodeFields.arc.map((f) => {
+      return {
+        color: f.config.color?.fixedColor || '',
+        name: f.config.displayName || f.name,
+      };
+    }),
   };
 }
 

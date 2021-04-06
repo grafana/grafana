@@ -1,6 +1,7 @@
 import { fromPairs, uniq } from 'lodash';
 import { useMemo } from 'react';
 import { EdgeDatumLayout, NodeDatum, NodesMarker } from './types';
+import { Config } from './layout';
 
 /**
  * Limits the number of nodes by going from the roots breadth first until we have desired number of nodes.
@@ -11,11 +12,52 @@ export function useNodeLimit(
   nodes: NodeDatum[],
   edges: EdgeDatumLayout[],
   limit: number,
+  config: Config,
   root?: NodeDatum
 ): { nodes: NodeDatum[]; edges: EdgeDatumLayout[]; markers?: NodesMarker[] } {
   return useMemo(() => {
     if (nodes.length <= limit) {
       return { nodes, edges };
+    }
+
+    if (config.gridLayout) {
+      let start = 0;
+      let stop = limit;
+      let markers = nodes.length > limit ? [{ node: nodes[limit], count: nodes.length - limit }] : [];
+
+      if (root) {
+        markers = [];
+        const index = nodes.indexOf(root);
+        const prevLimit = Math.floor(limit / 2);
+        let afterLimit = prevLimit;
+        start = index - prevLimit;
+        if (start < 0) {
+          afterLimit += Math.abs(start);
+          start = 0;
+        }
+        stop = index + afterLimit + 1;
+
+        if (stop > nodes.length) {
+          if (start > 0) {
+            start = Math.max(0, start - (stop - nodes.length));
+          }
+          stop = nodes.length;
+        }
+
+        if (start > 0) {
+          markers.push({ node: nodes[start - 1], count: start });
+        }
+
+        if (stop < nodes.length) {
+          markers.push({ node: nodes[stop], count: nodes.length - stop });
+        }
+      }
+
+      return {
+        nodes: nodes.slice(start, stop),
+        edges,
+        markers,
+      };
     }
 
     const edgesMap = edges.reduce<{ [id: string]: EdgeDatumLayout[] }>((acc, e) => {
@@ -55,7 +97,7 @@ export function useNodeLimit(
       edges: visibleEdges,
       markers: markersWithStats,
     };
-  }, [edges, limit, nodes, root]);
+  }, [edges, limit, nodes, root, config.gridLayout]);
 }
 
 /**

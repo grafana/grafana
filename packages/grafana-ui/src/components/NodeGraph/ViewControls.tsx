@@ -63,6 +63,24 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
         </span>
       </HorizontalGroup>
       <div className={styles.scrollHelp}>Or ctrl/meta + scroll</div>
+
+      <HorizontalGroup spacing="xs">
+        <Button
+          icon={'code-branch'}
+          onClick={() => onConfigChange({ ...config, gridLayout: false })}
+          size={'sm'}
+          title={'Default layout'}
+          variant="secondary"
+        />
+        <Button
+          icon={'apps'}
+          onClick={() => onConfigChange({ ...config, gridLayout: true })}
+          size={'sm'}
+          title={'Grid layout'}
+          variant="secondary"
+        />
+      </HorizontalGroup>
+
       {allowConfiguration && (
         <Button size={'xs'} variant={'link'} onClick={() => setShowConfig((showConfig) => !showConfig)}>
           {showConfig ? 'Hide config' : 'Show config'}
