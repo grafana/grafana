@@ -6,7 +6,6 @@ import './time_regions_form';
 import template from './template';
 import _ from 'lodash';
 
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
@@ -28,6 +27,7 @@ import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
 import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
 import { appEvents } from '../../../core/core';
 import { ZoomOutEvent } from '../../../types/events';
+import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
 
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
