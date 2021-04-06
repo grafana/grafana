@@ -6,6 +6,7 @@ import {
   DataQuery,
   DataSourceJsonData,
   ScopedVars,
+  makeClassES5Compatible,
 } from '@grafana/data';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
@@ -43,7 +44,7 @@ export interface HealthCheckResult {
  *
  * @public
  */
-export class DataSourceWithBackend<
+class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
@@ -186,3 +187,8 @@ export class DataSourceWithBackend<
     });
   }
 }
+
+//@ts-ignore
+DataSourceWithBackend = makeClassES5Compatible(DataSourceWithBackend);
+
+export { DataSourceWithBackend };

@@ -58,9 +58,11 @@ module.exports = (env = {}) =>
               options: {
                 cache: true,
               },
+              memoryLimit: 4096,
             },
             typescript: {
               mode: 'write-references',
+              memoryLimit: 4096,
               diagnosticOptions: {
                 semantic: true,
                 syntactic: true,

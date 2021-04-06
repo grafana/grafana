@@ -8,8 +8,8 @@ import {
   DEFAULT_ANNOTATION_COLOR,
   REGION_FILL_ALPHA,
 } from '@grafana/ui';
+import { MetricsPanelCtrl } from '../panel/metrics_panel_ctrl';
 
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { AnnotationEvent } from '@grafana/data';
 
 export class EventManager {
