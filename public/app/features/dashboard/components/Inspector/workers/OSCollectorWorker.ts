@@ -1,6 +1,7 @@
+import * as Bowser from 'bowser';
+
 import { BaseWorker } from './BaseWorker';
 import { CollectOptions, CollectorItem } from '../types';
-import * as Bowser from 'bowser';
 
 export class OSCollectorWorker extends BaseWorker {
   canCollect(options: CollectOptions): boolean {

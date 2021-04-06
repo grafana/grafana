@@ -10,18 +10,14 @@ export class DashboardJsonCollectorWorker extends BaseWorker {
     this.exporter = new DashboardExporter();
   }
 
-  canCollect(options: CollectOptions): boolean {
-    return true;
+  canCollect({ dashboard }: CollectOptions): boolean {
+    return Boolean(dashboard);
   }
 
   async collect(options: CollectOptions): Promise<CollectorItem> {
     return await this.safelyCollect(options, async () => {
       const { dashboard } = options;
-      if (dashboard) {
-        return await this.exporter.makeExportable(dashboard);
-      }
-
-      return { error: 'Missing dashboard' };
+      return await this.exporter.makeExportable(dashboard);
     });
   }
 }

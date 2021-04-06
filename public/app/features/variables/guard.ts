@@ -18,7 +18,11 @@ import {
 import {
   AdHocVariableModel,
   ConstantVariableModel,
+  CustomVariableModel,
+  DataSourceVariableModel,
+  IntervalVariableModel,
   QueryVariableModel,
+  TextBoxVariableModel,
   VariableQueryEditorType,
   VariableWithMultiSupport,
   VariableWithOptions,
@@ -36,6 +40,22 @@ export const isAdHoc = (model: VariableModel): model is AdHocVariableModel => {
 
 export const isConstant = (model: VariableModel): model is ConstantVariableModel => {
   return model.type === 'constant';
+};
+
+export const isTextBox = (model: VariableModel): model is TextBoxVariableModel => {
+  return model.type === 'textbox';
+};
+
+export const isCustom = (model: VariableModel): model is CustomVariableModel => {
+  return model.type === 'custom';
+};
+
+export const isInterval = (model: VariableModel): model is IntervalVariableModel => {
+  return model.type === 'interval';
+};
+
+export const isDataSource = (model: VariableModel): model is DataSourceVariableModel => {
+  return model.type === 'datasource';
 };
 
 export const isMulti = (model: VariableModel): model is VariableWithMultiSupport => {

@@ -1,5 +1,4 @@
 import { DashboardModel, PanelModel } from '../../state';
-import { TargetsSanitizer } from './sanitizers/TargetsSanitizer';
 import { UrlSanitizer } from './sanitizers/UrlSanitizer';
 import { CollectorItem, CollectorType, CollectorWorker, CollectorWorkers, Sanitizer } from './types';
 import { BrowserCollectorWorker } from './workers/BrowserCollectorWorker';
@@ -8,6 +7,7 @@ import { GrafanaCollectorWorker } from './workers/GrafanaCollectorWorker';
 import { DashboardJsonCollectorWorker } from './workers/DashboardJsonCollectorWorker';
 import { PanelJsonCollectorWorker } from './workers/PanelJsonCollectorWorker';
 import { PanelDataCollectorWorker } from './workers/PanelDataCollectorWorker';
+import { VariablesSanitizer } from './sanitizers/VariablesSanitizer';
 
 export function getCollectorWorkers(): CollectorWorker[] {
   return [
@@ -21,7 +21,7 @@ export function getCollectorWorkers(): CollectorWorker[] {
 }
 
 export function getCollectorSanitizers(): Sanitizer[] {
-  return [new UrlSanitizer('UrlSanitizer'), new TargetsSanitizer('TargetsSanitizer')];
+  return [new VariablesSanitizer(), new UrlSanitizer('UrlSanitizer')];
 }
 
 export interface CollectorOptions {
