@@ -2,6 +2,9 @@ import React, { useContext } from 'react';
 import uPlot, { AlignedData, Series } from 'uplot';
 import { PlotPlugin } from './types';
 
+/**
+ * @alpha
+ */
 interface PlotCanvasContextType {
   // canvas size css pxs
   width: number;
@@ -15,6 +18,9 @@ interface PlotCanvasContextType {
   };
 }
 
+/**
+ * @alpha
+ */
 interface PlotPluginsContextType {
   registerPlugin: (plugin: PlotPlugin) => () => void;
 }
@@ -28,6 +34,9 @@ interface PlotContextType extends PlotPluginsContextType {
   data: AlignedData;
 }
 
+/**
+ * @alpha
+ */
 export const PlotContext = React.createContext<PlotContextType>({} as PlotContextType);
 
 // Exposes uPlot instance and bounding box of the entire canvas and plot area
@@ -39,7 +48,11 @@ const throwWhenNoContext = (name: string) => {
   throw new Error(`${name} must be used within PlotContext or PlotContext is not ready yet!`);
 };
 
-// Exposes API for registering uPlot plugins
+/**
+ * Exposes API for registering uPlot plugins
+ *
+ * @alpha
+ */
 export const usePlotPluginContext = (): PlotPluginsContextType => {
   const ctx = useContext(PlotContext);
   if (Object.keys(ctx).length === 0) {
@@ -50,6 +63,9 @@ export const usePlotPluginContext = (): PlotPluginsContextType => {
   };
 };
 
+/**
+ * @alpha
+ */
 export const buildPlotContext = (
   isPlotReady: boolean,
   canvasRef: any,
