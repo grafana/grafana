@@ -1,11 +1,11 @@
 import React, { FC, useState, useEffect } from 'react';
 import { Column, Row } from 'react-table';
 import { logger } from '@percona/platform-core';
-import { Button, IconButton, useStyles } from '@grafana/ui';
+import { Button, useStyles } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
-import { Table } from 'app/percona/integrated-alerting/components/Table/Table';
+import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { StorageLocationsActions } from './StorageLocationsActions';
 import { Messages } from './StorageLocations.messages';
 import { StorageLocation } from './StorageLocations.types';
@@ -15,6 +15,7 @@ import { getStyles } from './StorageLocations.styles';
 import { StorageLocationDetails } from './StorageLocationDetails';
 import { AddStorageLocationModal } from './AddStorageLocationModal';
 import { RemoveStorageLocationModal } from './RemoveStorageLocationModal';
+import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
 
 const { noData, columns } = Messages;
 const { name, type, path, actions } = columns;
@@ -35,19 +36,7 @@ export const StorageLocations: FC = () => {
         accessor: 'name',
         id: 'name',
         width: '315px',
-        Cell: ({ row, value }) => {
-          const restProps = row.getToggleRowExpandedProps ? row.getToggleRowExpandedProps() : {};
-          return (
-            <div className={styles.nameWrapper} {...restProps}>
-              <span>{value}</span>
-              {row.isExpanded ? (
-                <IconButton data-qa="hide-storage-location-details" name="arrow-up" />
-              ) : (
-                <IconButton data-qa="show-storage-location-details" name="arrow-down" />
-              )}
-            </div>
-          );
-        },
+        Cell: ({ row, value }) => <ExpandableCell row={row} value={value} />,
       },
       {
         Header: type,
