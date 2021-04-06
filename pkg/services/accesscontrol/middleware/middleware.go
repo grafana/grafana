@@ -8,7 +8,6 @@ import (
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 

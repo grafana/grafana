@@ -5,21 +5,85 @@ import (
 )
 
 var builtInRolesMap = map[string]accesscontrol.RoleDTO{
-	"grafana:builtin:users:read:self": {
-		Name:    "grafana:builtin:users:read:self",
+	"gf:users:self:read": {
+		Name:    "gf:users:self:read",
 		Version: 1,
 		Permissions: []accesscontrol.Permission{
 			{
 				Permission: "users:read",
-				Scope:      "users:self",
+				Scope:      accesscontrol.ScopeUsersSelf,
 			},
 			{
 				Permission: "users.tokens:list",
-				Scope:      "users:self",
+				Scope:      accesscontrol.ScopeUsersSelf,
 			},
 			{
 				Permission: "users.teams:read",
-				Scope:      "users:self",
+				Scope:      accesscontrol.ScopeUsersSelf,
+			},
+		},
+	},
+	"gf:users:admin:read": {
+		Name:    "gf:users:admin:read",
+		Version: 1,
+		Permissions: []accesscontrol.Permission{
+			{
+				Permission: accesscontrol.ActionUsersAuthTokenList,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersQuotasList,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+		},
+	},
+	"gf:users:admin:edit": {
+		Name:    "gf:users:admin:edit",
+		Version: 1,
+		Permissions: []accesscontrol.Permission{
+			{
+				Permission: accesscontrol.ActionUsersAuthTokenList,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersPasswordUpdate,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersCreate,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersDelete,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersEnable,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersDisable,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersPermissionsUpdate,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersLogout,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersAuthTokenUpdate,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersQuotasList,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersQuotasUpdate,
+				Scope:      accesscontrol.ScopeUsersAll,
 			},
 		},
 	},
@@ -27,7 +91,11 @@ var builtInRolesMap = map[string]accesscontrol.RoleDTO{
 
 var builtInRoleGrants = map[string][]string{
 	"Viewer": {
-		"grafana:builtin:users:read:self",
+		"gf:users:self:read",
+	},
+	"Grafana Admin": {
+		"gf:users:admin:read",
+		"gf:users:admin:edit",
 	},
 }
 
