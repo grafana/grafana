@@ -68,7 +68,7 @@ describe('Azure Monitor QueryEditor', () => {
         metricNamespace: undefined,
         resourceName: undefined,
         metricName: undefined,
-        aggregation: '',
+        aggregation: 'None',
         timeGrain: '',
         dimensionFilters: [],
       },
