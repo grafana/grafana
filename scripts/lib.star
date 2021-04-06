@@ -832,6 +832,7 @@ def memcached_integration_tests_step():
             './bin/grabpl integration-tests',
         ],
     }
+
 def release_canary_npm_packages_step(edition):
     if edition in ('enterprise', 'enterprise2'):
         return None

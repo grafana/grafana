@@ -82,7 +82,7 @@ def get_steps(edition, is_downstream=False):
     ])
 
     if include_enterprise2:
-      steps.extends([redis_integration_tests_step(), memcached_integration_tests_step()])
+      steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
 
     steps.extend([
         release_canary_npm_packages_step(edition),
