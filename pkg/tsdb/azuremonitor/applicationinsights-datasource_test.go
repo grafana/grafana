@@ -81,6 +81,25 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT15M")
 			})
 
+			Convey("and has an empty time grain", func() {
+				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+					"appInsights": map[string]interface{}{
+						"rawQuery":    false,
+						"timeGrain":   "",
+						"aggregation": "Average",
+						"metricName":  "Percentage CPU",
+						"alias":       "testalias",
+						"queryType":   "Application Insights",
+					},
+				})
+				tsdbQuery.Queries[0].IntervalMS = 400000
+
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, *tsdbQuery.TimeRange)
+				So(err, ShouldBeNil)
+
+				So(queries[0].Params["interval"][0], ShouldEqual, "PT15M")
+			})
+
 			Convey("and has a time grain set to auto and the metric has a limited list of allowed time grains", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"appInsights": map[string]interface{}{
