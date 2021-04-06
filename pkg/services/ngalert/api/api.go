@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+
 	"github.com/go-macaron/binding"
 
 	apimodels "github.com/grafana/alerting-api/pkg/api"
@@ -47,6 +49,7 @@ type API struct {
 	AlertingStore   store.AlertingStore
 	DataProxy       *datasourceproxy.DatasourceProxyService
 	Alertmanager    Alertmanager
+	StateTracker    *state.StateTracker
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -63,7 +66,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		PrometheusApiMock{log: logger},
+		PrometheusSrv{log: logger, stateTracker: api.StateTracker},
 	))
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
