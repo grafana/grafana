@@ -16,7 +16,7 @@
   },
   "basePath": "/api/v1",
   "paths": {
-    "/alertmanager/{Recipient}/api/v2/alerts": {
+    "/api/alertmanager/{Recipient}/api/v2/alerts": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -129,7 +129,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/api/v2/alerts/groups": {
+    "/api/alertmanager/{Recipient}/api/v2/alerts/groups": {
       "get": {
         "description": "get alertmanager alerts",
         "tags": [
@@ -202,7 +202,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/api/v2/silence/{SilenceId}": {
+    "/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}": {
       "get": {
         "description": "get silence",
         "tags": [
@@ -276,7 +276,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/api/v2/silences": {
+    "/api/alertmanager/{Recipient}/api/v2/silences": {
       "get": {
         "description": "get silences",
         "tags": [
@@ -326,7 +326,7 @@
             "name": "Silence",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/postableSilence"
+              "$ref": "#/definitions/PostableSilence"
             }
           },
           {
@@ -353,7 +353,7 @@
         }
       }
     },
-    "/alertmanager/{Recipient}/config/api/v1/alerts": {
+    "/api/alertmanager/{Recipient}/config/api/v1/alerts": {
       "get": {
         "description": "gets an Alerting config",
         "tags": [
@@ -452,83 +452,7 @@
         }
       }
     },
-    "/api/v1/receiver/test": {
-      "post": {
-        "description": "Test receiver",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "testing"
-        ],
-        "operationId": "RouteTestReceiverConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/ExtendedReceiver"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "schema": {
-              "$ref": "#/definitions/Success"
-            }
-          },
-          "412": {
-            "description": "SmtpNotEnabled",
-            "schema": {
-              "$ref": "#/definitions/SmtpNotEnabled"
-            }
-          },
-          "500": {
-            "description": "Failure",
-            "schema": {
-              "$ref": "#/definitions/Failure"
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/rule/test": {
-      "post": {
-        "description": "Test rule",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "testing"
-        ],
-        "operationId": "RouteTestRuleConfig",
-        "parameters": [
-          {
-            "name": "Body",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/TestRulePayload"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "TestRuleResponse",
-            "schema": {
-              "$ref": "#/definitions/TestRuleResponse"
-            }
-          }
-        }
-      }
-    },
-    "/prometheus/{Recipient}/api/v1/alerts": {
+    "/api/prometheus/{Recipient}/api/v1/alerts": {
       "get": {
         "description": "gets the current alerts",
         "tags": [
@@ -554,7 +478,7 @@
         }
       }
     },
-    "/prometheus/{Recipient}/api/v1/rules": {
+    "/api/prometheus/{Recipient}/api/v1/rules": {
       "get": {
         "description": "gets the evaluation statuses of all rules",
         "tags": [
@@ -580,7 +504,7 @@
         }
       }
     },
-    "/ruler/{Recipient}/api/v1/rules": {
+    "/api/ruler/{Recipient}/api/v1/rules": {
       "get": {
         "description": "List rule groups",
         "produces": [
@@ -609,7 +533,7 @@
         }
       }
     },
-    "/ruler/{Recipient}/api/v1/rules/{Namespace}": {
+    "/api/ruler/{Recipient}/api/v1/rules/{Namespace}": {
       "get": {
         "description": "Get rule groups by namespace",
         "produces": [
@@ -715,7 +639,7 @@
         }
       }
     },
-    "/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}": {
+    "/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}": {
       "get": {
         "description": "Get rule group",
         "produces": [
@@ -787,6 +711,82 @@
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/receiver/test": {
+      "post": {
+        "description": "Test receiver",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "testing"
+        ],
+        "operationId": "RouteTestReceiverConfig",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ExtendedReceiver"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/Success"
+            }
+          },
+          "412": {
+            "description": "SmtpNotEnabled",
+            "schema": {
+              "$ref": "#/definitions/SmtpNotEnabled"
+            }
+          },
+          "500": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/Failure"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rule/test": {
+      "post": {
+        "description": "Test rule",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "testing"
+        ],
+        "operationId": "RouteTestRuleConfig",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/TestRulePayload"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "TestRuleResponse",
+            "schema": {
+              "$ref": "#/definitions/TestRuleResponse"
             }
           }
         }
@@ -1612,7 +1612,7 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "GettableSilence": {
-      "$ref": "#/definitions/gettableSilence"
+      "$ref": "#/definitions/GettableSilence"
     },
     "GettableSilences": {
       "$ref": "#/definitions/GettableSilences"
