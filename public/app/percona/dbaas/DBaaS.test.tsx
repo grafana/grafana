@@ -22,7 +22,6 @@ describe('DBaaS::', () => {
       return callback({ location: { routeParams: { tab: 'alerts' }, path: '/integrated-alerting/alerts' } });
     });
   });
-
   it('renders tabs correctly', () => {
     const root = mount(<DBaaS />);
     const tabs = root.find('ul');

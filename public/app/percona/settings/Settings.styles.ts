@@ -66,5 +66,13 @@ export const getSettingsStyles = stylesFactory((theme: GrafanaTheme) => {
         display: flex;
       }
     `,
+    authRadioGroup: css`
+      & input[type='radio'] + label {
+        white-space: nowrap;
+      }
+    `,
+    emailForm: css`
+      margin-top: ${spacing.md};
+    `,
   };
 });

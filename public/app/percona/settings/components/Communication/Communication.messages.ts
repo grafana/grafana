@@ -4,6 +4,12 @@ const COMMUNICATION_LINK = `${HOW_TO_DOC_URL}/configure.html#communication`;
 
 export const Messages = {
   fields: {
+    type: {
+      label: 'Auth Type',
+      tooltipText: 'Authentication type',
+      tooltipLinkText: 'Read more',
+      tooltipLink: COMMUNICATION_LINK,
+    },
     from: {
       label: 'From',
       tooltipText: 'The sender address',
@@ -24,26 +30,19 @@ export const Messages = {
     },
     username: {
       label: 'Username',
-      tooltipText: 'SMTP authentication information. Username',
+      tooltipText: 'SMTP authentication information',
       tooltipLinkText: 'Read more',
       tooltipLink: COMMUNICATION_LINK,
     },
     password: {
       label: 'Password',
-      tooltipText: 'SMTP authentication information. Password',
-      tooltipLinkText: 'Read more',
-      tooltipLink: COMMUNICATION_LINK,
-    },
-
-    secret: {
-      label: 'Secret',
-      tooltipText: 'SMTP authentication information.  Secret',
+      tooltipText: 'SMTP authentication information',
       tooltipLinkText: 'Read more',
       tooltipLink: COMMUNICATION_LINK,
     },
     identity: {
       label: 'Identity',
-      tooltipText: 'SMTP authentication information. Identity',
+      tooltipText: 'SMTP authentication information',
       tooltipLinkText: 'Read more',
       tooltipLink: COMMUNICATION_LINK,
     },

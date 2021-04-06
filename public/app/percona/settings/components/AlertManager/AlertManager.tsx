@@ -7,6 +7,7 @@ import { Messages } from 'app/percona/settings/Settings.messages';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import { getStyles } from './AlertManager.styles';
 import { AlertManagerProps } from './AlertManager.types';
+import { AlertManagerChangePayload } from '../../Settings.types';
 
 export const AlertManager: FC<AlertManagerProps> = ({ alertManagerUrl, alertManagerRules, updateSettings }) => {
   const theme = useTheme();
@@ -23,7 +24,7 @@ export const AlertManager: FC<AlertManagerProps> = ({ alertManagerUrl, alertMana
   };
   const isEqual = (a: string, b: string) => (!a && !b) || a === b;
   const applyChanges = ({ url, rules }: { url: string; rules: any }) => {
-    const body: any = {
+    const body: AlertManagerChangePayload = {
       alert_manager_url: url,
       alert_manager_rules: rules,
     };
