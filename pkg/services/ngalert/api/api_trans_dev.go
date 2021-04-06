@@ -146,48 +146,36 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 
 	save := c.Query("save") == "true"
 
-	getAlert := &models.GetAlertByIdQuery{
-		Id: id,
-	}
-
-	if err := bus.Dispatch(getAlert); err != nil {
-		return response.Error(400, fmt.Sprintf("could find alert with id %v", id), err)
-	}
-
-	if getAlert.Result.OrgId != c.SignedInUser.OrgId {
-		return response.Error(403, "alert does not match organization of user", nil)
-	}
-
-	oldAlert := getAlert.Result
-
-	sb, err := oldAlert.Settings.ToDB()
+	// Get dashboard alert definition from database.
+	oldAlert, status, err := transGetAlertById(id, *c.SignedInUser)
 	if err != nil {
-		return response.Error(400, "failed to marshal alert settings", err)
+		return response.Error(status, "failed to get alert", fmt.Errorf("failed to get alert for alert id %v: %w", id, err))
 	}
 
-	evalCond, err := translate.DashboardAlertConditions(sb, c.OrgId)
+	// Translate the dashboard's alerts conditions into SSE queries and conditions.
+	sseCond, err := transToSSECondition(oldAlert, *c.SignedInUser)
 	if err != nil {
-		return response.Error(400, "Failed to translate alert conditions", err)
+		return response.Error(400, "failed to translate alert conditions",
+			fmt.Errorf("failed to translate alert conditions for alert id %v: %w", id, err))
 	}
 
-	getDash := &models.GetDashboardQuery{
-		Id:    getAlert.Result.DashboardId,
-		OrgId: getAlert.Result.OrgId,
-	}
-	if err := bus.Dispatch(getDash); err != nil {
-		return response.Error(400, fmt.Sprintf("could find dashboard %v for alert with id %v", getDash.Id, id), err)
+	// Get the dashboard that contains the dashboard Alert.
+	oldAlertsDash, status, err := transGetAlertsDashById(oldAlert.DashboardId, *c.SignedInUser)
+	if err != nil {
+		return response.Error(status, "failed to get alert's dashboard", fmt.Errorf("failed to get dashboard for alert id %v, %w", id, err))
 	}
 
-	isGeneralFolder := getDash.Result.FolderId == 0 && !getDash.Result.IsFolder
+	isGeneralFolder := oldAlertsDash.FolderId == 0 && !oldAlertsDash.IsFolder
 
 	var namespaceUID string
 
 	if isGeneralFolder {
 		namespaceUID = "General"
 	} else {
+		// Get the folder that contains the dashboard that contains the dashboard alert.
 		getFolder := &models.GetDashboardQuery{
-			Id:    getDash.Result.FolderId,
-			OrgId: getDash.Result.OrgId,
+			Id:    oldAlertsDash.FolderId,
+			OrgId: oldAlertsDash.OrgId,
 		}
 		if err := bus.Dispatch(getFolder); err != nil {
 			return response.Error(400, fmt.Sprintf("could find folder %v for alert with id %v", getFolder.Id, id), err)
@@ -196,16 +184,10 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		namespaceUID = getFolder.Result.Uid
 	}
 
-	oldNoData := oldAlert.Settings.Get("noDataState").MustString()
-	noDataSetting, err := transNoData(oldNoData)
+	noDataSetting, execErrSetting, err := transNoDataExecSettings(oldAlert, *c.SignedInUser)
 	if err != nil {
-		return response.Error(400, "unrecognized no data option", err)
-	}
-
-	oldExecErr := oldAlert.Settings.Get("executionErrorState").MustString()
-	execErrSetting, err := transExecErr(oldExecErr)
-	if err != nil {
-		return response.Error(400, "unrecognized execution error option", err)
+		return response.Error(400, "unable to translate nodata/exec error settings",
+			fmt.Errorf("unable to translate nodata/exec error settings for alert id %v: %w", id, err))
 	}
 
 	// TODO: What to do with Rule Tags
@@ -220,22 +202,20 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 	// 	ruleTags[k] = sV
 	// }
 
-	// spew.Dump(ruleTags)
-
 	// TODO: Need place to put FOR duration
 
 	rule := ngmodels.AlertRule{
 		Title:        oldAlert.Name,
-		Data:         evalCond.Data,
-		Condition:    evalCond.Condition,
-		NoDataState:  noDataSetting,
-		ExecErrState: execErrSetting,
+		Data:         sseCond.Data,
+		Condition:    sseCond.Condition,
+		NoDataState:  *noDataSetting,
+		ExecErrState: *execErrSetting,
 	}
 
 	rgc := apimodels.PostableRuleGroupConfig{
 		// TODO? Generate new name on conflict?
 		Name:     oldAlert.Name,
-		Interval: adjustInterval(oldAlert.Frequency),
+		Interval: transAdjustInterval(oldAlert.Frequency),
 		Rules: []apimodels.PostableExtendedRuleNode{
 			toPostableExtendedRuleNode(rule),
 		},
@@ -266,6 +246,70 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 	return response.JSON(200, cmd)
 }
 
+func transAdjustInterval(freq int64) model.Duration {
+	// 10 corresponds to the SchedulerCfg, but TODO not worrying about fetching for now.
+	var baseFreq int64 = 10
+	if freq <= baseFreq {
+		return model.Duration(time.Second * 10)
+	}
+	return model.Duration(time.Duration((freq - (freq % baseFreq))) * time.Second)
+}
+
+func transGetAlertById(id int64, user models.SignedInUser) (*models.Alert, int, error) {
+	getAlert := &models.GetAlertByIdQuery{
+		Id: id,
+	}
+
+	if err := bus.Dispatch(getAlert); err != nil {
+		return nil, 400, fmt.Errorf("could find alert with id %v: %w", id, err)
+	}
+
+	if getAlert.Result.OrgId != user.OrgId {
+		return nil, 403, fmt.Errorf("alert does not match organization of user")
+	}
+
+	return getAlert.Result, 0, nil
+}
+
+func transGetAlertsDashById(dashboardId int64, user models.SignedInUser) (*models.Dashboard, int, error) {
+	getDash := &models.GetDashboardQuery{
+		Id:    dashboardId,
+		OrgId: user.OrgId,
+	}
+	if err := bus.Dispatch(getDash); err != nil {
+		return nil, 400, fmt.Errorf("could find dashboard with id %v: %w", dashboardId, err)
+	}
+	return getDash.Result, 0, nil
+}
+
+func transToSSECondition(m *models.Alert, user models.SignedInUser) (*ngmodels.Condition, error) {
+	sb, err := m.Settings.ToDB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal alert settings: %w", err)
+	}
+
+	evalCond, err := translate.DashboardAlertConditions(sb, user.OrgId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to translate dashboard alert to SSE conditions: %w", err)
+	}
+	return evalCond, nil
+}
+
+func transNoDataExecSettings(m *models.Alert, user models.SignedInUser) (*ngmodels.NoDataState, *ngmodels.ExecutionErrorState, error) {
+	oldNoData := m.Settings.Get("noDataState").MustString()
+	noDataSetting, err := transNoData(oldNoData)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	oldExecErr := m.Settings.Get("executionErrorState").MustString()
+	execErrSetting, err := transExecErr(oldExecErr)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &noDataSetting, &execErrSetting, nil
+}
+
 func transNoData(s string) (ngmodels.NoDataState, error) {
 	switch s {
 	case "ok":
@@ -288,13 +332,4 @@ func transExecErr(s string) (ngmodels.ExecutionErrorState, error) {
 		return ngmodels.KeepLastStateErrState, nil
 	}
 	return ngmodels.AlertingErrState, fmt.Errorf("unrecognized Execution Error setting %v", s)
-}
-
-func adjustInterval(freq int64) model.Duration {
-	// 10 corresponds to the SchedulerCfg, but TODO not worrying about fetching for now.
-	var baseFreq int64 = 10
-	if freq <= baseFreq {
-		return model.Duration(time.Second * 10)
-	}
-	return model.Duration(time.Duration((freq - (freq % baseFreq))) * time.Second)
 }
