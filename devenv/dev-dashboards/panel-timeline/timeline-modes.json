@@ -15,7 +15,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 146,
   "links": [],
   "panels": [
     {
@@ -24,16 +23,6 @@
         "defaults": {
           "color": {
             "mode": "palette-classic"
-          },
-          "custom": {
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "graph": false,
-              "legend": false,
-              "tooltip": false
-            },
-            "lineWidth": 1
           },
           "mappings": [],
           "thresholds": {
@@ -60,14 +49,15 @@
       },
       "id": 8,
       "options": {
-        "barWidth": 0.97,
+        "colWidth": 0.9,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
         "mode": "spans",
-        "showValue": "auto"
+        "rowHeight": 0.9,
+        "showValue": "always"
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
@@ -207,16 +197,6 @@
           "color": {
             "mode": "palette-classic"
           },
-          "custom": {
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "graph": false,
-              "legend": false,
-              "tooltip": false
-            },
-            "lineWidth": 1
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -245,14 +225,15 @@
       "interval": null,
       "maxDataPoints": 20,
       "options": {
-        "barWidth": 0.97,
+        "colWidth": 0.9,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
         "mode": "grid",
-        "showValue": "auto"
+        "rowHeight": 0.9,
+        "showValue": "always"
       },
       "pluginVersion": "7.5.0-pre",
       "targets": [
@@ -304,5 +285,5 @@
   "timezone": "utc",
   "title": "Timeline Modes",
   "uid": "mIJjFy8Gz",
-  "version": 21
+  "version": 1
 }

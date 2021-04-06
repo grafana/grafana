@@ -4,6 +4,7 @@ import { Quadtree, Rect, pointWithin } from '../BarChart/quadtree';
 import { distribute, SPACE_BETWEEN } from '../BarChart/distribute';
 import { TimelineMode } from './types';
 import { TimeRange } from '@grafana/data';
+import { BarValueVisibility } from '../BarChart/types';
 
 const { round, min, ceil } = Math;
 
@@ -32,6 +33,7 @@ export interface TimelineCoreOptions {
   numSeries: number;
   rowHeight: number;
   colWidth?: number;
+  showValue: BarValueVisibility;
 
   label: (seriesIdx: number) => string;
   fill: (seriesIdx: number, valueIdx: number, value: any) => CanvasRenderingContext2D['fillStyle'];
@@ -51,6 +53,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     numSeries,
     rowHeight = 0,
     colWidth = 0,
+    showValue,
     label,
     fill,
     stroke,
@@ -197,7 +200,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 
   const drawPoints: Series.Points.Show =
-    formatValue == null
+    formatValue == null || showValue === BarValueVisibility.Never
       ? false
       : (u, sidx, i0, i1) => {
           u.ctx.save();

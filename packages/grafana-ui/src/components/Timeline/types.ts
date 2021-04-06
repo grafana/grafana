@@ -54,5 +54,6 @@ export enum TimelineMode {
 export interface TimelineProps extends GraphNGProps {
   mode: TimelineMode;
   rowHeight: number;
+  showValue: BarValueVisibility;
   colWidth?: number;
 }

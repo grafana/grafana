@@ -1,8 +1,8 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { TimelinePanel } from './TimelinePanel';
-import { TimelineOptions, TimelineFieldConfig, BarValueVisibility, graphFieldOptions } from '@grafana/ui';
-import { addHideFrom, addLegendOptions } from '../timeseries/config';
-import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
+import { TimelineOptions, TimelineFieldConfig, BarValueVisibility } from '@grafana/ui';
+//import { addHideFrom, addLegendOptions } from '../timeseries/config';
+//import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
 import { TimelineMode } from '@grafana/ui/src/components/Timeline/types';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(TimelinePanel)
@@ -17,6 +17,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         },
       },
     },
+    /*
     useCustomConfig: (builder) => {
       const cfg = defaultBarChartFieldConfig;
 
@@ -53,6 +54,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
       // addAxisConfig(builder, cfg, true);
       addHideFrom(builder);
     },
+    */
   })
   .setPanelOptions((builder) => {
     builder
@@ -72,12 +74,12 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         name: 'Show values',
         settings: {
           options: [
-            { value: BarValueVisibility.Auto, label: 'Auto' },
+            //{ value: BarValueVisibility.Auto, label: 'Auto' },
             { value: BarValueVisibility.Always, label: 'Always' },
             { value: BarValueVisibility.Never, label: 'Never' },
           ],
         },
-        defaultValue: BarValueVisibility.Auto,
+        defaultValue: BarValueVisibility.Always,
       })
       .addSliderInput({
         path: 'rowHeight',
@@ -101,5 +103,5 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
         showIf: ({ mode }) => mode === TimelineMode.Grid,
       });
 
-    addLegendOptions(builder);
+    //addLegendOptions(builder);
   });

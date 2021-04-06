@@ -63,7 +63,7 @@ class UnthemedTimeline extends React.Component<TimelineProps, GraphNGState> {
   }
 
   componentDidMount() {
-    const { theme, mode, rowHeight, colWidth } = this.props;
+    const { theme, mode, rowHeight, colWidth, showValue } = this.props;
 
     // alignedDataFrame is already prepared by getDerivedStateFromProps method
     const { alignedDataFrame } = this.state;
@@ -77,12 +77,13 @@ class UnthemedTimeline extends React.Component<TimelineProps, GraphNGState> {
         mode,
         rowHeight,
         colWidth,
+        showValue,
       }),
     });
   }
 
   componentDidUpdate(prevProps: TimelineProps) {
-    const { data, theme, timeZone, mode, rowHeight, colWidth } = this.props;
+    const { data, theme, timeZone, mode, rowHeight, colWidth, showValue } = this.props;
     const { alignedDataFrame } = this.state;
     let shouldConfigUpdate = false;
     let stateUpdate = {} as GraphNGState;
@@ -92,7 +93,8 @@ class UnthemedTimeline extends React.Component<TimelineProps, GraphNGState> {
       timeZone !== prevProps.timeZone ||
       mode !== prevProps.mode ||
       rowHeight !== prevProps.rowHeight ||
-      colWidth !== prevProps.colWidth
+      colWidth !== prevProps.colWidth ||
+      showValue !== prevProps.showValue
     ) {
       shouldConfigUpdate = true;
     }
@@ -112,6 +114,7 @@ class UnthemedTimeline extends React.Component<TimelineProps, GraphNGState> {
         mode,
         rowHeight,
         colWidth,
+        showValue,
       });
       stateUpdate = { ...stateUpdate, config: builder };
     }

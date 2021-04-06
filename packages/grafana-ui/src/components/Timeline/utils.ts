@@ -84,6 +84,7 @@ export function preparePlotConfigBuilder(
     numSeries: frame.fields.length - 1,
     rowHeight: coreOptions.rowHeight!,
     colWidth: coreOptions.colWidth,
+    showValue: coreOptions.showValue!,
     label: (seriesIdx) => getFieldDisplayName(frame.fields[seriesIdx], frame),
     fill: colorLookup,
     stroke: colorLookup,
