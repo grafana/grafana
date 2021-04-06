@@ -109,7 +109,7 @@ export class DashboardExporter {
     };
 
     const processPanel = (panel: PanelModel) => {
-      if (panel.datasource !== undefined) {
+      if (panel.datasource !== undefined && panel.datasource !== null) {
         templateizeDatasourceUsage(panel);
       }
 

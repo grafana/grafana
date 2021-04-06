@@ -1,5 +1,5 @@
 import { InlineField, Input, QueryField } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React, { FunctionComponent, useEffect } from 'react';
 import { AddRemove } from '../../../../AddRemove';
 import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';

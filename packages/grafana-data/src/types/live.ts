@@ -6,17 +6,20 @@ import { Observable } from 'rxjs';
  *   ${scope}/${namespace}/${path}
  *
  * The scope drives how the namespace is used and controlled
+ *
+ * @alpha
  */
 export enum LiveChannelScope {
   DataSource = 'ds', // namespace = data source ID
   Plugin = 'plugin', // namespace = plugin name (singleton works for apps too)
   Grafana = 'grafana', // namespace = feature
+  Stream = 'stream', // namespace = id for the managed data stream
 }
 
 /**
  * @alpha -- experimental
  */
-export interface LiveChannelConfig<TMessage = any, TController = any> {
+export interface LiveChannelConfig {
   /**
    * The path definition.  either static, or it may contain variables identifed with {varname}
    */
@@ -37,12 +40,6 @@ export interface LiveChannelConfig<TMessage = any, TController = any> {
    * The function will return true/false if the current user can publish
    */
   canPublish?: () => boolean;
-
-  /** convert the raw stream message into a message that should be broadcast */
-  processMessage?: (msg: any) => TMessage;
-
-  /** some channels are managed by an explicit interface */
-  getController?: () => TController;
 }
 
 export enum LiveChannelConnectionState {
@@ -87,6 +84,11 @@ export interface LiveChannelStatusEvent {
    * As long as the `shutdown` flag is not set, the connection will try to reestablish
    */
   state: LiveChannelConnectionState;
+
+  /**
+   * When joining a channel, there may be an initial packet in the subscribe method
+   */
+  message?: any;
 
   /**
    * The last error.
@@ -150,6 +152,25 @@ export interface LiveChannelAddress {
 }
 
 /**
+ * Return an address from a string
+ *
+ * @alpha -- experimental
+ */
+export function parseLiveChannelAddress(id?: string): LiveChannelAddress | undefined {
+  if (id?.length) {
+    let parts = id.trim().split('/');
+    if (parts.length >= 3) {
+      return {
+        scope: parts[0] as LiveChannelScope,
+        namespace: parts[1],
+        path: parts.slice(2).join('/'),
+      };
+    }
+  }
+  return undefined;
+}
+
+/**
  * Check if the address has a scope, namespace, and path
  */
 export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is LiveChannelAddress {
@@ -173,7 +194,7 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
   config?: LiveChannelConfig;
 
   /**
-   * Watch all events in this channel
+   * Watch for messages in a channel
    */
   getStream: () => Observable<LiveChannelEvent<TMessage>>;
 
@@ -192,7 +213,7 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
   publish?: (msg: TPublish) => Promise<any>;
 
   /**
-   * This will close and terminate this channel
+   * Close and terminate the channel for everyone
    */
   disconnect: () => void;
 }

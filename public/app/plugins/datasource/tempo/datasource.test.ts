@@ -1,11 +1,4 @@
-import {
-  arrowTableToBase64String,
-  DataFrame,
-  DataSourceInstanceSettings,
-  grafanaDataFrameToArrowTable,
-  MutableDataFrame,
-  PluginType,
-} from '@grafana/data';
+import { DataFrame, dataFrameToJSON, DataSourceInstanceSettings, MutableDataFrame, PluginType } from '@grafana/data';
 import { Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { TempoDatasource } from './datasource';
@@ -24,7 +17,7 @@ describe('Tempo data source', () => {
       })
     );
     const ds = new TempoDatasource(defaultSettings);
-    await expect(ds.query({ targets: [{ query: '12345' }] } as any)).toEmitValuesWith((response) => {
+    await expect(ds.query({ targets: [{ refId: 'refid1' }] } as any)).toEmitValuesWith((response) => {
       const fields = (response[0].data[0] as DataFrame).fields;
       expect(
         fields.map((f) => ({
@@ -48,18 +41,13 @@ function setupBackendSrv(frame: DataFrame) {
         createFetchResponse({
           results: {
             refid1: {
-              dataframes: [encode(frame)],
+              frames: [dataFrameToJSON(frame)],
             },
           },
         })
       );
     },
   } as any);
-}
-
-function encode(frame: DataFrame) {
-  const table = grafanaDataFrameToArrowTable(frame);
-  return arrowTableToBase64String(table);
 }
 
 const defaultSettings: DataSourceInstanceSettings = {

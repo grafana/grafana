@@ -35,10 +35,6 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-func boolPtr(b bool) *bool {
-	return &b
-}
-
 func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
 	recipient := ctx.Params("Recipient")
 	if recipient == apimodels.GrafanaBackend.String() {
@@ -49,6 +45,8 @@ func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimod
 			switch ds.Type {
 			case "loki", "prometheus":
 				return apimodels.LoTexRulerBackend, nil
+			case "grafana-alertmanager-datasource":
+				return apimodels.AlertmanagerBackend, nil
 			default:
 				return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
 			}

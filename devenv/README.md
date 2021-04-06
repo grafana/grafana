@@ -48,6 +48,14 @@ The grafana block is pre-configured with the dev-datasources and dashboards.
 #### Jaeger
 Jaeger block runs both Jaeger and Loki container. Loki container sends traces to Jaeger and also logs its own logs into itself so it is possible to setup derived field for traceID from Loki to Jaeger. You need to install a docker plugin for the self logging to work, without it the container won't start. See https://github.com/grafana/loki/tree/master/cmd/docker-driver#plugin-installation for installation instructions.
 
+#### Graphite
+
+| version | source name | graphite-web port | plaintext port | pickle port |
+|---------|-------------|-------------------|----------------|-------------|
+| 1.1     | graphite    | 8180              | 2103           | 2103        |
+| 1.0     | graphite1   | 8280              | 2203           | 2203        |
+| 0.9     | graphite09  | 8380              | 2303           | 2303        |
+
 ## Troubleshooting
 
 ### Containers fail to start (Mac OS)

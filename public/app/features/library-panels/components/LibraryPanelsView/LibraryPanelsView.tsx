@@ -1,6 +1,6 @@
 import React, { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { Pagination, stylesFactory, useStyles } from '@grafana/ui';
 import { GrafanaTheme, LoadingState } from '@grafana/data';
 

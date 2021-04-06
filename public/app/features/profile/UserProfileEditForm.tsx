@@ -21,7 +21,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
     <Form onSubmit={onSubmitProfileUpdate} validateOn="onBlur">
       {({ register, errors }) => {
         return (
-          <FieldSet label="Edit Profile">
+          <FieldSet label="Edit profile">
             <Field label="Name" invalid={!!errors.name} error="Name is required" disabled={disableLoginForm}>
               <Input
                 name="name"
@@ -65,7 +65,7 @@ export default UserProfileEditForm;
 
 const InputSuffix: FC = () => {
   return disableLoginForm ? (
-    <Tooltip content="Login Details Locked - managed in another system.">
+    <Tooltip content="Login details locked because they are managed in another system.">
       <Icon name="lock" />
     </Tooltip>
   ) : null;

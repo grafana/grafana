@@ -51,9 +51,9 @@ export class AxesEditorCtrl {
   setUnitFormat(axis: { format: any }) {
     return (unit: string) => {
       axis.format = unit;
-      // if already set via field config we need to update that as well
+      // if already set via field config we clear that
       if (this.panel.fieldConfig.defaults.unit) {
-        this.panel.fieldConfig.defaults.unit = unit;
+        this.panel.fieldConfig.defaults.unit = undefined;
         this.panelCtrl.refresh();
       } else {
         this.panelCtrl.render();
