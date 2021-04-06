@@ -10,15 +10,6 @@ export enum AzureQueryType {
   LogAnalytics = 'Azure Log Analytics',
 }
 
-export enum AggregationType {
-  None,
-  Total,
-  Minimum,
-  Maximum,
-  Average,
-  Count = 7,
-}
-
 export interface AzureMonitorQuery extends DataQuery {
   queryType: AzureQueryType;
   format: string;

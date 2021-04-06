@@ -11,7 +11,6 @@ import {
   AzureQueryType,
   AzureMonitorMetricsMetadataResponse,
   AzureMetricQuery,
-  AggregationType,
 } from '../types';
 import {
   DataSourceInstanceSettings,
@@ -28,6 +27,16 @@ import { mergeMap } from 'rxjs/operators';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 const defaultDropdownValue = 'select';
+
+// Used to convert our aggregation value to the Azure enum for deep linking
+const aggregationTypeMap: Record<string, number> = {
+  None: 0,
+  Total: 1,
+  Minimum: 2,
+  Maximum: 3,
+  Average: 4,
+  Count: 7,
+};
 
 export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   apiVersion = '2018-01-01';
@@ -114,6 +123,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   buildAzurePortalUrl(metricQuery: AzureMetricQuery, subscriptionId: string, timeRange: TimeRange) {
+    const aggregationType = aggregationTypeMap[metricQuery.aggregation] ?? aggregationTypeMap.Average;
+
     const chartDef = this.stringifyAzurePortalUrlParam({
       v2charts: [
         {
@@ -123,7 +134,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
                 id: `/subscriptions/${subscriptionId}/resourceGroups/${metricQuery.resourceGroup}/providers/${metricQuery.metricDefinition}/${metricQuery.resourceName}`,
               },
               name: metricQuery.metricName,
-              aggregationType: AggregationType[metricQuery.aggregation as any],
+              aggregationType: aggregationType,
               namespace: metricQuery.metricNamespace,
               metricVisualization: {
                 displayName: metricQuery.metricName,
