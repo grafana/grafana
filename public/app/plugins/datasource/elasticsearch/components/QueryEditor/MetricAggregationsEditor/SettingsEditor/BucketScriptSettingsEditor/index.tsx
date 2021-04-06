@@ -55,7 +55,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
           `}
         >
           {value.pipelineVariables!.map((pipelineVar, index) => (
-            <Fragment key={pipelineVar.name}>
+            <Fragment key={index}>
               <div
                 className={css`
                   display: grid;

@@ -10,15 +10,22 @@ import { reducer } from './reducer';
 
 describe('BucketScript Settings Reducer', () => {
   it('Should correctly add new pipeline variable', () => {
-    const expectedPipelineVar: PipelineVariable = {
+    const firstVar: PipelineVariable = {
       name: 'var1',
+      pipelineAgg: '',
+    };
+
+    const secondVar: PipelineVariable = {
+      name: 'var2',
       pipelineAgg: '',
     };
 
     reducerTester<PipelineVariable[]>()
       .givenReducer(reducer, [])
       .whenActionIsDispatched(addPipelineVariable())
-      .thenStateShouldEqual([expectedPipelineVar]);
+      .thenStateShouldEqual([firstVar])
+      .whenActionIsDispatched(addPipelineVariable())
+      .thenStateShouldEqual([firstVar, secondVar]);
   });
 
   it('Should correctly remove pipeline variables', () => {
