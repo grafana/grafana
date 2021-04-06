@@ -5,7 +5,7 @@ import { getAllDataSources } from './config';
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
 
 export enum DataSourceType {
-  Alertmanager = 'grafana-alertmanager-datasource',
+  Alertmanager = 'alertmanager',
   Loki = 'loki',
   Prometheus = 'prometheus',
 }
@@ -15,6 +15,12 @@ export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceTy
 export function getRulesDataSources() {
   return getAllDataSources()
     .filter((ds) => RulesDataSourceTypes.includes(ds.type))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function getAlertManagerDataSources() {
+  return getAllDataSources()
+    .filter((ds) => ds.type === DataSourceType.Alertmanager)
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -30,16 +36,20 @@ export function getLotexDataSourceByName(dataSourceName: string): DataSourceInst
 }
 
 export function isCloudRulesSource(rulesSource: RulesSource): rulesSource is DataSourceInstanceSettings {
-  return rulesSource !== 'grafana';
+  return rulesSource !== GRAFANA_RULES_SOURCE_NAME;
 }
 
 export function getDataSourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
   return getAllDataSources().find((source) => source.name === name);
 }
 
-export function getDatasourceAPIId(datasourceName: string) {
-  if (datasourceName === 'grafana') {
-    return 'grafana';
+export function getDatasourceAPIId(dataSourceName: string): string {
+  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return GRAFANA_RULES_SOURCE_NAME;
   }
-  return String(getLotexDataSourceByName(datasourceName).id);
+  const ds = getDataSourceByName(dataSourceName);
+  if (!ds) {
+    throw new Error(`Data source ${dataSourceName} not found`);
+  }
+  return String(ds.id);
 }
