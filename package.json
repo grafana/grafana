@@ -320,10 +320,7 @@
     ],
     "nohoist": [
       "**/@types/*",
-      "**/@types/*/**",
-      "@storybook",
-      "**/@storybook",
-      "**/@storybook/**"
+      "**/@types/*/**"
     ]
   },
   "_moduleAliases": {
