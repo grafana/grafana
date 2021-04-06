@@ -71,18 +71,21 @@ const sanitizeDashboard = (data: CollectorData, context: SanitizeContext): Colle
     return data;
   }
 
-  return panels.map((panel) => {
-    const targets = panel?.targets;
+  return {
+    ...data,
+    panels: panels.map((panel) => {
+      const targets = panel?.targets;
 
-    if (!Array.isArray(targets)) {
-      return panel;
-    }
+      if (!Array.isArray(targets)) {
+        return panel;
+      }
 
-    return {
-      ...panel,
-      targets: targets.map((t) => copyAndSanitize(t, context)),
-    };
-  });
+      return {
+        ...panel,
+        targets: targets.map((t) => copyAndSanitize(t, context)),
+      };
+    }),
+  };
 };
 
 const shouldReplace = (key: string, value: any): boolean => {

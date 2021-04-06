@@ -8,6 +8,7 @@ import { DashboardJsonCollectorWorker } from './workers/DashboardJsonCollectorWo
 import { PanelJsonCollectorWorker } from './workers/PanelJsonCollectorWorker';
 import { PanelDataCollectorWorker } from './workers/PanelDataCollectorWorker';
 import { VariablesSanitizer } from './sanitizers/VariablesSanitizer';
+import { TargetsSanitizer } from './sanitizers/TargetsSanitizer';
 
 export function getCollectorWorkers(): CollectorWorker[] {
   return [
@@ -21,7 +22,7 @@ export function getCollectorWorkers(): CollectorWorker[] {
 }
 
 export function getCollectorSanitizers(): Sanitizer[] {
-  return [new VariablesSanitizer(), new UrlSanitizer('UrlSanitizer')];
+  return [new VariablesSanitizer(), new UrlSanitizer('UrlSanitizer'), new TargetsSanitizer('TargetsSanitizer')];
 }
 
 export interface CollectorOptions {
