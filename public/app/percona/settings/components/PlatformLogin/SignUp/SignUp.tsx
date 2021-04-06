@@ -22,7 +22,6 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
       appEvents.emit(AppEvents.alertSuccess, [Messages.signUpSucceeded]);
     } catch (e) {
       console.error(e);
-      appEvents.emit(AppEvents.alertError, [Messages.errors.signUpFailed]);
     }
   };
 
