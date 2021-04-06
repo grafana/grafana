@@ -133,7 +133,7 @@ const useFolderSelectOptions = (datasource: SelectableValue) => {
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     formInput: css`
-      width: 400px;
+      width: 330px;
       & + & {
         margin-left: ${theme.spacing.sm};
       }
