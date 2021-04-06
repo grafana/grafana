@@ -27,8 +27,8 @@ type PrometheusApiBase struct {
 
 func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Get(toMacaronPath("/prometheus/{Recipient}/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertStatuses))
-		group.Get(toMacaronPath("/prometheus/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRuleStatuses))
+		group.Get(toMacaronPath("/api/prometheus/{Recipient}/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertStatuses))
+		group.Get(toMacaronPath("/api/prometheus/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRuleStatuses))
 	}, middleware.ReqSignedIn)
 }
 

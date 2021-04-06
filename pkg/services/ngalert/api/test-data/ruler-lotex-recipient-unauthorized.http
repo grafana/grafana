@@ -5,7 +5,7 @@
 @namespace1 = test
 
 // create/update test namespace group42 rulegroup
-POST http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
+POST http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
 content-type: application/json
 
 {
@@ -21,7 +21,7 @@ content-type: application/json
 
 ###
 // create group101
-POST http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
+POST http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
 content-type: application/json
 
 {
@@ -37,47 +37,47 @@ content-type: application/json
 
 ###
 // get group42 rules
-GET http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}/group42
+GET http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}/group42
 
 ###
 // get group101 rules
-GET http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}/group101
+GET http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}/group101
 
 ###
 // get namespace rules
-GET http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
+GET http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
 
 ###
 // get org rules
-GET http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules
+GET http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules
 
 ###
 // delete group42 rules
-DELETE http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}/group42
+DELETE http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}/group42
 
 ###
 // get namespace rules - only group101 should be listed
-GET http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
+GET http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
 
 ###
 // delete namespace rules
-DELETE http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
+DELETE http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
 
 ###
 // get namespace rules - no rules
-GET http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
+GET http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
 
 ###
 // get group42 rules
-GET http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}/group42
+GET http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}/group42
 
 ###
 // get namespace rules
-GET http://localhost:3000/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
+GET http://localhost:3000/api/ruler/{{lokiDatasourceID}}/api/v1/rules/{{namespace1}}
 
 ###
 // create/update test namespace group42 rulegroup
-POST http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
+POST http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
 content-type: application/json
 
 {
@@ -93,7 +93,7 @@ content-type: application/json
 
 ###
 // create group101
-POST http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
+POST http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
 content-type: application/json
 
 {
@@ -109,40 +109,40 @@ content-type: application/json
 
 ###
 // get group42 rules
-GET http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}/group42
+GET http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}/group42
 
 ###
 // get group101 rules
-GET http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}/group101
+GET http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}/group101
 
 ###
 // get namespace rules
-GET http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
+GET http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
 
 ###
 // get org rules
-GET http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules
+GET http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules
 
 ###
 // delete group42 rules
-DELETE http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}/group42
+DELETE http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}/group42
 
 ###
 // get namespace rules - only group101 should be listed
-GET http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
+GET http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
 
 ###
 // delete namespace rules
-DELETE http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
+DELETE http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
 
 ###
 // get namespace rules - no rules
-GET http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
+GET http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
 
 ###
 // get group42 rules
-GET http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}/group42
+GET http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}/group42
 
 ###
 // get namespace rules
-GET http://localhost:3000/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}
+GET http://localhost:3000/api/ruler/{{prometheusDatasourceID}}/api/v1/rules/{{namespace1}}

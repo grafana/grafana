@@ -40,10 +40,7 @@ func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err er
 }
 
 func (ctx *ReqContext) IsApiRequest() bool {
-	return strings.HasPrefix(ctx.Req.URL.Path, "/api") ||
-		strings.HasPrefix(ctx.Req.URL.Path, "/alertmanager/") ||
-		strings.HasPrefix(ctx.Req.URL.Path, "/ruler/") ||
-		strings.HasPrefix(ctx.Req.URL.Path, "/prometheus/")
+	return strings.HasPrefix(ctx.Req.URL.Path, "/api")
 }
 
 func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
