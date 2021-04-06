@@ -206,6 +206,12 @@ type Cfg struct {
 	EnableGzip       bool
 	EnforceDomain    bool
 
+	// GRPC API Server Settings
+	GRPCCertFile string
+	GRPCKeyFile  string
+	GRPCAddr     string
+	GRPCPort     string
+
 	// build
 	BuildVersion string
 	BuildCommit  string
@@ -804,6 +810,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
+	if err := cfg.readGRPCAPIServerSettings(iniFile); err != nil {
+		return err
+	}
+
 	// read data proxy settings
 	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
@@ -1312,6 +1322,15 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
+	return nil
+}
+
+func (cfg *Cfg) readGRPCAPIServerSettings(iniFile *ini.File) error {
+	server := iniFile.Section("grpc_api_server")
+	cfg.GRPCCertFile = server.Key("cert_file").String()
+	cfg.GRPCKeyFile = server.Key("cert_key").String()
+	cfg.GRPCAddr = valueAsString(server, "addr", "127.0.0.1")
+	cfg.GRPCPort = valueAsString(server, "port", "10000")
 	return nil
 }
 

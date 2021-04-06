@@ -78,22 +78,18 @@ func (s *GRPCAPIServer) IsEnabled() bool {
 }
 
 func (s GRPCAPIServer) PublishStream(ctx context.Context, request *server.PublishStreamRequest) (*server.PublishStreamResponse, error) {
+	// TODO: permission checks still need to be improved.
+	// For now we don't apply any scope or namespace rules here.
 	identity, ok := GetIdentity(ctx)
 	if !ok {
 		return nil, status.Error(codes.Unauthenticated, "no authentication found")
 	}
-	if identity.Type != IdentityTypeDatasource {
+	if identity.Type != IdentityTypePlugin {
 		return nil, status.Error(codes.Unauthenticated, "unsupported identity type")
 	}
 	channel := live.ParseChannelAddress(request.Channel)
 	if !channel.IsValid() {
 		return nil, status.Error(codes.InvalidArgument, `invalid channel`)
-	}
-	if channel.Scope != live.ScopeDatasource {
-		return nil, status.Error(codes.PermissionDenied, `scope permission denied`)
-	}
-	if identity.DatasourceIdentity.UID != channel.Namespace {
-		return nil, status.Error(codes.PermissionDenied, `namespace permission denied`)
 	}
 	logger.Debug("Publish data to a channel", "channel", request.Channel, "data", string(request.Data))
 	err := s.GrafanaLive.Publish(request.Channel, request.Data)

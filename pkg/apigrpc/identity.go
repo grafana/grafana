@@ -7,23 +7,23 @@ type identityMDKey struct{}
 type IdentityType int
 
 const (
-	IdentityTypeUser       = 0
-	IdentityTypeDatasource = 1
+	IdentityTypeUser   = 0
+	IdentityTypePlugin = 1
 )
 
 type UserIdentity struct {
-	ID int64
+	UserID int64
 }
 
-type DatasourceIdentity struct {
-	UID string
+type PluginIdentity struct {
+	PluginID string
 }
 
 // Identity is an information about request issuer.
 type Identity struct {
-	Type               IdentityType
-	UserIdentity       *UserIdentity
-	DatasourceIdentity *DatasourceIdentity
+	Type           IdentityType
+	UserIdentity   *UserIdentity
+	PluginIdentity *PluginIdentity
 }
 
 // GetIdentity can be used to extract request Identity stored in a context.

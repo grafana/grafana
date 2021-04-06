@@ -39,9 +39,9 @@ func (a Authenticator) tokenAuth(ctx context.Context) (context.Context, error) {
 
 	// TODO: hardcoded identity for now if token is not empty.
 	identity := &Identity{
-		Type: IdentityTypeDatasource,
-		DatasourceIdentity: &DatasourceIdentity{
-			UID: "TODO",
+		Type: IdentityTypePlugin,
+		PluginIdentity: &PluginIdentity{
+			PluginID: "TODO",
 		},
 	}
 	return SetIdentity(newCtx, identity), nil
