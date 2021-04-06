@@ -51,7 +51,7 @@ var builtInRolesMap = map[string]accesscontrol.RoleDTO{
 			},
 			{
 				Permission: accesscontrol.ActionUsersCreate,
-				Scope:      accesscontrol.ScopeUsersAll,
+				Scope:      "",
 			},
 			{
 				Permission: accesscontrol.ActionUsersDelete,
