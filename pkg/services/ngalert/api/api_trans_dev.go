@@ -230,8 +230,6 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		Condition:    evalCond.Condition,
 		NoDataState:  noDataSetting,
 		ExecErrState: execErrSetting,
-
-		// Should Alert rule have interval seconds, or is the group Interval?
 	}
 
 	rgc := apimodels.PostableRuleGroupConfig{
