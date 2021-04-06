@@ -6,7 +6,6 @@ import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TooltipContentProps, TooltipMode } from '../Chart/Tooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { GraphProps } from './Graph';
 
 const series: GraphSeriesXY[] = [
@@ -86,6 +85,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['className', 'series', 'timeRange', 'ariaLabel'],
+    },
   },
   args: {
     series: series,
@@ -108,10 +110,6 @@ export default {
     width: { control: { type: 'range', min: 200, max: 800 } },
     height: { control: { type: 'range', min: 200, max: 800 } },
     lineWidth: { control: { type: 'range', min: 1, max: 10 } },
-    className: NOOP_CONTROL,
-    series: NOOP_CONTROL,
-    timeRange: NOOP_CONTROL,
-    ariaLabel: NOOP_CONTROL,
   },
 };
 

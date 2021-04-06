@@ -1,8 +1,7 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { ConfirmModal } from '@grafana/ui';
 import mdx from './ConfirmModal.mdx';
 import { Props } from './ConfirmModal';
@@ -18,13 +17,14 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['isOpen', 'body'],
+    },
   },
   argTypes: {
     icon: { control: { type: 'select', options: ['exclamation-triangle', 'power', 'cog', 'lock'] } },
-    isOpen: NOOP_CONTROL,
-    body: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 const defaultActions = {
   onConfirm: () => {

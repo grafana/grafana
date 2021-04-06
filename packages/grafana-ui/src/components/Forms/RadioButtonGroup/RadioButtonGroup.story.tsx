@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import mdx from './RadioButtonGroup.mdx';
 import { RadioButtonGroup } from './RadioButtonGroup';
 import { Story } from '@storybook/react';
-import { NOOP_CONTROL } from '../../../utils/storybook/noopControl';
 
 export default {
   title: 'Forms/RadioButtonGroup',
@@ -14,6 +13,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['className', 'options', 'value'],
+    },
   },
   argTypes: {
     disabledOptions: {
@@ -21,9 +23,6 @@ export default {
       control: { type: 'select', options: ['', 'graphite', 'prometheus', 'elastic'] },
     },
     size: { control: { type: 'select' } },
-    className: NOOP_CONTROL,
-    options: NOOP_CONTROL,
-    value: NOOP_CONTROL,
   },
 };
 

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Story } from '@storybook/react';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
+import { Meta, Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { FormField, Props } from './FormField';
 
@@ -12,6 +11,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['inputEl'],
+    },
   },
   args: {
     inputWidth: 20,
@@ -22,9 +24,8 @@ export default {
     inputWidth: { control: { type: 'range', min: 5, max: 30 } },
     labelWidth: { control: { type: 'range', min: 5, max: 30 } },
     tooltip: { control: { type: 'text' } },
-    inputEl: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 export const Basic: Story<Props> = (args) => {
   return <FormField {...args} />;

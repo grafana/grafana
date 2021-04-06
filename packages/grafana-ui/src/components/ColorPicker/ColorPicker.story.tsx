@@ -1,9 +1,8 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import { SeriesColorPicker, ColorPicker } from '@grafana/ui';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { UseState } from '../../utils/storybook/UseState';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 import { ColorPickerProps } from './ColorPickerPopover';
@@ -21,16 +20,14 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['color', 'onChange', 'onColorChange'],
+    },
   },
   args: {
     enableNamedColors: false,
   },
-  argTypes: {
-    color: NOOP_CONTROL,
-    onChange: NOOP_CONTROL,
-    onColorChange: NOOP_CONTROL,
-  },
-};
+} as Meta;
 
 export const Basic: Story<ColorPickerProps> = ({ enableNamedColors }) => {
   return (
