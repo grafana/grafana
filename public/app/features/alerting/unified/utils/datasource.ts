@@ -59,5 +59,9 @@ export function getDatasourceAPIId(datasourceName: string) {
   if (datasourceName === GRAFANA_RULES_SOURCE_NAME) {
     return GRAFANA_RULES_SOURCE_NAME;
   }
-  return String(datasourceName);
+  const ds = getDataSourceByName(datasourceName);
+  if (!ds) {
+    throw new Error(`Datasource "${datasourceName}" not found`);
+  }
+  return String(ds.id);
 }
