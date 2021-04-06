@@ -24,7 +24,6 @@ export const SignIn: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
       appEvents.emit(AppEvents.alertSuccess, [`${Messages.signInSucceeded} ${credentials.email}`]);
     } catch (e) {
       console.error(e);
-      appEvents.emit(AppEvents.alertError, [Messages.errors.signInFailed]);
     }
   };
 
