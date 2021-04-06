@@ -70,8 +70,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/ldap", reqGrafanaAdmin, hs.Index)
-// 	r.Get("/backup", reqGrafanaAdmin, hs.Index)
-// 	r.Get("/backup/:tab", reqGrafanaAdmin, hs.Index)
+	// 	r.Get("/backup", reqGrafanaAdmin, hs.Index)
+	// 	r.Get("/backup/:tab", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 

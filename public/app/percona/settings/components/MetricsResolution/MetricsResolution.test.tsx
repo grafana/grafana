@@ -8,7 +8,6 @@ import { dataQa } from '@percona/platform-core';
 describe('MetricsResolution::', () => {
   it('Renders correctly with props for standard resolution', () => {
     const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[1]} updateSettings={() => {}} />);
-    const radio = root.find('[data-qa="resolutions-radio-button"]');
     const lrInput = root.find('[data-qa="lr-number-input"]');
     const mrInput = root.find('[data-qa="mr-number-input"]');
     const hrInput = root.find('[data-qa="hr-number-input"]');
@@ -21,7 +20,6 @@ describe('MetricsResolution::', () => {
 
   it('Renders correctly with props for rare resolution', () => {
     const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[0]} updateSettings={() => {}} />);
-    const radio = root.find('[data-qa="resolutions-radio-button"]');
 
     const lrInput = root.find('[data-qa="lr-number-input"]');
     const mrInput = root.find('[data-qa="mr-number-input"]');

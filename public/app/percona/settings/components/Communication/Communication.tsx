@@ -18,13 +18,13 @@ export const Communication: FC<CommunicationProps> = ({ alertingSettings, update
         label: Messages.tabs.email.label,
         key: Messages.tabs.email.key,
         active: activeTab === Messages.tabs.email.key,
-        component: <Email updateSettings={updateSettings} settings={alertingSettings.email} />,
+        component: <Email key="email" updateSettings={updateSettings} settings={alertingSettings.email} />,
       },
       {
         label: Messages.tabs.slack.label,
         key: Messages.tabs.slack.key,
         active: activeTab === Messages.tabs.slack.key,
-        component: <Slack updateSettings={updateSettings} settings={alertingSettings.slack} />,
+        component: <Slack key="slack" updateSettings={updateSettings} settings={alertingSettings.slack} />,
       },
     ],
     [alertingSettings]

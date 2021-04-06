@@ -18,11 +18,7 @@ export const SSHKey: FC<SSHKeyProps> = ({ sshKey, updateSettings }) => {
   } = Messages;
   const [loading, setLoading] = useState(false);
   const isEqual = (a: string, b: string) => !(a && !b) || a === b;
-  const applyChanges = ({ key }: { key: string }) => {
-    const body = { ssh_key: key };
-
-    updateSettings(body, setLoading);
-  };
+  const applyChanges = ({ key }: { key: string }) => updateSettings({ ssh_key: key }, setLoading);
 
   return (
     <div className={cx(settingsStyles.wrapper, styles.sshKeyWrapper)}>

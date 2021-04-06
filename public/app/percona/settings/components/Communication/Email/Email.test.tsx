@@ -9,6 +9,9 @@ describe('Email::', () => {
       <Email
         settings={{
           username: 'test',
+          from: 'from@mail.com',
+          smarthost: 'host.com',
+          hello: 'hello',
         }}
         updateSettings={() => {}}
       />
@@ -22,6 +25,9 @@ describe('Email::', () => {
       <Email
         settings={{
           username: 'test',
+          from: 'from@mail.com',
+          smarthost: 'host.com',
+          hello: 'hello',
         }}
         updateSettings={() => {}}
       />
@@ -29,5 +35,39 @@ describe('Email::', () => {
     const button = root.find('button');
 
     expect(button.prop('disabled')).toBeTruthy();
+  });
+
+  it('Disables username and password when NONE is selected', () => {
+    const root = mount(
+      <Email
+        settings={{
+          from: 'from@mail.com',
+          smarthost: 'host.com',
+          hello: 'hello',
+        }}
+        updateSettings={() => {}}
+      />
+    );
+
+    expect(root.find(dataQa('username-text-input')).prop('disabled')).toBeTruthy();
+    expect(root.find(dataQa('password-password-input')).prop('disabled')).toBeTruthy();
+  });
+
+  it('Enabled username and password when NONE is not selected', () => {
+    const root = mount(
+      <Email
+        settings={{
+          username: 'user',
+          password: 'pass',
+          from: 'from@mail.com',
+          smarthost: 'host.com',
+          hello: 'hello',
+        }}
+        updateSettings={() => {}}
+      />
+    );
+
+    expect(root.find(dataQa('username-text-input')).prop('disabled')).toBeFalsy();
+    expect(root.find(dataQa('password-password-input')).prop('disabled')).toBeFalsy();
   });
 });
