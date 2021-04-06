@@ -10,13 +10,12 @@ import {
   outerJoinDataFrames,
   TimeRange,
   TimeZone,
+  classicColors,
 } from '@grafana/data';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { TimelineCoreOptions, getConfig } from './timeline';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import { AxisPlacement, GraphGradientMode, ScaleDirection, ScaleOrientation } from '../uPlot/config';
-//import { classicColors } from '@grafana/data/src/utils/namedColorsPalette';
-import { classicColors } from '../../../../grafana-data/src/utils/namedColorsPalette';
 import { measureText } from '../../utils/measureText';
 
 import { TimelineFieldConfig } from '../..';
