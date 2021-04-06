@@ -98,6 +98,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Time
           max: 1,
           step: 0.01,
         },
+        showIf: ({ mode }) => mode === TimelineMode.Grid,
       });
 
     addLegendOptions(builder);
