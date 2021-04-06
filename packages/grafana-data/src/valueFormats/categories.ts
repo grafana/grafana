@@ -121,7 +121,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Czech koruna (czk)', id: 'currencyCZK', fn: currency('czk') },
       { name: 'Swiss franc (CHF)', id: 'currencyCHF', fn: currency('CHF') },
       { name: 'Polish Złoty (PLN)', id: 'currencyPLN', fn: currency('PLN') },
-      { name: 'Ethereum (Ξ)', id: 'currencyETH', fn: currency('Ξ') },
+      { name: 'Ether (Ξ)', id: 'currencyETH', fn: currency('Ξ') },
       { name: 'Bitcoin (฿)', id: 'currencyBTC', fn: currency('฿') },
       { name: 'Milli Bitcoin (฿)', id: 'currencymBTC', fn: currency('mBTC') },
       { name: 'Micro Bitcoin (฿)', id: 'currencyμBTC', fn: currency('μBTC') },
