@@ -144,7 +144,7 @@ export const PieChartSvg: FC<SvgProps> = ({
   }
 
   const getValue = (d: FieldDisplay) => d.display.numeric;
-  const getGradientId = (color: string) => `${componentInstanceId}-${color}`;
+  const getGradientId = (color: string) => `${componentInstanceId}-${tinycolor(color).toHex()}`;
   const getGradientColor = (color: string) => {
     return `url(#${getGradientId(color)})`;
   };
