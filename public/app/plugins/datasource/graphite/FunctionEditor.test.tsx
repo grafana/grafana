@@ -1,5 +1,5 @@
 import React from 'react';
-import { mount } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import { FunctionEditor } from './FunctionEditor';
 import { FunctionDescriptor } from './FunctionEditorControls';
 
@@ -20,7 +20,7 @@ function mockFunctionDescriptor(name: string, unknown?: boolean): FunctionDescri
 
 describe('FunctionEditor', () => {
   it('should display a defined function with name and no icon', () => {
-    const component = mount(
+    render(
       <FunctionEditor
         func={mockFunctionDescriptor('foo')}
         onMoveLeft={() => {}}
@@ -28,15 +28,13 @@ describe('FunctionEditor', () => {
         onRemove={() => {}}
       />
     );
-    const label = component.find('span');
-    expect(label.text()).toEqual('foo');
 
-    const icon = component.find('Icon');
-    expect(icon).toHaveLength(0);
+    expect(screen.queryByText('foo')).toBeTruthy();
+    expect(screen.queryByTestId('warning-icon')).toBeNull();
   });
 
   it('should display an unknown function with name and warning icon', () => {
-    const component = mount(
+    render(
       <FunctionEditor
         func={mockFunctionDescriptor('bar', true)}
         onMoveLeft={jest.fn()}
@@ -44,10 +42,8 @@ describe('FunctionEditor', () => {
         onRemove={jest.fn()}
       />
     );
-    const label = component.find('span');
-    expect(label.text()).toEqual('bar');
 
-    const icon = component.find('Icon');
-    expect(icon).toHaveLength(1);
+    expect(screen.queryByText('bar')).toBeTruthy();
+    expect(screen.queryByTestId('warning-icon')).toBeTruthy();
   });
 });

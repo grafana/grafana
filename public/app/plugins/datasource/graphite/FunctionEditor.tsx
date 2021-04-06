@@ -70,7 +70,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
                 >
                   {this.props.func.def.unknown && (
                     <Tooltip content="This function is not on the list of supported functions." placement="bottom">
-                      <Icon name="exclamation-triangle" size="xs" />
+                      <Icon data-testid="warning-icon" name="exclamation-triangle" size="xs" />
                     </Tooltip>
                   )}
                   {this.props.func.def.name}
