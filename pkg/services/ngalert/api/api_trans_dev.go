@@ -208,12 +208,28 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		return response.Error(400, "unrecognized execution error option", err)
 	}
 
+	// TODO: What to do with Rule Tags
+	// ruleTags := map[string]string{}
+
+	// for k, v := range oldAlert.Settings.Get("alertRuleTags").MustMap() {
+	// 	sV, ok := v.(string)
+	// 	if !ok {
+	// 		return response.Error(400, "unable to unmarshal rule tags",
+	// 			fmt.Errorf("unexpected type %T for tag %v", v, k))
+	// 	}
+	// 	ruleTags[k] = sV
+	// }
+
+	// spew.Dump(ruleTags)
+
+	// TODO: Need place to put FOR duration
+
 	rule := ngmodels.AlertRule{
 		Title:        oldAlert.Name,
 		Data:         evalCond.Data,
 		Condition:    evalCond.Condition,
 		NoDataState:  noDataSetting,
-		ExecErrState: execErrSetting, // TODO: Translate properly
+		ExecErrState: execErrSetting,
 
 		// Should Alert rule have interval seconds, or is the group Interval?
 	}
