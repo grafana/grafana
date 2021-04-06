@@ -44,7 +44,8 @@ import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-const GET_AND_POST_MEDATADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
+const EXEMPLARS_NOT_AVAILABLE = 'Exemplars for this data source are not available.';
+const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -62,7 +63,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
-  exemplarErrors: Subject<FetchError> = new Subject();
+  exemplarErrors: Subject<string> = new Subject();
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -147,7 +148,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
 
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
-    if (GET_AND_POST_MEDATADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
+    if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
         return await this._request<T>(url, data, { method: this.httpMethod, hideFromInspector: true }).toPromise();
       } catch (err) {
@@ -238,12 +239,17 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         queries.push(this.createQuery(instantTarget, options, start, end));
         activeTargets.push(instantTarget);
       } else {
-        if (target.exemplar) {
+        // It doesn't make sense to query for exemplars in dashboard if only instant is selected
+        if (target.exemplar && !target.instant) {
           const exemplarTarget = cloneDeep(target);
           exemplarTarget.requestId += '_exemplar';
           target.exemplar = false;
           queries.push(this.createQuery(exemplarTarget, options, start, end));
           activeTargets.push(exemplarTarget);
+          this.exemplarErrors.next();
+        }
+        if (target.exemplar && target.instant) {
+          this.exemplarErrors.next('Exemplars are not available for instant queries.');
         }
         queries.push(this.createQuery(target, options, start, end));
         activeTargets.push(target);
@@ -310,8 +316,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       if (query.exemplar) {
         return this.getExemplars(query).pipe(
-          catchError((err: FetchError) => {
-            this.exemplarErrors.next(err);
+          catchError(() => {
+            this.exemplarErrors.next(EXEMPLARS_NOT_AVAILABLE);
             return of({
               data: [],
               state: LoadingState.Done,
@@ -357,8 +363,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       if (query.exemplar) {
         return this.getExemplars(query).pipe(
-          catchError((err: FetchError) => {
-            this.exemplarErrors.next(err);
+          catchError(() => {
+            this.exemplarErrors.next(EXEMPLARS_NOT_AVAILABLE);
             return of({
               data: [],
               state: LoadingState.Done,

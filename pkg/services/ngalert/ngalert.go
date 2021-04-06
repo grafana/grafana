@@ -69,6 +69,7 @@ func (ng *AlertNG) Init() error {
 		MaxAttempts:  maxAttempts,
 		Evaluator:    eval.Evaluator{Cfg: ng.Cfg},
 		Store:        store,
+		RuleStore:    store,
 		Notifier:     ng.Alertmanager,
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
@@ -84,6 +85,7 @@ func (ng *AlertNG) Init() error {
 		RuleStore:       store,
 		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
+		StateTracker:    ng.stateTracker,
 	}
 	api.RegisterAPIEndpoints()
 
