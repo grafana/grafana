@@ -7,7 +7,7 @@ export async function fetchAlertManagerConfig(alertmanagerSourceName: string): P
   try {
     const result = await getBackendSrv()
       .fetch<AlertManagerCortexConfig>({
-        url: `/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/config/api/v1/alerts`,
+        url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/config/api/v1/alerts`,
         showErrorAlert: false,
         showSuccessAlert: false,
       })
@@ -33,7 +33,7 @@ export async function updateAlertmanagerConfig(
   config: AlertManagerCortexConfig
 ): Promise<void> {
   await getBackendSrv().post(
-    `/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/config/api/v1/alerts`,
+    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/config/api/v1/alerts`,
     config
   );
 }

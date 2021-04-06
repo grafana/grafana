@@ -2,7 +2,7 @@ import { SelectableValue } from '@grafana/data';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import React, { FC, useMemo } from 'react';
 import { Select } from '@grafana/ui';
-import { getAllDataSources } from '../api/datasources';
+import { getAllDataSources } from '../utils/config';
 
 interface Props {
   onChange: (alertManagerSourceName?: string) => void;

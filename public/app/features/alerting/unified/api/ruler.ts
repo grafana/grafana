@@ -10,21 +10,21 @@ export async function setRulerRuleGroup(
   group: RulerRuleGroupDTO
 ): Promise<void> {
   await getBackendSrv().post(
-    `/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
     group
   );
 }
 
 // fetch all ruler rule namespaces and included groups
 export async function fetchRulerRules(dataSourceName: string) {
-  return rulerGetRequest<RulerRulesConfigDTO>(`/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`, {});
+  return rulerGetRequest<RulerRulesConfigDTO>(`/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`, {});
 }
 
 // fetch rule groups for a particular namespace
 // will throw with { status: 404 } if namespace does not exist
 export async function fetchRulerRulesNamespace(dataSourceName: string, namespace: string) {
   const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(
-    `/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
     {}
   );
   return result[namespace] || [];
@@ -38,18 +38,18 @@ export async function fetchRulerRulesGroup(
   group: string
 ): Promise<RulerRuleGroupDTO | null> {
   return rulerGetRequest<RulerRuleGroupDTO | null>(
-    `/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}/${encodeURIComponent(
-      group
-    )}`,
+    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
+      namespace
+    )}/${encodeURIComponent(group)}`,
     null
   );
 }
 
 export async function deleteRulerRulesGroup(dataSourceName: string, namespace: string, groupName: string) {
   return getBackendSrv().delete(
-    `/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}/${encodeURIComponent(
-      groupName
-    )}`
+    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
+      namespace
+    )}/${encodeURIComponent(groupName)}`
   );
 }
 

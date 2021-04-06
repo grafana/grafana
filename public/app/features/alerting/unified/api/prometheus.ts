@@ -6,7 +6,7 @@ import { getDatasourceAPIId } from '../utils/datasource';
 export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[]> {
   const response = await getBackendSrv()
     .fetch<PromRulesResponse>({
-      url: `/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
+      url: `/api/prometheus/${getDatasourceAPIId(dataSourceName)}/api/v1/rules`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
