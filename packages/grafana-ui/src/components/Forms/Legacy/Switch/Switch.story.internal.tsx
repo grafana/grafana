@@ -5,7 +5,6 @@ import { Meta, Story } from '@storybook/react';
 
 export default {
   title: 'Forms/Legacy/Switch',
-  description: 'A description',
   component: Switch,
   parameters: {
     knobs: {
