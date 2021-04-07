@@ -41,10 +41,10 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser, roles []string) ([]*accesscontrol.Permission, error) {
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, legacyRole := range roles {
-		if builtInRoleNames, ok := PredefinedRoleGrants[legacyRole]; ok {
+		if builtInRoleNames, ok := accesscontrol.PredefinedRoleGrants[legacyRole]; ok {
 			for _, builtInRoleName := range builtInRoleNames {
-				builtInRole := getBuiltInRole(builtInRoleName)
-				if builtInRole == nil {
+				builtInRole, exists := accesscontrol.PredefinedRoles[builtInRoleName]
+				if !exists {
 					continue
 				}
 				for _, p := range builtInRole.Permissions {
