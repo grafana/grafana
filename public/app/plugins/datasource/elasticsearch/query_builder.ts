@@ -7,6 +7,7 @@ import {
 import {
   isMetricAggregationWithField,
   isMetricAggregationWithSettings,
+  isMovingAverageWithModelSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
   MetricAggregation,
@@ -346,6 +347,35 @@ export class ElasticQueryBuilder {
           .forEach(([k, v]) => {
             metricAgg[k] = k === 'script' ? getScriptValue(metric as MetricAggregationWithInlineScript) : v;
           });
+
+        // Elasticsearch isn't generally too picky about the data types in the request body,
+        // however some fields are required to be numeric..
+        if (metric.type === 'moving_avg') {
+          metricAgg = {
+            ...metricAgg,
+            settings: {
+              ...metricAgg.settings,
+              ...(metricAgg.settings?.window && { window: this.toNumber(metricAgg.settings.window) }),
+              ...(metricAgg.settings?.predict && { predict: this.toNumber(metricAgg.settings.predict) }),
+              ...(isMovingAverageWithModelSettings(metric) &&
+                Object.fromEntries(
+                  Object.entries(metricAgg.settings || {})
+                    // Only format properties that are required to be numbers
+                    .filter(([settingName]) => ['alpha', 'beta', 'gamma', 'period'].includes(settingName))
+                    // except for falsy values
+                    .filter(([_, stringValue]) => Boolean(stringValue))
+                    .map(([_, stringValue]) => [_, this.toNumber(stringValue)])
+                )),
+            },
+          };
+        } else if (metric.type === 'serial_diff') {
+          metricAgg = {
+            ...metricAgg,
+            ...(metricAgg.lag && {
+              lag: this.toNumber(metricAgg.lag),
+            }),
+          };
+        }
       }
 
       aggField[metric.type] = metricAgg;
@@ -353,6 +383,14 @@ export class ElasticQueryBuilder {
     }
 
     return query;
+  }
+
+  private toNumber(stringValue: any) {
+    if (isNaN(stringValue)) {
+      throw 'Not a Number';
+    }
+
+    return parseInt(stringValue!, 10);
   }
 
   getTermsQuery(queryDef: any) {

@@ -263,7 +263,7 @@ export interface Derivative extends BasePipelineMetricAggregation {
 export interface SerialDiff extends BasePipelineMetricAggregation {
   type: 'serial_diff';
   settings?: {
-    lag?: number;
+    lag?: string;
   };
 }
 

@@ -160,7 +160,11 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
-    defaults: {},
+    defaults: {
+      settings: {
+        lag: '1',
+      },
+    },
   },
   cumulative_sum: {
     label: 'Cumulative Sum',
