@@ -27,7 +27,6 @@ import { Icon } from '../Icon/Icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Filter } from './Filter';
 import { TableCell } from './TableCell';
-import ClipboardButtonStoryInternal from '../ClipboardButton/ClipboardButton.story.internal';
 
 const COLUMN_MIN_WIDTH = 150;
 
