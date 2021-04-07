@@ -1,5 +1,5 @@
 import defaultTheme, { commonColorsPalette } from './default';
-import { GrafanaThemeType, GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeType, GrafanaTheme, createTheme } from '@grafana/data';
 
 const basicColors = {
   ...commonColorsPalette,
@@ -130,6 +130,7 @@ const darkTheme: GrafanaTheme = {
   shadows: {
     listItem: 'none',
   },
+  v2: createTheme({ palette: { mode: 'dark' } }),
 };
 
 export default darkTheme;

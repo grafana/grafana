@@ -27,7 +27,10 @@ interface ClickPluginProps extends PlotPluginProps {
   children: (api: ClickPluginAPI) => React.ReactElement | null;
 }
 
-// Exposes API for Graph click interactions
+/**
+ * @alpha
+ * Exposes API for Graph click interactions
+ */
 export const ClickPlugin: React.FC<ClickPluginProps> = ({ id, onClick, children }) => {
   const pluginId = `ClickPlugin:${id}`;
 

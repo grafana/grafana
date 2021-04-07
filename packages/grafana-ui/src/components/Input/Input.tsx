@@ -30,9 +30,9 @@ interface StyleDeps {
 }
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
-  const { palette, colors } = theme;
-  const borderRadius = theme.border.radius.sm;
-  const height = theme.spacing.formInputHeight;
+  const theme2 = theme.v2;
+  const borderRadius = theme2.shape.borderRadius(1);
+  const height = theme.v2.components.height.md;
 
   const prefixSuffixStaticWidth = '28px';
   const prefixSuffix = css`
@@ -48,7 +48,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     height: 100%;
     /* Min width specified for prefix/suffix classes used outside React component*/
     min-width: ${prefixSuffixStaticWidth};
-    color: ${theme.colors.textWeak};
+    color: ${theme2.palette.text.secondary};
   `;
 
   return {
@@ -57,14 +57,14 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css`
         label: input-wrapper;
         display: flex;
-        width: ${width ? `${8 * width}px` : '100%'};
-        height: ${height}px;
+        width: ${width ? `${theme2.spacing(width)}` : '100%'};
+        height: ${theme2.spacing(height)};
         border-radius: ${borderRadius};
         &:hover {
           > .prefix,
           .suffix,
           .input {
-            border-color: ${invalid ? palette.redBase : colors.formInputBorder};
+            border-color: ${invalid ? theme2.palette.error.border : theme2.palette.primary.border};
           }
 
           // only show number buttons on hover
@@ -147,8 +147,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       `
     ),
     inputDisabled: css`
-      background-color: ${colors.formInputBgDisabled};
-      color: ${colors.formInputDisabledText};
+      background-color: ${theme2.palette.formComponent.disabledBackground};
+      color: ${theme2.palette.text.disabled};
     `,
     addon: css`
       label: input-addon;
@@ -185,8 +185,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       prefixSuffix,
       css`
         label: input-prefix;
-        padding-left: ${theme.spacing.sm};
-        padding-right: ${theme.spacing.xs};
+        padding-left: ${theme2.spacing(1)};
+        padding-right: ${theme2.spacing(0.5)};
         border-right: none;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
@@ -196,8 +196,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       prefixSuffix,
       css`
         label: input-suffix;
-        padding-right: ${theme.spacing.sm};
-        padding-left: ${theme.spacing.xs};
+        padding-left: ${theme2.spacing(1)};
+        padding-right: ${theme2.spacing(0.5)};
         margin-bottom: -2px;
         border-left: none;
         border-top-left-radius: 0;
@@ -207,7 +207,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     ),
     loadingIndicator: css`
       & + * {
-        margin-left: ${theme.spacing.xs};
+        margin-left: ${theme2.spacing(0.5)};
       }
     `,
   };
