@@ -45,7 +45,6 @@ export function transform(
     target: PromQuery;
     responseListLength: number;
     scopedVars?: ScopedVars;
-    mixedQueries?: boolean;
   }
 ) {
   // Create options object from transformOptions
@@ -61,14 +60,8 @@ export function transform(
     refId: transformOptions.target.refId,
     valueWithRefId: transformOptions.target.valueWithRefId,
     meta: {
-      /**
-       * Fix for showing of Prometheus results in Explore table.
-       * We want to show result of instant query always in table and result of range query based on target.runAll;
-       */
-      preferredVisualisationType: getPreferredVisualisationType(
-        transformOptions.query.instant,
-        transformOptions.mixedQueries
-      ),
+      // Fix for showing of Prometheus results in Explore table
+      preferredVisualisationType: transformOptions.query.instant ? 'table' : 'graph',
     },
   };
   const prometheusResult = response.data.data;
@@ -226,14 +219,6 @@ function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
     }
   }
   return sampledExemplars;
-}
-
-function getPreferredVisualisationType(isInstantQuery?: boolean, mixedQueries?: boolean) {
-  if (isInstantQuery) {
-    return 'table';
-  }
-
-  return mixedQueries ? 'graph' : undefined;
 }
 
 /**
