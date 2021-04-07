@@ -18,6 +18,7 @@ type Props = {};
 
 const defaultValues: RuleFormValues = Object.freeze({
   name: '',
+  dataSourceName: null,
   labels: [],
   annotations: [],
   forTime: 1,
@@ -36,13 +37,13 @@ export const AlertRuleForm: FC<Props> = () => {
 
   const values = watch();
 
-  const showStep2 = values.dataSource && values.group && values.namespace && values.type;
+  const showStep2 = values.dataSourceName && values.type;
 
   const onSubmit = (alertRule: RuleFormValues) => {
-    const { name, expression, forTime, dataSource, forUnit, labels, annotations, namespace, group } = alertRule;
+    const { name, expression, forTime, dataSourceName, forUnit, labels, annotations, namespace, group } = alertRule;
     console.log('saving', alertRule);
-    if (namespace && group && expression && dataSource && name) {
-      fetchRulerRulesNamespace(dataSource.name, namespace)
+    if (namespace && group && expression && dataSourceName && name) {
+      fetchRulerRulesNamespace(dataSourceName, namespace)
         .then((ruleGroup) => {
           const existingGroup: RulerRuleGroupDTO = ruleGroup.find(({ name }) => name === group) || {
             name: group,
@@ -66,7 +67,7 @@ export const AlertRuleForm: FC<Props> = () => {
             }, {} as Record<string, string>),
           };
 
-          return setRulerRuleGroup(dataSource.name, namespace, {
+          return setRulerRuleGroup(dataSourceName, namespace, {
             ...existingGroup,
             rules: existingGroup.rules.concat(alertRule),
           });

@@ -1,5 +1,3 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
-
 export enum RuleFormType {
   threshold = 'threshold',
   system = 'system',
@@ -8,7 +6,7 @@ export enum RuleFormType {
 export interface RuleFormValues {
   name?: string;
   type?: RuleFormType;
-  dataSource?: DataSourceInstanceSettings;
+  dataSourceName: string | null;
   namespace?: string;
   group?: string;
   forTime: number;

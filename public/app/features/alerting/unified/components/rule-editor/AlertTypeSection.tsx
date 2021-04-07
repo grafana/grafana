@@ -1,16 +1,15 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { FC, useState, useEffect, useCallback } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Cascader, Field, Input, InputControl, stylesFactory, Select, CascaderOption } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { css } from '@emotion/css';
 
-import { getAllDataSources } from '../../utils/config';
 import { fetchRulerRules } from '../../api/ruler';
-import { getRulesDataSources } from '../../utils/datasource';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { DataSourcePicker, DataSourcePickerProps } from '@grafana/runtime';
+import { RulesDataSourceTypes } from '../../utils/datasource';
 
 const alertTypeOptions: SelectableValue[] = [
   {
@@ -31,11 +30,19 @@ const AlertTypeSection: FC = () => {
   const { register, control, watch, errors } = useFormContext<RuleFormValues>();
 
   const alertType = watch('type');
-  const datasource = watch('dataSource');
-  const dataSourceOptions = useDatasourceSelectOptions(alertType);
-  const folderOptions = useFolderSelectOptions(datasource);
+  const dataSourceName = watch('dataSourceName');
+  const folderOptions = useFolderSelectOptions(dataSourceName);
 
-  console.log(alertType, dataSourceOptions, folderOptions);
+  const dataSourceFilter = useCallback(
+    (ds: DataSourceInstanceSettings): boolean => {
+      if (alertType === RuleFormType.threshold) {
+        return !!ds.meta.alerting;
+      } else {
+        return RulesDataSourceTypes.includes(ds.type);
+      }
+    },
+    [alertType]
+  );
 
   return (
     <RuleEditorSection stepNo={1} title="Alert type">
@@ -58,7 +65,19 @@ const AlertTypeSection: FC = () => {
           />
         </Field>
         <Field className={styles.formInput} label="Select data source">
-          <InputControl as={Select} name="dataSource" options={dataSourceOptions} control={control} />
+          <InputControl
+            as={DataSourcePicker as React.ComponentType<Omit<DataSourcePickerProps, 'current'>>}
+            valueName="current"
+            filter={dataSourceFilter}
+            name="dataSourceName"
+            noDefault={true}
+            control={control}
+            alerting={true}
+            onChange={(ds: DataSourceInstanceSettings[]) => {
+              console.log('pick', ds);
+              return ds[0]?.name ?? null;
+            }}
+          />
         </Field>
       </div>
       <Field className={styles.formInput}>
@@ -79,38 +98,12 @@ const AlertTypeSection: FC = () => {
   );
 };
 
-const useDatasourceSelectOptions = (ruleFormType?: RuleFormType) => {
-  const [datasourceOptions, setDataSourceOptions] = useState<SelectableValue[]>([]);
-
-  useEffect(() => {
-    let options = [] as ReturnType<typeof getAllDataSources>;
-    if (ruleFormType) {
-      if (ruleFormType === RuleFormType.threshold) {
-        options = getDataSourceSrv().getList({ alerting: true });
-      } else if (ruleFormType === RuleFormType.system) {
-        options = getRulesDataSources();
-      }
-    }
-    setDataSourceOptions(
-      options.map(({ name, type, meta }) => {
-        return {
-          label: name,
-          value: name,
-          imgUrl: meta.info.logos.small,
-        };
-      })
-    );
-  }, [ruleFormType]);
-
-  return datasourceOptions;
-};
-
-const useFolderSelectOptions = (datasource?: DataSourceInstanceSettings) => {
+const useFolderSelectOptions = (dataSourceName: string | null) => {
   const [folderOptions, setFolderOptions] = useState<CascaderOption[]>([]);
 
   useEffect(() => {
-    if (datasource?.name) {
-      fetchRulerRules(datasource?.name)
+    if (dataSourceName) {
+      fetchRulerRules(dataSourceName)
         .then((namespaces) => {
           const options: CascaderOption[] = Object.entries(namespaces).map(([namespace, group]) => {
             return {
@@ -129,7 +122,7 @@ const useFolderSelectOptions = (datasource?: DataSourceInstanceSettings) => {
           }
         });
     }
-  }, [datasource]);
+  }, [dataSourceName]);
 
   return folderOptions;
 };

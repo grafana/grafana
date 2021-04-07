@@ -176,6 +176,9 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
         return false;
       }
+      if (filters.filter && !filters.filter(x)) {
+        return false;
+      }
       if (
         !filters.all &&
         x.meta.metrics !== true &&
@@ -215,7 +218,7 @@ export class DatasourceSrv implements DataSourceService {
       return 0;
     });
 
-    if (!filters.pluginId) {
+    if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
         base.push(this.getInstanceSettings('-- Mixed --')!);
       }

@@ -57,6 +57,9 @@ export interface GetDataSourceListFilters {
 
   /** filter list by plugin  */
   pluginId?: string;
+
+  /** apply a function to filter */
+  filter?: (dataSource: DataSourceInstanceSettings) => boolean;
 }
 
 let singletonInstance: DataSourceSrv;
