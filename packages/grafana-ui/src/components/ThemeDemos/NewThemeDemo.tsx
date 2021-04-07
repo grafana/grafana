@@ -157,7 +157,7 @@ export const NewThemeDemo = () => {
                 </Button>
               ))}
               <Button variant="primary" disabled>
-                Disabled primary
+                Disabled
               </Button>
             </HorizontalGroup>
           </DemoBox>
