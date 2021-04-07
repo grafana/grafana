@@ -37,5 +37,6 @@ export const useGraphNGContext = () => {
     dimFields,
     mapSeriesIndexToDataFrameFieldIndex,
     getXAxisField,
+    alignedData: data,
   };
 };

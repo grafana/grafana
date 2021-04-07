@@ -334,6 +334,7 @@ export function addStackingConfig(builder: FieldConfigEditorBuilder<StackingConf
       settings: {
         options: graphFieldOptions.stacking,
       },
+      shouldApply: (f) => f.type === FieldType.number,
     })
     .addTextInput({
       path: 'stackingGroup',
@@ -342,5 +343,6 @@ export function addStackingConfig(builder: FieldConfigEditorBuilder<StackingConf
       defaultValue: cfg.stackingGroup,
       hideFromDefaults: true,
       showIf: (c) => c.stackingMode !== StackingMode.None,
+      shouldApply: (f) => f.type === FieldType.number,
     });
 }

@@ -4,7 +4,7 @@ import { PlotPlugin, PlotProps } from './types';
 import { StackingMode } from './config';
 import { createLogger } from '../../utils/logger';
 
-const LOGGING_ENABLED = true;
+const LOGGING_ENABLED = false;
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
 export function timeFormatToTemplate(f: string) {
@@ -57,7 +57,8 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
     if (ignoreFieldTypes && ignoreFieldTypes.indexOf(f.type) > -1) {
       continue;
     }
-    if (f.config.custom.stackingMode !== StackingMode.None && f.config.custom.stackingGroup) {
+
+    if (f.config.custom?.stackingMode !== StackingMode.None && f.config.custom?.stackingGroup) {
       if (!stackingGroups[f.config.custom.stackingGroup]) {
         stackingGroups[f.config.custom.stackingGroup] = [result.length];
       } else {
@@ -79,8 +80,8 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
       const seriesIdxs = stackingGroups[group];
 
       for (let j = 1; j < seriesIdxs.length; j++) {
-        // series to stack
-        const currentlyStacking = result[seriesIdxs[j]];
+        // series to stack. Making a copy not to mutate the underlying vector
+        const currentlyStacking = [...result[seriesIdxs[j]]];
         // stacking on top of
         const stackBase = result[seriesIdxs[j - 1]];
 
@@ -88,6 +89,7 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
           const v = stackBase[k];
           currentlyStacking[k] += v === null || v === undefined ? 0 : +v;
         }
+        result[seriesIdxs[j]] = currentlyStacking;
       }
     }
     return result as AlignedData;

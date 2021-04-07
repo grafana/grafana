@@ -61,17 +61,17 @@ describe('preparePlotData', () => {
           {
             name: 'a',
             values: [-10, 20, 10],
-            config: { custom: { stacking: { mode: StackingMode.None } } },
+            config: { custom: { stackingMode: StackingMode.None } },
           },
           {
             name: 'b',
             values: [10, 10, 10],
-            config: { custom: { stacking: { mode: StackingMode.None } } },
+            config: { custom: { stackingMode: StackingMode.None } },
           },
           {
             name: 'c',
             values: [20, 20, 20],
-            config: { custom: { stacking: { mode: StackingMode.None } } },
+            config: { custom: { stackingMode: StackingMode.None } },
           },
         ],
       });
@@ -108,17 +108,17 @@ describe('preparePlotData', () => {
           {
             name: 'a',
             values: [-10, 20, 10],
-            config: { custom: { stacking: { mode: StackingMode.Standard, group: 'stackA' } } },
+            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
           },
           {
             name: 'b',
             values: [10, 10, 10],
-            config: { custom: { stacking: { mode: StackingMode.Standard, group: 'stackA' } } },
+            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
           },
           {
             name: 'c',
             values: [20, 20, 20],
-            config: { custom: { stacking: { mode: StackingMode.Standard, group: 'stackA' } } },
+            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
           },
         ],
       });
@@ -155,32 +155,32 @@ describe('preparePlotData', () => {
           {
             name: 'a',
             values: [-10, 20, 10],
-            config: { custom: { stacking: { mode: StackingMode.Standard, group: 'stackA' } } },
+            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
           },
           {
             name: 'b',
             values: [10, 10, 10],
-            config: { custom: { stacking: { mode: StackingMode.Standard, group: 'stackA' } } },
+            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
           },
           {
             name: 'c',
             values: [20, 20, 20],
-            config: { custom: { stacking: { mode: StackingMode.Standard, group: 'stackA' } } },
+            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
           },
           {
             name: 'd',
             values: [1, 2, 3],
-            config: { custom: { stacking: { mode: StackingMode.Standard, group: 'stackB' } } },
+            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackB' } },
           },
           {
             name: 'e',
             values: [1, 2, 3],
-            config: { custom: { stacking: { mode: StackingMode.Standard, group: 'stackB' } } },
+            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackB' } },
           },
           {
             name: 'f',
             values: [1, 2, 3],
-            config: { custom: { stacking: { mode: StackingMode.Standard, group: 'stackB' } } },
+            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackB' } },
           },
         ],
       });
