@@ -349,21 +349,22 @@ export class ElasticQueryBuilder {
           });
 
         // Elasticsearch isn't generally too picky about the data types in the request body,
-        // however some fields are required to be numeric..
+        // however some fields are required to be numeric.
+        // Users might have already created some of those with before, where the values were numbers.
         if (metric.type === 'moving_avg') {
           metricAgg = {
             ...metricAgg,
             settings: {
               ...metricAgg.settings,
-              ...(metricAgg.settings?.window && { window: this.toNumber(metricAgg.settings.window) }),
-              ...(metricAgg.settings?.predict && { predict: this.toNumber(metricAgg.settings.predict) }),
+              ...(metricAgg.settings?.window !== undefined && { window: this.toNumber(metricAgg.settings.window) }),
+              ...(metricAgg.settings?.predict !== undefined && { predict: this.toNumber(metricAgg.settings.predict) }),
               ...(isMovingAverageWithModelSettings(metric) &&
                 Object.fromEntries(
                   Object.entries(metricAgg.settings || {})
                     // Only format properties that are required to be numbers
                     .filter(([settingName]) => ['alpha', 'beta', 'gamma', 'period'].includes(settingName))
                     // except for falsy values
-                    .filter(([_, stringValue]) => Boolean(stringValue))
+                    .filter(([_, stringValue]) => stringValue !== undefined)
                     .map(([_, stringValue]) => [_, this.toNumber(stringValue)])
                 )),
             },
@@ -371,7 +372,7 @@ export class ElasticQueryBuilder {
         } else if (metric.type === 'serial_diff') {
           metricAgg = {
             ...metricAgg,
-            ...(metricAgg.lag && {
+            ...(metricAgg.lag !== undefined && {
               lag: this.toNumber(metricAgg.lag),
             }),
           };
