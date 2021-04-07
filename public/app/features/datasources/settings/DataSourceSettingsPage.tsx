@@ -234,12 +234,14 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
         )}
 
         <div className="gf-form-group">
-          {testingStatus && testingStatus.message && (
+          {testingStatus?.message && (
             <Alert
               severity={testingStatus.status === 'error' ? 'error' : 'success'}
               title={testingStatus.message}
               aria-label={selectors.pages.DataSource.alert}
-            />
+            >
+              {testingStatus.details?.message ?? null}
+            </Alert>
           )}
         </div>
 
