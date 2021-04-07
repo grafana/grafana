@@ -5,7 +5,6 @@ import { applyFieldOverrides, DataFrame, FieldType, toDataFrame } from '@grafana
 
 import { Props, Table } from './Table';
 import { getTheme } from '../../themes';
-import { PanelModel } from '../../../../../public/app/features/dashboard/state';
 
 function getDefaultDataFrame(): DataFrame {
   const dataFrame = toDataFrame({
@@ -64,7 +63,9 @@ function getDefaultDataFrame(): DataFrame {
       defaults: {},
       overrides: [],
     },
-    replaceVariables: new PanelModel({}).replaceVariables,
+    replaceVariables: (value, vars, format) => {
+      return vars && value === '${__value.text}' ? vars['__value'].value.text : value;
+    },
     timeZone: 'utc',
     theme: getTheme(),
   });
