@@ -190,17 +190,16 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 			fmt.Errorf("unable to translate nodata/exec error settings for alert id %v: %w", id, err))
 	}
 
-	// TODO: What to do with Rule Tags
-	// ruleTags := map[string]string{}
+	ruleTags := map[string]string{}
 
-	// for k, v := range oldAlert.Settings.Get("alertRuleTags").MustMap() {
-	// 	sV, ok := v.(string)
-	// 	if !ok {
-	// 		return response.Error(400, "unable to unmarshal rule tags",
-	// 			fmt.Errorf("unexpected type %T for tag %v", v, k))
-	// 	}
-	// 	ruleTags[k] = sV
-	// }
+	for k, v := range oldAlert.Settings.Get("alertRuleTags").MustMap() {
+		sV, ok := v.(string)
+		if !ok {
+			return response.Error(400, "unable to unmarshal rule tags",
+				fmt.Errorf("unexpected type %T for tag %v", v, k))
+		}
+		ruleTags[k] = sV
+	}
 
 	// TODO: Need place to put FOR duration
 
@@ -210,6 +209,8 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		Condition:    sseCond.Condition,
 		NoDataState:  *noDataSetting,
 		ExecErrState: *execErrSetting,
+		For:          model.Duration(oldAlert.For),
+		Annotations:  ruleTags,
 	}
 
 	rgc := apimodels.PostableRuleGroupConfig{
