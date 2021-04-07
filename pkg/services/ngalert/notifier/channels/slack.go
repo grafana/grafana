@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/bus"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -29,25 +30,30 @@ import (
 // alert notification to Slack.
 type SlackNotifier struct {
 	old_notifiers.NotifierBase
+	log         log.Logger
+	tmpl        *template.Template
+	externalUrl *url.URL
+
 	URL            string
-	Recipient      string
 	Username       string
 	IconEmoji      string
 	IconURL        string
+	Recipient      string
+	Text           string
+	Title          string
+	Fallback       string
 	MentionUsers   []string
 	MentionGroups  []string
 	MentionChannel string
 	Token          string
-	Upload         bool
-	log            log.Logger
 }
 
 var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*)|(#[^ .A-Z]{1,79})|([a-zA-Z0-9]+))$")
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(model *models.AlertNotification) (*SlackNotifier, error) {
-	url := model.DecryptedValue("url", model.Settings.Get("url").MustString())
-	if url == "" {
+func NewSlackNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*SlackNotifier, error) {
+	slackURL := model.DecryptedValue("url", model.Settings.Get("url").MustString())
+	if slackURL == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
@@ -55,21 +61,15 @@ func NewSlackNotifier(model *models.AlertNotification) (*SlackNotifier, error) {
 	if recipient != "" && !reRecipient.MatchString(recipient) {
 		return nil, alerting.ValidationError{Reason: fmt.Sprintf("Recipient on invalid format: %q", recipient)}
 	}
-	username := model.Settings.Get("username").MustString()
-	iconEmoji := model.Settings.Get("icon_emoji").MustString()
-	iconURL := model.Settings.Get("icon_url").MustString()
-	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
-	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
+
 	mentionChannel := model.Settings.Get("mentionChannel").MustString()
-	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
-
-	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
-
 	if mentionChannel != "" && mentionChannel != "here" && mentionChannel != "channel" {
 		return nil, alerting.ValidationError{
 			Reason: fmt.Sprintf("Invalid value for mentionChannel: %q", mentionChannel),
 		}
 	}
+
+	mentionUsersStr := model.Settings.Get("mentionUsers").MustString()
 	mentionUsers := []string{}
 	for _, u := range strings.Split(mentionUsersStr, ",") {
 		u = strings.TrimSpace(u)
@@ -77,6 +77,8 @@ func NewSlackNotifier(model *models.AlertNotification) (*SlackNotifier, error) {
 			mentionUsers = append(mentionUsers, u)
 		}
 	}
+
+	mentionGroupsStr := model.Settings.Get("mentionGroups").MustString()
 	mentionGroups := []string{}
 	for _, g := range strings.Split(mentionGroupsStr, ",") {
 		g = strings.TrimSpace(g)
@@ -87,27 +89,32 @@ func NewSlackNotifier(model *models.AlertNotification) (*SlackNotifier, error) {
 
 	return &SlackNotifier{
 		NotifierBase:   old_notifiers.NewNotifierBase(model),
-		URL:            url,
+		URL:            slackURL,
 		Recipient:      recipient,
-		Username:       username,
-		IconEmoji:      iconEmoji,
-		IconURL:        iconURL,
 		MentionUsers:   mentionUsers,
 		MentionGroups:  mentionGroups,
 		MentionChannel: mentionChannel,
-		Token:          token,
-		Upload:         uploadImage,
+		Username:       model.Settings.Get("username").MustString("Grafana"),
+		IconEmoji:      model.Settings.Get("icon_emoji").MustString(),
+		IconURL:        model.Settings.Get("icon_url").MustString(),
+		Token:          model.DecryptedValue("token", model.Settings.Get("token").MustString()),
+		Text:           model.Settings.Get("text").MustString(`{{ template "slack.default.text" . }}`),
+		Title:          model.Settings.Get("title").MustString(`{{ template "slack.default.title" . }}`),
+		Fallback:       model.Settings.Get("fallback").MustString(`{{ template "slack.default.title" . }}`),
 		log:            log.New("alerting.notifier.slack"),
+		tmpl:           t,
+		externalUrl:    externalUrl,
 	}, nil
 }
 
-// request is the request for sending a slack notification.
-type request struct {
-	Channel     string       `json:"channel,omitempty"`
-	Username    string       `json:"username,omitempty"`
-	IconEmoji   string       `json:"icon_emoji,omitempty"`
-	IconURL     string       `json:"icon_url,omitempty"`
-	Attachments []attachment `json:"attachments"`
+// slackMessage is the slackMessage for sending a slack notification.
+type slackMessage struct {
+	Channel     string                   `json:"channel,omitempty"`
+	Username    string                   `json:"username,omitempty"`
+	IconEmoji   string                   `json:"icon_emoji,omitempty"`
+	IconURL     string                   `json:"icon_url,omitempty"`
+	Attachments []attachment             `json:"attachments"`
+	Blocks      []map[string]interface{} `json:"blocks"`
 }
 
 // attachment is used to display a richly-formatted message block.
@@ -123,7 +130,7 @@ type attachment struct {
 	Ts         int64               `json:"ts,omitempty"`
 }
 
-func getAlertStatusAlert(status model.AlertStatus) string {
+func getAlertStatusColor(status model.AlertStatus) string {
 	if status == model.AlertFiring {
 		return "#D63232"
 	}
@@ -131,31 +138,12 @@ func getAlertStatusAlert(status model.AlertStatus) string {
 }
 
 func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	data := notify.GetTemplateData(ctx, &template.Template{}, as, gokit_log.NewNopLogger())
-	alerts := types.Alerts(as...)
-
-	title := getTitleFromTemplateData(data)
-	att := &attachment{
-		Color:      getAlertStatusAlert(alerts.Status()),
-		Title:      title,
-		Fallback:   title,
-		Footer:     "Grafana v" + setting.BuildVersion,
-		FooterIcon: "https://grafana.com/assets/img/fav32.png",
-		Ts:         time.Now().Unix(),
-		TitleLink:  "TODO: rule URL",
-		Text:       "TODO",
-		Fields:     nil, // TODO.
+	msg, err := sn.buildSlackMessage(ctx, as)
+	if err != nil {
+		return false, errors.Wrap(err, "build slack message")
 	}
 
-	req := &request{
-		Channel:     sn.Recipient,
-		Username:    sn.Username,
-		IconEmoji:   sn.IconEmoji,
-		IconURL:     sn.IconURL,
-		Attachments: []attachment{*att},
-	}
-
-	b, err := json.Marshal(&req)
+	b, err := json.Marshal(msg)
 	if err != nil {
 		return false, errors.Wrap(err, "marshal json")
 	}
@@ -166,6 +154,13 @@ func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		HttpMethod: http.MethodPost,
 	}
 
+	if sn.Token != "" {
+		sn.log.Debug("Adding authorization header to HTTP request")
+		cmd.HttpHeader = map[string]string{
+			"Authorization": fmt.Sprintf("Bearer %s", sn.Token),
+		}
+	}
+
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {
 		sn.log.Error("Failed to send slack notification", "error", err, "webhook", sn.Name)
 		return false, err
@@ -174,6 +169,74 @@ func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	return true, nil
 }
 
+func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
+	var tmplErr error
+	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: sn.externalUrl}, as, gokit_log.NewNopLogger())
+	alerts := types.Alerts(as...)
+	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
+
+	req := &slackMessage{
+		Channel:   tmpl(sn.Recipient),
+		Username:  tmpl(sn.Username),
+		IconEmoji: tmpl(sn.IconEmoji),
+		IconURL:   tmpl(sn.IconURL),
+		Attachments: []attachment{
+			{
+				Color:      getAlertStatusColor(alerts.Status()),
+				Title:      tmpl(sn.Title),
+				Fallback:   tmpl(sn.Fallback),
+				Footer:     "Grafana v" + setting.BuildVersion,
+				FooterIcon: "https://grafana.com/assets/img/fav32.png",
+				Ts:         time.Now().Unix(),
+				TitleLink:  "TODO: rule URL",
+				Text:       tmpl(sn.Text),
+				Fields:     nil, // TODO. Should be a config.
+			},
+		},
+	}
+
+	mentionsBuilder := strings.Builder{}
+	appendSpace := func() {
+		if mentionsBuilder.Len() > 0 {
+			mentionsBuilder.WriteString(" ")
+		}
+	}
+	mentionChannel := strings.TrimSpace(sn.MentionChannel)
+	if mentionChannel != "" {
+		mentionsBuilder.WriteString(fmt.Sprintf("<!%s|%s>", mentionChannel, mentionChannel))
+	}
+	if len(sn.MentionGroups) > 0 {
+		appendSpace()
+		for _, g := range sn.MentionGroups {
+			mentionsBuilder.WriteString(fmt.Sprintf("<!subteam^%s>", g))
+		}
+	}
+	if len(sn.MentionUsers) > 0 {
+		appendSpace()
+		for _, u := range sn.MentionUsers {
+			mentionsBuilder.WriteString(fmt.Sprintf("<@%s>", u))
+		}
+	}
+
+	if mentionsBuilder.Len() > 0 {
+		req.Blocks = []map[string]interface{}{
+			{
+				"type": "section",
+				"text": map[string]interface{}{
+					"type": "mrkdwn",
+					"text": mentionsBuilder.String(),
+				},
+			},
+		}
+	}
+
+	if tmplErr != nil {
+		tmplErr = errors.Wrap(tmplErr, "failed to template Slack message")
+	}
+
+	return req, tmplErr
+}
+
 func (sn *SlackNotifier) SendResolved() bool {
-	return true
+	return !sn.GetDisableResolveMessage()
 }
