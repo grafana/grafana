@@ -55,6 +55,7 @@ func TestResampleWide(t *testing.T) {
 					time.Date(2020, 1, 2, 3, 4, 23, 0, time.UTC),
 					time.Date(2020, 1, 2, 3, 4, 24, 0, time.UTC),
 					time.Date(2020, 1, 2, 3, 4, 25, 0, time.UTC),
+					time.Date(2020, 1, 2, 3, 4, 26, 0, time.UTC),
 				}),
 				data.NewField("Values Ints", nil, []*int64{
 					nil,
@@ -65,6 +66,7 @@ func TestResampleWide(t *testing.T) {
 					nil,
 					pointer.Int64(15),
 					nil,
+					nil,
 				}),
 				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []*float64{
 					nil,
@@ -74,6 +76,7 @@ func TestResampleWide(t *testing.T) {
 					nil,
 					nil,
 					pointer.Float64(15.0),
+					nil,
 					nil,
 				})),
 			err: require.NoError,
@@ -112,6 +115,7 @@ func TestResampleWide(t *testing.T) {
 					time.Date(2020, 1, 2, 3, 4, 23, 0, time.UTC),
 					time.Date(2020, 1, 2, 3, 4, 24, 0, time.UTC),
 					time.Date(2020, 1, 2, 3, 4, 25, 0, time.UTC),
+					time.Date(2020, 1, 2, 3, 4, 26, 0, time.UTC),
 				}),
 				data.NewField("Values Ints", nil, []*int64{
 					pointer.Int64(-1),
@@ -122,6 +126,7 @@ func TestResampleWide(t *testing.T) {
 					pointer.Int64(-1),
 					pointer.Int64(15),
 					pointer.Int64(-1),
+					pointer.Int64(-1),
 				}),
 				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []*float64{
 					pointer.Float64(-1),
@@ -131,6 +136,7 @@ func TestResampleWide(t *testing.T) {
 					pointer.Float64(-1),
 					pointer.Float64(-1),
 					pointer.Float64(15.0),
+					pointer.Float64(-1),
 					pointer.Float64(-1),
 				})),
 			err: require.NoError,
@@ -169,6 +175,7 @@ func TestResampleWide(t *testing.T) {
 					time.Date(2020, 1, 2, 3, 4, 23, 0, time.UTC),
 					time.Date(2020, 1, 2, 3, 4, 24, 0, time.UTC),
 					time.Date(2020, 1, 2, 3, 4, 25, 0, time.UTC),
+					time.Date(2020, 1, 2, 3, 4, 26, 0, time.UTC),
 				}),
 				data.NewField("Values Ints", nil, []*int64{
 					nil,
@@ -179,6 +186,7 @@ func TestResampleWide(t *testing.T) {
 					pointer.Int64(12),
 					pointer.Int64(15),
 					pointer.Int64(15),
+					pointer.Int64(15),
 				}),
 				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []*float64{
 					nil,
@@ -187,6 +195,7 @@ func TestResampleWide(t *testing.T) {
 					pointer.Float64(12.5),
 					pointer.Float64(12.5),
 					pointer.Float64(12.5),
+					pointer.Float64(15.0),
 					pointer.Float64(15.0),
 					pointer.Float64(15.0),
 				})),
@@ -222,18 +231,21 @@ func TestResampleWide(t *testing.T) {
 					time.Date(2020, 1, 2, 3, 4, 20, 0, time.UTC),
 					time.Date(2020, 1, 2, 3, 4, 22, 0, time.UTC),
 					time.Date(2020, 1, 2, 3, 4, 24, 0, time.UTC),
+					time.Date(2020, 1, 2, 3, 4, 26, 0, time.UTC),
 				}),
 				data.NewField("Values Ints", nil, []*int64{
 					pointer.Int64(12),
 					nil,
 					nil,
 					pointer.Int64(15),
+					nil,
 				}),
 				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []*float64{
 					pointer.Float64(12.5),
 					nil,
 					nil,
 					pointer.Float64(15.0),
+					nil,
 				})),
 			err: require.NoError,
 		},
