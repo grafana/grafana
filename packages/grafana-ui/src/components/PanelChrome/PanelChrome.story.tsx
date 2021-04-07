@@ -3,6 +3,7 @@ import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/st
 import { useInterval } from 'react-use';
 import { PanelChrome, PanelPadding } from './PanelChrome';
 import { LoadingIndicator } from './LoadingIndicator';
+import { ErrorIndicator } from './ErrorIndicator';
 import { useTheme } from '../../themes/ThemeContext';
 
 export default {
@@ -15,8 +16,8 @@ export default {
   argTypes: {
     rightItems: {
       control: {
-        type: 'select',
-        options: ['none', 'loading'],
+        type: 'multi-select',
+        options: ['none', 'loading', 'error'],
       },
     },
     width: {
@@ -33,10 +34,9 @@ export default {
 };
 
 type PanelChromeStoryProps = {
-  rightItems: string;
+  rightItems: string[];
   title: string | undefined;
   padding: PanelPadding;
-  error?: string;
 };
 
 export const StandardPanel = (props: PanelChromeStoryProps) => {
@@ -68,7 +68,7 @@ export const StandardPanel = (props: PanelChromeStoryProps) => {
 };
 
 StandardPanel.args = {
-  rightItems: 'none',
+  rightItems: ['none'],
   title: 'Very long title that should get ellipsis when there is no more space',
 };
 
@@ -79,11 +79,15 @@ const LoadingItem = () => {
   return <LoadingIndicator loading={loading} onCancel={() => setLoading(false)} />;
 };
 
-const mapToItems = (selected: string): React.ReactNode[] | undefined => {
-  switch (selected) {
-    case 'loading':
-      return [<LoadingItem key="loading" />];
-    default:
-      return;
-  }
+const mapToItems = (selected: string[]): React.ReactNode[] => {
+  return selected.map((s) => {
+    switch (s) {
+      case 'loading':
+        return <LoadingItem key="loading" />;
+      case 'error':
+        return <ErrorIndicator error="Could not find datasource with id: 12345" onClick={() => {}} />;
+      default:
+        return null;
+    }
+  });
 };

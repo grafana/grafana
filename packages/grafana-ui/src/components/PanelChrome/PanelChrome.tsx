@@ -2,7 +2,6 @@ import React, { CSSProperties, ReactNode } from 'react';
 import { css } from '@emotion/css';
 import { useTheme, useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import { ErrorIndicator } from './ErrorIndicator';
 
 /**
  * @internal
@@ -13,7 +12,6 @@ export interface PanelChromeProps {
   title?: string;
   padding?: PanelPadding;
   rightItems?: React.ReactNode[];
-  error?: string;
   children: (innerWidth: number, innerHeight: number) => React.ReactNode;
 }
 
@@ -32,7 +30,6 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   height,
   padding = 'md',
   rightItems = [],
-  error,
 }) => {
   const theme = useTheme();
   const styles = useStyles(getStyles);
@@ -48,7 +45,6 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   return (
     <div className={styles.container} style={containerStyles}>
       <div className={styles.header} style={headerStyles}>
-        <ErrorIndicator error={error} />
         <div className={styles.headerTitle}>{title}</div>
         {itemsRenderer(rightItems, (items) => {
           return <div className={styles.rightItems}>{items}</div>;
@@ -118,6 +114,7 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-grow: 1;
     `,
     rightItems: css`
+      display: flex;
       padding-right: ${theme.panelPadding}px;
     `,
   };

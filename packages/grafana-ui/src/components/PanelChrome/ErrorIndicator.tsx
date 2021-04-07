@@ -1,15 +1,19 @@
 import React from 'react';
-import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '../../themes';
+import { css, cx } from '@emotion/css';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { useStyles } from '../../themes';
+import { GrafanaTheme } from '@grafana/data';
 
-interface PanelChromeErrorProps {
+type ErrorIndicatorProps = {
   error?: string;
-}
+  onClick?: () => void;
+};
 
-export const ErrorIndicator: React.FC<PanelChromeErrorProps> = ({ error }) => {
+/**
+ * @internal
+ */
+export const ErrorIndicator: React.FC<ErrorIndicatorProps> = ({ error, onClick }) => {
   const styles = useStyles(getStyles);
 
   if (!error) {
@@ -17,43 +21,24 @@ export const ErrorIndicator: React.FC<PanelChromeErrorProps> = ({ error }) => {
   }
 
   return (
-    <>
-      <div className={styles.spacer} />
-      <div className={styles.container}>
-        <Tooltip theme="error" content={error} placement="top">
-          <div className={styles.triangle}>
-            <Icon className={styles.icon} name="exclamation"></Icon>
-          </div>
-        </Tooltip>
-      </div>
-    </>
+    <Tooltip theme="error" content={error}>
+      <Icon
+        onClick={onClick}
+        className={cx(styles.icon, { [styles.clickable]: !!onClick })}
+        size="sm"
+        name="exclamation-triangle"
+      />
+    </Tooltip>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
-    container: css`
-      position: absolute;
-      left: 0;
-      top: 0;
+    clickable: css`
       cursor: pointer;
-      width: ${theme.panelHeaderHeight}px;
-      height: ${theme.panelHeaderHeight}px;
-    `,
-    spacer: css`
-      width: ${theme.panelHeaderHeight / 2}px;
-    `,
-    triangle: css`
-      height: 0;
-      width: 0;
-      border-left: ${theme.panelHeaderHeight}px solid ${theme.palette.red88};
-      border-right: none;
-      border-bottom: ${theme.panelHeaderHeight}px solid transparent;
     `,
     icon: css`
-      position: absolute;
-      left: 0;
-      top: 0;
+      color: ${theme.palette.red88};
     `,
   };
 };
