@@ -10,7 +10,7 @@ import {
 } from '@grafana/ui';
 import { ButtonProps, Elements, PopoverProps, TooltipProps } from '@jaegertracing/jaeger-ui-components';
 import cx from 'classnames';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import React, { useRef } from 'react';
 
 /**

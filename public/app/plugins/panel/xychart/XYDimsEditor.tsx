@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { IconButton, Label, Select, stylesFactory, useTheme } from '@grafana/ui';
 import {
   SelectableValue,
@@ -23,10 +23,6 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
   onChange,
   context,
 }) => {
-  if (!context.data) {
-    return <div>No data...</div>;
-  }
-
   const frameNames = useMemo(() => {
     if (context?.data?.length) {
       return context.data.map((f, idx) => ({
@@ -35,7 +31,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
       }));
     }
     return [{ value: 0, label: 'First result' }];
-  }, [context.data, value?.frame]);
+  }, [context.data]);
 
   const dims = useMemo(() => getXYDimensions(value, context.data), [context.data, value]);
 
@@ -86,6 +82,10 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
 
   const theme = useTheme();
   const styles = getStyles(theme);
+
+  if (!context.data) {
+    return <div>No data...</div>;
+  }
 
   return (
     <div>

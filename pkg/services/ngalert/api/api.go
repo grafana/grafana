@@ -4,25 +4,23 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana/pkg/services/datasourceproxy"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/go-macaron/binding"
+
+	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/expr/translate"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
@@ -30,6 +28,14 @@ import (
 
 // timeNow makes it possible to test usage of time
 var timeNow = time.Now
+
+type Alertmanager interface {
+	ApplyConfig(config *apimodels.PostableUserConfig) error
+	CreateSilence(ps *apimodels.PostableSilence) (string, error)
+	DeleteSilence(silenceID string) error
+	GetSilence(silenceID string) (apimodels.GettableSilence, error)
+	ListSilences(filters []string) (apimodels.GettableSilences, error)
+}
 
 // API handlers.
 type API struct {
@@ -39,7 +45,11 @@ type API struct {
 	DataService     *tsdb.Service
 	Schedule        schedule.ScheduleService
 	Store           store.Store
+	RuleStore       store.RuleStore
+	AlertingStore   store.AlertingStore
 	DataProxy       *datasourceproxy.DatasourceProxyService
+	Alertmanager    Alertmanager
+	StateTracker    *state.StateTracker
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -48,16 +58,20 @@ func (api *API) RegisterAPIEndpoints() {
 	proxy := &AlertingProxy{
 		DataProxy: api.DataProxy,
 	}
-	api.RegisterAlertmanagerApiEndpoints(AlertmanagerApiMock{log: logger})
+	api.RegisterAlertmanagerApiEndpoints(NewForkedAM(
+		api.DatasourceCache,
+		NewLotexAM(proxy, logger),
+		AlertmanagerSrv{store: api.AlertingStore, am: api.Alertmanager, log: logger},
+	))
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		PrometheusApiMock{log: logger},
+		PrometheusSrv{log: logger, stateTracker: api.StateTracker},
 	))
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
-		RulerApiMock{log: logger},
+		RulerSrv{store: api.RuleStore, log: logger},
 	))
 	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
 
@@ -74,15 +88,6 @@ func (api *API) RegisterAPIEndpoints() {
 		alertDefinitions.Post("/unpause", middleware.ReqEditorRole, binding.Bind(ngmodels.UpdateAlertDefinitionPausedCommand{}), routing.Wrap(api.alertDefinitionUnpauseEndpoint))
 	})
 
-	api.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
-		schedulerRouter.Post("/pause", routing.Wrap(api.pauseScheduler))
-		schedulerRouter.Post("/unpause", routing.Wrap(api.unpauseScheduler))
-	}, middleware.ReqOrgAdmin)
-
-	api.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
-		alertInstances.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertInstancesEndpoint))
-	})
-
 	if api.Cfg.Env == setting.Dev {
 		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 			alertDefinitions.Post("/evalOld", middleware.ReqSignedIn, routing.Wrap(api.conditionEvalOldEndpoint))
@@ -90,102 +95,21 @@ func (api *API) RegisterAPIEndpoints() {
 		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 			alertDefinitions.Get("/evalOldByID/:id", middleware.ReqSignedIn, routing.Wrap(api.conditionEvalOldEndpointByID))
 		})
-	}
-}
-
-// conditionEvalEndpoint handles POST /api/alert-definitions/evalOld.
-func (api *API) conditionEvalOldEndpoint(c *models.ReqContext) response.Response {
-	b, err := c.Req.Body().Bytes()
-	if err != nil {
-		response.Error(400, "failed to read body", err)
-	}
-	evalCond, err := translate.DashboardAlertConditions(b, c.OrgId)
-	if err != nil {
-		return response.Error(400, "Failed to translate alert conditions", err)
+		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+			alertDefinitions.Get("/oldByID/:id", middleware.ReqSignedIn, routing.Wrap(api.conditionOldEndpointByID))
+		})
+		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+			alertDefinitions.Get("/ruleGroupByOldID/:id", middleware.ReqSignedIn, routing.Wrap(api.ruleGroupByOldID))
+		})
 	}
 
-	if err := api.validateCondition(*evalCond, c.SignedInUser, c.SkipCache); err != nil {
-		return response.Error(400, "invalid condition", err)
-	}
+	api.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
+		schedulerRouter.Post("/pause", routing.Wrap(api.pauseScheduler))
+		schedulerRouter.Post("/unpause", routing.Wrap(api.unpauseScheduler))
+	}, middleware.ReqOrgAdmin)
 
-	//now := cmd.Now
-	//if now.IsZero() {
-	//now := timeNow()
-	//}
-
-	evaluator := eval.Evaluator{Cfg: api.Cfg}
-	evalResults, err := evaluator.ConditionEval(evalCond, timeNow(), api.DataService)
-	if err != nil {
-		return response.Error(400, "Failed to evaluate conditions", err)
-	}
-
-	frame := evalResults.AsDataFrame()
-	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
-	instances, err := df.Encoded()
-	if err != nil {
-		return response.Error(400, "Failed to encode result dataframes", err)
-	}
-
-	return response.JSON(200, util.DynMap{
-		"instances": instances,
-	})
-}
-
-// conditionEvalEndpoint handles POST /api/alert-definitions/evalOld.
-func (api *API) conditionEvalOldEndpointByID(c *models.ReqContext) response.Response {
-	id := c.ParamsInt64("id")
-	if id == 0 {
-		return response.Error(400, "missing id", nil)
-	}
-
-	getAlert := &models.GetAlertByIdQuery{
-		Id: id,
-	}
-
-	if err := bus.Dispatch(getAlert); err != nil {
-		return response.Error(400, fmt.Sprintf("could find alert with id %v", id), err)
-	}
-
-	if getAlert.Result.OrgId != c.SignedInUser.OrgId {
-		return response.Error(403, "alert does not match organization of user", nil)
-	}
-
-	settings := getAlert.Result.Settings
-
-	sb, err := settings.ToDB()
-	if err != nil {
-		return response.Error(400, "failed to marshal alert settings", err)
-	}
-
-	evalCond, err := translate.DashboardAlertConditions(sb, c.OrgId)
-	if err != nil {
-		return response.Error(400, "Failed to translate alert conditions", err)
-	}
-
-	if err := api.validateCondition(*evalCond, c.SignedInUser, c.SkipCache); err != nil {
-		return response.Error(400, "invalid condition", err)
-	}
-
-	//now := cmd.Now
-	//if now.IsZero() {
-	//now := timeNow()
-	//}
-
-	evaluator := eval.Evaluator{Cfg: api.Cfg}
-	evalResults, err := evaluator.ConditionEval(evalCond, timeNow(), api.DataService)
-	if err != nil {
-		return response.Error(400, "Failed to evaluate conditions", err)
-	}
-
-	frame := evalResults.AsDataFrame()
-	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
-	instances, err := df.Encoded()
-	if err != nil {
-		return response.Error(400, "Failed to encode result dataframes", err)
-	}
-
-	return response.JSON(200, util.DynMap{
-		"instances": instances,
+	api.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
+		alertInstances.Get("", middleware.ReqSignedIn, routing.Wrap(api.listAlertInstancesEndpoint))
 	})
 }
 
@@ -212,14 +136,9 @@ func (api *API) conditionEvalEndpoint(c *models.ReqContext, cmd ngmodels.EvalAle
 	}
 
 	frame := evalResults.AsDataFrame()
-	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
-	instances, err := df.Encoded()
-	if err != nil {
-		return response.Error(400, "Failed to encode result dataframes", err)
-	}
 
-	return response.JSON(200, util.DynMap{
-		"instances": instances,
+	return response.JSONStreaming(200, util.DynMap{
+		"instances": []*data.Frame{&frame},
 	})
 }
 
@@ -243,17 +162,8 @@ func (api *API) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Respo
 	}
 	frame := evalResults.AsDataFrame()
 
-	df := plugins.NewDecodedDataFrames([]*data.Frame{&frame})
-	if err != nil {
-		return response.Error(400, "Failed to instantiate Dataframes from the decoded frames", err)
-	}
-
-	instances, err := df.Encoded()
-	if err != nil {
-		return response.Error(400, "Failed to encode result dataframes", err)
-	}
-	return response.JSON(200, util.DynMap{
-		"instances": instances,
+	return response.JSONStreaming(200, util.DynMap{
+		"instances": []*data.Frame{&frame},
 	})
 }
 

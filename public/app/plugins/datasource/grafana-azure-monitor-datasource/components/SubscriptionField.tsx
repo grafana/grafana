@@ -54,7 +54,14 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
           });
       })
       .catch((err) => setError(ERROR_SOURCE, err));
-  }, []);
+  }, [
+    datasource.azureLogAnalyticsDatasource?.logAnalyticsSubscriptionId,
+    datasource.azureLogAnalyticsDatasource?.subscriptionId,
+    datasource.azureMonitorDatasource,
+    onQueryChange,
+    query,
+    setError,
+  ]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -77,7 +84,7 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
           metricNamespace: undefined,
           resourceName: undefined,
           metricName: undefined,
-          aggregation: '',
+          aggregation: 'None',
           timeGrain: '',
           dimensionFilters: [],
         };

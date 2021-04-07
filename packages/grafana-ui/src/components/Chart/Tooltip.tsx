@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Portal } from '../Portal/Portal';
 import { Dimensions, TimeZone } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';

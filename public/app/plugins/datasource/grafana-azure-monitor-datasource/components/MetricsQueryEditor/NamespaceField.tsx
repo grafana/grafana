@@ -29,7 +29,7 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
       .getMetricDefinitions(subscriptionId, resourceGroup)
       .then((results) => setNamespaces(results.map(toOption)))
       .catch((err) => setError(ERROR_SOURCE, err));
-  }, [subscriptionId, query.azureMonitor.resourceGroup]);
+  }, [datasource, namespaces.length, query.azureMonitor, setError, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -45,13 +45,13 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
           resourceName: undefined,
           metricNamespace: undefined,
           metricName: undefined,
-          aggregation: '',
+          aggregation: 'None',
           timeGrain: '',
           dimensionFilters: [],
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...namespaces, variableOptionGroup], [namespaces, variableOptionGroup]);

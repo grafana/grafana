@@ -30,7 +30,7 @@ const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
         setError(ERROR_SOURCE, undefined);
       })
       .catch((err) => setError(ERROR_SOURCE, err));
-  }, [subscriptionId]);
+  }, [datasource, resourceGroups.length, setError, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -47,13 +47,13 @@ const ResourceGroupsField: React.FC<AzureQueryEditorFieldProps> = ({
           resourceName: undefined,
           metricNamespace: undefined,
           metricName: undefined,
-          aggregation: '',
+          aggregation: 'None',
           timeGrain: '',
           dimensionFilters: [],
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...resourceGroups, variableOptionGroup], [resourceGroups, variableOptionGroup]);

@@ -46,7 +46,7 @@ export class NewDashboardsFolder extends PureComponent<Props> {
     return (
       <Page navModel={this.props.navModel}>
         <Page.Contents>
-          <h3>New Dashboard Folder</h3>
+          <h3>New dashboard folder</h3>
           <Form defaultValues={initialFormModel} onSubmit={this.onSubmit}>
             {({ register, errors }) => (
               <>

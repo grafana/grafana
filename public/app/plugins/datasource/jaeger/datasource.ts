@@ -15,6 +15,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { createTraceFrame } from './responseTransform';
+import { createGraphFrames } from './graphTransform';
 
 export type JaegerQuery = {
   query: string;
@@ -41,8 +42,13 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
     return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
       map((response) => {
+        // We assume there is only one trace, as the querying right now does not work to query for multiple traces.
+        const traceData = response?.data?.data?.[0];
+        if (!traceData) {
+          return { data: [emptyTraceDataFrame] };
+        }
         return {
-          data: [createTraceFrame(response?.data?.data?.[0] || [])],
+          data: [createTraceFrame(traceData), ...createGraphFrames(traceData)],
         };
       })
     );

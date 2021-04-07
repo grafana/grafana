@@ -42,18 +42,24 @@ export function updateSourcePanel(sourcePanel: PanelModel): ThunkResult<void> {
   };
 }
 
+export function discardPanelChanges(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const { getPanel } = getStore().panelEditor;
+    getPanel().hasChanged = false;
+    dispatch(setDiscardChanges(true));
+  };
+}
 export function exitPanelEditor(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();
     const { getPanel, shouldDiscardChanges } = getStore().panelEditor;
     const onConfirm = () => locationService.partial({ editPanel: null, tab: null });
 
+    const panel = getPanel();
     const onDiscard = () => {
-      dispatch(setDiscardChanges(true));
+      dispatch(discardPanelChanges());
       onConfirm();
     };
-
-    const panel = getPanel();
 
     if (shouldDiscardChanges || !panel.libraryPanel) {
       onConfirm();
@@ -125,7 +131,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
 
       updateDuplicateLibraryPanels(panel, dashboard!, dispatch);
 
-      // restore the source panel id before we update source panel
+      // restore the source panel ID before we update source panel
       modifiedSaveModel.id = sourcePanel.id;
 
       sourcePanel.restoreModel(modifiedSaveModel);
