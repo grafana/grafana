@@ -32,11 +32,23 @@ export const ClassicConditions: FC<Props> = ({ onChange, query, refIds }) => {
 
   const onRemoveCondition = (index: number) => {
     if (query.conditions) {
-      delete query.conditions[index];
-
+      const condition = query.conditions[index];
+      const conditions = query.conditions
+        .filter((c) => c !== condition)
+        .map((c, index) => {
+          if (index === 0) {
+            return {
+              ...c,
+              operator: {
+                type: 'when',
+              },
+            };
+          }
+          return c;
+        });
       onChange({
         ...query,
-        conditions: query.conditions.length - 1 > 0 ? [...query.conditions] : [],
+        conditions,
       });
     }
   };
