@@ -52,6 +52,7 @@ func (p *LotexProm) RouteGetAlertStatuses(ctx *models.ReqContext) response.Respo
 		),
 		nil,
 		jsonExtractor(&apimodels.AlertResponse{}),
+		nil,
 	)
 }
 
@@ -70,6 +71,7 @@ func (p *LotexProm) RouteGetRuleStatuses(ctx *models.ReqContext) response.Respon
 		),
 		nil,
 		jsonExtractor(&apimodels.RuleResponse{}),
+		nil,
 	)
 }
 

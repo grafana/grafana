@@ -45,6 +45,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) res
 		),
 		nil,
 		messageExtractor,
+		nil,
 	)
 }
 
@@ -67,6 +68,7 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response
 		),
 		nil,
 		messageExtractor,
+		nil,
 	)
 }
 
@@ -88,6 +90,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 		),
 		nil,
 		yamlExtractor(apimodels.NamespaceConfigResponse{}),
+		nil,
 	)
 }
 
@@ -110,6 +113,7 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 		),
 		nil,
 		yamlExtractor(apimodels.RuleGroupConfigResponse{}),
+		nil,
 	)
 }
 
@@ -127,6 +131,7 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respon
 		),
 		nil,
 		yamlExtractor(apimodels.NamespaceConfigResponse{}),
+		nil,
 	)
 }
 
@@ -141,7 +146,7 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 	}
 	ns := ctx.Params("Namespace")
 	u := withPath(*ctx.Req.URL, fmt.Sprintf("%s/%s", legacyRulerPrefix, ns))
-	return r.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil))
+	return r.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
 }
 
 func (r *LotexRuler) getPrefix(ctx *models.ReqContext) (string, error) {

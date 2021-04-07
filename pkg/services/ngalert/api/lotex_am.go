@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	amSilencesPath    = "/api/v2/silences"
-	amSilencePath     = "/api/v2/silence/%s"
-	amAlertGroupsPath = "/api/v2/alerts/groups"
-	amAlertsPath      = "/api/v2/alerts"
+	amSilencesPath    = "/alertmanager/api/v2/silences"
+	amSilencePath     = "/alertmanager/api/v2/silence/%s"
+	amAlertGroupsPath = "/alertmanager/api/v2/alerts/groups"
+	amAlertsPath      = "/alertmanager/api/v2/alerts"
 	amConfigPath      = "/api/v1/alerts"
 )
 
@@ -44,6 +44,7 @@ func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimod
 		withPath(*ctx.Req.URL, amSilencesPath),
 		bytes.NewBuffer(blob),
 		jsonExtractor(&apimodels.GettableSilence{}),
+		map[string]string{"Content-Type": "application/json"},
 	)
 }
 
@@ -57,6 +58,7 @@ func (am *LotexAM) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Re
 		),
 		nil,
 		messageExtractor,
+		nil,
 	)
 }
 
@@ -70,6 +72,7 @@ func (am *LotexAM) RouteDeleteSilence(ctx *models.ReqContext) response.Response 
 		),
 		nil,
 		messageExtractor,
+		nil,
 	)
 }
 
@@ -82,7 +85,8 @@ func (am *LotexAM) RouteGetAlertingConfig(ctx *models.ReqContext) response.Respo
 			amConfigPath,
 		),
 		nil,
-		jsonExtractor(&apimodels.GettableUserConfig{}),
+		yamlExtractor(&apimodels.GettableUserConfig{}),
+		nil,
 	)
 }
 
@@ -96,6 +100,7 @@ func (am *LotexAM) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Respon
 		),
 		nil,
 		jsonExtractor(&apimodels.AlertGroups{}),
+		nil,
 	)
 }
 
@@ -109,6 +114,7 @@ func (am *LotexAM) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
 		),
 		nil,
 		jsonExtractor(&apimodels.GettableAlerts{}),
+		nil,
 	)
 }
 
@@ -122,6 +128,7 @@ func (am *LotexAM) RouteGetSilence(ctx *models.ReqContext) response.Response {
 		),
 		nil,
 		jsonExtractor(&apimodels.GettableSilence{}),
+		nil,
 	)
 }
 
@@ -135,6 +142,7 @@ func (am *LotexAM) RouteGetSilences(ctx *models.ReqContext) response.Response {
 		),
 		nil,
 		jsonExtractor(&apimodels.GettableSilences{}),
+		nil,
 	)
 }
 
@@ -150,6 +158,7 @@ func (am *LotexAM) RoutePostAlertingConfig(ctx *models.ReqContext, config apimod
 		withPath(*ctx.Req.URL, amConfigPath),
 		bytes.NewBuffer(yml),
 		messageExtractor,
+		nil,
 	)
 }
 
@@ -165,5 +174,6 @@ func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.Po
 		withPath(*ctx.Req.URL, amAlertsPath),
 		bytes.NewBuffer(yml),
 		messageExtractor,
+		nil,
 	)
 }

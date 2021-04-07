@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/go-openapi/strfmt"
 	apimodels "github.com/grafana/alerting-api/pkg/api"
@@ -47,7 +48,7 @@ func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimod
 			switch ds.Type {
 			case "loki", "prometheus":
 				return apimodels.LoTexRulerBackend, nil
-			case "grafana-alertmanager-datasource":
+			case "alertmanager":
 				return apimodels.AlertmanagerBackend, nil
 			default:
 				return 0, fmt.Errorf("unexpected backend type (%v)", ds.Type)
@@ -91,10 +92,14 @@ func (p *AlertingProxy) withReq(
 	u *url.URL,
 	body io.Reader,
 	extractor func([]byte) (interface{}, error),
+	headers map[string]string,
 ) response.Response {
 	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
+	}
+	for h, v := range headers {
+		req.Header.Add(h, v)
 	}
 	newCtx, resp := replacedResponseWriter(ctx)
 	newCtx.Req.Request = req
@@ -102,7 +107,19 @@ func (p *AlertingProxy) withReq(
 
 	status := resp.Status()
 	if status >= 400 {
-		return response.Error(status, string(resp.Body()), nil)
+		errMessage := string(resp.Body())
+		// if Content-Type is application/json
+		// and it is successfully decoded and contains a message
+		// return this as response error message
+		if strings.HasPrefix(resp.Header().Get("Content-Type"), "application/json") {
+			var m map[string]interface{}
+			if err := json.Unmarshal(resp.Body(), &m); err == nil {
+				if message, ok := m["message"]; ok {
+					errMessage = message.(string)
+				}
+			}
+		}
+		return response.Error(status, errMessage, nil)
 	}
 
 	t, err := extractor(resp.Body())
