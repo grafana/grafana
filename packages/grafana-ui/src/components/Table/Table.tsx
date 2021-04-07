@@ -14,7 +14,7 @@ import {
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns } from './utils';
+import { getColumns, sortCaseInsensitive } from './utils';
 import { useTheme } from '../../themes';
 import {
   TableColumnResizeActionCallback,
@@ -151,6 +151,9 @@ export const Table: FC<Props> = memo((props: Props) => {
       disableResizing: !resizable,
       stateReducer: stateReducer,
       initialState: getInitialState(initialSortBy, memoizedColumns),
+      sortTypes: {
+        'alphanumeric-insensitive': sortCaseInsensitive,
+      },
     }),
     [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
   );

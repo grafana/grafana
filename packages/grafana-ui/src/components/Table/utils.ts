@@ -63,7 +63,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
         case FieldType.time:
           return 'basic';
         default:
-          return 'alphanumeric';
+          return 'alphanumeric-insensitive';
       }
     };
 
@@ -203,4 +203,8 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
   }
 
   return options.filter((option) => filterValues.some((filtered) => filtered.value === option.value));
+}
+
+export function sortCaseInsensitive(a: Row<any>, b: Row<any>, id: string) {
+  return String(a.values[id]).localeCompare(String(b.values[id]), undefined, { sensitivity: 'base' });
 }
