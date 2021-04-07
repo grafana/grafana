@@ -1,20 +1,7 @@
 package accesscontrol
 
 import (
-	"errors"
 	"time"
-)
-
-var (
-	ErrRoleNotFound                = errors.New("role not found")
-	ErrTeamRoleAlreadyAdded        = errors.New("role is already added to this team")
-	ErrUserRoleAlreadyAdded        = errors.New("role is already added to this user")
-	ErrTeamRoleNotFound            = errors.New("team role not found")
-	ErrUserRoleNotFound            = errors.New("user role not found")
-	ErrTeamNotFound                = errors.New("team not found")
-	ErrPermissionNotFound          = errors.New("permission not found")
-	ErrRoleFailedGenerateUniqueUID = errors.New("failed to generate role definition UID")
-	ErrVersionLE                   = errors.New("the provided role version is smaller than or equal to stored role")
 )
 
 // Role is the model for Role in RBAC.
