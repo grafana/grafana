@@ -1,12 +1,13 @@
 package ossaccesscontrol
 
 import (
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-var builtInRolesMap = map[string]accesscontrol.RoleDTO{
-	"gf:users:self:read": {
-		Name:    "gf:users:self:read",
+var PredefinedRoles = map[string]accesscontrol.RoleDTO{
+	usersSelfRead: {
+		Name:    usersSelfRead,
 		Version: 1,
 		Permissions: []accesscontrol.Permission{
 			{
@@ -23,8 +24,8 @@ var builtInRolesMap = map[string]accesscontrol.RoleDTO{
 			},
 		},
 	},
-	"gf:users:admin:read": {
-		Name:    "gf:users:admin:read",
+	usersAdminRead: {
+		Name:    usersAdminRead,
 		Version: 1,
 		Permissions: []accesscontrol.Permission{
 			{
@@ -37,8 +38,8 @@ var builtInRolesMap = map[string]accesscontrol.RoleDTO{
 			},
 		},
 	},
-	"gf:users:admin:edit": {
-		Name:    "gf:users:admin:edit",
+	usersAdminEdit: {
+		Name:    usersAdminEdit,
 		Version: 1,
 		Permissions: []accesscontrol.Permission{
 			{
@@ -89,19 +90,25 @@ var builtInRolesMap = map[string]accesscontrol.RoleDTO{
 	},
 }
 
-var builtInRoleGrants = map[string][]string{
-	"Viewer": {
-		"gf:users:self:read",
+const (
+	usersSelfRead  = "grafana:roles:users:self:read"
+	usersAdminRead = "grafana:roles:users:admin:read"
+	usersAdminEdit = "grafana:roles:users:admin:edit"
+)
+
+var PredefinedRoleGrants = map[string][]string{
+	string(models.ROLE_VIEWER): {
+		usersSelfRead,
 	},
-	"Grafana Admin": {
-		"gf:users:admin:read",
-		"gf:users:admin:edit",
+	accesscontrol.RoleGrafanaAdmin: {
+		usersAdminRead,
+		usersAdminEdit,
 	},
 }
 
 func getBuiltInRole(role string) *accesscontrol.RoleDTO {
 	var builtInRole accesscontrol.RoleDTO
-	if r, ok := builtInRolesMap[role]; ok {
+	if r, ok := PredefinedRoles[role]; ok {
 		// Do not modify builtInRoles
 		builtInRole = r
 		return &builtInRole

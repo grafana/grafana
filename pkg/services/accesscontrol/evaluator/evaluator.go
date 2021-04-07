@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"github.com/gobwas/glob"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
-
-const roleGrafanaAdmin = "Grafana Admin"
 
 // Evaluate evaluates access to the given resource, using provided AccessControl instance
 func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
@@ -17,7 +16,7 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 		roles = append(roles, string(role))
 	}
 	if user.IsGrafanaAdmin {
-		roles = append(roles, roleGrafanaAdmin)
+		roles = append(roles, accesscontrol.RoleGrafanaAdmin)
 	}
 
 	res, err := ac.GetUserPermissions(ctx, user, roles)

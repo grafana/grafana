@@ -79,6 +79,9 @@ func (p RoleDTO) Role() Role {
 const (
 	// Permission actions
 
+	ActionUsersRead     = "users:read"
+	ActionUsersWrite    = "users:write"
+	ActionUsersTeamRead = "users.teams:read"
 	// We can ignore gosec G101 since this does not contain any credentials
 	// nolint:gosec
 	ActionUsersAuthTokenList = "users.authtoken:list"
@@ -101,3 +104,5 @@ const (
 	ScopeUsersAll  = "users:*"
 	ScopeUsersSelf = "users:self"
 )
+
+const RoleGrafanaAdmin = "Grafana Admin"
