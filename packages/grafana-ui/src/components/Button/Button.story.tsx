@@ -43,6 +43,9 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
                 {variant} {size}
               </Button>
             ))}
+            <Button variant={variant} disabled>
+              {variant} disabled
+            </Button>
           </VerticalGroup>
         ))}
       </HorizontalGroup>

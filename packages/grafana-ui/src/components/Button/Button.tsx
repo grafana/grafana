@@ -58,22 +58,10 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       children,
     });
 
-    const linkButtonStyles =
-      disabled &&
-      cx(
-        disabledStyles,
-        css`
-          pointer-events: none;
-        `
-      );
+    const linkButtonStyles = cx(styles.button, { [styles.disabled]: disabled }, className);
 
     return (
-      <a
-        className={cx(styles.button, linkButtonStyles, className)}
-        {...otherProps}
-        ref={ref}
-        tabIndex={disabled ? -1 : 0}
-      >
+      <a className={linkButtonStyles} {...otherProps} ref={ref} tabIndex={disabled ? -1 : 0}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </a>
@@ -93,23 +81,26 @@ export interface StyleProps {
   narrow?: boolean;
 }
 
-const disabledStyles: CSSObject = {
-  cursor: 'not-allowed',
-  opacity: 0.65,
-  boxShadow: 'none',
-};
-
 export const getButtonStyles = (props: StyleProps) => {
   const { theme, variant, size, children, fullWidth } = props;
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme.v2);
   const variantStyles = getPropertiesForVariant(theme.v2, variant);
   const iconOnly = !children;
 
-  // fullWidth && {}
-  //     `
-  //       flex-grow: 1;
-  //       justify-content: center;
-  //     `}
+  const disabledStyles: CSSObject = {
+    cursor: 'not-allowed',
+    opacity: 0.65,
+    boxShadow: 'none',
+    background: theme.v2.palette.formComponent.disabledBackground,
+    border: `1px solid ${theme.v2.palette.formComponent.disabledBackground}`,
+    color: theme.v2.palette.text.disabled,
+    pointerEvents: 'none',
+
+    '&:hover': {
+      background: theme.v2.palette.formComponent.disabledBackground,
+      color: theme.v2.palette.text.disabled,
+    },
+  };
 
   return {
     button: css({
@@ -122,21 +113,26 @@ export const getButtonStyles = (props: StyleProps) => {
       padding: theme.v2.spacing(0, padding),
       height: theme.v2.spacing(height),
       // Deduct border from line-height for perfect vertical centering on windows and linux
-      // lineHeight: `${height - 2}px`,
+      lineHeight: `${theme.v2.spacing.gridSize * height - 2}px`,
       verticalAlign: 'middle',
       cursor: 'pointer',
       borderRadius: theme.v2.shape.borderRadius(1),
+      ...(fullWidth && {
+        flexGrow: 1,
+        justifyContent: 'center',
+      }),
+      ...variantStyles,
       ':disabled': disabledStyles,
       '&[disabled]': disabledStyles,
-      ...variantStyles,
     }),
+    disabled: css(disabledStyles),
     img: css`
       width: 16px;
       height: 16px;
       margin: ${theme.v2.spacing(0, 1, 0, 0.5)};
     `,
     icon: css`
-      margin: ${theme.v2.spacing(0, (iconOnly ? -padding : padding) / 2, 0, padding / 2)};
+      margin: ${theme.v2.spacing(0, (iconOnly ? -padding : padding) / 2, 0, -(padding / 2))};
     `,
     content: css`
       display: flex;
@@ -153,7 +149,7 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemePaletteColor)
     background: color.main,
     color: color.contrastText,
     boxShadow: theme.shadows.z1,
-    border: `1px solid ${color.main}`,
+    border: `1px solid transparent`,
 
     '&:hover': {
       background: theme.palette.getHoverColor(color.main),
