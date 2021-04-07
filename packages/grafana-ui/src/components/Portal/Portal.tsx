@@ -1,14 +1,13 @@
-﻿import React, { PureComponent, useEffect, useRef, useMemo } from 'react';
+﻿import React, { PureComponent } from 'react';
 import ReactDOM from 'react-dom';
-
+import { appZIndexes } from '../../themes/default';
 interface Props {
   className?: string;
   root?: HTMLElement;
   forwardedRef?: any;
 }
-
 export class Portal extends PureComponent<Props> {
-  node: HTMLElement = document.createElement('div');
+  node: HTMLDivElement = document.createElement('div');
   portalRoot: HTMLElement;
 
   constructor(props: Props) {
@@ -18,6 +17,9 @@ export class Portal extends PureComponent<Props> {
     if (className) {
       this.node.classList.add(className);
     }
+
+    this.node.style.position = 'relative';
+    this.node.style.zIndex = `${appZIndexes.portal}`;
 
     this.portalRoot = root;
     this.portalRoot.appendChild(this.node);
@@ -29,33 +31,10 @@ export class Portal extends PureComponent<Props> {
 
   render() {
     // Default z-index is high to make sure
-    return ReactDOM.createPortal(
-      <div style={{ zIndex: 1051, position: 'relative' }} ref={this.props.forwardedRef}>
-        {this.props.children}
-      </div>,
-      this.node
-    );
+    return ReactDOM.createPortal(<div ref={this.props.forwardedRef}>{this.props.children}</div>, this.node);
   }
 }
 
 export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
   return <Portal {...props} forwardedRef={ref} />;
 });
-
-export const usePortalNode = (root: HTMLElement = document.body): HTMLElement => {
-  const node = useMemo(() => {
-    const element = document.createElement('div');
-    element.style.zIndex = '1051';
-    return element;
-  }, []);
-
-  useEffect(() => {
-    root.appendChild(node);
-
-    return () => {
-      root.removeChild(node);
-    };
-  }, [node, root]);
-
-  return node;
-};

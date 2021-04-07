@@ -1,5 +1,16 @@
 import { GrafanaThemeCommons } from '@grafana/data';
 
+export const appZIndexes = {
+  navbarFixed: 1000,
+  sidemenu: 1020,
+  dropdown: 1030,
+  typeahead: 1030,
+  tooltip: 1040,
+  modalBackdrop: 1050,
+  portal: 1051,
+  modal: 1060,
+};
+
 export const commonColorsPalette = {
   // New greys palette used by next-gen form elements
   gray98: '#f7f8fa',
@@ -123,15 +134,7 @@ const theme: GrafanaThemeCommons = {
   },
   panelPadding: 8,
   panelHeaderHeight: 28,
-  zIndex: {
-    navbarFixed: 1000,
-    sidemenu: 1020,
-    dropdown: 1030,
-    typeahead: 1030,
-    tooltip: 1040,
-    modalBackdrop: 1050,
-    modal: 1060,
-  },
+  zIndex: appZIndexes,
 };
 
 export default theme;

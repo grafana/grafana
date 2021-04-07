@@ -20,7 +20,7 @@ import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue, findSelectedValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
-import { usePortalNode } from '../Portal/Portal';
+import { appZIndexes } from '../../themes/default';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -136,7 +136,9 @@ export function SelectBase<T>({
   value,
   width,
 }: SelectBaseProps<T>) {
-  const portalNode = usePortalNode();
+  // Using the document.body as our portal target to let the react-select
+  // append the select menu div to the document.body when we open the select.
+  const portalNode = document.body;
   const theme = useTheme();
   const styles = getSelectStyles(theme);
   const onChangeWithEmpty = useCallback(
@@ -326,7 +328,7 @@ export function SelectBase<T>({
           ...resetSelectStyles(),
           menuPortal: (base: any) => ({
             ...base,
-            zIndex: theme.zIndex.modal,
+            zIndex: appZIndexes.portal,
           }),
           //These are required for the menu positioning to function
           menu: ({ top, bottom, position }: any) => ({
