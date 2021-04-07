@@ -59,7 +59,7 @@ export const LinkSettingsList: React.FC<LinkSettingsListProps> = ({ dashboard, o
         </thead>
         <tbody>
           {links.map((link, idx) => (
-            <tr key={`${link.title}-idx`}>
+            <tr key={`${link.title}-${idx}`}>
               <td className="pointer" onClick={() => onEdit(idx)}>
                 <Icon name="external-link-alt" /> &nbsp; {link.type}
               </td>
