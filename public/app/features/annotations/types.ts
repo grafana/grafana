@@ -1,10 +1,37 @@
-import { PanelData, AnnotationEvent, TimeRange } from '@grafana/data';
+import { AnnotationEvent, PanelData, TimeRange } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../dashboard/state';
 
 export interface AnnotationQueryOptions {
   dashboard: DashboardModel;
   panel: PanelModel;
   range: TimeRange;
+}
+
+export enum AlertState {
+  NoData = 'no_data',
+  Paused = 'paused',
+  Alerting = 'alerting',
+  OK = 'ok',
+  Pending = 'pending',
+  Unknown = 'unknown',
+}
+
+export interface AlertStateInfo {
+  id: number;
+  dashboardId: number;
+  panelId: number;
+  state: AlertState;
+  newStateDate: string;
+}
+
+export interface AnnotationResults {
+  annotations: AnnotationEvent[];
+  alertStates: AlertStateInfo[];
+}
+
+export interface AnnotationResult {
+  annotations: AnnotationEvent[];
+  alertState?: AlertStateInfo;
 }
 
 export interface AnnotationQueryResponse {
