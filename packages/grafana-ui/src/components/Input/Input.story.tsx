@@ -5,7 +5,6 @@ import mdx from './Input.mdx';
 import { getAvailableIcons, IconName } from '../../types';
 import { KeyValue } from '@grafana/data';
 import { Field, Icon, Button, Input } from '@grafana/ui';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 const prefixSuffixOpts = {
   None: null,
@@ -28,6 +27,9 @@ export default {
     },
     knobs: {
       disable: true,
+    },
+    controls: {
+      exclude: ['prefix', 'suffix', 'addonBefore', 'addonAfter'],
     },
   },
   args: {
@@ -59,23 +61,21 @@ export default {
     },
     // validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
     width: { control: { type: 'range', min: 10, max: 200, step: 10 } },
-    prefix: NOOP_CONTROL,
-    suffix: NOOP_CONTROL,
-    addonBefore: NOOP_CONTROL,
-    addonAfter: NOOP_CONTROL,
   },
 };
 
 export const Simple: Story = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
   const addonBefore = <div style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>Input</div>;
-  let prefixEl: any = args.prefixVisible;
-  if (args.prefixVisible && args.prefixVisible.match(/icon-/g)) {
-    prefixEl = <Icon name={args.suffixVisible.replace(/icon-/g, '') as IconName} />;
+  const prefix = args.prefixVisible;
+  const suffix = args.suffixVisible;
+  let prefixEl: any = prefix;
+  if (prefix && prefix.match(/icon-/g)) {
+    prefixEl = <Icon name={prefix.replace(/icon-/g, '') as IconName} />;
   }
-  let suffixEl: any = args.suffixVisible;
-  if (args.suffixVisible && args.suffixVisible.match(/icon-/g)) {
-    suffixEl = <Icon name={args.suffixVisible.replace(/icon-/g, '') as IconName} />;
+  let suffixEl: any = suffix;
+  if (suffix && suffix.match(/icon-/g)) {
+    suffixEl = <Icon name={suffix.replace(/icon-/g, '') as IconName} />;
   }
 
   return (
