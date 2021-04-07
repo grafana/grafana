@@ -142,9 +142,9 @@ export const NewThemeColors = () => {
         <CollapsableSection label="Shadows" isOpen={true}>
           <DemoBox bg={t.palette.layer1}>
             <HorizontalGroup>
-              <ShadowDemo name="level1" shadow={t.shadows.level1} />
-              <ShadowDemo name="level2" shadow={t.shadows.level2} />
-              <ShadowDemo name="level3" shadow={t.shadows.level3} />
+              <ShadowDemo name="Z1" shadow={t.shadows.z1} />
+              <ShadowDemo name="Z2" shadow={t.shadows.z2} />
+              <ShadowDemo name="Z3" shadow={t.shadows.z3} />
             </HorizontalGroup>
           </DemoBox>
         </CollapsableSection>

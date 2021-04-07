@@ -1,9 +1,9 @@
 import { ThemePalette } from './createPalette';
 
 export interface ThemeShadows {
-  level1: string;
-  level2: string;
-  level3: string;
+  z1: string;
+  z2: string;
+  z3: string;
 }
 
 function createDarkShadow(...px: number[]) {
@@ -33,15 +33,15 @@ function createLightShadow(...px: number[]) {
 export function createShadows(palette: ThemePalette): ThemeShadows {
   if (palette.mode === 'dark') {
     return {
-      level1: createDarkShadow(0, 2, 1, -1, 0, 1, 1, 0, 0, 1, 3, 0),
-      level2: createDarkShadow(0, 3, 1, -2, 0, 2, 2, 0, 0, 1, 5, 0),
-      level3: createDarkShadow(0, 3, 3, -2, 0, 3, 4, 0, 0, 1, 8, 0),
+      z1: createDarkShadow(0, 2, 1, -1, 0, 1, 1, 0, 0, 1, 3, 0),
+      z2: createDarkShadow(0, 3, 1, -2, 0, 2, 2, 0, 0, 1, 5, 0),
+      z3: createDarkShadow(0, 3, 3, -2, 0, 3, 4, 0, 0, 1, 8, 0),
     };
   }
 
   return {
-    level1: createLightShadow(0, 2, 1, -1, 0, 1, 1, 0, 0, 1, 3, 0),
-    level2: createLightShadow(0, 3, 1, -2, 0, 2, 2, 0, 0, 1, 5, 0),
-    level3: createLightShadow(0, 3, 3, -2, 0, 3, 4, 0, 0, 1, 8, 0),
+    z1: createLightShadow(0, 2, 1, -1, 0, 1, 1, 0, 0, 1, 3, 0),
+    z2: createLightShadow(0, 3, 1, -2, 0, 2, 2, 0, 0, 1, 5, 0),
+    z3: createLightShadow(0, 3, 3, -2, 0, 3, 4, 0, 0, 1, 8, 0),
   };
 }
