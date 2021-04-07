@@ -102,7 +102,10 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQu
 		azureURL := fmt.Sprintf("metrics/%s", insightsJSONModel.MetricName)
 		timeGrain := insightsJSONModel.TimeGrain
 		timeGrains := insightsJSONModel.AllowedTimeGrainsMs
-		if timeGrain == "auto" {
+
+		// Previous versions of the query model don't specify a time grain, so we
+		// need to fallback to a default value
+		if timeGrain == "auto" || timeGrain == "" {
 			timeGrain, err = setAutoTimeGrain(query.IntervalMS, timeGrains)
 			if err != nil {
 				return nil, err
