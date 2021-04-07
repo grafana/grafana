@@ -1,7 +1,8 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { css } from '@emotion/css';
-import { useStyles, useTheme } from '../../themes';
+import { useTheme, useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
+import { ErrorIndicator } from './ErrorIndicator';
 
 /**
  * @internal
@@ -11,7 +12,8 @@ export interface PanelChromeProps {
   height: number;
   title?: string;
   padding?: PanelPadding;
-  leftItems?: React.ReactNode[];
+  rightItems?: React.ReactNode[];
+  error?: string;
   children: (innerWidth: number, innerHeight: number) => React.ReactNode;
 }
 
@@ -29,11 +31,12 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   width,
   height,
   padding = 'md',
-  leftItems = [],
+  rightItems = [],
+  error,
 }) => {
   const theme = useTheme();
   const styles = useStyles(getStyles);
-  const headerHeight = getHeaderHeight(theme, title, leftItems);
+  const headerHeight = getHeaderHeight(theme, title, rightItems);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
   const headerStyles: CSSProperties = {
@@ -45,9 +48,10 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   return (
     <div className={styles.container} style={containerStyles}>
       <div className={styles.header} style={headerStyles}>
+        <ErrorIndicator error={error} />
         <div className={styles.headerTitle}>{title}</div>
-        {itemsRenderer(leftItems, (items) => {
-          return <div className={styles.leftItems}>{items}</div>;
+        {itemsRenderer(rightItems, (items) => {
+          return <div className={styles.rightItems}>{items}</div>;
         })}
       </div>
       <div className={styles.content} style={contentStyle}>
@@ -55,6 +59,31 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
       </div>
     </div>
   );
+};
+
+const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
+  const toRender = React.Children.toArray(items).filter(Boolean);
+  return toRender.length > 0 ? renderer(toRender) : null;
+};
+
+const getHeaderHeight = (theme: GrafanaTheme, title: string, items: ReactNode[]) => {
+  if (title.length > 0 || items.length > 0) {
+    return theme.panelHeaderHeight;
+  }
+  return 0;
+};
+
+const getContentStyle = (padding: string, theme: GrafanaTheme, width: number, headerHeight: number, height: number) => {
+  const chromePadding = padding === 'md' ? theme.panelPadding : 0;
+  const panelBorder = 1 * 2;
+  const innerWidth = width - chromePadding * 2 - panelBorder;
+  const innerHeight = height - headerHeight - chromePadding * 2 - panelBorder;
+
+  const contentStyle: CSSProperties = {
+    padding: chromePadding,
+  };
+
+  return { contentStyle, innerWidth, innerHeight };
 };
 
 const getStyles = (theme: GrafanaTheme) => {
@@ -88,33 +117,8 @@ const getStyles = (theme: GrafanaTheme) => {
       padding-left: ${theme.panelPadding}px;
       flex-grow: 1;
     `,
-    leftItems: css`
+    rightItems: css`
       padding-right: ${theme.panelPadding}px;
     `,
   };
-};
-
-const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => ReactNode): ReactNode => {
-  const toRender = React.Children.toArray(items).filter(Boolean);
-  return toRender.length > 0 ? renderer(toRender) : null;
-};
-
-const getHeaderHeight = (theme: GrafanaTheme, title: string, items: ReactNode[]) => {
-  if (title.length > 0 || items.length > 0) {
-    return theme.panelHeaderHeight;
-  }
-  return 0;
-};
-
-const getContentStyle = (padding: string, theme: GrafanaTheme, width: number, headerHeight: number, height: number) => {
-  const chromePadding = padding === 'md' ? theme.panelPadding : 0;
-  const panelBorder = 1 * 2;
-  const innerWidth = width - chromePadding * 2 - panelBorder;
-  const innerHeight = height - headerHeight - chromePadding * 2 - panelBorder;
-
-  const contentStyle: CSSProperties = {
-    padding: chromePadding,
-  };
-
-  return { contentStyle, innerWidth, innerHeight };
 };
