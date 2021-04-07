@@ -48,6 +48,7 @@ type Alertmanager struct {
 	// notificationLog keeps tracks of which notifications we've fired already.
 	notificationLog *nflog.Log
 	// silences keeps the track of which notifications we should not fire due to user configuration.
+	silencer     *silence.Silencer
 	silences     *silence.Silences
 	marker       types.Marker
 	alerts       *AlertProvider
@@ -194,7 +195,8 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	// Now, let's put together our notification pipeline
 	routingStage := make(notify.RoutingStage, len(integrationsMap))
 
-	silencingStage := notify.NewMuteStage(silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger()))
+	am.silencer = silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger())
+	silencingStage := notify.NewMuteStage(am.silencer)
 	for name := range integrationsMap {
 		stage := am.createReceiverStage(name, integrationsMap[name], waitFunc, am.notificationLog)
 		routingStage[name] = notify.MultiStage{silencingStage, stage}

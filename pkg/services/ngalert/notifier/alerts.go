@@ -5,20 +5,23 @@ import (
 	"sort"
 	"time"
 
-	v2 "github.com/prometheus/alertmanager/api/v2"
-	"github.com/prometheus/alertmanager/types"
-
-	"github.com/pkg/errors"
-
 	apimodels "github.com/grafana/alerting-api/pkg/api"
+	"github.com/pkg/errors"
+	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/alertmanager/types"
 	prometheus_model "github.com/prometheus/common/model"
+)
+
+var (
+	ErrGetAlertsInternal        = errors.New("unable to retrieve alerts(s) due to an internal error")
+	ErrGetAlertsBadPayload      = errors.New("unable to retrieve alerts")
+	ErrGetAlertGroupsBadPayload = errors.New("unable to retrieve alerts groups")
 )
 
 func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []string, receivers string) (apimodels.GettableAlerts, error) {
 	var (
-		receiverFilter *regexp.Regexp
 		// Initialize result slice to prevent api returning `null` when there
 		// are no alerts present
 		res = apimodels.GettableAlerts{}
@@ -26,17 +29,14 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 
 	matchers, err := parseFilter(filter)
 	if err != nil {
-		am.logger.Error("Failed to parse matchers", "err", err)
-		return nil, err
+		am.logger.Error("failed to parse matchers", "err", err)
+		return nil, errors.Wrap(ErrGetAlertsBadPayload, err.Error())
 	}
 
-	if receivers != "" {
-		receiverFilter, err = regexp.Compile("^(?:" + receivers + ")$")
-		if err != nil {
-			am.logger.Error("Failed to compile receiver regex", "err", err)
-			return nil, err // 400
-			//		fmt.Sprintf("failed to parse receiver param: %v", err.Error()),
-		}
+	receiverFilter, err := parseReceivers(receivers)
+	if err != nil {
+		am.logger.Error("failed to parse receiver regex", "err", err)
+		return nil, errors.Wrap(ErrGetAlertsBadPayload, err.Error())
 	}
 
 	alerts := am.alerts.GetPending()
@@ -50,10 +50,6 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 		if err = alerts.Err(); err != nil {
 			break
 		}
-
-		//if err = ctx.Err(); err != nil {
-		//	break
-		//}
 
 		routes := am.route.Match(a.Labels)
 		receivers := make([]string, 0, len(routes))
@@ -76,8 +72,8 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 	am.reloadConfigMtx.RUnlock()
 
 	if err != nil {
-		am.logger.Error("Failed to get alerts", "err", err)
-		return nil, err // 500
+		am.logger.Error("failed to iterate through the alerts", "err", err)
+		return nil, errors.Wrap(ErrGetAlertsInternal, err.Error())
 	}
 	sort.Slice(res, func(i, j int) bool {
 		return *res[i].Fingerprint < *res[j].Fingerprint
@@ -89,18 +85,14 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 func (am *Alertmanager) GetAlertGroups(active, silenced, inhibited bool, filter []string, receivers string) (apimodels.AlertGroups, error) {
 	matchers, err := parseFilter(filter)
 	if err != nil {
-		am.logger.Error("msg", "Failed to parse matchers", "err", err)
-		return nil, errors.Wrap(err, "") // 400
+		am.logger.Error("msg", "failed to parse matchers", "err", err)
+		return nil, errors.Wrap(ErrGetAlertGroupsBadPayload, err.Error())
 	}
 
-	var receiverFilter *regexp.Regexp
-	if receivers != "" {
-		receiverFilter, err = regexp.Compile("^(?:" + receivers + ")$")
-		if err != nil {
-			am.logger.Error("msg", "Failed to compile receiver regex", "err", err)
-			return nil, errors.Wrap(err, "") // 400
-			//fmt.Sprintf("failed to parse receiver param: %v", err.Error())
-		}
+	receiverFilter, err := parseReceivers(receivers)
+	if err != nil {
+		am.logger.Error("msg", "failed to compile receiver regex", "err", err)
+		return nil, errors.Wrap(ErrGetAlertGroupsBadPayload, err.Error())
 	}
 
 	rf := func(receiverFilter *regexp.Regexp) func(r *dispatch.Route) bool {
@@ -145,11 +137,7 @@ func (am *Alertmanager) alertFilter(matchers []*labels.Matcher, silenced, inhibi
 		}
 
 		// Set alert's current status based on its label set.
-		setAlertFn := func(labels prometheus_model.LabelSet) {
-			//inhibitor.Mutes(labels)
-			//silencer.Mutes(labels)
-		}
-		setAlertFn(a.Labels)
+		am.silencer.Mutes(a.Labels)
 
 		// Get alert's current status after seeing if it is suppressed.
 		status := am.marker.Status(a.Fingerprint())
@@ -200,6 +188,14 @@ func matchFilterLabels(matchers []*labels.Matcher, sms map[string]string) bool {
 	}
 
 	return true
+}
+
+func parseReceivers(receivers string) (*regexp.Regexp, error) {
+	if receivers == "" {
+		return nil, nil
+	}
+
+	return regexp.Compile("^(?:" + receivers + ")$")
 }
 
 func parseFilter(filter []string) ([]*labels.Matcher, error) {
