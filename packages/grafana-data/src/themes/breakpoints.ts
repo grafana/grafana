@@ -1,3 +1,4 @@
+/** @beta */
 export interface ThemeBreakpointValues {
   xs: number;
   sm: number;
@@ -7,8 +8,10 @@ export interface ThemeBreakpointValues {
   xxl: number;
 }
 
+/** @beta */
 export type ThemeBreakpointsKey = keyof ThemeBreakpointValues;
 
+/** @beta */
 export interface ThemeBreakpoints {
   values: ThemeBreakpointValues;
   keys: string[];
@@ -17,6 +20,7 @@ export interface ThemeBreakpoints {
   down: (key: ThemeBreakpointsKey) => string;
 }
 
+/** @internal */
 export function createBreakpoints(): ThemeBreakpoints {
   const step = 5;
   const keys = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'];

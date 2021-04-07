@@ -1,5 +1,6 @@
 import { ThemePalette } from './createPalette';
 
+/** @beta */
 export interface ThemeShadows {
   z1: string;
   z2: string;
@@ -30,6 +31,7 @@ function createLightShadow(...px: number[]) {
   ].join(',');
 }
 
+/** @alpha */
 export function createShadows(palette: ThemePalette): ThemeShadows {
   if (palette.mode === 'dark') {
     return {

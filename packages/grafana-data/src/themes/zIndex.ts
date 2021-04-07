@@ -10,4 +10,5 @@ export const zIndex = {
   modal: 1060,
 };
 
+/** @beta */
 export type ThemeZIndices = typeof zIndex;

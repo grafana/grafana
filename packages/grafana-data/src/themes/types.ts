@@ -1,3 +1,4 @@
+/** @alpha */
 export interface ThemePaletteColor {
   /** color intent (primary, secondary, info, error, etc) */
   name: string;
@@ -13,6 +14,7 @@ export interface ThemePaletteColor {
   contrastText: string;
 }
 
+/** @internal */
 export type DeepPartial<T> = {
   [P in keyof T]?: DeepPartial<T[P]>;
 };

@@ -3,7 +3,10 @@ import { emphasize, getContrastRatio } from './colorManipulator';
 import { colors } from './colors';
 import { DeepPartial, ThemePaletteColor } from './types';
 
+/** @internal */
 export type ThemePaletteMode = 'light' | 'dark';
+
+/** @internal */
 export interface ThemePaletteBase<TColor> {
   mode: ThemePaletteMode;
 
@@ -44,6 +47,7 @@ export interface ThemePaletteBase<TColor> {
   tonalOffset: number;
 }
 
+/** @beta */
 export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
   /** Returns a text color for the background */
   getContrastText(background: string): string;
@@ -51,6 +55,7 @@ export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
   getHoverColor(defaultColor: string): string;
 }
 
+/** @internal */
 export type ThemePaletteInput = DeepPartial<ThemePaletteBase<ThemePaletteColor>>;
 
 class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {

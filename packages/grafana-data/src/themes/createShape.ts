@@ -1,7 +1,9 @@
+/** @beta */
 export interface ThemeShape {
   borderRadius: (amount?: number) => string;
 }
 
+/** @internal */
 export interface ThemeShapeInput {
   borderRadius?: number;
 }

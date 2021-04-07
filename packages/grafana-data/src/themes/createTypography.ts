@@ -4,6 +4,7 @@
 
 import { ThemePalette } from './createPalette';
 
+/** @beta */
 export interface ThemeTypography {
   fontFamily: string;
   fontFamilyMonospace: string;

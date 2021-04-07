@@ -2,15 +2,19 @@
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
 
+/** @internal */
 export type ThemeSpacingOptions = {
   gridSize?: number;
 };
 
+/** @internal */
 export type ThemeSpacingArgument = number | string;
 
-// The different signatures imply different meaning for their arguments that can't be expressed structurally.
-// We express the difference with variable names.
-/* tslint:disable:unified-signatures */
+/**
+ * @beta
+ * The different signatures imply different meaning for their arguments that can't be expressed structurally.
+ * We express the difference with variable names.
+ * tslint:disable:unified-signatures */
 export interface ThemeSpacing {
   (): string;
   (value: number): string;
@@ -24,6 +28,7 @@ export interface ThemeSpacing {
   ): string;
 }
 
+/** @internal */
 export function createSpacing(options: ThemeSpacingOptions = {}): ThemeSpacing {
   const { gridSize = 8 } = options;
 

@@ -7,6 +7,7 @@ import { createSpacing, ThemeSpacingOptions, ThemeSpacing } from './createSpacin
 import { createTypography, ThemeTypography, ThemeTypographyInput } from './createTypography';
 import { ThemeZIndices, zIndex } from './zIndex';
 
+/** @beta */
 export interface GrafanaThemeV2 {
   name: string;
   isDark: boolean;
@@ -21,6 +22,7 @@ export interface GrafanaThemeV2 {
   shadows: ThemeShadows;
 }
 
+/** @internal */
 export interface NewThemeOptions {
   name?: string;
   palette?: ThemePaletteInput;
@@ -29,6 +31,7 @@ export interface NewThemeOptions {
   typography?: ThemeTypographyInput;
 }
 
+/** @internal */
 export function createTheme(options: NewThemeOptions = {}): GrafanaThemeV2 {
   const {
     name = 'Dark',

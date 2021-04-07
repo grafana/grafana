@@ -1,3 +1,4 @@
+/** @beta */
 export interface ThemeComponents {
   /** Applies to normal buttons, inputs, radio buttons, etc */
   height: {
