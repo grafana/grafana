@@ -9,6 +9,7 @@ import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Switch } from '../Switch/Switch';
+import { Button, ButtonVariant } from '../Button';
 
 interface DemoBoxProps {
   bg?: string;
@@ -19,7 +20,7 @@ interface DemoBoxProps {
 const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
   const style = cx(
     css`
-      padding: 32px 32px 16px 32px;
+      padding: 16px;
       background: ${bg ?? 'inherit'};
       width: 100%;
     `,
@@ -49,6 +50,7 @@ export const NewThemeColors = () => {
   const [boolValue, setBoolValue] = useState(false);
   const oldTheme = useTheme();
   const t = oldTheme.v2;
+  const variants: ButtonVariant[] = ['primary', 'secondary', 'destructive', 'link'];
 
   const richColors = [
     t.palette.primary,
@@ -137,6 +139,29 @@ export const NewThemeColors = () => {
             </HorizontalGroup>
           </DemoBox>
         </CollapsableSection>
+        <CollapsableSection label="Shadows" isOpen={true}>
+          <DemoBox bg={t.palette.background.layer1}>
+            <HorizontalGroup>
+              <ShadowDemo name="level1" shadow={t.shadows.level1} />
+              <ShadowDemo name="level2" shadow={t.shadows.level2} />
+              <ShadowDemo name="level3" shadow={t.shadows.level3} />
+            </HorizontalGroup>
+          </DemoBox>
+        </CollapsableSection>
+        <CollapsableSection label="Buttons" isOpen={true}>
+          <DemoBox bg={t.palette.background.layer1}>
+            <HorizontalGroup>
+              {variants.map((variant) => (
+                <Button variant={variant} key={variant}>
+                  {variant}
+                </Button>
+              ))}
+              <Button variant="primary" disabled>
+                Disabled primary
+              </Button>
+            </HorizontalGroup>
+          </DemoBox>
+        </CollapsableSection>
       </DemoBox>
     </div>
   );
@@ -212,4 +237,12 @@ export function TextColors({ t }: { t: GrafanaThemeV2 }) {
       </DemoText>
     </>
   );
+}
+
+export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
+  const style = css({
+    padding: '16px',
+    boxShadow: shadow,
+  });
+  return <div className={style}>{name}</div>;
 }
