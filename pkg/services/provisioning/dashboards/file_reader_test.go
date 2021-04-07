@@ -174,10 +174,10 @@ func TestDashboardFileReader(t *testing.T) {
 					},
 				}
 
-				reader, err := NewDashboardFileReader(cfg, logger)
+				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.startWalkingDisk()
+				err = reader.walkDisk()
 				So(err, ShouldBeNil)
 				So(len(fakeService.inserted), ShouldEqual, 0)
 			})
@@ -195,10 +195,10 @@ func TestDashboardFileReader(t *testing.T) {
 					},
 				}
 
-				reader, err := NewDashboardFileReader(cfg, logger)
+				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.startWalkingDisk()
+				err = reader.walkDisk()
 				So(err, ShouldBeNil)
 				So(len(fakeService.inserted), ShouldEqual, 1)
 			})
@@ -225,10 +225,10 @@ func TestDashboardFileReader(t *testing.T) {
 					},
 				}
 
-				reader, err := NewDashboardFileReader(cfg, logger)
+				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.startWalkingDisk()
+				err = reader.walkDisk()
 				So(err, ShouldBeNil)
 				So(len(fakeService.inserted), ShouldEqual, 0)
 			})
@@ -246,10 +246,10 @@ func TestDashboardFileReader(t *testing.T) {
 					},
 				}
 
-				reader, err := NewDashboardFileReader(cfg, logger)
+				reader, err := NewDashboardFileReader(cfg, logger, nil)
 				So(err, ShouldBeNil)
 
-				err = reader.startWalkingDisk()
+				err = reader.walkDisk()
 				So(err, ShouldBeNil)
 				So(len(fakeService.inserted), ShouldEqual, 1)
 			})
