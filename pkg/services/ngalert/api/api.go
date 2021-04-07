@@ -98,6 +98,9 @@ func (api *API) RegisterAPIEndpoints() {
 		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 			alertDefinitions.Get("/oldByID/:id", middleware.ReqSignedIn, routing.Wrap(api.conditionOldEndpointByID))
 		})
+		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+			alertDefinitions.Get("/ruleGroupByOldID/:id", middleware.ReqSignedIn, routing.Wrap(api.ruleGroupByOldID))
+		})
 	}
 
 	api.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
