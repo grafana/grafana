@@ -1,6 +1,7 @@
 import React, { MouseEvent, useContext } from 'react';
-import { CallToActionCard, LinkButton, ThemeContext, Icon, IconName } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
+import { CallToActionCard, Icon, IconName, LinkButton, ThemeContext } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   title: string;
@@ -79,7 +80,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
       href={buttonLink}
       icon={buttonIcon}
       className={ctaElementClassName}
-      aria-label={`Call to action button ${buttonTitle}`}
+      aria-label={selectors.components.CallToActionCard.button(buttonTitle)}
     >
       {buttonTitle}
     </LinkButton>

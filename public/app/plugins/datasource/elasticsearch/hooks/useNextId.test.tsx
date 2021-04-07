@@ -8,12 +8,13 @@ describe('useNextId', () => {
   it('Should return the next available id', () => {
     const query: ElasticsearchQuery = {
       refId: 'A',
+      query: '',
       metrics: [{ id: '1', type: 'avg' }],
       bucketAggs: [{ id: '2', type: 'date_histogram' }],
     };
     const wrapper: FunctionComponent = ({ children }) => {
       return (
-        <ElasticsearchProvider query={query} datasource={{} as any} onChange={() => {}}>
+        <ElasticsearchProvider query={query} datasource={{} as any} onChange={() => {}} onRunQuery={() => {}}>
           {children}
         </ElasticsearchProvider>
       );

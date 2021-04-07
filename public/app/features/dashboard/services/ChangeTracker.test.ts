@@ -1,5 +1,4 @@
 import { ChangeTracker } from './ChangeTracker';
-import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
@@ -10,12 +9,9 @@ jest.mock('app/core/services/context_srv', () => ({
 }));
 
 describe('ChangeTracker', () => {
-  let rootScope: any;
-  let location;
-  const timeout = () => {};
   let tracker: ChangeTracker;
   let dash: any;
-  let scope;
+  let original: any;
 
   beforeEach(() => {
     dash = new DashboardModel({
@@ -41,59 +37,44 @@ describe('ChangeTracker', () => {
       ],
     });
 
-    scope = {
-      appEvent: jest.fn(),
-      onAppEvent: jest.fn(),
-      $on: jest.fn(),
-    };
-
-    rootScope = {
-      appEvent: jest.fn(),
-      onAppEvent: jest.fn(),
-      $on: jest.fn(),
-    };
-
-    location = {
-      path: jest.fn(),
-    };
-
-    tracker = new ChangeTracker(dash, scope as any, undefined, location as any, window, timeout, contextSrv, rootScope);
+    tracker = new ChangeTracker();
+    original = dash.getSaveModelClone();
   });
 
   it('No changes should not have changes', () => {
-    expect(tracker.hasChanges()).toBe(false);
+    expect(tracker.hasChanges(dash, original)).toBe(false);
   });
 
   it('Simple change should be registered', () => {
     dash.title = 'google';
-    expect(tracker.hasChanges()).toBe(true);
+    expect(tracker.hasChanges(dash, original)).toBe(true);
   });
 
   it('Should ignore a lot of changes', () => {
     dash.time = { from: '1h' };
     dash.refresh = true;
     dash.schemaVersion = 10;
-    expect(tracker.hasChanges()).toBe(false);
+    expect(tracker.hasChanges(dash, original)).toBe(false);
   });
 
   it('Should ignore .iteration changes', () => {
     dash.iteration = new Date().getTime() + 1;
-    expect(tracker.hasChanges()).toBe(false);
+    expect(tracker.hasChanges(dash, original)).toBe(false);
   });
 
   it('Should ignore row collapse change', () => {
     dash.toggleRow(dash.panels[1]);
-    expect(tracker.hasChanges()).toBe(false);
+    expect(tracker.hasChanges(dash, original)).toBe(false);
   });
 
   it('Should ignore panel legend changes', () => {
     dash.panels[0].legend.sortDesc = true;
     dash.panels[0].legend.sort = 'avg';
-    expect(tracker.hasChanges()).toBe(false);
+    expect(tracker.hasChanges(dash, original)).toBe(false);
   });
 
   it('Should ignore panel repeats', () => {
     dash.panels.push(new PanelModel({ repeatPanelId: 10 }));
-    expect(tracker.hasChanges()).toBe(false);
+    expect(tracker.hasChanges(dash, original)).toBe(false);
   });
 });

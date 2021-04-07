@@ -4,19 +4,19 @@ import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
 import { constantVariableReducer, initialConstantVariableModelState } from './reducer';
-import { OptionsPicker } from '../pickers';
 import { ConstantVariableEditor } from './ConstantVariableEditor';
 import { updateConstantVariableOptions } from './actions';
 import { toVariableIdentifier } from '../state/types';
+import { optionPickerFactory } from '../pickers';
 
 export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariableModel> => {
   return {
     id: 'constant',
-    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
+    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share.',
     name: 'Constant',
     initialState: initialConstantVariableModelState,
     reducer: constantVariableReducer,
-    picker: OptionsPicker,
+    picker: optionPickerFactory<ConstantVariableModel>(),
     editor: ConstantVariableEditor,
     dependsOn: () => {
       return false;
@@ -27,17 +27,17 @@ export const createConstantVariableAdapter = (): VariableAdapter<ConstantVariabl
     setValueFromUrl: async (variable, urlValue) => {
       await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async variable => {
+    updateOptions: async (variable) => {
       await dispatch(updateConstantVariableOptions(toVariableIdentifier(variable)));
     },
-    getSaveModel: variable => {
+    getSaveModel: (variable) => {
       const { index, id, state, global, current, options, ...rest } = cloneDeep(variable);
       return rest;
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       return variable.current.value;
     },
-    beforeAdding: model => {
+    beforeAdding: (model) => {
       const { current, options, query, ...rest } = cloneDeep(model);
       const option = { selected: true, text: query, value: query };
 

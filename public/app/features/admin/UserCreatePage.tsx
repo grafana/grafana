@@ -7,11 +7,10 @@ import { getBackendSrv } from '@grafana/runtime';
 import { StoreState } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
-import { updateLocation } from 'app/core/actions';
+import { useHistory } from 'react-router-dom';
 
 interface UserCreatePageProps {
   navModel: NavModel;
-  updateLocation: typeof updateLocation;
 }
 interface UserDTO {
   name: string;
@@ -22,11 +21,16 @@ interface UserDTO {
 
 const createUser = async (user: UserDTO) => getBackendSrv().post('/api/admin/users', user);
 
-const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocation }) => {
-  const onSubmit = useCallback(async (data: UserDTO) => {
-    await createUser(data);
-    updateLocation({ path: '/admin/users' });
-  }, []);
+const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
+  const history = useHistory();
+
+  const onSubmit = useCallback(
+    async (data: UserDTO) => {
+      await createUser(data);
+      history.push('/admin/users');
+    },
+    [history]
+  );
 
   return (
     <Page navModel={navModel}>
@@ -45,7 +49,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                   <Input name="name" ref={register({ required: true })} />
                 </Field>
 
-                <Field label="E-mail">
+                <Field label="Email">
                   <Input name="email" ref={register} />
                 </Field>
 
@@ -62,7 +66,7 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                     type="password"
                     name="password"
                     ref={register({
-                      validate: value => value.trim() !== '' && value.length >= 4,
+                      validate: (value) => value.trim() !== '' && value.length >= 4,
                     })}
                   />
                 </Field>
@@ -80,7 +84,4 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'global-users'),
 });
 
-const mapDispatchToProps = {
-  updateLocation,
-};
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserCreatePage));
+export default hot(module)(connect(mapStateToProps)(UserCreatePage));

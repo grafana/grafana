@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/validations"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -169,7 +171,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 	for _, tc := range tcs {
 		evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 			State: tc.prevState,
-		})
+		}, &validations.OSSPluginRequestValidator{})
 
 		if tc.state == nil {
 			tc.state = &models.AlertNotificationState{}

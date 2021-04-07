@@ -66,14 +66,14 @@ export class FolderPickerCtrl {
         }
 
         if (this.isEditor && this.enableCreateNew && query === '') {
-          result.unshift({ title: '-- New Folder --', id: -1 });
+          result.unshift({ title: '-- New folder --', id: -1 });
         }
 
         if (this.enableReset && query === '' && this.initialTitle !== '') {
           result.unshift({ title: this.initialTitle, id: null });
         }
 
-        return _.map(result, item => {
+        return _.map(result, (item) => {
           return { text: item.title, value: item.id };
         });
       })
@@ -113,7 +113,7 @@ export class FolderPickerCtrl {
 
     return promiseToDigest(this.$scope)(
       createFolder({ title: this.newFolderName }).then((result: { title: string; id: number }) => {
-        appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
+        appEvents.emit(AppEvents.alertSuccess, ['Folder created', 'OK']);
 
         this.closeCreateFolder();
         this.folder = { text: result.title, value: result.id };

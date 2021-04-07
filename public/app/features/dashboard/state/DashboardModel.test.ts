@@ -511,6 +511,57 @@ describe('DashboardModel', () => {
       expect(saveModel.time.from).toBe('now-3h');
       expect(saveModel.time.to).toBe('now-1h');
     });
+
+    it('getSaveModelClone should remove repeated panels and scopedVars', () => {
+      const dashboardJSON = {
+        panels: [
+          { id: 1, type: 'row', repeat: 'dc', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+          { id: 2, repeat: 'app', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+        ],
+        templating: {
+          list: [
+            {
+              name: 'dc',
+              current: {
+                text: 'dc1 + dc2',
+                value: ['dc1', 'dc2'],
+              },
+              options: [
+                { text: 'dc1', value: 'dc1', selected: true },
+                { text: 'dc2', value: 'dc2', selected: true },
+              ],
+            },
+            {
+              name: 'app',
+              current: {
+                text: 'se1 + se2',
+                value: ['se1', 'se2'],
+              },
+              options: [
+                { text: 'se1', value: 'se1', selected: true },
+                { text: 'se2', value: 'se2', selected: true },
+              ],
+            },
+          ],
+        },
+      };
+
+      const model = getDashboardModel(dashboardJSON);
+      model.processRepeats();
+      expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
+      expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+
+      const saveModel = model.getSaveModelClone();
+      expect(saveModel.panels.length).toBe(2);
+      expect(saveModel.panels[0].scopedVars).toBe(undefined);
+      expect(saveModel.panels[1].scopedVars).toBe(undefined);
+
+      model.collapseRows();
+      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(1);
+    });
   });
 
   describe('Given model with template variable of type query', () => {
@@ -673,15 +724,36 @@ describe('DashboardModel', () => {
 
     it('toggleLegendsForAll should toggle all legends on on first execution', () => {
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter(panel => panel.legend!.show === true);
+      const legendsOn = model.panels.filter((panel) => panel.legend!.show === true);
       expect(legendsOn.length).toBe(3);
     });
 
     it('toggleLegendsForAll should toggle all legends off on second execution', () => {
       model.toggleLegendsForAll();
       model.toggleLegendsForAll();
-      const legendsOn = model.panels.filter(panel => panel.legend!.show === true);
+      const legendsOn = model.panels.filter((panel) => panel.legend!.show === true);
       expect(legendsOn.length).toBe(0);
     });
+  });
+
+  describe('canAddAnnotations', () => {
+    it.each`
+      canEdit  | canMakeEditable | expected
+      ${false} | ${false}        | ${false}
+      ${false} | ${true}         | ${true}
+      ${true}  | ${false}        | ${true}
+      ${true}  | ${true}         | ${true}
+    `(
+      'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable} and expected:{$expected}',
+      ({ canEdit, canMakeEditable, expected }) => {
+        const dashboard = new DashboardModel({});
+        dashboard.meta.canEdit = canEdit;
+        dashboard.meta.canMakeEditable = canMakeEditable;
+
+        const result = dashboard.canAddAnnotations();
+
+        expect(result).toBe(expected);
+      }
+    );
   });
 });

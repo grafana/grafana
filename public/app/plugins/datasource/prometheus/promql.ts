@@ -1,6 +1,8 @@
 import { Grammar } from 'prismjs';
 import { CompletionItem } from '@grafana/ui';
 
+// When changing RATE_RANGES, check if Loki/LogQL ranges should be changed too
+// @see public/app/plugins/datasource/loki/language_provider.ts
 export const RATE_RANGES: CompletionItem[] = [
   { label: '$__interval', sortText: '$__interval' },
   { label: '$__rate_interval', sortText: '$__rate_interval' },
@@ -393,7 +395,7 @@ const tokenizer: Grammar = {
     },
   },
   'context-labels': {
-    pattern: /\{[^}]*(?=})/,
+    pattern: /\{[^}]*(?=}?)/,
     greedy: true,
     inside: {
       comment: {
@@ -412,7 +414,7 @@ const tokenizer: Grammar = {
       punctuation: /[{]/,
     },
   },
-  function: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})(?=\\s*\\()`, 'i'),
+  function: new RegExp(`\\b(?:${FUNCTIONS.map((f) => f.label).join('|')})(?=\\s*\\()`, 'i'),
   'context-range': [
     {
       pattern: /\[[^\]]*(?=])/, // [1m]

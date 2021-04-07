@@ -25,7 +25,7 @@ export default class VariableQueryEditor extends PureComponent<Props> {
             query,
           }}
           onRunQuery={this.onRefresh}
-          onChange={v => onChange(v.query)}
+          onChange={(v) => onChange(v.query)}
         />
       );
     }
@@ -39,7 +39,7 @@ export default class VariableQueryEditor extends PureComponent<Props> {
             placeholder="metric name or tags query"
             rows={1}
             className="gf-form-input"
-            onBlur={e => onChange(e.currentTarget.value)}
+            onBlur={(e) => onChange(e.currentTarget.value)}
           />
         </div>
       </div>

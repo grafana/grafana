@@ -34,18 +34,8 @@ describe('RichHistoryQueriesTab', () => {
     });
     it('should render slider with correct timerange', () => {
       const wrapper = setup();
-      expect(
-        wrapper
-          .find('.label-slider')
-          .at(1)
-          .text()
-      ).toEqual('today');
-      expect(
-        wrapper
-          .find('.label-slider')
-          .at(2)
-          .text()
-      ).toEqual('two weeks ago');
+      expect(wrapper.find('.label-slider').at(1).text()).toEqual('today');
+      expect(wrapper.find('.label-slider').at(2).text()).toEqual('two weeks ago');
     });
   });
 

@@ -48,7 +48,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
       }
     };
 
-    return (await get()).map(toSelectableValue);
+    return (await get().toPromise()).map(toSelectableValue);
   };
 
   return (
@@ -57,7 +57,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
         <Segment
           className={segmentStyles}
           options={bucketAggOptions}
-          onChange={e => dispatch(changeBucketAggregationType(value.id, e.value!))}
+          onChange={(e) => dispatch(changeBucketAggregationType(value.id, e.value!))}
           value={toOption(value)}
         />
 
@@ -65,7 +65,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
           <SegmentAsync
             className={segmentStyles}
             loadOptions={getFields}
-            onChange={e => dispatch(changeBucketAggregationField(value.id, e.value))}
+            onChange={(e) => dispatch(changeBucketAggregationField(value.id, e.value))}
             placeholder="Select Field"
             value={value.field}
           />

@@ -1,13 +1,7 @@
 import React from 'react';
-import { text } from '@storybook/addon-knobs';
-import { FieldValidationMessage } from './FieldValidationMessage';
+import { Meta, Story } from '@storybook/react';
+import { FieldValidationMessage, FieldValidationMessageProps } from './FieldValidationMessage';
 import mdx from './FieldValidationMessage.mdx';
-
-const getKnobs = () => {
-  return {
-    message: text('message', 'Invalid input message'),
-  };
-};
 
 export default {
   title: 'Forms/FieldValidationMessage',
@@ -16,11 +10,22 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['className'],
+    },
   },
-};
+  args: {
+    horizontal: false,
+    children: 'Invalid input message',
+  },
+  argTypes: {
+    children: { name: 'message' },
+  },
+} as Meta;
 
-export const simple = () => {
-  const { message } = getKnobs();
-
-  return <FieldValidationMessage>{message}</FieldValidationMessage>;
+export const Basic: Story<FieldValidationMessageProps> = (args) => {
+  return <FieldValidationMessage horizontal={args.horizontal}>{args.children}</FieldValidationMessage>;
 };

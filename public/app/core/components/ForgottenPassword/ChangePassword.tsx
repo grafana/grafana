@@ -36,7 +36,7 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
               name="confirmNew"
               ref={register({
                 required: 'Confirmed password is required',
-                validate: v => v === getValues().newPassword || 'Passwords must match!',
+                validate: (v) => v === getValues().newPassword || 'Passwords must match!',
               })}
             />
           </Field>

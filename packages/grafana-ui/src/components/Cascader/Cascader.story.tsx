@@ -1,20 +1,11 @@
-import { text } from '@storybook/addon-knobs';
+import { Story, Meta } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Cascader } from '@grafana/ui';
+import { CascaderOption, CascaderProps } from './Cascader';
 import mdx from './Cascader.mdx';
 import React from 'react';
 
-export default {
-  title: 'Forms/Cascader',
-  component: Cascader,
-  decorators: [withCenteredStory],
-  parameters: {
-    docs: {
-      page: mdx,
-    },
-  },
-};
-
+const onSelect = (val: string) => console.log(val);
 const options = [
   {
     label: 'First',
@@ -40,22 +31,64 @@ const options = [
   },
 ];
 
-export const simple = () => (
-  <Cascader separator={text('Separator', '')} options={options} onSelect={val => console.log(val)} />
-);
-export const withInitialValue = () => (
-  <Cascader options={options} initialValue="3" onSelect={val => console.log(val)} />
-);
+export default {
+  title: 'Forms/Cascader',
+  component: Cascader,
+  decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['placeholder', 'initialValue', 'changeOnSelect'],
+    },
+  },
+  args: {
+    onSelect,
+    options,
+  },
+  argTypes: {
+    width: { control: { type: 'range', min: 0, max: 70 } },
+  },
+} as Meta;
 
-export const withCustomValue = () => {
-  const onCreateLabel = text('Custom value creation label', 'Create new value: ');
-  return (
-    <Cascader
-      options={options}
-      allowCustomValue
-      formatCreateLabel={val => onCreateLabel + val}
-      initialValue="Custom Initial Value"
-      onSelect={val => console.log(val)}
-    />
-  );
+const Template: Story<CascaderProps> = (args) => <Cascader {...args} />;
+
+export const Simple = Template.bind({});
+Simple.args = {
+  separator: '',
+};
+
+export const WithInitialValue = Template.bind({});
+WithInitialValue.args = {
+  initialValue: '3',
+};
+
+export const WithCustomValue = Template.bind({});
+WithCustomValue.args = {
+  initialValue: 'Custom Initial Value',
+  allowCustomValue: true,
+  formatCreateLabel: (val) => 'Custom Label' + val,
+};
+
+export const WithDisplayAllSelectedLevels = Template.bind({});
+WithDisplayAllSelectedLevels.args = {
+  displayAllSelectedLevels: true,
+  separator: ',',
+};
+
+export const WithOptionsStateUpdate = () => {
+  const [updatedOptions, setOptions] = React.useState<CascaderOption[]>([
+    {
+      label: 'Initial state option',
+      value: 'initial',
+    },
+  ]);
+
+  setTimeout(() => setOptions(options), 2000);
+
+  return <Cascader options={updatedOptions} onSelect={onSelect} />;
 };

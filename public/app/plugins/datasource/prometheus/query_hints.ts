@@ -38,7 +38,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
 
     if (metricMetadataKeys.length > 0) {
       counterNameMetric =
-        metricMetadataKeys.find(metricName => {
+        metricMetadataKeys.find((metricName) => {
           // Only considering first type information, could be non-deterministic
           const metadata = metricsMetadata[metricName][0];
           if (metadata.type.toLowerCase() === 'counter') {

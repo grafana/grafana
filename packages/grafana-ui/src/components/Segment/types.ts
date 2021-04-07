@@ -5,4 +5,5 @@ export interface SegmentProps<T> {
   className?: string;
   allowCustomValue?: boolean;
   placeholder?: string;
+  disabled?: boolean;
 }

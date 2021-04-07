@@ -1,5 +1,5 @@
 import React, { FC, useMemo } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import {
   CodeEditor,
@@ -21,7 +21,7 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
     if (!context.getSuggestions) {
       return [];
     }
-    return context.getSuggestions().map(v => variableSuggestionToCodeEditorSuggestion(v));
+    return context.getSuggestions().map((v) => variableSuggestionToCodeEditorSuggestion(v));
   };
 
   return (

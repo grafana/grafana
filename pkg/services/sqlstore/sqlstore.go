@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
-	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
@@ -44,17 +43,7 @@ const InitPriority = registry.High
 
 func init() {
 	ss := &SQLStore{}
-
-	// This change will make xorm use an empty default schema for postgres and
-	// by that mimic the functionality of how it was functioning before
-	// xorm's changes above.
-	xorm.DefaultPostgresSchema = ""
-
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     ss,
-		InitPriority: InitPriority,
-	})
+	ss.Register()
 }
 
 type SQLStore struct {
@@ -69,39 +58,53 @@ type SQLStore struct {
 	skipEnsureDefaultOrgAndUser bool
 }
 
+// Register registers the SQLStore service with the DI system.
+func (ss *SQLStore) Register() {
+	// This change will make xorm use an empty default schema for postgres and
+	// by that mimic the functionality of how it was functioning before
+	// xorm's changes above.
+	xorm.DefaultPostgresSchema = ""
+
+	registry.Register(&registry.Descriptor{
+		Name:         ServiceName,
+		Instance:     ss,
+		InitPriority: InitPriority,
+	})
+}
+
 func (ss *SQLStore) Init() error {
 	ss.log = log.New("sqlstore")
 	ss.readConfig()
 
-	engine, err := ss.getEngine()
-	if err != nil {
+	if err := ss.initEngine(); err != nil {
 		return errutil.Wrap("failed to connect to database", err)
 	}
 
-	ss.engine = engine
 	ss.Dialect = migrator.NewDialect(ss.engine)
 
 	// temporarily still set global var
-	x = engine
+	x = ss.engine
 	dialect = ss.Dialect
 
-	migrator := migrator.NewMigrator(engine)
-	migrations.AddMigrations(migrator)
+	if !ss.dbCfg.SkipMigrations {
+		migrator := migrator.NewMigrator(ss.engine)
+		migrations.AddMigrations(migrator)
 
-	for _, descriptor := range registry.GetServices() {
-		sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
-		if ok {
-			sc.AddMigration(migrator)
+		for _, descriptor := range registry.GetServices() {
+			sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
+			if ok {
+				sc.AddMigration(migrator)
+			}
 		}
-	}
 
-	if err := migrator.Start(); err != nil {
-		return errutil.Wrap("migration failed", err)
+		if err := migrator.Start(); err != nil {
+			return err
+		}
 	}
 
 	// Init repo instances
 	annotations.SetRepository(&SQLAnnotationRepo{})
-	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: 100, log: log.New("annotationcleaner")})
+	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner")})
 	ss.Bus.SetTransactionManager(ss)
 
 	// Register handlers
@@ -109,6 +112,27 @@ func (ss *SQLStore) Init() error {
 	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()
 
+	if err := ss.Reset(); err != nil {
+		return err
+	}
+	// Make sure the changes are synced, so they get shared with eventual other DB connections
+	if !ss.dbCfg.SkipMigrations {
+		if err := ss.Sync(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Sync syncs changes to the database.
+func (ss *SQLStore) Sync() error {
+	return ss.engine.Sync2()
+}
+
+// Reset resets database state.
+// If default org and user creation is enabled, it will be ensured they exist in the database.
+func (ss *SQLStore) Reset() error {
 	if ss.skipEnsureDefaultOrgAndUser {
 		return nil
 	}
@@ -117,21 +141,15 @@ func (ss *SQLStore) Init() error {
 }
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
-	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
+	ctx := context.Background()
+	err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
 		ss.log.Debug("Ensuring main org and admin user exist")
 		var stats models.SystemUserCountStats
-		err := ss.WithDbSession(ctx, func(sess *DBSession) error {
-			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
-			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
-			rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
-			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
-				return fmt.Errorf("could not determine if admin user exists: %w", err)
-			}
-
-			return nil
-		})
-		if err != nil {
-			return err
+		// TODO: Should be able to rename "Count" to "count", for more standard SQL style
+		// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
+		rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+		if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
+			return fmt.Errorf("could not determine if admin user exists: %w", err)
 		}
 
 		if stats.Count > 0 {
@@ -141,25 +159,24 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
-			cmd := models.CreateUserCommand{
+			ss.log.Debug("Creating default admin user")
+			if _, err := ss.createUser(ctx, sess, userCreationArgs{
 				Login:    ss.Cfg.AdminUser,
 				Email:    ss.Cfg.AdminUser + "@localhost",
 				Password: ss.Cfg.AdminPassword,
 				IsAdmin:  true,
-			}
-			if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+			}, false); err != nil {
 				return fmt.Errorf("failed to create admin user: %s", err)
 			}
 
 			ss.log.Info("Created default admin", "user", ss.Cfg.AdminUser)
-			return nil
+			// Why should we return and not create the default org in this case?
+			// Returning here breaks tests using anonymous access
+			// return nil
 		}
 
-		// ensure default org even if default admin user is disabled
-		if err := inTransactionCtx(ctx, func(sess *DBSession) error {
-			_, err := getOrCreateOrg(sess, mainOrgName)
-			return err
-		}); err != nil {
+		ss.log.Debug("Creating default org", "name", MainOrgName)
+		if _, err := ss.getOrCreateOrg(sess, MainOrgName); err != nil {
 			return fmt.Errorf("failed to create default organization: %w", err)
 		}
 
@@ -253,17 +270,28 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 	return cnnstr, nil
 }
 
-func (ss *SQLStore) getEngine() (*xorm.Engine, error) {
+// initEngine initializes ss.engine.
+func (ss *SQLStore) initEngine() error {
+	if ss.engine != nil {
+		sqlog.Debug("Already connected to database")
+		return nil
+	}
+
 	connectionString, err := ss.buildConnectionString()
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	if ss.Cfg.IsDatabaseMetricsEnabled() {
+		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type)
 	}
 
 	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
-	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(connectionString, "file:") {
+	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(connectionString, "file:") &&
+		!strings.HasPrefix(connectionString, "file::memory:") {
 		exists, err := fs.Exists(ss.dbCfg.Path)
 		if err != nil {
-			return nil, errutil.Wrapf(err, "can't check for existence of %q", ss.dbCfg.Path)
+			return errutil.Wrapf(err, "can't check for existence of %q", ss.dbCfg.Path)
 		}
 
 		const perms = 0640
@@ -271,15 +299,15 @@ func (ss *SQLStore) getEngine() (*xorm.Engine, error) {
 			ss.log.Info("Creating SQLite database file", "path", ss.dbCfg.Path)
 			f, err := os.OpenFile(ss.dbCfg.Path, os.O_CREATE|os.O_RDWR, perms)
 			if err != nil {
-				return nil, errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+				return errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
 			}
 			if err := f.Close(); err != nil {
-				return nil, errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
+				return errutil.Wrapf(err, "failed to create SQLite database file %q", ss.dbCfg.Path)
 			}
 		} else {
 			fi, err := os.Lstat(ss.dbCfg.Path)
 			if err != nil {
-				return nil, errutil.Wrapf(err, "failed to stat SQLite database file %q", ss.dbCfg.Path)
+				return errutil.Wrapf(err, "failed to stat SQLite database file %q", ss.dbCfg.Path)
 			}
 			m := fi.Mode() & os.ModePerm
 			if m|perms != perms {
@@ -290,7 +318,7 @@ func (ss *SQLStore) getEngine() (*xorm.Engine, error) {
 	}
 	engine, err := xorm.NewEngine(ss.dbCfg.Type, connectionString)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	engine.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
@@ -307,9 +335,11 @@ func (ss *SQLStore) getEngine() (*xorm.Engine, error) {
 		engine.ShowExecTime(true)
 	}
 
-	return engine, nil
+	ss.engine = engine
+	return nil
 }
 
+// readConfig initializes the SQLStore from its configuration.
 func (ss *SQLStore) readConfig() {
 	sec := ss.Cfg.Raw.Section("database")
 
@@ -352,25 +382,37 @@ func (ss *SQLStore) readConfig() {
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
+	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
 }
 
-// Interface of arguments for testing db
+// ITestDB is an interface of arguments for testing db
 type ITestDB interface {
 	Helper()
 	Fatalf(format string, args ...interface{})
 	Logf(format string, args ...interface{})
+	Log(args ...interface{})
 }
 
 var testSQLStore *SQLStore
 
+// InitTestDBOpt contains options for InitTestDB.
+type InitTestDBOpt struct {
+	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
+	EnsureDefaultOrgAndUser bool
+}
+
 // InitTestDB initializes the test DB.
-func InitTestDB(t ITestDB) *SQLStore {
+func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	if testSQLStore == nil {
 		testSQLStore = &SQLStore{}
 		testSQLStore.Bus = bus.New()
 		testSQLStore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
-		testSQLStore.skipEnsureDefaultOrgAndUser = false
+		testSQLStore.skipEnsureDefaultOrgAndUser = true
+
+		for _, opt := range opts {
+			testSQLStore.skipEnsureDefaultOrgAndUser = !opt.EnsureDefaultOrgAndUser
+		}
 
 		dbType := migrator.SQLite
 
@@ -419,19 +461,26 @@ func InitTestDB(t ITestDB) *SQLStore {
 
 		t.Logf("Cleaning DB")
 		if err := dialect.CleanDB(); err != nil {
-			t.Fatalf("Failed to clean test db %v", err)
+			t.Fatalf("Failed to clean test db: %s", err)
 		}
 
 		if err := testSQLStore.Init(); err != nil {
-			t.Fatalf("Failed to init test database: %v", err)
+			t.Fatalf("Failed to init test database: %s", err)
 		}
+		t.Log("Successfully initialized test database")
 
 		testSQLStore.engine.DatabaseTZ = time.UTC
 		testSQLStore.engine.TZLocation = time.UTC
+
+		return testSQLStore
 	}
 
+	t.Log("Truncating DB tables")
 	if err := dialect.TruncateDBTables(); err != nil {
-		t.Fatalf("Failed to truncate test db %v", err)
+		t.Fatalf("Failed to truncate test db: %s", err)
+	}
+	if err := testSQLStore.Reset(); err != nil {
+		t.Fatalf("Failed to reset SQLStore: %s", err)
 	}
 
 	return testSQLStore
@@ -471,4 +520,5 @@ type DatabaseConfig struct {
 	ConnMaxLifetime  int
 	CacheMode        string
 	UrlQueryParams   map[string][]string
+	SkipMigrations   bool
 }

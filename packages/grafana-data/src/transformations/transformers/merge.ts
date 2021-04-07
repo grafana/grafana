@@ -19,14 +19,14 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
   name: 'Merge series/tables',
   description: 'Merges multiple series/tables into a single serie/table',
   defaultOptions: {},
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(dataFrames => {
+      map((dataFrames) => {
         if (!Array.isArray(dataFrames) || dataFrames.length === 0) {
           return dataFrames;
         }
 
-        const data = dataFrames.filter(frame => frame.fields.length > 0);
+        const data = dataFrames.filter((frame) => frame.fields.length > 0);
 
         if (data.length === 0) {
           return [dataFrames[0]];
@@ -85,7 +85,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
 
             let valueWasMerged = false;
 
-            valuesByKey[key] = valuesByKey[key].map(existing => {
+            valuesByKey[key] = valuesByKey[key].map((existing) => {
               if (!isMergable(existing, value)) {
                 return existing;
               }

@@ -1,44 +1,43 @@
 import React, { PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { css } from 'emotion';
-import { dateMath, GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { connect, ConnectedProps } from 'react-redux';
+import { css } from '@emotion/css';
+import { GrafanaTheme } from '@grafana/data';
+import { RefreshPicker, stylesFactory } from '@grafana/ui';
+
 import { config } from 'app/core/config';
 import { QueryGroup } from '../../query/components/QueryGroup';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
-import { queryOptionsChange } from '../state/actions';
-import { StoreState } from '../../../types';
+import { onRunQueries, queryOptionsChange } from '../state/actions';
+import { QueryGroupOptions, StoreState } from 'app/types';
+
+function mapStateToProps(state: StoreState) {
+  return {
+    queryOptions: state.alertDefinition.getQueryOptions(),
+    queryRunner: state.alertDefinition.queryRunner,
+  };
+}
+
+const mapDispatchToProps = {
+  queryOptionsChange,
+  onRunQueries,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 interface OwnProps {}
 
-interface ConnectedProps {
-  queryOptions: QueryGroupOptions;
-  queryRunner: PanelQueryRunner;
-}
-interface DispatchProps {
-  queryOptionsChange: typeof queryOptionsChange;
-}
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
-type Props = ConnectedProps & DispatchProps & OwnProps;
-
-export class AlertingQueryEditor extends PureComponent<Props> {
+class AlertingQueryEditorUnconnected extends PureComponent<Props> {
   onQueryOptionsChange = (queryOptions: QueryGroupOptions) => {
     this.props.queryOptionsChange(queryOptions);
   };
 
   onRunQueries = () => {
-    const { queryRunner, queryOptions } = this.props;
-    const timeRange = { from: 'now-1h', to: 'now' };
+    this.props.onRunQueries();
+  };
 
-    queryRunner.run({
-      timezone: 'browser',
-      timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
-      maxDataPoints: queryOptions.maxDataPoints ?? 100,
-      minInterval: queryOptions.minInterval,
-      queries: queryOptions.queries,
-      datasource: queryOptions.dataSource.name!,
-    });
+  onIntervalChanged = (interval: string) => {
+    this.props.queryOptionsChange({ ...this.props.queryOptions, minInterval: interval });
   };
 
   render() {
@@ -49,8 +48,15 @@ export class AlertingQueryEditor extends PureComponent<Props> {
       <div className={styles.wrapper}>
         <div className={styles.container}>
           <h4>Queries</h4>
+          <div className={styles.refreshWrapper}>
+            <RefreshPicker
+              onIntervalChanged={this.onIntervalChanged}
+              onRefresh={this.onRunQueries}
+              intervals={['15s', '30s']}
+            />
+          </div>
           <QueryGroup
-            queryRunner={queryRunner}
+            queryRunner={queryRunner!} // if the queryRunner is undefined here, somethings very wrong so it's ok to throw an unhandled error
             options={queryOptions}
             onRunQueries={this.onRunQueries}
             onOptionsChange={this.onQueryOptionsChange}
@@ -61,18 +67,7 @@ export class AlertingQueryEditor extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
-  return {
-    queryOptions: state.alertDefinition.queryOptions,
-    queryRunner: state.alertDefinition.queryRunner,
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  queryOptionsChange,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(AlertingQueryEditor);
+export const AlertingQueryEditor = connector(AlertingQueryEditorUnconnected);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -84,6 +79,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
       height: 100%;
+    `,
+    refreshWrapper: css`
+      display: flex;
+      justify-content: flex-end;
     `,
     editorWrapper: css`
       border: 1px solid ${theme.colors.panelBorder};

@@ -21,7 +21,7 @@ export const setup = () => {
   };
 };
 
-export default data => {
+export default (data) => {
   client.withOrgId(data.orgId);
 
   group(`user auth token slow test (queries between 1 and ${slowQuery} seconds)`, () => {
@@ -30,8 +30,8 @@ export default data => {
         let res = client.ui.login('admin', 'admin');
 
         check(res, {
-          'response status is 200': r => r.status === 200,
-          "response has cookie 'grafana_session' with 32 characters": r =>
+          'response status is 200': (r) => r.status === 200,
+          "response has cookie 'grafana_session' with 32 characters": (r) =>
             r.cookies.grafana_session[0].value.length === 32,
         });
       });
@@ -65,7 +65,7 @@ export default data => {
         let responses = client.batch(requests);
         for (let n = 0; n < batchCount; n++) {
           check(responses[n], {
-            'response status is 200': r => r.status === 200,
+            'response status is 200': (r) => r.status === 200,
           });
         }
       });
@@ -75,4 +75,4 @@ export default data => {
   sleep(5);
 };
 
-export const teardown = data => {};
+export const teardown = (data) => {};

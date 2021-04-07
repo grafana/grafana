@@ -1,13 +1,12 @@
 import React, { PureComponent } from 'react';
 import { LegacyForms, VerticalGroup } from '@grafana/ui';
 import { DataQuery, PanelData, SelectableValue } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
-import { DashboardQuery, ResultInfo } from './types';
+import { DashboardQuery, ResultInfo, SHARED_DASHBODARD_QUERY } from './types';
 import config from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { DashboardQueryRow } from './DashboardQueryRow';
@@ -22,6 +21,7 @@ interface Props {
   queries: DataQuery[];
   panelData: PanelData;
   onChange: (queries: DataQuery[]) => void;
+  onRunQueries: () => void;
 }
 
 type State = {
@@ -98,6 +98,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
         panelId: id,
       } as DashboardQuery,
     ]);
+    this.props.onRunQueries();
   };
 
   renderQueryData(editURL: string) {
@@ -172,7 +173,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
             isSearchable={true}
             options={panels}
             value={selected}
-            onChange={item => this.onPanelChanged(item.value!)}
+            onChange={(item) => this.onPanelChanged(item.value!)}
           />
         </div>
         <div className={css({ padding: '16px' })}>{query.panelId && this.renderQueryData(editURL)}</div>

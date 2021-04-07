@@ -6,7 +6,7 @@ import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 import { TextPanelEditor } from './TextPanelEditor';
 
 export const plugin = new PanelPlugin<TextOptions>(TextPanel)
-  .setPanelOptions(builder => {
+  .setPanelOptions((builder) => {
     builder
       .addRadio({
         path: 'mode',

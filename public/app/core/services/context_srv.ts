@@ -49,6 +49,14 @@ export class ContextSrv {
     this.minRefreshInterval = config.minRefreshInterval;
   }
 
+  /**
+   * Indicate the user has been logged out
+   */
+  setLoggedOut() {
+    this.user.isSignedIn = false;
+    this.isSignedIn = false;
+  }
+
   hasRole(role: string) {
     return this.user.orgRole === role;
   }

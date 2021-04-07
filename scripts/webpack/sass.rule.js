@@ -2,7 +2,7 @@
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-module.exports = function(options) {
+module.exports = function (options) {
   return {
     test: /\.scss$/,
     use: [

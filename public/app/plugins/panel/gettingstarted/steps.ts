@@ -6,14 +6,8 @@ import { SetupStep } from './types';
 const step1TutorialTitle = 'Grafana fundamentals';
 const step2TutorialTitle = 'Create users and teams';
 const keyPrefix = 'getting.started.';
-const step1Key = `${keyPrefix}${step1TutorialTitle
-  .replace(' ', '-')
-  .trim()
-  .toLowerCase()}`;
-const step2Key = `${keyPrefix}${step2TutorialTitle
-  .replace(' ', '-')
-  .trim()
-  .toLowerCase()}`;
+const step1Key = `${keyPrefix}${step1TutorialTitle.replace(' ', '-').trim().toLowerCase()}`;
+const step2Key = `${keyPrefix}${step2TutorialTitle.replace(' ', '-').trim().toLowerCase()}`;
 
 export const getSteps = (): SetupStep[] => [
   {
@@ -43,11 +37,11 @@ export const getSteps = (): SetupStep[] => [
         learnHref: 'https://grafana.com/docs/grafana/latest/features/datasources/add-a-data-source',
         href: 'datasources/new',
         check: () => {
-          return new Promise(resolve => {
+          return new Promise((resolve) => {
             resolve(
               getDatasourceSrv()
                 .getMetricSources()
-                .filter(item => {
+                .filter((item) => {
                   return item.meta.builtIn !== true;
                 }).length > 0
             );

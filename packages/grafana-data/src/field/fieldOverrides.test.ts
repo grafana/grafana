@@ -66,13 +66,9 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
 });
 
 locationUtil.initialize({
-  getConfig: () => {
-    return { appSubUrl: '/subUrl' } as any;
-  },
-  // @ts-ignore
-  buildParamsFromVariables: () => {},
-  // @ts-ignore
-  getTimeRangeForUrl: () => {},
+  config: { appSubUrl: '/subUrl' } as any,
+  getVariablesUrlParams: (() => {}) as any,
+  getTimeRangeForUrl: (() => {}) as any,
 });
 
 describe('Global MinMax', () => {
@@ -244,7 +240,7 @@ describe('applyFieldOverrides', () => {
         overrides: [],
       },
       fieldConfigRegistry: customFieldRegistry,
-      replaceVariables: v => v,
+      replaceVariables: (v) => v,
       theme: getTestTheme(),
     })[0];
 
@@ -529,8 +525,8 @@ describe('setDynamicConfigValue', () => {
 describe('getLinksSupplier', () => {
   it('will replace variables in url and title of the data link', () => {
     locationUtil.initialize({
-      getConfig: () => ({} as any),
-      buildParamsFromVariables: (() => {}) as any,
+      config: {} as any,
+      getVariablesUrlParams: (() => {}) as any,
       getTimeRangeForUrl: (() => {}) as any,
     });
 
@@ -573,8 +569,8 @@ describe('getLinksSupplier', () => {
 
   it('handles internal links', () => {
     locationUtil.initialize({
-      getConfig: () => ({ appSubUrl: '' } as any),
-      buildParamsFromVariables: (() => {}) as any,
+      config: { appSubUrl: '' } as any,
+      getVariablesUrlParams: (() => {}) as any,
       getTimeRangeForUrl: (() => {}) as any,
     });
 

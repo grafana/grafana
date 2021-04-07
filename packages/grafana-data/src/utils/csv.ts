@@ -298,7 +298,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
     const length = fields[0].values.length;
 
     if (length > 0) {
-      const writers = fields.map(field => makeFieldWriter(field, config!));
+      const writers = fields.map((field) => makeFieldWriter(field, config!));
       for (let i = 0; i < length; i++) {
         for (let j = 0; j < fields.length; j++) {
           if (j > 0) {

@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -28,7 +29,8 @@ func TestDashboardsAsConfig(t *testing.T) {
 		t.Run("Should fail if orgs don't exist in the database", func(t *testing.T) {
 			cfgProvider := configReader{path: appliedDefaults, log: logger}
 			_, err := cfgProvider.readConfig()
-			require.Equal(t, errors.Unwrap(err), models.ErrOrgNotFound)
+			require.Error(t, err)
+			assert.True(t, errors.Is(err, models.ErrOrgNotFound))
 		})
 
 		for i := 1; i <= 2; i++ {

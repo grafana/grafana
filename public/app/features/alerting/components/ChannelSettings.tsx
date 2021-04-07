@@ -23,7 +23,7 @@ export const ChannelSettings: FC<Props> = ({
     <CollapsableSection label={`Optional ${selectedChannel.heading}`} isOpen={false}>
       {selectedChannel.info !== '' && <InfoBox>{selectedChannel.info}</InfoBox>}
       <NotificationChannelOptions
-        selectedChannelOptions={selectedChannel.options.filter(o => !o.required)}
+        selectedChannelOptions={selectedChannel.options.filter((o) => !o.required)}
         currentFormValues={currentFormValues}
         register={register}
         errors={errors}

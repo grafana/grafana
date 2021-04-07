@@ -1,5 +1,5 @@
 import React, { FC, useState, useCallback } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { TimeZone, GrafanaTheme, getTimeZoneInfo } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../../themes';
 import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
@@ -16,7 +16,7 @@ interface Props {
   onChangeTimeZone: (timeZone: TimeZone) => void;
 }
 
-export const TimePickerFooter: FC<Props> = props => {
+export const TimePickerFooter: FC<Props> = (props) => {
   const { timeZone, timestamp = Date.now(), onChangeTimeZone } = props;
   const [isEditing, setEditing] = useState(false);
 
@@ -49,7 +49,7 @@ export const TimePickerFooter: FC<Props> = props => {
         <div aria-label={selectors.components.TimeZonePicker.container} className={style.timeZoneContainer}>
           <TimeZonePicker
             includeInternal={true}
-            onChange={timeZone => {
+            onChange={(timeZone) => {
               onToggleChangeTz();
 
               if (isString(timeZone)) {

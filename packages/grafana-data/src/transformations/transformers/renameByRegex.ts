@@ -33,9 +33,9 @@ export const renameByRegexTransformer: DataTransformerInfo<RenameByRegexTransfor
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
@@ -46,7 +46,7 @@ export const renameByRegexTransformer: DataTransformerInfo<RenameByRegexTransfor
 
 const renameFieldsByRegex = (options: RenameByRegexTransformerOptions) => (frame: DataFrame) => {
   const regex = new RegExp(options.regex);
-  const fields = frame.fields.map(field => {
+  const fields = frame.fields.map((field) => {
     const displayName = getFieldDisplayName(field, frame);
     if (!regex.test(displayName)) {
       return field;

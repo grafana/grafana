@@ -1,22 +1,29 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const (
-	testLogin        = "test@example.com"
-	testPassword     = "password"
-	nonExistingOrgID = 1000
+	testLogin         = "test@example.com"
+	testPassword      = "password"
+	nonExistingOrgID  = 1000
+	existingTestLogin = "existing@example.com"
 )
 
 func TestAdminAPIEndpoint(t *testing.T) {
@@ -29,9 +36,15 @@ func TestAdminAPIEndpoint(t *testing.T) {
 
 		putAdminScenario(t, "When calling PUT on", "/api/admin/users/1/permissions",
 			"/api/admin/users/:id/permissions", role, updateCmd, func(sc *scenarioContext) {
-				bus.AddHandler("test", func(cmd *models.UpdateUserPermissionsCommand) error {
-					return models.ErrLastGrafanaAdmin
+				// TODO: Use a fake SQLStore when it's represented by an interface
+				origUpdateUserPermissions := updateUserPermissions
+				t.Cleanup(func() {
+					updateUserPermissions = origUpdateUserPermissions
 				})
+
+				updateUserPermissions = func(sqlStore *sqlstore.SQLStore, userID int64, isAdmin bool) error {
+					return models.ErrLastGrafanaAdmin
+				}
 
 				sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
@@ -221,21 +234,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
 				bus.ClearBusHandlers()
 
-				var userLogin string
-				var orgID int64
-
-				bus.AddHandler("test", func(cmd *models.CreateUserCommand) error {
-					userLogin = cmd.Login
-					orgID = cmd.OrgId
-
-					if orgID == nonExistingOrgID {
-						return models.ErrOrgNotFound
-					}
-
-					cmd.Result = models.User{Id: testUserID}
-					return nil
-				})
-
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 200, sc.resp.Code)
 
@@ -243,10 +241,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, testUserID, respJSON.Get("id").MustInt64())
 				assert.Equal(t, "User created", respJSON.Get("message").MustString())
-
-				// Verify that userLogin and orgID were transmitted correctly to the handler
-				assert.Equal(t, testLogin, userLogin)
-				assert.Equal(t, int64(0), orgID)
 			})
 		})
 
@@ -260,21 +254,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
 				bus.ClearBusHandlers()
 
-				var userLogin string
-				var orgID int64
-
-				bus.AddHandler("test", func(cmd *models.CreateUserCommand) error {
-					userLogin = cmd.Login
-					orgID = cmd.OrgId
-
-					if orgID == nonExistingOrgID {
-						return models.ErrOrgNotFound
-					}
-
-					cmd.Result = models.User{Id: testUserID}
-					return nil
-				})
-
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 200, sc.resp.Code)
 
@@ -282,9 +261,6 @@ func TestAdminAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, testUserID, respJSON.Get("id").MustInt64())
 				assert.Equal(t, "User created", respJSON.Get("message").MustString())
-
-				assert.Equal(t, testLogin, userLogin)
-				assert.Equal(t, testOrgID, orgID)
 			})
 		})
 
@@ -298,46 +274,24 @@ func TestAdminAPIEndpoint(t *testing.T) {
 			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
 				bus.ClearBusHandlers()
 
-				var userLogin string
-				var orgID int64
-
-				bus.AddHandler("test", func(cmd *models.CreateUserCommand) error {
-					userLogin = cmd.Login
-					orgID = cmd.OrgId
-
-					if orgID == nonExistingOrgID {
-						return models.ErrOrgNotFound
-					}
-
-					cmd.Result = models.User{Id: testUserID}
-					return nil
-				})
-
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 400, sc.resp.Code)
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				require.NoError(t, err)
 				assert.Equal(t, "organization not found", respJSON.Get("message").MustString())
-
-				assert.Equal(t, testLogin, userLogin)
-				assert.Equal(t, int64(1000), orgID)
 			})
 		})
 	})
 
 	t.Run("When a server admin attempts to create a user with an already existing email/login", func(t *testing.T) {
 		createCmd := dtos.AdminCreateUserForm{
-			Login:    testLogin,
+			Login:    existingTestLogin,
 			Password: testPassword,
 		}
 
 		adminCreateUserScenario(t, "Should return an error", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
 			bus.ClearBusHandlers()
-
-			bus.AddHandler("test", func(cmd *models.CreateUserCommand) error {
-				return models.ErrUserAlreadyExists
-			})
 
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			assert.Equal(t, 412, sc.resp.Code)
@@ -354,14 +308,18 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
+		hs := &HTTPServer{
+			Cfg: setting.NewCfg(),
+		}
+
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
-			return AdminUpdateUserPermissions(c, cmd)
+			return hs.AdminUpdateUserPermissions(c, cmd)
 		})
 
 		sc.m.Put(routePattern, sc.defaultHandler)
@@ -380,7 +338,7 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			t.Log("Route handler invoked", "url", c.Req.URL)
 
 			sc.context = c
@@ -410,7 +368,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -438,7 +396,7 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -465,7 +423,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 
@@ -487,7 +445,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 		t.Cleanup(bus.ClearBusHandlers)
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 
@@ -504,16 +462,43 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
+		hs := HTTPServer{
+			Bus:   bus.GetBus(),
+			Login: fakeLoginService{expected: cmd},
+		}
+
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 
-			return AdminCreateUser(c, cmd)
+			return hs.AdminCreateUser(c, cmd)
 		})
 
 		sc.m.Post(routePattern, sc.defaultHandler)
 
 		fn(sc)
 	})
+}
+
+type fakeLoginService struct {
+	login.Service
+	expected dtos.AdminCreateUserForm
+}
+
+func (s fakeLoginService) CreateUser(cmd models.CreateUserCommand) (*models.User, error) {
+	if cmd.OrgId == nonExistingOrgID {
+		return nil, models.ErrOrgNotFound
+	}
+
+	if cmd.Login == existingTestLogin {
+		return nil, models.ErrUserAlreadyExists
+	}
+
+	if s.expected.Login == cmd.Login && s.expected.Email == cmd.Email &&
+		s.expected.Password == cmd.Password && s.expected.Name == cmd.Name && s.expected.OrgId == cmd.OrgId {
+		return &models.User{Id: testUserID}, nil
+	}
+
+	return nil, errors.New("unexpected cmd")
 }

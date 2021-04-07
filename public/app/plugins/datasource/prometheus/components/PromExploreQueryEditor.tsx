@@ -1,4 +1,4 @@
-import React, { memo, FC } from 'react';
+import React, { memo, FC, useEffect } from 'react';
 
 // Types
 import { ExploreQueryFieldProps } from '@grafana/data';
@@ -13,6 +13,12 @@ export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, Prom
 
 export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
   const { range, query, data, datasource, history, onChange, onRunQuery } = props;
+
+  useEffect(() => {
+    if (query.exemplar === undefined) {
+      onChange({ ...query, exemplar: true });
+    }
+  }, [onChange, query]);
 
   function onChangeQueryStep(value: string) {
     const { query, onChange } = props;
@@ -63,6 +69,9 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
           onQueryTypeChange={onQueryTypeChange}
           onStepChange={onStepChange}
           onKeyDownFunc={onReturnKeyDown}
+          query={query}
+          onChange={onChange}
+          datasource={datasource}
         />
       }
     />

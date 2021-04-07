@@ -1,14 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import memoizeOne from 'memoize-one';
 import classNames from 'classnames';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { Icon, IconButton, SetInterval, Tooltip } from '@grafana/ui';
+import { Icon, IconButton, SetInterval, ToolbarButton, ToolbarButtonRow, Tooltip } from '@grafana/ui';
 import { DataSourceInstanceSettings, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
+import { DataSourcePicker } from '@grafana/runtime';
 import { StoreState } from 'app/types/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { changeDatasource } from './state/datasource';
@@ -18,22 +17,11 @@ import { getTimeZone } from '../profile/state/selectors';
 import { updateTimeZoneForSession } from '../profile/state/reducers';
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
-import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { cancelQueries, clearQueries, runQueries } from './state/query';
 import ReturnToDashboardButton from './ReturnToDashboardButton';
-
-const getStyles = memoizeOne(() => {
-  return {
-    liveTailButtons: css`
-      margin-left: 10px;
-      @media (max-width: 1110px) {
-        margin-left: 4px;
-      }
-    `,
-  };
-});
+import { isSplit } from './state/selectors';
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -117,7 +105,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       onChangeTimeZone,
     } = this.props;
 
-    const styles = getStyles();
     const showSmallDataSourcePicker = (splitted ? containerWidth < 700 : containerWidth < 800) || false;
     const showSmallTimePicker = splitted || containerWidth < 1210;
 
@@ -141,7 +128,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               )}
             </div>
             {splitted && (
-              <IconButton className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)} name="times" />
+              <IconButton
+                title="Close split pane"
+                className="explore-toolbar-header-close"
+                onClick={() => closeSplit(exploreId)}
+                name="times"
+              />
             )}
           </div>
         </div>
@@ -163,31 +155,29 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 </div>
               </div>
             ) : null}
-            <ReturnToDashboardButton exploreId={exploreId} />
-            {exploreId === 'left' && !splitted ? (
-              <div className="explore-toolbar-content-item explore-icon-align">
-                <ResponsiveButton
-                  splitted={splitted}
+            <ToolbarButtonRow>
+              <ReturnToDashboardButton exploreId={exploreId} />
+
+              {exploreId === 'left' && !splitted ? (
+                <ToolbarButton
+                  iconOnly={splitted}
                   title="Split"
-                  /* This way ResponsiveButton doesn't add event as a parameter when invoking split function
+                  /* This way ToolbarButton doesn't add event as a parameter when invoking split function
                    * which breaks splitting functionality
                    */
                   onClick={() => split()}
                   icon="columns"
-                  iconClassName="icon-margin-right"
                   disabled={isLive}
-                />
-              </div>
-            ) : null}
-            <div className={'explore-toolbar-content-item'}>
+                >
+                  Split
+                </ToolbarButton>
+              ) : null}
+
               <Tooltip content={'Copy shortened link'} placement="bottom">
-                <button className={'btn navbar-button'} onClick={() => createAndCopyShortLink(window.location.href)}>
-                  <Icon name="share-alt" />
-                </button>
+                <ToolbarButton icon="share-alt" onClick={() => createAndCopyShortLink(window.location.href)} />
               </Tooltip>
-            </div>
-            {!isLive && (
-              <div className="explore-toolbar-content-item">
+
+              {!isLive && (
                 <ExploreTimeControls
                   exploreId={exploreId}
                   range={range}
@@ -199,37 +189,29 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                   hideText={showSmallTimePicker}
                   onChangeTimeZone={onChangeTimeZone}
                 />
-              </div>
-            )}
+              )}
 
-            {!isLive && (
-              <div className="explore-toolbar-content-item explore-icon-align">
-                <ResponsiveButton
-                  splitted={splitted}
-                  title="Clear All"
-                  onClick={this.onClearAll}
-                  icon="trash-alt"
-                  iconClassName="icon-margin-right"
-                />
-              </div>
-            )}
-            <div className="explore-toolbar-content-item">
+              {!isLive && (
+                <ToolbarButton title="Clear all" onClick={this.onClearAll} icon="trash-alt" iconOnly={splitted}>
+                  Clear all
+                </ToolbarButton>
+              )}
+
               <RunButton
                 refreshInterval={refreshInterval}
                 onChangeRefreshInterval={this.onChangeRefreshInterval}
-                splitted={splitted}
+                isSmall={splitted || showSmallTimePicker}
                 isLive={isLive}
                 loading={loading || (isLive && !isPaused)}
                 onRun={this.onRunQuery}
                 showDropdown={!isLive}
               />
-              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
-            </div>
 
-            {hasLiveOption && (
-              <div className={`explore-toolbar-content-item ${styles.liveTailButtons}`}>
+              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
+
+              {hasLiveOption && (
                 <LiveTailControls exploreId={exploreId}>
-                  {controls => (
+                  {(controls) => (
                     <LiveTailButton
                       splitted={splitted}
                       isLive={isLive}
@@ -241,8 +223,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                     />
                   )}
                 </LiveTailControls>
-              </div>
-            )}
+              )}
+            </ToolbarButtonRow>
           </div>
         </div>
       </div>
@@ -251,9 +233,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
 }
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
-  const splitted = state.explore.split;
   const syncedTimes = state.explore.syncedTimes;
-  const exploreItem: ExploreItemState = state.explore[exploreId];
+  const exploreItem: ExploreItemState = state.explore[exploreId]!;
   const {
     datasourceInstance,
     datasourceMissing,
@@ -273,7 +254,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     loading,
     range,
     timeZone: getTimeZone(state.user),
-    splitted,
+    splitted: isSplit(state),
     refreshInterval,
     hasLiveOption,
     isLive,

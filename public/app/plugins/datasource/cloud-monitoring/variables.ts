@@ -25,7 +25,7 @@ export class CloudMonitoringVariableSupport extends CustomVariableSupport<
     const executeObservable = from(this.metricFindQuery.execute(request.targets[0]));
     return from(this.datasource.ensureGCEDefaultProject()).pipe(
       mergeMap(() => executeObservable),
-      map(data => ({ data }))
+      map((data) => ({ data }))
     );
   }
 }

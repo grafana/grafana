@@ -5,7 +5,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
-  DefaultTimeRange,
+  getDefaultTimeRange,
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
@@ -80,7 +80,7 @@ export class VariableQueryRunner {
   }
 
   getResponse(identifier: VariableIdentifier): Observable<UpdateOptionsResults> {
-    return this.updateOptionsResults.asObservable().pipe(filter(result => result.identifier === identifier));
+    return this.updateOptionsResults.asObservable().pipe(filter((result) => result.identifier === identifier));
   }
 
   cancelRequest(identifier: VariableIdentifier): void {
@@ -119,12 +119,12 @@ export class VariableQueryRunner {
         .runRequest(runnerArgs, request)
         .pipe(
           filter(() => {
-            // lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
+            // Lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
             const afterUid = getState().templating.transaction.uid;
             return beforeUid === afterUid;
           }),
-          first(data => data.state === LoadingState.Done || data.state === LoadingState.Error),
-          mergeMap(data => {
+          first((data) => data.state === LoadingState.Done || data.state === LoadingState.Error),
+          mergeMap((data) => {
             if (data.state === LoadingState.Error) {
               return throwError(data.error);
             }
@@ -138,7 +138,7 @@ export class VariableQueryRunner {
           validateVariableSelection({ variable, dispatch, searchFilter }),
           takeUntil(
             merge(this.updateOptionsRequests, this.cancelRequests).pipe(
-              filter(args => {
+              filter((args) => {
                 let cancelRequest = false;
 
                 if (args.identifier.id === identifier.id) {
@@ -150,7 +150,7 @@ export class VariableQueryRunner {
               })
             )
           ),
-          catchError(error => {
+          catchError((error) => {
             if (error.cancelled) {
               return of({});
             }
@@ -177,7 +177,7 @@ export class VariableQueryRunner {
     const range =
       variable.refresh === VariableRefresh.onTimeRangeChanged
         ? this.dependencies.getTimeSrv().timeRange()
-        : DefaultTimeRange;
+        : getDefaultTimeRange();
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,

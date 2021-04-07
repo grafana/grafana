@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import {
   Select,
@@ -19,6 +19,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { PreferencesService } from 'app/core/services/PreferencesService';
 
 export interface Props {
   resourceUri: string;
@@ -38,11 +39,12 @@ const themes: SelectableValue[] = [
 ];
 
 export class SharedPreferences extends PureComponent<Props, State> {
-  backendSrv = backendSrv;
+  service: PreferencesService;
 
   constructor(props: Props) {
     super(props);
 
+    this.service = new PreferencesService(props.resourceUri);
     this.state = {
       homeDashboardId: 0,
       theme: '',
@@ -52,7 +54,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const prefs = await backendSrv.get(`/api/${this.props.resourceUri}/preferences`);
+    const prefs = await this.service.load();
     const dashboards = await backendSrv.search({ starred: true });
     const defaultDashboardHit: DashboardSearchHit = {
       id: 0,
@@ -71,7 +73,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       items: [],
     };
 
-    if (prefs.homeDashboardId > 0 && !dashboards.find(d => d.id === prefs.homeDashboardId)) {
+    if (prefs.homeDashboardId > 0 && !dashboards.find((d) => d.id === prefs.homeDashboardId)) {
       const missing = await backendSrv.search({ dashboardIds: [prefs.homeDashboardId] });
       if (missing && missing.length > 0) {
         dashboards.push(missing[0]);
@@ -88,12 +90,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   onSubmitForm = async () => {
     const { homeDashboardId, theme, timezone } = this.state;
-
-    await backendSrv.put(`/api/${this.props.resourceUri}/preferences`, {
-      homeDashboardId,
-      theme,
-      timezone,
-    });
+    this.service.update({ homeDashboardId, theme, timezone });
     window.location.reload();
   };
 
@@ -131,7 +128,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
               <Field label="UI Theme">
                 <RadioButtonGroup
                   options={themes}
-                  value={themes.find(item => item.value === theme)?.value}
+                  value={themes.find((item) => item.value === theme)?.value}
                   onChange={this.onThemeChanged}
                 />
               </Field>
@@ -147,8 +144,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 }
               >
                 <Select
-                  value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
-                  getOptionValue={i => i.id}
+                  value={dashboards.find((dashboard) => dashboard.id === homeDashboardId)}
+                  getOptionValue={(i) => i.id}
                   getOptionLabel={this.getFullDashName}
                   onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
                   options={dashboards}

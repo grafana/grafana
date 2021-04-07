@@ -59,7 +59,7 @@ export class TeamMembers extends PureComponent<Props, State> {
 
     return (
       <td>
-        {labels.map(label => (
+        {labels.map((label) => (
           <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />
         ))}
       </td>
@@ -75,13 +75,7 @@ export class TeamMembers extends PureComponent<Props, State> {
       <div>
         <div className="page-action-bar">
           <div className="gf-form gf-form--grow">
-            <FilterInput
-              labelClassName="gf-form--has-input-icon gf-form--grow"
-              inputClassName="gf-form-input"
-              placeholder="Search members"
-              value={searchMemberQuery}
-              onChange={this.onSearchQueryChange}
-            />
+            <FilterInput placeholder="Search members" value={searchMemberQuery} onChange={this.onSearchQueryChange} />
           </div>
 
           <div className="page-action-bar__spacer" />
@@ -129,7 +123,7 @@ export class TeamMembers extends PureComponent<Props, State> {
             </thead>
             <tbody>
               {members &&
-                members.map(member => (
+                members.map((member) => (
                   <TeamMemberRow
                     key={member.userId}
                     member={member}

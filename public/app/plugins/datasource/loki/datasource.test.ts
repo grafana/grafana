@@ -1,6 +1,6 @@
 import { of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeRange, TimeSeries } from '@grafana/data';
+import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeSeries } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 import LokiDatasource from './datasource';
@@ -116,6 +116,23 @@ describe('LokiDatasource', () => {
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
+    });
+
+    it('should set the minimal step to 1ms', () => {
+      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const raw = { from: 'now', to: 'now-1h' };
+      const range = { from: dateTime('2020-10-14T00:00:00'), to: dateTime('2020-10-14T00:00:01'), raw: raw };
+      const options = {
+        range,
+        intervalMs: 0.0005,
+      };
+
+      const req = ds.createRangeQuery(target, options as any, 1000);
+      expect(req.start).toBeDefined();
+      expect(req.end).toBeDefined();
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(0.0005, expect.anything());
+      // Step is in seconds (1 ms === 0.001 s)
+      expect(req.step).toEqual(0.001);
     });
   });
 
@@ -253,7 +270,7 @@ describe('LokiDatasource', () => {
 
       fetchMock.mockImplementation(() => of(testMetricsResponse));
 
-      await expect(ds.query(options)).toEmitValuesWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
         const result = received[0];
         const timeSeries = result.data[0] as TimeSeries;
 
@@ -271,7 +288,7 @@ describe('LokiDatasource', () => {
 
       fetchMock.mockImplementation(() => of(testLogsResponse));
 
-      await expect(ds.query(options)).toEmitValuesWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
         const result = received[0];
         const dataFrame = result.data[0] as DataFrame;
         const fieldCache = new FieldCache(dataFrame);
@@ -298,7 +315,7 @@ describe('LokiDatasource', () => {
         })
       );
 
-      await expect(ds.query(options)).toEmitValuesWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
         const err: any = received[0];
         expect(err.data.message).toBe(
           'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.'
@@ -426,24 +443,6 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('when creating a range query', () => {
-    // Loki v1 API has an issue with float step parameters, can be removed when API is fixed
-    it('should produce an integer step parameter', () => {
-      const ds = createLokiDSForTests();
-      const query: LokiQuery = { expr: 'foo', refId: 'bar' };
-      const range: TimeRange = {
-        from: dateTime(0),
-        to: dateTime(1e9 + 1),
-        raw: { from: '0', to: '1000000001' },
-      };
-
-      // Odd timerange/interval combination that would lead to a float step
-      const options = { range, intervalMs: 2000 };
-
-      expect(Number.isInteger(ds.createRangeQuery(query, options as any, 1000).step!)).toBeTruthy();
-    });
-  });
-
   describe('when calling annotationQuery', () => {
     const getTestContext = (response: any) => {
       const query = makeAnnotationQueryRequest();
@@ -470,7 +469,9 @@ describe('LokiDatasource', () => {
               },
               {
                 stream: {
+                  label: '', // empty value gets filtered
                   label2: 'value2',
+                  label3: ' ', // whitespace value gets trimmed then filtered
                 },
                 values: [['1549024057498000000', 'hello 2']],
               },
@@ -530,16 +531,6 @@ describe('LokiDatasource', () => {
         const res = await ds.metricFindQuery('incorrect_query');
 
         expect(res).toEqual([]);
-      });
-    });
-
-    mocks.forEach((mock, index) => {
-      it(`should return label names according to provided rangefor Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
-
-        const res = await ds.metricFindQuery('label_names()', { range: { from: new Date(2), to: new Date(3) } });
-
-        expect(res).toEqual([{ text: 'label1' }]);
       });
     });
   });

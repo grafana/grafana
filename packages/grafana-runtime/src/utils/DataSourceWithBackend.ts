@@ -6,11 +6,12 @@ import {
   DataQuery,
   DataSourceJsonData,
   ScopedVars,
+  makeClassES5Compatible,
 } from '@grafana/data';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { getBackendSrv, getDataSourceSrv } from '../services';
-import { toDataQueryResponse } from './queryResponse';
+import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 const ExpressionDatasourceID = '__expr__';
 
@@ -43,7 +44,7 @@ export interface HealthCheckResult {
  *
  * @public
  */
-export class DataSourceWithBackend<
+class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
@@ -59,10 +60,10 @@ export class DataSourceWithBackend<
     let targets = request.targets;
 
     if (this.filterQuery) {
-      targets = targets.filter(q => this.filterQuery!(q));
+      targets = targets.filter((q) => this.filterQuery!(q));
     }
 
-    const queries = targets.map(q => {
+    const queries = targets.map((q) => {
       let datasourceId = this.id;
 
       if (q.datasource === ExpressionDatasourceID) {
@@ -104,17 +105,17 @@ export class DataSourceWithBackend<
     }
 
     return getBackendSrv()
-      .fetch({
+      .fetch<BackendDataSourceResponse>({
         url: '/api/ds/query',
         method: 'POST',
         data: body,
         requestId,
       })
       .pipe(
-        map((rsp: any) => {
-          return toDataQueryResponse(rsp);
+        map((rsp) => {
+          return toDataQueryResponse(rsp, queries as DataQuery[]);
         }),
-        catchError(err => {
+        catchError((err) => {
           return of(toDataQueryResponse(err));
         })
       );
@@ -162,10 +163,10 @@ export class DataSourceWithBackend<
   async callHealthCheck(): Promise<HealthCheckResult> {
     return getBackendSrv()
       .request({ method: 'GET', url: `/api/datasources/${this.id}/health`, showErrorAlert: false })
-      .then(v => {
+      .then((v) => {
         return v as HealthCheckResult;
       })
-      .catch(err => {
+      .catch((err) => {
         return err.data as HealthCheckResult;
       });
   }
@@ -175,7 +176,7 @@ export class DataSourceWithBackend<
    * see public/app/features/datasources/state/actions.ts for what needs to be returned here
    */
   async testDatasource(): Promise<any> {
-    return this.callHealthCheck().then(res => {
+    return this.callHealthCheck().then((res) => {
       if (res.status === HealthStatus.OK) {
         return {
           status: 'success',
@@ -186,3 +187,8 @@ export class DataSourceWithBackend<
     });
   }
 }
+
+//@ts-ignore
+DataSourceWithBackend = makeClassES5Compatible(DataSourceWithBackend);
+
+export { DataSourceWithBackend };

@@ -2,11 +2,9 @@ import each from 'lodash/each';
 import template from 'lodash/template';
 
 import config from 'app/core/config';
-import { dateMath } from '@grafana/data';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { RawTimeRange } from '@grafana/data';
-import { PanelPluginMeta } from '@grafana/data';
+import { RawTimeRange, PanelPluginMeta, dateMath } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export function ControllerTestContext(this: any) {
@@ -47,9 +45,8 @@ export function ControllerTestContext(this: any) {
   };
 
   this.createPanelController = (Ctrl: any) => {
-    return angularMocks.inject(($controller: any, $rootScope: GrafanaRootScope, $location: any, $browser: any) => {
+    return angularMocks.inject(($controller: any, $rootScope: GrafanaRootScope, $browser: any) => {
       self.scope = $rootScope.$new();
-      self.$location = $location;
       self.$browser = $browser;
       self.panel = new PanelModel({ type: 'test' });
       self.dashboard = { meta: {} };
@@ -79,9 +76,8 @@ export function ControllerTestContext(this: any) {
   };
 
   this.createControllerPhase = (controllerName: string) => {
-    return angularMocks.inject(($controller: any, $rootScope: GrafanaRootScope, $location: any, $browser: any) => {
+    return angularMocks.inject(($controller: any, $rootScope: GrafanaRootScope, $browser: any) => {
       self.scope = $rootScope.$new();
-      self.$location = $location;
       self.$browser = $browser;
       self.scope.contextSrv = {};
       self.scope.panel = {};
@@ -106,40 +102,6 @@ export function ControllerTestContext(this: any) {
 
   this.setIsUtc = (isUtc: any = false) => {
     self.isUtc = isUtc;
-  };
-}
-
-export function ServiceTestContext(this: any) {
-  const self = this;
-  self.templateSrv = TemplateSrvStub();
-  self.timeSrv = new TimeSrvStub();
-  self.datasourceSrv = {};
-  self.backendSrv = {};
-  self.$routeParams = {};
-
-  this.providePhase = (mocks: any) => {
-    return angularMocks.module(($provide: any) => {
-      each(mocks, (key: string) => {
-        $provide.value(key, self[key]);
-      });
-    });
-  };
-
-  this.createService = (name: string) => {
-    // @ts-ignore
-    return angularMocks.inject(
-      ($rootScope: GrafanaRootScope, $httpBackend: any, $injector: any, $location: any, $timeout: any) => {
-        self.$rootScope = $rootScope;
-        self.$httpBackend = $httpBackend;
-        self.$location = $location;
-
-        self.$rootScope.onAppEvent = () => {};
-        self.$rootScope.appEvent = () => {};
-        self.$timeout = $timeout;
-
-        self.service = $injector.get(name);
-      }
-    );
   };
 }
 
@@ -181,6 +143,10 @@ export class ContextSrvStub {
   hasRole() {
     return true;
   }
+
+  isAllowedInterval() {
+    return true;
+  }
 }
 
 export function TemplateSrvStub(this: any) {
@@ -203,7 +169,7 @@ export function TemplateSrvStub(this: any) {
   this.highlightVariablesAsHtml = (str: string) => {
     return str;
   };
-  this.setGrafanaVariable = function(name: string, value: string) {
+  this.setGrafanaVariable = function (name: string, value: string) {
     this.data[name] = value;
   };
 }
@@ -213,7 +179,6 @@ const allDeps = {
   TemplateSrvStub,
   TimeSrvStub,
   ControllerTestContext,
-  ServiceTestContext,
   DashboardViewStateStub,
 };
 

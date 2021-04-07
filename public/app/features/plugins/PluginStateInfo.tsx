@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { AlphaNotice } from '@grafana/ui';
 import { PluginState } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface Props {
   state?: PluginState;
@@ -17,7 +17,7 @@ function getPluginStateInfoText(state?: PluginState): string | null {
   return null;
 }
 
-const PluginStateinfo: FC<Props> = props => {
+const PluginStateinfo: FC<Props> = (props) => {
   const text = getPluginStateInfoText(props.state);
 
   if (!text) {

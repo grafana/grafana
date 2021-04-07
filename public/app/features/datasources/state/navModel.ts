@@ -83,6 +83,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       password: '',
       readOnly: false,
       type: 'Loading',
+      typeName: 'Loading',
       typeLogoUrl: 'public/img/icn-datasource.svg',
       url: '',
       user: '',
@@ -134,7 +135,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
 
 function hasDashboards(includes: PluginInclude[]): boolean {
   return (
-    includes.find(include => {
+    includes.find((include) => {
       return include.type === 'dashboard';
     }) !== undefined
   );

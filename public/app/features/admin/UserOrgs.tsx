@@ -1,18 +1,18 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import {
-  Modal,
-  Themeable,
-  stylesFactory,
-  withTheme,
-  ConfirmButton,
   Button,
-  HorizontalGroup,
+  ConfirmButton,
   Container,
   Field,
+  HorizontalGroup,
+  Modal,
+  stylesFactory,
+  Themeable,
+  withTheme,
 } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { UserOrg, Organization, OrgRole } from 'app/types';
+import { Organization, OrgRole, UserOrg } from 'app/types';
 import { OrgPicker, OrgSelectItem } from 'app/core/components/Select/OrgPicker';
 import { OrgRolePicker } from './OrgRolePicker';
 
@@ -46,7 +46,7 @@ export class UserOrgs extends PureComponent<Props, State> {
 
     return (
       <>
-        <h3 className="page-heading">Organisations</h3>
+        <h3 className="page-heading">Organizations</h3>
         <div className="gf-form-group">
           <div className="gf-form">
             <table className="filter-table form-inline">
@@ -64,7 +64,7 @@ export class UserOrgs extends PureComponent<Props, State> {
           </div>
           <div className={addToOrgContainerClass}>
             <Button variant="secondary" onClick={this.showOrgAddModal(true)}>
-              Add user to organisation
+              Add user to organization
             </Button>
           </div>
           <AddToOrgModal isOpen={showAddOrgModal} onOrgAdd={onOrgAdd} onDismiss={this.showOrgAddModal(false)} />
@@ -162,7 +162,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
               onCancel={this.onCancelClick}
               onConfirm={this.onOrgRemove}
             >
-              Remove from organisation
+              Remove from organization
             </ConfirmButton>
           </div>
         </td>
@@ -179,6 +179,9 @@ const getAddToOrgModalStyles = stylesFactory(() => ({
   `,
   buttonRow: css`
     text-align: center;
+  `,
+  modalContent: css`
+    overflow: visible;
   `,
 }));
 
@@ -224,10 +227,15 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
     const { isOpen } = this.props;
     const { role } = this.state;
     const styles = getAddToOrgModalStyles();
-
     return (
-      <Modal className={styles.modal} title="Add to an organization" isOpen={isOpen} onDismiss={this.onCancel}>
-        <Field label="Organisation">
+      <Modal
+        className={styles.modal}
+        contentClassName={styles.modalContent}
+        title="Add to an organization"
+        isOpen={isOpen}
+        onDismiss={this.onCancel}
+      >
+        <Field label="Organization">
           <OrgPicker onSelected={this.onOrgSelect} />
         </Field>
         <Field label="Role">
@@ -236,7 +244,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         <Container padding="md">
           <HorizontalGroup spacing="md" justify="center">
             <Button variant="primary" onClick={this.onAddUserToOrg}>
-              Add to organisation
+              Add to organization
             </Button>
             <Button variant="secondary" onClick={this.onCancel}>
               Cancel

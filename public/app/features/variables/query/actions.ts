@@ -1,8 +1,7 @@
-import { toDataQueryError } from '@grafana/runtime';
+import { toDataQueryError, getDataSourceSrv } from '@grafana/runtime';
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
@@ -24,14 +23,12 @@ export const updateQueryVariableOptions = (
       }
       const datasource = await getDataSourceSrv().get(variableInState.datasource ?? '');
 
-      // we need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
+      // We need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
       // variable will have the wrong current value as input
       await new Promise((resolve, reject) => {
         const subscription: Subscription = new Subscription();
         const observer = variableQueryObserver(resolve, reject, subscription);
-        const responseSubscription = getVariableQueryRunner()
-          .getResponse(identifier)
-          .subscribe(observer);
+        const responseSubscription = getVariableQueryRunner().getResponse(identifier).subscribe(observer);
         subscription.add(responseSubscription);
 
         getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });

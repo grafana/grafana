@@ -47,8 +47,8 @@ done
 
 # Make sure the script is being run as root
 if [ $EUID -ne 0 ]; then
-   echo "This script must be run as root" 
-   exit 1
+  echo "This script must be run as root"
+  exit 1
 fi
 
 ##
@@ -63,10 +63,11 @@ if [ "$version" == "latest" ]; then
 elif [ "$version" == "canary" ]; then
   version="$canary"
   wget -O - "https://dl.grafana.com/oss/master/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
+else
+  wget -O - "https://dl.grafana.com/oss/release/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
 fi
 
 /bin/rm -rf /opt/grafana > /dev/null 2>&1 || true
 ln -s /opt/grafana-${version} /opt/grafana
 
 # nohup /opt/grafana/bin/grafana-server -config /opt/grafana/conf/defaults.ini -homepath /opt/grafana >/dev/null 2>&1 &
-

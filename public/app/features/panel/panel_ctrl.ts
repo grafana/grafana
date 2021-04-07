@@ -32,6 +32,8 @@ export class PanelCtrl {
   timing: any;
 
   constructor($scope: any, $injector: auto.IInjectorService) {
+    this.panel = this.panel ?? $scope.$parent.panel;
+    this.dashboard = this.dashboard ?? $scope.$parent.dashboard;
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
@@ -51,6 +53,7 @@ export class PanelCtrl {
 
   panelDidMount() {
     this.events.emit(PanelEvents.componentDidMount);
+    this.events.emit(PanelEvents.initialized);
     this.dashboard.panelInitialized(this.panel);
   }
 

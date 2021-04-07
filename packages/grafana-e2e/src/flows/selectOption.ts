@@ -19,9 +19,7 @@ export const selectOption = (config: SelectOptionConfig): any => {
 
   return container.within(() => {
     if (clickToOpen) {
-      e2e()
-        .get('[class$="-input-suffix"]')
-        .click();
+      e2e().get('[class$="-input-suffix"]').click();
     }
 
     e2e.components.Select.option()
@@ -36,8 +34,6 @@ export const selectOption = (config: SelectOptionConfig): any => {
       })
       .scrollIntoView()
       .click({ force: forceClickOption });
-    e2e()
-      .root()
-      .scrollIntoView();
+    e2e().root().scrollIntoView();
   });
 };

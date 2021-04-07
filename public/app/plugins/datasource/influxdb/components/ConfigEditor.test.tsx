@@ -9,6 +9,7 @@ const setup = (propOverrides?: object) => {
       orgId: 1,
       name: 'InfluxDB-3',
       type: 'influxdb',
+      typeName: 'Influx',
       typeLogoUrl: '',
       access: 'proxy',
       url: '',

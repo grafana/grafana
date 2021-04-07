@@ -67,10 +67,7 @@ describe('LogDetailsRow', () => {
     });
 
     expect(wrapper.find(LogLabelStats).length).toBe(0);
-    wrapper
-      .find({ title: 'Ad-hoc statistics' })
-      .hostNodes()
-      .simulate('click');
+    wrapper.find({ title: 'Ad-hoc statistics' }).hostNodes().simulate('click');
     expect(wrapper.find(LogLabelStats).length).toBe(1);
     expect(wrapper.find(LogLabelStats).contains('another value')).toBeTruthy();
   });

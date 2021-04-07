@@ -1,15 +1,5 @@
 import React, { PureComponent } from 'react';
-import {
-  Button,
-  ClipboardButton,
-  Icon,
-  Spinner,
-  Select,
-  Input,
-  LinkButton,
-  InlineField,
-  InlineFieldRow,
-} from '@grafana/ui';
+import { Button, ClipboardButton, Icon, Spinner, Select, Input, LinkButton, Field } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -129,14 +119,14 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     dash.time = getTimeSrv().timeRange();
 
     // remove panel queries & links
-    dash.panels.forEach(panel => {
+    dash.panels.forEach((panel) => {
       panel.targets = [];
       panel.links = [];
       panel.datasource = null;
     });
 
     // remove annotation queries
-    const annotations = dash.annotations.list.filter(annotation => annotation.enable);
+    const annotations = dash.annotations.list.filter((annotation) => annotation.enable);
     dash.annotations.list = annotations.map((annotation: any) => {
       return {
         name: annotation.name,
@@ -171,7 +161,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     this.dashboard.forEachPanel((panel: PanelModel) => {
       delete panel.snapshotData;
     });
-    this.dashboard.annotations.list.forEach(annotation => {
+    this.dashboard.annotations.list.forEach((annotation) => {
       delete annotation.snapshotData;
     });
   };
@@ -220,40 +210,35 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       <>
         <div>
           <p className="share-modal-info-text">
-            A snapshot is an instant way to share an interactive dashboard publicly. When created, we{' '}
-            <strong>strip sensitive data</strong> like queries (metric, template and annotation) and panel links,
-            leaving only the visible metric data and series names embedded into your dashboard.
+            A snapshot is an instant way to share an interactive dashboard publicly. When created, we strip sensitive
+            data like queries (metric, template, and annotation) and panel links, leaving only the visible metric data
+            and series names embedded in your dashboard.
           </p>
           <p className="share-modal-info-text">
-            Keep in mind, your <strong>snapshot can be viewed by anyone</strong> that has the link and can reach the
-            URL. Share wisely.
+            Keep in mind, your snapshot <em>can be viewed by anyone</em> that has the link and can access the URL. Share
+            wisely.
           </p>
         </div>
-        <InlineFieldRow className="share-modal-options">
-          <InlineField labelWidth={24} label="Snapshot name">
-            <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
-          </InlineField>
-          <InlineField labelWidth={24} label="Expire">
-            <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
-          </InlineField>
-        </InlineFieldRow>
-
-        <p className="share-modal-info-text">
-          You may need to configure the timeout value if it takes a long time to collect your dashboard&apos;s metrics.
-        </p>
-
-        <InlineFieldRow className="share-modal-options">
-          <InlineField labelWidth={24} label="Timeout (seconds)">
-            <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
-          </InlineField>
-        </InlineFieldRow>
+        <Field label="Snapshot name">
+          <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
+        </Field>
+        <Field label="Expire">
+          <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
+        </Field>
+        <Field
+          label="Timeout (seconds)"
+          description="You might need to configure the timeout value if it takes a long time to collect your dashboard
+            metrics."
+        >
+          <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
+        </Field>
 
         <div className="gf-form-button-row">
-          <Button className="width-10" variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
+          <Button variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
             Local Snapshot
           </Button>
           {externalEnabled && (
-            <Button className="width-16" variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
+            <Button variant="secondary" disabled={isLoading} onClick={this.createSnapshot(true)}>
               {sharingButtonText}
             </Button>
           )}
@@ -285,7 +270,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         <div className="pull-right" style={{ padding: '5px' }}>
           Did you make a mistake?{' '}
           <LinkButton variant="link" target="_blank" onClick={this.deleteSnapshot}>
-            delete snapshot.
+            Delete snapshot.
           </LinkButton>
         </div>
       </>
@@ -296,8 +281,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-header">
         <p className="share-modal-info-text">
-          The snapshot has now been deleted. If you have already accessed it once, it might take up to an hour before it
-          is removed from browser caches or CDN caches.
+          The snapshot has been deleted. If you have already accessed it once, then it might take up to an hour before
+          before it is removed from browser caches or CDN caches.
         </p>
       </div>
     );
@@ -309,17 +294,11 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-body">
         <div className="share-modal-header">
-          {isLoading ? (
-            <div className="share-modal-big-icon">
-              <Spinner inline={true} />
-            </div>
-          ) : (
-            <Icon name="camera" className="share-modal-big-icon" size="xxl" />
-          )}
           <div className="share-modal-content">
             {step === 1 && this.renderStep1()}
             {step === 2 && this.renderStep2()}
             {step === 3 && this.renderStep3()}
+            {isLoading && <Spinner inline={true} />}
           </div>
         </div>
       </div>

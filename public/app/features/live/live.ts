@@ -1,5 +1,4 @@
-import Centrifuge from 'centrifuge/dist/centrifuge.protobuf';
-import SockJS from 'sockjs-client';
+import Centrifuge from 'centrifuge/dist/centrifuge';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
 import { BehaviorSubject } from 'rxjs';
 import { LiveChannel, LiveChannelScope, LiveChannelAddress } from '@grafana/data';
@@ -9,6 +8,7 @@ import {
   grafanaLiveCoreFeatures,
   GrafanaLiveDataSourceScope,
   GrafanaLivePluginScope,
+  GrafanaLiveStreamScope,
 } from './scopes';
 import { registerLiveFeatures } from './features';
 
@@ -17,9 +17,7 @@ export const sessionId =
   '/' +
   Date.now().toString(16) +
   '/' +
-  Math.random()
-    .toString(36)
-    .substring(2, 15);
+  Math.random().toString(36).substring(2, 15);
 
 export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
@@ -30,16 +28,17 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly scopes: Record<LiveChannelScope, GrafanaLiveScope>;
 
   constructor() {
-    this.centrifuge = new Centrifuge(`${config.appUrl}live/sockjs`, {
+    // build live url replacing scheme in appUrl.
+    const liveUrl = `${config.appUrl}live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
+    this.centrifuge = new Centrifuge(liveUrl, {
       debug: true,
-      sockjs: SockJS,
     });
     this.centrifuge.setConnectData({
       sessionId,
     });
     this.centrifuge.connect(); // do connection
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
-    this.connectionBlocker = new Promise<void>(resolve => {
+    this.connectionBlocker = new Promise<void>((resolve) => {
       if (this.centrifuge.isConnected()) {
         return resolve();
       }
@@ -54,6 +53,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       [LiveChannelScope.Grafana]: grafanaLiveCoreFeatures,
       [LiveChannelScope.DataSource]: new GrafanaLiveDataSourceScope(),
       [LiveChannelScope.Plugin]: new GrafanaLivePluginScope(),
+      [LiveChannelScope.Stream]: new GrafanaLiveStreamScope(),
     };
 
     // Register global listeners
@@ -103,7 +103,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     this.open.set(id, channel);
 
     // Initialize the channel in the background
-    this.initChannel(scope, channel).catch(err => {
+    this.initChannel(scope, channel).catch((err) => {
       channel?.shutdownWithError(err);
       this.open.delete(id);
     });

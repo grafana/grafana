@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 import { setBackendSrv } from '@grafana/runtime';
-import { dateTime, DefaultTimeRange } from '@grafana/data';
+import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 import { CloudWatchDatasource } from './datasource';
@@ -17,7 +17,7 @@ describe('datasource', () => {
         ],
       } as any);
 
-      await expect(observable).toEmitValuesWith(received => {
+      await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.error?.message).toBe('Log group is required');
       });
@@ -34,7 +34,7 @@ describe('datasource', () => {
         ],
       } as any);
 
-      await expect(observable).toEmitValuesWith(received => {
+      await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.data).toEqual([]);
       });
@@ -46,13 +46,11 @@ describe('datasource', () => {
       const { datasource } = setup({
         data: {
           results: {
-            a: { refId: 'a', series: [{ name: 'cpu', points: [1, 1] }], meta: { gmdMeta: '' } },
-            b: { refId: 'b', series: [{ name: 'memory', points: [2, 2] }], meta: { gmdMeta: '' } },
+            a: { refId: 'a', series: [{ name: 'cpu', points: [1, 1] }], meta: {} },
+            b: { refId: 'b', series: [{ name: 'memory', points: [2, 2] }], meta: {} },
           },
         },
       });
-      const buildCloudwatchConsoleUrlMock = jest.spyOn(datasource, 'buildCloudwatchConsoleUrl');
-      buildCloudwatchConsoleUrlMock.mockImplementation(() => '');
 
       const observable = datasource.performTimeSeriesQuery(
         {
@@ -64,7 +62,7 @@ describe('datasource', () => {
         { from: dateTime(), to: dateTime() } as any
       );
 
-      await expect(observable).toEmitValuesWith(received => {
+      await expect(observable).toEmitValuesWith((received) => {
         const response = received[0];
         expect(response.data.length).toEqual(2);
       });
@@ -86,7 +84,7 @@ describe('datasource', () => {
 function setup({ data = [] }: { data?: any } = {}) {
   const datasource = new CloudWatchDatasource({ jsonData: { defaultRegion: 'us-west-1' } } as any, new TemplateSrv(), {
     timeRange() {
-      return DefaultTimeRange;
+      return getDefaultTimeRange();
     },
   } as any);
   const fetchMock = jest.fn().mockReturnValue(of({ data }));

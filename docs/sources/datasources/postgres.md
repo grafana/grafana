@@ -19,20 +19,22 @@ Grafana ships with a built-in PostgreSQL data source plugin that allows you to q
 
 ### Data source options
 
-Name           | Description
--------------- | -------------
-`Name`         | The data source name. This is how you refer to the data source in panels and queries.
-`Default`      | Default data source means that it will be pre-selected for new panels.
-`Host`         | The IP address/hostname and optional port of your PostgreSQL instance. _Do not_ include the database name. The connection string for connecting to Postgres will not be correct and will cause errors.
-`Database`     | Name of your PostgreSQL database.
-`User`         | Database user's login/username
-`Password`     | Database user's password
-`SSL Mode`     | This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-`Max open`     | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
-`Max idle`     | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
-`Max lifetime` | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
-`Version`      | This option determines which functions are available in the query builder (only available in Grafana 5.3+).
-`TimescaleDB`  | TimescaleDB is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use `time_bucket` in the `$__timeGroup` macro and display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+).
+Name               | Description
+-----------------  | -------------
+`Name`             | The data source name. This is how you refer to the data source in panels and queries.
+`Default`          | Default data source means that it will be pre-selected for new panels.
+`Host`             | The IP address/hostname and optional port of your PostgreSQL instance. _Do not_ include the database name. The connection string for connecting to Postgres will not be correct and it may cause errors.
+`Database`         | Name of your PostgreSQL database.
+`User`             | Database user's login/username
+`Password`         | Database user's password
+`SSL Mode`         | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disabled, SSL Method and Auth Details would not be visible. 
+`SSL Auth Details Method`       | Determines whether the SSL Auth details will be configured as a file path or file content. Grafana v7.5+
+`SSL Auth Details Value` | File path or file content of SSL root certificate, client certificate and client key
+`Max open`         | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
+`Max idle`         | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
+`Max lifetime`     | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
+`Version`          |Determines which functions are available in the query builder (only available in Grafana 5.3+).
+`TimescaleDB`      |A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+).
 
 ### Min time interval
 
@@ -413,6 +415,7 @@ datasources:
       postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false
 ```
+>**Note:** In the above code, the `postgresVersion` value of `10` refers to version PotgreSQL 10 and above.
 
 If you encounter metric request errors or other issues:
 - Make sure your data source YAML file parameters exactly match the example. This includes parameter names and use of quotation marks.

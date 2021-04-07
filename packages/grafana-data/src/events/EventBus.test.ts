@@ -35,7 +35,7 @@ describe('EventBus', () => {
     const bus = new EventBusSrv();
     const events: LoginEvent[] = [];
 
-    bus.subscribe(LoginEvent, event => {
+    bus.subscribe(LoginEvent, (event) => {
       events.push(event);
     });
 
@@ -69,11 +69,11 @@ describe('EventBus', () => {
       const legacyEvents: any = [];
       const newEvents: any = [];
 
-      bus.on(legacyEvent, event => {
+      bus.on(legacyEvent, (event) => {
         legacyEvents.push(event);
       });
 
-      bus.subscribe(AlertSuccessEvent, event => {
+      bus.subscribe(AlertSuccessEvent, (event) => {
         newEvents.push(event);
       });
 
@@ -160,7 +160,7 @@ describe('EventBus', () => {
       const bus = new EventBusSrv();
       const events: LoginEvent[] = [];
 
-      bus.subscribe(LoginEvent, event => {
+      bus.subscribe(LoginEvent, (event) => {
         events.push(event);
       });
 

@@ -18,7 +18,7 @@ export const Alignments: FC<Props> = ({ perSeriesAligner, templateVariableOption
           <label className="gf-form-label query-keyword width-15">Aligner</label>
           <Segment
             onChange={({ value }) => onChange(value!)}
-            value={[...alignOptions, ...templateVariableOptions].find(s => s.value === perSeriesAligner)}
+            value={[...alignOptions, ...templateVariableOptions].find((s) => s.value === perSeriesAligner)}
             options={[
               {
                 label: 'Template Variables',

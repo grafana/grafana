@@ -2,7 +2,7 @@ package services
 
 import (
 	"bufio"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,7 +28,8 @@ func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plug
 	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo", pluginId)
 	if err != nil {
 		if errors.Is(err, ErrNotFoundError) {
-			return models.Plugin{}, errutil.Wrap("Failed to find requested plugin, check if the plugin_id is correct", err)
+			return models.Plugin{}, errutil.Wrap(
+				fmt.Sprintf("Failed to find requested plugin, check if the plugin_id (%s) is correct", pluginId), err)
 		}
 		return models.Plugin{}, errutil.Wrap("Failed to send request", err)
 	}
@@ -101,15 +102,15 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 	}()
 
 	w := bufio.NewWriter(tmpFile)
-	h := md5.New()
+	h := sha256.New()
 	if _, err = io.Copy(w, io.TeeReader(bodyReader, h)); err != nil {
-		return errutil.Wrap("Failed to compute MD5 checksum", err)
+		return errutil.Wrap("failed to compute SHA256 checksum", err)
 	}
 	if err := w.Flush(); err != nil {
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
 	}
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
-		return fmt.Errorf("expected MD5 checksum does not match the downloaded archive - please contact security@grafana.com")
+		return fmt.Errorf("expected SHA256 checksum does not match the downloaded archive - please contact security@grafana.com")
 	}
 	return nil
 }

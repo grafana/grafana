@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { IconButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme } from '../../themes/ThemeContext';
@@ -63,8 +63,8 @@ function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[],
       `}
     >
       <div>Surface: {surface}</div>
-      {icons.map(icon => {
-        return sizes.map(size => (
+      {icons.map((icon) => {
+        return sizes.map((size) => (
           <span key={icon + size}>
             <IconButton name={icon} size={size} surface={surface as any} />
           </span>

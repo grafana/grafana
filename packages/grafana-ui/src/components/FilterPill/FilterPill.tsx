@@ -1,11 +1,11 @@
 import React, { useContext } from 'react';
 import { stylesFactory, ThemeContext } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { IconButton } from '../IconButton/IconButton';
 import { IconName } from '../../types';
 
-interface FilterPillProps {
+export interface FilterPillProps {
   selected: boolean;
   label: string;
   onClick: React.MouseEventHandler<HTMLElement>;
@@ -19,7 +19,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick
     <div className={styles.wrapper} onClick={onClick}>
       <IconButton
         name={icon}
-        onClick={e => {
+        onClick={(e) => {
           e.stopPropagation();
           onClick(e);
         }}
@@ -39,7 +39,6 @@ const getFilterPillStyles = stylesFactory((theme: GrafanaTheme, isSelected: bool
       padding: ${theme.spacing.xxs} ${theme.spacing.sm};
       background: ${theme.colors.bg2};
       border-radius: ${theme.border.radius.sm};
-      display: inline-block;
       padding: 0 ${theme.spacing.md} 0 ${theme.spacing.xs};
       font-weight: ${theme.typography.weight.semibold};
       font-size: ${theme.typography.size.sm};

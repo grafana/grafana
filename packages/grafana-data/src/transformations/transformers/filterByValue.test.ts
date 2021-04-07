@@ -47,7 +47,7 @@ describe('FilterByValue transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
       const processed = received[0];
 
       expect(processed.length).toEqual(1);
@@ -56,15 +56,13 @@ describe('FilterByValue transformer', () => {
           name: 'time',
           type: FieldType.time,
           values: new ArrayVector([6000, 7000]),
-          state: { displayName: 'time' },
-          config: {},
+          state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
           values: new ArrayVector([6, 7]),
-          state: { displayName: 'numbers' },
-          config: {},
+          state: {},
         },
       ]);
     });
@@ -90,7 +88,7 @@ describe('FilterByValue transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
       const processed = received[0];
 
       expect(processed.length).toEqual(1);
@@ -99,15 +97,13 @@ describe('FilterByValue transformer', () => {
           name: 'time',
           type: FieldType.time,
           values: new ArrayVector([1000, 2000, 3000, 4000, 5000]),
-          state: { displayName: 'time' },
-          config: {},
+          state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
           values: new ArrayVector([1, 2, 3, 4, 5]),
-          state: { displayName: 'numbers' },
-          config: {},
+          state: {},
         },
       ]);
     });
@@ -142,7 +138,7 @@ describe('FilterByValue transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
       const processed = received[0];
 
       expect(processed.length).toEqual(1);
@@ -151,15 +147,13 @@ describe('FilterByValue transformer', () => {
           name: 'time',
           type: FieldType.time,
           values: new ArrayVector([1000, 2000, 3000, 4000, 7000]),
-          state: { displayName: 'time' },
-          config: {},
+          state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
           values: new ArrayVector([1, 2, 3, 4, 7]),
-          state: { displayName: 'numbers' },
-          config: {},
+          state: {},
         },
       ]);
     });
@@ -194,7 +188,7 @@ describe('FilterByValue transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
       const processed = received[0];
 
       expect(processed.length).toEqual(1);
@@ -203,15 +197,13 @@ describe('FilterByValue transformer', () => {
           name: 'time',
           type: FieldType.time,
           values: new ArrayVector([4000, 5000]),
-          state: { displayName: 'time' },
-          config: {},
+          state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
           values: new ArrayVector([4, 5]),
-          state: { displayName: 'numbers' },
-          config: {},
+          state: {},
         },
       ]);
     });

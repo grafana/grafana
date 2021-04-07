@@ -74,8 +74,43 @@ describe('addLabelToQuery()', () => {
     expect(addLabelToQuery('{job="grafana"} |= "foo-bar"', 'filename', 'test.txt', undefined, true)).toBe(
       '{filename="test.txt",job="grafana"} |= "foo-bar"'
     );
-    expect(addLabelToQuery('{job="grafana"} |= "foo-bar"', 'filename', 'test.txt')).toBe(
-      '{filename="test.txt",job="grafana"} |= "foo{filename="test.txt"}-bar"'
+  });
+
+  it('should add labels to metrics with logical operators', () => {
+    expect(addLabelToQuery('foo_info or bar_info', 'bar', 'baz')).toBe('foo_info{bar="baz"} or bar_info{bar="baz"}');
+    expect(addLabelToQuery('foo_info and bar_info', 'bar', 'baz')).toBe('foo_info{bar="baz"} and bar_info{bar="baz"}');
+  });
+
+  it('should not add ad-hoc filter to template variables', () => {
+    expect(addLabelToQuery('sum(rate({job="foo"}[2m])) by (value $variable)', 'bar', 'baz')).toBe(
+      'sum(rate({bar="baz",job="foo"}[2m])) by (value $variable)'
+    );
+  });
+
+  it('should not add ad-hoc filter to range', () => {
+    expect(addLabelToQuery('avg(rate((my_metric{job="foo"} > 0)[3h:])) by (label)', 'bar', 'baz')).toBe(
+      'avg(rate((my_metric{bar="baz",job="foo"} > 0)[3h:])) by (label)'
+    );
+  });
+  it('should not add ad-hoc filter to labels in label list provided with the group modifier', () => {
+    expect(
+      addLabelToQuery(
+        'max by (id, name, type) (my_metric{type=~"foo|bar|baz-test"}) * on(id) group_right(id, type, name) sum by (id) (my_metric) * 1000',
+        'bar',
+        'baz'
+      )
+    ).toBe(
+      'max by (id, name, type) (my_metric{bar="baz",type=~"foo|bar|baz-test"}) * on(id) group_right(id, type, name) sum by (id) (my_metric{bar="baz"}) * 1000'
+    );
+  });
+  it('should not add ad-hoc filter to labels in label list provided with the group modifier', () => {
+    expect(addLabelToQuery('rate(my_metric[${__range_s}s])', 'bar', 'baz')).toBe(
+      'rate(my_metric{bar="baz"}[${__range_s}s])'
+    );
+  });
+  it('should not add ad-hoc filter to labels to math operations', () => {
+    expect(addLabelToQuery('count(my_metric{job!="foo"} < (5*1024*1024*1024) or vector(0)) - 1', 'bar', 'baz')).toBe(
+      'count(my_metric{bar="baz",job!="foo"} < (5*1024*1024*1024) or vector(0)) - 1'
     );
   });
 });

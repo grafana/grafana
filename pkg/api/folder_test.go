@@ -6,7 +6,10 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	dboards "github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
@@ -143,7 +146,7 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
 
@@ -172,12 +175,16 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
+		hs := HTTPServer{
+			Cfg: setting.NewCfg(),
+		}
+
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: testOrgID, UserId: testUserID}
 
-			return UpdateFolder(c, cmd)
+			return hs.UpdateFolder(c, cmd)
 		})
 
 		origNewFolderService := dashboards.NewFolderService
@@ -193,6 +200,8 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 }
 
 type fakeFolderService struct {
+	dashboards.FolderService
+
 	GetFoldersResult     []*models.Folder
 	GetFoldersError      error
 	GetFolderByUIDResult *models.Folder
@@ -220,9 +229,8 @@ func (s *fakeFolderService) GetFolderByUID(uid string) (*models.Folder, error) {
 	return s.GetFolderByUIDResult, s.GetFolderByUIDError
 }
 
-func (s *fakeFolderService) CreateFolder(cmd *models.CreateFolderCommand) error {
-	cmd.Result = s.CreateFolderResult
-	return s.CreateFolderError
+func (s *fakeFolderService) CreateFolder(title, uid string) (*models.Folder, error) {
+	return s.CreateFolderResult, s.CreateFolderError
 }
 
 func (s *fakeFolderService) UpdateFolder(existingUID string, cmd *models.UpdateFolderCommand) error {
@@ -236,7 +244,8 @@ func (s *fakeFolderService) DeleteFolder(uid string) (*models.Folder, error) {
 }
 
 func mockFolderService(mock *fakeFolderService) {
-	dashboards.NewFolderService = func(orgId int64, user *models.SignedInUser) dashboards.FolderService {
+	dashboards.NewFolderService = func(orgId int64, user *models.SignedInUser,
+		dashboardStore dboards.Store) dashboards.FolderService {
 		return mock
 	}
 }

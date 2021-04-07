@@ -11,7 +11,7 @@ export type MutableField<T = any> = Field<T, MutableVector<T>>;
 
 type MutableVectorCreator = (buffer?: any[]) => MutableVector;
 
-export const MISSING_VALUE: any = null;
+export const MISSING_VALUE: any = undefined; // Treated as connected in new graph panel
 
 export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame, MutableVector<T> {
   name?: string;
@@ -191,7 +191,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   }
 
   /**
-   * Add all properties of the value as fields on the frame
+   * Add values from an object to corresponding fields. Similar to appendRow but does not create new fields.
    */
   add(value: T) {
     // Will add one value for every field

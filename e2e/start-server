@@ -4,6 +4,7 @@ set -eo pipefail
 . e2e/variables
 
 PORT=${PORT:-$DEFAULT_PORT}
+PACKAGE_FILE=${PACKAGE_FILE:-$DEFAULT_PACKAGE_FILE}
 
 ./e2e/kill-server
 
@@ -11,12 +12,20 @@ mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
 
-if [ -f $PACKAGE_FILE ]; then
-  echo "Found package tar file, extracting..."
-  tar zxf $PACKAGE_FILE -C $RUNDIR
+# Expand any wildcards
+pkgs=(${PACKAGE_FILE})
+pkg=${pkgs[0]}
+if [[ -f ${pkg} ]]; then
+  echo "Found package tar file ${pkg}, extracting..."
+  tar zxf ${pkg} -C $RUNDIR
   mv $RUNDIR/grafana-*/* $RUNDIR
 else
-  echo "Copying local dev files"
+  echo "Couldn't find package ${PACKAGE_FILE} - copying local dev files"
+
+  if [[ ! -f bin/grafana-server ]]; then
+    echo bin/grafana-server missing
+    exit 1
+  fi
 
   cp -r ./bin $RUNDIR
   cp -r ./public $RUNDIR

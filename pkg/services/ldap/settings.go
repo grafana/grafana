@@ -74,7 +74,7 @@ func IsEnabled() bool {
 	return setting.LDAPEnabled
 }
 
-// ReloadConfig reads the config from the disc and caches it.
+// ReloadConfig reads the config from the disk and caches it.
 func ReloadConfig() error {
 	if !IsEnabled() {
 		return nil

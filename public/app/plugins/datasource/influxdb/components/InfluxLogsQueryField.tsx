@@ -29,7 +29,7 @@ interface ChooserOptions {
 export function pairsAreValid(pairs: KeyValuePair[]) {
   return (
     !pairs ||
-    pairs.every(pair => {
+    pairs.every((pair) => {
       const allDefined = !!(pair.key && pair.operator && pair.value);
       const allEmpty = pair.key === undefined && pair.operator === undefined && pair.value === undefined;
       return allDefined || allEmpty;

@@ -126,6 +126,9 @@ var (
 	// MStatTotalDashboards is a metric total amount of dashboards
 	MStatTotalDashboards prometheus.Gauge
 
+	// MStatTotalDashboards is a metric total amount of dashboards
+	MStatTotalFolders prometheus.Gauge
+
 	// MStatTotalUsers is a metric total amount of users
 	MStatTotalUsers prometheus.Gauge
 
@@ -412,6 +415,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	MStatTotalFolders = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_folder",
+		Help:      "total amount of folders",
+		Namespace: ExporterName,
+	})
+
 	MStatTotalUsers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_total_users",
 		Help:      "total amount of users",
@@ -575,6 +584,7 @@ func initMetricVars() {
 		MRenderingQueue,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
+		MStatTotalFolders,
 		MStatTotalUsers,
 		MStatActiveUsers,
 		MStatTotalOrgs,

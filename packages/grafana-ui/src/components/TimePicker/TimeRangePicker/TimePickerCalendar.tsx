@@ -1,5 +1,5 @@
 import React, { FormEvent, memo, useCallback } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { dateTime, DateTime, dateTimeParse, GrafanaTheme, TimeZone } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../../themes';
@@ -198,7 +198,7 @@ interface Props {
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
-export const TimePickerCalendar = memo<Props>(props => {
+export const TimePickerCalendar = memo<Props>((props) => {
   const theme = useTheme();
   const styles = getStyles(theme, props.isReversed);
   const { isOpen, isFullscreen } = props;

@@ -15,8 +15,8 @@ import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
 import darkTheme from '../../../public/sass/grafana.dark.scss';
 import { GrafanaLight, GrafanaDark } from './storybookTheme';
-import { configure } from '@storybook/react';
 import addons from '@storybook/addons';
+import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer';
 
 const handleThemeChange = (theme: any) => {
   if (theme !== 'light') {
@@ -36,14 +36,14 @@ addons.setConfig({
 export const decorators = [withTheme(handleThemeChange), withPaddedStory];
 
 export const parameters = {
-  info: {},
   docs: {
-    theme: GrafanaDark,
+    container: ThemedDocsContainer,
   },
   darkMode: {
     dark: GrafanaDark,
     light: GrafanaLight,
   },
+  actions: { argTypesRegex: '^on[A-Z].*' },
   options: {
     showPanel: true,
     panelPosition: 'right',

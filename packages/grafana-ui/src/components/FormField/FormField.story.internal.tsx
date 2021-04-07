@@ -1,30 +1,40 @@
 import React from 'react';
-import { number, text } from '@storybook/addon-knobs';
-
+import { Meta, Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { FormField } from './FormField';
-
-const getKnobs = () => {
-  return {
-    label: text('label', 'Test'),
-    tooltip: text('tooltip', 'This is a tooltip with information about this FormField'),
-    labelWidth: number('labelWidth', 10),
-    inputWidth: number('inputWidth', 20),
-  };
-};
+import { FormField, Props } from './FormField';
 
 export default {
   title: 'Forms/Legacy/FormField',
   component: FormField,
   decorators: [withCenteredStory],
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['inputEl'],
+    },
+  },
+  args: {
+    inputWidth: 20,
+    labelWidth: 10,
+    label: 'Test',
+  },
+  argTypes: {
+    inputWidth: { control: { type: 'range', min: 5, max: 30 } },
+    labelWidth: { control: { type: 'range', min: 5, max: 30 } },
+    tooltip: { control: { type: 'text' } },
+  },
+} as Meta;
+
+export const Basic: Story<Props> = (args) => {
+  return <FormField {...args} />;
 };
 
-export const basic = () => {
-  const { inputWidth, label, labelWidth } = getKnobs();
-  return <FormField label={label} labelWidth={labelWidth} inputWidth={inputWidth} />;
+export const WithTooltip: Story<Props> = ({ tooltip, ...args }) => {
+  return <FormField {...args} tooltip={tooltip} />;
 };
 
-export const withTooltip = () => {
-  const { inputWidth, label, labelWidth, tooltip } = getKnobs();
-  return <FormField label={label} labelWidth={labelWidth} inputWidth={inputWidth} tooltip={tooltip} />;
+WithTooltip.args = {
+  tooltip: 'This is a tooltip with information about this FormField',
 };

@@ -18,10 +18,6 @@ describe('GraphCtrl', () => {
     },
   };
 
-  const scope: any = {
-    $on: () => {},
-  };
-
   GraphCtrl.prototype.panel = {
     events: {
       on: () => {},
@@ -29,6 +25,17 @@ describe('GraphCtrl', () => {
     },
     gridPos: {
       w: 100,
+    },
+    fieldConfig: {
+      defaults: {},
+    },
+  };
+
+  const scope: any = {
+    $on: () => {},
+    $parent: {
+      panel: GraphCtrl.prototype.panel,
+      dashboard: {},
     },
   };
 
@@ -71,9 +78,7 @@ describe('GraphCtrl', () => {
   describe('when time series are inside range', () => {
     beforeEach(() => {
       const range = {
-        from: dateTime()
-          .subtract(1, 'days')
-          .valueOf(),
+        from: dateTime().subtract(1, 'days').valueOf(),
         to: dateTime().valueOf(),
       };
 

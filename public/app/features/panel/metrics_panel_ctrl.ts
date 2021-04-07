@@ -19,9 +19,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
-  scope: any;
   datasource: DataSourceApi;
-  $timeout: any;
   contextSrv: ContextSrv;
   datasourceSrv: any;
   timeSrv: any;
@@ -44,7 +42,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
-    this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
     this.events.on(PanelEvents.refresh, this.onMetricsPanelRefresh.bind(this));
@@ -166,7 +163,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.handleDataFrames(data.series);
       } else {
         // Make the results look as if they came directly from a <6.2 datasource request
-        const legacy = data.series.map(v => toLegacyResponseData(v));
+        const legacy = data.series.map((v) => toLegacyResponseData(v));
         this.handleQueryResult({ data: legacy });
       }
 
@@ -211,7 +208,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = false;
 
     if (this.dashboard && this.dashboard.snapshot) {
-      this.panel.snapshotData = data.map(frame => toDataFrameDTO(frame));
+      this.panel.snapshotData = data.map((frame) => toDataFrameDTO(frame));
     }
 
     try {

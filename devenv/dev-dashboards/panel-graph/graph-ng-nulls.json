@@ -15,8 +15,15 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 345,
-  "links": [],
+  "links": [
+    {
+      "icon": "external link",
+      "tags": ["gdev", "graph-ng"],
+      "type": "dashboards",
+      "asDropdown": true,
+      "title": "Graph Tests"
+    }
+  ],
   "panels": [
     {
       "datasource": "gdev-testdata",
@@ -29,11 +36,19 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 7,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "auto",
             "spanNulls": false
           },
@@ -108,7 +123,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Show gaps",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -122,11 +137,19 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "auto",
             "spanNulls": false
           },
@@ -210,7 +233,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Gaps & null between every point for series B",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -224,11 +247,19 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "auto",
             "spanNulls": false
           },
@@ -332,7 +363,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "No nulls but unaligned series",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -345,11 +376,19 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 7,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "auto",
             "spanNulls": true
           },
@@ -424,7 +463,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Connected",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -438,11 +477,19 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "auto",
             "spanNulls": true
           },
@@ -526,7 +573,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Same as above but connected",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -540,11 +587,19 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "drawStyle": "line",
-            "fillGradient": 0,
+            "fillGradient": "none",
             "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "auto",
             "spanNulls": true
           },
@@ -648,12 +703,432 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Same as above but connected",
-      "type": "graph3"
+      "type": "timeseries"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "Temperature",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0
+            },
+            "fillGradient": "none",
+            "fillOpacity": 10,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 8,
+              "show": true
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A-series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "C-series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 0,
+        "y": 14
+      },
+      "id": 11,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "list",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10,25,null,null,50,10"
+        },
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,90,30,5,0"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Null values in first series & show gaps ",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "Temperature",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0
+            },
+            "fillGradient": "none",
+            "fillOpacity": 10,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 8,
+              "show": true
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A-series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "C-series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 7,
+        "y": 14
+      },
+      "id": 9,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "list",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,90,30,5,0"
+        },
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10,25,null,null,50,10"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Null values in second series show gaps (bugged)",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": 3600000
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 10,
+        "x": 14,
+        "y": 14
+      },
+      "id": 13,
+      "options": {
+        "graph": {},
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,90,null,30,5,0"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Span nulls below 1hr",
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 27,
   "style": "dark",
-  "tags": ["gdev", "panel-tests"],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },
@@ -665,5 +1140,5 @@
   "timezone": "",
   "title": "Panel Tests - Graph NG - Gaps and Connected",
   "uid": "8mmCAF1Mz",
-  "version": 10
+  "version": 1
 }

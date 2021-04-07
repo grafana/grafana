@@ -5,3 +5,4 @@ vendor
 devenv
 data
 dist
+e2e/tmp

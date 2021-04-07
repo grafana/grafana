@@ -64,7 +64,7 @@ export class VariableOptions extends PureComponent<Props> {
     return (
       <div className="variable-options-column">
         <div className="variable-options-column-header text-center">Tags</div>
-        {tags.map(tag => this.renderTag(tag))}
+        {tags.map((tag) => this.renderTag(tag))}
       </div>
     );
   }

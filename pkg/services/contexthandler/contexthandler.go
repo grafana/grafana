@@ -44,6 +44,7 @@ func init() {
 type ContextHandler struct {
 	Cfg              *setting.Cfg             `inject:""`
 	AuthTokenService models.UserTokenService  `inject:""`
+	JWTAuthService   models.JWTService        `inject:""`
 	RemoteCache      *remotecache.RemoteCache `inject:""`
 	RenderService    rendering.Service        `inject:""`
 	SQLStore         *sqlstore.SQLStore       `inject:""`
@@ -92,6 +93,7 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 	case h.initContextWithBasicAuth(ctx, orgID):
 	case h.initContextWithAuthProxy(ctx, orgID):
 	case h.initContextWithToken(ctx, orgID):
+	case h.initContextWithJWT(ctx, orgID):
 	case h.initContextWithAnonymousUser(ctx):
 	}
 
@@ -114,8 +116,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(ctx *models.ReqContext) bo
 		return false
 	}
 
-	orgQuery := models.GetOrgByNameQuery{Name: h.Cfg.AnonymousOrgName}
-	if err := bus.Dispatch(&orgQuery); err != nil {
+	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
+	if err != nil {
 		log.Errorf(3, "Anonymous access organization error: '%s': %s", h.Cfg.AnonymousOrgName, err)
 		return false
 	}
@@ -124,8 +126,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(ctx *models.ReqContext) bo
 	ctx.AllowAnonymous = true
 	ctx.SignedInUser = &models.SignedInUser{IsAnonymous: true}
 	ctx.OrgRole = models.RoleType(h.Cfg.AnonymousOrgRole)
-	ctx.OrgId = orgQuery.Result.Id
-	ctx.OrgName = orgQuery.Result.Name
+	ctx.OrgId = org.Id
+	ctx.OrgName = org.Name
 	return true
 }
 
@@ -257,7 +259,13 @@ func (h *ContextHandler) initContextWithToken(ctx *models.ReqContext, orgID int6
 	token, err := h.AuthTokenService.LookupToken(ctx.Req.Context(), rawToken)
 	if err != nil {
 		ctx.Logger.Error("Failed to look up user based on cookie", "error", err)
-		cookies.WriteSessionCookie(ctx, h.Cfg, "", -1)
+
+		var revokedErr *models.TokenRevokedError
+		if !errors.As(err, &revokedErr) || !ctx.IsApiRequest() {
+			cookies.WriteSessionCookie(ctx, h.Cfg, "", -1)
+		}
+
+		ctx.Data["lookupTokenErr"] = err
 		return false
 	}
 

@@ -118,7 +118,9 @@ You can send reports programmatically with the [send report]({{< relref "../http
 
 When generating reports, each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
 
-To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
+To make a panel more legible, you can set a scale factor for the rendered images. However, a higher scale factor increases the file size of the generated PDF.
+
+You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
 These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
@@ -131,6 +133,14 @@ concurrent_render_limit = 4
 # Set the scale factor for rendering images. 2 is enough for monitor resolutions
 # 4 would be better for printed material. Setting a higher value affects performance and memory
 image_scale_factor = 2
+# Path to the directory containing font files
+fonts_path =
+# Name of the TrueType font file with regular style
+font_regular = DejaVuSansCondensed.ttf
+# Name of the TrueType font file with bold style
+font_bold = DejaVuSansCondensed-Bold.ttf
+# Name of the TrueType font file with italic style
+font_italic = DejaVuSansCondensed-Oblique.ttf
 ```
 
 ## Report time range
@@ -144,6 +154,12 @@ By default, reports use the saved time range of the dashboard. Changing the time
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
 
 If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this.
+
+## Choose template variables
+
+> ** Note:** Available in Grafana Enterprise version 7.5+ (behind `reportVariables` feature flag).
+
+You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/_index.md" >}}) section. 
 
 ## Reports settings
 

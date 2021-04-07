@@ -33,7 +33,7 @@ export default class TimeGrainConverter {
   }
 
   static findClosestTimeGrain(interval: any, allowedTimeGrains: string[]) {
-    const timeGrains = _.filter(allowedTimeGrains, o => o !== 'auto');
+    const timeGrains = _.filter(allowedTimeGrains, (o) => o !== 'auto');
 
     let closest = timeGrains[0];
     const intervalMs = rangeUtil.intervalToMs(interval);

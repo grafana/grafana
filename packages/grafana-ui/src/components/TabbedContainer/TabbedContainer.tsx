@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { SelectableValue, GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
@@ -27,6 +27,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     tabContent: css`
       padding: ${theme.spacing.md};
       background-color: ${theme.colors.bodyBg};
+      height: 100%;
     `,
     close: css`
       position: absolute;
@@ -51,7 +52,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export function TabbedContainer(props: TabbedContainerProps) {
   const [activeTab, setActiveTab] = useState(
-    props.tabs.some(tab => tab.value === props.defaultTab) ? props.defaultTab : props.tabs?.[0].value
+    props.tabs.some((tab) => tab.value === props.defaultTab) ? props.defaultTab : props.tabs?.[0].value
   );
 
   const onSelectTab = (item: SelectableValue<string>) => {
@@ -65,7 +66,7 @@ export function TabbedContainer(props: TabbedContainerProps) {
   return (
     <div className={styles.container}>
       <TabsBar className={styles.tabs}>
-        {tabs.map(t => (
+        {tabs.map((t) => (
           <Tab
             key={t.value}
             label={t.label}
@@ -77,7 +78,7 @@ export function TabbedContainer(props: TabbedContainerProps) {
         <IconButton className={styles.close} onClick={onClose} name="times" title={closeIconTooltip ?? 'Close'} />
       </TabsBar>
       <CustomScrollbar className={styles.scrollbar}>
-        <TabContent className={styles.tabContent}>{tabs.find(t => t.value === activeTab)?.content}</TabContent>
+        <TabContent className={styles.tabContent}>{tabs.find((t) => t.value === activeTab)?.content}</TabContent>
       </CustomScrollbar>
     </div>
   );

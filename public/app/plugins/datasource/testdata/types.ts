@@ -17,15 +17,21 @@ export type Points = PointValue[][];
 export interface TestDataQuery extends DataQuery {
   alias?: string;
   scenarioId: string;
-  stringInput: string;
-  points: Points;
+  stringInput?: string;
+  points?: Points;
   stream?: StreamingQuery;
   pulseWave?: PulseWaveQuery;
-  csvWave: any;
+  csvWave?: any;
   labels?: string;
   lines?: number;
   levelColumn?: boolean;
   channel?: string; // for grafana live
+  nodes?: NodesQuery;
+}
+
+export interface NodesQuery {
+  type?: 'random' | 'response';
+  count?: number;
 }
 
 export interface StreamingQuery {

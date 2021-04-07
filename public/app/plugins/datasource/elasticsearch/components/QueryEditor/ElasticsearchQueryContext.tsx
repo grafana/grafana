@@ -1,4 +1,4 @@
-import React, { createContext, FunctionComponent, useContext } from 'react';
+import React, { createContext, FunctionComponent, useCallback, useContext } from 'react';
 import { ElasticDatasource } from '../../datasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
 import { ElasticsearchQuery } from '../../types';
@@ -13,10 +13,25 @@ const QueryContext = createContext<ElasticsearchQuery | undefined>(undefined);
 interface Props {
   query: ElasticsearchQuery;
   onChange: (query: ElasticsearchQuery) => void;
+  onRunQuery: () => void;
   datasource: ElasticDatasource;
 }
 
-export const ElasticsearchProvider: FunctionComponent<Props> = ({ children, onChange, query, datasource }) => {
+export const ElasticsearchProvider: FunctionComponent<Props> = ({
+  children,
+  onChange,
+  onRunQuery,
+  query,
+  datasource,
+}) => {
+  const onStateChange = useCallback(
+    (query: ElasticsearchQuery) => {
+      onChange(query);
+      onRunQuery();
+    },
+    [onChange, onRunQuery]
+  );
+
   const reducer = combineReducers({
     query: queryReducer,
     alias: aliasPatternReducer,
@@ -26,14 +41,14 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({ children, onCh
 
   const dispatch = useStatelessReducer(
     // timeField is part of the query model, but its value is always set to be the one from datasource settings.
-    newState => onChange({ ...query, ...newState, timeField: datasource.timeField }),
+    (newState) => onStateChange({ ...query, ...newState, timeField: datasource.timeField }),
     query,
     reducer
   );
 
   // This initializes the query by dispatching an init action to each reducer.
   // useStatelessReducer will then call `onChange` with the newly generated query
-  if (!query.metrics && !query.bucketAggs) {
+  if (!query.metrics || !query.bucketAggs || query.query === undefined) {
     dispatch(initQuery());
 
     return null;

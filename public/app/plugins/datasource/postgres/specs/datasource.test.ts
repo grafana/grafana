@@ -96,7 +96,6 @@ describe('PostgreSQLDatasource', () => {
               },
             ],
             tables: null,
-            dataframes: null,
           },
         },
       };
@@ -167,7 +166,6 @@ describe('PostgreSQLDatasource', () => {
                 rows: [[1599643351085, 'America', 30.226249741223704]],
               },
             ],
-            dataframes: null,
           },
         },
       };
@@ -227,7 +225,7 @@ describe('PostgreSQLDatasource', () => {
 
       const { ds } = setupTestContext({});
 
-      await expect(ds.query(options)).toEmitValuesWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith((received) => {
         expect(received[0]).toEqual({ data: [] });
         expect(fetchMock).not.toHaveBeenCalled();
       });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { config } from '@grafana/runtime';
 import { renderHook } from '@testing-library/react-hooks';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { mount } from 'enzyme';
 import { memoizedStyleCreators, mockThemeContext, useStyles } from './ThemeContext';
 
@@ -50,9 +50,9 @@ describe('useStyles', () => {
     expect(memoizedStyleCreators.get(styleCreators[1])).toBeUndefined();
   });
 
-  it('passes in theme and returns style object', done => {
-    const Dummy: React.FC = function() {
-      const styles = useStyles(theme => {
+  it('passes in theme and returns style object', (done) => {
+    const Dummy: React.FC = function () {
+      const styles = useStyles((theme) => {
         expect(theme).toEqual(config.theme);
 
         return {

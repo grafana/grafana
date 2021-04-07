@@ -1,4 +1,11 @@
-import app from './app';
+declare let __webpack_public_path__: string;
 
-app.initEchoSrv();
+/**
+ * Check if we are hosting files on cdn and set webpack public path
+ */
+if ((window as any).public_cdn_path) {
+  __webpack_public_path__ = (window as any).public_cdn_path;
+}
+
+import app from './app';
 app.init();

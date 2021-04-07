@@ -23,7 +23,7 @@ describe('Concat Transformer', () => {
   it('dropping frame name', () => {
     const frame = concatenateFields([simpleABC, simpleXYZ], { frameNameMode: ConcatenateFrameNameMode.Drop });
     expect(frame.length).toBe(3);
-    expect(frame.fields.map(f => ({ name: f.name, labels: f.labels }))).toMatchInlineSnapshot(`
+    expect(frame.fields.map((f) => ({ name: f.name, labels: f.labels }))).toMatchInlineSnapshot(`
       Array [
         Object {
           "labels": undefined,
@@ -56,7 +56,7 @@ describe('Concat Transformer', () => {
   it('using field name', () => {
     const frame = concatenateFields([simpleABC, simpleXYZ], { frameNameMode: ConcatenateFrameNameMode.FieldName });
     expect(frame.length).toBe(3);
-    expect(frame.fields.map(f => ({ name: f.name, labels: f.labels }))).toMatchInlineSnapshot(`
+    expect(frame.fields.map((f) => ({ name: f.name, labels: f.labels }))).toMatchInlineSnapshot(`
       Array [
         Object {
           "labels": undefined,
@@ -92,7 +92,7 @@ describe('Concat Transformer', () => {
       frameNameLabel: 'sensor',
     });
     expect(frame.length).toBe(3);
-    expect(frame.fields.map(f => ({ name: f.name, labels: f.labels }))).toMatchInlineSnapshot(`
+    expect(frame.fields.map((f) => ({ name: f.name, labels: f.labels }))).toMatchInlineSnapshot(`
       Array [
         Object {
           "labels": Object {

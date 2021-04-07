@@ -1,4 +1,4 @@
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { styleMixins, stylesFactory } from '../../themes';
 import { getScrollbarWidth } from '../../utils';
@@ -13,7 +13,7 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
   const bodyFontSize = 14;
   const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
   const rowHoverBg = styleMixins.hoverColor(theme.colors.bg1, theme);
-  const scollbarWidth = getScrollbarWidth();
+  const lastChildExtraPadding = Math.max(getScrollbarWidth(), cellPadding);
 
   const buildCellContainerStyle = (color?: string, background?: string) => {
     return css`
@@ -29,10 +29,7 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
 
       &:last-child {
         border-right: none;
-
-        > div {
-          padding-right: ${scollbarWidth + cellPadding}px;
-        }
+        padding-right: ${lastChildExtraPadding}px;
       }
 
       &:hover {
@@ -54,6 +51,7 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
     cellHeight,
     buildCellContainerStyle,
     cellPadding,
+    lastChildExtraPadding,
     cellHeightInner: bodyFontSize * lineHeight,
     rowHeight: cellHeight + 2,
     table: css`
@@ -92,7 +90,6 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     cellContainer: buildCellContainerStyle(),
     cellText: css`
-      cursor: text;
       overflow: hidden;
       text-overflow: ellipsis;
       user-select: text;
@@ -156,6 +153,13 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       label: filterItem;
       cursor: pointer;
       padding: 0 ${theme.spacing.xxs};
+    `,
+    noData: css`
+      align-items: center;
+      display: flex;
+      height: 100%;
+      justify-content: center;
+      width: 100%;
     `,
   };
 });

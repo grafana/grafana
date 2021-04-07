@@ -54,13 +54,24 @@ export class DatasourceSrv implements DataSourceService {
     // For this we just pick the current or first data source in the variable
     if (nameOrUid[0] === '$') {
       const interpolatedName = this.templateSrv.replace(nameOrUid, {}, variableInterpolation);
-      const dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+
+      let dsSettings;
+
+      if (interpolatedName === 'default') {
+        dsSettings = this.settingsMapByName[this.defaultName];
+      } else {
+        dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+      }
+
       if (!dsSettings) {
         return undefined;
       }
       // The return name or uid needs preservet string containing the variable
       const clone = cloneDeep(dsSettings);
       clone.name = nameOrUid;
+      // A data source being looked up using a variable should not be considered default
+      clone.isDefault = false;
+
       return clone;
     }
 
@@ -141,7 +152,7 @@ export class DatasourceSrv implements DataSourceService {
   }
 
   getList(filters: GetDataSourceListFilters = {}): DataSourceInstanceSettings[] {
-    const base = Object.values(this.settingsMapByName).filter(x => {
+    const base = Object.values(this.settingsMapByName).filter((x) => {
       if (x.meta.id === 'grafana' || x.meta.id === 'mixed' || x.meta.id === 'dashboard') {
         return false;
       }
@@ -157,11 +168,20 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
         return false;
       }
+      if (
+        !filters.all &&
+        x.meta.metrics !== true &&
+        x.meta.annotations !== true &&
+        x.meta.tracing !== true &&
+        x.meta.logs !== true
+      ) {
+        return false;
+      }
       return true;
     });
 
     if (filters.variables) {
-      for (const variable of this.templateSrv.getVariables().filter(variable => variable.type === 'datasource')) {
+      for (const variable of this.templateSrv.getVariables().filter((variable) => variable.type === 'datasource')) {
         const dsVar = variable as DataSourceVariableModel;
         const first = dsVar.current.value === 'default' ? this.defaultName : dsVar.current.value;
         const dsName = (first as unknown) as string;
@@ -215,7 +235,7 @@ export class DatasourceSrv implements DataSourceService {
    * @deprecated use getList
    * */
   getAnnotationSources() {
-    return this.getList({ annotations: true, variables: true }).map(x => {
+    return this.getList({ annotations: true, variables: true }).map((x) => {
       return {
         name: x.name,
         value: x.isDefault ? null : x.name,
@@ -228,7 +248,7 @@ export class DatasourceSrv implements DataSourceService {
    * @deprecated use getList
    * */
   getMetricSources(options?: { skipVariables?: boolean }): DataSourceSelectItem[] {
-    return this.getList({ metrics: true, variables: !options?.skipVariables }).map(x => {
+    return this.getList({ metrics: true, variables: !options?.skipVariables }).map((x) => {
       return {
         name: x.name,
         value: x.isDefault ? null : x.name,

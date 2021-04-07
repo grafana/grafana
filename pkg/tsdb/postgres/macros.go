@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/gtime"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -15,22 +15,24 @@ const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type postgresMacroEngine struct {
-	*sqleng.SqlMacroEngineBase
-	timeRange   *tsdb.TimeRange
-	query       *tsdb.Query
+	*sqleng.SQLMacroEngineBase
+	timeRange   plugins.DataTimeRange
+	query       plugins.DataSubQuery
 	timescaledb bool
 }
 
-func newPostgresMacroEngine(timescaledb bool) sqleng.SqlMacroEngine {
+func newPostgresMacroEngine(timescaledb bool) sqleng.SQLMacroEngine {
 	return &postgresMacroEngine{
-		SqlMacroEngineBase: sqleng.NewSqlMacroEngineBase(),
+		SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase(),
 		timescaledb:        timescaledb,
 	}
 }
 
-func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *postgresMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
+	sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
+	// TODO: Handle error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
@@ -107,7 +109,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		}
 
 		if m.timescaledb {
-			return fmt.Sprintf("time_bucket('%vs',%s)", interval.Seconds(), args[0]), nil
+			return fmt.Sprintf("time_bucket('%.0fs',%s)", interval.Seconds(), args[0]), nil
 		}
 
 		return fmt.Sprintf(

@@ -1,5 +1,11 @@
 import _ from 'lodash';
 import TimeGrainConverter from '../time_grain_converter';
+import {
+  AzureMonitorLocalizedValue,
+  AzureMonitorMetricAvailabilityMetadata,
+  AzureMonitorMetricsMetadataResponse,
+  AzureMonitorOption,
+} from '../types';
 export default class ResponseParser {
   static parseResponseValues(
     result: any,
@@ -45,10 +51,11 @@ export default class ResponseParser {
     return list;
   }
 
-  static parseMetadata(result: any, metricName: string) {
+  static parseMetadata(result: AzureMonitorMetricsMetadataResponse, metricName: string) {
     const defaultAggTypes = ['None', 'Average', 'Minimum', 'Maximum', 'Total', 'Count'];
+    const metricData = result?.value.find((v) => v.name.value === metricName);
 
-    if (!result) {
+    if (!metricData) {
       return {
         primaryAggType: '',
         supportedAggTypes: defaultAggTypes,
@@ -57,51 +64,44 @@ export default class ResponseParser {
       };
     }
 
-    const metricData: any = _.find(result.data.value, o => {
-      return _.get(o, 'name.value') === metricName;
-    });
-
     return {
       primaryAggType: metricData.primaryAggregationType,
       supportedAggTypes: metricData.supportedAggregationTypes || defaultAggTypes,
-      supportedTimeGrains: ResponseParser.parseTimeGrains(metricData.metricAvailabilities || []),
-      dimensions: ResponseParser.parseDimensions(metricData),
+
+      supportedTimeGrains: [
+        { label: 'Auto', value: 'auto' },
+        ...ResponseParser.parseTimeGrains(metricData.metricAvailabilities ?? []),
+      ],
+      dimensions: ResponseParser.parseDimensions(metricData.dimensions ?? []),
     };
   }
 
-  static parseTimeGrains(metricAvailabilities: any[]): Array<{ text: string; value: string }> {
-    const timeGrains: any[] = [];
+  static parseTimeGrains(metricAvailabilities: AzureMonitorMetricAvailabilityMetadata[]): AzureMonitorOption[] {
+    const timeGrains: AzureMonitorOption[] = [];
+
     if (!metricAvailabilities) {
       return timeGrains;
     }
 
-    metricAvailabilities.forEach(avail => {
+    metricAvailabilities.forEach((avail) => {
       if (avail.timeGrain) {
         timeGrains.push({
-          text: TimeGrainConverter.createTimeGrainFromISO8601Duration(avail.timeGrain),
+          label: TimeGrainConverter.createTimeGrainFromISO8601Duration(avail.timeGrain),
           value: avail.timeGrain,
         });
       }
     });
+
     return timeGrains;
   }
 
-  static parseDimensions(metricData: any): Array<{ text: string; value: string }> {
-    const dimensions: Array<{ text: string; value: string }> = [];
-    if (!metricData.dimensions || metricData.dimensions.length === 0) {
-      return dimensions;
-    }
-
-    for (let i = 0; i < metricData.dimensions.length; i++) {
-      const text = metricData.dimensions[i].localizedValue;
-      const value = metricData.dimensions[i].value;
-
-      dimensions.push({
-        text: !text ? value : text,
-        value: value,
-      });
-    }
-    return dimensions;
+  static parseDimensions(metadataDimensions: AzureMonitorLocalizedValue[]) {
+    return metadataDimensions.map((dimension) => {
+      return {
+        label: dimension.localizedValue || dimension.value,
+        value: dimension.value,
+      };
+    });
   }
 
   static parseSubscriptions(result: any): Array<{ text: string; value: string }> {
@@ -116,7 +116,7 @@ export default class ResponseParser {
     for (let i = 0; i < result.data.value.length; i++) {
       if (!_.find(list, ['value', _.get(result.data.value[i], valueFieldName)])) {
         list.push({
-          text: `${_.get(result.data.value[i], textFieldName)} - ${_.get(result.data.value[i], valueFieldName)}`,
+          text: `${_.get(result.data.value[i], textFieldName)}`,
           value: _.get(result.data.value[i], valueFieldName),
         });
       }

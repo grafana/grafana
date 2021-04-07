@@ -1,4 +1,4 @@
-import { restore, versions } from './__mocks__/history';
+import { restore, versions } from './__mocks__/dashboardHistoryMocks';
 import { HistorySrv } from './HistorySrv';
 import { DashboardModel } from '../../state/DashboardModel';
 

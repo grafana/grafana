@@ -1,4 +1,4 @@
-import { getDecimalsForValue, getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { MappingType, ValueMapping } from '../types/valueMapping';
 import { FieldConfig, FieldType, ThresholdsMode } from '../types';
@@ -14,7 +14,7 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
 }
 
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
-  processors.forEach(processor => {
+  processors.forEach((processor) => {
     const value = processor(input);
     for (const key of Object.keys(match)) {
       expect((value as any)[key]).toEqual((match as any)[key]);
@@ -144,27 +144,6 @@ describe('Format value', () => {
     expect(result.text).toEqual('10.0');
   });
 
-  it('should set auto decimals, 1 significant', () => {
-    const value = 3.23;
-    const instance = getDisplayProcessorFromConfig({ decimals: null });
-    expect(instance(value).text).toEqual('3.2');
-  });
-
-  it('should set auto decimals, 2 significant', () => {
-    const value = 0.0245;
-    const instance = getDisplayProcessorFromConfig({ decimals: null });
-
-    expect(instance(value).text).toEqual('0.025');
-  });
-
-  it('should use override decimals', () => {
-    const value = 100030303;
-    const instance = getDisplayProcessorFromConfig({ decimals: 2, unit: 'bytes' });
-    const disp = instance(value);
-    expect(disp.text).toEqual('95.40');
-    expect(disp.suffix).toEqual(' MiB');
-  });
-
   it('should return mapped value if there are matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
       { id: 0, text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
@@ -183,6 +162,16 @@ describe('Format value', () => {
 
     expect(instance(value).text).toEqual('');
     expect(instance(value).numeric).toEqual(1);
+  });
+
+  it('should not map 1kW to the value for 1W', () => {
+    const valueMappings: ValueMapping[] = [{ id: 0, text: 'mapped', type: MappingType.ValueToText, value: '1' }];
+    const value = '1000';
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings, unit: 'watt' });
+
+    const result = instance(value);
+
+    expect(result.text).toEqual('1.0');
   });
 
   it('With null value and thresholds should use base color', () => {
@@ -205,7 +194,7 @@ describe('Format value', () => {
     const value = 1000;
     const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'short' });
     const disp = instance(value);
-    expect(disp.text).toEqual('1.000');
+    expect(disp.text).toEqual('1');
     expect(disp.suffix).toEqual(' K');
   });
 
@@ -213,7 +202,7 @@ describe('Format value', () => {
     const value = 1200;
     const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'short' });
     const disp = instance(value);
-    expect(disp.text).toEqual('1.200');
+    expect(disp.text).toEqual('1.20');
     expect(disp.suffix).toEqual(' K');
   });
 
@@ -221,7 +210,7 @@ describe('Format value', () => {
     const value = 1250;
     const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'short' });
     const disp = instance(value);
-    expect(disp.text).toEqual('1.250');
+    expect(disp.text).toEqual('1.25');
     expect(disp.suffix).toEqual(' K');
   });
 
@@ -229,8 +218,24 @@ describe('Format value', () => {
     const value = 1000000;
     const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'short' });
     const disp = instance(value);
-    expect(disp.text).toEqual('1.000');
+    expect(disp.text).toEqual('1');
     expect(disp.suffix).toEqual(' Mil');
+  });
+
+  it('with value 15000000 and unit short', () => {
+    const value = 1500000;
+    const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'short' });
+    const disp = instance(value);
+    expect(disp.text).toEqual('1.50');
+    expect(disp.suffix).toEqual(' Mil');
+  });
+
+  it('with value 128000000 and unit bytes', () => {
+    const value = 1280000125;
+    const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'bytes' });
+    const disp = instance(value);
+    expect(disp.text).toEqual('1.19');
+    expect(disp.suffix).toEqual(' GiB');
   });
 });
 
@@ -347,23 +352,5 @@ describe('getRawDisplayProcessor', () => {
     const result = processor(value);
 
     expect(result).toEqual({ text: expected, numeric: null });
-  });
-});
-
-describe('getDecimalsForValue', () => {
-  it.each`
-    value                   | expected
-    ${0}                    | ${0}
-    ${13.37}                | ${0}
-    ${-13.37}               | ${0}
-    ${12679.3712345811212}  | ${0}
-    ${-12679.3712345811212} | ${0}
-    ${0.3712345}            | ${2}
-    ${-0.37123458}          | ${2}
-    ${-0.04671994403853774} | ${3}
-    ${0.04671994403853774}  | ${3}
-  `('should return correct suggested decimal count', ({ value, expected }) => {
-    const result = getDecimalsForValue(value);
-    expect(result.decimals).toEqual(expected);
   });
 });

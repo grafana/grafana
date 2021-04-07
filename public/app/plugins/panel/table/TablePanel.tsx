@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Select, Table } from '@grafana/ui';
 import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
 import { Options } from './types';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 import { dispatch } from '../../../store/store';
@@ -25,11 +25,11 @@ export class TablePanel extends Component<Props> {
     const propId = 'custom.width';
 
     // look for existing override
-    const override = overrides.find(o => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
+    const override = overrides.find((o) => o.matcher.id === matcherId && o.matcher.options === fieldDisplayName);
 
     if (override) {
       // look for existing property
-      const property = override.properties.find(prop => prop.id === propId);
+      const property = override.properties.find((prop) => prop.id === propId);
       if (property) {
         property.value = width;
       } else {
@@ -67,9 +67,7 @@ export class TablePanel extends Component<Props> {
 
   onCellFilterAdded = (filter: FilterItem) => {
     const { key, value, operator } = filter;
-    const panelModel = getDashboardSrv()
-      .getCurrent()
-      .getPanelById(this.props.id);
+    const panelModel = getDashboardSrv().getCurrent().getPanelById(this.props.id);
     const datasource = panelModel?.datasource;
 
     if (!datasource) {

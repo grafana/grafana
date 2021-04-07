@@ -5,7 +5,6 @@ import { Unsubscribable } from 'rxjs';
 import {
   CoreApp,
   DataQuery,
-  DataQueryError,
   DataQueryRequest,
   DataSourceApi,
   dateMath,
@@ -73,7 +72,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
   /** In Explore, we don't have legend formatter and we don't want to keep
    * legend formatting as we can't change it
    */
-  let exploreTargets: DataQuery[] = panelTargets.map(t => _.omit(t, 'legendFormat'));
+  let exploreTargets: DataQuery[] = panelTargets.map((t) => _.omit(t, 'legendFormat'));
   let url: string | undefined;
 
   // Mixed datasources need to choose only one datasource
@@ -83,7 +82,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
       const datasource = await datasourceSrv.get(t.datasource || undefined);
       if (datasource) {
         exploreDatasource = datasource;
-        exploreTargets = panelTargets.filter(t => t.datasource === datasource.name);
+        exploreTargets = panelTargets.filter((t) => t.datasource === datasource.name);
         break;
       }
     }
@@ -105,7 +104,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
         ...state,
         datasource: exploreDatasource.name,
         context: 'explore',
-        queries: exploreTargets.map(t => ({ ...t, datasource: exploreDatasource.name })),
+        queries: exploreTargets.map((t) => ({ ...t, datasource: exploreDatasource.name })),
       };
     }
 
@@ -156,13 +155,7 @@ export function buildQueryTransaction(
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
     maxDataPoints: queryOptions.maxDataPoints,
-    exploreMode: undefined,
     liveStreaming: queryOptions.liveStreaming,
-    /**
-     * @deprecated (external API) showingGraph and showingTable are always set to true and set to true
-     */
-    showingGraph: true,
-    showingTable: true,
   };
 
   return {
@@ -178,7 +171,7 @@ export function buildQueryTransaction(
 export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
 
 const isSegment = (segment: { [key: string]: string }, ...props: string[]) =>
-  props.some(prop => segment.hasOwnProperty(prop));
+  props.some((prop) => segment.hasOwnProperty(prop));
 
 enum ParseUrlStateIndex {
   RangeFrom = 0,
@@ -242,9 +235,9 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId', 'mode'));
+  const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'originPanelId', 'mode'));
 
-  const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
+  const originPanelId = parsedSegments.filter((segment) => isSegment(segment, 'originPanelId'))[0];
   return { datasource, queries, range, originPanelId };
 }
 
@@ -297,9 +290,9 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
     queries &&
     queries.some((query: any) => {
       const keys = Object.keys(query)
-        .filter(key => validKeys.indexOf(key) === -1)
-        .map(k => query[k])
-        .filter(v => v);
+        .filter((key) => validKeys.indexOf(key) === -1)
+        .map((k) => query[k])
+        .filter((v) => v);
       return keys.length > 0;
     })
   );
@@ -315,7 +308,7 @@ export function updateHistory<T extends DataQuery = any>(
 ): Array<HistoryItem<T>> {
   const ts = Date.now();
   let updatedHistory = history;
-  queries.forEach(query => {
+  queries.forEach((query) => {
     updatedHistory = [{ query, ts }, ...updatedHistory];
   });
 
@@ -428,14 +421,6 @@ export const getValueWithRefId = (value?: any): any => {
   return undefined;
 };
 
-export const getFirstQueryErrorWithoutRefId = (errors?: DataQueryError[]): DataQueryError | undefined => {
-  if (!errors) {
-    return undefined;
-  }
-
-  return errors.filter(error => (error && error.refId ? false : true))[0];
-};
-
 export const getRefIds = (value: any): string[] => {
   if (!value) {
     return [];
@@ -484,11 +469,6 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
 }
-
-export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {
-  const refId = getValueWithRefId(queryErrors);
-  return refId ? undefined : getFirstQueryErrorWithoutRefId(queryErrors);
-};
 
 export const copyStringToClipboard = (string: string) => {
   const el = document.createElement('textarea');

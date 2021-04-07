@@ -42,9 +42,5 @@ const uiDelete = (name: string) => {
   // @todo replace `e2e.pages.DataSources.dataSources` with this when argument is empty
   e2e()
     .get('[aria-label^="Data source list item "]')
-    .each(item =>
-      e2e()
-        .wrap(item)
-        .should('not.contain', name)
-    );
+    .each((item) => e2e().wrap(item).should('not.contain', name));
 };

@@ -1,13 +1,13 @@
 import { combineReducers } from '@reduxjs/toolkit';
 import { LoadingState } from '@grafana/data';
 
-import { NEW_VARIABLE_ID } from './types';
+import { NEW_VARIABLE_ID, VariablesState } from './types';
 import { VariableHide, VariableModel } from '../types';
-import { VariablesState } from './variablesReducer';
-import { locationReducer } from '../../../core/reducers/location';
+
 import { VariableAdapter } from '../adapters';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
-import { templatingReducers } from './reducers';
+import { templatingReducers, TemplatingState } from './reducers';
+import { DashboardState } from '../../../types';
 
 export const getVariableState = (
   noOfVariables: number,
@@ -71,18 +71,15 @@ export const getVariableTestContext = <Model extends VariableModel>(
 
 export const getRootReducer = () =>
   combineReducers({
-    location: locationReducer,
     dashboard: dashboardReducer,
     templating: templatingReducers,
   });
+
+export type RootReducerType = { dashboard: DashboardState; templating: TemplatingState };
 
 export const getTemplatingRootReducer = () =>
   combineReducers({
     templating: templatingReducers,
   });
 
-export const getTemplatingAndLocationRootReducer = () =>
-  combineReducers({
-    templating: templatingReducers,
-    location: locationReducer,
-  });
+export type TemplatingReducerType = { templating: TemplatingState };

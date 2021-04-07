@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { describeMetric } from '../utils';
@@ -23,12 +23,16 @@ interface Props {
   value?: string;
 }
 
-export const MetricPicker: FunctionComponent<Props> = ({ options, onChange, className, value }) => (
-  <Segment
-    className={cx(className, noWrap)}
-    options={toOptions(options)}
-    onChange={onChange}
-    placeholder="Select Metric"
-    value={!!value ? toOption(options.find(option => option.id === value)!) : null}
-  />
-);
+export const MetricPicker: FunctionComponent<Props> = ({ options, onChange, className, value }) => {
+  const selectedOption = options.find((option) => option.id === value);
+
+  return (
+    <Segment
+      className={cx(className, noWrap)}
+      options={toOptions(options)}
+      onChange={onChange}
+      placeholder="Select Metric"
+      value={!!selectedOption ? toOption(selectedOption) : null}
+    />
+  );
+};

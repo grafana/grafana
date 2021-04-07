@@ -1,7 +1,6 @@
 import { SingleStatCtrl, ShowData } from '../module';
-import { dateTime, ReducerID, getFieldDisplayName } from '@grafana/data';
+import { dateTime, ReducerID, getFieldDisplayName, LegacyResponseData } from '@grafana/data';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { LegacyResponseData } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 interface TestContext {
@@ -257,7 +256,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('should set formatted value', () => {
-        expect(ctx.data.display!.text).toBe('100');
+        expect(ctx.data.display!.text).toBe('100.0');
       });
     }
   );
@@ -373,7 +372,7 @@ describe('SingleStatCtrl', () => {
         });
 
         it('should set formatted falue', () => {
-          expect(ctx.data.display!.text).toBe('100');
+          expect(ctx.data.display!.text).toBe('100.0');
         });
       }
     );

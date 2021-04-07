@@ -23,7 +23,7 @@ export class VariableInput extends PureComponent<Props> {
   render() {
     return (
       <input
-        ref={instance => {
+        ref={(instance) => {
           if (instance) {
             instance.focus();
             instance.setAttribute('style', `width:${Math.max(instance.width, 80)}px`);

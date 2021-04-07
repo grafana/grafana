@@ -13,12 +13,12 @@ const COMMAND_DELAY = 1000;
 if (Cypress.env('SLOWMO')) {
   const commandsToModify = ['clear', 'click', 'contains', 'reload', 'then', 'trigger', 'type', 'visit'];
 
-  commandsToModify.forEach(command => {
+  commandsToModify.forEach((command) => {
     // @ts-ignore -- https://github.com/cypress-io/cypress/issues/7807
     Cypress.Commands.overwrite(command, (originalFn, ...args) => {
       const origVal = originalFn(...args);
 
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         setTimeout(() => resolve(origVal), COMMAND_DELAY);
       });
     });
@@ -26,7 +26,7 @@ if (Cypress.env('SLOWMO')) {
 }
 
 // @todo remove when possible: https://github.com/cypress-io/cypress/issues/95
-Cypress.on('window:before:load', win => {
+Cypress.on('window:before:load', (win) => {
   // @ts-ignore
   delete win.fetch;
 });

@@ -32,7 +32,7 @@ const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
       dashboard={dashboard as DashboardModel}
       onCancel={() => {}}
       onSuccess={() => {}}
-      onSubmit={async jsonModel => {
+      onSubmit={async (jsonModel) => {
         submitSpy(jsonModel);
         return { status: 'success' };
       }}

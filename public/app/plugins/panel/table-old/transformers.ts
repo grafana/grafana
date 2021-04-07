@@ -160,7 +160,7 @@ transformers['annotations'] = {
 
 transformers['table'] = {
   description: 'Table',
-  getColumns: data => {
+  getColumns: (data) => {
     if (!data || data.length === 0) {
       return [];
     }
@@ -177,7 +177,7 @@ transformers['table'] = {
 
     // Union of all columns
     const columns = filteredData.reduce((acc: Column[], series: TableData) => {
-      series.columns.forEach(col => {
+      series.columns.forEach((col) => {
         const { text } = col;
         if (columnNames[text] === undefined) {
           columnNames[text] = acc.length;
@@ -194,7 +194,7 @@ transformers['table'] = {
       return;
     }
     const filteredData = tableDataFormatFilterer(data);
-    const noTableIndex = _.findIndex(filteredData, d => 'columns' in d && 'rows' in d);
+    const noTableIndex = _.findIndex(filteredData, (d) => 'columns' in d && 'rows' in d);
     if (noTableIndex < 0) {
       throw {
         message: `Result of query #${String.fromCharCode(
@@ -209,7 +209,7 @@ transformers['table'] = {
 
 transformers['json'] = {
   description: 'JSON Data',
-  getColumns: data => {
+  getColumns: (data) => {
     if (!data || data.length === 0) {
       return [];
     }

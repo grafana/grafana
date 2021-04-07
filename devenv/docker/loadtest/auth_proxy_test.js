@@ -21,7 +21,7 @@ export const setup = () => {
   };
 };
 
-export default data => {
+export default (data) => {
   group('auth proxy test', () => {
     group('batch proxy requests', () => {
       const d = new Date();
@@ -44,7 +44,7 @@ export default data => {
       let responses = client.batch(requests);
       for (let n = 0; n < batchCount; n++) {
         check(responses[n], {
-          'response status is 200': r => r.status === 200,
+          'response status is 200': (r) => r.status === 200,
         });
       }
     });
@@ -53,4 +53,4 @@ export default data => {
   sleep(5);
 };
 
-export const teardown = data => {};
+export const teardown = (data) => {};

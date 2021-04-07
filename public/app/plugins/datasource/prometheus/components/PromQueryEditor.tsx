@@ -9,6 +9,7 @@ import { PromOptions, PromQuery } from '../types';
 
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
+import { PromExemplarField } from './PromExemplarField';
 
 const { Switch } = LegacyForms;
 
@@ -31,6 +32,7 @@ interface State {
   interval?: string;
   intervalFactorOption: SelectableValue<number>;
   instant: boolean;
+  exemplar: boolean;
 }
 
 export class PromQueryEditor extends PureComponent<Props, State> {
@@ -40,7 +42,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     // Use default query to prevent undefined input values
-    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '' };
+    const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '', exemplar: true };
     const query = Object.assign({}, defaultQuery, props.query);
     this.query = query;
     // Query target properties that are fully controlled inputs
@@ -49,11 +51,12 @@ export class PromQueryEditor extends PureComponent<Props, State> {
       interval: query.interval,
       legendFormat: query.legendFormat,
       // Select options
-      formatOption: FORMAT_OPTIONS.find(option => option.value === query.format) || FORMAT_OPTIONS[0],
+      formatOption: FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0],
       intervalFactorOption:
-        INTERVAL_FACTOR_OPTIONS.find(option => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
+        INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
       // Switch options
       instant: Boolean(query.instant),
+      exemplar: Boolean(query.exemplar),
     };
   }
 
@@ -89,15 +92,22 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     this.setState({ legendFormat });
   };
 
+  onExemplarChange = (isEnabled: boolean) => {
+    this.query.exemplar = isEnabled;
+    this.setState({ exemplar: isEnabled }, this.onRunQuery);
+  };
+
   onRunQuery = () => {
     const { query } = this;
-    this.props.onChange(query);
+    // Change of query.hide happens outside of this component and is just passed as prop. We have to update it when running queries.
+    const { hide } = this.props.query;
+    this.props.onChange({ ...query, hide });
     this.props.onRunQuery();
   };
 
   render() {
     const { datasource, query, range, data } = this.props;
-    const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
+    const { formatOption, instant, interval, intervalFactorOption, legendFormat, exemplar } = this.state;
 
     return (
       <div>
@@ -182,6 +192,8 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               />
             </InlineFormLabel>
           </div>
+
+          <PromExemplarField isEnabled={exemplar} onChange={this.onExemplarChange} datasource={datasource} />
         </div>
       </div>
     );

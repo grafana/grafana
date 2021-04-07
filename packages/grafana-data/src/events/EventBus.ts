@@ -1,7 +1,14 @@
 import EventEmitter from 'eventemitter3';
 import { Unsubscribable, Observable } from 'rxjs';
-import { AppEvent } from './types';
-import { EventBus, LegacyEmitter, BusEventHandler, BusEventType, LegacyEventHandler, BusEvent } from './types';
+import {
+  EventBus,
+  LegacyEmitter,
+  BusEventHandler,
+  BusEventType,
+  LegacyEventHandler,
+  BusEvent,
+  AppEvent,
+} from './types';
 
 /**
  * @alpha
@@ -22,7 +29,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
   }
 
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
-    return new Observable<T>(observer => {
+    return new Observable<T>((observer) => {
       const handler = (event: T) => {
         observer.next(event);
       };

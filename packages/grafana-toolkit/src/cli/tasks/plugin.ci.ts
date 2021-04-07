@@ -113,7 +113,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType,
   const docsDir = path.resolve(ciDir, 'docs');
   const jobsDir = path.resolve(ciDir, 'jobs');
 
-  fs.exists(jobsDir, jobsDirExists => {
+  fs.exists(jobsDir, (jobsDirExists) => {
     if (!jobsDirExists) {
       throw new Error('You must run plugin:ci-build prior to running plugin:ci-package');
     }

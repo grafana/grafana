@@ -1,16 +1,12 @@
 import React, { useCallback } from 'react';
-// @ts-ignore
-import { default as ReactSelect } from '@torkelo/react-select';
-// @ts-ignore
-import Creatable from '@torkelo/react-select/creatable';
-// @ts-ignore
-import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
-// @ts-ignore
-import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable';
+import { default as ReactSelect } from 'react-select';
+import Creatable from 'react-select/creatable';
+import { default as ReactAsyncSelect } from 'react-select/async';
+import { default as AsyncCreatable } from 'react-select/async-creatable';
 
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
@@ -90,6 +86,7 @@ const CustomControl = (props: any) => {
 
 export function SelectBase<T>({
   allowCustomValue = false,
+  'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
   cacheOptions,
@@ -106,8 +103,10 @@ export function SelectBase<T>({
   inputValue,
   invalid,
   isClearable = false,
+  id,
   isLoading = false,
   isMulti = false,
+  inputId,
   isOpen,
   isOptionDisabled,
   isSearchable = true,
@@ -147,10 +146,12 @@ export function SelectBase<T>({
     },
     [isMulti, onChange]
   );
-  let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
+
+  let ReactSelectComponent = ReactSelect;
+
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
-  let selectedValue = [];
+  let selectedValue;
   if (isMulti && loadOptions) {
     selectedValue = value as any;
   } else {
@@ -158,7 +159,7 @@ export function SelectBase<T>({
     // we are selecting the corresponding value from the options
     if (isMulti && value && Array.isArray(value) && !loadOptions) {
       // @ts-ignore
-      selectedValue = value.map(v => findSelectedValue(v.value ?? v, options));
+      selectedValue = value.map((v) => findSelectedValue(v.value ?? v, options));
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
@@ -168,6 +169,7 @@ export function SelectBase<T>({
   }
 
   const commonSelectProps = {
+    'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
     captureMenuScroll: false,
@@ -181,10 +183,12 @@ export function SelectBase<T>({
     inputValue,
     invalid,
     isClearable,
+    id,
     // Passing isDisabled as react-select accepts this prop
     isDisabled: disabled,
     isLoading,
     isMulti,
+    inputId,
     isOptionDisabled,
     isSearchable,
     maxMenuHeight,
@@ -207,18 +211,18 @@ export function SelectBase<T>({
     renderControl,
     showAllSelectedWhenOpen,
     tabSelectsValue,
-    value: isMulti ? selectedValue : selectedValue[0],
+    value: isMulti ? selectedValue : selectedValue?.[0],
   };
 
   if (allowCustomValue) {
-    ReactSelectComponent = Creatable;
+    ReactSelectComponent = Creatable as any;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
     creatableProps.onCreateOption = onCreateOption;
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
   if (loadOptions) {
-    ReactSelectComponent = allowCustomValue ? AsyncCreatable : ReactAsyncSelect;
+    ReactSelectComponent = (allowCustomValue ? AsyncCreatable : ReactAsyncSelect) as any;
     asyncSelectProps = {
       loadOptions,
       cacheOptions,
@@ -286,7 +290,7 @@ export function SelectBase<T>({
             return (
               <Icon
                 name="times"
-                onMouseDown={e => {
+                onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   clearValue();

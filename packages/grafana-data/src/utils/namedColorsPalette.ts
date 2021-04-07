@@ -69,7 +69,7 @@ const buildColorDefinition = (
 });
 
 export function getColorDefinitionByName(name: Color): ColorDefinition {
-  return flatten(Array.from(getNamedColorPalette().values())).filter(definition => definition.name === name)[0];
+  return flatten(Array.from(getNamedColorPalette().values())).filter((definition) => definition.name === name)[0];
 }
 
 export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, string> {

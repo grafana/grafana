@@ -1,21 +1,19 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
-  "plugins": [
-    "no-only-tests"
-  ],
+  "plugins": ["no-only-tests", "@emotion"],
+  "rules": {
+    "no-only-tests/no-only-tests": "error",
+    "react/prop-types": "off",
+    "@emotion/jsx-import": "error",
+    "@emotion/pkg-renaming": "error"
+  },
   "overrides": [
     {
-      "files": [
-        "packages/grafana-ui/**/*/!(*.story).{ts,tsx}",
-        "packages/jaeger-ui-components/**/*.{ts,tsx,js}",
-        "public/app/**/*.{ts,tsx}"
-      ],
+      "files": ["packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}"],
       "rules": {
         "react-hooks/rules-of-hooks": "off",
-        "react-hooks/exhaustive-deps": "off",
-        "react/prop-types": "off",
-        "no-only-tests/no-only-tests": "error"
+        "react-hooks/exhaustive-deps": "off"
       }
     }
   ]

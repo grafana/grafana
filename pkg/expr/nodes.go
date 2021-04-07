@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
 	"gonum.org/v1/gonum/graph/simple"
@@ -81,7 +82,7 @@ func (gn *CMDNode) NodeType() NodeType {
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
 	return gn.Command.Execute(ctx, vars)
 }
 
@@ -105,6 +106,8 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 		node.Command, err = UnmarshalReduceCommand(rn)
 	case TypeResample:
 		node.Command, err = UnmarshalResampleCommand(rn)
+	case TypeClassicConditions:
+		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in '%v' not implemented", commandType, rn.RefID)
 	}
@@ -123,13 +126,15 @@ const (
 // DSNode is a DPNode that holds a datasource request.
 type DSNode struct {
 	baseNode
-	query        json.RawMessage
-	datasourceID int64
-	orgID        int64
-	queryType    string
-	timeRange    backend.TimeRange
-	intervalMS   int64
-	maxDP        int64
+	query         json.RawMessage
+	datasourceID  int64
+	datasourceUID string
+
+	orgID      int64
+	queryType  string
+	timeRange  backend.TimeRange
+	intervalMS int64
+	maxDP      int64
 }
 
 // NodeType returns the data pipeline node type.
@@ -137,7 +142,7 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
+func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -157,14 +162,24 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, e
 	}
 
 	rawDsID, ok := rn.Query["datasourceId"]
-	if !ok {
-		return nil, fmt.Errorf("no datasourceId in expression data source request for refId %v", rn.RefID)
+	switch ok {
+	case true:
+		floatDsID, ok := rawDsID.(float64)
+		if !ok {
+			return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
+		}
+		dsNode.datasourceID = int64(floatDsID)
+	default:
+		rawDsUID, ok := rn.Query["datasourceUid"]
+		if !ok {
+			return nil, fmt.Errorf("neither datasourceId or datasourceUid in expression data source request for refId %v", rn.RefID)
+		}
+		strDsUID, ok := rawDsUID.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected datasourceUid to be a string, got type %T for refId %v", rawDsUID, rn.RefID)
+		}
+		dsNode.datasourceUID = strDsUID
 	}
-	floatDsID, ok := rawDsID.(float64)
-	if !ok {
-		return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
-	}
-	dsNode.datasourceID = int64(floatDsID)
 
 	var floatIntervalMS float64
 	if rawIntervalMS := rn.Query["intervalMs"]; ok {
@@ -188,11 +203,12 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, e
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
 	pc := backend.PluginContext{
 		OrgID: dn.orgID,
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			ID: dn.datasourceID,
+			ID:  dn.datasourceID,
+			UID: dn.datasourceUID,
 		},
 	}
 
@@ -207,7 +223,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 		},
 	}
 
-	resp, err := QueryData(ctx, &backend.QueryDataRequest{
+	resp, err := s.queryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
 	})
@@ -218,6 +234,10 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 
 	vals := make([]mathexp.Value, 0)
 	for refID, qr := range resp.Responses {
+		if qr.Error != nil {
+			return mathexp.Results{}, fmt.Errorf("failed to execute query %v: %w", refID, qr.Error)
+		}
+
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {

@@ -1,5 +1,5 @@
 import React, { FC, HTMLAttributes, ReactNode } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useTheme } from '../../themes';
@@ -79,6 +79,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
 
   return {
     alert: css`
+      flex-grow: 1;
       padding: 15px 20px;
       margin-bottom: ${theme.spacing.xs};
       position: relative;

@@ -1,6 +1,6 @@
 // Libraries
 import React, { PureComponent, ChangeEvent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
 import { SelectableValue, ReducerID, QueryEditorProps } from '@grafana/data';
@@ -41,7 +41,7 @@ const upsamplingTypes: Array<SelectableValue<string>> = [
 ];
 
 const mathPlaceholder =
-  'Math operations on one more queries, you reference the query by ${refId} ie. $A, $B, $C etc\n' +
+  'Math operations on one more queries, you reference the query by ${refId}, such as $A, $B, $C etc\n' +
   'Example: $A + $B\n' +
   'Available functions: abs(), log(), nan(), inf(), null()';
 
@@ -133,13 +133,13 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { query, queries } = this.props;
-    const selected = gelTypes.find(o => o.value === query.type);
-    const reducer = reducerTypes.find(o => o.value === query.reducer);
-    const downsampler = downsamplingTypes.find(o => o.value === query.downsampler);
-    const upsampler = upsamplingTypes.find(o => o.value === query.upsampler);
+    const selected = gelTypes.find((o) => o.value === query.type);
+    const reducer = reducerTypes.find((o) => o.value === query.reducer);
+    const downsampler = downsamplingTypes.find((o) => o.value === query.downsampler);
+    const upsampler = upsamplingTypes.find((o) => o.value === query.upsampler);
     const labelWidth = 14;
 
-    const refIds = queries!.filter(q => query.refId !== q.refId).map(q => ({ value: q.refId, label: q.refId }));
+    const refIds = queries!.filter((q) => query.refId !== q.refId).map((q) => ({ value: q.refId, label: q.refId }));
 
     return (
       <div>

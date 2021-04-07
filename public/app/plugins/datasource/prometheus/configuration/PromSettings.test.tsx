@@ -1,7 +1,9 @@
-import { getValueFromEventItem, promSettingsValidationEvents } from './PromSettings';
+import React, { SyntheticEvent } from 'react';
+import { render, screen } from '@testing-library/react';
 import { EventsWithValidation } from '@grafana/ui';
-import { SyntheticEvent } from 'react';
 import { SelectableValue } from '@grafana/data';
+import { getValueFromEventItem, promSettingsValidationEvents, PromSettings } from './PromSettings';
+import { createDefaultConfigOptions } from './mocks';
 
 describe('PromSettings', () => {
   describe('getValueFromEventItem', () => {
@@ -82,5 +84,57 @@ describe('PromSettings', () => {
         expect(validationEvents[EventsWithValidation.onBlur][0].rule(value)).toBe(expected);
       }
     );
+  });
+  describe('PromSettings component', () => {
+    const defaultProps = createDefaultConfigOptions();
+
+    it('should show POST httpMethod if no httpMethod and no url', () => {
+      const options = defaultProps;
+      options.url = '';
+      options.jsonData.httpMethod = '';
+
+      render(
+        <div>
+          <PromSettings onOptionsChange={() => {}} options={options} />
+        </div>
+      );
+      expect(screen.getByText('POST')).toBeInTheDocument();
+    });
+    it('should show GET httpMethod if no httpMethod and url', () => {
+      const options = defaultProps;
+      options.url = 'test_url';
+      options.jsonData.httpMethod = '';
+
+      render(
+        <div>
+          <PromSettings onOptionsChange={() => {}} options={options} />
+        </div>
+      );
+      expect(screen.getByText('GET')).toBeInTheDocument();
+    });
+    it('should show POST httpMethod if POST httpMethod is configured', () => {
+      const options = defaultProps;
+      options.url = 'test_url';
+      options.jsonData.httpMethod = 'POST';
+
+      render(
+        <div>
+          <PromSettings onOptionsChange={() => {}} options={options} />
+        </div>
+      );
+      expect(screen.getByText('POST')).toBeInTheDocument();
+    });
+    it('should show GET httpMethod if GET httpMethod is configured', () => {
+      const options = defaultProps;
+      options.url = 'test_url';
+      options.jsonData.httpMethod = 'GET';
+
+      render(
+        <div>
+          <PromSettings onOptionsChange={() => {}} options={options} />
+        </div>
+      );
+      expect(screen.getByText('GET')).toBeInTheDocument();
+    });
   });
 });

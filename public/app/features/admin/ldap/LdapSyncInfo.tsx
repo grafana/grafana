@@ -26,8 +26,6 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
     const { ldapSyncInfo } = this.props;
     const { isSyncing } = this.state;
     const nextSyncTime = dateTimeFormat(ldapSyncInfo.nextSync, { format });
-    const prevSyncSuccessful = ldapSyncInfo && ldapSyncInfo.prevSync;
-    const prevSyncTime = prevSyncSuccessful ? dateTimeFormat(ldapSyncInfo.prevSync!.started, { format }) : '';
 
     return (
       <>
@@ -53,15 +51,6 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
                 <tr>
                   <td>Next scheduled synchronisation</td>
                   <td>{nextSyncTime}</td>
-                </tr>
-                <tr>
-                  <td>Last synchronisation</td>
-                  {prevSyncSuccessful && (
-                    <>
-                      <td>{prevSyncTime}</td>
-                      <td>Successful</td>
-                    </>
-                  )}
                 </tr>
               </tbody>
             </table>

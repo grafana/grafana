@@ -5,7 +5,10 @@ import {
   MetricAggregation,
   PipelineMetricAggregationType,
 } from './aggregations';
-import { defaultPipelineVariable } from './SettingsEditor/BucketScriptSettingsEditor/utils';
+import {
+  defaultPipelineVariable,
+  generatePipelineVariableName,
+} from './SettingsEditor/BucketScriptSettingsEditor/utils';
 
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
@@ -147,6 +150,18 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasMeta: false,
     defaults: {},
   },
+  serial_diff: {
+    label: 'Serial Difference',
+    requiresField: true,
+    isPipelineAgg: true,
+    minVersion: 2,
+    supportsMissing: false,
+    supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
+    hasMeta: false,
+    defaults: {},
+  },
   cumulative_sum: {
     label: 'Cumulative Sum',
     requiresField: true,
@@ -170,7 +185,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsInlineScript: false,
     hasMeta: false,
     defaults: {
-      pipelineVariables: [defaultPipelineVariable()],
+      pipelineVariables: [defaultPipelineVariable(generatePipelineVariableName([]))],
     },
   },
   raw_document: {
@@ -196,7 +211,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
-    hasSettings: false,
+    hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
     defaults: {
@@ -236,6 +251,7 @@ export const pipelineOptions: PipelineOptions = {
   ],
   moving_fn: [{ label: 'window', default: 5 }, { label: 'script' }],
   derivative: [{ label: 'unit' }],
+  serial_diff: [{ label: 'lag' }],
   cumulative_sum: [{ label: 'format' }],
   bucket_script: [],
 };
@@ -248,14 +264,14 @@ export const pipelineOptions: PipelineOptions = {
  * @param metrics
  */
 export const getChildren = (metric: MetricAggregation, metrics: MetricAggregation[]): MetricAggregation[] => {
-  const children = metrics.filter(m => {
+  const children = metrics.filter((m) => {
     // TODO: Check this.
     if (isPipelineAggregationWithMultipleBucketPaths(m)) {
-      return m.pipelineVariables?.some(pv => pv.pipelineAgg === metric.id);
+      return m.pipelineVariables?.some((pv) => pv.pipelineAgg === metric.id);
     }
 
     return isMetricAggregationWithField(m) && metric.id === m.field;
   });
 
-  return [...children, ...children.flatMap(child => getChildren(child, metrics))];
+  return [...children, ...children.flatMap((child) => getChildren(child, metrics))];
 };

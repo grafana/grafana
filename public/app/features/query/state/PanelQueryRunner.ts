@@ -43,12 +43,11 @@ export interface QueryRunnerOptions<
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
-  delayStateNotification?: number; // default 100ms.
   transformations?: DataTransformerConfig[];
 }
 
 let counter = 100;
-function getNextRequestId() {
+export function getNextRequestId() {
   return 'Q' + counter++;
 }
 
@@ -80,7 +79,7 @@ export class PanelQueryRunner {
         let processedData = data;
 
         if (withFieldConfig) {
-          // Apply field defaults & overrides
+          // Apply field defaults and overrides
           const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
           const timeZone = data.request?.timezone ?? 'browser';
 
@@ -102,9 +101,9 @@ export class PanelQueryRunner {
   }
 
   private getTransformationsStream = (withTransforms: boolean): MonoTypeOperatorFunction<PanelData> => {
-    return inputStream =>
+    return (inputStream) =>
       inputStream.pipe(
-        mergeMap(data => {
+        mergeMap((data) => {
           if (!withTransforms) {
             return of(data);
           }
@@ -115,7 +114,7 @@ export class PanelQueryRunner {
             return of(data);
           }
 
-          return transformDataFrame(transformations, data.series).pipe(map(series => ({ ...data, series })));
+          return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
         })
       );
   };
@@ -163,8 +162,8 @@ export class PanelQueryRunner {
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
 
-      // Attach the datasource name to each query
-      request.targets = request.targets.map(query => {
+      // Attach the data source name to each query
+      request.targets = request.targets.map((query) => {
         if (!query.datasource) {
           query.datasource = ds.name;
         }
@@ -196,7 +195,7 @@ export class PanelQueryRunner {
     }
 
     this.subscription = observable.subscribe({
-      next: data => {
+      next: (data) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);

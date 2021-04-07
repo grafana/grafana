@@ -26,7 +26,7 @@ const getBackendSrvMock = () =>
         message: '',
       }),
     }),
-    withNoBackendCache: jest.fn().mockImplementationOnce(cb => cb()),
+    withNoBackendCache: jest.fn().mockImplementationOnce((cb) => cb()),
   } as any);
 
 describe('Name exists', () => {

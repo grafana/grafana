@@ -7,7 +7,7 @@ const isEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   id: ValueMatcherID.equal,
   name: 'Is equal',
   description: 'Match where value for given field is equal to options value.',
-  get: options => {
+  get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
       // eslint-disable-next-line eqeqeq
@@ -25,7 +25,7 @@ const isNotEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions> = {
   id: ValueMatcherID.notEqual,
   name: 'Is not equal',
   description: 'Match where value for given field is not equal to options value.',
-  get: options => {
+  get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
       // eslint-disable-next-line eqeqeq

@@ -67,6 +67,25 @@ Metadata also accepts HTML elements, which could be links, for example. For elem
   </Card>
 </Preview>
 
+The separator for multiple metadata elements defaults to a vertical line `|`, but can be customised.
+
+```jsx
+<Card heading="Test dashboard">
+   <Card.Meta separator={'-'}>
+    Grafana
+    <a key='prom-link' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>
+    </Card.Meta>
+</Card>
+```
+
+<Preview>
+  <Card heading="Test dashboard">
+    <Card.Meta separator={'-'}>
+      Grafana
+      <a key='prom-link' href="https://ops-us-east4.grafana.net/api/prom">https://ops-us-east4.grafana.net/api/prom</a>
+    </Card.Meta>
+  </Card>
+</Preview>
 
 ### Tags
 Tags can be rendered inside the Card, by being wrapped in `Card.Tags` component. Note that this component does not provide any tag styling and that should be handled by the children. It is recommended to use it with Grafana-UI's `TagList` component.

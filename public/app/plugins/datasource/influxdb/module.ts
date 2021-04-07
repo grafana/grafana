@@ -8,6 +8,9 @@ import VariableQueryEditor from './components/VariableQueryEditor';
 // This adds a directive that is used in the query editor
 import './components/FluxQueryEditor';
 
+// This adds a directive that is used in the query editor
+import './registerRawInfluxQLEditor';
+
 class InfluxAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
 }
@@ -17,4 +20,4 @@ export const plugin = new DataSourcePlugin(InfluxDatasource)
   .setQueryCtrl(InfluxQueryCtrl)
   .setAnnotationQueryCtrl(InfluxAnnotationsQueryCtrl)
   .setVariableQueryEditor(VariableQueryEditor)
-  .setExploreStartPage(InfluxStartPage);
+  .setQueryEditorHelp(InfluxStartPage);
