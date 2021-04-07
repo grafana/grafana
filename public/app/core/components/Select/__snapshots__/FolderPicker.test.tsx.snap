@@ -10,7 +10,6 @@ exports[`FolderPicker should render 1`] = `
     defaultValue={Object {}}
     loadOptions={[Function]}
     loadingMessage="Loading folders..."
-    menuPosition="fixed"
     onChange={[Function]}
     onCreateOption={[Function]}
     value={Object {}}

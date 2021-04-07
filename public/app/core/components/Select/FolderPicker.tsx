@@ -161,7 +161,6 @@ export class FolderPicker extends PureComponent<Props, State> {
           loadOptions={this.debouncedSearch}
           onChange={this.onFolderChange}
           onCreateOption={this.createNewFolder}
-          menuPosition="fixed"
         />
       </div>
     );
