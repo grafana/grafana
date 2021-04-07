@@ -156,7 +156,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				existingAlertRule, err := getAlertRuleByUID(sess, r.New.UID, r.New.OrgID)
 				if err != nil {
 					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-						return nil
+						return fmt.Errorf("err: %w, UID: %s", err, r.New.UID)
 					}
 					return err
 				}
