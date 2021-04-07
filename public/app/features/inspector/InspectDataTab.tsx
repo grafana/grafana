@@ -7,6 +7,7 @@ import {
   DataFrame,
   DataTransformerID,
   dateTimeFormat,
+  dateTimeFormatISO,
   getFrameDisplayName,
   SelectableValue,
   toCSV,
@@ -23,6 +24,7 @@ import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from 'app/features/inspector/DetailText';
+import { dataFrameToLogsModel } from 'app/core/logs_model';
 
 interface Props {
   isLoading: boolean;
@@ -87,6 +89,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
     const { panel } = this.props;
     const { transformId } = this.state;
+    console.log(panel);
 
     const dataFrameCsv = toCSV([dataFrame], csvConfig);
 
@@ -96,6 +99,24 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
     const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
     const fileName = `${displayTitle}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
+    saveAs(blob, fileName);
+  };
+
+  exportLogsAsTxt = () => {
+    const { data, panel } = this.props;
+    const logsModel = dataFrameToLogsModel(data || [], undefined, 'utc');
+
+    let textToDownload = '';
+    logsModel.rows.forEach((row) => {
+      const newRow = dateTimeFormatISO(row.timeEpochMs) + '\t' + row.entry + '\n';
+      textToDownload = textToDownload + newRow;
+    });
+
+    const blob = new Blob([textToDownload], {
+      type: 'text/plain;charset=utf-8',
+    });
+    const displayTitle = panel ? panel.getDisplayTitle() : 'Explore';
+    const fileName = `${displayTitle}-logs-${dateTimeFormat(new Date())}.txt`;
     saveAs(blob, fileName);
   };
 
@@ -270,6 +291,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     // let's make sure we don't try to render a frame that doesn't exists
     const index = !dataFrames[dataFrameIndex] ? 0 : dataFrameIndex;
     const data = dataFrames[index];
+    const hasLogs = dataFrames.some((df) => df?.meta?.preferredVisualisationType === 'logs');
 
     return (
       <div className={styles.dataTabContent} aria-label={selectors.components.PanelInspector.Data.content}>
@@ -284,6 +306,18 @@ export class InspectDataTab extends PureComponent<Props, State> {
           >
             Download CSV
           </Button>
+          {hasLogs && (
+            <Button
+              variant="primary"
+              onClick={this.exportLogsAsTxt}
+              className={css`
+                margin-bottom: 10px;
+                margin-left: 10px;
+              `}
+            >
+              Download logs
+            </Button>
+          )}
         </div>
         <Container grow={1}>
           <AutoSizer>
