@@ -67,10 +67,8 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
 
 locationUtil.initialize({
   config: { appSubUrl: '/subUrl' } as any,
-  // @ts-ignore
-  buildParamsFromVariables: () => {},
-  // @ts-ignore
-  getTimeRangeForUrl: () => {},
+  getVariablesUrlParams: (() => {}) as any,
+  getTimeRangeForUrl: (() => {}) as any,
 });
 
 describe('Global MinMax', () => {
@@ -528,7 +526,7 @@ describe('getLinksSupplier', () => {
   it('will replace variables in url and title of the data link', () => {
     locationUtil.initialize({
       config: {} as any,
-      buildParamsFromVariables: (() => {}) as any,
+      getVariablesUrlParams: (() => {}) as any,
       getTimeRangeForUrl: (() => {}) as any,
     });
 
@@ -572,7 +570,7 @@ describe('getLinksSupplier', () => {
   it('handles internal links', () => {
     locationUtil.initialize({
       config: { appSubUrl: '' } as any,
-      buildParamsFromVariables: (() => {}) as any,
+      getVariablesUrlParams: (() => {}) as any,
       getTimeRangeForUrl: (() => {}) as any,
     });
 

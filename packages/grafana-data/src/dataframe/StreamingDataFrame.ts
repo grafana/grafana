@@ -2,6 +2,7 @@ import { Field, DataFrame, FieldType } from '../types/dataFrame';
 import { QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities } from './DataFrameJSON';
+import { guessFieldTypeFromValue } from './processDataFrame';
 
 // binary search for index of closest value
 function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
@@ -41,7 +42,7 @@ function circPush(data: number[][], newData: number[][], maxLength = Infinity, d
     sliceIdx = nlen - maxLength;
   }
 
-  if (maxDelta !== Infinity) {
+  if (maxDelta !== Infinity && deltaIdx >= 0) {
     const deltaLookup = data[deltaIdx];
 
     const low = deltaLookup[sliceIdx];
@@ -141,7 +142,26 @@ export class StreamingDataFrame implements DataFrame {
     if (data && data.values.length && data.values[0].length) {
       const { values, entities } = data;
       if (values.length !== this.fields.length) {
-        throw new Error('push message mismatch');
+        if (this.fields.length) {
+          throw new Error(`push message mismatch.  Expected: ${this.fields.length}, recieved: ${values.length}`);
+        }
+
+        this.fields = values.map((vals, idx) => {
+          let name = `Field ${idx}`;
+          let type = guessFieldTypeFromValue(vals[0]);
+          const isTime = idx === 0 && type === FieldType.number && vals[0] > 1600016688632;
+          if (isTime) {
+            type = FieldType.time;
+            name = 'Time';
+          }
+
+          return {
+            name,
+            type,
+            config: {},
+            values: new ArrayVector([]),
+          };
+        });
       }
 
       if (entities) {

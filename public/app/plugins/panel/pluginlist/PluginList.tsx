@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAsync } from 'react-use';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme, PanelProps, PluginMeta, PluginType } from '@grafana/data';
 import { CustomScrollbar, ModalsController, stylesFactory, Tooltip, useStyles } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';

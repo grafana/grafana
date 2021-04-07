@@ -10,7 +10,7 @@ import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@gra
 // Types
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
@@ -250,7 +250,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
               width={9}
               tooltip={
                 <>
-                  The evaluated Interval that is sent to data source and is used in <code>$__interval</code> and{' '}
+                  The evaluated interval that is sent to data source and is used in <code>$__interval</code> and{' '}
                   <code>$__interval_ms</code>
                 </>
               }

@@ -1,5 +1,5 @@
 import React, { FC, MouseEvent, PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Icon, IconButton, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { GrafanaTheme } from '@grafana/data';
@@ -64,10 +64,10 @@ export class VariableEditorList extends PureComponent<Props> {
                   __html: ` <p>
                     Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server
                     or sensor names in your metric queries you can use variables in their place. Variables are shown as
-                    dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
+                    list boxes at the top of the dashboard. These drop-down lists make it easy to change the data
                     being displayed in your dashboard. Check out the
-                    <a class="external-link" href="http://docs.grafana.org/reference/templating/" target="_blank">
-                      Templating documentation
+                    <a class="external-link" href="https://grafana.com/docs/grafana/latest/variables/" target="_blank">
+                      Templates and variables documentation
                     </a>
                     for more information.
                   </p>`,
@@ -208,7 +208,7 @@ const VariableCheckIndicator: FC<VariableCheckIndicatorProps> = ({ passed }) => 
       <Icon
         name="check"
         className={style.iconPassed}
-        title="This variable is referenced by other variables or dashboard"
+        title="This variable is referenced by other variables or dashboard."
       />
     );
   }
@@ -217,7 +217,7 @@ const VariableCheckIndicator: FC<VariableCheckIndicatorProps> = ({ passed }) => 
     <Icon
       name="exclamation-triangle"
       className={style.iconFailed}
-      title="This variable is not referenced by any variable or dashboard"
+      title="This variable is not referenced by any variable or dashboard."
     />
   );
 };
