@@ -1,10 +1,10 @@
 import React, { FC } from 'react';
-import { Field, FieldSet, Input, Select, useStyles, Label, InputControl } from '@grafana/ui';
+import { Field, Input, Select, useStyles, Label, InputControl } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { AlertRuleFormMethods } from './AlertRuleForm';
-
-type Props = AlertRuleFormMethods;
+import { RuleEditorSection } from './RuleEditorSection';
+import { useFormContext } from 'react-hook-form';
+import { RuleFormValues } from '../../types/rule-form';
 
 enum TIME_OPTIONS {
   seconds = 's',
@@ -33,10 +33,11 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-const AlertConditionsSection: FC<Props> = ({ register, control }) => {
+const AlertConditionsSection: FC = () => {
   const styles = useStyles(getStyles);
+  const { register, control } = useFormContext<RuleFormValues>();
   return (
-    <FieldSet label="Define alert conditions">
+    <RuleEditorSection stepNo={3} title="Define alert conditions">
       <Label description="Required time for which the expression has to happen">For</Label>
       <div className={styles.flexRow}>
         <Field className={styles.numberInput}>
@@ -46,7 +47,7 @@ const AlertConditionsSection: FC<Props> = ({ register, control }) => {
           <InputControl name="timeUnit" as={Select} options={timeOptions} control={control} />
         </Field>
       </div>
-    </FieldSet>
+    </RuleEditorSection>
   );
 };
 

@@ -3,7 +3,6 @@ import {
   Button,
   Field,
   FieldArray,
-  FormAPI,
   IconButton,
   InputControl,
   Label,
@@ -14,8 +13,8 @@ import {
 import { GrafanaTheme } from '@grafana/data';
 import { config } from 'app/core/config';
 import { css, cx } from '@emotion/css';
-
-interface Props extends FormAPI<any> {}
+import { useFormContext } from 'react-hook-form';
+import { RuleFormValues } from '../../types/rule-form';
 
 enum AnnotationOptions {
   summary = 'Summary',
@@ -23,9 +22,10 @@ enum AnnotationOptions {
   runbook = 'Runbook url',
 }
 
-const AnnotationsField: FC<Props> = ({ control, register }) => {
+const AnnotationsField: FC = () => {
   const styles = getStyles(config.theme);
   const annotationOptions = Object.entries(AnnotationOptions).map(([key, value]) => ({ value: key, label: value }));
+  const { control, register } = useFormContext<RuleFormValues>();
 
   return (
     <>

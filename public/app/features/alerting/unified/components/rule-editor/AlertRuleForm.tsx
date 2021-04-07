@@ -1,53 +1,57 @@
-import React, { FC, useState } from 'react';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { PageToolbar, ToolbarButton, Form, FormAPI, useStyles, CustomScrollbar } from '@grafana/ui';
+import React, { FC } from 'react';
+import { GrafanaTheme } from '@grafana/data';
+import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import AlertTypeSection from './AlertTypeSection';
 import AlertConditionsSection from './AlertConditionsSection';
 import AlertDetails from './AlertDetails';
 import Expression from './Expression';
+import { useForm, FormContext } from 'react-hook-form';
 
 import { fetchRulerRulesNamespace, setRulerRuleGroup } from '../../api/ruler';
 import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { locationService } from '@grafana/runtime';
+import { RuleFormValues } from '../../types/rule-form';
 
 type Props = {};
 
-interface AlertRuleFormFields {
-  name: string;
-  type: SelectableValue;
-  folder: SelectableValue;
-  forTime: string;
-  dataSource: SelectableValue;
-  expression: string;
-  timeUnit: SelectableValue;
-  labels: Array<{ key: string; value: string }>;
-  annotations: Array<{ key: SelectableValue; value: string }>;
-}
-
-export type AlertRuleFormMethods = FormAPI<AlertRuleFormFields>;
+const defaultValues: RuleFormValues = Object.freeze({
+  name: '',
+  labels: [],
+  annotations: [],
+  forTime: 1,
+  forUnit: 'm',
+});
 
 export const AlertRuleForm: FC<Props> = () => {
   const styles = useStyles(getStyles);
 
-  const [folder, setFolder] = useState<{ namespace: string; group: string }>();
+  const formAPI = useForm<RuleFormValues>({
+    mode: 'onSubmit',
+    defaultValues,
+  });
 
-  const handleSubmit = (alertRule: AlertRuleFormFields) => {
-    const { name, expression, forTime, dataSource, timeUnit, labels, annotations } = alertRule;
+  const { handleSubmit, watch } = formAPI;
+
+  const values = watch();
+
+  const showStep2 = values.dataSource && values.group && values.namespace && values.type;
+
+  const onSubmit = (alertRule: RuleFormValues) => {
+    const { name, expression, forTime, dataSource, forUnit, labels, annotations, namespace, group } = alertRule;
     console.log('saving', alertRule);
-    const { namespace, group: groupName } = folder || {};
-    if (namespace && groupName) {
-      fetchRulerRulesNamespace(dataSource?.value, namespace)
+    if (namespace && group && expression && dataSource && name) {
+      fetchRulerRulesNamespace(dataSource.name, namespace)
         .then((ruleGroup) => {
-          const group: RulerRuleGroupDTO = ruleGroup.find(({ name }) => name === groupName) || {
-            name: groupName,
+          const existingGroup: RulerRuleGroupDTO = ruleGroup.find(({ name }) => name === group) || {
+            name: group,
             rules: [] as RulerRuleDTO[],
           };
           const alertRule: RulerRuleDTO = {
             alert: name,
             expr: expression,
-            for: `${forTime}${timeUnit.value}`,
+            for: `${forTime}${forUnit}`,
             labels: labels.reduce((acc, { key, value }) => {
               if (key && value) {
                 acc[key] = value;
@@ -56,14 +60,16 @@ export const AlertRuleForm: FC<Props> = () => {
             }, {} as Record<string, string>),
             annotations: annotations.reduce((acc, { key, value }) => {
               if (key && value) {
-                acc[key.value] = value;
+                acc[key] = value;
               }
               return acc;
             }, {} as Record<string, string>),
           };
 
-          group.rules = group?.rules.concat(alertRule);
-          return setRulerRuleGroup(dataSource?.value, namespace, group);
+          return setRulerRuleGroup(dataSource.name, namespace, {
+            ...existingGroup,
+            rules: existingGroup.rules.concat(alertRule),
+          });
         })
         .then(() => {
           console.log('Alert rule saved successfully');
@@ -73,33 +79,31 @@ export const AlertRuleForm: FC<Props> = () => {
     }
   };
   return (
-    <Form
-      onSubmit={handleSubmit}
-      className={styles.form}
-      defaultValues={{ labels: [{ key: '', value: '' }], annotations: [{ key: {}, value: '' }] }}
-    >
-      {(formApi) => (
-        <>
-          <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
-            <ToolbarButton variant="default">Cancel</ToolbarButton>
-            <ToolbarButton variant="primary" type="submit">
-              Save
-            </ToolbarButton>
-            <ToolbarButton variant="primary">Save and exit</ToolbarButton>
-          </PageToolbar>
-          <div className={styles.contentOutter}>
-            <CustomScrollbar autoHeightMin="100%">
-              <div className={styles.contentInner}>
-                <AlertTypeSection {...formApi} setFolder={setFolder} />
-                <Expression {...formApi} />
-                <AlertConditionsSection {...formApi} />
-                <AlertDetails {...formApi} />
-              </div>
-            </CustomScrollbar>
-          </div>
-        </>
-      )}
-    </Form>
+    <FormContext {...formAPI}>
+      <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+        <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
+          <ToolbarButton variant="default">Cancel</ToolbarButton>
+          <ToolbarButton variant="primary" type="submit">
+            Save
+          </ToolbarButton>
+          <ToolbarButton variant="primary">Save and exit</ToolbarButton>
+        </PageToolbar>
+        <div className={styles.contentOutter}>
+          <CustomScrollbar autoHeightMin="100%">
+            <div className={styles.contentInner}>
+              <AlertTypeSection />
+              {showStep2 && (
+                <>
+                  <Expression />
+                  <AlertConditionsSection />
+                  <AlertDetails />
+                </>
+              )}
+            </div>
+          </CustomScrollbar>
+        </div>
+      </form>
+    </FormContext>
   );
 };
 
@@ -123,6 +127,7 @@ const getStyles = (theme: GrafanaTheme) => {
     contentOutter: css`
       background: ${theme.colors.panelBg};
       overflow: hidden;
+      flex: 1;
     `,
     formInput: css`
       width: 400px;

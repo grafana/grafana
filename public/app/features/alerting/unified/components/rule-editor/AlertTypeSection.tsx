@@ -1,47 +1,44 @@
 import React, { FC, useState, useEffect } from 'react';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Cascader, FieldSet, Field, Input, InputControl, stylesFactory, Select, CascaderOption } from '@grafana/ui';
+import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
+import { Cascader, Field, Input, InputControl, stylesFactory, Select, CascaderOption } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { css } from '@emotion/css';
 
 import { getAllDataSources } from '../../utils/config';
 import { fetchRulerRules } from '../../api/ruler';
-import { AlertRuleFormMethods } from './AlertRuleForm';
 import { getRulesDataSources } from '../../utils/datasource';
-
-interface Props extends AlertRuleFormMethods {
-  setFolder: ({ namespace, group }: { namespace: string; group: string }) => void;
-}
-
-enum ALERT_TYPE {
-  THRESHOLD = 'threshold',
-  SYSTEM = 'system',
-  HOST = 'host',
-}
+import { RuleEditorSection } from './RuleEditorSection';
+import { useFormContext } from 'react-hook-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 const alertTypeOptions: SelectableValue[] = [
   {
     label: 'Threshold',
-    value: ALERT_TYPE.THRESHOLD,
+    value: RuleFormType.threshold,
     description: 'Metric alert based on a defined threshold',
   },
   {
     label: 'System or application',
-    value: ALERT_TYPE.SYSTEM,
+    value: RuleFormType.system,
     description: 'Alert based on a system or application behavior. Based on Prometheus.',
   },
 ];
 
-const AlertTypeSection: FC<Props> = ({ register, control, watch, setFolder, errors }) => {
+const AlertTypeSection: FC = () => {
   const styles = getStyles(config.theme);
 
-  const alertType = watch('type') as SelectableValue;
-  const datasource = watch('dataSource') as SelectableValue;
+  const { register, control, watch, errors } = useFormContext<RuleFormValues>();
+
+  const alertType = watch('type');
+  const datasource = watch('dataSource');
   const dataSourceOptions = useDatasourceSelectOptions(alertType);
   const folderOptions = useFolderSelectOptions(datasource);
 
+  console.log(alertType, dataSourceOptions, folderOptions);
+
   return (
-    <FieldSet label="Alert type">
+    <RuleEditorSection stepNo={1} title="Alert type">
       <Field
         className={styles.formInput}
         label="Alert name"
@@ -52,7 +49,13 @@ const AlertTypeSection: FC<Props> = ({ register, control, watch, setFolder, erro
       </Field>
       <div className={styles.flexRow}>
         <Field label="Alert type" className={styles.formInput} error={errors.type?.message}>
-          <InputControl as={Select} name="type" options={alertTypeOptions} control={control} />
+          <InputControl
+            as={Select}
+            name="type"
+            options={alertTypeOptions}
+            control={control}
+            onChange={(values: SelectableValue[]) => values[0]?.value}
+          />
         </Field>
         <Field className={styles.formInput} label="Select data source">
           <InputControl as={Select} name="dataSource" options={dataSourceOptions} control={control} />
@@ -67,53 +70,54 @@ const AlertTypeSection: FC<Props> = ({ register, control, watch, setFolder, erro
           options={folderOptions}
           control={control}
           changeOnSelect={false}
-          onSelect={(value: string) => {
-            const [namespace, group] = value.split(' > ');
-            setFolder({ namespace, group });
+          onSelect={(value: any) => {
+            console.log('sel', value);
           }}
         />
       </Field>
-    </FieldSet>
+    </RuleEditorSection>
   );
 };
 
-const useDatasourceSelectOptions = (alertType: SelectableValue) => {
+const useDatasourceSelectOptions = (ruleFormType?: RuleFormType) => {
   const [datasourceOptions, setDataSourceOptions] = useState<SelectableValue[]>([]);
 
   useEffect(() => {
     let options = [] as ReturnType<typeof getAllDataSources>;
-    if (alertType?.value === ALERT_TYPE.THRESHOLD) {
-      options = getAllDataSources().filter(({ type }) => type !== 'datasource');
-    } else if (alertType?.value === ALERT_TYPE.SYSTEM) {
-      options = getRulesDataSources();
+    if (ruleFormType) {
+      if (ruleFormType === RuleFormType.threshold) {
+        options = getDataSourceSrv().getList({ alerting: true });
+      } else if (ruleFormType === RuleFormType.system) {
+        options = getRulesDataSources();
+      }
     }
     setDataSourceOptions(
-      options.map(({ name, type }) => {
+      options.map(({ name, type, meta }) => {
         return {
           label: name,
           value: name,
-          description: type,
+          imgUrl: meta.info.logos.small,
         };
       })
     );
-  }, [alertType?.value]);
+  }, [ruleFormType]);
 
   return datasourceOptions;
 };
 
-const useFolderSelectOptions = (datasource: SelectableValue) => {
+const useFolderSelectOptions = (datasource?: DataSourceInstanceSettings) => {
   const [folderOptions, setFolderOptions] = useState<CascaderOption[]>([]);
 
   useEffect(() => {
-    if (datasource?.value) {
-      fetchRulerRules(datasource?.value)
+    if (datasource?.name) {
+      fetchRulerRules(datasource?.name)
         .then((namespaces) => {
           const options: CascaderOption[] = Object.entries(namespaces).map(([namespace, group]) => {
             return {
               label: namespace,
               value: namespace,
               items: group.map(({ name }) => {
-                return { label: name, value: `${namespace} > ${name}` };
+                return { label: name, value: { namespace, group: name } };
               }),
             };
           });
@@ -125,7 +129,7 @@ const useFolderSelectOptions = (datasource: SelectableValue) => {
           }
         });
     }
-  }, [datasource?.value]);
+  }, [datasource]);
 
   return folderOptions;
 };

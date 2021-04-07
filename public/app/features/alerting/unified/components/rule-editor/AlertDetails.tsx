@@ -1,16 +1,14 @@
 import React, { FC } from 'react';
-import { FieldSet, FormAPI } from '@grafana/ui';
 import LabelsField from './LabelsField';
 import AnnotationsField from './AnnotationsField';
+import { RuleEditorSection } from './RuleEditorSection';
 
-interface Props extends FormAPI<{}> {}
-
-const AlertDetails: FC<Props> = (props) => {
+const AlertDetails: FC = () => {
   return (
-    <FieldSet label="Add details for your alert">
-      <AnnotationsField {...props} />
-      <LabelsField {...props} />
-    </FieldSet>
+    <RuleEditorSection stepNo={4} title="Add details for your alert">
+      <AnnotationsField />
+      <LabelsField />
+    </RuleEditorSection>
   );
 };
 

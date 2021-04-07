@@ -1,18 +1,20 @@
-import React from 'react';
-import { Button, Field, FieldArray, FormAPI, Input, InlineLabel, IconButton, Label, stylesFactory } from '@grafana/ui';
+import React, { FC } from 'react';
+import { Button, Field, FieldArray, Input, InlineLabel, IconButton, Label, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { config } from 'app/core/config';
 import { css, cx } from '@emotion/css';
+import { useFormContext } from 'react-hook-form';
+import { RuleFormValues } from '../../types/rule-form';
 
-interface Props extends Pick<FormAPI<{}>, 'register' | 'control'> {
+interface Props {
   className?: string;
 }
 
-const LabelsField = (props: Props) => {
+const LabelsField: FC<Props> = ({ className }) => {
   const styles = getStyles(config.theme);
-  const { register, control } = props;
+  const { register, control } = useFormContext<RuleFormValues>();
   return (
-    <div className={props.className}>
+    <div className={className}>
       <Label>Custom Labels</Label>
       <FieldArray control={control} name="labels">
         {({ fields, append, remove }) => {

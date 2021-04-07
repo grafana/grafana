@@ -1,16 +1,17 @@
 import React, { FC } from 'react';
-import { Field, FieldSet, Input } from '@grafana/ui';
-import { AlertRuleFormMethods } from './AlertRuleForm';
+import { Field, Input } from '@grafana/ui';
+import { RuleEditorSection } from './RuleEditorSection';
+import { useFormContext } from 'react-hook-form';
+import { RuleFormValues } from '../../types/rule-form';
 
-type Props = AlertRuleFormMethods;
-
-const Expression: FC<Props> = ({ register }) => {
+const Expression: FC = () => {
+  const { register } = useFormContext<RuleFormValues>();
   return (
-    <FieldSet label="Create a query (expression) to be alerted on">
+    <RuleEditorSection stepNo={2} title="Create a query to be alerted on">
       <Field>
-        <Input ref={register()} name="expression" placeholder="Enter a PromQL query here" />
+        <Input ref={register()} name="expression" placeholder="Enter a query here" />
       </Field>
-    </FieldSet>
+    </RuleEditorSection>
   );
 };
 
