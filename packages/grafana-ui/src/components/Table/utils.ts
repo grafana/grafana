@@ -206,5 +206,5 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
 }
 
 export function sortCaseInsensitive(a: Row<any>, b: Row<any>, id: string) {
-  return a.values[id].localeCompare(b.values[id], undefined, { sensitivity: 'base' });
+  return String(a.values[id]).localeCompare(String(b.values[id]), undefined, { sensitivity: 'base' });
 }
