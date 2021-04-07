@@ -107,6 +107,7 @@ export interface GrafanaThemeCommons {
     modalBackdrop: number;
     modal: number;
     typeahead: number;
+    portal: number;
   };
 }
 

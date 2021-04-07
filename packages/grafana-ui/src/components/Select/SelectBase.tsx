@@ -20,7 +20,6 @@ import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
 import { cleanValue, findSelectedValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
-import { appZIndexes } from '../../themes/default';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -328,7 +327,7 @@ export function SelectBase<T>({
           ...resetSelectStyles(),
           menuPortal: (base: any) => ({
             ...base,
-            zIndex: appZIndexes.portal,
+            zIndex: theme.zIndex.portal,
           }),
           //These are required for the menu positioning to function
           menu: ({ top, bottom, position }: any) => ({
