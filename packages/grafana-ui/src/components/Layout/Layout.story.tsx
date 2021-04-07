@@ -3,7 +3,7 @@ import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/st
 import { Layout, Orientation, LayoutProps } from './Layout';
 import { Button, VerticalGroup, HorizontalGroup } from '@grafana/ui';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
-import { Story } from '@storybook/react';
+import { Story, Meta } from '@storybook/react';
 import mdx from './Layout.mdx';
 
 export default {
@@ -46,7 +46,7 @@ export default {
       },
     },
   },
-};
+} as Meta;
 
 export const Horizontal: Story<LayoutProps> = (args) => {
   return (
