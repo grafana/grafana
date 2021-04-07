@@ -516,6 +516,9 @@ func (st DBstore) createNamespace(cmd UpdateRuleGroupCmd) (*models.Folder, error
 	}
 
 	if err := st.updateNamespaceACLs(folder, cmd); err != nil {
+		if _, err := folderService.DeleteFolder(folder.Uid); err != nil {
+			return nil, fmt.Errorf("could not update folder: %s permissions and failed to delete the folder, err: %w", folder.Title, err)
+		}
 		return nil, fmt.Errorf("could not update folder: %s permissions, err: %w", folder.Title, err)
 	}
 	return folder, nil
@@ -564,7 +567,10 @@ func (st DBstore) updateNamespaceACLs(folder *models.Folder, cmd UpdateRuleGroup
 	items = append(items, hiddenACL...)
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
-		return fmt.Errorf("failed to check permissions, err %w", err)
+		if err != nil {
+			return fmt.Errorf("failed to check permissions, err %w", err)
+		}
+		return fmt.Errorf("not ok to update permissions")
 	}
 
 	if err := st.SQLStore.UpdateDashboardACL(folder.Id, items); err != nil {
