@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { PanelProps } from '@grafana/data';
-import { Timeline, GraphNGLegendEvent, TimelineOptions } from '@grafana/ui';
+import { GraphNGLegendEvent, TimelineChart, TimelineOptions } from '@grafana/ui';
 import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
 
@@ -42,7 +42,7 @@ export const TimelinePanel: React.FC<TimelinePanelProps> = ({
   }
 
   return (
-    <Timeline
+    <TimelineChart
       data={data.series}
       timeRange={timeRange}
       timeZone={timeZone}
