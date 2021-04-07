@@ -26,6 +26,9 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 	namespace := c.Params(":Namespace")
 	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
+		if errors.Is(err, ngmodels.ErrCannotAdminNamespace) {
+			return response.Error(http.StatusForbidden, fmt.Sprintf("no admin access to namespace: %s", namespace), err)
+		}
 		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
 	}
 	if err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespaceUID); err != nil {
@@ -38,6 +41,9 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 	namespace := c.Params(":Namespace")
 	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
+		if errors.Is(err, ngmodels.ErrCannotAdminNamespace) {
+			return response.Error(http.StatusForbidden, fmt.Sprintf("no admin access to namespace: %s", namespace), err)
+		}
 		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
 	}
 	ruleGroup := c.Params(":Groupname")
@@ -132,7 +138,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 
 	configs := make(map[string]map[string]apimodels.GettableRuleGroupConfig)
 	for _, r := range q.Result {
-		namespace, err := srv.store.GetNamespaceByUID(r.NamespaceUID, c.SignedInUser.OrgId, c.SignedInUser)
+		namespace, err := srv.store.GetNamespaceByUID(r.NamespaceUID, c.SignedInUser.OrgId, c.SignedInUser, false)
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", r.NamespaceUID), err)
 		}
