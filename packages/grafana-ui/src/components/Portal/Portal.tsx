@@ -1,4 +1,4 @@
-﻿import React, { PureComponent, useEffect, useRef } from 'react';
+﻿import React, { PureComponent, useEffect, useRef, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 
 interface Props {
@@ -43,16 +43,19 @@ export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((prop
 });
 
 export const usePortalNode = (root: HTMLElement = document.body): HTMLElement => {
-  const nodeRef = useRef<HTMLElement>(document.createElement('div'));
+  const node = useMemo(() => {
+    const element = document.createElement('div');
+    element.style.zIndex = '1051';
+    return element;
+  }, []);
 
   useEffect(() => {
-    const node = nodeRef.current;
     root.appendChild(node);
 
     return () => {
       root.removeChild(node);
     };
-  }, [root]);
+  }, [node, root]);
 
-  return nodeRef.current;
+  return node;
 };

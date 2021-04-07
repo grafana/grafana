@@ -64,6 +64,7 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
 
   return (
     <Portal>
+      <div className={styles.modalBackdrop} onClick={onClickBackdrop || onDismiss} />
       <div className={cx(styles.modal, className)}>
         <div className={styles.modalHeader}>
           {typeof title === 'string' && <DefaultModalHeader {...props} title={title} />}
@@ -74,7 +75,6 @@ export function Modal(props: PropsWithChildren<Props>): ReturnType<FC<Props>> {
         </div>
         <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
       </div>
-      <div className={styles.modalBackdrop} onClick={onClickBackdrop || onDismiss} />
     </Portal>
   );
 }
