@@ -137,6 +137,8 @@ func (s *ManagedStream) OnSubscribe(_ context.Context, _ *models.SignedInUser, e
 	return reply, backend.SubscribeStreamStatusOK, nil
 }
 
-func (s *ManagedStream) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+func (s *ManagedStream) OnPublish(_ context.Context, _ *models.SignedInUser, evt models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+	logger.Debug("OnPublish", evt.Channel, "evt", evt)
+
 	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }
