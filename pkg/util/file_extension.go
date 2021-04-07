@@ -1,9 +1,12 @@
 package util
 
 func GetFileExtensionByContentType(contentType string) string {
-	extensions := map[string]string{
-		"text/html":  ".html",
-		"text/plain": ".txt",
+	switch contentType {
+		"text/html":
+			return ".html"
+		"text/plain": 
+			return ".txt"
+		default:
+			panic(fmt.Sprintf("Unrecognized content type %q", contentType))
 	}
-	return extensions[contentType]
 }
