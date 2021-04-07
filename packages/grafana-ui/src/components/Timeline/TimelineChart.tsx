@@ -11,7 +11,7 @@ import { LegendDisplayMode } from '../VizLegend/types';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { TimelineProps } from './types';
 
-class UnthemedTimeline extends React.Component<TimelineProps, GraphNGState> {
+class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState> {
   constructor(props: TimelineProps) {
     super(props);
     let dimFields = props.fields;
@@ -191,5 +191,5 @@ class UnthemedTimeline extends React.Component<TimelineProps, GraphNGState> {
   }
 }
 
-export const Timeline = withTheme(UnthemedTimeline);
-Timeline.displayName = 'Timeline';
+export const TimelineChart = withTheme(UnthemedTimelineChart);
+TimelineChart.displayName = 'TimelineChart';
