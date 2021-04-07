@@ -6,7 +6,6 @@ import { LegendDisplayMode, LegendPlacement } from '../VizLegend/types';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { useTheme } from '../../themes';
 import { Story } from '@storybook/react';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 export default {
   title: 'Visualizations/GraphNG',
@@ -16,6 +15,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['className', 'timeRange', 'data', 'legend', 'fields'],
+    },
   },
   argTypes: {
     legendDisplayMode: { control: { type: 'radio', options: ['table', 'list', 'hidden'] } },
@@ -23,11 +25,6 @@ export default {
     timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
     width: { control: { type: 'range', min: 200, max: 800 } },
     height: { control: { type: 'range', min: 200, max: 800 } },
-    className: NOOP_CONTROL,
-    timeRange: NOOP_CONTROL,
-    data: NOOP_CONTROL,
-    legend: NOOP_CONTROL,
-    fields: NOOP_CONTROL,
   },
 };
 

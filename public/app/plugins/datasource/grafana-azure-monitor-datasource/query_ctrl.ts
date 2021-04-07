@@ -34,7 +34,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   // target: AzureMonitorQuery;
 
-  target: {
+  declare target: {
     // should be: AzureMonitorQuery
     refId: string;
     queryType: AzureQueryType;

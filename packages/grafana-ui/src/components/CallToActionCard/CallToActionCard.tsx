@@ -1,7 +1,7 @@
 import React from 'react';
 import { Themeable } from '../../types/theme';
 import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { stylesFactory } from '../../themes';
 
 export interface CallToActionCardProps extends Themeable {
