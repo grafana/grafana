@@ -92,9 +92,9 @@ export class ShareEmbed extends PureComponent<Props, State> {
               <RadioButtonGroup options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
             </Field>
             <Field
-              label="Embed html"
-              description="The html code below can be pasted and included in another web page. Unless anonymous access is enabled, 
-                the user viewing that page need to be signed into grafana for the graph to load."
+              label="Embed HTML"
+              description="The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, 
+                the user viewing that page need to be signed into Grafana for the graph to load."
             >
               <TextArea rows={5} value={iframeHtml} onChange={this.onIframeHtmlChange}></TextArea>
             </Field>

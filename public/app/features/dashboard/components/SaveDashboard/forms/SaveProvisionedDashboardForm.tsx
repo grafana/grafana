@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import { Button, HorizontalGroup, stylesFactory, TextArea, useTheme, VerticalGroup } from '@grafana/ui';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
@@ -31,14 +31,14 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
     <>
       <VerticalGroup spacing="lg">
         <small>
-          This dashboard cannot be saved from Grafana&apos;s UI since it has been provisioned from another source. Copy
-          the JSON or save it to a file below. Then you can update your dashboard in corresponding provisioning source.
+          This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
+          the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
           <br />
           <i>
             See{' '}
             <a
               className="external-link"
-              href="http://docs.grafana.org/administration/provisioning/#dashboards"
+              href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards"
               target="_blank"
               rel="noreferrer"
             >

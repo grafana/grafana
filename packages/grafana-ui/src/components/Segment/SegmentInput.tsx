@@ -1,5 +1,5 @@
 import React, { HTMLProps, useRef, useState } from 'react';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 import useClickAway from 'react-use/lib/useClickAway';
 import { measureText } from '../../utils/measureText';
 import { useExpandableLabel, SegmentProps } from '.';

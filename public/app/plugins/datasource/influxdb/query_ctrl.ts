@@ -11,7 +11,7 @@ import InfluxDatasource from './datasource';
 export class InfluxQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  datasource: InfluxDatasource;
+  declare datasource: InfluxDatasource;
   queryModel: InfluxQueryModel;
   queryBuilder: any;
   groupBySegment: any;

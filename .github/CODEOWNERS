@@ -83,6 +83,7 @@ lerna.json @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/cloud-monitoring @grafana/cloud-datasources
 /public/app/plugins/datasource/zipkin @grafana/observability-squad
 /public/app/plugins/datasource/tempo @grafana/observability-squad
+/public/app/plugins/datasource/alertmanager @grafana/alerting-squad
 
 # Cloud middleware
 /grafana-mixin/ @grafana/cloud-middleware

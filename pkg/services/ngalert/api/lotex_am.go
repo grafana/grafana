@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	amSilencesPath    = "/api/v2/silences"
-	amSilencePath     = "/api/v2/silence/%s"
-	amAlertGroupsPath = "/api/v2/alerts/groups"
-	amAlertsPath      = "/api/v2/alerts"
+	amSilencesPath    = "/alertmanager/api/v2/silences"
+	amSilencePath     = "/alertmanager/api/v2/silence/%s"
+	amAlertGroupsPath = "/alertmanager/api/v2/alerts/groups"
+	amAlertsPath      = "/alertmanager/api/v2/alerts"
 	amConfigPath      = "/api/v1/alerts"
 )
 
@@ -32,7 +32,7 @@ func NewLotexAM(proxy *AlertingProxy, log log.Logger) *LotexAM {
 	}
 }
 
-func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimodels.SilenceBody) response.Response {
+func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimodels.PostableSilence) response.Response {
 	blob, err := json.Marshal(silenceBody)
 	if err != nil {
 		return response.Error(500, "Failed marshal silence", err)
@@ -44,8 +44,9 @@ func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimod
 			URL:           withPath(*ctx.Req.URL, amSilencesPath),
 			Body:          body,
 			ContentLength: ln,
+			Header:        map[string][]string{"Content-Type": {"application/json"}},
 		},
-		jsonExtractor(&apimodels.GettableSilence{}),
+		jsonExtractor(nil),
 	)
 }
 
@@ -83,7 +84,7 @@ func (am *LotexAM) RouteGetAlertingConfig(ctx *models.ReqContext) response.Respo
 				amConfigPath,
 			),
 		},
-		jsonExtractor(&apimodels.GettableUserConfig{}),
+		yamlExtractor(&apimodels.GettableUserConfig{}),
 	)
 }
 

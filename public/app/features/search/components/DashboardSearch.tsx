@@ -1,5 +1,5 @@
 import React, { FC, memo } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useTheme, CustomScrollbar, stylesFactory, IconButton } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { useSearchQuery } from '../hooks/useSearchQuery';

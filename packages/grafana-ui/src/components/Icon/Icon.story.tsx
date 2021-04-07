@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { Input, Field, Icon } from '@grafana/ui';
 import { getAvailableIcons, IconName } from '../../types';
