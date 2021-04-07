@@ -6,7 +6,6 @@ import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader
 
 export interface Props {
   model: NavModel;
-  contentWidth?: keyof GrafanaTheme['breakpoints'];
 }
 
 const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCss: string }) => {
@@ -72,7 +71,7 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
   );
 };
 
-export const PageHeader: FC<Props> = ({ model, contentWidth }) => {
+export const PageHeader: FC<Props> = ({ model }) => {
   const styles = useStyles(getStyles);
 
   if (!model) {
@@ -84,7 +83,7 @@ export const PageHeader: FC<Props> = ({ model, contentWidth }) => {
 
   return (
     <div className={styles.headerCanvas}>
-      <div className={cx('page-container', contentWidth ? styles.contentWidth(contentWidth) : undefined)}>
+      <div className={cx('page-container')}>
         <div className="page-header">
           {renderHeaderTitle(main)}
           {children && children.length && <Navigation>{children}</Navigation>}
@@ -142,9 +141,6 @@ const getStyles = (theme: GrafanaTheme) => ({
   headerCanvas: css`
     background: ${theme.colors.bg2};
     border-bottom: 1px solid ${theme.colors.border1};
-  `,
-  contentWidth: (size: keyof GrafanaTheme['breakpoints']) => css`
-    max-width: ${theme.breakpoints[size]};
   `,
 });
 
