@@ -6,6 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
+
+	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/services/guardian"
+
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -22,9 +27,16 @@ const AlertRuleMaxTitleLength = 190
 // AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
 const AlertRuleMaxRuleGroupNameLength = 190
 
+// ErrCannotAdminNamespace is an error returned if the user does not have permissions to admin the namespace
+var ErrCannotAdminNamespace = errors.New("user does not have permissions to admin the namespace")
+
 type UpdateRuleGroupCmd struct {
-	OrgID           int64
-	NamespaceUID    string
+	OrgID       int64
+	RequestedBy *models.SignedInUser
+	Namespace   string
+	// NamespaceACLs are the namespace permissions of a newly created namespace (if it does not exist)
+	// If it's empty then the default permissions are applied
+	NamespaceACLs   []dtos.DashboardAclUpdateItem
 	RuleGroupConfig apimodels.PostableRuleGroupConfig
 }
 
@@ -43,7 +55,7 @@ type RuleStore interface {
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
-	GetNamespaceUIDBySlug(string, int64, *models.SignedInUser) (string, error)
+	GetNamespaceUIDBySlug(string, int64, *models.SignedInUser, bool) (string, error)
 	GetNamespaceByUID(string, int64, *models.SignedInUser) (string, error)
 	UpsertAlertRules([]UpsertRule) error
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
@@ -304,12 +316,20 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 }
 
 // GetNamespaceUIDBySlug is a handler for retrieving namespace UID by its name.
-func (st DBstore) GetNamespaceUIDBySlug(namespace string, orgID int64, user *models.SignedInUser) (string, error) {
+func (st DBstore) GetNamespaceUIDBySlug(namespace string, orgID int64, user *models.SignedInUser, withAdmin bool) (string, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
 	folder, err := s.GetFolderBySlug(namespace)
 	if err != nil {
 		return "", err
 	}
+
+	if withAdmin {
+		g := guardian.New(folder.Id, orgID, user)
+		if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
+			return "", ErrCannotAdminNamespace
+		}
+	}
+
 	return folder.Uid, nil
 }
 
@@ -391,9 +411,22 @@ func (st DBstore) ValidateAlertRule(alertRule ngmodels.AlertRule, requireData bo
 func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		ruleGroup := cmd.RuleGroupConfig.Name
+		namespaceUID, err := st.GetNamespaceUIDBySlug(cmd.Namespace, cmd.OrgID, cmd.RequestedBy, true)
+		if err != nil {
+			if errors.Is(err, models.ErrFolderNotFound) {
+				folder, err := st.createNamespace(cmd)
+				if err != nil {
+					return err
+				}
+				namespaceUID = (*folder).Uid
+			} else {
+				return fmt.Errorf("failed to retrieve namespace %s, err: %w", cmd.Namespace, err)
+			}
+		}
+
 		q := &ngmodels.ListRuleGroupAlertRulesQuery{
 			OrgID:        cmd.OrgID,
-			NamespaceUID: cmd.NamespaceUID,
+			NamespaceUID: namespaceUID,
 			RuleGroup:    ruleGroup,
 		}
 		if err := st.GetRuleGroupAlertRules(q); err != nil {
@@ -420,7 +453,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 					Data:            r.GrafanaManagedAlert.Data,
 					UID:             r.GrafanaManagedAlert.UID,
 					IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
-					NamespaceUID:    cmd.NamespaceUID,
+					NamespaceUID:    namespaceUID,
 					RuleGroup:       ruleGroup,
 					NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
 					ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
@@ -447,4 +480,78 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 		}
 		return nil
 	})
+}
+
+func (st DBstore) createNamespace(cmd UpdateRuleGroupCmd) (*models.Folder, error) {
+	folderService := dashboards.NewFolderService(cmd.OrgID, cmd.RequestedBy, st.SQLStore)
+	// do not provide UID
+	folder, err := folderService.CreateFolder(cmd.Namespace, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create namespace %s, err: %w", cmd.Namespace, err)
+	}
+
+	if st.SQLStore.Cfg.EditorsCanAdmin {
+		if err := folderService.MakeUserAdmin(cmd.OrgID, cmd.RequestedBy.UserId, folder.Id, true); err != nil {
+			// probably fine to ignore
+			return nil, fmt.Errorf("could not make user: %s admin to folder: %s, err: %w", cmd.RequestedBy.Name, folder.Title, err)
+		}
+	}
+
+	if err := st.updateNamespaceACLs(folder, cmd); err != nil {
+		return nil, fmt.Errorf("could not update folder: %s permissions, err: %w", folder.Title, err)
+	}
+	return folder, nil
+}
+
+func (st DBstore) updateNamespaceACLs(folder *models.Folder, cmd UpdateRuleGroupCmd) error {
+	if len(cmd.NamespaceACLs) == 0 {
+		return nil
+	}
+
+	// based on UpdateFolderPermissions() implementation
+	if err := api.ValidatePermissionsUpdate(dtos.UpdateDashboardAclCommand{
+		Items: cmd.NamespaceACLs,
+	}); err != nil {
+		return err
+	}
+
+	g := guardian.New(folder.Id, cmd.OrgID, cmd.RequestedBy)
+	canAdmin, err := g.CanAdmin()
+	if err != nil {
+		return err
+	}
+
+	if !canAdmin {
+		return ErrCannotAdminNamespace
+	}
+
+	var items []*models.DashboardAcl
+	for _, item := range cmd.NamespaceACLs {
+		items = append(items, &models.DashboardAcl{
+			OrgID:       cmd.OrgID,
+			DashboardID: folder.Id,
+			UserID:      item.UserID,
+			TeamID:      item.TeamID,
+			Role:        item.Role,
+			Permission:  item.Permission,
+			Created:     time.Now(),
+			Updated:     time.Now(),
+		})
+	}
+
+	hiddenACL, err := g.GetHiddenACL(st.SQLStore.Cfg)
+	if err != nil {
+		return fmt.Errorf("failed retrieving hidden permissions, err: %w", err)
+	}
+	items = append(items, hiddenACL...)
+
+	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
+		return fmt.Errorf("failed to check permissions, err %w", err)
+	}
+
+	if err := st.SQLStore.UpdateDashboardACL(folder.Id, items); err != nil {
+		return fmt.Errorf("failed to set permissions, err %w", err)
+	}
+
+	return nil
 }

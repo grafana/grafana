@@ -57,7 +57,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 }
 
 func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) response.Response {
-	if err := validatePermissionsUpdate(apiCmd); err != nil {
+	if err := ValidatePermissionsUpdate(apiCmd); err != nil {
 		return response.Error(400, err.Error(), err)
 	}
 

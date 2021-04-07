@@ -24,7 +24,7 @@ type RulerSrv struct {
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
 	namespace := c.Params(":Namespace")
-	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser)
+	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
 	}
@@ -36,7 +36,7 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 
 func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Response {
 	namespace := c.Params(":Namespace")
-	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser)
+	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
 	}
@@ -49,7 +49,7 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
 	namespace := c.Params(":Namespace")
-	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser)
+	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
 	}
@@ -90,7 +90,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 
 func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Response {
 	namespace := c.Params(":Namespace")
-	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser)
+	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
 	}
@@ -176,10 +176,6 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig) response.Response {
 	namespace := c.Params(":Namespace")
-	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
-	}
 
 	// TODO check permissions
 	// TODO check quota
@@ -187,7 +183,8 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,
-		NamespaceUID:    namespaceUID,
+		Namespace:       namespace,
+		RequestedBy:     c.SignedInUser,
 		RuleGroupConfig: ruleGroupConfig,
 	}); err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
