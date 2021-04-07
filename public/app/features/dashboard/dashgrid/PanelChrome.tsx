@@ -312,7 +312,7 @@ export class PanelChrome extends Component<Props, State> {
     );
 
     return (
-      <div style={contentStyles}>
+      <div className="panel-content" style={contentStyles}>
         {plugin.scrollableY ? <CustomScrollbar autoHeightMin="100%">{panelContent}</CustomScrollbar> : panelContent}
       </div>
     );
