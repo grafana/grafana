@@ -21,7 +21,6 @@ import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
   datasource: DataSourceApi;
-  $timeout: any;
   contextSrv: ContextSrv;
   datasourceSrv: any;
   timeSrv: any;
@@ -89,9 +88,9 @@ class MetricsPanelCtrl extends PanelCtrl {
 
       // Defer panel rendering till the next digest cycle.
       // For some reason snapshot panels don't init at this time, so this helps to avoid rendering issues.
-      return this.$timeout(() => {
+      return setTimeout(() => {
         this.events.emit(PanelEvents.dataSnapshotLoad, data);
-      });
+      }, 100);
     }
 
     // clear loading/error state
