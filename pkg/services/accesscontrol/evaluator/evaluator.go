@@ -31,11 +31,6 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 	for _, s := range scope {
 		var match bool
 		for dbScope := range dbScopes {
-			// If there is no scope requires, allow by default
-			if len(dbScope) == 0 {
-				match = true
-				break
-			}
 			rule, err := glob.Compile(dbScope, ':', '/')
 			if err != nil {
 				return false, err
