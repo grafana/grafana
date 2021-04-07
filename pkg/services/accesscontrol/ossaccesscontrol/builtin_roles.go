@@ -29,6 +29,14 @@ var PredefinedRoles = map[string]accesscontrol.RoleDTO{
 		Version: 1,
 		Permissions: []accesscontrol.Permission{
 			{
+				Permission: accesscontrol.ActionUsersRead,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
+				Permission: accesscontrol.ActionUsersTeamRead,
+				Scope:      accesscontrol.ScopeUsersAll,
+			},
+			{
 				Permission: accesscontrol.ActionUsersAuthTokenList,
 				Scope:      accesscontrol.ScopeUsersAll,
 			},
@@ -52,7 +60,10 @@ var PredefinedRoles = map[string]accesscontrol.RoleDTO{
 			},
 			{
 				Permission: accesscontrol.ActionUsersCreate,
-				Scope:      "",
+			},
+			{
+				Permission: accesscontrol.ActionUsersWrite,
+				Scope:      accesscontrol.ScopeUsersAll,
 			},
 			{
 				Permission: accesscontrol.ActionUsersDelete,
