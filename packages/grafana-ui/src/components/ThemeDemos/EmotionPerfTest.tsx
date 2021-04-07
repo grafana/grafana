@@ -6,6 +6,7 @@ import { css, cx } from '@emotion/css';
 import { useStyles, useTheme } from '../../themes';
 import { Button } from '../Button';
 import { VerticalGroup } from '../Layout/Layout';
+import classnames from 'classnames';
 
 export function EmotionPerfTest() {
   console.log('process.env.NODE_ENV', process.env.NODE_ENV);
@@ -19,6 +20,7 @@ export function EmotionPerfTest() {
       <TestScenario name="useStyles with conditional cx styles" Component={UseStylesWithConditionalCX} />
       <TestScenario name="useStyles with css prop" Component={UseStylesWithCSSProp} />
       <TestScenario name="useStyles with conditional css prop" Component={UseStylesWithConditionalCSS} />
+      <TestScenario name="useStyles with conditional classnames" Component={UseStylesWithConditionalClassNames} />
     </VerticalGroup>
   );
 }
@@ -62,6 +64,17 @@ function UseStylesNoCX({ index }: TestComponentProps) {
 function UseStylesWithConditionalCX({ index }: TestComponentProps) {
   const styles = useStyles(getStyles);
   const mainStyles = cx(styles.main, { [styles.large]: index > 10, [styles.disabed]: index % 10 === 0 });
+
+  return (
+    <div className={mainStyles}>
+      <div className={styles.child}>{index}</div>
+    </div>
+  );
+}
+
+function UseStylesWithConditionalClassNames({ index }: TestComponentProps) {
+  const styles = useStyles(getStyles);
+  const mainStyles = classnames(styles.main, { [styles.large]: index > 10, [styles.disabed]: index % 10 === 0 });
 
   return (
     <div className={mainStyles}>
