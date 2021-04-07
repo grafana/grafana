@@ -181,11 +181,9 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 
 	body := make(map[string]string)
 	for _, contentType := range ns.Cfg.Smtp.ContentTypes {
-		var buffer bytes.Buffer
-		var err error
-
 		fileExtension := util.GetFileExtensionByContentType(contentType)
-		err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
+		var buffer bytes.Buffer
+		err := mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
 		if err != nil {
 			return nil, err
 		}
