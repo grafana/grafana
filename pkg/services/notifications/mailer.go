@@ -181,7 +181,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 
 	body := make(map[string]string)
 	for _, contentType := range ns.Cfg.Smtp.ContentTypes {
-		fileExtension := util.GetFileExtensionByContentType(contentType)
+		fileExtension := getFileExtensionByContentType(contentType)
 		var buffer bytes.Buffer
 		err := mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
 		if err != nil {
@@ -242,4 +242,15 @@ func buildAttachedFiles(
 	}
 
 	return result
+}
+
+func getFileExtensionByContentType(contentType string) string {
+	switch contentType {
+		"text/html":
+			return ".html"
+		"text/plain": 
+			return ".txt"
+		default:
+			panic(fmt.Sprintf("Unrecognized content type %q", contentType))
+	}
 }
