@@ -52,6 +52,8 @@ type AlertRule struct {
 	RuleGroup       string
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
+	//For             model.Duration
+	//Annotations     map[string]string
 }
 
 // AlertRuleKey is the alert definition identifier
