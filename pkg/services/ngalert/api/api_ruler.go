@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -189,6 +190,9 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		NamespaceUID:    namespaceUID,
 		RuleGroupConfig: ruleGroupConfig,
 	}); err != nil {
+		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+			return response.Error(http.StatusBadRequest, "failed to update rule group", err)
+		}
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
 	}
 
