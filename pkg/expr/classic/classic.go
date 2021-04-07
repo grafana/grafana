@@ -26,7 +26,7 @@ type ClassicConditionJSON struct {
 	} `json:"operator"`
 
 	Query struct {
-		Params []string
+		Params []string `json:"params"`
 	} `json:"query"`
 
 	Reducer struct {
