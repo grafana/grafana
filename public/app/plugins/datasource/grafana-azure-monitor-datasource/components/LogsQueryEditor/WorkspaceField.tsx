@@ -21,13 +21,14 @@ const WorkspaceField: React.FC<AzureQueryEditorFieldProps> = ({
       workspaces.length > 0 && setWorkspaces([]);
     }
 
+    console.log('getAzureLogAnalyticsWorkspaces');
     datasource
       .getAzureLogAnalyticsWorkspaces(subscriptionId)
       .then((results) => {
         setWorkspaces(results.map(toOption));
       })
       .catch((err) => setError(ERROR_SOURCE, err));
-  }, [subscriptionId]);
+  }, [datasource, setError, subscriptionId, workspaces.length]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -43,7 +44,7 @@ const WorkspaceField: React.FC<AzureQueryEditorFieldProps> = ({
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...workspaces, variableOptionGroup], [workspaces, variableOptionGroup]);
