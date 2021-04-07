@@ -51,6 +51,9 @@ export class AnnotationsSrv {
     this.globalAnnotationsPromise = null;
     this.alertStatesPromise = null;
     this.datasourcePromises = null;
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
 
   async getAnnotations(options: AnnotationQueryOptions) {
