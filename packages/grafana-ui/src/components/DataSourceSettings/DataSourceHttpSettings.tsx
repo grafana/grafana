@@ -148,19 +148,34 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             </>
           )}
           {dataSourceConfig.access === 'proxy' && (
-            <div className="gf-form">
-              <InlineFormLabel
-                width={11}
-                tooltip="Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
-              >
-                Whitelisted Cookies
-              </InlineFormLabel>
-              <TagsInput
-                tags={dataSourceConfig.jsonData.keepCookies}
-                onChange={(cookies) =>
-                  onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
-                }
-              />
+            <div className="gf-form-group">
+              <div className="gf-form">
+                <InlineFormLabel
+                  width={11}
+                  tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
+                >
+                  Whitelisted Cookies
+                </InlineFormLabel>
+                <TagsInput
+                  tags={dataSourceConfig.jsonData.keepCookies}
+                  onChange={(cookies) =>
+                    onSettingsChange({ jsonData: { ...dataSourceConfig.jsonData, keepCookies: cookies } })
+                  }
+                />
+              </div>
+              <div className="gf-form">
+                <FormField
+                  label="Timeout"
+                  labelWidth={11}
+                  tooltip="HTTP request timeout in seconds"
+                  value={dataSourceConfig.jsonData.timeout}
+                  onChange={(event) => {
+                    onSettingsChange({
+                      jsonData: { ...dataSourceConfig.jsonData, timeout: event.currentTarget.value },
+                    });
+                  }}
+                />
+              </div>
             </div>
           )}
         </div>
