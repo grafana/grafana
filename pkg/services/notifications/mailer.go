@@ -245,11 +245,11 @@ func buildAttachedFiles(
 
 func getFileExtensionByContentType(contentType string) string {
 	switch contentType {
-		case "text/html":
-			return ".html"
-		case"text/plain":
-			return ".txt"
-		default:
-			panic(fmt.Sprintf("Unrecognized content type %q", contentType))
+	case "text/html":
+		return ".html"
+	case "text/plain":
+		return ".txt"
+	default:
+		panic(fmt.Sprintf("Unrecognized content type %q", contentType))
 	}
 }
