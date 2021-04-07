@@ -162,9 +162,6 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			preInterpolatedQuery := rawSQL
 
 			// global substitutions
-			fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< From ", timeRange.From)
-			fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< To ", timeRange.To)
-			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> rawSQL ", rawSQL)
 			rawSQL, err := Interpolate(query, timeRange, rawSQL)
 			if err != nil {
 				queryResult.Error = err
@@ -312,7 +309,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 	minInterval, err := interval.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 	if err != nil {
-		return sql, nil
+		return sql, err
 	}
 	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
 

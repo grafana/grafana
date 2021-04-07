@@ -963,6 +963,7 @@ func TestMSSQL(t *testing.T) {
 			query := plugins.DataQuery{
 				Queries: []plugins.DataSubQuery{
 					{
+						DataSource: &models.DataSource{},
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": "SELECT time_sec as time, description as [text], tags FROM [event] WHERE $__unixEpochFilter(time_sec) AND tags='deploy' ORDER BY 1 ASC",
 							"format": "table",
@@ -977,8 +978,8 @@ func TestMSSQL(t *testing.T) {
 			}
 
 			resp, err := endpoint.DataQuery(context.Background(), nil, query)
-			queryResult := resp.Results["Deploys"]
 			require.NoError(t, err)
+			queryResult := resp.Results["Deploys"]
 			frames, err := queryResult.Dataframes.Decoded()
 			require.NoError(t, err)
 			require.Equal(t, 1, len(frames))
@@ -1073,7 +1074,7 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 
 			// Should be in time.Time
-			// require.Equal(t, dt.Unix()*1000, columns[0].(int64))
+			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
 		})
 
 		t.Run("When doing an annotation query with a time column in epoch second format (int) should return ms", func(t *testing.T) {
@@ -1105,7 +1106,7 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 
 			// Should be in time.Time
-			// require.Equal(t, dt.Unix()*1000, columns[0].(int64))
+			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
 		})
 
 		t.Run("When doing an annotation query with a time column in epoch millisecond format should return ms", func(t *testing.T) {
@@ -1137,7 +1138,7 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 
 			// Should be in time.Time
-			// require.Equal(t, float64(dt.Unix()*1000), columns[0].(float64))
+			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
 		})
 
 		t.Run("When doing an annotation query with a time column holding a bigint null value should return nil", func(t *testing.T) {
@@ -1167,7 +1168,7 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 
 			// Should be in time.Time
-			// So(columns[0], ShouldBeNil)
+			require.Nil(t, frames[0].Fields[0].At(0))
 		})
 
 		t.Run("When doing an annotation query with a time column holding a datetime null value should return nil", func(t *testing.T) {
@@ -1197,7 +1198,7 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 
 			// Should be in time.Time
-			// So(columns[0], ShouldBeNil)
+			require.Nil(t, frames[0].Fields[0].At(0))
 		})
 	})
 }
