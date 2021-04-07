@@ -160,17 +160,21 @@ func TestDashboardFileReader(t *testing.T) {
 				So(err, ShouldBeNil)
 				file, err := os.Open(filepath.Clean(absPath))
 				So(err, ShouldBeNil)
-				defer func() {
-					err := file.Close()
-					So(err, ShouldBeNil)
-				}()
+				t.Cleanup(func() {
+					_ = file.Close()
+				})
 
 				checksum, err := util.Md5Sum(file)
 				So(err, ShouldBeNil)
 
 				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 					"Default": {
-						{Name: "Default", ExternalId: absPath, Updated: stat.ModTime().AddDate(0, 0, +1).Unix(), CheckSum: checksum},
+						{
+							Name:       "Default",
+							ExternalId: absPath,
+							Updated:    stat.ModTime().AddDate(0, 0, +1).Unix(),
+							CheckSum:   checksum,
+						},
 					},
 				}
 
@@ -191,7 +195,12 @@ func TestDashboardFileReader(t *testing.T) {
 
 				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 					"Default": {
-						{Name: "Default", ExternalId: absPath, Updated: stat.ModTime().AddDate(0, 0, +1).Unix(), CheckSum: "fakechecksum"},
+						{
+							Name:       "Default",
+							ExternalId: absPath,
+							Updated:    stat.ModTime().AddDate(0, 0, +1).Unix(),
+							CheckSum:   "fakechecksum",
+						},
 					},
 				}
 
@@ -211,17 +220,21 @@ func TestDashboardFileReader(t *testing.T) {
 				So(err, ShouldBeNil)
 				file, err := os.Open(filepath.Clean(absPath))
 				So(err, ShouldBeNil)
-				defer func() {
-					err := file.Close()
-					So(err, ShouldBeNil)
-				}()
+				t.Cleanup(func() {
+					_ = file.Close()
+				})
 
 				checksum, err := util.Md5Sum(file)
 				So(err, ShouldBeNil)
 
 				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 					"Default": {
-						{Name: "Default", ExternalId: absPath, Updated: stat.ModTime().AddDate(0, 0, -1).Unix(), CheckSum: checksum},
+						{
+							Name:       "Default",
+							ExternalId: absPath,
+							Updated:    stat.ModTime().AddDate(0, 0, -1).Unix(),
+							CheckSum:   checksum,
+						},
 					},
 				}
 
@@ -233,7 +246,7 @@ func TestDashboardFileReader(t *testing.T) {
 				So(len(fakeService.inserted), ShouldEqual, 0)
 			})
 
-			Convey("Dashboard with newer timestamp and different checksum not replace imported dashboard", func() {
+			Convey("Dashboard with newer timestamp and different checksum should replace imported dashboard", func() {
 				cfg.Options["path"] = oneDashboard
 				absPath, err := filepath.Abs(oneDashboard + "/dashboard1.json")
 				So(err, ShouldBeNil)
@@ -242,7 +255,12 @@ func TestDashboardFileReader(t *testing.T) {
 
 				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 					"Default": {
-						{Name: "Default", ExternalId: absPath, Updated: stat.ModTime().AddDate(0, 0, -1).Unix(), CheckSum: "fakechecksum"},
+						{
+							Name:       "Default",
+							ExternalId: absPath,
+							Updated:    stat.ModTime().AddDate(0, 0, -1).Unix(),
+							CheckSum:   "fakechecksum",
+						},
 					},
 				}
 
