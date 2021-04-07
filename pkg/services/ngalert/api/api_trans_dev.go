@@ -167,10 +167,10 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 
 	isGeneralFolder := oldAlertsDash.FolderId == 0 && !oldAlertsDash.IsFolder
 
-	var namespaceUID string
+	var namespace string
 
 	if isGeneralFolder {
-		namespaceUID = "General"
+		namespace = "General"
 	} else {
 		// Get the folder that contains the dashboard that contains the dashboard alert.
 		getFolder := &models.GetDashboardQuery{
@@ -181,7 +181,7 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 			return response.Error(400, fmt.Sprintf("could find folder %v for alert with id %v", getFolder.Id, id), err)
 		}
 
-		namespaceUID = getFolder.Result.Uid
+		namespace = getFolder.Result.Slug
 	}
 
 	noDataSetting, execErrSetting, err := transNoDataExecSettings(oldAlert, *c.SignedInUser)
@@ -223,7 +223,7 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 
 	cmd := store.UpdateRuleGroupCmd{
 		OrgID:           oldAlert.OrgId,
-		NamespaceUID:    namespaceUID,
+		Namespace:       namespace,
 		RuleGroupConfig: rgc,
 	}
 
