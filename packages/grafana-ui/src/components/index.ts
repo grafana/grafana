@@ -226,3 +226,4 @@ export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConf
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';
+export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';

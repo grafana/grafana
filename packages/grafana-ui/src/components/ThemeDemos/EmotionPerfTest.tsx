@@ -1,17 +1,25 @@
-import React, { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
+/** @jsxImportSource @emotion/react */
+
+import { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
 import { GrafanaTheme } from '@grafana/data';
-import { css, CSSObject, cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useStyles, useTheme } from '../../themes';
 import { Button } from '../Button';
+import { VerticalGroup } from '../Layout/Layout';
 
 export function EmotionPerfTest() {
+  console.log('process.env.NODE_ENV', process.env.NODE_ENV);
+
   return (
-    <div>
+    <VerticalGroup>
+      <div>Emotion performance tests</div>
       <TestScenario name="No styles" Component={NoStyles} />
       <TestScenario name="inline emotion/css" Component={InlineEmotionCSS} />
       <TestScenario name="useStyles no cx" Component={UseStylesNoCX} />
       <TestScenario name="useStyles with conditional cx styles" Component={UseStylesWithConditionalCX} />
-    </div>
+      <TestScenario name="useStyles with css prop" Component={UseStylesWithCSSProp} />
+      <TestScenario name="useStyles with conditional css prop" Component={UseStylesWithConditionalCSS} />
+    </VerticalGroup>
   );
 }
 
@@ -32,7 +40,7 @@ function renderManyComponents(Component: FC<TestComponentProps>) {
   const elements: React.ReactNode[] = [];
 
   for (let i = 0; i < 5000; i++) {
-    elements.push(<Component index={i} />);
+    elements.push(<Component index={i} key={i.toString()} />);
   }
 
   return <div style={{ display: 'flex', flexWrap: 'wrap' }}>{elements}</div>;
@@ -58,6 +66,26 @@ function UseStylesWithConditionalCX({ index }: TestComponentProps) {
   return (
     <div className={mainStyles}>
       <div className={styles.child}>{index}</div>
+    </div>
+  );
+}
+
+function UseStylesWithCSSProp({ index }: TestComponentProps) {
+  const styles = useStyles(getStylesObjects);
+
+  return (
+    <div css={styles.main}>
+      <div css={styles.child}>{index}</div>
+    </div>
+  );
+}
+
+function UseStylesWithConditionalCSS({ index }: TestComponentProps) {
+  const styles = useStyles(getStylesObjects);
+  const mainStyles = [styles.main, index > 10 && styles.large, index % 10 === 0 && styles.disabed];
+  return (
+    <div css={mainStyles}>
+      <div css={styles.child}>{index}</div>
     </div>
   );
 }
@@ -115,7 +143,22 @@ const getStyles = (theme: GrafanaTheme) => {
   };
 };
 
-function getStylesObjectMain(theme: GrafanaTheme) {
+const getStylesObjects = (theme: GrafanaTheme) => {
+  return {
+    main: getStylesObjectMain(theme),
+    large: {
+      fontSize: '20px',
+      color: 'red',
+    },
+    disabed: {
+      fontSize: '10px',
+      color: 'gray',
+    },
+    child: getStylesObjectChild(theme),
+  };
+};
+
+function getStylesObjectMain(theme: GrafanaTheme): any {
   return {
     background: 'blue',
     border: '1px solid red',
@@ -128,7 +171,7 @@ function getStylesObjectMain(theme: GrafanaTheme) {
   };
 }
 
-function getStylesObjectChild(theme: GrafanaTheme): CSSObject {
+function getStylesObjectChild(theme: GrafanaTheme): any {
   return {
     padding: '2px',
     fontSize: '10px',

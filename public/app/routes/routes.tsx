@@ -421,6 +421,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "PlaylistEditPage"*/ 'app/features/playlist/PlaylistEditPage')
       ),
     },
+    {
+      path: '/sandbox/benchmarks',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "BenchmarksPage"*/ 'app/features/sandbox/BenchmarksPage')
+      ),
+    },
     ...extraRoutes,
     {
       path: '/*',
