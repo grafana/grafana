@@ -66,6 +66,13 @@ describe('GroupListener', () => {
         query: `filter responseCode="SERVFAIL" | stats count(*) by queryName.0.1 as f0, bin(5m)`,
         expected: ['f0', 'bin(5m)'],
       },
+      {
+        query: `fields @timestamp, @message
+      | filter @message like /dial tcp /
+      | parse log /dial tcp (?<ip>[\d\.]+)\:(?<port>\d+)\: (?<reason>[^\\\"]+)/
+      | stats count() by bin($__interval), reason`,
+        expected: ['bin($__interval)', 'reason'],
+      },
     ];
 
     for (const { query, expected } of testQueries) {

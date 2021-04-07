@@ -5,7 +5,7 @@ const byRE = /\s+by\s+/im;
  * group 1 is the field, group 2 is " as " and group 3 is the alias
  * this regex will not advance past any non-identifier or whitespace characters, e.g. |
  */
-const groupsRE = /([\w@().]+)(?:(\s+as\s+)(\w+))?\s*,?\s*/iy;
+const groupsRE = /([\w$@().]+)(?:(\s+as\s+)([\w$]+))?\s*,?\s*/iy;
 
 export function getStatsGroups(query: string): string[] {
   let groups = [];
