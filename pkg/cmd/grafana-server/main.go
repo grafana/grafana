@@ -226,6 +226,7 @@ func listenToSystemSignals(s *server.Server) {
 			}
 		case sig := <-signalChan:
 			s.Shutdown(fmt.Sprintf("System signal: %s", sig))
+			return
 		}
 	}
 }
