@@ -22,6 +22,19 @@ export interface ThemeTypography {
   h4: ThemeTypographyVariant;
   h5: ThemeTypographyVariant;
   h6: ThemeTypographyVariant;
+
+  body: ThemeTypographyVariant;
+
+  /** from legacy old theme */
+  size: {
+    base: string;
+    xs: string;
+    sm: string;
+    md: string;
+    lg: string;
+  };
+
+  pxToRem: (px: number) => string;
 }
 
 export interface ThemeTypographyVariant {
@@ -48,7 +61,7 @@ export interface ThemeTypographyInput {
 const defaultFontFamily = '"Roboto", "Helvetica", "Arial", sans-serif';
 const defaultFontFamilyMonospace = "Menlo, Monaco, Consolas, 'Courier New', monospace";
 
-export function createTypography(palette: ThemePalette, typographyInput: ThemeTypographyInput = {}) {
+export function createTypography(palette: ThemePalette, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
   const {
     fontFamily = defaultFontFamily,
     fontFamilyMonospace = defaultFontFamilyMonospace,
@@ -94,12 +107,21 @@ export function createTypography(palette: ThemePalette, typographyInput: ThemeTy
   });
 
   const variants = {
-    h1: buildVariant(fontWeightLight, 96, 1.167, -1.5),
-    h2: buildVariant(fontWeightLight, 60, 1.2, -0.5),
-    h3: buildVariant(fontWeightRegular, 48, 1.167, 0),
-    h4: buildVariant(fontWeightRegular, 34, 1.235, 0.25),
-    h5: buildVariant(fontWeightRegular, 24, 1.334, 0),
-    h6: buildVariant(fontWeightMedium, 20, 1.6, 0.15),
+    h1: buildVariant(fontWeightLight, 28, 1.167, -1.5),
+    h2: buildVariant(fontWeightLight, 24, 1.2, -0.5),
+    h3: buildVariant(fontWeightRegular, 21, 1.167, 0),
+    h4: buildVariant(fontWeightRegular, 18, 1.235, 0.25),
+    h5: buildVariant(fontWeightRegular, 16, 1.334, 0),
+    h6: buildVariant(fontWeightMedium, 14, 1.6, 0.15),
+    body: buildVariant(fontWeightRegular, 14, 1.5, 0.15),
+  };
+
+  const size = {
+    base: '14px',
+    xs: '10px',
+    sm: '12px',
+    md: '14px',
+    lg: '18px',
   };
 
   return {
@@ -112,6 +134,7 @@ export function createTypography(palette: ThemePalette, typographyInput: ThemeTy
     fontWeightRegular,
     fontWeightMedium,
     fontWeightBold,
+    size,
     ...variants,
   };
 }

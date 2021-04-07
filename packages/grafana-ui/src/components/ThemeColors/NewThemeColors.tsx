@@ -74,13 +74,13 @@ export const NewThemeColors = () => {
         color: ${t.palette.text.primary};
       `}
     >
-      <DemoBox bg={t.palette.background.layer0}>
+      <DemoBox bg={t.palette.layer0}>
         <CollapsableSection label="Layers" isOpen={true}>
-          <DemoText>t.palette.background.layer0</DemoText>
-          <DemoBox bg={t.palette.background.layer1} border={t.palette.border.layer0}>
-            <DemoText>t.palette.background.layer1 is the main & preferred content background.</DemoText>
-            <DemoBox bg={t.palette.background.layer2} border={t.palette.border.layer1}>
-              <DemoText>t.palette.background.layer2 and t.palette.border.layer1</DemoText>
+          <DemoText>t.palette.layer0</DemoText>
+          <DemoBox bg={t.palette.layer1} border={t.palette.border0}>
+            <DemoText>t.palette.layer1 is the main & preferred content </DemoText>
+            <DemoBox bg={t.palette.layer2} border={t.palette.border0}>
+              <DemoText>t.palette.layer2 and t.palette.border.layer1</DemoText>
             </DemoBox>
           </DemoBox>
         </CollapsableSection>
@@ -89,16 +89,16 @@ export const NewThemeColors = () => {
             <DemoBox>
               <TextColors t={t} />
             </DemoBox>
-            <DemoBox bg={t.palette.background.layer1}>
+            <DemoBox bg={t.palette.layer1}>
               <TextColors t={t} />
             </DemoBox>
-            <DemoBox bg={t.palette.background.layer2}>
+            <DemoBox bg={t.palette.layer2}>
               <TextColors t={t} />
             </DemoBox>
           </HorizontalGroup>
         </CollapsableSection>
         <CollapsableSection label="Rich colors" isOpen={true}>
-          <DemoBox bg={t.palette.background.layer1}>
+          <DemoBox bg={t.palette.layer1}>
             <table className={colorsTableStyle}>
               <thead>
                 <tr>
@@ -116,7 +116,7 @@ export const NewThemeColors = () => {
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Forms" isOpen={true}>
-          <DemoBox bg={t.palette.background.layer1}>
+          <DemoBox bg={t.palette.layer1}>
             <Field label="Input label" description="Field description">
               <Input placeholder="Placeholder" />
             </Field>
@@ -140,7 +140,7 @@ export const NewThemeColors = () => {
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Shadows" isOpen={true}>
-          <DemoBox bg={t.palette.background.layer1}>
+          <DemoBox bg={t.palette.layer1}>
             <HorizontalGroup>
               <ShadowDemo name="level1" shadow={t.shadows.level1} />
               <ShadowDemo name="level2" shadow={t.shadows.level2} />
@@ -149,7 +149,7 @@ export const NewThemeColors = () => {
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Buttons" isOpen={true}>
-          <DemoBox bg={t.palette.background.layer1}>
+          <DemoBox bg={t.palette.layer1}>
             <HorizontalGroup>
               {variants.map((variant) => (
                 <Button variant={variant} key={variant}>

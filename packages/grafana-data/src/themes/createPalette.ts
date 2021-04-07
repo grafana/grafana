@@ -15,24 +15,21 @@ export interface ThemePaletteBase<TColor> {
   warning: TColor;
 
   text: {
-    strong: string;
     primary: string;
     secondary: string;
     disabled: string;
     link: string;
+    /** Used for auto white or dark text on colored backgrounds */
+    maxContrast: string;
   };
 
-  background: {
-    layer0: string;
-    layer1: string;
-    layer2: string;
-  };
+  layer0: string;
+  layer1: string;
+  layer2: string;
 
-  border: {
-    layer0: string;
-    layer1: string;
-    layer2: string;
-  };
+  border0: string;
+  border1: string;
+  border2: string;
 
   formComponent: {
     background: string;
@@ -60,11 +57,11 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'dark';
 
   text = {
-    strong: colors.white,
     primary: 'rgba(255, 255, 255, 0.75)',
     secondary: 'rgba(255, 255, 255, 0.50)',
     disabled: 'rgba(255, 255, 255, 0.3)',
     link: colors.blueDark2,
+    maxContrast: colors.white,
   };
 
   primary = {
@@ -96,21 +93,17 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     main: colors.orange,
   };
 
-  background = {
-    layer0: colors.gray05,
-    layer1: colors.gray10,
-    layer2: colors.gray15,
-  };
+  layer0 = colors.gray05;
+  layer1 = colors.gray10;
+  layer2 = colors.gray15;
 
-  border = {
-    layer0: colors.gray15,
-    layer1: colors.gray25,
-    layer2: colors.gray33,
-  };
+  border0 = colors.gray15;
+  border1 = colors.gray25;
+  border2 = colors.gray33;
 
   formComponent = {
-    background: this.background.layer0,
-    border: this.border.layer1,
+    background: this.layer0,
+    border: this.border1,
     text: this.text.primary,
     disabledText: this.text.disabled,
     disabledBackground: colors.gray10,
@@ -155,28 +148,24 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   text = {
-    strong: colors.black,
     primary: 'rgba(0, 0, 0, 0.87)',
     secondary: 'rgba(0, 0, 0, 0.54)',
     disabled: 'rgba(0, 0, 0, 0.38)',
     link: this.primary.text,
+    maxContrast: colors.black,
   };
 
-  background = {
-    layer0: colors.gray98,
-    layer1: colors.white,
-    layer2: colors.gray97,
-  };
+  layer0 = colors.gray98;
+  layer1 = colors.white;
+  layer2 = colors.gray97;
 
-  border = {
-    layer0: colors.gray90,
-    layer1: colors.gray85,
-    layer2: colors.gray70,
-  };
+  border0 = colors.gray90;
+  border1 = colors.gray85;
+  border2 = colors.gray70;
 
   formComponent = {
-    background: this.background.layer1,
-    border: this.border.layer1,
+    background: this.layer1,
+    border: this.border2,
     text: this.text.primary,
     disabledBackground: colors.gray95,
     disabledText: this.text.disabled,
@@ -206,7 +195,9 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
 
   function getContrastText(background: string) {
     const contrastText =
-      getContrastRatio(background, dark.text.primary) >= contrastThreshold ? dark.text.strong : light.text.strong;
+      getContrastRatio(background, dark.text.primary) >= contrastThreshold
+        ? dark.text.maxContrast
+        : light.text.maxContrast;
     // todo, need color framework
     return contrastText;
   }
