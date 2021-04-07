@@ -818,7 +818,8 @@ func TestPostgres(t *testing.T) {
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
 
-			frames, _ := queryResult.Dataframes.Decoded()
+			frames, err := queryResult.Dataframes.Decoded()
+			require.NoError(t, err)
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 5, len(frames[0].Fields))
 			require.Equal(t, "valueOne", frames[0].Fields[1].Name)

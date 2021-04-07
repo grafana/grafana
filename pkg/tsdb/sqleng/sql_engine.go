@@ -162,6 +162,9 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			preInterpolatedQuery := rawSQL
 
 			// global substitutions
+			fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< From ", timeRange.From)
+			fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< To ", timeRange.To)
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> rawSQL ", rawSQL)
 			rawSQL, err := Interpolate(query, timeRange, rawSQL)
 			if err != nil {
 				queryResult.Error = err
