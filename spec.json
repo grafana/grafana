@@ -26,6 +26,7 @@
         "parameters": [
           {
             "type": "boolean",
+            "default": true,
             "x-go-name": "Active",
             "description": "Show active alerts",
             "name": "active",
@@ -33,6 +34,7 @@
           },
           {
             "type": "boolean",
+            "default": true,
             "x-go-name": "Silenced",
             "description": "Show silenced alerts",
             "name": "silenced",
@@ -40,6 +42,7 @@
           },
           {
             "type": "boolean",
+            "default": true,
             "x-go-name": "Inhibited",
             "description": "Show inhibited alerts",
             "name": "inhibited",
@@ -52,17 +55,14 @@
             },
             "x-go-name": "Matchers",
             "description": "A list of matchers to filter alerts by",
-            "name": "matchers",
+            "name": "filter",
             "in": "query"
           },
           {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
+            "type": "string",
             "x-go-name": "Receivers",
-            "description": "A list of receivers to filter alerts by",
-            "name": "receivers",
+            "description": "A regex matching receivers to filter alerts by",
+            "name": "receiver",
             "in": "query"
           },
           {
@@ -139,6 +139,7 @@
         "parameters": [
           {
             "type": "boolean",
+            "default": true,
             "x-go-name": "Active",
             "description": "Show active alerts",
             "name": "active",
@@ -146,6 +147,7 @@
           },
           {
             "type": "boolean",
+            "default": true,
             "x-go-name": "Silenced",
             "description": "Show silenced alerts",
             "name": "silenced",
@@ -153,6 +155,7 @@
           },
           {
             "type": "boolean",
+            "default": true,
             "x-go-name": "Inhibited",
             "description": "Show inhibited alerts",
             "name": "inhibited",
@@ -165,17 +168,14 @@
             },
             "x-go-name": "Matchers",
             "description": "A list of matchers to filter alerts by",
-            "name": "matchers",
+            "name": "filter",
             "in": "query"
           },
           {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
+            "type": "string",
             "x-go-name": "Receivers",
-            "description": "A list of receivers to filter alerts by",
-            "name": "receivers",
+            "description": "A regex matching receivers to filter alerts by",
+            "name": "receiver",
             "in": "query"
           },
           {
@@ -289,7 +289,8 @@
             "items": {
               "type": "string"
             },
-            "name": "Filter",
+            "x-go-name": "Filter",
+            "name": "filter",
             "in": "query"
           },
           {
@@ -326,7 +327,7 @@
             "name": "Silence",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/PostableSilence"
+              "$ref": "#/definitions/postableSilence"
             }
           },
           {
@@ -847,8 +848,11 @@
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
+    "AlertGroup": {
+      "$ref": "#/definitions/alertGroup"
+    },
     "AlertGroups": {
-      "$ref": "#/definitions/alertGroups"
+      "$ref": "#/definitions/AlertGroups"
     },
     "AlertInstancesResponse": {
       "type": "object",
@@ -1350,8 +1354,11 @@
     "Failure": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "GettableAlert": {
+      "$ref": "#/definitions/gettableAlert"
+    },
     "GettableAlerts": {
-      "$ref": "#/definitions/gettableAlerts"
+      "$ref": "#/definitions/GettableAlerts"
     },
     "GettableApiAlertingConfig": {
       "type": "object",
@@ -2323,7 +2330,7 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "PostableSilence": {
-      "$ref": "#/definitions/PostableSilence"
+      "$ref": "#/definitions/postableSilence"
     },
     "PostableUserConfig": {
       "type": "object",
@@ -2460,7 +2467,7 @@
           "x-go-name": "WechatConfigs"
         }
       },
-      "x-go-package": "github.com/prometheus/alertmanager/config"
+      "$ref": "#/definitions/receiver"
     },
     "Regexp": {
       "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -2973,8 +2980,9 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -3007,7 +3015,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "github.com/prometheus/common/config"
+      "x-go-package": "net/url"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3183,7 +3191,7 @@
           "description": "alerts",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/gettableAlert"
+            "$ref": "#/definitions/GettableAlert"
           },
           "x-go-name": "Alerts"
         },
@@ -3391,7 +3399,7 @@
       "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/gettableAlert"
+        "$ref": "#/definitions/GettableAlert"
       },
       "x-go-name": "GettableAlerts",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
@@ -3457,7 +3465,7 @@
       "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/GettableSilence"
+        "$ref": "#/definitions/gettableSilence"
       },
       "x-go-name": "GettableSilences",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
