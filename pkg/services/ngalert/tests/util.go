@@ -7,10 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/guardian"
+
+	"github.com/grafana/grafana/pkg/models"
+
 	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -65,12 +69,27 @@ func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
 }
 
 // createTestAlertRule creates a dummy alert definition to be used by the tests.
-func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertRule {
+func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *ngmodels.AlertRule {
+	origNewGuardian := guardian.New
+	t.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanAdminValue: true,
+		CanSaveValue:  true,
+		CanViewValue:  true,
+	})
+
 	d := rand.Intn(1000)
 	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
+	namespace := "namespace"
+	var orgID int64 = 1
+	var userId int64 = 1
+	signedInUser := models.SignedInUser{OrgId: orgID, UserId: userId}
 	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
-		OrgID:        1,
-		NamespaceUID: "namespace",
+		OrgID:       orgID,
+		RequestedBy: &signedInUser,
+		Namespace:   namespace,
 		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
 			Name:     ruleGroup,
 			Interval: model.Duration(time.Duration(intervalSeconds) * time.Second),
@@ -80,16 +99,16 @@ func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 						OrgID:     1,
 						Title:     fmt.Sprintf("an alert definition %d", d),
 						Condition: "A",
-						Data: []models.AlertQuery{
+						Data: []ngmodels.AlertQuery{
 							{
 								Model: json.RawMessage(`{
 										"datasource": "__expr__",
 										"type":"math",
 										"expression":"2 + 2 > 1"
 									}`),
-								RelativeTimeRange: models.RelativeTimeRange{
-									From: models.Duration(5 * time.Hour),
-									To:   models.Duration(3 * time.Hour),
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(5 * time.Hour),
+									To:   ngmodels.Duration(3 * time.Hour),
 								},
 								RefID: "A",
 							},
@@ -101,9 +120,12 @@ func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 	})
 	require.NoError(t, err)
 
-	q := models.ListRuleGroupAlertRulesQuery{
+	namespaceUID, err := dbstore.GetNamespaceUIDBySlug(namespace, orgID, &signedInUser, false)
+	require.NoError(t, err)
+
+	q := ngmodels.ListRuleGroupAlertRulesQuery{
 		OrgID:        1,
-		NamespaceUID: "namespace",
+		NamespaceUID: namespaceUID,
 		RuleGroup:    ruleGroup,
 	}
 	err = dbstore.GetRuleGroupAlertRules(&q)
@@ -116,10 +138,15 @@ func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 }
 
 // updateTestAlertRule update a dummy alert definition to be used by the tests.
-func updateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, existingRule *models.AlertRule, intervalSeconds int64) *models.AlertRule {
+func updateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, existingRule *ngmodels.AlertRule, intervalSeconds int64) *ngmodels.AlertRule {
+	namespace := "namespace"
+	var orgID int64 = 1
+	var userId int64 = 1
+	signedInUser := models.SignedInUser{OrgId: orgID, UserId: userId}
 	cmd := store.UpdateRuleGroupCmd{
-		OrgID:        1,
-		NamespaceUID: "namespace",
+		OrgID:       orgID,
+		RequestedBy: &signedInUser,
+		Namespace:   "namespace",
 		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
 			Name:     existingRule.RuleGroup,
 			Interval: model.Duration(time.Duration(intervalSeconds) * time.Second),
@@ -137,9 +164,12 @@ func updateTestAlertRuleIntervalSeconds(t *testing.T, dbstore *store.DBstore, ex
 	err := dbstore.UpdateRuleGroup(cmd)
 	require.NoError(t, err)
 
-	q := models.ListRuleGroupAlertRulesQuery{
+	namespaceUID, err := dbstore.GetNamespaceUIDBySlug(namespace, orgID, &signedInUser, false)
+	require.NoError(t, err)
+
+	q := ngmodels.ListRuleGroupAlertRulesQuery{
 		OrgID:        1,
-		NamespaceUID: "namespace",
+		NamespaceUID: namespaceUID,
 		RuleGroup:    existingRule.RuleGroup,
 	}
 	err = dbstore.GetRuleGroupAlertRules(&q)

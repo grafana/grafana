@@ -27,9 +27,6 @@ const AlertRuleMaxTitleLength = 190
 // AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
 const AlertRuleMaxRuleGroupNameLength = 190
 
-// ErrCannotAdminNamespace is an error returned if the user does not have permissions to admin the namespace
-var ErrCannotAdminNamespace = errors.New("user does not have permissions to admin the namespace")
-
 type UpdateRuleGroupCmd struct {
 	OrgID       int64
 	RequestedBy *models.SignedInUser
@@ -56,8 +53,7 @@ type RuleStore interface {
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
 	GetNamespaceUIDBySlug(string, int64, *models.SignedInUser, bool) (string, error)
-	GetNamespaceByUID(string, int64, *models.SignedInUser) (string, error)
-	UpsertAlertRules([]UpsertRule) error
+	GetNamespaceByUID(string, int64, *models.SignedInUser, bool) (string, error)
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
 	GetAlertInstance(*ngmodels.GetAlertInstanceQuery) error
 	ListAlertInstances(cmd *ngmodels.ListAlertInstancesQuery) error
@@ -326,7 +322,7 @@ func (st DBstore) GetNamespaceUIDBySlug(namespace string, orgID int64, user *mod
 	if withAdmin {
 		g := guardian.New(folder.Id, orgID, user)
 		if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-			return "", ErrCannotAdminNamespace
+			return "", ngmodels.ErrCannotAdminNamespace
 		}
 	}
 
@@ -334,12 +330,20 @@ func (st DBstore) GetNamespaceUIDBySlug(namespace string, orgID int64, user *mod
 }
 
 // GetNamespaceByUID is a handler for retrieving namespace by its UID.
-func (st DBstore) GetNamespaceByUID(UID string, orgID int64, user *models.SignedInUser) (string, error) {
+func (st DBstore) GetNamespaceByUID(UID string, orgID int64, user *models.SignedInUser, withAdmin bool) (string, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
 	folder, err := s.GetFolderByUID(UID)
 	if err != nil {
 		return "", err
 	}
+
+	if withAdmin {
+		g := guardian.New(folder.Id, orgID, user)
+		if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
+			return "", ngmodels.ErrCannotAdminNamespace
+		}
+	}
+
 	return folder.Title, nil
 }
 
@@ -411,18 +415,29 @@ func (st DBstore) ValidateAlertRule(alertRule ngmodels.AlertRule, requireData bo
 func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		ruleGroup := cmd.RuleGroupConfig.Name
-		namespaceUID, err := st.GetNamespaceUIDBySlug(cmd.Namespace, cmd.OrgID, cmd.RequestedBy, true)
+
+		// check if namespace exists
+		folderSrv := dashboards.NewFolderService(cmd.OrgID, cmd.RequestedBy, st.SQLStore)
+		folder, err := folderSrv.GetFolderBySlug(cmd.Namespace)
 		if err != nil {
 			if errors.Is(err, models.ErrFolderNotFound) {
-				folder, err := st.createNamespace(cmd)
+				// if does not exist, create it
+				folder, err = st.createNamespace(cmd)
 				if err != nil {
 					return err
 				}
-				namespaceUID = (*folder).Uid
 			} else {
 				return fmt.Errorf("failed to retrieve namespace %s, err: %w", cmd.Namespace, err)
 			}
 		}
+
+		// make sure that user can admin the namespace
+		g := guardian.New(folder.Id, cmd.OrgID, cmd.RequestedBy)
+		if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
+			return ngmodels.ErrCannotAdminNamespace
+		}
+
+		namespaceUID := (*folder).Uid
 
 		q := &ngmodels.ListRuleGroupAlertRulesQuery{
 			OrgID:        cmd.OrgID,
@@ -483,6 +498,9 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 }
 
 func (st DBstore) createNamespace(cmd UpdateRuleGroupCmd) (*models.Folder, error) {
+	if cmd.RequestedBy == nil {
+		return nil, fmt.Errorf("invalid command: missing RequestedBy")
+	}
 	folderService := dashboards.NewFolderService(cmd.OrgID, cmd.RequestedBy, st.SQLStore)
 	// do not provide UID
 	folder, err := folderService.CreateFolder(cmd.Namespace, "")
@@ -522,7 +540,7 @@ func (st DBstore) updateNamespaceACLs(folder *models.Folder, cmd UpdateRuleGroup
 	}
 
 	if !canAdmin {
-		return ErrCannotAdminNamespace
+		return ngmodels.ErrCannotAdminNamespace
 	}
 
 	var items []*models.DashboardAcl
