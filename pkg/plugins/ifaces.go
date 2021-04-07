@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -70,3 +71,75 @@ type DataRequestHandler interface {
 	// HandleRequest handles a data request.
 	HandleRequest(context.Context, *models.DataSource, DataQuery) (DataResponse, error)
 }
+
+type PluginFinderV2 interface {
+	// Load loads a plugin and returns it.
+	Find(string) (interface{}, error)
+}
+
+type PluginLoaderV2 interface {
+	// Load loads a plugin and returns it.
+	Load() (interface{}, error)
+}
+
+type PluginInitializerV2 interface {
+	// Load loads a plugin and returns it.
+	Initialize(plugin PluginV2) (interface{}, error)
+}
+
+type PluginManagerV2 interface {
+	PluginFinderV2      // find plugins
+	PluginLoaderV2      // load plugins
+	PluginInitializerV2 // initialize plugins
+
+	Reload() // find, load and initialize dynamically
+
+	// Probably not necessary as loading/initializing will cover this step
+	//Register(pluginID string) error
+	//Unregister(pluginID string) error
+
+	StartPlugin(ctx context.Context, pluginID string) error
+	StopPlugin(ctx context.Context, pluginID string) error
+
+	// Fetch plugin info
+	DataSource(pluginID string)
+	Panel(pluginID string)
+	App(pluginID string)
+	Renderer()
+
+	DataSources()
+	Apps()
+
+	// Plugin error metadata
+	Errors(pluginID string)
+
+	// Fetch plugin data
+	//backend.QueryDataHandler
+	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
+	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
+	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
+	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error)
+	// StreamingHandler
+
+	IsSupported(pluginID string) bool
+	IsEnabled() bool
+
+	Register(PluginV2) error
+
+	// Plugin dashboards
+}
+
+type PluginV2 struct {
+	ID string
+
+	// Would be nice that when we retrieve plugins, we will know their capability
+	// This will also allow any plugin to have different responsibilities
+	backend.QueryDataHandler
+	backend.StreamHandler
+	backend.CallResourceHandler
+	backend.CheckHealthHandler
+}
+
+// refer to ID of backend plugin instead of backend:true and executable
+
+// can maintain a map of what’s been migrated fully

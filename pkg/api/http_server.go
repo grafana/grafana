@@ -97,6 +97,7 @@ type HTTPServer struct {
 	DataService            *tsdb.Service                           `inject:""`
 	PluginDashboardService *plugindashboards.Service               `inject:""`
 	AlertEngine            *alerting.AlertEngine                   `inject:""`
+	PluginManagerV2        plugins.PluginManagerV2                 `inject:""`
 	Listener               net.Listener
 }
 

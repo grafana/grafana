@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -73,6 +75,20 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
+
+	//if hs.PluginManagerV2.IsSupported(ds.Type) && !hs.PluginManagerV2.(registry.CanBeDisabled).IsDisabled() {
+	//	req, err := createRequest(ds, request)
+	//	if err != nil {
+	//		return response.Error(http.StatusInternalServerError, "Request formation error", err)
+	//	}
+	//
+	//	resp, err := hs.PluginManagerV2.QueryData(c.Req.Context(), req)
+	//	if err != nil {
+	//		return response.Error(http.StatusInternalServerError, "Metric request error", err)
+	//	}
+	//
+	//	return response.JSONStreaming(http.StatusOK, resp)
+	//}
 
 	resp, err := hs.DataService.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
@@ -252,4 +268,62 @@ func (hs *HTTPServer) GetTestDataRandomWalk(c *models.ReqContext) response.Respo
 	}
 
 	return response.JSON(200, &resp)
+}
+
+func createRequest(ds *models.DataSource, query plugins.DataQuery) (*backend.QueryDataRequest, error) {
+	instanceSettings, err := modelToInstanceSettings(ds)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			OrgID:                      ds.OrgId,
+			PluginID:                   ds.Type,
+			User:                       adapters.BackendUserFromSignedInUser(query.User),
+			DataSourceInstanceSettings: instanceSettings,
+		},
+		Queries: []backend.DataQuery{},
+		Headers: query.Headers,
+	}
+
+	for _, q := range query.Queries {
+		modelJSON, err := q.Model.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		req.Queries = append(req.Queries, backend.DataQuery{
+			RefID:         q.RefID,
+			Interval:      time.Duration(q.IntervalMS) * time.Millisecond,
+			MaxDataPoints: q.MaxDataPoints,
+			TimeRange: backend.TimeRange{
+				From: query.TimeRange.GetFromAsTimeUTC(),
+				To:   query.TimeRange.GetToAsTimeUTC(),
+			},
+			QueryType: q.QueryType,
+			JSON:      modelJSON,
+		})
+	}
+
+	return req, nil
+}
+
+func modelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstanceSettings, error) {
+	jsonDataBytes, err := ds.JsonData.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return &backend.DataSourceInstanceSettings{
+		ID:                      ds.Id,
+		Name:                    ds.Name,
+		URL:                     ds.Url,
+		Database:                ds.Database,
+		User:                    ds.User,
+		BasicAuthEnabled:        ds.BasicAuth,
+		BasicAuthUser:           ds.BasicAuthUser,
+		JSONData:                jsonDataBytes,
+		DecryptedSecureJSONData: ds.DecryptedValues(),
+		Updated:                 ds.Updated,
+	}, nil
 }

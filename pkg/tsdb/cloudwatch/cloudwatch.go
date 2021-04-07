@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
@@ -65,18 +66,31 @@ func init() {
 }
 
 type CloudWatchService struct {
-	LogsService          *LogsService          `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
+	LogsService          *LogsService            `inject:""`
+	BackendPluginManager backendplugin.Manager   `inject:""`
+	PluginManagerV2      plugins.PluginManagerV2 `inject:""`
+	Cfg                  *setting.Cfg            `inject:""`
 }
 
 func (s *CloudWatchService) Init() error {
 	plog.Debug("initing")
 
 	im := datasource.NewInstanceManager(NewInstanceSettings())
+	cw := newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache())
+
+	if s.PluginManagerV2.IsEnabled() {
+		err := s.PluginManagerV2.Register(plugins.PluginV2{
+			QueryDataHandler:    cw,
+			StreamHandler:       nil,
+			CallResourceHandler: nil,
+			CheckHealthHandler:  nil,
+		})
+
+		return err
+	}
 
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache()),
+		QueryDataHandler: cw,
 	})
 
 	if err := s.BackendPluginManager.Register("cloudwatch", factory); err != nil {
