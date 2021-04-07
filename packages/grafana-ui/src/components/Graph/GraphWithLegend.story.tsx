@@ -5,7 +5,6 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
 import { LegendDisplayMode } from '../VizLegend/types';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 export default {
   title: 'Visualizations/Graph/GraphWithLegend',
@@ -14,6 +13,9 @@ export default {
   parameters: {
     knobs: {
       disable: true,
+    },
+    controls: {
+      exclude: ['className', 'series', 'timeRange', 'ariaLabel', 'legendDisplayMode'],
     },
   },
   argTypes: {
@@ -24,11 +26,6 @@ export default {
     width: { control: { type: 'range', min: 200, max: 800 } },
     height: { control: { type: 'range', min: 200, max: 800 } },
     lineWidth: { control: { type: 'range', min: 1, max: 10 } },
-    className: NOOP_CONTROL,
-    series: NOOP_CONTROL,
-    timeRange: NOOP_CONTROL,
-    ariaLabel: NOOP_CONTROL,
-    legendDisplayMode: NOOP_CONTROL,
   },
 };
 
