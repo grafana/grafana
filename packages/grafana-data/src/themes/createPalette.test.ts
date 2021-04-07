@@ -9,9 +9,9 @@ describe('createColors', () => {
   it('Should allow overrides', () => {
     const palette = createPalette({
       primary: {
-        main: 'pink',
+        main: '#FF0000',
       },
     });
-    expect(palette.primary.main).toBe('pink');
+    expect(palette.primary.main).toBe('#FF0000');
   });
 });
