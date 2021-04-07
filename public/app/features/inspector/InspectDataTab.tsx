@@ -86,7 +86,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
   exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
     const { panel } = this.props;
     const { transformId } = this.state;
-    console.log(panel);
 
     const dataFrameCsv = toCSV([dataFrame], csvConfig);
 
