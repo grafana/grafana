@@ -3,12 +3,6 @@
 // should point to an existing folder named alerting
 @namespace1 = alerting
 
-// create group42 under unknown namespace - it should fail
-POST http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/unknown
-content-type: application/json
-
-< ./post-rulegroup-42.json
-
 ###
 // create group42
 POST http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
