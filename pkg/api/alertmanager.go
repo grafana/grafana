@@ -106,7 +106,7 @@ type GetDeleteSilenceParams struct {
 // swagger:parameters RouteGetSilences
 type GetSilencesParams struct {
 	// in:query
-	Filter []string
+	Filter []string `json:"filter"`
 }
 
 // swagger:model
@@ -119,10 +119,19 @@ type GettableSilences = amv2.GettableSilences
 type GettableSilence = amv2.GettableSilence
 
 // swagger:model
-type GettableAlerts amv2.GettableAlerts
+type GettableAlerts = amv2.GettableAlerts
 
 // swagger:model
-type AlertGroups amv2.AlertGroups
+type GettableAlert = amv2.GettableAlert
+
+// swagger:model
+type AlertGroups = amv2.AlertGroups
+
+// swagger:model
+type AlertGroup = amv2.AlertGroup
+
+// swagger:model
+type Receiver = amv2.Receiver
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups
 type AlertsParams struct {
@@ -130,27 +139,30 @@ type AlertsParams struct {
 	// Show active alerts
 	// in: query
 	// required: false
+	// default: true
 	Active bool `json:"active"`
 
 	// Show silenced alerts
 	// in: query
 	// required: false
+	// default: true
 	Silenced bool `json:"silenced"`
 
 	// Show inhibited alerts
 	// in: query
 	// required: false
+	// default: true
 	Inhibited bool `json:"inhibited"`
 
 	// A list of matchers to filter alerts by
 	// in: query
 	// required: false
-	Matchers []string `json:"matchers"`
+	Matchers []string `json:"filter"`
 
-	// A list of receivers to filter alerts by
+	// A regex matching receivers to filter alerts by
 	// in: query
 	// required: false
-	Receivers []string `json:"receivers"`
+	Receivers string `json:"receiver"`
 }
 
 // swagger:parameters RoutePostAMAlerts
