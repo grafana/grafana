@@ -174,6 +174,8 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 				a.Settings = m.Settings.MustMap()
 			})
 		}
+
+		// TODO: Here copy the same thing i just did in the frontend query builder
 	}
 
 	return nil
