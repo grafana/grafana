@@ -127,26 +127,6 @@ func NewDataPlugin(config DataPluginConfiguration, queryResultTransformer SqlQue
 
 const rowLimit = 1000000
 
-// func getFillMissing(query *plugins.DataSubQuery, qm *DataQueryModel) {
-// 	isFillMissing := query.Model.Get("fill").MustBool(false)
-// 	if isFillMissing {
-// 		qm.FillMissing = &data.FillMissing{}
-// 		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>fuck")
-// 		qm.Interval = time.Duration(query.Model.Get("fillInterval").MustFloat64() * float64(time.Second))
-// 		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>fuckfuck")
-// 		switch strings.ToLower(query.Model.Get("fillMode").MustString()) {
-// 		case "null":
-// 			qm.FillMissing.Mode = data.FillModeNull
-// 		case "previous":
-// 			qm.FillMissing.Mode = data.FillModePrevious
-// 		case "value":
-// 			qm.FillMissing.Mode = data.FillModeValue
-// 			qm.FillMissing.Value = query.Model.Get("fillValue").MustFloat64()
-// 		}
-// 	}
-// }
-
-// Query is the main function for the SqlQueryEndpoint
 func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 
