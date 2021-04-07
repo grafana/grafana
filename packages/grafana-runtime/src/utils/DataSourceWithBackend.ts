@@ -193,7 +193,8 @@ class DataSourceWithBackend<
           message: res.message,
         };
       }
-      throw new Error(res.message);
+
+      throw new HealthCheckError(res.message, res.details);
     });
   }
 }
