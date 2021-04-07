@@ -41,7 +41,10 @@ export interface GraphNGProps extends Themeable {
   children?: React.ReactNode;
 }
 
-interface GraphNGState {
+/**
+ * @internal -- not a public API
+ */
+export interface GraphNGState {
   data: AlignedData;
   alignedDataFrame: DataFrame;
   dimFields: XYFieldMatchers;

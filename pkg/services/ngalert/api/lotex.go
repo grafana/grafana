@@ -3,8 +3,6 @@ package api
 import (
 	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -40,14 +38,14 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) res
 	}
 	return r.withReq(
 		ctx,
-		&http.Request{
-			Method: "DELETE",
-			URL: withPath(
-				*ctx.Req.URL,
-				fmt.Sprintf("%s/%s", legacyRulerPrefix, ctx.Params("Namespace")),
-			),
-		},
+		http.MethodDelete,
+		withPath(
+			*ctx.Req.URL,
+			fmt.Sprintf("%s/%s", legacyRulerPrefix, ctx.Params("Namespace")),
+		),
+		nil,
 		messageExtractor,
+		nil,
 	)
 }
 
@@ -58,19 +56,19 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response
 	}
 	return r.withReq(
 		ctx,
-		&http.Request{
-			Method: "DELETE",
-			URL: withPath(
-				*ctx.Req.URL,
-				fmt.Sprintf(
-					"%s/%s/%s",
-					legacyRulerPrefix,
-					ctx.Params("Namespace"),
-					ctx.Params("Groupname"),
-				),
+		http.MethodDelete,
+		withPath(
+			*ctx.Req.URL,
+			fmt.Sprintf(
+				"%s/%s/%s",
+				legacyRulerPrefix,
+				ctx.Params("Namespace"),
+				ctx.Params("Groupname"),
 			),
-		},
+		),
+		nil,
 		messageExtractor,
+		nil,
 	)
 }
 
@@ -80,17 +78,19 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 		return response.Error(500, err.Error(), nil)
 	}
 	return r.withReq(
-		ctx, &http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				fmt.Sprintf(
-					"%s/%s",
-					legacyRulerPrefix,
-					ctx.Params("Namespace"),
-				),
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			fmt.Sprintf(
+				"%s/%s",
+				legacyRulerPrefix,
+				ctx.Params("Namespace"),
 			),
-		},
+		),
+		nil,
 		yamlExtractor(apimodels.NamespaceConfigResponse{}),
+		nil,
 	)
 }
 
@@ -101,18 +101,19 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 	}
 	return r.withReq(
 		ctx,
-		&http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				fmt.Sprintf(
-					"%s/%s/%s",
-					legacyRulerPrefix,
-					ctx.Params("Namespace"),
-					ctx.Params("Groupname"),
-				),
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			fmt.Sprintf(
+				"%s/%s/%s",
+				legacyRulerPrefix,
+				ctx.Params("Namespace"),
+				ctx.Params("Groupname"),
 			),
-		},
+		),
+		nil,
 		yamlExtractor(apimodels.RuleGroupConfigResponse{}),
+		nil,
 	)
 }
 
@@ -123,13 +124,14 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respon
 	}
 	return r.withReq(
 		ctx,
-		&http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				legacyRulerPrefix,
-			),
-		},
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			legacyRulerPrefix,
+		),
+		nil,
 		yamlExtractor(apimodels.NamespaceConfigResponse{}),
+		nil,
 	)
 }
 
@@ -142,18 +144,9 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 	if err != nil {
 		return response.Error(500, "Failed marshal rule group", err)
 	}
-	body, ln := payload(yml)
-
 	ns := ctx.Params("Namespace")
-
 	u := withPath(*ctx.Req.URL, fmt.Sprintf("%s/%s", legacyRulerPrefix, ns))
-	req := &http.Request{
-		Method:        "POST",
-		URL:           u,
-		Body:          body,
-		ContentLength: ln,
-	}
-	return r.withReq(ctx, req, jsonExtractor(nil))
+	return r.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
 }
 
 func (r *LotexRuler) getPrefix(ctx *models.ReqContext) (string, error) {
@@ -172,8 +165,4 @@ func withPath(u url.URL, newPath string) *url.URL {
 	// TODO: handle path escaping
 	u.Path = newPath
 	return &u
-}
-
-func payload(b []byte) (io.ReadCloser, int64) {
-	return ioutil.NopCloser(bytes.NewBuffer(b)), int64(len(b))
 }

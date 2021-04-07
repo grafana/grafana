@@ -7,6 +7,7 @@ import {
   grafanaLiveCoreFeatures,
   GrafanaLiveDataSourceScope,
   GrafanaLivePluginScope,
+  GrafanaLiveStreamScope,
 } from './scopes';
 import { registerLiveFeatures } from './features';
 import CentrifugeWorkerProxy from './CentrifugeWorkerProxy';
@@ -47,6 +48,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       [LiveChannelScope.Grafana]: grafanaLiveCoreFeatures,
       [LiveChannelScope.DataSource]: new GrafanaLiveDataSourceScope(),
       [LiveChannelScope.Plugin]: new GrafanaLivePluginScope(),
+      [LiveChannelScope.Stream]: new GrafanaLiveStreamScope(),
     };
 
     // Register global listeners
