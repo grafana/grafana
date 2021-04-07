@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Story } from '@storybook/react';
+import { Story, Meta } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Input.mdx';
 import { getAvailableIcons, IconName } from '../../types';
@@ -62,7 +62,7 @@ export default {
     // validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
     width: { control: { type: 'range', min: 10, max: 200, step: 10 } },
   },
-};
+} as Meta;
 
 export const Simple: Story = (args) => {
   const addonAfter = <Button variant="secondary">Load</Button>;
