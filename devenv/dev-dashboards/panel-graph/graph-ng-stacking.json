@@ -15,7 +15,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 362,
   "links": [],
   "panels": [
     {
@@ -162,7 +161,9 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stackingGroup": "A",
+            "stackingMode": "standard"
           },
           "mappings": [],
           "thresholds": {
@@ -381,7 +382,9 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stackingGroup": "A",
+            "stackingMode": "standard"
           },
           "mappings": [],
           "thresholds": {
@@ -592,7 +595,9 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stackingGroup": "A",
+            "stackingMode": "none"
           },
           "mappings": [],
           "thresholds": {
@@ -732,7 +737,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Bars (no stacking, angular)",
+      "title": "Bars (stacking, angular)",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -795,7 +800,9 @@
               "type": "linear"
             },
             "showPoints": "never",
-            "spanNulls": true
+            "spanNulls": true,
+            "stackingGroup": "A",
+            "stackingMode": "standard"
           },
           "mappings": [],
           "thresholds": {
@@ -859,7 +866,7 @@
           "stringInput": "556,581,482,552,550,589,575,565,471,575,565,605,663,544,471,641,567,535,630,535,623,579,582,559,611,509,521,563,513,544,523,558,450,486,478,584,440,432,473,480,555,510,451,476,490,470,555,418,463,402,403,476,591,431,560,581,532,579,427,501,452,551,479,405,397,376,458,439,490,508,389,488,360,413,509,351,434,392,430,426,375,414,401,459,435,327,491,406,397,406,384,423,439,538,338,467,421,406,477,428,371"
         }
       ],
-      "title": "Bars (no stacking, TimeSeries)",
+      "title": "Bars (stacking, TimeSeries)",
       "type": "timeseries"
     }
   ],
@@ -877,5 +884,5 @@
   "timezone": "",
   "title": "Panel Tests - TimeSeries - stacking",
   "uid": "Ei86FP_Mx",
-  "version": 37
+  "version": 2
 }
