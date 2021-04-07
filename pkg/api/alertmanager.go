@@ -119,10 +119,19 @@ type GettableSilences = amv2.GettableSilences
 type GettableSilence = amv2.GettableSilence
 
 // swagger:model
-type GettableAlerts amv2.GettableAlerts
+type GettableAlerts = amv2.GettableAlerts
 
 // swagger:model
-type AlertGroups amv2.AlertGroups
+type GettableAlert = amv2.GettableAlert
+
+// swagger:model
+type AlertGroups = amv2.AlertGroups
+
+// swagger:model
+type AlertGroup = amv2.AlertGroup
+
+// swagger:model
+type Receiver = amv2.Receiver
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups
 type AlertsParams struct {
