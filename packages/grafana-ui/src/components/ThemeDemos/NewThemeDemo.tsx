@@ -45,7 +45,7 @@ const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color
   return <div className={style}>{children}</div>;
 };
 
-export const NewThemeColors = () => {
+export const NewThemeDemo = () => {
   const [radioValue, setRadioValue] = useState('v');
   const [boolValue, setBoolValue] = useState(false);
   const oldTheme = useTheme();
