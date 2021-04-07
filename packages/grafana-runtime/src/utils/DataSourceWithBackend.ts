@@ -15,6 +15,16 @@ import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse'
 
 const ExpressionDatasourceID = '__expr__';
 
+class HealthCheckError extends Error {
+  details: HealthCheckResult['details'];
+
+  constructor(message: string, details: HealthCheckResult['details']) {
+    super(message);
+    this.details = details;
+    this.name = 'HealthCheckError';
+  }
+}
+
 /**
  * Describes the current health status of a data source plugin.
  *
