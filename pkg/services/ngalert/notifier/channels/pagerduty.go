@@ -9,6 +9,7 @@ import (
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/prometheus/alertmanager/template"
 )
 
 const (
@@ -99,12 +99,10 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		return true, nil
 	}
 
-	eventType := pagerDutyEventTrigger
-	if alerts.Status() == model.AlertResolved {
-		eventType = pagerDutyEventResolve
-	}
-
 	msg, eventType, err := pn.buildPagerdutyMessage(ctx, alerts, as)
+	if err != nil {
+		return false, errors.Wrap(err, "build pagerduty message")
+	}
 
 	body, err := json.Marshal(msg)
 	if err != nil {
@@ -120,7 +118,6 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 			"Content-Type": "application/json",
 		},
 	}
-
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {
 		pn.log.Error("Failed to send notification to Pagerduty", "error", err, "body", string(body))
 		return false, err

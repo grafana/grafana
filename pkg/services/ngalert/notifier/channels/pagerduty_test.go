@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"errors"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"os"
 	"testing"
 
@@ -15,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestPagerdutyNotifier(t *testing.T) {
@@ -26,15 +26,15 @@ func TestPagerdutyNotifier(t *testing.T) {
 
 	cases := []struct {
 		name         string
-		json         string
+		settings     string
 		alerts       []*types.Alert
 		expMsg       *pagerDutyMessage
 		expInitError error
 		expMsgError  error
 	}{
 		{
-			name: "Default config with one alert",
-			json: `{"integrationKey": "abcdefgh0123456789"}`,
+			name:     "Default config with one alert",
+			settings: `{"integrationKey": "abcdefgh0123456789"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -46,7 +46,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			expMsg: &pagerDutyMessage{
 				RoutingKey:  "abcdefgh0123456789",
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				Description: "[firing:1] (val1)",
+				Description: "[firing:1]  (val1)",
 				EventAction: "trigger",
 				Payload: &pagerDutyPayload{
 					Summary:   "[FIRING:1]  (val1)",
@@ -70,7 +70,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			expMsgError:  nil,
 		}, {
 			name: "Custom config with multiple alerts",
-			json: `{
+			settings: `{
 				"integrationKey": "abcdefgh0123456789",
 				"severity": "warning",
 				"class": "{{ .Status }}",
@@ -93,7 +93,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			expMsg: &pagerDutyMessage{
 				RoutingKey:  "abcdefgh0123456789",
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				Description: "[firing:2] ",
+				Description: "[firing:2]  ",
 				EventAction: "trigger",
 				Payload: &pagerDutyPayload{
 					Summary:   "[FIRING:2]  ",
@@ -117,11 +117,11 @@ func TestPagerdutyNotifier(t *testing.T) {
 			expMsgError:  nil,
 		}, {
 			name:         "Error in initing",
-			json:         `{}`,
+			settings:     `{}`,
 			expInitError: alerting.ValidationError{Reason: "Could not find integration key property in settings"},
 		}, {
 			name: "Error in building message",
-			json: `{
+			settings: `{
 				"integrationKey": "abcdefgh0123456789",
 				"class": "{{ .Status }"
 			}`,
@@ -131,7 +131,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			settingsJSON, err := simplejson.NewJson([]byte(c.json))
+			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
 			m := &models.AlertNotification{
