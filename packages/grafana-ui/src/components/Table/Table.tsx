@@ -183,7 +183,7 @@ export const Table: FC<Props> = memo((props: Props) => {
               onCellFilterAdded={onCellFilterAdded}
               columnIndex={index}
               columnCount={row.cells.length}
-              rowIndex={rowIndex}
+              dataRowIndex={row.index}
             />
           ))}
         </div>

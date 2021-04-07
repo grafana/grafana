@@ -11,7 +11,8 @@ export interface Props {
   onCellFilterAdded?: TableFilterActionCallback;
   columnIndex: number;
   columnCount: number;
-  rowIndex: number;
+  /** Index before table sort */
+  dataRowIndex: number;
 }
 
 export const TableCell: FC<Props> = ({
@@ -21,7 +22,7 @@ export const TableCell: FC<Props> = ({
   onCellFilterAdded,
   columnIndex,
   columnCount,
-  rowIndex,
+  dataRowIndex,
 }) => {
   const cellProps = cell.getCellProps();
 
@@ -42,7 +43,7 @@ export const TableCell: FC<Props> = ({
   }
 
   const link: LinkModel | undefined = field.getLinks?.({
-    valueRowIndex: rowIndex,
+    valueRowIndex: dataRowIndex,
   })[0];
 
   let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
