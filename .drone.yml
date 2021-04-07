@@ -1356,6 +1356,17 @@ steps:
   - test-backend
   - test-frontend
 
+- name: memcached-integration-tests
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - ./bin/grabpl integration-tests
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  depends_on:
+  - test-backend
+  - test-frontend
+
 - name: upload-cdn-assets
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
@@ -1379,6 +1390,7 @@ steps:
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
+  - memcached-integration-tests
 
 - name: package-enterprise2
   image: grafana/build-container:1.4.1
@@ -1443,6 +1455,7 @@ steps:
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
+  - memcached-integration-tests
 
 services:
 - name: postgres
@@ -1462,6 +1475,9 @@ services:
 
 - name: redis
   image: redis:6.2.1-alpine
+
+- name: memcached
+  image: memcached:1.6.9-alpine
 
 trigger:
   ref:
@@ -2274,6 +2290,17 @@ steps:
   - test-backend
   - test-frontend
 
+- name: memcached-integration-tests
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - ./bin/grabpl integration-tests
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  depends_on:
+  - test-backend
+  - test-frontend
+
 - name: upload-cdn-assets
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
@@ -2297,6 +2324,7 @@ steps:
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
+  - memcached-integration-tests
 
 - name: package-enterprise2
   image: grafana/build-container:1.4.1
@@ -2361,6 +2389,7 @@ steps:
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
+  - memcached-integration-tests
 
 services:
 - name: postgres
@@ -2380,6 +2409,9 @@ services:
 
 - name: redis
   image: redis:6.2.1-alpine
+
+- name: memcached
+  image: memcached:1.6.9-alpine
 
 trigger:
   event:
@@ -3166,6 +3198,17 @@ steps:
   - test-backend
   - test-frontend
 
+- name: memcached-integration-tests
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/dockerize -wait tcp://memcached:11211 -timeout 120s
+  - ./bin/grabpl integration-tests
+  environment:
+    MEMCACHED_HOSTS: memcached:11211
+  depends_on:
+  - test-backend
+  - test-frontend
+
 - name: upload-cdn-assets
   image: grafana/grafana-ci-deploy:1.3.1
   commands:
@@ -3189,6 +3232,7 @@ steps:
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
+  - memcached-integration-tests
 
 - name: package-enterprise2
   image: grafana/build-container:1.4.1
@@ -3253,6 +3297,7 @@ steps:
   - mysql-integration-tests
   - postgres-integration-tests
   - redis-integration-tests
+  - memcached-integration-tests
 
 services:
 - name: postgres
@@ -3272,6 +3317,9 @@ services:
 
 - name: redis
   image: redis:6.2.1-alpine
+
+- name: memcached
+  image: memcached:1.6.9-alpine
 
 trigger:
   ref:

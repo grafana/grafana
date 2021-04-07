@@ -816,6 +816,23 @@ def redis_integration_tests_step():
         ],
     }
 
+def memcached_integration_tests_step():
+    return {
+        'name': 'memcached-integration-tests',
+        'image': build_image,
+        'depends_on': [
+            'test-backend',
+            'test-frontend',
+        ],
+        'environment': {
+            'MEMCACHED_HOSTS': 'memcached:11211',
+        },
+        'commands': [
+            './bin/dockerize -wait tcp://memcached:11211 -timeout 120s',
+            './bin/grabpl integration-tests',
+        ],
+    }
+
 def release_canary_npm_packages_step(edition):
     if edition in ('enterprise', 'enterprise2'):
         return None
@@ -882,6 +899,7 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
 
     if edition in ('enterprise', 'enterprise2'):
       dependencies.append('redis-integration-tests')
+      dependencies.append('memcached-integration-tests')
 
     return {
         'name': 'upload-packages' + enterprise2_sfx(edition),
@@ -1093,10 +1111,14 @@ def integration_test_services(edition):
     ]
 
     if edition in ('enterprise', 'enterprise2'):
-        services.append({
+        services.extend([{
             'name': 'redis',
             'image': 'redis:6.2.1-alpine',
             'environment': {},
-        })
+        }, {
+            'name': 'memcached',
+            'image': 'memcached:1.6.9-alpine',
+            'environment': {},
+        }])
 
     return services

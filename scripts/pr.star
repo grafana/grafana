@@ -22,6 +22,7 @@ load(
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
+    'memcached_integration_tests_step',
     'benchmark_ldap_step',
     'ldap_service',
     'integration_test_services',
@@ -74,6 +75,7 @@ def pr_pipelines(edition):
     if include_enterprise2:
         steps.extend([
             redis_integration_tests_step(),
+            memcached_integration_tests_step(),
             package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
             e2e_tests_server_step(edition=edition2, port=3002),
             e2e_tests_step(edition=edition2, port=3002),
