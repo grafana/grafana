@@ -30,6 +30,7 @@ import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContext
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
+  isMovingAverageWithModelSettings,
   isPipelineAggregationWithMultipleBucketPaths,
   Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
@@ -350,6 +351,50 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       .toPromise();
   }
 
+  private toNumber(stringValue?: string) {
+    if (isNaN((stringValue as unknown) as number)) {
+      throw 'Not a Number';
+    }
+
+    return parseInt(stringValue!, 10);
+  }
+
+  // Elasticsearch isn't generally too picky about the data types in the request body,
+  // however some fields are required to be numeric.
+  // This function should be removed once we fully migrate to the backend query builder
+  // as all the formatting must happen there.
+  private formatQueries(queries: ElasticsearchQuery[]) {
+    return queries.map((query) => ({
+      ...query,
+      metrics: query.metrics?.map((metric) => {
+        if (metric.type === 'moving_avg') {
+          return {
+            ...metric,
+            settings: {
+              // top-lever metric settings
+              ...metric.settings,
+              ...(metric.settings?.window && { window: this.toNumber(metric.settings.window) }),
+              ...(metric.settings?.predict && { predict: this.toNumber(metric.settings.predict) }),
+
+              ...(isMovingAverageWithModelSettings(metric) && {
+                settings: Object.fromEntries(
+                  Object.entries(metric.settings?.settings || {})
+                    // Only format properties that are required to be numbers
+                    .filter(([settingName]) => ['alpha', 'beta', 'gamma', 'period'].includes(settingName))
+                    // except for falsy values
+                    .filter(([_, stringValue]) => Boolean(stringValue))
+                    .map(([_, stringValue]) => [_, this.toNumber(stringValue)])
+                ),
+              }),
+            },
+          };
+        }
+
+        return metric;
+      }),
+    }));
+  }
+
   private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
     // Elasticsearch queryString should always be '*' if empty string
     return this.templateSrv.replace(queryString, scopedVars, 'lucene') || '*';
@@ -388,7 +433,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       this.templateSrv.replace(JSON.stringify(expandedQueries), scopedVars)
     );
 
-    return finalQueries;
+    return this.formatQueries(finalQueries) as ElasticsearchQuery[];
   }
 
   testDatasource() {

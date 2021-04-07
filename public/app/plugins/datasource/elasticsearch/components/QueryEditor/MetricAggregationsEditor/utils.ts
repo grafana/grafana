@@ -121,7 +121,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {
       settings: {
         model: 'simple',
-        window: 5,
+        window: '5',
       },
     },
   },
