@@ -98,7 +98,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   };
 
   onDiscard = () => {
-    locationService.replace(`${config.appSubUrl}/alerting/list`);
+    locationService.replace(`${config.appSubUrl}/alerting/ng/list`);
   };
 
   onTest = () => {
