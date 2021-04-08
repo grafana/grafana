@@ -1,5 +1,5 @@
 import { ApplyFieldOverrideOptions, DataTransformerConfig, dateMath, FieldColorModeId, PanelData } from '@grafana/data';
-import { GraphNG, LegendDisplayMode, StackingMode, Table } from '@grafana/ui';
+import { GraphNG, LegendDisplayMode, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
@@ -61,7 +61,6 @@ export const TestStuffPage: FC = () => {
             legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
             timeRange={data.timeRange}
             timeZone="browser"
-            stacking={StackingMode.None}
           />
           <hr />
           <Table data={data.series[0]} width={1200} height={300} />

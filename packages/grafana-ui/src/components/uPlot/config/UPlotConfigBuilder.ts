@@ -2,7 +2,7 @@ import { PlotConfig } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
-import { AxisPlacement, StackingMode } from '../config';
+import { AxisPlacement } from '../config';
 import uPlot, { Cursor, Band, Hooks, BBox } from 'uplot';
 import { defaultsDeep } from 'lodash';
 import { DefaultTimeZone, getTimeZoneInfo } from '@grafana/data';
@@ -22,7 +22,7 @@ export class UPlotConfigBuilder {
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
 
-  constructor(getTimeZone = () => DefaultTimeZone, private stacking = StackingMode.None) {
+  constructor(getTimeZone = () => DefaultTimeZone) {
     this.tz = getTimeZoneInfo(getTimeZone(), Date.now())?.ianaName;
   }
 
@@ -121,15 +121,14 @@ export class UPlotConfigBuilder {
     // When bands exist, only keep fill when defined
     if (this.bands?.length) {
       config.bands = this.bands;
-      if (this.stacking === StackingMode.None) {
-        const keepFill = new Set<number>();
-        for (const b of config.bands) {
-          keepFill.add(b.series[0]);
-        }
-        for (let i = 1; i < config.series.length; i++) {
-          if (!keepFill.has(i)) {
-            config.series[i].fill = undefined;
-          }
+      const keepFill = new Set<number>();
+      for (const b of config.bands) {
+        keepFill.add(b.series[0]);
+      }
+
+      for (let i = 1; i < config.series.length; i++) {
+        if (!keepFill.has(i)) {
+          config.series[i].fill = undefined;
         }
       }
     }

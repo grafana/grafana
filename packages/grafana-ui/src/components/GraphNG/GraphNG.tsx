@@ -17,7 +17,6 @@ import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent, XYFieldMatchers } from './types';
 import { GraphNGContext } from './hooks';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
-import { StackingMode } from '../uPlot/config';
 import { preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
@@ -34,7 +33,6 @@ export interface GraphNGProps extends Themeable {
   height: number;
   data: DataFrame[];
   timeRange: TimeRange;
-  stacking: StackingMode;
   legend: VizLegendOptions;
   timeZone: TimeZone;
   fields?: XYFieldMatchers; // default will assume timeseries data
@@ -103,7 +101,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidMount() {
-    const { theme, stacking } = this.props;
+    const { theme } = this.props;
 
     // alignedDataFrame is already prepared by getDerivedStateFromProps method
     const { alignedDataFrame } = this.state;
@@ -113,12 +111,12 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     }
 
     this.setState({
-      config: preparePlotConfigBuilder(alignedDataFrame, theme, stacking, this.getTimeRange, this.getTimeZone),
+      config: preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone),
     });
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { data, theme, stacking } = this.props;
+    const { data, theme } = this.props;
     const { alignedDataFrame } = this.state;
     let shouldConfigUpdate = false;
     let stateUpdate = {} as GraphNGState;
@@ -135,13 +133,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       const hasStructureChanged = !compareArrayValues(data, prevProps.data, compareDataFrameStructures);
 
       if (shouldConfigUpdate || hasStructureChanged) {
-        const builder = preparePlotConfigBuilder(
-          alignedDataFrame,
-          theme,
-          stacking,
-          this.getTimeRange,
-          this.getTimeZone
-        );
+        const builder = preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone);
         stateUpdate = { ...stateUpdate, config: builder };
       }
     }

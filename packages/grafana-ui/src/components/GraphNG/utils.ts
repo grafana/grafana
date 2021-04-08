@@ -84,7 +84,6 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
 export function preparePlotConfigBuilder(
   frame: DataFrame,
   theme: GrafanaTheme,
-  stacking: StackingMode,
   getTimeRange: () => TimeRange,
   getTimeZone: () => TimeZone
 ): UPlotConfigBuilder {
@@ -131,6 +130,8 @@ export function preparePlotConfigBuilder(
       theme,
     });
   }
+
+  const stackingGroups: Record<string, number[]> = {};
 
   let indexByName: Map<string, number> | undefined = undefined;
 
@@ -180,6 +181,7 @@ export function preparePlotConfigBuilder(
     const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
     let { fillOpacity } = customConfig;
+
     if (customConfig.fillBelowTo) {
       if (!indexByName) {
         indexByName = getNamesToFieldIndex(frame);
@@ -221,23 +223,27 @@ export function preparePlotConfigBuilder(
       fieldName: getFieldDisplayName(field, frame),
       hideInLegend: customConfig.hideFrom?.legend,
     });
-  }
 
-  if (stacking !== StackingMode.None) {
-    const series = [{}].concat(builder.getSeries());
-    for (let i = 1; i < series.length; i++) {
-      builder.addBand({
-        series: [
-          series.findIndex((_, j) => {
-            return j > i;
-          }),
-          i,
-        ],
-        fill: null as any,
-      });
+    if (customConfig?.stackingMode !== StackingMode.None && customConfig?.stackingGroup) {
+      if (!stackingGroups[customConfig.stackingGroup]) {
+        stackingGroups[customConfig.stackingGroup] = [seriesIndex];
+      } else {
+        stackingGroups[customConfig.stackingGroup].push(seriesIndex);
+      }
     }
   }
 
+  if (Object.keys(stackingGroups).length !== 0) {
+    const groups = Object.keys(stackingGroups);
+    for (let i = 0; i < groups.length; i++) {
+      const group = stackingGroups[groups[i]];
+      for (let j = group.length - 1; j > 0; j--) {
+        builder.addBand({
+          series: [group[j], group[j - 1]],
+        });
+      }
+    }
+  }
   return builder;
 }
 

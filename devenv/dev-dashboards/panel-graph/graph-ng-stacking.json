@@ -786,7 +786,7 @@
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "bars",
-            "fillOpacity": 50,
+            "fillOpacity": 100,
             "gradientMode": "none",
             "hideFrom": {
               "graph": false,
@@ -867,6 +867,293 @@
         }
       ],
       "title": "Bars (stacking, TimeSeries)",
+      "type": "timeseries"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "hiddenSeries": false,
+      "id": 15,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.0-pre",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "$$hashKey": "object:110",
+          "alias": "A-series",
+          "stack": "A"
+        },
+        {
+          "$$hashKey": "object:117",
+          "alias": "B-series",
+          "stack": "A"
+        },
+        {
+          "$$hashKey": "object:124",
+          "alias": "C-series",
+          "stack": "B"
+        },
+        {
+          "$$hashKey": "object:129",
+          "alias": "D-series",
+          "stack": "B"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,6,7,8,7,6"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        },
+        {
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        },
+        {
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Stacking groups (angular)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stackingGroup": "A",
+            "stackingMode": "none"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A-series"
+            },
+            "properties": [
+              {
+                "id": "custom.stackingMode",
+                "value": "standard"
+              },
+              {
+                "id": "custom.stackingGroup",
+                "value": "A"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "custom.stackingMode",
+                "value": "standard"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "C-series"
+            },
+            "properties": [
+              {
+                "id": "custom.stackingMode",
+                "value": "standard"
+              },
+              {
+                "id": "custom.stackingGroup",
+                "value": "B"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "D-series"
+            },
+            "properties": [
+              {
+                "id": "custom.stackingMode",
+                "value": "standard"
+              },
+              {
+                "id": "custom.stackingGroup",
+                "value": "B"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "stacking": "none",
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,6,7,8,7,6"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        },
+        {
+          "hide": false,
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        },
+        {
+          "hide": false,
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "5,5,5,5,5,5"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Stacking groups (TimeSeries)",
       "type": "timeseries"
     }
   ],
