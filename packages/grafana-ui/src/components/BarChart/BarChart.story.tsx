@@ -2,7 +2,7 @@ import { toDataFrame, FieldType, VizOrientation } from '@grafana/data';
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { BarChart } from './BarChart';
-import { LegendDisplayMode } from '../VizLegend/types';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { useTheme } from '../../themes';
 import { select } from '@storybook/addon-knobs';
