@@ -7,7 +7,7 @@ import { preparePlotConfigBuilder, preparePlotFrame } from './utils'; // << prep
 import { preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
-import { LegendDisplayMode } from '../VizLegend/types';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { TimelineProps } from './types';
 
