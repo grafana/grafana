@@ -92,25 +92,23 @@ export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTh
   switch (size) {
     case 'sm':
       return {
-        padding: theme.spacing(0, 1),
-        height: theme.spacing(theme.components.height.sm),
-        lineHeight: `${theme.spacing.gridSize * theme.components.height.sm - 2}px`,
+        padding: 1,
         fontSize: theme.typography.size.sm,
+        height: theme.components.height.sm,
       };
+
     case 'lg':
       return {
-        padding: theme.spacing(0, 3),
-        height: theme.spacing(theme.components.height.lg),
-        lineHeight: `${theme.spacing.gridSize * theme.components.height.lg - 2}px`,
+        padding: 3,
         fontSize: theme.typography.size.lg,
+        height: theme.components.height.lg,
       };
     case 'md':
     default:
       return {
-        padding: theme.spacing(0, 2),
-        height: theme.spacing(theme.components.height.md),
-        lineHeight: `${theme.spacing.gridSize * theme.components.height.md - 2}px`,
+        padding: 2,
         fontSize: theme.typography.size.md,
+        height: theme.components.height.md,
       };
   }
 }

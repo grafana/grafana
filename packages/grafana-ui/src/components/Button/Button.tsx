@@ -1,6 +1,6 @@
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import { css, CSSObject, cx } from '@emotion/css';
-import { useStyles, useTheme } from '../../themes';
+import { useTheme } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { GrafanaTheme, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
@@ -23,24 +23,20 @@ type CommonProps = {
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', icon, fullWidth, children, className, disabled, ...otherProps }, ref) => {
-    const styles = useStyles(getStyles);
-
-    const rootClass = cx(
-      styles.button,
-      styles[variant],
-      {
-        [styles.disabled]: disabled,
-        [styles.fullWidth]: fullWidth,
-      },
-      className
-    );
-
-    const iconClass = children ? styles.icon : styles.iconOnly;
+  ({ variant = 'primary', size = 'md', icon, fullWidth, children, className, ...otherProps }, ref) => {
+    const theme = useTheme();
+    const styles = getButtonStyles({
+      theme,
+      size,
+      variant,
+      icon,
+      fullWidth,
+      children,
+    });
 
     return (
-      <button className={rootClass} disabled={disabled} {...otherProps} ref={ref}>
-        {icon && <Icon name={icon} size={size} className={iconClass} />}
+      <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
+        {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </button>
     );
@@ -53,23 +49,21 @@ type ButtonLinkProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement> & A
 
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
   ({ variant = 'primary', size = 'md', icon, fullWidth, children, className, disabled, ...otherProps }, ref) => {
-    const styles = useStyles(getStyles);
+    const theme = useTheme();
+    const styles = getButtonStyles({
+      theme,
+      fullWidth,
+      size,
+      variant,
+      icon,
+      children,
+    });
 
-    const rootClass = cx(
-      styles.button,
-      styles[variant],
-      {
-        [styles.disabled]: disabled,
-        [styles.fullWidth]: fullWidth,
-      },
-      className
-    );
-
-    const iconClass = children ? styles.icon : styles.iconOnly;
+    const linkButtonStyles = cx(styles.button, { [styles.disabled]: disabled }, className);
 
     return (
-      <a className={rootClass} {...otherProps} ref={ref} tabIndex={disabled ? -1 : 0}>
-        {icon && <Icon name={icon} size={size} className={'grafana-ui-button-icon'} />}
+      <a className={linkButtonStyles} {...otherProps} ref={ref} tabIndex={disabled ? -1 : 0}>
+        {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </a>
     );
@@ -88,7 +82,27 @@ export interface StyleProps {
   narrow?: boolean;
 }
 
-export const getStyles = (theme: GrafanaTheme) => {
+export const getButtonStyles = (props: StyleProps) => {
+  const { theme, variant, size, children, fullWidth } = props;
+  const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme.v2);
+  const variantStyles = getPropertiesForVariant(theme.v2, variant);
+  const iconOnly = !children;
+
+  const disabledStyles: CSSObject = {
+    cursor: 'not-allowed',
+    opacity: 0.65,
+    boxShadow: 'none',
+    background: theme.v2.palette.formComponent.disabledBackground,
+    border: `1px solid ${theme.v2.palette.formComponent.disabledBackground}`,
+    color: theme.v2.palette.text.disabled,
+    pointerEvents: 'none',
+
+    '&:hover': {
+      background: theme.v2.palette.formComponent.disabledBackground,
+      color: theme.v2.palette.text.disabled,
+    },
+  };
+
   return {
     button: css({
       label: 'button',
@@ -104,43 +118,23 @@ export const getStyles = (theme: GrafanaTheme) => {
       verticalAlign: 'middle',
       cursor: 'pointer',
       borderRadius: theme.v2.shape.borderRadius(1),
+      ...(fullWidth && {
+        flexGrow: 1,
+        justifyContent: 'center',
+      }),
+      ...variantStyles,
+      ':disabled': disabledStyles,
+      '&[disabled]': disabledStyles,
     }),
-    primary: css(getPropertiesForVariant(theme.v2, 'primary')),
-    secondary: css(getPropertiesForVariant(theme.v2, 'secondary')),
-    destructive: css(getPropertiesForVariant(theme.v2, 'destructive')),
-    link: css(getPropertiesForVariant(theme.v2, 'destructive')),
-    disabled: css({
-      cursor: 'not-allowed',
-      opacity: 0.65,
-      boxShadow: 'none',
-      background: theme.v2.palette.formComponent.disabledBackground,
-      border: `1px solid ${theme.v2.palette.formComponent.disabledBackground}`,
-      color: theme.v2.palette.text.disabled,
-      pointerEvents: 'none',
-
-      '&:hover': {
-        background: theme.v2.palette.formComponent.disabledBackground,
-        color: theme.v2.palette.text.disabled,
-      },
-    }),
-    sizeMD: css(getPropertiesForButtonSize('md', theme.v2)),
-    sizeSM: css(getPropertiesForButtonSize('sm', theme.v2)),
-    sizeLG: css(getPropertiesForButtonSize('lg', theme.v2)),
-    fullWidth: css({
-      flexGrow: 1,
-      justifyContent: 'center',
-    }),
+    disabled: css(disabledStyles),
     img: css`
       width: 16px;
       height: 16px;
       margin: ${theme.v2.spacing(0, 1, 0, 0.5)};
     `,
     icon: css`
-      margin: ${theme.v2.spacing(0, padding / 2, 0, -(padding / 2))};
+      margin: ${theme.v2.spacing(0, (iconOnly ? -padding : padding) / 2, 0, -(padding / 2))};
     `,
-    iconOnly: css({
-      margin: theme.v2.spacing(0, -padding / 2, 0, -padding / 2),
-    }),
     content: css`
       display: flex;
       flex-direction: row;
@@ -153,7 +147,6 @@ export const getStyles = (theme: GrafanaTheme) => {
 
 function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemePaletteColor): CSSObject {
   return {
-    label: `button-${color.name}`,
     background: color.main,
     color: color.contrastText,
     boxShadow: theme.shadows.z1,
