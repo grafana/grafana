@@ -2,14 +2,10 @@ package notifier
 
 import (
 	"context"
-	"fmt"
+	"net/url"
 	"path/filepath"
 	"sync"
 	"time"
-
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-
-	"github.com/grafana/grafana/pkg/models"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/alerting-api/pkg/api"
@@ -23,7 +19,9 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -173,6 +171,8 @@ func (am *Alertmanager) ApplyConfig(cfg *api.PostableUserConfig) error {
 	return am.applyConfig(cfg)
 }
 
+const defaultTemplate = "templates/default.tmpl"
+
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
 func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
@@ -181,6 +181,8 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	if err != nil {
 		return err
 	}
+
+	paths = append([]string{defaultTemplate}, paths...)
 
 	// With the templates persisted, create the template list using the paths.
 	tmpl, err := template.FromGlobs(paths...)
@@ -236,35 +238,44 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*api.PostableApiReceive
 	return integrationsMap, nil
 }
 
+type NotificationChannel interface {
+	notify.Notifier
+	notify.ResolvedSender
+}
+
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiReceiver, _ *template.Template) ([]notify.Integration, error) {
+func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
 	var integrations []notify.Integration
 
 	for i, r := range receiver.GrafanaManagedReceivers {
-		switch r.Type {
-		case "email":
-			frequency, err := time.ParseDuration(r.Frequency)
-			if err != nil {
-				return nil, fmt.Errorf("unable to parse receiver frequency %s, %w", r.Frequency, err)
-			}
-			notification := models.AlertNotification{
+		var (
+			cfg = &models.AlertNotification{
 				Uid:                   r.Uid,
 				Name:                  r.Name,
 				Type:                  r.Type,
 				IsDefault:             r.IsDefault,
 				SendReminder:          r.SendReminder,
 				DisableResolveMessage: r.DisableResolveMessage,
-				Frequency:             frequency,
 				Settings:              r.Settings,
 				SecureSettings:        securejsondata.GetEncryptedJsonData(r.SecureSettings),
 			}
-			n, err := channels.NewEmailNotifier(&notification)
-			if err != nil {
-				return nil, err
-			}
-
-			integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
+			n   NotificationChannel
+			err error
+		)
+		externalURL, err := url.Parse(am.Settings.AppURL)
+		if err != nil {
+			return nil, err
 		}
+		switch r.Type {
+		case "email":
+			n, err = channels.NewEmailNotifier(cfg, externalURL)
+		case "pagerduty":
+			n, err = channels.NewPagerdutyNotifier(cfg, tmpl, externalURL)
+		}
+		if err != nil {
+			return nil, err
+		}
+		integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
 	}
 
 	return integrations, nil

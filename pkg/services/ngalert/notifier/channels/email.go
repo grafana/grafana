@@ -26,15 +26,17 @@ type EmailNotifier struct {
 	old_notifiers.NotifierBase
 	Addresses   []string
 	SingleEmail bool
+	AutoResolve bool
 	log         log.Logger
 	externalUrl *url.URL
 }
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(model *models.AlertNotification) (*EmailNotifier, error) {
+func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL) (*EmailNotifier, error) {
 	addressesString := model.Settings.Get("addresses").MustString()
 	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
+	autoResolve := model.Settings.Get("autoResolve").MustBool(true)
 
 	if addressesString == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find addresses in settings"}
@@ -43,18 +45,13 @@ func NewEmailNotifier(model *models.AlertNotification) (*EmailNotifier, error) {
 	// split addresses with a few different ways
 	addresses := util.SplitEmails(addressesString)
 
-	// TODO: remove this URL hack and add an actual external URL.
-	u, err := url.Parse("http://localhost")
-	if err != nil {
-		return nil, err
-	}
-
 	return &EmailNotifier{
 		NotifierBase: old_notifiers.NewNotifierBase(model),
 		Addresses:    addresses,
 		SingleEmail:  singleEmail,
+		AutoResolve:  autoResolve,
 		log:          log.New("alerting.notifier.email"),
-		externalUrl:  u,
+		externalUrl:  externalUrl,
 	}, nil
 }
 
@@ -111,6 +108,5 @@ func getTitleFromTemplateData(data *template.Data) string {
 }
 
 func (en *EmailNotifier) SendResolved() bool {
-	// TODO: implement this.
-	return true
+	return en.AutoResolve
 }
