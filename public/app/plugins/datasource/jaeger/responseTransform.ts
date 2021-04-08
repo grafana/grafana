@@ -1,5 +1,4 @@
-import { DataFrame, FieldType, MutableDataFrame, TraceSpanRow } from '@grafana/data';
-
+import { DataFrame, DataSourceInstanceSettings, FieldType, MutableDataFrame, TraceSpanRow } from '@grafana/data';
 import { Span, TraceProcess, TraceResponse } from './types';
 
 export function createTraceFrame(data: TraceResponse): DataFrame {
@@ -50,5 +49,52 @@ function toSpanRow(span: Span, processes: Record<string, TraceProcess>): TraceSp
     stackTraces: span.stackTraces,
     serviceName: processes[span.processID].serviceName,
     serviceTags: processes[span.processID].tags,
+  };
+}
+
+export function createTableFrame(data: TraceResponse[], instanceSettings: DataSourceInstanceSettings): DataFrame {
+  const frame = new MutableDataFrame({
+    fields: [
+      {
+        name: 'traceID',
+        type: FieldType.string,
+        config: {
+          links: [
+            {
+              title: 'Trace: ${__value.raw}',
+              url: '',
+              internal: {
+                datasourceUid: instanceSettings.uid,
+                datasourceName: instanceSettings.name,
+                query: {
+                  queryType: 'traceID',
+                  traceID: '${__value.raw}',
+                },
+              },
+            },
+          ],
+        },
+      },
+      { name: 'service', type: FieldType.string },
+      { name: 'operation', type: FieldType.string },
+      { name: 'startTime', type: FieldType.number },
+      { name: 'duration', type: FieldType.number },
+    ],
+    meta: {
+      preferredVisualisationType: 'table',
+    },
+  });
+  const traceData = data.map(transformToTraceData);
+
+  for (const trace of traceData) {
+    frame.add(trace);
+  }
+
+  return frame;
+}
+
+function transformToTraceData(data: TraceResponse) {
+  return {
+    traceID: data.traceID,
   };
 }

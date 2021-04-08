@@ -1,3 +1,5 @@
+import { DataQuery } from '@grafana/data';
+
 export type TraceKeyValuePair = {
   key: string;
   type?: string;
@@ -47,3 +49,12 @@ export type TraceResponse = {
   warnings?: string[] | null;
   spans: Span[];
 };
+
+export type JaegerQuery = {
+  queryType?: JaegerQueryType;
+  service?: string;
+  operation?: string;
+  traceID?: string;
+} & DataQuery;
+
+export type JaegerQueryType = 'traceID' | 'search';

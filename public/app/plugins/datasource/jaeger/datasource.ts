@@ -1,5 +1,4 @@
 import {
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
@@ -14,12 +13,9 @@ import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { createTraceFrame } from './responseTransform';
+import { createTableFrame, createTraceFrame } from './responseTransform';
 import { createGraphFrames } from './graphTransform';
-
-export type JaegerQuery = {
-  query: string;
-} & DataQuery;
+import { JaegerQuery } from './types';
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
@@ -34,21 +30,30 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
-    const id = options.targets[0]?.query;
-    if (!id) {
+    const target = options.targets[0];
+    if (!target) {
       return of({ data: [emptyTraceDataFrame] });
     }
 
+    if (target.traceID) {
+      return this._request(`/api/traces/${encodeURIComponent(target.traceID)}`).pipe(
+        map((response) => {
+          const traceData = response?.data?.data?.[0];
+          if (!traceData) {
+            return { data: [emptyTraceDataFrame] };
+          }
+          return {
+            data: [createTraceFrame(traceData), ...createGraphFrames(traceData)],
+          };
+        })
+      );
+    }
+
     // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
-    return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
+    return this._request(`/api/traces`, { service: target.service, operation: target.operation }).pipe(
       map((response) => {
-        // We assume there is only one trace, as the querying right now does not work to query for multiple traces.
-        const traceData = response?.data?.data?.[0];
-        if (!traceData) {
-          return { data: [emptyTraceDataFrame] };
-        }
         return {
-          data: [createTraceFrame(traceData), ...createGraphFrames(traceData)],
+          data: [createTableFrame(response.data.data, this.instanceSettings)],
         };
       })
     );
@@ -101,7 +106,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   getQueryDisplayText(query: JaegerQuery) {
-    return query.query;
+    return query.traceID || '';
   }
 
   private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {

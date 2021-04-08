@@ -2,13 +2,14 @@ import { DataQueryRequest, DataSourceInstanceSettings, dateTime, FieldType, Plug
 import { backendSrv } from 'app/core/services/backend_srv';
 import { of, throwError } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
-import { JaegerDatasource, JaegerQuery } from './datasource';
+import { JaegerDatasource } from './datasource';
 import {
   testResponse,
   testResponseDataFrameFields,
   testResponseNodesFields,
   testResponseEdgesFields,
 } from './testResponse';
+import { JaegerQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -170,7 +171,7 @@ const defaultQuery: DataQueryRequest<JaegerQuery> = {
   startTime: 0,
   targets: [
     {
-      query: '12345',
+      traceID: '12345',
       refId: '1',
     },
   ],
