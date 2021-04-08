@@ -23,6 +23,7 @@ import {
   locationUtil,
   getFieldDisplayName,
   getColorForTheme,
+  InterpolateFunction,
 } from '@grafana/data';
 
 import { convertOldAngularValueMapping } from '@grafana/ui';
@@ -50,13 +51,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
   data: Partial<ShowData> = {};
-
   fontSizes: any[] = [];
   fieldNames: string[] = [];
-
   invalidGaugeRange = false;
-  panel: any;
-  events: any;
+
   valueNameOptions: any[] = [
     { value: 'min', text: 'Min' },
     { value: 'max', text: 'Max' },
@@ -621,7 +619,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       elem.toggleClass('pointer', panel.links.length > 0);
 
       if (panel.links.length > 0) {
-        linkInfo = linkSrv.getDataLinkUIModel(panel.links[0], data.scopedVars, {});
+        const replace: InterpolateFunction = (value, vars) =>
+          templateSrv.replace(value, { ...vars, ...data.scopedVars });
+        linkInfo = linkSrv.getDataLinkUIModel(panel.links[0], replace, {});
       } else {
         linkInfo = null;
       }

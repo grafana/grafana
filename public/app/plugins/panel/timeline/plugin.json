@@ -1,0 +1,18 @@
+{
+  "type": "panel",
+  "name": "Timeline",
+  "id": "timeline",
+
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/timeline.svg",
+      "large": "img/timeline.svg"
+    }
+  }
+}

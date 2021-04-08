@@ -214,6 +214,25 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		assert.Equal(t, "Ok", bodyStr)
 	})
 
+	t.Run("Should use request timeout if configured in JsonData", func(t *testing.T) {
+		clearDSProxyCache(t)
+
+		json := simplejson.NewFromAny(map[string]interface{}{
+			"timeout": 19,
+		})
+		ds := DataSource{
+			Id:       1,
+			Url:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: json,
+		}
+
+		client, err := ds.GetHttpClient()
+		require.NoError(t, err)
+
+		assert.Equal(t, 19*time.Second, client.Timeout)
+	})
+
 	t.Run("Should not include SigV4 middleware if not configured in JsonData", func(t *testing.T) {
 		clearDSProxyCache(t)
 
