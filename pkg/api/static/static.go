@@ -16,6 +16,7 @@
 package httpstatic
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -149,7 +150,12 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 	if fi.IsDir() {
 		// Redirect if missing trailing slash.
 		if !strings.HasSuffix(ctx.Req.URL.Path, "/") {
-			http.Redirect(ctx.Resp, ctx.Req.Request, ctx.Req.URL.Path+"/", http.StatusFound)
+			path := fmt.Sprintf("%s/", ctx.Req.URL.Path)
+			if !strings.HasPrefix(path, "/") {
+				// Disambiguate that it's a path relative to this server
+				path = fmt.Sprintf("/%s", path)
+			}
+			http.Redirect(ctx.Resp, ctx.Req.Request, path, http.StatusFound)
 			return true
 		}
 
