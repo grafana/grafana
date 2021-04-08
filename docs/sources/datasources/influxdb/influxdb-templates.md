@@ -1,10 +1,10 @@
 +++
-title = "Provision InfluxDB"
-description = "Guide for provisioning InfluxDB"
+title = "InfluxDB templates"
+description = "Guide for templates in InfluxDB"
 weight = 300
 +++
 
-## Templating
+## InfluxDB templates
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
 
