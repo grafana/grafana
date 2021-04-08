@@ -20,7 +20,7 @@ InfluxDB data source options differ depending on which [query language](#query-l
 
 ### InfluxQL (classic InfluxDB query)
 
-
+These options apply if you are using the InfluxQL query language. If you are using Flux, refer to [Flux support in Grafana]({{< relref "influx-flux.md" >}}).
 
 Name        | Description
 ----------- | -------------
