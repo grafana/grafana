@@ -83,7 +83,7 @@ const getStyles = (theme: GrafanaTheme) => {
     icon: css`
       opacity: 0.7;
       margin-right: 10px;
-      color: ${theme.colors.linkDisabled};
+      color: ${theme.v2.palette.text.secondary};
     `,
   };
 };
