@@ -35,7 +35,7 @@ type PublishEvent struct {
 // PublishReply is a reaction to PublishEvent.
 type PublishReply struct {
 	// By default, it's a handler responsibility to publish data
-	// into a stream upon OnPublish but setting Fallthrough to true
+	// into a stream upon OnPublish but returning a data here
 	// will make Grafana Live publish data itself (i.e. stream handler
 	// just works as permission proxy in this case).
 	Data json.RawMessage

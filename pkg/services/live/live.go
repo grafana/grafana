@@ -206,6 +206,7 @@ func (g *GrafanaLive) Init() error {
 				reply, status, err := handler.OnPublish(client.Context(), user, models.PublishEvent{
 					Channel: e.Channel,
 					Path:    addr.Path,
+					Data:    e.Data,
 				})
 				if err != nil {
 					logger.Error("Error calling channel handler publish", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
@@ -356,6 +357,8 @@ func (g *GrafanaLive) GetChannelHandlerFactory(user *models.SignedInUser, scope 
 		return g.handleDatasourceScope(user, namespace)
 	case ScopeStream:
 		return g.handleStreamScope(user, namespace)
+	case ScopePush:
+		return g.handlePushScope(user, namespace)
 	default:
 		return nil, fmt.Errorf("invalid scope: %q", scope)
 	}
@@ -391,6 +394,10 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 
 func (g *GrafanaLive) handleStreamScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
 	return g.ManagedStreamRunner.GetOrCreateStream(namespace)
+}
+
+func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
+	return NewDemultiplexer(g.ManagedStreamRunner, namespace), nil
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
