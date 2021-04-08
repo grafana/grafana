@@ -86,10 +86,9 @@ export const getButtonStyles = (props: StyleProps) => {
 
   const disabledStyles: CSSObject = {
     cursor: 'not-allowed',
-    opacity: 0.65,
     boxShadow: 'none',
     background: theme.v2.palette.formComponent.disabledBackground,
-    border: `1px solid ${theme.v2.palette.formComponent.disabledBackground}`,
+    border: `1px solid transparent`,
     color: theme.v2.palette.text.disabled,
     pointerEvents: 'none',
 

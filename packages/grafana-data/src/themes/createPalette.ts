@@ -129,7 +129,7 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   secondary = {
-    main: 'rgba(0,0,0,0.18)',
+    main: 'rgba(0,0,0,0.14)',
     contrastText: 'rgba(0, 0, 0, 0.75)',
   };
 
@@ -154,8 +154,8 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
 
   text = {
     primary: 'rgba(0, 0, 0, 0.87)',
-    secondary: 'rgba(0, 0, 0, 0.54)',
-    disabled: 'rgba(0, 0, 0, 0.38)',
+    secondary: 'rgba(0, 0, 0, 0.55)',
+    disabled: 'rgba(0, 0, 0, 0.40)',
     link: this.primary.text,
     maxContrast: colors.black,
   };
@@ -172,7 +172,7 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     background: this.layer1,
     border: this.border1,
     text: this.text.primary,
-    disabledBackground: colors.gray95,
+    disabledBackground: 'rgba(0,0,0,0.07)',
     disabledText: this.text.disabled,
   };
 

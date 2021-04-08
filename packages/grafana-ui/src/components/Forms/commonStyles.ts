@@ -16,7 +16,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
   const textColor = palette.text.primary;
 
   return css`
-    background-color: ${background};
+    background: ${background};
     line-height: ${theme.typography.lineHeight.md};
     font-size: ${theme.typography.size.md};
     color: ${textColor};
