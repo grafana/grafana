@@ -8,7 +8,7 @@ weight = 700
 
 # Using InfluxDB in Grafana
 
-[InfluxDB](https://www.influxdata.com/products/) is an open-source time series database (TSDB) developed by [InfluxData](https://www.influxdata.com/). It is optimized for fast, high-availability storage and retrieval of time series data in fields such as operations monitoring, application metrics, IoT sensor data, and real-time analytics.
+{{< docs/shared "influxdb/intro.md" >}}
 
 This topic explains options, variables, querying, and other options specific to this data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
@@ -62,6 +62,7 @@ You can query InfluxDB using InfluxQL or Flux:
 - [InfluxQL](https://docs.influxdata.com/influxdb/v1.8/query_language/explore-data/) is a SQL-like language for querying InfluxDB, with statements such as SELECT, FROM, WHERE, and GROUP BY that are familiar to SQL users. InfluxQL is available in InfluxDB 1.0 onwards.
 - [Flux](https://docs.influxdata.com/influxdb/v2.0/query-data/get-started/) provides significantly broader functionality than InfluxQL, supporting not only queries, but built-in functions for data shaping, string manipulation, joining to non-InfluxDB data sources and more, but also processing time-series data. It’s more similar to JavaScript with a functional style.
 
+To help you choose the best language for your needs, here’s a comparison of [Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/), and [why InfluxData created Flux](https://www.influxdata.com/blog/why-were-building-flux-a-new-data-scripting-and-query-language/).
 
 ## Query Editor
 
