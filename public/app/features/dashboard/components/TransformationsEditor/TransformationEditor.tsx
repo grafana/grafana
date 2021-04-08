@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { mergeMap } from 'rxjs/operators';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Icon, JSONFormatter, useStyles } from '@grafana/ui';
 import {
   DataFrame,

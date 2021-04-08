@@ -216,7 +216,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     if (!panel) {
       // Panel not found
-      this.props.notifyApp(createErrorNotification(`Panel with id ${urlPanelId} not found`));
+      this.props.notifyApp(createErrorNotification(`Panel with ID ${urlPanelId} not found`));
       // Clear url state
       locationService.partial({ editPanel: null, viewPanel: null });
       return;
