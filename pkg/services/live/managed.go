@@ -7,6 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/grpc/codes"
+
+	"github.com/gogo/status"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
@@ -139,6 +142,16 @@ func (s *ManagedStream) OnSubscribe(_ context.Context, _ *models.SignedInUser, e
 
 func (s *ManagedStream) OnPublish(_ context.Context, _ *models.SignedInUser, evt models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	logger.Debug("OnPublish", evt.Channel, "evt", evt)
-
-	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
+	var frame data.Frame
+	err := json.Unmarshal(evt.Data, &frame)
+	if err != nil {
+		// stream scope only deals with data frames.
+		return models.PublishReply{}, 0, status.Error(codes.InvalidArgument, `invalid frame data`)
+	}
+	err = s.Push(evt.Path, &frame)
+	if err != nil {
+		// stream scope only deals with data frames.
+		return models.PublishReply{}, 0, status.Error(codes.Internal, `internal error`)
+	}
+	return models.PublishReply{}, backend.PublishStreamStatusOK, nil
 }
