@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, IconButton } from '@grafana/ui';
 import { Route } from '../../../../../plugins/datasource/alertmanager/types';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
@@ -8,12 +8,16 @@ export interface AmSpecificRoutingProps {
 }
 
 export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ route }) => {
-  const [items, setItems] = useState<Array<DynamicTableItemProps<Route>>>(
-    (route?.routes ?? []).map((currentRoute, index) => ({
-      id: index,
-      data: currentRoute,
-    }))
-  );
+  const [items, setItems] = useState<Array<DynamicTableItemProps<Route>>>([]);
+
+  useEffect(() => {
+    setItems(
+      (route?.routes ?? []).map((currentRoute, index) => ({
+        id: index,
+        data: currentRoute,
+      }))
+    );
+  }, [route?.routes]);
 
   const renderMatchingCriteria = (item: DynamicTableItemProps<Route>) =>
     Object.entries({
