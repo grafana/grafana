@@ -3,6 +3,8 @@ import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
+import { AmRootRoute } from './components/amroutes/AmRootRoute';
+import { AmSpecificRouting } from './components/amroutes/AmSpecificRouting';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertManagerConfigAction } from './state/actions';
@@ -31,7 +33,13 @@ const AmRoutes: FC = () => {
         </InfoBox>
       )}
       {loading && <LoadingPlaceholder text="loading alert manager config..." />}
-      {result && !loading && !error && <pre>{JSON.stringify(result, null, 2)}</pre>}
+      {result && !loading && !error && (
+        <>
+          <AmRootRoute route={result.alertmanager_config.route} />
+          <AmSpecificRouting route={result.alertmanager_config.route} />
+          <pre>{JSON.stringify(result, null, 2)}</pre>
+        </>
+      )}
     </AlertingPageWrapper>
   );
 };
