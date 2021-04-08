@@ -1,6 +1,6 @@
 import { GraphNGProps } from '../GraphNG/GraphNG';
 import { GraphGradientMode, HideableFieldConfig } from '../uPlot/config';
-import { VizLegendOptions } from '../VizLegend/types';
+import { VizLegendOptions } from '../VizLegend/models.gen';
 
 /**
  * @alpha
