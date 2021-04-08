@@ -4,7 +4,8 @@ import { number, select } from '@storybook/addon-knobs';
 import {} from './VizLegendListItem';
 import { DisplayValue, getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { LegendDisplayMode, VizLegendItem, LegendPlacement } from './types';
+import { VizLegendItem } from './types';
+import { LegendDisplayMode, LegendPlacement } from './models.gen';
 
 const getStoriesKnobs = (table = false) => {
   const seriesCount = number('Number of series', 5);
