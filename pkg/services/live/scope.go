@@ -9,6 +9,6 @@ const (
 	ScopeDatasource = "ds"
 	// ScopeStream is a managed data frame stream
 	ScopeStream = "stream"
-	// ScopePush is a managed data frame demultiplexer.
+	// ScopePush allows sending data into managed streams.  It does not support subscriptions
 	ScopePush = "push"
 )
