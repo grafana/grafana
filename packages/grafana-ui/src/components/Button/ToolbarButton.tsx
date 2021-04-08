@@ -104,8 +104,8 @@ function renderIcon(icon: IconName | React.ReactNode) {
 }
 
 const getStyles = (theme: GrafanaTheme) => {
-  const primaryVariant = getPropertiesForVariant(theme, 'primary');
-  const destructiveVariant = getPropertiesForVariant(theme, 'destructive');
+  const primaryVariant = getPropertiesForVariant(theme.v2, 'primary');
+  const destructiveVariant = getPropertiesForVariant(theme.v2, 'destructive');
 
   return {
     button: css`
@@ -151,14 +151,8 @@ const getStyles = (theme: GrafanaTheme) => {
         background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
       }
     `,
-    primary: css`
-      border-color: ${primaryVariant.borderColor};
-      ${primaryVariant.variantStyles}
-    `,
-    destructive: css`
-      border-color: ${destructiveVariant.borderColor};
-      ${destructiveVariant.variantStyles}
-    `,
+    primary: css(primaryVariant),
+    destructive: css(destructiveVariant),
     narrow: css`
       padding: 0 ${theme.spacing.xs};
     `,

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -32,13 +33,13 @@ type RulerApiBase struct {
 
 func (api *API) RegisterRulerApiEndpoints(srv RulerApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Delete(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}"), routing.Wrap(srv.RouteDeleteNamespaceRulesConfig))
-		group.Delete(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"), routing.Wrap(srv.RouteDeleteRuleGroupConfig))
-		group.Get(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}"), routing.Wrap(srv.RouteGetNamespaceRulesConfig))
-		group.Get(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"), routing.Wrap(srv.RouteGetRulegGroupConfig))
-		group.Get(toMacaronPath("/ruler/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRulesConfig))
-		group.Post(toMacaronPath("/ruler/{Recipient}/api/v1/rules/{Namespace}"), binding.Bind(apimodels.PostableRuleGroupConfig{}), routing.Wrap(srv.RoutePostNameRulesConfig))
-	})
+		group.Delete(toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"), routing.Wrap(srv.RouteDeleteNamespaceRulesConfig))
+		group.Delete(toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"), routing.Wrap(srv.RouteDeleteRuleGroupConfig))
+		group.Get(toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"), routing.Wrap(srv.RouteGetNamespaceRulesConfig))
+		group.Get(toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}/{Groupname}"), routing.Wrap(srv.RouteGetRulegGroupConfig))
+		group.Get(toMacaronPath("/api/ruler/{Recipient}/api/v1/rules"), routing.Wrap(srv.RouteGetRulesConfig))
+		group.Post(toMacaronPath("/api/ruler/{Recipient}/api/v1/rules/{Namespace}"), binding.Bind(apimodels.PostableRuleGroupConfig{}), routing.Wrap(srv.RoutePostNameRulesConfig))
+	}, middleware.ReqSignedIn)
 }
 
 func (base RulerApiBase) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {

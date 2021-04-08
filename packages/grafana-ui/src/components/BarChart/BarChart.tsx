@@ -6,11 +6,11 @@ import { Themeable } from '../../types';
 import { UPlotChart } from '../uPlot/Plot';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent } from '../GraphNG/types';
-import { LegendDisplayMode } from '../VizLegend/types';
 import { BarChartOptions } from './types';
 import { withTheme } from '../../themes';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { preparePlotData } from '../uPlot/utils';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { PlotLegend } from '../uPlot/PlotLegend';
 
 /**
