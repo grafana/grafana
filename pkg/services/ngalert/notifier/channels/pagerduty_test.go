@@ -2,7 +2,9 @@ package channels
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/url"
 	"os"
 	"testing"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -125,7 +128,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				"integrationKey": "abcdefgh0123456789",
 				"class": "{{ .Status }"
 			}`,
-			expMsgError: errors.New("failed to template PagerDuty message: template: :1: unexpected \"}\" in operand"),
+			expMsgError: errors.New("build pagerduty message: failed to template PagerDuty message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 
@@ -140,7 +143,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewPagerdutyNotifier(m, tmpl)
+			externalURL, err := url.Parse("http://localhost")
+			require.NoError(t, err)
+			pn, err := NewPagerdutyNotifier(m, tmpl, externalURL)
 			if c.expInitError != nil {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError.Error(), err.Error())
@@ -148,17 +153,28 @@ func TestPagerdutyNotifier(t *testing.T) {
 			}
 			require.NoError(t, err)
 
+			body := ""
+			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
+				body = webhook.Body
+				return nil
+			})
+
 			ctx := notify.WithGroupKey(context.Background(), "alertname")
 			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": ""})
-			msg, _, err := pn.buildPagerdutyMessage(ctx, types.Alerts(c.alerts...), c.alerts)
+			ok, err := pn.Notify(ctx, c.alerts...)
 			if c.expMsgError != nil {
+				require.False(t, ok)
 				require.Error(t, err)
 				require.Equal(t, c.expMsgError.Error(), err.Error())
 				return
 			}
+			require.True(t, ok)
 			require.NoError(t, err)
 
-			require.Equal(t, c.expMsg, msg)
+			expBody, err := json.Marshal(c.expMsg)
+			require.NoError(t, err)
+
+			require.JSONEq(t, string(expBody), body)
 		})
 	}
 }

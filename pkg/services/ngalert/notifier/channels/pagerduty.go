@@ -21,9 +21,12 @@ import (
 )
 
 const (
-	pagerdutyEventAPIURL  = "https://events.pagerduty.com/v2/enqueue"
 	pagerDutyEventTrigger = "trigger"
 	pagerDutyEventResolve = "resolve"
+)
+
+var (
+	pagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
 // PagerdutyNotifier is responsible for sending
@@ -44,17 +47,12 @@ type PagerdutyNotifier struct {
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template) (*PagerdutyNotifier, error) {
-	severity := model.Settings.Get("severity").MustString("critical")
-	autoResolve := model.Settings.Get("autoResolve").MustBool(true)
+func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*PagerdutyNotifier, error) {
 	key := model.DecryptedValue("integrationKey", model.Settings.Get("integrationKey").MustString())
 	if key == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
 	}
-	class := model.Settings.Get("class").MustString("todo_class") // TODO
-	component := model.Settings.Get("component").MustString("Grafana")
-	group := model.Settings.Get("group").MustString("todo_group") // TODO
-	summary := model.Settings.Get("summary").MustString(`{{ template "pagerduty.default.description" .}}`)
+
 	customDetails := model.Settings.Get("customDetails").MustMap(map[string]interface{}{
 		"firing":       `{{ template "pagerduty.default.instances" .Alerts.Firing }}`,
 		"resolved":     `{{ template "pagerduty.default.instances" .Alerts.Resolved }}`,
@@ -69,24 +67,18 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 		}
 	}
 
-	// TODO: remove this URL hack and add an actual external URL.
-	u, err := url.Parse("http://localhost")
-	if err != nil {
-		return nil, err
-	}
-
 	return &PagerdutyNotifier{
 		NotifierBase:  old_notifiers.NewNotifierBase(model),
 		Key:           key,
-		Severity:      severity,
-		AutoResolve:   autoResolve,
-		Class:         class,
-		Component:     component,
-		Group:         group,
 		CustomDetails: details,
-		Summary:       summary,
+		Severity:      model.Settings.Get("severity").MustString("critical"),
+		AutoResolve:   model.Settings.Get("autoResolve").MustBool(true),
+		Class:         model.Settings.Get("class").MustString("todo_class"), // TODO
+		Component:     model.Settings.Get("component").MustString("Grafana"),
+		Group:         model.Settings.Get("group").MustString("todo_group"), // TODO
+		Summary:       model.Settings.Get("summary").MustString(`{{ template "pagerduty.default.description" .}}`),
 		tmpl:          t,
-		externalUrl:   u,
+		externalUrl:   externalUrl,
 		log:           log.New("alerting.notifier." + model.Name),
 	}, nil
 }
@@ -95,7 +87,7 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
 	if alerts.Status() == model.AlertResolved && !pn.AutoResolve {
-		pn.log.Info("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.AutoResolve)
+		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.AutoResolve)
 		return true, nil
 	}
 
@@ -119,8 +111,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		},
 	}
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {
-		pn.log.Error("Failed to send notification to Pagerduty", "error", err, "body", string(body))
-		return false, err
+		return false, errors.Wrap(err, "send notification to Pagerduty")
 	}
 
 	return true, nil

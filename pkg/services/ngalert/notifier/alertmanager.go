@@ -2,13 +2,10 @@ package notifier
 
 import (
 	"context"
+	"net/url"
 	"path/filepath"
 	"sync"
 	"time"
-
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-
-	"github.com/grafana/grafana/pkg/models"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/alerting-api/pkg/api"
@@ -22,7 +19,9 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -172,6 +171,8 @@ func (am *Alertmanager) ApplyConfig(cfg *api.PostableUserConfig) error {
 	return am.applyConfig(cfg)
 }
 
+const defaultTemplate = "templates/default.tmpl"
+
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
 func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
@@ -181,7 +182,7 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 		return err
 	}
 
-	paths = append([]string{"templates/default.tmpl"}, paths...)
+	paths = append([]string{defaultTemplate}, paths...)
 
 	// With the templates persisted, create the template list using the paths.
 	tmpl, err := template.FromGlobs(paths...)
@@ -261,11 +262,15 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiRecei
 			n   NotificationChannel
 			err error
 		)
+		externalURL, err := url.Parse(am.Settings.AppURL)
+		if err != nil {
+			return nil, err
+		}
 		switch r.Type {
 		case "email":
-			n, err = channels.NewEmailNotifier(cfg)
+			n, err = channels.NewEmailNotifier(cfg, externalURL)
 		case "pagerduty":
-			n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
+			n, err = channels.NewPagerdutyNotifier(cfg, tmpl, externalURL)
 		}
 		if err != nil {
 			return nil, err
