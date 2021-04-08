@@ -31,6 +31,14 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
           }
 
           return runner.run({ annotation, datasource, dashboard, range });
+        }),
+        map((results) => {
+          // store response in annotation object if this is a snapshot call
+          if (dashboard.snapshot) {
+            annotation.snapshotData = cloneDeep(results);
+          }
+          // translate result
+          return this.translateQueryResult(annotation, results);
         })
       );
     });
