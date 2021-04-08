@@ -141,3 +141,37 @@ export type AlertmanagerConfig = {
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
 };
+
+export type SilenceMatcher = {
+  name: string;
+  value: string;
+  isRegex: boolean;
+};
+
+export enum SilenceState {
+  Active = 'active',
+  Expired = 'expired',
+  Pending = 'pending',
+}
+
+export type Silence = {
+  id: string;
+  matchers?: SilenceMatcher[];
+  startsAt: string;
+  endsAt: string;
+  updatedAt: string;
+  createdBy: string;
+  comment: string;
+  status: {
+    state: SilenceState;
+  };
+};
+
+export type SilenceCreatePayload = {
+  id?: string;
+  matchers?: SilenceMatcher[];
+  startsAt: string;
+  endsAt: string;
+  createdBy: string;
+  comment: string;
+};
