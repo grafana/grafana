@@ -59,11 +59,15 @@ export const prepare = () =>
   );
 
 export const versions = async () => {
-  const nodeVersion = await execa('node', ['--version']);
-  console.log(`Using Node.js ${nodeVersion}`);
+  try {
+    const nodeVersion = await execa('node', ['--version']);
+    console.log(`Using Node.js ${nodeVersion.stdout}`);
 
-  const toolkitVersion = await execa('grafana-toolkit', ['--version']);
-  console.log(`Using @grafana/toolkit ${toolkitVersion}`);
+    const toolkitVersion = await execa('grafana-toolkit', ['--version']);
+    console.log(`Using @grafana/toolkit ${toolkitVersion.stdout}`);
+  } catch (err) {
+    console.log(`Error reading versions`, err);
+  }
 };
 
 // @ts-ignore

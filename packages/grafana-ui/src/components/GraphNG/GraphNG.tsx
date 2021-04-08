@@ -20,7 +20,7 @@ import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
-import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
+import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
 
 /**
@@ -41,7 +41,10 @@ export interface GraphNGProps extends Themeable {
   children?: React.ReactNode;
 }
 
-interface GraphNGState {
+/**
+ * @internal -- not a public API
+ */
+export interface GraphNGState {
   data: AlignedData;
   alignedDataFrame: DataFrame;
   dimFields: XYFieldMatchers;

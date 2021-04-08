@@ -3,6 +3,7 @@ import { getRootReducer, RootReducerType } from '../../state/helpers';
 import { initialVariableModelState, QueryVariableModel, VariableRefresh, VariableSort } from '../../types';
 import {
   hideOptions,
+  initialState,
   moveOptionsHighlight,
   showOptions,
   toggleOption,
@@ -14,6 +15,7 @@ import {
   commitChangesToVariable,
   filterOrSearchOptions,
   navigateOptions,
+  openOptions,
   toggleAndFetchTag,
   toggleOptionByHighlight,
 } from './actions';
@@ -23,6 +25,7 @@ import { addVariable, changeVariableProp, setCurrentVariableValue } from '../../
 import { variableAdapters } from '../../adapters';
 import { createQueryVariableAdapter } from '../../query/adapter';
 import { locationService } from '@grafana/runtime';
+import { queryBuilder } from '../../shared/testing/builders';
 
 const datasource = {
   metricFindQuery: jest.fn(() => Promise.resolve([])),
@@ -215,6 +218,101 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(filterOrSearchOptions(filter), true);
 
       tester.thenDispatchedActionsShouldEqual(updateSearchQuery(filter), updateOptionsAndFilter(variable.options));
+    });
+  });
+
+  describe('when openOptions is dispatched and there is no picker state yet', () => {
+    it('then correct actions are dispatched', async () => {
+      const variable = queryBuilder()
+        .withId('query0')
+        .withName('query0')
+        .withMulti()
+        .withCurrent(['A', 'C'])
+        .withOptions('A', 'B', 'C')
+        .build();
+
+      const preloadedState: any = {
+        templating: {
+          variables: {
+            [variable.id]: { ...variable },
+          },
+          optionsPicker: { ...initialState },
+        },
+      };
+
+      const tester = await reduxTester<RootReducerType>({ preloadedState })
+        .givenRootReducer(getRootReducer())
+        .whenAsyncActionIsDispatched(openOptions(variable, undefined));
+
+      tester.thenDispatchedActionsShouldEqual(showOptions(variable));
+    });
+  });
+
+  describe('when openOptions is dispatched and picker.id is same as variable.id', () => {
+    it('then correct actions are dispatched', async () => {
+      const variable = queryBuilder()
+        .withId('query0')
+        .withName('query0')
+        .withMulti()
+        .withCurrent(['A', 'C'])
+        .withOptions('A', 'B', 'C')
+        .build();
+
+      const preloadedState: any = {
+        templating: {
+          variables: {
+            [variable.id]: { ...variable },
+          },
+          optionsPicker: { ...initialState, id: variable.id },
+        },
+      };
+
+      const tester = await reduxTester<RootReducerType>({ preloadedState })
+        .givenRootReducer(getRootReducer())
+        .whenAsyncActionIsDispatched(openOptions(variable, undefined));
+
+      tester.thenDispatchedActionsShouldEqual(showOptions(variable));
+    });
+  });
+
+  describe('when openOptions is dispatched and picker.id is not the same as variable.id', () => {
+    it('then correct actions are dispatched', async () => {
+      const variableInPickerState = queryBuilder()
+        .withId('query1')
+        .withName('query1')
+        .withMulti()
+        .withCurrent(['A', 'C'])
+        .withOptions('A', 'B', 'C')
+        .build();
+
+      const variable = queryBuilder()
+        .withId('query0')
+        .withName('query0')
+        .withMulti()
+        .withCurrent(['A'])
+        .withOptions('A', 'B', 'C')
+        .build();
+
+      const preloadedState: any = {
+        templating: {
+          variables: {
+            [variable.id]: { ...variable },
+            [variableInPickerState.id]: { ...variableInPickerState },
+          },
+          optionsPicker: { ...initialState, id: variableInPickerState.id },
+        },
+      };
+
+      const tester = await reduxTester<RootReducerType>({ preloadedState })
+        .givenRootReducer(getRootReducer())
+        .whenAsyncActionIsDispatched(openOptions(variable, undefined));
+
+      tester.thenDispatchedActionsShouldEqual(
+        setCurrentVariableValue({ type: 'query', id: 'query1', data: { option: undefined } }),
+        changeVariableProp({ type: 'query', id: 'query1', data: { propName: 'queryValue', propValue: '' } }),
+        hideOptions(),
+        showOptions(variable)
+      );
     });
   });
 

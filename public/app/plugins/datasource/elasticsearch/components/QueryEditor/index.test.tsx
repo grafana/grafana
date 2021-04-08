@@ -4,6 +4,8 @@ import { QueryEditor } from '.';
 import { ElasticDatasource } from '../../datasource';
 import { ElasticsearchQuery } from '../../types';
 
+const noop = () => void 0;
+
 describe('QueryEditor', () => {
   describe('Alias Field', () => {
     it('Should correctly render and trigger changes on blur', () => {
@@ -23,9 +25,7 @@ describe('QueryEditor', () => {
 
       const onChange = jest.fn<void, [ElasticsearchQuery]>();
 
-      render(
-        <QueryEditor query={query} datasource={{} as ElasticDatasource} onChange={onChange} onRunQuery={() => {}} />
-      );
+      render(<QueryEditor query={query} datasource={{} as ElasticDatasource} onChange={onChange} onRunQuery={noop} />);
 
       let aliasField = screen.getByLabelText('Alias') as HTMLInputElement;
 
@@ -44,6 +44,42 @@ describe('QueryEditor', () => {
       // query state should match what expected
       expect(onChange).toHaveBeenCalledTimes(1);
       expect(onChange.mock.calls[0][0].alias).toBe(newAlias);
+    });
+
+    it('Should be disabled if last bucket aggregation is not Date Histogram', () => {
+      const query: ElasticsearchQuery = {
+        refId: 'A',
+        query: '',
+        metrics: [
+          {
+            id: '1',
+            type: 'avg',
+          },
+        ],
+        bucketAggs: [{ id: '2', type: 'terms' }],
+      };
+
+      render(<QueryEditor query={query} datasource={{} as ElasticDatasource} onChange={noop} onRunQuery={noop} />);
+
+      expect(screen.getByLabelText('Alias')).toBeDisabled();
+    });
+
+    it('Should be enabled if last bucket aggregation is Date Histogram', () => {
+      const query: ElasticsearchQuery = {
+        refId: 'A',
+        query: '',
+        metrics: [
+          {
+            id: '1',
+            type: 'avg',
+          },
+        ],
+        bucketAggs: [{ id: '2', type: 'date_histogram' }],
+      };
+
+      render(<QueryEditor query={query} datasource={{} as ElasticDatasource} onChange={noop} onRunQuery={noop} />);
+
+      expect(screen.getByLabelText('Alias')).toBeEnabled();
     });
   });
 });

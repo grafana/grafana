@@ -1,9 +1,8 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 
 import { Legend } from '@grafana/ui';
 import mdx from './Legend.mdx';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 export default {
   title: 'Forms/Legend',
@@ -15,12 +14,14 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['description'],
+    },
   },
   argTypes: {
     children: { name: 'Label' },
-    description: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 export const Basic: Story = (args) => {
   return <Legend>{args.children}</Legend>;

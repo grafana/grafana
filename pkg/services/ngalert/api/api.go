@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+
 	"github.com/go-macaron/binding"
 
 	apimodels "github.com/grafana/alerting-api/pkg/api"
@@ -28,11 +30,18 @@ import (
 var timeNow = time.Now
 
 type Alertmanager interface {
+	// Configuration
 	ApplyConfig(config *apimodels.PostableUserConfig) error
+
+	// Silences
 	CreateSilence(ps *apimodels.PostableSilence) (string, error)
 	DeleteSilence(silenceID string) error
 	GetSilence(silenceID string) (apimodels.GettableSilence, error)
-	ListSilences(filters []string) (apimodels.GettableSilences, error)
+	ListSilences(filter []string) (apimodels.GettableSilences, error)
+
+	// Alerts
+	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
+	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 }
 
 // API handlers.
@@ -47,6 +56,7 @@ type API struct {
 	AlertingStore   store.AlertingStore
 	DataProxy       *datasourceproxy.DatasourceProxyService
 	Alertmanager    Alertmanager
+	StateTracker    *state.StateTracker
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -63,7 +73,7 @@ func (api *API) RegisterAPIEndpoints() {
 	api.RegisterPrometheusApiEndpoints(NewForkedProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		PrometheusApiMock{log: logger},
+		PrometheusSrv{log: logger, stateTracker: api.StateTracker},
 	))
 	api.RegisterRulerApiEndpoints(NewForkedRuler(
 		api.DatasourceCache,
@@ -94,6 +104,9 @@ func (api *API) RegisterAPIEndpoints() {
 		})
 		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 			alertDefinitions.Get("/oldByID/:id", middleware.ReqSignedIn, routing.Wrap(api.conditionOldEndpointByID))
+		})
+		api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
+			alertDefinitions.Get("/ruleGroupByOldID/:id", middleware.ReqSignedIn, routing.Wrap(api.ruleGroupByOldID))
 		})
 	}
 
