@@ -9,4 +9,6 @@ const (
 	ScopeDatasource = "ds"
 	// ScopeStream is a managed data frame stream
 	ScopeStream = "stream"
+	// ScopePush is a managed data frame multiplexer.
+	ScopePush = "push"
 )

@@ -7,9 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/grpc/codes"
-
-	"github.com/gogo/status"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
@@ -146,12 +143,12 @@ func (s *ManagedStream) OnPublish(_ context.Context, _ *models.SignedInUser, evt
 	err := json.Unmarshal(evt.Data, &frame)
 	if err != nil {
 		// stream scope only deals with data frames.
-		return models.PublishReply{}, 0, status.Error(codes.InvalidArgument, `invalid frame data`)
+		return models.PublishReply{}, 0, err
 	}
 	err = s.Push(evt.Path, &frame)
 	if err != nil {
 		// stream scope only deals with data frames.
-		return models.PublishReply{}, 0, status.Error(codes.Internal, `internal error`)
+		return models.PublishReply{}, 0, err
 	}
 	return models.PublishReply{}, backend.PublishStreamStatusOK, nil
 }
