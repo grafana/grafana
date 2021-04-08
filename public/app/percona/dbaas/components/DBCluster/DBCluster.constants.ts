@@ -3,7 +3,7 @@ import { DBClusterServiceDatabasesMap } from './DBCluster.types';
 import { PSMDBService } from './PSMDB.service';
 import { XtraDBService } from './XtraDB.service';
 
-export const ADVANCED_SETTINGS_URL = '/settings/advanced-settings';
+export const ADVANCED_SETTINGS_URL = '/graph/settings/advanced-settings';
 
 export const DATABASE_OPTIONS = [
   {
