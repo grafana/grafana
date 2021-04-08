@@ -58,7 +58,7 @@ describe('LegacyAnnotationQueryRunner', () => {
       const options = { ...getDefaultOptions(), datasource };
 
       await expect(runner.run(options)).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
+        expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual([]);
         expect(datasource.annotationQuery).not.toHaveBeenCalled();
@@ -71,7 +71,7 @@ describe('LegacyAnnotationQueryRunner', () => {
       const { options, annotationQueryMock } = getTestContext();
 
       await expect(runner.run(options)).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
+        expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual([{ id: '1' }]);
         expect(annotationQueryMock).toHaveBeenCalledTimes(1);
@@ -86,7 +86,7 @@ describe('LegacyAnnotationQueryRunner', () => {
       const { options, annotationQueryMock, dispatchMock } = getTestContext(annotationQuery);
 
       await expect(runner.run(options)).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
+        expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual([]);
         expect(annotationQueryMock).toHaveBeenCalledTimes(1);
@@ -102,7 +102,7 @@ describe('LegacyAnnotationQueryRunner', () => {
       const { options, annotationQueryMock, dispatchMock } = getTestContext(annotationQuery);
 
       await expect(runner.run(options)).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
+        expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual([]);
         expect(annotationQueryMock).toHaveBeenCalledTimes(1);

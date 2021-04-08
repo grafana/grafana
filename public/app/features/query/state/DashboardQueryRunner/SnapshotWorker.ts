@@ -20,13 +20,13 @@ export class SnapshotWorker implements DashboardQueryRunnerWorker {
     const dashAnnotations = dashboard.annotations.list.filter((a) => a.enable);
     const snapshots = dashAnnotations.filter((a) => Boolean(a.snapshotData));
     const annotations = snapshots.reduce((acc, curr) => {
-      return acc.concat(this.translateQueryResult(curr, curr.snapshotData));
+      return acc.concat(SnapshotWorker.translateQueryResult(curr, curr.snapshotData));
     }, [] as AnnotationEvent[]);
 
     return of({ annotations, alertStates: [] });
   }
 
-  translateQueryResult(annotation: any, results: AnnotationEvent[]): AnnotationEvent[] {
+  private static translateQueryResult(annotation: any, results: AnnotationEvent[]): AnnotationEvent[] {
     annotation = cloneDeep(annotation);
     delete annotation.snapshotData;
 

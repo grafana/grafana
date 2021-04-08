@@ -60,7 +60,7 @@ describe('AnnotationsQueryRunner', () => {
       const { options, executeAnnotationQueryMock } = getTestContext();
 
       await expect(runner.run({ ...options, datasource })).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
+        expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual([]);
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(0);
@@ -73,7 +73,7 @@ describe('AnnotationsQueryRunner', () => {
       const { options, executeAnnotationQueryMock } = getTestContext();
 
       await expect(runner.run(options)).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
+        expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual([{ id: '1' }]);
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
@@ -85,7 +85,7 @@ describe('AnnotationsQueryRunner', () => {
         const { options, executeAnnotationQueryMock } = getTestContext(of({ id: '1' }));
 
         await expect(runner.run(options)).toEmitValuesWith((received) => {
-          expect(received.length).toBe(1);
+          expect(received).toHaveLength(1);
           const results = received[0];
           expect(results).toEqual([]);
           expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
@@ -100,7 +100,7 @@ describe('AnnotationsQueryRunner', () => {
       const { options, executeAnnotationQueryMock, dispatchMock } = getTestContext(throwError({ message: 'An error' }));
 
       await expect(runner.run(options)).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
+        expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual([]);
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
@@ -115,7 +115,7 @@ describe('AnnotationsQueryRunner', () => {
       const { options, executeAnnotationQueryMock, dispatchMock } = getTestContext(throwError({ cancelled: true }));
 
       await expect(runner.run(options)).toEmitValuesWith((received) => {
-        expect(received.length).toBe(1);
+        expect(received).toHaveLength(1);
         const results = received[0];
         expect(results).toEqual([]);
         expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
