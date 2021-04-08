@@ -1,6 +1,6 @@
 import React from 'react';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Layout, Orientation, LayoutProps } from './Layout';
+import { Layout, LayoutProps } from './Layout';
 import { Button, VerticalGroup, HorizontalGroup } from '@grafana/ui';
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Story, Meta } from '@storybook/react';
@@ -14,6 +14,9 @@ export default {
   parameters: {
     docs: {
       page: mdx,
+    },
+    knobs: {
+      disabled: true,
     },
     controls: {
       exclude: ['orientation'],
@@ -56,9 +59,6 @@ export const Horizontal: Story<LayoutProps> = (args) => {
     </HorizontalGroup>
   );
 };
-Horizontal.args = {
-  orientation: Orientation.Horizontal,
-};
 
 export const Vertical: Story<LayoutProps> = (args) => {
   return (
@@ -67,7 +67,4 @@ export const Vertical: Story<LayoutProps> = (args) => {
       <Button>Cancel</Button>
     </VerticalGroup>
   );
-};
-Vertical.args = {
-  orientation: Orientation.Vertical,
 };

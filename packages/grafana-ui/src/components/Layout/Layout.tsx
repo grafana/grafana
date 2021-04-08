@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 
-export enum Orientation {
+enum Orientation {
   Horizontal,
   Vertical,
 }
