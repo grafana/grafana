@@ -30,21 +30,21 @@ function getAnnotation(timeEnd: number | undefined = undefined) {
 describe('SnapshotWorker', () => {
   const worker = new SnapshotWorker();
 
-  describe('when canRun is called with correct props', () => {
+  describe('when canWork is called with correct props', () => {
     it('then it should return true', () => {
       const dashboard: any = { annotations: { list: [getAnnotation(), {}] } };
       const options = { ...getDefaultOptions(), dashboard };
 
-      expect(worker.canRun(options)).toBe(true);
+      expect(worker.canWork(options)).toBe(true);
     });
   });
 
-  describe('when canRun is called with incorrect props', () => {
+  describe('when canWork is called with incorrect props', () => {
     it('then it should return false', () => {
       const dashboard: any = { annotations: { list: [{}] } };
       const options = { ...getDefaultOptions(), dashboard };
 
-      expect(worker.canRun(options)).toBe(false);
+      expect(worker.canWork(options)).toBe(false);
     });
   });
 
@@ -53,7 +53,7 @@ describe('SnapshotWorker', () => {
       const dashboard: any = { annotations: { list: [{}] } };
       const options = { ...getDefaultOptions(), dashboard };
 
-      await expect(worker.run(options)).toEmitValues([{ alertStates: [], annotations: [] }]);
+      await expect(worker.work(options)).toEmitValues([{ alertStates: [], annotations: [] }]);
     });
   });
 
@@ -66,7 +66,7 @@ describe('SnapshotWorker', () => {
       const dashboard: any = { annotations: { list: [noRegionUndefined, region, noSnapshotData, noRegionEqualTime] } };
       const options = { ...getDefaultOptions(), dashboard };
 
-      await expect(worker.run(options)).toEmitValuesWith((received) => {
+      await expect(worker.work(options)).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
         const { alertStates, annotations } = received[0];
         expect(alertStates).toBeDefined();

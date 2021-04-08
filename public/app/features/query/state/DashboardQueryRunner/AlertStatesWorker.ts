@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { emptyResult } from './DashboardQueryRunner';
 
 export class AlertStatesWorker implements DashboardQueryRunnerWorker {
-  canRun({ dashboard, range }: DashboardQueryRunnerOptions): boolean {
+  canWork({ dashboard, range }: DashboardQueryRunnerOptions): boolean {
     if (!dashboard.id) {
       return false;
     }
@@ -17,8 +17,8 @@ export class AlertStatesWorker implements DashboardQueryRunnerWorker {
     return true;
   }
 
-  run(options: DashboardQueryRunnerOptions): Observable<DashboardQueryRunnerWorkerResult> {
-    if (!this.canRun(options)) {
+  work(options: DashboardQueryRunnerOptions): Observable<DashboardQueryRunnerWorkerResult> {
+    if (!this.canWork(options)) {
       return emptyResult();
     }
 

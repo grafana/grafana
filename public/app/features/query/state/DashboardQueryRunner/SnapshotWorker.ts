@@ -5,13 +5,13 @@ import cloneDeep from 'lodash/cloneDeep';
 import { emptyResult } from './DashboardQueryRunner';
 
 export class SnapshotWorker implements DashboardQueryRunnerWorker {
-  canRun({ dashboard }: DashboardQueryRunnerOptions): boolean {
+  canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {
     const snapshots = dashboard.annotations.list.find((a) => a.enable && Boolean(a.snapshotData));
     return Boolean(snapshots);
   }
 
-  run(options: DashboardQueryRunnerOptions): Observable<DashboardQueryRunnerWorkerResult> {
-    if (!this.canRun(options)) {
+  work(options: DashboardQueryRunnerOptions): Observable<DashboardQueryRunnerWorkerResult> {
+    if (!this.canWork(options)) {
       return emptyResult();
     }
 

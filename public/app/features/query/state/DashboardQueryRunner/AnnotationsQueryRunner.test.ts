@@ -31,7 +31,7 @@ function getTestContext(result: Observable<any> = of({ events: [{ id: '1' }] }))
 describe('AnnotationsQueryRunner', () => {
   const runner = new AnnotationsQueryRunner();
 
-  describe('when canRun is called with correct props', () => {
+  describe('when canWork is called with correct props', () => {
     it('then it should return true', () => {
       const datasource: any = {
         annotationQuery: jest.fn(),
@@ -42,7 +42,7 @@ describe('AnnotationsQueryRunner', () => {
     });
   });
 
-  describe('when canRun is called with incorrect props', () => {
+  describe('when canWork is called with incorrect props', () => {
     it('then it should return false', () => {
       const datasource: any = {
         annotationQuery: jest.fn(),

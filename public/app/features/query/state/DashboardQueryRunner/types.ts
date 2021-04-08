@@ -27,8 +27,8 @@ export interface DashboardQueryRunnerWorkerResult {
 }
 
 export interface DashboardQueryRunnerWorker {
-  canRun: (options: DashboardQueryRunnerOptions) => boolean;
-  run: (options: DashboardQueryRunnerOptions) => Observable<DashboardQueryRunnerWorkerResult>;
+  canWork: (options: DashboardQueryRunnerOptions) => boolean;
+  work: (options: DashboardQueryRunnerOptions) => Observable<DashboardQueryRunnerWorkerResult>;
 }
 
 export interface AnnotationQueryRunnerOptions extends DashboardQueryRunnerOptions {

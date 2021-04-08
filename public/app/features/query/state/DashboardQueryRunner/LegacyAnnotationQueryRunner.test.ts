@@ -28,7 +28,7 @@ function getTestContext(annotationQuery?: jest.Mock) {
 describe('LegacyAnnotationQueryRunner', () => {
   const runner = new LegacyAnnotationQueryRunner();
 
-  describe('when canRun is called with correct props', () => {
+  describe('when canWork is called with correct props', () => {
     it('then it should return true', () => {
       const datasource: any = {
         annotationQuery: jest.fn(),
@@ -38,7 +38,7 @@ describe('LegacyAnnotationQueryRunner', () => {
     });
   });
 
-  describe('when canRun is called with incorrect props', () => {
+  describe('when canWork is called with incorrect props', () => {
     it('then it should return false', () => {
       const datasource: any = {
         annotationQuery: jest.fn(),

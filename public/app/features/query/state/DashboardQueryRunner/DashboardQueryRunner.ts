@@ -31,8 +31,8 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
 
   run(options: DashboardQueryRunnerOptions): void {
     console.log('Calling getDashboardQueryRunner with', options);
-    const workers = getDashboardQueryRunnerWorkers().filter((w) => w.canRun(options));
-    const observables = workers.map((w) => w.run(options));
+    const workers = getDashboardQueryRunnerWorkers().filter((w) => w.canWork(options));
+    const observables = workers.map((w) => w.work(options));
     merge(observables)
       .pipe(
         mergeAll(),
