@@ -52,6 +52,10 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   } else {
     switch (listMode) {
       case OptionFilter.All:
+        if (props.plugin.editBanner) {
+          mainBoxElements.push(<props.plugin.editBanner />);
+        }
+
         // Panel frame options first
         mainBoxElements.push(panelFrameOptions.render());
         // If angular add those options next
