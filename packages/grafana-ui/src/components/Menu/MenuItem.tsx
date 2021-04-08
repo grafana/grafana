@@ -1,7 +1,7 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme, LinkTarget } from '@grafana/data';
-import { styleMixins, useStyles } from '../../themes';
+import { useStyles } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 
@@ -56,34 +56,29 @@ MenuItem.displayName = 'MenuItem';
 
 /** @internal */
 const getStyles = (theme: GrafanaTheme) => {
-  const linkColor = theme.colors.text;
-  const linkColorHover = theme.colors.linkHover;
-  const itemBgHover = styleMixins.hoverColor(theme.colors.bg1, theme);
-
   return {
     link: css`
-      color: ${linkColor};
+      color: ${theme.v2.palette.text.primary};
       display: flex;
       cursor: pointer;
       padding: 5px 12px 5px 10px;
+
       &:hover {
-        color: ${linkColorHover};
+        color: ${theme.v2.palette.text.primary};
         text-decoration: none;
       }
     `,
     item: css`
       background: none;
-      border-left: 2px solid transparent;
       cursor: pointer;
       white-space: nowrap;
+
       &:hover {
-        background: ${itemBgHover};
-        border-image: linear-gradient(#f05a28 30%, #fbca0a 99%);
-        border-image-slice: 1;
+        background: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer2)};
       }
     `,
     activeItem: css`
-      background: ${theme.colors.bg2};
+      background: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer2, 0.1)};
     `,
     icon: css`
       opacity: 0.7;
