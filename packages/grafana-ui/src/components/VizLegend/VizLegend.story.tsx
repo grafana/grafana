@@ -92,7 +92,7 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
 };
 
 const seriesCount = 5;
-export const WithNoValues: Story = (args) => {
+export const Basic: Story = (args) => {
   return (
     <div style={{ width: args.containerWidth }}>
       <LegendStoryDemo
@@ -112,52 +112,6 @@ export const WithNoValues: Story = (args) => {
         displayMode={LegendDisplayMode.Table}
         seriesCount={seriesCount}
         placement="bottom"
-      />
-    </div>
-  );
-};
-
-export const WithValues: Story = (args) => {
-  const stats: DisplayValue[] = [
-    {
-      title: 'Min',
-      text: '5.00',
-      numeric: 5,
-    },
-    {
-      title: 'Max',
-      text: '10.00',
-      numeric: 10,
-    },
-    {
-      title: 'Last',
-      text: '2.00',
-      numeric: 2,
-    },
-  ];
-
-  return (
-    <div style={{ width: args.containerWidth }}>
-      <LegendStoryDemo
-        name="List mode, placement bottom"
-        displayMode={LegendDisplayMode.List}
-        seriesCount={seriesCount}
-        placement="bottom"
-        stats={stats}
-      />
-      <LegendStoryDemo
-        name="List mode, placement right"
-        displayMode={LegendDisplayMode.List}
-        seriesCount={seriesCount}
-        placement="right"
-        stats={stats}
-      />
-      <LegendStoryDemo
-        name="Table mode"
-        displayMode={LegendDisplayMode.Table}
-        seriesCount={seriesCount}
-        placement="bottom"
-        stats={stats}
       />
     </div>
   );
