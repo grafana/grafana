@@ -5,8 +5,7 @@
   "rules": {
     "no-only-tests/no-only-tests": "error",
     "react/prop-types": "off",
-    "@emotion/jsx-import": "error",
-    "@emotion/pkg-renaming": "error"
+    "@emotion/jsx-import": "error"
   },
   "overrides": [
     {
@@ -14,6 +13,14 @@
       "rules": {
         "react-hooks/rules-of-hooks": "off",
         "react-hooks/exhaustive-deps": "off"
+      }
+    },
+    {
+      "files": ["packages/grafana-ui/src/components/ThemeDemos/**/*.{ts,tsx}"],
+      "rules": {
+        "@emotion/jsx-import": "off",
+        "react/jsx-uses-react": "off",
+        "react/react-in-jsx-scope": "off"
       }
     }
   ]

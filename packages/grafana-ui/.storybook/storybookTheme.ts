@@ -9,7 +9,7 @@ const createTheme = (theme: GrafanaTheme) => {
     base: theme.name.includes('Light') ? 'light' : 'dark',
 
     colorPrimary: theme.v2.palette.primary.main,
-    colorSecondary: theme.v2.palette.secondary.main,
+    colorSecondary: theme.v2.palette.error.main,
 
     // UI
     appBg: theme.v2.palette.layer0,

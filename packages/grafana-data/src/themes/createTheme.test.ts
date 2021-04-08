@@ -55,7 +55,7 @@ describe('createTheme', () => {
           "formComponent": Object {
             "background": "#0b0c0e",
             "border": "#2c3235",
-            "disabledBackground": "#141619",
+            "disabledBackground": "rgba(255, 255, 255, 0.04)",
             "disabledText": "rgba(255, 255, 255, 0.3)",
             "text": "rgba(255, 255, 255, 0.75)",
           },

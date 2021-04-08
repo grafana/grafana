@@ -1,6 +1,6 @@
 import React from 'react';
 import { Story } from '@storybook/react';
-import { Button, ButtonProps, ButtonVariant } from './Button';
+import { allButtonVariants, Button, ButtonProps } from './Button';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { iconOptions } from '../../utils/storybook/knobs';
 import mdx from './Button.mdx';
@@ -31,18 +31,20 @@ export default {
 
 export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
   const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
-  const variants: ButtonVariant[] = ['primary', 'secondary', 'destructive', 'link'];
 
   return (
     <VerticalGroup>
       <HorizontalGroup spacing="lg">
-        {variants.map((variant) => (
+        {allButtonVariants.map((variant) => (
           <VerticalGroup spacing="lg" key={variant}>
             {sizes.map((size) => (
               <Button variant={variant} size={size} key={size}>
                 {variant} {size}
               </Button>
             ))}
+            <Button variant={variant} disabled>
+              {variant} disabled
+            </Button>
           </VerticalGroup>
         ))}
       </HorizontalGroup>
