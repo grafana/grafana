@@ -101,8 +101,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
   exportLogsAsTxt = () => {
     const { data, panel } = this.props;
     const logsModel = dataFrameToLogsModel(data || [], undefined, 'utc');
-
     let textToDownload = '';
+
+    logsModel.meta?.forEach((obj) => {
+      const string = `${obj.label}: ${JSON.stringify(obj.value)}\n`;
+      textToDownload = textToDownload + string;
+    });
+    textToDownload = textToDownload + '\n\n';
+
     logsModel.rows.forEach((row) => {
       const newRow = dateTimeFormatISO(row.timeEpochMs) + '\t' + row.entry + '\n';
       textToDownload = textToDownload + newRow;
