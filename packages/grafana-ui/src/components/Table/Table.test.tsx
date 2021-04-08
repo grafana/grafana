@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { applyFieldOverrides, DataFrame, FieldType, toDataFrame } from '@grafana/data';
+import { applyFieldOverrides, DataFrame, FieldType, locationUtil, toDataFrame } from '@grafana/data';
 
 import { Props, Table } from './Table';
 import { getTheme } from '../../themes';
@@ -73,6 +73,8 @@ function getDefaultDataFrame(): DataFrame {
 }
 
 function getTestContext(propOverrides: Partial<Props> = {}) {
+  jest.clearAllMocks();
+  jest.spyOn(locationUtil, 'processUrl').mockImplementation((url: string) => url);
   const onSortByChange = jest.fn();
   const onCellFilterAdded = jest.fn();
   const onColumnResize = jest.fn();
