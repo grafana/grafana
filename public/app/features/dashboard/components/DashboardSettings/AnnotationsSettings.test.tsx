@@ -54,6 +54,9 @@ describe('AnnotationsSettings', () => {
     },
   };
 
+  const getTableBody = () => screen.getAllByRole('rowgroup')[1];
+  const getTableBodyRows = () => within(getTableBody()).getAllByRole('row');
+
   beforeAll(() => {
     setDataSourceSrv({
       getList() {
@@ -108,7 +111,7 @@ describe('AnnotationsSettings', () => {
     };
   });
 
-  test('it renders a header and cta if no annotations or only builtIn annotation', async () => {
+  test('it renders a header and cta if no annotations or only builtIn annotation', () => {
     render(<AnnotationsSettings dashboard={dashboard} />);
 
     expect(screen.getByRole('heading', { name: /annotations/i })).toBeInTheDocument();
@@ -153,7 +156,61 @@ describe('AnnotationsSettings', () => {
     ).toBeInTheDocument();
   });
 
-  test('it renders a form for adding/editing annotations', async () => {
+  test('it renders a sortable table of annotations', () => {
+    const annotationsList = [
+      ...dashboard.annotations.list,
+      {
+        builtIn: 0,
+        datasource: 'Prometheus',
+        enable: true,
+        hide: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotation 2',
+        type: 'dashboard',
+      },
+      {
+        builtIn: 0,
+        datasource: 'Prometheus',
+        enable: true,
+        hide: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotation 3',
+        type: 'dashboard',
+      },
+    ];
+    const dashboardWithAnnotations = {
+      ...dashboard,
+      annotations: {
+        list: [...annotationsList],
+      },
+    };
+    render(<AnnotationsSettings dashboard={dashboardWithAnnotations} />);
+    // Check that we have sorting buttons
+    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-up' })).not.toBeInTheDocument();
+    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
+
+    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'arrow-up' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
+
+    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'arrow-up' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'arrow-down' })).not.toBeInTheDocument();
+
+    // Check the original order
+    expect(within(getTableBodyRows()[0]).queryByText(/annotations & alerts/i)).toBeInTheDocument();
+    expect(within(getTableBodyRows()[1]).queryByText(/annotation 2/i)).toBeInTheDocument();
+    expect(within(getTableBodyRows()[2]).queryByText(/annotation 3/i)).toBeInTheDocument();
+
+    userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[0]);
+    userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[1]);
+    userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-up' })[0]);
+
+    // Checking if it has changed the sorting accordingly
+    expect(within(getTableBodyRows()[0]).queryByText(/annotation 3/i)).toBeInTheDocument();
+    expect(within(getTableBodyRows()[1]).queryByText(/annotation 2/i)).toBeInTheDocument();
+    expect(within(getTableBodyRows()[2]).queryByText(/annotations & alerts/i)).toBeInTheDocument();
+  });
+
+  test('it renders a form for adding/editing annotations', () => {
     render(<AnnotationsSettings dashboard={dashboard} />);
 
     userEvent.click(screen.getByLabelText(selectors.components.CallToActionCard.button('Add annotation query')));

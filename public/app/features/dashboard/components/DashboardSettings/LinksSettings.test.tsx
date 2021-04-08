@@ -88,9 +88,15 @@ describe('LinksSettings', () => {
     // @ts-ignore
     render(<LinksSettings dashboard={dashboard} />);
 
-    // Try checking that we don't have arrow-up and arrow-down buttons in the first and last rows
-    expect(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' }).length).toBe(links.length - 1);
-    expect(within(getTableBody()).getAllByRole('button', { name: 'arrow-up' }).length).toBe(links.length - 1);
+    // Check that we have sorting buttons
+    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-up' })).not.toBeInTheDocument();
+    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
+
+    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'arrow-up' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
+
+    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'arrow-up' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'arrow-down' })).not.toBeInTheDocument();
 
     // Checking the original order
     assertRowHasText(0, links[0].title);

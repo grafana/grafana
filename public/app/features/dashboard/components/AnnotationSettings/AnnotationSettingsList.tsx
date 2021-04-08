@@ -39,7 +39,7 @@ export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEd
           </thead>
           <tbody>
             {dashboard.annotations.list.map((annotation, idx) => (
-              <tr key={`${annotation.name}-idx`}>
+              <tr key={`${annotation.name}-${idx}`}>
                 {!annotation.builtIn && (
                   <td className="pointer" onClick={() => onEdit(idx)}>
                     <Icon name="comment-alt" /> &nbsp; {annotation.name}
@@ -64,7 +64,7 @@ export const AnnotationSettingsList: React.FC<Props> = ({ dashboard, onNew, onEd
                   )}
                 </td>
                 <td style={{ width: '1%' }}>
-                  {dashboard.links.length > 1 && idx !== dashboard.links.length - 1 ? (
+                  {dashboard.annotations.list.length > 1 && idx !== dashboard.annotations.list.length - 1 ? (
                     <IconButton
                       surface="header"
                       name="arrow-down"
