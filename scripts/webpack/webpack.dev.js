@@ -36,7 +36,7 @@ module.exports = (env = {}) =>
           use: [
             {
               loader: 'babel-loader',
-              options: getBabelConfig(),
+              options: getBabelConfig({ BABEL_ENV: 'dev' }),
             },
           ],
         },
@@ -58,9 +58,11 @@ module.exports = (env = {}) =>
               options: {
                 cache: true,
               },
+              memoryLimit: 4096,
             },
             typescript: {
               mode: 'write-references',
+              memoryLimit: 4096,
               diagnosticOptions: {
                 semantic: true,
                 syntactic: true,

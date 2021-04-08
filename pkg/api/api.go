@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -397,8 +398,16 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Post("/graphite", reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), routing.Wrap(PostGraphiteAnnotation))
 		})
 
+		apiRoute.Post("/frontend-metrics", bind(metrics.PostFrontendMetricsCommand{}), routing.Wrap(hs.PostFrontendMetrics))
+
 		if hs.Live.IsEnabled() {
 			apiRoute.Post("/live/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
+
+			// POST influx line protocol
+			apiRoute.Post("/live/push/:streamId", hs.LivePushGateway.Handle)
+
+			// List available streams and fields
+			apiRoute.Get("/live/list", routing.Wrap(hs.Live.HandleListHTTP))
 		}
 
 		// short urls

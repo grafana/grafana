@@ -69,6 +69,7 @@ func (ng *AlertNG) Init() error {
 		MaxAttempts:  maxAttempts,
 		Evaluator:    eval.Evaluator{Cfg: ng.Cfg},
 		Store:        store,
+		RuleStore:    store,
 		Notifier:     ng.Alertmanager,
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
@@ -81,8 +82,10 @@ func (ng *AlertNG) Init() error {
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
 		Store:           store,
+		RuleStore:       store,
 		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
+		StateTracker:    ng.stateTracker,
 	}
 	api.RegisterAPIEndpoints()
 
@@ -92,6 +95,7 @@ func (ng *AlertNG) Init() error {
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
+	ng.schedule.WarmStateCache(ng.stateTracker)
 	return ng.schedule.Ticker(ctx, ng.stateTracker)
 }
 
@@ -114,6 +118,7 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	// Create alert_instance table
 	store.AlertInstanceMigration(mg)
 
-	// Create silence table
-	store.SilenceMigration(mg)
+	// Create alert_rule
+	store.AddAlertRuleMigrations(mg, defaultIntervalSeconds)
+	store.AddAlertRuleVersionMigrations(mg)
 }

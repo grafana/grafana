@@ -98,7 +98,7 @@ func (r *ForkedRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respo
 	}
 }
 
-func (r *ForkedRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.RuleGroupConfig) response.Response {
+func (r *ForkedRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
 	backendType, err := backendType(ctx, r.DatasourceCache)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)

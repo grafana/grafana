@@ -1,4 +1,4 @@
-module.exports = function getBabelConfig() {
+module.exports = function getBabelConfig(options = {}) {
   return {
     cacheDirectory: true,
     babelrc: false,
@@ -8,12 +8,10 @@ module.exports = function getBabelConfig() {
       [
         '@babel/preset-env',
         {
-          targets: {
-            browsers: 'last 3 versions',
-          },
+          bugfixes: true,
+          browserslistEnv: process.env.BABEL_ENV || options.BABEL_ENV || 'production',
           useBuiltIns: 'entry',
-          corejs: 3,
-          modules: false,
+          corejs: '3.10',
         },
       ],
       [
@@ -41,8 +39,7 @@ module.exports = function getBabelConfig() {
       ['@babel/plugin-proposal-class-properties', { loose: true }],
       ['@babel/plugin-proposal-private-methods', { loose: true }],
       ['@babel/plugin-proposal-object-rest-spread', { loose: true }],
-      // Waiting with this need to refactoring timeSrv & locationUtil.init
-      // '@babel/plugin-transform-react-constant-elements',
+      '@babel/plugin-transform-react-constant-elements',
       '@babel/plugin-proposal-nullish-coalescing-operator',
       '@babel/plugin-proposal-optional-chaining',
       '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
