@@ -73,6 +73,7 @@ Optionally, play around this dashboard and customize it to:
 - Change frequency of data polling.
 - Change the period for which the data is displayed.
 - Rearrange and resize panels.
+
 ## Step 5. Start building dashboards
 
 Now that you have gained some idea of using the pre-packaged MS SQL data source and some test data, the next step is to setup your own instance of MS SQL Server database and data your development or sandbox area. In the previous steps, if you followed along the path of deploying your own instance of MS SQL Server, you are already on your way.
