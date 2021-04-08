@@ -201,8 +201,6 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		ruleTags[k] = sV
 	}
 
-	// TODO: Need place to put FOR duration
-
 	rule := ngmodels.AlertRule{
 		Title:        oldAlert.Name,
 		Data:         sseCond.Data,
