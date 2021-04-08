@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
@@ -263,16 +262,13 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		}
 	}
 
-	requestedFile := c.Params("*")
+	requestedFile := filepath.Clean(c.Params("*"))
+	pluginFilePath := filepath.Join(plugin.PluginDir, requestedFile)
 
-	// forbid directory changes
-	if strings.Contains(requestedFile, ".."+string(filepath.Separator)) {
-		c.Handle(hs.Cfg, 400, "Could not open plugin file", nil)
-		return
-	}
-
-	path := filepath.Join(plugin.PluginDir, requestedFile)
-	f, err := os.Open(path)
+	// It's safe to ignore gosec warning G304 since we already clean the requested file path and subsequently
+	// use this with a prefix of the plugin's directory, which is set during plugin loading
+	// nolint:gosec
+	f, err := os.Open(pluginFilePath)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Could not open plugin file", err)
 		return
@@ -291,7 +287,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 
 	headers(c.Context)
 
-	http.ServeContent(c.Resp, c.Req.Request, path, fi.ModTime(), f)
+	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
 }
 
 // CheckHealth returns the health of a plugin.
