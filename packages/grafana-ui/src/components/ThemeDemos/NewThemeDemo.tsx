@@ -2,7 +2,7 @@ import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { useTheme } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
-import { HorizontalGroup } from '../Layout/Layout';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
 import { Field } from '../Forms/Field';
@@ -10,6 +10,8 @@ import { Input } from '../Input/Input';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Switch } from '../Switch/Switch';
 import { allButtonVariants, Button } from '../Button';
+import { InlineField } from '../Forms/InlineField';
+import { InlineFieldRow } from '../Forms/InlineFieldRow';
 
 interface DemoBoxProps {
   bg?: string;
@@ -136,6 +138,17 @@ export const NewThemeDemo = () => {
                 <Switch value={false} disabled />
               </Field>
             </HorizontalGroup>
+            <VerticalGroup>
+              <div>Inline forms</div>
+              <InlineFieldRow>
+                <InlineField label="Label">
+                  <Input placeholder="Placeholder" />
+                </InlineField>
+                <InlineField label="Another Label" disabled>
+                  <Input placeholder="Disabled" />
+                </InlineField>
+              </InlineFieldRow>
+            </VerticalGroup>
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Shadows" isOpen={true}>

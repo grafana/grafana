@@ -64,7 +64,7 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   text = {
     primary: 'rgba(255, 255, 255, 0.75)',
     secondary: 'rgba(255, 255, 255, 0.50)',
-    disabled: 'rgba(255, 255, 255, 0.3)',
+    disabled: 'rgba(255, 255, 255, 0.35)',
     link: colors.blueDark2,
     maxContrast: colors.white,
   };
@@ -111,7 +111,7 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     border: this.border1,
     text: this.text.primary,
     disabledText: this.text.disabled,
-    disabledBackground: colors.gray10,
+    disabledBackground: 'rgba(255,255,255,0.07)',
   };
 
   contrastThreshold = 3;

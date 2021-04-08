@@ -55,13 +55,13 @@ describe('createTheme', () => {
           "formComponent": Object {
             "background": "#0b0c0e",
             "border": "#2c3235",
-            "disabledBackground": "rgba(255, 255, 255, 0.04)",
-            "disabledText": "rgba(255, 255, 255, 0.3)",
+            "disabledBackground": "rgba(255,255,255,0.07)",
+            "disabledText": "rgba(255, 255, 255, 0.35)",
             "text": "rgba(255, 255, 255, 0.75)",
           },
           "getContrastText": [Function],
           "getHoverColor": [Function],
-          "hoverFactor": 0.15,
+          "hoverFactor": 0.03,
           "info": Object {
             "border": "#5B93FF",
             "contrastText": "#fff",
@@ -95,7 +95,7 @@ describe('createTheme', () => {
             "text": "#6CCF8E",
           },
           "text": Object {
-            "disabled": "rgba(255, 255, 255, 0.3)",
+            "disabled": "rgba(255, 255, 255, 0.35)",
             "link": "#5B93FF",
             "maxContrast": "#fff",
             "primary": "rgba(255, 255, 255, 0.75)",
@@ -111,9 +111,9 @@ describe('createTheme', () => {
           },
         },
         "shadows": Object {
-          "z1": "0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)",
-          "z2": "0px 3px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.14),0px 1px 5px 0px rgba(0,0,0,0.12)",
-          "z3": "0px 3px 3px -2px rgba(0,0,0,0.2),0px 3px 4px 0px rgba(0,0,0,0.14),0px 1px 8px 0px rgba(0,0,0,0.12)",
+          "z1": "0px 3px 1px -2px rgba(0,0,0,0.7),0px 2px 2px 0px rgba(0,0,0,0.6),0px 1px 5px 0px rgba(0,0,0,0.5)",
+          "z2": "0px 2px 4px -1px rgba(0,0,0,0.7),0px 4px 5px 0px rgba(0,0,0,0.6),0px 1px 10px 0px rgba(0,0,0,0.5)",
+          "z3": "0px 5px 5px -3px rgba(0,0,0,0.7),0px 8px 10px 1px rgba(0,0,0,0.6),0px 3px 14px 2px rgba(0,0,0,0.5)",
         },
         "shape": Object {
           "borderRadius": [Function],

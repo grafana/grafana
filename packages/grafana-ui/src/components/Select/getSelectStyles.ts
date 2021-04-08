@@ -4,7 +4,7 @@ import { GrafanaTheme } from '@grafana/data';
 
 export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
   const menuBg = theme.v2.palette.layer2;
-  const optionBgHover = theme.v2.palette.getHoverColor(menuBg);
+  const optionBgHover = theme.v2.palette.getHoverColor(menuBg, 0.07);
 
   return {
     menu: css`
@@ -52,13 +52,6 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     optionFocused: css`
       label: grafana-select-option-focused;
       background: ${optionBgHover};
-      border-image: linear-gradient(#f05a28 30%, #fbca0a 99%);
-      border-image-slice: 1;
-      border-style: solid;
-      border-top: 0;
-      border-right: 0;
-      border-bottom: 0;
-      border-left-width: 2px;
     `,
     singleValue: css`
       label: grafana-select-single-value;
