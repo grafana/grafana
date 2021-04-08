@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
-	"golang.org/x/oauth2/google"
 )
 
 // ApplyRoute should use the plugin route data to set auth headers and custom headers.
@@ -54,38 +53,37 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		logger.Error("Failed to set plugin route body content", "error", err)
 	}
 
-	tokenProvider := newAccessTokenProvider(ds, route)
-
-	if route.TokenAuth != nil {
-		if token, err := tokenProvider.getAccessToken(data); err != nil {
+	if tokenProvider := getTokenProvider(ctx, ds, route, data); tokenProvider != nil {
+		if token, err := tokenProvider.getAccessToken(); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-		}
-	}
-
-	authenticationType := ds.JsonData.Get("authenticationType").MustString("jwt")
-	if route.JwtTokenAuth != nil && authenticationType == "jwt" {
-		if token, err := tokenProvider.getJwtAccessToken(ctx, data); err != nil {
-			logger.Error("Failed to get access token", "error", err)
-		} else {
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-		}
-	}
-
-	if authenticationType == "gce" {
-		tokenSrc, err := google.DefaultTokenSource(ctx, route.JwtTokenAuth.Scopes...)
-		if err != nil {
-			logger.Error("Failed to get default token from meta data server", "error", err)
-		} else {
-			token, err := tokenSrc.Token()
-			if err != nil {
-				logger.Error("Failed to get default access token from meta data server", "error", err)
-			} else {
-				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
-			}
 		}
 	}
 
 	logger.Info("Requesting", "url", req.URL.String())
+}
+
+func getTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
+	data templateData) accessTokenProvider {
+	authenticationType := ds.JsonData.Get("authenticationType").MustString()
+
+	switch authenticationType {
+	case "gce":
+		return newGceAccessTokenProvider(ctx, ds, pluginRoute)
+	case "jwt":
+		if pluginRoute.JwtTokenAuth != nil {
+			return newJwtAccessTokenProvider(ctx, ds, pluginRoute, data)
+		}
+	default:
+		// Fallback to authentication options when authentication type isn't explicitly configured
+		if pluginRoute.TokenAuth != nil {
+			return newGenericAccessTokenProvider(ds, pluginRoute, data)
+		}
+		if pluginRoute.JwtTokenAuth != nil {
+			return newJwtAccessTokenProvider(ctx, ds, pluginRoute, data)
+		}
+	}
+
+	return nil
 }

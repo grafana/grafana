@@ -2,7 +2,6 @@ package pluginproxy
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,22 +10,14 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/oauth2"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"golang.org/x/oauth2/jwt"
 )
 
 var (
 	tokenCache = tokenCacheType{
 		cache: map[string]*jwtToken{},
 	}
-	oauthJwtTokenCache = oauthJwtTokenCacheType{
-		cache: map[string]*oauth2.Token{},
-	}
-	// timeNow makes it possible to test usage of time
-	timeNow = time.Now
 )
 
 type tokenCacheType struct {
@@ -34,15 +25,11 @@ type tokenCacheType struct {
 	sync.Mutex
 }
 
-type oauthJwtTokenCacheType struct {
-	cache map[string]*oauth2.Token
-	sync.Mutex
-}
-
-type accessTokenProvider struct {
-	route             *plugins.AppPluginRoute
+type genericAccessTokenProvider struct {
 	datasourceId      int64
 	datasourceVersion int
+	route             *plugins.AppPluginRoute
+	data              templateData
 }
 
 type jwtToken struct {
@@ -81,15 +68,17 @@ func (token *jwtToken) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func newAccessTokenProvider(ds *models.DataSource, pluginRoute *plugins.AppPluginRoute) *accessTokenProvider {
-	return &accessTokenProvider{
+func newGenericAccessTokenProvider(ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
+	data templateData) *genericAccessTokenProvider {
+	return &genericAccessTokenProvider{
 		datasourceId:      ds.Id,
 		datasourceVersion: ds.Version,
 		route:             pluginRoute,
+		data:              data,
 	}
 }
 
-func (provider *accessTokenProvider) getAccessToken(data templateData) (string, error) {
+func (provider *genericAccessTokenProvider) getAccessToken() (string, error) {
 	tokenCache.Lock()
 	defer tokenCache.Unlock()
 	if cachedToken, found := tokenCache.cache[provider.getAccessTokenCacheKey()]; found {
@@ -99,14 +88,14 @@ func (provider *accessTokenProvider) getAccessToken(data templateData) (string, 
 		}
 	}
 
-	urlInterpolated, err := interpolateString(provider.route.TokenAuth.Url, data)
+	urlInterpolated, err := interpolateString(provider.route.TokenAuth.Url, provider.data)
 	if err != nil {
 		return "", err
 	}
 
 	params := make(url.Values)
 	for key, value := range provider.route.TokenAuth.Params {
-		interpolatedParam, err := interpolateString(value, data)
+		interpolatedParam, err := interpolateString(value, provider.data)
 		if err != nil {
 			return "", err
 		}
@@ -141,68 +130,6 @@ func (provider *accessTokenProvider) getAccessToken(data templateData) (string, 
 	return token.AccessToken, nil
 }
 
-func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data templateData) (string, error) {
-	oauthJwtTokenCache.Lock()
-	defer oauthJwtTokenCache.Unlock()
-	if cachedToken, found := oauthJwtTokenCache.cache[provider.getAccessTokenCacheKey()]; found {
-		if cachedToken.Expiry.After(timeNow().Add(time.Second * 10)) {
-			logger.Debug("Using token from cache")
-			return cachedToken.AccessToken, nil
-		}
-	}
-
-	conf := &jwt.Config{}
-
-	if val, ok := provider.route.JwtTokenAuth.Params["client_email"]; ok {
-		interpolatedVal, err := interpolateString(val, data)
-		if err != nil {
-			return "", err
-		}
-		conf.Email = interpolatedVal
-	}
-
-	if val, ok := provider.route.JwtTokenAuth.Params["private_key"]; ok {
-		interpolatedVal, err := interpolateString(val, data)
-		if err != nil {
-			return "", err
-		}
-		conf.PrivateKey = []byte(interpolatedVal)
-	}
-
-	if val, ok := provider.route.JwtTokenAuth.Params["token_uri"]; ok {
-		interpolatedVal, err := interpolateString(val, data)
-		if err != nil {
-			return "", err
-		}
-		conf.TokenURL = interpolatedVal
-	}
-
-	conf.Scopes = provider.route.JwtTokenAuth.Scopes
-
-	token, err := getTokenSource(conf, ctx)
-	if err != nil {
-		return "", err
-	}
-
-	oauthJwtTokenCache.cache[provider.getAccessTokenCacheKey()] = token
-
-	logger.Info("Got new access token", "ExpiresOn", token.Expiry)
-
-	return token.AccessToken, nil
-}
-
-// getTokenSource gets a token source.
-// Stubbable by tests.
-var getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
-	tokenSrc := conf.TokenSource(ctx)
-	token, err := tokenSrc.Token()
-	if err != nil {
-		return nil, err
-	}
-
-	return token, nil
-}
-
-func (provider *accessTokenProvider) getAccessTokenCacheKey() string {
+func (provider *genericAccessTokenProvider) getAccessTokenCacheKey() string {
 	return fmt.Sprintf("%v_%v_%v_%v", provider.datasourceId, provider.datasourceVersion, provider.route.Path, provider.route.Method)
 }

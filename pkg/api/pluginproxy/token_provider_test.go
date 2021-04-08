@@ -66,8 +66,8 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 		setUp(t, func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
 			return &oauth2.Token{AccessToken: "abc"}, nil
 		})
-		provider := newAccessTokenProvider(ds, pluginRoute)
-		token, err := provider.getJwtAccessToken(context.Background(), templateData)
+		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, templateData)
+		token, err := provider.getAccessToken()
 		require.NoError(t, err)
 
 		assert.Equal(t, "abc", token)
@@ -85,8 +85,8 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 			return &oauth2.Token{AccessToken: "abc"}, nil
 		})
 
-		provider := newAccessTokenProvider(ds, pluginRoute)
-		_, err := provider.getJwtAccessToken(context.Background(), templateData)
+		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, templateData)
+		_, err := provider.getAccessToken()
 		require.NoError(t, err)
 	})
 
@@ -96,15 +96,15 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 				AccessToken: "abc",
 				Expiry:      time.Now().Add(1 * time.Minute)}, nil
 		})
-		provider := newAccessTokenProvider(ds, pluginRoute)
-		token1, err := provider.getJwtAccessToken(context.Background(), templateData)
+		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, templateData)
+		token1, err := provider.getAccessToken()
 		require.NoError(t, err)
 		assert.Equal(t, "abc", token1)
 
 		getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
 			return &oauth2.Token{AccessToken: "error: cache not used"}, nil
 		}
-		token2, err := provider.getJwtAccessToken(context.Background(), templateData)
+		token2, err := provider.getAccessToken()
 		require.NoError(t, err)
 		assert.Equal(t, "abc", token2)
 	})
@@ -162,7 +162,7 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 
 		mockTimeNow(time.Now())
 		defer resetTimeNow()
-		provider := newAccessTokenProvider(&models.DataSource{}, pluginRoute)
+		provider := newGenericAccessTokenProvider(&models.DataSource{}, pluginRoute, templateData)
 
 		testCases := []tokenTestDescription{
 			{
@@ -216,12 +216,12 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 					token["expires_on"] = testCase.expiresOn
 				}
 
-				accessToken, err := provider.getAccessToken(templateData)
+				accessToken, err := provider.getAccessToken()
 				require.NoError(t, err)
 				assert.Equal(t, token["access_token"], accessToken)
 
 				// getAccessToken should use internal cache
-				accessToken, err = provider.getAccessToken(templateData)
+				accessToken, err = provider.getAccessToken()
 				require.NoError(t, err)
 				assert.Equal(t, token["access_token"], accessToken)
 				assert.Equal(t, 1, authCalls)
@@ -244,20 +244,20 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 
 		mockTimeNow(time.Now())
 		defer resetTimeNow()
-		provider := newAccessTokenProvider(&models.DataSource{}, pluginRoute)
+		provider := newGenericAccessTokenProvider(&models.DataSource{}, pluginRoute, templateData)
 
 		token = map[string]interface{}{
 			"access_token":  "2YotnFZFEjr1zCsicMWpAA",
 			"token_type":    "3600",
 			"refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
 		}
-		accessToken, err := provider.getAccessToken(templateData)
+		accessToken, err := provider.getAccessToken()
 		require.NoError(t, err)
 		assert.Equal(t, token["access_token"], accessToken)
 
 		mockTimeNow(timeNow().Add(3601 * time.Second))
 
-		accessToken, err = provider.getAccessToken(templateData)
+		accessToken, err = provider.getAccessToken()
 		require.NoError(t, err)
 		assert.Equal(t, token["access_token"], accessToken)
 		assert.Equal(t, 2, authCalls)
