@@ -29,9 +29,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       theme,
       size,
       variant,
-      icon,
       fullWidth,
-      children,
+      iconOnly: !children,
     });
 
     return (
@@ -55,8 +54,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       fullWidth,
       size,
       variant,
-      icon,
-      children,
+      iconOnly: !children,
     });
 
     const linkButtonStyles = cx(styles.button, { [styles.disabled]: disabled }, className);
@@ -75,18 +73,16 @@ LinkButton.displayName = 'LinkButton';
 export interface StyleProps {
   size: ComponentSize;
   variant: ButtonVariant;
-  children?: React.ReactNode;
-  icon?: IconName;
+  iconOnly?: boolean;
   theme: GrafanaTheme;
   fullWidth?: boolean;
   narrow?: boolean;
 }
 
 export const getButtonStyles = (props: StyleProps) => {
-  const { theme, variant, size, children, fullWidth } = props;
+  const { theme, variant, size, iconOnly, fullWidth } = props;
   const { height, padding, fontSize } = getPropertiesForButtonSize(size, theme.v2);
   const variantStyles = getPropertiesForVariant(theme.v2, variant);
-  const iconOnly = !children;
 
   const disabledStyles: CSSObject = {
     cursor: 'not-allowed',
