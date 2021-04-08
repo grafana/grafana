@@ -6,14 +6,13 @@ import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/redu
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import { screen, render } from '@testing-library/react';
-import { Chance } from 'chance';
 import { selectors } from '@grafana/e2e-selectors';
 import { PluginState } from '@grafana/data';
 
 const getMockNode = () => ({
-  text: Chance().sentence(),
-  subTitle: Chance().sentence(),
-  icon: Chance().word(),
+  text: 'text',
+  subTitle: 'subtitle',
+  icon: 'icon',
 });
 
 const getProps = (): Props => ({
@@ -100,9 +99,9 @@ describe('Render', () => {
     const mockProps = {
       ...getProps(),
       testingStatus: {
-        message: Chance().sentence(),
+        message: 'message',
         status: 'error',
-        details: { message: Chance().sentence() },
+        details: { message: 'detailed message' },
       },
     };
 
@@ -116,7 +115,7 @@ describe('Render', () => {
     const mockProps = {
       ...getProps(),
       testingStatus: {
-        message: Chance().sentence(),
+        message: 'message',
         status: 'error',
         details: {},
       },
@@ -131,7 +130,7 @@ describe('Render', () => {
     const mockProps = {
       ...getProps(),
       testingStatus: {
-        message: Chance().sentence(),
+        message: 'message',
         status: 'error',
       },
     };
