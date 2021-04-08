@@ -35,7 +35,6 @@ Object {
     ],
   },
   "options": Object {
-    "graph": Object {},
     "legend": Object {
       "calcs": Array [
         "mean",
@@ -68,7 +67,6 @@ Object {
     "overrides": Array [],
   },
   "options": Object {
-    "graph": Object {},
     "legend": Object {
       "calcs": Array [],
       "displayMode": "list",
@@ -102,7 +100,6 @@ Object {
     "overrides": Array [],
   },
   "options": Object {
-    "graph": Object {},
     "legend": Object {
       "calcs": Array [
         "mean",
@@ -156,7 +153,6 @@ Object {
     ],
   },
   "options": Object {
-    "graph": Object {},
     "legend": Object {
       "calcs": Array [],
       "displayMode": "list",
@@ -237,7 +233,6 @@ Object {
     ],
   },
   "options": Object {
-    "graph": Object {},
     "legend": Object {
       "calcs": Array [],
       "displayMode": "list",
