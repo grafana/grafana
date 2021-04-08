@@ -11,7 +11,7 @@ describe('Table::', () => {
     const emptyDiv = root.find('[data-qa="db-check-panel-table-empty"]');
 
     expect(emptyDiv.length).toEqual(1);
-    expect(emptyDiv.text()).toEqual('No failed checks. Checks run every 24 hours.');
+    expect(emptyDiv.text()).toEqual('No failed checks.');
   });
 
   it('should render the table with a header and a body if STT is enabled and data is not empty', () => {

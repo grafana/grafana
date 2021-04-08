@@ -33,7 +33,7 @@ export const Table: FC<TableProps> = ({ columns, data = [], hasNoAccess = false 
       <div className={styles.wrapper}>
         {isEmpty ? (
           <div className={styles.empty} data-qa="db-check-panel-table-empty">
-            No failed checks. Checks run every 24 hours.
+            No failed checks.
           </div>
         ) : (
           <table className={styles.table} data-qa="db-check-panel-table">

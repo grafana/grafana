@@ -1,24 +1,27 @@
 import React from 'react';
 import { ReactWrapper, mount } from 'enzyme';
 import { CheckService } from 'app/percona/check/Check.service';
+import { LoaderButton } from '@percona/platform-core';
 import { CheckTableRow } from './CheckTableRow';
 import { Messages } from './AllChecksTab.messages';
-import { LoaderButton } from '@percona/platform-core';
+import { CheckDetails } from 'app/percona/check/types';
 
 const originalConsoleError = jest.fn();
 
 const runAllPromises = () => new Promise(setImmediate);
 
-const TEST_CHECK = {
+const TEST_CHECK: CheckDetails = {
   summary: 'Test',
   name: 'test',
+  interval: 'FREQUENT',
   description: 'test description',
   disabled: false,
 };
 
-const TEST_CHECK_DISABLED = {
+const TEST_CHECK_DISABLED: CheckDetails = {
   summary: 'Test disabled',
   name: 'test disabled',
+  interval: 'RARE',
   description: 'test disabled description',
   disabled: true,
 };
@@ -42,12 +45,12 @@ describe('CheckTableRow::', () => {
 
     expect(tdElements.at(0).text()).toBe('Test');
     expect(tdElements.at(1).text()).toBe('test description');
-    expect(tdElements.at(2).text()).toBe(Messages.enabled);
-    expect(tdElements.at(3).text()).toBe(Messages.disable);
-    expect(tdElements.at(3).find(LoaderButton)).toHaveLength(1);
+    expect(tdElements.at(3).text()).toBe('Frequent');
+    expect(tdElements.at(4).text()).toBe(Messages.disable);
+    expect(tdElements.at(4).find(LoaderButton)).toHaveLength(1);
     expect(
       tdElements
-        .at(3)
+        .at(4)
         .find(LoaderButton)
         .prop('variant')
     ).toBe('destructive');
@@ -56,10 +59,11 @@ describe('CheckTableRow::', () => {
     tdElements = wrapper.find('tr').find('td');
 
     expect(tdElements.at(2).text()).toBe(Messages.disabled);
-    expect(tdElements.at(3).text()).toBe(Messages.enable);
+    expect(tdElements.at(3).text()).toBe('Rare');
+    expect(tdElements.at(4).text()).toBe(Messages.enable);
     expect(
       tdElements
-        .at(3)
+        .at(4)
         .find(LoaderButton)
         .prop('variant')
     ).toBe('primary');

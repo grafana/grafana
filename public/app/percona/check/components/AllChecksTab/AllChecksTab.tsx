@@ -10,6 +10,7 @@ import { Messages } from './AllChecksTab.messages';
 import * as styles from './AllChecksTab.styles';
 import { FetchChecks } from './types';
 import { CheckTableRow } from './CheckTableRow';
+import { ChecksReloadContext } from './AllChecks.context';
 
 export const AllChecksTab: FC = () => {
   const [fetchChecksPending, setFetchChecksPending] = useState(false);
@@ -62,6 +63,7 @@ export const AllChecksTab: FC = () => {
             <col className={styles.nameColumn} />
             <col />
             <col className={styles.statusColumn} />
+            <col className={styles.intervalColumn} />
             <col className={styles.actionsColumn} />
           </colgroup>
           <thead data-qa="db-checks-all-checks-thead">
@@ -69,13 +71,16 @@ export const AllChecksTab: FC = () => {
               <th>{Messages.name}</th>
               <th>{Messages.description}</th>
               <th>{Messages.status}</th>
+              <th>{Messages.interval}</th>
               <th>{Messages.actions}</th>
             </tr>
           </thead>
           <tbody data-qa="db-checks-all-checks-tbody">
-            {checks?.map(check => (
-              <CheckTableRow key={check.name} check={check} onSuccess={updateUI} />
-            ))}
+            <ChecksReloadContext.Provider value={{ fetchChecks }}>
+              {checks?.map(check => (
+                <CheckTableRow key={check.name} check={check} onSuccess={updateUI} />
+              ))}
+            </ChecksReloadContext.Provider>
           </tbody>
         </table>
       )}

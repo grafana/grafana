@@ -1,6 +1,7 @@
 import React from 'react';
 import { ReactWrapper, mount } from 'enzyme';
 import { CheckService } from 'app/percona/check/Check.service';
+import { Interval } from 'app/percona/check/types';
 import { AllChecksTab } from './AllChecksTab';
 import { Messages } from './AllChecksTab.messages';
 
@@ -63,12 +64,14 @@ describe('AllChecksTab::', () => {
           summary: 'Test',
           name: 'test enabled',
           description: 'test enabled description',
+          interval: 'STANDARD',
           disabled: false,
         },
         {
           summary: 'Test disabled',
           name: 'test disabled',
           description: 'test disabled description',
+          interval: 'RARE',
           disabled: true,
         },
       ])
@@ -85,7 +88,7 @@ describe('AllChecksTab::', () => {
     expect(wrapper.find(dataQa('db-checks-all-checks-table'))).toHaveLength(1);
     expect(wrapper.find(dataQa('db-checks-all-checks-thead'))).toHaveLength(1);
     expect(wrapper.find(tbody)).toHaveLength(1);
-    expect(wrapper.find(tbody).find('tr > td')).toHaveLength(8);
+    expect(wrapper.find(tbody).find('tr > td')).toHaveLength(10);
     expect(
       wrapper
         .find(tbody)
@@ -113,33 +116,47 @@ describe('AllChecksTab::', () => {
         .find('tr > td')
         .at(3)
         .text()
-    ).toBe(Messages.disable);
+    ).toBe(Interval.STANDARD);
     expect(
       wrapper
         .find(tbody)
         .find('tr > td')
         .at(4)
         .text()
-    ).toBe('Test disabled');
+    ).toBe(Messages.disable);
     expect(
       wrapper
         .find(tbody)
         .find('tr > td')
         .at(5)
         .text()
-    ).toBe('test disabled description');
+    ).toBe('Test disabled');
     expect(
       wrapper
         .find(tbody)
         .find('tr > td')
         .at(6)
         .text()
-    ).toBe(Messages.disabled);
+    ).toBe('test disabled description');
     expect(
       wrapper
         .find(tbody)
         .find('tr > td')
         .at(7)
+        .text()
+    ).toBe(Messages.disabled);
+    expect(
+      wrapper
+        .find(tbody)
+        .find('tr > td')
+        .at(8)
+        .text()
+    ).toBe(Interval.RARE);
+    expect(
+      wrapper
+        .find(tbody)
+        .find('tr > td')
+        .at(9)
         .text()
     ).toBe(Messages.enable);
 

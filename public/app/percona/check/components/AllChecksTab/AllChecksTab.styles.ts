@@ -20,3 +20,7 @@ export const statusColumn = css`
 export const actionsColumn = css`
   width: 150px;
 `;
+
+export const intervalColumn = css`
+  width: 150px;
+`;

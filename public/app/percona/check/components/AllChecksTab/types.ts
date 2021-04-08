@@ -8,3 +8,7 @@ export interface CheckTableRowProps {
   check: CheckDetails;
   onSuccess: (check: CheckDetails) => void;
 }
+
+export interface ChecksReload {
+  fetchChecks: () => Promise<void>;
+}
