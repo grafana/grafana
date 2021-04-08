@@ -192,5 +192,5 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add column for to alert_rule_version", migrator.NewAddColumnMigration(alertRuleVersion, &migrator.Column{Name: "for", Type: migrator.DB_BigInt, Nullable: false, Default: "0"}))
 
 	// add annotations column
-	mg.AddMigration("add column annotations to alert_rule", migrator.NewAddColumnMigration(alertRuleVersion, &migrator.Column{Name: "annotations", Type: migrator.DB_Text, Nullable: true}))
+	mg.AddMigration("add column annotations to alert_rule_version", migrator.NewAddColumnMigration(alertRuleVersion, &migrator.Column{Name: "annotations", Type: migrator.DB_Text, Nullable: true}))
 }
