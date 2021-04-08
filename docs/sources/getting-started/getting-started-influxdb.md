@@ -7,14 +7,7 @@ weight = 250
 
 # Getting started with Grafana and InfluxDB
 
-
-
-
-
-
-
-
-Prometheus is an open source systems monitoring system for which Grafana provides out-of-the-box support. This topic walks you through the steps to create a series of dashboards in Grafana to display system metrics for a server monitored by Prometheus.
+{{< docs/shared "influxdb/intro.md" >}}
 
 You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself.
 
