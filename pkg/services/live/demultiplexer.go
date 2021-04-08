@@ -9,28 +9,28 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-type Multiplexer struct {
+type Demultiplexer struct {
 	telegrafConverterWide *telegraf.Converter
 	managedStreamRunner   *ManagedStreamRunner
 }
 
-func NewMultiplexer(managedStreamRunner *ManagedStreamRunner) *Multiplexer {
-	return &Multiplexer{
+func NewDemultiplexer(managedStreamRunner *ManagedStreamRunner) *Demultiplexer {
+	return &Demultiplexer{
 		telegrafConverterWide: telegraf.NewConverter(),
 		managedStreamRunner:   managedStreamRunner,
 	}
 }
 
-func (s *Multiplexer) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
+func (s *Demultiplexer) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
 	return s, nil
 }
 
-func (s *Multiplexer) OnSubscribe(_ context.Context, _ *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (s *Demultiplexer) OnSubscribe(_ context.Context, _ *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := models.SubscribeReply{}
 	return reply, backend.SubscribeStreamStatusOK, nil
 }
 
-func (s *Multiplexer) OnPublish(_ context.Context, _ *models.SignedInUser, evt models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+func (s *Demultiplexer) OnPublish(_ context.Context, _ *models.SignedInUser, evt models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	stream, err := s.managedStreamRunner.GetOrCreateStream("archer")
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)

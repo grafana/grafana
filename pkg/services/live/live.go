@@ -397,7 +397,7 @@ func (g *GrafanaLive) handleStreamScope(_ *models.SignedInUser, namespace string
 }
 
 func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	return NewMultiplexer(g.ManagedStreamRunner), nil
+	return NewDemultiplexer(g.ManagedStreamRunner), nil
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
