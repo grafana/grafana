@@ -24,16 +24,6 @@ export interface AlertStateInfo {
   newStateDate: string;
 }
 
-export interface AnnotationResults {
-  annotations: AnnotationEvent[];
-  alertStates: AlertStateInfo[];
-}
-
-export interface AnnotationResult {
-  annotations: AnnotationEvent[];
-  alertState?: AlertStateInfo;
-}
-
 export interface AnnotationQueryResponse {
   /**
    * The processed annotation events

@@ -17,7 +17,7 @@ import {
   dashboardInitSlow,
 } from './reducers';
 // Types
-import { DashboardDTO, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult, DashboardInitPhase } from 'app/types';
+import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
@@ -25,6 +25,7 @@ import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { locationService } from '@grafana/runtime';
 import { ChangeTracker } from '../services/ChangeTracker';
+import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -180,6 +181,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
+    getDashboardQueryRunner().run({ dashboard, range: timeSrv.timeRange() });
 
     if (storeState.dashboard.modifiedQueries) {
       const { panelId, queries } = storeState.dashboard.modifiedQueries;

@@ -1,34 +1,51 @@
 import { from, merge, Observable, of, Subject, Unsubscribable } from 'rxjs';
 import { catchError, map, mergeAll, mergeMap, reduce } from 'rxjs/operators';
 import cloneDeep from 'lodash/cloneDeep';
-import { AnnotationEvent, AppEvents, DataQuery, DataSourceApi } from '@grafana/data';
+import { AnnotationEvent, AppEvents, DataQuery, DataSourceApi, TimeRange } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 
-import { AnnotationQueryOptions, AnnotationResult, AnnotationResults } from '../../annotations/types';
+import { AlertStateInfo } from '../../annotations/types';
 import { executeAnnotationQuery } from '../../annotations/annotations_srv';
 import { appEvents } from '../../../core/core';
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
+import { DashboardModel, PanelModel } from '../../dashboard/state';
+
+export interface DashboardQueryRunnerOptions {
+  dashboard: DashboardModel;
+  range: TimeRange;
+}
+
+export interface DashboardQueryRunnerResult {
+  annotations: AnnotationEvent[];
+  alertState?: AlertStateInfo;
+}
+
+interface DashboardQueryRunnerResults {
+  annotations: AnnotationEvent[];
+  alertStates: AlertStateInfo[];
+}
 
 export interface DashboardQueryRunner {
-  run: (options: AnnotationQueryOptions) => void;
-  getResult: (panelId?: number) => Observable<AnnotationResult>;
+  run: (options: DashboardQueryRunnerOptions) => void;
+  getResult: (panelId: number) => Observable<DashboardQueryRunnerResult>;
   cancel: () => void;
   destroy: () => void;
 }
 
-export const emptyResult: () => Observable<AnnotationResults> = () => of({ annotations: [], alertStates: [] });
+export const emptyResult: () => Observable<DashboardQueryRunnerResults> = () =>
+  of({ annotations: [], alertStates: [] });
 
 export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
-  private readonly results: Subject<AnnotationResults>;
+  private readonly results: Subject<DashboardQueryRunnerResults>;
   private readonly cancellations: Subject<{}>;
   private readonly subscription: Unsubscribable;
 
   constructor() {
-    this.results = new Subject<AnnotationResults>();
+    this.results = new Subject<DashboardQueryRunnerResults>();
     this.cancellations = new Subject<{}>();
   }
 
-  run(options: AnnotationQueryOptions): void {
+  run(options: DashboardQueryRunnerOptions): void {
     console.log('Calling getDashboardQueryRunner with', options);
     const workers = getDashboardQueryRunnerWorkers().filter((w) => w.canRun(options));
     const observables = workers.map((w) => w.run(options));
@@ -64,7 +81,7 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
       });
   }
 
-  getResult(panelId: number): Observable<AnnotationResult> {
+  getResult(panelId: number): Observable<DashboardQueryRunnerResult> {
     return this.results.asObservable().pipe(
       map((result) => {
         const annotations = result.annotations.filter((item) => {
@@ -91,8 +108,8 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
 }
 
 export interface Worker {
-  canRun: (options: AnnotationQueryOptions) => boolean;
-  run: (options: AnnotationQueryOptions) => Observable<AnnotationResults>;
+  canRun: (options: DashboardQueryRunnerOptions) => boolean;
+  run: (options: DashboardQueryRunnerOptions) => Observable<DashboardQueryRunnerResults>;
 }
 
 export function getDashboardQueryRunnerWorkers(): Worker[] {
@@ -100,13 +117,8 @@ export function getDashboardQueryRunnerWorkers(): Worker[] {
 }
 
 export class AlertStatesWorker implements Worker {
-  canRun({ dashboard, panel, range }: AnnotationQueryOptions): boolean {
+  canRun({ dashboard, range }: DashboardQueryRunnerOptions): boolean {
     if (!dashboard.id) {
-      return false;
-    }
-
-    // ignore if no alerts
-    if (!panel?.alert) {
       return false;
     }
 
@@ -117,7 +129,7 @@ export class AlertStatesWorker implements Worker {
     return true;
   }
 
-  run(options: AnnotationQueryOptions): Observable<AnnotationResults> {
+  run(options: DashboardQueryRunnerOptions): Observable<DashboardQueryRunnerResults> {
     if (!this.canRun(options)) {
       return emptyResult();
     }
@@ -141,12 +153,12 @@ export class AlertStatesWorker implements Worker {
 }
 
 export class SnapshotWorker implements Worker {
-  canRun({ dashboard }: AnnotationQueryOptions): boolean {
+  canRun({ dashboard }: DashboardQueryRunnerOptions): boolean {
     const snapshots = dashboard.annotations.list.find((a) => a.enable && Boolean(a.snapshotData));
     return Boolean(snapshots);
   }
 
-  run(options: AnnotationQueryOptions): Observable<AnnotationResults> {
+  run(options: DashboardQueryRunnerOptions): Observable<DashboardQueryRunnerResults> {
     if (!this.canRun(options)) {
       return emptyResult();
     }
@@ -178,18 +190,18 @@ export class SnapshotWorker implements Worker {
 }
 
 export class AnnotationsWorker implements Worker {
-  canRun({ dashboard }: AnnotationQueryOptions): boolean {
+  canRun({ dashboard }: DashboardQueryRunnerOptions): boolean {
     const annotations = dashboard.annotations.list.find((a) => a.enable && !Boolean(a.snapshotData));
     return Boolean(annotations);
   }
 
-  run(options: AnnotationQueryOptions): Observable<AnnotationResults> {
+  run(options: DashboardQueryRunnerOptions): Observable<DashboardQueryRunnerResults> {
     if (!this.canRun(options)) {
       return emptyResult();
     }
 
     console.log('Running AnnotationsWorker');
-    const { dashboard, range, panel } = options;
+    const { dashboard, range } = options;
     const annotations = dashboard.annotations.list.filter((a) => a.enable && !Boolean(a.snapshotData));
     const runners = getAnnotationQueryRunners();
     const observables = annotations.map((annotation) => {
@@ -201,7 +213,7 @@ export class AnnotationsWorker implements Worker {
             return of([]);
           }
 
-          return runner.run({ annotation, datasource, dashboard, panel, range });
+          return runner.run({ annotation, datasource, dashboard, range });
         })
       );
     });
@@ -240,7 +252,7 @@ export class AnnotationsWorker implements Worker {
   }
 }
 
-export interface AnnotationQueryRunnerOptions extends AnnotationQueryOptions {
+export interface AnnotationQueryRunnerOptions extends DashboardQueryRunnerOptions {
   datasource: DataSourceApi;
   annotation: {
     datasource: string;
@@ -277,18 +289,14 @@ export class AnnotationsQueryRunner implements AnnotationQueryRunner {
     return !Boolean(datasource.annotationQuery && !datasource.annotations);
   }
 
-  run({
-    annotation,
-    datasource,
-    dashboard,
-    range,
-    panel,
-  }: AnnotationQueryRunnerOptions): Observable<AnnotationEvent[]> {
+  run({ annotation, datasource, dashboard, range }: AnnotationQueryRunnerOptions): Observable<AnnotationEvent[]> {
     if (!this.canRun(datasource)) {
       return of([]);
     }
 
-    return executeAnnotationQuery({ panel, dashboard, range }, datasource, annotation).pipe(
+    const panel: PanelModel = ({} as unknown) as PanelModel; // deliberate setting panel to empty object because executeAnnotationQuery shouldn't depend on panelModel
+
+    return executeAnnotationQuery({ dashboard, range, panel }, datasource, annotation).pipe(
       map((result) => {
         return result.events ?? [];
       })
