@@ -5,8 +5,7 @@ import { Dimensions, TimeZone } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
 import { TooltipContainer } from './TooltipContainer';
 import { useStyles } from '../../themes';
-
-export type TooltipMode = 'single' | 'multi' | 'none';
+import { TooltipMode } from './models.gen';
 
 // Describes active dimensions user interacts with
 // It's a key-value pair where:

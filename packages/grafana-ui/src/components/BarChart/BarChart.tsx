@@ -10,7 +10,7 @@ import { BarChartOptions } from './types';
 import { withTheme } from '../../themes';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { preparePlotData } from '../uPlot/utils';
-import { LegendDisplayMode } from '../VizLegend/types';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { PlotLegend } from '../uPlot/PlotLegend';
 
 /**

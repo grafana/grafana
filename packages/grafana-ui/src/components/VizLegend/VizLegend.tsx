@@ -1,5 +1,6 @@
 import React from 'react';
-import { LegendProps, LegendDisplayMode } from './types';
+import { LegendProps } from './types';
+import { LegendDisplayMode } from './models.gen';
 import { VizLegendTable } from './VizLegendTable';
 import { VizLegendList } from './VizLegendList';
 

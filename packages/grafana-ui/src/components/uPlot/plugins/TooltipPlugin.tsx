@@ -12,7 +12,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { TooltipContainer } from '../../Chart/TooltipContainer';
-import { TooltipMode } from '../../Chart/Tooltip';
+import { TooltipMode } from '../../Chart/models.gen';
 import { useGraphNGContext } from '../../GraphNG/hooks';
 
 interface TooltipPluginProps {

@@ -1,6 +1,6 @@
 import { VizOrientation } from '@grafana/data';
 import { AxisConfig, GraphGradientMode, HideableFieldConfig } from '../uPlot/config';
-import { VizLegendOptions } from '../VizLegend/types';
+import { VizLegendOptions } from '../VizLegend/models.gen';
 
 /**
  * @alpha

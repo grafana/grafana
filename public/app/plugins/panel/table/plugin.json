@@ -3,6 +3,11 @@
   "name": "Table",
   "id": "table",
 
+  "models": {
+    "version": [1, 0],
+    "changed": "2021/03/30"
+  },
+
   "info": {
     "description": "Table Panel for Grafana",
     "author": {

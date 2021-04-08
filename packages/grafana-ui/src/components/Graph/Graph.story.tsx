@@ -4,7 +4,8 @@ import Chart from '../Chart';
 import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId } from '@grafana/data';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TooltipContentProps, TooltipMode } from '../Chart/Tooltip';
+import { TooltipContentProps } from '../Chart/Tooltip';
+import { TooltipMode } from '../Chart/models.gen';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
 import { GraphProps } from './Graph';
 

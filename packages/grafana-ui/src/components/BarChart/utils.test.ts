@@ -2,7 +2,7 @@ import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { FieldConfig, FieldType, GrafanaTheme, MutableDataFrame, VizOrientation } from '@grafana/data';
 import { BarChartFieldConfig, BarChartOptions, BarStackingMode, BarValueVisibility } from './types';
 import { GraphGradientMode } from '../uPlot/config';
-import { LegendDisplayMode } from '../VizLegend/types';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
 
 function mockDataFrame() {
   const df1 = new MutableDataFrame({

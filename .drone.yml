@@ -51,13 +51,6 @@ steps:
   depends_on:
   - initialize
 
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
-  depends_on:
-  - initialize
-
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -114,7 +107,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
 
 - name: package
   image: grafana/build-container:1.4.1
@@ -305,13 +297,6 @@ steps:
   depends_on:
   - initialize
 
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
-  depends_on:
-  - initialize
-
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -382,7 +367,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
 
 - name: package
   image: grafana/build-container:1.4.1
@@ -761,13 +745,6 @@ steps:
   depends_on:
   - initialize
 
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
-  depends_on:
-  - initialize
-
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -830,7 +807,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
 
 - name: package
   image: grafana/build-container:1.4.1
@@ -1137,13 +1113,6 @@ steps:
   depends_on:
   - initialize
 
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
-  depends_on:
-  - initialize
-
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -1237,7 +1206,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
   - build-backend-enterprise2
   - test-backend-enterprise2
 
@@ -1712,13 +1680,6 @@ steps:
   depends_on:
   - initialize
 
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
-  depends_on:
-  - initialize
-
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -1781,7 +1742,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
 
 - name: package
   image: grafana/build-container:1.4.1
@@ -2077,13 +2037,6 @@ steps:
   depends_on:
   - initialize
 
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
-  depends_on:
-  - initialize
-
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -2177,7 +2130,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
   - build-backend-enterprise2
   - test-backend-enterprise2
 
@@ -2645,13 +2597,6 @@ steps:
   depends_on:
   - initialize
 
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
-  depends_on:
-  - initialize
-
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -2711,7 +2656,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
 
 - name: package
   image: grafana/build-container:1.4.1
@@ -2981,13 +2925,6 @@ steps:
   depends_on:
   - initialize
 
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
-  depends_on:
-  - initialize
-
 - name: test-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -3075,7 +3012,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
   - build-backend-enterprise2
   - test-backend-enterprise2
 
