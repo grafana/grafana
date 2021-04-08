@@ -24,6 +24,7 @@ import {
   GraphGradientMode,
   LegendDisplayMode,
   AxisConfig,
+  HideableFieldConfig,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
@@ -185,7 +186,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
   };
 }
 
-export function addHideFrom(builder: FieldConfigEditorBuilder<AxisConfig>) {
+export function addHideFrom(builder: FieldConfigEditorBuilder<HideableFieldConfig>) {
   builder.addCustomEditor({
     id: 'hideFrom',
     name: 'Hide in area',
