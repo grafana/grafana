@@ -2,7 +2,7 @@ import React from 'react';
 import { ThemeColors } from './ThemeColors';
 
 export default {
-  title: 'Docs Overview/ThemeColors',
+  title: 'Docs Overview/Theme',
   component: ThemeColors,
   decorators: [],
   parameters: {
@@ -13,6 +13,6 @@ export default {
   },
 };
 
-export const ThemeColorsDemo = () => {
+export const OldThemeDemo = () => {
   return <ThemeColors />;
 };

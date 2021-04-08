@@ -19,7 +19,6 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
-  scope: any;
   datasource: DataSourceApi;
   contextSrv: ContextSrv;
   datasourceSrv: any;
@@ -43,7 +42,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
-    this.scope = $scope;
     this.panel.datasource = this.panel.datasource || null;
 
     this.events.on(PanelEvents.refresh, this.onMetricsPanelRefresh.bind(this));
