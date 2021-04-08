@@ -43,7 +43,7 @@ describe('FunctionEditor', () => {
       />
     );
 
-    expect(screen.queryByText('bar')).toBeTruthy();
-    expect(screen.queryByTestId('warning-icon')).toBeTruthy();
+    expect(screen.getByText('alert')).toBeInTheDocument();
+    expect(screen.getByTestId('warning-icon')).toBeInTheDocument();
   });
 });
