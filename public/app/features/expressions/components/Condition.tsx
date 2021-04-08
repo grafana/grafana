@@ -2,7 +2,7 @@ import React, { FC, FormEvent } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, ButtonSelect, Icon, InlineFieldRow, Input, Select, useStyles } from '@grafana/ui';
-import alertDef from '../../alerting/state/alertDef';
+import alertDef, { EvalFunction } from '../../alerting/state/alertDef';
 import { ClassicCondition, ReducerType } from '../types';
 
 interface Props {
@@ -41,7 +41,7 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
     });
   };
 
-  const onEvalFunctionChange = (evalFunction: SelectableValue<string>) => {
+  const onEvalFunctionChange = (evalFunction: SelectableValue<EvalFunction>) => {
     onChange({
       ...condition,
       evaluator: { params: [], type: evalFunction.value! },
@@ -63,7 +63,8 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
     width: 60px;
   `;
 
-  const isRange = condition.evaluator.type === 'within_range' || condition.evaluator.type === 'outside_range';
+  const isRange =
+    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
 
   return (
     <InlineFieldRow>
@@ -112,14 +113,14 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
             value={condition.evaluator.params[1]}
           />
         </>
-      ) : (
+      ) : condition.evaluator.type !== EvalFunction.HasNoValue ? (
         <Input
           type="number"
           width={10}
           onChange={(event) => onEvaluateValueChange(event, 0)}
           value={condition.evaluator.params[0]}
         />
-      )}
+      ) : null}
 
       <Button variant="secondary" onClick={() => onRemoveCondition(index)}>
         <Icon name="trash-alt" />

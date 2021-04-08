@@ -1,4 +1,5 @@
 import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
+import { EvalFunction } from '../alerting/state/alertDef';
 
 export enum ExpressionQueryType {
   math = 'math',
@@ -52,7 +53,7 @@ export interface ExpressionQuery extends DataQuery {
 export interface ClassicCondition {
   evaluator: {
     params: number[];
-    type: string;
+    type: EvalFunction;
   };
   operator?: {
     type: string;
