@@ -29,7 +29,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, plugin }
   });
 
   const location = useLocation();
-  const { data, isLoading, error } = usePanelLatestData(panel, dataOptions);
+  const { data, isLoading, error } = usePanelLatestData(panel, dataOptions, true);
   const metaDs = useDatasourceMetadata(data);
   const tabs = useInspectTabs(dashboard, plugin, error, metaDs);
   const defaultTab = new URLSearchParams(location.search).get('inspectTab') as InspectTab;

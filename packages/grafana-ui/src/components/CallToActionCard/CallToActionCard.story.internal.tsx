@@ -1,8 +1,7 @@
 import React from 'react';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 import { CallToActionCard, CallToActionCardProps } from './CallToActionCard';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
-import { Story } from '@storybook/react';
+import { Story, Meta } from '@storybook/react';
 import { Button } from '../Button/Button';
 import { action } from '@storybook/addon-actions';
 
@@ -13,14 +12,14 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['className', 'callToActionElement', 'theme'],
+    },
   },
   argTypes: {
     Element: { control: { type: 'select', options: ['button', 'custom'] } },
-    className: NOOP_CONTROL,
-    callToActionElement: NOOP_CONTROL,
-    theme: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 interface StoryProps extends Partial<CallToActionCardProps> {
   Element: string;
