@@ -2,7 +2,7 @@
 title = "InfluxDB"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide", "flux"]
-aliases = ["/docs/grafana/latest/features/datasources/influxdb"]
+aliases = ["/docs/grafana/latest/features/datasources/influxdb", "/docs/grafana/latest/datasources/influxdb"]
 weight = 700
 +++
 
@@ -37,10 +37,13 @@ Name        | Description
 
 ### Flux
 
+Grafana supports Flux running on InfluxDB 1.8+.  See [1.8 compatibility](https://github.com/influxdata/influxdb-client-go/#influxdb-18-api-compatibility) for more information and connection details.
+
 Name        | Description
 ----------- | -------------
 `Name`      | The data source name. This is how you refer to the data source in panels and queries.
 `Default`   | Default data source means that it will be pre-selected for new panels.
+`URL`       | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
 `Access`    | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 `Whitelisted Cookies`| Cookies that will be forwarded to the data source. All other cookies will be deleted.
 `Organization` |
@@ -50,6 +53,7 @@ Name        | Description
 `Max series`| Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
 
 #### Min time interval
+
 A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -65,9 +69,6 @@ Identifier   | Description
 `s`          | second
 `ms`         | millisecond
 
-
-
-
 ## Query languages
 
 You can query InfluxDB using InfluxQL or Flux:
@@ -77,7 +78,7 @@ You can query InfluxDB using InfluxQL or Flux:
 
 To help you choose the best language for your needs, here’s a comparison of [Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/), and [why InfluxData created Flux](https://www.influxdata.com/blog/why-were-building-flux-a-new-data-scripting-and-query-language/).
 
-## Query Editor
+## Query editor
 
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
@@ -152,7 +153,6 @@ Name             | Description
 
 You can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Grafana's Flux query editor is a text editor for raw Flux queries with Macro support.
 
-
 ### Supported macros
 
 The macros support copying and pasting from [Chronograph](https://www.influxdata.com/time-series-platform/chronograf/).
@@ -191,14 +191,12 @@ from(bucket: "grafana")
 
 You can view the interpolated version of a query with the Query Inspector.
 
-## Querying Logs (BETA)
-
-> Only available in Grafana v6.3+.
+## Querying logs
 
 Querying and displaying log data from InfluxDB is available in [Explore]({{< relref "../explore" >}}), and in the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards.
 Select the InfluxDB data source, and then enter a query to display your logs.
 
-### Log Queries
+### Log queries
 
 The Logs Explorer (the `Measurements/Fields` button) next to the query field shows a list of measurements and fields. Choose the desired measurement that contains your log data and then choose which field Explore should use to display the log message.
 
@@ -214,8 +212,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
-types of template variables.
+Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query variable
 
@@ -263,7 +260,7 @@ SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^[[host]]$/ AND $timeFil
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value*
 options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.
 
-Example Dashboard:
+Example dashboard:
 [InfluxDB Templated Dashboard](https://play.grafana.org/dashboard/db/influxdb-templated)
 
 ### Ad hoc filters variable
@@ -285,7 +282,7 @@ For InfluxDB, you need to enter a query like the one in the example above. The `
 
 ## Configure the data source with provisioning
 
-You can now configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
+You can configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
 
 Here are some provisioning examples for this data source.
 
