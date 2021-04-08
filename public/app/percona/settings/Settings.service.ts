@@ -13,34 +13,8 @@ export const SettingsService = {
     const { settings }: SettingsAPIResponse = await api.post('/v1/Settings/Get', {});
     return toModel(settings);
   },
-  async setSettings(body: SettingsAPIChangePayload, setLoading: LoadingCallback) {
-    let response: Settings = {
-      awsPartitions: [],
-      updatesDisabled: false,
-      telemetryEnabled: false,
-      backupEnabled: false,
-      metricsResolutions: {
-        hr: '',
-        mr: '',
-        lr: '',
-      },
-      dataRetention: '',
-      sshKey: '',
-      alertManagerUrl: '',
-      alertManagerRules: '',
-      sttEnabled: false,
-      alertingSettings: {
-        email: {
-          from: '',
-          smarthost: '',
-          hello: '',
-        },
-        slack: {
-          url: '',
-        },
-      },
-    };
-
+  async setSettings(body: SettingsAPIChangePayload, setLoading: LoadingCallback): Promise<Settings | undefined> {
+    let response;
     try {
       setLoading(true);
       const { settings }: SettingsAPIResponse = await api.post<any, any>('/v1/Settings/Change', body);
@@ -75,5 +49,10 @@ const toModel = (response: SettingsPayload): Settings => ({
     slack: response.slack_alerting_settings || {},
   },
   publicAddress: response.pmm_public_address,
+  sttCheckIntervals: {
+    rareInterval: response.stt_check_intervals.rare_interval,
+    standardInterval: response.stt_check_intervals.standard_interval,
+    frequentInterval: response.stt_check_intervals.frequent_interval,
+  },
   backupEnabled: response.backup_management_enabled,
 });

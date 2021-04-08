@@ -21,8 +21,16 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
       display: flex;
       width: 210px;
     `,
-    retentionInputWrapper: css`
+    advancedChildCol: css`
+      width: 150px;
+      margin-left: 30px;
+    `,
+    inputWrapper: css`
+      align-items: center;
       display: flex;
+      input {
+        width: 60px;
+      }
       div {
         margin: 0;
         div[class*='-error'] {
@@ -30,7 +38,7 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
         }
       }
     `,
-    retentionUnitslabel: css`
+    unitsLabel: css`
       font-size: ${typography.size.sm};
       margin-left: ${spacing.sm};
     `,
@@ -66,6 +74,10 @@ export const getStyles = stylesFactory(({ breakpoints, spacing, typography, bord
       ${mq} {
         margin-left: 0;
       }
+    `,
+    sttCheckIntervalsLabel: css`
+      margin-top: ${spacing.sm};
+      margin-bottom: ${spacing.sm};
     `,
     technicalPreview: css`
       border: ${border.width.sm} solid ${colors.pageHeaderBorder};
