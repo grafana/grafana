@@ -3,7 +3,7 @@ import usePrevious from 'react-use/lib/usePrevious';
 import { DataLinkSuggestions } from './DataLinkSuggestions';
 import { makeValue, ThemeContext } from '../../index';
 import { SelectionReference } from './SelectionReference';
-import { getFormStyles, Portal } from '../index';
+import { Portal } from '../index';
 
 // @ts-ignore
 import Prism, { Grammar, LanguageMap } from 'prismjs';
@@ -17,6 +17,7 @@ import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
 import { stylesFactory } from '../../themes';
 import { DataLinkBuiltInVars, GrafanaTheme, VariableOrigin, VariableSuggestion } from '@grafana/data';
+import { getInputStyles } from '../Input/Input';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -44,7 +45,7 @@ const plugins = [
 ];
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  input: getFormStyles(theme, { variant: 'primary', size: 'md', invalid: false }).input.input,
+  input: getInputStyles({ theme, invalid: false }).input,
   editor: css`
     .token.builtInVariable {
       color: ${theme.palette.queryGreen};

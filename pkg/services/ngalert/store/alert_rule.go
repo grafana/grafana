@@ -25,7 +25,6 @@ const AlertRuleMaxRuleGroupNameLength = 190
 type UpdateRuleGroupCmd struct {
 	OrgID           int64
 	NamespaceUID    string
-	RuleGroup       string
 	RuleGroupConfig apimodels.PostableRuleGroupConfig
 }
 
@@ -40,7 +39,7 @@ type RuleStore interface {
 	DeleteNamespaceAlertRules(orgID int64, namespaceUID string) error
 	DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ruleGroup string) error
 	GetAlertRuleByUID(*ngmodels.GetAlertRuleByUIDQuery) error
-	GetAlertRules(query *ngmodels.ListAlertRulesQuery) error
+	GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery) error
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
@@ -324,12 +323,12 @@ func (st DBstore) GetNamespaceByUID(UID string, orgID int64, user *models.Signed
 	return folder.Title, nil
 }
 
-// GetAlertRules returns alert rule identifier, interval, version and pause state
-// that are useful for it's scheduling.
-func (st DBstore) GetAlertRules(query *ngmodels.ListAlertRulesQuery) error {
+// GetAlertRulesForScheduling returns alert rule info (identifier, interval, version state)
+// that is useful for it's scheduling.
+func (st DBstore) GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*ngmodels.AlertRule, 0)
-		q := "SELECT uid, org_id, interval_seconds, version, paused FROM alert_rule"
+		q := "SELECT uid, org_id, interval_seconds, version FROM alert_rule"
 		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}
@@ -391,10 +390,11 @@ func (st DBstore) ValidateAlertRule(alertRule ngmodels.AlertRule, requireData bo
 // UpdateRuleGroup creates new rules and updates and/or deletes existing rules
 func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		ruleGroup := cmd.RuleGroupConfig.Name
 		q := &ngmodels.ListRuleGroupAlertRulesQuery{
 			OrgID:        cmd.OrgID,
 			NamespaceUID: cmd.NamespaceUID,
-			RuleGroup:    cmd.RuleGroup,
+			RuleGroup:    ruleGroup,
 		}
 		if err := st.GetRuleGroupAlertRules(q); err != nil {
 			return err
@@ -421,7 +421,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 					UID:             r.GrafanaManagedAlert.UID,
 					IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
 					NamespaceUID:    cmd.NamespaceUID,
-					RuleGroup:       cmd.RuleGroup,
+					RuleGroup:       ruleGroup,
 					NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
 					ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
 				},

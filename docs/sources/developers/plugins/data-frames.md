@@ -72,7 +72,7 @@ A data transformation is any function that accepts a data frame as input, and re
 
 A data frame with at least one time field is considered a _time series_.
 
-For more information on time series, refer to our [Introduction to time series]({{< relref "../../getting-started/timeseries.md" >}}).
+For more information on time series, refer to our [Introduction to time series]({{< relref "../../basics/timeseries.md" >}}).
 
 ### Wide format
 
