@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
-import { PanelMenuItem } from '@grafana/data';
-
+import { PanelMenuItem, CartesianCoords2D } from '@grafana/data';
 export interface Props {
   items: PanelMenuItem[];
+  coordinates?: CartesianCoords2D;
 }
 
 export class PanelHeaderMenu extends PureComponent<Props> {
@@ -29,6 +29,13 @@ export class PanelHeaderMenu extends PureComponent<Props> {
   };
 
   render() {
-    return <div className="panel-menu-container dropdown open">{this.renderItems(this.props.items)}</div>;
+    return (
+      <div
+        className="panel-menu-container dropdown open"
+        style={{ position: 'fixed', left: this.props.coordinates?.x, top: this.props.coordinates?.y }}
+      >
+        {this.renderItems(this.props.items)}
+      </div>
+    );
   }
 }

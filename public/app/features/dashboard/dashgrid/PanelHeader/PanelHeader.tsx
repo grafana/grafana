@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import React, { FC, useLayoutEffect, useState, useRef } from 'react';
 import { cx } from '@emotion/css';
-import { DataLink, PanelData } from '@grafana/data';
+import { DataLink, PanelData, CartesianCoords2D } from '@grafana/data';
 import { Icon } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -12,7 +12,6 @@ import { PanelHeaderNotices } from './PanelHeaderNotices';
 import { PanelHeaderMenuTrigger } from './PanelHeaderMenuTrigger';
 import { PanelHeaderLoadingIndicator } from './PanelHeaderLoadingIndicator';
 import { PanelHeaderMenuWrapper } from './PanelHeaderMenuWrapper';
-
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
@@ -24,23 +23,41 @@ export interface Props {
   isViewing: boolean;
   isEditing: boolean;
   data: PanelData;
-  /** Menu item trigger that accepts openMenu prop */
-  children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
 }
 
-export const PanelHeader: FC<Props> = ({
-  panel,
-  error,
-  isViewing,
-  isEditing,
-  data,
-  alertState,
-  dashboard,
-  children,
-}) => {
+export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, data, alertState, dashboard }) => {
   const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
   const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
+
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuIconCoordinates, setMenuIconCoordinates] = useState<CartesianCoords2D>({ x: 0, y: 0 });
+
+  useLayoutEffect(() => {
+    const menuElement = menuRef.current;
+    if (menuElement) {
+      const rect = menuElement.getBoundingClientRect();
+      // const OFFSET = 5;
+      // const collisions = {
+      //   right: window.innerWidth < x + rect.width,
+      //   bottom: window.innerHeight < rect.bottom + rect.height + OFFSET,
+      // };
+
+      setMenuIconCoordinates({
+        // position: 'fixed',
+        // left: collisions.right ? x - rect.width - OFFSET : x - OFFSET,
+        // top: collisions.bottom ? y - rect.height - OFFSET : y + OFFSET,
+        x: rect.x,
+        y: rect.y,
+      });
+    }
+  });
+
+  // useClickAway(menuRef, () => {
+  //   if (onClose) {
+  //     onClose();
+  //   }
+  // });
 
   return (
     <>
@@ -69,8 +86,14 @@ export const PanelHeader: FC<Props> = ({
                   />
                 ) : null}
                 <span className="panel-title-text">{title}</span>
-                <Icon name="angle-down" className="panel-menu-toggle" />
-                <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} show={panelMenuOpen} onClose={closeMenu} />
+                <Icon name="angle-down" className="panel-menu-toggle" ref={menuRef} />
+                <PanelHeaderMenuWrapper
+                  panel={panel}
+                  dashboard={dashboard}
+                  show={panelMenuOpen}
+                  onClose={closeMenu}
+                  coordinates={menuIconCoordinates}
+                />
                 {data.request && data.request.timeInfo && (
                   <span className="panel-time-info">
                     <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}

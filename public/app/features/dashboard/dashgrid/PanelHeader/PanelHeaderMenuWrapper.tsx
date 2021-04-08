@@ -1,49 +1,19 @@
-import React, { FC, useLayoutEffect, useState, useRef } from 'react';
+import React, { FC } from 'react';
 import { ClickOutsideWrapper, Portal } from '@grafana/ui';
-import { useClickAway } from 'react-use';
 import { PanelHeaderMenuProvider } from './PanelHeaderMenuProvider';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
 import { DashboardModel, PanelModel } from '../../state';
+import { CartesianCoords2D } from '@grafana/data';
 
 interface Props {
-  /** Starting horizontal position for the panel header menu */
-  x: number;
-  /** Starting vertical position for the panel header menu */
-  y: number;
   panel: PanelModel;
   dashboard: DashboardModel;
   show: boolean;
   onClose: () => void;
+  coordinates?: CartesianCoords2D;
 }
 
-export const PanelHeaderMenuWrapper: FC<Props> = ({ show, x, y, onClose, panel, dashboard }) => {
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [positionStyles, setPositionStyles] = useState({});
-
-  useLayoutEffect(() => {
-    const menuElement = menuRef.current;
-    if (menuElement) {
-      const rect = menuElement.getBoundingClientRect();
-      const OFFSET = 5;
-      const collisions = {
-        right: window.innerWidth < x + rect.width,
-        bottom: window.innerHeight < rect.bottom + rect.height + OFFSET,
-      };
-
-      setPositionStyles({
-        position: 'fixed',
-        left: collisions.right ? x - rect.width - OFFSET : x - OFFSET,
-        top: collisions.bottom ? y - rect.height - OFFSET : y + OFFSET,
-      });
-    }
-  }, [x, y]);
-
-  useClickAway(menuRef, () => {
-    if (onClose) {
-      onClose();
-    }
-  });
-
+export const PanelHeaderMenuWrapper: FC<Props> = ({ show, onClose, panel, dashboard, coordinates }) => {
   if (!show) {
     return null;
   }
@@ -53,7 +23,7 @@ export const PanelHeaderMenuWrapper: FC<Props> = ({ show, x, y, onClose, panel, 
       <ClickOutsideWrapper onClick={onClose} parent={document}>
         <PanelHeaderMenuProvider panel={panel} dashboard={dashboard}>
           {({ items }) => {
-            return <PanelHeaderMenu items={items} ref={menuRef} style={positionStyles} />;
+            return <PanelHeaderMenu items={items} coordinates={coordinates} />;
           }}
         </PanelHeaderMenuProvider>
       </ClickOutsideWrapper>
