@@ -1,4 +1,4 @@
-import { VizLegendOptions, GraphTooltipOptions, StackingMode } from '@grafana/ui';
+import { VizLegendOptions, GraphTooltipOptions } from '@grafana/ui';
 
 export interface OptionsWithLegend {
   legend: VizLegendOptions;
@@ -6,5 +6,4 @@ export interface OptionsWithLegend {
 
 export interface Options extends OptionsWithLegend {
   tooltipOptions: GraphTooltipOptions;
-  stacking: StackingMode;
 }

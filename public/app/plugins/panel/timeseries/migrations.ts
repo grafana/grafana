@@ -13,7 +13,6 @@ import {
 import {
   GraphFieldConfig,
   LegendDisplayMode,
-  StackingMode,
   AxisPlacement,
   DrawStyle,
   GraphGradientMode,
@@ -279,7 +278,6 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     tooltipOptions: {
       mode: 'single',
     },
-    stacking: StackingMode.None,
   };
 
   // Legend config migration
