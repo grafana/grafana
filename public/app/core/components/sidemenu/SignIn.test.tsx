@@ -1,11 +1,18 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import { SignIn } from './SignIn';
+import { Router } from 'react-router-dom';
+import { locationService } from '@grafana/runtime';
 
 describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = shallow(<SignIn url="/whatever" />);
+  it('should render component', async () => {
+    render(
+      <Router history={locationService.getHistory()}>
+        <SignIn url="/whatever" />
+      </Router>
+    );
 
-    expect(wrapper).toMatchSnapshot();
+    const link = await screen.getByText('Sign In');
+    expect(link).toBeInTheDocument();
   });
 });

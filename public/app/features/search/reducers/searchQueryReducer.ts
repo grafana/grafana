@@ -1,4 +1,4 @@
-import { DashboardQuery, RouteParams, SearchAction, SearchLayout } from '../types';
+import { DashboardQuery, SearchQueryParams, SearchAction, SearchLayout } from '../types';
 import {
   ADD_TAG,
   CLEAR_FILTERS,
@@ -23,7 +23,7 @@ export const defaultQuery: DashboardQuery = {
   prevSort: null,
 };
 
-export const defaultQueryParams: RouteParams = {
+export const defaultQueryParams: SearchQueryParams = {
   sort: null,
   starred: null,
   query: null,

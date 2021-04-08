@@ -9,6 +9,7 @@ import { DataSourceApi, FieldType, getFieldDisplayName, isDataFrame, MetricFindV
 import { updateVariableOptions, updateVariableTags } from './reducer';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { getLegacyQueryOptions, getTemplatedRegex } from '../utils';
+import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
   return (source) =>
@@ -23,6 +24,7 @@ export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValu
           return frames;
         }
 
+        const processedDataFrames = getProcessedDataFrames(frames);
         const metrics: MetricFindValue[] = [];
 
         let valueIndex = -1;
@@ -30,7 +32,7 @@ export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValu
         let stringIndex = -1;
         let expandableIndex = -1;
 
-        for (const frame of frames) {
+        for (const frame of processedDataFrames) {
           for (let index = 0; index < frame.fields.length; index++) {
             const field = frame.fields[index];
             const fieldName = getFieldDisplayName(field, frame, frames).toLowerCase();
@@ -160,7 +162,7 @@ export function validateVariableSelection(args: {
 
         // If we are searching options there is no need to validate selection state
         // This condition was added to as validateVariableSelectionState will update the current value of the variable
-        // So after search and selection the current value is already update so no setValue, refresh & url update is performed
+        // So after search and selection the current value is already update so no setValue, refresh and URL update is performed
         // The if statement below fixes https://github.com/grafana/grafana/issues/25671
         if (!searchFilter) {
           return from(dispatch(validateVariableSelectionState(toVariableIdentifier(variable))));
@@ -181,6 +183,7 @@ export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
   }
 
   const firstValue: any = data[0];
+
   if (isDataFrame(firstValue)) {
     return false;
   }
@@ -190,7 +193,11 @@ export function areMetricFindValues(data: any[]): data is MetricFindValue[] {
       continue;
     }
 
-    if (typeof firstValue[firstValueKey] !== 'string' && typeof firstValue[firstValueKey] !== 'number') {
+    if (
+      firstValue[firstValueKey] !== null &&
+      typeof firstValue[firstValueKey] !== 'string' &&
+      typeof firstValue[firstValueKey] !== 'number'
+    ) {
       continue;
     }
 

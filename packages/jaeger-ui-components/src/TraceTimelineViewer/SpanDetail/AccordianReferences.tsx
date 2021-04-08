@@ -13,12 +13,12 @@
 // limitations under the License.
 
 import * as React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
-import { TraceSpanReference } from '@grafana/data';
+import { TraceSpanReference } from '../../types/trace';
 import ReferenceLink from '../../url/ReferenceLink';
 
 import { createStyle } from '../../Theme';

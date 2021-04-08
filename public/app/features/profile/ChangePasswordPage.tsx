@@ -23,7 +23,7 @@ export const ChangePasswordPage: FC<Props> = ({ navModel }) => (
         teams: Team[],
         orgs: UserOrg[],
         sessions: UserSession[],
-        user: UserDTO
+        user?: UserDTO
       ) => {
         return (
           <Page.Contents>
@@ -31,7 +31,7 @@ export const ChangePasswordPage: FC<Props> = ({ navModel }) => (
             {states.loadUser ? (
               <LoadingPlaceholder text="Loading user profile..." />
             ) : (
-              <ChangePasswordForm user={user} onChangePassword={api.changePassword} isSaving={states.changePassword} />
+              <ChangePasswordForm user={user!} onChangePassword={api.changePassword} isSaving={states.changePassword} />
             )}
           </Page.Contents>
         );

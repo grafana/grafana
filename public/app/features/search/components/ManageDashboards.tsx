@@ -1,5 +1,5 @@
 import React, { FC, memo, useState } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { HorizontalGroup, stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -14,7 +14,6 @@ import { useSearchQuery } from '../hooks/useSearchQuery';
 import { SearchResultsFilter } from './SearchResultsFilter';
 import { SearchResults } from './SearchResults';
 import { DashboardActions } from './DashboardActions';
-import { connectWithRouteParams, ConnectProps, DispatchProps } from '../connect';
 
 export interface Props {
   folder?: FolderDTO;
@@ -22,7 +21,7 @@ export interface Props {
 
 const { isEditor } = contextSrv;
 
-export const ManageDashboards: FC<Props & ConnectProps & DispatchProps> = memo(({ folder, params, updateLocation }) => {
+export const ManageDashboards: FC<Props> = memo(({ folder }) => {
   const folderId = folder?.id;
   const folderUid = folder?.uid;
   const theme = useTheme();
@@ -30,13 +29,13 @@ export const ManageDashboards: FC<Props & ConnectProps & DispatchProps> = memo((
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
   const defaultLayout = folderId ? SearchLayout.List : SearchLayout.Folders;
-  const queryParams = {
+  const queryParamsDefaults = {
     skipRecent: true,
     skipStarred: true,
     folderIds: folderId ? [folderId] : [],
     layout: defaultLayout,
-    ...params,
   };
+
   const {
     query,
     hasFilters,
@@ -46,7 +45,7 @@ export const ManageDashboards: FC<Props & ConnectProps & DispatchProps> = memo((
     onTagAdd,
     onSortChange,
     onLayoutChange,
-  } = useSearchQuery(queryParams, updateLocation);
+  } = useSearchQuery(queryParamsDefaults);
 
   const {
     results,
@@ -96,13 +95,7 @@ export const ManageDashboards: FC<Props & ConnectProps & DispatchProps> = memo((
     <div className={styles.container}>
       <div>
         <HorizontalGroup justify="space-between">
-          <FilterInput
-            labelClassName="gf-form--has-input-icon"
-            inputClassName="gf-form-input width-20"
-            value={query.query}
-            onChange={onQueryChange}
-            placeholder={'Search dashboards by name'}
-          />
+          <FilterInput value={query.query} onChange={onQueryChange} placeholder={'Search dashboards by name'} />
           <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
         </HorizontalGroup>
       </div>
@@ -149,7 +142,7 @@ export const ManageDashboards: FC<Props & ConnectProps & DispatchProps> = memo((
   );
 });
 
-export default connectWithRouteParams(ManageDashboards);
+export default ManageDashboards;
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

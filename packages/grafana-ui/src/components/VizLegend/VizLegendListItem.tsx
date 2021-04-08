@@ -1,5 +1,5 @@
 import React from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem, SeriesColorChangeHandler } from './types';
 import { VizLegendStatsList } from './VizLegendStatsList';
@@ -62,6 +62,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     display: flex;
     white-space: nowrap;
     align-items: center;
+    flex-grow: 1;
   `,
   value: css`
     text-align: right;

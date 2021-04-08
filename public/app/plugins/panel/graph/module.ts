@@ -6,7 +6,6 @@ import './time_regions_form';
 import template from './template';
 import _ from 'lodash';
 
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
@@ -20,13 +19,15 @@ import { DataWarning, GraphFieldConfig, GraphPanelOptions } from './types';
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
-import { CoreEvents } from 'app/types';
 import { getLocationSrv } from '@grafana/runtime';
 import { getDataTimeRange } from './utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { dispatch } from 'app/store/store';
 import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
 import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
+import { appEvents } from '../../../core/core';
+import { ZoomOutEvent } from '../../../types/events';
+import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
 
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -205,7 +206,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt: any) {
-    this.publishAppEvent(CoreEvents.zoomOut, 2);
+    appEvents.publish(new ZoomOutEvent(2));
   }
 
   onDataSnapshotLoad(snapshotData: any) {

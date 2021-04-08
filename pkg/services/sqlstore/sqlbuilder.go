@@ -24,11 +24,15 @@ func (sb *SQLBuilder) GetSQLString() string {
 	return sb.sql.String()
 }
 
+func (sb *SQLBuilder) GetParams() []interface{} {
+	return sb.params
+}
+
 func (sb *SQLBuilder) AddParams(params ...interface{}) {
 	sb.params = append(sb.params, params...)
 }
 
-func (sb *SQLBuilder) writeDashboardPermissionFilter(user *models.SignedInUser, permission models.PermissionType) {
+func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *models.SignedInUser, permission models.PermissionType) {
 	if user.OrgRole == models.ROLE_ADMIN {
 		return
 	}

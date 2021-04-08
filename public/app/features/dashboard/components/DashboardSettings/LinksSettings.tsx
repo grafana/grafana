@@ -1,30 +1,37 @@
-import React, { PureComponent } from 'react';
+import React, { useState } from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-
+import { LinkSettingsEdit, LinkSettingsHeader, LinkSettingsList } from '../LinksSettings';
 interface Props {
   dashboard: DashboardModel;
 }
 
-export class LinksSettings extends PureComponent<Props> {
-  element?: HTMLElement | null;
-  angularCmp?: AngularComponent;
+export type LinkSettingsMode = 'list' | 'new' | 'edit';
 
-  componentDidMount() {
-    const loader = getAngularLoader();
+export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
+  const [mode, setMode] = useState<LinkSettingsMode>('list');
+  const [editLinkIdx, setEditLinkIdx] = useState<number | null>(null);
+  const hasLinks = dashboard.links.length > 0;
 
-    const template = '<dash-links-editor dashboard="dashboard" />';
-    const scopeProps = { dashboard: this.props.dashboard };
-    this.angularCmp = loader.load(this.element, scopeProps, template);
-  }
+  const backToList = () => {
+    setMode('list');
+  };
+  const setupNew = () => {
+    setEditLinkIdx(null);
+    setMode('new');
+  };
+  const editLink = (idx: number) => {
+    setEditLinkIdx(idx);
+    setMode('edit');
+  };
 
-  componentWillUnmount() {
-    if (this.angularCmp) {
-      this.angularCmp.destroy();
-    }
-  }
-
-  render() {
-    return <div ref={(ref) => (this.element = ref)} />;
-  }
-}
+  return (
+    <>
+      <LinkSettingsHeader onNavClick={backToList} onBtnClick={setupNew} mode={mode} hasLinks={hasLinks} />
+      {mode === 'list' ? (
+        <LinkSettingsList dashboard={dashboard} setupNew={setupNew} editLink={editLink} />
+      ) : (
+        <LinkSettingsEdit dashboard={dashboard} mode={mode} editLinkIdx={editLinkIdx} backToList={backToList} />
+      )}
+    </>
+  );
+};

@@ -174,3 +174,24 @@ export interface AlertDefinitionUiState {
   rightPaneSize: number;
   topPaneSize: number;
 }
+
+export interface AnnotationItemDTO {
+  id: number;
+  alertId: number;
+  alertName: string;
+  dashboardId: number;
+  panelId: number;
+  userId: number;
+  newState: string;
+  prevState: string;
+  created: number;
+  updated: number;
+  time: number;
+  timeEnd: number;
+  text: string;
+  tags: string[];
+  login: string;
+  email: string;
+  avatarUrl: string;
+  data: any;
+}

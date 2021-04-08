@@ -14,7 +14,8 @@ import (
 )
 
 // ApplyRoute should use the plugin route data to set auth headers and custom headers.
-func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute, ds *models.DataSource) {
+func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute,
+	ds *models.DataSource) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 
 	data := templateData{
@@ -47,6 +48,10 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 
 	if err := addHeaders(&req.Header, route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)
+	}
+
+	if err := setBodyContent(req, route, data); err != nil {
+		logger.Error("Failed to set plugin route body content", "error", err)
 	}
 
 	tokenProvider := newAccessTokenProvider(ds, route)

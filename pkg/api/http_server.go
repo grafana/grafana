@@ -13,13 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/services/live"
-	"github.com/grafana/grafana/pkg/services/search"
-	"github.com/grafana/grafana/pkg/services/shorturls"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -30,17 +23,31 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	_ "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
+	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/live/push"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/errutil"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	macaron "gopkg.in/macaron.v1"
@@ -61,28 +68,35 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
-	RouteRegister          routing.RouteRegister              `inject:""`
-	Bus                    bus.Bus                            `inject:""`
-	RenderService          rendering.Service                  `inject:""`
-	Cfg                    *setting.Cfg                       `inject:""`
-	HooksService           *hooks.HooksService                `inject:""`
-	CacheService           *localcache.CacheService           `inject:""`
-	DatasourceCache        datasources.CacheService           `inject:""`
-	AuthTokenService       models.UserTokenService            `inject:""`
-	QuotaService           *quota.QuotaService                `inject:""`
-	RemoteCacheService     *remotecache.RemoteCache           `inject:""`
-	ProvisioningService    provisioning.ProvisioningService   `inject:""`
-	Login                  *login.LoginService                `inject:""`
-	License                models.Licensing                   `inject:""`
-	BackendPluginManager   backendplugin.Manager              `inject:""`
-	PluginRequestValidator models.PluginRequestValidator      `inject:""`
-	PluginManager          *plugins.PluginManager             `inject:""`
-	SearchService          *search.SearchService              `inject:""`
-	ShortURLService        *shorturls.ShortURLService         `inject:""`
-	Live                   *live.GrafanaLive                  `inject:""`
-	ContextHandler         *contexthandler.ContextHandler     `inject:""`
-	SQLStore               *sqlstore.SQLStore                 `inject:""`
-	LibraryPanelService    *librarypanels.LibraryPanelService `inject:""`
+	PluginContextProvider  *plugincontext.Provider                 `inject:""`
+	RouteRegister          routing.RouteRegister                   `inject:""`
+	Bus                    bus.Bus                                 `inject:""`
+	RenderService          rendering.Service                       `inject:""`
+	Cfg                    *setting.Cfg                            `inject:""`
+	HooksService           *hooks.HooksService                     `inject:""`
+	CacheService           *localcache.CacheService                `inject:""`
+	DatasourceCache        datasources.CacheService                `inject:""`
+	AuthTokenService       models.UserTokenService                 `inject:""`
+	QuotaService           *quota.QuotaService                     `inject:""`
+	RemoteCacheService     *remotecache.RemoteCache                `inject:""`
+	ProvisioningService    provisioning.ProvisioningService        `inject:""`
+	Login                  login.Service                           `inject:""`
+	License                models.Licensing                        `inject:""`
+	AccessControl          accesscontrol.AccessControl             `inject:""`
+	BackendPluginManager   backendplugin.Manager                   `inject:""`
+	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
+	PluginRequestValidator models.PluginRequestValidator           `inject:""`
+	PluginManager          plugins.Manager                         `inject:""`
+	SearchService          *search.SearchService                   `inject:""`
+	ShortURLService        *shorturls.ShortURLService              `inject:""`
+	Live                   *live.GrafanaLive                       `inject:""`
+	LivePushGateway        *push.Gateway                           `inject:""`
+	ContextHandler         *contexthandler.ContextHandler          `inject:""`
+	SQLStore               *sqlstore.SQLStore                      `inject:""`
+	LibraryPanelService    *librarypanels.LibraryPanelService      `inject:""`
+	DataService            *tsdb.Service                           `inject:""`
+	PluginDashboardService *plugindashboards.Service               `inject:""`
+	AlertEngine            *alerting.AlertEngine                   `inject:""`
 	Listener               net.Listener
 }
 
@@ -105,10 +119,11 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.applyRoutes()
 
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
-	host := strings.TrimSuffix(strings.TrimPrefix(setting.HttpAddr, "["), "]")
+	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	hs.httpSrv = &http.Server{
-		Addr:    net.JoinHostPort(host, setting.HttpPort),
-		Handler: hs.macaron,
+		Addr:        net.JoinHostPort(host, hs.Cfg.HTTPPort),
+		Handler:     hs.macaron,
+		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 	switch hs.Cfg.Protocol {
 	case setting.HTTP2Scheme:
@@ -153,7 +168,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 			return err
 		}
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		if err := hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile); err != nil {
+		if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
 				hs.log.Debug("server was shutdown gracefully")
 				return nil
@@ -201,20 +216,20 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 }
 
 func (hs *HTTPServer) configureHttps() error {
-	if setting.CertFile == "" {
+	if hs.Cfg.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
 	}
 
-	if setting.KeyFile == "" {
+	if hs.Cfg.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
 	}
 
-	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL cert_file at %q`, setting.CertFile)
+	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
 	}
 
-	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL key_file at %q`, setting.KeyFile)
+	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -242,20 +257,20 @@ func (hs *HTTPServer) configureHttps() error {
 }
 
 func (hs *HTTPServer) configureHttp2() error {
-	if setting.CertFile == "" {
+	if hs.Cfg.CertFile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
 	}
 
-	if setting.KeyFile == "" {
+	if hs.Cfg.KeyFile == "" {
 		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
 	}
 
-	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL cert_file at %q`, setting.CertFile)
+	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
 	}
 
-	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL key_file at %q`, setting.KeyFile)
+	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
+		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -306,34 +321,34 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(middleware.Logger(hs.Cfg))
 
-	if setting.EnableGzip {
+	if hs.Cfg.EnableGzip {
 		m.Use(middleware.Gziper())
 	}
 
 	m.Use(middleware.Recovery(hs.Cfg))
 
-	for _, route := range plugins.StaticRoutes {
+	for _, route := range hs.PluginManager.StaticRoutes() {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
 		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
 		hs.mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
-	hs.mapStatic(m, setting.StaticRootPath, "build", "public/build")
-	hs.mapStatic(m, setting.StaticRootPath, "", "public")
-	hs.mapStatic(m, setting.StaticRootPath, "robots.txt", "robots.txt")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 
-	if setting.ImageUploadProvider == "local" {
+	if hs.Cfg.ImageUploadProvider == "local" {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
 	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
 
-	if setting.ServeFromSubPath && setting.AppSubUrl != "" {
-		m.SetURLPrefix(setting.AppSubUrl)
+	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
+		m.SetURLPrefix(hs.Cfg.AppSubURL)
 	}
 
 	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  filepath.Join(setting.StaticRootPath, "views"),
+		Directory:  filepath.Join(hs.Cfg.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
@@ -348,7 +363,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(middleware.OrgRedirect(hs.Cfg))
 
 	// needs to be after context handler
-	if setting.EnforceDomain {
+	if hs.Cfg.EnforceDomain {
 		m.Use(middleware.ValidateHostHeader(hs.Cfg))
 	}
 
@@ -405,8 +420,8 @@ func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	data := simplejson.New()
 	data.Set("database", "ok")
 	if !hs.Cfg.AnonymousHideVersion {
-		data.Set("version", setting.BuildVersion)
-		data.Set("commit", setting.BuildCommit)
+		data.Set("version", hs.Cfg.BuildVersion)
+		data.Set("commit", hs.Cfg.BuildCommit)
 	}
 
 	if !hs.databaseHealthy() {

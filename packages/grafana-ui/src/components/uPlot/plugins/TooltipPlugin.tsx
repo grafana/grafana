@@ -12,7 +12,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { TooltipContainer } from '../../Chart/TooltipContainer';
-import { TooltipMode } from '../../Chart/Tooltip';
+import { TooltipMode } from '../../Chart/models.gen';
 import { useGraphNGContext } from '../../GraphNG/hooks';
 
 interface TooltipPluginProps {
@@ -29,7 +29,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
   const plotContext = usePlotContext();
   const graphContext = useGraphNGContext();
 
-  let xField = graphContext.getXAxisField(otherProps.data);
+  let xField = graphContext.getXAxisField();
   if (!xField) {
     return null;
   }
@@ -59,16 +59,18 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
         // when interacting with a point in single mode
         if (mode === 'single' && originFieldIndex !== null) {
           const field = otherProps.data[originFieldIndex.frameIndex].fields[originFieldIndex.fieldIndex];
-
+          const plotSeries = plotContext.getSeries();
           const fieldFmt = field.display || getDisplayProcessor({ field, timeZone });
+          const value = fieldFmt(plotContext.data[focusedSeriesIdx!][focusedPointIdx]);
+
           tooltip = (
             <SeriesTable
               series={[
                 {
                   // TODO: align with uPlot typings
-                  color: (plotContext.getSeries()[focusedSeriesIdx!].stroke as any)(),
+                  color: (plotSeries[focusedSeriesIdx!].stroke as any)(),
                   label: getFieldDisplayName(field, otherProps.data[originFieldIndex.frameIndex]),
-                  value: fieldFmt(field.values.get(focusedPointIdx)).text,
+                  value: value ? formattedValueToString(value) : null,
                 },
               ]}
               timestamp={xVal}
@@ -78,33 +80,33 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
 
         if (mode === 'multi') {
           let series: SeriesTableRowProps[] = [];
+          const plotSeries = plotContext.getSeries();
 
-          for (let i = 0; i < otherProps.data.length; i++) {
-            series = series.concat(
-              otherProps.data[i].fields.reduce<SeriesTableRowProps[]>((agg, f, j) => {
-                // skipping time field and non-numeric fields
-                if (f.type === FieldType.time || f.type !== FieldType.number) {
-                  return agg;
-                }
+          for (let i = 0; i < plotSeries.length; i++) {
+            const dataFrameFieldIndex = graphContext.mapSeriesIndexToDataFrameFieldIndex(i);
+            const frame = otherProps.data[dataFrameFieldIndex.frameIndex];
+            const field = otherProps.data[dataFrameFieldIndex.frameIndex].fields[dataFrameFieldIndex.fieldIndex];
+            if (
+              field === xField ||
+              field.type === FieldType.time ||
+              field.type !== FieldType.number ||
+              field.config.custom?.hideFrom?.tooltip
+            ) {
+              continue;
+            }
 
-                if (f.config.custom?.hideFrom?.tooltip) {
-                  return agg;
-                }
+            const value = field.display!(plotContext.data[i][focusedPointIdx]);
 
-                return [
-                  ...agg,
-                  {
-                    // TODO: align with uPlot typings
-                    color: (plotContext.getSeries()[j].stroke as any)!(),
-                    label: getFieldDisplayName(f, otherProps.data[i]),
-                    value: formattedValueToString(f.display!(f.values.get(focusedPointIdx!))),
-                    isActive: originFieldIndex
-                      ? originFieldIndex.frameIndex === i && originFieldIndex.fieldIndex === j
-                      : false,
-                  },
-                ];
-              }, [])
-            );
+            series.push({
+              // TODO: align with uPlot typings
+              color: (plotSeries[i].stroke as any)!(),
+              label: getFieldDisplayName(field, frame),
+              value: value ? formattedValueToString(value) : null,
+              isActive: originFieldIndex
+                ? dataFrameFieldIndex.frameIndex === originFieldIndex.frameIndex &&
+                  dataFrameFieldIndex.fieldIndex === originFieldIndex.fieldIndex
+                : false,
+            });
           }
 
           tooltip = <SeriesTable series={series} timestamp={xVal} />;

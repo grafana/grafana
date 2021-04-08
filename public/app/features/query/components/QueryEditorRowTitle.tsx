@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme, TimeRange } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
 import { Icon, Input, stylesFactory, useTheme, FieldValidationMessage, TimeRangeInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker } from '../../../core/components/Select/DataSourcePicker';
 
 export interface Props {
   query: DataQuery;
@@ -134,6 +134,7 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
           <TimeRangeInput onChange={onTimeRangeChange} value={query.timeRange!} />
         </div>
       )}
+      {dataSourceName && <em className={styles.contextInfo}> ({dataSourceName})</em>}
       {disabled && <em className={styles.contextInfo}> Disabled</em>}
 
       {collapsedText && (

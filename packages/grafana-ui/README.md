@@ -6,6 +6,8 @@
 
 Our goal is to deliver Grafana's common UI elements for plugins developers and contributors.
 
+Browse the [Storybook catalog of the components](http://developers.grafana.com/).
+
 See [package source](https://github.com/grafana/grafana/tree/master/packages/grafana-ui) for more details.
 
 ## Installation

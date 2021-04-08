@@ -172,6 +172,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           }
           query={
             Object {
+              "exemplar": true,
               "expr": "",
               "interval": "",
               "legendFormat": "",
@@ -182,13 +183,14 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
       </FormLabel>
     </div>
     <PromExemplarField
-      onChange={[MockFunction]}
-      query={
+      datasource={
         Object {
-          "expr": "",
-          "refId": "A",
+          "createQuery": [MockFunction],
+          "getPrometheusTime": [MockFunction],
         }
       }
+      isEnabled={true}
+      onChange={[Function]}
     />
   </div>
 </div>

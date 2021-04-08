@@ -10,6 +10,7 @@ const setup = () => {
       name: 'Azure Monitor-10-10',
       type: 'grafana-azure-monitor-datasource',
       typeLogoUrl: '',
+      typeName: 'Azure',
       access: 'proxy',
       url: '',
       password: '',

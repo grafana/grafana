@@ -78,6 +78,42 @@ describe('urlParser', () => {
     });
   });
 
+  describe('parsing toUrl with filters with number values', () => {
+    it('then url params should be correct', () => {
+      const a = ({
+        value: 1974,
+        key: 'key',
+        operator: '=',
+        condition: '',
+      } as unknown) as AdHocVariableFilter;
+
+      const filters: AdHocVariableFilter[] = [a];
+
+      const expectedA = `key|=|1974`;
+      const expected: string[] = [expectedA];
+
+      expect(toUrl(filters)).toEqual(expected);
+    });
+  });
+
+  describe('parsing toUrl with filters with boolean values', () => {
+    it('then url params should be correct', () => {
+      const a = ({
+        value: false,
+        key: 'key',
+        operator: '=',
+        condition: '',
+      } as unknown) as AdHocVariableFilter;
+
+      const filters: AdHocVariableFilter[] = [a];
+
+      const expectedA = `key|=|false`;
+      const expected: string[] = [expectedA];
+
+      expect(toUrl(filters)).toEqual(expected);
+    });
+  });
+
   describe('parsing toFilters with url containing no filters as string', () => {
     it('then url params should be correct', () => {
       const url: UrlQueryValue = '';

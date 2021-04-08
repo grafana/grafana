@@ -4,8 +4,10 @@ import {
   ContextMenu,
   GraphContextMenuHeader,
   IconName,
-  MenuItem,
+  MenuItemProps,
   MenuItemsGroup,
+  MenuGroup,
+  MenuItem,
   Portal,
   useGraphNGContext,
 } from '@grafana/ui';
@@ -31,16 +33,16 @@ interface ContextMenuPluginProps {
 
 export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
   data,
+  defaultItems,
   onClose,
   timeZone,
-  defaultItems,
   replaceVariables,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onClick = useCallback(() => {
     setIsOpen(!isOpen);
-  }, [setIsOpen]);
+  }, [isOpen]);
 
   return (
     <ClickPlugin id="ContextMenu" onClick={onClick}>
@@ -100,12 +102,11 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     onClose();
   });
 
-  const xField = graphContext.getXAxisField(data);
+  const xField = graphContext.getXAxisField();
 
   if (!xField) {
     return null;
   }
-
   const items = defaultItems ? [...defaultItems] : [];
   let renderHeader: () => JSX.Element | null = () => null;
 
@@ -135,9 +136,10 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
 
       if (linksSupplier) {
         items.push({
-          items: linksSupplier.getLinks(replaceVariables).map<MenuItem>((link) => {
+          items: linksSupplier.getLinks(replaceVariables).map<MenuItemProps>((link) => {
             return {
               label: link.title,
+              ariaLabel: link.title,
               url: link.href,
               target: link.target,
               icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
@@ -159,9 +161,28 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     );
   }
 
+  const renderMenuGroupItems = () => {
+    return items?.map((group, index) => (
+      <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+        {(group.items || []).map((item) => (
+          <MenuItem
+            key={item.label}
+            url={item.url}
+            label={item.label}
+            ariaLabel={item.label}
+            target={item.target}
+            icon={item.icon}
+            active={item.active}
+            onClick={item.onClick}
+          />
+        ))}
+      </MenuGroup>
+    ));
+  };
+
   return (
     <ContextMenu
-      items={items}
+      renderMenuItems={renderMenuGroupItems}
       renderHeader={renderHeader}
       x={selection.coords.viewport.x}
       y={selection.coords.viewport.y}

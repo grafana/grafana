@@ -23,7 +23,7 @@ import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -36,6 +36,7 @@ import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregat
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { generate, Observable, of, throwError } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
+import { getScriptValue } from './utils';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -103,11 +104,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.languageProvider = new LanguageProvider(this);
   }
 
-  private request(method: string, url: string, data?: undefined): Observable<any> {
-    const options: any = {
+  private request(
+    method: string,
+    url: string,
+    data?: undefined,
+    headers?: BackendSrvRequest['headers']
+  ): Observable<any> {
+    const options: BackendSrvRequest = {
       url: this.url + '/' + url,
-      method: method,
-      data: data,
+      method,
+      data,
+      headers,
     };
 
     if (this.basicAuth || this.withCredentials) {
@@ -191,7 +198,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   private post(url: string, data: any): Observable<any> {
-    return this.request('POST', url, data);
+    return this.request('POST', url, data, { 'Content-Type': 'application/x-ndjson' });
   }
 
   annotationQuery(options: any): Promise<any> {
@@ -425,7 +432,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         text += metric.field;
       }
       if (isPipelineAggregationWithMultipleBucketPaths(metric)) {
-        text += metric.settings?.script?.replace(new RegExp('params.', 'g'), '');
+        text += getScriptValue(metric).replace(new RegExp('params.', 'g'), '');
       }
       text += '), ';
 
@@ -497,7 +504,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const payload = [header, esQuery].join('\n') + '\n';
     const url = this.getMultiSearchUrl();
     const response = await this.post(url, payload).toPromise();
-    const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [], isLogsQuery: true }];
+    const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [{ type: 'logs', id: '1' }] }];
     const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
     const dataFrame = _.first(logResponse.data);
@@ -530,6 +537,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     let payload = '';
     const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
     const sentTargets: ElasticsearchQuery[] = [];
+    let targetsContainsLogsQuery = targets.some((target) => hasMetricOfType(target, 'logs'));
 
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
@@ -540,11 +548,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
 
       let queryObj;
-      if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
+      if (hasMetricOfType(target, 'logs')) {
         target.bucketAggs = [defaultBucketAgg()];
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
-        target.isLogsQuery = true;
         queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, target.query);
       } else {
         if (target.alias) {
@@ -583,7 +590,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       map((res) => {
         const er = new ElasticResponse(sentTargets, res);
 
-        if (sentTargets.some((target) => target.isLogsQuery)) {
+        // TODO: This needs to be revisited, it seems wrong to process ALL the sent queries as logs if only one of them was a log query
+        if (targetsContainsLogsQuery) {
           const response = er.getLogs(this.logMessageField, this.logLevelField);
           for (const dataFrame of response.data) {
             enhanceDataFrame(dataFrame, this.dataLinks);
@@ -616,6 +624,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           text: 'string',
           scaled_float: 'number',
           nested: 'nested',
+          histogram: 'number',
         };
 
         const shouldAddField = (obj: any, key: string) => {

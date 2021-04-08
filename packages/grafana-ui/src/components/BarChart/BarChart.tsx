@@ -10,7 +10,7 @@ import { BarChartOptions } from './types';
 import { withTheme } from '../../themes';
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { preparePlotData } from '../uPlot/utils';
-import { LegendDisplayMode } from '../VizLegend/types';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { PlotLegend } from '../uPlot/PlotLegend';
 
 /**
@@ -105,6 +105,8 @@ class UnthemedBarChart extends React.Component<BarChartProps, BarChartState> {
         config={config}
         onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
+        maxHeight="35%"
+        maxWidth="60%"
         {...legend}
       />
     );

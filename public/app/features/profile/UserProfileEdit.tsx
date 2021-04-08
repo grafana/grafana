@@ -27,7 +27,7 @@ export const UserProfileEdit: FC<Props> = ({ navModel }) => (
         teams: Team[],
         orgs: UserOrg[],
         sessions: UserSession[],
-        user: UserDTO
+        user?: UserDTO
       ) => {
         return (
           <Page.Contents>
@@ -37,7 +37,7 @@ export const UserProfileEdit: FC<Props> = ({ navModel }) => (
               <UserProfileEditForm
                 updateProfile={api.updateUserProfile}
                 isSavingUser={states.updateUserProfile}
-                user={user}
+                user={user!}
               />
             )}
             <SharedPreferences resourceUri="user" />
@@ -49,14 +49,14 @@ export const UserProfileEdit: FC<Props> = ({ navModel }) => (
                   setUserOrg={api.setUserOrg}
                   loadOrgs={api.loadOrgs}
                   orgs={orgs}
-                  user={user}
+                  user={user!}
                 />
                 <UserSessions
                   isLoading={states.loadSessions}
                   loadSessions={api.loadSessions}
                   revokeUserSession={api.revokeUserSession}
                   sessions={sessions}
-                  user={user}
+                  user={user!}
                 />
               </>
             )}

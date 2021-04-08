@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +19,7 @@ func TestTestdataScenarios(t *testing.T) {
 
 	t.Run("random walk ", func(t *testing.T) {
 		t.Run("Should start at the requested value", func(t *testing.T) {
-			timeRange := tsdb.NewFakeTimeRange("5m", "now", time.Now())
+			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
 			model := simplejson.New()
 			model.Set("startValue", 1.234)
@@ -63,7 +63,7 @@ func TestTestdataScenarios(t *testing.T) {
 
 	t.Run("random walk table", func(t *testing.T) {
 		t.Run("Should return a table that looks like value/min/max", func(t *testing.T) {
-			timeRange := tsdb.NewFakeTimeRange("5m", "now", time.Now())
+			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
 			model := simplejson.New()
 			modelBytes, err := model.MarshalJSON()
@@ -117,7 +117,7 @@ func TestTestdataScenarios(t *testing.T) {
 		})
 
 		t.Run("Should return a table with some nil values", func(t *testing.T) {
-			timeRange := tsdb.NewFakeTimeRange("5m", "now", time.Now())
+			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
 			model := simplejson.New()
 			model.Set("withNil", true)
@@ -183,6 +183,57 @@ func TestTestdataScenarios(t *testing.T) {
 			require.True(t, valNil)
 			require.True(t, minNil)
 			require.True(t, maxNil)
+		})
+	})
+
+	t.Run("manual entry ", func(t *testing.T) {
+		t.Run("should support nulls and return all data", func(t *testing.T) {
+			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
+
+			query := backend.DataQuery{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: timeRange.MustGetFrom(),
+					To:   timeRange.MustGetTo(),
+				},
+				JSON: []byte(`{ "points": [
+					[
+					  4, 1616557148000
+					],
+					[
+					  null, 1616558756000
+					],
+					[
+					  4, 1616561658000
+					]] }`),
+			}
+
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries:       []backend.DataQuery{query},
+			}
+
+			resp, err := p.handleManualEntryScenario(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses[query.RefID]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+
+			require.Len(t, dResp.Frames, 1)
+			frame := dResp.Frames[0]
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, "Time", frame.Fields[0].Name)
+			require.Equal(t, "Value", frame.Fields[1].Name)
+			require.Equal(t, 3, frame.Rows())
+
+			vals := frame.Fields[1]
+			v, _ := vals.ConcreteAt(0)
+			require.Equal(t, float64(4), v)
+			require.Nil(t, vals.At(1))
+			v, _ = vals.ConcreteAt(2)
+			require.Equal(t, float64(4), v)
 		})
 	})
 }

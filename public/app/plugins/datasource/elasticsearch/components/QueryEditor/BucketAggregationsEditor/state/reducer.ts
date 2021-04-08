@@ -16,7 +16,7 @@ import { bucketAggregationConfig } from '../utils';
 import { removeEmpty } from '../../../../utils';
 
 export const reducer = (
-  state: BucketAggregation[],
+  state: ElasticsearchQuery['bucketAggs'],
   action: BucketAggregationAction | ChangeMetricTypeAction | InitAction
 ): ElasticsearchQuery['bucketAggs'] => {
   switch (action.type) {
@@ -28,18 +28,18 @@ export const reducer = (
       };
 
       // If the last bucket aggregation is a `date_histogram` we add the new one before it.
-      const lastAgg = state[state.length - 1];
+      const lastAgg = state![state!.length - 1];
       if (lastAgg?.type === 'date_histogram') {
-        return [...state.slice(0, state.length - 1), newAgg, lastAgg];
+        return [...state!.slice(0, state!.length - 1), newAgg, lastAgg];
       }
 
-      return [...state, newAgg];
+      return [...state!, newAgg];
 
     case REMOVE_BUCKET_AGG:
-      return state.filter((bucketAgg) => bucketAgg.id !== action.payload.id);
+      return state!.filter((bucketAgg) => bucketAgg.id !== action.payload.id);
 
     case CHANGE_BUCKET_AGG_TYPE:
-      return state.map((bucketAgg) => {
+      return state!.map((bucketAgg) => {
         if (bucketAgg.id !== action.payload.id) {
           return bucketAgg;
         }
@@ -58,7 +58,7 @@ export const reducer = (
       });
 
     case CHANGE_BUCKET_AGG_FIELD:
-      return state.map((bucketAgg) => {
+      return state!.map((bucketAgg) => {
         if (bucketAgg.id !== action.payload.id) {
           return bucketAgg;
         }
@@ -74,7 +74,7 @@ export const reducer = (
       // we remove all of them.
       if (metricAggregationConfig[action.payload.type].isSingleMetric) {
         return [];
-      } else if (state.length === 0) {
+      } else if (state!.length === 0) {
         // Else, if there are no bucket aggregations we restore a default one.
         // This happens when switching from a metric that requires the absence of bucket aggregations to
         // one that requires it.
@@ -83,7 +83,7 @@ export const reducer = (
       return state;
 
     case CHANGE_BUCKET_AGG_SETTING:
-      return state.map((bucketAgg) => {
+      return state!.map((bucketAgg) => {
         if (bucketAgg.id !== action.payload.bucketAgg.id) {
           return bucketAgg;
         }
@@ -102,6 +102,9 @@ export const reducer = (
       });
 
     case INIT:
+      if (state?.length || 0 > 0) {
+        return state;
+      }
       return [defaultBucketAgg('2')];
 
     default:

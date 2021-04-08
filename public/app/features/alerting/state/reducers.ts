@@ -25,6 +25,7 @@ import {
 import store from 'app/core/store';
 import { config } from '@grafana/runtime';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import unifiedAlertingReducer from '../unified/state/reducers';
 
 export const ALERT_DEFINITION_UI_STATE_STORAGE_KEY = 'grafana.alerting.alertDefinition.ui';
 const DEFAULT_ALERT_DEFINITION_UI_STATE: AlertDefinitionUiState = { rightPaneSize: 400, topPaneSize: 0.45 };
@@ -256,6 +257,7 @@ export default {
   alertRules: alertRulesReducer,
   notificationChannel: notificationChannelReducer,
   alertDefinition: alertDefinitionsReducer,
+  unifiedAlerting: unifiedAlertingReducer,
 };
 
 function migrateSecureFields(

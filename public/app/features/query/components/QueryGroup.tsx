@@ -1,9 +1,8 @@
 // Libraries
 import React, { PureComponent } from 'react';
 // Components
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { Button, CustomScrollbar, HorizontalGroup, Icon, Modal, stylesFactory, Tooltip } from '@grafana/ui';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -27,7 +26,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
@@ -299,7 +298,14 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { data } = this.state;
 
     if (isSharedDashboardQuery(dsSettings.name)) {
-      return <DashboardQueryEditor queries={options.queries} panelData={data} onChange={this.onQueriesChange} />;
+      return (
+        <DashboardQueryEditor
+          queries={options.queries}
+          panelData={data}
+          onChange={this.onQueriesChange}
+          onRunQueries={onRunQueries}
+        />
+      );
     }
 
     return (

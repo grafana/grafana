@@ -64,18 +64,21 @@ export function useZoom({ stepUp, stepDown, min, max } = defaultOptions) {
   );
 
   useEffect(() => {
-    if (ref.current) {
-      // Adds listener for wheel event, we need the passive: false to be able to prevent default otherwise that
-      // cannot be used with passive listeners.
-      ref.current.addEventListener('wheel', onWheel, { passive: false });
-      return () => {
-        if (ref.current) {
-          ref.current.removeEventListener('wheel', onWheel);
-        }
-      };
+    if (!ref.current) {
+      return;
     }
-    return undefined;
-  }, [ref.current, onWheel]);
+
+    const zoomRef = ref.current;
+
+    // Adds listener for wheel event, we need the passive: false to be able to prevent default otherwise that
+    // cannot be used with passive listeners.
+    zoomRef.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      if (zoomRef) {
+        zoomRef.removeEventListener('wheel', onWheel);
+      }
+    };
+  }, [onWheel]);
 
   return {
     onStepUp,

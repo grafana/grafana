@@ -17,7 +17,13 @@ export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholde
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export { PieChart, PieChartType, PieChartLabelOptions } from './PieChart/PieChart';
+export {
+  PieChart,
+  PieChartType,
+  PieChartLabels,
+  PieChartLegendOptions,
+  PieChartLegendValues,
+} from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -75,8 +81,10 @@ export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
+export { PanelChrome, PanelChromeProps, PanelPadding, PanelChromeType } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
-export { VizLegendItem, LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/types';
+export { VizLegendItem } from './VizLegend/types';
+export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
 
 export { Alert, AlertVariant } from './Alert/Alert';
@@ -96,7 +104,9 @@ export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuProps } from './ContextMenu/ContextMenu';
-export { Menu, MenuItem, MenuItemsGroup } from './Menu/Menu';
+export { Menu, MenuProps } from './Menu/Menu';
+export { MenuGroup, MenuItemsGroup, MenuGroupProps } from './Menu/MenuGroup';
+export { MenuItem, MenuItemProps } from './Menu/MenuItem';
 export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
@@ -129,6 +139,7 @@ export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
 export { SliderValueEditor } from './OptionsUI/slider';
 export { SelectValueEditor } from './OptionsUI/select';
+export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
 
 // Next-gen forms
 export { Form } from './Forms/Form';
@@ -137,6 +148,7 @@ export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarB
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';
+export { Link } from './Link/Link';
 
 export { Label } from './Forms/Label';
 export { Field } from './Forms/Field';
@@ -169,6 +181,7 @@ export { Card, Props as CardProps, ContainerProps, CardInnerProps, getCardStyles
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 
 export { ButtonSelect } from './Dropdown/ButtonSelect';
+export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
 
 // Legacy forms
 
@@ -176,7 +189,7 @@ export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { InlineFormLabel } from './FormLabel/FormLabel';
 
 // Select
-import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';
+import { AsyncSelect, Select } from './Forms/Legacy/Select/Select';
 import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
 import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
 
@@ -209,6 +222,8 @@ export { usePlotContext, usePlotPluginContext } from './uPlot/context';
 export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
 export { useGraphNGContext } from './GraphNG/hooks';
 export { BarChart } from './BarChart/BarChart';
+export { TimelineChart } from './Timeline/TimelineChart';
 export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
+export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';

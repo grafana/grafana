@@ -15,6 +15,7 @@ import { loadPanelPlugin } from 'app/features/plugins/state/actions';
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
 import { PanelModel } from './PanelModel';
 import { cancelVariables } from '../../variables/state/actions';
+import { getTimeSrv } from '../services/TimeSrv';
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async (dispatch) => {
@@ -160,7 +161,16 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
   };
 }
 
-export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch) => {
+export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, getStore) => {
+  const store = getStore();
+  const dashboard = store.dashboard.getModel();
+
+  if (dashboard) {
+    dashboard.destroy();
+  }
+
+  getTimeSrv().stopAutoRefresh();
+
   dispatch(cleanUpDashboard());
   dispatch(cancelVariables());
 };

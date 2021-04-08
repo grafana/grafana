@@ -11,7 +11,7 @@ import { useZoom } from './useZoom';
 import { Bounds, Config, defaultConfig, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { stylesFactory, useTheme } from '../../themes';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
@@ -84,11 +84,17 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const [edgeHover, setEdgeHover] = useState<string | undefined>(undefined);
   const clearEdgeHover = useCallback(() => setEdgeHover(undefined), [setEdgeHover]);
 
+  const firstNodesDataFrame = nodesDataFrames[0];
+  const firstEdgesDataFrame = edgesDataFrames[0];
+
+  const theme = useTheme();
+
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
-  const processed = useMemo(() => processNodes(nodesDataFrames[0], edgesDataFrames[0]), [
-    nodesDataFrames[0],
-    edgesDataFrames[0],
+  const processed = useMemo(() => processNodes(firstNodesDataFrame, firstEdgesDataFrame, theme), [
+    firstEdgesDataFrame,
+    firstNodesDataFrame,
+    theme,
   ]);
 
   const { nodes: rawNodes, edges: rawEdges } = useNodeLimit(processed.nodes, processed.edges, nodeCountLimit);
@@ -99,16 +105,19 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     bounds
   );
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
-  const styles = getStyles(useTheme());
+  const styles = getStyles(theme);
+
+  // This cannot be inline func or it will create infinite render cycle.
+  const topLevelRef = useCallback(
+    (r) => {
+      measureRef(r);
+      (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
+    },
+    [measureRef, zoomRef]
+  );
 
   return (
-    <div
-      ref={(r) => {
-        measureRef(r);
-        (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
-      }}
-      className={styles.wrapper}
-    >
+    <div ref={topLevelRef} className={styles.wrapper}>
       <svg
         ref={panRef}
         viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
@@ -230,7 +239,8 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
           (e.source as NodeDatum).id === props.nodeHoveringId ||
           (e.target as NodeDatum).id === props.nodeHoveringId ||
           props.edgeHoveringId === e.id;
-        return shouldShow && <EdgeLabel key={e.id} edge={e} />;
+        const hasStats = e.mainStat || e.secondaryStat;
+        return shouldShow && hasStats && <EdgeLabel key={e.id} edge={e} />;
       })}
     </>
   );

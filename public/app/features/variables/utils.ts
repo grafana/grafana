@@ -1,5 +1,7 @@
 import isString from 'lodash/isString';
-import { ScopedVars, VariableType } from '@grafana/data';
+import isArray from 'lodash/isArray';
+import isEqual from 'lodash/isEqual';
+import { ScopedVars, UrlQueryMap, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './state/types';
@@ -137,7 +139,7 @@ export function getTemplatedRegex(variable: QueryVariableModel, templateSrv = ge
 
 export function getLegacyQueryOptions(variable: QueryVariableModel, searchFilter?: string, timeSrv = getTimeSrv()) {
   const queryOptions: any = { range: undefined, variable, searchFilter };
-  if (variable.refresh === VariableRefresh.onTimeRangeChanged) {
+  if (variable.refresh === VariableRefresh.onTimeRangeChanged || variable.refresh === VariableRefresh.onDashboardLoad) {
     queryOptions.range = timeSrv.timeRange();
   }
 
@@ -170,4 +172,74 @@ export function getVariableTypes(): Array<{ label: string; value: VariableType }
       label: name,
       value: id,
     }));
+}
+
+function getUrlValueForComparison(value: any): any {
+  if (isArray(value)) {
+    if (value.length === 0) {
+      value = undefined;
+    } else if (value.length === 1) {
+      value = value[0];
+    }
+  }
+
+  return value;
+}
+
+export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): UrlQueryMap | undefined {
+  let count = 0;
+  const changes: UrlQueryMap = {};
+
+  for (const key in query) {
+    if (!key.startsWith('var-')) {
+      continue;
+    }
+
+    let oldValue = getUrlValueForComparison(old[key]);
+    let newValue = getUrlValueForComparison(query[key]);
+
+    if (!isEqual(newValue, oldValue)) {
+      changes[key] = query[key];
+      count++;
+    }
+  }
+
+  for (const key in old) {
+    if (!key.startsWith('var-')) {
+      continue;
+    }
+
+    const value = old[key];
+
+    // ignore empty array values
+    if (isArray(value) && value.length === 0) {
+      continue;
+    }
+
+    if (!query.hasOwnProperty(key)) {
+      changes[key] = ''; // removed
+      count++;
+    }
+  }
+  return count ? changes : undefined;
+}
+
+export function ensureStringValues(value: any | any[]): string | string[] {
+  if (Array.isArray(value)) {
+    return value.map(String);
+  }
+
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'number') {
+    return value.toString(10);
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return '';
 }

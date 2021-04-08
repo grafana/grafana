@@ -4,8 +4,6 @@ import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui
 
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';
-import { getRouteParamsId } from 'app/core/selectors/location';
-import { getTeam } from './state/selectors';
 import { Team } from 'app/types';
 
 export interface Props {
@@ -16,7 +14,7 @@ export interface Props {
 export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   return (
     <VerticalGroup>
-      <FieldSet label="Team Settings">
+      <FieldSet label="Team settings">
         <Form
           defaultValues={{ ...team }}
           onSubmit={(formTeam: Team) => {
@@ -31,7 +29,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
 
               <Field
                 label="Email"
-                description="This is optional and is primarily used to set the team profile avatar (via gravatar service)"
+                description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
               >
                 <Input placeholder="team@email.com" type="email" name="email" ref={register} />
               </Field>
@@ -45,16 +43,8 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
   );
 };
 
-function mapStateToProps(state: any) {
-  const teamId = getRouteParamsId(state.location);
-
-  return {
-    team: getTeam(state.team, teamId),
-  };
-}
-
 const mapDispatchToProps = {
   updateTeam,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamSettings);
+export default connect(null, mapDispatchToProps)(TeamSettings);

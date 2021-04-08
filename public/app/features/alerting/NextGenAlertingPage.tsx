@@ -1,10 +1,10 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
-
 import { config } from 'app/core/config';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
@@ -21,19 +21,17 @@ import {
   updateAlertDefinitionOption,
   updateAlertDefinitionUiState,
 } from './state/actions';
-import { getRouteParamsId } from 'app/core/selectors/location';
 import { StoreState } from 'app/types';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-function mapStateToProps(state: StoreState) {
-  const pageId = getRouteParamsId(state.location);
-
+function mapStateToProps(state: StoreState, props: RouteProps) {
   return {
     uiState: state.alertDefinition.uiState,
     getQueryOptions: state.alertDefinition.getQueryOptions,
     queryRunners: state.alertDefinition.queryRunners,
     getInstances: state.alertDefinition.getInstances,
     alertDefinition: state.alertDefinition.alertDefinition,
-    pageId: (pageId as string) ?? '',
+    pageId: props.match.params.id as string,
   };
 }
 
@@ -50,6 +48,8 @@ const mapDispatchToProps = {
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface RouteProps extends GrafanaRouteComponentProps<{ id: string }> {}
 
 interface OwnProps {
   saveDefinition: typeof createAlertDefinition | typeof updateAlertDefinition;
@@ -97,7 +97,9 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
     }
   };
 
-  onDiscard = () => {};
+  onDiscard = () => {
+    locationService.replace(`${config.appSubUrl}/alerting/ng/list`);
+  };
 
   onTest = () => {
     const { alertDefinition, evaluateAlertDefinition, evaluateNotSavedAlertDefinition } = this.props;
@@ -125,11 +127,11 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   render() {
     const {
       alertDefinition,
-      getInstances,
       uiState,
       updateAlertDefinitionUiState,
       queryRunners,
       getQueryOptions,
+      getInstances,
       onRunQueries,
     } = this.props;
 

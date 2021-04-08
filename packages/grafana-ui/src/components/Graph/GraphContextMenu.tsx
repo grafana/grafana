@@ -14,13 +14,16 @@ import { useTheme } from '../../themes';
 import { HorizontalGroup } from '../Layout/Layout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
+import { MenuGroup, MenuGroupProps } from '../Menu/MenuGroup';
+import { MenuItem } from '../Menu/MenuItem';
 
 export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
 
 export type GraphContextMenuProps = ContextMenuProps & {
   getContextMenuSource: () => FlotDataPoint | null;
   timeZone?: TimeZone;
+  itemsGroup?: MenuGroupProps[];
   dimensions?: GraphDimensions;
   contextDimensions?: ContextDimensions;
 };
@@ -29,7 +32,7 @@ export type GraphContextMenuProps = ContextMenuProps & {
 export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   getContextMenuSource,
   timeZone,
-  items,
+  itemsGroup,
   dimensions,
   contextDimensions,
   ...otherProps
@@ -37,10 +40,10 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   const source = getContextMenuSource();
 
   //  Do not render items that do not have label specified
-  const itemsToRender = items
-    ? items.map((group) => ({
+  const itemsToRender = itemsGroup
+    ? itemsGroup.map((group) => ({
         ...group,
-        items: group.items.filter((item) => item.label),
+        items: group.items?.filter((item) => item.label),
       }))
     : [];
 
@@ -80,8 +83,26 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
       />
     );
   };
+  const renderMenuGroupItems = () => {
+    return itemsToRender?.map((group, index) => (
+      <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+        {(group.items || []).map((item) => (
+          <MenuItem
+            key={`${item.label}`}
+            url={item.url}
+            label={item.label}
+            ariaLabel={item.label}
+            target={item.target}
+            icon={item.icon}
+            active={item.active}
+            onClick={item.onClick}
+          />
+        ))}
+      </MenuGroup>
+    ));
+  };
 
-  return <ContextMenu {...otherProps} items={itemsToRender} renderHeader={renderHeader} />;
+  return <ContextMenu {...otherProps} renderMenuItems={renderMenuGroupItems} renderHeader={renderHeader} />;
 };
 
 /** @internal */

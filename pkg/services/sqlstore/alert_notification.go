@@ -510,7 +510,7 @@ func SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models
 }
 
 func SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
-	return withDbSession(ctx, func(sess *DBSession) error {
+	return withDbSession(ctx, x, func(sess *DBSession) error {
 		newVersion := cmd.Version + 1
 		sql := `UPDATE alert_notification_state SET
 			state = ?,
