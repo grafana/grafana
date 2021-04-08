@@ -15,6 +15,16 @@ import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse'
 
 const ExpressionDatasourceID = '__expr__';
 
+class HealthCheckError extends Error {
+  details: HealthCheckResultDetails;
+
+  constructor(message: string, details: HealthCheckResultDetails) {
+    super(message);
+    this.details = details;
+    this.name = 'HealthCheckError';
+  }
+}
+
 /**
  * Describes the current health status of a data source plugin.
  *
@@ -27,6 +37,16 @@ export enum HealthStatus {
 }
 
 /**
+ * Describes the details in the payload returned when checking the health of a data source
+ * plugin.
+ *
+ * If the 'message' key exists, this will be displayed in the error message in DataSourceSettingsPage
+ *
+ * @public
+ */
+export type HealthCheckResultDetails = Record<string, any> | undefined;
+
+/**
  * Describes the payload returned when checking the health of a data source
  * plugin.
  *
@@ -35,7 +55,7 @@ export enum HealthStatus {
 export interface HealthCheckResult {
   status: HealthStatus;
   message: string;
-  details?: Record<string, any>;
+  details: HealthCheckResultDetails;
 }
 
 /**
@@ -183,7 +203,8 @@ class DataSourceWithBackend<
           message: res.message,
         };
       }
-      throw new Error(res.message);
+
+      throw new HealthCheckError(res.message, res.details);
     });
   }
 }

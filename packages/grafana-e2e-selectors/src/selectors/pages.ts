@@ -14,6 +14,7 @@ export const Pages = {
   DataSource: {
     name: 'Data source settings page name input field',
     delete: 'Data source settings page Delete button',
+    readOnly: 'Data source settings page read only message',
     saveAndTest: 'Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
   },

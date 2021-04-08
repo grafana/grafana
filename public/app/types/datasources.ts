@@ -1,6 +1,7 @@
 import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
 import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { GenericDataSourcePlugin } from 'app/features/datasources/settings/PluginSettings';
+import { HealthCheckResultDetails } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 export interface DataSourcesState {
   dataSources: DataSourceSettings[];
@@ -16,12 +17,15 @@ export interface DataSourcesState {
   categories: DataSourcePluginCategory[];
 }
 
+export interface TestingStatus {
+  message?: string | null;
+  status?: string | null;
+  details?: HealthCheckResultDetails;
+}
+
 export interface DataSourceSettingsState {
   plugin?: GenericDataSourcePlugin | null;
-  testingStatus?: {
-    message?: string | null;
-    status?: string | null;
-  };
+  testingStatus?: TestingStatus;
   loadError?: string | null;
 }
 

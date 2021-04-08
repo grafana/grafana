@@ -95,15 +95,10 @@ export const testDataSource = (
 
         dispatch(testDataSourceSucceeded(result));
       } catch (err) {
-        let message = '';
+        const { statusText, message: errMessage, details } = err;
+        const message = statusText ? 'HTTP error ' + statusText : errMessage;
 
-        if (err.statusText) {
-          message = 'HTTP error ' + err.statusText;
-        } else {
-          message = err.message;
-        }
-
-        dispatch(testDataSourceFailed({ message }));
+        dispatch(testDataSourceFailed({ message, details }));
       }
     });
   };
