@@ -1,14 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { isCloudRulesSource } from '../utils/datasource';
-import { omitBy, isUndefined } from 'lodash';
-
-type UnifiedNamespace = {
-  namespace: RuleNamespace;
-  dataSource: DataSourceInstanceSettings;
-};
+import { isAlertingRule } from '../utils/rules';
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const [filteredRules, setFilteredRules] = useState<CombinedRuleNamespace[]>([]);
@@ -37,8 +31,9 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
               shouldKeep = doesNameContainsQueryString || Boolean(doLabelsContainQueryString?.length);
             }
             if (rulesFilters.alertState) {
-              const matchesAlertState =
-                rule?.promRule?.type === 'alerting' && rule.promRule.state === rulesFilters.alertState;
+              const matchesAlertState = Boolean(
+                rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state === rulesFilters.alertState
+              );
 
               shouldKeep = shouldKeep && matchesAlertState;
             }

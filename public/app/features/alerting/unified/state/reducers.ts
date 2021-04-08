@@ -42,6 +42,9 @@ export const rulesFiltersSlice = createSlice({
       state.rulesFilters.alertState = action.payload;
       return state;
     },
+    replaceFilters: (state, action: PayloadAction<FilterState>) => {
+      state.rulesFilters = action.payload;
+    },
   },
 });
 
