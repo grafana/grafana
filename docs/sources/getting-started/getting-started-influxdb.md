@@ -31,14 +31,20 @@ If you downloaded and installed InfluxDB on your local machine, then use the [Qu
 
 If you are using the cloud account, then the wizards will guide you through the initial process. For more information, refer to [Configure Telegraf](https://docs.influxdata.com/influxdb/cloud/write-data/no-code/use-telegraf/#configure-telegraf).
 
-> **Note:** Windows users might need to make additional adjustments. Look for special instructions in the InfluxDB documentation.
+> **Note:** Windows users might need to make additional adjustments. Look for special instructions in the InfluxData documentation and [Using Telegraf on Windows](https://www.influxdata.com/blog/using-telegraf-on-windows/) blog post.
 
-## Step 4. Connect InfluxDB to Grafana
+## Step 4. Add your InfluxDB data source to Grafana
 
+You can have more than one InfluxDB data source defined in Grafana.
 
+1. Follow the general instructions to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}).
+1. Refer to [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}}) for information about specific data source fields.
 
 ## Step 5. Add a query
 
+InfluxQL query
+
+Flux query
 
 
 ## Step 6. Check InfluxDB metrics in Grafana Explore view

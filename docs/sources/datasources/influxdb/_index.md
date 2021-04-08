@@ -75,7 +75,7 @@ To help you choose the best language for your needs, here’s a comparison of [F
 
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
-You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels.
+You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Stat panels.
 Enter edit mode by clicking the panel title and clicking **Edit**. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
