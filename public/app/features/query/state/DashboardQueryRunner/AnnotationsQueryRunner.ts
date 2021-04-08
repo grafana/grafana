@@ -1,9 +1,11 @@
-import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
-import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { AnnotationEvent, DataSourceApi } from '@grafana/data';
+
+import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
 import { PanelModel } from '../../../dashboard/state';
 import { executeAnnotationQuery } from '../../../annotations/annotations_srv';
-import { map } from 'rxjs/operators';
+import { handleAnnotationQueryRunnerError } from './operators';
 
 export class AnnotationsQueryRunner implements AnnotationQueryRunner {
   canRun(datasource: DataSourceApi): boolean {
@@ -20,7 +22,8 @@ export class AnnotationsQueryRunner implements AnnotationQueryRunner {
     return executeAnnotationQuery({ dashboard, range, panel }, datasource, annotation).pipe(
       map((result) => {
         return result.events ?? [];
-      })
+      }),
+      catchError(handleAnnotationQueryRunnerError)
     );
   }
 }

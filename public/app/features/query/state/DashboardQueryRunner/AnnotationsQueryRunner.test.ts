@@ -1,37 +1,41 @@
 import { getDefaultTimeRange } from '@grafana/data';
 
-import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
+import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { AnnotationQueryRunnerOptions } from './types';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as store from '../../../../store/store';
+import * as annotationsSrv from '../../../annotations/annotations_srv';
+import { Observable, of, throwError } from 'rxjs';
 
-function getDefaultOptions(annotationQuery?: jest.Mock): AnnotationQueryRunnerOptions {
+function getDefaultOptions(): AnnotationQueryRunnerOptions {
   const annotation: any = {};
   const dashboard: any = {};
   const datasource: any = {
-    annotationQuery: annotationQuery ?? jest.fn().mockResolvedValue([{ id: '1' }]),
+    annotationQuery: {},
+    annotations: {},
   };
   const range = getDefaultTimeRange();
 
   return { annotation, datasource, dashboard, range };
 }
 
-function getTestContext(annotationQuery?: jest.Mock) {
+function getTestContext(result: Observable<any> = of({ events: [{ id: '1' }] })) {
   jest.clearAllMocks();
   const dispatchMock = jest.spyOn(store, 'dispatch');
-  const options = getDefaultOptions(annotationQuery);
-  const annotationQueryMock = options.datasource.annotationQuery;
+  const options = getDefaultOptions();
+  const executeAnnotationQueryMock = jest.spyOn(annotationsSrv, 'executeAnnotationQuery').mockReturnValue(result);
 
-  return { options, dispatchMock, annotationQueryMock };
+  return { options, dispatchMock, executeAnnotationQueryMock };
 }
 
-describe('LegacyAnnotationQueryRunner', () => {
-  const runner = new LegacyAnnotationQueryRunner();
+describe('AnnotationsQueryRunner', () => {
+  const runner = new AnnotationsQueryRunner();
 
   describe('when canRun is called with correct props', () => {
     it('then it should return true', () => {
       const datasource: any = {
         annotationQuery: jest.fn(),
+        annotations: {},
       };
 
       expect(runner.canRun(datasource)).toBe(true);
@@ -42,7 +46,6 @@ describe('LegacyAnnotationQueryRunner', () => {
     it('then it should return false', () => {
       const datasource: any = {
         annotationQuery: jest.fn(),
-        annotations: {},
       };
 
       expect(runner.canRun(datasource)).toBe(false);
@@ -53,28 +56,40 @@ describe('LegacyAnnotationQueryRunner', () => {
     it('then it should return the correct results', async () => {
       const datasource: any = {
         annotationQuery: jest.fn(),
-        annotations: {},
       };
-      const options = { ...getDefaultOptions(), datasource };
+      const { options, executeAnnotationQueryMock } = getTestContext();
 
-      await expect(runner.run(options)).toEmitValuesWith((received) => {
+      await expect(runner.run({ ...options, datasource })).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const results = received[0];
         expect(results).toEqual([]);
-        expect(datasource.annotationQuery).not.toHaveBeenCalled();
+        expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(0);
       });
     });
   });
 
   describe('when run is called and the request is successful', () => {
     it('then it should return the correct results', async () => {
-      const { options, annotationQueryMock } = getTestContext();
+      const { options, executeAnnotationQueryMock } = getTestContext();
 
       await expect(runner.run(options)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const results = received[0];
         expect(results).toEqual([{ id: '1' }]);
-        expect(annotationQueryMock).toHaveBeenCalledTimes(1);
+        expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('but result is missing events prop', () => {
+      it('then it should return the correct results', async () => {
+        const { options, executeAnnotationQueryMock } = getTestContext(of({ id: '1' }));
+
+        await expect(runner.run(options)).toEmitValuesWith((received) => {
+          expect(received.length).toBe(1);
+          const results = received[0];
+          expect(results).toEqual([]);
+          expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
+        });
       });
     });
   });
@@ -82,14 +97,13 @@ describe('LegacyAnnotationQueryRunner', () => {
   describe('when run is called and the request fails', () => {
     silenceConsoleOutput();
     it('then it should return the correct results', async () => {
-      const annotationQuery = jest.fn().mockRejectedValue({ message: 'An error' });
-      const { options, annotationQueryMock, dispatchMock } = getTestContext(annotationQuery);
+      const { options, executeAnnotationQueryMock, dispatchMock } = getTestContext(throwError({ message: 'An error' }));
 
       await expect(runner.run(options)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const results = received[0];
         expect(results).toEqual([]);
-        expect(annotationQueryMock).toHaveBeenCalledTimes(1);
+        expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
         expect(dispatchMock).toHaveBeenCalledTimes(1);
       });
     });
@@ -98,14 +112,13 @@ describe('LegacyAnnotationQueryRunner', () => {
   describe('when run is called and the request is cancelled', () => {
     silenceConsoleOutput();
     it('then it should return the correct results', async () => {
-      const annotationQuery = jest.fn().mockRejectedValue({ cancelled: true });
-      const { options, annotationQueryMock, dispatchMock } = getTestContext(annotationQuery);
+      const { options, executeAnnotationQueryMock, dispatchMock } = getTestContext(throwError({ cancelled: true }));
 
       await expect(runner.run(options)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const results = received[0];
         expect(results).toEqual([]);
-        expect(annotationQueryMock).toHaveBeenCalledTimes(1);
+        expect(executeAnnotationQueryMock).toHaveBeenCalledTimes(1);
         expect(dispatchMock).not.toHaveBeenCalled();
       });
     });
