@@ -849,10 +849,10 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "AlertGroup": {
-      "$ref": "#/definitions/alertGroup"
+      "$ref": "#/definitions/AlertGroup"
     },
     "AlertGroups": {
-      "$ref": "#/definitions/AlertGroups"
+      "$ref": "#/definitions/alertGroups"
     },
     "AlertInstancesResponse": {
       "type": "object",
@@ -1355,7 +1355,7 @@
       "$ref": "#/definitions/ResponseDetails"
     },
     "GettableAlert": {
-      "$ref": "#/definitions/gettableAlert"
+      "$ref": "#/definitions/GettableAlert"
     },
     "GettableAlerts": {
       "$ref": "#/definitions/GettableAlerts"
@@ -1525,6 +1525,13 @@
     "GettableGrafanaRule": {
       "type": "object",
       "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
         "condition": {
           "type": "string",
           "x-go-name": "Condition"
@@ -1543,6 +1550,9 @@
             "KeepLastState"
           ],
           "x-go-name": "ExecErrState"
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
         },
         "id": {
           "type": "integer",
@@ -1619,10 +1629,10 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "GettableSilence": {
-      "$ref": "#/definitions/GettableSilence"
+      "$ref": "#/definitions/gettableSilence"
     },
     "GettableSilences": {
-      "$ref": "#/definitions/GettableSilences"
+      "$ref": "#/definitions/gettableSilences"
     },
     "GettableUserConfig": {
       "type": "object",
@@ -2269,6 +2279,13 @@
     "PostableGrafanaRule": {
       "type": "object",
       "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Annotations"
+        },
         "condition": {
           "type": "string",
           "x-go-name": "Condition"
@@ -2287,6 +2304,9 @@
             "KeepLastState"
           ],
           "x-go-name": "ExecErrState"
+        },
+        "for": {
+          "$ref": "#/definitions/Duration"
         },
         "no_data_state": {
           "type": "string",
@@ -3399,7 +3419,7 @@
       "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/GettableAlert"
+        "$ref": "#/definitions/gettableAlert"
       },
       "x-go-name": "GettableAlerts",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"

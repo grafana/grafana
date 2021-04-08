@@ -57,10 +57,10 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "AlertGroup": {
-   "$ref": "#/definitions/alertGroup"
+  "AlertGroup": {},
+  "AlertGroups": {
+   "$ref": "#/definitions/alertGroups"
   },
-  "AlertGroups": {},
   "AlertInstancesResponse": {
    "properties": {
     "instances": {
@@ -560,9 +560,7 @@
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
-  "GettableAlert": {
-   "$ref": "#/definitions/gettableAlert"
-  },
+  "GettableAlert": {},
   "GettableAlerts": {},
   "GettableApiAlertingConfig": {
    "properties": {
@@ -728,6 +726,13 @@
   },
   "GettableGrafanaRule": {
    "properties": {
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "Annotations"
+    },
     "condition": {
      "type": "string",
      "x-go-name": "Condition"
@@ -746,6 +751,9 @@
      ],
      "type": "string",
      "x-go-name": "ExecErrState"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
     },
     "id": {
      "format": "int64",
@@ -822,8 +830,12 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "GettableSilence": {},
-  "GettableSilences": {},
+  "GettableSilence": {
+   "$ref": "#/definitions/gettableSilence"
+  },
+  "GettableSilences": {
+   "$ref": "#/definitions/gettableSilences"
+  },
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -1467,6 +1479,13 @@
   },
   "PostableGrafanaRule": {
    "properties": {
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "Annotations"
+    },
     "condition": {
      "type": "string",
      "x-go-name": "Condition"
@@ -1485,6 +1504,9 @@
      ],
      "type": "string",
      "x-go-name": "ExecErrState"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
     },
     "no_data_state": {
      "enum": [
@@ -2597,7 +2619,7 @@
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/GettableAlert"
+    "$ref": "#/definitions/gettableAlert"
    },
    "type": "array",
    "x-go-name": "GettableAlerts",
