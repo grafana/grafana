@@ -21,7 +21,6 @@ const WorkspaceField: React.FC<AzureQueryEditorFieldProps> = ({
       workspaces.length > 0 && setWorkspaces([]);
     }
 
-    console.log('getAzureLogAnalyticsWorkspaces');
     datasource
       .getAzureLogAnalyticsWorkspaces(subscriptionId)
       .then((results) => {
