@@ -103,8 +103,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const logsModel = dataFrameToLogsModel(data || [], undefined, 'utc');
     let textToDownload = '';
 
-    logsModel.meta?.forEach((obj) => {
-      const string = `${obj.label}: ${JSON.stringify(obj.value)}\n`;
+    logsModel.meta?.forEach((metaItem) => {
+      const string = `${metaItem.label}: ${JSON.stringify(metaItem.value)}\n`;
       textToDownload = textToDownload + string;
     });
     textToDownload = textToDownload + '\n\n';
