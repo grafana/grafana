@@ -1,4 +1,5 @@
 import { LoadingCallback } from 'app/percona/settings/Settings.service';
+import { SttCheckIntervalsSettings } from 'app/percona/settings/Settings.types';
 import { AdvancedChangePayload } from '../../Settings.types';
 
 export interface AdvancedProps {
@@ -11,6 +12,7 @@ export interface AdvancedProps {
   alertingEnabled?: boolean;
   azureDiscoverEnabled?: boolean;
   publicAddress?: string;
+  sttCheckIntervals: SttCheckIntervalsSettings;
   updateSettings: (body: AdvancedChangePayload, callback: LoadingCallback, refresh?: boolean) => void;
 }
 
@@ -24,4 +26,7 @@ export interface AdvancedFormProps {
   publicAddress?: string;
   alerting?: boolean;
   azureDiscover?: boolean;
+  rareInterval: string;
+  standardInterval: string;
+  frequentInterval: string;
 }
