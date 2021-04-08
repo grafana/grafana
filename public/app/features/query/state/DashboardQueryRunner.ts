@@ -142,7 +142,7 @@ export class AlertStatesWorker implements Worker {
         {
           dashboardId: dashboard.id,
         },
-        `get-alert-states-${dashboard.id}`
+        `dashboard-query-runner-alert-states-${dashboard.id}`
       )
     ).pipe(
       map((alertStates) => {
