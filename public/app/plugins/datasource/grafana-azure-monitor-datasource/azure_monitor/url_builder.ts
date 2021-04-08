@@ -7,11 +7,11 @@ export default class UrlBuilder {
     resourceName: string,
     apiVersion: string
   ) {
-    var metricDefinitionArray = metricDefinition.split('/');
+    const metricDefinitionArray = metricDefinition.split('/');
     const resourceNameArray = resourceName.split('/');
     const provider = metricDefinitionArray.shift();
-    var urlArray = [baseUrl, subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
-    for (var i in metricDefinitionArray) {
+    const urlArray = [baseUrl, subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
+    for (const i in metricDefinitionArray) {
       urlArray.push(metricDefinitionArray[i]);
       urlArray.push(resourceNameArray[i]);
     }
@@ -28,11 +28,11 @@ export default class UrlBuilder {
     metricNamespace: string,
     apiVersion: string
   ) {
-    var metricDefinitionArray = metricDefinition.split('/');
+    const metricDefinitionArray = metricDefinition.split('/');
     const resourceNameArray = resourceName.split('/');
     const provider = metricDefinitionArray.shift();
-    var urlArray = [baseUrl, subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
-    for (var i in metricDefinitionArray) {
+    const urlArray = [baseUrl, subscriptionId, 'resourceGroups', resourceGroup, 'providers', provider];
+    for (const i in metricDefinitionArray) {
       urlArray.push(metricDefinitionArray[i]);
       urlArray.push(resourceNameArray[i]);
     }
