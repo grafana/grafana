@@ -25,7 +25,7 @@ import { emitDashboardViewEvent } from './analyticsProcessor';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { locationService } from '@grafana/runtime';
 import { ChangeTracker } from '../services/ChangeTracker';
-import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner';
+import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 
 export interface InitDashboardArgs {
   $injector: any;
