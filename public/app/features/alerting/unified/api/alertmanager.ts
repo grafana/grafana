@@ -1,5 +1,12 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { AlertManagerCortexConfig, Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerAlert,
+  AlertManagerCortexConfig,
+  AlertmanagerGroup,
+  Silence,
+  SilenceCreatePayload,
+  SilenceMatcher,
+} from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 // "grafana" for grafana-managed, otherwise a datasource name
@@ -65,4 +72,47 @@ export async function expireSilence(alertmanagerSourceName: string, silenceID: s
   await getBackendSrv().delete(
     `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences/${encodeURIComponent(silenceID)}`
   );
+}
+
+export async function fetchAlerts(
+  alertmanagerSourceName: string,
+  matchers?: SilenceMatcher[]
+): Promise<AlertmanagerAlert[]> {
+  const filters =
+    matchers
+      ?.map(
+        (matcher) =>
+          `filter=${encodeURIComponent(
+            `${escapeQuotes(matcher.name)}=${matcher.isRegex ? '~' : ''}"${escapeQuotes(matcher.value)}"`
+          )}`
+      )
+      .join('&') || '';
+
+  const result = await getBackendSrv()
+    .fetch<AlertmanagerAlert[]>({
+      url:
+        `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts` +
+        (filters ? '?' + filters : ''),
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+
+  return result.data;
+}
+
+export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<AlertmanagerGroup[]> {
+  const result = await getBackendSrv()
+    .fetch<AlertmanagerGroup[]>({
+      url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts/groups`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+
+  return result.data;
+}
+
+function escapeQuotes(value: string): string {
+  return value.replace(/"/g, '\\"');
 }
