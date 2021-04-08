@@ -24,9 +24,20 @@ export interface Props {
   isViewing: boolean;
   isEditing: boolean;
   data: PanelData;
+  /** Menu item trigger that accepts openMenu prop */
+  children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
 }
 
-export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, data, alertState, dashboard }) => {
+export const PanelHeader: FC<Props> = ({
+  panel,
+  error,
+  isViewing,
+  isEditing,
+  data,
+  alertState,
+  dashboard,
+  children,
+}) => {
   const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
   const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
