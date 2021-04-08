@@ -33,7 +33,7 @@ export function NetworkGraphModal({ edges, nodes, show: propsShow, title, childr
         isOpen={show}
         title={title}
         icon="info-circle"
-        iconTooltip="The graph can be moved, zoomed in and zoomed out."
+        iconTooltip="The graph can be moved, zoomed in, and zoomed out."
         onClickBackdrop={onClose}
         onDismiss={onClose}
       >

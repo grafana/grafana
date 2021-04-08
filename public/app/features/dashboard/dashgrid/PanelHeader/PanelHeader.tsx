@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { cx } from 'emotion';
+import { cx } from '@emotion/css';
 import { DataLink, PanelData } from '@grafana/data';
 import { Icon } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
