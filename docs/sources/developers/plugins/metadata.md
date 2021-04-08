@@ -197,23 +197,24 @@ For data source plugins. Token authentication section used with an JWT OAuth API
 
 #### Properties
 
-| Property | Type              | Required | Description                                                               |
-|----------|-------------------|----------|---------------------------------------------------------------------------|
-| `params` | [object](#params) | No       | For data source plugins. Parameters for the token authentication request. |
-| `url`    | string            | No       | For data source plugins. URL to fetch the JWT token.                      |
+| Property | Type              | Required | Description                                          |
+|----------|-------------------|----------|------------------------------------------------------|
+| `params` | [object](#params) | No       | Parameters for the JWT token authentication request. |
+| `scopes` | string            | No       |                                                      |
+| `url`    | string            | No       | URL to fetch the JWT token.                          |
 
 #### params
 
-For data source plugins. Parameters for the token authentication request.
+Parameters for the JWT token authentication request.
 
 ##### Properties
 
-| Property        | Type   | Required | Description                                                                                                        |
-|-----------------|--------|----------|--------------------------------------------------------------------------------------------------------------------|
-| `client_id`     | string | No       | For data source plugins. OAuth client id.                                                                          |
-| `client_secret` | string | No       | For data source plugins. OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
-| `grant_type`    | string | No       | For data source plugins. OAuth grant type.                                                                         |
-| `resource`      | string | No       | For data source plugins. OAuth resource.                                                                           |
+| Property       | Type     | Required | Description |
+|----------------|----------|----------|-------------|
+| `client_email` | string   | No       |             |
+| `private_key`  | string   | No       |             |
+| `scopes`       | string[] | No       |             |
+| `token_uri`    | string   | No       |             |
 
 ### tokenAuth
 
@@ -221,22 +222,23 @@ For data source plugins. Token authentication section used with an OAuth API.
 
 #### Properties
 
-| Property | Type              | Required | Description                                                               |
-|----------|-------------------|----------|---------------------------------------------------------------------------|
-| `params` | [object](#params) | No       | For data source plugins. Parameters for the token authentication request. |
-| `url`    | string            | No       | For data source plugins. URL to fetch the authentication token.           |
+| Property | Type              | Required | Description                                      |
+|----------|-------------------|----------|--------------------------------------------------|
+| `params` | [object](#params) | No       | Parameters for the token authentication request. |
+| `scopes` | string            | No       |                                                  |
+| `url`    | string            | No       | URL to fetch the authentication token.           |
 
 #### params
 
-For data source plugins. Parameters for the token authentication request.
+Parameters for the token authentication request.
 
 ##### Properties
 
-| Property        | Type   | Required | Description                                                                                                        |
-|-----------------|--------|----------|--------------------------------------------------------------------------------------------------------------------|
-| `client_id`     | string | No       | For data source plugins. OAuth client id.                                                                          |
-| `client_secret` | string | No       | For data source plugins. OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
-| `grant_type`    | string | No       | For data source plugins. OAuth grant type.                                                                         |
-| `resource`      | string | No       | For data source plugins. OAuth resource.                                                                           |
+| Property        | Type   | Required | Description                                                                               |
+|-----------------|--------|----------|-------------------------------------------------------------------------------------------|
+| `client_id`     | string | No       | OAuth client ID                                                                           |
+| `client_secret` | string | No       | OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
+| `grant_type`    | string | No       | OAuth grant type                                                                          |
+| `resource`      | string | No       | OAuth resource                                                                            |
 
 
