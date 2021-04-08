@@ -149,8 +149,9 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemePaletteColor)
     border: `1px solid transparent`,
 
     '&:hover': {
-      background: theme.palette.getHoverColor(color.main),
+      background: theme.palette.getHoverColor(color.main, 0.15),
       color: color.contrastText,
+      boxShadow: theme.shadows.z2,
     },
 
     '&:focus': {

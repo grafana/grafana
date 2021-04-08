@@ -141,9 +141,9 @@ export const NewThemeDemo = () => {
         <CollapsableSection label="Shadows" isOpen={true}>
           <DemoBox bg={t.palette.layer1}>
             <HorizontalGroup>
-              <ShadowDemo name="Z1" shadow={t.shadows.z1} />
-              <ShadowDemo name="Z2" shadow={t.shadows.z2} />
-              <ShadowDemo name="Z3" shadow={t.shadows.z3} />
+              {Object.keys(t.shadows).map((key) => (
+                <ShadowDemo name={key} shadow={(t.shadows as any)[key]} key={key} />
+              ))}
             </HorizontalGroup>
           </DemoBox>
         </CollapsableSection>

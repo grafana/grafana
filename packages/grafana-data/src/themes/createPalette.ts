@@ -51,8 +51,8 @@ export interface ThemePaletteBase<TColor> {
 export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
   /** Returns a text color for the background */
   getContrastText(background: string): string;
-  /* Retruns a hover color for any default color */
-  getHoverColor(defaultColor: string): string;
+  /* Return a hover color for any default color */
+  getHoverColor(defaultColor: string, hoverFactor?: number): string;
 }
 
 /** @internal */
@@ -111,11 +111,11 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     border: this.border1,
     text: this.text.primary,
     disabledText: this.text.disabled,
-    disabledBackground: 'rgba(255, 255, 255, 0.04)',
+    disabledBackground: colors.gray10,
   };
 
   contrastThreshold = 3;
-  hoverFactor = 0.15;
+  hoverFactor = 0.03;
   tonalOffset = 0.1;
 }
 
@@ -177,7 +177,7 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   contrastThreshold = 3;
-  hoverFactor = 0.15;
+  hoverFactor = 0.03;
   tonalOffset = 0.2;
 }
 
@@ -207,8 +207,8 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     return contrastText;
   }
 
-  function getHoverColor(color: string) {
-    return emphasize(color, hoverFactor);
+  function getHoverColor(color: string, factorOverride?: number) {
+    return emphasize(color, factorOverride ?? hoverFactor);
   }
 
   const getRichColor = ({ color, name }: GetRichColorProps): ThemePaletteColor => {
