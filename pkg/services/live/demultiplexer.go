@@ -10,12 +10,14 @@ import (
 )
 
 type Demultiplexer struct {
+	streamID              string
 	telegrafConverterWide *telegraf.Converter
 	managedStreamRunner   *ManagedStreamRunner
 }
 
-func NewDemultiplexer(managedStreamRunner *ManagedStreamRunner) *Demultiplexer {
+func NewDemultiplexer(managedStreamRunner *ManagedStreamRunner, streamID string) *Demultiplexer {
 	return &Demultiplexer{
+		streamID:              streamID,
 		telegrafConverterWide: telegraf.NewConverter(),
 		managedStreamRunner:   managedStreamRunner,
 	}
@@ -27,11 +29,11 @@ func (s *Demultiplexer) GetHandlerForPath(_ string) (models.ChannelHandler, erro
 
 func (s *Demultiplexer) OnSubscribe(_ context.Context, _ *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := models.SubscribeReply{}
-	return reply, backend.SubscribeStreamStatusOK, nil
+	return reply, backend.SubscribeStreamStatusPermissionDenied, nil
 }
 
 func (s *Demultiplexer) OnPublish(_ context.Context, _ *models.SignedInUser, evt models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
-	stream, err := s.managedStreamRunner.GetOrCreateStream("archer")
+	stream, err := s.managedStreamRunner.GetOrCreateStream(s.streamID)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
 		return models.PublishReply{}, 0, err
