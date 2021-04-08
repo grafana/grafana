@@ -1,8 +1,9 @@
 import React from 'react';
-import { PopoverController, Popover, ClickOutsideWrapper, Icon, Tooltip } from '@grafana/ui';
+import { PopoverController, Popover, ClickOutsideWrapper, Icon, Tooltip, withTheme, Themeable } from '@grafana/ui';
 import { FunctionDescriptor, FunctionEditorControls, FunctionEditorControlsProps } from './FunctionEditorControls';
+import { css } from '@emotion/css';
 
-interface FunctionEditorProps extends FunctionEditorControlsProps {
+interface FunctionEditorProps extends FunctionEditorControlsProps, Themeable {
   func: FunctionDescriptor;
 }
 
@@ -10,7 +11,7 @@ interface FunctionEditorState {
   showingDescription: boolean;
 }
 
-class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEditorState> {
+class UnthemedFunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEditorState> {
   private triggerRef = React.createRef<HTMLSpanElement>();
 
   constructor(props: FunctionEditorProps) {
@@ -40,6 +41,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
   };
 
   render() {
+    const { theme } = this.props;
     return (
       <PopoverController content={this.renderContent} placement="top" hideAfter={100}>
         {(showPopper, hidePopper, popperProps) => {
@@ -74,7 +76,9 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
                         data-testid="warning-icon"
                         name="exclamation-triangle"
                         size="xs"
-                        style={{ marginRight: '2px' }}
+                        className={css`
+                          margin-right: ${theme.spacing.xxs};
+                        `}
                       />
                     </Tooltip>
                   )}
@@ -107,4 +111,5 @@ const TooltipContent = React.memo(() => {
 });
 TooltipContent.displayName = 'FunctionEditorTooltipContent';
 
-export { FunctionEditor };
+export const FunctionEditor = withTheme(UnthemedFunctionEditor);
+FunctionEditor.displayName = 'FunctionEditor';
