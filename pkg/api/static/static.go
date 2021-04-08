@@ -150,7 +150,7 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 	if fi.IsDir() {
 		// Redirect if missing trailing slash.
 		if !strings.HasSuffix(ctx.Req.URL.Path, "/") {
-			path := ctx.Req.URL.Path + "/"
+			path := fmt.Sprintf("%s/", ctx.Req.URL.Path)
 			if !strings.HasPrefix(path, "/") {
 				// Disambiguate that it's a path relative to this server
 				path = fmt.Sprintf("/%s", path)
