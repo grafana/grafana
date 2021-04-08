@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import { Select, Table } from '@grafana/ui';
 import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
 import { Options } from './types';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { FilterItem, TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 import { dispatch } from '../../../store/store';

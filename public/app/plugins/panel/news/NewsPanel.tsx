@@ -12,7 +12,7 @@ import { loadRSSFeed } from './rss';
 import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme, textUtil } from '@grafana/data';
 import { NewsOptions, NewsItem } from './types';
 import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface Props extends PanelProps<NewsOptions> {}
 

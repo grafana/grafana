@@ -347,7 +347,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/alerting/list',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList')
+        () => import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleListIndex')
+      ),
+    },
+    {
+      path: '/alerting/routes',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
       ),
     },
     {
@@ -374,14 +381,20 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/alerting/new',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
+        () =>
+          import(
+            /* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/unified/components/rule-editor/AlertRuleForm'
+          )
       ),
     },
     {
       path: '/alerting/:id/edit',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
+        () =>
+          import(
+            /* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/unified/components/rule-editor/AlertRuleForm'
+          )
       ),
     },
     {
@@ -394,6 +407,18 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/playlists/play/:id',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistStartPage"*/ 'app/features/playlist/PlaylistStartPage')
+      ),
+    },
+    {
+      path: '/playlists/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "PlaylistNewPage"*/ 'app/features/playlist/PlaylistNewPage')
+      ),
+    },
+    {
+      path: '/playlists/edit/:id',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "PlaylistEditPage"*/ 'app/features/playlist/PlaylistEditPage')
       ),
     },
     ...extraRoutes,

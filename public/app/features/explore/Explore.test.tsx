@@ -1,6 +1,5 @@
 import React from 'react';
 import { DataSourceApi, LoadingState, toUtc, DataQueryError, DataQueryRequest, CoreApp } from '@grafana/data';
-import { getFirstNonQueryRowSpecificError } from 'app/core/utils/explore';
 import { ExploreId } from 'app/types/explore';
 import { shallow } from 'enzyme';
 import { Explore, ExploreProps } from './Explore';
@@ -85,17 +84,6 @@ const dummyProps: ExploreProps = {
   splitOpen: (() => {}) as any,
 };
 
-const setupErrors = (hasRefId?: boolean) => {
-  return [
-    {
-      message: 'Error message',
-      status: '400',
-      statusText: 'Bad Request',
-      refId: hasRefId ? 'A' : '',
-    },
-  ];
-};
-
 describe('Explore', () => {
   it('should render component', () => {
     const wrapper = shallow(<Explore {...dummyProps} />);
@@ -106,22 +94,5 @@ describe('Explore', () => {
     const wrapper = shallow(<Explore {...dummyProps} />);
     expect(wrapper.find(SecondaryActions)).toHaveLength(1);
     expect(wrapper.find(SecondaryActions).props().addQueryRowButtonHidden).toBe(false);
-  });
-
-  it('should filter out a query-row-specific error when looking for non-query-row-specific errors', async () => {
-    const queryErrors = setupErrors(true);
-    const queryError = getFirstNonQueryRowSpecificError(queryErrors);
-    expect(queryError).toBeUndefined();
-  });
-
-  it('should not filter out a generic error when looking for non-query-row-specific errors', async () => {
-    const queryErrors = setupErrors();
-    const queryError = getFirstNonQueryRowSpecificError(queryErrors);
-    expect(queryError).toEqual({
-      message: 'Error message',
-      status: '400',
-      statusText: 'Bad Request',
-      refId: '',
-    });
   });
 });

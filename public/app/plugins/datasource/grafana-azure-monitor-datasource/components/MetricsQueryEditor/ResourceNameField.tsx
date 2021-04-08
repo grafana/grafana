@@ -3,32 +3,33 @@ import { Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 import { Field } from '../Field';
-import { findOption, toOption } from '../common';
+import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
+const ERROR_SOURCE = 'metrics-resource';
 const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
   subscriptionId,
   variableOptionGroup,
   onQueryChange,
+  setError,
 }) => {
   const [resourceNames, setResourceNames] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
-    if (!(subscriptionId && query.azureMonitor.resourceGroup && query.azureMonitor.metricDefinition)) {
+    const { resourceGroup, metricDefinition } = query.azureMonitor;
+
+    if (!(subscriptionId && resourceGroup && metricDefinition)) {
       resourceNames.length > 0 && setResourceNames([]);
       return;
     }
 
     datasource
-      .getResourceNames(subscriptionId, query.azureMonitor.resourceGroup, query.azureMonitor.metricDefinition)
+      .getResourceNames(subscriptionId, resourceGroup, metricDefinition)
       .then((results) => setResourceNames(results.map(toOption)))
-      .catch((err) => {
-        // TODO: handle error
-        console.error(err);
-      });
-  }, [subscriptionId, query.azureMonitor.resourceGroup, query.azureMonitor.metricDefinition]);
+      .catch((err) => setError(ERROR_SOURCE, err));
+  }, [datasource, query.azureMonitor, resourceNames.length, setError, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -42,24 +43,25 @@ const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
           ...query.azureMonitor,
           resourceName: change.value,
 
-          metricNamespace: 'select',
-          metricName: 'select',
-          aggregation: '',
+          metricNamespace: undefined,
+          metricName: undefined,
+          aggregation: 'None',
           timeGrain: '',
           dimensionFilters: [],
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...resourceNames, variableOptionGroup], [resourceNames, variableOptionGroup]);
 
+  const selectedResourceNameValue = findOption(resourceNames, query.azureMonitor.resourceName);
   return (
     <Field label="Resource Name">
       <Select
         inputId="azure-monitor-metrics-resource-name-field"
-        value={findOption(resourceNames, query.azureMonitor.resourceName)}
+        value={selectedResourceNameValue}
         onChange={handleChange}
         options={options}
         width={38}

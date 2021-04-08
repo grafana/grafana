@@ -9,7 +9,7 @@ import {
   stringToJsRegex,
 } from '@grafana/data';
 import { Field, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}

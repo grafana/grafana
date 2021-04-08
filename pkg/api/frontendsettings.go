@@ -268,7 +268,7 @@ func getPanelSort(id string) int {
 		sort = 6
 	case "bargauge":
 		sort = 7
-	case "singlestat":
+	case "piechart":
 		sort = 8
 	case "text":
 		sort = 9
@@ -279,7 +279,7 @@ func getPanelSort(id string) int {
 	case "dashlist":
 		sort = 12
 	case "news":
-		sort = 12
+		sort = 13
 	}
 	return sort
 }

@@ -1,8 +1,7 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { Story, Meta } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ButtonCascader } from '@grafana/ui';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { ButtonCascaderProps } from './ButtonCascader';
 
 export default {
@@ -12,6 +11,9 @@ export default {
   parameters: {
     knobs: {
       disable: true,
+    },
+    controls: {
+      exclude: ['className', 'value', 'fieldNames'],
     },
   },
   args: {
@@ -32,11 +34,8 @@ export default {
   argTypes: {
     icon: { control: { type: 'select', options: ['plus', 'minus', 'table'] } },
     options: { control: 'object' },
-    className: NOOP_CONTROL,
-    value: NOOP_CONTROL,
-    fieldNames: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 const Template: Story<ButtonCascaderProps> = ({ children, ...args }) => {
   return <ButtonCascader {...args}>{children}</ButtonCascader>;

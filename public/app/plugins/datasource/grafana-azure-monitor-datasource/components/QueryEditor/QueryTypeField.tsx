@@ -3,7 +3,7 @@ import { Select } from '@grafana/ui';
 import { Field } from '../Field';
 import { AzureMonitorQuery, AzureQueryType } from '../../types';
 import { SelectableValue } from '@grafana/data';
-import { findOption } from '../common';
+import { findOption } from '../../utils/common';
 
 const QUERY_TYPES = [
   { value: AzureQueryType.AzureMonitor, label: 'Metrics' },
@@ -26,7 +26,7 @@ const QueryTypeField: React.FC<QueryTypeFieldProps> = ({ query, onQueryChange })
           queryType: change.value,
         });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   return (
