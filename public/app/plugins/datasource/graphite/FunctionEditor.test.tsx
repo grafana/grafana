@@ -29,7 +29,7 @@ describe('FunctionEditor', () => {
       />
     );
 
-    expect(screen.getByText('alert')).toBeInTheDocument()
+    expect(screen.getByText('foo')).toBeInTheDocument();
     expect(screen.queryByTestId('warning-icon')).not.toBeInTheDocument();
   });
 
@@ -43,7 +43,7 @@ describe('FunctionEditor', () => {
       />
     );
 
-    expect(screen.getByText('alert')).toBeInTheDocument();
+    expect(screen.getByText('bar')).toBeInTheDocument();
     expect(screen.getByTestId('warning-icon')).toBeInTheDocument();
   });
 });
