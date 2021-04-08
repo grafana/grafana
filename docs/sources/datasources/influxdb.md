@@ -16,12 +16,18 @@ This topic explains options, variables, querying, and other options specific to 
 
 To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the data source.
 
+InfluxDB data source options differ depending on which [query language](#query-languages) you select: InfluxQL or Flux.
+
+### InfluxQL (classic InfluxDB query)
+
 Name        | Description
 ----------- | -------------
 `Name`      | The data source name. This is how you refer to the data source in panels and queries.
 `Default`   | Default data source means that it will be pre-selected for new panels.
 `URL`       | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
 `Access`    | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
+`Whitelisted Cookies`| Cookies that will be forwarded to the data source. All other cookies will be deleted.
+
 `Database`  | Name of your InfluxDB database
 `User`      | Name of your database user
 `Password`  | Database user's password
@@ -29,17 +35,21 @@ Name        | Description
 `Min time interval` | Refer to [Min time interval]({{< relref "#min-time-interval" >}}).
 `Max series`| Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
 
-Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
+### Flux
 
-### Server access mode (Default)
+Name        | Description
+----------- | -------------
+`Name`      | The data source name. This is how you refer to the data source in panels and queries.
+`Default`   | Default data source means that it will be pre-selected for new panels.
+`Access`    | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
+`Whitelisted Cookies`| Cookies that will be forwarded to the data source. All other cookies will be deleted.
+`Organization` |
+`Token`     |
+`Default Bucket`|
+`Min time interval` | Refer to [Min time interval]({{< relref "#min-time-interval" >}}).
+`Max series`| Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
 
-All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.
-
-### Browser access mode
-
-All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
-
-### Min time interval
+#### Min time interval
 A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
@@ -54,6 +64,9 @@ Identifier   | Description
 `m`          | minute
 `s`          | second
 `ms`         | millisecond
+
+
+
 
 ## Query languages
 
