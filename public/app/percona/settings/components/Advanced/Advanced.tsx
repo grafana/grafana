@@ -12,12 +12,25 @@ import validators from 'app/percona/shared/helpers/validators';
 
 import { AdvancedChangePayload } from '../../Settings.types';
 
-import { SECONDS_IN_DAY, MIN_DAYS, MAX_DAYS, TECHNICAL_PREVIEW_DOC_URL } from './Advanced.constants';
+import {
+  SECONDS_IN_DAY,
+  MIN_DAYS,
+  MAX_DAYS,
+  MIN_STT_CHECK_INTERVAL,
+  STT_CHECK_INTERVAL_STEP,
+  STT_CHECK_INTERVALS,
+  TECHNICAL_PREVIEW_DOC_URL,
+} from './Advanced.constants';
+import { getStyles } from './Advanced.styles';
 import { AdvancedProps, AdvancedFormProps } from './Advanced.types';
-import { transformSecondsToDays } from './Advanced.utils';
+import { convertSecondsToDays, convertCheckIntervalsToHours, convertHoursStringToSeconds } from './Advanced.utils';
 import { SwitchRow } from './SwitchRow';
 
 const refreshingFeatureKeys: Array<keyof AdvancedFormProps> = ['alerting', 'backup', 'stt'];
+
+const {
+  advanced: { sttCheckIntervalsLabel, sttCheckIntervalTooltip, sttCheckIntervalUnit },
+} = Messages;
 
 export const Advanced: FC<AdvancedProps> = ({
   dataRetention,
@@ -30,10 +43,12 @@ export const Advanced: FC<AdvancedProps> = ({
   azureDiscoverEnabled,
   publicAddress,
   updateSettings,
+  sttCheckIntervals,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const settingsStyles = getSettingsStyles(theme);
+  const { rareInterval, standardInterval, frequentInterval } = convertCheckIntervalsToHours(sttCheckIntervals);
   const {
     advanced: {
       action,
@@ -66,8 +81,9 @@ export const Advanced: FC<AdvancedProps> = ({
     },
     tooltipLinkText,
   } = Messages;
+
   const initialValues: AdvancedFormProps = {
-    retention: transformSecondsToDays(dataRetention),
+    retention: convertSecondsToDays(dataRetention),
     telemetry: telemetryEnabled,
     updates: !updatesDisabled,
     backup: backupEnabled,
@@ -76,11 +92,30 @@ export const Advanced: FC<AdvancedProps> = ({
     azureDiscover: azureDiscoverEnabled,
     publicAddress,
     alerting: alertingEnabled,
+    rareInterval,
+    standardInterval,
+    frequentInterval,
   };
   const [loading, setLoading] = useState(false);
   // @ts-ignore
   const applyChanges = (values: AdvancedFormProps) => {
-    const { retention, telemetry, stt, publicAddress, alerting, backup, azureDiscover } = values;
+    const {
+      retention,
+      telemetry,
+      stt,
+      publicAddress,
+      alerting,
+      backup,
+      azureDiscover,
+      rareInterval,
+      standardInterval,
+      frequentInterval,
+    } = values;
+    const sttCheckIntervals = {
+      rare_interval: `${convertHoursStringToSeconds(rareInterval)}s`,
+      standard_interval: `${convertHoursStringToSeconds(standardInterval)}s`,
+      frequent_interval: `${convertHoursStringToSeconds(frequentInterval)}s`,
+    };
     const refresh = !!refreshingFeatureKeys.find((feature) => !!values[feature] !== initialValues[feature]);
     const body: AdvancedChangePayload = {
       data_retention: `${+retention * SECONDS_IN_DAY}s`,
@@ -94,6 +129,7 @@ export const Advanced: FC<AdvancedProps> = ({
       remove_pmm_public_address: !publicAddress,
       enable_alerting: alerting ? true : undefined,
       disable_alerting: !alerting ? true : undefined,
+      stt_check_intervals: !!stt ? sttCheckIntervals : undefined,
       enable_backup_management: backup,
       disable_backup_management: !backup,
     };
@@ -121,13 +157,13 @@ export const Advanced: FC<AdvancedProps> = ({
                   />
                 </div>
               </div>
-              <div className={styles.retentionInputWrapper}>
+              <div className={styles.inputWrapper}>
                 <NumberInputField
                   name="retention"
                   validators={[validators.required, validators.range(MIN_DAYS, MAX_DAYS)]}
                 />
               </div>
-              <span className={styles.retentionUnitslabel}>{retentionUnits}</span>
+              <span className={styles.unitsLabel}>{retentionUnits}</span>
             </div>
             <Field
               name="telemetry"
@@ -142,18 +178,6 @@ export const Advanced: FC<AdvancedProps> = ({
               component={SwitchRow}
             />
             <Field
-              name="stt"
-              type="checkbox"
-              label={sttLabel}
-              tooltip={sttTooltip}
-              tooltipLinkText={tooltipLinkText}
-              link={sttLink}
-              className={cx({ [styles.switchDisabled]: !values.telemetry })}
-              disabled={!values.telemetry}
-              dataQa="advanced-stt"
-              component={SwitchRow}
-            />
-            <Field
               name="updates"
               type="checkbox"
               label={updatesLabel}
@@ -165,6 +189,56 @@ export const Advanced: FC<AdvancedProps> = ({
               dataQa="advanced-updates"
               component={SwitchRow}
             />
+            {dbaasEnabled && (
+              <Field
+                name="dbaas"
+                type="checkbox"
+                label={dbaasLabel}
+                tooltip={dbaasTooltip}
+                className={styles.switchDisabled}
+                disabled
+                dataQa="advanced-dbaas"
+                component={SwitchRow}
+              />
+            )}
+            <Field
+              name="stt"
+              type="checkbox"
+              label={sttLabel}
+              tooltip={sttTooltip}
+              tooltipLinkText={tooltipLinkText}
+              link={sttLink}
+              className={cx({ [styles.switchDisabled]: !values.telemetry })}
+              disabled={!values.telemetry}
+              dataQa="advanced-stt"
+              component={SwitchRow}
+            />
+            <div className={styles.advancedRow}>
+              <div className={cx(styles.advancedCol, styles.advancedChildCol, styles.sttCheckIntervalsLabel)}>
+                <div className={settingsStyles.labelWrapper} data-qa="check-intervals-label">
+                  <span>{sttCheckIntervalsLabel}</span>
+                  <LinkTooltip tooltipText={sttCheckIntervalTooltip} icon="info-circle" />
+                </div>
+              </div>
+            </div>
+            {STT_CHECK_INTERVALS.map(({ label, name }) => (
+              <div key={name} className={styles.advancedRow}>
+                <div className={cx(styles.advancedCol, styles.advancedChildCol)}>
+                  <div className={settingsStyles.labelWrapper} data-qa={`check-interval-${name}-label`}>
+                    <span>{label}</span>
+                  </div>
+                </div>
+                <div className={styles.inputWrapper}>
+                  <NumberInputField
+                    inputProps={{ step: STT_CHECK_INTERVAL_STEP, min: MIN_STT_CHECK_INTERVAL }}
+                    disabled={!values.stt}
+                    name={name}
+                    validators={[validators.required, validators.min(MIN_STT_CHECK_INTERVAL)]}
+                  />
+                </div>
+                <span className={styles.unitsLabel}>{sttCheckIntervalUnit}</span>
+              </div>
+            ))}
             {/* TODO remove comment when feature is ready to come out */}
             {/* <Field
               name="backup"

@@ -7,6 +7,7 @@ import {
   Settings,
   SilenceResponse,
   AlertState,
+  Severity,
 } from 'app/percona/check/types';
 
 import { alertsStub } from './stubs';
@@ -76,7 +77,7 @@ export const processData = (data: Alert[]): ActiveCheck[] => {
       }
 
       return acc;
-    }, {});
+    }, {} as any);
 
   return Object.entries(result).map(([name, value], i) => {
     const failed = value.reduce(
@@ -105,8 +106,8 @@ export const processData = (data: Alert[]): ActiveCheck[] => {
         silenced: val.silenced,
       }))
       .sort((a, b) => {
-        const aSeverity = a.labels.severity;
-        const bSeverity = b.labels.severity;
+        const aSeverity: Severity = a.labels.severity as Severity;
+        const bSeverity: Severity = b.labels.severity as Severity;
 
         return SEVERITIES_ORDER[aSeverity] - SEVERITIES_ORDER[bSeverity];
       });
