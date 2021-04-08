@@ -2,7 +2,7 @@ import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQuery
 import { Observable, of } from 'rxjs';
 import { AnnotationEvent } from '@grafana/data';
 import cloneDeep from 'lodash/cloneDeep';
-import { emptyResult } from './DashboardQueryRunner';
+import { emptyResult } from './operators';
 
 export class SnapshotWorker implements DashboardQueryRunnerWorker {
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {

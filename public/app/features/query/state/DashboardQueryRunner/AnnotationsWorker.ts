@@ -4,7 +4,8 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { map, mergeAll, mergeMap, reduce } from 'rxjs/operators';
 import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 import cloneDeep from 'lodash/cloneDeep';
-import { emptyResult, getAnnotationQueryRunners } from './DashboardQueryRunner';
+import { getAnnotationQueryRunners } from './DashboardQueryRunner';
+import { emptyResult } from './operators';
 
 export class AnnotationsWorker implements DashboardQueryRunnerWorker {
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {

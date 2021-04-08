@@ -5,14 +5,27 @@ import { toDataQueryError } from '@grafana/runtime';
 import { dispatch } from 'app/store/store';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
+import { DashboardQueryRunnerWorkerResult } from './types';
 
 export function handleAnnotationQueryRunnerError(err: any): Observable<AnnotationEvent[]> {
   if (err.cancelled) {
     return of([]);
   }
 
-  notifyWithError('AnnotationQueryRunner Failed', err);
+  notifyWithError('AnnotationQueryRunner failed', err);
   return of([]);
+}
+
+export const emptyResult: () => Observable<DashboardQueryRunnerWorkerResult> = () =>
+  of({ annotations: [], alertStates: [] });
+
+export function handleDashboardQueryRunnerWorkerError(err: any): Observable<DashboardQueryRunnerWorkerResult> {
+  if (err.cancelled) {
+    return emptyResult();
+  }
+
+  notifyWithError('DashboardQueryRunner failed', err);
+  return emptyResult();
 }
 
 function notifyWithError(title: string, err: any) {

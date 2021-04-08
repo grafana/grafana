@@ -1,8 +1,8 @@
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { from, Observable } from 'rxjs';
 import { getBackendSrv } from '@grafana/runtime';
-import { map } from 'rxjs/operators';
-import { emptyResult } from './DashboardQueryRunner';
+import { catchError, map } from 'rxjs/operators';
+import { emptyResult, handleDashboardQueryRunnerWorkerError } from './operators';
 
 export class AlertStatesWorker implements DashboardQueryRunnerWorker {
   canWork({ dashboard, range }: DashboardQueryRunnerOptions): boolean {
@@ -35,7 +35,8 @@ export class AlertStatesWorker implements DashboardQueryRunnerWorker {
     ).pipe(
       map((alertStates) => {
         return { alertStates, annotations: [] };
-      })
+      }),
+      catchError(handleDashboardQueryRunnerWorkerError)
     );
   }
 }

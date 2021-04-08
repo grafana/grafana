@@ -1,4 +1,4 @@
-import { merge, Observable, of, Subject, Unsubscribable } from 'rxjs';
+import { merge, Observable, Subject, Unsubscribable } from 'rxjs';
 import { catchError, map, mergeAll, reduce } from 'rxjs/operators';
 import { AppEvents } from '@grafana/data';
 import { appEvents } from '../../../../core/core';
@@ -15,9 +15,7 @@ import { SnapshotWorker } from './SnapshotWorker';
 import { AnnotationsWorker } from './AnnotationsWorker';
 import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
-
-export const emptyResult: () => Observable<DashboardQueryRunnerWorkerResult> = () =>
-  of({ annotations: [], alertStates: [] });
+import { emptyResult } from './operators';
 
 export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   private readonly results: Subject<DashboardQueryRunnerWorkerResult>;
