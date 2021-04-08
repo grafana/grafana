@@ -86,9 +86,9 @@ class MetricsPanelCtrl extends PanelCtrl {
 
       // Defer panel rendering till the next digest cycle.
       // For some reason snapshot panels don't init at this time, so this helps to avoid rendering issues.
-      return setTimeout(() => {
+      return this.$timeout(() => {
         this.events.emit(PanelEvents.dataSnapshotLoad, data);
-      }, 100);
+      });
     }
 
     // clear loading/error state
