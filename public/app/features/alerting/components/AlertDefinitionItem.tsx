@@ -4,6 +4,7 @@ import Highlighter from 'react-highlight-words';
 import { FeatureState } from '@grafana/data';
 import { Card, FeatureBadge, Icon, LinkButton } from '@grafana/ui';
 import { AlertDefinition } from 'app/types';
+import { config } from '@grafana/runtime';
 
 interface Props {
   alertDefinition: AlertDefinition;
@@ -23,7 +24,16 @@ export const AlertDefinitionItem: FC<Props> = ({ alertDefinition, search }) => {
       </Card.Meta>
       <Card.Actions>
         {[
-          <LinkButton key="edit" variant="secondary" href={`/alerting/${alertDefinition.uid}/edit`} icon="cog">
+          <LinkButton
+            key="edit"
+            variant="secondary"
+            href={
+              config.featureToggles.ngalert
+                ? `/alerting/ng/${alertDefinition.uid}/edit`
+                : `/alerting/${alertDefinition.uid}/edit`
+            }
+            icon="cog"
+          >
             Edit alert
           </LinkButton>,
         ]}
