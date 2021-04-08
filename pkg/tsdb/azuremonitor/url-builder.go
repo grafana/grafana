@@ -36,5 +36,4 @@ func (ub *urlBuilder) Build() string {
 	}
 
 	return fmt.Sprintf("%s/providers/microsoft.insights/metrics", strings.Join(urlArray[:], "/"))
-
 }
