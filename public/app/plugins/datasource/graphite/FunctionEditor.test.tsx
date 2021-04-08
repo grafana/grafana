@@ -29,8 +29,8 @@ describe('FunctionEditor', () => {
       />
     );
 
-    expect(screen.queryByText('foo')).toBeTruthy();
-    expect(screen.queryByTestId('warning-icon')).toBeNull();
+    expect(screen.getByText('alert')).toBeInTheDocument()
+    expect(screen.queryByTestId('warning-icon')).not.toBeInTheDocument();
   });
 
   it('should display an unknown function with name and warning icon', () => {
