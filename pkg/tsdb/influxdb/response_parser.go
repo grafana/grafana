@@ -24,10 +24,15 @@ func init() {
 func (rp *ResponseParser) Parse(response *Response, query *Query) plugins.DataQueryResult {
 	var queryRes plugins.DataQueryResult
 
+	if response.Error != "" {
+		queryRes.Error = fmt.Errorf(response.Error)
+		return queryRes
+	}
+
 	for _, result := range response.Results {
 		queryRes.Series = append(queryRes.Series, rp.transformRows(result.Series, queryRes, query)...)
-		if result.Err != nil {
-			queryRes.Error = result.Err
+		if result.Error != "" {
+			queryRes.Error = fmt.Errorf(result.Error)
 		}
 	}
 

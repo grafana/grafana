@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -38,6 +39,15 @@ var ErrInvalidHttpMode error = errors.New("'httpMode' should be either 'GET' or 
 
 func init() {
 	glog = log.New("tsdb.influxdb")
+}
+
+func parseJSON(buf io.ReadCloser) (*Response, error) {
+	var response Response
+	dec := json.NewDecoder(buf)
+	dec.UseNumber()
+
+	err := dec.Decode(&response)
+	return &response, err
 }
 
 func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
@@ -91,19 +101,14 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 		return plugins.DataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", resp.Status)
 	}
 
-	var response Response
-	dec := json.NewDecoder(resp.Body)
-	dec.UseNumber()
-	if err := dec.Decode(&response); err != nil {
+	response, err := parseJSON(resp.Body)
+	if err != nil {
 		return plugins.DataResponse{}, err
-	}
-	if response.Err != nil {
-		return plugins.DataResponse{}, response.Err
 	}
 
 	result := plugins.DataResponse{
 		Results: map[string]plugins.DataQueryResult{
-			"A": e.ResponseParser.Parse(&response, query),
+			"A": e.ResponseParser.Parse(response, query),
 		},
 	}
 
