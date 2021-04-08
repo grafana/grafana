@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import uniqueId from 'lodash/uniqueId';
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
@@ -37,7 +37,7 @@ const getRadioButtonGroupStyles = () => {
   };
 };
 
-interface RadioButtonGroupProps<T> {
+export interface RadioButtonGroupProps<T> {
   value?: T;
   disabled?: boolean;
   disabledOptions?: T[];

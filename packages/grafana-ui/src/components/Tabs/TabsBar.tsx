@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 export interface Props {
   /** Children should be a single <Tab /> or an array of <Tab /> */

@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -69,33 +70,44 @@ func ParseURL(u string) (*url.URL, error) {
 	}, nil
 }
 
-func generateConnectionString(datasource *models.DataSource) (string, error) {
+func generateConnectionString(dataSource *models.DataSource) (string, error) {
+	const dfltPort = "0"
 	var addr util.NetworkAddress
-	if datasource.Url != "" {
-		u, err := ParseURL(datasource.Url)
+	if dataSource.Url != "" {
+		u, err := ParseURL(dataSource.Url)
 		if err != nil {
 			return "", err
 		}
-		addr, err = util.SplitHostPortDefault(u.Host, "localhost", "1433")
+		addr, err = util.SplitHostPortDefault(u.Host, "localhost", dfltPort)
 		if err != nil {
 			return "", err
 		}
 	} else {
 		addr = util.NetworkAddress{
 			Host: "localhost",
-			Port: "1433",
+			Port: dfltPort,
 		}
 	}
 
-	logger.Debug("Generating connection string", "url", datasource.Url, "host", addr.Host, "port", addr.Port)
-	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
-	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
+	args := []interface{}{
+		"url", dataSource.Url, "host", addr.Host,
+	}
+	if addr.Port != "0" {
+		args = append(args, "port", addr.Port)
+	}
+
+	logger.Debug("Generating connection string", args...)
+	encrypt := dataSource.JsonData.Get("encrypt").MustString("false")
+	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
-		addr.Port,
-		datasource.Database,
-		datasource.User,
-		datasource.DecryptedPassword(),
+		dataSource.Database,
+		dataSource.User,
+		dataSource.DecryptedPassword(),
 	)
+	// Port number 0 means to determine the port automatically, so we can let the driver choose
+	if addr.Port != "0" {
+		connStr += fmt.Sprintf("port=%s;", addr.Port)
+	}
 	if encrypt != "false" {
 		connStr += fmt.Sprintf("encrypt=%s;", encrypt)
 	}
@@ -150,6 +162,13 @@ func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.Co
 }
 
 func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
+	// go-mssql overrides source error, so we currently match on string
+	// ref https://github.com/denisenkom/go-mssqldb/blob/045585d74f9069afe2e115b6235eb043c8047043/tds.go#L904
+	if strings.HasPrefix(strings.ToLower(err.Error()), "unable to open tcp connection with host") {
+		t.log.Error("query error", "err", err)
+		return sqleng.ErrConnectionFailed
+	}
+
 	return err
 }
 

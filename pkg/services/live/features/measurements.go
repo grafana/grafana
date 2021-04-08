@@ -1,7 +1,10 @@
 package features
 
 import (
-	"github.com/centrifugal/centrifuge"
+	"context"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -22,14 +25,12 @@ func (m *MeasurementsRunner) GetHandlerForPath(path string) (models.ChannelHandl
 }
 
 // OnSubscribe will let anyone connect to the path
-func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-	return centrifuge.SubscribeReply{}, nil
+func (m *MeasurementsRunner) OnSubscribe(ctx context.Context, _ *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+	return models.SubscribeReply{}, backend.SubscribeStreamStatusOK, nil
 }
 
 // OnPublish is called when a client wants to broadcast on the websocket
 // Currently this sends measurements over websocket -- should be replaced with the HTTP interface
-func (m *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-	return centrifuge.PublishReply{
-		Options: centrifuge.PublishOptions{},
-	}, nil
+func (m *MeasurementsRunner) OnPublish(ctx context.Context, _ *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+	return models.PublishReply{}, backend.PublishStreamStatusOK, nil
 }

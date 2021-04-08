@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { TagList, Card, useStyles, Icon, IconName } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -27,9 +27,12 @@ const getIconFromMeta = (meta = ''): IconName => {
 
 export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
   const styles = useStyles(getStyles);
-  const tagSelected = useCallback((tag: string, event: React.MouseEvent<HTMLElement>) => {
-    onTagSelected(tag);
-  }, []);
+  const tagSelected = useCallback(
+    (tag: string, event: React.MouseEvent<HTMLElement>) => {
+      onTagSelected(tag);
+    },
+    [onTagSelected]
+  );
 
   const toggleItem = useCallback(
     (event: React.MouseEvent) => {
@@ -38,7 +41,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         onToggleChecked(item);
       }
     },
-    [item]
+    [item, onToggleChecked]
   );
 
   const folderTitle = item.folderTitle || 'General';

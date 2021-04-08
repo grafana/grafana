@@ -131,6 +131,23 @@ To add URL parameters to proxied requests, use the `urlParams` property.
 ]
 ```
 
+### Set body content
+
+To set the body content and length of proxied requests, use the `body` property.
+
+```json
+"routes": [
+  {
+    "path": "example",
+    "url": "http://api.example.com",
+    "body": {
+      "username": "{{ .JsonData.username }}",
+      "password": "{{ .SecureJsonData.password }}"
+    }
+  }
+]
+```
+
 ### Enable token authentication
 
 To enable token-based authentication for proxied requests, use the `tokenAuth` property.

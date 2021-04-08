@@ -11,10 +11,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 )
@@ -30,7 +32,9 @@ import (
 var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	x := InitMSSQLTestDB(t)
+	t.Skip()
+
+	x := initMSSQLTestDB(t)
 	origXormEngine := sqleng.NewXormEngine
 	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
 		return x, nil
@@ -1203,13 +1207,92 @@ func TestMSSQL(t *testing.T) {
 	})
 }
 
-func InitMSSQLTestDB(t *testing.T) *xorm.Engine {
+func TestTransformQueryError(t *testing.T) {
+	transformer := &mssqlQueryResultTransformer{
+		log: log.New("test"),
+	}
+
+	randomErr := fmt.Errorf("random error")
+
+	tests := []struct {
+		err         error
+		expectedErr error
+	}{
+		{err: fmt.Errorf("Unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
+		{err: fmt.Errorf("unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
+		{err: randomErr, expectedErr: randomErr},
+	}
+
+	for _, tc := range tests {
+		resultErr := transformer.TransformQueryError(tc.err)
+		assert.ErrorIs(t, resultErr, tc.expectedErr)
+	}
+}
+
+func TestGenerateConnectionString(t *testing.T) {
+	testCases := []struct {
+		desc       string
+		dataSource *models.DataSource
+		expConnStr string
+	}{
+		{
+			desc: "From URL w/ port",
+			dataSource: &models.DataSource{
+				Url:      "localhost:1001",
+				Database: "database",
+				User:     "user",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;port=1001;",
+		},
+		// When no port is specified, the driver should be allowed to choose
+		{
+			desc: "From URL w/o port",
+			dataSource: &models.DataSource{
+				Url:      "localhost",
+				Database: "database",
+				User:     "user",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;",
+		},
+		// Port 0 should be equivalent to not specifying a port, i.e. let the driver choose
+		{
+			desc: "From URL w port 0",
+			dataSource: &models.DataSource{
+				Url:      "localhost:0",
+				Database: "database",
+				User:     "user",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;",
+		},
+		{
+			desc: "Defaults",
+			dataSource: &models.DataSource{
+				Database: "database",
+				User:     "user",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+			},
+			expConnStr: "server=localhost;database=database;user id=user;password=;",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			connStr, err := generateConnectionString(tc.dataSource)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expConnStr, connStr)
+		})
+	}
+}
+
+func initMSSQLTestDB(t *testing.T) *xorm.Engine {
+	t.Helper()
+
 	testDB := sqlutil.MSSQLTestDB()
 	x, err := xorm.NewEngine(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
 		serverIP, 1))
-	if err != nil {
-		t.Fatalf("Failed to init mssql db %v", err)
-	}
+	require.NoError(t, err)
 
 	x.DatabaseTZ = time.UTC
 	x.TZLocation = time.UTC

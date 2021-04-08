@@ -1,9 +1,11 @@
 package features
 
 import (
+	"context"
 	"time"
 
-	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -17,22 +19,18 @@ func (b *BroadcastRunner) GetHandlerForPath(path string) (models.ChannelHandler,
 }
 
 // OnSubscribe will let anyone connect to the path
-func (b *BroadcastRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-	return centrifuge.SubscribeReply{
-		Options: centrifuge.SubscribeOptions{
-			Presence:  true,
-			JoinLeave: true,
-			Recover:   true, // loads the saved value from history
-		},
-	}, nil
+func (b *BroadcastRunner) OnSubscribe(ctx context.Context, _ *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+	return models.SubscribeReply{
+		Presence:  true,
+		JoinLeave: true,
+		Recover:   true, // loads the saved value from history
+	}, backend.SubscribeStreamStatusOK, nil
 }
 
 // OnPublish is called when a client wants to broadcast on the websocket
-func (b *BroadcastRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-	return centrifuge.PublishReply{
-		Options: centrifuge.PublishOptions{
-			HistorySize: 1, // The last message is saved for 10 mins
-			HistoryTTL:  10 * time.Minute,
-		},
-	}, nil
+func (b *BroadcastRunner) OnPublish(ctx context.Context, _ *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+	return models.PublishReply{
+		HistorySize: 1, // The last message is saved for 10 min.
+		HistoryTTL:  10 * time.Minute,
+	}, backend.PublishStreamStatusOK, nil
 }

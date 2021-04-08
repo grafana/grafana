@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
+	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -25,6 +27,8 @@ import (
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
+
+var ErrConnectionFailed = errors.New("failed to connect to server - please inspect Grafana server log for details")
 
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
@@ -200,6 +204,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			if err != nil {
 				errAppendDebug("DB Query error", "db query error", err)
 				queryResult.Error = e.queryResultTransformer.TransformQueryError(err)
+				ch <- queryResult
 				return
 			}
 
@@ -245,6 +250,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				// timeserie has to have time column
 				if qm.timeIndex == -1 {
 					errAppendDebug("DB get no time column", "db get no time column", errors.New("no time column found"))
+					ch <- queryResult
 					return
 				}
 				for i := range qm.columnNames {
@@ -255,6 +261,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 					if frame, err = ConvertSqlValueColumnToFloat(frame, i); err != nil {
 						errAppendDebug("Convert value to float failed", "Convert value to float failed",
 							err)
+						ch <- queryResult
 						return
 					}
 				}
@@ -268,6 +275,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 					frame, err = data.LongToWide(frame, qm.FillMissing)
 					if err != nil {
 						errAppendDebug("Failed to convert long to wide series when converting from dataframe", "failed to convert long to wide series when converting from dataframe", err)
+						ch <- queryResult
 						return
 					}
 				}
@@ -737,6 +745,7 @@ func convertInt16ToFloat64(origin *data.Field, newField *data.Field) {
 	}
 }
 
+<<<<<<< HEAD
 func convertNullableInt16ToFloat64(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
@@ -748,6 +757,38 @@ func convertNullableInt16ToFloat64(origin *data.Field, newField *data.Field) {
 			newField.Append(&value)
 		}
 	}
+=======
+func (e *dataPlugin) transformQueryError(err error) error {
+	// OpError is the error type usually returned by functions in the net
+	// package. It describes the operation, network type, and address of
+	// an error. We log this error rather than returing it to the client
+	// for security purposes.
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		e.log.Error("query error", "err", err)
+		return ErrConnectionFailed
+	}
+
+	return e.queryResultTransformer.TransformQueryError(err)
+}
+
+type processCfg struct {
+	rowCount           int
+	columnTypes        []*sql.ColumnType
+	columnNames        []string
+	rows               *core.Rows
+	timeIndex          int
+	metricIndex        int
+	metricPrefix       bool
+	metricPrefixValue  string
+	fillMissing        bool
+	pointsBySeries     map[string]*plugins.DataTimeSeries
+	seriesByQueryOrder *list.List
+	fillValue          null.Float
+	queryContext       plugins.DataQuery
+	fillInterval       float64
+	fillPrevious       bool
+>>>>>>> origin/master
 }
 
 func convertUInt16ToFloat64(origin *data.Field, newField *data.Field) {
