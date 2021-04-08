@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -36,17 +37,17 @@ type AlertmanagerApiBase struct {
 
 func (api *API) RegisterAlertmanagerApiEndpoints(srv AlertmanagerApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Post(toMacaronPath("/alertmanager/{Recipient}/api/v2/silences"), binding.Bind(apimodels.PostableSilence{}), routing.Wrap(srv.RouteCreateSilence))
-		group.Delete(toMacaronPath("/alertmanager/{Recipient}/config/api/v1/alerts"), routing.Wrap(srv.RouteDeleteAlertingConfig))
-		group.Delete(toMacaronPath("/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteDeleteSilence))
-		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/alerts/groups"), routing.Wrap(srv.RouteGetAMAlertGroups))
-		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/alerts"), routing.Wrap(srv.RouteGetAMAlerts))
-		group.Get(toMacaronPath("/alertmanager/{Recipient}/config/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertingConfig))
-		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteGetSilence))
-		group.Get(toMacaronPath("/alertmanager/{Recipient}/api/v2/silences"), routing.Wrap(srv.RouteGetSilences))
-		group.Post(toMacaronPath("/alertmanager/{Recipient}/api/v2/alerts"), binding.Bind(apimodels.PostableAlerts{}), routing.Wrap(srv.RoutePostAMAlerts))
-		group.Post(toMacaronPath("/alertmanager/{Recipient}/config/api/v1/alerts"), binding.Bind(apimodels.PostableUserConfig{}), routing.Wrap(srv.RoutePostAlertingConfig))
-	})
+		group.Post(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"), binding.Bind(apimodels.PostableSilence{}), routing.Wrap(srv.RouteCreateSilence))
+		group.Delete(toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"), routing.Wrap(srv.RouteDeleteAlertingConfig))
+		group.Delete(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteDeleteSilence))
+		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts/groups"), routing.Wrap(srv.RouteGetAMAlertGroups))
+		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts"), routing.Wrap(srv.RouteGetAMAlerts))
+		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"), routing.Wrap(srv.RouteGetAlertingConfig))
+		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silence/{SilenceId}"), routing.Wrap(srv.RouteGetSilence))
+		group.Get(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/silences"), routing.Wrap(srv.RouteGetSilences))
+		group.Post(toMacaronPath("/api/alertmanager/{Recipient}/api/v2/alerts"), binding.Bind(apimodels.PostableAlerts{}), routing.Wrap(srv.RoutePostAMAlerts))
+		group.Post(toMacaronPath("/api/alertmanager/{Recipient}/config/api/v1/alerts"), binding.Bind(apimodels.PostableUserConfig{}), routing.Wrap(srv.RoutePostAlertingConfig))
+	}, middleware.ReqSignedIn)
 }
 
 func (base AlertmanagerApiBase) RouteCreateSilence(c *models.ReqContext, body apimodels.PostableSilence) response.Response {

@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"golang.org/x/sync/errgroup"
 
 	"github.com/benbjohnson/clock"
@@ -29,20 +31,21 @@ type ScheduleService interface {
 	Ticker(context.Context, *state.StateTracker) error
 	Pause() error
 	Unpause() error
+	WarmStateCache(*state.StateTracker)
 
 	// the following are used by tests only used for tests
-	evalApplied(models.AlertDefinitionKey, time.Time)
-	stopApplied(models.AlertDefinitionKey)
+	evalApplied(models.AlertRuleKey, time.Time)
+	stopApplied(models.AlertRuleKey)
 	overrideCfg(cfg SchedulerCfg)
 }
 
-func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.AlertDefinitionKey, evalCh <-chan *evalContext, stopCh <-chan struct{}, stateTracker *state.StateTracker) error {
-	sch.log.Debug("alert definition routine started", "key", key)
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}, stateTracker *state.StateTracker) error {
+	sch.log.Debug("alert rule routine started", "key", key)
 
 	evalRunning := false
 	var start, end time.Time
 	var attempt int64
-	var alertDefinition *models.AlertDefinition
+	var alertRule *models.AlertRule
 	for {
 		select {
 		case ctx := <-evalCh:
@@ -53,42 +56,37 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 			evaluate := func(attempt int64) error {
 				start = timeNow()
 
-				// fetch latest alert definition version
-				if alertDefinition == nil || alertDefinition.Version < ctx.version {
-					q := models.GetAlertDefinitionByUIDQuery{OrgID: key.OrgID, UID: key.DefinitionUID}
-					err := sch.store.GetAlertDefinitionByUID(&q)
+				// fetch latest alert rule version
+				if alertRule == nil || alertRule.Version < ctx.version {
+					q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
+					err := sch.ruleStore.GetAlertRuleByUID(&q)
 					if err != nil {
-						sch.log.Error("failed to fetch alert definition", "key", key)
+						sch.log.Error("failed to fetch alert rule", "key", key)
 						return err
 					}
-					alertDefinition = q.Result
-					sch.log.Debug("new alert definition version fetched", "title", alertDefinition.Title, "key", key, "version", alertDefinition.Version)
+					alertRule = q.Result
+					sch.log.Debug("new alert rule version fetched", "title", alertRule.Title, "key", key, "version", alertRule.Version)
 				}
 
 				condition := models.Condition{
-					Condition: alertDefinition.Condition,
-					OrgID:     alertDefinition.OrgID,
-					Data:      alertDefinition.Data,
+					Condition: alertRule.Condition,
+					OrgID:     alertRule.OrgID,
+					Data:      alertRule.Data,
 				}
 				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
 				end = timeNow()
 				if err != nil {
 					// consider saving alert instance on error
-					sch.log.Error("failed to evaluate alert definition", "title", alertDefinition.Title,
+					sch.log.Error("failed to evaluate alert rule", "title", alertRule.Title,
 						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
-				for _, r := range results {
-					sch.log.Info("alert definition result", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
-					cmd := models.SaveAlertInstanceCommand{DefinitionOrgID: key.OrgID, DefinitionUID: key.DefinitionUID, State: models.InstanceStateType(r.State.String()), Labels: models.InstanceLabels(r.Instance), LastEvalTime: ctx.now}
-					err := sch.store.SaveAlertInstance(&cmd)
-					if err != nil {
-						sch.log.Error("failed saving alert instance", "title", alertDefinition.Title, "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
-					}
-				}
-				transitionedStates := stateTracker.ProcessEvalResults(key.DefinitionUID, results, condition)
-				alerts := FromAlertStateToPostableAlerts(transitionedStates)
-				err = sch.SendAlerts(alerts)
+
+				processedStates := stateTracker.ProcessEvalResults(key.UID, results, condition)
+				sch.saveAlertStates(processedStates)
+				alerts := FromAlertStateToPostableAlerts(processedStates)
+				sch.log.Debug("sending alerts to notifier", "count", len(alerts))
+				err = sch.sendAlerts(alerts)
 				if err != nil {
 					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts), "err", err)
 				}
@@ -111,7 +109,7 @@ func (sch *schedule) definitionRoutine(grafanaCtx context.Context, key models.Al
 			}()
 		case <-stopCh:
 			sch.stopApplied(key)
-			sch.log.Debug("stopping alert definition routine", "key", key)
+			sch.log.Debug("stopping alert rule routine", "key", key)
 			// interrupt evaluation if it's running
 			return nil
 		case <-grafanaCtx.Done():
@@ -129,8 +127,8 @@ type schedule struct {
 	// base tick rate (fastest possible configured check)
 	baseInterval time.Duration
 
-	// each alert definition gets its own channel and routine
-	registry alertDefinitionRegistry
+	// each alert rule gets its own channel and routine
+	registry alertRuleRegistry
 
 	maxAttempts int64
 
@@ -141,18 +139,20 @@ type schedule struct {
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
-	evalAppliedFunc func(models.AlertDefinitionKey, time.Time)
+	evalAppliedFunc func(models.AlertRuleKey, time.Time)
 
 	// stopApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from stopApplied is handled.
-	stopAppliedFunc func(models.AlertDefinitionKey)
+	stopAppliedFunc func(models.AlertRuleKey)
 
 	log log.Logger
 
 	evaluator eval.Evaluator
 
 	store store.Store
+
+	ruleStore store.RuleStore
 
 	dataService *tsdb.Service
 
@@ -164,11 +164,12 @@ type SchedulerCfg struct {
 	C               clock.Clock
 	BaseInterval    time.Duration
 	Logger          log.Logger
-	EvalAppliedFunc func(models.AlertDefinitionKey, time.Time)
+	EvalAppliedFunc func(models.AlertRuleKey, time.Time)
 	MaxAttempts     int64
-	StopAppliedFunc func(models.AlertDefinitionKey)
+	StopAppliedFunc func(models.AlertRuleKey)
 	Evaluator       eval.Evaluator
 	Store           store.Store
+	RuleStore       store.RuleStore
 	Notifier        Notifier
 }
 
@@ -176,7 +177,7 @@ type SchedulerCfg struct {
 func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 	sch := schedule{
-		registry:        alertDefinitionRegistry{alertDefinitionInfo: make(map[models.AlertDefinitionKey]alertDefinitionInfo)},
+		registry:        alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
 		maxAttempts:     cfg.MaxAttempts,
 		clock:           cfg.C,
 		baseInterval:    cfg.BaseInterval,
@@ -186,6 +187,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
 		stopAppliedFunc: cfg.StopAppliedFunc,
 		evaluator:       cfg.Evaluator,
 		store:           cfg.Store,
+		ruleStore:       cfg.RuleStore,
 		dataService:     dataService,
 		notifier:        cfg.Notifier,
 	}
@@ -200,7 +202,7 @@ func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
 	sch.stopAppliedFunc = cfg.StopAppliedFunc
 }
 
-func (sch *schedule) evalApplied(alertDefKey models.AlertDefinitionKey, now time.Time) {
+func (sch *schedule) evalApplied(alertDefKey models.AlertRuleKey, now time.Time) {
 	if sch.evalAppliedFunc == nil {
 		return
 	}
@@ -208,7 +210,7 @@ func (sch *schedule) evalApplied(alertDefKey models.AlertDefinitionKey, now time
 	sch.evalAppliedFunc(alertDefKey, now)
 }
 
-func (sch *schedule) stopApplied(alertDefKey models.AlertDefinitionKey) {
+func (sch *schedule) stopApplied(alertDefKey models.AlertRuleKey) {
 	if sch.stopAppliedFunc == nil {
 		return
 	}
@@ -221,7 +223,7 @@ func (sch *schedule) Pause() error {
 		return fmt.Errorf("scheduler is not initialised")
 	}
 	sch.heartbeat.Pause()
-	sch.log.Info("alert definition scheduler paused", "now", sch.clock.Now())
+	sch.log.Info("alert rule scheduler paused", "now", sch.clock.Now())
 	return nil
 }
 
@@ -230,7 +232,7 @@ func (sch *schedule) Unpause() error {
 		return fmt.Errorf("scheduler is not initialised")
 	}
 	sch.heartbeat.Unpause()
-	sch.log.Info("alert definition scheduler unpaused", "now", sch.clock.Now())
+	sch.log.Info("alert rule scheduler unpaused", "now", sch.clock.Now())
 	return nil
 }
 
@@ -240,50 +242,46 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 		select {
 		case tick := <-sch.heartbeat.C:
 			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-			alertDefinitions := sch.fetchAllDetails(tick)
-			sch.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
+			alertRules := sch.fetchAllDetails()
+			sch.log.Debug("alert rules fetched", "count", len(alertRules))
 
-			// registeredDefinitions is a map used for finding deleted alert definitions
-			// initially it is assigned to all known alert definitions from the previous cycle
-			// each alert definition found also in this cycle is removed
-			// so, at the end, the remaining registered alert definitions are the deleted ones
+			// registeredDefinitions is a map used for finding deleted alert rules
+			// initially it is assigned to all known alert rules from the previous cycle
+			// each alert rule found also in this cycle is removed
+			// so, at the end, the remaining registered alert rules are the deleted ones
 			registeredDefinitions := sch.registry.keyMap()
 
 			type readyToRunItem struct {
-				key            models.AlertDefinitionKey
-				definitionInfo alertDefinitionInfo
+				key      models.AlertRuleKey
+				ruleInfo alertRuleInfo
 			}
 			readyToRun := make([]readyToRunItem, 0)
-			for _, item := range alertDefinitions {
-				if item.Paused {
-					continue
-				}
-
+			for _, item := range alertRules {
 				key := item.GetKey()
 				itemVersion := item.Version
 				newRoutine := !sch.registry.exists(key)
-				definitionInfo := sch.registry.getOrCreateInfo(key, itemVersion)
+				ruleInfo := sch.registry.getOrCreateInfo(key, itemVersion)
 				invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return sch.definitionRoutine(ctx, key, definitionInfo.evalCh, definitionInfo.stopCh, stateTracker)
+						return sch.ruleRoutine(ctx, key, ruleInfo.evalCh, ruleInfo.stopCh, stateTracker)
 					})
 				}
 
 				if invalidInterval {
 					// this is expected to be always false
-					// give that we validate interval during alert definition updates
-					sch.log.Debug("alert definition with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "key", key, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", sch.baseInterval)
+					// give that we validate interval during alert rule updates
+					sch.log.Debug("alert rule with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "key", key, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", sch.baseInterval)
 					continue
 				}
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{key: key, definitionInfo: definitionInfo})
+					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleInfo: ruleInfo})
 				}
 
-				// remove the alert definition from the registered alert definitions
+				// remove the alert rule from the registered alert rules
 				delete(registeredDefinitions, key)
 			}
 
@@ -296,88 +294,163 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 				item := readyToRun[i]
 
 				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					item.definitionInfo.evalCh <- &evalContext{now: tick, version: item.definitionInfo.version}
+					item.ruleInfo.evalCh <- &evalContext{now: tick, version: item.ruleInfo.version}
 				})
 			}
 
-			// unregister and stop routines of the deleted alert definitions
+			// unregister and stop routines of the deleted alert rules
 			for key := range registeredDefinitions {
-				definitionInfo, err := sch.registry.get(key)
+				ruleInfo, err := sch.registry.get(key)
 				if err != nil {
-					sch.log.Error("failed to get alert definition routine information", "err", err)
+					sch.log.Error("failed to get alert rule routine information", "err", err)
 					continue
 				}
-				definitionInfo.stopCh <- struct{}{}
+				ruleInfo.stopCh <- struct{}{}
 				sch.registry.del(key)
 			}
 		case <-grafanaCtx.Done():
 			err := dispatcherGroup.Wait()
+			sch.saveAlertStates(stateTracker.GetAll())
 			return err
 		}
 	}
 }
 
-func (sch *schedule) SendAlerts(alerts []*notifier.PostableAlert) error {
+func (sch *schedule) sendAlerts(alerts []*notifier.PostableAlert) error {
 	return sch.notifier.PutAlerts(alerts...)
 }
 
-type alertDefinitionRegistry struct {
-	mu                  sync.Mutex
-	alertDefinitionInfo map[models.AlertDefinitionKey]alertDefinitionInfo
+func (sch *schedule) saveAlertStates(states []state.AlertState) {
+	sch.log.Debug("saving alert states", "count", len(states))
+	for _, s := range states {
+		cmd := models.SaveAlertInstanceCommand{
+			DefinitionOrgID:   s.OrgID,
+			DefinitionUID:     s.UID,
+			Labels:            models.InstanceLabels(s.Labels),
+			State:             models.InstanceStateType(s.State.String()),
+			LastEvalTime:      s.LastEvaluationTime,
+			CurrentStateSince: s.StartsAt,
+			CurrentStateEnd:   s.EndsAt,
+		}
+		err := sch.store.SaveAlertInstance(&cmd)
+		if err != nil {
+			sch.log.Error("failed to save alert state", "uid", s.UID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
+		}
+	}
 }
 
-// getOrCreateInfo returns the channel for the specific alert definition
+func dataLabelsFromInstanceLabels(il models.InstanceLabels) data.Labels {
+	lbs := data.Labels{}
+	for k, v := range il {
+		lbs[k] = v
+	}
+	return lbs
+}
+
+func (sch *schedule) WarmStateCache(st *state.StateTracker) {
+	sch.log.Info("warming cache for startup")
+	st.ResetCache()
+
+	orgIdsCmd := models.FetchUniqueOrgIdsQuery{}
+	if err := sch.store.FetchOrgIds(&orgIdsCmd); err != nil {
+		sch.log.Error("unable to fetch orgIds", "msg", err.Error())
+	}
+
+	var states []state.AlertState
+	for _, orgIdResult := range orgIdsCmd.Result {
+		cmd := models.ListAlertInstancesQuery{
+			DefinitionOrgID: orgIdResult.DefinitionOrgID,
+		}
+		if err := sch.store.ListAlertInstances(&cmd); err != nil {
+			sch.log.Error("unable to fetch previous state", "msg", err.Error())
+		}
+		for _, entry := range cmd.Result {
+			lbs := dataLabelsFromInstanceLabels(entry.Labels)
+			stateForEntry := state.AlertState{
+				UID:                entry.DefinitionUID,
+				OrgID:              entry.DefinitionOrgID,
+				CacheId:            fmt.Sprintf("%s %s", entry.DefinitionUID, lbs),
+				Labels:             lbs,
+				State:              translateInstanceState(entry.CurrentState),
+				Results:            []state.StateEvaluation{},
+				StartsAt:           entry.CurrentStateSince,
+				EndsAt:             entry.CurrentStateEnd,
+				LastEvaluationTime: entry.LastEvalTime,
+			}
+			states = append(states, stateForEntry)
+		}
+	}
+	st.Put(states)
+}
+
+func translateInstanceState(state models.InstanceStateType) eval.State {
+	switch {
+	case state == models.InstanceStateFiring:
+		return eval.Alerting
+	case state == models.InstanceStateNormal:
+		return eval.Normal
+	default:
+		return eval.Error
+	}
+}
+
+type alertRuleRegistry struct {
+	mu            sync.Mutex
+	alertRuleInfo map[models.AlertRuleKey]alertRuleInfo
+}
+
+// getOrCreateInfo returns the channel for the specific alert rule
 // if it does not exists creates one and returns it
-func (r *alertDefinitionRegistry) getOrCreateInfo(key models.AlertDefinitionKey, definitionVersion int64) alertDefinitionInfo {
+func (r *alertRuleRegistry) getOrCreateInfo(key models.AlertRuleKey, ruleVersion int64) alertRuleInfo {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	info, ok := r.alertDefinitionInfo[key]
+	info, ok := r.alertRuleInfo[key]
 	if !ok {
-		r.alertDefinitionInfo[key] = alertDefinitionInfo{evalCh: make(chan *evalContext), stopCh: make(chan struct{}), version: definitionVersion}
-		return r.alertDefinitionInfo[key]
+		r.alertRuleInfo[key] = alertRuleInfo{evalCh: make(chan *evalContext), stopCh: make(chan struct{}), version: ruleVersion}
+		return r.alertRuleInfo[key]
 	}
-	info.version = definitionVersion
-	r.alertDefinitionInfo[key] = info
+	info.version = ruleVersion
+	r.alertRuleInfo[key] = info
 	return info
 }
 
-// get returns the channel for the specific alert definition
+// get returns the channel for the specific alert rule
 // if the key does not exist returns an error
-func (r *alertDefinitionRegistry) get(key models.AlertDefinitionKey) (*alertDefinitionInfo, error) {
+func (r *alertRuleRegistry) get(key models.AlertRuleKey) (*alertRuleInfo, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	info, ok := r.alertDefinitionInfo[key]
+	info, ok := r.alertRuleInfo[key]
 	if !ok {
 		return nil, fmt.Errorf("%v key not found", key)
 	}
 	return &info, nil
 }
 
-func (r *alertDefinitionRegistry) exists(key models.AlertDefinitionKey) bool {
+func (r *alertRuleRegistry) exists(key models.AlertRuleKey) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	_, ok := r.alertDefinitionInfo[key]
+	_, ok := r.alertRuleInfo[key]
 	return ok
 }
 
-func (r *alertDefinitionRegistry) del(key models.AlertDefinitionKey) {
+func (r *alertRuleRegistry) del(key models.AlertRuleKey) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	delete(r.alertDefinitionInfo, key)
+	delete(r.alertRuleInfo, key)
 }
 
-func (r *alertDefinitionRegistry) iter() <-chan models.AlertDefinitionKey {
-	c := make(chan models.AlertDefinitionKey)
+func (r *alertRuleRegistry) iter() <-chan models.AlertRuleKey {
+	c := make(chan models.AlertRuleKey)
 
 	f := func() {
 		r.mu.Lock()
 		defer r.mu.Unlock()
 
-		for k := range r.alertDefinitionInfo {
+		for k := range r.alertRuleInfo {
 			c <- k
 		}
 		close(c)
@@ -387,15 +460,15 @@ func (r *alertDefinitionRegistry) iter() <-chan models.AlertDefinitionKey {
 	return c
 }
 
-func (r *alertDefinitionRegistry) keyMap() map[models.AlertDefinitionKey]struct{} {
-	definitionsIDs := make(map[models.AlertDefinitionKey]struct{})
+func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
+	definitionsIDs := make(map[models.AlertRuleKey]struct{})
 	for k := range r.iter() {
 		definitionsIDs[k] = struct{}{}
 	}
 	return definitionsIDs
 }
 
-type alertDefinitionInfo struct {
+type alertRuleInfo struct {
 	evalCh  chan *evalContext
 	stopCh  chan struct{}
 	version int64

@@ -32,7 +32,7 @@ export const OptionsPane: React.FC<Props> = ({
 }: Props) => {
   const styles = useStyles(getStyles);
   const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
-  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false });
+  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.OptionsPane.content}>

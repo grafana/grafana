@@ -1,29 +1,20 @@
 import React, { useState } from 'react';
 
 import { Props, Switch } from './Switch';
-import { Story } from '@storybook/react';
-import mdx from './Switch.mdx';
-import { NOOP_CONTROL } from '../../../../utils/storybook/noopControl';
+import { Meta, Story } from '@storybook/react';
 
-const getStory = (title: string, component: any) => ({
-  title,
+export default {
+  title: 'Forms/Legacy/Switch',
+  component: Switch,
   parameters: {
-    component,
-    docs: {
-      page: mdx,
-    },
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['className', 'labelClass', 'switchClass'],
+    },
   },
-  argTypes: {
-    className: NOOP_CONTROL,
-    labelClass: NOOP_CONTROL,
-    switchClass: NOOP_CONTROL,
-  },
-});
-
-export default getStory('Forms/Legacy/Switch', Switch);
+} as Meta;
 
 const SwitchWrapper: Story<Props> = ({ label, ...args }) => {
   const [checked, setChecked] = useState(false);
