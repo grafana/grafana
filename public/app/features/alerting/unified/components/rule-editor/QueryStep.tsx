@@ -4,7 +4,7 @@ import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormValues } from '../../types/rule-form';
 
-const Expression: FC = () => {
+export const QueryStep: FC = () => {
   const { register } = useFormContext<RuleFormValues>();
   return (
     <RuleEditorSection stepNo={2} title="Create a query to be alerted on">
@@ -14,5 +14,3 @@ const Expression: FC = () => {
     </RuleEditorSection>
   );
 };
-
-export default Expression;

@@ -3,10 +3,10 @@ import { GrafanaTheme } from '@grafana/data';
 import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-import AlertTypeSection from './AlertTypeSection';
-import AlertConditionsSection from './AlertConditionsSection';
-import AlertDetails from './AlertDetails';
-import Expression from './Expression';
+import { AlertTypeStep } from './AlertTypeStep';
+import { ConditionsStep } from './ConditionsStep';
+import { DetailsStep } from './DetailsStep';
+import { QueryStep } from './QueryStep';
 import { useForm, FormContext } from 'react-hook-form';
 
 import { fetchRulerRulesNamespace, setRulerRuleGroup } from '../../api/ruler';
@@ -40,9 +40,9 @@ export const AlertRuleForm: FC<Props> = () => {
   const showStep2 = values.dataSourceName && values.type;
 
   const onSubmit = (alertRule: RuleFormValues) => {
-    const { name, expression, forTime, dataSourceName, forUnit, labels, annotations, namespace, group } = alertRule;
-    console.log('saving', alertRule);
-    if (namespace && group && expression && dataSourceName && name) {
+    const { name, expression, forTime, dataSourceName, forUnit, labels, annotations, location } = alertRule;
+    if (location && expression && dataSourceName && name) {
+      const { namespace, group } = location;
       fetchRulerRulesNamespace(dataSourceName, namespace)
         .then((ruleGroup) => {
           const existingGroup: RulerRuleGroupDTO = ruleGroup.find(({ name }) => name === group) || {
@@ -92,12 +92,12 @@ export const AlertRuleForm: FC<Props> = () => {
         <div className={styles.contentOutter}>
           <CustomScrollbar autoHeightMin="100%">
             <div className={styles.contentInner}>
-              <AlertTypeSection />
+              <AlertTypeStep />
               {showStep2 && (
                 <>
-                  <Expression />
-                  <AlertConditionsSection />
-                  <AlertDetails />
+                  <QueryStep />
+                  <ConditionsStep />
+                  <DetailsStep />
                 </>
               )}
             </div>

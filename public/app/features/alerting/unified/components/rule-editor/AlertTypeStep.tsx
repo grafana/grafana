@@ -1,15 +1,16 @@
-import React, { FC, useState, useEffect, useCallback } from 'react';
+import React, { FC, useCallback, useEffect } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Cascader, Field, Input, InputControl, stylesFactory, Select, CascaderOption } from '@grafana/ui';
+import { Field, Input, InputControl, stylesFactory, Select } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { css } from '@emotion/css';
 
-import { fetchRulerRules } from '../../api/ruler';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { DataSourcePicker, DataSourcePickerProps } from '@grafana/runtime';
-import { RulesDataSourceTypes } from '../../utils/datasource';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { RuleGroupPicker } from '../RuleGroupPicker';
+import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 
 const alertTypeOptions: SelectableValue[] = [
   {
@@ -24,24 +25,31 @@ const alertTypeOptions: SelectableValue[] = [
   },
 ];
 
-const AlertTypeSection: FC = () => {
+export const AlertTypeStep: FC = () => {
   const styles = getStyles(config.theme);
 
-  const { register, control, watch, errors } = useFormContext<RuleFormValues>();
+  const { register, control, watch, errors, setValue } = useFormContext<RuleFormValues>();
 
-  const alertType = watch('type');
+  register({ name: 'folder' });
+
+  const ruleFormType = watch('type');
   const dataSourceName = watch('dataSourceName');
-  const folderOptions = useFolderSelectOptions(dataSourceName);
+  const folder = watch('folder');
+
+  useEffect(() => {}, [ruleFormType]);
+
+  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
   const dataSourceFilter = useCallback(
     (ds: DataSourceInstanceSettings): boolean => {
-      if (alertType === RuleFormType.threshold) {
+      if (ruleFormType === RuleFormType.threshold) {
         return !!ds.meta.alerting;
       } else {
-        return RulesDataSourceTypes.includes(ds.type);
+        // filter out only rules sources that support ruler and thus can have alerts edited
+        return !!rulesSourcesWithRuler.find(({ id }) => id === ds.id);
       }
     },
-    [alertType]
+    [ruleFormType, rulesSourcesWithRuler]
   );
 
   return (
@@ -61,7 +69,18 @@ const AlertTypeSection: FC = () => {
             name="type"
             options={alertTypeOptions}
             control={control}
-            onChange={(values: SelectableValue[]) => values[0]?.value}
+            onChange={(values: SelectableValue[]) => {
+              const value = values[0]?.value;
+              // when switching to system alerts, null out data source selection if it's not a rules source with ruler
+              if (
+                value === RuleFormType.system &&
+                dataSourceName &&
+                !rulesSourcesWithRuler.find(({ name }) => name === dataSourceName)
+              ) {
+                setValue('dataSourceName', null);
+              }
+              return value;
+            }}
           />
         </Field>
         <Field className={styles.formInput} label="Select data source">
@@ -74,57 +93,35 @@ const AlertTypeSection: FC = () => {
             control={control}
             alerting={true}
             onChange={(ds: DataSourceInstanceSettings[]) => {
-              console.log('pick', ds);
+              // reset location if switching data sources, as differnet rules source will have different groups and namespaces
+              setValue('location', undefined);
               return ds[0]?.name ?? null;
             }}
           />
         </Field>
       </div>
-      <Field className={styles.formInput}>
-        <InputControl
-          as={Cascader}
-          displayAllSelectedLevels={true}
-          separator=" > "
-          name="folder"
-          options={folderOptions}
-          control={control}
-          changeOnSelect={false}
-          onSelect={(value: any) => {
-            console.log('sel', value);
-          }}
-        />
-      </Field>
+      {ruleFormType === RuleFormType.system && (
+        <Field label="Group" className={styles.formInput} key={dataSourceName || 'null'}>
+          {dataSourceName ? (
+            <InputControl as={RuleGroupPicker} name="location" control={control} dataSourceName={dataSourceName} />
+          ) : (
+            <Select placeholder="Select a data source first" onChange={() => {}} disabled={true} />
+          )}
+        </Field>
+      )}
+      {ruleFormType === RuleFormType.threshold && (
+        <Field label="Folder" className={styles.formInput}>
+          <FolderPicker
+            initialTitle={folder?.title}
+            initialFolderId={folder?.id}
+            enableCreateNew={true}
+            enableReset={true}
+            onChange={(folder) => setValue('folder', folder)}
+          />
+        </Field>
+      )}
     </RuleEditorSection>
   );
-};
-
-const useFolderSelectOptions = (dataSourceName: string | null) => {
-  const [folderOptions, setFolderOptions] = useState<CascaderOption[]>([]);
-
-  useEffect(() => {
-    if (dataSourceName) {
-      fetchRulerRules(dataSourceName)
-        .then((namespaces) => {
-          const options: CascaderOption[] = Object.entries(namespaces).map(([namespace, group]) => {
-            return {
-              label: namespace,
-              value: namespace,
-              items: group.map(({ name }) => {
-                return { label: name, value: { namespace, group: name } };
-              }),
-            };
-          });
-          setFolderOptions(options);
-        })
-        .catch((error) => {
-          if (error.status === 404) {
-            setFolderOptions([{ label: 'No folders found', value: '' }]);
-          }
-        });
-    }
-  }, [dataSourceName]);
-
-  return folderOptions;
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -142,5 +139,3 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
-
-export default AlertTypeSection;

@@ -7,8 +7,8 @@ export interface RuleFormValues {
   name?: string;
   type?: RuleFormType;
   dataSourceName: string | null;
-  namespace?: string;
-  group?: string;
+  location?: { namespace: string; group: string };
+  folder?: { title: string; id: number };
   forTime: number;
   forUnit: string;
   expression?: string;

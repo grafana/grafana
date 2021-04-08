@@ -153,7 +153,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           maxMenuHeight={500}
           placeholder={placeholder}
           noOptionsMessage="No datasources found"
-          value={value}
+          value={value ?? null}
           invalid={!!error}
           getOptionLabel={(o) => {
             if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {

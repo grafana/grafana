@@ -33,7 +33,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
 });
 
-const AlertConditionsSection: FC = () => {
+export const ConditionsStep: FC = () => {
   const styles = useStyles(getStyles);
   const { register, control } = useFormContext<RuleFormValues>();
   return (
@@ -50,5 +50,3 @@ const AlertConditionsSection: FC = () => {
     </RuleEditorSection>
   );
 };
-
-export default AlertConditionsSection;

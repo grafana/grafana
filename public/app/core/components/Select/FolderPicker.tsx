@@ -140,7 +140,7 @@ export class FolderPicker extends PureComponent<Props, State> {
       () => {
         // if this is not the same as our initial value notify parent
         if (folder.value !== initialFolderId) {
-          this.props.onChange({ id: folder.value!, title: folder.text });
+          this.props.onChange({ id: folder.value!, title: folder.label! });
         }
       }
     );

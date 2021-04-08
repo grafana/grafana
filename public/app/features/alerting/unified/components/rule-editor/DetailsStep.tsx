@@ -3,7 +3,7 @@ import LabelsField from './LabelsField';
 import AnnotationsField from './AnnotationsField';
 import { RuleEditorSection } from './RuleEditorSection';
 
-const AlertDetails: FC = () => {
+export const DetailsStep: FC = () => {
   return (
     <RuleEditorSection stepNo={4} title="Add details for your alert">
       <AnnotationsField />
@@ -11,5 +11,3 @@ const AlertDetails: FC = () => {
     </RuleEditorSection>
   );
 };
-
-export default AlertDetails;

@@ -8,7 +8,7 @@ import { fetchRules } from '../api/prometheus';
 import { deleteRulerRulesGroup, fetchRulerRules, fetchRulerRulesNamespace, setRulerRuleGroup } from '../api/ruler';
 import { getAllRulesSourceNames, isCloudRulesSource } from '../utils/datasource';
 import { withSerializedError } from '../utils/redux';
-import { hashRulerRule } from '../utils/rules';
+import { hashRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
@@ -35,7 +35,18 @@ export const fetchSilencesAction = createAsyncThunk(
   }
 );
 
-export function fetchAllPromAndRulerRules(force = false): ThunkResult<void> {
+// this will only trigger ruler rules fetch if rules are not loaded yet and request is not in flight
+export function fetchRulerRulesIfNotFetchedYet(dataSourceName: string): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const { rulerRules } = getStore().unifiedAlerting;
+    const resp = rulerRules[dataSourceName];
+    if (!resp?.result && !(resp && isRulerNotSupportedResponse(resp)) && !resp?.loading) {
+      dispatch(fetchRulerRulesAction(dataSourceName));
+    }
+  };
+}
+
+export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
   return (dispatch, getStore) => {
     const { promRules, rulerRules } = getStore().unifiedAlerting;
     getAllRulesSourceNames().map((name) => {
