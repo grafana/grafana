@@ -1,5 +1,5 @@
 import { from, merge, Observable, of, Subject, Unsubscribable } from 'rxjs';
-import { catchError, map, mergeAll, mergeMap, scan } from 'rxjs/operators';
+import { catchError, map, mergeAll, mergeMap, reduce } from 'rxjs/operators';
 import cloneDeep from 'lodash/cloneDeep';
 import { AnnotationEvent, AppEvents, DataQuery, DataSourceApi } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
@@ -35,10 +35,11 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     merge(observables)
       .pipe(
         mergeAll(),
-        scan((acc, value) => {
+        reduce((acc, value) => {
           // should we use scan or reduce here
           // reduce will only emit when all observables are completed
           // scan will emit when any observable is completed
+          // choosing reduce to minimize re-renders
           acc.annotations = acc.annotations.concat(value.annotations);
           acc.alertStates = acc.alertStates.concat(value.alertStates);
           return acc;
@@ -207,10 +208,11 @@ export class AnnotationsWorker implements Worker {
 
     return merge(observables).pipe(
       mergeAll(),
-      scan((acc, value) => {
+      reduce((acc, value) => {
         // should we use scan or reduce here
         // reduce will only emit when all observables are completed
         // scan will emit when any observable is completed
+        // choosing reduce to minimize re-renders
         return acc.concat(value);
       }),
       map((annotations) => {

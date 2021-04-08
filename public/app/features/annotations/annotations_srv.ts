@@ -20,13 +20,12 @@ import {
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
-import { Observable, of, Subscription } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
 import { standardAnnotationSupport } from './standardAnnotationSupport';
 import { runRequest } from '../query/state/runRequest';
 import { RefreshEvent } from 'app/types/events';
-import { getDashboardQueryRunner } from '../query/state/DashboardQueryRunner';
 
 let counter = 100;
 function getNextRequestId() {
@@ -37,33 +36,21 @@ export class AnnotationsSrv {
   globalAnnotationsPromise: any;
   alertStatesPromise: any;
   datasourcePromises: any;
-  subscription: Subscription;
 
   init(dashboard: DashboardModel) {
     // always clearPromiseCaches when loading new dashboard
     this.clearPromiseCaches();
     // clear promises on refresh events
     dashboard.events.subscribe(RefreshEvent, this.clearPromiseCaches.bind(this));
-    this.subscription = new Subscription();
   }
 
   clearPromiseCaches() {
     this.globalAnnotationsPromise = null;
     this.alertStatesPromise = null;
     this.datasourcePromises = null;
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
   }
 
-  async getAnnotations(options: AnnotationQueryOptions) {
-    let panelFilterId = options.panel.getSavedId();
-    this.subscription.add(
-      getDashboardQueryRunner()
-        .getResult(panelFilterId)
-        .subscribe((x) => console.log('getResult', panelFilterId, x))
-    );
-    getDashboardQueryRunner().run(options);
+  getAnnotations(options: AnnotationQueryOptions) {
     return Promise.all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then((results) => {
         // combine the annotations and flatten results
