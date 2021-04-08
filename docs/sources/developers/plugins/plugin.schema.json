@@ -374,8 +374,7 @@
                 "properties": {
                   "grant_type": {
                     "type": "string",
-                    "description": "OAuth grant type",
-                    "enum": ["client_credentials"]
+                    "description": "OAuth grant type"
                   },
                   "client_id": {
                     "type": "string",

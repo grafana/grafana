@@ -238,7 +238,7 @@ Parameters for the token authentication request.
 |-----------------|--------|----------|-------------------------------------------------------------------------------------------|
 | `client_id`     | string | No       | OAuth client ID                                                                           |
 | `client_secret` | string | No       | OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob. |
-| `grant_type`    | string | No       | OAuth grant type Possible values are: `client_credentials`.                               |
+| `grant_type`    | string | No       | OAuth grant type                                                                          |
 | `resource`      | string | No       | OAuth resource                                                                            |
 
 
