@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { forceSimulation, forceLink, forceCollide, forceX } from 'd3-force';
 import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
+import { Field } from '@grafana/data';
 
 export interface Config {
   linkDistance: number;
@@ -10,8 +11,8 @@ export interface Config {
   forceCollide: number;
   tick: number;
   gridLayout: boolean;
-  // Atm index in the nodes arc section
-  sort: number;
+  // Either a arc field or stats field
+  sort?: Field;
 }
 
 export const defaultConfig: Config = {
@@ -22,7 +23,6 @@ export const defaultConfig: Config = {
   forceCollide: 100,
   tick: 300,
   gridLayout: false,
-  sort: 0,
 };
 
 /**
@@ -108,9 +108,15 @@ function gridLayout(nodes: NodeDatum[], config: Config /* TODO for selecting the
   const spacingHorizontal = 120;
   const perRow = 4;
 
-  nodes.sort((node1, node2) => {
-    return node2.arcSections[config.sort].value - node1.arcSections[config.sort].value;
-  });
+  if (config.sort) {
+    nodes.sort((node1, node2) => {
+      const val1 = config.sort?.values.get(node1.dataFrameRowIndex);
+      const val2 = config.sort?.values.get(node2.dataFrameRowIndex);
+
+      // Lets pretend we don't care about type for a while
+      return val2 - val1;
+    });
+  }
 
   for (const [index, node] of nodes.entries()) {
     const row = Math.floor(index / perRow);

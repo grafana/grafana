@@ -26,7 +26,7 @@ export function VizLegend<T>({
           placement={placement}
           sortBy={sortKey}
           sortDesc={sortDesc}
-          onLabelClick={onLabelClick}
+          onLabelClick={onLabelClick as any}
           onToggleSort={onToggleSort}
           onSeriesColorChange={onSeriesColorChange}
         />
@@ -37,13 +37,13 @@ export function VizLegend<T>({
           className={className}
           items={items}
           placement={placement}
-          onLabelClick={onLabelClick}
+          onLabelClick={onLabelClick as any}
           onSeriesColorChange={onSeriesColorChange}
         />
       );
     default:
       return null;
   }
-};
+}
 
 VizLegend.displayName = 'Legend';

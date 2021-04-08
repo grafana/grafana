@@ -127,7 +127,7 @@ export function usePanning<T extends Element>(
         ref.removeEventListener('touchstart', onPanStart);
       }
     };
-  }, [scale, bounds?.left, bounds?.right, bounds?.top, bounds?.bottom, isMounted]);
+  }, [scale, viewBounds.left, viewBounds.right, viewBounds.top, viewBounds.bottom, isMounted]);
 
   return {
     state: {

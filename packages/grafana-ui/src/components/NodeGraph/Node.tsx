@@ -4,6 +4,7 @@ import { stylesFactory, useTheme } from '../../themes';
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
+import { statToString } from './utils';
 
 const nodeR = 40;
 
@@ -70,10 +71,10 @@ export const Node = memo(function Node(props: {
       <ResponseTypeCircle node={node} />
       <g className={styles.text}>
         <text x={node.x} y={node.y - 5} textAnchor={'middle'}>
-          {node.mainStat}
+          {node.mainStat && statToString(node.mainStat, node.dataFrameRowIndex)}
         </text>
         <text x={node.x} y={node.y + 10} textAnchor={'middle'}>
-          {node.secondaryStat}
+          {node.secondaryStat && statToString(node.secondaryStat, node.dataFrameRowIndex)}
         </text>
         <foreignObject x={node.x - 50} y={node.y + nodeR + 5} width="100" height="30">
           <div className={styles.titleText}>
@@ -92,7 +93,7 @@ export const Node = memo(function Node(props: {
  */
 function ResponseTypeCircle(props: { node: NodeDatum }) {
   const { node } = props;
-  const fullStat = node.arcSections.find((s) => s.value === 1);
+  const fullStat = node.arcSections.find((s) => s.values.get(node.dataFrameRowIndex) === 1);
   const theme = useTheme();
 
   if (fullStat) {
@@ -100,7 +101,7 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
     return (
       <circle
         fill="none"
-        stroke={getColorForTheme(fullStat.color, theme)}
+        stroke={getColorForTheme(fullStat.config.color?.fixedColor || '', theme)}
         strokeWidth={2}
         r={nodeR}
         cx={node.x}
@@ -109,24 +110,26 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
     );
   }
 
-  const nonZero = node.arcSections.filter((s) => s.value !== 0);
+  const nonZero = node.arcSections.filter((s) => s.values.get(node.dataFrameRowIndex) !== 0);
 
   const { elements } = nonZero.reduce(
     (acc, section) => {
+      const color = section.config.color?.fixedColor || '';
+      const value = section.values.get(node.dataFrameRowIndex);
       const el = (
         <ArcSection
-          key={section.color}
+          key={color}
           r={nodeR}
           x={node.x!}
           y={node.y!}
           startPercent={acc.percent}
-          percent={section.value}
-          color={getColorForTheme(section.color, theme)}
+          percent={value}
+          color={getColorForTheme(color, theme)}
           strokeWidth={2}
         />
       );
       acc.elements.push(el);
-      acc.percent = acc.percent + section.value;
+      acc.percent = acc.percent + value;
       return acc;
     },
     { elements: [] as React.ReactNode[], percent: 0 }

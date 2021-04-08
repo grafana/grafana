@@ -6,7 +6,7 @@ import { EdgeDatum, NodeDatum, NodesMarker } from './types';
 import { Node } from './Node';
 import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
-import { DataFrame, getColorForTheme, GrafanaTheme, LinkModel } from '@grafana/data';
+import { DataFrame, GrafanaTheme, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
 import { Bounds, Config, defaultConfig, graphBounds, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
@@ -16,9 +16,10 @@ import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
 import { processNodes } from './utils';
-import { Icon, LegendDisplayMode, VizLegend } from '..';
+import { Icon } from '..';
 import { useNodeLimit } from './useNodeLimit';
 import { Marker } from './Marker';
+import { Legend } from './Legend';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -167,28 +168,17 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
           disableZoomIn={isMaxZoom}
           disableZoomOut={isMinZoom}
         />
-        <div>
-          {nodes.length && (
-            <VizLegend<{ index: number }>
-              displayMode={LegendDisplayMode.List}
-              placement={'right'}
-              items={nodes[0].arcSections.map((s, index) => {
-                return {
-                  label: s.name,
-                  color: getColorForTheme(s.color, theme),
-                  yAxis: 0,
-                  data: { index },
-                };
-              })}
-              onLabelClick={(item) => {
-                setConfig({
-                  ...config,
-                  sort: item.data!.index,
-                });
-              }}
-            />
-          )}
-        </div>
+        {nodes.length && (
+          <Legend
+            nodes={nodes}
+            onClick={(data) => {
+              setConfig({
+                ...config,
+                sort: data.field,
+              });
+            }}
+          />
+        )}
       </div>
 
       {hiddenNodesCount > 0 && (

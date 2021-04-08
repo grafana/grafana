@@ -91,15 +91,9 @@ export function processNodes(
         subTitle: nodeFields.subTitle ? nodeFields.subTitle.values.get(index) : '',
         dataFrameRowIndex: index,
         incoming: 0,
-        mainStat: nodeFields.mainStat ? statToString(nodeFields.mainStat, index) : '',
-        secondaryStat: nodeFields.secondaryStat ? statToString(nodeFields.secondaryStat, index) : '',
-        arcSections: nodeFields.arc.map((f) => {
-          return {
-            value: f.values.get(index),
-            color: f.config.color?.fixedColor || '',
-            name: f.config.displayName || 'unknown',
-          };
-        }),
+        mainStat: nodeFields.mainStat,
+        secondaryStat: nodeFields.secondaryStat,
+        arcSections: nodeFields.arc,
       };
       return acc;
     }, {}) || {};
@@ -141,7 +135,7 @@ export function processNodes(
   };
 }
 
-function statToString(field: Field, index: number) {
+export function statToString(field: Field, index: number) {
   if (field.type === FieldType.string) {
     return field.values.get(index);
   } else {

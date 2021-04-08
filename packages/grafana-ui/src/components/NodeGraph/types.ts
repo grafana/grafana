@@ -1,4 +1,5 @@
 import { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force';
+import { Field } from '@grafana/data';
 
 export type NodeDatum = SimulationNodeDatum & {
   id: string;
@@ -6,13 +7,9 @@ export type NodeDatum = SimulationNodeDatum & {
   subTitle: string;
   dataFrameRowIndex: number;
   incoming: number;
-  mainStat: string;
-  secondaryStat: string;
-  arcSections: Array<{
-    value: number;
-    color: string;
-    name: string;
-  }>;
+  mainStat?: Field;
+  secondaryStat?: Field;
+  arcSections: Field[];
 };
 
 // This is the data we have before the graph is laid out with source and target being string IDs.
