@@ -162,12 +162,14 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			preInterpolatedQuery := rawSQL
 
 			// global substitutions
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>111")
 			rawSQL, err := Interpolate(query, timeRange, rawSQL)
 			if err != nil {
 				queryResult.Error = err
 				ch <- queryResult
 				return
 			}
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>222")
 			// datasource specific substitutions
 			rawSQL, err = e.macroEngine.Interpolate(query, timeRange, rawSQL)
 			if err != nil {
@@ -189,7 +191,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				queryResult.Error = fmt.Errorf(frameErr+": %w", err)
 				queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
 			}
-
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>333")
 			session := e.engine.NewSession()
 			defer session.Close()
 			db := session.DB()
@@ -237,7 +239,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			if qm.timeIndex != -1 {
 				frame, _ = ConvertSqlTimeColumnToEpochMs(frame, qm.timeIndex)
 			}
-
+			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>444")
 			if qm.Format == DataQueryFormatSeries {
 				var err error
 				// timeserie has to have time column
