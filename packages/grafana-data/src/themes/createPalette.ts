@@ -111,7 +111,7 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     border: this.border1,
     text: this.text.primary,
     disabledText: this.text.disabled,
-    disabledBackground: colors.gray10,
+    disabledBackground: 'rgba(255, 255, 255, 0.04)',
   };
 
   contrastThreshold = 3;
@@ -129,8 +129,8 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   secondary = {
-    main: 'rgba(0,0,0,0.2)',
-    contrastText: 'rgba(0, 0, 0, 0.87)',
+    main: 'rgba(0,0,0,0.18)',
+    contrastText: 'rgba(0, 0, 0, 0.75)',
   };
 
   info = {
@@ -170,7 +170,7 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
 
   formComponent = {
     background: this.layer1,
-    border: this.border2,
+    border: this.border1,
     text: this.text.primary,
     disabledBackground: colors.gray95,
     disabledText: this.text.disabled,

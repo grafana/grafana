@@ -1,4 +1,5 @@
 import React from 'react';
+import { EmotionPerfTest } from './EmotionPerfTest';
 import { NewThemeDemo as NewThemeDemoComponent } from './NewThemeDemo';
 
 export default {
@@ -15,4 +16,8 @@ export default {
 
 export const NewThemeDemo = () => {
   return <NewThemeDemoComponent />;
+};
+
+export const PerfTest = () => {
+  return <EmotionPerfTest />;
 };
