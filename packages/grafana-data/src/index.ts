@@ -13,6 +13,7 @@ export * from './text';
 export * from './valueFormats';
 export * from './field';
 export * from './events';
+export * from './themes';
 export {
   ValueMatcherOptions,
   BasicValueMatcherOptions,

@@ -83,7 +83,8 @@ export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepea
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export { PanelChrome, PanelChromeProps, PanelPadding, PanelChromeType } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
-export { VizLegendItem, LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/types';
+export { VizLegendItem } from './VizLegend/types';
+export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
 
 export { Alert, AlertVariant } from './Alert/Alert';
@@ -226,3 +227,4 @@ export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConf
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';
+export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';
