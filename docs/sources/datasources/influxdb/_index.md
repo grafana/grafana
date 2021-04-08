@@ -18,6 +18,11 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 
 InfluxDB data source options differ depending on which [query language](#query-languages) you select: InfluxQL or Flux.
 
+> **Note:** Though not required, it's a good practice to append the language choice to the data source name. For example:
+> 
+ - InfluxDB-InfluxQL
+ - InfluxDB-Flux
+
 ### InfluxQL (classic InfluxDB query)
 
 These options apply if you are using the InfluxQL query language. If you are using Flux, refer to [Flux support in Grafana]({{< relref "influx-flux.md" >}}).
@@ -29,10 +34,9 @@ Name        | Description
 `URL`       | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
 `Access`    | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 `Whitelisted Cookies`| Cookies that will be forwarded to the data source. All other cookies will be deleted.
-
-`Database`  | Name of your InfluxDB database
-`User`      | Name of your database user
-`Password`  | Database user's password
+`Database`  | The ID of the bucket you want to query from, copied from the [Buckets page](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) of the InfluxDB UI.
+`User`      | The username you use to sign into InfluxDB.
+`Password`  | The token you use to query the bucket above, copied from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) of the InfluxDB UI.
 `HTTP mode` | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
 `Min time interval` | Refer to [Min time interval]({{< relref "#min-time-interval" >}}).
 `Max series`| Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
