@@ -1,29 +1,34 @@
-import React, { FC, useRef } from 'react';
+import React, { FC, useState } from 'react';
 import { Button, HorizontalGroup, IconButton } from '@grafana/ui';
 import { Route } from '../../../../../plugins/datasource/alertmanager/types';
-import { DynamicTable, DynamicTableColumnProps, DynamicTableRef } from '../DynamicTable';
+import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 
 export interface AmSpecificRoutingProps {
   route: Route | undefined;
 }
 
 export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ route }) => {
-  const tableRef = useRef<DynamicTableRef>(null);
+  const [items, setItems] = useState<Array<DynamicTableItemProps<Route>>>(
+    (route?.routes ?? []).map((currentRoute, index) => ({
+      id: index,
+      data: currentRoute,
+    }))
+  );
 
-  const renderMatchingCriteria = (item: Route) =>
+  const renderMatchingCriteria = (item: DynamicTableItemProps<Route>) =>
     Object.entries({
-      ...(item.match ?? {}),
-      ...(item.match_re ?? {}),
+      ...(item.data.match ?? {}),
+      ...(item.data.match_re ?? {}),
     })
       .map(([key, value]) => `${key}: ${value}`)
       .join(', ');
 
-  const renderGroupBy = (item: Route) => (item.group_by ?? []).join(', ');
+  const renderGroupBy = (item: DynamicTableItemProps<Route>) => (item.data.group_by ?? []).join(', ');
 
-  const renderReceiverChannel = (item: Route) => item?.receiver;
+  const renderReceiverChannel = (item: DynamicTableItemProps<Route>) => item.data.receiver;
 
-  const renderButtons = (_item: Route, itemKey: string, _isExpanded: boolean, isAlternateContent: boolean) => {
-    if (isAlternateContent) {
+  const renderButtons = (item: DynamicTableItemProps<Route>) => {
+    if (item.renderExpandedContent) {
       return null;
     }
 
@@ -32,7 +37,19 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ route }) => {
         <Button
           icon="pen"
           onClick={() => {
-            tableRef.current?.addAlternateExpandedContentItem(itemKey);
+            setItems(
+              items.map((currentItem) => {
+                if (currentItem !== item) {
+                  return currentItem;
+                }
+
+                return {
+                  ...currentItem,
+                  isExpanded: true,
+                  renderExpandedContent: () => 2,
+                };
+              })
+            );
           }}
           size="sm"
           variant="secondary"
@@ -46,38 +63,60 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ route }) => {
 
   const cols: Array<DynamicTableColumnProps<Route>> = [
     {
-      label: '',
-      type: 'expand',
-    },
-    {
+      id: 'matchingCriteria',
       label: 'Matching criteria',
-      render: renderMatchingCriteria,
+      renderRow: renderMatchingCriteria,
       size: 10,
-      type: 'data',
     },
     {
+      id: 'groupBy',
       label: 'Group by',
-      render: renderGroupBy,
+      renderRow: renderGroupBy,
       size: 5,
-      type: 'data',
     },
     {
+      id: 'receiverChannel',
       label: 'Receiver channel',
-      render: renderReceiverChannel,
+      renderRow: renderReceiverChannel,
       size: 5,
-      type: 'data',
     },
     {
+      id: 'actions',
       label: 'Actions',
-      render: renderButtons,
+      renderRow: renderButtons,
       size: 2,
-      type: 'data',
     },
   ];
 
-  const renderExpandedItem = () => 'asdf';
+  const onCollapse = (item: DynamicTableItemProps<Route>) => {
+    setItems(
+      items.map((currentItem) => {
+        if (currentItem !== item) {
+          return currentItem;
+        }
 
-  const renderAlternateExpandedItem = () => '2';
+        return {
+          ...currentItem,
+          isExpanded: false,
+        };
+      })
+    );
+  };
+
+  const onExpand = (item: DynamicTableItemProps<Route>) => {
+    setItems(
+      items.map((currentItem) => {
+        if (currentItem !== item) {
+          return currentItem;
+        }
+
+        return {
+          ...currentItem,
+          isExpanded: true,
+        };
+      })
+    );
+  };
 
   return (
     <div>
@@ -85,10 +124,11 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ route }) => {
       <p>Send specific alerts to chosen channels, based on matching criteria</p>
       <DynamicTable
         cols={cols}
-        items={route?.routes ?? []}
-        renderExpandedItem={renderExpandedItem}
-        renderAlternateExpandedItem={renderAlternateExpandedItem}
-        ref={tableRef}
+        isExpandable={true}
+        items={items}
+        onCollapse={onCollapse}
+        onExpand={onExpand}
+        renderExpandedContent={() => 1}
       />
     </div>
   );
