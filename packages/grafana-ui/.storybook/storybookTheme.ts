@@ -2,40 +2,39 @@
 import { create } from '@storybook/theming/create';
 import lightTheme from '../src/themes/light';
 import darkTheme from '../src/themes/dark';
-import ThemeCommons from '../src/themes/default';
 import { GrafanaTheme } from '@grafana/data';
 
 const createTheme = (theme: GrafanaTheme) => {
   return create({
     base: theme.name.includes('Light') ? 'light' : 'dark',
 
-    colorPrimary: theme.palette.brandPrimary,
-    colorSecondary: theme.palette.brandPrimary,
+    colorPrimary: theme.v2.palette.primary.main,
+    colorSecondary: theme.v2.palette.error.main,
 
     // UI
-    appBg: theme.colors.bodyBg,
-    appContentBg: theme.colors.bodyBg,
-    appBorderColor: theme.colors.pageHeaderBorder,
-    appBorderRadius: 4,
+    appBg: theme.v2.palette.layer0,
+    appContentBg: theme.v2.palette.layer1,
+    appBorderColor: theme.v2.palette.border1,
+    appBorderRadius: theme.v2.shape.borderRadius(1),
 
     // Typography
-    fontBase: ThemeCommons.typography.fontFamily.sansSerif,
-    fontCode: ThemeCommons.typography.fontFamily.monospace,
+    fontBase: theme.v2.typography.fontFamily,
+    fontCode: theme.v2.typography.fontFamilyMonospace,
 
     // Text colors
-    textColor: theme.colors.text,
-    textInverseColor: 'rgba(255,255,255,0.9)',
+    textColor: theme.v2.palette.text.primary,
+    textInverseColor: theme.v2.palette.primary.contrastText,
 
     // Toolbar default and active colors
-    barTextColor: theme.colors.formInputBorderActive,
-    barSelectedColor: theme.palette.brandPrimary,
-    barBg: theme.colors.pageHeaderBg,
+    barTextColor: theme.v2.palette.primary.text,
+    barSelectedColor: theme.v2.palette.getHoverColor(theme.v2.palette.primary.text),
+    barBg: theme.v2.palette.layer1,
 
     // Form colors
-    inputBg: theme.colors.formInputBg,
-    inputBorder: theme.colors.formInputBorder,
-    inputTextColor: theme.colors.formInputText,
-    inputBorderRadius: 4,
+    inputBg: theme.v2.palette.formComponent.background,
+    inputBorder: theme.v2.palette.formComponent.border,
+    inputTextColor: theme.v2.palette.formComponent.text,
+    inputBorderRadius: theme.v2.shape.borderRadius(1),
 
     brandTitle: 'Grafana UI',
     brandUrl: './',
