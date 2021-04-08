@@ -30,11 +30,18 @@ import (
 var timeNow = time.Now
 
 type Alertmanager interface {
+	// Configuration
 	ApplyConfig(config *apimodels.PostableUserConfig) error
+
+	// Silences
 	CreateSilence(ps *apimodels.PostableSilence) (string, error)
 	DeleteSilence(silenceID string) error
 	GetSilence(silenceID string) (apimodels.GettableSilence, error)
-	ListSilences(filters []string) (apimodels.GettableSilences, error)
+	ListSilences(filter []string) (apimodels.GettableSilences, error)
+
+	// Alerts
+	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
+	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
 }
 
 // API handlers.

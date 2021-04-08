@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -195,6 +196,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = securitySect.NewKey("content_security_policy", "true")
 			require.NoError(t, err)
 		}
+		if len(o.EnableFeatureToggles) > 0 {
+			featureSection, err := cfg.NewSection("feature_toggles")
+			require.NoError(t, err)
+			_, err = featureSection.NewKey("enable", strings.Join(o.EnableFeatureToggles, " "))
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -208,5 +215,6 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 }
 
 type GrafanaOpts struct {
-	EnableCSP bool
+	EnableCSP            bool
+	EnableFeatureToggles []string
 }

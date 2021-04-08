@@ -98,6 +98,10 @@ content-type: application/json
 GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/alerts
 
 ###
+# get AM alert groups
+GET http://admin:admin@localhost:3000/alertmanager/{{alertManagerDatasourceID}}/api/v2/alerts/groups
+
+###
 # get silences - no silences
 GET http://admin:admin@localhost:3000/api/alertmanager/{{alertManagerDatasourceID}}/api/v2/silences?Filter=foo="bar"&Filter=bar="foo"
 

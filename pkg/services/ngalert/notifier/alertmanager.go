@@ -48,17 +48,18 @@ type Alertmanager struct {
 	// notificationLog keeps tracks of which notifications we've fired already.
 	notificationLog *nflog.Log
 	// silences keeps the track of which notifications we should not fire due to user configuration.
-	silences *silence.Silences
-	marker   types.Marker
-	alerts   *AlertProvider
-
+	silencer     *silence.Silencer
+	silences     *silence.Silences
+	marker       types.Marker
+	alerts       *AlertProvider
+	route        *dispatch.Route
 	dispatcher   *dispatch.Dispatcher
 	dispatcherWG sync.WaitGroup
 
 	stageMetrics      *notify.Metrics
 	dispatcherMetrics *dispatch.DispatcherMetrics
 
-	reloadConfigMtx sync.Mutex
+	reloadConfigMtx sync.RWMutex
 }
 
 func init() {
@@ -194,7 +195,8 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	// Now, let's put together our notification pipeline
 	routingStage := make(notify.RoutingStage, len(integrationsMap))
 
-	silencingStage := notify.NewMuteStage(silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger()))
+	am.silencer = silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger())
+	silencingStage := notify.NewMuteStage(am.silencer)
 	for name := range integrationsMap {
 		stage := am.createReceiverStage(name, integrationsMap[name], waitFunc, am.notificationLog)
 		routingStage[name] = notify.MultiStage{silencingStage, stage}
@@ -203,9 +205,8 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	am.alerts.SetStage(routingStage)
 
 	am.StopAndWait()
-	//TODO: Verify this is correct
-	route := dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), am.dispatcherMetrics)
+	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), am.dispatcherMetrics)
 
 	am.dispatcherWG.Add(1)
 	go func() {
@@ -285,7 +286,6 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []notify.I
 		var s notify.MultiStage
 		s = append(s, notify.NewWaitStage(wait))
 		s = append(s, notify.NewDedupStage(&integrations[i], notificationLog, recv))
-		//TODO: This probably won't work w/o the metrics
 		s = append(s, notify.NewRetryStage(integrations[i], name, am.stageMetrics))
 		s = append(s, notify.NewSetNotifiesStage(notificationLog, recv))
 
