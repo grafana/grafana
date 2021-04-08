@@ -9,7 +9,7 @@ import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Switch } from '../Switch/Switch';
-import { allButtonVariants, Button, ButtonVariant } from '../Button';
+import { allButtonVariants, Button } from '../Button';
 
 interface DemoBoxProps {
   bg?: string;
