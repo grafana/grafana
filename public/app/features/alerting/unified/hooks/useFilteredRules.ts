@@ -1,27 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { isCloudRulesSource } from '../utils/datasource';
+import { omitBy, isUndefined } from 'lodash';
 
 type UnifiedNamespace = {
   namespace: RuleNamespace;
   dataSource: DataSourceInstanceSettings;
 };
 
-export const useFilteredRules = (namespaces: UnifiedNamespace[]) => {
-  const [filteredRules, setFilteredRules] = useState<UnifiedNamespace[]>([]);
+export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
+  const [filteredRules, setFilteredRules] = useState<CombinedRuleNamespace[]>([]);
   const { rulesFilters } = useUnifiedAlertingSelector((state) => state.filters);
 
   useEffect(() => {
     const filteredNamespaces = namespaces
-      .filter(({ namespace }) =>
-        rulesFilters.dataSource ? namespace.dataSourceName === rulesFilters.dataSource : true
+      .filter(({ rulesSource }) =>
+        rulesFilters.dataSource && isCloudRulesSource(rulesSource) ? rulesSource.name === rulesFilters.dataSource : true
       )
-      .reduce((acc, unifiedNamespace) => {
-        const { namespace } = unifiedNamespace;
-        const groups = namespace.groups.reduce((groupAcc, group) => {
+      .reduce((acc, namespace) => {
+        const { groups } = namespace;
+        const filteredGroups = groups.reduce((groupAcc, group) => {
           const groupCopy = { ...group };
           const rules = groupCopy.rules.filter((rule) => {
+            let shouldKeep = true;
             if (rulesFilters.queryString) {
               const normalizedQueryString = rulesFilters.queryString.toLocaleLowerCase();
               const doesNameContainsQueryString = rule.name.toLocaleLowerCase().includes(normalizedQueryString);
@@ -31,26 +34,32 @@ export const useFilteredRules = (namespaces: UnifiedNamespace[]) => {
                   key.toLocaleLowerCase().includes(normalizedQueryString) ||
                   value.toLocaleLowerCase().includes(normalizedQueryString)
               );
-              return doesNameContainsQueryString || doLabelsContainQueryString;
+              shouldKeep = doesNameContainsQueryString || Boolean(doLabelsContainQueryString?.length);
             }
-            return true;
+            if (rulesFilters.alertState) {
+              const matchesAlertState =
+                rule?.promRule?.type === 'alerting' && rule.promRule.state === rulesFilters.alertState;
+
+              shouldKeep = shouldKeep && matchesAlertState;
+            }
+            return shouldKeep;
           });
           if (rules.length) {
             groupCopy.rules = rules;
             groupAcc.push(groupCopy);
           }
           return groupAcc;
-        }, [] as RuleGroup[]);
+        }, [] as CombinedRuleGroup[]);
 
-        if (groups.length) {
-          unifiedNamespace.namespace.groups = groups;
-          acc.push(unifiedNamespace);
+        if (filteredGroups.length) {
+          namespace.groups = filteredGroups;
+          acc.push(namespace);
         }
 
         return acc;
-      }, [] as UnifiedNamespace[]);
+      }, [] as CombinedRuleNamespace[]);
     setFilteredRules(filteredNamespaces);
-  }, [namespaces, rulesFilters.dataSource, rulesFilters.queryString]);
+  }, [namespaces, rulesFilters.dataSource, rulesFilters.queryString, rulesFilters.alertState]);
 
   return filteredRules;
 };

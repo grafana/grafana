@@ -17,11 +17,8 @@ export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
   const styles = useStyles(getStyles);
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
-  const { rulesFilters } = useUnifiedAlertingSelector((state) => state.filters);
 
   const filteredRules = useFilteredRules(namespaces);
-
-  console.log({ filteredRules });
 
   const dataSourcesLoading = useMemo(() => rulesDataSources.filter((ds) => rules[ds.name]?.loading), [
     rules,
@@ -42,12 +39,12 @@ export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
         )}
       </div>
 
-      {filteredRules?.map(({ rulesSource, namespace, groups }) =>
+      {filteredRules?.map(({ rulesSource, name, groups }) =>
         groups.map((group) => (
           <RulesGroup
             group={group}
             key={`${getRulesSourceName(rulesSource)}-${name}-${group.name}`}
-            namespace={namespace}
+            namespace={name}
             rulesSource={rulesSource}
           />
         ))

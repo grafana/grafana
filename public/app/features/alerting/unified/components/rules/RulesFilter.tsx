@@ -2,7 +2,7 @@ import React, { FormEvent } from 'react';
 import { useDispatch } from 'react-redux';
 import { Button, Icon, Input, Label, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import DataSourceSelect from '../DataSourceSelect';
 import { rulesFiltersSlice } from '../../state/reducers';
@@ -31,7 +31,7 @@ const RulesFilter = () => {
     <div className={styles.container}>
       <div className={styles.inputWidth}>
         <Label>Select data source</Label>
-        <DataSourceSelect value={dataSource} onChange={handleDataSourceChange} />
+        <DataSourceSelect key={dataSource} value={dataSource} onChange={handleDataSourceChange} />
       </div>
       <div className={styles.flexRow}>
         <div className={styles.rowChild}>
