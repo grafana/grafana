@@ -292,11 +292,16 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({
-        templating: {
-          list: [{}],
+      model = new DashboardModel(
+        {
+          templating: {
+            list: [{}],
+          },
         },
-      });
+        {},
+        // getVariablesFromState stub to return a variable
+        () => [{} as any]
+      );
     });
 
     it('should enable submmenu', () => {
