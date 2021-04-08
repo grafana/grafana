@@ -11,7 +11,7 @@ import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
 import { css } from '@emotion/css';
 import { VizLegend, VizLegendItem } from '..';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
+import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
 
