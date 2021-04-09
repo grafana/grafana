@@ -48,7 +48,7 @@ const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color
   return <div className={style}>{children}</div>;
 };
 
-export const NewThemeDemo = () => {
+export const ThemeDemo = () => {
   const [radioValue, setRadioValue] = useState('v');
   const [boolValue, setBoolValue] = useState(false);
   const oldTheme = useTheme();
@@ -191,6 +191,9 @@ export const NewThemeDemo = () => {
             </VerticalGroup>
           </DemoBox>
         </CollapsableSection>
+        <CollapsableSection label="Actions" isOpen={true}>
+          <ActionsDemo />
+        </CollapsableSection>
       </DemoBox>
     </div>
   );
@@ -274,4 +277,56 @@ export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
     boxShadow: shadow,
   });
   return <div className={style}>{name}</div>;
+}
+
+export function ActionsDemo() {
+  const t = useTheme().v2;
+
+  const item = css({
+    padding: '8px',
+    ':hover': {
+      background: t.palette.action.hover,
+    },
+  });
+  const hover = css({
+    background: t.palette.action.hover,
+  });
+  const selected = css({
+    background: t.palette.action.selected,
+  });
+  const focused = css({
+    background: t.palette.action.focus,
+  });
+
+  return (
+    <HorizontalGroup>
+      <DemoBox bg={t.palette.layer0}>
+        <VerticalGroup>
+          <div className={item}>item</div>
+          <div className={item}>item</div>
+          <div className={cx(item, hover)}>item hover</div>
+          <div className={cx(item, selected)}>item selected</div>
+          <div className={cx(item, focused)}>item focused</div>
+        </VerticalGroup>
+      </DemoBox>
+      <DemoBox bg={t.palette.layer1}>
+        <VerticalGroup>
+          <div className={item}>item</div>
+          <div className={item}>item</div>
+          <div className={cx(item, hover)}>item hover</div>
+          <div className={cx(item, selected)}>item selected</div>
+          <div className={cx(item, focused)}>item focused</div>
+        </VerticalGroup>
+      </DemoBox>
+      <DemoBox bg={t.palette.layer2}>
+        <VerticalGroup>
+          <div className={item}>item</div>
+          <div className={item}>item</div>
+          <div className={cx(item, hover)}>item hover</div>
+          <div className={cx(item, selected)}>item selected</div>
+          <div className={cx(item, focused)}>item focused</div>
+        </VerticalGroup>
+      </DemoBox>
+    </HorizontalGroup>
+  );
 }
