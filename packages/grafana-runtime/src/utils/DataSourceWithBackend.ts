@@ -14,7 +14,7 @@ import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { getBackendSrv, getDataSourceSrv } from '../services';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
-import { getLiveDataStream } from '../measurement';
+import { getLiveDataStream } from './liveQuery';
 
 const ExpressionDatasourceID = '__expr__';
 
