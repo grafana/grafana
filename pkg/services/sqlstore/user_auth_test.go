@@ -222,7 +222,7 @@ func TestUserAuth(t *testing.T) {
 			require.Equal(t, getAuthQuery.Result.AuthModule, "test1")
 		})
 
-		t.Run("Testing DB - users with generic oauth tokens", func(t *testing.T) {
+		t.Run("Can set & locate by generic oauth auth module and user id", func(t *testing.T) {
 			// Find a user to set tokens on
 			login := "loginuser0"
 
