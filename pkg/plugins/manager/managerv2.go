@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -13,55 +14,53 @@ import (
 
 var _ plugins.PluginManagerV2 = (*PluginManagerV2)(nil)
 
-type Finder struct {
-	plugins.PluginFinderV2
-}
+var (
+	pmlog = log.New("plugin.manager")
+)
 
-type Loader struct {
-	plugins.PluginLoaderV2
-}
 type Initializer struct {
 	plugins.PluginInitializerV2
 }
 
 type PluginManagerV2 struct {
-	Cfg                  *setting.Cfg          `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
+	Cfg                  *setting.Cfg           `inject:""`
+	BackendPluginManager backendplugin.Manager  `inject:""`
+	PluginFinder         plugins.PluginFinderV2 `inject:""`
+	PluginLoader         plugins.PluginLoaderV2 `inject:""`
 
-	plugins.PluginFinderV2
-	plugins.PluginLoaderV2
-	plugins.PluginInitializerV2
-
-	plugins map[string]plugins.PluginV2
+	plugins map[string]*plugins.PluginV2
 }
 
 func init() {
 	registry.Register(&registry.Descriptor{
-		Name: "PluginManagerV2",
-		Instance: &PluginManagerV2{
-			Cfg:                 nil,
-			PluginFinderV2:      Finder{},
-			PluginLoaderV2:      Loader{},
-			PluginInitializerV2: Initializer{},
-		},
+		Name:         "PluginManagerV2",
+		Instance:     &PluginManagerV2{},
 		InitPriority: registry.MediumHigh,
 	})
 }
 
 func (m *PluginManagerV2) Init() error {
+	m.plugins = map[string]*plugins.PluginV2{}
+
+	pluginJSONPaths, err := m.PluginFinder.Find(m.Cfg.PluginsPath)
+	if err != nil {
+		return err
+	}
+
+	for _, pluginJSONPath := range pluginJSONPaths {
+		pmlog.Info("Found plugin", "JSON", pluginJSONPath)
+
+		p, err := m.PluginLoader.Load(pluginJSONPath)
+		if err != nil {
+			return err
+		}
+
+		m.plugins[p.ID] = p
+
+		pmlog.Info("Loaded plugin", "pluginID", p.ID)
+	}
+
 	return nil
-}
-
-func (m *PluginManagerV2) Find(string) (interface{}, error) {
-	return nil, nil
-}
-
-func (m *PluginManagerV2) Load() (interface{}, error) {
-	return nil, nil
-}
-
-func (m *PluginManagerV2) Initialize(plugin plugins.PluginV2) (interface{}, error) {
-	return nil, nil
 }
 
 func (m *PluginManagerV2) IsDisabled() bool {
@@ -118,7 +117,7 @@ func (m *PluginManagerV2) Apps() {
 }
 
 func (m *PluginManagerV2) Errors(pluginID string) {
-
+	//m.PluginLoader.errors
 }
 
 func (m *PluginManagerV2) CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string) {
@@ -133,7 +132,7 @@ func (m *PluginManagerV2) CheckHealth(ctx context.Context, pCtx backend.PluginCo
 	return &backend.CheckHealthResult{}, nil
 }
 
-func (m *PluginManagerV2) Register(p plugins.PluginV2) error {
+func (m *PluginManagerV2) Register(p *plugins.PluginV2) error {
 	m.plugins[p.ID] = p
 
 	return nil

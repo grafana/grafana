@@ -74,24 +74,20 @@ type DataRequestHandler interface {
 
 type PluginFinderV2 interface {
 	// Load loads a plugin and returns it.
-	Find(string) (interface{}, error)
+	Find(string) ([]string, error)
 }
 
 type PluginLoaderV2 interface {
 	// Load loads a plugin and returns it.
-	Load() (interface{}, error)
+	Load(string) (*PluginV2, error)
 }
 
 type PluginInitializerV2 interface {
 	// Load loads a plugin and returns it.
-	Initialize(plugin PluginV2) (interface{}, error)
+	Initialize(plugin PluginV2) error
 }
 
 type PluginManagerV2 interface {
-	PluginFinderV2      // find plugins
-	PluginLoaderV2      // load plugins
-	PluginInitializerV2 // initialize plugins
-
 	Reload() // find, load and initialize dynamically
 
 	// Probably not necessary as loading/initializing will cover this step
@@ -124,20 +120,46 @@ type PluginManagerV2 interface {
 	IsSupported(pluginID string) bool
 	IsEnabled() bool
 
-	Register(PluginV2) error
+	Register(*PluginV2) error
 
 	// Plugin dashboards
 }
 
 type PluginV2 struct {
-	ID string
-
 	// Would be nice that when we retrieve plugins, we will know their capability
 	// This will also allow any plugin to have different responsibilities
 	backend.QueryDataHandler
 	backend.StreamHandler
 	backend.CallResourceHandler
 	backend.CheckHealthHandler
+
+	Type         string                `json:"type"`
+	Name         string                `json:"name"`
+	ID           string                `json:"id"`
+	Info         PluginInfo            `json:"info"`
+	Dependencies PluginDependencies    `json:"dependencies"`
+	Includes     []*PluginInclude      `json:"includes"`
+	Module       string                `json:"module"`
+	BaseUrl      string                `json:"baseUrl"`
+	Category     string                `json:"category"`
+	HideFromList bool                  `json:"hideFromList,omitempty"`
+	Preload      bool                  `json:"preload"`
+	State        PluginState           `json:"state,omitempty"`
+	Signature    PluginSignatureStatus `json:"signature"`
+	Backend      bool                  `json:"backend"`
+
+	IncludedInAppID string              `json:"-"`
+	PluginDir       string              `json:"-"`
+	DefaultNavURL   string              `json:"-"`
+	IsCorePlugin    bool                `json:"-"`
+	Files           []string            `json:"-"`
+	SignatureType   PluginSignatureType `json:"-"`
+	SignatureOrg    string              `json:"-"`
+
+	GrafanaNetVersion   string `json:"-"`
+	GrafanaNetHasUpdate bool   `json:"-"`
+
+	Parent *PluginV2
 }
 
 // refer to ID of backend plugin instead of backend:true and executable

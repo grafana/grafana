@@ -59,6 +59,22 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 	return p, nil
 }
 
+func (p *DataSourcePlugin) LoadV2(pluginDir string, backendPluginManager backendplugin.Manager) error {
+	if p.Backend {
+		cmd := ComposePluginStartCommand(p.Executable)
+		fullpath := filepath.Join(pluginDir, cmd)
+		factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
+			OnLegacyStart: p.onLegacyPluginStart,
+			OnStart:       p.onPluginStart,
+		})
+		if err := backendPluginManager.Register(p.Id, factory); err != nil {
+			return errutil.Wrapf(err, "failed to register backend plugin")
+		}
+	}
+
+	return nil
+}
+
 func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource, query DataQuery) (DataResponse, error) {
 	if !p.CanHandleDataQueries() {
 		return DataResponse{}, fmt.Errorf("plugin %q can't handle data queries", p.Id)

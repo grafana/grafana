@@ -43,6 +43,22 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase,
 	return r, nil
 }
 
+func (r *RendererPlugin) LoadV2(pluginDir string, backendPluginManager backendplugin.Manager) error {
+	r.backendPluginManager = backendPluginManager
+
+	cmd := ComposePluginStartCommand("plugin_start")
+	fullpath := filepath.Join(pluginDir, cmd)
+	factory := grpcplugin.NewRendererPlugin(r.Id, fullpath, grpcplugin.PluginStartFuncs{
+		OnLegacyStart: r.onLegacyPluginStart,
+		OnStart:       r.onPluginStart,
+	})
+	if err := backendPluginManager.Register(r.Id, factory); err != nil {
+		return errutil.Wrapf(err, "failed to register backend plugin")
+	}
+
+	return nil
+}
+
 func (r *RendererPlugin) Start(ctx context.Context) error {
 	if err := r.backendPluginManager.StartPlugin(ctx, r.Id); err != nil {
 		return errutil.Wrapf(err, "Failed to start renderer plugin")

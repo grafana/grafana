@@ -79,11 +79,8 @@ func (s *CloudWatchService) Init() error {
 	cw := newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache())
 
 	if s.PluginManagerV2.IsEnabled() {
-		err := s.PluginManagerV2.Register(plugins.PluginV2{
-			QueryDataHandler:    cw,
-			StreamHandler:       nil,
-			CallResourceHandler: nil,
-			CheckHealthHandler:  nil,
+		err := s.PluginManagerV2.Register(&plugins.PluginV2{
+			QueryDataHandler: cw,
 		})
 
 		return err
