@@ -76,13 +76,13 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     primary: 'rgba(255, 255, 255, 0.75)',
     secondary: 'rgba(255, 255, 255, 0.50)',
     disabled: 'rgba(255, 255, 255, 0.35)',
-    link: colors.blueDark2,
+    link: colors.blueDarkText,
     maxContrast: colors.white,
   };
 
   primary = {
-    main: colors.blueDark1,
-    text: colors.blueDark2,
+    main: colors.blueDarkMain,
+    text: colors.blueDarkText,
   };
 
   secondary = {
@@ -95,17 +95,18 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   info = this.primary;
 
   error = {
-    main: colors.redDark1,
-    text: colors.redDark2,
+    main: colors.redDarkMain,
+    text: colors.redDarkText,
   };
 
   success = {
-    main: colors.green1,
-    text: colors.green2,
+    main: colors.greenDarkMain,
+    text: colors.greenDarkText,
   };
 
   warning = {
-    main: colors.orange,
+    main: colors.orangeDarkMain,
+    text: colors.orangeDarkText,
   };
 
   layer0 = colors.gray05;
@@ -135,9 +136,9 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'light';
 
   primary = {
-    main: colors.blueLight1,
-    border: colors.blueLight3,
-    text: colors.blueLight3,
+    main: colors.blueLightMain,
+    border: colors.blueLightText,
+    text: colors.blueLightText,
   };
 
   secondary = {
@@ -147,22 +148,24 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   info = {
-    main: colors.blueLight1,
-    text: colors.blueLight3,
+    main: colors.blueLightMain,
+    text: colors.blueLightText,
   };
 
   error = {
-    main: colors.redLight1,
-    text: colors.redLight1,
-    border: colors.redLight1,
+    main: colors.redLightMain,
+    text: colors.redLightText,
+    border: colors.redLightText,
   };
 
   success = {
-    main: colors.greenBase,
+    main: colors.greenLightMain,
+    text: colors.greenLightText,
   };
 
   warning = {
-    main: colors.orange,
+    main: colors.orangeLightMain,
+    text: colors.orangeLightText,
   };
 
   text = {
@@ -173,11 +176,11 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     maxContrast: colors.black,
   };
 
-  layer0 = colors.gray98;
+  layer0 = colors.gray90;
   layer1 = colors.white;
-  layer2 = colors.gray97;
+  layer2 = colors.gray100;
 
-  border0 = colors.gray90;
+  border0 = colors.lightBorder1;
   border1 = colors.gray85;
   border2 = colors.gray70;
 

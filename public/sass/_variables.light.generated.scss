@@ -80,9 +80,9 @@ $critical: #c4162a;
 
 // Scaffolding
 // -------------------------
-$body-bg: #ffffff;
-$page-bg: #ffffff;
-$dashboard-bg: #f7f8fa;
+$body-bg: #fff;
+$page-bg: #fff;
+$dashboard-bg: #f4f5f5;
 
 $text-color: #464c54;
 $text-color-strong: #202226;
@@ -115,29 +115,29 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: #ffffff;
+$panel-bg: #fff;
 $panel-border: 1px solid #dce1e6;
-$panel-header-hover-bg: #f1f5f9;
+$panel-header-hover-bg: #f9f9fa;
 $panel-corner: $gray-4;
 
 // Page header
-$page-header-bg: #f1f5f9;
+$page-header-bg: #f9f9fa;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
 $page-header-border-color: #dce1e6;
 
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: #f1f5f9;
-$tight-form-func-highlight-bg: #eaf0f6;
+$tight-form-func-bg: #f9f9fa;
+$tight-form-func-highlight-bg: #f3f3f5;
 
-$modal-backdrop-bg: #ffffff;
+$modal-backdrop-bg: #fff;
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: #f1f5f9;
-$card-background-hover: #eaf0f6;
+$card-background: #f9f9fa;
+$card-background-hover: #f3f3f5;
 $card-shadow: none;
 
 // Lists
@@ -203,7 +203,7 @@ $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;
 $input-color-placeholder: #9fa7b3;
-$input-label-bg: #f1f5f9;
+$input-label-bg: #f9f9fa;
 $input-color-select-arrow: #7b8087;
 
 // search
@@ -249,7 +249,7 @@ $side-menu-header-color: #e9edf2;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: #f1f5f9;
+$menu-dropdown-bg: #f9f9fa;
 $menu-dropdown-hover-bg: rgba(0, 0, 0, 0.04);
 $menu-dropdown-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2), 0px 4px 5px 0px rgba(0, 0, 0, 0.14),
   0px 1px 10px 0px rgba(0, 0, 0, 0.12);
@@ -293,7 +293,7 @@ $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $tooltipColor;
 
-$popover-code-bg: #ffffff;
+$popover-code-bg: #fff;
 $popover-code-boxshadow: 0 0 5px $gray60;
 
 // images
@@ -322,13 +322,13 @@ $json-explorer-url-color: $blue-base;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: #dce1e6;
+$diff-label-bg: rgba(0, 0, 0, 0.04);
 $diff-label-fg: $gray-2;
 
 $diff-arrow-color: $dark-2;
-$diff-group-bg: #f1f5f9;
+$diff-group-bg: #f9f9fa;
 
-$diff-json-bg: #f1f5f9;
+$diff-json-bg: #f9f9fa;
 $diff-json-fg: #464c54;
 
 $diff-json-added: $blue-shade;
