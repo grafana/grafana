@@ -102,7 +102,6 @@ div.flot-text {
   width: 100%;
   flex-grow: 1;
   height: calc(100% - #{$panel-header-height});
-  overflow: hidden;
 
   &--no-padding {
     padding: 0;
