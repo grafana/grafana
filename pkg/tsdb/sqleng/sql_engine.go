@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -80,6 +81,20 @@ type DataPluginConfiguration struct {
 	MetricColumnTypes []string
 }
 
+func (e *dataPlugin) transformQueryError(err error) error {
+	// OpError is the error type usually returned by functions in the net
+	// package. It describes the operation, network type, and address of
+	// an error. We log this error rather than returing it to the client
+	// for security purposes.
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		e.log.Error("query error", "err", err)
+		return ErrConnectionFailed
+	}
+
+	return e.queryResultTransformer.TransformQueryError(err)
+}
+
 // NewDataPlugin returns a new plugins.DataPlugin
 func NewDataPlugin(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
 	macroEngine SQLMacroEngine, log log.Logger) (plugins.DataPlugin, error) {
@@ -131,7 +146,6 @@ const rowLimit = 1000000
 
 func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
-
 	var timeRange plugins.DataTimeRange
 	if queryContext.TimeRange != nil {
 		timeRange = *queryContext.TimeRange
@@ -164,14 +178,12 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			preInterpolatedQuery := rawSQL
 
 			// global substitutions
-			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>111")
 			rawSQL, err := Interpolate(query, timeRange, rawSQL)
 			if err != nil {
 				queryResult.Error = err
 				ch <- queryResult
 				return
 			}
-			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>222")
 			// datasource specific substitutions
 			rawSQL, err = e.macroEngine.Interpolate(query, timeRange, rawSQL)
 			if err != nil {
@@ -193,7 +205,6 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				queryResult.Error = fmt.Errorf(frameErr+": %w", err)
 				queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
 			}
-			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>333")
 			session := e.engine.NewSession()
 			defer session.Close()
 			db := session.DB()
@@ -237,12 +248,14 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			if frame.Rows() == 0 {
 				return
 			}
-			// frame, foo, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
 
 			if qm.timeIndex != -1 {
-				frame, _ = ConvertSqlTimeColumnToEpochMs(frame, qm.timeIndex)
+				err = ConvertSqlTimeColumnToEpochMs(frame, qm.timeIndex)
+				errAppendDebug("DB convert time column failed", "db convert time column failed", err)
+				ch <- queryResult
+				return
 			}
-			fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>444")
+
 			if qm.Format == DataQueryFormatSeries {
 				var err error
 				// timeserie has to have time column
@@ -268,8 +281,6 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				backend.Logger.Debug("Timeseries schema", "schema", tsSchema.Type)
 
 				if tsSchema.Type == data.TimeSeriesTypeLong {
-					content, _ := frame.StringTable(-1, -1)
-					fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<< before convertion", content)
 					frame, err = data.LongToWide(frame, qm.FillMissing)
 					if err != nil {
 						errAppendDebug("Failed to convert long to wide series when converting from dataframe", "failed to convert long to wide series when converting from dataframe", err)
@@ -330,7 +341,6 @@ var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 }
 
 func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery, rows *core.Rows) (*DataQueryModel, error) {
-
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -759,12 +769,12 @@ func convertNullableFloat32ToEpochMs(origin *data.Field, newField *data.Field) {
 // ConvertSqlTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
 // to make native datetime types and epoch dates work in annotation and table queries.
 // func ConvertSqlTimeColumnToEpochMs(values plugins.DataRowValues, timeIndex int) {
-func ConvertSqlTimeColumnToEpochMs(frame *data.Frame, timeIndex int) (*data.Frame, error) {
+func ConvertSqlTimeColumnToEpochMs(frame *data.Frame, timeIndex int) error {
 	if timeIndex >= 0 && timeIndex < len(frame.Fields) {
 		origin := frame.Fields[timeIndex]
 		valueType := origin.Type()
 		if valueType == data.FieldTypeTime || valueType == data.FieldTypeNullableTime {
-			return frame, nil
+			return nil
 		}
 		newField := data.NewFieldFromFieldType(data.FieldTypeNullableTime, 0)
 		newField.Name = origin.Name
@@ -795,12 +805,14 @@ func ConvertSqlTimeColumnToEpochMs(frame *data.Frame, timeIndex int) (*data.Fram
 			convertFloat32ToEpochMs(frame.Fields[timeIndex], newField)
 		case data.FieldTypeNullableFloat32:
 			convertNullableFloat32ToEpochMs(frame.Fields[timeIndex], newField)
+		default:
+			return fmt.Errorf("column type %s is not convertible to time.Time", valueType)
 		}
 		frame.Fields[timeIndex] = newField
 	} else {
-		return frame, fmt.Errorf("timeIndex %d is out of range", timeIndex)
+		return fmt.Errorf("timeIndex %d is out of range", timeIndex)
 	}
-	return frame, nil
+	return nil
 }
 
 // ConvertSqlValueColumnToFloat converts timeseries value column to float.

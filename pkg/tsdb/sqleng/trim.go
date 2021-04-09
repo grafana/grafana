@@ -22,7 +22,7 @@ func trim(f *data.Frame, qm DataQueryModel) error {
 	for i := timeField.Len() - 1; i >= 0; i-- {
 		t, ok := timeField.ConcreteAt(i)
 		if !ok {
-			return fmt.Errorf("Time point is nil")
+			return fmt.Errorf("time point is nil")
 		}
 
 		if t.(time.Time).After(qm.TimeRange.To) {
@@ -37,7 +37,7 @@ func trim(f *data.Frame, qm DataQueryModel) error {
 	for i := 0; i < timeField.Len(); i++ {
 		t, ok := timeField.ConcreteAt(i)
 		if !ok {
-			return fmt.Errorf("Time point is nil")
+			return fmt.Errorf("time point is nil")
 		}
 
 		if t.(time.Time).Before(qm.TimeRange.From) {

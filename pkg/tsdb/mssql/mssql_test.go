@@ -32,7 +32,11 @@ import (
 var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	t.Skip()
+	runMySQLTests := false
+
+	if !runMySQLTests {
+		t.Skip()
+	}
 
 	x := initMSSQLTestDB(t)
 	origXormEngine := sqleng.NewXormEngine
@@ -743,7 +747,6 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 			require.Equal(t, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1", queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
 			require.Equal(t, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1", frames[0].Meta.ExecutedQueryString)
-
 		})
 
 		t.Run("Given a stored procedure that takes @from and @to in epoch time", func(t *testing.T) {

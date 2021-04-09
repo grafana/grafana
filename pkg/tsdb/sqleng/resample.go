@@ -16,7 +16,7 @@ func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime
 			switch f.Fields[tsSchema.TimeIndex].Type() {
 			case data.FieldTypeTime:
 				vals = append(vals, currentTime)
-			case data.FieldTypeNullableTime:
+			default:
 				vals = append(vals, &currentTime)
 			}
 			continue
@@ -42,7 +42,7 @@ func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime
 			if len(intermidiateRows) > 0 {
 				// instead of setting the last seen
 				// we could set avg, sum, min or max
-				// of the intermidiate values for each field
+				// of the intermediate values for each field
 				newVal = f.At(fieldIdx, intermidiateRows[len(intermidiateRows)-1])
 			} else {
 				val, err := data.GetMissing(fillMissing, f.Fields[fieldIdx], lastSeenRowIdx)
@@ -117,7 +117,7 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 			initialRowIdx++
 		}
 
-		// no intermidiate points; set values following fill missing mode
+		// no intermediate points; set values following fill missing mode
 		fieldVals := getRowFillValues(f, tsSchema, currentTime, qm.FillMissing, intermidiateRows, lastSeenRowIdx)
 
 		resampledFrame.InsertRow(resampledRowidx, fieldVals...)

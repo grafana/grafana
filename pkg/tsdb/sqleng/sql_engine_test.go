@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -90,7 +91,8 @@ func TestSQLEngine(t *testing.T) {
 		)
 
 		for i := 0; i < 7; i++ {
-			ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			require.NoError(t, err)
 		}
 
 		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
@@ -133,7 +135,8 @@ func TestSQLEngine(t *testing.T) {
 		)
 
 		for i := 0; i < 7; i++ {
-			ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			require.NoError(t, err)
 		}
 
 		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
@@ -161,7 +164,8 @@ func TestSQLEngine(t *testing.T) {
 			}),
 		)
 		for i := 0; i < 3; i++ {
-			ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			require.NoError(t, err)
 		}
 
 		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
@@ -185,13 +189,12 @@ func TestSQLEngine(t *testing.T) {
 			}),
 		)
 		for i := 0; i < 3; i++ {
-			ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			require.NoError(t, err)
 		}
-
 		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
 		require.Equal(t, dt.Unix(), (*originFrame.Fields[1].At(0).(*time.Time)).Unix())
 		require.Nil(t, originFrame.Fields[2].At(0))
-
 	})
 
 	t.Run("Given row values with float64 as time columns", func(t *testing.T) {
@@ -225,7 +228,8 @@ func TestSQLEngine(t *testing.T) {
 		)
 
 		for i := 0; i < 7; i++ {
-			ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			require.NoError(t, err)
 		}
 
 		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
@@ -253,16 +257,15 @@ func TestSQLEngine(t *testing.T) {
 			}),
 		)
 		for i := 0; i < 3; i++ {
-			ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			require.NoError(t, err)
 		}
-
 		require.Equal(t, int64(tSeconds), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
 		require.Equal(t, int64(tSeconds), (*originFrame.Fields[1].At(0).(*time.Time)).Unix())
 		require.Nil(t, originFrame.Fields[2].At(0))
 	})
 
 	t.Run("Given row with value columns, would be converted to float64", func(t *testing.T) {
-
 		originFrame := data.NewFrame("",
 			data.NewField("value1", nil, []int64{
 				int64(1),
@@ -424,4 +427,9 @@ func (t *testQueryResultTransformer) TransformQueryResult(columnTypes []*sql.Col
 func (t *testQueryResultTransformer) TransformQueryError(err error) error {
 	t.transformQueryErrorWasCalled = true
 	return err
+}
+
+func (t *testQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
+	var convertors []sqlutil.StringConverter
+	return convertors
 }
