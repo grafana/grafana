@@ -441,7 +441,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   private handleMetricsAutoCompleteError(error: Error): void {
-    console.log(error);
+    console.error(error);
     if (!this._metricAutoCompleteErrorShown) {
       this._metricAutoCompleteErrorShown = true;
       dispatch(notifyApp(createErrorNotification(`Fetching metrics failed: ${error.message}.`)));
