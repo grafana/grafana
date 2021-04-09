@@ -68,7 +68,6 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme, severity: AlertVari
     color: ${theme.colors.textSemiWeak};
 
     code {
-      @include font-family-monospace();
       font-size: ${theme.typography.size.sm};
       background-color: ${theme.colors.bg1};
       color: ${theme.colors.text};
