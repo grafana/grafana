@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
-	"github.com/prometheus/common/model"
 )
 
 var (
@@ -54,7 +52,7 @@ type AlertRule struct {
 	RuleGroup       string
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
-	For             model.Duration
+	For             Duration
 	Annotations     map[string]string
 }
 
@@ -104,7 +102,7 @@ type AlertRuleVersion struct {
 	IntervalSeconds int64
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
-	For             model.Duration
+	For             Duration
 	Annotations     map[string]string
 }
 
