@@ -316,8 +316,8 @@ When referencing the Prometheus data source exporters, always use "node_exporter
 
 Two words, not one.
 
-**Correct:** webserver
-**Incorrect:** web server
+**Correct:** web server
+**Incorrect:** webserver
 
 ### MS SQL Server
 Always use "MS SQL" when referring to MS SQL Server application.

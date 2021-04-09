@@ -41,5 +41,8 @@ func ParseChannelAddress(id string) ChannelAddress {
 
 // IsValid checks if all parts of the address are valid.
 func (ca *ChannelAddress) IsValid() bool {
+	if ca.Scope == ScopePush {
+		return ca.Namespace != "" && ca.Path == ""
+	}
 	return ca.Scope != "" && ca.Namespace != "" && ca.Path != ""
 }
