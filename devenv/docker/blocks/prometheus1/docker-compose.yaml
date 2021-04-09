@@ -1,9 +1,7 @@
   prometheus:
-    build: docker/blocks/prometheus2
+    build: docker/blocks/prometheus1
     ports:
       - "9090:9090"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   node_exporter:
     image: prom/node-exporter
