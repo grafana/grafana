@@ -60,7 +60,9 @@
   "AlertGroup": {
    "$ref": "#/definitions/alertGroup"
   },
-  "AlertGroups": {},
+  "AlertGroups": {
+   "$ref": "#/definitions/alertGroups"
+  },
   "AlertInstancesResponse": {
    "properties": {
     "instances": {
@@ -560,9 +562,7 @@
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
-  "GettableAlert": {
-   "$ref": "#/definitions/gettableAlert"
-  },
+  "GettableAlert": {},
   "GettableAlerts": {},
   "GettableApiAlertingConfig": {
    "properties": {
@@ -822,8 +822,12 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "GettableSilence": {},
-  "GettableSilences": {},
+  "GettableSilence": {
+   "$ref": "#/definitions/gettableSilence"
+  },
+  "GettableSilences": {
+   "$ref": "#/definitions/gettableSilences"
+  },
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -1026,21 +1030,6 @@
    },
    "type": "array",
    "x-go-package": "github.com/prometheus/prometheus/pkg/labels"
-  },
-  "LotexQuery": {
-   "properties": {
-    "Expr": {
-     "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)",
-     "type": "string"
-    },
-    "datasourceUid": {
-     "description": "DatasourceUID is required if the query will be sent to grafana to be executed",
-     "type": "string",
-     "x-go-name": "DatasourceUID"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "MatchRegexps": {
    "additionalProperties": {
@@ -2157,7 +2146,9 @@
   "TestRulePayload": {
    "properties": {
     "expr": {
-     "$ref": "#/definitions/LotexQuery"
+     "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)",
+     "type": "string",
+     "x-go-name": "Expr"
     },
     "grafana_condition": {
      "$ref": "#/definitions/EvalAlertConditionCommand"
@@ -2179,7 +2170,6 @@
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -2212,9 +2202,9 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
-   "x-go-package": "net/url"
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "Userinfo": {
    "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -2392,7 +2382,7 @@
      "$ref": "#/definitions/labelSet"
     },
     "receiver": {
-     "$ref": "#/definitions/receiver"
+     "$ref": "#/definitions/Receiver"
     }
    },
    "required": [
@@ -2407,7 +2397,7 @@
   "alertGroups": {
    "description": "AlertGroups alert groups",
    "items": {
-    "$ref": "#/definitions/alertGroup"
+    "$ref": "#/definitions/AlertGroup"
    },
    "type": "array",
    "x-go-name": "AlertGroups",
@@ -2559,7 +2549,7 @@
     "receivers": {
      "description": "receivers",
      "items": {
-      "$ref": "#/definitions/receiver"
+      "$ref": "#/definitions/Receiver"
      },
      "type": "array",
      "x-go-name": "Receivers"
@@ -2663,7 +2653,7 @@
   "gettableSilences": {
    "description": "GettableSilences gettable silences",
    "items": {
-    "$ref": "#/definitions/gettableSilence"
+    "$ref": "#/definitions/GettableSilence"
    },
    "type": "array",
    "x-go-name": "GettableSilences",
@@ -3270,7 +3260,7 @@
       "in": "body",
       "name": "Silence",
       "schema": {
-       "$ref": "#/definitions/postableSilence"
+       "$ref": "#/definitions/PostableSilence"
       }
      },
      {
@@ -3663,7 +3653,7 @@
     ]
    }
   },
-  "/api/v1/receiver/test": {
+  "/api/v1/receiver/test/{Recipient}": {
    "post": {
     "consumes": [
      "application/json"
@@ -3671,6 +3661,13 @@
     "description": "Test receiver",
     "operationId": "RouteTestReceiverConfig",
     "parameters": [
+     {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "in": "path",
+      "name": "Recipient",
+      "required": true,
+      "type": "string"
+     },
      {
       "in": "body",
       "name": "Body",
@@ -3707,7 +3704,7 @@
     ]
    }
   },
-  "/api/v1/rule/test": {
+  "/api/v1/rule/test/{Recipient}": {
    "post": {
     "consumes": [
      "application/json"
@@ -3715,6 +3712,13 @@
     "description": "Test rule",
     "operationId": "RouteTestRuleConfig",
     "parameters": [
+     {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "in": "path",
+      "name": "Recipient",
+      "required": true,
+      "type": "string"
+     },
      {
       "in": "body",
       "name": "Body",

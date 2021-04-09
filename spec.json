@@ -327,7 +327,7 @@
             "name": "Silence",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/postableSilence"
+              "$ref": "#/definitions/PostableSilence"
             }
           },
           {
@@ -717,7 +717,7 @@
         }
       }
     },
-    "/api/v1/receiver/test": {
+    "/api/v1/receiver/test/{Recipient}": {
       "post": {
         "description": "Test receiver",
         "consumes": [
@@ -731,6 +731,13 @@
         ],
         "operationId": "RouteTestReceiverConfig",
         "parameters": [
+          {
+            "type": "string",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
+            "in": "path",
+            "required": true
+          },
           {
             "name": "Body",
             "in": "body",
@@ -761,7 +768,7 @@
         }
       }
     },
-    "/api/v1/rule/test": {
+    "/api/v1/rule/test/{Recipient}": {
       "post": {
         "description": "Test rule",
         "consumes": [
@@ -775,6 +782,13 @@
         ],
         "operationId": "RouteTestRuleConfig",
         "parameters": [
+          {
+            "type": "string",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
+            "in": "path",
+            "required": true
+          },
           {
             "name": "Body",
             "in": "body",
@@ -852,7 +866,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "AlertGroups": {
-      "$ref": "#/definitions/AlertGroups"
+      "$ref": "#/definitions/alertGroups"
     },
     "AlertInstancesResponse": {
       "type": "object",
@@ -1355,7 +1369,7 @@
       "$ref": "#/definitions/ResponseDetails"
     },
     "GettableAlert": {
-      "$ref": "#/definitions/gettableAlert"
+      "$ref": "#/definitions/GettableAlert"
     },
     "GettableAlerts": {
       "$ref": "#/definitions/GettableAlerts"
@@ -1619,10 +1633,10 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "GettableSilence": {
-      "$ref": "#/definitions/GettableSilence"
+      "$ref": "#/definitions/gettableSilence"
     },
     "GettableSilences": {
-      "$ref": "#/definitions/GettableSilences"
+      "$ref": "#/definitions/gettableSilences"
     },
     "GettableUserConfig": {
       "type": "object",
@@ -1826,21 +1840,6 @@
         "$ref": "#/definitions/Label"
       },
       "x-go-package": "github.com/prometheus/prometheus/pkg/labels"
-    },
-    "LotexQuery": {
-      "type": "object",
-      "properties": {
-        "Expr": {
-          "type": "string",
-          "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)"
-        },
-        "datasourceUid": {
-          "description": "DatasourceUID is required if the query will be sent to grafana to be executed",
-          "type": "string",
-          "x-go-name": "DatasourceUID"
-        }
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "MatchRegexps": {
       "type": "object",
@@ -2959,7 +2958,9 @@
       "type": "object",
       "properties": {
         "expr": {
-          "$ref": "#/definitions/LotexQuery"
+          "type": "string",
+          "x-go-name": "Expr",
+          "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)"
         },
         "grafana_condition": {
           "$ref": "#/definitions/EvalAlertConditionCommand"
@@ -2980,9 +2981,8 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -3015,7 +3015,7 @@
           "$ref": "#/definitions/Userinfo"
         }
       },
-      "x-go-package": "net/url"
+      "x-go-package": "github.com/prometheus/common/config"
     },
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
@@ -3199,7 +3199,7 @@
           "$ref": "#/definitions/labelSet"
         },
         "receiver": {
-          "$ref": "#/definitions/receiver"
+          "$ref": "#/definitions/Receiver"
         }
       },
       "x-go-name": "AlertGroup",
@@ -3209,7 +3209,7 @@
       "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/alertGroup"
+        "$ref": "#/definitions/AlertGroup"
       },
       "x-go-name": "AlertGroups",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
@@ -3372,7 +3372,7 @@
           "description": "receivers",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/receiver"
+            "$ref": "#/definitions/Receiver"
           },
           "x-go-name": "Receivers"
         },
@@ -3465,7 +3465,7 @@
       "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
-        "$ref": "#/definitions/gettableSilence"
+        "$ref": "#/definitions/GettableSilence"
       },
       "x-go-name": "GettableSilences",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"

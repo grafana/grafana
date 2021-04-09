@@ -1,12 +1,15 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/prometheus/promql"
 )
 
-// swagger:route Post /api/v1/receiver/test testing RouteTestReceiverConfig
+// swagger:route Post /api/v1/receiver/test/{Recipient} testing RouteTestReceiverConfig
 //
 // Test receiver
 //
@@ -21,7 +24,7 @@ import (
 //		 412: SmtpNotEnabled
 //		 500: Failure
 
-// swagger:route Post /api/v1/rule/test testing RouteTestRuleConfig
+// swagger:route Post /api/v1/rule/test/{Recipient} testing RouteTestRuleConfig
 //
 // Test rule
 //
@@ -48,17 +51,43 @@ type TestRuleRequest struct {
 
 // swagger:model
 type TestRulePayload struct {
-	Expr LotexQuery `json:"expr,omitempty"`
+	// Example: (node_filesystem_avail_bytes{fstype!="",job="integrations/node_exporter"} node_filesystem_size_bytes{fstype!="",job="integrations/node_exporter"} * 100 < 5 and node_filesystem_readonly{fstype!="",job="integrations/node_exporter"} == 0)
+	Expr string `json:"expr,omitempty"`
 	// GrafanaManagedCondition for grafana alerts
-	GrafanaManagedCondition models.EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
+	GrafanaManagedCondition *models.EvalAlertConditionCommand `json:"grafana_condition,omitempty"`
 }
 
-// swagger:model
-type LotexQuery struct {
-	// Example: (node_filesystem_avail_bytes{fstype!="",job="integrations/node_exporter"} node_filesystem_size_bytes{fstype!="",job="integrations/node_exporter"} * 100 < 5 and node_filesystem_readonly{fstype!="",job="integrations/node_exporter"} == 0)
-	Expr string
-	// DatasourceUID is required if the query will be sent to grafana to be executed
-	DatasourceUID string `json:"datasourceUid,omitempty"`
+func (p *TestRulePayload) UnmarshalJSON(b []byte) error {
+	type plain TestRulePayload
+	if err := json.Unmarshal(b, (*plain)(p)); err != nil {
+		return err
+	}
+
+	return p.validate()
+}
+
+func (p *TestRulePayload) validate() error {
+	if p.Expr != "" && p.GrafanaManagedCondition != nil {
+		return fmt.Errorf("cannot mix Grafana & Prometheus style expressions")
+	}
+
+	if p.Expr == "" && p.GrafanaManagedCondition == nil {
+		return fmt.Errorf("missing either Grafana or Prometheus style expressions")
+	}
+
+	return nil
+}
+
+func (p *TestRulePayload) Type() (backend Backend) {
+	if p.Expr != "" {
+		return LoTexRulerBackend
+	}
+
+	if p.GrafanaManagedCondition != nil {
+		return GrafanaBackend
+	}
+
+	return
 }
 
 // swagger:model
