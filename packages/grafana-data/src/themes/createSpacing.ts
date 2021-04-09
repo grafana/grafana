@@ -26,6 +26,7 @@ export interface ThemeSpacing {
     bottom: ThemeSpacingArgument,
     left: ThemeSpacingArgument
   ): string;
+  gridSize: number;
 }
 
 /** @internal */
@@ -63,6 +64,8 @@ export function createSpacing(options: ThemeSpacingOptions = {}): ThemeSpacing {
       })
       .join(' ');
   };
+
+  spacing.gridSize = gridSize;
 
   return spacing;
 }

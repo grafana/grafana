@@ -41,7 +41,7 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
-	github.com/grafana/alerting-api v0.0.0-20210405171311-97906879c771
+	github.com/grafana/alerting-api v0.0.0-20210407150830-64bd267999d1
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-live-sdk v0.0.4
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
@@ -89,7 +89,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210313182246-cd4f82c27b84
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
-	gonum.org/v1/gonum v0.8.2
+	gonum.org/v1/gonum v0.9.1
 	google.golang.org/api v0.42.0
 	google.golang.org/grpc v1.36.1
 	google.golang.org/protobuf v1.26.0

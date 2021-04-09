@@ -64,7 +64,7 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
   };
 
   render() {
-    const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly } = this.props;
+    const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly, monacoOptions } = this.props;
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
@@ -97,7 +97,10 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
           language={language}
           theme={theme.isDark ? 'vs-dark' : 'vs-light'}
           value={value}
-          options={options}
+          options={{
+            ...options,
+            ...(monacoOptions ?? {}),
+          }}
           editorWillMount={this.editorWillMount}
           editorDidMount={this.editorDidMount}
         />
