@@ -1,26 +1,6 @@
 package accesscontrol
 
-import "github.com/grafana/grafana/pkg/models"
-
 var PredefinedRoles = map[string]RoleDTO{
-	usersSelfRead: {
-		Name:    usersSelfRead,
-		Version: 1,
-		Permissions: []Permission{
-			{
-				Permission: "users:read",
-				Scope:      ScopeUsersSelf,
-			},
-			{
-				Permission: "users.tokens:list",
-				Scope:      ScopeUsersSelf,
-			},
-			{
-				Permission: "users.teams:read",
-				Scope:      ScopeUsersSelf,
-			},
-		},
-	},
 	usersAdminRead: {
 		Name:    usersAdminRead,
 		Version: 1,
@@ -99,15 +79,11 @@ var PredefinedRoles = map[string]RoleDTO{
 }
 
 const (
-	usersSelfRead  = "grafana:roles:users:self:read"
 	usersAdminRead = "grafana:roles:users:admin:read"
 	usersAdminEdit = "grafana:roles:users:admin:edit"
 )
 
 var PredefinedRoleGrants = map[string][]string{
-	string(models.ROLE_VIEWER): {
-		usersSelfRead,
-	},
 	RoleGrafanaAdmin: {
 		usersAdminRead,
 		usersAdminEdit,
