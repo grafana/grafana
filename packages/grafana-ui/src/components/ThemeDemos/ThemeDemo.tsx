@@ -13,6 +13,7 @@ import { allButtonVariants, Button } from '../Button';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { Card } from '../Card/Card';
+import { Select } from '../Select/Select';
 
 interface DemoBoxProps {
   bg?: string;
@@ -51,7 +52,9 @@ const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color
 export const ThemeDemo = () => {
   const [radioValue, setRadioValue] = useState('v');
   const [boolValue, setBoolValue] = useState(false);
+  const [selectValue, setSelectValue] = useState('Item 2');
   const oldTheme = useTheme();
+
   const t = oldTheme.v2;
 
   const richColors = [
@@ -63,6 +66,12 @@ export const ThemeDemo = () => {
     t.palette.info,
   ];
 
+  const selectOptions = [
+    { label: 'Item 1', value: 'Item 1' },
+    { label: 'Item 2', value: 'Item 2' },
+    { label: 'Item 3', value: 'Item 3' },
+    { label: 'Item 4', value: 'Item 4' },
+  ];
   const radioOptions = [
     { value: 'h', label: 'Horizontal' },
     { value: 'v', label: 'Vertical' },
@@ -106,6 +115,7 @@ export const ThemeDemo = () => {
                 <tr>
                   <td>name</td>
                   <td>main</td>
+                  <td>shade</td>
                   <td>border & text</td>
                 </tr>
               </thead>
@@ -124,6 +134,9 @@ export const ThemeDemo = () => {
             </Field>
             <Field label="Input disabled" disabled>
               <Input placeholder="Placeholder" value="Disabled value" />
+            </Field>
+            <Field label="Select">
+              <Select options={selectOptions} value={selectValue} onChange={(v) => setSelectValue(v?.value!)} />
             </Field>
             <Field label="Radio label">
               <RadioButtonGroup options={radioOptions} value={radioValue} onChange={setRadioValue} />
@@ -216,12 +229,21 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
             color: ${color.contrastText};
             padding: 8px;
             font-weight: 500;
-            &:hover {
-              background: ${theme.palette.getHoverColor(color.main)};
-            }
           `}
         >
           {color.main}
+        </div>
+      </td>
+      <td>
+        <div
+          className={css`
+            background: ${color.shade};
+            color: ${color.contrastText};
+            border-radius: 4px;
+            padding: 8px;
+          `}
+        >
+          {color.shade}
         </div>
       </td>
       <td>
@@ -231,9 +253,6 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
             color: ${color.text};
             border-radius: 4px;
             padding: 8px;
-            &:hover {
-              color: ${color.text};
-            }
           `}
         >
           {color.text}

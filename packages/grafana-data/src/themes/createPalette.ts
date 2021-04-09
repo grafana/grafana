@@ -117,10 +117,10 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   border2 = colors.gray33;
 
   action = {
-    selected: 'rgba(255, 255, 255, 0.16)',
     hover: 'rgba(255, 255, 255, 0.08)',
+    selected: 'rgba(255, 255, 255, 0.12)',
+    focus: 'rgba(255, 255, 255, 0.16)',
     hoverOpacity: 0.08,
-    focus: 'rgba(255, 255, 255, 0.12)',
     disabledText: this.text.disabled,
     disabledBackground: 'rgba(255,255,255,0.07)',
     disabledOpacity: 0.38,
