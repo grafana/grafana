@@ -193,10 +193,61 @@ describe('GraphiteQueryCtrl', () => {
     });
   });
 
+  describe('when autocomplete for metric names is not available', () => {
+    silenceConsoleOutput();
+    beforeEach(() => {
+      ctx.ctrl.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(Promise.resolve([]));
+      ctx.ctrl.datasource.metricFindQuery = jest.fn().mockReturnValue(
+        new Promise(() => {
+          throw new Error();
+        })
+      );
+    });
+
+    it('getAltSegments should handle autocomplete errors', async () => {
+      await expect(async () => {
+        await ctx.ctrl.getAltSegments(0, 'any');
+        expect(mockDispatch).toBeCalledWith(
+          expect.objectContaining({
+            type: 'appNotifications/notifyApp',
+          })
+        );
+      }).not.toThrow();
+    });
+
+    it('getAltSegments should display the error message only once', async () => {
+      await ctx.ctrl.getAltSegments(0, 'any');
+      expect(mockDispatch.mock.calls.length).toBe(1);
+
+      await ctx.ctrl.getAltSegments(0, 'any');
+      expect(mockDispatch.mock.calls.length).toBe(1);
+    });
+
+    it('checkOtherSegments should handle autocomplete errors', async () => {
+      await expect(async () => {
+        await ctx.ctrl.checkOtherSegments(1, false);
+        expect(mockDispatch).toBeCalledWith(
+          expect.objectContaining({
+            type: 'appNotifications/notifyApp',
+          })
+        );
+      }).not.toThrow();
+    });
+
+    it('checkOtherSegments should display the error message only once', async () => {
+      await ctx.ctrl.checkOtherSegments(1, false);
+      expect(mockDispatch.mock.calls.length).toBe(1);
+
+      await ctx.ctrl.checkOtherSegments(1, false);
+      expect(mockDispatch.mock.calls.length).toBe(1);
+    });
+  });
+
   describe('when autocomplete for tags is not available', () => {
     silenceConsoleOutput();
     beforeEach(() => {
-      ctx.ctrl.datasource.getTagsAutoComplete.mockReturnValue(
+      ctx.datasource.metricFindQuery = jest.fn().mockReturnValue(Promise.resolve([]));
+      ctx.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(
         new Promise(() => {
           throw new Error();
         })

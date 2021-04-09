@@ -24,8 +24,9 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   supportsTags: boolean;
   paused: boolean;
 
-  // to avoid error flooding, it's shown only once per session
+  // to avoid error flooding, these errors are shown only once per session
   private _tagsAutoCompleteErrorShown = false;
+  private _metricAutoCompleteErrorShown = false;
 
   /** @ngInject */
   constructor(
@@ -110,7 +111,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
       })
       .catch((err: any) => {
-        dispatch(notifyApp(createErrorNotification('Error', err)));
+        this.handleMetricsAutoCompleteError(err);
       });
   }
 
@@ -183,6 +184,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
       })
       .catch((err: any): any[] => {
+        this.handleMetricsAutoCompleteError(err);
         return [];
       });
   }
@@ -431,10 +433,18 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   private handleTagsAutoCompleteError(error: Error): void {
-    console.log(error);
+    console.error(error);
     if (!this._tagsAutoCompleteErrorShown) {
       this._tagsAutoCompleteErrorShown = true;
       dispatch(notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}.`)));
+    }
+  }
+
+  private handleMetricsAutoCompleteError(error: Error): void {
+    console.error(error);
+    if (!this._metricAutoCompleteErrorShown) {
+      this._metricAutoCompleteErrorShown = true;
+      dispatch(notifyApp(createErrorNotification(`Fetching metrics failed: ${error.message}.`)));
     }
   }
 }
