@@ -198,43 +198,6 @@ func (api *API) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*ngm
 	}, nil
 }
 
-func (api *API) validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool) error {
-	var refID string
-
-	if len(c.Data) == 0 {
-		return nil
-	}
-
-	for _, query := range c.Data {
-		if c.Condition == query.RefID {
-			refID = c.Condition
-		}
-
-		datasourceUID, err := query.GetDatasource()
-		if err != nil {
-			return err
-		}
-
-		isExpression, err := query.IsExpression()
-		if err != nil {
-			return err
-		}
-		if isExpression {
-			continue
-		}
-
-		_, err = api.DatasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
-		if err != nil {
-			return fmt.Errorf("failed to get datasource: %s: %w", datasourceUID, err)
-		}
-	}
-
-	if refID == "" {
-		return fmt.Errorf("condition %s not found in any query or expression", c.Condition)
-	}
-	return nil
-}
-
 func (api *API) validateOrgAlertDefinition(c *models.ReqContext) {
 	uid := c.ParamsEscape(":alertDefinitionUID")
 
