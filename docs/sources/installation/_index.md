@@ -18,5 +18,7 @@ This section discusses the hardware and software requirements as well as the pro
 - [Run Docker image]({{< relref "docker" >}})
 - [Deploy Grafana on Kubernetes]({{< relref "kubernetes" >}})
 
-Refer to [Upgrade Grafana]({{< relref "upgrading.md" >}}) topic. If you need to restart Grafana, refer to the [Restart Grafana]({{< relref "Restart-grafana.md" >}})
-topic for detailed information.
+For upgrade instructions, refer to [Upgrade Grafana]({{< relref "upgrading.md" >}}).
+To restart Grafana, refer to [Restart Grafana]({{< relref "restart-grafana.md" >}}).
+
+To install Grafana Enterprise, refer to the instructions for installing Grafana on your system. Then, refer to [Activate an Enterprise license]({{< relref "../enterprise/activate-license.md" >}}).
