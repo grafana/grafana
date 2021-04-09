@@ -289,7 +289,7 @@ type PostableGrafanaRule struct {
 	UID          string              `json:"uid" yaml:"uid"`
 	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	For          model.Duration      `json:"for" yaml:"for"`
+	For          models.Duration     `json:"for" yaml:"for"`
 	Annotations  map[string]string   `json:"annotations" yaml:"annotations"`
 }
 
@@ -308,6 +308,6 @@ type GettableGrafanaRule struct {
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	For             model.Duration      `json:"for" yaml:"for"`
+	For             models.Duration     `json:"for" yaml:"for"`
 	Annotations     map[string]string   `json:"annotations" yaml:"annotations"`
 }
