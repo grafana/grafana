@@ -247,9 +247,9 @@ $side-menu-header-color: ${theme.palette.gray95};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $panel-bg;
-$menu-dropdown-hover-bg: $gray-6;
-$menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
+$menu-dropdown-bg: ${theme.v2.palette.layer2};
+$menu-dropdown-hover-bg: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer2, 0.07)};
+$menu-dropdown-shadow: ${theme.v2.shadows.z2};
 
 // Tabs
 // -------------------------

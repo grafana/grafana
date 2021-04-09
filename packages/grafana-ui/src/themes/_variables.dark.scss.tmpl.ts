@@ -252,9 +252,9 @@ $side-menu-header-color: ${theme.colors.text};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: ${theme.colors.bg1};
-$menu-dropdown-hover-bg: ${theme.colors.bg2};
-$menu-dropdown-shadow: 5px 5px 20px -5px $black;
+$menu-dropdown-bg: ${theme.v2.palette.layer2};
+$menu-dropdown-hover-bg: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer2, 0.07)};
+$menu-dropdown-shadow: ${theme.v2.shadows.z2};
 
 // Tabs
 // -------------------------

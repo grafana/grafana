@@ -8,9 +8,9 @@ export interface ThemeShadows {
 }
 
 function createDarkShadow(...px: number[]) {
-  const shadowKeyUmbraOpacity = 0.7;
-  const shadowKeyPenumbraOpacity = 0.6;
-  const shadowAmbientShadowOpacity = 0.5;
+  const shadowKeyUmbraOpacity = 0.5;
+  const shadowKeyPenumbraOpacity = 0.4;
+  const shadowAmbientShadowOpacity = 0.3;
 
   return [
     `${px[0]}px ${px[1]}px ${px[2]}px ${px[3]}px rgba(0,0,0,${shadowKeyUmbraOpacity})`,

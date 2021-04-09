@@ -12,6 +12,7 @@ import { Switch } from '../Switch/Switch';
 import { allButtonVariants, Button } from '../Button';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
+import { Card } from '../Card/Card';
 
 interface DemoBoxProps {
   bg?: string;
@@ -162,16 +163,32 @@ export const NewThemeDemo = () => {
         </CollapsableSection>
         <CollapsableSection label="Buttons" isOpen={true}>
           <DemoBox bg={t.palette.layer1}>
-            <HorizontalGroup>
-              {allButtonVariants.map((variant) => (
-                <Button variant={variant} key={variant}>
-                  {variant}
+            <VerticalGroup spacing="lg">
+              <HorizontalGroup>
+                {allButtonVariants.map((variant) => (
+                  <Button variant={variant} key={variant}>
+                    {variant}
+                  </Button>
+                ))}
+                <Button variant="primary" disabled>
+                  Disabled
                 </Button>
-              ))}
-              <Button variant="primary" disabled>
-                Disabled
-              </Button>
-            </HorizontalGroup>
+              </HorizontalGroup>
+              <Card heading="Button inside card">
+                <Card.Actions>
+                  <>
+                    {allButtonVariants.map((variant) => (
+                      <Button variant={variant} key={variant}>
+                        {variant}
+                      </Button>
+                    ))}
+                    <Button variant="primary" disabled>
+                      Disabled
+                    </Button>
+                  </>
+                </Card.Actions>
+              </Card>
+            </VerticalGroup>
           </DemoBox>
         </CollapsableSection>
       </DemoBox>

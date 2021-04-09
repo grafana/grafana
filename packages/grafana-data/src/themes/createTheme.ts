@@ -4,6 +4,7 @@ import { createPalette, ThemePalette, ThemePaletteInput } from './createPalette'
 import { createShadows, ThemeShadows } from './createShadows';
 import { createShape, ThemeShape, ThemeShapeInput } from './createShape';
 import { createSpacing, ThemeSpacingOptions, ThemeSpacing } from './createSpacing';
+import { createTransitions, ThemeTransitions } from './createTransitions';
 import { createTypography, ThemeTypography, ThemeTypographyInput } from './createTypography';
 import { ThemeZIndices, zIndex } from './zIndex';
 
@@ -20,6 +21,7 @@ export interface GrafanaThemeV2 {
   typography: ThemeTypography;
   zIndex: ThemeZIndices;
   shadows: ThemeShadows;
+  transitions: ThemeTransitions;
 }
 
 /** @internal */
@@ -48,6 +50,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaThemeV2 {
   const components = createComponents();
   const typography = createTypography(palette, typographyInput);
   const shadows = createShadows(palette);
+  const transitions = createTransitions();
 
   return {
     name,
@@ -60,6 +63,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaThemeV2 {
     components,
     typography,
     shadows,
+    transitions,
     zIndex: {
       ...zIndex,
     },

@@ -254,9 +254,10 @@ $side-menu-header-color: #c7d0d9;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: #141619;
-$menu-dropdown-hover-bg: #202226;
-$menu-dropdown-shadow: 5px 5px 20px -5px $black;
+$menu-dropdown-bg: #202226;
+$menu-dropdown-hover-bg: rgb(47, 49, 53);
+$menu-dropdown-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.5), 0px 4px 5px 0px rgba(0, 0, 0, 0.4),
+  0px 1px 10px 0px rgba(0, 0, 0, 0.3);
 
 // Tabs
 // -------------------------
