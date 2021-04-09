@@ -30,6 +30,11 @@ describe('createTheme', () => {
           "dropdown": Object {
             "background": "#202226",
           },
+          "form": Object {
+            "background": "#0b0c0e",
+            "border": "#2c3235",
+            "text": "rgba(255, 255, 255, 0.75)",
+          },
           "height": Object {
             "lg": 6,
             "md": 4,
@@ -54,10 +59,13 @@ describe('createTheme', () => {
         "name": "Dark",
         "palette": Object {
           "action": Object {
-            "focus": "rgba(255, 255, 255, 0.12)",
+            "disabledBackground": "rgba(255,255,255,0.07)",
+            "disabledOpacity": 0.38,
+            "disabledText": "rgba(255, 255, 255, 0.35)",
+            "focus": "rgba(255, 255, 255, 0.16)",
             "hover": "rgba(255, 255, 255, 0.08)",
             "hoverOpacity": 0.08,
-            "selected": "rgba(255, 255, 255, 0.16)",
+            "selected": "rgba(255, 255, 255, 0.12)",
           },
           "border0": "#202226",
           "border1": "#2c3235",
@@ -69,13 +77,6 @@ describe('createTheme', () => {
             "name": "error",
             "shade": "rgb(215, 50, 116)",
             "text": "#FF5286",
-          },
-          "formComponent": Object {
-            "background": "#0b0c0e",
-            "border": "#2c3235",
-            "disabledBackground": "rgba(255,255,255,0.07)",
-            "disabledText": "rgba(255, 255, 255, 0.35)",
-            "text": "rgba(255, 255, 255, 0.75)",
           },
           "getContrastText": [Function],
           "getHoverColor": [Function],
