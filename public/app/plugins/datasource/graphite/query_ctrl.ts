@@ -433,7 +433,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   private handleTagsAutoCompleteError(error: Error): void {
-    console.log(error);
+    console.error(error);
     if (!this._tagsAutoCompleteErrorShown) {
       this._tagsAutoCompleteErrorShown = true;
       dispatch(notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}.`)));
