@@ -22,7 +22,7 @@ var unitMultiplier = map[string]int{
 
 var (
 	valueFormatRegex = regexp.MustCompile(`^\d+`)
-	isDigitRegex     = regexp.MustCompile(`^[1-9]+$`)
+	isDigitRegex     = regexp.MustCompile(`^[0-9]+$`)
 )
 
 var (
@@ -89,12 +89,8 @@ func (e ValidationError) Error() string {
 }
 
 func getTimeDurationStringToSeconds(str string) (int64, error) {
-	if str == "0" || str == "" {
-		return 0, nil
-	}
-
 	// Check if frequency lacks unit
-	if isDigitRegex.MatchString(str) {
+	if isDigitRegex.MatchString(str) || str == "" {
 		return 0, ErrFrequencyCouldNotBeParsed
 	}
 
