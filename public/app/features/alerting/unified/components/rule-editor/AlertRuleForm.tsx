@@ -29,6 +29,9 @@ const defaultValues: RuleFormValues = Object.freeze({
   annotations: [{ key: '', value: '' }],
   forTime: 1,
   forTimeUnit: 'm',
+
+  evaluateEvery: '1m',
+  evaluateFor: '5m',
 });
 
 export const AlertRuleForm: FC<Props> = () => {

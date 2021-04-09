@@ -4,7 +4,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
-import { RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 
 enum TIME_OPTIONS {
   seconds = 's',
@@ -42,20 +42,22 @@ export const ConditionsStep: FC = () => {
   return (
     <RuleEditorSection stepNo={3} title="Define alert conditions">
       <Label description="Required time for which the expression has to happen">For</Label>
-      <div className={styles.flexRow}>
-        <Field className={styles.numberInput}>
-          <Input ref={register()} name="forTime" />
-        </Field>
-        <Field className={styles.numberInput}>
-          <InputControl
-            name="forTimeUnit"
-            as={Select}
-            options={timeOptions}
-            control={control}
-            onChange={(val: SelectableValue) => val.value}
-          />
-        </Field>
-      </div>
+      {type === RuleFormType.system && (
+        <div className={styles.flexRow}>
+          <Field className={styles.numberInput}>
+            <Input ref={register()} name="forTime" />
+          </Field>
+          <Field className={styles.numberInput}>
+            <InputControl
+              name="forTimeUnit"
+              as={Select}
+              options={timeOptions}
+              control={control}
+              onChange={(val: SelectableValue) => val.value}
+            />
+          </Field>
+        </div>
+      )}
     </RuleEditorSection>
   );
 };
