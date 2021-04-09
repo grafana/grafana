@@ -1,5 +1,12 @@
 import React, { FC, ReactNode } from 'react';
-import { DisplayValue, FALLBACK_COLOR, FieldDisplay, formattedValueToString, GrafanaTheme } from '@grafana/data';
+import {
+  DisplayValue,
+  FALLBACK_COLOR,
+  FieldDisplay,
+  formattedValueToString,
+  getFieldDisplayValues,
+  GrafanaTheme,
+} from '@grafana/data';
 import { useStyles, useTheme } from '../../themes/ThemeContext';
 import tinycolor from 'tinycolor2';
 import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
@@ -11,42 +18,17 @@ import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
 import { css } from '@emotion/css';
 import { VizLegend, VizLegendItem } from '..';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
-
-export enum PieChartLabels {
-  Name = 'name',
-  Value = 'value',
-  Percent = 'percent',
-}
-
-export enum PieChartLegendValues {
-  Value = 'value',
-  Percent = 'percent',
-}
-
-interface SvgProps {
-  height: number;
-  width: number;
-  fieldDisplayValues: FieldDisplay[];
-  pieType: PieChartType;
-  displayLabels?: PieChartLabels[];
-  useGradients?: boolean;
-  onSeriesColorChange?: (label: string, color: string) => void;
-}
-export interface Props extends SvgProps {
-  legendOptions?: PieChartLegendOptions;
-}
-
-export enum PieChartType {
-  Pie = 'pie',
-  Donut = 'donut',
-}
-
-export interface PieChartLegendOptions extends VizLegendOptions {
-  values: PieChartLegendValues[];
-}
+import {
+  PieChartLabels,
+  PieChartLegendOptions,
+  PieChartLegendValues,
+  PieChartProps,
+  PieChartSvgProps,
+  PieChartType,
+} from './types';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -55,8 +37,12 @@ const defaultLegendOptions: PieChartLegendOptions = {
   values: [PieChartLegendValues.Percent],
 };
 
-export const PieChart: FC<Props> = ({
-  fieldDisplayValues,
+export const PieChart: FC<PieChartProps> = ({
+  data,
+  timeZone,
+  reduceOptions,
+  fieldConfig,
+  replaceVariables,
   legendOptions = defaultLegendOptions,
   onSeriesColorChange,
   width,
@@ -111,6 +97,15 @@ export const PieChart: FC<Props> = ({
     );
   };
 
+  const fieldDisplayValues = getFieldDisplayValues({
+    fieldConfig,
+    reduceOptions: reduceOptions,
+    data: data,
+    theme: useTheme(),
+    replaceVariables: replaceVariables,
+    timeZone,
+  });
+
   return (
     <VizLayout width={width} height={height} legend={getLegend(fieldDisplayValues, legendOptions)}>
       {(vizWidth: number, vizHeight: number) => {
@@ -122,7 +117,7 @@ export const PieChart: FC<Props> = ({
   );
 };
 
-export const PieChartSvg: FC<SvgProps> = ({
+export const PieChartSvg: FC<PieChartSvgProps> = ({
   fieldDisplayValues,
   pieType,
   width,
