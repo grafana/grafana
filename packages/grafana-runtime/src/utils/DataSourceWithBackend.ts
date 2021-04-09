@@ -9,6 +9,7 @@ import {
   makeClassES5Compatible,
   DataFrame,
   parseLiveChannelAddress,
+  StreamingFrameOptions,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -139,6 +140,15 @@ class DataSourceWithBackend<
           const rsp = toDataQueryResponse(raw, queries as DataQuery[]);
           // Check if any response should subscribe to a live stream
           if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
+            const buffer: StreamingFrameOptions = {
+              maxLength: request.maxDataPoints ?? 500,
+            };
+
+            // For recent queries, clamp to the current time range
+            if (request.rangeRaw?.to === 'now') {
+              buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+            }
+
             const staticdata: DataFrame[] = [];
             const streams: Array<Observable<DataQueryResponse>> = [];
             for (const frame of rsp.data) {
@@ -147,8 +157,8 @@ class DataSourceWithBackend<
                 streams.push(
                   getLiveDataStream({
                     addr,
+                    buffer,
                     frame: frame as DataFrame,
-                    //;;buffer?: StreamingFrameOptions;
                   })
                 );
               } else {
