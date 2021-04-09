@@ -2,6 +2,8 @@ import { Task, TaskRunner } from './task';
 import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
 import { useSpinner } from '../utils/useSpinner';
 import { lintPlugin } from './plugin.build';
+// @ts-ignore
+import allSettled from 'promise.allsettled';
 
 // @ts-ignore
 import execa = require('execa');
@@ -12,25 +14,35 @@ const bundlePlugin = useSpinner<PluginBundleOptions>('Bundling plugin in dev mod
 });
 
 const yarnlink = useSpinner<void>('Linking local toolkit', async () => {
-  try {
-    // Make sure we are not using package.json defined toolkit
-    await execa('yarn', ['remove', '@grafana/toolkit']);
-  } catch (e) {
-    console.log('\n', e.message, '\n');
-  }
-  await execa('yarn', ['link', '@grafana/toolkit']);
+  const existingDeps: string[] = ['@grafana/eslint-config', '@grafana/toolkit', '@grafana/tsconfig'];
 
-  // Add all the same dependencies as toolkit
-  const args: string[] = ['add'];
-  const packages = require(path.resolve(__dirname, '../../../package.json'));
-  for (const [key, value] of Object.entries(packages.dependencies)) {
-    args.push(`${key}@${value}`);
-  }
-  await execa('yarn', args);
+  // Remove published dependencies
+  // @todo https://github.com/es-shims/Promise.allSettled/issues/5
+  await allSettled.call(
+    Promise,
+    existingDeps.map(async dep => {
+      try {
+        await execa('yarn', ['remove', dep]);
+      } catch ({ message }) {
+        console.log('\n', message, '\n');
+      }
+    })
+  );
+
+  // Link to local -- must have been manually linked (see README)
+  await execa('yarn', ['link', ...existingDeps]);
+
+  const newDeps: string[] = existingDeps
+    .map(dep => require(`${dep}/package.json`))
+    .map(({ dependencies = {} }) => Object.entries(dependencies))
+    .flat()
+    // @todo dedupe, excluding older versions
+    .map(([key, value]) => `${key}@${value}`);
+
+  // Add all the nested dependencies
+  await execa('yarn', ['add', ...newDeps]);
 
   console.log('Added dependencies required by local @grafana/toolkit.  Do not checkin this package.json!');
-
-  return Promise.resolve();
 });
 
 const pluginDevRunner: TaskRunner<PluginBundleOptions> = async options => {
