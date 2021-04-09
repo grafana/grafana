@@ -1,15 +1,16 @@
-import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
-import { from, merge, Observable, of } from 'rxjs';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { map, mergeAll, mergeMap, reduce } from 'rxjs/operators';
-import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 import cloneDeep from 'lodash/cloneDeep';
+import { from, merge, Observable, of } from 'rxjs';
+import { map, mergeAll, mergeMap, reduce } from 'rxjs/operators';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { AnnotationEvent, DataSourceApi } from '@grafana/data';
+
+import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { getAnnotationQueryRunners } from './DashboardQueryRunner';
 import { emptyResult } from './operators';
 
 export class AnnotationsWorker implements DashboardQueryRunnerWorker {
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {
-    const annotations = dashboard.annotations.list.find((a) => a.enable && !Boolean(a.snapshotData));
+    const annotations = dashboard.annotations.list.find(AnnotationsWorker.getAnnotationsToProcessFilter);
     return Boolean(annotations);
   }
 
@@ -20,7 +21,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
 
     console.log('Running AnnotationsWorker');
     const { dashboard, range } = options;
-    const annotations = dashboard.annotations.list.filter((a) => a.enable && !Boolean(a.snapshotData));
+    const annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
     const runners = getAnnotationQueryRunners();
     const observables = annotations.map((annotation) => {
       const datasourcePromise = getDataSourceSrv().get(annotation.datasource);
@@ -31,15 +32,16 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
             return of([]);
           }
 
-          return runner.run({ annotation, datasource, dashboard, range });
-        }),
-        map((results) => {
-          // store response in annotation object if this is a snapshot call
-          if (dashboard.snapshot) {
-            annotation.snapshotData = cloneDeep(results);
-          }
-          // translate result
-          return this.translateQueryResult(annotation, results);
+          return runner.run({ annotation, datasource, dashboard, range }).pipe(
+            map((results) => {
+              // store response in annotation object if this is a snapshot call
+              if (dashboard.snapshot) {
+                annotation.snapshotData = cloneDeep(results);
+              }
+              // translate result
+              return AnnotationsWorker.translateQueryResult(annotation, results);
+            })
+          );
         })
       );
     });
@@ -59,7 +61,11 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
     );
   }
 
-  translateQueryResult(annotation: any, results: AnnotationEvent[]): AnnotationEvent[] {
+  private static getAnnotationsToProcessFilter(annotation: any): boolean {
+    return annotation.enable && !Boolean(annotation.snapshotData);
+  }
+
+  private static translateQueryResult(annotation: any, results: AnnotationEvent[]): AnnotationEvent[] {
     // if annotation has snapshotData
     // make clone and remove it
     if (annotation.snapshotData) {

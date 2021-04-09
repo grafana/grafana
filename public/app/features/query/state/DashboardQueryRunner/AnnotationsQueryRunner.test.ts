@@ -6,6 +6,7 @@ import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceCons
 import * as store from '../../../../store/store';
 import * as annotationsSrv from '../../../annotations/annotations_srv';
 import { Observable, of, throwError } from 'rxjs';
+import { toAsyncOfResult } from './testHelpers';
 
 function getDefaultOptions(): AnnotationQueryRunnerOptions {
   const annotation: any = {};
@@ -19,7 +20,7 @@ function getDefaultOptions(): AnnotationQueryRunnerOptions {
   return { annotation, datasource, dashboard, range };
 }
 
-function getTestContext(result: Observable<any> = of({ events: [{ id: '1' }] })) {
+function getTestContext(result: Observable<any> = toAsyncOfResult({ events: [{ id: '1' }] })) {
   jest.clearAllMocks();
   const dispatchMock = jest.spyOn(store, 'dispatch');
   const options = getDefaultOptions();
