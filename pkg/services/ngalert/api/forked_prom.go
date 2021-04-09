@@ -14,6 +14,7 @@ type ForkedPromSvc struct {
 	DatasourceCache      datasources.CacheService
 }
 
+// NewForkedProm implements a set of routes that proxy to various Prometheus-compatible backends.
 func NewForkedProm(datasourceCache datasources.CacheService, proxy, grafana PrometheusApiService) *ForkedPromSvc {
 	return &ForkedPromSvc{
 		ProxySvc:        proxy,

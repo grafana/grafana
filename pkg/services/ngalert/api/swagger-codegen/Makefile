@@ -18,7 +18,6 @@ fix:
 	sed -i -e 's/apimodels\.\[\]PostableAlert/apimodels.PostableAlerts/' ../go/*.go
 	sed -i -e 's/apimodels\.\[\]UpdateDashboardAclCommand/apimodels.Permissions/' ../go/*.go
 	goimports -w -v ../go/*.go
-	rm ../go/*.go-e
 
 clean:
 	rm -rf ../go

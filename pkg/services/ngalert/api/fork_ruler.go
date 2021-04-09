@@ -15,6 +15,7 @@ type ForkedRuler struct {
 	DatasourceCache          datasources.CacheService
 }
 
+// NewForkedRuler implements a set of routes that proxy to various Cortex Ruler-compatible backends.
 func NewForkedRuler(datasourceCache datasources.CacheService, lotex, grafana RulerApiService) *ForkedRuler {
 	return &ForkedRuler{
 		LotexRuler:      lotex,
