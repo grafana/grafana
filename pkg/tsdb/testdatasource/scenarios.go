@@ -770,7 +770,7 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) (*data.
 
 		switch rawValue {
 		case "null":
-			// val stays nill
+			// val stays nil
 		case "nan":
 			f := math.NaN()
 			val = &f
