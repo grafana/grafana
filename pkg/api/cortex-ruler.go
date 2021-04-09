@@ -289,9 +289,8 @@ type PostableGrafanaRule struct {
 	UID          string              `json:"uid" yaml:"uid"`
 	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	// Receivers are used for migrating notification channels of existing alerts
-	// Do we still need this?
-	// Receivers []string
+	For          model.Duration      `json:"for" yaml:"for"`
+	Annotations  map[string]string   `json:"annotations" yaml:"annotations"`
 }
 
 // swagger:model
@@ -309,7 +308,6 @@ type GettableGrafanaRule struct {
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	// Receivers are used for migrating notification channels of existing alerts
-	// Do we still need this?
-	// Receivers []string
+	For             model.Duration      `json:"for" yaml:"for"`
+	Annotations     map[string]string   `json:"annotations" yaml:"annotations"`
 }
