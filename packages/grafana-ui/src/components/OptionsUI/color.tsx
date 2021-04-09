@@ -5,6 +5,9 @@ import { stylesFactory, useTheme } from '../../themes';
 import { css } from '@emotion/css';
 import { ColorPickerTrigger } from '../ColorPicker/ColorPickerTrigger';
 
+/**
+ * @alpha
+ * */
 export interface ColorValueEditorProps {
   value?: string;
   onChange: (value?: string) => void;
