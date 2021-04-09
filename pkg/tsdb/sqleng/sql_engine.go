@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"math"
-	"net"
 	"regexp"
 	"strconv"
 	"strings"
@@ -409,121 +407,6 @@ func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plug
 	return qm, nil
 }
 
-// func (e *dataPlugin) transformToTimeSeries(query plugins.DataSubQuery, rows *core.Rows,
-// 	result *plugins.DataQueryResult, queryContext plugins.DataQuery) error {
-
-// 	// the only difference between table and timeseries is that for timeserie we need to manage intervals
-
-// 	cfg, err := newProcessCfg(query, queryContext, rows)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// check columns of resultset: a column named time is mandatory
-// 	// the first text column is treated as metric name unless a column named metric is present
-// 	for i, col := range cfg.columnNames {
-// 		for _, tc := range e.timeColumnNames {
-// 			if col == tc {
-// 				cfg.timeIndex = i
-// 				continue
-// 			}
-// 		}
-// 		switch col {
-// 		case "metric":
-// 			cfg.metricIndex = i
-// 		default:
-// 			if cfg.metricIndex == -1 {
-// 				columnType := cfg.columnTypes[i].DatabaseTypeName()
-
-// 				for _, mct := range e.metricColumnTypes {
-// 					if columnType == mct {
-// 						cfg.metricIndex = i
-// 						continue
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	// use metric column as prefix with multiple value columns
-// 	if cfg.metricIndex != -1 && len(cfg.columnNames) > 3 {
-// 		cfg.metricPrefix = true
-// 	}
-
-// 	if cfg.timeIndex == -1 {
-// 		return fmt.Errorf("found no column named %q", strings.Join(e.timeColumnNames, " or "))
-// 	}
-
-// 	if cfg.fillMissing {
-// 		cfg.fillInterval = query.Model.Get("fillInterval").MustFloat64() * 1000
-// 		switch query.Model.Get("fillMode").MustString() {
-// 		case "null":
-// 		case "previous":
-// 			cfg.fillPrevious = true
-// 		case "value":
-// 			cfg.fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
-// 			cfg.fillValue.Valid = true
-// 		}
-// 	}
-
-// 	for rows.Next() {
-// 		if err := e.processRow(cfg); err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	for elem := cfg.seriesByQueryOrder.Front(); elem != nil; elem = elem.Next() {
-// 		key := elem.Value.(string)
-// 		if !cfg.fillMissing {
-// 			result.Series = append(result.Series, *cfg.pointsBySeries[key])
-// 			continue
-// 		}
-
-// 		series := cfg.pointsBySeries[key]
-// 		// fill in values from last fetched value till interval end
-// 		intervalStart := series.Points[len(series.Points)-1][1].Float64
-// 		intervalEnd := float64(queryContext.TimeRange.MustGetTo().UnixNano() / 1e6)
-
-// 		if cfg.fillPrevious {
-// 			if len(series.Points) > 0 {
-// 				cfg.fillValue = series.Points[len(series.Points)-1][0]
-// 			} else {
-// 				cfg.fillValue.Valid = false
-// 			}
-// 		}
-
-// 		// align interval start
-// 		intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
-// 		for i := intervalStart + cfg.fillInterval; i < intervalEnd; i += cfg.fillInterval {
-// 			series.Points = append(series.Points, plugins.DataTimePoint{cfg.fillValue, null.FloatFrom(i)})
-// 			cfg.rowCount++
-// 		}
-
-// 		result.Series = append(result.Series, *series)
-// 	}
-
-// 	result.Meta.Set("rowCount", cfg.rowCount)
-// 	return nil
-// }
-
-// type processCfg struct {
-// 	rowCount           int
-// 	columnTypes        []*sql.ColumnType
-// 	columnNames        []string
-// 	rows               *core.Rows
-// 	timeIndex          int
-// 	metricIndex        int
-// 	metricPrefix       bool
-// 	metricPrefixValue  string
-// 	fillMissing        bool
-// 	pointsBySeries     map[string]*plugins.DataTimeSeries
-// 	seriesByQueryOrder *list.List
-// 	fillValue          null.Float
-// 	queryContext       plugins.DataQuery
-// 	fillInterval       float64
-// 	fillPrevious       bool
-// }
-
 // DataQueryFormat is the type of query.
 type DataQueryFormat string
 
@@ -549,109 +432,6 @@ type DataQueryModel struct {
 	metricPrefix         bool
 	queryContext         plugins.DataQuery
 }
-
-// func (e *dataPlugin) processRow(cfg *processCfg) error {
-// 	var timestamp float64
-// 	var value null.Float
-// 	var metric string
-
-// 	if cfg.rowCount > rowLimit {
-// 		return fmt.Errorf("query row limit exceeded, limit %d", rowLimit)
-// 	}
-
-// 	values, err := e.queryResultTransformer.TransformQueryResult(cfg.columnTypes, cfg.rows)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// converts column named time to unix timestamp in milliseconds to make
-// 	// native mysql datetime types and epoch dates work in
-// 	// annotation and table queries.
-// 	ConvertSqlTimeColumnToEpochMs(values, cfg.timeIndex)
-
-// 	switch columnValue := values[cfg.timeIndex].(type) {
-// 	case int64:
-// 		timestamp = float64(columnValue)
-// 	case float64:
-// 		timestamp = columnValue
-// 	default:
-// 		return fmt.Errorf("invalid type for column time, must be of type timestamp or unix timestamp, got: %T %v",
-// 			columnValue, columnValue)
-// 	}
-
-// 	if cfg.metricIndex >= 0 {
-// 		columnValue, ok := values[cfg.metricIndex].(string)
-// 		if !ok {
-// 			return fmt.Errorf("column metric must be of type %s. metric column name: %s type: %s but datatype is %T",
-// 				strings.Join(e.metricColumnTypes, ", "), cfg.columnNames[cfg.metricIndex],
-// 				cfg.columnTypes[cfg.metricIndex].DatabaseTypeName(), values[cfg.metricIndex])
-// 		}
-
-// 		if cfg.metricPrefix {
-// 			cfg.metricPrefixValue = columnValue
-// 		} else {
-// 			metric = columnValue
-// 		}
-// 	}
-
-// 	for i, col := range cfg.columnNames {
-// 		if i == cfg.timeIndex || i == cfg.metricIndex {
-// 			continue
-// 		}
-
-// 		if value, err = ConvertSqlValueColumnToFloat(col, values[i]); err != nil {
-// 			return err
-// 		}
-
-// 		if cfg.metricIndex == -1 {
-// 			metric = col
-// 		} else if cfg.metricPrefix {
-// 			metric = cfg.metricPrefixValue + " " + col
-// 		}
-
-// 		series, exists := cfg.pointsBySeries[metric]
-// 		if !exists {
-// 			series = &plugins.DataTimeSeries{Name: metric}
-// 			cfg.pointsBySeries[metric] = series
-// 			cfg.seriesByQueryOrder.PushBack(metric)
-// 		}
-
-// 		if cfg.fillMissing {
-// 			var intervalStart float64
-// 			if !exists {
-// 				intervalStart = float64(cfg.queryContext.TimeRange.MustGetFrom().UnixNano() / 1e6)
-// 			} else {
-// 				intervalStart = series.Points[len(series.Points)-1][1].Float64 + cfg.fillInterval
-// 			}
-
-// 			if cfg.fillPrevious {
-// 				if len(series.Points) > 0 {
-// 					cfg.fillValue = series.Points[len(series.Points)-1][0]
-// 				} else {
-// 					cfg.fillValue.Valid = false
-// 				}
-// 			}
-
-// 			// align interval start
-// 			intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
-
-// 			for i := intervalStart; i < timestamp; i += cfg.fillInterval {
-// 				series.Points = append(series.Points, plugins.DataTimePoint{cfg.fillValue, null.FloatFrom(i)})
-// 				cfg.rowCount++
-// 			}
-// 		}
-
-// 		series.Points = append(series.Points, plugins.DataTimePoint{value, null.FloatFrom(timestamp)})
-// 		cfg.pointsBySeries[metric] = series
-
-// 		// TODO: Make non-global
-// 		if setting.Env == setting.Dev {
-// 			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
-// 		}
-// 	}
-
-// 	return nil
-// }
 
 func convertInt64ToFloat64(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
@@ -745,7 +525,6 @@ func convertInt16ToFloat64(origin *data.Field, newField *data.Field) {
 	}
 }
 
-<<<<<<< HEAD
 func convertNullableInt16ToFloat64(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
@@ -757,38 +536,6 @@ func convertNullableInt16ToFloat64(origin *data.Field, newField *data.Field) {
 			newField.Append(&value)
 		}
 	}
-=======
-func (e *dataPlugin) transformQueryError(err error) error {
-	// OpError is the error type usually returned by functions in the net
-	// package. It describes the operation, network type, and address of
-	// an error. We log this error rather than returing it to the client
-	// for security purposes.
-	var opErr *net.OpError
-	if errors.As(err, &opErr) {
-		e.log.Error("query error", "err", err)
-		return ErrConnectionFailed
-	}
-
-	return e.queryResultTransformer.TransformQueryError(err)
-}
-
-type processCfg struct {
-	rowCount           int
-	columnTypes        []*sql.ColumnType
-	columnNames        []string
-	rows               *core.Rows
-	timeIndex          int
-	metricIndex        int
-	metricPrefix       bool
-	metricPrefixValue  string
-	fillMissing        bool
-	pointsBySeries     map[string]*plugins.DataTimeSeries
-	seriesByQueryOrder *list.List
-	fillValue          null.Float
-	queryContext       plugins.DataQuery
-	fillInterval       float64
-	fillPrevious       bool
->>>>>>> origin/master
 }
 
 func convertUInt16ToFloat64(origin *data.Field, newField *data.Field) {
