@@ -820,6 +820,8 @@ github.com/grafana/alerting-api v0.0.0-20210407150830-64bd267999d1 h1:pbG8BsRHez
 github.com/grafana/alerting-api v0.0.0-20210407150830-64bd267999d1/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
 github.com/grafana/alerting-api v0.0.0-20210409131652-40d938157f6c h1:QFQhYfJ2S6nPU0SI0WCJ27XlgK2A7Jrm/fgZrWArSMQ=
 github.com/grafana/alerting-api v0.0.0-20210409131652-40d938157f6c/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
+github.com/grafana/alerting-api v0.0.0-20210409134845-c36ac1eae41b h1:QG52Et3EVCxPoYZifm91bRPVknccfjQURcpi7zXVut8=
+github.com/grafana/alerting-api v0.0.0-20210409134845-c36ac1eae41b/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/grafana/grafana v1.9.2-0.20210308201921-4ce0a49eac03/go.mod h1:AHRRvd4utJGY25J5nW8aL7wZzn/LcJ0z2za9oOp14j4=
@@ -1450,6 +1452,7 @@ github.com/prometheus/prometheus v1.8.2-0.20210217141258-a6be548dbc17 h1:VN3p3Nb
 github.com/prometheus/prometheus v1.8.2-0.20210217141258-a6be548dbc17/go.mod h1:dv3B1syqmkrkmo665MPCU6L8PbTXIiUeg/OEQULLNxA=
 github.com/prometheus/statsd_exporter v0.15.0/go.mod h1:Dv8HnkoLQkeEjkIE4/2ndAA7WL1zHKK7WMqFQqu72rw=
 github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40TwIPHuXU=
+github.com/quasilyte/go-ruleguard/dsl/fluent v0.0.0-20201222093424-5d7e62a465d3 h1:eL7x4/zMnlquMxYe7V078BD7MGskZ0daGln+SJCVzuY=
 github.com/quasilyte/go-ruleguard/dsl/fluent v0.0.0-20201222093424-5d7e62a465d3/go.mod h1:P7JlQWFT7jDcFZMtUPQbtGzzzxva3rBn6oIF+LPwFcM=
 github.com/rafaeljusto/redigomock v0.0.0-20190202135759-257e089e14a1/go.mod h1:JaY6n2sDr+z2WTsXkOmNRUfDy6FN0L6Nk7x06ndm4tY=
 github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be h1:ta7tUOvsPHVHGom5hKW5VXNc2xZIkfCKP8iaqOyYtUQ=
