@@ -8,7 +8,6 @@ import { DashboardQueryRunnerImpl } from './DashboardQueryRunner';
 import { DashboardQueryRunner, DashboardQueryRunnerResult } from './types';
 import { throwError } from 'rxjs';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
-import DoneCallback = jest.DoneCallback;
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -16,6 +15,9 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function getTestContext() {
+  // These tests are setup so all the workers and runners are invoked once, this wouldn't be the case in real life
+  const runner = new DashboardQueryRunnerImpl();
+
   jest.clearAllMocks();
   const getResults: AlertStateInfo[] = [
     { id: 1, state: AlertState.Alerting, newStateDate: '2021-01-01', dashboardId: 1, panelId: 1 },
@@ -46,13 +48,13 @@ function getTestContext() {
   setDataSourceSrv(dataSourceSrvMock);
   const options = getDefaultOptions();
 
-  return { options, annotationQueryMock, executeAnnotationQueryMock, getMock };
+  return { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock };
 }
 
 function expectOnResults(args: {
   runner: DashboardQueryRunner;
   panelId: number;
-  done: DoneCallback;
+  done: jest.DoneCallback;
   expect: (results: DashboardQueryRunnerResult) => void;
 }) {
   const { runner, done, panelId, expect: expectCallback } = args;
@@ -71,12 +73,9 @@ function expectOnResults(args: {
 }
 
 describe('DashboardQueryRunnerImpl', () => {
-  // These tests are setup so all the workers and runners are invoked once, this wouldn't be the case in real life
-  const runner = new DashboardQueryRunnerImpl();
-
   describe('when calling run and all workers succeed', () => {
     it('then it should return the correct results', (done) => {
-      const { options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
+      const { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
 
       expectOnResults({
         runner,
@@ -99,7 +98,7 @@ describe('DashboardQueryRunnerImpl', () => {
   describe('when calling run and all workers fail', () => {
     silenceConsoleOutput();
     it('then it should return the correct results', (done) => {
-      const { options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
+      const { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
       getMock.mockRejectedValue({ message: 'Get error' });
       annotationQueryMock.mockRejectedValue({ message: 'Legacy error' });
       executeAnnotationQueryMock.mockReturnValue(throwError({ message: 'NextGen error' }));
@@ -126,7 +125,7 @@ describe('DashboardQueryRunnerImpl', () => {
   describe('when calling run and AlertStatesWorker fails', () => {
     silenceConsoleOutput();
     it('then it should return the correct results', (done) => {
-      const { options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
+      const { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
       getMock.mockRejectedValue({ message: 'Get error' });
 
       expectOnResults({
@@ -151,7 +150,7 @@ describe('DashboardQueryRunnerImpl', () => {
     describe('when calling run and AnnotationsWorker fails', () => {
       silenceConsoleOutput();
       it('then it should return the correct results', (done) => {
-        const { options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
+        const { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock } = getTestContext();
         annotationQueryMock.mockRejectedValue({ message: 'Legacy error' });
         executeAnnotationQueryMock.mockReturnValue(throwError({ message: 'NextGen error' }));
 

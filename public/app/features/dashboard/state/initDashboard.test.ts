@@ -14,6 +14,8 @@ import { keybindingSrv } from 'app/core/services/keybindingSrv';
 import { getTimeSrv, setTimeSrv } from '../services/TimeSrv';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from '../services/DashboardLoaderSrv';
 import { getDashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
+import { setDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { emptyResult } from '../../query/state/DashboardQueryRunner/utils';
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/features/dashboard/services/TimeSrv', () => {
@@ -84,6 +86,12 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
     };
 
     setDashboardLoaderSrv((loaderSrv as unknown) as DashboardLoaderSrv);
+    setDashboardQueryRunner({
+      getResult: emptyResult,
+      run: () => undefined,
+      cancel: () => undefined,
+      destroy: () => undefined,
+    });
 
     const injectorMock = {
       get: (name: string) => {
