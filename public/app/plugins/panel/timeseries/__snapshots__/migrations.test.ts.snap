@@ -79,6 +79,148 @@ Object {
 }
 `;
 
+exports[`Graph Migrations stacking groups 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 50,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 5,
+        "showPoints": "never",
+        "spanNulls": true,
+        "stackingGroup": "A",
+        "stackingMode": "standard",
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "red",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "custom.stackingMode",
+            "value": "standard",
+          },
+          Object {
+            "id": "custom.stackingGroup",
+            "value": "A",
+          },
+        ],
+      },
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "B-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "custom.stackingMode",
+            "value": "standard",
+          },
+          Object {
+            "id": "custom.stackingGroup",
+            "value": "A",
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "max",
+        "min",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltipOptions": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations stacking simple 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 50,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 5,
+        "showPoints": "never",
+        "spanNulls": true,
+        "stackingGroup": "A",
+        "stackingMode": "standard",
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "red",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "max",
+        "min",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltipOptions": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
 exports[`Graph Migrations stairscase 1`] = `
 Object {
   "fieldConfig": Object {

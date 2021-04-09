@@ -11,19 +11,21 @@ import {
   PanelModel,
 } from '@grafana/data';
 import {
-  GraphFieldConfig,
-  LegendDisplayMode,
   AxisPlacement,
   DrawStyle,
+  GraphFieldConfig,
   GraphGradientMode,
+  LegendDisplayMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
+  StackingMode,
 } from '@grafana/ui';
 import { Options } from './types';
 import omitBy from 'lodash/omitBy';
 import isNil from 'lodash/isNil';
 import { isNumber, isString } from 'lodash';
+import { defaultGraphConfig } from './config';
 
 /**
  * This is called when the panel changes from another panel
@@ -211,6 +213,16 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
                 break;
             }
             break;
+          case 'stack':
+            rule.properties.push({
+              id: 'custom.stackingMode',
+              value: StackingMode.Standard,
+            });
+            rule.properties.push({
+              id: 'custom.stackingGroup',
+              value: v,
+            });
+            break;
           default:
             console.log('Ignore override migration:', seriesOverride.alias, p, v);
         }
@@ -264,6 +276,11 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
 
   if (graph.drawStyle === DrawStyle.Bars) {
     graph.fillOpacity = 100; // bars were always
+  }
+
+  if (angular.stack) {
+    graph.stackingMode = StackingMode.Standard;
+    graph.stackingGroup = defaultGraphConfig.stackingGroup;
   }
 
   y1.custom = omitBy(graph, isNil);
