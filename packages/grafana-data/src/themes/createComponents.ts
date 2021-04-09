@@ -29,6 +29,9 @@ export interface ThemeComponents {
     border: string;
     text: string;
   };
+  card: {
+    background: string;
+  };
 }
 
 export function createComponents(palette: ThemePalette): ThemeComponents {
@@ -49,6 +52,9 @@ export function createComponents(palette: ThemePalette): ThemeComponents {
     },
     scrollbar: {
       background: palette.secondary.main,
+    },
+    card: {
+      background: palette.layer2,
     },
     panel: {
       padding: 1,
