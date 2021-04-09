@@ -21,6 +21,7 @@ export default {
   },
   args: {
     containerWidth: '100%',
+    seriesCount: 5,
   },
   argTypes: {
     containerWidth: {
@@ -91,10 +92,9 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
   );
 };
 
-const seriesCount = 5;
-export const Basic: Story = (args) => {
+export const WithNoValues: Story = ({ containerWidth, seriesCount }) => {
   return (
-    <div style={{ width: args.containerWidth }}>
+    <div style={{ width: containerWidth }}>
       <LegendStoryDemo
         name="List mode, placement bottom"
         displayMode={LegendDisplayMode.List}
@@ -112,6 +112,52 @@ export const Basic: Story = (args) => {
         displayMode={LegendDisplayMode.Table}
         seriesCount={seriesCount}
         placement="bottom"
+      />
+    </div>
+  );
+};
+
+export const WithValues: Story = ({ containerWidth, seriesCount }) => {
+  const stats: DisplayValue[] = [
+    {
+      title: 'Min',
+      text: '5.00',
+      numeric: 5,
+    },
+    {
+      title: 'Max',
+      text: '10.00',
+      numeric: 10,
+    },
+    {
+      title: 'Last',
+      text: '2.00',
+      numeric: 2,
+    },
+  ];
+
+  return (
+    <div style={{ width: containerWidth }}>
+      <LegendStoryDemo
+        name="List mode, placement bottom"
+        displayMode={LegendDisplayMode.List}
+        seriesCount={seriesCount}
+        placement="bottom"
+        stats={stats}
+      />
+      <LegendStoryDemo
+        name="List mode, placement right"
+        displayMode={LegendDisplayMode.List}
+        seriesCount={seriesCount}
+        placement="right"
+        stats={stats}
+      />
+      <LegendStoryDemo
+        name="Table mode"
+        displayMode={LegendDisplayMode.Table}
+        seriesCount={seriesCount}
+        placement="bottom"
+        stats={stats}
       />
     </div>
   );
