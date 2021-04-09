@@ -24,6 +24,11 @@ export interface ThemeComponents {
   scrollbar: {
     background: string;
   };
+  form: {
+    background: string;
+    border: string;
+    text: string;
+  };
 }
 
 export function createComponents(palette: ThemePalette): ThemeComponents {
@@ -49,5 +54,17 @@ export function createComponents(palette: ThemePalette): ThemeComponents {
       padding: 1,
       headerHeight: 4,
     },
+    form:
+      palette.mode === 'dark'
+        ? {
+            background: palette.layer0,
+            border: palette.border1,
+            text: palette.text.primary,
+          }
+        : {
+            background: palette.layer1,
+            border: palette.border1,
+            text: palette.text.primary,
+          },
   };
 }

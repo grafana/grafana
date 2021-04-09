@@ -87,13 +87,13 @@ export const getButtonStyles = (props: StyleProps) => {
   const disabledStyles: CSSObject = {
     cursor: 'not-allowed',
     boxShadow: 'none',
-    background: theme.v2.palette.formComponent.disabledBackground,
+    background: theme.v2.palette.action.disabledBackground,
     border: `1px solid transparent`,
     color: theme.v2.palette.text.disabled,
     pointerEvents: 'none',
 
     '&:hover': {
-      background: theme.v2.palette.formComponent.disabledBackground,
+      background: theme.v2.palette.action.disabledBackground,
       color: theme.v2.palette.text.disabled,
     },
   };

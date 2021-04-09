@@ -34,14 +34,6 @@ export interface ThemePaletteBase<TColor> {
   border1: string;
   border2: string;
 
-  formComponent: {
-    background: string;
-    text: string;
-    border: string;
-    disabledBackground: string;
-    disabledText: string;
-  };
-
   action: {
     /** Used for selected menu item / select option */
     selected: string;
@@ -51,6 +43,12 @@ export interface ThemePaletteBase<TColor> {
     hoverOpacity: number;
     /** Used focused menu item / select option */
     focus: string;
+    /** Used for disabled buttons and inputs */
+    disabledBackground: string;
+    /** Disabled text */
+    disabledText: string;
+    /** Disablerd opacity */
+    disabledOpacity: number;
   };
 
   hoverFactor: number;
@@ -118,19 +116,14 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   border1 = colors.gray25;
   border2 = colors.gray33;
 
-  formComponent = {
-    background: this.layer0,
-    border: this.border1,
-    text: this.text.primary,
-    disabledText: this.text.disabled,
-    disabledBackground: 'rgba(255,255,255,0.07)',
-  };
-
   action = {
     selected: 'rgba(255, 255, 255, 0.16)',
     hover: 'rgba(255, 255, 255, 0.08)',
     hoverOpacity: 0.08,
     focus: 'rgba(255, 255, 255, 0.12)',
+    disabledText: this.text.disabled,
+    disabledBackground: 'rgba(255,255,255,0.07)',
+    disabledOpacity: 0.38,
   };
 
   contrastThreshold = 3;
@@ -188,19 +181,14 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   border1 = colors.gray85;
   border2 = colors.gray70;
 
-  formComponent = {
-    background: this.layer1,
-    border: this.border1,
-    text: this.text.primary,
-    disabledBackground: 'rgba(0,0,0,0.07)',
-    disabledText: this.text.disabled,
-  };
-
   action = {
     hover: 'rgba(0, 0, 0, 0.04)',
     selected: 'rgba(0, 0, 0, 0.08)',
     hoverOpacity: 0.08,
     focus: 'rgba(0, 0, 0, 0.12)',
+    disabledBackground: 'rgba(0,0,0,0.07)',
+    disabledText: this.text.disabled,
+    disabledOpacity: 0.38,
   };
 
   contrastThreshold = 3;
