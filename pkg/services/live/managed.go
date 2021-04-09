@@ -137,6 +137,18 @@ func (s *ManagedStream) OnSubscribe(_ context.Context, _ *models.SignedInUser, e
 	return reply, backend.SubscribeStreamStatusOK, nil
 }
 
-func (s *ManagedStream) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
-	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
+func (s *ManagedStream) OnPublish(_ context.Context, _ *models.SignedInUser, evt models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+	logger.Debug("OnPublish", evt.Channel, "evt", evt)
+	var frame data.Frame
+	err := json.Unmarshal(evt.Data, &frame)
+	if err != nil {
+		// stream scope only deals with data frames.
+		return models.PublishReply{}, 0, err
+	}
+	err = s.Push(evt.Path, &frame)
+	if err != nil {
+		// stream scope only deals with data frames.
+		return models.PublishReply{}, 0, err
+	}
+	return models.PublishReply{}, backend.PublishStreamStatusOK, nil
 }

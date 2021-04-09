@@ -3,13 +3,11 @@ package {{packageName}}
 
 {{#operations}}
 import (
-	"net/http"
-	
 	"github.com/go-macaron/binding"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/middleware"
 )
@@ -18,22 +16,11 @@ type {{classname}}Service interface { {{#operation}}
 	{{nickname}}(*models.ReqContext{{#bodyParams}}, apimodels.{{dataType}}{{/bodyParams}}) response.Response{{/operation}}
 }
 
-type {{classname}}Base struct {
-	log log.Logger
-}
-
 func (api *API) Register{{classname}}Endpoints(srv {{classname}}Service) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
 		group.{{httpMethod}}(toMacaronPath("{{{path}}}"){{#bodyParams}}, binding.Bind(apimodels.{{dataType}}{}){{/bodyParams}}, routing.Wrap(srv.{{nickname}})){{/operation}}{{/operations}}
 	}, middleware.ReqSignedIn)
 }{{#operation}}
-
-
-func (base {{classname}}Base) {{nickname}}(c *models.ReqContext{{#bodyParams}}, {{paramName}} apimodels.{{dataType}}{{/bodyParams}}) response.Response { {{#pathParams}}
-	{{paramName}} := c.Params(":{{baseName}}")
-	base.log.Info("{{nickname}}: ", "{{baseName}}", {{paramName}}){{/pathParams}}{{#bodyParams}}
-	base.log.Info("{{nickname}}: ", "{{baseName}}", {{paramName}}){{/bodyParams}}
-	return response.Error(http.StatusNotImplemented, "", nil)
-}{{/operation}}{{/operations}}
+{{/operation}}{{/operations}}
 
 
