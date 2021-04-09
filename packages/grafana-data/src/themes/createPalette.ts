@@ -64,8 +64,8 @@ export interface ThemeHoverStrengh {}
 export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
   /** Returns a text color for the background */
   getContrastText(background: string): string;
-  /* Return a hover color for any default color */
-  getHoverColor(defaultColor: string, hoverFactor?: number): string;
+  /* Return a hover color for any color */
+  getHoverColor(color: string, hoverFactor?: number): string;
 }
 
 /** @internal */

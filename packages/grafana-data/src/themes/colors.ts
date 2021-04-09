@@ -2,7 +2,7 @@ export const colors = {
   white: '#fff',
   black: '#000',
 
-  // New greys palette used by next-gen form elements
+  // old
   gray98: '#f7f8fa',
   gray97: '#f1f5f9',
   gray95: '#e9edf2',
@@ -15,6 +15,11 @@ export const colors = {
   gray15: '#202226',
   gray10: '#141619',
   gray05: '#0b0c0e',
+
+  // new from figma,
+  // gray90: '#F4F5F5',
+  // gray100: '#F9F9FA',
+  // gray80: '#D0D1D3',
 
   blueDark1: '#3658E2',
   blueDark2: '#5B93FF',
