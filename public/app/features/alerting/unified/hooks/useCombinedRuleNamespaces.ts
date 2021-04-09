@@ -2,7 +2,7 @@ import { CombinedRule, CombinedRuleNamespace, Rule, RuleNamespace } from 'app/ty
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { useMemo, useRef } from 'react';
 import { getAllRulesSources, isCloudRulesSource } from '../utils/datasource';
-import { isAlertingRule, isAlertingRulerRule } from '../utils/rules';
+import { isAlertingRule, isAlertingRulerRule, isRecordingRulerRule } from '../utils/rules';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 interface CacheValue {
@@ -49,11 +49,19 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
                         annotations: rule.annotations || {},
                         rulerRule: rule,
                       }
-                    : {
+                    : isRecordingRulerRule(rule)
+                    ? {
                         name: rule.record,
                         query: rule.expr,
                         labels: rule.labels || {},
                         annotations: {},
+                        rulerRule: rule,
+                      }
+                    : {
+                        name: rule.grafana_alert.title,
+                        query: '',
+                        labels: rule.labels || {},
+                        annotations: rule.annotations || {},
                         rulerRule: rule,
                       }
               ),

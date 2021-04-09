@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { Field, Input, Select, useStyles, Label, InputControl } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormValues } from '../../types/rule-form';
@@ -35,7 +35,10 @@ const getStyles = (theme: GrafanaTheme) => ({
 
 export const ConditionsStep: FC = () => {
   const styles = useStyles(getStyles);
-  const { register, control } = useFormContext<RuleFormValues>();
+  const { register, control, watch } = useFormContext<RuleFormValues>();
+
+  const type = watch('type');
+
   return (
     <RuleEditorSection stepNo={3} title="Define alert conditions">
       <Label description="Required time for which the expression has to happen">For</Label>
@@ -44,7 +47,13 @@ export const ConditionsStep: FC = () => {
           <Input ref={register()} name="forTime" />
         </Field>
         <Field className={styles.numberInput}>
-          <InputControl name="timeUnit" as={Select} options={timeOptions} control={control} />
+          <InputControl
+            name="forTimeUnit"
+            as={Select}
+            options={timeOptions}
+            control={control}
+            onChange={(val: SelectableValue) => val.value}
+          />
         </Field>
       </div>
     </RuleEditorSection>

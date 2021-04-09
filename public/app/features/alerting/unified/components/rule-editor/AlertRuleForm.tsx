@@ -10,19 +10,25 @@ import { QueryStep } from './QueryStep';
 import { useForm, FormContext } from 'react-hook-form';
 
 import { fetchRulerRulesNamespace, setRulerRuleGroup } from '../../api/ruler';
-import { RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertState, RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { locationService } from '@grafana/runtime';
 import { RuleFormValues } from '../../types/rule-form';
+import { SAMPLE_QUERIES } from '../../mocks/grafana-queries';
 
 type Props = {};
 
 const defaultValues: RuleFormValues = Object.freeze({
   name: '',
+  expression: '',
+  queries: SAMPLE_QUERIES, // @TODO remove eventually
+  condition: '',
+  no_data_state: GrafanaAlertState.NoData,
+  exec_err_state: GrafanaAlertState.Alerting,
   dataSourceName: null,
-  labels: [],
-  annotations: [],
+  labels: [{ key: '', value: '' }],
+  annotations: [{ key: '', value: '' }],
   forTime: 1,
-  forUnit: 'm',
+  forTimeUnit: 'm',
 });
 
 export const AlertRuleForm: FC<Props> = () => {
@@ -37,10 +43,12 @@ export const AlertRuleForm: FC<Props> = () => {
 
   const values = watch();
 
+  console.log('values', values);
+
   const showStep2 = values.dataSourceName && values.type;
 
   const onSubmit = (alertRule: RuleFormValues) => {
-    const { name, expression, forTime, dataSourceName, forUnit, labels, annotations, location } = alertRule;
+    const { name, expression, forTime, dataSourceName, forTimeUnit, labels, annotations, location } = alertRule;
     if (location && expression && dataSourceName && name) {
       const { namespace, group } = location;
       fetchRulerRulesNamespace(dataSourceName, namespace)
@@ -52,7 +60,7 @@ export const AlertRuleForm: FC<Props> = () => {
           const alertRule: RulerRuleDTO = {
             alert: name,
             expr: expression,
-            for: `${forTime}${forUnit}`,
+            for: `${forTime}${forTimeUnit}`,
             labels: labels.reduce((acc, { key, value }) => {
               if (key && value) {
                 acc[key] = value;

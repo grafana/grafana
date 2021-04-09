@@ -84,7 +84,46 @@ export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
   annotations?: Annotations;
 }
 
-export type RulerRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO;
+export enum GrafanaAlertState {
+  Alerting = 'Alerting',
+  NoData = 'NoData',
+  KeepLastState = 'KeepLastState',
+  OK = 'OK',
+}
+
+export interface GrafanaQueryModel {
+  datasource: string;
+  datasourceUid: string;
+  refId: string;
+  [key: string]: any;
+}
+
+export interface GrafanaQuery {
+  refId: string;
+  queryType: string;
+  relativeTimeRange: {
+    from: number;
+    to: number;
+  };
+  model: GrafanaQueryModel;
+}
+
+export interface GrafanaRuleDefinition {
+  uid?: string;
+  title: string;
+  condition: string;
+  no_data_state: GrafanaAlertState;
+  exec_err_state: GrafanaAlertState;
+  data: GrafanaQuery[];
+}
+
+export interface RulerGrafanaRuleDTO {
+  grafana_alert: GrafanaRuleDefinition;
+  labels?: Labels;
+  annotations?: Annotations;
+}
+
+export type RulerRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | RulerGrafanaRuleDTO;
 
 export type RulerRuleGroupDTO = {
   name: string;
