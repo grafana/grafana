@@ -11,7 +11,7 @@ export interface PanelChromeProps {
   height: number;
   title?: string;
   padding?: PanelPadding;
-  rightItems?: React.ReactNode[];
+  leftItems?: React.ReactNode[]; // rightItems will be added later (actions links etc.)
   children: (innerWidth: number, innerHeight: number) => React.ReactNode;
 }
 
@@ -29,11 +29,11 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   width,
   height,
   padding = 'md',
-  rightItems = [],
+  leftItems = [],
 }) => {
   const theme = useTheme();
   const styles = useStyles(getStyles);
-  const headerHeight = getHeaderHeight(theme, title, rightItems);
+  const headerHeight = getHeaderHeight(theme, title, leftItems);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
   const headerStyles: CSSProperties = {
@@ -46,8 +46,8 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
     <div className={styles.container} style={containerStyles}>
       <div className={styles.header} style={headerStyles}>
         <div className={styles.headerTitle}>{title}</div>
-        {itemsRenderer(rightItems, (items) => {
-          return <div className={styles.rightItems}>{items}</div>;
+        {itemsRenderer(leftItems, (items) => {
+          return <div className={styles.leftItems}>{items}</div>;
         })}
       </div>
       <div className={styles.content} style={contentStyle}>
@@ -113,7 +113,7 @@ const getStyles = (theme: GrafanaTheme) => {
       padding-left: ${theme.panelPadding}px;
       flex-grow: 1;
     `,
-    rightItems: css`
+    leftItems: css`
       display: flex;
       padding-right: ${theme.panelPadding}px;
     `,

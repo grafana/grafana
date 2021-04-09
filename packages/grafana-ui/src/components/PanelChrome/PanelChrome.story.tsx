@@ -14,7 +14,7 @@ export default {
     docs: {},
   },
   argTypes: {
-    rightItems: {
+    leftItems: {
       control: {
         type: 'multi-select',
         options: ['none', 'loading', 'error'],
@@ -34,18 +34,18 @@ export default {
 };
 
 type PanelChromeStoryProps = {
-  rightItems: string[];
+  leftItems: string[];
   title: string | undefined;
   padding: PanelPadding;
 };
 
 export const StandardPanel = (props: PanelChromeStoryProps) => {
   const theme = useTheme();
-  const rightItems = mapToItems(props.rightItems);
+  const leftItems = mapToItems(props.leftItems);
 
   return (
     <div style={{ display: 'flex', height: '500px', alignItems: 'center' }}>
-      <PanelChrome {...props} width={400} height={230} rightItems={rightItems}>
+      <PanelChrome {...props} width={400} height={230} leftItems={leftItems}>
         {(innerWidth, innerHeight) => {
           return (
             <div
@@ -68,7 +68,7 @@ export const StandardPanel = (props: PanelChromeStoryProps) => {
 };
 
 StandardPanel.args = {
-  rightItems: ['none'],
+  leftItems: ['none'],
   title: 'Very long title that should get ellipsis when there is no more space',
 };
 
