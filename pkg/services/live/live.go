@@ -306,11 +306,11 @@ func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) 
 }
 
 // GetChannelHandler gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, ChannelAddress, error) {
+func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, Channel, error) {
 	// Parse the identifier ${scope}/${namespace}/${path}
-	addr := ParseChannelAddress(channel)
+	addr := ParseChannel(channel)
 	if !addr.IsValid() {
-		return nil, ChannelAddress{}, fmt.Errorf("invalid channel: %q", channel)
+		return nil, Channel{}, fmt.Errorf("invalid channel: %q", channel)
 	}
 
 	g.channelsMu.RLock()
@@ -397,7 +397,7 @@ func (g *GrafanaLive) handleStreamScope(_ *models.SignedInUser, namespace string
 }
 
 func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	return NewDemultiplexer(g.ManagedStreamRunner, namespace), nil
+	return NewDemultiplexer(namespace, g.ManagedStreamRunner), nil
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
@@ -430,7 +430,7 @@ func (g *GrafanaLive) IsEnabled() bool {
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
-	addr := ParseChannelAddress(cmd.Channel)
+	addr := ParseChannel(cmd.Channel)
 	if !addr.IsValid() {
 		return response.Error(http.StatusBadRequest, "Bad channel address", nil)
 	}
