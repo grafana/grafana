@@ -43,7 +43,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
   };
 
   return (
-    <>
+    <div className={styles.wrapper}>
       <ToolbarButton
         className={className}
         isOpen={isOpen}
@@ -71,7 +71,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
           </ClickOutsideWrapper>
         </div>
       )}
-    </>
+    </div>
   );
 });
 
