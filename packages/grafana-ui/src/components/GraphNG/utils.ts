@@ -234,6 +234,7 @@ export function preparePlotConfigBuilder(
   }
 
   if (Object.keys(stackingGroups).length !== 0) {
+    builder.setStacking(true);
     const groups = Object.keys(stackingGroups);
     for (let i = 0; i < groups.length; i++) {
       const group = stackingGroups[groups[i]];

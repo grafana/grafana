@@ -79,17 +79,14 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
       // series indexes within results array
       const seriesIdxs = stackingGroups[group];
 
-      for (let j = 1; j < seriesIdxs.length; j++) {
-        // series to stack. Making a copy not to mutate the underlying vector
-        const currentlyStacking = [...result[seriesIdxs[j]]];
-        // stacking on top of
-        const stackBase = result[seriesIdxs[j - 1]];
-
-        for (let k = 0; k < stackBase.length; k++) {
-          const v = stackBase[k];
-          currentlyStacking[k] += v === null || v === undefined ? 0 : +v;
+      const acc = Array(result[0].length).fill(0);
+      for (let j = 0; j < seriesIdxs.length; j++) {
+        const currentlyStacking = result[seriesIdxs[j]];
+        for (let k = 0; k < result[0].length; k++) {
+          const v = currentlyStacking[k];
+          acc[k] += v === null || v === undefined ? 0 : +v;
         }
-        result[seriesIdxs[j]] = currentlyStacking;
+        result[seriesIdxs[j]] = acc.slice();
       }
     }
     return result as AlignedData;

@@ -18,6 +18,7 @@ import {
   GraphFieldConfig,
   graphFieldOptions,
   GraphGradientMode,
+  HideableFieldConfig,
   LegendDisplayMode,
   LineInterpolation,
   LineStyle,
@@ -26,7 +27,6 @@ import {
   ScaleDistributionConfig,
   StackingConfig,
   StackingMode,
-  HideableFieldConfig,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
