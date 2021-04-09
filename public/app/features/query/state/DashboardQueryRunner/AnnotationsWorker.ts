@@ -6,7 +6,7 @@ import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { getAnnotationQueryRunners } from './DashboardQueryRunner';
-import { emptyResult } from './operators';
+import { emptyResult } from './utils';
 
 export class AnnotationsWorker implements DashboardQueryRunnerWorker {
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {

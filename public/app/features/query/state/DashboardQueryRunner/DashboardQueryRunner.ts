@@ -15,7 +15,7 @@ import { SnapshotWorker } from './SnapshotWorker';
 import { AnnotationsWorker } from './AnnotationsWorker';
 import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
-import { emptyResult } from './operators';
+import { emptyResult } from './utils';
 
 export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   private readonly results: Subject<DashboardQueryRunnerWorkerResult>;

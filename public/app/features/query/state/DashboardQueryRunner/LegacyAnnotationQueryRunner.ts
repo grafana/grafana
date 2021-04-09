@@ -3,7 +3,7 @@ import { catchError } from 'rxjs/operators';
 import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 
 import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
-import { handleAnnotationQueryRunnerError } from './operators';
+import { handleAnnotationQueryRunnerError } from './utils';
 
 export class LegacyAnnotationQueryRunner implements AnnotationQueryRunner {
   canRun(datasource: DataSourceApi): boolean {

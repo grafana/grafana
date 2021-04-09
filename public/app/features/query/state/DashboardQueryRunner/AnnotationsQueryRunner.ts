@@ -5,7 +5,7 @@ import { AnnotationEvent, DataSourceApi } from '@grafana/data';
 import { AnnotationQueryRunner, AnnotationQueryRunnerOptions } from './types';
 import { PanelModel } from '../../../dashboard/state';
 import { executeAnnotationQuery } from '../../../annotations/annotations_srv';
-import { handleAnnotationQueryRunnerError } from './operators';
+import { handleAnnotationQueryRunnerError } from './utils';
 
 export class AnnotationsQueryRunner implements AnnotationQueryRunner {
   canRun(datasource: DataSourceApi): boolean {

@@ -2,7 +2,7 @@ import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQuery
 import { from, Observable } from 'rxjs';
 import { getBackendSrv } from '@grafana/runtime';
 import { catchError, map } from 'rxjs/operators';
-import { emptyResult, handleDashboardQueryRunnerWorkerError } from './operators';
+import { emptyResult, handleDashboardQueryRunnerWorkerError } from './utils';
 
 export class AlertStatesWorker implements DashboardQueryRunnerWorker {
   canWork({ dashboard, range }: DashboardQueryRunnerOptions): boolean {
