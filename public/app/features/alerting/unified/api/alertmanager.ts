@@ -1,5 +1,12 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerAlert,
+  AlertManagerCortexConfig,
+  AlertmanagerGroup,
+  Silence,
+  SilenceCreatePayload,
+  SilenceMatcher,
+} from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 // "grafana" for grafana-managed, otherwise a datasource name
@@ -36,4 +43,76 @@ export async function updateAlertmanagerConfig(
     `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/config/api/v1/alerts`,
     config
   );
+}
+
+export async function fetchSilences(alertmanagerSourceName: string): Promise<Silence[]> {
+  const result = await getBackendSrv()
+    .fetch<Silence[]>({
+      url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+  return result.data;
+}
+
+// returns the new silence ID. Even in the case of an update, a new silence is created and the previous one expired.
+export async function createOrUpdateSilence(
+  alertmanagerSourceName: string,
+  payload: SilenceCreatePayload
+): Promise<string> {
+  const result = await getBackendSrv().post(
+    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
+    payload
+  );
+  return result.data.silenceID;
+}
+
+export async function expireSilence(alertmanagerSourceName: string, silenceID: string): Promise<void> {
+  await getBackendSrv().delete(
+    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences/${encodeURIComponent(silenceID)}`
+  );
+}
+
+export async function fetchAlerts(
+  alertmanagerSourceName: string,
+  matchers?: SilenceMatcher[]
+): Promise<AlertmanagerAlert[]> {
+  const filters =
+    matchers
+      ?.map(
+        (matcher) =>
+          `filter=${encodeURIComponent(
+            `${escapeQuotes(matcher.name)}=${matcher.isRegex ? '~' : ''}"${escapeQuotes(matcher.value)}"`
+          )}`
+      )
+      .join('&') || '';
+
+  const result = await getBackendSrv()
+    .fetch<AlertmanagerAlert[]>({
+      url:
+        `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts` +
+        (filters ? '?' + filters : ''),
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+
+  return result.data;
+}
+
+export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<AlertmanagerGroup[]> {
+  const result = await getBackendSrv()
+    .fetch<AlertmanagerGroup[]>({
+      url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts/groups`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+
+  return result.data;
+}
+
+function escapeQuotes(value: string): string {
+  return value.replace(/"/g, '\\"');
 }
