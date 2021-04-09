@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -403,7 +404,14 @@ func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
 	ds, err := g.DatasourceCache.GetDatasourceByUID(namespace, user, false)
 	if err != nil {
-		return nil, fmt.Errorf("error getting datasource: %w", err)
+		// the namespace may be an ID
+		id, _ := strconv.ParseInt(namespace, 10, 64)
+		if id > 0 {
+			ds, err = g.DatasourceCache.GetDatasource(id, user, false)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error getting datasource: %w", err)
+		}
 	}
 	streamHandler, err := g.getStreamPlugin(ds.Type)
 	if err != nil {
