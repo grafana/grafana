@@ -24,31 +24,7 @@ func (api *API) listAlertInstancesEndpoint(c *models.ReqContext) response.Respon
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
 func (api *API) conditionEvalEndpoint(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand) response.Response {
-	evalCond := ngmodels.Condition{
-		Condition: cmd.Condition,
-		OrgID:     c.SignedInUser.OrgId,
-		Data:      cmd.Data,
-	}
-	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
-		return response.Error(400, "invalid condition", err)
-	}
-
-	now := cmd.Now
-	if now.IsZero() {
-		now = timeNow()
-	}
-
-	evaluator := eval.Evaluator{Cfg: api.Cfg}
-	evalResults, err := evaluator.ConditionEval(&evalCond, timeNow(), api.DataService)
-	if err != nil {
-		return response.Error(400, "Failed to evaluate conditions", err)
-	}
-
-	frame := evalResults.AsDataFrame()
-
-	return response.JSONStreaming(200, util.DynMap{
-		"instances": []*data.Frame{&frame},
-	})
+	return conditionEval(c, cmd, api.DatasourceCache, api.DataService, api.Cfg)
 }
 
 // alertDefinitionEvalEndpoint handles GET /api/alert-definitions/eval/:alertDefinitionUID.
@@ -60,7 +36,7 @@ func (api *API) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Respo
 		return response.Error(400, "Failed to load alert definition conditions", err)
 	}
 
-	if err := api.validateCondition(*condition, c.SignedInUser, c.SkipCache); err != nil {
+	if err := validateCondition(*condition, c.SignedInUser, c.SkipCache, api.DatasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -118,7 +94,8 @@ func (api *API) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels
 		OrgID:     c.SignedInUser.OrgId,
 		Data:      cmd.Data,
 	}
-	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
+
+	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, api.DatasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -138,7 +115,8 @@ func (api *API) createAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels
 		OrgID:     c.SignedInUser.OrgId,
 		Data:      cmd.Data,
 	}
-	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
+
+	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, api.DatasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
