@@ -135,6 +135,10 @@ export function SelectBase<T>({
   value,
   width,
 }: SelectBaseProps<T>) {
+  // Using the document.body as our portal target to let the react-select
+  // append the select menu div to the document.body when we open the select.
+  const portalNode = document.body;
+
   const theme = useTheme();
   const styles = getSelectStyles(theme);
   const onChangeWithEmpty = useCallback(
@@ -212,6 +216,7 @@ export function SelectBase<T>({
     showAllSelectedWhenOpen,
     tabSelectsValue,
     value: isMulti ? selectedValue : selectedValue?.[0],
+    menuPortalTarget: portalNode,
   };
 
   if (allowCustomValue) {
@@ -321,10 +326,9 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
-          menuPortal: ({ position, width }: any) => ({
-            position,
-            width,
-            zIndex: theme.zIndex.dropdown,
+          menuPortal: (base: any) => ({
+            ...base,
+            zIndex: theme.zIndex.portal,
           }),
           //These are required for the menu positioning to function
           menu: ({ top, bottom, position }: any) => ({

@@ -8,7 +8,6 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     modal: css`
       position: fixed;
-      z-index: ${theme.zIndex.modal};
       background: ${theme.colors.bodyBg};
       box-shadow: 0 0 20px ${theme.colors.dropdownShadow};
       background-clip: padding-box;
@@ -27,7 +26,6 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 0;
       bottom: 0;
       left: 0;
-      z-index: ${theme.zIndex.modalBackdrop};
       background-color: ${backdropBackground};
       opacity: 0.7;
     `,

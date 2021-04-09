@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useRef } from 'react';
 import { cx } from '@emotion/css';
 import { DataLink, PanelData } from '@grafana/data';
 import { Icon } from '@grafana/ui';
@@ -31,6 +31,9 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
   const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
 
+  const ref = useRef<HTMLDivElement>(null);
+  const [positionStyles, setPositionStyles] = useState({});
+
   return (
     <>
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} />
@@ -58,7 +61,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   />
                 ) : null}
                 <span className="panel-title-text">{title}</span>
-                <Icon name="angle-down" className="panel-menu-toggle" />
+                <Icon name="angle-down" ref={ref} className="panel-menu-toggle" />
                 <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} show={panelMenuOpen} onClose={closeMenu} />
                 {data.request && data.request.timeInfo && (
                   <span className="panel-time-info">
