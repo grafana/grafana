@@ -2,6 +2,8 @@ package notifier
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/json"
 	"net/url"
 	"path/filepath"
 	"sync"
@@ -33,9 +35,27 @@ import (
 )
 
 const (
-	workingDir = "alerting"
+	pollInterval = 1 * time.Minute
+	workingDir   = "alerting"
 	// How long should we keep silences and notification entries on-disk after they've served their purpose.
 	retentionNotificationsAndSilences = 5 * 24 * time.Hour
+	// To start, the alertmanager needs at least one route defined.
+	// TODO: we should move this to Grafana settings and define this as the default.
+	alertmanagerDefaultConfiguration = `
+{
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"email_configs": [{
+				"to": "<example@email.com>"
+			}]
+		}]
+	}
+}
+`
 )
 
 type Alertmanager struct {
@@ -59,6 +79,7 @@ type Alertmanager struct {
 	dispatcherMetrics *dispatch.DispatcherMetrics
 
 	reloadConfigMtx sync.RWMutex
+	config          []byte
 }
 
 func init() {
@@ -105,8 +126,8 @@ func (am *Alertmanager) Init() (err error) {
 
 func (am *Alertmanager) Run(ctx context.Context) error {
 	// Make sure dispatcher starts. We can tolerate future reload failures.
-	if err := am.SyncAndApplyConfigFromDatabase(); err != nil && !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-		return err
+	if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+		am.logger.Error(errors.Wrap(err, "unable to sync configuration").Error())
 	}
 
 	for {
@@ -114,14 +135,10 @@ func (am *Alertmanager) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			am.StopAndWait()
 			return nil
-		case <-time.After(1 * time.Minute):
-			// TODO: once we have a check to skip reload on same config, uncomment this.
-			//if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
-			//	if err == store.ErrNoAlertmanagerConfiguration {
-			//		am.logger.Warn(errors.Wrap(err, "unable to sync configuration").Error())
-			//	}
-			//	am.logger.Error(errors.Wrap(err, "unable to sync configuration").Error())
-			//}
+		case <-time.After(pollInterval):
+			if err := am.SyncAndApplyConfigFromDatabase(); err != nil {
+				am.logger.Error(errors.Wrap(err, "unable to sync configuration").Error())
+			}
 		}
 	}
 }
@@ -144,23 +161,23 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
-	// TODO: check if config is same as before using hashes and skip reload in case they are same.
-	cfg, err := am.getConfigFromDatabase()
-	if err != nil {
-		return errors.Wrap(err, "get config from database")
-	}
-	return errors.Wrap(am.applyConfig(cfg), "reload from config")
-}
-
-func (am *Alertmanager) getConfigFromDatabase() (*api.PostableUserConfig, error) {
 	// First, let's get the configuration we need from the database.
 	q := &ngmodels.GetLatestAlertmanagerConfigurationQuery{}
 	if err := am.Store.GetLatestAlertmanagerConfiguration(q); err != nil {
-		return nil, err
+		// If there's no configuration in the database, let's use the default configuration.
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			q.Result = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: alertmanagerDefaultConfiguration}
+		} else {
+			return errors.Wrap(err, "unable to get Alertmanager configuration from the database")
+		}
 	}
 
-	// Then, let's parse and return the alertmanager configuration.
-	return Load(q.Result.AlertmanagerConfiguration)
+	cfg, err := Load([]byte(q.Result.AlertmanagerConfiguration))
+	if err != nil {
+		return err
+	}
+
+	return errors.Wrap(am.applyConfig(cfg), "unable to reload configuration")
 }
 
 // ApplyConfig applies a new configuration by re-initializing all components using the configuration provided.
@@ -176,10 +193,27 @@ const defaultTemplate = "templates/default.tmpl"
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
 func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
-	// First, we need to make sure we persist the templates to disk.
-	paths, _, err := PersistTemplates(cfg, am.WorkingDirPath())
+	// First, let's make sure this config is not already loaded
+	var configChanged bool
+	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
+	if err != nil {
+		// In theory, this should never happen.
+		return err
+	}
+
+	if am.config != nil && md5.Sum(am.config) != md5.Sum(rawConfig) {
+		configChanged = true
+	}
+	// next, we need to make sure we persist the templates to disk.
+	paths, templatesChanged, err := PersistTemplates(cfg, am.WorkingDirPath())
 	if err != nil {
 		return err
+	}
+
+	// If neither the configuration or templates have changed, we've got nothing to do.
+	if !configChanged || !templatesChanged {
+		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
+		return nil
 	}
 
 	paths = append([]string{defaultTemplate}, paths...)
@@ -217,6 +251,7 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 		am.dispatcher.Run()
 	}()
 
+	am.config = rawConfig
 	return nil
 }
 
