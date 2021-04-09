@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -111,7 +112,7 @@ func (s *ManagedStream) Push(path string, frame *data.Frame) error {
 	}
 
 	// The channel this will be posted into.
-	channel := Channel{Scope: ScopeStream, Namespace: s.id, Path: path}.String()
+	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	return s.publisher(channel, frameJSON)
 }

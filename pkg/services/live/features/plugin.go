@@ -100,7 +100,7 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 		Path:          r.path,
 	})
 	if err != nil {
-		logger.Error("Plugin CanSubscribeToStream call error", "error", err, "path", r.path)
+		logger.Error("Plugin OnSubscribe call error", "error", err, "path", r.path)
 		return models.SubscribeReply{}, 0, err
 	}
 	if resp.Status != backend.SubscribeStreamStatusOK {
@@ -144,7 +144,7 @@ func (r *PluginPathRunner) OnPublish(ctx context.Context, user *models.SignedInU
 		Data:          e.Data,
 	})
 	if err != nil {
-		logger.Error("Plugin CanSubscribeToStream call error", "error", err, "path", r.path)
+		logger.Error("Plugin OnPublish call error", "error", err, "path", r.path)
 		return models.PublishReply{}, 0, err
 	}
 	if resp.Status != backend.PublishStreamStatusOK {
