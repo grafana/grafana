@@ -155,7 +155,7 @@ export function parseKeyValue(keyValue: string) {
         val = val !== undefined ? tryDecodeURIComponent(val as string) : true;
 
         let parsedVal: any;
-        if (typeof val === 'string') {
+        if (typeof val === 'string' && val !== '') {
           parsedVal = val === 'true' || val === 'false' ? val === 'true' : _.toNumber(val);
         } else {
           parsedVal = val;
