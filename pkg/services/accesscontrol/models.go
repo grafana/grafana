@@ -95,7 +95,7 @@ const (
 	ActionUsersCreate            = "users:create"
 	ActionUsersEnable            = "users:enable"
 	ActionUsersDisable           = "users:disable"
-	ActionUsersPermissionsUpdate = "users.permissions.update"
+	ActionUsersPermissionsUpdate = "users.permissions:update"
 	ActionUsersLogout            = "users:logout"
 	ActionUsersQuotasList        = "users.quotas:list"
 	ActionUsersQuotasUpdate      = "users.quotas:update"
