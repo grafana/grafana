@@ -19,7 +19,6 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
       return emptyResult();
     }
 
-    console.log('Running AnnotationsWorker');
     const { dashboard, range } = options;
     const annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
     const runners = getAnnotationQueryRunners();

@@ -1,7 +1,5 @@
 import { merge, Observable, Subject, Unsubscribable } from 'rxjs';
-import { catchError, map, mergeAll, reduce } from 'rxjs/operators';
-import { AppEvents } from '@grafana/data';
-import { appEvents } from '../../../../core/core';
+import { map, mergeAll, reduce } from 'rxjs/operators';
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
 import {
   DashboardQueryRunner,
@@ -15,7 +13,6 @@ import { SnapshotWorker } from './SnapshotWorker';
 import { AnnotationsWorker } from './AnnotationsWorker';
 import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
-import { emptyResult } from './utils';
 
 export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   private readonly results: Subject<DashboardQueryRunnerWorkerResult>;
@@ -28,7 +25,6 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   }
 
   run(options: DashboardQueryRunnerOptions): void {
-    console.log('Calling getDashboardQueryRunner with', options);
     const workers = getDashboardQueryRunnerWorkers().filter((w) => w.canWork(options));
     const observables = workers.map((w) => w.work(options));
     merge(observables)
@@ -42,23 +38,9 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
           acc.annotations = acc.annotations.concat(value.annotations);
           acc.alertStates = acc.alertStates.concat(value.alertStates);
           return acc;
-        }),
-        catchError((err) => {
-          if (err.cancelled) {
-            return emptyResult();
-          }
-
-          if (!err.message && err.data && err.data.message) {
-            err.message = err.data.message;
-          }
-
-          console.error('DashboardQueryRunner run error', err);
-          appEvents.emit(AppEvents.alertError, ['DashboardQueryRunner Failed', err.message || err]);
-          return emptyResult();
         })
       )
       .subscribe((x) => {
-        console.log('DashboardQueryRunnerImpl.subscribe', x);
         this.results.next(x);
       });
   }

@@ -1,49 +1,9 @@
-import { getDefaultTimeRange } from '@grafana/data';
-
 import { AnnotationsWorker } from './AnnotationsWorker';
-import { DashboardQueryRunnerOptions } from './types';
 import { setDataSourceSrv } from '@grafana/runtime';
 import * as annotationsSrv from '../../../annotations/annotations_srv';
-import { toAsyncOfResult } from './testHelpers';
+import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import { throwError } from 'rxjs';
-
-const LEGACY_DS_NAME = 'Legacy';
-const NEXT_GEN_DS_NAME = 'NextGen';
-
-function getAnnotation({
-  enable = true,
-  snapshotData,
-  datasource = LEGACY_DS_NAME,
-}: { enable?: boolean; snapshotData?: any; datasource?: string } = {}) {
-  return {
-    enable,
-    hide: false,
-    name: 'Test',
-    iconColor: 'pink',
-    snapshotData,
-    datasource,
-  };
-}
-
-function getDefaultOptions(): DashboardQueryRunnerOptions {
-  const legacy = getAnnotation({ datasource: LEGACY_DS_NAME });
-  const nextGen = getAnnotation({ datasource: NEXT_GEN_DS_NAME });
-  const dashboard: any = {
-    annotations: {
-      list: [
-        legacy,
-        nextGen,
-        getAnnotation({ enable: false }),
-        getAnnotation({ snapshotData: {} }),
-        getAnnotation({ enable: false, snapshotData: {} }),
-      ],
-    },
-  };
-  const range = getDefaultTimeRange();
-
-  return { dashboard, range };
-}
 
 function getTestContext() {
   jest.clearAllMocks();

@@ -15,7 +15,6 @@ export class SnapshotWorker implements DashboardQueryRunnerWorker {
       return emptyResult();
     }
 
-    console.log('Running SnapshotWorker');
     const { dashboard } = options;
     const dashAnnotations = dashboard.annotations.list.filter((a) => a.enable);
     const snapshots = dashAnnotations.filter((a) => Boolean(a.snapshotData));
