@@ -14,6 +14,7 @@ describe('KubernetesClusterActions::', () => {
         setSelectedCluster={jest.fn()}
         setDeleteModalVisible={jest.fn()}
         setViewConfigModalVisible={jest.fn()}
+        setManageComponentsModalVisible={jest.fn()}
         getDBClusters={jest.fn()}
       />
     );
@@ -30,6 +31,7 @@ describe('KubernetesClusterActions::', () => {
         setSelectedCluster={setSelectedCluster}
         setDeleteModalVisible={setDeleteModalVisible}
         setViewConfigModalVisible={jest.fn()}
+        setManageComponentsModalVisible={jest.fn()}
         getDBClusters={jest.fn()}
       />
     );
@@ -62,6 +64,7 @@ describe('KubernetesClusterActions::', () => {
         setSelectedCluster={setSelectedCluster}
         setDeleteModalVisible={setDeleteModalVisible}
         setViewConfigModalVisible={setViewConfigModalVisible}
+        setManageComponentsModalVisible={jest.fn()}
         getDBClusters={jest.fn()}
       />
     );

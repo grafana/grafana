@@ -14,6 +14,7 @@ export const styles = {
   `,
   optionTitle: css`
     color: #d8d9da;
+    white-space: nowrap;
   `,
   optionDescription: css`
     color: #8e8e8e;

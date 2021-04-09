@@ -1,35 +1,54 @@
 import React, { FC, useCallback } from 'react';
+import { config } from '@grafana/runtime';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
-import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions/MultipleActions';
+import { MultipleActions, Action } from 'app/percona/dbaas/components/MultipleActions';
 import { DBClusterActionsProps } from './KubernetesClusterActions.types';
 import { styles } from './KubernetesClusterActions.styles';
 import { Kubernetes } from '../Kubernetes.types';
+import { hasActiveOperator } from '../OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.utils';
 
 export const KubernetesClusterActions: FC<DBClusterActionsProps> = ({
   kubernetesCluster,
   setSelectedCluster,
   setDeleteModalVisible,
   setViewConfigModalVisible,
+  setManageComponentsModalVisible,
   getDBClusters,
 }) => {
+  const isAdmin = config.bootData.user.isGrafanaAdmin;
   const getActions = useCallback(
-    (kubernetesCluster: Kubernetes) => [
-      {
-        title: Messages.kubernetes.deleteAction,
-        action: () => {
-          setSelectedCluster(kubernetesCluster);
-          setDeleteModalVisible(true);
+    (kubernetesCluster: Kubernetes) => {
+      const actions: Action[] = [
+        {
+          title: Messages.kubernetes.deleteAction,
+          action: () => {
+            setSelectedCluster(kubernetesCluster);
+            setDeleteModalVisible(true);
+          },
         },
-      },
-      {
-        title: Messages.kubernetes.showConfiguration,
-        action: () => {
-          setSelectedCluster(kubernetesCluster);
-          setViewConfigModalVisible(true);
+        {
+          title: Messages.kubernetes.showConfiguration,
+          action: () => {
+            setSelectedCluster(kubernetesCluster);
+            setViewConfigModalVisible(true);
+          },
         },
-      },
-    ],
-    [setSelectedCluster, setDeleteModalVisible, getDBClusters]
+      ];
+
+      if (isAdmin) {
+        actions.push({
+          title: Messages.kubernetes.manageComponents,
+          disabled: !hasActiveOperator(kubernetesCluster),
+          action: () => {
+            setSelectedCluster(kubernetesCluster);
+            setManageComponentsModalVisible(true);
+          },
+        });
+      }
+
+      return actions;
+    },
+    [isAdmin, setSelectedCluster, setDeleteModalVisible, getDBClusters]
   );
 
   return (

@@ -1,0 +1,90 @@
+import React, { FC, ChangeEvent, FocusEvent, useState, useMemo, useCallback, useEffect } from 'react';
+import { Field, FieldInputProps } from 'react-final-form';
+import { cx } from 'emotion';
+import { useStyles } from '@grafana/ui';
+import { CheckboxField, validators } from '@percona/platform-core';
+import { getStyles } from './MultiCheckboxField.styles';
+import { MultiCheckboxFieldProps, MultiCheckboxRenderProps } from './MultiCheckboxField.types';
+
+const { compose } = validators;
+
+export const MultiCheckboxField: FC<MultiCheckboxFieldProps> = React.memo(
+  ({
+    className,
+    disabled = false,
+    label,
+    name,
+    required = false,
+    showErrorOnBlur = false,
+    initialOptions,
+    validators,
+    recommendedOptions = [],
+    recommendedLabel,
+    ...fieldConfig
+  }) => {
+    const styles = useStyles(getStyles);
+    const [selectedOptions, setSelectedOptions] = useState(initialOptions);
+    const validate = useMemo(() => (Array.isArray(validators) ? compose(...validators) : undefined), [validators]);
+    const onChangeOption = useCallback(
+      (input: FieldInputProps<string, HTMLElement>) => ({ target }: ChangeEvent<HTMLInputElement>) => {
+        const newSelectedOptions = selectedOptions.map(option =>
+          option.name === target.name ? { ...option, value: target.checked } : option
+        );
+
+        input.onChange(newSelectedOptions);
+        setSelectedOptions(newSelectedOptions);
+      },
+      [selectedOptions]
+    );
+    const onBlurOption = useCallback(
+      (input: FieldInputProps<string, HTMLElement>) => (event: FocusEvent<HTMLElement>) => input.onBlur(event),
+      []
+    );
+
+    useEffect(() => setSelectedOptions(initialOptions), [initialOptions]);
+
+    return (
+      <Field {...fieldConfig} name={name} initialValue={selectedOptions} validate={validate}>
+        {({ input, meta }: MultiCheckboxRenderProps) => {
+          const validationError = meta.error && typeof meta.error === 'string' ? meta.error : undefined;
+
+          return (
+            <div className={styles.field} data-qa={`${name}-field-container`}>
+              {label && (
+                <label className={styles.label} data-qa={`${name}-field-label`}>
+                  {`${label}${required ? ' *' : ''}`}
+                </label>
+              )}
+              <div
+                className={cx(styles.getOptionsWrapperStyles(!!validationError), className)}
+                data-qa={`${name}-options`}
+              >
+                {selectedOptions.map(({ name, label, value }) => (
+                  <div className={styles.optionWrapper} key={name} data-qa={`${name}-option`}>
+                    <span className={styles.optionLabel}>{label}</span>
+                    {recommendedOptions.some(r => r.name === name) && (
+                      <span className={styles.recommendedLabel}>{recommendedLabel}</span>
+                    )}
+                    <CheckboxField
+                      name={name}
+                      inputProps={{
+                        checked: value,
+                        onChange: onChangeOption(input),
+                        onBlur: onBlurOption(input),
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div data-qa={`${name}-field-error-message`} className={styles.errorMessage}>
+                {validationError}
+              </div>
+            </div>
+          );
+        }}
+      </Field>
+    );
+  }
+);
+
+MultiCheckboxField.displayName = 'MultiCheckboxField';

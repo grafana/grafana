@@ -1,5 +1,8 @@
-import { DBClusterExpectedResources } from '../DBCluster.types';
-import { dbClusterExpectedResourcesStub, xtraDBClusterConnectionStub } from './dbClustersStubs';
+import {
+  dbClusterExpectedResourcesStub,
+  xtraDBClusterConnectionStub,
+  xtradbComponentsVersionsStubs,
+} from './dbClustersStubs';
 
 export class XtraDBService {
   getDBClusterCredentials() {
@@ -8,7 +11,11 @@ export class XtraDBService {
 
   restartDBCluster() {}
 
-  getExpectedResources(): Promise<DBClusterExpectedResources> {
+  getExpectedResources() {
     return Promise.resolve(dbClusterExpectedResourcesStub);
+  }
+
+  getComponents() {
+    return Promise.resolve(xtradbComponentsVersionsStubs);
   }
 }

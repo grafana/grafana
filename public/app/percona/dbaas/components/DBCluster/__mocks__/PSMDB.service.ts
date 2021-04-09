@@ -1,5 +1,8 @@
-import { DBClusterExpectedResources } from '../DBCluster.types';
-import { dbClusterExpectedResourcesStub, mongoDBClusterConnectionStub } from './dbClustersStubs';
+import {
+  dbClusterExpectedResourcesStub,
+  mongoDBClusterConnectionStub,
+  psmdbComponentsVersionsStubs,
+} from './dbClustersStubs';
 
 export class PSMDBService {
   getDBClusterCredentials() {
@@ -8,7 +11,11 @@ export class PSMDBService {
 
   restartDBCluster() {}
 
-  getExpectedResources(): Promise<DBClusterExpectedResources> {
+  getExpectedResources() {
     return Promise.resolve(dbClusterExpectedResourcesStub);
+  }
+
+  getComponents() {
+    return Promise.resolve(psmdbComponentsVersionsStubs);
   }
 }

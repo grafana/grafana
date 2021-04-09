@@ -1,5 +1,13 @@
 import { Databases } from 'app/percona/shared/core';
-import { CpuUnits, DBCluster, DBClusterConnection, DBClusterStatus, ResourcesUnits } from '../DBCluster.types';
+import { Operators } from '../AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
+import {
+  CpuUnits,
+  DBCluster,
+  DBClusterConnection,
+  DBClusterStatus,
+  ResourcesUnits,
+  DBClusterComponentVersionStatus,
+} from '../DBCluster.types';
 
 export const dbClustersStub: DBCluster[] = [
   {
@@ -132,4 +140,46 @@ export const dbClusterExpectedResourcesStub = {
     cpu: { value: 4, units: CpuUnits.MILLI },
     disk: { value: 20, units: ResourcesUnits.GB },
   },
+};
+
+export const versionsStub = {
+  '1.0': {
+    image_path: 'test_image',
+    image_hash: 'test_hash',
+    status: DBClusterComponentVersionStatus.available,
+    critical: false,
+    default: false,
+  },
+  '2.0': {
+    image_path: 'test_image',
+    image_hash: 'test_hash',
+    status: DBClusterComponentVersionStatus.recommended,
+    critical: false,
+    default: true,
+  },
+};
+
+export const xtradbComponentsVersionsStubs = {
+  versions: [
+    {
+      product: Operators.xtradb,
+      operator: '1',
+      matrix: {
+        pxc: versionsStub,
+        proxysql: versionsStub,
+      },
+    },
+  ],
+};
+
+export const psmdbComponentsVersionsStubs = {
+  versions: [
+    {
+      product: Operators.psmdb,
+      operator: '1',
+      matrix: {
+        mongod: versionsStub,
+      },
+    },
+  ],
 };
