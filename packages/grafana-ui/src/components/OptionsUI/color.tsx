@@ -5,7 +5,7 @@ import { stylesFactory, useTheme } from '../../themes';
 import { css } from '@emotion/css';
 import { ColorPickerTrigger } from '../ColorPicker/ColorPickerTrigger';
 
-export interface Props {
+export interface ColorValueEditorProps {
   value?: string;
   onChange: (value?: string) => void;
 }
@@ -13,7 +13,7 @@ export interface Props {
 /**
  * @alpha
  * */
-export const ColorValueEditor: React.FC<Props> = ({ value, onChange }) => {
+export const ColorValueEditor: React.FC<ColorValueEditorProps> = ({ value, onChange }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
