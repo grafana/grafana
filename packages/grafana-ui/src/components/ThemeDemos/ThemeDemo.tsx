@@ -115,7 +115,7 @@ export const ThemeDemo = () => {
                 <tr>
                   <td>name</td>
                   <td>main</td>
-                  <td>shade</td>
+                  <td>shade (used for hover)</td>
                   <td>border & text</td>
                 </tr>
               </thead>
