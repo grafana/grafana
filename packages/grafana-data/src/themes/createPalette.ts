@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { emphasize, getContrastRatio } from './colorManipulator';
+import { darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { colors } from './colors';
 import { DeepPartial, ThemePaletteColor } from './types';
 
@@ -42,10 +42,23 @@ export interface ThemePaletteBase<TColor> {
     disabledText: string;
   };
 
+  action: {
+    /** Used for selected menu item / select option */
+    selected: string;
+    /** Used for hovered menu item / select option */
+    hover: string;
+    /** Used for button/colored background hover opacity */
+    hoverOpacity: number;
+    /** Used focused menu item / select option */
+    focus: string;
+  };
+
   hoverFactor: number;
   contrastThreshold: number;
   tonalOffset: number;
 }
+
+export interface ThemeHoverStrengh {}
 
 /** @beta */
 export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
@@ -71,12 +84,13 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
 
   primary = {
     main: colors.blueDark1,
-    border: colors.blueDark2,
     text: colors.blueDark2,
   };
 
   secondary = {
     main: 'rgba(255,255,255,0.1)',
+    shade: 'rgba(255,255,255,0.15)',
+    text: 'rgba(255,255,255,0.13)',
     contrastText: 'rgba(255, 255, 255, 0.8)',
   };
 
@@ -84,14 +98,12 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
 
   error = {
     main: colors.redDark1,
-    border: colors.redDark2,
     text: colors.redDark2,
   };
 
   success = {
     main: colors.green1,
     text: colors.green2,
-    border: colors.green2,
   };
 
   warning = {
@@ -114,9 +126,16 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     disabledBackground: 'rgba(255,255,255,0.07)',
   };
 
+  action = {
+    selected: 'rgba(255, 255, 255, 0.16)',
+    hover: 'rgba(255, 255, 255, 0.08)',
+    hoverOpacity: 0.08,
+    focus: 'rgba(255, 255, 255, 0.12)',
+  };
+
   contrastThreshold = 3;
   hoverFactor = 0.03;
-  tonalOffset = 0.1;
+  tonalOffset = 0.15;
 }
 
 class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
@@ -130,6 +149,7 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
 
   secondary = {
     main: 'rgba(0,0,0,0.14)',
+    shade: 'rgba(0,0,0,0.18)',
     contrastText: 'rgba(0, 0, 0, 0.75)',
   };
 
@@ -140,8 +160,8 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
 
   error = {
     main: colors.redLight1,
-    text: colors.redLight2,
-    border: colors.redLight2,
+    text: colors.redLight1,
+    border: colors.redLight1,
   };
 
   success = {
@@ -174,6 +194,13 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     text: this.text.primary,
     disabledBackground: 'rgba(0,0,0,0.07)',
     disabledText: this.text.disabled,
+  };
+
+  action = {
+    hover: 'rgba(0, 0, 0, 0.04)',
+    selected: 'rgba(0, 0, 0, 0.08)',
+    hoverOpacity: 0.08,
+    focus: 'rgba(0, 0, 0, 0.12)',
   };
 
   contrastThreshold = 3;
@@ -216,11 +243,11 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     if (!color.main) {
       throw new Error(`Missing main color for ${name}`);
     }
-    if (!color.border) {
-      color.border = color.main;
-    }
     if (!color.text) {
       color.text = color.main;
+    }
+    if (!color.shade) {
+      color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);

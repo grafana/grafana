@@ -3,7 +3,7 @@ import { css, CSSObject, cx } from '@emotion/css';
 import { useTheme } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
-import { GrafanaTheme, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
+import { colorManipulator, GrafanaTheme, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
 import { ComponentSize } from '../../types/size';
 import { getFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
@@ -151,7 +151,7 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemePaletteColor)
     }),
 
     '&:hover': {
-      background: theme.palette.getHoverColor(color.main, 0.15),
+      background: color.shade,
       color: color.contrastText,
       boxShadow: theme.shadows.z2,
     },
@@ -181,7 +181,7 @@ export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVa
         },
 
         '&:hover': {
-          color: theme.palette.getHoverColor(theme.palette.text.link),
+          background: colorManipulator.alpha(theme.palette.text.link, theme.palette.action.hoverOpacity),
           textDecoration: 'underline',
         },
       };

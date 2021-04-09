@@ -74,11 +74,11 @@ const getStyles = (theme: GrafanaTheme) => {
       white-space: nowrap;
 
       &:hover {
-        background: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer2)};
+        background: ${theme.v2.palette.action.hover};
       }
     `,
     activeItem: css`
-      background: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer2, 0.1)};
+      background: ${theme.v2.palette.action.selected};
     `,
     icon: css`
       opacity: 0.7;

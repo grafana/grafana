@@ -3,13 +3,10 @@ import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 
 export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
-  const menuBg = theme.v2.palette.layer2;
-  const optionBgHover = theme.v2.palette.getHoverColor(menuBg, 0.07);
-
   return {
     menu: css`
       label: grafana-select-menu;
-      background: ${menuBg};
+      background: ${theme.v2.palette.layer2};
       box-shadow: ${theme.v2.shadows.z2};
       position: relative;
       min-width: 100%;
@@ -25,8 +22,9 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       white-space: nowrap;
       cursor: pointer;
       border-left: 2px solid transparent;
+
       &:hover {
-        background: ${optionBgHover};
+        background: ${theme.v2.palette.action.hover};
       }
     `,
     optionImage: css`
@@ -51,7 +49,10 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     optionFocused: css`
       label: grafana-select-option-focused;
-      background: ${optionBgHover};
+      background: ${theme.v2.palette.action.focus};
+    `,
+    optionSelected: css`
+      background: ${theme.v2.palette.action.selected};
     `,
     singleValue: css`
       label: grafana-select-single-value;
