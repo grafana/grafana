@@ -157,8 +157,8 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 				path = fmt.Sprintf("/%s", path)
 			} else {
 				// A string starting with // or /\ is interpreted by browsers as a URL, and not a server relative path
-				rePrefix := regexp.MustCompile(`^/+|^/\\`)
-				path = rePrefix.ReplaceAll(path, "/")
+				rePrefix := regexp.MustCompile(`^(?:/\\|/+)`)
+				path = rePrefix.ReplaceAllString(path, "/")
 			}
 			http.Redirect(ctx.Resp, ctx.Req.Request, path, http.StatusFound)
 			return true
