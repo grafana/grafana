@@ -7,7 +7,7 @@ export enum BinaryOperationID {
   Multiply = '*',
 }
 
-export type BinaryOperation = (left: number, right: number) => number;
+export type BinaryOperation = (a: number, b: number) => number;
 
 interface BinaryOperatorInfo extends RegistryItem {
   operation: BinaryOperation;
