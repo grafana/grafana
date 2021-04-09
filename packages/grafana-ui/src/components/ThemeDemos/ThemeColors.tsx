@@ -58,9 +58,6 @@ export const ThemeColors = () => {
               colors.bg2 background used for elements placed on colors.bg1. Using colors.border1 should be used on
               elements placed ontop of bg1. This box is using border2.
             </DemoText>
-            <DemoBox bg={theme.colors.bg3} border={theme.colors.border2}>
-              <DemoText>colors.bg3 background used for elements placed on colors.bg2.</DemoText>
-            </DemoBox>
           </DemoBox>
         </DemoBox>
       </DemoBox>

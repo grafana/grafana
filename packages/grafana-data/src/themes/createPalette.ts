@@ -134,7 +134,7 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   contrastThreshold = 3;
-  hoverFactor = 0.03;
+  hoverFactor = 0.15;
   tonalOffset = 0.15;
 }
 
@@ -204,7 +204,7 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   contrastThreshold = 3;
-  hoverFactor = 0.03;
+  hoverFactor = 0.15;
   tonalOffset = 0.2;
 }
 
