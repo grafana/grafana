@@ -140,38 +140,7 @@ class DataSourceWithBackend<
           const rsp = toDataQueryResponse(raw, queries as DataQuery[]);
           // Check if any response should subscribe to a live stream
           if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
-            const buffer: StreamingFrameOptions = {
-              maxLength: request.maxDataPoints ?? 500,
-            };
-
-            // For recent queries, clamp to the current time range
-            if (request.rangeRaw?.to === 'now') {
-              buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
-            }
-
-            const staticdata: DataFrame[] = [];
-            const streams: Array<Observable<DataQueryResponse>> = [];
-            for (const frame of rsp.data) {
-              const addr = parseLiveChannelAddress(frame.meta?.channel);
-              if (addr) {
-                streams.push(
-                  getLiveDataStream({
-                    addr,
-                    buffer,
-                    frame: frame as DataFrame,
-                  })
-                );
-              } else {
-                staticdata.push(frame);
-              }
-            }
-            if (staticdata.length) {
-              streams.push(of({ ...rsp, data: staticdata }));
-            }
-            if (streams.length === 1) {
-              return streams[0]; // avoid merge wrapper
-            }
-            return merge(...streams);
+            return toStreamingDataResponse(request, rsp);
           }
           return of(rsp);
         }),
@@ -247,6 +216,44 @@ class DataSourceWithBackend<
       throw new HealthCheckError(res.message, res.details);
     });
   }
+}
+
+export function toStreamingDataResponse(
+  request: DataQueryRequest,
+  rsp: DataQueryResponse
+): Observable<DataQueryResponse> {
+  const buffer: StreamingFrameOptions = {
+    maxLength: request.maxDataPoints ?? 500,
+  };
+
+  // For recent queries, clamp to the current time range
+  if (request.rangeRaw?.to === 'now') {
+    buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+  }
+
+  const staticdata: DataFrame[] = [];
+  const streams: Array<Observable<DataQueryResponse>> = [];
+  for (const frame of rsp.data) {
+    const addr = parseLiveChannelAddress(frame.meta?.channel);
+    if (addr) {
+      streams.push(
+        getLiveDataStream({
+          addr,
+          buffer,
+          frame: frame as DataFrame,
+        })
+      );
+    } else {
+      staticdata.push(frame);
+    }
+  }
+  if (staticdata.length) {
+    streams.push(of({ ...rsp, data: staticdata }));
+  }
+  if (streams.length === 1) {
+    return streams[0]; // avoid merge wrapper
+  }
+  return merge(...streams);
 }
 
 //@ts-ignore
