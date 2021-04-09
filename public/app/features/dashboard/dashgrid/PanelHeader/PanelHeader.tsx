@@ -34,35 +34,18 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
   const [menuIconCoordinates, setMenuIconCoordinates] = useState<CartesianCoords2D>({ x: 0, y: 0 });
 
   useLayoutEffect(() => {
-    const menuElement = menuRef.current;
-    if (menuElement) {
-      const rect = menuElement.getBoundingClientRect();
-      // const OFFSET = 5;
-      // const collisions = {
-      //   right: window.innerWidth < x + rect.width,
-      //   bottom: window.innerHeight < rect.bottom + rect.height + OFFSET,
-      // };
-
-      setMenuIconCoordinates({
-        // position: 'fixed',
-        // left: collisions.right ? x - rect.width - OFFSET : x - OFFSET,
-        // top: collisions.bottom ? y - rect.height - OFFSET : y + OFFSET,
-        x: rect.x,
-        y: rect.y,
-      });
+    if (menuRef.current) {
+      const coordinates = menuRef.current.getBoundingClientRect();
+      setMenuIconCoordinates({ x: coordinates.x, y: coordinates.y });
+      console.log(coordinates.y);
+      console.log(coordinates.x);
     }
-  });
-
-  // useClickAway(menuRef, () => {
-  //   if (onClose) {
-  //     onClose();
-  //   }
-  // });
+  }, [menuRef]);
 
   return (
     <>
       <PanelHeaderLoadingIndicator state={data.state} onClick={onCancelQuery} />
-      <div className={className}>
+      <div className={className} ref={menuRef}>
         <PanelHeaderCorner
           panel={panel}
           title={panel.title}
@@ -86,7 +69,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   />
                 ) : null}
                 <span className="panel-title-text">{title}</span>
-                <Icon name="angle-down" className="panel-menu-toggle" ref={menuRef} />
+                <Icon name="angle-down" className="panel-menu-toggle" />
                 <PanelHeaderMenuWrapper
                   panel={panel}
                   dashboard={dashboard}
