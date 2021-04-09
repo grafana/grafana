@@ -1,4 +1,4 @@
-import { merge, Observable, Subject, Unsubscribable } from 'rxjs';
+import { merge, Observable, ReplaySubject, Subject, Unsubscribable } from 'rxjs';
 import { map, mergeAll, reduce } from 'rxjs/operators';
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
 import {
@@ -15,12 +15,12 @@ import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 
 export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
-  private readonly results: Subject<DashboardQueryRunnerWorkerResult>;
+  private readonly results: ReplaySubject<DashboardQueryRunnerWorkerResult>;
   private readonly cancellations: Subject<{}>;
   private readonly subscription: Unsubscribable;
 
   constructor() {
-    this.results = new Subject<DashboardQueryRunnerWorkerResult>();
+    this.results = new ReplaySubject<DashboardQueryRunnerWorkerResult>(1);
     this.cancellations = new Subject<{}>();
   }
 
@@ -45,17 +45,17 @@ export class DashboardQueryRunnerImpl implements DashboardQueryRunner {
       });
   }
 
-  getResult(panelId: number): Observable<DashboardQueryRunnerResult> {
+  getResult(panelId?: number): Observable<DashboardQueryRunnerResult> {
     return this.results.asObservable().pipe(
       map((result) => {
         const annotations = result.annotations.filter((item) => {
-          if (item.panelId && item.source?.type === 'dashboard') {
+          if (Boolean(panelId) && item.panelId && item.source?.type === 'dashboard') {
             return item.panelId === panelId;
           }
           return true;
         });
 
-        const alertState = result.alertStates.find((res) => res.panelId === panelId);
+        const alertState = result.alertStates.find((res) => Boolean(panelId) && res.panelId === panelId);
 
         return { annotations: dedupAnnotations(annotations), alertState };
       })
