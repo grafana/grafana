@@ -201,7 +201,7 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 		return err
 	}
 
-	if am.config != nil && md5.Sum(am.config) != md5.Sum(rawConfig) {
+	if md5.Sum(am.config) != md5.Sum(rawConfig) {
 		configChanged = true
 	}
 	// next, we need to make sure we persist the templates to disk.
@@ -210,8 +210,8 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 		return err
 	}
 
-	// If neither the configuration or templates have changed, we've got nothing to do.
-	if !configChanged || !templatesChanged {
+	// If neither the configuration nor templates have changed, we've got nothing to do.
+	if !configChanged && !templatesChanged {
 		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
 		return nil
 	}
