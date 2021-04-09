@@ -198,6 +198,32 @@ type PostableUserConfig struct {
 	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
 }
 
+func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
+	type plain PostableUserConfig
+	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
+		return err
+	}
+
+	return c.validate()
+}
+
+func (c *PostableUserConfig) validate() error {
+	// Taken from https://github.com/prometheus/alertmanager/blob/master/config/config.go#L170-L191
+	// Check if we have a root route. We cannot check for it in the
+	// UnmarshalYAML method because it won't be called if the input is empty
+	// (e.g. the config file is empty or only contains whitespace).
+	if c.AlertmanagerConfig.Route == nil {
+		return fmt.Errorf("no route provided in config")
+	}
+
+	// Check if continue in root route.
+	if c.AlertmanagerConfig.Route.Continue {
+		return fmt.Errorf("cannot have continue in root route")
+	}
+
+	return nil
+}
+
 // swagger:model
 type GettableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
