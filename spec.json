@@ -717,7 +717,7 @@
         }
       }
     },
-    "/api/v1/receiver/test": {
+    "/api/v1/receiver/test/{Recipient}": {
       "post": {
         "description": "Test receiver",
         "consumes": [
@@ -731,6 +731,13 @@
         ],
         "operationId": "RouteTestReceiverConfig",
         "parameters": [
+          {
+            "type": "string",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
+            "in": "path",
+            "required": true
+          },
           {
             "name": "Body",
             "in": "body",
@@ -761,7 +768,7 @@
         }
       }
     },
-    "/api/v1/rule/test": {
+    "/api/v1/rule/test/{Recipient}": {
       "post": {
         "description": "Test rule",
         "consumes": [
@@ -775,6 +782,13 @@
         ],
         "operationId": "RouteTestRuleConfig",
         "parameters": [
+          {
+            "type": "string",
+            "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+            "name": "Recipient",
+            "in": "path",
+            "required": true
+          },
           {
             "name": "Body",
             "in": "body",
@@ -849,7 +863,7 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "AlertGroup": {
-      "$ref": "#/definitions/AlertGroup"
+      "$ref": "#/definitions/alertGroup"
     },
     "AlertGroups": {
       "$ref": "#/definitions/alertGroups"
@@ -1358,7 +1372,7 @@
       "$ref": "#/definitions/GettableAlert"
     },
     "GettableAlerts": {
-      "$ref": "#/definitions/GettableAlerts"
+      "$ref": "#/definitions/gettableAlerts"
     },
     "GettableApiAlertingConfig": {
       "type": "object",
@@ -1632,7 +1646,7 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "GettableSilences": {
-      "$ref": "#/definitions/gettableSilences"
+      "$ref": "#/definitions/GettableSilences"
     },
     "GettableUserConfig": {
       "type": "object",
@@ -1836,21 +1850,6 @@
         "$ref": "#/definitions/Label"
       },
       "x-go-package": "github.com/prometheus/prometheus/pkg/labels"
-    },
-    "LotexQuery": {
-      "type": "object",
-      "properties": {
-        "Expr": {
-          "type": "string",
-          "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)"
-        },
-        "datasourceUid": {
-          "description": "DatasourceUID is required if the query will be sent to grafana to be executed",
-          "type": "string",
-          "x-go-name": "DatasourceUID"
-        }
-      },
-      "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "MatchRegexps": {
       "type": "object",
@@ -2487,7 +2486,7 @@
           "x-go-name": "WechatConfigs"
         }
       },
-      "$ref": "#/definitions/receiver"
+      "$ref": "#/definitions/Receiver"
     },
     "Regexp": {
       "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
@@ -2979,7 +2978,9 @@
       "type": "object",
       "properties": {
         "expr": {
-          "$ref": "#/definitions/LotexQuery"
+          "type": "string",
+          "x-go-name": "Expr",
+          "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)"
         },
         "grafana_condition": {
           "$ref": "#/definitions/EvalAlertConditionCommand"
@@ -3211,7 +3212,7 @@
           "description": "alerts",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/GettableAlert"
+            "$ref": "#/definitions/gettableAlert"
           },
           "x-go-name": "Alerts"
         },
@@ -3219,7 +3220,7 @@
           "$ref": "#/definitions/labelSet"
         },
         "receiver": {
-          "$ref": "#/definitions/receiver"
+          "$ref": "#/definitions/Receiver"
         }
       },
       "x-go-name": "AlertGroup",

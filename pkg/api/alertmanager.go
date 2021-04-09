@@ -183,6 +183,8 @@ type BodyAlertingConfig struct {
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
 // prom routes
 // swagger:parameters RouteGetRuleStatuses RouteGetAlertStatuses
+// testing routes
+// swagger:parameters RouteTestReceiverConfig RouteTestRuleConfig
 type DatasourceReference struct {
 	// Recipient should be "grafana" for requests to be handled by grafana
 	// and the numeric datasource id for requests to be forwarded to a datasource

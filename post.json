@@ -57,7 +57,9 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "AlertGroup": {},
+  "AlertGroup": {
+   "$ref": "#/definitions/alertGroup"
+  },
   "AlertGroups": {
    "$ref": "#/definitions/alertGroups"
   },
@@ -561,7 +563,9 @@
    "$ref": "#/definitions/ResponseDetails"
   },
   "GettableAlert": {},
-  "GettableAlerts": {},
+  "GettableAlerts": {
+   "$ref": "#/definitions/gettableAlerts"
+  },
   "GettableApiAlertingConfig": {
    "properties": {
     "global": {
@@ -833,9 +837,7 @@
   "GettableSilence": {
    "$ref": "#/definitions/gettableSilence"
   },
-  "GettableSilences": {
-   "$ref": "#/definitions/gettableSilences"
-  },
+  "GettableSilences": {},
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -1038,21 +1040,6 @@
    },
    "type": "array",
    "x-go-package": "github.com/prometheus/prometheus/pkg/labels"
-  },
-  "LotexQuery": {
-   "properties": {
-    "Expr": {
-     "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)",
-     "type": "string"
-    },
-    "datasourceUid": {
-     "description": "DatasourceUID is required if the query will be sent to grafana to be executed",
-     "type": "string",
-     "x-go-name": "DatasourceUID"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "MatchRegexps": {
    "additionalProperties": {
@@ -1623,7 +1610,6 @@
    "x-go-package": "github.com/prometheus/alertmanager/config"
   },
   "Receiver": {
-   "$ref": "#/definitions/receiver",
    "properties": {
     "email_configs": {
      "items": {
@@ -2179,7 +2165,9 @@
   "TestRulePayload": {
    "properties": {
     "expr": {
-     "$ref": "#/definitions/LotexQuery"
+     "example": "(node_filesystem_avail_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} node_filesystem_size_bytes{fstype!=\"\",job=\"integrations/node_exporter\"} * 100 \u003c 5 and node_filesystem_readonly{fstype!=\"\",job=\"integrations/node_exporter\"} == 0)",
+     "type": "string",
+     "x-go-name": "Expr"
     },
     "grafana_condition": {
      "$ref": "#/definitions/EvalAlertConditionCommand"
@@ -2405,7 +2393,7 @@
     "alerts": {
      "description": "alerts",
      "items": {
-      "$ref": "#/definitions/GettableAlert"
+      "$ref": "#/definitions/gettableAlert"
      },
      "type": "array",
      "x-go-name": "Alerts"
@@ -2414,7 +2402,7 @@
      "$ref": "#/definitions/labelSet"
     },
     "receiver": {
-     "$ref": "#/definitions/receiver"
+     "$ref": "#/definitions/Receiver"
     }
    },
    "required": [
@@ -3685,7 +3673,7 @@
     ]
    }
   },
-  "/api/v1/receiver/test": {
+  "/api/v1/receiver/test/{Recipient}": {
    "post": {
     "consumes": [
      "application/json"
@@ -3693,6 +3681,13 @@
     "description": "Test receiver",
     "operationId": "RouteTestReceiverConfig",
     "parameters": [
+     {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "in": "path",
+      "name": "Recipient",
+      "required": true,
+      "type": "string"
+     },
      {
       "in": "body",
       "name": "Body",
@@ -3729,7 +3724,7 @@
     ]
    }
   },
-  "/api/v1/rule/test": {
+  "/api/v1/rule/test/{Recipient}": {
    "post": {
     "consumes": [
      "application/json"
@@ -3737,6 +3732,13 @@
     "description": "Test rule",
     "operationId": "RouteTestRuleConfig",
     "parameters": [
+     {
+      "description": "Recipient should be \"grafana\" for requests to be handled by grafana\nand the numeric datasource id for requests to be forwarded to a datasource",
+      "in": "path",
+      "name": "Recipient",
+      "required": true,
+      "type": "string"
+     },
      {
       "in": "body",
       "name": "Body",
