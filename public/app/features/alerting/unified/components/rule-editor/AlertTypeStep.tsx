@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useEffect } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Field, Input, InputControl, stylesFactory, Select } from '@grafana/ui';
-import { config } from 'app/core/config';
+import { Field, Input, InputControl, Select, useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import { RuleEditorSection } from './RuleEditorSection';
@@ -26,7 +25,7 @@ const alertTypeOptions: SelectableValue[] = [
 ];
 
 export const AlertTypeStep: FC = () => {
-  const styles = getStyles(config.theme);
+  const styles = useStyles(getStyles);
 
   const { register, control, watch, errors, setValue } = useFormContext<RuleFormValues>();
 
@@ -124,18 +123,16 @@ export const AlertTypeStep: FC = () => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    formInput: css`
-      width: 330px;
-      & + & {
-        margin-left: ${theme.spacing.sm};
-      }
-    `,
-    flexRow: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-    `,
-  };
+const getStyles = (theme: GrafanaTheme) => ({
+  formInput: css`
+    width: 330px;
+    & + & {
+      margin-left: ${theme.spacing.sm};
+    }
+  `,
+  flexRow: css`
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+  `,
 });

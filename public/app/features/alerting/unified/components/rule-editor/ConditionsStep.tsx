@@ -1,10 +1,11 @@
 import React, { FC } from 'react';
-import { Field, Input, Select, useStyles, Label, InputControl } from '@grafana/ui';
+import { Field, Input, Select, useStyles, Label, InputControl, InlineLabel } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { ConditionField } from './ConditionField';
 
 enum TIME_OPTIONS {
   seconds = 's',
@@ -41,22 +42,39 @@ export const ConditionsStep: FC = () => {
 
   return (
     <RuleEditorSection stepNo={3} title="Define alert conditions">
-      <Label description="Required time for which the expression has to happen">For</Label>
+      {type === RuleFormType.threshold && (
+        <>
+          <ConditionField />
+          <Field label="Evaluate">
+            <>
+              <InlineLabel width={122} tooltip="How often the alert will be evaluated to see if it fires">
+                Evaluate every
+              </InlineLabel>
+              <Input ref={register()} name="evaluateEvery" />
+              <InlineLabel width={33}>for</InlineLabel>
+              <Input ref={register()} name="evaluateFor" />
+            </>
+          </Field>
+        </>
+      )}
       {type === RuleFormType.system && (
-        <div className={styles.flexRow}>
-          <Field className={styles.numberInput}>
-            <Input ref={register()} name="forTime" />
-          </Field>
-          <Field className={styles.numberInput}>
-            <InputControl
-              name="forTimeUnit"
-              as={Select}
-              options={timeOptions}
-              control={control}
-              onChange={(val: SelectableValue) => val.value}
-            />
-          </Field>
-        </div>
+        <>
+          <Label description="Required time for which the expression has to happen">For</Label>
+          <div className={styles.flexRow}>
+            <Field className={styles.numberInput}>
+              <Input ref={register()} name="forTime" />
+            </Field>
+            <Field className={styles.numberInput}>
+              <InputControl
+                name="forTimeUnit"
+                as={Select}
+                options={timeOptions}
+                control={control}
+                onChange={(val: SelectableValue) => val.value}
+              />
+            </Field>
+          </div>
+        </>
       )}
     </RuleEditorSection>
   );

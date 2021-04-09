@@ -16,9 +16,9 @@ export interface RuleFormValues {
 
   // threshold alerts
   queries: GrafanaQuery[];
-  condition: string;
-  no_data_state: GrafanaAlertState;
-  exec_err_state: GrafanaAlertState;
+  condition: string | null; // refId of the query that gets alerted on
+  noDataState: GrafanaAlertState;
+  execErrState: GrafanaAlertState;
   folder?: { title: string; id: number };
   evaluateEvery: string;
   evaluateFor: string;

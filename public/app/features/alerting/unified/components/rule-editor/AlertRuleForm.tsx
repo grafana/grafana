@@ -19,19 +19,22 @@ type Props = {};
 
 const defaultValues: RuleFormValues = Object.freeze({
   name: '',
-  expression: '',
-  queries: SAMPLE_QUERIES, // @TODO remove eventually
-  condition: '',
-  no_data_state: GrafanaAlertState.NoData,
-  exec_err_state: GrafanaAlertState.Alerting,
-  dataSourceName: null,
   labels: [{ key: '', value: '' }],
   annotations: [{ key: '', value: '' }],
-  forTime: 1,
-  forTimeUnit: 'm',
+  dataSourceName: null,
 
+  // threshold
+  queries: SAMPLE_QUERIES, // @TODO remove the sample eventually
+  condition: '',
+  noDataState: GrafanaAlertState.NoData,
+  execErrState: GrafanaAlertState.Alerting,
   evaluateEvery: '1m',
   evaluateFor: '5m',
+
+  // system
+  expression: '',
+  forTime: 1,
+  forTimeUnit: 'm',
 });
 
 export const AlertRuleForm: FC<Props> = () => {
