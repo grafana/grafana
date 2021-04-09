@@ -107,15 +107,6 @@ div.flot-text {
   &--no-padding {
     padding: 0;
   }
-
-  &--scrollable-y {
-    overflow: hidden auto;
-    margin-bottom: $panel-padding;
-  }
-
-  &--no-padding.panel-content--scrollable-y {
-    margin-bottom: 0;
-  }
 }
 
 .dashboard-header {

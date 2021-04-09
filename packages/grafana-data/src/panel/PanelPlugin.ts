@@ -106,7 +106,7 @@ export class PanelPlugin<
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
-  scrollableY?: boolean;
+  scrollable?: boolean;
 
   /**
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
@@ -200,8 +200,8 @@ export class PanelPlugin<
     return this;
   }
 
-  setScrollable(scrollableY = false) {
-    this.scrollableY = scrollableY;
+  setScrollable(scrollable = false) {
+    this.scrollable = scrollable;
     return this;
   }
 
