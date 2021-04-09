@@ -1,6 +1,8 @@
 package live
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/centrifugal/centrifuge"
@@ -8,17 +10,20 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 )
 
-type pluginChannelPublisher struct {
+type pluginPacketSender struct {
 	node *centrifuge.Node
 }
 
-func newPluginChannelPublisher(node *centrifuge.Node) *pluginChannelPublisher {
-	return &pluginChannelPublisher{node: node}
+func newPluginPacketSender(node *centrifuge.Node) *pluginPacketSender {
+	return &pluginPacketSender{node: node}
 }
 
-func (p *pluginChannelPublisher) Publish(channel string, data []byte) error {
-	_, err := p.node.Publish(channel, data)
-	return err
+func (p *pluginPacketSender) Send(channel string, packet *backend.StreamPacket) error {
+	_, err := p.node.Publish(channel, packet.Data)
+	if err != nil {
+		return fmt.Errorf("error publishing %s: %w", string(packet.Data), err)
+	}
+	return nil
 }
 
 type pluginPresenceGetter struct {

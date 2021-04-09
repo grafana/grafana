@@ -2,14 +2,10 @@ package notifier
 
 import (
 	"context"
-	"fmt"
+	"net/url"
 	"path/filepath"
 	"sync"
 	"time"
-
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-
-	"github.com/grafana/grafana/pkg/models"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/alerting-api/pkg/api"
@@ -23,8 +19,11 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -48,17 +47,18 @@ type Alertmanager struct {
 	// notificationLog keeps tracks of which notifications we've fired already.
 	notificationLog *nflog.Log
 	// silences keeps the track of which notifications we should not fire due to user configuration.
-	silences *silence.Silences
-	marker   types.Marker
-	alerts   *AlertProvider
-
+	silencer     *silence.Silencer
+	silences     *silence.Silences
+	marker       types.Marker
+	alerts       *AlertProvider
+	route        *dispatch.Route
 	dispatcher   *dispatch.Dispatcher
 	dispatcherWG sync.WaitGroup
 
 	stageMetrics      *notify.Metrics
 	dispatcherMetrics *dispatch.DispatcherMetrics
 
-	reloadConfigMtx sync.Mutex
+	reloadConfigMtx sync.RWMutex
 }
 
 func init() {
@@ -171,6 +171,8 @@ func (am *Alertmanager) ApplyConfig(cfg *api.PostableUserConfig) error {
 	return am.applyConfig(cfg)
 }
 
+const defaultTemplate = "templates/default.tmpl"
+
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
 func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
@@ -179,6 +181,8 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	if err != nil {
 		return err
 	}
+
+	paths = append([]string{defaultTemplate}, paths...)
 
 	// With the templates persisted, create the template list using the paths.
 	tmpl, err := template.FromGlobs(paths...)
@@ -194,7 +198,8 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	// Now, let's put together our notification pipeline
 	routingStage := make(notify.RoutingStage, len(integrationsMap))
 
-	silencingStage := notify.NewMuteStage(silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger()))
+	am.silencer = silence.NewSilencer(am.silences, am.marker, gokit_log.NewNopLogger())
+	silencingStage := notify.NewMuteStage(am.silencer)
 	for name := range integrationsMap {
 		stage := am.createReceiverStage(name, integrationsMap[name], waitFunc, am.notificationLog)
 		routingStage[name] = notify.MultiStage{silencingStage, stage}
@@ -203,9 +208,8 @@ func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
 	am.alerts.SetStage(routingStage)
 
 	am.StopAndWait()
-	//TODO: Verify this is correct
-	route := dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
-	am.dispatcher = dispatch.NewDispatcher(am.alerts, route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), am.dispatcherMetrics)
+	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
+	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), am.dispatcherMetrics)
 
 	am.dispatcherWG.Add(1)
 	go func() {
@@ -234,35 +238,44 @@ func (am *Alertmanager) buildIntegrationsMap(receivers []*api.PostableApiReceive
 	return integrationsMap, nil
 }
 
+type NotificationChannel interface {
+	notify.Notifier
+	notify.ResolvedSender
+}
+
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiReceiver, _ *template.Template) ([]notify.Integration, error) {
+func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
 	var integrations []notify.Integration
 
 	for i, r := range receiver.GrafanaManagedReceivers {
-		switch r.Type {
-		case "email":
-			frequency, err := time.ParseDuration(r.Frequency)
-			if err != nil {
-				return nil, fmt.Errorf("unable to parse receiver frequency %s, %w", r.Frequency, err)
-			}
-			notification := models.AlertNotification{
+		var (
+			cfg = &models.AlertNotification{
 				Uid:                   r.Uid,
 				Name:                  r.Name,
 				Type:                  r.Type,
 				IsDefault:             r.IsDefault,
 				SendReminder:          r.SendReminder,
 				DisableResolveMessage: r.DisableResolveMessage,
-				Frequency:             frequency,
 				Settings:              r.Settings,
 				SecureSettings:        securejsondata.GetEncryptedJsonData(r.SecureSettings),
 			}
-			n, err := channels.NewEmailNotifier(&notification)
-			if err != nil {
-				return nil, err
-			}
-
-			integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
+			n   NotificationChannel
+			err error
+		)
+		externalURL, err := url.Parse(am.Settings.AppURL)
+		if err != nil {
+			return nil, err
 		}
+		switch r.Type {
+		case "email":
+			n, err = channels.NewEmailNotifier(cfg, externalURL)
+		case "pagerduty":
+			n, err = channels.NewPagerdutyNotifier(cfg, tmpl, externalURL)
+		}
+		if err != nil {
+			return nil, err
+		}
+		integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
 	}
 
 	return integrations, nil
@@ -285,7 +298,6 @@ func (am *Alertmanager) createReceiverStage(name string, integrations []notify.I
 		var s notify.MultiStage
 		s = append(s, notify.NewWaitStage(wait))
 		s = append(s, notify.NewDedupStage(&integrations[i], notificationLog, recv))
-		//TODO: This probably won't work w/o the metrics
 		s = append(s, notify.NewRetryStage(integrations[i], name, am.stageMetrics))
 		s = append(s, notify.NewSetNotifiesStage(notificationLog, recv))
 
@@ -304,4 +316,30 @@ func timeoutFunc(d time.Duration) time.Duration {
 		d = notify.MinTimeout
 	}
 	return d + waitFunc()
+}
+
+// GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
+func (am *Alertmanager) GetAvailableNotifiers() []*alerting.NotifierPlugin {
+	return []*alerting.NotifierPlugin{
+		{
+			Type:        "email",
+			Name:        "Email",
+			Description: "Sends notifications using Grafana server configured SMTP settings",
+			Heading:     "Email settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Single email",
+					Description:  "Send a single email to all recipients",
+					Element:      alerting.ElementTypeCheckbox,
+					PropertyName: "singleEmail",
+				}, {
+					Label:        "Addresses",
+					Description:  "You can enter multiple email addresses using a \";\" separator",
+					Element:      alerting.ElementTypeTextArea,
+					PropertyName: "addresses",
+					Required:     true,
+				},
+			},
+		},
+	}
 }

@@ -13,6 +13,7 @@ type AlertInstance struct {
 	LabelsHash        string
 	CurrentState      InstanceStateType
 	CurrentStateSince time.Time
+	CurrentStateEnd   time.Time
 	LastEvalTime      time.Time
 }
 
@@ -24,22 +25,30 @@ const (
 	InstanceStateFiring InstanceStateType = "Alerting"
 	// InstanceStateNormal is for a normal alert.
 	InstanceStateNormal InstanceStateType = "Normal"
+	// InstanceStateNoData is for an alert with no data.
+	InstanceStateNoData InstanceStateType = "NoData"
+	// InstanceStateError is for a erroring alert.
+	InstanceStateError InstanceStateType = "Error"
 )
 
 // IsValid checks that the value of InstanceStateType is a valid
 // string.
 func (i InstanceStateType) IsValid() bool {
 	return i == InstanceStateFiring ||
-		i == InstanceStateNormal
+		i == InstanceStateNormal ||
+		i == InstanceStateNoData ||
+		i == InstanceStateError
 }
 
 // SaveAlertInstanceCommand is the query for saving a new alert instance.
 type SaveAlertInstanceCommand struct {
-	DefinitionOrgID int64
-	DefinitionUID   string
-	Labels          InstanceLabels
-	State           InstanceStateType
-	LastEvalTime    time.Time
+	DefinitionOrgID   int64
+	DefinitionUID     string
+	Labels            InstanceLabels
+	State             InstanceStateType
+	LastEvalTime      time.Time
+	CurrentStateSince time.Time
+	CurrentStateEnd   time.Time
 }
 
 // GetAlertInstanceQuery is the query for retrieving/deleting an alert definition by ID.
@@ -61,6 +70,10 @@ type ListAlertInstancesQuery struct {
 	Result []*ListAlertInstancesQueryResult
 }
 
+type FetchUniqueOrgIdsQuery struct {
+	Result []*FetchUniqueOrgIdsQueryResult
+}
+
 // ListAlertInstancesQueryResult represents the result of listAlertInstancesQuery.
 type ListAlertInstancesQueryResult struct {
 	DefinitionOrgID   int64             `xorm:"def_org_id" json:"definitionOrgId"`
@@ -70,7 +83,12 @@ type ListAlertInstancesQueryResult struct {
 	LabelsHash        string            `json:"labeHash"`
 	CurrentState      InstanceStateType `json:"currentState"`
 	CurrentStateSince time.Time         `json:"currentStateSince"`
+	CurrentStateEnd   time.Time         `json:"currentStateEnd"`
 	LastEvalTime      time.Time         `json:"lastEvalTime"`
+}
+
+type FetchUniqueOrgIdsQueryResult struct {
+	DefinitionOrgID int64 `xorm:"def_org_id" json:"definitionOrgId"`
 }
 
 // ValidateAlertInstance validates that the alert instance contains an alert definition id,
