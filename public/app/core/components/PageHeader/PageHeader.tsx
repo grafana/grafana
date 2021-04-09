@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { Tab, TabsBar, Icon, IconName, useStyles } from '@grafana/ui';
 import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaTheme } from '@grafana/data';
 import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
@@ -83,7 +83,7 @@ export const PageHeader: FC<Props> = ({ model }) => {
 
   return (
     <div className={styles.headerCanvas}>
-      <div className={cx('page-container')}>
+      <div className="page-container">
         <div className="page-header">
           {renderHeaderTitle(main)}
           {children && children.length && <Navigation>{children}</Navigation>}
