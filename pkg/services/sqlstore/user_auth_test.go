@@ -228,7 +228,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Expect to pass since there's a matching login user
 			getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "oauth_generic_oauth", AuthId: ""}
+			query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: genericOAuthModule, AuthId: ""}
 			err := GetUserByAuthInfo(query)
 			getTime = time.Now
 
@@ -237,7 +237,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Should throw a "user not found" error since there's no matching login user
 			getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
-			query = &models.GetUserByAuthInfoQuery{Login: "aloginuser", AuthModule: "oauth_generic_oauth", AuthId: ""}
+			query = &models.GetUserByAuthInfoQuery{Login: "aloginuser", AuthModule: genericOAuthModule, AuthId: ""}
 			err = GetUserByAuthInfo(query)
 			getTime = time.Now
 

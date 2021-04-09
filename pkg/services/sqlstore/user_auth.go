@@ -13,6 +13,8 @@ import (
 
 var getTime = time.Now
 
+const genericOAuthModule = "oauth_generic_oauth"
+
 func init() {
 	bus.AddHandler("sql", GetUserByAuthInfo)
 	bus.AddHandler("sql", GetExternalUserInfoByLogin)
@@ -102,7 +104,7 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 	}
 
 	// Special case for generic oauth duplicates
-	if query.AuthModule == "oauth_generic_oauth" && user.Id != 0 {
+	if query.AuthModule == genericOAuthModule && user.Id != 0 {
 		authQuery.UserId = user.Id
 		authQuery.AuthModule = query.AuthModule
 		err = GetAuthInfo(authQuery)
