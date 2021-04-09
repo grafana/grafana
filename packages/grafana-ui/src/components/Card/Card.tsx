@@ -165,7 +165,7 @@ export const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled =
     }
 
     &:hover {
-      background: ${disableHover ? theme.colors.bg2 : theme.v2.palette.getHoverColor(theme.v2.palette.layer2)};
+      background: ${disableHover ? theme.colors.bg2 : theme.v2.palette.getHoverColor(theme.v2.palette.layer2, 0.02)};
       cursor: ${disableHover ? 'default' : 'pointer'};
     }
 

@@ -31,7 +31,7 @@ export const colors = {
   redDark1: '#D10E5C',
   redDark2: '#FF5286',
 
-  redLight1: '#CF0E5B',
+  redLight1: '#E0226E',
   redLight2: '#FF5286',
 
   green1: '#13875D',

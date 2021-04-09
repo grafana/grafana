@@ -27,14 +27,26 @@ describe('createTheme', () => {
           },
         },
         "components": Object {
+          "dropdown": Object {
+            "background": "#202226",
+          },
           "height": Object {
             "lg": 6,
             "md": 4,
             "sm": 3,
           },
+          "menu": Object {
+            "background": "#202226",
+          },
           "panel": Object {
             "headerHeight": 4,
             "padding": 1,
+          },
+          "scrollbar": Object {
+            "background": "rgba(255,255,255,0.1)",
+          },
+          "tooltip": Object {
+            "background": "#202226",
           },
         },
         "isDark": true,
@@ -67,7 +79,7 @@ describe('createTheme', () => {
           },
           "getContrastText": [Function],
           "getHoverColor": [Function],
-          "hoverFactor": 0.03,
+          "hoverFactor": 0.15,
           "info": Object {
             "contrastText": "#fff",
             "main": "#3658E2",

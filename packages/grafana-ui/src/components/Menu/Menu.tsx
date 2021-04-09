@@ -34,7 +34,7 @@ const getStyles = (theme: GrafanaTheme) => {
       border-bottom: 1px solid ${theme.v2.palette.border1};
     `,
     wrapper: css`
-      background: ${theme.v2.palette.layer2};
+      background: ${theme.v2.components.menu.background};
       box-shadow: ${theme.v2.shadows.z2};
       display: inline-block;
       border-radius: ${theme.v2.shape.borderRadius()};

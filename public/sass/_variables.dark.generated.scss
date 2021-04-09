@@ -66,7 +66,7 @@ $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
 $purple: #9933cc;
-$variable: #33a2e5;
+$variable: #5b93ff;
 
 $brand-primary: #eb7b18;
 $brand-success: #299c46;
@@ -90,13 +90,13 @@ $body-bg: #141619;
 $page-bg: #141619;
 $dashboard-bg: #0b0c0e;
 
-$text-color-strong: #f7f8fa;
-$text-color: #c7d0d9;
-$text-color-semi-weak: #9fa7b3;
-$text-color-weak: #7b8087;
-$text-color-faint: #464c54;
-$text-color-emphasis: #f7f8fa;
-$text-blue: #33a2e5;
+$text-color-strong: #fff;
+$text-color: rgba(255, 255, 255, 0.75);
+$text-color-semi-weak: rgba(255, 255, 255, 0.5);
+$text-color-weak: rgba(255, 255, 255, 0.35);
+$text-color-faint: rgba(255, 255, 255, 0.35);
+$text-color-emphasis: #fff;
+$text-blue: #5b93ff;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -114,7 +114,7 @@ $external-link-color: #33a2e5;
 
 // Typography
 // -------------------------
-$headings-color: #d8d9da;
+$headings-color: rgba(255, 255, 255, 0.75);
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -138,7 +138,7 @@ $divider-border-color: $gray-1;
 $tight-form-func-bg: #202226;
 $tight-form-func-highlight-bg: #25272b;
 
-$modal-backdrop-bg: #2c3235;
+$modal-backdrop-bg: rgba(255, 255, 255, 0.08);
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
@@ -209,7 +209,7 @@ $input-border-color: #2c3235;
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: #464c54;
+$input-color-placeholder: rgba(255, 255, 255, 0.35);
 $input-label-bg: #202226;
 $input-color-select-arrow: $white;
 
@@ -250,7 +250,7 @@ $side-menu-border: none;
 $side-menu-item-hover-bg: #202226;
 $side-menu-shadow: 0 0 20px black;
 $side-menu-icon-color: #9fa7b3;
-$side-menu-header-color: #c7d0d9;
+$side-menu-header-color: rgba(255, 255, 255, 0.75);
 
 // Menu dropdowns
 // -------------------------
@@ -329,14 +329,14 @@ $json-explorer-url-color: #027bff;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: #2c3235;
+$diff-label-bg: rgba(255, 255, 255, 0.08);
 $diff-label-fg: $white;
 
 $diff-group-bg: #202226;
 $diff-arrow-color: $white;
 
 $diff-json-bg: #202226;
-$diff-json-fg: #c7d0d9;
+$diff-json-fg: rgba(255, 255, 255, 0.75);
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;
