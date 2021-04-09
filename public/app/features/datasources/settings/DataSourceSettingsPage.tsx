@@ -127,7 +127,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderIsReadOnlyMessage() {
     return (
-      <InfoBox severity="info">
+      <InfoBox aria-label={selectors.pages.DataSource.readOnly} severity="info">
         This data source was added by config and cannot be modified using the UI. Please contact your server admin to
         update this data source.
       </InfoBox>
@@ -234,12 +234,14 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
         )}
 
         <div className="gf-form-group">
-          {testingStatus && testingStatus.message && (
+          {testingStatus?.message && (
             <Alert
               severity={testingStatus.status === 'error' ? 'error' : 'success'}
               title={testingStatus.message}
               aria-label={selectors.pages.DataSource.alert}
-            />
+            >
+              {testingStatus.details?.message ?? null}
+            </Alert>
           )}
         </div>
 

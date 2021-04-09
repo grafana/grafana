@@ -9,7 +9,7 @@ import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Switch } from '../Switch/Switch';
-import { Button, ButtonVariant } from '../Button';
+import { allButtonVariants, Button } from '../Button';
 
 interface DemoBoxProps {
   bg?: string;
@@ -50,7 +50,6 @@ export const NewThemeDemo = () => {
   const [boolValue, setBoolValue] = useState(false);
   const oldTheme = useTheme();
   const t = oldTheme.v2;
-  const variants: ButtonVariant[] = ['primary', 'secondary', 'destructive', 'link'];
 
   const richColors = [
     t.palette.primary,
@@ -151,13 +150,13 @@ export const NewThemeDemo = () => {
         <CollapsableSection label="Buttons" isOpen={true}>
           <DemoBox bg={t.palette.layer1}>
             <HorizontalGroup>
-              {variants.map((variant) => (
+              {allButtonVariants.map((variant) => (
                 <Button variant={variant} key={variant}>
                   {variant}
                 </Button>
               ))}
               <Button variant="primary" disabled>
-                Disabled primary
+                Disabled
               </Button>
             </HorizontalGroup>
           </DemoBox>
