@@ -29,17 +29,21 @@ type TestingApiBase struct {
 
 func (api *API) RegisterTestingApiEndpoints(srv TestingApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
-		group.Post(toMacaronPath("/api/v1/receiver/test"), binding.Bind(apimodels.ExtendedReceiver{}), routing.Wrap(srv.RouteTestReceiverConfig))
-		group.Post(toMacaronPath("/api/v1/rule/test"), binding.Bind(apimodels.TestRulePayload{}), routing.Wrap(srv.RouteTestRuleConfig))
+		group.Post(toMacaronPath("/api/v1/receiver/test/{Recipient}"), binding.Bind(apimodels.ExtendedReceiver{}), routing.Wrap(srv.RouteTestReceiverConfig))
+		group.Post(toMacaronPath("/api/v1/rule/test/{Recipient}"), binding.Bind(apimodels.TestRulePayload{}), routing.Wrap(srv.RouteTestRuleConfig))
 	}, middleware.ReqSignedIn)
 }
 
 func (base TestingApiBase) RouteTestReceiverConfig(c *models.ReqContext, body apimodels.ExtendedReceiver) response.Response {
+	recipient := c.Params(":Recipient")
+	base.log.Info("RouteTestReceiverConfig: ", "Recipient", recipient)
 	base.log.Info("RouteTestReceiverConfig: ", "body", body)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }
 
 func (base TestingApiBase) RouteTestRuleConfig(c *models.ReqContext, body apimodels.TestRulePayload) response.Response {
+	recipient := c.Params(":Recipient")
+	base.log.Info("RouteTestRuleConfig: ", "Recipient", recipient)
 	base.log.Info("RouteTestRuleConfig: ", "body", body)
 	return response.Error(http.StatusNotImplemented, "", nil)
 }

@@ -73,7 +73,13 @@ func (api *API) RegisterAPIEndpoints() {
 		NewLotexRuler(proxy, logger),
 		RulerSrv{store: api.RuleStore, log: logger},
 	))
-	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
+	api.RegisterTestingApiEndpoints(TestingApiSrv{
+		AlertingProxy:   proxy,
+		Cfg:             api.Cfg,
+		DataService:     api.DataService,
+		DatasourceCache: api.DatasourceCache,
+		log:             logger,
+	})
 
 	// Legacy routes; they will be removed in v8
 	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
@@ -115,12 +121,16 @@ func (api *API) RegisterAPIEndpoints() {
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
 func (api *API) conditionEvalEndpoint(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand) response.Response {
+	return conditionEval(c, cmd, api.DatasourceCache, api.DataService, api.Cfg)
+}
+
+func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, dataService *tsdb.Service, cfg *setting.Cfg) response.Response {
 	evalCond := ngmodels.Condition{
 		Condition: cmd.Condition,
 		OrgID:     c.SignedInUser.OrgId,
 		Data:      cmd.Data,
 	}
-	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
+	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -129,8 +139,8 @@ func (api *API) conditionEvalEndpoint(c *models.ReqContext, cmd ngmodels.EvalAle
 		now = timeNow()
 	}
 
-	evaluator := eval.Evaluator{Cfg: api.Cfg}
-	evalResults, err := evaluator.ConditionEval(&evalCond, timeNow(), api.DataService)
+	evaluator := eval.Evaluator{Cfg: cfg}
+	evalResults, err := evaluator.ConditionEval(&evalCond, timeNow(), dataService)
 	if err != nil {
 		return response.Error(400, "Failed to evaluate conditions", err)
 	}
@@ -151,7 +161,7 @@ func (api *API) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Respo
 		return response.Error(400, "Failed to load alert definition conditions", err)
 	}
 
-	if err := api.validateCondition(*condition, c.SignedInUser, c.SkipCache); err != nil {
+	if err := validateCondition(*condition, c.SignedInUser, c.SkipCache, api.DatasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -209,7 +219,7 @@ func (api *API) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels
 		OrgID:     c.SignedInUser.OrgId,
 		Data:      cmd.Data,
 	}
-	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
+	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, api.DatasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -229,7 +239,7 @@ func (api *API) createAlertDefinitionEndpoint(c *models.ReqContext, cmd ngmodels
 		OrgID:     c.SignedInUser.OrgId,
 		Data:      cmd.Data,
 	}
-	if err := api.validateCondition(evalCond, c.SignedInUser, c.SkipCache); err != nil {
+	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, api.DatasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -311,7 +321,7 @@ func (api *API) LoadAlertCondition(alertDefinitionUID string, orgID int64) (*ngm
 	}, nil
 }
 
-func (api *API) validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool) error {
+func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
 	var refID string
 
 	if len(c.Data) == 0 {
@@ -336,7 +346,7 @@ func (api *API) validateCondition(c ngmodels.Condition, user *models.SignedInUse
 			continue
 		}
 
-		_, err = api.DatasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
 		if err != nil {
 			return fmt.Errorf("failed to get datasource: %s: %w", datasourceUID, err)
 		}
