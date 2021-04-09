@@ -56,7 +56,7 @@ export async function fetchSilences(alertmanagerSourceName: string): Promise<Sil
   return result.data;
 }
 
-//returns silence id
+// returns the new silence ID. Even in the case of an update, a new silence is created and the previous one expired.
 export async function createOrUpdateSilence(
   alertmanagerSourceName: string,
   payload: SilenceCreatePayload
