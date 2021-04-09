@@ -35,6 +35,7 @@ UPlotConfigBuilder {
   "hasBottomAxis": true,
   "hasLeftAxis": true,
   "hooks": Object {},
+  "isStacking": false,
   "scales": Array [
     UPlotScaleBuilder {
       "props": Object {
