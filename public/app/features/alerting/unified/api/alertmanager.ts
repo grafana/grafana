@@ -65,7 +65,7 @@ export async function createOrUpdateSilence(
     `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
     payload
   );
-  return result.silenceID;
+  return result.data.silenceID;
 }
 
 export async function expireSilence(alertmanagerSourceName: string, silenceID: string): Promise<void> {
