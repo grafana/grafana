@@ -8,10 +8,11 @@ import createMockQuery from '../../__mocks__/query';
 import createMockDatasource from '../../__mocks__/datasource';
 import { AzureQueryType } from '../../types';
 import { invalidNamespaceError } from '../../__mocks__/errors';
+import * as ui from '@grafana/ui';
 
 // Have to mock CodeEditor because it doesnt seem to work in tests???
 jest.mock('@grafana/ui', () => ({
-  ...(jest.requireActual('@grafana/ui') as any),
+  ...jest.requireActual<typeof ui>('@grafana/ui'),
   CodeEditor: function CodeEditor({ value }: { value: string }) {
     return <pre>{value}</pre>;
   },
