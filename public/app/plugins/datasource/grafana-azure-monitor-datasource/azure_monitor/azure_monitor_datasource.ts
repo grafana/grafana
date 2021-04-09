@@ -10,11 +10,33 @@ import {
   AzureMonitorResourceGroupsResponse,
   AzureQueryType,
   AzureMonitorMetricsMetadataResponse,
+  AzureMetricQuery,
 } from '../types';
-import { DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  ScopedVars,
+  MetricFindValue,
+  DataQueryResponse,
+  DataQueryRequest,
+  TimeRange,
+} from '@grafana/data';
 import { getBackendSrv, DataSourceWithBackend, getTemplateSrv, FetchResponse } from '@grafana/runtime';
+import { from, Observable } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
+
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 const defaultDropdownValue = 'select';
+
+// Used to convert our aggregation value to the Azure enum for deep linking
+const aggregationTypeMap: Record<string, number> = {
+  None: 0,
+  Total: 1,
+  Minimum: 2,
+  Maximum: 3,
+  Average: 4,
+  Count: 7,
+};
 
 export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   apiVersion = '2018-01-01';
@@ -26,10 +48,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   url: string;
   cloudName: string;
   supportedMetricNamespaces: string[] = [];
+  timeSrv: TimeSrv;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
 
+    this.timeSrv = getTimeSrv();
     this.subscriptionId = instanceSettings.jsonData.subscriptionId;
     this.cloudName = instanceSettings.jsonData.cloudName || 'azuremonitor';
     this.baseUrl = `/${this.cloudName}/subscriptions`;
@@ -53,6 +77,83 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       item.azureMonitor.metricName &&
       item.azureMonitor.metricName !== defaultDropdownValue
     );
+  }
+
+  query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
+    const metricQueries = request.targets.reduce((prev: Record<string, AzureMonitorQuery>, cur) => {
+      prev[cur.refId] = cur;
+      return prev;
+    }, {});
+
+    return super.query(request).pipe(
+      mergeMap((res: DataQueryResponse) => {
+        return from(this.processResponse(res, metricQueries));
+      })
+    );
+  }
+
+  async processResponse(
+    res: DataQueryResponse,
+    metricQueries: Record<string, AzureMonitorQuery>
+  ): Promise<DataQueryResponse> {
+    if (res.data) {
+      for (const df of res.data) {
+        const metricQuery = metricQueries[df.refId]?.azureMonitor;
+        if (metricQuery) {
+          const url = this.buildAzurePortalUrl(metricQuery, this.subscriptionId, this.timeSrv.timeRange());
+
+          for (const field of df.fields) {
+            field.config.links = [
+              {
+                url: url,
+                title: 'View in Azure Portal',
+                targetBlank: true,
+              },
+            ];
+          }
+        }
+      }
+    }
+    return res;
+  }
+
+  stringifyAzurePortalUrlParam(value: string | object): string {
+    const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+    return encodeURIComponent(stringValue);
+  }
+
+  buildAzurePortalUrl(metricQuery: AzureMetricQuery, subscriptionId: string, timeRange: TimeRange) {
+    const aggregationType = aggregationTypeMap[metricQuery.aggregation] ?? aggregationTypeMap.Average;
+
+    const chartDef = this.stringifyAzurePortalUrlParam({
+      v2charts: [
+        {
+          metrics: [
+            {
+              resourceMetadata: {
+                id: `/subscriptions/${subscriptionId}/resourceGroups/${metricQuery.resourceGroup}/providers/${metricQuery.metricDefinition}/${metricQuery.resourceName}`,
+              },
+              name: metricQuery.metricName,
+              aggregationType: aggregationType,
+              namespace: metricQuery.metricNamespace,
+              metricVisualization: {
+                displayName: metricQuery.metricName,
+                resourceDisplayName: metricQuery.resourceName,
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    const timeContext = this.stringifyAzurePortalUrlParam({
+      absolute: {
+        startTime: timeRange.from,
+        endTime: timeRange.to,
+      },
+    });
+
+    return `https://portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {

@@ -1,6 +1,8 @@
 package live
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/centrifugal/centrifuge"
@@ -18,7 +20,10 @@ func newPluginPacketSender(node *centrifuge.Node) *pluginPacketSender {
 
 func (p *pluginPacketSender) Send(channel string, packet *backend.StreamPacket) error {
 	_, err := p.node.Publish(channel, packet.Data)
-	return err
+	if err != nil {
+		return fmt.Errorf("error publishing %s: %w", string(packet.Data), err)
+	}
+	return nil
 }
 
 type pluginPresenceGetter struct {

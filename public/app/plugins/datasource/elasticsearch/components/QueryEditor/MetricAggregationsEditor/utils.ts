@@ -5,7 +5,10 @@ import {
   MetricAggregation,
   PipelineMetricAggregationType,
 } from './aggregations';
-import { defaultPipelineVariable } from './SettingsEditor/BucketScriptSettingsEditor/utils';
+import {
+  defaultPipelineVariable,
+  generatePipelineVariableName,
+} from './SettingsEditor/BucketScriptSettingsEditor/utils';
 
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
@@ -182,7 +185,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsInlineScript: false,
     hasMeta: false,
     defaults: {
-      pipelineVariables: [defaultPipelineVariable()],
+      pipelineVariables: [defaultPipelineVariable(generatePipelineVariableName([]))],
     },
   },
   raw_document: {
