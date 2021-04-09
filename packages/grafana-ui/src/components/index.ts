@@ -17,13 +17,8 @@ export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholde
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export {
-  PieChart,
-  PieChartType,
-  PieChartLabels,
-  PieChartLegendOptions,
-  PieChartLegendValues,
-} from './PieChart/PieChart';
+export { PieChart } from './PieChart/PieChart';
+export { PieChartType, PieChartLabels, PieChartLegendOptions, PieChartLegendValues } from './PieChart/types';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
