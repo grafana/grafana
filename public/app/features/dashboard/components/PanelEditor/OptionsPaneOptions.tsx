@@ -33,52 +33,55 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     [props]
   );
 
-  const mainBoxElements: React.ReactNode[] = [];
   const isSearching = searchQuery.length > 0;
   const optionRadioFilters = useMemo(getOptionRadioFilters, []);
   const allOptions = [panelFrameOptions, ...vizOptions];
 
-  if (isSearching) {
-    mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
+  const mainBoxElements = useMemo(() => {
+    const mainBoxElements: React.ReactNode[] = [];
+    if (isSearching) {
+      mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
 
-    // If searching for angular panel, then we need to add notice that results are limited
-    if (props.plugin.angularPanelCtrl) {
-      mainBoxElements.push(
-        <div className={styles.searchNotice} key="Search notice">
-          This is an old visualization type that does not support searching all options.
-        </div>
-      );
-    }
-  } else {
-    switch (listMode) {
-      case OptionFilter.All:
-        // Panel frame options first
-        mainBoxElements.push(panelFrameOptions.render());
-        // If angular add those options next
-        if (props.plugin.angularPanelCtrl) {
-          mainBoxElements.push(
-            <AngularPanelOptions plugin={plugin} dashboard={dashboard} panel={panel} key="AngularOptions" />
-          );
-        }
-        // Then add all panel and field defaults
-        for (const item of vizOptions) {
-          mainBoxElements.push(item.render());
-        }
-        break;
-      case OptionFilter.Overrides:
-        for (const override of justOverrides) {
-          mainBoxElements.push(override.render());
-        }
-        break;
-      case OptionFilter.Recent:
+      // If searching for angular panel, then we need to add notice that results are limited
+      if (props.plugin.angularPanelCtrl) {
         mainBoxElements.push(
-          <OptionsPaneCategory id="Recent options" title="Recent options" key="Recent options" forceOpen={1}>
-            {getRecentOptions(allOptions).map((item) => item.render())}
-          </OptionsPaneCategory>
+          <div className={styles.searchNotice} key="Search notice">
+            This is an old visualization type that does not support searching all options.
+          </div>
         );
-        break;
+      }
+    } else {
+      switch (listMode) {
+        case OptionFilter.All:
+          // Panel frame options first
+          mainBoxElements.push(panelFrameOptions.render());
+          // If angular add those options next
+          if (props.plugin.angularPanelCtrl) {
+            mainBoxElements.push(
+              <AngularPanelOptions plugin={plugin} dashboard={dashboard} panel={panel} key="AngularOptions" />
+            );
+          }
+          // Then add all panel and field defaults
+          for (const item of vizOptions) {
+            mainBoxElements.push(item.render());
+          }
+          break;
+        case OptionFilter.Overrides:
+          for (const override of justOverrides) {
+            mainBoxElements.push(override.render());
+          }
+          break;
+        case OptionFilter.Recent:
+          mainBoxElements.push(
+            <OptionsPaneCategory id="Recent options" title="Recent options" key="Recent options" forceOpen={1}>
+              {getRecentOptions(allOptions).map((item) => item.render())}
+            </OptionsPaneCategory>
+          );
+          break;
+      }
     }
-  }
+    return mainBoxElements;
+  }, [isSearching, listMode, plugin]);
 
   return (
     <div className={styles.wrapper}>
