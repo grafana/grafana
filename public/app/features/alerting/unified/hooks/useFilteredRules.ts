@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
+import { useMemo } from 'react';
+
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { isCloudRulesSource } from '../utils/datasource';
 import { isAlertingRule } from '../utils/rules';
+import { getFiltersFromUrlParams } from '../utils/misc';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
-  const [filteredRules, setFilteredRules] = useState<CombinedRuleNamespace[]>([]);
-  const { rulesFilters } = useUnifiedAlertingSelector((state) => state.filters);
+  const [queryParams] = useQueryParams();
+  const filters = getFiltersFromUrlParams(queryParams);
 
-  useEffect(() => {
+  return useMemo(() => {
     const filteredNamespaces = namespaces
       .filter(({ rulesSource }) =>
-        rulesFilters.dataSource && isCloudRulesSource(rulesSource) ? rulesSource.name === rulesFilters.dataSource : true
+        filters.dataSource && isCloudRulesSource(rulesSource) ? rulesSource.name === filters.dataSource : true
       )
       .reduce((acc, namespace) => {
         const { groups } = namespace;
@@ -19,8 +21,8 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
           const groupCopy = { ...group };
           const rules = groupCopy.rules.filter((rule) => {
             let shouldKeep = true;
-            if (rulesFilters.queryString) {
-              const normalizedQueryString = rulesFilters.queryString.toLocaleLowerCase();
+            if (filters.queryString) {
+              const normalizedQueryString = filters.queryString.toLocaleLowerCase();
               const doesNameContainsQueryString = rule.name.toLocaleLowerCase().includes(normalizedQueryString);
 
               const doLabelsContainQueryString = Object.entries(rule.labels || {}).find(
@@ -30,9 +32,9 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
               );
               shouldKeep = doesNameContainsQueryString || Boolean(doLabelsContainQueryString?.length);
             }
-            if (rulesFilters.alertState) {
+            if (filters.alertState) {
               const matchesAlertState = Boolean(
-                rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state === rulesFilters.alertState
+                rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state === filters.alertState
               );
 
               shouldKeep = shouldKeep && matchesAlertState;
@@ -53,8 +55,6 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
 
         return acc;
       }, [] as CombinedRuleNamespace[]);
-    setFilteredRules(filteredNamespaces);
-  }, [namespaces, rulesFilters.dataSource, rulesFilters.queryString, rulesFilters.alertState]);
-
-  return filteredRules;
+    return filteredNamespaces;
+  }, [filters.alertState, filters.queryString, filters.dataSource, namespaces]);
 };

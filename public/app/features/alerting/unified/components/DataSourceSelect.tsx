@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useMemo } from 'react';
 import { Select, InputControl } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
@@ -37,27 +37,22 @@ const DataSourceSelect: FC<Props> = ({ alertType, className, control, onChange, 
 };
 
 const useDatasourceSelectOptions = (alertType?: ALERT_TYPE) => {
-  const [datasourceOptions, setDataSourceOptions] = useState<SelectableValue[]>([]);
-
-  useEffect(() => {
+  return useMemo(() => {
     let options = [] as ReturnType<typeof getAllDataSources>;
     if (alertType === ALERT_TYPE.SYSTEM) {
       options = getRulesDataSources();
     } else {
-      options = getAllDataSources().filter(({ type }) => type !== 'datasource');
+      options = getAllDataSources().filter(({ meta }) => meta.alerting);
     }
-    setDataSourceOptions(
-      options.map(({ name, type }) => {
-        return {
-          label: name,
-          value: name,
-          description: type,
-        };
-      })
-    );
-  }, [alertType]);
 
-  return datasourceOptions;
+    return options.map(({ name, type }) => {
+      return {
+        label: name,
+        value: name,
+        description: type,
+      };
+    });
+  }, [alertType]);
 };
 
 export default DataSourceSelect;

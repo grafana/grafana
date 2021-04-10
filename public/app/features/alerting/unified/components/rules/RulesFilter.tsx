@@ -1,56 +1,46 @@
-import React, { FormEvent, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { FormEvent, useState } from 'react';
 import { Button, Icon, Input, Label, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { omitBy, isUndefined } from 'lodash';
+import { debounce } from 'lodash';
 
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import DataSourceSelect from '../DataSourceSelect';
-import { rulesFiltersSlice } from '../../state/reducers';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { getFiltersFromUrlParams } from '../../utils/misc';
 
 const RulesFilter = () => {
-  const dispatch = useDispatch();
   const [queryParams, setQueryParams] = useQueryParams();
-  const { rulesFilters } = useUnifiedAlertingSelector((state) => state.filters);
-  const { dataSource, alertState, queryString } = rulesFilters;
-  const { setDataSource, setQueryString, setAlertState, clearFilters, replaceFilters } = rulesFiltersSlice.actions;
+  // This key is used to force a rerender on the inputs when the filters are cleared
+  const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
+  const dataSourceKey = `dataSource-${filterKey}`;
+  const queryStringKey = `queryString-${filterKey}`;
+
+  const { dataSource, alertState, queryString } = getFiltersFromUrlParams(queryParams);
+
   const styles = useStyles(getStyles);
   const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({ label: key, value }));
 
-  useEffect(() => {
-    if (!Object.keys(rulesFilters).length && Object.keys(queryParams).length) {
-      const queryString = queryParams['queryString'] as string | undefined;
-      const alertState = queryParams['alertState'] as string | undefined;
-      const dataSource = queryParams['dataSource'] as string | undefined;
-      const filtersToSet = omitBy({ queryString, alertState, dataSource }, isUndefined);
-      dispatch(replaceFilters({ ...filtersToSet }));
-    }
-  });
-
   const handleDataSourceChange = (dataSourceValue: SelectableValue<string>) => {
-    dispatch(setDataSource(dataSourceValue.value as string));
     setQueryParams({ dataSource: dataSourceValue.value });
   };
-  const handleQueryStringChange = (e: FormEvent<HTMLInputElement>) => {
+
+  const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
-    dispatch(setQueryString(target.value));
-    setQueryParams({ queryString: target.value });
-  };
+    setQueryParams({ queryString: target.value || null });
+  }, 600);
+
   const handleAlertStateChange = (value: string) => {
-    dispatch(setAlertState(value));
     setQueryParams({ alertState: value });
   };
 
   const handleClearFiltersClick = () => {
-    dispatch(clearFilters());
     setQueryParams({
-      alertState: undefined,
-      queryString: undefined,
-      dataSource: undefined,
+      alertState: null,
+      queryString: null,
+      dataSource: null,
     });
+    setFilterKey(filterKey + 1);
   };
 
   const searchIcon = <Icon name={'search'} />;
@@ -58,17 +48,18 @@ const RulesFilter = () => {
     <div className={styles.container}>
       <div className={styles.inputWidth}>
         <Label>Select data source</Label>
-        <DataSourceSelect key={dataSource} value={dataSource} onChange={handleDataSourceChange} />
+        <DataSourceSelect key={dataSourceKey} value={dataSource} onChange={handleDataSourceChange} />
       </div>
       <div className={cx(styles.flexRow, styles.spaceBetween)}>
         <div className={styles.flexRow}>
           <div className={styles.rowChild}>
             <Label>Search by name or label</Label>
             <Input
+              key={queryStringKey}
               className={styles.inputWidth}
               prefix={searchIcon}
               onChange={handleQueryStringChange}
-              value={queryString}
+              defaultValue={queryString}
             />
           </div>
           <div className={styles.rowChild}>
