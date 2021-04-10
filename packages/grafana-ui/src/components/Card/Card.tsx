@@ -145,16 +145,18 @@ const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false,
     position: 'relative',
     pointerEvents: disabled ? 'none' : 'auto',
     marginBottom: theme.v2.spacing(1),
-    boxShadow: theme.v2.shadows.z1,
+    transition: theme.v2.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+      duration: theme.v2.transitions.duration.short,
+    }),
 
     ...(!disableHover && {
       '&:hover': {
-        boxShadow: theme.v2.shadows.z3,
+        boxShadow: theme.v2.shadows.z2,
         cursor: 'pointer',
+        zIndex: 1,
       },
+      '&:focus': styleMixins.getFocusStyles(theme.v2),
     }),
-
-    //    '&:focus': styleMixins.focusCss(theme),
   });
 });
 

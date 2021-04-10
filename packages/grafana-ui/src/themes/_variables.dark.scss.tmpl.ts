@@ -141,8 +141,8 @@ $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: ${theme.colors.bg2};
-$card-background-hover: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$card-background: ${theme.v2.components.card.background};
+$card-background-hover: ${theme.v2.components.card.background};
 $card-shadow: none;
 
 // Lists
@@ -254,7 +254,7 @@ $side-menu-header-color: ${theme.colors.text};
 // -------------------------
 $menu-dropdown-bg: ${theme.v2.components.menu.background};
 $menu-dropdown-hover-bg: ${theme.v2.palette.action.hover};
-$menu-dropdown-shadow: ${theme.v2.shadows.z2};
+$menu-dropdown-shadow: ${theme.v2.shadows.z3};
 
 // Tabs
 // -------------------------
