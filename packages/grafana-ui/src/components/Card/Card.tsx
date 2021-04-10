@@ -151,7 +151,7 @@ const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false,
 
     ...(!disableHover && {
       '&:hover': {
-        boxShadow: theme.v2.shadows.z2,
+        // boxShadow: theme.v2.shadows.z2,
         cursor: 'pointer',
         zIndex: 1,
       },

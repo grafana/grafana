@@ -86,9 +86,9 @@ $critical: #e02f44;
 
 // Scaffolding
 // -------------------------
-$body-bg: #141619;
-$page-bg: #141619;
-$dashboard-bg: #0b0c0e;
+$body-bg: #212124;
+$page-bg: #212124;
+$dashboard-bg: #18181a;
 
 $text-color-strong: #fff;
 $text-color: rgba(255, 255, 255, 0.75);
@@ -122,29 +122,29 @@ $hr-border-color: $dark-9;
 
 // Panel
 // -------------------------
-$panel-bg: #141619;
-$panel-border: 1px solid #202226;
-$panel-header-hover-bg: #202226;
+$panel-bg: #212124;
+$panel-border: 1px solid rgba(255, 255, 255, 0.08);
+$panel-header-hover-bg: #2a2a2f;
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: #202226;
+$page-header-bg: #2a2a2f;
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: #202226;
+$page-header-border-color: rgba(255, 255, 255, 0.08);
 
 $divider-border-color: $gray-1;
 
 // Graphite Target Editor
-$tight-form-func-bg: #202226;
-$tight-form-func-highlight-bg: #25272b;
+$tight-form-func-bg: #2a2a2f;
+$tight-form-func-highlight-bg: #2f2f34;
 
 $modal-backdrop-bg: rgba(255, 255, 255, 0.08);
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: #202226;
-$card-background-hover: #202226;
+$card-background: #2a2a2f;
+$card-background-hover: #2a2a2f;
 $card-shadow: none;
 
 // Lists
@@ -152,7 +152,7 @@ $list-item-bg: $card-background;
 $list-item-hover-bg: $card-background-hover;
 $list-item-shadow: $card-shadow;
 
-$empty-list-cta-bg: #202226;
+$empty-list-cta-bg: #2a2a2f;
 
 // Scrollbars
 $scrollbarBackground: #404357;
@@ -161,7 +161,7 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg-accent: #191b1e; // for striping
+$table-bg-accent: #262629; // for striping
 $table-border: $dark-6; // table and cell border
 
 $table-bg-odd: $dark-3;
@@ -205,12 +205,12 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: #c7d0d9;
-$input-border-color: #2c3235;
+$input-border-color: rgba(255, 255, 255, 0.14);
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: rgba(255, 255, 255, 0.35);
-$input-label-bg: #202226;
+$input-label-bg: #2a2a2f;
 $input-color-select-arrow: $white;
 
 // Search
@@ -224,7 +224,7 @@ $typeahead-selected-color: $yellow;
 // Dropdowns
 // -------------------------
 $dropdownBackground: $panel-bg;
-$dropdownBorder: #202226;
+$dropdownBorder: rgba(255, 255, 255, 0.08);
 $dropdownDividerTop: transparent;
 $dropdownDividerBottom: #2c3235;
 
@@ -247,14 +247,14 @@ $navbarBorder: 1px solid $dark-6;
 $side-menu-bg: $panel-bg;
 $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
-$side-menu-item-hover-bg: #202226;
+$side-menu-item-hover-bg: #2a2a2f;
 $side-menu-shadow: 0 0 20px black;
 $side-menu-icon-color: #9fa7b3;
 $side-menu-header-color: rgba(255, 255, 255, 0.75);
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: #202226;
+$menu-dropdown-bg: #2a2a2f;
 $menu-dropdown-hover-bg: rgba(255, 255, 255, 0.08);
 $menu-dropdown-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.5), 0px 4px 5px 0px rgba(0, 0, 0, 0.4),
   0px 1px 10px 0px rgba(0, 0, 0, 0.3);
@@ -332,10 +332,10 @@ $json-explorer-url-color: #027bff;
 $diff-label-bg: rgba(255, 255, 255, 0.08);
 $diff-label-fg: $white;
 
-$diff-group-bg: #202226;
+$diff-group-bg: #2a2a2f;
 $diff-arrow-color: $white;
 
-$diff-json-bg: #202226;
+$diff-json-bg: #2a2a2f;
 $diff-json-fg: rgba(255, 255, 255, 0.75);
 
 $diff-json-added: $blue-shade;
@@ -381,7 +381,7 @@ $panel-editor-tabs-line-color: #e3e3e3;
 $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
 
 $panel-options-group-border: none;
-$panel-options-group-header-bg: #202226;
+$panel-options-group-header-bg: #2a2a2f;
 
 $panel-grid-placeholder-bg: darken(#1f60c4, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px #3274d9;

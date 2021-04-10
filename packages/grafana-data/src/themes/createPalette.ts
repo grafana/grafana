@@ -32,7 +32,6 @@ export interface ThemePaletteBase<TColor> {
 
   border0: string;
   border1: string;
-  border2: string;
 
   action: {
     /** Used for selected menu item / select option */
@@ -109,13 +108,12 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     text: colors.orangeDarkText,
   };
 
-  layer0 = colors.gray05;
-  layer1 = colors.gray10;
-  layer2 = colors.gray15;
+  layer0 = colors.darkLayer0;
+  layer1 = colors.darkLayer1;
+  layer2 = colors.darkLayer2;
 
-  border0 = colors.gray15;
-  border1 = colors.gray25;
-  border2 = colors.gray33;
+  border0 = 'rgba(255, 255, 255, 0.08)';
+  border1 = 'rgba(255, 255, 255, 0.14)';
 
   action = {
     hover: 'rgba(255, 255, 255, 0.08)',
@@ -180,9 +178,8 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   layer1 = colors.white;
   layer2 = colors.gray100;
 
-  border0 = colors.lightBorder1;
-  border1 = colors.gray85;
-  border2 = colors.gray70;
+  border0 = 'rgba(0, 0, 0, 0.08)';
+  border1 = 'rgba(0, 0, 0, 0.14)';
 
   action = {
     hover: 'rgba(0, 0, 0, 0.04)',

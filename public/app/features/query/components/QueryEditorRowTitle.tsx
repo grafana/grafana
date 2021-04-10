@@ -137,7 +137,7 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
       &:hover {
         .query-name-wrapper {
           background: ${theme.v2.palette.action.hover};
-          border: 1px dashed ${theme.v2.palette.border2};
+          border: 1px dashed ${theme.v2.palette.border1};
         }
 
         .query-name-edit-icon {

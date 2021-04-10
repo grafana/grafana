@@ -48,7 +48,7 @@ const backgrounds = {
 const borders = {
   border1: v2.palette.border0,
   border2: v2.palette.border1,
-  border3: v2.palette.border2,
+  border3: v2.palette.border1,
 };
 
 const textColors = {

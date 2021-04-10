@@ -17,7 +17,14 @@ export const colors = {
   gray05: '#0b0c0e',
 
   // new from figma,
-  // Dashboard bg / layer 0
+  darkLayer0: '#18181A',
+  darkLayer1: '#212124',
+  darkLayer2: '#2a2a2f', // figma used #34343B but a bit too bright
+
+  darkBorder1: '#34343B',
+  darkBorder2: '#64646B',
+
+  // Dashboard bg / layer 0 (light theme)
   gray90: '#F4F5F5',
   // Card bg / layer 1
   gray100: '#F9F9FA',
