@@ -1,17 +1,6 @@
 import React, { FC } from 'react';
-import {
-  Button,
-  Field,
-  FieldArray,
-  IconButton,
-  InputControl,
-  Label,
-  Select,
-  TextArea,
-  stylesFactory,
-} from '@grafana/ui';
+import { Button, Field, FieldArray, InputControl, Label, Select, TextArea, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { config } from 'app/core/config';
 import { css, cx } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormValues } from '../../types/rule-form';
@@ -23,7 +12,7 @@ enum AnnotationOptions {
 }
 
 const AnnotationsField: FC = () => {
-  const styles = getStyles(config.theme);
+  const styles = useStyles(getStyles);
   const annotationOptions = Object.entries(AnnotationOptions).map(([key, value]) => ({ value: key, label: value }));
   const { control, register } = useFormContext<RuleFormValues>();
 
@@ -37,27 +26,32 @@ const AnnotationsField: FC = () => {
               {fields.map((field, index) => {
                 return (
                   <div key={`${field.annotationKey}-${index}`} className={styles.flexRow}>
-                    <Field className={styles.annotationSelect}>
+                    <Field className={styles.field}>
                       <InputControl
                         as={Select}
+                        width={14}
                         name={`annotations[${index}].key`}
                         options={annotationOptions}
                         control={control}
                         defaultValue={field.key}
                       />
                     </Field>
-                    <Field className={cx(styles.annotationTextArea, styles.flexRowItemMargin)}>
+                    <Field className={cx(styles.flexRowItemMargin, styles.field)}>
                       <TextArea
                         name={`annotations[${index}].value`}
+                        className={styles.annotationTextArea}
                         ref={register()}
                         placeholder={`Text`}
                         defaultValue={field.value}
                       />
                     </Field>
-                    <IconButton
+                    <Button
+                      type="button"
                       className={styles.flexRowItemMargin}
                       aria-label="delete annotation"
-                      name="trash-alt"
+                      icon="trash-alt"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         remove(index);
                       }}
@@ -85,32 +79,31 @@ const AnnotationsField: FC = () => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    annotationSelect: css`
-      width: 120px;
-    `,
-    annotationTextArea: css`
-      width: 450px;
-      height: 76px;
-    `,
-    addAnnotationsButton: css`
-      flex-grow: 0;
-      align-self: flex-start;
-    `,
-    flexColumn: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    flexRow: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-    `,
-    flexRowItemMargin: css`
-      margin-left: ${theme.spacing.sm};
-    `,
-  };
+const getStyles = (theme: GrafanaTheme) => ({
+  annotationTextArea: css`
+    width: 450px;
+    height: 76px;
+  `,
+  addAnnotationsButton: css`
+    flex-grow: 0;
+    align-self: flex-start;
+    margin-left: 116px;
+  `,
+  flexColumn: css`
+    display: flex;
+    flex-direction: column;
+  `,
+  field: css`
+    margin-bottom: ${theme.spacing.xs};
+  `,
+  flexRow: css`
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+  `,
+  flexRowItemMargin: css`
+    margin-left: ${theme.spacing.xs};
+  `,
 });
 
 export default AnnotationsField;

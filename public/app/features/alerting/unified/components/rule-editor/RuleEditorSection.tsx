@@ -6,9 +6,10 @@ import React, { FC } from 'react';
 export interface RuleEditorSectionProps {
   title: string;
   stepNo: number;
+  description?: string;
 }
 
-export const RuleEditorSection: FC<RuleEditorSectionProps> = ({ title, stepNo, children }) => {
+export const RuleEditorSection: FC<RuleEditorSectionProps> = ({ title, stepNo, children, description }) => {
   const styles = useStyles(getStyles);
 
   return (
@@ -17,7 +18,10 @@ export const RuleEditorSection: FC<RuleEditorSectionProps> = ({ title, stepNo, c
         <span className={styles.stepNo}>{stepNo}</span>
       </div>
       <div className={styles.content}>
-        <FieldSet label={title}>{children}</FieldSet>
+        <FieldSet label={title}>
+          {description && <p className={styles.description}>{description}</p>}
+          {children}
+        </FieldSet>
       </div>
     </div>
   );
@@ -27,6 +31,9 @@ const getStyles = (theme: GrafanaTheme) => ({
   parent: css`
     display: flex;
     flex-direction: row;
+  `,
+  description: css`
+    margin-top: -${theme.spacing.md};
   `,
   stepNo: css`
     display: inline-block;

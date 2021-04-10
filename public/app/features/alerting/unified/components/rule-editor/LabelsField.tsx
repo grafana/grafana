@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
-import { Button, Field, FieldArray, Input, InlineLabel, IconButton, Label, stylesFactory } from '@grafana/ui';
+import { Button, Field, FieldArray, Input, InlineLabel, Label, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { config } from 'app/core/config';
 import { css, cx } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormValues } from '../../types/rule-form';
@@ -11,17 +10,17 @@ interface Props {
 }
 
 const LabelsField: FC<Props> = ({ className }) => {
-  const styles = getStyles(config.theme);
+  const styles = useStyles(getStyles);
   const { register, control } = useFormContext<RuleFormValues>();
   return (
-    <div className={className}>
+    <div className={cx(className, styles.wrapper)}>
       <Label>Custom Labels</Label>
       <FieldArray control={control} name="labels">
         {({ fields, append, remove }) => {
           return (
             <>
               <div className={styles.flexRow}>
-                <InlineLabel width={12}>Labels</InlineLabel>
+                <InlineLabel width={14}>Labels</InlineLabel>
                 <div className={styles.flexColumn}>
                   {fields.map((field, index) => {
                     return (
@@ -35,7 +34,7 @@ const LabelsField: FC<Props> = ({ className }) => {
                               defaultValue={field.key}
                             />
                           </Field>
-                          <div className={styles.equalSign}>=</div>
+                          <InlineLabel className={styles.equalSign}>=</InlineLabel>
                           <Field className={styles.labelInput}>
                             <Input
                               ref={register()}
@@ -44,9 +43,11 @@ const LabelsField: FC<Props> = ({ className }) => {
                               defaultValue={field.value}
                             />
                           </Field>
-                          <IconButton
+                          <Button
                             aria-label="delete label"
-                            name="trash-alt"
+                            icon="trash-alt"
+                            size="sm"
+                            variant="secondary"
                             onClick={() => {
                               remove(index);
                             }}
@@ -60,7 +61,6 @@ const LabelsField: FC<Props> = ({ className }) => {
                     icon="plus-circle"
                     type="button"
                     variant="secondary"
-                    size="sm"
                     onClick={() => {
                       append({});
                     }}
@@ -77,8 +77,11 @@ const LabelsField: FC<Props> = ({ className }) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
+    wrapper: css`
+      margin-top: ${theme.spacing.md};
+    `,
     flexColumn: css`
       display: flex;
       flex-direction: column;
@@ -100,21 +103,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: baseline;
     `,
     equalSign: css`
-      width: ${theme.spacing.lg};
-      height: ${theme.spacing.lg};
-      padding: ${theme.spacing.sm};
-      line-height: ${theme.spacing.sm};
-      background-color: ${theme.colors.bg2};
-      margin: 0 ${theme.spacing.xs};
+      width: 28px;
+      justify-content: center;
+      margin-left: ${theme.spacing.xs};
     `,
     labelInput: css`
-      width: 200px;
+      width: 208px;
       margin-bottom: ${theme.spacing.sm};
       & + & {
         margin-left: ${theme.spacing.sm};
       }
     `,
   };
-});
+};
 
 export default LabelsField;

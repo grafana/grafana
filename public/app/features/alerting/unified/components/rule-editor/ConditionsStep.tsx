@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
-import { Field, Input, Select, useStyles, Label, InputControl, InlineLabel, Switch } from '@grafana/ui';
+import { Field, Input, Select, useStyles, InputControl, InlineLabel, Switch } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -84,6 +84,7 @@ export const ConditionsStep: FC = () => {
                 options={timeOptions}
                 control={control}
                 width={15}
+                className={styles.timeUnit}
                 onChange={(values) => values[0]?.value}
               />
             </div>
@@ -106,6 +107,9 @@ const getStyles = (theme: GrafanaTheme) => ({
     & + & {
       margin-left: ${theme.spacing.sm};
     }
+  `,
+  timeUnit: css`
+    margin-left: ${theme.spacing.xs};
   `,
   switchField: css`
     display: inline-flex;
