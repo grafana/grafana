@@ -64,12 +64,12 @@ export function createComponents(palette: ThemePalette): ThemeComponents {
       palette.mode === 'dark'
         ? {
             background: palette.layer0,
-            border: palette.border1,
+            border: 'rgba(255, 255, 255, 0.23)',
             text: palette.text.primary,
           }
         : {
             background: palette.layer1,
-            border: palette.border1,
+            border: 'rgba(0, 0, 0, 0.23)',
             text: palette.text.primary,
           },
   };

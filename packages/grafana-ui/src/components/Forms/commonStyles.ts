@@ -16,8 +16,8 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
 
   return css`
     background: ${background};
-    line-height: ${theme.typography.lineHeight.md};
-    font-size: ${theme.typography.size.md};
+    line-height: ${theme.v2.typography.body.lineHeight};
+    font-size: ${theme.v2.typography.size.md};
     color: ${textColor};
     border: 1px solid ${borderColor};
     padding: ${theme.v2.spacing(0, 1, 0, 1)};
@@ -37,7 +37,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     }
 
     &:hover {
-      border-color: ${borderColor};
+      border-color: ${theme.v2.palette.text.disabled};
     }
 
     &:focus {
