@@ -21,7 +21,7 @@ const LabelsField: FC<Props> = ({ className }) => {
           return (
             <>
               <div className={styles.flexRow}>
-                <InlineLabel width={14}>Labels</InlineLabel>
+                <InlineLabel width={15}>Labels</InlineLabel>
                 <div className={styles.flexColumn}>
                   {fields.map((field, index) => {
                     return (
