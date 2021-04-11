@@ -147,8 +147,8 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   secondary = {
-    main: 'rgba(0,0,0,0.14)',
-    shade: 'rgba(0,0,0,0.18)',
+    main: 'rgba(0,0,0,0.11)',
+    shade: 'rgba(0,0,0,0.16)',
     contrastText: 'rgba(0, 0, 0, 0.75)',
   };
 
