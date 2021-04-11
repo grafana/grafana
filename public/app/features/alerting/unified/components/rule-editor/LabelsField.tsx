@@ -44,9 +44,9 @@ const LabelsField: FC<Props> = ({ className }) => {
                             />
                           </Field>
                           <Button
+                            className={styles.deleteLabelButton}
                             aria-label="delete label"
                             icon="trash-alt"
-                            size="sm"
                             variant="secondary"
                             onClick={() => {
                               remove(index);
@@ -95,6 +95,10 @@ const getStyles = (theme: GrafanaTheme) => {
         margin-left: ${theme.spacing.xs};
       }
     `,
+    deleteLabelButton: css`
+      margin-left: ${theme.spacing.xs};
+      align-self: flex-start;
+    `,
     addLabelButton: css`
       flex-grow: 0;
       align-self: flex-start;
@@ -103,12 +107,13 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: baseline;
     `,
     equalSign: css`
+      align-self: flex-start;
       width: 28px;
       justify-content: center;
       margin-left: ${theme.spacing.xs};
     `,
     labelInput: css`
-      width: 208px;
+      width: 207px;
       margin-bottom: ${theme.spacing.sm};
       & + & {
         margin-left: ${theme.spacing.sm};

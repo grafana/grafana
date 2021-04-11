@@ -51,7 +51,6 @@ const AnnotationsField: FC = () => {
                       aria-label="delete annotation"
                       icon="trash-alt"
                       variant="secondary"
-                      size="sm"
                       onClick={() => {
                         remove(index);
                       }}
@@ -64,7 +63,6 @@ const AnnotationsField: FC = () => {
                 icon="plus-circle"
                 type="button"
                 variant="secondary"
-                size="sm"
                 onClick={() => {
                   append({});
                 }}
