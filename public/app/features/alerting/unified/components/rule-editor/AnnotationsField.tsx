@@ -14,7 +14,8 @@ enum AnnotationOptions {
 const AnnotationsField: FC = () => {
   const styles = useStyles(getStyles);
   const annotationOptions = Object.entries(AnnotationOptions).map(([key, value]) => ({ value: key, label: value }));
-  const { control, register } = useFormContext<RuleFormValues>();
+  const { control, register, watch, errors } = useFormContext<RuleFormValues>();
+  const annotations = watch('annotations');
 
   return (
     <>
@@ -26,7 +27,11 @@ const AnnotationsField: FC = () => {
               {fields.map((field, index) => {
                 return (
                   <div key={`${field.annotationKey}-${index}`} className={styles.flexRow}>
-                    <Field className={styles.field}>
+                    <Field
+                      className={styles.field}
+                      invalid={!!errors.annotations?.[index]?.key?.message}
+                      error={errors.annotations?.[index]?.key?.message}
+                    >
                       <InputControl
                         as={Select}
                         width={14}
@@ -34,13 +39,18 @@ const AnnotationsField: FC = () => {
                         options={annotationOptions}
                         control={control}
                         defaultValue={field.key}
+                        rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
                       />
                     </Field>
-                    <Field className={cx(styles.flexRowItemMargin, styles.field)}>
+                    <Field
+                      className={cx(styles.flexRowItemMargin, styles.field)}
+                      invalid={!!errors.annotations?.[index]?.value?.message}
+                      error={errors.annotations?.[index]?.value?.message}
+                    >
                       <TextArea
                         name={`annotations[${index}].value`}
                         className={styles.annotationTextArea}
-                        ref={register()}
+                        ref={register({ required: { value: !!annotations[index]?.key, message: 'Required.' } })}
                         placeholder={`Text`}
                         defaultValue={field.value}
                       />

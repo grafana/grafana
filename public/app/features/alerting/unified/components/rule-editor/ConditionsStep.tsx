@@ -3,7 +3,7 @@ import { Field, Input, Select, useStyles, InputControl, InlineLabel, Switch } fr
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { RuleEditorSection } from './RuleEditorSection';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, ValidationOptions } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { ConditionField } from './ConditionField';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
@@ -16,6 +16,19 @@ enum TIME_OPTIONS {
   days = 'd',
 }
 
+const timeRangeValidationOptions: ValidationOptions = {
+  required: {
+    value: true,
+    message: 'Required.',
+  },
+  pattern: {
+    value: new RegExp(`^\\d+(${Object.values(TIME_OPTIONS).join('|')})$`),
+    message: `Must be of format "(number)(unit)", for example "1m". Available units: ${Object.values(TIME_OPTIONS).join(
+      ', '
+    )}`,
+  },
+};
+
 const timeOptions = Object.entries(TIME_OPTIONS).map(([key, value]) => ({
   label: key[0].toUpperCase() + key.slice(1),
   value: value,
@@ -24,7 +37,7 @@ const timeOptions = Object.entries(TIME_OPTIONS).map(([key, value]) => ({
 export const ConditionsStep: FC = () => {
   const styles = useStyles(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
-  const { register, control, watch } = useFormContext<RuleFormValues>();
+  const { register, control, watch, errors } = useFormContext<RuleFormValues>();
 
   const type = watch('type');
 
@@ -38,14 +51,26 @@ export const ConditionsStep: FC = () => {
               <InlineLabel width={16} tooltip="How often the alert will be evaluated to see if it fires">
                 Evaluate every
               </InlineLabel>
-              <Input width={8} ref={register()} name="evaluateEvery" />
+              <Field
+                className={styles.inlineField}
+                error={errors.evaluateEvery?.message}
+                invalid={!!errors.evaluateEvery?.message}
+              >
+                <Input width={8} ref={register(timeRangeValidationOptions)} name="evaluateEvery" />
+              </Field>
               <InlineLabel
                 width={7}
                 tooltip='Once condition is breached, alert will go into pending state. If it is pending for longer than the "for" value, it will become a firing alert.'
               >
                 for
               </InlineLabel>
-              <Input width={8} ref={register()} name="evaluateFor" />
+              <Field
+                className={styles.inlineField}
+                error={errors.evaluateFor?.message}
+                invalid={!!errors.evaluateFor?.message}
+              >
+                <Input width={8} ref={register(timeRangeValidationOptions)} name="evaluateFor" />
+              </Field>
             </div>
           </Field>
           <Field label="Configure no data and error handling" horizontal={true} className={styles.switchField}>
@@ -96,11 +121,15 @@ export const ConditionsStep: FC = () => {
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
+  inlineField: css`
+    margin-bottom: 0;
+  `,
   flexRow: css`
     display: flex;
     flex-direction: row;
     align-items: flex-end;
     justify-content: flex-start;
+    align-items: flex-start;
   `,
   numberInput: css`
     width: 200px;

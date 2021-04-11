@@ -5,22 +5,42 @@ import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { ExpressionEditor } from './ExpressionEditor';
 import { GrafanaQueryEditor } from './GrafanaQueryEditor';
+import { isArray } from 'lodash';
 
 // @TODO get proper query editors in
 export const QueryStep: FC = () => {
-  const { control, watch } = useFormContext<RuleFormValues>();
+  const { control, watch, errors } = useFormContext<RuleFormValues>();
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
+  console.log('errs', errors);
   return (
     <RuleEditorSection stepNo={2} title="Create a query to be alerted on">
       {type === RuleFormType.system && dataSourceName && (
-        <Field>
-          <InputControl name="expression" dataSourceName={dataSourceName} as={ExpressionEditor} control={control} />
+        <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
+          <InputControl
+            name="expression"
+            dataSourceName={dataSourceName}
+            as={ExpressionEditor}
+            control={control}
+            rules={{
+              required: { value: true, message: 'A valid expression is required' },
+            }}
+          />
         </Field>
       )}
       {type === RuleFormType.threshold && (
-        <Field>
-          <InputControl name="queries" as={GrafanaQueryEditor} control={control} />
+        <Field
+          invalid={!!errors.queries}
+          error={(!!errors.queries && 'Must provide at least one valid query.') || undefined}
+        >
+          <InputControl
+            name="queries"
+            as={GrafanaQueryEditor}
+            control={control}
+            rules={{
+              validate: (queries) => isArray(queries) && !!queries.length,
+            }}
+          />
         </Field>
       )}
     </RuleEditorSection>

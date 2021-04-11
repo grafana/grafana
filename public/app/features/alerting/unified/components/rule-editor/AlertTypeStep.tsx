@@ -7,9 +7,9 @@ import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { DataSourcePicker, DataSourcePickerProps } from '@grafana/runtime';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { RuleGroupPicker } from '../RuleGroupPicker';
 import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
+import { RuleFolderPicker } from './RuleFolderPicker';
 
 const alertTypeOptions: SelectableValue[] = [
   {
@@ -29,11 +29,8 @@ export const AlertTypeStep: FC = () => {
 
   const { register, control, watch, errors, setValue } = useFormContext<RuleFormValues>();
 
-  register({ name: 'folder' });
-
   const ruleFormType = watch('type');
   const dataSourceName = watch('dataSourceName');
-  const folder = watch('folder');
 
   useEffect(() => {}, [ruleFormType]);
 
@@ -62,12 +59,20 @@ export const AlertTypeStep: FC = () => {
         <Input ref={register({ required: { value: true, message: 'Must enter an alert name' } })} name="name" />
       </Field>
       <div className={styles.flexRow}>
-        <Field label="Alert type" className={styles.formInput} error={errors.type?.message}>
+        <Field
+          label="Alert type"
+          className={styles.formInput}
+          error={errors.type?.message}
+          invalid={!!errors.type?.message}
+        >
           <InputControl
             as={Select}
             name="type"
             options={alertTypeOptions}
             control={control}
+            rules={{
+              required: { value: true, message: 'Please select alert type' },
+            }}
             onChange={(values: SelectableValue[]) => {
               const value = values[0]?.value;
               // when switching to system alerts, null out data source selection if it's not a rules source with ruler
@@ -82,7 +87,12 @@ export const AlertTypeStep: FC = () => {
             }}
           />
         </Field>
-        <Field className={styles.formInput} label="Select data source">
+        <Field
+          className={styles.formInput}
+          label="Select data source"
+          error={errors.dataSourceName?.message}
+          invalid={!!errors.dataSourceName?.message}
+        >
           <InputControl
             as={DataSourcePicker as React.ComponentType<Omit<DataSourcePickerProps, 'current'>>}
             valueName="current"
@@ -91,6 +101,9 @@ export const AlertTypeStep: FC = () => {
             noDefault={true}
             control={control}
             alerting={true}
+            rules={{
+              required: { value: true, message: 'Please select a data source' },
+            }}
             onChange={(ds: DataSourceInstanceSettings[]) => {
               // reset location if switching data sources, as differnet rules source will have different groups and namespaces
               setValue('location', undefined);
@@ -100,22 +113,43 @@ export const AlertTypeStep: FC = () => {
         </Field>
       </div>
       {ruleFormType === RuleFormType.system && (
-        <Field label="Group" className={styles.formInput} key={dataSourceName || 'null'}>
+        <Field
+          label="Group"
+          className={styles.formInput}
+          key={dataSourceName || 'null'}
+          error={errors.location?.message}
+          invalid={!!errors.location?.message}
+        >
           {dataSourceName ? (
-            <InputControl as={RuleGroupPicker} name="location" control={control} dataSourceName={dataSourceName} />
+            <InputControl
+              as={RuleGroupPicker}
+              name="location"
+              control={control}
+              dataSourceName={dataSourceName}
+              rules={{
+                required: { value: true, message: 'Please select a group' },
+              }}
+            />
           ) : (
             <Select placeholder="Select a data source first" onChange={() => {}} disabled={true} />
           )}
         </Field>
       )}
       {ruleFormType === RuleFormType.threshold && (
-        <Field label="Folder" className={styles.formInput}>
-          <FolderPicker
-            initialTitle={folder?.title}
-            initialFolderId={folder?.id}
+        <Field
+          label="Folder"
+          className={styles.formInput}
+          error={errors.folder?.message}
+          invalid={!!errors.folder?.message}
+        >
+          <InputControl
+            as={RuleFolderPicker}
+            name="folder"
             enableCreateNew={true}
             enableReset={true}
-            onChange={(folder) => setValue('folder', folder)}
+            rules={{
+              required: { value: true, message: 'Please select a folder' },
+            }}
           />
         </Field>
       )}

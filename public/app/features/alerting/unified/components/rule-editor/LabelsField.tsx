@@ -11,7 +11,8 @@ interface Props {
 
 const LabelsField: FC<Props> = ({ className }) => {
   const styles = useStyles(getStyles);
-  const { register, control } = useFormContext<RuleFormValues>();
+  const { register, control, watch, errors } = useFormContext<RuleFormValues>();
+  const labels = watch('labels');
   return (
     <div className={cx(className, styles.wrapper)}>
       <Label>Custom Labels</Label>
@@ -26,18 +27,26 @@ const LabelsField: FC<Props> = ({ className }) => {
                     return (
                       <div key={field.id}>
                         <div className={cx(styles.flexRow, styles.centerAlignRow)}>
-                          <Field className={styles.labelInput}>
+                          <Field
+                            className={styles.labelInput}
+                            invalid={!!errors.labels?.[index]?.key?.message}
+                            error={errors.labels?.[index]?.key?.message}
+                          >
                             <Input
-                              ref={register()}
+                              ref={register({ required: { value: !!labels[index]?.value, message: 'Required.' } })}
                               name={`labels[${index}].key`}
                               placeholder="key"
                               defaultValue={field.key}
                             />
                           </Field>
                           <InlineLabel className={styles.equalSign}>=</InlineLabel>
-                          <Field className={styles.labelInput}>
+                          <Field
+                            className={styles.labelInput}
+                            invalid={!!errors.labels?.[index]?.value?.message}
+                            error={errors.labels?.[index]?.value?.message}
+                          >
                             <Input
-                              ref={register()}
+                              ref={register({ required: { value: !!labels[index]?.key, message: 'Required.' } })}
                               name={`labels[${index}].value`}
                               placeholder="value"
                               defaultValue={field.value}

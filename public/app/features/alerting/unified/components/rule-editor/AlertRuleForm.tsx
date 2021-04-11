@@ -9,9 +9,9 @@ import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
 import { useForm, FormContext } from 'react-hook-form';
 
-import { fetchRulerRulesNamespace, setRulerRuleGroup } from '../../api/ruler';
-import { GrafanaAlertState, RulerRuleDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
-import { locationService } from '@grafana/runtime';
+//import { fetchRulerRulesNamespace, setRulerRuleGroup } from '../../api/ruler';
+import { GrafanaAlertState /*, RulerRuleDTO, RulerRuleGroupDTO */ } from 'app/types/unified-alerting-dto';
+//import { locationService } from '@grafana/runtime';
 import { RuleFormValues } from '../../types/rule-form';
 import { SAMPLE_QUERIES } from '../../mocks/grafana-queries';
 
@@ -49,12 +49,11 @@ export const AlertRuleForm: FC<Props> = () => {
 
   const values = watch();
 
-  console.log('values', values);
-
   const showStep2 = values.dataSourceName && values.type;
 
   const onSubmit = (alertRule: RuleFormValues) => {
-    const { name, expression, forTime, dataSourceName, forTimeUnit, labels, annotations, location } = alertRule;
+    console.log('submit', alertRule);
+    /*const { name, expression, forTime, dataSourceName, forTimeUnit, labels, annotations, location } = alertRule;
     if (location && expression && dataSourceName && name) {
       const { namespace, group } = location;
       fetchRulerRulesNamespace(dataSourceName, namespace)
@@ -92,6 +91,7 @@ export const AlertRuleForm: FC<Props> = () => {
         })
         .catch((error) => console.error(error));
     }
+    */
   };
   return (
     <FormContext {...formAPI}>
