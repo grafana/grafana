@@ -32,6 +32,7 @@ export interface ThemePaletteBase<TColor> {
 
   border0: string;
   border1: string;
+  border2: string;
 
   action: {
     /** Used for selected menu item / select option */
@@ -82,6 +83,7 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   primary = {
     main: colors.blueDarkMain,
     text: colors.blueDarkText,
+    border: colors.blueDarkText,
   };
 
   secondary = {
@@ -112,8 +114,9 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   layer1 = colors.darkLayer1;
   layer2 = colors.darkLayer2;
 
-  border0 = 'rgba(218,224,254,0.0.8)';
-  border1 = 'rgba(218,224,254,0.0.14)';
+  border0 = 'rgba(218,224,254,0.10)';
+  border1 = 'rgba(218,224,254,0.20)';
+  border2 = 'rgba(218,224,254,0.30)';
 
   action = {
     hover: 'rgba(255, 255, 255, 0.08)',
@@ -178,8 +181,9 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   layer1 = colors.white;
   layer2 = colors.gray100;
 
-  border0 = 'rgba(0,2,78, 0.08)';
-  border1 = 'rgba(0,2,78, 0.14)';
+  border0 = 'rgba(0, 2, 78, 0.10)';
+  border1 = 'rgba(0, 2, 78, 0.20)';
+  border2 = 'rgba(0, 2, 78, 0.30)';
 
   action = {
     hover: 'rgba(0, 0, 0, 0.04)',
@@ -233,6 +237,9 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     }
     if (!color.text) {
       color.text = color.main;
+    }
+    if (!color.border) {
+      color.text = color.text;
     }
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);

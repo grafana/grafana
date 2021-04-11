@@ -24,6 +24,7 @@ export interface ThemeComponents {
   form: {
     background: string;
     border: string;
+    borderHover: string;
     text: string;
   };
   card: {
@@ -68,12 +69,14 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
       palette.mode === 'dark'
         ? {
             background: palette.layer0,
-            border: 'rgba(218,224,254,0.2)',
+            border: palette.border1,
+            borderHover: palette.border2,
             text: palette.text.primary,
           }
         : {
             background: palette.layer1,
-            border: 'rgba(0,2,78,0.25)',
+            border: palette.border1,
+            borderHover: palette.border2,
             text: palette.text.primary,
           },
     panel: {

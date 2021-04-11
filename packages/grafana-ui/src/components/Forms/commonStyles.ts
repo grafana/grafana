@@ -11,6 +11,7 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 
 export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
   const borderColor = invalid ? theme.v2.palette.error.border : theme.v2.components.form.border;
+  const borderColorHover = invalid ? theme.v2.palette.error.shade : theme.v2.components.form.borderHover;
   const background = theme.v2.components.form.background;
   const textColor = theme.v2.components.form.text;
 
@@ -37,7 +38,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     }
 
     &:hover {
-      border-color: ${theme.v2.palette.text.disabled};
+      border-color: ${borderColorHover};
     }
 
     &:focus {

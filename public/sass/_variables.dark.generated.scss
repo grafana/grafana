@@ -61,8 +61,8 @@ $white: #ffffff;
 $layer0: #18181a;
 $layer1: #212124;
 $layer2: #2a2a2f;
-$border0: rgba(255, 255, 255, 0.08);
-$border1: rgba(255, 255, 255, 0.14);
+$border0: rgba(218, 224, 254, 0.08);
+$border1: rgba(218, 224, 254, 0.14);
 
 // Accent colors
 // -------------------------
@@ -137,7 +137,7 @@ $panel-corner: $panel-bg;
 // page header
 $page-header-bg: #2a2a2f;
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: rgba(255, 255, 255, 0.08);
+$page-header-border-color: rgba(218, 224, 254, 0.08);
 
 $divider-border-color: $gray-1;
 
@@ -169,7 +169,7 @@ $scrollbarBorder: black;
 // Tables
 // -------------------------
 $table-bg-accent: #2a2a2f;
-$table-border: rgba(255, 255, 255, 0.14);
+$table-border: rgba(218, 224, 254, 0.14);
 $table-bg-odd: rgb(37, 37, 40);
 $table-bg-hover: rgb(44, 44, 46);
 
@@ -211,7 +211,7 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: #c7d0d9;
-$input-border-color: rgba(255, 255, 255, 0.14);
+$input-border-color: rgba(218, 224, 254, 0.14);
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: $blue-light !default;
@@ -230,7 +230,7 @@ $typeahead-selected-color: $yellow;
 // Dropdowns
 // -------------------------
 $dropdownBackground: $panel-bg;
-$dropdownBorder: rgba(255, 255, 255, 0.08);
+$dropdownBorder: rgba(218, 224, 254, 0.08);
 $dropdownDividerTop: transparent;
 $dropdownDividerBottom: #2c3235;
 
