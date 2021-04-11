@@ -54,8 +54,13 @@ $gray-5: ${theme.palette.gray5};
 $gray-6: ${theme.palette.gray6};
 
 $input-black: ${theme.colors.formInputBg};
-
 $white: ${theme.palette.white};
+
+$layer0: ${theme.v2.palette.layer0};
+$layer1: ${theme.v2.palette.layer1};
+$layer2: ${theme.v2.palette.layer2};
+$border0: ${theme.v2.palette.border0};
+$border1: ${theme.v2.palette.border1};
 
 // Accent colors
 // -------------------------
@@ -120,9 +125,10 @@ $hr-border-color: $dark-9;
 
 // Panel
 // -------------------------
-$panel-bg: ${theme.colors.panelBg};
-$panel-border: 1px solid ${theme.colors.panelBorder};
-$panel-header-hover-bg: ${theme.colors.bg2};
+$panel-bg: ${theme.v2.components.panel.background};
+$panel-border: ${theme.v2.components.panel.border};
+$panel-header-hover-bg: ${theme.v2.palette.action.hover};
+$panel-box-shadow: ${theme.v2.components.panel.boxShadow};
 $panel-corner: $panel-bg;
 
 // page header
@@ -159,11 +165,10 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)}; // for striping
-$table-border: $dark-6; // table and cell border
-
-$table-bg-odd: $dark-3;
-$table-bg-hover: $dark-6;
+$table-bg-accent: ${theme.v2.palette.layer2};
+$table-border: ${theme.v2.palette.border1};
+$table-bg-odd: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.02)};
+$table-bg-hover: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.05)};
 
 // Buttons
 // -------------------------

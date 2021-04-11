@@ -112,8 +112,8 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   layer1 = colors.darkLayer1;
   layer2 = colors.darkLayer2;
 
-  border0 = 'rgba(255, 255, 255, 0.08)';
-  border1 = 'rgba(255, 255, 255, 0.14)';
+  border0 = 'rgba(218,224,254,0.0.8)';
+  border1 = 'rgba(218,224,254,0.0.14)';
 
   action = {
     hover: 'rgba(255, 255, 255, 0.08)',
@@ -178,8 +178,8 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   layer1 = colors.white;
   layer2 = colors.gray100;
 
-  border0 = 'rgba(0, 0, 0, 0.08)';
-  border1 = 'rgba(0, 0, 0, 0.14)';
+  border0 = 'rgba(0,2,78, 0.08)';
+  border1 = 'rgba(0,2,78, 0.14)';
 
   action = {
     hover: 'rgba(0, 0, 0, 0.04)',

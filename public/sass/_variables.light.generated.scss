@@ -53,6 +53,12 @@ $gray-7: #f7f8fa;
 
 $white: #ffffff;
 
+$layer0: #f4f5f5;
+$layer1: #fff;
+$layer2: #f9f9fa;
+$border0: rgba(0, 0, 0, 0.08);
+$border1: rgba(0, 0, 0, 0.14);
+
 // Accent colors
 // -------------------------
 $blue: #33a2e5;
@@ -116,9 +122,11 @@ $hr-border-color: $gray-4 !default;
 // Panel
 // -------------------------
 $panel-bg: #fff;
-$panel-border: 1px solid #dce1e6;
-$panel-header-hover-bg: #f9f9fa;
-$panel-corner: $gray-4;
+$panel-border: 1px solid transparent;
+$panel-header-hover-bg: rgba(0, 0, 0, 0.04);
+$panel-box-shadow: 0px 1px 1px -1px rgba(0, 0, 0, 0.2), 0px 0px 0px 0px rgba(0, 0, 0, 0.14),
+  0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+$panel-corner: $panel-bg;
 
 // Page header
 $page-header-bg: #f9f9fa;
@@ -154,11 +162,10 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: #fafafa;
-$table-border: $gray-3; // table and cell border
-
-$table-bg-odd: $gray-6;
-$table-bg-hover: $gray-5;
+$table-bg-accent: #f9f9fa;
+$table-border: rgba(0, 0, 0, 0.14);
+$table-bg-odd: rgb(249, 249, 249);
+$table-bg-hover: rgb(242, 242, 242);
 
 // Buttons
 // -------------------------

@@ -1,4 +1,5 @@
 import { ThemePalette } from './createPalette';
+import { ThemeShadows } from './createShadows';
 
 /** @beta */
 export interface ThemeComponents {
@@ -7,10 +8,6 @@ export interface ThemeComponents {
     sm: number;
     md: number;
     lg: number;
-  };
-  panel: {
-    padding: number;
-    headerHeight: number;
   };
   tooltip: {
     background: string;
@@ -32,9 +29,20 @@ export interface ThemeComponents {
   card: {
     background: string;
   };
+  panel: {
+    padding: number;
+    headerHeight: number;
+    border: string;
+    boxShadow: string;
+    background: string;
+  };
+  dashboard: {
+    background: string;
+    padding: number;
+  };
 }
 
-export function createComponents(palette: ThemePalette): ThemeComponents {
+export function createComponents(palette: ThemePalette, shadows: ThemeShadows): ThemeComponents {
   return {
     height: {
       sm: 3,
@@ -56,21 +64,28 @@ export function createComponents(palette: ThemePalette): ThemeComponents {
     card: {
       background: palette.layer2,
     },
-    panel: {
-      padding: 1,
-      headerHeight: 4,
-    },
     form:
       palette.mode === 'dark'
         ? {
             background: palette.layer0,
-            border: 'rgba(255, 255, 255, 0.23)',
+            border: 'rgba(218,224,254,0.2)',
             text: palette.text.primary,
           }
         : {
             background: palette.layer1,
-            border: 'rgba(0, 0, 0, 0.23)',
+            border: 'rgba(0,2,78,0.25)',
             text: palette.text.primary,
           },
+    panel: {
+      padding: 1,
+      headerHeight: 4,
+      background: palette.layer1,
+      border: '1px solid transparent',
+      boxShadow: shadows.z0,
+    },
+    dashboard: {
+      background: palette.layer0,
+      padding: 1,
+    },
   };
 }

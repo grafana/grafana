@@ -189,7 +189,7 @@ $side-menu-width: 60px;
 $navbar-padding: 20px;
 
 // dashboard
-$dashboard-padding: $space-md;
+$dashboard-padding: $space-sm;
 $panel-padding: ${theme.panelPadding}px;
 $panel-header-height: ${theme.panelHeaderHeight}px;
 $panel-header-z-index: 10;

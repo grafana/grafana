@@ -74,6 +74,7 @@ div.flot-text {
   display: flex;
   flex-direction: column;
   flex: 1 1 0;
+  box-shadow: $panel-box-shadow;
 
   &--transparent {
     background-color: transparent;
