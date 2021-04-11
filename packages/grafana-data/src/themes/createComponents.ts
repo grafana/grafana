@@ -42,9 +42,22 @@ export interface ThemeComponents {
     background: string;
     padding: number;
   };
+  pageToolbar: {
+    background: string;
+    boxShadow: string;
+    border: string;
+  };
 }
 
 export function createComponents(palette: ThemePalette, shadows: ThemeShadows): ThemeComponents {
+  const panel = {
+    padding: 1,
+    headerHeight: 4,
+    background: palette.layer1,
+    border: '1px solid transparent',
+    boxShadow: shadows.z0,
+  };
+
   return {
     height: {
       sm: 3,
@@ -81,12 +94,11 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
             borderHover: palette.border2,
             text: palette.text.primary,
           },
-    panel: {
-      padding: 1,
-      headerHeight: 4,
-      background: palette.layer1,
-      border: '1px solid transparent',
-      boxShadow: shadows.z0,
+    panel,
+    pageToolbar: {
+      background: panel.background,
+      boxShadow: panel.boxShadow,
+      border: panel.border,
     },
     dashboard: {
       background: palette.layer0,
