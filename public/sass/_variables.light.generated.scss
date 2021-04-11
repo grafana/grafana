@@ -56,8 +56,11 @@ $white: #ffffff;
 $layer0: #f4f5f5;
 $layer1: #fff;
 $layer2: #f9f9fa;
-$border0: rgba(0, 2, 78, 0.08);
-$border1: rgba(0, 2, 78, 0.14);
+
+$divider: rgba(0, 2, 78, 0.05);
+
+$border0: #fff;
+$border1: rgba(0, 2, 78, 0.2);
 
 // Accent colors
 // -------------------------
@@ -131,7 +134,7 @@ $panel-corner: $panel-bg;
 // Page header
 $page-header-bg: #f9f9fa;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: #dce1e6;
+$page-header-border-color: #fff;
 
 $divider-border-color: $gray-2;
 
@@ -163,7 +166,7 @@ $scrollbarBorder: $gray-7;
 // Tables
 // -------------------------
 $table-bg-accent: #f9f9fa;
-$table-border: rgba(0, 2, 78, 0.14);
+$table-border: rgba(0, 2, 78, 0.2);
 $table-bg-odd: rgb(249, 249, 249);
 $table-bg-hover: rgb(242, 242, 242);
 
@@ -280,21 +283,24 @@ $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
-$tooltipBackground: $gray-1;
-$tooltipColor: $gray-7;
-$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
-$tooltipBackgroundError: $brand-danger;
-$tooltipShadow: 0 0 5px $gray60;
+$tooltipBackground: #f9f9fa;
+$tooltipColor: rgba(0, 0, 0, 0.87);
+$tooltipArrowColor: #f9f9fa;
+$tooltipBackgroundError: #e0226e;
+$tooltipShadow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14),
+  0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+
+$popover-bg: #f9f9fa;
+$popover-color: rgba(0, 0, 0, 0.87);
+$popover-border-color: rgba(0, 2, 78, 0.2);
+$popover-header-bg: #fff;
+$popover-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2), 0px 4px 5px 0px rgba(0, 0, 0, 0.14),
+  0px 1px 10px 0px rgba(0, 0, 0, 0.12);
+
 $graph-tooltip-bg: $gray-5;
 
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($tooltipColor, 5%);
-
-$popover-bg: $page-bg;
-$popover-color: $text-color;
-$popover-border-color: $gray-5;
-$popover-header-bg: $gray-5;
-$popover-shadow: 0 0 20px $white;
 
 $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
@@ -379,9 +385,6 @@ $panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-2;
 
 $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
-
-$panel-options-group-border: none;
-$panel-options-group-header-bg: $gray-5;
 
 $panel-grid-placeholder-bg: lighten(#5794f2, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px #5794f2;

@@ -54,6 +54,9 @@ $white: ${theme.palette.white};
 $layer0: ${theme.v2.palette.layer0};
 $layer1: ${theme.v2.palette.layer1};
 $layer2: ${theme.v2.palette.layer2};
+
+$divider: ${theme.v2.palette.divider};
+
 $border0: ${theme.v2.palette.border0};
 $border1: ${theme.v2.palette.border1};
 
@@ -276,21 +279,22 @@ $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
-$tooltipBackground: $gray-1;
-$tooltipColor: $gray-7;
-$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
-$tooltipBackgroundError: $brand-danger;
-$tooltipShadow: 0 0 5px $gray60;
+$tooltipBackground: ${theme.v2.components.tooltip.background};
+$tooltipColor: ${theme.v2.components.tooltip.text};
+$tooltipArrowColor: ${theme.v2.components.tooltip.background};
+$tooltipBackgroundError: ${theme.v2.palette.error.main};
+$tooltipShadow: ${theme.v2.shadows.z2};
+
+$popover-bg: ${theme.v2.palette.layer2};
+$popover-color: ${theme.v2.palette.text.primary};
+$popover-border-color: ${theme.v2.palette.border1};
+$popover-header-bg: ${theme.v2.palette.layer1};
+$popover-shadow: ${theme.v2.shadows.z3};
+
 $graph-tooltip-bg: $gray-5;
 
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($tooltipColor, 5%);
-
-$popover-bg: $page-bg;
-$popover-color: $text-color;
-$popover-border-color: $gray-5;
-$popover-header-bg: $gray-5;
-$popover-shadow: 0 0 20px $white;
 
 $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
@@ -375,9 +379,6 @@ $panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-2;
 
 $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
-
-$panel-options-group-border: none;
-$panel-options-group-header-bg: $gray-5;
 
 $panel-grid-placeholder-bg: lighten(${theme.palette.blue95}, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue95};

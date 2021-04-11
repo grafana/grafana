@@ -11,6 +11,7 @@ export interface ThemeComponents {
   };
   tooltip: {
     background: string;
+    text: string;
   };
   menu: {
     background: string;
@@ -52,6 +53,7 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
     },
     tooltip: {
       background: palette.layer2,
+      text: palette.text.primary,
     },
     menu: {
       background: palette.layer2,

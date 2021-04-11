@@ -12,9 +12,9 @@ export const colors = {
   gray60: '#7b8087',
   gray33: '#464c54',
   gray25: '#2c3235',
-  gray15: '#202226',
-  gray10: '#141619',
-  gray05: '#0b0c0e',
+  gray15: '#22252b', //'#202226',
+  gray10: '#181b1f', // old '#141619',
+  gray05: '#0d0f16', // old '#0b0c0e',
 
   // new from figma,
   darkLayer0: '#18181A',
