@@ -1,6 +1,7 @@
 import {
   DataFrame,
   DataFrameJSON,
+  dataFrameToJSON,
   DataQueryResponse,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
@@ -15,7 +16,7 @@ import {
 import { getGrafanaLiveSrv } from '../services/live';
 
 import { Observable, of } from 'rxjs';
-import { toDataQueryError } from '../utils/queryResponse';
+import { toDataQueryError } from './queryResponse';
 import { perf } from './perf';
 
 export interface LiveDataFilter {
@@ -28,6 +29,7 @@ export interface LiveDataFilter {
 export interface LiveDataStreamOptions {
   key?: string;
   addr: LiveChannelAddress;
+  frame?: DataFrame; // initial results
   buffer?: StreamingFrameOptions;
   filter?: LiveDataFilter;
 }
@@ -39,8 +41,13 @@ export interface LiveDataStreamOptions {
  */
 export function getLiveDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse> {
   if (!isValidLiveChannelAddress(options.addr)) {
-    return of({ error: toDataQueryError('invalid address'), data: [] });
+    return of({
+      error: toDataQueryError(`invalid channel address: ${JSON.stringify(options.addr)}`),
+      state: LoadingState.Error,
+      data: options.frame ? [options.frame] : [],
+    });
   }
+
   const live = getGrafanaLiveSrv();
   if (!live) {
     return of({ error: toDataQueryError('grafana live is not initalized'), data: [] });
@@ -50,8 +57,16 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
     let data: StreamingDataFrame | undefined = undefined;
     let filtered: DataFrame | undefined = undefined;
     let state = LoadingState.Loading;
-    const { key, filter } = options;
+    let { key } = options;
     let last = perf.last;
+    if (options.frame) {
+      const msg = dataFrameToJSON(options.frame);
+      data = new StreamingDataFrame(msg, options.buffer);
+      state = LoadingState.Streaming;
+    }
+    if (!key) {
+      key = `xstr/${streamCounter++}`;
+    }
 
     const process = (msg: DataFrameJSON) => {
       if (!data) {
@@ -61,14 +76,17 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
       }
       state = LoadingState.Streaming;
 
-      // Select the fields we are actually looking at
+      // Filter out fields
       if (!filtered || msg.schema) {
         filtered = data;
-        if (filter?.fields?.length) {
-          filtered = {
-            ...data,
-            fields: data.fields.filter((f) => filter.fields!.includes(f.name)),
-          };
+        if (options.filter) {
+          const { fields } = options.filter;
+          if (fields?.length) {
+            filtered = {
+              ...data,
+              fields: data.fields.filter((f) => fields.includes(f.name)),
+            };
+          }
         }
       }
 
@@ -85,15 +103,17 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
       .getStream()
       .subscribe({
         error: (err: any) => {
+          console.log('LiveQuery [error]', { err }, options.addr);
           state = LoadingState.Error;
-          subscriber.next({ state, data: [data], key });
+          subscriber.next({ state, data: [data], key, error: toDataQueryError(err) });
           sub.unsubscribe(); // close after error
         },
         complete: () => {
+          console.log('LiveQuery [complete]', options.addr);
           if (state !== LoadingState.Error) {
             state = LoadingState.Done;
           }
-          subscriber.next({ state, data: [data], key });
+          // or track errors? subscriber.next({ state, data: [data], key });
           subscriber.complete();
           sub.unsubscribe();
         },
@@ -103,14 +123,19 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
             return;
           }
           if (isLiveChannelStatusEvent(evt)) {
-            if (
+            if (evt.error) {
+              let error = toDataQueryError(evt.error);
+              error.message = `Streaming channel error: ${error.message}`;
+              state = LoadingState.Error;
+              subscriber.next({ state, data: [data], key, error });
+              return;
+            } else if (
               evt.state === LiveChannelConnectionState.Connected ||
               evt.state === LiveChannelConnectionState.Pending
             ) {
               if (evt.message) {
                 process(evt.message);
               }
-              return;
             }
             console.log('ignore state', evt);
           }
@@ -122,3 +147,6 @@ export function getLiveDataStream(options: LiveDataStreamOptions): Observable<Da
     };
   });
 }
+
+// incremet the stream ids
+let streamCounter = 10;
