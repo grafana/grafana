@@ -1,6 +1,22 @@
 import { createTheme } from './createTheme';
 
 describe('createTheme', () => {
+  it('create custom theme', () => {
+    const custom = createTheme({
+      palette: {
+        mode: 'dark',
+        primary: {
+          main: 'rgb(240,0,0)',
+        },
+        layer0: '#123',
+      },
+    });
+
+    expect(custom.palette.primary.main).toBe('rgb(240,0,0)');
+    expect(custom.palette.primary.shade).toBe('rgb(242, 38, 38)');
+    expect(custom.palette.layer0).toBe('#123');
+  });
+
   it('create default theme', () => {
     const theme = createTheme();
     expect(theme).toMatchInlineSnapshot(`
@@ -58,7 +74,7 @@ describe('createTheme', () => {
           },
           "panel": Object {
             "background": "#181b1f",
-            "border": "1px solid transparent",
+            "border": "#181b1f",
             "boxShadow": "0px 1px 1px -1px rgba(0,0,0,0.5),0px 1px 1px 0px rgba(0,0,0,0.4),0px 1px 3px 0px rgba(0,0,0,0.3)",
             "headerHeight": 4,
             "padding": 1,

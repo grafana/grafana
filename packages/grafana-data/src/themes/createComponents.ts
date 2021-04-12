@@ -54,7 +54,7 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
     padding: 1,
     headerHeight: 4,
     background: palette.layer1,
-    border: '1px solid transparent',
+    border: palette.border0,
     boxShadow: shadows.z0,
   };
 
