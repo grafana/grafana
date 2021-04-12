@@ -1,5 +1,11 @@
 package accesscontrol
 
+// PredefinedRoles provides a map of permission sets/roles which can be
+// assigned to a set of users. When adding a new resource protected by
+// Grafana access control the default permissions should be added to a
+// new predefined role in this set so that users can access the new
+// resource. PredefinedRoleGrants lists which organization roles are
+// assigned which predefined roles in this list.
 var PredefinedRoles = map[string]RoleDTO{
 	// TODO: Add support for inheritance between the predefined roles to
 	// make the admin ⊃ editor ⊃ viewer property hold.
@@ -93,13 +99,15 @@ var PredefinedRoles = map[string]RoleDTO{
 }
 
 const (
-	usersAdminRead = "grafana:roles:users:admin:read"
 	usersAdminEdit = "grafana:roles:users:admin:edit"
+	usersAdminRead = "grafana:roles:users:admin:read"
 )
 
+// PredefinedRoleGrants specifies which organization roles are assigned
+// to which set of PredefinedRoles by default. Alphabetically sorted.
 var PredefinedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
-		usersAdminRead,
 		usersAdminEdit,
+		usersAdminRead,
 	},
 }
