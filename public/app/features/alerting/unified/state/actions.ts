@@ -1,9 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkResult } from 'app/types';
 import { RuleLocation, RuleNamespace } from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
-import { fetchAlertManagerConfig } from '../api/alertmanager';
+import { fetchAlertManagerConfig, fetchSilences } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import { deleteRulerRulesGroup, fetchRulerRules, fetchRulerRulesNamespace, setRulerRuleGroup } from '../api/ruler';
 import { getAllRulesSourceNames, isCloudRulesSource } from '../utils/datasource';
@@ -25,6 +25,13 @@ export const fetchRulerRulesAction = createAsyncThunk(
   'unifiedalerting/fetchRulerRules',
   (rulesSourceName: string): Promise<RulerRulesConfigDTO | null> => {
     return withSerializedError(fetchRulerRules(rulesSourceName));
+  }
+);
+
+export const fetchSilencesAction = createAsyncThunk(
+  'unifiedalerting/fetchSilences',
+  (alertManagerSourceName: string): Promise<Silence[]> => {
+    return withSerializedError(fetchSilences(alertManagerSourceName));
   }
 );
 
