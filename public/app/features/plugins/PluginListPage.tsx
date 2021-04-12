@@ -2,7 +2,7 @@ import React from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
-import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
+import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import PluginList from './PluginList';
 import { loadPlugins } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -44,7 +44,7 @@ export const PluginListPage: React.FC<Props> = ({
     <Page navModel={navModel} aria-label={selectors.pages.PluginsList.page}>
       <Page.Contents isLoading={!hasFetched}>
         <>
-          <OrgActionBar
+          <PageActionBar
             searchQuery={searchQuery}
             setSearchQuery={(query) => setPluginsSearchQuery(query)}
             linkButton={linkButton}

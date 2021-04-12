@@ -165,6 +165,12 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Url:  hs.Cfg.AppSubURL + "/dashboard/snapshots",
 			Icon: "camera",
 		})
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Global panels",
+			Id:   "library-panels",
+			Url:  hs.Cfg.AppSubURL + "/library-panels",
+			Icon: "reusable-panel",
+		})
 	}
 
 	navTree = append(navTree, &dtos.NavLink{

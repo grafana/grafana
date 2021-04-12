@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import OrgActionBar, { Props } from './OrgActionBar';
+import PageActionBar, { Props } from './PageActionBar';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -12,7 +12,7 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  return shallow(<OrgActionBar {...props} />);
+  return shallow(<PageActionBar {...props} />);
 };
 
 describe('Render', () => {

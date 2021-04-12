@@ -448,6 +448,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/library-panels',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
+      ),
+    },
+    {
       path: '/sandbox/benchmarks',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "BenchmarksPage"*/ 'app/features/sandbox/BenchmarksPage')
