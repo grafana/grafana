@@ -148,11 +148,10 @@ const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false,
     transition: theme.v2.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
       duration: theme.v2.transitions.duration.short,
     }),
-    // boxShadow: theme.v2.shadows.z0,
 
     ...(!disableHover && {
       '&:hover': {
-        // boxShadow: theme.v2.shadows.z3,
+        background: theme.v2.palette.getHoverColor(theme.v2.palette.layer2, 0.03),
         cursor: 'pointer',
         zIndex: 1,
       },
