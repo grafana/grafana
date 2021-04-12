@@ -1,7 +1,7 @@
 import React from 'react';
 import { GrafanaTheme, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { Badge, BadgeProps, IconButton, PluginSignatureBadge, styleMixins, useStyles } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
@@ -69,18 +69,21 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       flex-shrink: 0;
       cursor: pointer;
-      background: ${theme.colors.bg2};
-      border: 1px solid ${theme.colors.border2};
-      border-radius: ${theme.border.radius.sm};
+      background: ${theme.v2.palette.layer2};
+      border-radius: ${theme.v2.shape.borderRadius()};
+      box-shadow: ${theme.v2.shadows.z0};
       align-items: center;
       padding: 8px;
       width: 100%;
       position: relative;
       overflow: hidden;
       height: 55px;
+      transition: ${theme.v2.transitions.create(['background'], {
+        duration: theme.v2.transitions.duration.short,
+      })};
 
       &:hover {
-        background: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+        background: ${styleMixins.hoverColor(theme.v2.palette.layer2, theme)};
       }
     `,
     itemContent: css`
@@ -146,19 +149,19 @@ function getPanelStateBadgeDisplayModel(panel: PanelPluginMeta): BadgeProps | nu
       return {
         text: 'Deprecated',
         color: 'red',
-        tooltip: `${panel.name} panel is deprecated`,
+        tooltip: `${panel.name} Panel is deprecated`,
       };
     case PluginState.alpha:
       return {
         text: 'Alpha',
         color: 'blue',
-        tooltip: `${panel.name} panel is experimental`,
+        tooltip: `${panel.name} Panel is experimental`,
       };
     case PluginState.beta:
       return {
         text: 'Beta',
         color: 'blue',
-        tooltip: `${panel.name} panel is in beta`,
+        tooltip: `${panel.name} Panel is in beta`,
       };
     default:
       return null;

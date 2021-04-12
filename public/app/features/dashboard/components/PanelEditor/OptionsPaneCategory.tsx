@@ -1,5 +1,5 @@
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import _ from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
 import { Counter, Icon, useStyles } from '@grafana/ui';
@@ -90,7 +90,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 const getStyles = (theme: GrafanaTheme) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
+      border-bottom: 1px solid ${theme.v2.palette.divider};
       &:last-child {
         border-bottom: none;
       }

@@ -1,4 +1,5 @@
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
+import { LegendDisplayMode, LegendPlacement } from './models.gen';
 
 export interface VizLegendBaseProps<T = {}> {
   placement: LegendPlacement;
@@ -29,20 +30,6 @@ export interface VizLegendItem<T = {}> {
   getDisplayValues?: () => DisplayValue[];
   fieldIndex?: DataFrameFieldIndex;
   data?: T;
-}
-
-export enum LegendDisplayMode {
-  List = 'list',
-  Table = 'table',
-  Hidden = 'hidden',
-}
-
-export type LegendPlacement = 'bottom' | 'right';
-
-export interface VizLegendOptions {
-  displayMode: LegendDisplayMode;
-  placement: LegendPlacement;
-  calcs: string[];
 }
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;

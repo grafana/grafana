@@ -11,7 +11,7 @@ import { useZoom } from './useZoom';
 import { Bounds, Config, defaultConfig, graphBounds, useLayout } from './layout';
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { stylesFactory, useTheme } from '../../themes';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
@@ -86,11 +86,14 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const firstNodesDataFrame = nodesDataFrames[0];
   const firstEdgesDataFrame = edgesDataFrames[0];
 
+  const theme = useTheme();
+
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
-  const processed = useMemo(() => processNodes(firstNodesDataFrame, firstEdgesDataFrame), [
+  const processed = useMemo(() => processNodes(firstNodesDataFrame, firstEdgesDataFrame, theme), [
     firstEdgesDataFrame,
     firstNodesDataFrame,
+    theme,
   ]);
 
   // May seem weird that we do layout first and then limit the nodes shown but the problem is we want to keep the node
@@ -110,7 +113,6 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     bounds
   );
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
-  const theme = useTheme();
   const styles = getStyles(theme);
 
   // This cannot be inline func or it will create infinite render cycle.
@@ -274,7 +276,8 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
           (e.source as NodeDatum).id === props.nodeHoveringId ||
           (e.target as NodeDatum).id === props.nodeHoveringId ||
           props.edgeHoveringId === e.id;
-        return shouldShow && <EdgeLabel key={e.id} edge={e} />;
+        const hasStats = e.mainStat || e.secondaryStat;
+        return shouldShow && hasStats && <EdgeLabel key={e.id} edge={e} />;
       })}
     </>
   );

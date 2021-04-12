@@ -15,7 +15,7 @@ import config from 'app/core/config';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Constants
-import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
+import { DEPRECATED_PANELS, LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
@@ -23,12 +23,14 @@ import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/event
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
   if (ask !== false) {
-    const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : undefined;
+    const text2 = panel.alert
+      ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
+      : undefined;
     const confirmText = panel.alert ? 'YES' : undefined;
 
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Remove Panel',
+        title: 'Remove panel',
         text: 'Are you sure you want to remove this panel?',
         text2: text2,
         icon: 'trash-alt',
@@ -54,7 +56,7 @@ export const copyPanel = (panel: PanelModel) => {
   }
 
   store.set(LS_PANEL_COPY_KEY, JSON.stringify(saveModel));
-  appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Open Add Panel to paste']);
+  appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Click **Add panel** icon to paste.']);
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
@@ -154,4 +156,8 @@ export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: nu
   const chromePadding = panel.plugin && panel.plugin.noPadding ? 0 : config.theme.panelPadding * 2;
   const headerHeight = panel.hasTitle() ? config.theme.panelHeaderHeight : 0;
   return containerHeight - headerHeight - chromePadding - PANEL_BORDER;
+}
+
+export function isDeprecatedPanel(panelType: string) {
+  return !!DEPRECATED_PANELS[panelType];
 }

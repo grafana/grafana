@@ -1,8 +1,8 @@
 import {
   AppEvents,
   applyFieldOverrides,
-  arrowTableToDataFrame,
-  base64StringToArrowTable,
+  dataFrameFromJSON,
+  DataFrameJSON,
   DataSourceApi,
   dateMath,
 } from '@grafana/data';
@@ -123,7 +123,7 @@ export function createAlertDefinition(): ThunkResult<void> {
     const alertDefinition = await buildAlertDefinition(getStore().alertDefinition);
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
-    locationService.push('/alerting/list');
+    locationService.push('/alerting/ng/list');
   };
 }
 
@@ -187,11 +187,11 @@ export function evaluateAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { alertDefinition } = getStore().alertDefinition;
 
-    const response: { instances: string[] } = await getBackendSrv().get(
+    const response: { instances: DataFrameJSON[] } = await getBackendSrv().get(
       `/api/alert-definitions/eval/${alertDefinition.uid}`
     );
 
-    const handledResponse = handleBase64Response(response.instances);
+    const handledResponse = handleJSONResponse(response.instances);
 
     dispatch(setInstanceData(handledResponse));
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition tested successfully']);
@@ -203,12 +203,12 @@ export function evaluateNotSavedAlertDefinition(): ThunkResult<void> {
     const { alertDefinition, getQueryOptions } = getStore().alertDefinition;
     const defaultDataSource = await getDataSourceSrv().get(null);
 
-    const response: { instances: string[] } = await getBackendSrv().post('/api/alert-definitions/eval', {
+    const response: { instances: DataFrameJSON[] } = await getBackendSrv().post('/api/alert-definitions/eval', {
       condition: alertDefinition.condition,
       data: buildDataQueryModel(getQueryOptions(), defaultDataSource),
     });
 
-    const handledResponse = handleBase64Response(response.instances);
+    const handledResponse = handleJSONResponse(response.instances);
     dispatch(setInstanceData(handledResponse));
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition tested successfully']);
   };
@@ -231,10 +231,9 @@ async function buildAlertDefinition(state: AlertDefinitionState) {
   };
 }
 
-function handleBase64Response(frames: string[]) {
+function handleJSONResponse(frames: DataFrameJSON[]) {
   const dataFrames = frames.map((instance) => {
-    const table = base64StringToArrowTable(instance);
-    return arrowTableToDataFrame(table);
+    return dataFrameFromJSON(instance);
   });
 
   return applyFieldOverrides({

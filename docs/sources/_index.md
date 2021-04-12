@@ -2,7 +2,7 @@
 title = "Grafana documentation"
 description = "Guides, Installation and Feature Documentation"
 keywords = ["grafana", "installation", "documentation"]
-aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", "/docs/grafana/v3.1"]
+aliases = ["/docs/grafana/v1.1", "/docs/grafana/next/guides/reference/admin", "/docs/grafana/v3.1"]
 +++
 
 # Grafana documentation
@@ -52,7 +52,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h4>Configure Grafana</h4>
         <p>Review the configuration and setup options.</p>
     </a>
-    <a href="{{< relref "getting-started/timeseries.md" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "basics/timeseries.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Intro to time series</h4>
         <p>Learn about time series data.</p>
     </a>

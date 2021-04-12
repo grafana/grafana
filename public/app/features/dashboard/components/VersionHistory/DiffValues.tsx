@@ -2,7 +2,7 @@ import React from 'react';
 import _ from 'lodash';
 import { useStyles, Icon } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Diff } from './utils';
 
 type DiffProps = {
@@ -25,7 +25,7 @@ export const DiffValues: React.FC<DiffProps> = ({ diff }) => {
 };
 
 const getStyles = (theme: GrafanaTheme) => css`
-  background-color: ${theme.colors.bg3};
+  background-color: ${theme.v2.palette.action.hover};
   border-radius: ${theme.border.radius.md};
   color: ${theme.colors.textHeading};
   font-size: ${theme.typography.size.base};
