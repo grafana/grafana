@@ -39,14 +39,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 
 // GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
-	roles := []string{string(user.OrgRole)}
-	for _, role := range user.OrgRole.Children() {
-		roles = append(roles, string(role))
-	}
-	if user.IsGrafanaAdmin {
-		roles = append(roles, roleGrafanaAdmin)
-	}
-
+	roles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, legacyRole := range roles {
 		if builtInRoleNames, ok := builtInRoleGrants[legacyRole]; ok {
