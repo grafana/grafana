@@ -160,23 +160,26 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		return response.Error(400, "unable to translate nodata/exec error settings",
 			fmt.Errorf("unable to translate nodata/exec error settings for alert id %v: %w", id, err))
 	}
-	// TODO: What to do with Rule Tags
-	// ruleTags := map[string]string{}
-	// for k, v := range oldAlert.Settings.Get("alertRuleTags").MustMap() {
-	// 	sV, ok := v.(string)
-	// 	if !ok {
-	// 		return response.Error(400, "unable to unmarshal rule tags",
-	// 			fmt.Errorf("unexpected type %T for tag %v", v, k))
-	// 	}
-	// 	ruleTags[k] = sV
-	// }
-	// TODO: Need place to put FOR duration
+
+	ruleTags := map[string]string{}
+
+	for k, v := range oldAlert.Settings.Get("alertRuleTags").MustMap() {
+		sV, ok := v.(string)
+		if !ok {
+			return response.Error(400, "unable to unmarshal rule tags",
+				fmt.Errorf("unexpected type %T for tag %v", v, k))
+		}
+		ruleTags[k] = sV
+	}
+
 	rule := ngmodels.AlertRule{
 		Title:        oldAlert.Name,
 		Data:         sseCond.Data,
 		Condition:    sseCond.Condition,
 		NoDataState:  *noDataSetting,
 		ExecErrState: *execErrSetting,
+		For:          ngmodels.Duration(oldAlert.For),
+		Annotations:  ruleTags,
 	}
 	rgc := apimodels.PostableRuleGroupConfig{
 		// TODO? Generate new name on conflict?
@@ -206,6 +209,7 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 	}
 	return response.JSON(200, cmd)
 }
+
 func transAdjustInterval(freq int64) model.Duration {
 	// 10 corresponds to the SchedulerCfg, but TODO not worrying about fetching for now.
 	var baseFreq int64 = 10
@@ -214,6 +218,7 @@ func transAdjustInterval(freq int64) model.Duration {
 	}
 	return model.Duration(time.Duration((freq - (freq % baseFreq))) * time.Second)
 }
+
 func transGetAlertById(id int64, user models.SignedInUser) (*models.Alert, int, error) {
 	getAlert := &models.GetAlertByIdQuery{
 		Id: id,
@@ -226,6 +231,7 @@ func transGetAlertById(id int64, user models.SignedInUser) (*models.Alert, int, 
 	}
 	return getAlert.Result, 0, nil
 }
+
 func transGetAlertsDashById(dashboardId int64, user models.SignedInUser) (*models.Dashboard, int, error) {
 	getDash := &models.GetDashboardQuery{
 		Id:    dashboardId,
@@ -236,6 +242,7 @@ func transGetAlertsDashById(dashboardId int64, user models.SignedInUser) (*model
 	}
 	return getDash.Result, 0, nil
 }
+
 func transToSSECondition(m *models.Alert, user models.SignedInUser) (*ngmodels.Condition, error) {
 	sb, err := m.Settings.ToDB()
 	if err != nil {
@@ -247,6 +254,7 @@ func transToSSECondition(m *models.Alert, user models.SignedInUser) (*ngmodels.C
 	}
 	return evalCond, nil
 }
+
 func transNoDataExecSettings(m *models.Alert, user models.SignedInUser) (*ngmodels.NoDataState, *ngmodels.ExecutionErrorState, error) {
 	oldNoData := m.Settings.Get("noDataState").MustString()
 	noDataSetting, err := transNoData(oldNoData)
@@ -260,6 +268,7 @@ func transNoDataExecSettings(m *models.Alert, user models.SignedInUser) (*ngmode
 	}
 	return &noDataSetting, &execErrSetting, nil
 }
+
 func transNoData(s string) (ngmodels.NoDataState, error) {
 	switch s {
 	case "ok":
@@ -273,6 +282,7 @@ func transNoData(s string) (ngmodels.NoDataState, error) {
 	}
 	return ngmodels.NoData, fmt.Errorf("unrecognized No Data setting %v", s)
 }
+
 func transExecErr(s string) (ngmodels.ExecutionErrorState, error) {
 	switch s {
 	case "alerting":
