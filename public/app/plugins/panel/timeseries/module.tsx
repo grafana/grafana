@@ -3,7 +3,7 @@ import { GraphFieldConfig } from '@grafana/ui';
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
-import { addLegendOptions, defaultGraphConfig, getGraphFieldConfig } from './config';
+import { addLegendOptions, defaultGraphConfig, getGraphFieldConfig, timeSeriesXYDimensionsResolver } from './config';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
@@ -24,4 +24,5 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
       },
     });
     addLegendOptions(builder);
-  });
+  })
+  .setPanelXYDimensionsResolver(timeSeriesXYDimensionsResolver);

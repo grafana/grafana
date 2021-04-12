@@ -33,7 +33,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensionConfig, any, Option
     return [{ value: 0, label: 'First result' }];
   }, [context.data]);
 
-  const dims = useMemo(() => getXYDimensions(value, context.data), [context.data, value]);
+  const dims = useMemo(() => getXYDimensions(context.data, value), [context.data, value]);
 
   const info = useMemo(() => {
     const first = {

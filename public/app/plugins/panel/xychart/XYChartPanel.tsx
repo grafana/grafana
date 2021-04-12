@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Button, TooltipPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
+import { Button, GraphNG, GraphNGLegendEvent, TooltipPlugin } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
@@ -18,7 +18,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   fieldConfig,
   onFieldConfigChange,
 }) => {
-  const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
+  const dims = useMemo(() => getXYDimensions(data.series, options.dims), [options.dims, data.series]);
 
   const frames = useMemo(() => [dims.frame], [dims]);
 
@@ -52,7 +52,8 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
 
   return (
     <GraphNG
-      data={frames}
+      // XYChart asks for aligned data hence we are getting single frame from PanelQueryRunner
+      data={frames[0]}
       fields={dims.fields}
       timeRange={timeRange}
       timeZone={timeZone}
@@ -62,7 +63,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
     >
-      <TooltipPlugin data={data.series} mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
+      <TooltipPlugin data={data.series[0]} mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <>{/* needs to be an array */}</>
     </GraphNG>
   );

@@ -169,4 +169,4 @@ export const setLocationService = (location: LocationService) => {
 };
 
 /** @internal */
-export const navigationLogger = createLogger('Router');
+export const navigationLogger = createLogger('Router', false);

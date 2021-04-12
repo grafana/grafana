@@ -51,7 +51,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
 
   return (
     <GraphNG
-      data={data.series}
+      // TimeSeries asks for aligned data hence we are getting single frame from PanelQueryRunner
+      data={data.series[0]}
       timeRange={timeRange}
       timeZone={timeZone}
       width={width}
@@ -61,8 +62,8 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       onSeriesColorChange={onSeriesColorChange}
     >
       <ZoomPlugin onZoom={onChangeTimeRange} />
-      <TooltipPlugin data={data.series} mode={options.tooltipOptions.mode} timeZone={timeZone} />
-      <ContextMenuPlugin data={data.series} timeZone={timeZone} replaceVariables={replaceVariables} />
+      <TooltipPlugin data={data.series[0]} mode={options.tooltipOptions.mode} timeZone={timeZone} />
+      <ContextMenuPlugin data={data.series[0]} timeZone={timeZone} replaceVariables={replaceVariables} />
       {data.annotations && (
         <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />
       )}

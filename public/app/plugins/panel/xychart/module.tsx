@@ -4,6 +4,7 @@ import { XYChartPanel } from './XYChartPanel';
 import { Options } from './types';
 import { XYDimsEditor } from './XYDimsEditor';
 import { getGraphFieldConfig, defaultGraphConfig, addLegendOptions } from '../timeseries/config';
+import { getXYFieldMatchers } from './dims';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
   .useFieldConfig(
@@ -35,4 +36,5 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
       });
 
     addLegendOptions(builder);
-  });
+  })
+  .setPanelXYDimensionsResolver(getXYFieldMatchers);

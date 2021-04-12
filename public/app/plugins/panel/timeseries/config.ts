@@ -1,7 +1,10 @@
 import {
+  DimensionsResolver,
   FieldColorModeId,
   FieldConfigEditorBuilder,
   FieldConfigProperty,
+  FieldMatcherID,
+  fieldMatchers,
   FieldType,
   identityOverrideProcessor,
   PanelOptionsEditorBuilder,
@@ -319,3 +322,10 @@ export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOpti
       showIf: (currentConfig) => currentConfig.legend.displayMode !== LegendDisplayMode.Hidden,
     });
 }
+
+export const timeSeriesXYDimensionsResolver: DimensionsResolver = () => {
+  return {
+    x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+    y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+  };
+};

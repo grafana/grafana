@@ -5,18 +5,16 @@ import {
   compareDataFrameStructures,
   DataFrame,
   DataFrameFieldIndex,
-  FieldMatcherID,
-  fieldMatchers,
   FieldType,
   TimeRange,
-  TimeZone, XYFieldMatchers,
+  TimeZone,
+  XYFieldMatchers,
 } from '@grafana/data';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
-import { GraphNGLegendEvent, XYFieldMatchers } from './types';
-import { GraphNGContext } from './hooks';
-import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
+import { GraphNGLegendEvent } from './types';
+import { preparePlotConfigBuilder } from './utils';
 import { preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
@@ -31,7 +29,7 @@ export const FIXED_UNIT = '__fixed';
 export interface GraphNGProps extends Themeable {
   width: number;
   height: number;
-  data: DataFrame[];
+  data: DataFrame;
   timeRange: TimeRange;
   legend: VizLegendOptions;
   timeZone: TimeZone;
@@ -46,8 +44,6 @@ export interface GraphNGProps extends Themeable {
  */
 export interface GraphNGState {
   data: AlignedData;
-  alignedDataFrame: DataFrame;
-  dimFields: XYFieldMatchers;
   seriesToDataFrameFieldIndexMap: DataFrameFieldIndex[];
   config?: UPlotConfigBuilder;
 }
@@ -55,88 +51,41 @@ export interface GraphNGState {
 class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   constructor(props: GraphNGProps) {
     super(props);
-    let dimFields = props.fields;
-
-    if (!dimFields) {
-      dimFields = {
-        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-      };
-    }
-    this.state = { dimFields } as GraphNGState;
-  }
-
-  /**
-   * Since no matter the nature of the change (data vs config only) we always calculate the plot-ready AlignedData array.
-   * It's cheaper than run prev and current AlignedData comparison to indicate necessity of data-only update. We assume
-   * that if there were no config updates, we can do data only updates(as described in Plot.tsx, L32)
-   *
-   * Preparing the uPlot-ready data in getDerivedStateFromProps makes the data updates happen only once for a render cycle.
-   * If we did it in componendDidUpdate we will end up having two data-only updates: 1) for props and 2) for state update
-   *
-   * This is a way of optimizing the uPlot rendering, yet there are consequences: when there is a config update,
-   * the data is updated first, and then the uPlot is re-initialized. But since the config updates does not happen that
-   * often (apart from the edit mode interactions) this should be a fair performance compromise.
-   */
-  static getDerivedStateFromProps(props: GraphNGProps, state: GraphNGState) {
-    let dimFields = props.fields;
-
-    if (!dimFields) {
-      dimFields = {
-        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-      };
-    }
-
-    const frame = preparePlotFrame(props.data, dimFields);
-
-    if (!frame) {
-      return { ...state, dimFields };
-    }
-
-    return {
-      ...state,
-      data: preparePlotData(frame, [FieldType.string]),
-      alignedDataFrame: frame,
-      seriesToDataFrameFieldIndexMap: frame.fields.map((f) => f.state!.origin!),
-      dimFields,
-    };
+    this.state = {} as GraphNGState;
   }
 
   componentDidMount() {
-    const { theme } = this.props;
+    const { theme, data } = this.props;
 
-    // alignedDataFrame is already prepared by getDerivedStateFromProps method
-    const { alignedDataFrame } = this.state;
-
-    if (!alignedDataFrame) {
+    if (!data) {
       return;
     }
+    const plotData = preparePlotData(data, [FieldType.string]);
+    const config = preparePlotConfigBuilder(data, theme, this.getTimeRange, this.getTimeZone);
 
     this.setState({
-      config: preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone),
+      data: plotData,
+      config,
     });
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
     const { data, theme } = this.props;
-    const { alignedDataFrame } = this.state;
     let shouldConfigUpdate = false;
-    let stateUpdate = {} as GraphNGState;
+
+    let stateUpdate = {
+      data: preparePlotData(data, [FieldType.string]),
+    } as GraphNGState;
 
     if (this.state.config === undefined || this.props.timeZone !== prevProps.timeZone) {
       shouldConfigUpdate = true;
     }
 
     if (data !== prevProps.data) {
-      if (!alignedDataFrame) {
-        return;
-      }
-
-      const hasStructureChanged = !compareArrayValues(data, prevProps.data, compareDataFrameStructures);
+      const hasStructureChanged = !compareArrayValues([data], [prevProps.data], compareDataFrameStructures);
 
       if (shouldConfigUpdate || hasStructureChanged) {
-        const builder = preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone);
+        const builder = preparePlotConfigBuilder(data, theme, this.getTimeRange, this.getTimeZone);
         stateUpdate = { ...stateUpdate, config: builder };
       }
     }
@@ -145,10 +94,6 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       this.setState(stateUpdate);
     }
   }
-
-  mapSeriesIndexToDataFrameFieldIndex = (i: number) => {
-    return this.state.seriesToDataFrameFieldIndexMap[i];
-  };
 
   getTimeRange = () => {
     return this.props.timeRange;
@@ -168,7 +113,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     return (
       <PlotLegend
-        data={data}
+        data={[data]}
         config={config}
         onSeriesColorChange={onSeriesColorChange}
         onLegendClick={onLegendClick}
@@ -187,28 +132,20 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     }
 
     return (
-      <GraphNGContext.Provider
-        value={{
-          mapSeriesIndexToDataFrameFieldIndex: this.mapSeriesIndexToDataFrameFieldIndex,
-          dimFields: this.state.dimFields,
-          data: this.state.alignedDataFrame,
-        }}
-      >
-        <VizLayout width={width} height={height} legend={this.renderLegend()}>
-          {(vizWidth: number, vizHeight: number) => (
-            <UPlotChart
-              {...plotProps}
-              config={this.state.config!}
-              data={this.state.data}
-              width={vizWidth}
-              height={vizHeight}
-              timeRange={timeRange}
-            >
-              {children}
-            </UPlotChart>
-          )}
-        </VizLayout>
-      </GraphNGContext.Provider>
+      <VizLayout width={width} height={height} legend={this.renderLegend()}>
+        {(vizWidth: number, vizHeight: number) => (
+          <UPlotChart
+            {...plotProps}
+            config={this.state.config!}
+            data={this.state.data}
+            width={vizWidth}
+            height={vizHeight}
+            timeRange={timeRange}
+          >
+            {children}
+          </UPlotChart>
+        )}
+      </VizLayout>
     );
   }
 }
