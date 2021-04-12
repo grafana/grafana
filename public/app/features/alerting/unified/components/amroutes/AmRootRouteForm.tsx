@@ -1,8 +1,7 @@
 import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Button, Collapse, Field, Form, Input, InputControl, Link, Select, stylesFactory } from '@grafana/ui';
+import { Button, Collapse, Field, Form, Input, InputControl, Link, Select, useStyles } from '@grafana/ui';
 import { Route } from '../../../../../plugins/datasource/alertmanager/types';
 
 const intervalTypeOptions: SelectableValue[] = [
@@ -47,33 +46,13 @@ const groupByOptions: SelectableValue[] = [
   },
 ];
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    container: css`
-      align-items: center;
-      display: flex;
-      flex-flow: row nowrap;
-
-      > * + * {
-        margin-left: ${theme.spacing.sm};
-      }
-    `,
-    input: css`
-      flex: 1;
-    `,
-    smallInput: css`
-      flex: 0.1;
-    `,
-  };
-});
-
 export interface AmRootRouteFormProps {
   onCancel: () => void;
   route: Route | undefined;
 }
 
 export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel }) => {
-  const styles = getStyles(config.theme);
+  const styles = useStyles(getStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
 
   return (
@@ -169,4 +148,24 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel }) => {
       )}
     </Form>
   );
+};
+
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    container: css`
+      align-items: center;
+      display: flex;
+      flex-flow: row nowrap;
+
+      > * + * {
+        margin-left: ${theme.spacing.sm};
+      }
+    `,
+    input: css`
+      flex: 1;
+    `,
+    smallInput: css`
+      flex: 0.1;
+    `,
+  };
 };

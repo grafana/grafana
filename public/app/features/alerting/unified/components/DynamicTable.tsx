@@ -8,7 +8,7 @@ export interface DynamicTableColumnProps<T = any> {
   label: string;
 
   renderRow?: (item: DynamicTableItemProps<T>) => ReactNode;
-  size?: number;
+  size?: number | string;
 }
 
 export interface DynamicTableItemProps<T = any> {
@@ -63,7 +63,7 @@ export const DynamicTable: FC<DynamicTableProps> = ({
                 </div>
               )}
               {cols.map((col) => (
-                <div className={styles.cell} data-column={col.label} key={`${item.id}-${col.id}`}>
+                <div className={cx(styles.cell, styles.bodyCell)} data-column={col.label} key={`${item.id}-${col.id}`}>
                   {col.renderRow?.(item)}
                 </div>
               ))}
@@ -86,7 +86,11 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
       return 'auto';
     }
 
-    return `${col.size}fr`;
+    if (typeof col.size === 'number') {
+      return `${col.size}fr`;
+    }
+
+    return col.size;
   });
 
   if (isExpandable) {
@@ -95,40 +99,38 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
 
   return (theme: GrafanaTheme) => ({
     container: css`
-      border: 1px solid #464c54;
+      background-color: ${theme.colors.bg2};
+      border: 1px solid ${theme.colors.border3};
       border-radius: 2px;
     `,
     row: css`
-      color: #9fa7b3;
       display: grid;
       grid-template-columns: ${sizes.join(' ')};
 
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        grid-template-columns: auto;
+        grid-template-columns: auto 1fr;
+        grid-template-areas: 'left right';
       }
     `,
     headerRow: css`
-      background-color: #202226;
-
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
         display: none;
       }
     `,
     bodyRow: css`
       &:nth-child(2n) {
-        background-color: #141619;
-      }
-
-      &:nth-child(2n + 1) {
-        background-color: #202226;
+        background-color: ${theme.colors.bodyBg};
       }
     `,
     cell: css`
       align-items: center;
       display: grid;
-      padding: 8px;
-
+      padding: ${theme.spacing.sm};
+    `,
+    bodyCell: css`
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
+        grid-column-end: right;
+        grid-column-start: right;
         grid-template-columns: minmax(30px, 30%) 1fr;
 
         &::before {
@@ -138,10 +140,14 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
     `,
     expandCell: css`
       justify-content: center;
-      padding: 8px 4px 8px 8px;
+
+      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+        grid-area: left;
+        grid-template-columns: 1fr;
+      }
     `,
     expandedContentRow: css`
-      padding: 8px;
+      padding: ${theme.spacing.sm};
     `,
   });
 };

@@ -1,38 +1,17 @@
 import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Button, stylesFactory } from '@grafana/ui';
+import { Button, useStyles } from '@grafana/ui';
 import { Route } from '../../../../../plugins/datasource/alertmanager/types';
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
-
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    container: css`
-      background-color: ${theme.palette.gray15};
-      color: ${theme.palette.gray70};
-      padding: ${theme.spacing.md};
-    `,
-    titleContainer: css`
-      display: flex;
-      flex-flow: row nowrap;
-    `,
-    title: css`
-      flex: 100%;
-    `,
-    titleInfo: css`
-      font-style: italic;
-    `,
-  };
-});
 
 export interface AmRootRouteProps {
   route: Route | undefined;
 }
 
 export const AmRootRoute: FC<AmRootRouteProps> = ({ route }) => {
-  const styles = getStyles(config.theme);
+  const styles = useStyles(getStyles);
   const [isEditMode, setIsEditMode] = useState(false);
 
   const toggleIsEditMode = () => {
@@ -58,4 +37,24 @@ export const AmRootRoute: FC<AmRootRouteProps> = ({ route }) => {
       {isEditMode ? <AmRootRouteForm onCancel={toggleIsEditMode} route={route} /> : <AmRootRouteRead route={route} />}
     </div>
   );
+};
+
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    container: css`
+      background-color: ${theme.colors.bg2};
+      color: ${theme.colors.textSemiWeak};
+      padding: ${theme.spacing.md};
+    `,
+    titleContainer: css`
+      display: flex;
+      flex-flow: row nowrap;
+    `,
+    title: css`
+      flex: 100%;
+    `,
+    titleInfo: css`
+      font-style: italic;
+    `,
+  };
 };

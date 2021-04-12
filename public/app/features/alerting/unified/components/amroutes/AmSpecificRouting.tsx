@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, IconButton } from '@grafana/ui';
 import { Route } from '../../../../../plugins/datasource/alertmanager/types';
+import { collapseItem, expandItem, prepareItems } from '../../utils/dynamicTable';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 
 export interface AmSpecificRoutingProps {
@@ -11,12 +12,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ route }) => {
   const [items, setItems] = useState<Array<DynamicTableItemProps<Route>>>([]);
 
   useEffect(() => {
-    setItems(
-      (route?.routes ?? []).map((currentRoute, index) => ({
-        id: index,
-        data: currentRoute,
-      }))
-    );
+    setItems(prepareItems(route?.routes ?? []));
   }, [route?.routes]);
 
   const renderMatchingCriteria = (item: DynamicTableItemProps<Route>) =>
@@ -88,38 +84,16 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({ route }) => {
       id: 'actions',
       label: 'Actions',
       renderRow: renderButtons,
-      size: 2,
+      size: 2.5,
     },
   ];
 
   const onCollapse = (item: DynamicTableItemProps<Route>) => {
-    setItems(
-      items.map((currentItem) => {
-        if (currentItem !== item) {
-          return currentItem;
-        }
-
-        return {
-          ...currentItem,
-          isExpanded: false,
-        };
-      })
-    );
+    setItems(collapseItem(items, item));
   };
 
   const onExpand = (item: DynamicTableItemProps<Route>) => {
-    setItems(
-      items.map((currentItem) => {
-        if (currentItem !== item) {
-          return currentItem;
-        }
-
-        return {
-          ...currentItem,
-          isExpanded: true,
-        };
-      })
-    );
+    setItems(expandItem(items, item));
   };
 
   return (
