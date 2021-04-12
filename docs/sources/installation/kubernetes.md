@@ -64,6 +64,14 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 2
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 3000
+            timeoutSeconds: 1            
           resources:
             limits:
               memory: 4Gi
