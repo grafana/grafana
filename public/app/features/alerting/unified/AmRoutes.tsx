@@ -36,7 +36,61 @@ const AmRoutes: FC = () => {
       {result && !loading && !error && (
         <>
           <AmRootRoute route={result.alertmanager_config.route} />
-          <AmSpecificRouting route={result.alertmanager_config.route} />
+          <AmSpecificRouting
+            route={{
+              receiver: 'e2e-bogdanmatei1',
+              group_by: ['cluster', 'alertname'],
+              routes: [
+                {
+                  receiver: 'database-pager-root',
+                  match_re: {
+                    service: 'mysql|cassandra',
+                    service2: 'asl',
+                    service3: 'pls',
+                    service4: 'asdfads',
+                    service5: 'cassandra',
+                  },
+                  routes: [
+                    {
+                      receiver: 'database-pager-child1',
+                      match_re: {
+                        service: 'mysql',
+                      },
+                      routes: [
+                        {
+                          receiver: 'database-pager-subchild1',
+                          group_wait: '10s',
+                        },
+                        {
+                          receiver: 'database-pager-subchild2',
+                          group_wait: '20m',
+                        },
+                      ],
+                      group_wait: '10s',
+                    },
+                    {
+                      receiver: 'database-pager-child2',
+                      match_re: {
+                        service: 'cassandra',
+                      },
+                      group_wait: '20s',
+                    },
+                  ],
+                  group_wait: '10s',
+                },
+                {
+                  receiver: 'frontend-pager',
+                  group_by: ['product', 'environment'],
+                  match: {
+                    team: 'frontend',
+                  },
+                },
+              ],
+              group_wait: '30s',
+              group_interval: '5m',
+              repeat_interval: '4h',
+            }}
+          />
           <pre>{JSON.stringify(result, null, 2)}</pre>
         </>
       )}

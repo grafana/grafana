@@ -2,7 +2,7 @@ import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, Collapse, Field, Form, Input, InputControl, Link, Select, useStyles } from '@grafana/ui';
-import { Route } from '../../../../../plugins/datasource/alertmanager/types';
+import { Route } from 'app/plugins/datasource/alertmanager/types';
 
 const intervalTypeOptions: SelectableValue[] = [
   {

@@ -2,7 +2,7 @@ import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Button, useStyles } from '@grafana/ui';
-import { Route } from '../../../../../plugins/datasource/alertmanager/types';
+import { Route } from 'app/plugins/datasource/alertmanager/types';
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';
 
