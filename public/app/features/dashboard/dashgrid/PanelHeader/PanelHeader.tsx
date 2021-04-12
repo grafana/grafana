@@ -1,6 +1,6 @@
 import React, { FC, useLayoutEffect, useState, useRef } from 'react';
 import { cx } from '@emotion/css';
-import { DataLink, PanelData, CartesianCoords2D } from '@grafana/data';
+import { DataLink, PanelData, CartesianCoords2D, Dimensions2D } from '@grafana/data';
 import { Icon } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -32,13 +32,13 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
 
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuIconCoordinates, setMenuIconCoordinates] = useState<CartesianCoords2D>({ x: 0, y: 0 });
+  const [menuIconDimension, setMenuIconDimension] = useState<Dimensions2D>({ width: 0, height: 0 });
 
   useLayoutEffect(() => {
     if (menuRef.current) {
       const coordinates = menuRef.current.getBoundingClientRect();
       setMenuIconCoordinates({ x: coordinates.x, y: coordinates.y });
-      console.log(coordinates.y);
-      console.log(coordinates.x);
+      setMenuIconDimension({ width: coordinates.width, height: coordinates.height });
     }
   }, [menuRef]);
 
@@ -76,6 +76,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   show={panelMenuOpen}
                   onClose={closeMenu}
                   coordinates={menuIconCoordinates}
+                  dimensions={menuIconDimension}
                 />
                 {data.request && data.request.timeInfo && (
                   <span className="panel-time-info">
