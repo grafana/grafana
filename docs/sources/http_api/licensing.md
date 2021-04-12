@@ -2,7 +2,7 @@
 title = "Licensing HTTP API "
 description = "Grafana Licensing HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "licensing", "enterprise"]
-aliases = ["/docs/grafana/latest/http_api/licensing/"]
+aliases = ["/docs/grafana/next/http_api/licensing/"]
 +++
 
 > Licensing is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).

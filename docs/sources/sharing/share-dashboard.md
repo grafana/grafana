@@ -1,7 +1,7 @@
 +++
 title = "Share a dashboard"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
-aliases = ["/docs/grafana/latest/dashboards/share-dashboard/","/docs/grafana/latest/reference/share_dashboard/"]
+aliases = ["/docs/grafana/next/dashboards/share-dashboard/","/docs/grafana/next/reference/share_dashboard/"]
 weight = 6
 +++
 

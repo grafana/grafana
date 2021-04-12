@@ -12,8 +12,8 @@ This section explains how to use Time series field options to visualize time ser
 
 ## Create the panel
 
-1. [Add a panel](https://grafana.com/docs/grafana/latest/panels/add-a-panel/). Select the [Time series]({{< relref "_index.md" >}}) visualization.
-1. In the [Panel editor](https://grafana.com/docs/grafana/latest/panels/panel-editor/), click the **Field** tab.
+1. [Add a panel](https://grafana.com/docs/grafana/next/panels/add-a-panel/). Select the [Time series]({{< relref "_index.md" >}}) visualization.
+1. In the [Panel editor](https://grafana.com/docs/grafana/next/panels/panel-editor/), click the **Field** tab.
 1. In Style, click **Bars**.
 
 ## Style the bars
@@ -81,7 +81,7 @@ Fill opacity set to 95:
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme](https://grafana.com/docs/grafana/latest/panels/field-options/standard-field-options/#color-scheme) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme](https://grafana.com/docs/grafana/next/panels/field-options/standard-field-options/#color-scheme) field option.
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 

@@ -1,6 +1,6 @@
 +++
 title = "Add a text box variable"
-aliases = ["/docs/grafana/latest/variables/add-text-box-variable.md"]
+aliases = ["/docs/grafana/next/variables/add-text-box-variable.md"]
 weight = 300
 +++
 
