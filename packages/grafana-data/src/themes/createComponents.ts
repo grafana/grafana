@@ -96,9 +96,9 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
           },
     panel,
     pageToolbar: {
-      background: panel.background,
-      boxShadow: panel.boxShadow,
-      border: panel.border,
+      background: palette.layer0,
+      boxShadow: 'none',
+      border: 'none',
     },
     dashboard: {
       background: palette.layer0,

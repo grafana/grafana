@@ -79,6 +79,7 @@ div.flot-text {
   &--transparent {
     background-color: transparent;
     border: 1px solid transparent;
+    box-shadow: none;
   }
 
   &:hover {
