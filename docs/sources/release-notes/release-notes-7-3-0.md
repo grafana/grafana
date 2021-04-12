@@ -52,7 +52,7 @@ list = false
 
 ### Breaking changes
 
-- **CloudWatch**: The AWS CloudWatch data source's authentication scheme has changed. See the [upgrade notes]{{< relref "../installation/upgrading.md#upgrading-to-v73" >}) for details and how this may affect you.
+- **CloudWatch**: The AWS CloudWatch data source's authentication scheme has changed. See the [upgrade notes]{{< relref "../installation/upgrading.md#upgrading-to-v73" >}}) for details and how this may affect you.
 
 ### Features and enhancements
 * **Alerting**: Add labels to name when converting data frame to series. [#28085](https://github.com/grafana/grafana/pull/28085), [@kylebrandt](https://github.com/kylebrandt)
