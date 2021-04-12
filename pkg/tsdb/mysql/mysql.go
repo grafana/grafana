@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/url"
@@ -21,12 +20,12 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"xorm.io/core"
 )
 
 const (
-	dateFormat     = "2006-01-02"
-	dateTimeFormat = "2006-01-02 15:04:05"
+	dateFormat      = "2006-01-02"
+	dateTimeFormat1 = "2006-01-02 15:04:05"
+	dateTimeFormat2 = "2006-01-02T15:04:05Z"
 )
 
 func characterEscape(s string, escapeChar string) string {
@@ -83,67 +82,6 @@ func NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 
 type mysqlQueryResultTransformer struct {
 	log log.Logger
-}
-
-// converter map to be implemented here
-func (t *mysqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
-	plugins.DataRowValues, error) {
-	values := make([]interface{}, len(columnTypes))
-
-	for i := range values {
-		scanType := columnTypes[i].ScanType()
-		values[i] = reflect.New(scanType).Interface()
-
-		if columnTypes[i].DatabaseTypeName() == "BIT" {
-			values[i] = new([]byte)
-		}
-	}
-
-	if err := rows.Scan(values...); err != nil {
-		return nil, err
-	}
-
-	for i := 0; i < len(columnTypes); i++ {
-		typeName := reflect.ValueOf(values[i]).Type().String()
-
-		switch typeName {
-		case "*sql.RawBytes":
-			values[i] = string(*values[i].(*sql.RawBytes))
-		case "*mysql.NullTime":
-			sqlTime := (*values[i].(*mysql.NullTime))
-			if sqlTime.Valid {
-				values[i] = sqlTime.Time
-			} else {
-				values[i] = nil
-			}
-		case "*sql.NullInt64":
-			nullInt64 := (*values[i].(*sql.NullInt64))
-			if nullInt64.Valid {
-				values[i] = nullInt64.Int64
-			} else {
-				values[i] = nil
-			}
-		case "*sql.NullFloat64":
-			nullFloat64 := (*values[i].(*sql.NullFloat64))
-			if nullFloat64.Valid {
-				values[i] = nullFloat64.Float64
-			} else {
-				values[i] = nil
-			}
-		}
-
-		if columnTypes[i].DatabaseTypeName() == "DECIMAL" {
-			f, err := strconv.ParseFloat(values[i].(string), 64)
-
-			if err == nil {
-				values[i] = f
-			} else {
-				values[i] = nil
-			}
-		}
-	}
-
-	return values, nil
 }
 
 func (t *mysqlQueryResultTransformer) TransformQueryError(err error) error {
@@ -238,9 +176,14 @@ var converterList = []sqlutil.StringConverter{
 				if in == nil {
 					return nil, nil
 				}
-				v, err := time.Parse(dateTimeFormat, *in)
+				v, err := time.Parse(dateTimeFormat1, *in)
 				if err == nil {
 					return &v, nil
+				} else {
+					v, err = time.Parse(dateTimeFormat2, *in)
+					if err == nil {
+						return &v, nil
+					}
 				}
 				return nil, err
 			},
@@ -278,7 +221,7 @@ var converterList = []sqlutil.StringConverter{
 				if in == nil {
 					return nil, nil
 				}
-				v, err := time.Parse(dateTimeFormat, *in)
+				v, err := time.Parse(dateTimeFormat1, *in)
 				if err == nil {
 					return &v, nil
 				}

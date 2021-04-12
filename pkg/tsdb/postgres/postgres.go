@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -17,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"xorm.io/core"
 )
 
 func init() {
@@ -137,43 +135,6 @@ func (s *PostgresService) generateConnectionString(datasource *models.DataSource
 
 type postgresQueryResultTransformer struct {
 	log log.Logger
-}
-
-func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (
-	plugins.DataRowValues, error) {
-	values := make([]interface{}, len(columnTypes))
-	valuePtrs := make([]interface{}, len(columnTypes))
-
-	for i := 0; i < len(columnTypes); i++ {
-		valuePtrs[i] = &values[i]
-	}
-
-	if err := rows.Scan(valuePtrs...); err != nil {
-		return nil, err
-	}
-
-	// convert types not handled by lib/pq
-	// unhandled types are returned as []byte
-	for i := 0; i < len(columnTypes); i++ {
-		if value, ok := values[i].([]byte); ok {
-			switch columnTypes[i].DatabaseTypeName() {
-			case "NUMERIC":
-				if v, err := strconv.ParseFloat(string(value), 64); err == nil {
-					values[i] = v
-				} else {
-					t.log.Debug("Rows", "Error converting numeric to float", value)
-				}
-			case "UNKNOWN", "CIDR", "INET", "MACADDR":
-				// char literals have type UNKNOWN
-				values[i] = string(value)
-			default:
-				t.log.Debug("Rows", "Unknown database type", columnTypes[i].DatabaseTypeName(), "value", value)
-				values[i] = string(value)
-			}
-		}
-	}
-
-	return values, nil
 }
 
 func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {

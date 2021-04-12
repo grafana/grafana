@@ -37,8 +37,6 @@ type SQLMacroEngine interface {
 
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
 type SqlQueryResultTransformer interface {
-	// TransformQueryResult transforms a query result row to RowValues with proper types.
-	TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (plugins.DataRowValues, error)
 	// TransformQueryError transforms a query error.
 	TransformQueryError(err error) error
 
@@ -146,6 +144,7 @@ const rowLimit = 1000000
 
 func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
+
 	var timeRange plugins.DataTimeRange
 	if queryContext.TimeRange != nil {
 		timeRange = *queryContext.TimeRange
@@ -305,7 +304,6 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<", content)
 			frames = append(frames, frame)
 			queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
-
 			ch <- queryResult
 		}(query)
 	}
