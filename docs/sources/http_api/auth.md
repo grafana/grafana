@@ -128,7 +128,6 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-
 JSON Body schema:
 
 - **name** – The key name
