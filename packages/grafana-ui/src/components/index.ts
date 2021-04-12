@@ -15,6 +15,7 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
+export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export {
@@ -227,3 +228,4 @@ export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConf
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';
+export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';

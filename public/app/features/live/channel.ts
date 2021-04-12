@@ -178,6 +178,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
 
   shutdownWithError(err: string) {
     this.currentStatus.error = err;
+    this.sendStatus();
     this.disconnect();
   }
 }
