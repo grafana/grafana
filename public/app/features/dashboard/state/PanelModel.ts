@@ -29,7 +29,7 @@ import {
   RenderEvent,
 } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
-import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
+import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import {
   filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
@@ -510,6 +510,17 @@ export class PanelModel implements DataConfigSource {
   setProperty(key: keyof this, value: any) {
     this[key] = value;
     this.hasChanged = true;
+
+    // Custom handling of repeat dependent options, handled here as PanelEditor can
+    // update one key at a time right now
+    if (key === 'repeat') {
+      if (this.repeat && !this.repeatDirection) {
+        this.repeatDirection = 'h';
+      } else if (!this.repeat) {
+        delete this.repeatDirection;
+        delete this.maxPerRow;
+      }
+    }
   }
 
   replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
@@ -518,7 +529,8 @@ export class PanelModel implements DataConfigSource {
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
-    const allVariablesParams = getAllVariableValuesForUrl(vars);
+
+    const allVariablesParams = getVariablesUrlParams(vars);
     const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
     const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
 

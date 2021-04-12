@@ -2,7 +2,7 @@
 title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-aliases = ["/docs/grafana/latest/installation/configuration/"]
+aliases = ["/docs/grafana/next/installation/configuration/"]
 weight = 150
 +++
 
@@ -168,7 +168,7 @@ Override log path using the command line argument `cfg:default.paths.logs`:
 
 ### plugins
 
-Directory where Grafana automatically scans and looks for plugins. Manually or automatically install any [plugins](https://grafana.com/docs/grafana/latest/plugins/installation/) here.
+Directory where Grafana automatically scans and looks for plugins. Manually or automatically install any [plugins](https://grafana.com/docs/grafana/next/plugins/installation/) here.
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
@@ -796,6 +796,12 @@ If this option is disabled, the **Assume Role** and the **External Id** field ar
 ### list_metrics_page_limit
 
 Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) option to load metrics for custom namespaces in the CloudWatch data source. By default, the page limit is 500.
+
+<hr />
+
+## [auth.jwt]
+
+Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
 
 <hr />
 

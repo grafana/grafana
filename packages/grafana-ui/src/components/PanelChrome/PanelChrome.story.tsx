@@ -1,10 +1,9 @@
-import React, { CSSProperties, useState } from 'react';
+import React, { useState } from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { PanelChrome, useTheme, PanelChromeProps } from '@grafana/ui';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
-import { merge } from 'lodash';
-import { GrafanaTheme } from '@grafana/data';
 import { useInterval } from 'react-use';
+import { PanelChrome, PanelPadding } from './PanelChrome';
+import { LoadingIndicator } from './LoadingIndicator';
+import { useTheme } from '../../themes/ThemeContext';
 
 export default {
   title: 'Visualizations/PanelChrome',
@@ -13,91 +12,76 @@ export default {
   parameters: {
     docs: {},
   },
+  argTypes: {
+    leftItems: {
+      control: {
+        type: 'select',
+        options: ['none', 'loading'],
+      },
+    },
+    width: {
+      table: {
+        disable: true,
+      },
+    },
+    height: {
+      table: {
+        disable: true,
+      },
+    },
+  },
 };
 
-function renderPanel(name: string, overrides: Partial<PanelChromeProps>, theme: GrafanaTheme) {
-  const props: PanelChromeProps = {
-    width: 400,
-    height: 130,
-    title: 'Default title',
-    children: () => undefined,
-  };
+type PanelChromeStoryProps = {
+  leftItems: string;
+  title: string | undefined;
+  padding: PanelPadding;
+};
 
-  merge(props, overrides);
-
-  const contentStyle: CSSProperties = {
-    background: theme.colors.bg2,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
+export const StandardPanel = (props: PanelChromeStoryProps) => {
+  const theme = useTheme();
+  const { title, padding } = props;
+  const leftItems = mapToItems(props.leftItems);
 
   return (
-    <PanelChrome {...props}>
+    <PanelChrome width={400} height={230} leftItems={leftItems} title={title} padding={padding}>
       {(innerWidth, innerHeight) => {
-        return <div style={{ width: innerWidth, height: innerHeight, ...contentStyle }}>{name}</div>;
+        return (
+          <div
+            style={{
+              width: innerWidth,
+              height: innerHeight,
+              ...{
+                background: theme.colors.bg2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+            }}
+          ></div>
+        );
       }}
     </PanelChrome>
   );
-}
+};
 
-export const StandardPanel = () => {
-  const theme = useTheme();
+StandardPanel.args = {
+  leftItems: 'none',
+  title: 'Very long title that should get ellipsis when there is no more space',
+};
+
+const LoadingItem = () => {
   const [loading, setLoading] = useState(true);
-
   useInterval(() => setLoading(true), 5000);
 
-  return (
-    <div style={{ background: theme.colors.dashboardBg, padding: 100 }}>
-      <HorizontalGroup spacing="md">
-        <VerticalGroup spacing="md">
-          {renderPanel('Default panel', {}, theme)}
-          {renderPanel('No padding', { padding: 'none' }, theme)}
-        </VerticalGroup>
-        <VerticalGroup spacing="md">
-          {renderPanel('No title', { title: '' }, theme)}
-          {renderPanel(
-            'Very long title',
-            { title: 'Very long title that should get ellipsis when there is no more space' },
-            theme
-          )}
-        </VerticalGroup>
-      </HorizontalGroup>
-      <div style={{ marginTop: theme.spacing.md }} />
-      <HorizontalGroup spacing="md">
-        <VerticalGroup spacing="md">
-          {renderPanel(
-            'No title and loading indicator',
-            {
-              title: '',
-              leftItems: [
-                <PanelChrome.LoadingIndicator
-                  loading={loading}
-                  onCancel={() => setLoading(false)}
-                  key="loading-indicator"
-                />,
-              ],
-            },
-            theme
-          )}
-        </VerticalGroup>
-        <VerticalGroup spacing="md">
-          {renderPanel(
-            'Very long title',
-            {
-              title: 'Very long title that should get ellipsis when there is no more space',
-              leftItems: [
-                <PanelChrome.LoadingIndicator
-                  loading={loading}
-                  onCancel={() => setLoading(false)}
-                  key="loading-indicator"
-                />,
-              ],
-            },
-            theme
-          )}
-        </VerticalGroup>
-      </HorizontalGroup>
-    </div>
-  );
+  return <LoadingIndicator loading={loading} onCancel={() => setLoading(false)} />;
+};
+
+const mapToItems = (selected: string): React.ReactNode[] | undefined => {
+  switch (selected) {
+    case 'loading':
+      return [<LoadingItem key="loading" />];
+    default:
+      return;
+  }
 };

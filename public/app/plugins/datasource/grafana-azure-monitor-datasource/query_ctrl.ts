@@ -7,7 +7,7 @@ import { TemplateSrv } from '@grafana/runtime';
 import { auto } from 'angular';
 import { DataFrame, PanelEvents } from '@grafana/data';
 import { AzureQueryType, AzureMetricQuery, AzureMonitorQuery } from './types';
-import { convertTimeGrainsToMs } from './components/common';
+import { convertTimeGrainsToMs } from './utils/common';
 import Datasource from './datasource';
 
 export interface ResultFormat {
@@ -34,7 +34,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   // target: AzureMonitorQuery;
 
-  target: {
+  declare target: {
     // should be: AzureMonitorQuery
     refId: string;
     queryType: AzureQueryType;

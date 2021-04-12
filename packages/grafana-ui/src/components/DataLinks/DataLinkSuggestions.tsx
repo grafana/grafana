@@ -1,6 +1,6 @@
 import { ThemeContext } from '../../index';
 import { GrafanaTheme, VariableSuggestion } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import _ from 'lodash';
 import React, { useRef, useContext, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';

@@ -3,14 +3,12 @@ title = "What's new in Grafana v7.5"
 description = "Feature and improvement highlights for Grafana v7.5"
 keywords = ["grafana", "new", "documentation", "7.5", "release notes"]
 weight = -32
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-5/"]
+aliases = ["/docs/grafana/next/guides/whats-new-in-v7-5/"]
 [_build]
 list = false
 +++
 
 # What’s new in Grafana v7.5
-
-> **Note:** This is content for a beta version of Grafana. It will be updated several times before the stable release.
 
 This topic includes the release notes for Grafana v7.5. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 

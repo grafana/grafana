@@ -33,7 +33,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 
 	if setting.AddChangePasswordLink() {
 		children = append(children, &dtos.NavLink{
-			Text: "Change Password", Id: "change-password", Url: hs.Cfg.AppSubURL + "/profile/password",
+			Text: "Change password", Id: "change-password", Url: hs.Cfg.AppSubURL + "/profile/password",
 			Icon: "lock", HideFromMenu: true,
 		})
 	}
@@ -165,12 +165,18 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Url:  hs.Cfg.AppSubURL + "/dashboard/snapshots",
 			Icon: "camera",
 		})
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Global panels",
+			Id:   "library-panels",
+			Url:  hs.Cfg.AppSubURL + "/library-panels",
+			Icon: "reusable-panel",
+		})
 	}
 
 	navTree = append(navTree, &dtos.NavLink{
 		Text:       "Dashboards",
 		Id:         "dashboards",
-		SubTitle:   "Manage dashboards & folders",
+		SubTitle:   "Manage dashboards and folders",
 		Icon:       "apps",
 		Url:        hs.Cfg.AppSubURL + "/",
 		SortWeight: dtos.WeightDashboard,
@@ -192,18 +198,26 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		navTree = append(navTree, hs.getProfileNode(c))
 	}
 
-	if setting.AlertingEnabled && (c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR) {
+	if setting.AlertingEnabled {
 		alertChildNavs := []*dtos.NavLink{
-			{Text: "Alert Rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
-			{
+			{Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul"},
+		}
+		if hs.Cfg.IsNgAlertEnabled() {
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Silences", Id: "silences", Url: hs.Cfg.AppSubURL + "/alerting/silences", Icon: "bell-slash"})
+		}
+		if c.OrgRole == models.ROLE_ADMIN && hs.Cfg.IsNgAlertEnabled() {
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Routes", Id: "am-routes", Url: hs.Cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
+		}
+		if c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR {
+			alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 				Text: "Notification channels", Id: "channels", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
 				Icon: "comment-alt-share",
-			},
+			})
 		}
 
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Alerting",
-			SubTitle:   "Alert rules & notifications",
+			SubTitle:   "Alert rules and notifications",
 			Id:         "alerting",
 			Icon:       "bell",
 			Url:        hs.Cfg.AppSubURL + "/alerting/list",
@@ -222,7 +236,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if c.OrgRole == models.ROLE_ADMIN {
 		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "Data Sources",
+			Text:        "Data sources",
 			Icon:        "database",
 			Description: "Add and configure data sources",
 			Id:          "datasources",
@@ -264,7 +278,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			Url:         hs.Cfg.AppSubURL + "/org",
 		})
 		configNodes = append(configNodes, &dtos.NavLink{
-			Text:        "API Keys",
+			Text:        "API keys",
 			Id:          "apikeys",
 			Description: "Create & manage API keys",
 			Icon:        "key-skeleton-alt",
@@ -300,7 +314,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 		navTree = append(navTree, &dtos.NavLink{
 			Text:         "Server Admin",
-			SubTitle:     "Manage all users & orgs",
+			SubTitle:     "Manage all users and orgs",
 			HideFromTabs: true,
 			Id:           "admin",
 			Icon:         "shield",

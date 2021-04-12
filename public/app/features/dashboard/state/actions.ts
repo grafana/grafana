@@ -18,6 +18,7 @@ import { cancelVariables } from '../../variables/state/actions';
 import { isDeprecatedPanel } from '../utils/panel';
 import { DEPRECATED_PANELS } from '../../../core/constants';
 import { getPanelPluginNotFound } from '../dashgrid/PanelPluginError';
+import { getTimeSrv } from '../services/TimeSrv';
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async (dispatch) => {
@@ -187,6 +188,8 @@ export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, 
   if (dashboard) {
     dashboard.destroy();
   }
+
+  getTimeSrv().stopAutoRefresh();
 
   dispatch(cleanUpDashboard());
   dispatch(cancelVariables());

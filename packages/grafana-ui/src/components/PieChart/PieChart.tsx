@@ -8,10 +8,10 @@ import { RadialGradient } from '@visx/gradient';
 import { localPoint } from '@visx/event';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { useComponentInstanceId } from '../../utils/useComponetInstanceId';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { VizLegend, VizLegendItem } from '..';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
+import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
 
@@ -144,7 +144,7 @@ export const PieChartSvg: FC<SvgProps> = ({
   }
 
   const getValue = (d: FieldDisplay) => d.display.numeric;
-  const getGradientId = (color: string) => `${componentInstanceId}-${color}`;
+  const getGradientId = (color: string) => `${componentInstanceId}-${tinycolor(color).toHex()}`;
   const getGradientColor = (color: string) => {
     return `url(#${getGradientId(color)})`;
   };

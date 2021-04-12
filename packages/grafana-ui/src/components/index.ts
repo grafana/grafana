@@ -15,6 +15,7 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
+export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export {
@@ -83,7 +84,8 @@ export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepea
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export { PanelChrome, PanelChromeProps, PanelPadding, PanelChromeType } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
-export { VizLegendItem, LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/types';
+export { VizLegendItem } from './VizLegend/types';
+export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
 
 export { Alert, AlertVariant } from './Alert/Alert';
@@ -188,7 +190,7 @@ export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatu
 export { InlineFormLabel } from './FormLabel/FormLabel';
 
 // Select
-import { Select, AsyncSelect } from './Forms/Legacy/Select/Select';
+import { AsyncSelect, Select } from './Forms/Legacy/Select/Select';
 import { IndicatorsContainer } from './Forms/Legacy/Select/IndicatorsContainer';
 import { NoOptionsMessage } from './Forms/Legacy/Select/NoOptionsMessage';
 
@@ -221,6 +223,9 @@ export { usePlotContext, usePlotPluginContext } from './uPlot/context';
 export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
 export { useGraphNGContext } from './GraphNG/hooks';
 export { BarChart } from './BarChart/BarChart';
+export { TimelineChart } from './Timeline/TimelineChart';
 export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
+export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';
+export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';

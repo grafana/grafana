@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -78,16 +79,25 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusInternalServerError, "Metric request error", err)
 	}
 
+	// This is insanity... but ¯\_(ツ)_/¯, the current query path looks like:
+	//  encodeJson( decodeBase64( encodeBase64( decodeArrow( encodeArrow(frame)) ) )
+	// this will soon change to a more direct route
+	qdr, err := resp.ToBackendDataResponse()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "error converting results", err)
+	}
+	return toMacronResponse(qdr)
+}
+
+func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
 	statusCode := http.StatusOK
-	for _, res := range resp.Results {
+	for _, res := range qdr.Responses {
 		if res.Error != nil {
-			res.ErrorString = res.Error.Error()
-			resp.Message = res.ErrorString
 			statusCode = http.StatusBadRequest
 		}
 	}
 
-	return response.JSONStreaming(statusCode, resp)
+	return response.JSONStreaming(statusCode, qdr)
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.
@@ -131,21 +141,11 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 		Cfg:         hs.Cfg,
 		DataService: hs.DataService,
 	}
-	resp, err := exprService.WrapTransformData(c.Req.Context(), request)
+	qdr, err := exprService.WrapTransformData(c.Req.Context(), request)
 	if err != nil {
 		return response.Error(500, "expression request error", err)
 	}
-
-	statusCode := 200
-	for _, res := range resp.Results {
-		if res.Error != nil {
-			res.ErrorString = res.Error.Error()
-			resp.Message = res.ErrorString
-			statusCode = 400
-		}
-	}
-
-	return response.JSONStreaming(statusCode, resp)
+	return toMacronResponse(qdr)
 }
 
 func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *response.NormalResponse {

@@ -3,7 +3,7 @@ import { PopoverContent } from '../Tooltip/Tooltip';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { ToolbarButtonVariant, ToolbarButton } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useStyles } from '../../themes/ThemeContext';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
@@ -43,7 +43,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
   };
 
   return (
-    <>
+    <div className={styles.wrapper}>
       <ToolbarButton
         className={className}
         isOpen={isOpen}
@@ -71,7 +71,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
           </ClickOutsideWrapper>
         </div>
       )}
-    </>
+    </div>
   );
 });
 

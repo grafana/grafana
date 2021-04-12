@@ -42,7 +42,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
 
   const onClick = useCallback(() => {
     setIsOpen(!isOpen);
-  }, [setIsOpen]);
+  }, [isOpen]);
 
   return (
     <ClickPlugin id="ContextMenu" onClick={onClick}>
@@ -102,7 +102,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
     onClose();
   });
 
-  const xField = graphContext.getXAxisField(data);
+  const xField = graphContext.getXAxisField();
 
   if (!xField) {
     return null;
