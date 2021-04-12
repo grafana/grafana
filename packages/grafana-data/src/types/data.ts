@@ -42,6 +42,9 @@ export interface QueryResultMeta {
   /** Currently used to show results in Explore only in preferred visualisation option */
   preferredVisualisationType?: PreferredVisualisationType;
 
+  /** The path for live stream updates for this frame */
+  channel?: string;
+
   /**
    * Optionally identify which topic the frame should be assigned to.
    * A value specified in the response will override what the request asked for.
