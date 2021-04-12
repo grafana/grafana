@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { useTheme, VizLegend } from '@grafana/ui';
 import { Story, Meta } from '@storybook/react';
 import {} from './VizLegendListItem';
@@ -14,9 +14,6 @@ export default {
   parameters: {
     knobs: {
       disable: true,
-    },
-    controls: {
-      exclude: ['seriesCount'],
     },
   },
   args: {
@@ -44,6 +41,10 @@ interface LegendStoryDemoProps {
 const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, name, placement, stats }) => {
   const theme = useTheme();
   const [items, setItems] = useState<VizLegendItem[]>(generateLegendItems(seriesCount, theme, stats));
+
+  useEffect(() => {
+    setItems(generateLegendItems(seriesCount, theme, stats));
+  }, [seriesCount, theme, stats]);
 
   const onSeriesColorChange = (label: string, color: string) => {
     setItems(
