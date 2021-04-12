@@ -102,7 +102,13 @@ export const ConditionsStep: FC = () => {
         <>
           <Field label="For" description="Expression has to be true for this long for the alert to be fired.">
             <div className={styles.flexRow}>
-              <Input ref={register()} name="forTime" width={8} />
+              <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>
+                <Input
+                  ref={register({ pattern: { value: /^\d+$/, message: 'Must be a postive integer.' } })}
+                  name="forTime"
+                  width={8}
+                />
+              </Field>
               <InputControl
                 name="forTimeUnit"
                 as={Select}
