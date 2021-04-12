@@ -19,7 +19,7 @@ If you are interested in Grafana Enterprise (not Grafana OS), jump to [Deploy Gr
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: grafana
+  name: grafana-pvc
 spec:
   accessModes:
     - ReadWriteOnce
@@ -73,18 +73,16 @@ spec:
               port: 3000
             timeoutSeconds: 1            
           resources:
-            limits:
-              memory: 4Gi
             requests:
-              cpu: 100m
-              memory: 2Gi
+              cpu: 250m
+              memory: 750Mi
           volumeMounts:
             - mountPath: /var/lib/grafana
-              name: grafana
+              name: grafana-pv
       volumes:
-        - name: grafana
+        - name: grafana-pv
           persistentVolumeClaim:
-            claimName: grafana
+            claimName: grafana-pvc
 ---
 apiVersion: v1
 kind: Service
