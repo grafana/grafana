@@ -73,9 +73,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     const { data, theme } = this.props;
     let shouldConfigUpdate = false;
 
-    let stateUpdate = {
-      data: preparePlotData(data, [FieldType.string]),
-    } as GraphNGState;
+    let stateUpdate = {} as GraphNGState;
 
     if (this.state.config === undefined || this.props.timeZone !== prevProps.timeZone) {
       shouldConfigUpdate = true;
@@ -91,7 +89,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     }
 
     if (Object.keys(stateUpdate).length > 0) {
-      this.setState(stateUpdate);
+      this.setState({ ...stateUpdate, data: preparePlotData(data, [FieldType.string]) });
     }
   }
 
