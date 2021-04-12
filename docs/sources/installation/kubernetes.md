@@ -42,6 +42,10 @@ spec:
       labels:
         app: grafana
     spec:
+      securityContext:
+        fsGroup: 472
+        supplementalGroups:
+        - 0    
       containers:
         - image: grafana/grafana:latest
           imagePullPolicy: IfNotPresent
