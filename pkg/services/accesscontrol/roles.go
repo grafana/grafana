@@ -1,6 +1,8 @@
 package accesscontrol
 
 var PredefinedRoles = map[string]RoleDTO{
+	// TODO: Add support for inheritance between the predefined roles to
+	// make the admin ⊃ editor ⊃ viewer property hold.
 	usersAdminRead: {
 		Name:    usersAdminRead,
 		Version: 1,
@@ -28,6 +30,17 @@ var PredefinedRoles = map[string]RoleDTO{
 		Version: 1,
 		Permissions: []Permission{
 			{
+				// Inherited from grafana:roles:users:admin:read
+				Permission: ActionUsersRead,
+				Scope:      ScopeUsersAll,
+			},
+			{
+				// Inherited from grafana:roles:users:admin:read
+				Permission: ActionUsersTeamRead,
+				Scope:      ScopeUsersAll,
+			},
+			{
+				// Inherited from grafana:roles:users:admin:read
 				Permission: ActionUsersAuthTokenList,
 				Scope:      ScopeUsersAll,
 			},
@@ -67,6 +80,7 @@ var PredefinedRoles = map[string]RoleDTO{
 				Scope:      ScopeUsersAll,
 			},
 			{
+				// Inherited from grafana:roles:users:admin:read
 				Permission: ActionUsersQuotasList,
 				Scope:      ScopeUsersAll,
 			},
