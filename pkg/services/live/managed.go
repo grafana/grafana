@@ -3,23 +3,24 @@ package live
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// ManagedStreamRunner keeps ManagedStream per streamID.
 type ManagedStreamRunner struct {
 	mu        sync.RWMutex
 	streams   map[string]*ManagedStream
 	publisher models.ChannelPublisher
 }
 
-// NewPluginRunner creates new PluginRunner.
+// NewManagedStreamRunner creates new ManagedStreamRunner.
 func NewManagedStreamRunner(publisher models.ChannelPublisher) *ManagedStreamRunner {
 	return &ManagedStreamRunner{
 		publisher: publisher,
@@ -27,7 +28,7 @@ func NewManagedStreamRunner(publisher models.ChannelPublisher) *ManagedStreamRun
 	}
 }
 
-// Streams returns map of active managed streams.
+// Streams returns a map of active managed streams (per streamID).
 func (r *ManagedStreamRunner) Streams() map[string]*ManagedStream {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -51,7 +52,7 @@ func (r *ManagedStreamRunner) GetOrCreateStream(streamID string) (*ManagedStream
 	return s, nil
 }
 
-// ManagedStream holds the state of a managed stream
+// ManagedStream holds the state of a managed stream.
 type ManagedStream struct {
 	mu        sync.RWMutex
 	id        string
@@ -60,7 +61,7 @@ type ManagedStream struct {
 	publisher models.ChannelPublisher
 }
 
-// NewCache creates new Cache.
+// NewManagedStream creates new ManagedStream.
 func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStream {
 	return &ManagedStream{
 		id:        id,
@@ -85,7 +86,7 @@ func (s *ManagedStream) ListChannels(prefix string) []util.DynMap {
 	return info
 }
 
-// Push sends data to the stream and optionally processes it.
+// Push sends frame to the stream and saves it for later retrieval by subscribers.
 func (s *ManagedStream) Push(path string, frame *data.Frame) error {
 	// Keep schema + data for last packet.
 	frameJSON, err := data.FrameToJSON(frame, true, true)
@@ -111,7 +112,7 @@ func (s *ManagedStream) Push(path string, frame *data.Frame) error {
 	}
 
 	// The channel this will be posted into.
-	channel := fmt.Sprintf("stream/%s/%s", s.id, path)
+	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	return s.publisher(channel, frameJSON)
 }
@@ -138,16 +139,15 @@ func (s *ManagedStream) OnSubscribe(_ context.Context, _ *models.SignedInUser, e
 }
 
 func (s *ManagedStream) OnPublish(_ context.Context, _ *models.SignedInUser, evt models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
-	logger.Debug("OnPublish", evt.Channel, "evt", evt)
 	var frame data.Frame
 	err := json.Unmarshal(evt.Data, &frame)
 	if err != nil {
-		// stream scope only deals with data frames.
+		// Stream scope only deals with data frames.
 		return models.PublishReply{}, 0, err
 	}
 	err = s.Push(evt.Path, &frame)
 	if err != nil {
-		// stream scope only deals with data frames.
+		// Stream scope only deals with data frames.
 		return models.PublishReply{}, 0, err
 	}
 	return models.PublishReply{}, backend.PublishStreamStatusOK, nil

@@ -211,6 +211,9 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				r.New.RuleGroup = r.Existing.RuleGroup
 				r.New.Version = r.Existing.Version + 1
 
+				r.New.For = r.Existing.For
+				r.New.Annotations = r.Existing.Annotations
+
 				if err := st.ValidateAlertRule(r.New, true); err != nil {
 					return err
 				}
@@ -241,6 +244,8 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				IntervalSeconds:  r.New.IntervalSeconds,
 				NoDataState:      r.New.NoDataState,
 				ExecErrState:     r.New.ExecErrState,
+				For:              r.New.For,
+				Annotations:      r.New.Annotations,
 			})
 		}
 
@@ -422,6 +427,8 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 					IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
 					NamespaceUID:    cmd.NamespaceUID,
 					RuleGroup:       ruleGroup,
+					For:             r.GrafanaManagedAlert.For,
+					Annotations:     r.GrafanaManagedAlert.Annotations,
 					NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
 					ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
 				},

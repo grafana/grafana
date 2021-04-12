@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -154,6 +155,10 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 			if !strings.HasPrefix(path, "/") {
 				// Disambiguate that it's a path relative to this server
 				path = fmt.Sprintf("/%s", path)
+			} else {
+				// A string starting with // or /\ is interpreted by browsers as a URL, and not a server relative path
+				rePrefix := regexp.MustCompile(`^(?:/\\|/+)`)
+				path = rePrefix.ReplaceAllString(path, "/")
 			}
 			http.Redirect(ctx.Resp, ctx.Req.Request, path, http.StatusFound)
 			return true
