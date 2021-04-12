@@ -112,15 +112,18 @@ export interface GrafanaRuleDefinition {
   uid?: string;
   title: string;
   condition: string;
+  for: number; //@TODO Sofia will update to accept string
   no_data_state: GrafanaAlertState;
   exec_err_state: GrafanaAlertState;
   data: GrafanaQuery[];
+  annotations: Annotations;
+  labels: Labels;
 }
 
 export interface RulerGrafanaRuleDTO {
   grafana_alert: GrafanaRuleDefinition;
-  labels?: Labels;
-  annotations?: Annotations;
+  // labels?: Labels; @TODO to be discussed
+  // annotations?: Annotations;
 }
 
 export type RulerRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | RulerGrafanaRuleDTO;

@@ -274,6 +274,7 @@
     "rc-cascader": "1.0.1",
     "re-resizable": "^6.2.0",
     "react": "17.0.1",
+    "react-async-hook": "^3.6.2",
     "react-beautiful-dnd": "13.0.0",
     "react-diff-viewer": "^3.1.1",
     "react-dom": "17.0.1",

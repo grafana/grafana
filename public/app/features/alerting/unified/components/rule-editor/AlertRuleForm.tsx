@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { GrafanaTheme } from '@grafana/data';
-import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar } from '@grafana/ui';
+import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import { AlertTypeStep } from './AlertTypeStep';
@@ -9,11 +9,11 @@ import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
 import { useForm, FormContext } from 'react-hook-form';
 
-//import { fetchRulerRulesNamespace, setRulerRuleGroup } from '../../api/ruler';
-import { GrafanaAlertState /*, RulerRuleDTO, RulerRuleGroupDTO */ } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 //import { locationService } from '@grafana/runtime';
 import { RuleFormValues } from '../../types/rule-form';
 import { SAMPLE_QUERIES } from '../../mocks/grafana-queries';
+import { useSaveRuleForm } from '../../hooks/useSaveRuleForm';
 
 type Props = {};
 
@@ -47,67 +47,37 @@ export const AlertRuleForm: FC<Props> = () => {
 
   const { handleSubmit, watch } = formAPI;
 
-  const values = watch();
+  const type = watch('type');
+  const dataSourceName = watch('dataSourceName');
 
-  console.log('values', values);
+  const showStep2 = Boolean(dataSourceName && type);
 
-  const showStep2 = Boolean(values.dataSourceName && values.type);
+  const submit = useSaveRuleForm();
 
-  const onSubmit = (alertRule: RuleFormValues) => {
-    console.log('submit', alertRule);
-    /*const { name, expression, forTime, dataSourceName, forTimeUnit, labels, annotations, location } = alertRule;
-    if (location && expression && dataSourceName && name) {
-      const { namespace, group } = location;
-      fetchRulerRulesNamespace(dataSourceName, namespace)
-        .then((ruleGroup) => {
-          const existingGroup: RulerRuleGroupDTO = ruleGroup.find(({ name }) => name === group) || {
-            name: group,
-            rules: [] as RulerRuleDTO[],
-          };
-          const alertRule: RulerRuleDTO = {
-            alert: name,
-            expr: expression,
-            for: `${forTime}${forTimeUnit}`,
-            labels: labels.reduce((acc, { key, value }) => {
-              if (key && value) {
-                acc[key] = value;
-              }
-              return acc;
-            }, {} as Record<string, string>),
-            annotations: annotations.reduce((acc, { key, value }) => {
-              if (key && value) {
-                acc[key] = value;
-              }
-              return acc;
-            }, {} as Record<string, string>),
-          };
-
-          return setRulerRuleGroup(dataSourceName, namespace, {
-            ...existingGroup,
-            rules: existingGroup.rules.concat(alertRule),
-          });
-        })
-        .then(() => {
-          console.log('Alert rule saved successfully');
-          locationService.push('/alerting/list');
-        })
-        .catch((error) => console.error(error));
-    }
-    */
-  };
   return (
     <FormContext {...formAPI}>
-      <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+      <form onSubmit={handleSubmit(submit.execute)} className={styles.form}>
         <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
-          <ToolbarButton variant="default">Cancel</ToolbarButton>
-          <ToolbarButton variant="primary" type="submit">
+          <ToolbarButton variant="default" disabled={submit.loading}>
+            Cancel
+          </ToolbarButton>
+          <ToolbarButton variant="primary" type="submit" disabled={submit.loading}>
+            {submit.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
             Save
           </ToolbarButton>
-          <ToolbarButton variant="primary">Save and exit</ToolbarButton>
+          <ToolbarButton variant="primary" disabled={submit.loading}>
+            {submit.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
+            Save and exit
+          </ToolbarButton>
         </PageToolbar>
         <div className={styles.contentOutter}>
           <CustomScrollbar autoHeightMin="100%">
             <div className={styles.contentInner}>
+              {submit.error && (
+                <Alert severity="error" title="Error saving rule">
+                  {submit.error.message || (submit.error as any)?.data?.message || String(submit.error)}
+                </Alert>
+              )}
               <AlertTypeStep />
               {showStep2 && (
                 <>
@@ -126,6 +96,9 @@ export const AlertRuleForm: FC<Props> = () => {
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
+    buttonSpiner: css`
+      margin-right: ${theme.spacing.sm};
+    `,
     toolbar: css`
       padding-top: ${theme.spacing.sm};
       padding-bottom: ${theme.spacing.md};

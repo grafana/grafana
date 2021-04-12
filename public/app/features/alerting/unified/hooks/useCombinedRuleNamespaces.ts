@@ -1,7 +1,7 @@
 import { CombinedRule, CombinedRuleNamespace, Rule, RuleNamespace } from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { useMemo, useRef } from 'react';
-import { getAllRulesSources, isCloudRulesSource } from '../utils/datasource';
+import { getAllRulesSources, isCloudRulesSource, isGrafanaRulesSource } from '../utils/datasource';
 import { isAlertingRule, isAlertingRulerRule, isRecordingRulerRule } from '../utils/rules';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
@@ -60,8 +60,8 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
                     : {
                         name: rule.grafana_alert.title,
                         query: '',
-                        labels: rule.labels || {},
-                        annotations: rule.annotations || {},
+                        labels: rule.grafana_alert.labels || {},
+                        annotations: rule.grafana_alert.annotations || {},
                         rulerRule: rule,
                       }
               ),
@@ -107,6 +107,17 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
         });
 
         const result = Object.values(namespaces);
+        if (isGrafanaRulesSource(rulesSource)) {
+          // merge all groups in case of grafana
+          result.forEach((namespace) => {
+            namespace.groups = [
+              {
+                name: 'default',
+                rules: namespace.groups.flatMap((g) => g.rules).sort((a, b) => a.name.localeCompare(b.name)),
+              },
+            ];
+          });
+        }
         cache.current[rulesSourceName] = { promRules, rulerRules, result };
         return result;
       })

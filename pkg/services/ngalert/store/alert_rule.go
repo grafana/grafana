@@ -441,6 +441,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 			}
 			upsertRules = append(upsertRules, upsertRule)
 		}
+
 		if err := st.UpsertAlertRules(upsertRules); err != nil {
 			return err
 		}

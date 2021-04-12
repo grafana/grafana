@@ -4,17 +4,9 @@ import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext, ValidationOptions } from 'react-hook-form';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues, TimeOptions } from '../../types/rule-form';
 import { ConditionField } from './ConditionField';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
-
-enum TIME_OPTIONS {
-  milliseconds = 'ms',
-  seconds = 's',
-  minutes = 'm',
-  hours = 'h',
-  days = 'd',
-}
 
 const timeRangeValidationOptions: ValidationOptions = {
   required: {
@@ -22,14 +14,14 @@ const timeRangeValidationOptions: ValidationOptions = {
     message: 'Required.',
   },
   pattern: {
-    value: new RegExp(`^\\d+(${Object.values(TIME_OPTIONS).join('|')})$`),
-    message: `Must be of format "(number)(unit)", for example "1m". Available units: ${Object.values(TIME_OPTIONS).join(
+    value: new RegExp(`^\\d+(${Object.values(TimeOptions).join('|')})$`),
+    message: `Must be of format "(number)(unit)", for example "1m". Available units: ${Object.values(TimeOptions).join(
       ', '
     )}`,
   },
 };
 
-const timeOptions = Object.entries(TIME_OPTIONS).map(([key, value]) => ({
+const timeOptions = Object.entries(TimeOptions).map(([key, value]) => ({
   label: key[0].toUpperCase() + key.slice(1),
   value: value,
 }));
