@@ -41,7 +41,9 @@ export const AngularEditorLoader: React.FC<Props> = React.memo(({ annotation, da
 
       setAngularComponent(component);
     }
-  }, [ref]);
+    // specifying annotation or onChange causes angular error `Cannot read property '$$nextSibling' of null`
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ref, datasource]);
 
   return <div ref={ref} />;
 });
