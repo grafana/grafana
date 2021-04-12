@@ -295,6 +295,10 @@ export class DashboardModel {
         } else {
           copy.templating.list[i].current = original.current;
         }
+
+        current.options.forEach((option: any) => {
+          option.selected = option.value === current.current.value;
+        });
       }
     }
   }
