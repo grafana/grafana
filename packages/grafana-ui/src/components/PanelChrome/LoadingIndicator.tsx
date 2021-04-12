@@ -5,11 +5,17 @@ import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { useStyles } from '../../themes';
 
+/**
+ * @internal
+ */
 export type LoadingIndicatorProps = {
   loading: boolean;
   onCancel: () => void;
 };
 
+/**
+ * @internal
+ */
 export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ onCancel, loading }) => {
   const styles = useStyles(getStyles);
 

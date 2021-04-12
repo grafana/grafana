@@ -5,11 +5,17 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 
+/**
+ * @internal
+ */
 export type ErrorIndicatorProps = {
   error?: string;
   onClick?: () => void;
 };
 
+/**
+ * @internal
+ */
 export const ErrorIndicator: React.FC<ErrorIndicatorProps> = ({ error, onClick }) => {
   const styles = useStyles(getStyles);
 
