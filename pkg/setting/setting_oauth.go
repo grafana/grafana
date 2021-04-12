@@ -3,6 +3,7 @@ package setting
 type OAuthInfo struct {
 	ClientId, ClientSecret string
 	Scopes                 []string
+	State                  string
 	AuthUrl, TokenUrl      string
 	Enabled                bool
 	EmailAttributeName     string
