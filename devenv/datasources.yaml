@@ -1,5 +1,11 @@
 apiVersion: 1
 
+deleteDatasources:
+  - name: gdev-influxdb
+  - name: gdev-influxdb-telegraf
+  - name: gdev-influxdb2
+  - name: gdev-influxdb2-influxql
+
 datasources:
   - name: gdev-graphite
     type: graphite
