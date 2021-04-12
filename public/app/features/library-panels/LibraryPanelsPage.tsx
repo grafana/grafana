@@ -8,7 +8,7 @@ import Page from '../../core/components/Page/Page';
 import { LibraryPanelsView } from './components/LibraryPanelsView/LibraryPanelsView';
 import { useAsync } from 'react-use';
 import { getLibraryPanels } from './state/api';
-import OrgActionBar from '../../core/components/OrgActionBar/OrgActionBar';
+import PageActionBar from '../../core/components/PageActionBar/PageActionBar';
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'library-panels'),
@@ -31,7 +31,7 @@ export const LibraryPanelsPage: FC<Props> = ({ navModel }) => {
     <Page navModel={navModel}>
       <Page.Contents isLoading={loading}>
         {hasLibraryPanels && (
-          <OrgActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder={'Search by name'} />
+          <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder={'Search by name'} />
         )}
         <LibraryPanelsView
           className=""

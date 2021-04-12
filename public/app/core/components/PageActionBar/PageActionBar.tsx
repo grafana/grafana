@@ -10,7 +10,7 @@ export interface Props {
   placeholder?: string;
 }
 
-export default class OrgActionBar extends PureComponent<Props> {
+export default class PageActionBar extends PureComponent<Props> {
   render() {
     const { searchQuery, linkButton, setSearchQuery, target, placeholder = 'Search by name or type' } = this.props;
     const linkProps = { href: linkButton?.href };
