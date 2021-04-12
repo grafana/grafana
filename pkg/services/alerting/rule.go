@@ -23,6 +23,7 @@ var unitMultiplier = map[string]int{
 var (
 	valueFormatRegex = regexp.MustCompile(`^\d+`)
 	isDigitRegex     = regexp.MustCompile(`^[0-9]+$`)
+	unitFormatRegex  = regexp.MustCompile(`[a-z]+`)
 )
 
 var (
@@ -117,6 +118,28 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 	}
 
 	return int64(value * multiplier), nil
+}
+
+func getForValue(rawFor string) (time.Duration, error) {
+	var forValue time.Duration
+	var err error
+
+	if rawFor != "" {
+		if rawFor != "0" {
+			strings := unitFormatRegex.FindAllString(rawFor, 1)
+			if strings == nil {
+				return 0, ValidationError{Reason: fmt.Sprintf("no specified unit, error: %s", ErrWrongUnitFormat.Error())}
+			}
+			if _, ok := unitMultiplier[strings[0]]; !ok {
+				return 0, ValidationError{Reason: fmt.Sprintf("could not parse for field, error: %s", ErrWrongUnitFormat.Error())}
+			}
+		}
+		forValue, err = time.ParseDuration(rawFor)
+		if err != nil {
+			return 0, ValidationError{Reason: "Could not parse for field"}
+		}
+	}
+	return forValue, nil
 }
 
 // NewRuleFromDBAlert maps a db version of

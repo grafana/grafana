@@ -4,17 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-)
-
-var (
-	unitFormatRegex = regexp.MustCompile(`[a-z]+`)
 )
 
 // DashAlertExtractor extracts alerts from the dashboard json.
@@ -114,18 +107,10 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		}
 
 		rawFor := jsonAlert.Get("for").MustString()
-		var forValue time.Duration
-		if rawFor != "" {
-			if rawFor != "0" {
-				unit := unitFormatRegex.FindAllString(rawFor, 1)[0]
-				if _, ok := unitMultiplier[unit]; !ok {
-					return nil, ValidationError{Reason: fmt.Sprintf("Could not parse for field, error: %s", ErrWrongUnitFormat.Error())}
-				}
-			}
-			forValue, err = time.ParseDuration(rawFor)
-			if err != nil {
-				return nil, ValidationError{Reason: "Could not parse for field"}
-			}
+
+		forValue, err := getForValue(rawFor)
+		if err != nil {
+			return nil, err
 		}
 
 		alert := &models.Alert{

@@ -1,7 +1,9 @@
 package alerting
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -39,6 +41,37 @@ func TestAlertRuleFrequencyParsing(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(tc.input, func(t *testing.T) {
 			r, err := getTimeDurationStringToSeconds(tc.input)
+			if tc.err == nil {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, tc.err.Error())
+			}
+			assert.Equal(t, tc.result, r)
+		})
+	}
+}
+
+func TestAlertRuleForParsing(t *testing.T) {
+	tcs := []struct {
+		input  string
+		err    error
+		result time.Duration
+	}{
+		{input: "10s", result: time.Duration(10000000000)},
+		{input: "10m", result: time.Duration(600000000000)},
+		{input: "1h", result: time.Duration(3600000000000)},
+		{input: "1o", err: fmt.Errorf("alert validation error: could not parse for field, error: %s", ErrWrongUnitFormat)},
+		{input: "1", err: fmt.Errorf("alert validation error: no specified unit, error: %s", ErrWrongUnitFormat)},
+		{input: "0s", result: time.Duration(0)},
+		{input: "0m", result: time.Duration(0)},
+		{input: "0h", result: time.Duration(0)},
+		{input: "0", result: time.Duration(0)},
+		{input: "", result: time.Duration(0)},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.input, func(t *testing.T) {
+			r, err := getForValue(tc.input)
 			if tc.err == nil {
 				require.NoError(t, err)
 			} else {
