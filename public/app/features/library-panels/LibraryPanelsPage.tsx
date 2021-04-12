@@ -9,6 +9,7 @@ import { LibraryPanelsView } from './components/LibraryPanelsView/LibraryPanelsV
 import { useAsync } from 'react-use';
 import { getLibraryPanels } from './state/api';
 import PageActionBar from '../../core/components/PageActionBar/PageActionBar';
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'library-panels'),
@@ -34,12 +35,11 @@ export const LibraryPanelsPage: FC<Props> = ({ navModel }) => {
           <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder={'Search by name'} />
         )}
         <LibraryPanelsView
-          className=""
           onClickCard={() => undefined}
           searchString={searchQuery}
           currentPanelId={undefined}
           showSecondaryActions={true}
-          perPage={8}
+          perPage={DEFAULT_PER_PAGE_PAGINATION}
         />
       </Page.Contents>
     </Page>

@@ -24,7 +24,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   searchString,
   showSecondaryActions,
   currentPanelId: currentPanel,
-  perPage: propsPerPage,
+  perPage: propsPerPage = 40,
 }) => {
   const styles = useStyles(getPanelViewStyles);
   const [{ libraryPanels, page, perPage, numberOfPages, loadingState, currentPanelId }, dispatch] = useReducer(
@@ -32,7 +32,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
     {
       ...initialLibraryPanelsViewState,
       currentPanelId: currentPanel,
-      perPage: propsPerPage ?? 40,
+      perPage: propsPerPage,
     }
   );
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
