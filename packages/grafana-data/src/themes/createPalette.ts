@@ -174,9 +174,9 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   text = {
-    primary: 'rgba(0, 0, 0, 0.87)',
-    secondary: 'rgba(0, 0, 0, 0.55)',
-    disabled: 'rgba(0, 0, 0, 0.40)',
+    primary: 'rgba(0, 0, 0, 0.75)',
+    secondary: 'rgba(0, 0, 0, 0.60)',
+    disabled: 'rgba(0, 0, 0, 0.45)',
     link: this.primary.text,
     maxContrast: colors.black,
   };

@@ -64,12 +64,12 @@ $border1: rgba(0, 2, 78, 0.20);
 
 // Accent colors
 // -------------------------
-$blue: #33a2e5;
+$blue: #1F62E0;
 $red: $red-base;
 $yellow: #ff851b;
 $orange: #ff7941;
 $purple: #9954bb;
-$variable: #33a2e5;
+$variable: #1F62E0;
 
 $brand-primary: #ff7941;
 $brand-success: #3eb15b;
@@ -93,13 +93,13 @@ $body-bg: #fff;
 $page-bg: #fff;
 $dashboard-bg: #F4F5F5;
 
-$text-color: #464c54;
-$text-color-strong: #202226;
-$text-color-semi-weak: #464c54;
-$text-color-weak: #7b8087;
-$text-color-faint: #9fa7b3;
-$text-color-emphasis: #202226;
-$text-blue: #33a2e5;
+$text-color: rgba(0, 0, 0, 0.75);
+$text-color-strong: #000;
+$text-color-semi-weak: rgba(0, 0, 0, 0.60);
+$text-color-weak: rgba(0, 0, 0, 0.45);
+$text-color-faint: rgba(0, 0, 0, 0.45);
+$text-color-emphasis: #000;
+$text-blue: #1F62E0;
 
 $text-shadow-faint: none;
 
@@ -109,14 +109,14 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 
 // Links
 // -------------------------
-$link-color: #464c54;
-$link-color-disabled: #7b8087;
-$link-hover-color: #202226;
+$link-color: rgba(0, 0, 0, 0.75);
+$link-color-disabled: rgba(0, 0, 0, 0.45);
+$link-hover-color: #000;
 $external-link-color: #33a2e5;
 
 // Typography
 // -------------------------
-$headings-color: #2c3235;
+$headings-color: rgba(0, 0, 0, 0.75);
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -206,12 +206,12 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: #464c54;
+$input-color: rgba(0, 0, 0, 0.75);
 $input-border-color: #c7d0d9;
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;
-$input-color-placeholder: #9fa7b3;
+$input-color-placeholder: rgba(0, 0, 0, 0.45);
 $input-label-bg: #F7F7F8;
 $input-color-select-arrow: #7b8087;
 
@@ -279,13 +279,13 @@ $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
 $tooltipBackground: #F7F7F8;
-$tooltipColor: rgba(0, 0, 0, 0.87);
+$tooltipColor: rgba(0, 0, 0, 0.75);
 $tooltipArrowColor: #F7F7F8;
 $tooltipBackgroundError: #E0226E;
 $tooltipShadow: 0px 2px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.14),0px 1px 5px 0px rgba(0,0,0,0.12);
 
 $popover-bg: #F7F7F8;
-$popover-color: rgba(0, 0, 0, 0.87);
+$popover-color: rgba(0, 0, 0, 0.75);
 $popover-border-color: rgba(0, 2, 78, 0.20);
 $popover-header-bg: #F7F7F8;
 $popover-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.14),0px 3px 14px 2px rgba(0,0,0,0.12);
@@ -335,7 +335,7 @@ $diff-arrow-color: $dark-2;
 $diff-group-bg: #F7F7F8;
 
 $diff-json-bg: #F7F7F8;
-$diff-json-fg: #464c54;
+$diff-json-fg: rgba(0, 0, 0, 0.75);
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;

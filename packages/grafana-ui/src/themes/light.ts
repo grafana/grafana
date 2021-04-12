@@ -52,17 +52,17 @@ const borders = {
 
 const textColors = {
   // Text colors
-  textStrong: basicColors.gray15,
-  text: basicColors.gray33,
-  textSemiWeak: basicColors.gray33,
-  textWeak: basicColors.gray60,
-  textFaint: basicColors.gray70,
-  textBlue: basicColors.blue85,
+  textStrong: v2.palette.text.maxContrast,
+  text: v2.palette.text.primary,
+  textSemiWeak: v2.palette.text.secondary,
+  textWeak: v2.palette.text.disabled,
+  textFaint: v2.palette.text.disabled,
+  textBlue: v2.palette.primary.text,
 };
 
 const form = {
   formLabel: textColors.text,
-  formDescription: textColors.textWeak,
+  formDescription: v2.palette.text.secondary,
   formLegend: basicColors.gray25,
   formInputBg: basicColors.white,
   formInputBgDisabled: basicColors.gray95,
@@ -128,7 +128,7 @@ const lightTheme: GrafanaTheme = {
     linkDisabled: textColors.textWeak,
     linkHover: textColors.textStrong,
     linkExternal: basicColors.blue85,
-    textHeading: basicColors.gray25,
+    textHeading: v2.palette.text.primary,
   },
   shadows: {
     listItem: 'none',
