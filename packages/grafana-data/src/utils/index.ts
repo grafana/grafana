@@ -1,3 +1,4 @@
+import * as arrayUtils from './arrayUtils';
 export * from './Registry';
 export * from './datasource';
 export * from './deprecationWarning';
@@ -10,7 +11,7 @@ export * from './namedColorsPalette';
 export * from './series';
 export * from './binaryOperators';
 export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './OptionsUIBuilders';
-
+export { arrayUtils };
 export { getMappedValue } from './valueMappings';
 export { getFlotPairs, getFlotPairsConstant } from './flotPairs';
 export { locationUtil } from './location';

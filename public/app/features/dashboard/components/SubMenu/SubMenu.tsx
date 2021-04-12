@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables } from '../../../variables/state/selectors';
-import { VariableHide, VariableModel } from '../../../variables/types';
+import { VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
 import { Annotations } from './Annotations';
@@ -38,24 +38,10 @@ class SubMenuUnConnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  isSubMenuVisible = () => {
-    if (this.props.dashboard.links.length > 0) {
-      return true;
-    }
-
-    const visibleVariables = this.props.variables.filter((variable) => variable.hide !== VariableHide.hideVariable);
-    if (visibleVariables.length > 0) {
-      return true;
-    }
-
-    const visibleAnnotations = this.props.dashboard.annotations.list.filter((annotation) => annotation.hide !== true);
-    return visibleAnnotations.length > 0;
-  };
-
   render() {
     const { dashboard, variables, links, annotations } = this.props;
 
-    if (!this.isSubMenuVisible()) {
+    if (!dashboard.isSubMenuVisible()) {
       return null;
     }
 
@@ -78,4 +64,5 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
 };
 
 export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);
+
 SubMenu.displayName = 'SubMenu';

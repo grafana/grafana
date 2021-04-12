@@ -203,7 +203,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     try {
       dashboard.processRepeats();
-      dashboard.updateSubmenuVisibility();
 
       // handle auto fix experimental feature
       if (queryParams.autofitpanels) {
