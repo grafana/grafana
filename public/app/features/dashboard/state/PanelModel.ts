@@ -38,6 +38,7 @@ import {
 } from './getPanelOptionsWithDefaults';
 import { QueryGroupOptions } from 'app/types';
 import { PanelModelLibraryPanel } from '../../library-panels/types';
+import { isDeprecatedPanel } from '../utils/panel';
 
 export interface GridPos {
   x: number;
@@ -339,10 +340,9 @@ export class PanelModel implements DataConfigSource {
 
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
+    const version = getPluginVersion(plugin);
 
     if (plugin.onPanelMigration) {
-      const version = getPluginVersion(plugin);
-
       if (version !== this.pluginVersion) {
         this.options = plugin.onPanelMigration(this);
         this.pluginVersion = version;
@@ -380,8 +380,7 @@ export class PanelModel implements DataConfigSource {
     const oldOptions: any = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
-    const wasAngular = this.isAngularPlugin();
-
+    const wasAngular = this.isAngularPlugin() || isDeprecatedPanel(this.type);
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,

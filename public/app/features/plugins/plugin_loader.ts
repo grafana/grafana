@@ -51,6 +51,7 @@ const bust = `?_cache=${Date.now()}`;
 function locate(load: { address: string }) {
   return load.address + bust;
 }
+
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
 
 grafanaRuntime.SystemJS.config({
@@ -214,7 +215,7 @@ export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaDa
   });
 }
 
-import { getPanelPluginNotFound, getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
+import { getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
 import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
 
 interface PanelCache {
@@ -224,7 +225,6 @@ const panelCache: PanelCache = {};
 
 export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> {
   const loaded = panelCache[id];
-
   if (loaded) {
     return loaded;
   }
@@ -232,7 +232,7 @@ export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> 
   const meta = config.panels[id];
 
   if (!meta) {
-    return Promise.resolve(getPanelPluginNotFound(id));
+    throw new Error(`Plugin ${id} not found`);
   }
 
   panelCache[id] = importPluginModule(meta.module)
