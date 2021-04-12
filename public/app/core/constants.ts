@@ -32,4 +32,3 @@ export const DEPRECATED_PANELS: Record<string, (panel: PanelModel) => string> = 
     return 'stat';
   },
 };
-
