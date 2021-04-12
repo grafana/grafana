@@ -138,7 +138,7 @@ const getStyles = (theme: GrafanaTheme) => {
 
       justify-content: flex-end;
       flex-wrap: wrap;
-      padding: 0 ${spacing.md} ${spacing.sm} ${spacing.md};
+      padding: 0 ${spacing.sm} ${spacing.sm} ${spacing.md};
     `,
     toolbarLeft: css`
       display: flex;
