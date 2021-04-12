@@ -5,6 +5,8 @@ package tests
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -417,4 +419,32 @@ func getLongString(n int) string {
 		b[i] = 'a'
 	}
 	return string(b)
+}
+
+// createTestAlertDefinition creates a dummy alert definition to be used by the tests.
+func createTestAlertDefinition(t *testing.T, dbstore *store.DBstore, intervalSeconds int64) *models.AlertDefinition {
+	cmd := models.SaveAlertDefinitionCommand{
+		OrgID:     1,
+		Title:     fmt.Sprintf("an alert definition %d", rand.Intn(1000)),
+		Condition: "A",
+		Data: []models.AlertQuery{
+			{
+				Model: json.RawMessage(`{
+						"datasource": "__expr__",
+						"type":"math",
+						"expression":"2 + 2 > 1"
+					}`),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(5 * time.Hour),
+					To:   models.Duration(3 * time.Hour),
+				},
+				RefID: "A",
+			},
+		},
+		IntervalSeconds: &intervalSeconds,
+	}
+	err := dbstore.SaveAlertDefinition(&cmd)
+	require.NoError(t, err)
+	t.Logf("alert definition: %v with interval: %d created", cmd.Result.GetKey(), intervalSeconds)
+	return cmd.Result
 }

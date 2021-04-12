@@ -1,9 +1,6 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
-
-// Ignoring because I couldn't get @types/react-select work with Torkel's fork
-// @ts-ignore
-import { components } from '@torkelo/react-select';
+import { components, SingleValueProps } from 'react-select';
 import { useDelayedSwitch } from '../../utils/useDelayedSwitch';
 import { stylesFactory, useTheme } from '../../themes';
 import { SlideOutTransition } from '../transitions/SlideOutTransition';
@@ -14,7 +11,7 @@ import { GrafanaTheme } from '@grafana/data';
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const singleValue = css`
     label: singleValue;
-    color: ${theme.colors.formInputText};
+    color: ${theme.v2.components.form.text};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -41,14 +38,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return { singleValue, container, item };
 });
 
-type Props = {
-  children: React.ReactNode;
-  data: {
+interface Props
+  extends SingleValueProps<{
     imgUrl?: string;
     loading?: boolean;
     hideText?: boolean;
-  };
-};
+  }> {}
 
 export const SingleValue = (props: Props) => {
   const { children, data } = props;

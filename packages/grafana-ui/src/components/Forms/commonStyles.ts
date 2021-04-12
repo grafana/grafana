@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 
@@ -10,33 +10,35 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 `;
 
 export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
-  const colors = theme.colors;
-  const borderColor = invalid ? theme.palette.redBase : colors.formInputBorder;
+  const borderColor = invalid ? theme.v2.palette.error.border : theme.v2.components.form.border;
+  const borderColorHover = invalid ? theme.v2.palette.error.shade : theme.v2.components.form.borderHover;
+  const background = theme.v2.components.form.background;
+  const textColor = theme.v2.components.form.text;
 
   return css`
-    background-color: ${colors.formInputBg};
-    line-height: ${theme.typography.lineHeight.md};
-    font-size: ${theme.typography.size.md};
-    color: ${colors.formInputText};
+    background: ${background};
+    line-height: ${theme.v2.typography.body.lineHeight};
+    font-size: ${theme.v2.typography.size.md};
+    color: ${textColor};
     border: 1px solid ${borderColor};
-    padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
+    padding: ${theme.v2.spacing(0, 1, 0, 1)};
 
     &:-webkit-autofill,
     &:-webkit-autofill:hover {
       /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${colors.formInputBg}!important;
-      -webkit-text-fill-color: ${colors.formInputText} !important;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important;
+      -webkit-text-fill-color: ${textColor} !important;
     }
 
     &:-webkit-autofill:focus {
       /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
       box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline},
-        inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${colors.formInputBg}!important;
-      -webkit-text-fill-color: ${colors.formInputText} !important;
+        inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important;
+      -webkit-text-fill-color: ${textColor} !important;
     }
 
     &:hover {
-      border-color: ${borderColor};
+      border-color: ${borderColorHover};
     }
 
     &:focus {
@@ -44,12 +46,17 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     }
 
     &:disabled {
-      background-color: ${colors.formInputBgDisabled};
-      color: ${colors.formInputDisabledText};
+      background-color: ${theme.v2.palette.action.disabledBackground};
+      color: ${theme.v2.palette.action.disabledText};
+      border: 1px solid ${theme.v2.palette.action.disabledBackground};
+
+      &:hover {
+        border-color: ${borderColor};
+      }
     }
 
     &::placeholder {
-      color: ${colors.formInputPlaceholderText};
+      color: ${theme.v2.palette.text.disabled};
       opacity: 1;
     }
   `;
@@ -86,29 +93,27 @@ export const inputSizesPixels = (size: string) => {
   }
 };
 
-export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTheme) {
-  const { typography, height, spacing } = theme;
-
+export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaThemeV2) {
   switch (size) {
     case 'sm':
       return {
-        padding: spacing.base,
-        fontSize: typography.size.sm,
-        height: height.sm,
+        padding: 1,
+        fontSize: theme.typography.size.sm,
+        height: theme.components.height.sm,
       };
 
     case 'lg':
       return {
-        padding: spacing.base * 3,
-        fontSize: typography.size.lg,
-        height: height.lg,
+        padding: 3,
+        fontSize: theme.typography.size.lg,
+        height: theme.components.height.lg,
       };
     case 'md':
     default:
       return {
-        padding: spacing.base * 2,
-        fontSize: typography.size.md,
-        height: height.md,
+        padding: 2,
+        fontSize: theme.typography.size.md,
+        height: theme.components.height.md,
       };
   }
 }

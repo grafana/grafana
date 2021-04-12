@@ -1,13 +1,14 @@
 import Centrifuge from 'centrifuge/dist/centrifuge';
 import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
 import { BehaviorSubject } from 'rxjs';
-import { LiveChannel, LiveChannelScope, LiveChannelAddress } from '@grafana/data';
+import { LiveChannel, LiveChannelScope, LiveChannelAddress, LiveChannelConnectionState } from '@grafana/data';
 import { CentrifugeLiveChannel, getErrorChannel } from './channel';
 import {
   GrafanaLiveScope,
   grafanaLiveCoreFeatures,
   GrafanaLiveDataSourceScope,
   GrafanaLivePluginScope,
+  GrafanaLiveStreamScope,
 } from './scopes';
 import { registerLiveFeatures } from './features';
 
@@ -52,6 +53,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       [LiveChannelScope.Grafana]: grafanaLiveCoreFeatures,
       [LiveChannelScope.DataSource]: new GrafanaLiveDataSourceScope(),
       [LiveChannelScope.Plugin]: new GrafanaLivePluginScope(),
+      [LiveChannelScope.Stream]: new GrafanaLiveStreamScope(),
     };
 
     // Register global listeners
@@ -102,7 +104,10 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
 
     // Initialize the channel in the background
     this.initChannel(scope, channel).catch((err) => {
-      channel?.shutdownWithError(err);
+      if (channel) {
+        channel.currentStatus.state = LiveChannelConnectionState.Invalid;
+        channel.shutdownWithError(err);
+      }
       this.open.delete(id);
     });
 
@@ -114,7 +119,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     const { addr } = channel;
     const support = await scope.getChannelSupport(addr.namespace);
     if (!support) {
-      throw new Error(channel.addr.namespace + 'does not support streaming');
+      throw new Error(channel.addr.namespace + ' does not support streaming');
     }
     const config = support.getChannelConfig(addr.path);
     if (!config) {

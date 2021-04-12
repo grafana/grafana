@@ -184,12 +184,9 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	// TODO check quota
 	// TODO validate UID uniqueness in the payload
 
-	ruleGroup := ruleGroupConfig.Name
-
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,
 		NamespaceUID:    namespaceUID,
-		RuleGroup:       ruleGroup,
 		RuleGroupConfig: ruleGroupConfig,
 	}); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
@@ -214,6 +211,24 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule) apimodels.GettableExtended
 			RuleGroup:       r.RuleGroup,
 			NoDataState:     apimodels.NoDataState(r.NoDataState),
 			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
+			For:             r.For,
+			Annotations:     r.Annotations,
+		},
+	}
+}
+
+func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtendedRuleNode {
+	return apimodels.PostableExtendedRuleNode{
+		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+			OrgID:        r.OrgID,
+			Title:        r.Title,
+			Condition:    r.Condition,
+			Data:         r.Data,
+			UID:          r.UID,
+			NoDataState:  apimodels.NoDataState(r.NoDataState),
+			ExecErrState: apimodels.ExecutionErrorState(r.ExecErrState),
+			For:          r.For,
+			Annotations:  r.Annotations,
 		},
 	}
 }

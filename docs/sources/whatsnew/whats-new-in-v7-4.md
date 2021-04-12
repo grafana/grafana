@@ -3,7 +3,7 @@ title = "What's New in Grafana v7.4"
 description = "Feature and improvement highlights for Grafana v7.4"
 keywords = ["grafana", "new", "documentation", "7.4", "release notes"]
 weight = -31
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-4/"]
+aliases = ["/docs/grafana/next/guides/whats-new-in-v7-4/"]
 [_build]
 list = false
 +++
@@ -95,7 +95,7 @@ The following topics were updated as a result of this feature:
 
 _Server-side expressions_ is an experimental feature that allows you to manipulate data returned from backend data source queries. Expressions allow you to manipulate data with math and other operations when the data source is a backend data source or a **--Mixed--** data source.
 
-The main use case is for [multi-dimensional]({{< relref "../getting-started/timeseries-dimensions.md" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
+The main use case is for [multi-dimensional]({{< relref "../basics/timeseries-dimensions.md" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
 

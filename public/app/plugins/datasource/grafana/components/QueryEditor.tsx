@@ -1,17 +1,24 @@
 import defaults from 'lodash/defaults';
 
 import React, { PureComponent } from 'react';
-import { InlineField, Select, FeatureInfoBox } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue, LiveChannelScope, FeatureState } from '@grafana/data';
-import { getLiveMeasurements, LiveMeasurements } from '@grafana/runtime';
+import { InlineField, Select, FeatureInfoBox, Input } from '@grafana/ui';
+import { QueryEditorProps, SelectableValue, FeatureState, dataFrameFromJSON, rangeUtil } from '@grafana/data';
 import { GrafanaDatasource } from '../datasource';
 import { defaultQuery, GrafanaQuery, GrafanaQueryType } from '../types';
+import { getBackendSrv } from '@grafana/runtime';
 
 type Props = QueryEditorProps<GrafanaDatasource, GrafanaQuery>;
 
 const labelWidth = 12;
 
-export class QueryEditor extends PureComponent<Props> {
+interface State {
+  channels: Array<SelectableValue<string>>;
+  channelFields: Record<string, Array<SelectableValue<string>>>;
+}
+
+export class QueryEditor extends PureComponent<Props, State> {
+  state: State = { channels: [], channelFields: {} };
+
   queryTypes: Array<SelectableValue<GrafanaQueryType>> = [
     {
       label: 'Random Walk',
@@ -25,6 +32,43 @@ export class QueryEditor extends PureComponent<Props> {
     },
   ];
 
+  loadChannelInfo() {
+    getBackendSrv()
+      .fetch({ url: 'api/live/list' })
+      .subscribe({
+        next: (v: any) => {
+          console.log('GOT', v);
+          const channelInfo = v.data?.channels as any[];
+          if (channelInfo?.length) {
+            const channelFields: Record<string, Array<SelectableValue<string>>> = {};
+            const channels: Array<SelectableValue<string>> = channelInfo.map((c) => {
+              if (c.data) {
+                const distinctFields = new Set<string>();
+                const frame = dataFrameFromJSON(c.data);
+                for (const f of frame.fields) {
+                  distinctFields.add(f.name);
+                }
+                channelFields[c.channel] = Array.from(distinctFields).map((n) => ({
+                  value: n,
+                  label: n,
+                }));
+              }
+              return {
+                value: c.channel,
+                label: c.channel,
+              };
+            });
+
+            this.setState({ channelFields, channels });
+          }
+        },
+      });
+  }
+
+  componentDidMount() {
+    this.loadChannelInfo();
+  }
+
   onQueryTypeChange = (sel: SelectableValue<GrafanaQueryType>) => {
     const { onChange, query, onRunQuery } = this.props;
     onChange({ ...query, queryType: sel.value! });
@@ -37,21 +81,65 @@ export class QueryEditor extends PureComponent<Props> {
     onRunQuery();
   };
 
-  onMeasurementNameChanged = (sel: SelectableValue<string>) => {
+  onFieldNamesChange = (item: SelectableValue<string>) => {
     const { onChange, query, onRunQuery } = this.props;
+    let fields: string[] = [];
+    if (Array.isArray(item)) {
+      fields = item.map((v) => v.value);
+    } else if (item.value) {
+      fields = [item.value];
+    }
+
+    // When adding the first field, also add time (if it exists)
+    if (fields.length === 1 && !query.filter?.fields?.length && query.channel) {
+      const names = this.state.channelFields[query.channel] ?? [];
+      const tf = names.find((f) => f.value === 'time' || f.value === 'Time');
+      if (tf && tf.value && tf.value !== fields[0]) {
+        fields = [tf.value, ...fields];
+      }
+    }
+
     onChange({
       ...query,
-      measurements: {
-        ...query.measurements,
-        key: sel?.value,
+      filter: {
+        ...query.filter,
+        fields,
       },
     });
     onRunQuery();
   };
 
+  checkAndUpdateBuffer = (txt: string) => {
+    const { onChange, query, onRunQuery } = this.props;
+    let buffer: number | undefined;
+    if (txt) {
+      try {
+        buffer = rangeUtil.intervalToSeconds(txt) * 1000;
+      } catch (err) {
+        console.warn('ERROR', err);
+      }
+    }
+    onChange({
+      ...query,
+      buffer,
+    });
+    onRunQuery();
+  };
+
+  handleEnterKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') {
+      return;
+    }
+    this.checkAndUpdateBuffer((e.target as any).value);
+  };
+
+  handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    this.checkAndUpdateBuffer(e.target.value);
+  };
+
   renderMeasurementsQuery() {
-    let { channel, measurements } = this.props.query;
-    const channels: Array<SelectableValue<string>> = [];
+    let { channel, filter, buffer } = this.props.query;
+    let { channels, channelFields } = this.state;
     let currentChannel = channels.find((c) => c.value === channel);
     if (channel && !currentChannel) {
       currentChannel = {
@@ -59,46 +147,42 @@ export class QueryEditor extends PureComponent<Props> {
         label: channel,
         description: `Connected to ${channel}`,
       };
-      channels.push(currentChannel);
+      channels = [currentChannel, ...channels];
     }
 
-    if (!measurements) {
-      measurements = {};
-    }
-    const names: Array<SelectableValue<string>> = [
-      { value: '', label: 'All measurements', description: 'Show every measurement streamed to this channel' },
-    ];
-
-    let info: LiveMeasurements | undefined = undefined;
-    if (channel) {
-      info = getLiveMeasurements({
-        scope: LiveChannelScope.Grafana,
-        namespace: 'measurements',
-        path: channel,
-      });
-
-      let foundName = false;
-      if (info) {
-        for (const name of info.getKeys()) {
-          names.push({
-            value: name,
-            label: name,
+    const distinctFields = new Set<string>();
+    const fields: Array<SelectableValue<string>> = channel ? channelFields[channel] ?? [] : [];
+    // if (data && data.series?.length) {
+    //   for (const frame of data.series) {
+    //     for (const field of frame.fields) {
+    //       if (distinctFields.has(field.name) || !field.name) {
+    //         continue;
+    //       }
+    //       fields.push({
+    //         value: field.name,
+    //         label: field.name,
+    //         description: `(${getFrameDisplayName(frame)} / ${field.type})`,
+    //       });
+    //       distinctFields.add(field.name);
+    //     }
+    //   }
+    // }
+    if (filter?.fields) {
+      for (const f of filter.fields) {
+        if (!distinctFields.has(f)) {
+          fields.push({
+            value: f,
+            label: `${f} (not loaded)`,
+            description: `Configured, but not found in the query results`,
           });
-          if (name === measurements.key) {
-            foundName = true;
-          }
+          distinctFields.add(f);
         }
-      } else {
-        console.log('NO INFO for', channel);
       }
+    }
 
-      if (measurements.key && !foundName) {
-        names.push({
-          label: measurements.key,
-          value: measurements.key,
-          description: `Frames with key ${measurements.key}`,
-        });
-      }
+    let formattedTime = '';
+    if (buffer) {
+      formattedTime = rangeUtil.secondsToHms(buffer / 1000);
     }
 
     return (
@@ -120,18 +204,29 @@ export class QueryEditor extends PureComponent<Props> {
         </div>
         {channel && (
           <div className="gf-form">
-            <InlineField label="Measurement" grow={true} labelWidth={labelWidth}>
+            <InlineField label="Fields" grow={true} labelWidth={labelWidth}>
               <Select
-                options={names}
-                value={names.find((v) => v.value === measurements?.key) || names[0]}
-                onChange={this.onMeasurementNameChanged}
+                options={fields}
+                value={filter?.fields || []}
+                onChange={this.onFieldNamesChange}
                 allowCustomValue={true}
                 backspaceRemovesValue={true}
-                placeholder="Filter by name"
+                placeholder="All fields"
                 isClearable={true}
-                noOptionsMessage="Filter by name"
-                formatCreateLabel={(input: string) => `Show: ${input}`}
+                noOptionsMessage="Unable to list all fields"
+                formatCreateLabel={(input: string) => `Field: ${input}`}
                 isSearchable={true}
+                isMulti={true}
+              />
+            </InlineField>
+            <InlineField label="Buffer">
+              <Input
+                placeholder="Auto"
+                width={12}
+                defaultValue={formattedTime}
+                onKeyDown={this.handleEnterKey}
+                onBlur={this.handleBlur}
+                spellCheck={false}
               />
             </InlineField>
           </div>

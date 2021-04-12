@@ -9,7 +9,9 @@ import DatasourceSrv from 'app/features/plugins/datasource_srv';
 export class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
 
-  current: any;
+  // Set through angular bindings
+  declare current: any;
+
   datasourceSrv: any;
   showTimescaleDBHelp: boolean;
   onPasswordReset: ReturnType<typeof createResetHandler>;
