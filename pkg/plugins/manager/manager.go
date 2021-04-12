@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -44,9 +45,10 @@ type PluginScanner struct {
 }
 
 type PluginManager struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	SQLStore             *sqlstore.SQLStore    `inject:""`
+	BackendPluginManager backendplugin.Manager   `inject:""`
+	Cfg                  *setting.Cfg            `inject:""`
+	SQLStore             *sqlstore.SQLStore      `inject:""`
+	PluginManagerV2      plugins.PluginManagerV2 `inject:""`
 	log                  log.Logger
 	scanningErrors       []error
 
@@ -84,80 +86,84 @@ func newManager(cfg *setting.Cfg) *PluginManager {
 }
 
 func (pm *PluginManager) Init() error {
-	//pm.log = log.New("plugins")
-	//plog = log.New("plugins")
-	//pm.pluginScanningErrors = map[string]plugins.PluginError{}
-	//
-	//pm.log.Info("Starting plugin search")
-	//
-	//plugDir := filepath.Join(pm.Cfg.StaticRootPath, "app/plugins")
-	//pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
-	//if err := pm.scan(plugDir, false); err != nil {
-	//	return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
-	//}
-	//
-	//plugDir = pm.Cfg.BundledPluginsPath
-	//pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)
-	//exists, err := fs.Exists(plugDir)
-	//if err != nil {
-	//	return err
-	//}
-	//if exists {
-	//	if err := pm.scan(plugDir, false); err != nil {
-	//		return errutil.Wrapf(err, "failed to scan bundled plugins directory '%s'", plugDir)
-	//	}
-	//}
-	//
-	//// check if plugins dir exists
-	//exists, err = fs.Exists(pm.Cfg.PluginsPath)
-	//if err != nil {
-	//	return err
-	//}
-	//if !exists {
-	//	if err = os.MkdirAll(pm.Cfg.PluginsPath, os.ModePerm); err != nil {
-	//		pm.log.Error("failed to create external plugins directory", "dir", pm.Cfg.PluginsPath, "error", err)
-	//	} else {
-	//		pm.log.Info("External plugins directory created", "directory", pm.Cfg.PluginsPath)
-	//	}
-	//} else {
-	//	pm.log.Debug("Scanning external plugins directory", "dir", pm.Cfg.PluginsPath)
-	//	if err := pm.scan(pm.Cfg.PluginsPath, true); err != nil {
-	//		return errutil.Wrapf(err, "failed to scan external plugins directory '%s'",
-	//			pm.Cfg.PluginsPath)
-	//	}
-	//}
-	//
-	//if err := pm.scanPluginPaths(); err != nil {
-	//	return err
-	//}
-	//
-	//for _, panel := range pm.panels {
-	//	staticRoutes := panel.InitFrontendPlugin(pm.Cfg)
-	//	pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
-	//}
-	//
-	//for _, ds := range pm.dataSources {
-	//	staticRoutes := ds.InitFrontendPlugin(pm.Cfg)
-	//	pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
-	//}
-	//
-	//for _, app := range pm.apps {
-	//	staticRoutes := app.InitApp(pm.panels, pm.dataSources, pm.Cfg)
-	//	pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
-	//}
-	//
-	//if pm.renderer != nil {
-	//	staticRoutes := pm.renderer.InitFrontendPlugin(pm.Cfg)
-	//	pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
-	//}
-	//
-	//for _, p := range pm.plugins {
-	//	if p.IsCorePlugin {
-	//		p.Signature = plugins.PluginSignatureInternal
-	//	} else {
-	//		metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
-	//	}
-	//}
+	pm.log = log.New("plugins")
+	plog = log.New("plugins")
+	pm.pluginScanningErrors = map[string]plugins.PluginError{}
+
+	if pm.PluginManagerV2.IsEnabled() {
+		return nil
+	}
+
+	pm.log.Info("Starting plugin search")
+
+	plugDir := filepath.Join(pm.Cfg.StaticRootPath, "app/plugins")
+	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
+	if err := pm.scan(plugDir, false); err != nil {
+		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
+	}
+
+	plugDir = pm.Cfg.BundledPluginsPath
+	pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)
+	exists, err := fs.Exists(plugDir)
+	if err != nil {
+		return err
+	}
+	if exists {
+		if err := pm.scan(plugDir, false); err != nil {
+			return errutil.Wrapf(err, "failed to scan bundled plugins directory '%s'", plugDir)
+		}
+	}
+
+	// check if plugins dir exists
+	exists, err = fs.Exists(pm.Cfg.PluginsPath)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		if err = os.MkdirAll(pm.Cfg.PluginsPath, os.ModePerm); err != nil {
+			pm.log.Error("failed to create external plugins directory", "dir", pm.Cfg.PluginsPath, "error", err)
+		} else {
+			pm.log.Info("External plugins directory created", "directory", pm.Cfg.PluginsPath)
+		}
+	} else {
+		pm.log.Debug("Scanning external plugins directory", "dir", pm.Cfg.PluginsPath)
+		if err := pm.scan(pm.Cfg.PluginsPath, true); err != nil {
+			return errutil.Wrapf(err, "failed to scan external plugins directory '%s'",
+				pm.Cfg.PluginsPath)
+		}
+	}
+
+	if err := pm.scanPluginPaths(); err != nil {
+		return err
+	}
+
+	for _, panel := range pm.panels {
+		staticRoutes := panel.InitFrontendPlugin(pm.Cfg)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
+	}
+
+	for _, ds := range pm.dataSources {
+		staticRoutes := ds.InitFrontendPlugin(pm.Cfg)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
+	}
+
+	for _, app := range pm.apps {
+		staticRoutes := app.InitApp(pm.panels, pm.dataSources, pm.Cfg)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
+	}
+
+	if pm.renderer != nil {
+		staticRoutes := pm.renderer.InitFrontendPlugin(pm.Cfg)
+		pm.staticRoutes = append(pm.staticRoutes, staticRoutes...)
+	}
+
+	for _, p := range pm.plugins {
+		if p.IsCorePlugin {
+			p.Signature = plugins.PluginSignatureInternal
+		} else {
+			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
+		}
+	}
 
 	return nil
 }

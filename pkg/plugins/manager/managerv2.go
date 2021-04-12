@@ -2,8 +2,11 @@ package manager
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -39,7 +42,42 @@ func init() {
 func (m *PluginManagerV2) Init() error {
 	m.plugins = map[string]*plugins.PluginV2{}
 
-	pluginJSONPaths, err := m.PluginFinder.Find(m.Cfg.PluginsPath)
+	// load Core plugins
+	err := m.loadPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"), false)
+	if err != nil {
+		return err
+	}
+
+	// load Bundled plugins
+	err = m.loadPlugins(m.Cfg.BundledPluginsPath, false)
+	if err != nil {
+		return err
+	}
+
+	// load Core plugins
+	err = m.loadPlugins(m.Cfg.PluginsPath, true)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *PluginManagerV2) loadPlugins(path string, forceCreate bool) error {
+	exists, err := fs.Exists(path)
+	if err != nil {
+		return err
+	}
+
+	if !exists && forceCreate {
+		if err = os.MkdirAll(path, os.ModePerm); err != nil {
+			pmlog.Error("Failed to create plugins directory", "dir", path, "error", err)
+		} else {
+			pmlog.Info("Plugins directory created", "directory", path)
+		}
+	}
+
+	pluginJSONPaths, err := m.PluginFinder.Find(path)
 	if err != nil {
 		return err
 	}
