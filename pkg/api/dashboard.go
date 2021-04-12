@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -371,8 +372,15 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 // GetHomeDashboard returns the home dashboard.
 func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
+	homePage := setting.GetCfg().HomePage
 	if err := hs.Bus.Dispatch(&prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
+	}
+
+	// import config, check for config.homePath and if it exists, send back the redirect.
+	if prefsQuery.Result.HomeDashboardId == 0 && homePage != "" {
+		homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
+		return response.JSON(200, &homePageRedirect)
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
