@@ -112,7 +112,7 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 			),
 		),
 		nil,
-		yamlExtractor(apimodels.RuleGroupConfigResponse{}),
+		yamlExtractor(&apimodels.GettableRuleGroupConfig{}),
 		nil,
 	)
 }

@@ -147,7 +147,7 @@ func (am *LotexAM) RouteGetSilences(ctx *models.ReqContext) response.Response {
 }
 
 func (am *LotexAM) RoutePostAlertingConfig(ctx *models.ReqContext, config apimodels.PostableUserConfig) response.Response {
-	yml, err := yaml.Marshal(config)
+	yml, err := yaml.Marshal(&config)
 	if err != nil {
 		return response.Error(500, "Failed marshal alert manager configuration ", err)
 	}
