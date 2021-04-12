@@ -1083,7 +1083,7 @@ function createFuncInstance(funcDef: any, options?: { withDefaultParams: any }, 
 
 function getFuncDef(name: string, idx?: any) {
   if (!(idx || index)[name]) {
-    throw { message: 'Method not found ' + name };
+    return { name: name, params: [{ multiple: true }], unknown: true };
   }
   return (idx || index)[name];
 }

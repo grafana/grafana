@@ -819,16 +819,6 @@ github.com/gorilla/websocket v1.4.2 h1:+/TMaTYc4QFitKJxsQ7Yye35DkWvkdLcvGKqM+x0U
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gosimple/slug v1.9.0 h1:r5vDcYrFz9BmfIAMC829un9hq7hKM4cHUrsv36LbEqs=
 github.com/gosimple/slug v1.9.0/go.mod h1:AMZ+sOVe65uByN3kgEyf9WEBKBCSS+dJjMX9x4vDJbg=
-github.com/grafana/alerting-api v0.0.0-20210331135037-3294563b51bb h1:Hj25Whc/TRv0hSLm5VN0FJ5R4yZ6M4ycRcBgu7bsEAc=
-github.com/grafana/alerting-api v0.0.0-20210331135037-3294563b51bb/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
-github.com/grafana/alerting-api v0.0.0-20210405171311-97906879c771 h1:CTmKHUu2n0O9fPTSXb+s5FO8Em9Atw57Z7mvw7lt6IM=
-github.com/grafana/alerting-api v0.0.0-20210405171311-97906879c771/go.mod h1:5IppnPguSHcCbVLGCVzVjBvuQZNbYgVJ4KyXXjhCyWY=
-github.com/grafana/alerting-api v0.0.0-20210407150830-64bd267999d1 h1:pbG8BsRHezUvUjMxwq+uZsx1ZMEQsfSj26KSd/H3A9g=
-github.com/grafana/alerting-api v0.0.0-20210407150830-64bd267999d1/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
-github.com/grafana/alerting-api v0.0.0-20210408130544-2969b61275a5 h1:r33Ruhf3TNvT4Y+acR8R0zBtNULnThnJRlAje2AFt6c=
-github.com/grafana/alerting-api v0.0.0-20210408130544-2969b61275a5/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
-github.com/grafana/alerting-api v0.0.0-20210408135630-bc10f737ceff h1:3l/P+TIOXJy1zX/kZB6dFAMPQrpwpiN3cLMVr8B8u4Q=
-github.com/grafana/alerting-api v0.0.0-20210408135630-bc10f737ceff/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
 github.com/grafana/alerting-api v0.0.0-20210409134845-c36ac1eae41b h1:QG52Et3EVCxPoYZifm91bRPVknccfjQURcpi7zXVut8=
 github.com/grafana/alerting-api v0.0.0-20210409134845-c36ac1eae41b/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=
@@ -843,8 +833,9 @@ github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4 h1:SP
 github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4/go.mod h1:nc0XxBzjeGcrMltCDw269LoWF9S8ibhgxolCdA1R8To=
 github.com/grafana/grafana-plugin-sdk-go v0.79.0/go.mod h1:NvxLzGkVhnoBKwzkst6CFfpMFKwAdIUZ1q8ssuLeF60=
 github.com/grafana/grafana-plugin-sdk-go v0.88.0/go.mod h1:PTALh0lz+Y7k0+OMczAABTpeocL63aw6FVOBptp5GVo=
-github.com/grafana/grafana-plugin-sdk-go v0.91.0 h1:kiPS3NqR+KOvHrc32EkX7D40JON3+GYZ6Nm2WOtCElQ=
 github.com/grafana/grafana-plugin-sdk-go v0.91.0/go.mod h1:Ot3k7nY7P6DXmUsDgKvNB7oG1v7PRyTdmnYVoS554bU=
+github.com/grafana/grafana-plugin-sdk-go v0.92.0 h1:Wim+Ey7BaA0BO7+wBHeTPrGotKPRznKBXYArSAJL3W8=
+github.com/grafana/grafana-plugin-sdk-go v0.92.0/go.mod h1:UwW5HV5HUzRKCieDfC4J31H4PBQngn2wXjJXJmn2zjw=
 github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387 h1:iwcM8lkYJ3EhytGLJ2BvRSwutb0QWoI7EWbYv3yJRsY=
 github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387/go.mod h1:jHA1OHnPsuj3LLgMXmFopsKDt4ARHHUhrmT3JrGf71g=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
@@ -1054,7 +1045,6 @@ github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5/go.mod h1:7Id9E
 github.com/jung-kurt/gofpdf v1.16.2 h1:jgbatWHfRlPYiK85qgevsZTHviWXKwB1TTiKdz5PtRc=
 github.com/jung-kurt/gofpdf v1.16.2/go.mod h1:1hl7y57EsiPAkLbOwzpzqgx1A30nQCk/YmFV8S2vmK0=
 github.com/jwilder/encoding v0.0.0-20170811194829-b4e1701a28ef/go.mod h1:Ct9fl0F6iIOGgxJ5npU/IUOhOhqlVrGjyIZc8/MagT0=
-github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 h1:uC1QfSlInpQF+M0ao65imhwqKnz3Q2z/d8PWZRMQvDM=
 github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88/go.mod h1:3w7q1U84EfirKl04SVQ/s7nPm1ZPhiXd34z40TNz36k=
 github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213/go.mod h1:vNUNkEQ1e29fT/6vq2aBdFsgNPmy8qMdSay1npru+Sw=
 github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
