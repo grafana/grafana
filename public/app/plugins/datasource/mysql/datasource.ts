@@ -1,13 +1,18 @@
 import _ from 'lodash';
 import { Observable, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
-import { getBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
-import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars, DataQueryResponse } from '@grafana/data';
+import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
+import {
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  ScopedVars,
+  DataQueryResponse,
+  MetricFindValue,
+} from '@grafana/data';
 import MysqlQuery from 'app/plugins/datasource/mysql/mysql_query';
 import ResponseParser from './response_parser';
-import { MysqlMetricFindValue, MysqlQueryForInterpolation, MySQLOptions, MySQLQuery } from './types';
+import { MysqlQueryForInterpolation, MySQLOptions, MySQLQuery } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOptions> {
@@ -19,8 +24,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<MySQLOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
@@ -81,8 +85,6 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
     const queryModel = new MysqlQuery(target, this.templateSrv, scopedVars);
     return {
       refId: target.refId,
-      intervalMs: scopedVars.intervalMs,
-      maxDataPoints: scopedVars.maxDataPoints,
       datasourceId: this.id,
       rawSql: queryModel.render(this.interpolateVariable as any),
       format: target.format,
@@ -121,7 +123,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
       .toPromise();
   }
 
-  metricFindQuery(query: string, optionalOptions: any): Promise<MysqlMetricFindValue[]> {
+  metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
@@ -140,28 +142,18 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
       format: 'table',
     };
 
-    const range = this.timeSrv.timeRange();
-    const data = {
-      queries: [interpolatedQuery],
-      from: range.from.valueOf().toString(),
-      to: range.to.valueOf().toString(),
-    };
-
-    if (optionalOptions && optionalOptions.range && optionalOptions.range.from) {
-      data['from'] = optionalOptions.range.from.valueOf().toString();
-    }
-    if (optionalOptions && optionalOptions.range && optionalOptions.range.to) {
-      data['to'] = optionalOptions.range.to.valueOf().toString();
-    }
-
-    return getBackendSrv()
-      .fetch({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: data,
-      })
-      .pipe(map((data: any) => this.responseParser.parseMetricFindQueryResult(refId, data)))
-      .toPromise();
+    return super
+      .query({
+        ...optionalOptions, // includes 'range'
+        targets: [interpolatedQuery],
+      } as DataQueryRequest)
+      .toPromise()
+      .then((rsp) => {
+        if (rsp.data?.length) {
+          return frameToMetricFindValue(rsp.data[0]);
+        }
+        return [];
+      });
   }
 
   testDatasource() {

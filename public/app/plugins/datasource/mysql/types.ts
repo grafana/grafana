@@ -18,15 +18,6 @@ export interface MySQLOptions extends DataSourceJsonData {
 export type ResultFormat = 'time_series' | 'table';
 
 export interface MySQLQuery extends DataQuery {
-  policy?: string;
-  measurement?: string;
-  resultFormat?: ResultFormat;
-  orderByTime?: string;
-  limit?: string;
-  slimit?: string;
-  tz?: string;
-  fill?: string;
-  query?: string;
   alias?: string;
   format?: any;
   rawSql?: any;

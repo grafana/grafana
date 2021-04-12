@@ -344,7 +344,6 @@ func TestMySQL(t *testing.T) {
 				require.Equal(t, 1, len(frames))
 
 				require.NoError(t, queryResult.Error)
-				require.Equal(t, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1", queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
 				require.Equal(t, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1", frames[0].Meta.ExecutedQueryString)
 			})
 		})

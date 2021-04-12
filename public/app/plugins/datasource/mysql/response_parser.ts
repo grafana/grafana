@@ -53,31 +53,34 @@ export default class ResponseParser {
     return { data: data };
   }
 
+  // get the list of template variables
   parseMetricFindQueryResult(refId: string, results: any): MysqlMetricFindValue[] {
-    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
+    if (!results || results.data.length === 0) {
       return [];
     }
 
-    const columns = results.data.results[refId].tables[0].columns;
-    const rows = results.data.results[refId].tables[0].rows;
+    console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<', results.data.results[refId]);
+
+    const columns = results.data.results[refId].dataframes[0].fields;
+    const frame = results.data.results[refId].dataframes[0];
     const textColIndex = this.findColIndex(columns, '__text');
     const valueColIndex = this.findColIndex(columns, '__value');
 
     if (columns.length === 2 && textColIndex !== -1 && valueColIndex !== -1) {
-      return this.transformToKeyValueList(rows, textColIndex, valueColIndex);
+      return this.transformToKeyValueList(frame, textColIndex, valueColIndex);
     }
 
-    return this.transformToSimpleList(rows);
+    return this.transformToSimpleList(frame);
   }
 
-  transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number) {
+  transformToKeyValueList(frame: any, textColIndex: number, valueColIndex: number) {
     const res = [];
 
-    for (let i = 0; i < rows.length; i++) {
-      if (!this.containsKey(res, rows[i][textColIndex])) {
+    for (let i = 0; i < frame.length; i++) {
+      if (!this.containsKey(res, frame.fields[textColIndex][i])) {
         res.push({
-          text: rows[i][textColIndex],
-          value: rows[i][valueColIndex],
+          text: frame.fields[textColIndex][i],
+          value: frame.fields[valueColIndex][i],
         });
       }
     }
@@ -85,12 +88,12 @@ export default class ResponseParser {
     return res;
   }
 
-  transformToSimpleList(rows: any) {
+  transformToSimpleList(frame: any) {
     const res = [];
 
-    for (let i = 0; i < rows.length; i++) {
-      for (let j = 0; j < rows[i].length; j++) {
-        res.push(rows[i][j]);
+    for (let i = 0; i < frame.length; i++) {
+      for (let j = 0; j < frame.fields.length; j++) {
+        res.push(frame.fields[j][i]);
       }
     }
 
@@ -103,7 +106,7 @@ export default class ResponseParser {
 
   findColIndex(columns: any[], colName: string) {
     for (let i = 0; i < columns.length; i++) {
-      if (columns[i].text === colName) {
+      if (columns[i].name === colName) {
         return i;
       }
     }
@@ -113,7 +116,7 @@ export default class ResponseParser {
 
   containsKey(res: any[], key: any) {
     for (let i = 0; i < res.length; i++) {
-      if (res[i].text === key) {
+      if (res[i].name === key) {
         return true;
       }
     }

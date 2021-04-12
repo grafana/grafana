@@ -154,6 +154,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 	// Execute each query in a goroutine and wait for them to finish afterwards
 	for _, query := range queryContext.Queries {
+		fmt.Printf("%+v\n", query)
 		if query.Model.Get("rawSql").MustString() == "" {
 			continue
 		}
@@ -173,8 +174,6 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				panic("Query model property rawSql should not be empty at this point")
 			}
 
-			preInterpolatedQuery := rawSQL
-
 			// global substitutions
 			rawSQL, err := Interpolate(query, timeRange, rawSQL)
 			if err != nil {
@@ -190,15 +189,13 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				return
 			}
 			interpolatedQuery := rawSQL
-			queryResult.Meta.Set(MetaKeyExecutedQueryString, rawSQL)
 
 			emptyFrame := &data.Frame{}
 			emptyFrame.SetMeta(&data.FrameMeta{
 				ExecutedQueryString: interpolatedQuery,
 			})
 
-			errAppendDebug := func(logErr string, frameErr string, err error) {
-				backend.Logger.Error(logErr, "error", err)
+			errAppendDebug := func(frameErr string, err error) {
 				frames = append(frames, emptyFrame)
 				queryResult.Error = fmt.Errorf(frameErr+": %w", err)
 				queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
@@ -209,18 +206,14 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 			rows, err := db.Query(rawSQL)
 			if err != nil {
-				errAppendDebug("DB Query error", "db query error", err)
-				queryResult.Error = e.queryResultTransformer.TransformQueryError(err)
+				errAppendDebug("db query error", e.queryResultTransformer.TransformQueryError(err))
 				ch <- queryResult
 				return
 			}
 
-			qm, err := e.newProcessCfg(query, queryContext, rows)
-			qm.PreInterpolatedQuery = preInterpolatedQuery
-			qm.InterpolatedQuery = interpolatedQuery
-
+			qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
 			if err != nil {
-				errAppendDebug("fail when getting configurations", "fail when getting configurations", err)
+				errAppendDebug("fail when getting configurations", err)
 				return
 			}
 
@@ -233,9 +226,8 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			// Convert row.Rows to dataframe
 			myCs := e.queryResultTransformer.GetConverterList()
 			frame, _, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
-			// spew.Dump(foo)
 			if err != nil {
-				errAppendDebug("DB Query error", "db query error", err)
+				errAppendDebug("db query error", err)
 				return
 			}
 			frame.SetMeta(&data.FrameMeta{
@@ -249,7 +241,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 			if qm.timeIndex != -1 {
 				err = ConvertSqlTimeColumnToEpochMs(frame, qm.timeIndex)
-				errAppendDebug("DB convert time column failed", "db convert time column failed", err)
+				errAppendDebug("db convert time column failed", err)
 				ch <- queryResult
 				return
 			}
@@ -258,7 +250,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				var err error
 				// timeserie has to have time column
 				if qm.timeIndex == -1 {
-					errAppendDebug("DB get no time column", "db get no time column", errors.New("no time column found"))
+					errAppendDebug("db get no time column", errors.New("no time column found"))
 					ch <- queryResult
 					return
 				}
@@ -268,8 +260,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 					}
 
 					if frame, err = ConvertSqlValueColumnToFloat(frame, i); err != nil {
-						errAppendDebug("Convert value to float failed", "Convert value to float failed",
-							err)
+						errAppendDebug("convert value to float failed", err)
 						ch <- queryResult
 						return
 					}
@@ -281,7 +272,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				if tsSchema.Type == data.TimeSeriesTypeLong {
 					frame, err = data.LongToWide(frame, qm.FillMissing)
 					if err != nil {
-						errAppendDebug("Failed to convert long to wide series when converting from dataframe", "failed to convert long to wide series when converting from dataframe", err)
+						errAppendDebug("failed to convert long to wide series when converting from dataframe", err)
 						ch <- queryResult
 						return
 					}
@@ -301,6 +292,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			}
 			content, _ := frame.StringTable(-1, -1)
 			fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<", content)
+
 			frames = append(frames, frame)
 			queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
 			ch <- queryResult
@@ -337,7 +329,7 @@ var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 	return sql, nil
 }
 
-func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery, rows *core.Rows) (*DataQueryModel, error) {
+func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery, rows *core.Rows, interpolatedQuery string) (*DataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -410,7 +402,7 @@ func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plug
 			}
 		}
 	}
-
+	qm.InterpolatedQuery = interpolatedQuery
 	return qm, nil
 }
 
@@ -425,19 +417,18 @@ const (
 )
 
 type DataQueryModel struct {
-	PreInterpolatedQuery string
-	InterpolatedQuery    string // property non set until after Interpolate()
-	Format               DataQueryFormat
-	TimeRange            backend.TimeRange
-	FillMissing          *data.FillMissing // property non set until after Interpolate()
-	Interval             time.Duration
-	columnNames          []string
-	columnTypes          []*sql.ColumnType
-	timeIndex            int
-	metricIndex          int
-	rows                 *core.Rows
-	metricPrefix         bool
-	queryContext         plugins.DataQuery
+	InterpolatedQuery string // property non set until after Interpolate()
+	Format            DataQueryFormat
+	TimeRange         backend.TimeRange
+	FillMissing       *data.FillMissing // property non set until after Interpolate()
+	Interval          time.Duration
+	columnNames       []string
+	columnTypes       []*sql.ColumnType
+	timeIndex         int
+	metricIndex       int
+	rows              *core.Rows
+	metricPrefix      bool
+	queryContext      plugins.DataQuery
 }
 
 func convertInt64ToFloat64(origin *data.Field, newField *data.Field) {
