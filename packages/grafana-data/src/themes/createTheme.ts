@@ -47,10 +47,10 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaThemeV2 {
   const breakpoints = createBreakpoints();
   const spacing = createSpacing(spacingInput);
   const shape = createShape(shapeInput);
-  const components = createComponents(palette);
   const typography = createTypography(palette, typographyInput);
   const shadows = createShadows(palette);
   const transitions = createTransitions();
+  const components = createComponents(palette, shadows);
 
   return {
     name,

@@ -54,8 +54,16 @@ $gray-5: ${theme.palette.gray5};
 $gray-6: ${theme.palette.gray6};
 
 $input-black: ${theme.colors.formInputBg};
-
 $white: ${theme.palette.white};
+
+$layer0: ${theme.v2.palette.layer0};
+$layer1: ${theme.v2.palette.layer1};
+$layer2: ${theme.v2.palette.layer2};
+
+$divider: ${theme.v2.palette.divider};
+
+$border0: ${theme.v2.palette.border0};
+$border1: ${theme.v2.palette.border1};
 
 // Accent colors
 // -------------------------
@@ -120,9 +128,10 @@ $hr-border-color: $dark-9;
 
 // Panel
 // -------------------------
-$panel-bg: ${theme.colors.panelBg};
-$panel-border: 1px solid ${theme.colors.panelBorder};
-$panel-header-hover-bg: ${theme.colors.bg2};
+$panel-bg: ${theme.v2.components.panel.background};
+$panel-border: ${theme.v2.components.panel.border};
+$panel-header-hover-bg: ${theme.v2.palette.action.hover};
+$panel-box-shadow: ${theme.v2.components.panel.boxShadow};
 $panel-corner: $panel-bg;
 
 // page header
@@ -141,8 +150,8 @@ $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: ${theme.colors.bg2};
-$card-background-hover: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$card-background: ${theme.v2.components.card.background};
+$card-background-hover: ${theme.v2.components.card.background};
 $card-shadow: none;
 
 // Lists
@@ -159,11 +168,10 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)}; // for striping
-$table-border: $dark-6; // table and cell border
-
-$table-bg-odd: $dark-3;
-$table-bg-hover: $dark-6;
+$table-bg-accent: ${theme.v2.palette.layer2};
+$table-border: ${theme.v2.palette.border1};
+$table-bg-odd: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.02)};
+$table-bg-hover: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.05)};
 
 // Buttons
 // -------------------------
@@ -254,7 +262,7 @@ $side-menu-header-color: ${theme.colors.text};
 // -------------------------
 $menu-dropdown-bg: ${theme.v2.components.menu.background};
 $menu-dropdown-hover-bg: ${theme.v2.palette.action.hover};
-$menu-dropdown-shadow: ${theme.v2.shadows.z2};
+$menu-dropdown-shadow: ${theme.v2.shadows.z3};
 
 // Tabs
 // -------------------------
@@ -276,22 +284,21 @@ $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
 // -------------------------
-$tooltipColor: $text-color;
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: $link-color;
-$tooltipShadow: 0 0 10px black;
 $graph-tooltip-bg: $dark-1;
 
-$tooltipBackground: $gray15;
-$tooltipColor: $text-color;
-$tooltipArrowColor: $tooltipBackground;
-$tooltipBackgroundError: $brand-danger;
+$tooltipBackground: ${theme.v2.components.tooltip.background};
+$tooltipColor: ${theme.v2.components.tooltip.text};
+$tooltipArrowColor: ${theme.v2.components.tooltip.background};
+$tooltipBackgroundError: ${theme.v2.palette.error.main};
+$tooltipShadow: ${theme.v2.shadows.z2};
 
-$popover-bg: $dark-2;
-$popover-color: $text-color;
-$popover-border-color: $dark-9;
-$popover-header-bg: $dark-9;
-$popover-shadow: 0 0 20px black;
+$popover-bg: ${theme.v2.palette.layer2};
+$popover-color: ${theme.v2.palette.text.primary};
+$popover-border-color: ${theme.v2.palette.border1};
+$popover-header-bg: ${theme.v2.palette.layer1};
+$popover-shadow: ${theme.v2.shadows.z3};
 
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $text-color;
@@ -376,9 +383,6 @@ $panel-editor-viz-item-bg: $input-black;
 $panel-editor-tabs-line-color: #e3e3e3;
 
 $panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
-
-$panel-options-group-border: none;
-$panel-options-group-header-bg: ${theme.colors.bg2};
 
 $panel-grid-placeholder-bg: darken(${theme.palette.blue77}, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue80};

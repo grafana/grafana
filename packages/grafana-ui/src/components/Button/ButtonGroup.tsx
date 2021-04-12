@@ -22,10 +22,12 @@ ButtonGroup.displayName = 'ButtonGroup';
 const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
     display: flex;
+    box-shadow: ${theme.v2.shadows.z1};
 
     > button {
       border-radius: 0;
-      border-right-width: 0;
+      border-right: 1px solid ${theme.v2.palette.border1};
+      box-shadow: none;
 
       &.toolbar-button {
         margin-left: 0;
@@ -33,7 +35,7 @@ const getStyles = (theme: GrafanaTheme) => ({
 
       &:last-of-type {
         border-radius: 0 ${theme.border.radius.sm} ${theme.border.radius.sm} 0;
-        border-right-width: 1px;
+        border-right: none;
       }
 
       &:first-child {

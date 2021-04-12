@@ -30,6 +30,8 @@ export interface ThemePaletteBase<TColor> {
   layer1: string;
   layer2: string;
 
+  divider: string;
+
   border0: string;
   border1: string;
   border2: string;
@@ -76,13 +78,14 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     primary: 'rgba(255, 255, 255, 0.75)',
     secondary: 'rgba(255, 255, 255, 0.50)',
     disabled: 'rgba(255, 255, 255, 0.35)',
-    link: colors.blueDark2,
+    link: colors.blueDarkText,
     maxContrast: colors.white,
   };
 
   primary = {
-    main: colors.blueDark1,
-    text: colors.blueDark2,
+    main: colors.blueDarkMain,
+    text: colors.blueDarkText,
+    border: colors.blueDarkText,
   };
 
   secondary = {
@@ -95,26 +98,29 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   info = this.primary;
 
   error = {
-    main: colors.redDark1,
-    text: colors.redDark2,
+    main: colors.redDarkMain,
+    text: colors.redDarkText,
   };
 
   success = {
-    main: colors.green1,
-    text: colors.green2,
+    main: colors.greenDarkMain,
+    text: colors.greenDarkText,
   };
 
   warning = {
-    main: colors.orange,
+    main: colors.orangeDarkMain,
+    text: colors.orangeDarkText,
   };
 
   layer0 = colors.gray05;
   layer1 = colors.gray10;
   layer2 = colors.gray15;
 
-  border0 = colors.gray15;
-  border1 = colors.gray25;
-  border2 = colors.gray33;
+  divider = 'rgba(218,224,254,0.06)';
+
+  border0 = this.layer1;
+  border1 = 'rgba(218,224,254,0.15)';
+  border2 = 'rgba(218,224,254,0.20)';
 
   action = {
     hover: 'rgba(255, 255, 255, 0.08)',
@@ -135,34 +141,36 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'light';
 
   primary = {
-    main: colors.blueLight1,
-    border: colors.blueLight3,
-    text: colors.blueLight3,
+    main: colors.blueLightMain,
+    border: colors.blueLightText,
+    text: colors.blueLightText,
   };
 
   secondary = {
-    main: 'rgba(0,0,0,0.14)',
-    shade: 'rgba(0,0,0,0.18)',
+    main: 'rgba(0,0,0,0.11)',
+    shade: 'rgba(0,0,0,0.16)',
     contrastText: 'rgba(0, 0, 0, 0.75)',
   };
 
   info = {
-    main: colors.blueLight1,
-    text: colors.blueLight3,
+    main: colors.blueLightMain,
+    text: colors.blueLightText,
   };
 
   error = {
-    main: colors.redLight1,
-    text: colors.redLight1,
-    border: colors.redLight1,
+    main: colors.redLightMain,
+    text: colors.redLightText,
+    border: colors.redLightText,
   };
 
   success = {
-    main: colors.greenBase,
+    main: colors.greenLightMain,
+    text: colors.greenLightText,
   };
 
   warning = {
-    main: colors.orange,
+    main: colors.orangeLightMain,
+    text: colors.orangeLightText,
   };
 
   text = {
@@ -173,13 +181,16 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     maxContrast: colors.black,
   };
 
-  layer0 = colors.gray98;
+  layer0 = colors.gray90;
   layer1 = colors.white;
-  layer2 = colors.gray97;
+  layer2 = colors.gray100;
 
-  border0 = colors.gray90;
-  border1 = colors.gray85;
-  border2 = colors.gray70;
+  divider = 'rgba(0, 2, 78, 0.07)';
+
+  border0 = this.layer1;
+
+  border1 = 'rgba(0, 2, 78, 0.20)';
+  border2 = 'rgba(0, 2, 78, 0.30)';
 
   action = {
     hover: 'rgba(0, 0, 0, 0.04)',
@@ -233,6 +244,9 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     }
     if (!color.text) {
       color.text = color.main;
+    }
+    if (!color.border) {
+      color.text = color.text;
     }
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
