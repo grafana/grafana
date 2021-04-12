@@ -2,11 +2,9 @@ package api
 
 import (
 	"fmt"
-	"math"
 	"net/http"
 	"net/url"
 	"strconv"
-	"time"
 
 	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -53,31 +51,27 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 
 		switch ds.Type {
 		case "loki":
-			path = "loki/api/v1/query_range"
+			path = "loki/api/v1/query"
 		case "prometheus":
-			path = "api/v1/query_range"
+			path = "api/v1/query"
 		default:
 			return response.Error(http.StatusBadRequest, fmt.Sprintf("unexpected recipient type %s", ds.Type), nil)
 		}
 	}
 
-	end := timeNow()
-	start := end.Add(-time.Hour)
-	queryRangeURL, err := url.Parse(path)
+	t := timeNow()
+	queryURL, err := url.Parse(path)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to parse url", err)
 	}
-	params := queryRangeURL.Query()
+	params := queryURL.Query()
 	params.Set("query", body.Expr)
-	params.Set("start", strconv.FormatInt(start.Unix(), 10))
-	params.Set("end", strconv.FormatInt(end.Unix(), 10))
-	step := int(math.Max(math.Floor(end.Sub(start).Seconds()/250), 1))
-	params.Set("step", strconv.Itoa(step))
-	queryRangeURL.RawQuery = params.Encode()
+	params.Set("time", strconv.FormatInt(t.Unix(), 10))
+	queryURL.RawQuery = params.Encode()
 	return srv.withReq(
 		c,
 		http.MethodGet,
-		queryRangeURL,
+		queryURL,
 		nil,
 		jsonExtractor(nil),
 		nil,
