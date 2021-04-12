@@ -47,9 +47,9 @@ spec:
         supplementalGroups:
         - 0    
       containers:
-        - image: grafana/grafana:latest
+        - name: grafana
+          image: grafana/grafana:7.5.2
           imagePullPolicy: IfNotPresent
-          name: grafana
           ports:
             - containerPort: 3000
               name: http-grafana
