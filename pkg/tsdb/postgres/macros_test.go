@@ -108,7 +108,7 @@ func TestMacroEngine(t *testing.T) {
 				sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '12d')")
 				So(err, ShouldBeNil)
 
-				So(sql, ShouldEqual, "GROUP BY time_bucket('1033200s',time_column)")
+				So(sql, ShouldEqual, "GROUP BY time_bucket('1036800s',time_column)")
 			})
 
 			Convey("interpolate __unixEpochFilter function", func() {
