@@ -39,6 +39,7 @@ export const LibraryPanelsPage: FC<Props> = ({ navModel }) => {
           searchString={searchQuery}
           currentPanelId={undefined}
           showSecondaryActions={true}
+          perPage={8}
         />
       </Page.Contents>
     </Page>
