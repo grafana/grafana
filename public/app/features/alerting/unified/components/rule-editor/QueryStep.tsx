@@ -12,7 +12,6 @@ export const QueryStep: FC = () => {
   const { control, watch, errors } = useFormContext<RuleFormValues>();
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
-  console.log('errs', errors);
   return (
     <RuleEditorSection stepNo={2} title="Create a query to be alerted on">
       {type === RuleFormType.system && dataSourceName && (

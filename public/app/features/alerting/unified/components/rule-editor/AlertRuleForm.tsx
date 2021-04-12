@@ -49,7 +49,9 @@ export const AlertRuleForm: FC<Props> = () => {
 
   const values = watch();
 
-  const showStep2 = values.dataSourceName && values.type;
+  console.log('values', values);
+
+  const showStep2 = Boolean(values.dataSourceName && values.type);
 
   const onSubmit = (alertRule: RuleFormValues) => {
     console.log('submit', alertRule);

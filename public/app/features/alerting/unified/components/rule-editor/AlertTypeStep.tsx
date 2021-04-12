@@ -56,7 +56,11 @@ export const AlertTypeStep: FC = () => {
         error={errors?.name?.message}
         invalid={!!errors.name?.message}
       >
-        <Input ref={register({ required: { value: true, message: 'Must enter an alert name' } })} name="name" />
+        <Input
+          autoFocus={true}
+          ref={register({ required: { value: true, message: 'Must enter an alert name' } })}
+          name="name"
+        />
       </Field>
       <div className={styles.flexRow}>
         <Field
