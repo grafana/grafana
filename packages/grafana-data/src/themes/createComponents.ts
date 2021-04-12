@@ -9,27 +9,11 @@ export interface ThemeComponents {
     md: number;
     lg: number;
   };
-  tooltip: {
-    background: string;
-    text: string;
-  };
-  menu: {
-    background: string;
-  };
-  dropdown: {
-    background: string;
-  };
-  scrollbar: {
-    background: string;
-  };
   form: {
     background: string;
     border: string;
     borderHover: string;
     text: string;
-  };
-  card: {
-    background: string;
   };
   panel: {
     padding: number;
@@ -41,11 +25,6 @@ export interface ThemeComponents {
   dashboard: {
     background: string;
     padding: number;
-  };
-  pageToolbar: {
-    background: string;
-    boxShadow: string;
-    border: string;
   };
 }
 
@@ -64,22 +43,6 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
       md: 4,
       lg: 6,
     },
-    tooltip: {
-      background: palette.layer2,
-      text: palette.text.primary,
-    },
-    menu: {
-      background: palette.layer2,
-    },
-    dropdown: {
-      background: palette.layer2,
-    },
-    scrollbar: {
-      background: palette.secondary.main,
-    },
-    card: {
-      background: palette.layer2,
-    },
     form:
       palette.mode === 'dark'
         ? {
@@ -95,11 +58,6 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
             text: palette.text.primary,
           },
     panel,
-    pageToolbar: {
-      background: palette.layer0,
-      boxShadow: 'none',
-      border: 'none',
-    },
     dashboard: {
       background: palette.layer0,
       padding: 1,

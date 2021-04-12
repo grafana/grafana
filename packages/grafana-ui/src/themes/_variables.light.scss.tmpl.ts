@@ -256,7 +256,7 @@ $side-menu-header-color: ${theme.palette.gray95};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: ${theme.v2.components.menu.background};
+$menu-dropdown-bg: ${theme.v2.palette.layer2};
 $menu-dropdown-hover-bg: ${theme.v2.palette.action.hover};
 $menu-dropdown-shadow: ${theme.v2.shadows.z3};
 
@@ -279,9 +279,9 @@ $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
-$tooltipBackground: ${theme.v2.components.tooltip.background};
-$tooltipColor: ${theme.v2.components.tooltip.text};
-$tooltipArrowColor: ${theme.v2.components.tooltip.background};
+$tooltipBackground: ${theme.v2.palette.layer2};
+$tooltipColor: ${theme.v2.palette.text.primary};
+$tooltipArrowColor: ${theme.v2.palette.layer2};
 $tooltipBackgroundError: ${theme.v2.palette.error.main};
 $tooltipShadow: ${theme.v2.shadows.z2};
 

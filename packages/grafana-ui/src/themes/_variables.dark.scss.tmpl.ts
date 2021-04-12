@@ -150,8 +150,8 @@ $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: ${theme.v2.components.card.background};
-$card-background-hover: ${theme.v2.components.card.background};
+$card-background: ${theme.v2.palette.layer2};
+$card-background-hover: ${theme.v2.palette.layer2};
 $card-shadow: none;
 
 // Lists
@@ -260,7 +260,7 @@ $side-menu-header-color: ${theme.colors.text};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: ${theme.v2.components.menu.background};
+$menu-dropdown-bg: ${theme.v2.palette.layer2};
 $menu-dropdown-hover-bg: ${theme.v2.palette.action.hover};
 $menu-dropdown-shadow: ${theme.v2.shadows.z3};
 
@@ -288,9 +288,9 @@ $tooltipArrowWidth: 5px;
 $tooltipLinkColor: $link-color;
 $graph-tooltip-bg: $dark-1;
 
-$tooltipBackground: ${theme.v2.components.tooltip.background};
-$tooltipColor: ${theme.v2.components.tooltip.text};
-$tooltipArrowColor: ${theme.v2.components.tooltip.background};
+$tooltipBackground: ${theme.v2.palette.layer2};
+$tooltipColor: ${theme.v2.palette.text.primary};
+$tooltipArrowColor: ${theme.v2.palette.layer2};
 $tooltipBackgroundError: ${theme.v2.palette.error.main};
 $tooltipShadow: ${theme.v2.shadows.z2};
 

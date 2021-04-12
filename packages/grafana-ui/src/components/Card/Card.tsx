@@ -140,7 +140,7 @@ const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false,
   return css({
     display: 'flex',
     width: '100%',
-    background: theme.v2.components.card.background,
+    background: theme.v2.palette.layer2,
     borderRadius: theme.v2.shape.borderRadius(),
     position: 'relative',
     pointerEvents: disabled ? 'none' : 'auto',
