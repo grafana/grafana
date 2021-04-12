@@ -1,6 +1,8 @@
 import defaultTheme, { commonColorsPalette } from './default';
 import { GrafanaThemeType, GrafanaTheme, createTheme } from '@grafana/data';
 
+const v2 = createTheme({ palette: { mode: 'light' } });
+
 const basicColors = {
   ...commonColorsPalette,
   black: '#000000',
@@ -34,18 +36,18 @@ const basicColors = {
 };
 
 const backgrounds = {
-  bg1: basicColors.white,
-  bg2: basicColors.gray97,
-  bg3: basicColors.gray90,
-  dashboardBg: basicColors.gray98,
+  bg1: v2.palette.layer1,
+  bg2: v2.palette.layer2,
+  bg3: v2.palette.action.hover,
+  dashboardBg: v2.palette.layer0,
   bgBlue1: basicColors.blue80,
   bgBlue2: basicColors.blue77,
 };
 
 const borders = {
-  border1: basicColors.gray90,
-  border2: basicColors.gray85,
-  border3: basicColors.gray70,
+  border1: v2.palette.border0,
+  border2: v2.palette.border1,
+  border3: v2.palette.border2,
 };
 
 const textColors = {
@@ -131,7 +133,7 @@ const lightTheme: GrafanaTheme = {
   shadows: {
     listItem: 'none',
   },
-  v2: createTheme({ palette: { mode: 'light' } }),
+  v2: v2,
 };
 
 export default lightTheme;

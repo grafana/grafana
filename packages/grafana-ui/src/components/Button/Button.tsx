@@ -3,7 +3,7 @@ import { css, CSSObject, cx } from '@emotion/css';
 import { useTheme } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
-import { GrafanaTheme, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
+import { colorManipulator, GrafanaTheme, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
 import { ComponentSize } from '../../types/size';
 import { getFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
@@ -86,15 +86,14 @@ export const getButtonStyles = (props: StyleProps) => {
 
   const disabledStyles: CSSObject = {
     cursor: 'not-allowed',
-    opacity: 0.65,
     boxShadow: 'none',
-    background: theme.v2.palette.formComponent.disabledBackground,
-    border: `1px solid ${theme.v2.palette.formComponent.disabledBackground}`,
+    background: theme.v2.palette.action.disabledBackground,
+    border: `1px solid transparent`,
     color: theme.v2.palette.text.disabled,
     pointerEvents: 'none',
 
     '&:hover': {
-      background: theme.v2.palette.formComponent.disabledBackground,
+      background: theme.v2.palette.action.disabledBackground,
       color: theme.v2.palette.text.disabled,
     },
   };
@@ -147,10 +146,14 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemePaletteColor)
     color: color.contrastText,
     boxShadow: theme.shadows.z1,
     border: `1px solid transparent`,
+    transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+      duration: theme.transitions.duration.short,
+    }),
 
     '&:hover': {
-      background: theme.palette.getHoverColor(color.main),
+      background: color.shade,
       color: color.contrastText,
+      boxShadow: theme.shadows.z2,
     },
 
     '&:focus': {
@@ -178,7 +181,7 @@ export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVa
         },
 
         '&:hover': {
-          color: theme.palette.getHoverColor(theme.palette.text.link),
+          background: colorManipulator.alpha(theme.palette.text.link, theme.palette.action.hoverOpacity),
           textDecoration: 'underline',
         },
       };
