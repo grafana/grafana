@@ -15,6 +15,7 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
+export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export {
