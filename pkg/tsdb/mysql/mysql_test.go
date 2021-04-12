@@ -33,7 +33,7 @@ import (
 // devenv/README.md for setup instructions.
 func TestMySQL(t *testing.T) {
 	// change to true to run the MySQL tests
-	runMySQLTests := true
+	runMySQLTests := false
 	// runMySqlTests := true
 
 	if !(sqlstore.IsTestDbMySQL() || runMySQLTests) {
