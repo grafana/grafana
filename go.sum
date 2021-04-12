@@ -826,6 +826,8 @@ github.com/grafana/alerting-api v0.0.0-20210409134845-c36ac1eae41b h1:QG52Et3EVC
 github.com/grafana/alerting-api v0.0.0-20210409134845-c36ac1eae41b h1:QG52Et3EVCxPoYZifm91bRPVknccfjQURcpi7zXVut8=
 github.com/grafana/alerting-api v0.0.0-20210409134845-c36ac1eae41b/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
 github.com/grafana/alerting-api v0.0.0-20210409134845-c36ac1eae41b/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
+github.com/grafana/alerting-api v0.0.0-20210409144933-44440a7f8ce6 h1:3vMgJq8WWmby7lFU9P98FwKjDQrTA8D6QeRAnBZNMNQ=
+github.com/grafana/alerting-api v0.0.0-20210409144933-44440a7f8ce6/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
 github.com/grafana/alerting-api v0.0.0-20210412090350-fcb11bfbb6a4 h1:S4nnWhH40AIWCkk3F7pUYVr67rqqangwm8a8cskYGyc=
 github.com/grafana/alerting-api v0.0.0-20210412090350-fcb11bfbb6a4/go.mod h1:Ce2PwraBlFMa+P0ArBzubfB/BXZV35mfYWQjM8C/BSE=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=
