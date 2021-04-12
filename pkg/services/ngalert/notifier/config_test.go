@@ -118,7 +118,7 @@ func TestLoad(t *testing.T) {
 		{
 			name: "with a valid config and template",
 			rawConfig: `
-alertmanager_config:
+alertmanager_config: |
   global:
     smtp_from: noreply@grafana.net
   route:
