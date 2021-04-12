@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "plugins": {
+    "go-codegen": {
+      "service": "grafana#Grafana",
+      "module": "grafana",
+      "moduleVersion": "0.0.1"
+    },
+    "openapi": {
+      "service": "grafana#Grafana",
+      "protocol": "aws.protocols#restJson1"
+    }
+  }
+}
