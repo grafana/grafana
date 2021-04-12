@@ -40,12 +40,11 @@ When displaying every value from a single series, this limits the number of valu
 
 ### Fields
 
-Select which field or fields to display in the visualization.
+Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:
 
 - **Numeric fields -** All fields with numerical values.
 - **All fields -** All fields that are not removed by transformations.
 - **Time -** All fields with time values.
-- **<field name> -** Each field name is available in the list.
 
 ### Pie chart type
 
