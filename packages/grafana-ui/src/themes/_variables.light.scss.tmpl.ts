@@ -51,6 +51,15 @@ $gray-7: ${theme.palette.gray7};
 
 $white: ${theme.palette.white};
 
+$layer0: ${theme.v2.palette.layer0};
+$layer1: ${theme.v2.palette.layer1};
+$layer2: ${theme.v2.palette.layer2};
+
+$divider: ${theme.v2.palette.divider};
+
+$border0: ${theme.v2.palette.border0};
+$border1: ${theme.v2.palette.border1};
+
 // Accent colors
 // -------------------------
 $blue: ${theme.colors.textBlue};
@@ -113,10 +122,11 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: ${theme.colors.panelBg};
-$panel-border: 1px solid ${theme.colors.panelBorder};
-$panel-header-hover-bg: ${theme.colors.bg2};
-$panel-corner: $gray-4;
+$panel-bg: ${theme.v2.components.panel.background};
+$panel-border: ${theme.v2.components.panel.border};
+$panel-header-hover-bg: ${theme.v2.palette.action.hover};
+$panel-box-shadow: ${theme.v2.components.panel.boxShadow};
+$panel-corner: $panel-bg;
 
 // Page header
 $page-header-bg: ${theme.colors.pageHeaderBg};
@@ -134,8 +144,8 @@ $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: ${theme.colors.bg2};
-$card-background-hover: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$card-background: ${theme.v2.palette.layer2};
+$card-background-hover: ${theme.v2.palette.layer2};
 $card-shadow: none;
 
 // Lists
@@ -152,11 +162,10 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
-$table-border: $gray-3; // table and cell border
-
-$table-bg-odd: $gray-6;
-$table-bg-hover: $gray-5;
+$table-bg-accent: ${theme.v2.palette.layer2};
+$table-border: ${theme.v2.palette.border1};
+$table-bg-odd: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.02)};
+$table-bg-hover: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.05)};
 
 // Buttons
 // -------------------------
@@ -214,10 +223,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $white;
-$dropdownBorder: $gray-4;
-$dropdownDividerTop: $gray-6;
-$dropdownDividerBottom: $gray-4;
+$dropdownBackground: ${theme.v2.palette.layer2};
+$dropdownBorder: ${theme.v2.palette.border0};
+$dropdownDividerTop: ${theme.v2.palette.divider};
+$dropdownDividerBottom: ${theme.v2.palette.divider};
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
@@ -247,16 +256,13 @@ $side-menu-header-color: ${theme.palette.gray95};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $panel-bg;
-$menu-dropdown-hover-bg: $gray-6;
-$menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
+$menu-dropdown-bg: ${theme.v2.palette.layer2};
+$menu-dropdown-hover-bg: ${theme.v2.palette.action.hover};
+$menu-dropdown-shadow: ${theme.v2.shadows.z3};
 
 // Tabs
 // -------------------------
 $tab-border-color: $gray-5;
-
-// Toolbar
-$toolbar-bg: white;
 
 // Form states and alerts
 // -------------------------
@@ -270,21 +276,22 @@ $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
-$tooltipBackground: $gray-1;
-$tooltipColor: $gray-7;
-$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
-$tooltipBackgroundError: $brand-danger;
-$tooltipShadow: 0 0 5px $gray60;
+$tooltipBackground: ${theme.v2.palette.layer2};
+$tooltipColor: ${theme.v2.palette.text.primary};
+$tooltipArrowColor: ${theme.v2.palette.layer2};
+$tooltipBackgroundError: ${theme.v2.palette.error.main};
+$tooltipShadow: ${theme.v2.shadows.z2};
+
+$popover-bg: ${theme.v2.palette.layer2};
+$popover-color: ${theme.v2.palette.text.primary};
+$popover-border-color: ${theme.v2.palette.border1};
+$popover-header-bg: ${theme.v2.palette.layer2};
+$popover-shadow: ${theme.v2.shadows.z4};
+
 $graph-tooltip-bg: $gray-5;
 
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($tooltipColor, 5%);
-
-$popover-bg: $page-bg;
-$popover-color: $text-color;
-$popover-border-color: $gray-5;
-$popover-header-bg: $gray-5;
-$popover-shadow: 0 0 20px $white;
 
 $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
@@ -369,9 +376,6 @@ $panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-2;
 
 $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
-
-$panel-options-group-border: none;
-$panel-options-group-header-bg: $gray-5;
 
 $panel-grid-placeholder-bg: lighten(${theme.palette.blue95}, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue95};

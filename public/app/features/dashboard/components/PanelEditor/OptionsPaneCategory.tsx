@@ -90,7 +90,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 const getStyles = (theme: GrafanaTheme) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
+      border-bottom: 1px solid ${theme.v2.palette.divider};
       &:last-child {
         border-bottom: none;
       }

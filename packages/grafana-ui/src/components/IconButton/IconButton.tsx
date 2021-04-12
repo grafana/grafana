@@ -13,7 +13,7 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   name: IconName;
   /** Icon size */
   size?: IconSize;
-  /** Need this to change hover effect based on what surface it is on */
+  /** @deprecated */
   surface?: SurfaceType;
   /** Type od the icon - mono or default */
   iconType?: IconType;
@@ -26,9 +26,9 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 type SurfaceType = 'dashboard' | 'panel' | 'header';
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
-  ({ name, size = 'md', surface = 'panel', iconType, tooltip, tooltipPlacement, className, ...restProps }, ref) => {
+  ({ name, size = 'md', iconType, tooltip, tooltipPlacement, className, ...restProps }, ref) => {
     const theme = useTheme();
-    const styles = getStyles(theme, surface, size);
+    const styles = getStyles(theme, size);
 
     const button = (
       <button ref={ref} {...restProps} className={cx(styles.button, className)}>
@@ -50,19 +50,8 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 
 IconButton.displayName = 'IconButton';
 
-function getHoverColor(theme: GrafanaTheme, surface: SurfaceType): string {
-  switch (surface) {
-    case 'dashboard':
-      return theme.isLight ? theme.palette.gray95 : theme.palette.gray15;
-    case 'panel':
-      return theme.isLight ? theme.palette.gray6 : theme.palette.gray15;
-    case 'header':
-      return theme.isLight ? theme.colors.bg3 : theme.palette.gray25;
-  }
-}
-
-const getStyles = stylesFactory((theme: GrafanaTheme, surface: SurfaceType, size: IconSize) => {
-  const hoverColor = getHoverColor(theme, surface);
+const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
+  const hoverColor = theme.v2.palette.action.hover;
   const pixelSize = getSvgSize(size);
 
   return {

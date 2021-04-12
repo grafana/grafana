@@ -381,7 +381,7 @@ const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
       }
 
       &:hover {
-        background: ${theme.colors.bg3};
+        background: ${theme.v2.palette.action.hover};
         box-shadow: none;
         border: none;
       }

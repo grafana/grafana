@@ -7,6 +7,7 @@ import mdx from './Button.mdx';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { ButtonGroup } from './ButtonGroup';
 import { ComponentSize } from '../../types/size';
+import { Card } from '../Card/Card';
 
 export default {
   title: 'Buttons/Button',
@@ -78,6 +79,20 @@ export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
           <Button icon="angle-down" />
         </ButtonGroup>
       </HorizontalGroup>
+      <Card heading="Button inside card">
+        <Card.Actions>
+          <>
+            {allButtonVariants.map((variant) => (
+              <Button variant={variant} key={variant}>
+                {variant}
+              </Button>
+            ))}
+            <Button variant="primary" disabled>
+              Disabled
+            </Button>
+          </>
+        </Card.Actions>
+      </Card>
     </VerticalGroup>
   );
 };

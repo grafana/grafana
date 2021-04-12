@@ -43,7 +43,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
   };
 
   return (
-    <div className={styles.wrapper}>
+    <>
       <ToolbarButton
         className={className}
         isOpen={isOpen}
@@ -71,7 +71,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
           </ClickOutsideWrapper>
         </div>
       )}
-    </div>
+    </>
   );
 });
 
@@ -79,10 +79,6 @@ ButtonSelect.displayName = 'ButtonSelect';
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
-    wrapper: css`
-      position: relative;
-      display: inline-flex;
-    `,
     menuWrapper: css`
       position: absolute;
       z-index: ${theme.zIndex.dropdown};

@@ -30,7 +30,7 @@
 
 .dashboard-settings__aside {
   padding: 32px 0 0 32px;
-  background: lightOrDark($gray95, $gray15);
+  background: $dashboard-bg;
   display: flex;
   flex-direction: column;
 }

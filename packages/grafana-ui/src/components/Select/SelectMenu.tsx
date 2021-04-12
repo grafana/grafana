@@ -3,7 +3,6 @@ import { useTheme } from '../../themes/ThemeContext';
 import { getSelectStyles } from './getSelectStyles';
 import { cx } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
-import { Icon } from '../Icon/Icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 interface SelectMenuProps {
@@ -46,7 +45,7 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
     return (
       <div
         ref={ref}
-        className={cx(styles.option, isFocused && styles.optionFocused)}
+        className={cx(styles.option, isFocused && styles.optionFocused, isSelected && styles.optionSelected)}
         {...innerProps}
         aria-label="Select option"
       >
@@ -56,11 +55,6 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
           {data.description && <div className={styles.optionDescription}>{data.description}</div>}
           {data.component && <data.component />}
         </div>
-        {isSelected && (
-          <span>
-            <Icon name="check" />
-          </span>
-        )}
       </div>
     );
   }

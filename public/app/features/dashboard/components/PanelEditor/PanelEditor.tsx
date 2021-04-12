@@ -486,6 +486,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       min-height: 0;
       width: 100%;
       padding-left: ${paneSpacing};
+      padding-right: 2px;
     `,
     tabsWrapper: css`
       height: 100%;

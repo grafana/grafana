@@ -21,17 +21,14 @@ export interface RadioButtonProps {
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme.v2);
 
-  const c = theme.palette;
-  const textColor = theme.colors.textSemiWeak;
-  const textColorHover = theme.colors.text;
-  const textColorActive = theme.colors.textBlue;
-  const borderColor = theme.colors.border2;
-  const borderColorHover = theme.colors.border3;
-  const borderColorActive = theme.colors.border2;
+  const textColor = theme.v2.palette.text.secondary;
+  const textColorHover = theme.v2.palette.text.primary;
+  const textColorActive = theme.v2.palette.primary.text;
+  const borderColor = theme.v2.components.form.border;
+  const borderColorHover = theme.v2.components.form.borderHover;
+  const borderColorActive = theme.v2.components.form.border;
   const bg = theme.colors.bodyBg;
-  const bgDisabled = theme.isLight ? c.gray95 : c.gray15;
-  const bgActive = theme.colors.bg2;
-
+  const bgActive = theme.v2.palette.layer2;
   const border = `1px solid ${borderColor}`;
   const borderActive = `1px solid ${borderColorActive}`;
   const borderHover = `1px solid ${borderColorHover}`;
@@ -56,8 +53,8 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
 
       &:disabled + label {
         cursor: default;
-        background: ${bgDisabled};
-        color: ${textColor};
+        color: ${theme.v2.palette.text.disabled};
+        cursor: not-allowed;
       }
     `,
     radioLabel: css`

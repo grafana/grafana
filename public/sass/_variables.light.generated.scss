@@ -53,6 +53,15 @@ $gray-7: #f7f8fa;
 
 $white: #ffffff;
 
+$layer0: #F4F5F5;
+$layer1: #fff;
+$layer2: #F7F7F8;
+
+$divider: rgba(0, 2, 78, 0.07);
+
+$border0: #fff;
+$border1: rgba(0, 2, 78, 0.20);
+
 // Accent colors
 // -------------------------
 $blue: #33a2e5;
@@ -80,9 +89,9 @@ $critical: #c4162a;
 
 // Scaffolding
 // -------------------------
-$body-bg: #ffffff;
-$page-bg: #ffffff;
-$dashboard-bg: #f7f8fa;
+$body-bg: #fff;
+$page-bg: #fff;
+$dashboard-bg: #F4F5F5;
 
 $text-color: #464c54;
 $text-color-strong: #202226;
@@ -115,29 +124,30 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: #ffffff;
-$panel-border: 1px solid #dce1e6;
-$panel-header-hover-bg: #f1f5f9;
-$panel-corner: $gray-4;
+$panel-bg: #fff;
+$panel-border: #fff;
+$panel-header-hover-bg: rgba(0, 0, 0, 0.04);
+$panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.2),0px 0px 0px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
+$panel-corner: $panel-bg;
 
 // Page header
-$page-header-bg: #f1f5f9;
+$page-header-bg: #F7F7F8;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: #dce1e6;
+$page-header-border-color: #fff;
 
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: #f1f5f9;
-$tight-form-func-highlight-bg: #eaf0f6;
+$tight-form-func-bg: #F7F7F8;
+$tight-form-func-highlight-bg: #f2f2f3;
 
-$modal-backdrop-bg: #ffffff;
+$modal-backdrop-bg: #fff;
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: #f1f5f9;
-$card-background-hover: #eaf0f6;
+$card-background: #F7F7F8;
+$card-background-hover: #F7F7F8;
 $card-shadow: none;
 
 // Lists
@@ -154,11 +164,10 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: #fafafa;
-$table-border: $gray-3; // table and cell border
-
-$table-bg-odd: $gray-6;
-$table-bg-hover: $gray-5;
+$table-bg-accent: #F7F7F8;
+$table-border: rgba(0, 2, 78, 0.20);
+$table-bg-odd: rgb(249, 249, 249);
+$table-bg-hover: rgb(242, 242, 242);
 
 // Buttons
 // -------------------------
@@ -203,7 +212,7 @@ $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;
 $input-color-placeholder: #9fa7b3;
-$input-label-bg: #f1f5f9;
+$input-label-bg: #F7F7F8;
 $input-color-select-arrow: #7b8087;
 
 // search
@@ -216,10 +225,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $white;
-$dropdownBorder: $gray-4;
-$dropdownDividerTop: $gray-6;
-$dropdownDividerBottom: $gray-4;
+$dropdownBackground: #F7F7F8;
+$dropdownBorder: #fff;
+$dropdownDividerTop: rgba(0, 2, 78, 0.07);
+$dropdownDividerBottom: rgba(0, 2, 78, 0.07);
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
@@ -249,16 +258,13 @@ $side-menu-header-color: #e9edf2;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $panel-bg;
-$menu-dropdown-hover-bg: $gray-6;
-$menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
+$menu-dropdown-bg: #F7F7F8;
+$menu-dropdown-hover-bg: rgba(0, 0, 0, 0.04);
+$menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12);
 
 // Tabs
 // -------------------------
 $tab-border-color: $gray-5;
-
-// Toolbar
-$toolbar-bg: white;
 
 // Form states and alerts
 // -------------------------
@@ -272,27 +278,28 @@ $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
-$tooltipBackground: $gray-1;
-$tooltipColor: $gray-7;
-$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
-$tooltipBackgroundError: $brand-danger;
-$tooltipShadow: 0 0 5px $gray60;
+$tooltipBackground: #F7F7F8;
+$tooltipColor: rgba(0, 0, 0, 0.87);
+$tooltipArrowColor: #F7F7F8;
+$tooltipBackgroundError: #E0226E;
+$tooltipShadow: 0px 2px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.14),0px 1px 5px 0px rgba(0,0,0,0.12);
+
+$popover-bg: #F7F7F8;
+$popover-color: rgba(0, 0, 0, 0.87);
+$popover-border-color: rgba(0, 2, 78, 0.20);
+$popover-header-bg: #F7F7F8;
+$popover-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.14),0px 3px 14px 2px rgba(0,0,0,0.12);
+
 $graph-tooltip-bg: $gray-5;
 
 $tooltipArrowWidth: 5px;
 $tooltipLinkColor: lighten($tooltipColor, 5%);
 
-$popover-bg: $page-bg;
-$popover-color: $text-color;
-$popover-border-color: $gray-5;
-$popover-header-bg: $gray-5;
-$popover-shadow: 0 0 20px $white;
-
 $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $tooltipColor;
 
-$popover-code-bg: #ffffff;
+$popover-code-bg: #fff;
 $popover-code-boxshadow: 0 0 5px $gray60;
 
 // images
@@ -321,13 +328,13 @@ $json-explorer-url-color: $blue-base;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: #dce1e6;
+$diff-label-bg: rgba(0, 0, 0, 0.04);
 $diff-label-fg: $gray-2;
 
 $diff-arrow-color: $dark-2;
-$diff-group-bg: #f1f5f9;
+$diff-group-bg: #F7F7F8;
 
-$diff-json-bg: #f1f5f9;
+$diff-json-bg: #F7F7F8;
 $diff-json-fg: #464c54;
 
 $diff-json-added: $blue-shade;
@@ -371,9 +378,6 @@ $panel-editor-viz-item-bg: $white;
 $panel-editor-tabs-line-color: $dark-2;
 
 $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
-
-$panel-options-group-border: none;
-$panel-options-group-header-bg: $gray-5;
 
 $panel-grid-placeholder-bg: lighten(#5794f2, 30%);
 $panel-grid-placeholder-shadow: 0 0 4px #5794f2;

@@ -2,7 +2,7 @@ import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { useTheme } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
-import { HorizontalGroup } from '../Layout/Layout';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
 import { Field } from '../Forms/Field';
@@ -10,6 +10,10 @@ import { Input } from '../Input/Input';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Switch } from '../Switch/Switch';
 import { allButtonVariants, Button } from '../Button';
+import { InlineField } from '../Forms/InlineField';
+import { InlineFieldRow } from '../Forms/InlineFieldRow';
+import { Card } from '../Card/Card';
+import { Select } from '../Select/Select';
 
 interface DemoBoxProps {
   bg?: string;
@@ -45,10 +49,12 @@ const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color
   return <div className={style}>{children}</div>;
 };
 
-export const NewThemeDemo = () => {
+export const ThemeDemo = () => {
   const [radioValue, setRadioValue] = useState('v');
   const [boolValue, setBoolValue] = useState(false);
+  const [selectValue, setSelectValue] = useState('Item 2');
   const oldTheme = useTheme();
+
   const t = oldTheme.v2;
 
   const richColors = [
@@ -60,6 +66,12 @@ export const NewThemeDemo = () => {
     t.palette.info,
   ];
 
+  const selectOptions = [
+    { label: 'Item 1', value: 'Item 1' },
+    { label: 'Item 2', value: 'Item 2' },
+    { label: 'Item 3', value: 'Item 3' },
+    { label: 'Item 4', value: 'Item 4' },
+  ];
   const radioOptions = [
     { value: 'h', label: 'Horizontal' },
     { value: 'v', label: 'Vertical' },
@@ -103,6 +115,7 @@ export const NewThemeDemo = () => {
                 <tr>
                   <td>name</td>
                   <td>main</td>
+                  <td>shade (used for hover)</td>
                   <td>border & text</td>
                 </tr>
               </thead>
@@ -122,6 +135,9 @@ export const NewThemeDemo = () => {
             <Field label="Input disabled" disabled>
               <Input placeholder="Placeholder" value="Disabled value" />
             </Field>
+            <Field label="Select">
+              <Select options={selectOptions} value={selectValue} onChange={(v) => setSelectValue(v?.value!)} />
+            </Field>
             <Field label="Radio label">
               <RadioButtonGroup options={radioOptions} value={radioValue} onChange={setRadioValue} />
             </Field>
@@ -136,30 +152,60 @@ export const NewThemeDemo = () => {
                 <Switch value={false} disabled />
               </Field>
             </HorizontalGroup>
+            <VerticalGroup>
+              <div>Inline forms</div>
+              <InlineFieldRow>
+                <InlineField label="Label">
+                  <Input placeholder="Placeholder" />
+                </InlineField>
+                <InlineField label="Another Label" disabled>
+                  <Input placeholder="Disabled" />
+                </InlineField>
+              </InlineFieldRow>
+            </VerticalGroup>
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Shadows" isOpen={true}>
           <DemoBox bg={t.palette.layer1}>
             <HorizontalGroup>
-              <ShadowDemo name="Z1" shadow={t.shadows.z1} />
-              <ShadowDemo name="Z2" shadow={t.shadows.z2} />
-              <ShadowDemo name="Z3" shadow={t.shadows.z3} />
+              {Object.keys(t.shadows).map((key) => (
+                <ShadowDemo name={key} shadow={(t.shadows as any)[key]} key={key} />
+              ))}
             </HorizontalGroup>
           </DemoBox>
         </CollapsableSection>
         <CollapsableSection label="Buttons" isOpen={true}>
           <DemoBox bg={t.palette.layer1}>
-            <HorizontalGroup>
-              {allButtonVariants.map((variant) => (
-                <Button variant={variant} key={variant}>
-                  {variant}
+            <VerticalGroup spacing="lg">
+              <HorizontalGroup>
+                {allButtonVariants.map((variant) => (
+                  <Button variant={variant} key={variant}>
+                    {variant}
+                  </Button>
+                ))}
+                <Button variant="primary" disabled>
+                  Disabled
                 </Button>
-              ))}
-              <Button variant="primary" disabled>
-                Disabled
-              </Button>
-            </HorizontalGroup>
+              </HorizontalGroup>
+              <Card heading="Button inside card">
+                <Card.Actions>
+                  <>
+                    {allButtonVariants.map((variant) => (
+                      <Button variant={variant} key={variant}>
+                        {variant}
+                      </Button>
+                    ))}
+                    <Button variant="primary" disabled>
+                      Disabled
+                    </Button>
+                  </>
+                </Card.Actions>
+              </Card>
+            </VerticalGroup>
           </DemoBox>
+        </CollapsableSection>
+        <CollapsableSection label="Actions" isOpen={true}>
+          <ActionsDemo />
         </CollapsableSection>
       </DemoBox>
     </div>
@@ -183,12 +229,21 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
             color: ${color.contrastText};
             padding: 8px;
             font-weight: 500;
-            &:hover {
-              background: ${theme.palette.getHoverColor(color.main)};
-            }
           `}
         >
           {color.main}
+        </div>
+      </td>
+      <td>
+        <div
+          className={css`
+            background: ${color.shade};
+            color: ${color.contrastText};
+            border-radius: 4px;
+            padding: 8px;
+          `}
+        >
+          {color.shade}
         </div>
       </td>
       <td>
@@ -198,9 +253,6 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
             color: ${color.text};
             border-radius: 4px;
             padding: 8px;
-            &:hover {
-              color: ${color.text};
-            }
           `}
         >
           {color.text}
@@ -244,4 +296,56 @@ export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
     boxShadow: shadow,
   });
   return <div className={style}>{name}</div>;
+}
+
+export function ActionsDemo() {
+  const t = useTheme().v2;
+
+  const item = css({
+    padding: '8px',
+    ':hover': {
+      background: t.palette.action.hover,
+    },
+  });
+  const hover = css({
+    background: t.palette.action.hover,
+  });
+  const selected = css({
+    background: t.palette.action.selected,
+  });
+  const focused = css({
+    background: t.palette.action.focus,
+  });
+
+  return (
+    <HorizontalGroup>
+      <DemoBox bg={t.palette.layer0}>
+        <VerticalGroup>
+          <div className={item}>item</div>
+          <div className={item}>item</div>
+          <div className={cx(item, hover)}>item hover</div>
+          <div className={cx(item, selected)}>item selected</div>
+          <div className={cx(item, focused)}>item focused</div>
+        </VerticalGroup>
+      </DemoBox>
+      <DemoBox bg={t.palette.layer1}>
+        <VerticalGroup>
+          <div className={item}>item</div>
+          <div className={item}>item</div>
+          <div className={cx(item, hover)}>item hover</div>
+          <div className={cx(item, selected)}>item selected</div>
+          <div className={cx(item, focused)}>item focused</div>
+        </VerticalGroup>
+      </DemoBox>
+      <DemoBox bg={t.palette.layer2}>
+        <VerticalGroup>
+          <div className={item}>item</div>
+          <div className={item}>item</div>
+          <div className={cx(item, hover)}>item hover</div>
+          <div className={cx(item, selected)}>item selected</div>
+          <div className={cx(item, focused)}>item focused</div>
+        </VerticalGroup>
+      </DemoBox>
+    </HorizontalGroup>
+  );
 }

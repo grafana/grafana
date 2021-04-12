@@ -69,18 +69,21 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       flex-shrink: 0;
       cursor: pointer;
-      background: ${theme.colors.bg2};
-      border: 1px solid ${theme.colors.border2};
-      border-radius: ${theme.border.radius.sm};
+      background: ${theme.v2.palette.layer2};
+      border-radius: ${theme.v2.shape.borderRadius()};
+      box-shadow: ${theme.v2.shadows.z0};
       align-items: center;
       padding: 8px;
       width: 100%;
       position: relative;
       overflow: hidden;
       height: 55px;
+      transition: ${theme.v2.transitions.create(['background'], {
+        duration: theme.v2.transitions.duration.short,
+      })};
 
       &:hover {
-        background: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+        background: ${styleMixins.hoverColor(theme.v2.palette.layer2, theme)};
       }
     `,
     itemContent: css`

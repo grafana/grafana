@@ -4,9 +4,11 @@ export interface ThemePaletteColor {
   name: string;
   /** Main color */
   main: string;
+  /** Used for hover */
+  shade: string;
   /** Used for text */
   text: string;
-  /** Used for text */
+  /** Used for borders */
   border: string;
   /** Used subtly colored backgrounds */
   transparent: string;
