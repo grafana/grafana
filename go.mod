@@ -41,11 +41,11 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
-	github.com/grafana/alerting-api v0.0.0-20210407150830-64bd267999d1
+	github.com/grafana/alerting-api v0.0.0-20210409134845-c36ac1eae41b
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-live-sdk v0.0.4
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.91.0
+	github.com/grafana/grafana-plugin-sdk-go v0.92.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-hclog v0.15.0
