@@ -56,6 +56,7 @@ export type IconName =
   | 'envelope'
   | 'exchange-alt'
   | 'exclamation-triangle'
+  | 'exclamation'
   | 'external-link-alt'
   | 'eye-slash'
   | 'eye'
