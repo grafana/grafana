@@ -12,25 +12,29 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
 
   return useMemo(() => {
     const filteredNamespaces = namespaces
+      // Filter by data source
+      // TODO: filter by multiple data sources for grafana-managed alerts
       .filter(({ rulesSource }) =>
         filters.dataSource && isCloudRulesSource(rulesSource) ? rulesSource.name === filters.dataSource : true
       )
-      .reduce((acc, namespace) => {
+      // If a namespace and group have rules that match the rules filters then keep them.
+      .reduce((namespaceAcc, namespace) => {
         const { groups } = namespace;
         const filteredGroups = groups.reduce((groupAcc, group) => {
           const groupCopy = { ...group };
           const rules = groupCopy.rules.filter((rule) => {
             let shouldKeep = true;
+            // Query strings can match alert name, label keys, and label values
             if (filters.queryString) {
               const normalizedQueryString = filters.queryString.toLocaleLowerCase();
               const doesNameContainsQueryString = rule.name.toLocaleLowerCase().includes(normalizedQueryString);
 
-              const doLabelsContainQueryString = Object.entries(rule.labels || {}).find(
+              const doLabelsContainQueryString = Object.entries(rule.labels || {}).some(
                 ([key, value]) =>
                   key.toLocaleLowerCase().includes(normalizedQueryString) ||
                   value.toLocaleLowerCase().includes(normalizedQueryString)
               );
-              shouldKeep = doesNameContainsQueryString || Boolean(doLabelsContainQueryString?.length);
+              shouldKeep = doesNameContainsQueryString || doLabelsContainQueryString;
             }
             if (filters.alertState) {
               const matchesAlertState = Boolean(
@@ -41,6 +45,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
             }
             return shouldKeep;
           });
+          // Add rules to the group that match the rule list filters
           if (rules.length) {
             groupCopy.rules = rules;
             groupAcc.push(groupCopy);
@@ -50,10 +55,10 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
 
         if (filteredGroups.length) {
           namespace.groups = filteredGroups;
-          acc.push(namespace);
+          namespaceAcc.push(namespace);
         }
 
-        return acc;
+        return namespaceAcc;
       }, [] as CombinedRuleNamespace[]);
     return filteredNamespaces;
   }, [filters.alertState, filters.queryString, filters.dataSource, namespaces]);

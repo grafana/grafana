@@ -7,6 +7,7 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { SystemOrApplicationRules } from './components/rules/SystemOrApplicationRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { useFilteredRules } from './hooks/useFilteredRules';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import {
   getAllRulesSourceNames,
@@ -73,8 +74,9 @@ export const RuleList: FC = () => {
   const showNewAlertSplash = dispatched && !loading && !haveResults;
 
   const combinedNamespaces = useCombinedRuleNamespaces();
+  const filteredNamespaces = useFilteredRules(combinedNamespaces);
   const [thresholdNamespaces, systemNamespaces] = useMemo(() => {
-    const sorted = combinedNamespaces
+    const sorted = filteredNamespaces
       .map((namespace) => ({
         ...namespace,
         groups: namespace.groups.sort((a, b) => a.name.localeCompare(b.name)),
@@ -84,7 +86,7 @@ export const RuleList: FC = () => {
       sorted.filter((ns) => ns.rulesSource === GRAFANA_RULES_SOURCE_NAME),
       sorted.filter((ns) => isCloudRulesSource(ns.rulesSource)),
     ];
-  }, [combinedNamespaces]);
+  }, [filteredNamespaces]);
 
   return (
     <AlertingPageWrapper pageId="alert-list" isLoading={loading && !haveResults}>
