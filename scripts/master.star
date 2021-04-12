@@ -4,7 +4,6 @@ load(
     'lint_backend_step',
     'codespell_step',
     'shellcheck_step',
-    'dashboard_schemas_check',
     'test_backend_step',
     'test_frontend_step',
     'build_backend_step',
@@ -21,6 +20,7 @@ load(
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
     'redis_integration_tests_step',
+    'memcached_integration_tests_step',
     'get_windows_steps',
     'benchmark_ldap_step',
     'ldap_service',
@@ -46,7 +46,6 @@ def get_steps(edition, is_downstream=False):
         lint_backend_step(edition=edition),
         codespell_step(),
         shellcheck_step(),
-        dashboard_schemas_check(),
         test_backend_step(edition=edition),
         test_frontend_step(),
         frontend_metrics_step(edition=edition),
@@ -81,7 +80,7 @@ def get_steps(edition, is_downstream=False):
     ])
 
     if include_enterprise2:
-      steps.append(redis_integration_tests_step())
+      steps.extend([redis_integration_tests_step(), memcached_integration_tests_step()])
 
     steps.extend([
         release_canary_npm_packages_step(edition),

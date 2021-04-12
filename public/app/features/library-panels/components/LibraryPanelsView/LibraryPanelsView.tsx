@@ -1,7 +1,7 @@
 import React, { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 import { css, cx } from '@emotion/css';
-import { Pagination, stylesFactory, useStyles } from '@grafana/ui';
+import { Pagination, useStyles } from '@grafana/ui';
 import { GrafanaTheme, LoadingState } from '@grafana/data';
 
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';
@@ -15,6 +15,7 @@ interface LibraryPanelViewProps {
   showSecondaryActions?: boolean;
   currentPanelId?: string;
   searchString: string;
+  perPage?: number;
 }
 
 export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
@@ -23,6 +24,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   searchString,
   showSecondaryActions,
   currentPanelId: currentPanel,
+  perPage: propsPerPage = 40,
 }) => {
   const styles = useStyles(getPanelViewStyles);
   const [{ libraryPanels, page, perPage, numberOfPages, loadingState, currentPanelId }, dispatch] = useReducer(
@@ -30,6 +32,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
     {
       ...initialLibraryPanelsViewState,
       currentPanelId: currentPanel,
+      perPage: propsPerPage,
     }
   );
   const asyncDispatch = useMemo(() => asyncDispatcher(dispatch), [dispatch]);
@@ -75,7 +78,7 @@ export const LibraryPanelsView: React.FC<LibraryPanelViewProps> = ({
   );
 };
 
-const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
+const getPanelViewStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
       display: flex;
@@ -96,6 +99,7 @@ const getPanelViewStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     pagination: css`
       align-self: center;
+      margin-top: ${theme.spacing.sm};
     `,
   };
-});
+};
