@@ -14,7 +14,7 @@ This topic explains options, variables, querying, and other options specific to 
 
 ## Data source options
 
-To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the data source.
+To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data sources**, and then click the data source.
 
 InfluxDB data source options differ depending on which [query language](#query-languages) you select: InfluxQL or Flux.
 
