@@ -1,16 +1,16 @@
 import _ from 'lodash';
 import { Observable, of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
-import { getBackendSrv } from '@grafana/runtime';
-import { ScopedVars } from '@grafana/data';
+import { getBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars, DataQueryResponse } from '@grafana/data';
 import MysqlQuery from 'app/plugins/datasource/mysql/mysql_query';
-import ResponseParser, { MysqlResponse } from './response_parser';
-import { MysqlMetricFindValue, MysqlQueryForInterpolation } from './types';
+import ResponseParser from './response_parser';
+import { MysqlMetricFindValue, MysqlQueryForInterpolation, MySQLOptions, MySQLQuery } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
-export class MysqlDatasource {
+export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOptions> {
   id: any;
   name: any;
   responseParser: ResponseParser;
@@ -18,15 +18,17 @@ export class MysqlDatasource {
   interval: string;
 
   constructor(
-    instanceSettings: any,
+    instanceSettings: DataSourceInstanceSettings<MySQLOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv(),
     private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
+    super(instanceSettings);
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser();
     this.queryModel = new MysqlQuery({});
-    this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
+    const settingsData = instanceSettings.jsonData || ({} as MySQLOptions);
+    this.interval = settingsData.timeInterval || '1m';
   }
 
   interpolateVariable = (value: string | string[] | number, variable: any) => {
@@ -68,37 +70,27 @@ export class MysqlDatasource {
     return expandedQueries;
   }
 
-  query(options: any): Observable<MysqlResponse> {
-    const queries = _.filter(options.targets, (target) => {
-      return target.hide !== true;
-    }).map((target) => {
-      const queryModel = new MysqlQuery(target, this.templateSrv, options.scopedVars);
-
-      return {
-        refId: target.refId,
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
-        datasourceId: this.id,
-        rawSql: queryModel.render(this.interpolateVariable as any),
-        format: target.format,
-      };
-    });
-
-    if (queries.length === 0) {
-      return of({ data: [] });
+  filterQuery(query: MySQLQuery): boolean {
+    if (query.hide) {
+      return false;
     }
+    return true;
+  }
 
-    return getBackendSrv()
-      .fetch({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: queries,
-        },
-      })
-      .pipe(map(this.responseParser.processQueryResult));
+  applyTemplateVariables(target: MySQLQuery, scopedVars: ScopedVars): Record<string, any> {
+    const queryModel = new MysqlQuery(target, this.templateSrv, scopedVars);
+    return {
+      refId: target.refId,
+      intervalMs: scopedVars.intervalMs,
+      maxDataPoints: scopedVars.maxDataPoints,
+      datasourceId: this.id,
+      rawSql: queryModel.render(this.interpolateVariable as any),
+      format: target.format,
+    };
+  }
+
+  query(request: DataQueryRequest<MySQLQuery>): Observable<DataQueryResponse> {
+    return super.query(request);
   }
 
   annotationQuery(options: any) {
