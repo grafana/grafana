@@ -79,10 +79,6 @@ ButtonSelect.displayName = 'ButtonSelect';
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
-    wrapper: css`
-      position: relative;
-      display: inline-flex;
-    `,
     menuWrapper: css`
       position: absolute;
       z-index: ${theme.zIndex.dropdown};

@@ -17,7 +17,7 @@ import Centrifuge, {
   UnsubscribeContext,
 } from 'centrifuge/dist/centrifuge';
 
-import { Subject, of, merge } from 'rxjs';
+import { Subject, of, Observable } from 'rxjs';
 
 /**
  * Internal class that maps Centrifuge support to GrafanaLive
@@ -53,17 +53,15 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
       throw new Error('Channel already initalized: ' + this.id);
     }
     this.config = config;
-    const prepare = config.processMessage ? config.processMessage : (v: any) => v;
 
     const events: SubscriptionEvents = {
-      // This means a message was received from the server
+      // Called when a message is recieved from the socket
       publish: (ctx: PublicationContext) => {
         try {
-          const message = prepare(ctx.data);
-          if (message) {
+          if (ctx.data) {
             this.stream.next({
               type: LiveChannelEventType.Message,
-              message,
+              message: ctx.data,
             });
           }
 
@@ -89,7 +87,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
         this.currentStatus.timestamp = Date.now();
         this.currentStatus.state = LiveChannelConnectionState.Connected;
         delete this.currentStatus.error;
-        this.sendStatus();
+        this.sendStatus(ctx.data);
       },
       unsubscribe: (ctx: UnsubscribeContext) => {
         this.currentStatus.timestamp = Date.now();
@@ -117,15 +115,32 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
     return events;
   }
 
-  private sendStatus() {
-    this.stream.next({ ...this.currentStatus });
+  private sendStatus(message?: any) {
+    const copy = { ...this.currentStatus };
+    if (message) {
+      copy.message = message;
+    }
+    this.stream.next(copy);
   }
 
   /**
    * Get the stream of events and
    */
   getStream() {
-    return merge(of({ ...this.currentStatus }), this.stream.asObservable());
+    return new Observable((subscriber) => {
+      subscriber.next({ ...this.currentStatus });
+      const sub = this.stream.subscribe(subscriber);
+      return () => {
+        sub.unsubscribe();
+        const count = this.stream.observers.length;
+        console.log('unsubscribe stream', this.addr, count);
+
+        // Fully disconnect when no more listeners
+        if (count === 0) {
+          this.disconnect();
+        }
+      };
+    }) as Observable<LiveChannelEvent<TMessage>>;
   }
 
   /**
@@ -163,6 +178,7 @@ export class CentrifugeLiveChannel<TMessage = any, TPublish = any> implements Li
 
   shutdownWithError(err: string) {
     this.currentStatus.error = err;
+    this.sendStatus();
     this.disconnect();
   }
 }

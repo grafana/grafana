@@ -123,7 +123,7 @@ export function createAlertDefinition(): ThunkResult<void> {
     const alertDefinition = await buildAlertDefinition(getStore().alertDefinition);
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
-    locationService.push('/alerting/list');
+    locationService.push('/alerting/ng/list');
   };
 }
 

@@ -564,6 +564,7 @@ function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
       datasource: 'loki',
       enable: true,
       name: 'test-annotation',
+      iconColor: 'red',
     },
     dashboard: {
       id: 1,
