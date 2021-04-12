@@ -8,6 +8,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import DataSourceSelect from '../DataSourceSelect';
 import { getFiltersFromUrlParams } from '../../utils/misc';
+import { DataSourcePicker } from '@grafana/runtime';
 
 const RulesFilter = () => {
   const [queryParams, setQueryParams] = useQueryParams();
@@ -48,6 +49,7 @@ const RulesFilter = () => {
     <div className={styles.container}>
       <div className={styles.inputWidth}>
         <Label>Select data source</Label>
+        <DataSourcePicker alerting={true} />
         <DataSourceSelect key={dataSourceKey} value={dataSource} onChange={handleDataSourceChange} />
       </div>
       <div className={cx(styles.flexRow, styles.spaceBetween)}>

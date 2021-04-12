@@ -173,6 +173,9 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.annotations && !x.meta.annotations) {
         return false;
       }
+      if (filters.alerting && !x.meta.alerting) {
+        return false;
+      }
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
         return false;
       }
@@ -184,7 +187,8 @@ export class DatasourceSrv implements DataSourceService {
         x.meta.metrics !== true &&
         x.meta.annotations !== true &&
         x.meta.tracing !== true &&
-        x.meta.logs !== true
+        x.meta.logs !== true &&
+        x.meta.alerting !== true
       ) {
         return false;
       }
