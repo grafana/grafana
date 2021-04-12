@@ -152,8 +152,7 @@ func TestGenerateConnectionString(t *testing.T) {
 // devenv/README.md for setup instructions.
 func TestPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
-	// runPostgresTests := false
-	runPostgresTests := true
+	runPostgresTests := false
 
 	if !sqlstore.IsTestDbPostgres() && !runPostgresTests {
 		t.Skip()
