@@ -1,5 +1,5 @@
 import React from 'react';
-import { number, select } from '@storybook/addon-knobs';
+import { Story, Meta } from '@storybook/react';
 import { List } from './List';
 import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
@@ -8,7 +8,27 @@ import { InlineList } from './InlineList';
 export default {
   title: 'Layout/List',
   component: List,
-};
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['renderItem', 'getItemKey', 'className', 'items'],
+    },
+  },
+  args: {
+    itemRenderer: 'raw',
+    numberOfItems: 3,
+  },
+  argTypes: {
+    itemRenderer: {
+      control: {
+        type: 'select',
+        options: ['raw', 'custom'],
+      },
+    },
+  },
+} as Meta;
 
 const generateListItems = (numberOfItems: number) => {
   return [...new Array(numberOfItems)].map((item, i) => {
@@ -19,8 +39,7 @@ const generateListItems = (numberOfItems: number) => {
   });
 };
 
-const getStoriesKnobs = (inline = false) => {
-  const numberOfItems = number('Number of items', 3);
+const getItem = (inline = false) => {
   const rawRenderer = (item: any) => <>{item.name}</>;
   const customRenderer = (item: any, index: number) => (
     <div
@@ -44,27 +63,28 @@ const getStoriesKnobs = (inline = false) => {
     </div>
   );
 
-  const itemRenderer = select(
-    'Item rendered',
-    {
-      'Raw renderer': 'raw',
-      'Custom renderer': 'custom',
-    },
-    'raw'
-  );
-
   return {
-    numberOfItems,
-    renderItem: itemRenderer === 'raw' ? rawRenderer : customRenderer,
+    rawRenderer,
+    customRenderer,
   };
 };
 
-export const basic = () => {
-  const { numberOfItems, renderItem } = getStoriesKnobs();
-  return <List items={generateListItems(numberOfItems)} renderItem={renderItem} />;
+export const basic: Story = (args) => {
+  const { rawRenderer, customRenderer } = getItem();
+  return (
+    <List
+      items={generateListItems(args.numberOfItems)}
+      renderItem={args.itemRenderer === 'raw' ? rawRenderer : customRenderer}
+    />
+  );
 };
 
-export const inline = () => {
-  const { numberOfItems, renderItem } = getStoriesKnobs(true);
-  return <InlineList items={generateListItems(numberOfItems)} renderItem={renderItem} />;
+export const inline: Story = (args) => {
+  const { rawRenderer, customRenderer } = getItem(true);
+  return (
+    <InlineList
+      items={generateListItems(args.numberOfItems)}
+      renderItem={args.itemRenderer === 'raw' ? rawRenderer : customRenderer}
+    />
+  );
 };
