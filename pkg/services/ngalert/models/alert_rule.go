@@ -52,6 +52,8 @@ type AlertRule struct {
 	RuleGroup       string
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
+	For             Duration
+	Annotations     map[string]string
 }
 
 // AlertRuleKey is the alert definition identifier
@@ -100,6 +102,8 @@ type AlertRuleVersion struct {
 	IntervalSeconds int64
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
+	For             Duration
+	Annotations     map[string]string
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
