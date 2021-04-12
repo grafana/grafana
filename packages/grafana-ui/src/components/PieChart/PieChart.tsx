@@ -49,6 +49,8 @@ export const PieChart: FC<PieChartProps> = ({
   height,
   ...restProps
 }) => {
+  const theme = useTheme();
+
   const getLegend = (fields: FieldDisplay[], legendOptions: PieChartLegendOptions) => {
     if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
       return undefined;
@@ -99,10 +101,10 @@ export const PieChart: FC<PieChartProps> = ({
 
   const fieldDisplayValues = getFieldDisplayValues({
     fieldConfig,
-    reduceOptions: reduceOptions,
-    data: data,
-    theme: useTheme(),
-    replaceVariables: replaceVariables,
+    reduceOptions,
+    data,
+    theme,
+    replaceVariables,
     timeZone,
   });
 
