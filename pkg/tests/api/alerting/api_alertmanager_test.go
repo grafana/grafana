@@ -74,59 +74,32 @@ func setupDB(t *testing.T, dir string) *sqlstore.SQLStore {
 }
 
 var AMConfigFixture = `
-{
-  "template_files": {},
-  "alertmanager_config": {
-    "global": {
-      "resolve_timeout": "4m",
-      "http_config": {
-        "BasicAuth": null,
-        "Authorization": null,
-        "BearerToken": "",
-        "BearerTokenFile": "",
-        "ProxyURL": {},
-        "TLSConfig": {
-          "CAFile": "",
-          "CertFile": "",
-          "KeyFile": "",
-          "ServerName": "",
-          "InsecureSkipVerify": false
-        },
-        "FollowRedirects": true
-      },
-      "smtp_from": "youraddress@example.org",
-      "smtp_hello": "localhost",
-      "smtp_smarthost": "localhost:25",
-      "smtp_require_tls": true,
-      "pagerduty_url": "https://events.pagerduty.com/v2/enqueue",
-      "opsgenie_api_url": "https://api.opsgenie.com/",
-      "wechat_api_url": "https://qyapi.weixin.qq.com/cgi-bin/",
-      "victorops_api_url": "https://alert.victorops.com/integrations/generic/20131114/alert/"
-    },
-    "route": {
-      "receiver": "example-email"
-    },
-    "templates": [],
-    "receivers": [
-      {
-        "name": "example-email",
-        "email_configs": [
-          {
-            "send_resolved": false,
-            "to": "youraddress@example.org",
-            "smarthost": "",
-            "html": "{{ template \"email.default.html\" . }}",
-            "tls_config": {
-              "CAFile": "",
-              "CertFile": "",
-              "KeyFile": "",
-              "ServerName": "",
-              "InsecureSkipVerify": false
-            }
-          }
-        ]
-      }
-    ]
-  }
-}
+template_files:
+alertmanager_config: |
+    global:
+        resolve_timeout: 4m
+        smtp_require_tls: true
+    route:
+        receiver: example-email
+    templates: []
+    receivers:
+        - name: example-email
+          grafana_managed_receiver_configs:
+            - uid: email UID
+              name: an email receiver
+              type: email
+              sendreminder: false
+              disableresolvemessage: false
+              frequency: 5m
+              isdefault: false
+              settings:
+                addresses: youraddress@example.org
+                autoResolve: true
+                httpMethod: POST
+                severity: critical
+                singleEmail: true
+                uploadImage: false
+              securesettings: {}
+              orgid: 0
+              result: null
 `
