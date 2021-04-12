@@ -223,10 +223,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $white;
-$dropdownBorder: $gray-4;
-$dropdownDividerTop: $gray-6;
-$dropdownDividerBottom: $gray-4;
+$dropdownBackground: ${theme.v2.palette.layer2};
+$dropdownBorder: ${theme.v2.palette.border0};
+$dropdownDividerTop: ${theme.v2.palette.divider};
+$dropdownDividerBottom: ${theme.v2.palette.divider};
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
@@ -264,9 +264,6 @@ $menu-dropdown-shadow: ${theme.v2.shadows.z3};
 // -------------------------
 $tab-border-color: $gray-5;
 
-// Toolbar
-$toolbar-bg: white;
-
 // Form states and alerts
 // -------------------------
 $warning-text-color: lighten($orange, 10%);
@@ -288,8 +285,8 @@ $tooltipShadow: ${theme.v2.shadows.z2};
 $popover-bg: ${theme.v2.palette.layer2};
 $popover-color: ${theme.v2.palette.text.primary};
 $popover-border-color: ${theme.v2.palette.border1};
-$popover-header-bg: ${theme.v2.palette.layer1};
-$popover-shadow: ${theme.v2.shadows.z3};
+$popover-header-bg: ${theme.v2.palette.layer2};
+$popover-shadow: ${theme.v2.shadows.z4};
 
 $graph-tooltip-bg: $gray-5;
 

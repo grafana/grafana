@@ -231,10 +231,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $panel-bg;
+$dropdownBackground: #22252b;
 $dropdownBorder: #181b1f;
-$dropdownDividerTop: transparent;
-$dropdownDividerBottom: #2c3235;
+$dropdownDividerTop: rgba(218,224,254,0.06);
+$dropdownDividerBottom: rgba(218,224,254,0.06);
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -270,9 +270,6 @@ $menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.5),0px 4px 5px 0px rgba(0,0
 // -------------------------
 $tab-border-color: $dark-9;
 
-// Toolbar
-$toolbar-bg: $input-black;
-
 // Form states and alerts
 // -------------------------
 $warning-text-color: $warn;
@@ -299,8 +296,8 @@ $tooltipShadow: 0px 3px 1px -2px rgba(0,0,0,0.5),0px 2px 2px 0px rgba(0,0,0,0.4)
 $popover-bg: #22252b;
 $popover-color: rgba(255, 255, 255, 0.75);
 $popover-border-color: rgba(218,224,254,0.15);
-$popover-header-bg: #181b1f;
-$popover-shadow: 0px 2px 4px -1px rgba(0,0,0,0.5),0px 4px 5px 0px rgba(0,0,0,0.4),0px 1px 10px 0px rgba(0,0,0,0.3);
+$popover-header-bg: #22252b;
+$popover-shadow: 0px 5px 5px -3px rgba(0,0,0,0.5),0px 8px 10px 1px rgba(0,0,0,0.4),0px 3px 14px 2px rgba(0,0,0,0.3);
 
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $text-color;
