@@ -174,7 +174,6 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 }
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig) response.Response {
-	fmt.Println("RoutePostnameRulesConfig 1")
 	namespace := c.Params(":Namespace")
 	namespaceUID, err := srv.store.GetNamespaceUIDBySlug(namespace, c.SignedInUser.OrgId, c.SignedInUser)
 	if err != nil {
@@ -184,8 +183,6 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	// TODO check permissions
 	// TODO check quota
 	// TODO validate UID uniqueness in the payload
-
-	fmt.Println("RoutePostnameRulesConfig 2")
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,

@@ -155,7 +155,6 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				existingAlertRule, err := getAlertRuleByUID(sess, r.New.UID, r.New.OrgID)
 				if err != nil {
 					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-						fmt.Println("not found")
 						return nil
 					}
 					return err
@@ -249,8 +248,6 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				Annotations:      r.New.Annotations,
 			})
 		}
-
-		fmt.Println("save", len(newRules), "versions", len(ruleVersions))
 
 		if len(newRules) > 0 {
 			if _, err := sess.Insert(&newRules); err != nil {
@@ -444,7 +441,6 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 			}
 			upsertRules = append(upsertRules, upsertRule)
 		}
-		fmt.Println("upsert alert rules", upsertRules)
 		if err := st.UpsertAlertRules(upsertRules); err != nil {
 			return err
 		}
