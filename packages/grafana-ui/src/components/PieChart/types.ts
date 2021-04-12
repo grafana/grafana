@@ -17,7 +17,7 @@ export interface PieChartProps extends Omit<PieChartSvgProps, 'fieldDisplayValue
   fieldConfig: FieldConfigSource<any>;
   replaceVariables: InterpolateFunction;
   data: DataFrame[];
-  timeZone: string;
+  timeZone?: string;
 }
 
 export enum PieChartType {
