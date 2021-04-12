@@ -79,12 +79,12 @@ type PluginFinderV2 interface {
 
 type PluginLoaderV2 interface {
 	// Load loads a plugin and returns it.
-	Load(string) (*PluginV2, error)
+	Load([]string) ([]*PluginV2, error)
 }
 
 type PluginInitializerV2 interface {
 	// Load loads a plugin and returns it.
-	Initialize(plugin PluginV2) error
+	Initialize(plugin *PluginV2) error
 }
 
 type PluginManagerV2 interface {
@@ -133,6 +133,7 @@ type PluginV2 struct {
 	backend.CallResourceHandler
 	backend.CheckHealthHandler
 
+	// Common settings
 	Type         string                `json:"type"`
 	Name         string                `json:"name"`
 	ID           string                `json:"id"`
@@ -156,12 +157,33 @@ type PluginV2 struct {
 	SignatureType   PluginSignatureType `json:"-"`
 	SignatureOrg    string              `json:"-"`
 
+	// App settings
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
 
-	Parent *PluginV2
+	AutoEnabled bool `json:"autoEnabled"`
+
+	//FoundChildPlugins []*PluginInclude `json:"-"` // unused
+	Pinned bool `json:"-"`
+
+	// Datasource settings
+	Annotations  bool            `json:"annotations"`
+	Metrics      bool            `json:"metrics"`
+	Alerting     bool            `json:"alerting"`
+	Explore      bool            `json:"explore"`
+	Table        bool            `json:"tables"`
+	Logs         bool            `json:"logs"`
+	Tracing      bool            `json:"tracing"`
+	QueryOptions map[string]bool `json:"queryOptions,omitempty"`
+	BuiltIn      bool            `json:"builtIn,omitempty"`
+	Mixed        bool            `json:"mixed,omitempty"`
+	Streaming    bool            `json:"streaming"`
+	SDK          bool            `json:"sdk,omitempty"`
+
+	// Backend (App + Datasource_ settings
+	Routes     []*AppPluginRoute `json:"routes"`
+	Executable string            `json:"executable,omitempty"`
+
+	Parent   *PluginV2   `json:"-"`
+	Children []*PluginV2 `json:"-"`
 }
-
-// refer to ID of backend plugin instead of backend:true and executable
-
-// can maintain a map of what’s been migrated fully

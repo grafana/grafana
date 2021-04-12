@@ -18,15 +18,12 @@ var (
 	pmlog = log.New("plugin.manager")
 )
 
-type Initializer struct {
-	plugins.PluginInitializerV2
-}
-
 type PluginManagerV2 struct {
-	Cfg                  *setting.Cfg           `inject:""`
-	BackendPluginManager backendplugin.Manager  `inject:""`
-	PluginFinder         plugins.PluginFinderV2 `inject:""`
-	PluginLoader         plugins.PluginLoaderV2 `inject:""`
+	Cfg                  *setting.Cfg                `inject:""`
+	BackendPluginManager backendplugin.Manager       `inject:""`
+	PluginFinder         plugins.PluginFinderV2      `inject:""`
+	PluginLoader         plugins.PluginLoaderV2      `inject:""`
+	PluginInitializer    plugins.PluginInitializerV2 `inject:""`
 
 	plugins map[string]*plugins.PluginV2
 }
@@ -47,17 +44,19 @@ func (m *PluginManagerV2) Init() error {
 		return err
 	}
 
-	for _, pluginJSONPath := range pluginJSONPaths {
-		pmlog.Info("Found plugin", "JSON", pluginJSONPath)
+	loadedPlugins, err := m.PluginLoader.Load(pluginJSONPaths)
+	if err != nil {
+		return err
+	}
 
-		p, err := m.PluginLoader.Load(pluginJSONPath)
+	for _, p := range loadedPlugins {
+		pmlog.Info("Loaded plugin", "pluginID", p.ID)
+
+		err = m.PluginInitializer.Initialize(p)
 		if err != nil {
 			return err
 		}
-
 		m.plugins[p.ID] = p
-
-		pmlog.Info("Loaded plugin", "pluginID", p.ID)
 	}
 
 	return nil
