@@ -9,6 +9,7 @@ import (
 type PanelPlugin struct {
 	FrontendPluginBase
 	SkipDataQuery bool `json:"skipDataQuery"`
+	AlignData bool `json:"alignData"`
 }
 
 func (p *PanelPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (

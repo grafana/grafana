@@ -1,5 +1,4 @@
-import { DataFrame, DataFrameFieldIndex, Field } from '@grafana/data';
-import { XYFieldMatchers } from './types';
+import { DataFrame, DataFrameFieldIndex, Field, XYFieldMatchers } from '@grafana/data';
 import React, { useCallback, useContext } from 'react';
 
 /** @alpha */

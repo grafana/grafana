@@ -15,6 +15,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
+  DataFrame,
   FieldConfigSource,
   getDefaultTimeRange,
   LoadingState,
@@ -70,7 +71,6 @@ export class PanelChrome extends Component<Props, State> {
 
   componentDidMount() {
     const { panel, dashboard } = this.props;
-
     // Subscribe to panel events
     this.subs.add(panel.events.subscribe(RefreshEvent, this.onRefresh));
     this.subs.add(panel.events.subscribe(RenderEvent, this.onRender));
@@ -90,10 +90,23 @@ export class PanelChrome extends Component<Props, State> {
       this.setState({ isFirstLoad: false });
     }
 
+    let alignmentOptions;
+
+    if (Boolean(panel.plugin?.meta.alignData) && panel.plugin?.resolveXYDimensions) {
+      alignmentOptions = {
+        withAlignment: Boolean(panel.plugin?.meta.alignData),
+        alignmentOptions: (data: DataFrame[]) => panel.plugin!.resolveXYDimensions!(data, panel.options),
+      };
+    }
+
     this.subs.add(
       panel
         .getQueryRunner()
-        .getData({ withTransforms: true, withFieldConfig: true })
+        .getData({
+          withTransforms: true,
+          withFieldConfig: true,
+          ...alignmentOptions,
+        })
         .subscribe({
           next: (data) => this.onDataUpdate(data),
         })

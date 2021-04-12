@@ -1,6 +1,6 @@
 import React from 'react';
 import isNumber from 'lodash/isNumber';
-import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
+import { GraphNGLegendEventMode } from './types';
 import {
   ArrayVector,
   DataFrame,
@@ -14,6 +14,7 @@ import {
   outerJoinDataFrames,
   TimeRange,
   TimeZone,
+  XYFieldMatchers,
 } from '@grafana/data';
 import { nullToUndefThreshold } from './nullToUndefThreshold';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';

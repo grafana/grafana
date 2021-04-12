@@ -20,6 +20,8 @@ export interface PanelPluginMeta extends PluginMeta {
   hideFromList?: boolean;
   /** Sort order */
   sort: number;
+  /** Indicates panel required pre-aligned data */
+  alignData?: boolean;
 }
 
 export interface PanelData {

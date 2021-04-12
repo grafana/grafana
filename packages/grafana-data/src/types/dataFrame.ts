@@ -6,6 +6,7 @@ import { DataLink, LinkModel } from './dataLink';
 import { Vector } from './vector';
 import { FieldColor } from './fieldColor';
 import { ScopedVars } from './ScopedVars';
+import { FieldMatcher } from './transformations';
 
 export enum FieldType {
   time = 'time', // or date
@@ -219,4 +220,10 @@ export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
 export interface DataFrameFieldIndex {
   frameIndex: number;
   fieldIndex: number;
+}
+
+/** @alpha */
+export interface XYFieldMatchers {
+  x: FieldMatcher; // first match
+  y: FieldMatcher;
 }

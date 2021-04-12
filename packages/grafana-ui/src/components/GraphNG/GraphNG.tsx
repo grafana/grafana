@@ -9,7 +9,7 @@ import {
   fieldMatchers,
   FieldType,
   TimeRange,
-  TimeZone,
+  TimeZone, XYFieldMatchers,
 } from '@grafana/data';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';

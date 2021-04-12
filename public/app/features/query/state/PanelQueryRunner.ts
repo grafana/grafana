@@ -14,11 +14,14 @@ import {
   applyFieldOverrides,
   CoreApp,
   DataConfigSource,
+  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
   DataTransformerConfig,
+  FieldMatcherID,
+  fieldMatchers,
   LoadingState,
   PanelData,
   rangeUtil,
@@ -26,7 +29,11 @@ import {
   TimeRange,
   TimeZone,
   transformDataFrame,
+  XYFieldMatchers,
 } from '@grafana/data';
+
+// TODO: Fix import
+import { preparePlotFrame } from '@grafana/ui/src/components/GraphNG/utils';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -54,6 +61,8 @@ export function getNextRequestId() {
 export interface GetDataOptions {
   withTransforms: boolean;
   withFieldConfig: boolean;
+  withAlignment?: boolean;
+  getAlignmentMatchers?: (data?: DataFrame[]) => XYFieldMatchers;
 }
 
 export class PanelQueryRunner {
@@ -71,7 +80,7 @@ export class PanelQueryRunner {
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
   getData(options: GetDataOptions): Observable<PanelData> {
-    const { withFieldConfig, withTransforms } = options;
+    const { withFieldConfig, withTransforms, withAlignment } = options;
 
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),
@@ -93,6 +102,26 @@ export class PanelQueryRunner {
               }),
             };
           }
+        }
+
+        if (withAlignment) {
+          console.log('ALIGN ALL THE THINGS!');
+
+          const defaultAlignmentMatchers = {
+            x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+            y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+          };
+
+          // TODO: reame to uPlot agnostic fn
+          const alignedData = preparePlotFrame(
+            processedData.series,
+            options.getAlignmentMatchers ? options.getAlignmentMatchers(processedData.series) : defaultAlignmentMatchers
+          );
+
+          processedData = {
+            ...processedData,
+            series: alignedData ? [alignedData] : [],
+          };
         }
 
         return processedData;

@@ -8,6 +8,8 @@ import {
   PanelProps,
   PanelTypeChangedHandler,
   FieldConfigProperty,
+  DataFrame,
+  XYFieldMatchers,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
@@ -15,6 +17,11 @@ import set from 'lodash/set';
 import { deprecationWarning } from '../utils';
 import { FieldConfigOptionsRegistry } from '../field';
 import { createFieldConfigRegistry } from './registryFactories';
+
+/**
+ * @alpha
+ */
+export type DimensionsResolver<TOptions extends {} = any> = (data?: DataFrame[], options?: TOptions) => XYFieldMatchers;
 
 /** @beta */
 export type StandardOptionConfig = {
@@ -111,6 +118,8 @@ export class PanelPlugin<
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
    */
   angularPanelCtrl?: any;
+
+  resolveXYDimensions?: DimensionsResolver;
 
   constructor(panel: ComponentType<PanelProps<TOptions>> | null) {
     super();
@@ -220,6 +229,14 @@ export class PanelPlugin<
    */
   setPanelChangeHandler(handler: PanelTypeChangedHandler) {
     this.onPanelTypeChanged = handler;
+    return this;
+  }
+
+  /**
+   * @alpha
+   */
+  setPanelXYDimensionsResolver(resolver: DimensionsResolver) {
+    this.resolveXYDimensions = resolver;
     return this;
   }
 
