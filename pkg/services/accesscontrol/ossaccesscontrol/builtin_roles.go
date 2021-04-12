@@ -4,6 +4,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+const roleGrafanaAdmin = "Grafana Admin"
+
 var builtInRolesMap = map[string]accesscontrol.RoleDTO{
 	"grafana:builtin:users:read:self": {
 		Name:    "grafana:builtin:users:read:self",
