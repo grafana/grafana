@@ -144,7 +144,6 @@ const rowLimit = 1000000
 
 func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
-
 	var timeRange plugins.DataTimeRange
 	if queryContext.TimeRange != nil {
 		timeRange = *queryContext.TimeRange
