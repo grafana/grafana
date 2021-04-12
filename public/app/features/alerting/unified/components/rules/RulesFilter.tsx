@@ -1,12 +1,11 @@
 import React, { FormEvent, useState } from 'react';
 import { Button, Icon, Input, Label, RadioButtonGroup, useStyles } from '@grafana/ui';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
 
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import DataSourceSelect from '../DataSourceSelect';
 import { getFiltersFromUrlParams } from '../../utils/misc';
 import { DataSourcePicker } from '@grafana/runtime';
 
@@ -22,8 +21,8 @@ const RulesFilter = () => {
   const styles = useStyles(getStyles);
   const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({ label: key, value }));
 
-  const handleDataSourceChange = (dataSourceValue: SelectableValue<string>) => {
-    setQueryParams({ dataSource: dataSourceValue.value });
+  const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings) => {
+    setQueryParams({ dataSource: dataSourceValue.name });
   };
 
   const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
@@ -49,8 +48,13 @@ const RulesFilter = () => {
     <div className={styles.container}>
       <div className={styles.inputWidth}>
         <Label>Select data source</Label>
-        <DataSourcePicker alerting={true} />
-        <DataSourceSelect key={dataSourceKey} value={dataSource} onChange={handleDataSourceChange} />
+        <DataSourcePicker
+          key={dataSourceKey}
+          alerting
+          noDefault
+          current={dataSource}
+          onChange={handleDataSourceChange}
+        />
       </div>
       <div className={cx(styles.flexRow, styles.spaceBetween)}>
         <div className={styles.flexRow}>
