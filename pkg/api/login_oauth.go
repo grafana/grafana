@@ -81,7 +81,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 			return
 		}
 
-		stateConfig := setting.OAuthService.OAuthInfos[name].State
+		stateConfig := hs.Cfg.OAuthService.OAuthInfos[name].State
 		if stateConfig != "" {
 			idx := strings.Index(stateConfig, "<random>")
 			if idx != -1 {
