@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -70,9 +71,8 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 	params.Set("query", body.Expr)
 	params.Set("start", strconv.FormatInt(start.Unix(), 10))
 	params.Set("end", strconv.FormatInt(end.Unix(), 10))
-	params.Set("directtion", "BACKWARD")
-	params.Set("limit", strconv.Itoa(1332))
-	params.Set("step", strconv.Itoa(15))
+	step := int(math.Max(math.Floor(end.Sub(start).Seconds()/250), 1))
+	params.Set("step", strconv.Itoa(step))
 	queryRangeURL.RawQuery = params.Encode()
 	return srv.withReq(
 		c,

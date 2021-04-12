@@ -1,0 +1,13 @@
+package tests
+
+import (
+	"testing"
+
+	"github.com/grafana/grafana/pkg/tests/testinfra"
+)
+
+func TestLoadingAlertmanagerConfig(t *testing.T) {
+	grafDir, cfgPath := testinfra.CreateGrafDir(t)
+	sqlStore := testinfra.SetUpDatabase(t, grafDir)
+	addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+}
