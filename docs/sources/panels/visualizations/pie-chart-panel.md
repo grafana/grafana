@@ -13,7 +13,7 @@ The pie chart displays reduced series, or values in a series, from one or more q
 
 ## Data and field options
 
-Time series visualizations allow you to apply:
+Pie chart visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../transformations/_index.md" >}})
 - [Field options and overrides]({{< relref "../field-options/_index.md" >}})
