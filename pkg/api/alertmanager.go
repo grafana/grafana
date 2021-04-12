@@ -224,6 +224,45 @@ func (c *PostableUserConfig) validate() error {
 	return nil
 }
 
+// MarshalYAML implements yaml.Marshaller.
+func (c *PostableUserConfig) MarshalYAML() (interface{}, error) {
+	yml, err := yaml.Marshal(c.AlertmanagerConfig)
+	if err != nil {
+		return nil, err
+	}
+	// cortex/loki actually pass the AM config as a string.
+	cortexPostableUserConfig := struct {
+		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}{
+		TemplateFiles:      c.TemplateFiles,
+		AlertmanagerConfig: string(yml),
+	}
+	return cortexPostableUserConfig, nil
+}
+
+func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
+	// cortex/loki actually pass the AM config as a string.
+	type cortexPostableUserConfig struct {
+		TemplateFiles      map[string]string `yaml:"template_files" json:"template_files"`
+		AlertmanagerConfig string            `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	var tmp cortexPostableUserConfig
+
+	if err := value.Decode(&tmp); err != nil {
+		return err
+	}
+
+	if err := yaml.Unmarshal([]byte(tmp.AlertmanagerConfig), &c.AlertmanagerConfig); err != nil {
+		return err
+	}
+
+	c.TemplateFiles = tmp.TemplateFiles
+	return nil
+
+}
+
 // swagger:model
 type GettableUserConfig struct {
 	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
