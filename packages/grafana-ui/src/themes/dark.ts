@@ -1,6 +1,8 @@
 import defaultTheme, { commonColorsPalette } from './default';
 import { GrafanaThemeType, GrafanaTheme, createTheme } from '@grafana/data';
 
+const v2 = createTheme({ palette: { mode: 'dark' } });
+
 const basicColors = {
   ...commonColorsPalette,
   black: '#000000',
@@ -35,28 +37,28 @@ const basicColors = {
 };
 
 const backgrounds = {
-  bg1: basicColors.gray10,
-  bg2: basicColors.gray15,
-  bg3: basicColors.gray25,
-  dashboardBg: basicColors.gray05,
-  bgBlue1: basicColors.blue80,
-  bgBlue2: basicColors.blue77,
+  bg1: v2.palette.layer1,
+  bg2: v2.palette.layer2,
+  bg3: v2.palette.action.hover,
+  dashboardBg: v2.palette.layer0,
+  bgBlue1: v2.palette.primary.main,
+  bgBlue2: v2.palette.primary.shade,
 };
 
 const borders = {
-  border1: basicColors.gray15,
-  border2: basicColors.gray25,
-  border3: basicColors.gray33,
+  border1: v2.palette.border0,
+  border2: v2.palette.border1,
+  border3: v2.palette.border2,
 };
 
 const textColors = {
-  textStrong: basicColors.gray98,
-  textHeading: basicColors.gray4,
-  text: basicColors.gray85,
-  textSemiWeak: basicColors.gray70,
-  textWeak: basicColors.gray60,
-  textFaint: basicColors.gray33,
-  textBlue: basicColors.blue85,
+  textStrong: v2.palette.text.maxContrast,
+  textHeading: v2.palette.text.primary,
+  text: v2.palette.text.primary,
+  textSemiWeak: v2.palette.text.secondary,
+  textWeak: v2.palette.text.disabled,
+  textFaint: v2.palette.text.disabled,
+  textBlue: v2.palette.primary.text,
 };
 
 const form = {
@@ -130,7 +132,7 @@ const darkTheme: GrafanaTheme = {
   shadows: {
     listItem: 'none',
   },
-  v2: createTheme({ palette: { mode: 'dark' } }),
+  v2: v2,
 };
 
 export default darkTheme;
