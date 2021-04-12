@@ -16,7 +16,7 @@ exports[`Render should render action bar and datasources 1`] = `
   <PageContents
     isLoading={false}
   >
-    <OrgActionBar
+    <PageActionBar
       key="action-bar"
       linkButton={
         Object {

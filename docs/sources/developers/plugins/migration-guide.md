@@ -141,9 +141,9 @@ Before 7.0, data source and panel plugins exchanged data using either time serie
 
 Grafana 7.0 is backward compatible with the old data format used in previous versions. Panels and data sources using the old format will still work with plugins using the new data frame format.
 
-The `DataQueryResponse` returned by the `query` method can be either a [LegacyResponseData](https://grafana.com/docs/grafana/latest/packages_api/data/legacyresponsedata/) or a [DataFrame](https://grafana.com/docs/grafana/latest/packages_api/data/dataframe/).
+The `DataQueryResponse` returned by the `query` method can be either a [LegacyResponseData](https://grafana.com/docs/grafana/next/packages_api/data/legacyresponsedata/) or a [DataFrame](https://grafana.com/docs/grafana/next/packages_api/data/dataframe/).
 
-The [toDataFrame()](https://grafana.com/docs/grafana/latest/packages_api/data/todataframe/) function converts a legacy response, such as `TimeSeries` or `Table`, to a `DataFrame`. Use it to gradually move your code to the new format.
+The [toDataFrame()](https://grafana.com/docs/grafana/next/packages_api/data/todataframe/) function converts a legacy response, such as `TimeSeries` or `Table`, to a `DataFrame`. Use it to gradually move your code to the new format.
 
 ```ts
 import { toDataFrame } from '@grafana/data';
@@ -160,7 +160,7 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 }
 ```
 
-For more information, refer to [Data frames](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/).
+For more information, refer to [Data frames](https://grafana.com/docs/grafana/next/developers/plugins/data-frames/).
 
 ## Troubleshoot plugin migration
 
