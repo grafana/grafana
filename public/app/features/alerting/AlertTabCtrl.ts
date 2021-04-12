@@ -264,11 +264,13 @@ export class AlertTabCtrl {
   }
 
   checkFrequency() {
-    if (!this.alert.frequency) {
+    this.frequencyWarning = '';
+
+    if (!(this.alert.frequency || '').match(/^\d+([dhms])$/)) {
+      this.frequencyWarning =
+        'Invalid frequency, has to be numeric followed by one of the following units: "d, h, m, s"';
       return;
     }
-
-    this.frequencyWarning = '';
 
     try {
       const frequencySecs = rangeUtil.intervalToSeconds(this.alert.frequency);

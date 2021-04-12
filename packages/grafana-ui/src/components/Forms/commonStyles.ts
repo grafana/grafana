@@ -10,15 +10,15 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 `;
 
 export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
-  const palette = theme.v2.palette;
-  const borderColor = invalid ? palette.error.border : palette.formComponent.border;
-  const background = palette.formComponent.background;
-  const textColor = palette.text.primary;
+  const borderColor = invalid ? theme.v2.palette.error.border : theme.v2.components.form.border;
+  const borderColorHover = invalid ? theme.v2.palette.error.shade : theme.v2.components.form.borderHover;
+  const background = theme.v2.components.form.background;
+  const textColor = theme.v2.components.form.text;
 
   return css`
-    background-color: ${background};
-    line-height: ${theme.typography.lineHeight.md};
-    font-size: ${theme.typography.size.md};
+    background: ${background};
+    line-height: ${theme.v2.typography.body.lineHeight};
+    font-size: ${theme.v2.typography.size.md};
     color: ${textColor};
     border: 1px solid ${borderColor};
     padding: ${theme.v2.spacing(0, 1, 0, 1)};
@@ -38,7 +38,7 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     }
 
     &:hover {
-      border-color: ${borderColor};
+      border-color: ${borderColorHover};
     }
 
     &:focus {
@@ -46,12 +46,12 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     }
 
     &:disabled {
-      background-color: ${palette.formComponent.disabledBackground};
-      color: ${palette.text.disabled};
+      background-color: ${theme.v2.palette.action.disabledBackground};
+      color: ${theme.v2.palette.action.disabledText};
     }
 
     &::placeholder {
-      color: ${palette.text.disabled};
+      color: ${theme.v2.palette.text.disabled};
       opacity: 1;
     }
   `;
