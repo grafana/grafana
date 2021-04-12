@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"golang.org/x/oauth2"
 
@@ -78,6 +79,16 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 				PublicMessage: "An internal error occurred",
 			})
 			return
+		}
+
+		stateConfig := setting.OAuthService.OAuthInfos[name].State
+		if stateConfig != "" {
+			idx := strings.Index(stateConfig, "<random>")
+			if idx != -1 {
+				state = strings.Replace(stateConfig, "<random>", state, 1)
+			} else {
+				state = stateConfig + state
+			}
 		}
 
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)

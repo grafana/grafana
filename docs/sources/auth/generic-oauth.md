@@ -29,6 +29,7 @@ enabled = true
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
 scopes =
+state =
 auth_url =
 token_url =
 api_url =
@@ -41,6 +42,11 @@ tls_client_ca =
 ```
 
 Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
+
+Grafana will always generate a unique `state` value, for security purposes. However, if you need to influence the content of the state parameter in the oAuth requests, this can be done through by setting `state`
+- if the value of `state` containes the text `<random>`, the text `<random>` will automatically be replaced with a generated random value
+- if the value of `state` does NOT contain the text `<random>`, an automatically generated random value will be appended to the provided `state` value
+- if no value is provided for `state`, it will be set to an automatically generated random value
 
 You can also specify the SSL/TLS configuration used by the client.
 - Set `tls_client_cert` to the path of the certificate.

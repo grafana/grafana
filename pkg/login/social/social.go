@@ -89,6 +89,7 @@ func NewOAuthService() {
 			ClientId:           sec.Key("client_id").String(),
 			ClientSecret:       sec.Key("client_secret").String(),
 			Scopes:             util.SplitString(sec.Key("scopes").String()),
+			State:              sec.Key("state").String(),
 			AuthUrl:            sec.Key("auth_url").String(),
 			TokenUrl:           sec.Key("token_url").String(),
 			ApiUrl:             sec.Key("api_url").String(),
