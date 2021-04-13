@@ -71,6 +71,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
           size={'sm'}
           title={'Default layout'}
           variant="secondary"
+          disabled={!config.gridLayout}
         />
         <Button
           icon={'apps'}
@@ -78,6 +79,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
           size={'sm'}
           title={'Grid layout'}
           variant="secondary"
+          disabled={config.gridLayout}
         />
       </HorizontalGroup>
 
