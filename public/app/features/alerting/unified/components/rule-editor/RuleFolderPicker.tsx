@@ -11,5 +11,5 @@ export interface Props extends Omit<FolderPickerProps, 'initiailTitle' | 'initia
 }
 
 export const RuleFolderPicker: FC<Props> = ({ value, ...props }) => (
-  <FolderPicker initialTitle={value?.title} initialFolderId={value?.id} {...props} />
+  <FolderPicker showRoot={false} allowEmpty={true} initialTitle={value?.title} initialFolderId={value?.id} {...props} />
 );

@@ -28,6 +28,7 @@ const defaultValues: RuleFormValues = Object.freeze({
   dataSourceName: null,
 
   // threshold
+  folder: null,
   queries: SAMPLE_QUERIES, // @TODO remove the sample eventually
   condition: '',
   noDataState: GrafanaAlertState.NoData,

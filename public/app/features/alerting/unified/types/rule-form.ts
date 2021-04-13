@@ -26,7 +26,7 @@ export interface RuleFormValues {
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertState;
   execErrState: GrafanaAlertState;
-  folder?: { title: string; id: number };
+  folder: { title: string; id: number } | null;
   evaluateEvery: string;
   evaluateFor: string;
 
