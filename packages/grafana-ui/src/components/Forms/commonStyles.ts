@@ -48,6 +48,11 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     &:disabled {
       background-color: ${theme.v2.palette.action.disabledBackground};
       color: ${theme.v2.palette.action.disabledText};
+      border: 1px solid ${theme.v2.palette.action.disabledBackground};
+
+      &:hover {
+        border-color: ${borderColor};
+      }
     }
 
     &::placeholder {
