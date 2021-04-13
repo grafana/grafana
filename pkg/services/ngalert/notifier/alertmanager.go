@@ -51,8 +51,14 @@ const (
 		},
 		"receivers": [{
 			"name": "grafana-default-email",
-			"email_configs": [{
-				"to": "<example@email.com>"
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
 			}]
 		}]
 	}
