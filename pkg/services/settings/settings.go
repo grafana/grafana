@@ -23,7 +23,8 @@ type Provider interface {
 	// Section returns a settings section
 	// abstraction for the given section name.
 	Section(section string) Section
-	// RegisterReloadHandler
+	// RegisterReloadHandler registers a handler for validation and reload
+	// of configuration updates tied to a specific section
 	RegisterReloadHandler(section string, handler ReloadHandler)
 }
 
@@ -54,6 +55,12 @@ type KeyValue interface {
 	MustDuration(defaultVal time.Duration) time.Duration
 }
 
+// ReloadHandler makes it possible
 type ReloadHandler interface {
+	// Reload handles reloading of configuration changes
 	Reload(section Section) error
+
+	// Validate validates the configuration, if the validations
+	// fails the configuration will not be updated in the database
+	Validate(section Section) error
 }

@@ -166,14 +166,32 @@ func (i *Implementation) refreshWithBag(bag models.SettingsBag) error {
 		return nil
 	}
 
+	if err = i.triggerReload(toReload); err != nil {
+		return err
+	}
+
 	i.Lock()
 	i.settings = newSettingsBag
 	i.Unlock()
 
-	return i.triggerReload(toReload)
+	return nil
 }
 
 func (i *Implementation) triggerReload(bag models.SettingsBag) error {
+	logger.Debug("Validating settings updates")
+	for sectionName, config := range bag {
+		if handlers, exists := i.reloadHandlers[sectionName]; exists {
+			logger.Debug("Validation settings for", "section", sectionName)
+			for _, h := range handlers {
+				if err := h.Validate(buildSection(config)); err != nil {
+					return err
+				}
+				// TODO: should not return here, instead keep track of all failure and return those
+			}
+		}
+	}
+
+	logger.Debug("Reloading settings")
 	for sectionName, config := range bag {
 		if handlers, exists := i.reloadHandlers[sectionName]; exists {
 			logger.Debug("Reloading services using", "section", sectionName)
