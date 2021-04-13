@@ -1,9 +1,9 @@
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { ApplyFieldOverrideOptions, DataTransformerConfig, dateMath, FieldColorModeId, PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { combineLatest, Observable, ReplaySubject } from 'rxjs';
+import { Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { QueryGroupOptions } from '../../../types';
-import { first } from 'rxjs/operators';
+import { combineAll } from 'rxjs/operators';
 
 const options: ApplyFieldOverrideOptions = {
   fieldConfig: {
@@ -24,12 +24,13 @@ const dataConfig = {
 };
 
 export class MultiQueryRunner {
-  private subject: ReplaySubject<PanelData[]>;
+  private runnersSubscription: Subscription | undefined;
+  private runnersResult: ReplaySubject<PanelData[]>;
   private queryRunners: Record<string, PanelQueryRunner>;
   private createRunner: (config: any) => PanelQueryRunner;
 
   constructor(createRunner?: (config: any) => PanelQueryRunner) {
-    this.subject = new ReplaySubject(1);
+    this.runnersResult = new ReplaySubject(1);
     this.queryRunners = {};
 
     if (!createRunner) {
@@ -41,15 +42,7 @@ export class MultiQueryRunner {
 
   run(queryOptions: QueryGroupOptions) {
     const allQueries = queryOptions.queries.map((query) => {
-      const runner = this.getQueryRunner(query.refId);
-
-      const getDataFromRunners = Object.values(this.queryRunners).map((r) =>
-        r.getData({ withFieldConfig: false, withTransforms: false })
-      );
-
-      combineLatest(getDataFromRunners).pipe(first()).subscribe(this.subject.next);
-
-      return runner.run({
+      return this.getQueryRunner(query.refId).run({
         timezone: 'browser',
         timeRange: {
           from: dateMath.parse(query.timeRange!.from)!,
@@ -67,7 +60,14 @@ export class MultiQueryRunner {
   }
 
   getData(): Observable<PanelData[]> {
-    return this.subject.asObservable();
+    return this.runnersResult.asObservable();
+  }
+
+  destroy(): void {
+    if (this.runnersSubscription) {
+      this.runnersSubscription.unsubscribe();
+    }
+    this.runnersResult.complete();
   }
 
   getQueryRunner(refId: string) {
@@ -75,9 +75,23 @@ export class MultiQueryRunner {
       return this.queryRunners[refId];
     }
 
+    if (this.runnersSubscription) {
+      this.runnersSubscription.unsubscribe();
+    }
+
+    const subject = new Subject<Observable<PanelData>>();
+    this.runnersSubscription = subject.pipe(combineAll()).subscribe((data) => {
+      this.runnersResult.next(data);
+    });
+
     const runner = this.createRunner(dataConfig);
     this.queryRunners[refId] = runner;
 
+    for (const r of Object.values(this.queryRunners)) {
+      subject.next(r.getData({ withTransforms: false, withFieldConfig: false }));
+    }
+
+    subject.complete();
     return runner;
   }
 }
