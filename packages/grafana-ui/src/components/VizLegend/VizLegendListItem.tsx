@@ -6,21 +6,26 @@ import { VizLegendStatsList } from './VizLegendStatsList';
 import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 
-export interface Props {
-  item: VizLegendItem;
+export interface Props<T> {
+  item: VizLegendItem<T>;
   className?: string;
-  onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLDivElement>) => void;
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
 /**
  * @internal
  */
-export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesColorChange, onLabelClick }) => {
+export const VizLegendListItem = <T extends unknown = any>({
+  item,
+  onSeriesColorChange,
+  onLabelClick,
+  className,
+}: Props<T>) => {
   const styles = useStyles(getStyles);
 
   return (
-    <div className={styles.itemWrapper}>
+    <div className={cx(styles.itemWrapper, className)}>
       <VizLegendSeriesIcon
         disabled={!onSeriesColorChange}
         color={item.color}
@@ -59,6 +64,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     color: ${theme.colors.linkDisabled};
   `,
   itemWrapper: css`
+    label: LegendItemWrapper;
     display: flex;
     white-space: nowrap;
     align-items: center;

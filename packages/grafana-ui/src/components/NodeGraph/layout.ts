@@ -11,8 +11,11 @@ export interface Config {
   forceCollide: number;
   tick: number;
   gridLayout: boolean;
-  // Either a arc field or stats field
-  sort?: Field;
+  sort?: {
+    // Either a arc field or stats field
+    field: Field;
+    ascending: boolean;
+  };
 }
 
 export const defaultConfig: Config = {
@@ -110,11 +113,11 @@ function gridLayout(nodes: NodeDatum[], config: Config /* TODO for selecting the
 
   if (config.sort) {
     nodes.sort((node1, node2) => {
-      const val1 = config.sort?.values.get(node1.dataFrameRowIndex);
-      const val2 = config.sort?.values.get(node2.dataFrameRowIndex);
+      const val1 = config.sort!.field.values.get(node1.dataFrameRowIndex);
+      const val2 = config.sort!.field.values.get(node2.dataFrameRowIndex);
 
       // Lets pretend we don't care about type for a while
-      return val2 - val1;
+      return config.sort!.ascending ? val2 - val1 : val1 - val2;
     });
   }
 

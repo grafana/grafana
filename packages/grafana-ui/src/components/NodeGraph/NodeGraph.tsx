@@ -172,11 +172,13 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
         />
         {nodes.length && (
           <Legend
+            sortable={config.gridLayout}
             nodes={nodes}
-            onClick={(data) => {
+            sort={config.sort}
+            onSort={(sort) => {
               setConfig({
                 ...config,
-                sort: data.field,
+                sort: sort,
               });
             }}
           />

@@ -1,20 +1,36 @@
 import React from 'react';
 import { VizLegend } from '../VizLegend/VizLegend';
-import { LegendDisplayMode, VizLegendItem } from '../VizLegend/types';
+import { VizLegendItem } from '../VizLegend/types';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { NodeDatum } from './types';
 import { Field, FieldColorModeId, getColorForTheme, GrafanaTheme } from '@grafana/data';
-import { useTheme } from '../../themes';
+import { useStyles, useTheme } from '../../themes';
 import { identity } from 'lodash';
+import { Icon, VizLegendListItem } from '..';
+import { Config } from './layout';
+import { css } from '@emotion/css';
+
+function getStyles() {
+  return {
+    item: css`
+      label: LegendItem;
+      flex-grow: 0;
+    `,
+  };
+}
 
 interface Props {
   nodes: NodeDatum[];
-  onClick: (itemData: ItemData) => void;
+  onSort: (sort: Config['sort']) => void;
+  sort?: Config['sort'];
+  sortable: boolean;
 }
 
 export const Legend = React.memo(function Legend(props: Props) {
-  const { nodes, onClick } = props;
+  const { nodes, onSort, sort, sortable } = props;
 
   const theme = useTheme();
+  const styles = useStyles(getStyles);
   const colorItems = getColorLegendItems(nodes, theme);
 
   return (
@@ -22,7 +38,26 @@ export const Legend = React.memo(function Legend(props: Props) {
       displayMode={LegendDisplayMode.List}
       placement={'right'}
       items={colorItems}
-      onLabelClick={(item) => onClick(item.data!)}
+      itemRenderer={(item) => {
+        return (
+          <>
+            <VizLegendListItem
+              item={item}
+              className={styles.item}
+              onLabelClick={(item) => {
+                if (sortable) {
+                  onSort({
+                    field: item.data!.field,
+                    ascending: item.data!.field === sort?.field ? !sort?.ascending : true,
+                  });
+                }
+              }}
+            />
+            {sortable &&
+              (sort?.field === item.data!.field ? <Icon name={sort!.ascending ? 'angle-up' : 'angle-down'} /> : '')}
+          </>
+        );
+      }}
     />
   );
 });

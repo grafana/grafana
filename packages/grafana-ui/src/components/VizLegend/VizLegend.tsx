@@ -17,11 +17,12 @@ export function VizLegend<T>({
   onSeriesColorChange,
   placement,
   className,
+  itemRenderer,
 }: LegendProps<T>) {
   switch (displayMode) {
     case LegendDisplayMode.Table:
       return (
-        <VizLegendTable
+        <VizLegendTable<T>
           className={className}
           items={items}
           placement={placement}
@@ -30,16 +31,18 @@ export function VizLegend<T>({
           onLabelClick={onLabelClick as any}
           onToggleSort={onToggleSort}
           onSeriesColorChange={onSeriesColorChange}
+          itemRenderer={itemRenderer}
         />
       );
     case LegendDisplayMode.List:
       return (
-        <VizLegendList
+        <VizLegendList<T>
           className={className}
           items={items}
           placement={placement}
           onLabelClick={onLabelClick as any}
           onSeriesColorChange={onSeriesColorChange}
+          itemRenderer={itemRenderer}
         />
       );
     default:
