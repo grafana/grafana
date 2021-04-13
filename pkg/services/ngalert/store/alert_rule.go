@@ -43,7 +43,7 @@ type RuleStore interface {
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
-	GetNamespaceUIDBySlug(string, int64, *models.SignedInUser) (string, error)
+	GetNamespaceUIDByTitle(string, int64, *models.SignedInUser) (string, error)
 	GetNamespaceByUID(string, int64, *models.SignedInUser) (string, error)
 	UpsertAlertRules([]UpsertRule) error
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
@@ -309,9 +309,9 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 }
 
 // GetNamespaceUIDBySlug is a handler for retrieving namespace UID by its name.
-func (st DBstore) GetNamespaceUIDBySlug(namespace string, orgID int64, user *models.SignedInUser) (string, error) {
+func (st DBstore) GetNamespaceUIDByTitle(namespace string, orgID int64, user *models.SignedInUser) (string, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
-	folder, err := s.GetFolderBySlug(namespace)
+	folder, err := s.GetFolderByTitle(namespace)
 	if err != nil {
 		return "", err
 	}
