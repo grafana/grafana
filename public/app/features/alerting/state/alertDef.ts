@@ -25,12 +25,20 @@ const alertStateSortScore = {
   paused: 5,
 };
 
+export enum EvalFunction {
+  'IsAbove' = 'gt',
+  'IsBelow' = 'lt',
+  'IsOutsideRange' = 'outside_range',
+  'IsWithinRange' = 'within_range',
+  'HasNoValue' = 'no_value',
+}
+
 const evalFunctions = [
-  { text: 'IS ABOVE', value: 'gt' },
-  { text: 'IS BELOW', value: 'lt' },
-  { text: 'IS OUTSIDE RANGE', value: 'outside_range' },
-  { text: 'IS WITHIN RANGE', value: 'within_range' },
-  { text: 'HAS NO VALUE', value: 'no_value' },
+  { value: EvalFunction.IsAbove, text: 'IS ABOVE' },
+  { value: EvalFunction.IsBelow, text: 'IS BELOW' },
+  { value: EvalFunction.IsOutsideRange, text: 'IS OUTSIDE RANGE' },
+  { value: EvalFunction.IsWithinRange, text: 'IS WITHIN RANGE' },
+  { value: EvalFunction.HasNoValue, text: 'HAS NO VALUE' },
 ];
 
 const evalOperators = [

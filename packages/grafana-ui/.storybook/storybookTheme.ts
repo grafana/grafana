@@ -9,7 +9,7 @@ const createTheme = (theme: GrafanaTheme) => {
     base: theme.name.includes('Light') ? 'light' : 'dark',
 
     colorPrimary: theme.v2.palette.primary.main,
-    colorSecondary: theme.v2.palette.secondary.main,
+    colorSecondary: theme.v2.palette.error.main,
 
     // UI
     appBg: theme.v2.palette.layer0,
@@ -31,9 +31,9 @@ const createTheme = (theme: GrafanaTheme) => {
     barBg: theme.v2.palette.layer1,
 
     // Form colors
-    inputBg: theme.v2.palette.formComponent.background,
-    inputBorder: theme.v2.palette.formComponent.border,
-    inputTextColor: theme.v2.palette.formComponent.text,
+    inputBg: theme.v2.components.form.background,
+    inputBorder: theme.v2.components.form.border,
+    inputTextColor: theme.v2.components.form.text,
     inputBorderRadius: theme.v2.shape.borderRadius(1),
 
     brandTitle: 'Grafana UI',
