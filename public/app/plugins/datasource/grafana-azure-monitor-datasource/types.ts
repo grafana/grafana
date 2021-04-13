@@ -3,6 +3,8 @@ import Datasource from './datasource';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
+export type AzureResultFormat = 'time_series' | 'table';
+
 export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
   ApplicationInsights = 'Application Insights',

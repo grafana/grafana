@@ -58,7 +58,7 @@ const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
 
   const selectedResourceNameValue = findOption(resourceNames, query.azureMonitor.resourceName);
   return (
-    <Field label="Resource Name">
+    <Field label="Resource name">
       <Select
         inputId="azure-monitor-metrics-resource-name-field"
         value={selectedResourceNameValue}

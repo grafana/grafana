@@ -65,7 +65,7 @@ const MetricNamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   const options = useMemo(() => [...metricNamespaces, variableOptionGroup], [metricNamespaces, variableOptionGroup]);
 
   return (
-    <Field label="Metric Namespace">
+    <Field label="Metric namespace">
       <Select
         inputId="azure-monitor-metrics-metric-namespace-field"
         value={findOption(metricNamespaces, query.azureMonitor.metricNamespace)}
