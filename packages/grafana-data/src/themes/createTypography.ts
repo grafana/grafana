@@ -59,7 +59,7 @@ export interface ThemeTypographyInput {
   htmlFontSize?: number;
 }
 
-const defaultFontFamily = '"Roboto", "Helvetica", "Arial", sans-serif';
+const defaultFontFamily = '"Inter", "Helvetica", "Arial", sans-serif';
 const defaultFontFamilyMonospace = "Menlo, Monaco, Consolas, 'Courier New', monospace";
 
 export function createTypography(palette: ThemePalette, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
