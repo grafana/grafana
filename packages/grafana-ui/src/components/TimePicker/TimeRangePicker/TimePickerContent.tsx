@@ -12,18 +12,16 @@ import { TimeRangeList } from './TimeRangeList';
 import { TimePickerFooter } from './TimePickerFooter';
 
 const getStyles = stylesFactory((theme: GrafanaTheme, isReversed, hideQuickRanges, isContainerTall) => {
-  const containerBorder = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
-
   return {
     container: css`
-      background: ${theme.colors.bodyBg};
-      box-shadow: 0px 0px 20px ${theme.colors.dropdownShadow};
+      background: ${theme.v2.palette.layer2};
+      box-shadow: ${theme.v2.shadows.z4};
       position: absolute;
       z-index: ${theme.zIndex.dropdown};
       width: 546px;
       top: 116%;
       border-radius: 2px;
-      border: 1px solid ${containerBorder};
+      border: 1px solid ${theme.v2.palette.border0};
       ${isReversed ? 'left' : 'right'}: 0;
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
@@ -37,14 +35,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isReversed, hideQuickRange
     leftSide: css`
       display: flex;
       flex-direction: column;
-      border-right: ${isReversed ? 'none' : `1px solid ${theme.colors.border1}`};
+      border-right: ${isReversed ? 'none' : `1px solid ${theme.v2.palette.divider}`};
       width: ${!hideQuickRanges ? '60%' : '100%'};
       overflow: hidden;
       order: ${isReversed ? 1 : 0};
     `,
     rightSide: css`
       width: 40% !important;
-      border-right: ${isReversed ? `1px solid ${theme.colors.border1}` : 'none'};
+      border-right: ${isReversed ? `1px solid ${theme.v2.palette.divider}` : 'none'};
 
       @media only screen and (max-width: ${theme.breakpoints.lg}) {
         width: 100% !important;
@@ -63,12 +61,11 @@ const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
       flex-direction: row;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid ${theme.colors.border1};
+      border-bottom: 1px solid ${theme.v2.palette.divider};
       padding: 7px 9px 7px 9px;
     `,
     body: css`
-      border-bottom: 1px solid ${theme.colors.border1};
-      box-shadow: inset 0px 2px 2px ${theme.colors.dropdownShadow};
+      border-bottom: 1px solid ${theme.v2.palette.divider};
     `,
     form: css`
       padding: 7px 9px 7px 9px;
@@ -97,11 +94,8 @@ const getFullScreenStyles = stylesFactory((theme: GrafanaTheme, hideQuickRanges?
 });
 
 const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
-  const formBackground = theme.isDark ? theme.palette.gray15 : theme.palette.gray98;
-
   return {
     container: css`
-      background-color: ${formBackground};
       padding: 12px;
       margin: 12px;
 
