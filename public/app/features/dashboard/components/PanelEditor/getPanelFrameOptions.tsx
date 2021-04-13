@@ -33,7 +33,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         title: 'Title',
         value: panel.title,
         popularRank: 1,
-        Component: function renderTitle() {
+        render: function renderTitle() {
           return (
             <Input
               id="PanelFrameTitle"
@@ -49,7 +49,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         title: 'Description',
         description: panel.description,
         value: panel.description,
-        Component: function renderDescription() {
+        render: function renderDescription() {
           return (
             <TextArea
               defaultValue={panel.description}
@@ -62,7 +62,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     .addItem(
       new OptionsPaneItemDescriptor({
         title: 'Transparent background',
-        Component: function renderTransparent() {
+        render: function renderTransparent() {
           return (
             <Switch
               value={panel.transparent}
@@ -81,7 +81,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: 'Panel links',
-          Component: function renderLinks() {
+          render: function renderLinks() {
             return (
               <DataLinksInlineEditor
                 links={panel.links}
@@ -105,7 +105,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             title: 'Repeat by variable',
             description:
               'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
-            Component: function renderRepeatOptions() {
+            render: function renderRepeatOptions() {
               return (
                 <RepeatRowSelect
                   repeat={panel.repeat}
@@ -121,7 +121,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           new OptionsPaneItemDescriptor({
             title: 'Repeat direction',
             showIf: () => !!panel.repeat,
-            Component: function renderRepeatOptions() {
+            render: function renderRepeatOptions() {
               const directionOptions = [
                 { label: 'Horizontal', value: 'h' },
                 { label: 'Vertical', value: 'v' },
@@ -141,7 +141,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           new OptionsPaneItemDescriptor({
             title: 'Max per row',
             showIf: () => Boolean(panel.repeat && panel.repeatDirection === 'h'),
-            Component: function renderOption() {
+            render: function renderOption() {
               const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
               return (
                 <Select
