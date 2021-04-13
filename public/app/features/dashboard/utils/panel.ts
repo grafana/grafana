@@ -19,6 +19,8 @@ import { DEPRECATED_PANELS, LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/con
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
+import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
+import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -66,6 +68,34 @@ export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
       props: {
         dashboard: dashboard,
         panel: panel,
+      },
+    })
+  );
+};
+
+export const addLibraryPanel = (dashboard: DashboardModel, panel: PanelModel) => {
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: AddLibraryPanelModal,
+      props: {
+        panel,
+        initialFolderId: dashboard.meta.folderId,
+        isOpen: true,
+      },
+    })
+  );
+};
+
+export const unlinkLibraryPanel = (panel: PanelModel) => {
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: UnlinkModal,
+      props: {
+        onConfirm: () => {
+          delete panel.libraryPanel;
+          panel.render();
+        },
+        isOpen: true,
       },
     })
   );

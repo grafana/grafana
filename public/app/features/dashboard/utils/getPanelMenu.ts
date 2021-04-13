@@ -1,7 +1,15 @@
 import { store } from 'app/store/store';
 import { AngularComponent, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { PanelMenuItem } from '@grafana/data';
-import { copyPanel, duplicatePanel, removePanel, sharePanel } from 'app/features/dashboard/utils/panel';
+import {
+  addLibraryPanel,
+  copyPanel,
+  duplicatePanel,
+  removePanel,
+  sharePanel,
+  unlinkLibraryPanel,
+} from 'app/features/dashboard/utils/panel';
+import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { contextSrv } from '../../../core/services/context_srv';
@@ -33,6 +41,16 @@ export function getPanelMenu(
   const onSharePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
+  };
+
+  const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
+    event.preventDefault();
+    addLibraryPanel(dashboard, panel);
+  };
+
+  const onUnlinkLibraryPanel = (event: React.MouseEvent<any>) => {
+    event.preventDefault();
+    unlinkLibraryPanel(panel);
   };
 
   const onInspectPanel = (tab?: string) => {
@@ -148,6 +166,18 @@ export function getPanelMenu(
       text: 'Copy',
       onClick: onCopyPanel,
     });
+
+    if (isPanelModelLibraryPanel(panel)) {
+      subMenu.push({
+        text: 'Unlink global panel',
+        onClick: onUnlinkLibraryPanel,
+      });
+    } else {
+      subMenu.push({
+        text: 'To global panel',
+        onClick: onAddLibraryPanel,
+      });
+    }
   }
 
   // add old angular panel options
