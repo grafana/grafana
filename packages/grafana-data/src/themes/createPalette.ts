@@ -36,6 +36,11 @@ export interface ThemePaletteBase<TColor> {
   border1: string;
   border2: string;
 
+  gradients: {
+    brandVertical: string;
+    brandHorizontal: string;
+  };
+
   action: {
     /** Used for selected menu item / select option */
     selected: string;
@@ -132,6 +137,11 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     disabledOpacity: 0.38,
   };
 
+  gradients = {
+    brandHorizontal: ' linear-gradient(270deg, #F55F3E 0%, #FF8833 100%);',
+    brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);',
+  };
+
   contrastThreshold = 3;
   hoverFactor = 0.15;
   tonalOffset = 0.15;
@@ -199,6 +209,11 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     disabledBackground: 'rgba(0,0,0,0.07)',
     disabledText: this.text.disabled,
     disabledOpacity: 0.38,
+  };
+
+  gradients = {
+    brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);',
+    brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
   };
 
   contrastThreshold = 3;
