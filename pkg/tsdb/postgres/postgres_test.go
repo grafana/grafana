@@ -152,7 +152,7 @@ func TestGenerateConnectionString(t *testing.T) {
 // devenv/README.md for setup instructions.
 func TestPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
-	runPostgresTests := false
+	runPostgresTests := true
 
 	if !sqlstore.IsTestDbPostgres() && !runPostgresTests {
 		t.Skip()
@@ -394,9 +394,6 @@ func TestPostgres(t *testing.T) {
 			frames, _ := queryResult.Dataframes.Decoded()
 
 			require.NoError(t, queryResult.Error)
-			require.Equal(t,
-				"SELECT floor(extract(epoch from time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
-				queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
 			require.Equal(t,
 				"SELECT floor(extract(epoch from time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 				frames[0].Meta.ExecutedQueryString)
@@ -884,9 +881,6 @@ func TestPostgres(t *testing.T) {
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Equal(t, 1, len(frames))
 
-			require.Equal(t,
-				"SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1",
-				queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
 			require.Equal(t,
 				"SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1",
 				frames[0].Meta.ExecutedQueryString)

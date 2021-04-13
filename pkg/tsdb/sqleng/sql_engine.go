@@ -758,7 +758,6 @@ func convertNullableFloat32ToEpochMs(origin *data.Field, newField *data.Field) {
 // to make native datetime types and epoch dates work in annotation and table queries.
 // func ConvertSqlTimeColumnToEpochMs(values plugins.DataRowValues, timeIndex int) {
 func ConvertSqlTimeColumnToEpochMs(frame *data.Frame, timeIndex int) error {
-	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<111111", timeIndex)
 	if timeIndex >= 0 && timeIndex < len(frame.Fields) {
 		origin := frame.Fields[timeIndex]
 		valueType := origin.Type()
@@ -795,7 +794,6 @@ func ConvertSqlTimeColumnToEpochMs(frame *data.Frame, timeIndex int) error {
 		case data.FieldTypeNullableFloat32:
 			convertNullableFloat32ToEpochMs(frame.Fields[timeIndex], newField)
 		default:
-			fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<2222222 %+v\n", valueType)
 			return fmt.Errorf("column type %s is not convertible to time.Time", valueType)
 		}
 		frame.Fields[timeIndex] = newField

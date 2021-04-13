@@ -32,7 +32,7 @@ import (
 var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	runMySQLTests := true
+	runMySQLTests := false
 
 	if !runMySQLTests {
 		t.Skip()
