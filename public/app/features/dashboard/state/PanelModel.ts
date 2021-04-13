@@ -578,10 +578,6 @@ function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
 }
 
-export function isLibraryPanel(panel: PanelModel): panel is PanelModel & Required<Pick<PanelModel, 'libraryPanel'>> {
-  return panel.libraryPanel !== undefined;
-}
-
 interface PanelOptionsCache {
   properties: any;
   fieldConfig: FieldConfigSource;
