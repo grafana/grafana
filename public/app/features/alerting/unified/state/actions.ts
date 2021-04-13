@@ -1,4 +1,6 @@
+import { AppEvents } from '@grafana/data';
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { appEvents } from 'app/core/core';
 import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkResult } from 'app/types';
 import { RuleLocation, RuleNamespace } from 'app/types/unified-alerting';
@@ -155,13 +157,13 @@ export const saveRuleFormAction = createAsyncThunk(
         // in case of system (cortex/loki)
         if (type === RuleFormType.system) {
           await saveLotexRule(values);
-
           // in case of grafana managed
         } else if (type === RuleFormType.threshold) {
           await saveGrafanaRule(values);
         } else {
           throw new Error('Unexpected rule form type');
         }
+        appEvents.emit(AppEvents.alertSuccess, ['Rule saved.']);
       })()
     )
 );

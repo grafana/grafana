@@ -66,7 +66,13 @@ export const AlertRuleForm: FC<Props> = () => {
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
 
   const submit = (values: RuleFormValues) => {
-    dispatch(saveRuleFormAction(values));
+    dispatch(
+      saveRuleFormAction({
+        ...values,
+        annotations: values.annotations.filter(({ key }) => !!key),
+        labels: values.labels.filter(({ key }) => !!key),
+      })
+    );
   };
 
   return (
