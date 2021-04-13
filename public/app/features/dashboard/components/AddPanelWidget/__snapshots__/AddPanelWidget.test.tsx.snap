@@ -2,20 +2,20 @@
 
 exports[`Render should render component 1`] = `
 <div
-  className="panel-container css-1sl7nld"
+  className="panel-container css-bopjp7"
 >
   <AddPanelWidgetHandle
     onCancel={[Function]}
     styles={
       Object {
-        "actionsRow": "css-txvz1e",
+        "actionsRow": "css-7gkft9",
         "actionsWrapper": "css-gxxmom",
         "backButton": "css-1cdxa9p",
-        "headerRow": "css-1ka09x",
+        "headerRow": "css-3sdqvi",
         "libraryPanelsWrapper": "css-18m13of",
         "noMargin": "css-u023fv",
         "panelSearchInput": "css-2ug8g3",
-        "wrapper": "css-1sl7nld",
+        "wrapper": "css-bopjp7",
       }
     }
   >
@@ -25,7 +25,7 @@ exports[`Render should render component 1`] = `
     className="css-gxxmom"
   >
     <div
-      className="css-txvz1e"
+      className="css-7gkft9"
     >
       <div
         aria-label="Add new panel"

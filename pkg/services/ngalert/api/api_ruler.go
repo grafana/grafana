@@ -211,6 +211,8 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule) apimodels.GettableExtended
 			RuleGroup:       r.RuleGroup,
 			NoDataState:     apimodels.NoDataState(r.NoDataState),
 			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
+			For:             r.For,
+			Annotations:     r.Annotations,
 		},
 	}
 }
@@ -225,6 +227,8 @@ func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtended
 			UID:          r.UID,
 			NoDataState:  apimodels.NoDataState(r.NoDataState),
 			ExecErrState: apimodels.ExecutionErrorState(r.ExecErrState),
+			For:          r.For,
+			Annotations:  r.Annotations,
 		},
 	}
 }

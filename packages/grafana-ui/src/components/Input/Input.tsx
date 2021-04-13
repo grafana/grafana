@@ -30,10 +30,6 @@ interface StyleDeps {
 }
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
-  const theme2 = theme.v2;
-  const borderRadius = theme2.shape.borderRadius(1);
-  const height = theme.v2.components.height.md;
-
   const prefixSuffixStaticWidth = '28px';
   const prefixSuffix = css`
     position: absolute;
@@ -48,7 +44,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     height: 100%;
     /* Min width specified for prefix/suffix classes used outside React component*/
     min-width: ${prefixSuffixStaticWidth};
-    color: ${theme2.palette.text.secondary};
+    color: ${theme.v2.palette.text.secondary};
   `;
 
   return {
@@ -57,14 +53,14 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css`
         label: input-wrapper;
         display: flex;
-        width: ${width ? `${theme2.spacing(width)}` : '100%'};
-        height: ${theme2.spacing(height)};
-        border-radius: ${borderRadius};
+        width: ${width ? `${theme.v2.spacing(width)}` : '100%'};
+        height: ${theme.v2.spacing(theme.v2.components.height.md)};
+        border-radius: ${theme.v2.shape.borderRadius()};
         &:hover {
           > .prefix,
           .suffix,
           .input {
-            border-color: ${invalid ? theme2.palette.error.border : theme2.palette.primary.border};
+            border-color: ${invalid ? theme.v2.palette.error.border : theme.v2.palette.primary.border};
           }
 
           // only show number buttons on hover
@@ -141,14 +137,14 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         position: relative;
         z-index: 0;
         flex-grow: 1;
-        border-radius: ${borderRadius};
+        border-radius: ${theme.v2.shape.borderRadius()};
         height: 100%;
         width: 100%;
       `
     ),
     inputDisabled: css`
-      background-color: ${theme2.palette.formComponent.disabledBackground};
-      color: ${theme2.palette.text.disabled};
+      background-color: ${theme.v2.palette.action.disabledBackground};
+      color: ${theme.v2.palette.action.disabledText};
     `,
     addon: css`
       label: input-addon;
@@ -185,8 +181,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       prefixSuffix,
       css`
         label: input-prefix;
-        padding-left: ${theme2.spacing(1)};
-        padding-right: ${theme2.spacing(0.5)};
+        padding-left: ${theme.v2.spacing(1)};
+        padding-right: ${theme.v2.spacing(0.5)};
         border-right: none;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
@@ -196,8 +192,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       prefixSuffix,
       css`
         label: input-suffix;
-        padding-left: ${theme2.spacing(1)};
-        padding-right: ${theme2.spacing(0.5)};
+        padding-left: ${theme.v2.spacing(1)};
+        padding-right: ${theme.v2.spacing(0.5)};
         margin-bottom: -2px;
         border-left: none;
         border-top-left-radius: 0;
@@ -207,7 +203,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     ),
     loadingIndicator: css`
       & + * {
-        margin-left: ${theme2.spacing(0.5)};
+        margin-left: ${theme.v2.spacing(0.5)};
       }
     `,
   };

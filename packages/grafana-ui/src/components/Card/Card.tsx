@@ -136,43 +136,28 @@ export const Card: CardInterface = ({
   );
 };
 
-/**
- * @public
- */
-export const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
-  return css`
-    display: flex;
-    width: 100%;
-    color: ${theme.colors.textStrong};
-    background: ${theme.colors.bg2};
-    border-radius: ${theme.border.radius.sm};
-    position: relative;
-    pointer-events: ${disabled ? 'none' : 'auto'};
-    margin-bottom: ${theme.spacing.sm};
+const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
+  return css({
+    display: 'flex',
+    width: '100%',
+    background: theme.v2.palette.layer2,
+    borderRadius: theme.v2.shape.borderRadius(),
+    position: 'relative',
+    pointerEvents: disabled ? 'none' : 'auto',
+    marginBottom: theme.v2.spacing(1),
+    transition: theme.v2.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+      duration: theme.v2.transitions.duration.short,
+    }),
 
-    &::after {
-      content: '';
-      display: ${disabled ? 'block' : 'none'};
-      position: absolute;
-      top: 1px;
-      left: 1px;
-      right: 1px;
-      bottom: 1px;
-      background: linear-gradient(180deg, rgba(75, 79, 84, 0.5) 0%, rgba(82, 84, 92, 0.5) 100%);
-      width: calc(100% - 2px);
-      height: calc(100% - 2px);
-      border-radius: ${theme.border.radius.sm};
-    }
-
-    &:hover {
-      background: ${disableHover ? theme.colors.bg2 : styleMixins.hoverColor(theme.colors.bg2, theme)};
-      cursor: ${disableHover ? 'default' : 'pointer'};
-    }
-
-    &:focus {
-      ${styleMixins.focusCss(theme)};
-    }
-  `;
+    ...(!disableHover && {
+      '&:hover': {
+        background: theme.v2.palette.getHoverColor(theme.v2.palette.layer2, 0.03),
+        cursor: 'pointer',
+        zIndex: 1,
+      },
+      '&:focus': styleMixins.getFocusStyles(theme.v2),
+    }),
+  });
 });
 
 /**
