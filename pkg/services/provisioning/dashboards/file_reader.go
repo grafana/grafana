@@ -206,7 +206,6 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 	}
 
 	provisionedData, alreadyProvisioned := provisionedDashboardRefs[path]
-	upToDate := alreadyProvisioned && provisionedData.Updated >= resolvedFileInfo.ModTime().Unix()
 
 	jsonFile, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderID)
 	if err != nil {
@@ -214,8 +213,9 @@ func (fr *FileReader) saveDashboard(path string, folderID int64, fileInfo os.Fil
 		return provisioningMetadata, nil
 	}
 
-	if provisionedData != nil && jsonFile.checkSum == provisionedData.CheckSum {
-		upToDate = true
+	upToDate := alreadyProvisioned
+	if provisionedData != nil {
+		upToDate = jsonFile.checkSum == provisionedData.CheckSum
 	}
 
 	// keeps track of which UIDs and titles we have already provisioned
