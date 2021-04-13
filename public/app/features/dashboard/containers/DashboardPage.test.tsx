@@ -8,6 +8,7 @@ import { notifyApp } from 'app/core/actions';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { selectors } from '@grafana/e2e-selectors';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { getTheme } from '@grafana/ui';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 
@@ -67,6 +68,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           cancelVariables: jest.fn(),
           templateVarsChangedInUrl: jest.fn(),
           dashboard: null,
+          theme: getTheme(),
         };
 
         Object.assign(props, propOverrides);

@@ -1,10 +1,21 @@
 import $ from 'jquery';
 import React, { MouseEvent, PureComponent } from 'react';
+import { css } from 'emotion';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { getLegacyAngularInjector, locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  CustomScrollbar,
+  HorizontalGroup,
+  Spinner,
+  stylesFactory,
+  withTheme,
+  Themeable,
+  VerticalGroup,
+} from '@grafana/ui';
 
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -26,7 +37,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { UrlQueryValue } from '@grafana/data';
+import { GrafanaTheme, UrlQueryValue } from '@grafana/data';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -47,7 +58,9 @@ type DashboardPageRouteSearchParams = {
   refresh?: string;
 };
 
-export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
+export interface Props
+  extends Themeable,
+    GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
   dashboard: DashboardModel | null;
@@ -69,7 +82,7 @@ export interface State {
   showLoadingState: boolean;
 }
 
-export class DashboardPage extends PureComponent<Props, State> {
+export class UnthemedDashboardPage extends PureComponent<Props, State> {
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
 
@@ -269,10 +282,10 @@ export class DashboardPage extends PureComponent<Props, State> {
     locationService.push('/');
   };
 
-  renderSlowInitState() {
+  renderSlowInitState(dashboardLoadingstyle: string, dashboardLoadingTextStyle: string) {
     return (
-      <div className="dashboard-loading">
-        <div className="dashboard-loading__text">
+      <div className={dashboardLoadingstyle}>
+        <div className={dashboardLoadingTextStyle}>
           <VerticalGroup spacing="md">
             <HorizontalGroup align="center" justify="center" spacing="xs">
               <Spinner inline={true} /> {this.props.initPhase}
@@ -288,7 +301,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     );
   }
 
-  renderInitFailedState() {
+  renderInitFailedState(dashboardLoadingstyle: string) {
     const { initError } = this.props;
 
     if (!initError) {
@@ -296,7 +309,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     }
 
     return (
-      <div className="dashboard-loading">
+      <div className={dashboardLoadingstyle}>
         <Alert severity={AppNotificationSeverity.Error} title={initError.message}>
           {getMessageFromError(initError.error)}
         </Alert>
@@ -324,12 +337,13 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, isInitSlow, initError, isPanelEditorOpen, queryParams } = this.props;
+    const { dashboard, isInitSlow, initError, isPanelEditorOpen, queryParams, theme } = this.props;
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
+    const styles = getStyles(theme);
 
     if (!dashboard) {
       if (isInitSlow) {
-        return this.renderSlowInitState();
+        return this.renderSlowInitState(styles.dashboardLoading, styles.dashboardLoadingText);
       }
 
       return null;
@@ -341,7 +355,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     const kioskMode = getKioskMode(queryParams.kiosk);
 
     return (
-      <div className="dashboard-container">
+      <div className={styles.dashboardContainer}>
         {kioskMode !== KioskMode.Full && (
           <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
             <DashNav
@@ -354,7 +368,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           </div>
         )}
 
-        <div className="dashboard-scroll">
+        <div className={styles.dashboardScroll}>
           <CustomScrollbar
             autoHeightMin="100%"
             setScrollTop={this.setScrollTop}
@@ -362,8 +376,8 @@ export class DashboardPage extends PureComponent<Props, State> {
             hideHorizontalTrack={true}
             updateAfterMountMs={500}
           >
-            <div className="dashboard-content">
-              {initError && this.renderInitFailedState()}
+            <div className={styles.dashboardContent}>
+              {initError && this.renderInitFailedState(styles.dashboardLoading)}
               {!editPanel && kioskMode === KioskMode.Off && (
                 <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
@@ -405,4 +419,44 @@ const mapDispatchToProps = {
   templateVarsChangedInUrl,
 };
 
+/*
+ * Styles
+ */
+export const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    dashboardContainer: css`
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex: 1 1 0;
+      flex-direction: column;
+    `,
+    dashboardLoading: css`
+      height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `,
+    dashboardLoadingText: css`
+      font-size: ${theme.typography.size.lg};
+    `,
+    dashboardScroll: css`
+      width: 100%;
+      flex-grow: 1;
+      min-height: 0;
+      display: flex;
+    `,
+    dashboardContent: css`
+      padding: ${theme.spacing.md};
+      flex-basis: 100%;
+      flex-grow: 1;
+    `,
+  };
+});
+
+export const DashboardPage = withTheme(UnthemedDashboardPage);
+DashboardPage.displayName = 'DashboardPage';
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));
