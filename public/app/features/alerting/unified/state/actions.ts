@@ -3,13 +3,8 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { appEvents } from 'app/core/core';
 import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkResult } from 'app/types';
-import { RuleIdentifier, RuleLocation, RuleNamespace } from 'app/types/unified-alerting';
-import {
-  RulerGrafanaRuleDTO,
-  RulerRuleDTO,
-  RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
-} from 'app/types/unified-alerting-dto';
+import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
+import { RulerGrafanaRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { fetchAlertManagerConfig, fetchSilences } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -75,9 +70,7 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
   };
 }
 
-async function findExistingRule(
-  ruleIdentifier: RuleIdentifier
-): Promise<{ location: RuleLocation; group: RulerRuleGroupDTO; rule: RulerRuleDTO } | null> {
+async function findExistingRule(ruleIdentifier: RuleIdentifier): Promise<RuleWithLocation | null> {
   if (isGrafanaRuleIdentifier(ruleIdentifier)) {
     const namespaces = await fetchRulerRules(GRAFANA_RULES_SOURCE_NAME);
     // find namespace and group that contains the uid for the rule
@@ -87,11 +80,8 @@ async function findExistingRule(
         if (rule) {
           return {
             group,
-            location: {
-              ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-              namespace: namespace,
-              groupName: group.name,
-            },
+            ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+            namespace: namespace,
             rule,
           };
         }
@@ -105,7 +95,8 @@ async function findExistingRule(
       if (rule) {
         return {
           group,
-          location: { ruleSourceName, namespace, groupName },
+          ruleSourceName,
+          namespace,
           rule,
         };
       }
@@ -113,6 +104,12 @@ async function findExistingRule(
   }
   return null;
 }
+
+export const fetchExistingRule = createAsyncThunk(
+  'unifiedalerting/fetchExistingRule',
+  (ruleIdentifier: RuleIdentifier): Promise<RuleWithLocation | null> =>
+    withSerializedError(findExistingRule(ruleIdentifier))
+);
 
 export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<void> {
   /*
@@ -124,19 +121,15 @@ export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<vo
     if (!ruleWithLocation) {
       throw new Error('Rule not found.');
     }
-    const {
-      location: { ruleSourceName, namespace, groupName },
-      group,
-      rule,
-    } = ruleWithLocation;
+    const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
     // in case of GRAFANA
     if (isGrafanaRulesSource(ruleSourceName)) {
-      await deleteRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, groupName);
+      await deleteRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, group.name);
       // in case of CLOUD
     } else {
       // it was the last rule, delete the entire group
       if (group.rules.length === 1) {
-        await deleteRulerRulesGroup(ruleSourceName, namespace, groupName);
+        await deleteRulerRulesGroup(ruleSourceName, namespace, group.name);
       } else {
         // post the group with rule removed
         await setRulerRuleGroup(ruleSourceName, namespace, {
