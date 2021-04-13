@@ -3,8 +3,13 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { appEvents } from 'app/core/core';
 import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkResult } from 'app/types';
-import { RuleLocation, RuleNamespace } from 'app/types/unified-alerting';
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RuleIdentifier, RuleLocation, RuleNamespace } from 'app/types/unified-alerting';
+import {
+  RulerGrafanaRuleDTO,
+  RulerRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 import { fetchAlertManagerConfig, fetchSilences } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -15,10 +20,10 @@ import {
   setRulerRuleGroup,
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
-import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../utils/datasource';
+import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { withSerializedError } from '../utils/redux';
 import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
-import { hashRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
+import { hashRulerRule, isGrafanaRuleIdentifier, isRulerNotSupportedResponse } from '../utils/rules';
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
@@ -70,32 +75,77 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
   };
 }
 
-export function deleteRuleAction(ruleLocation: RuleLocation): ThunkResult<void> {
+async function findExistingRule(
+  ruleIdentifier: RuleIdentifier
+): Promise<{ location: RuleLocation; group: RulerRuleGroupDTO; rule: RulerRuleDTO } | null> {
+  if (isGrafanaRuleIdentifier(ruleIdentifier)) {
+    const namespaces = await fetchRulerRules(GRAFANA_RULES_SOURCE_NAME);
+    // find namespace and group that contains the uid for the rule
+    for (const [namespace, groups] of Object.entries(namespaces)) {
+      for (const group of groups) {
+        const rule = group.rules.find((rule: RulerGrafanaRuleDTO) => rule.grafana_alert?.uid === ruleIdentifier.uid);
+        if (rule) {
+          return {
+            group,
+            location: {
+              ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+              namespace: namespace,
+              groupName: group.name,
+            },
+            rule,
+          };
+        }
+      }
+    }
+  } else {
+    const { ruleSourceName, namespace, groupName, ruleHash } = ruleIdentifier;
+    const group = await fetchRulerRulesGroup(ruleSourceName, namespace, groupName);
+    if (group) {
+      const rule = group.rules.find((rule) => hashRulerRule(rule) === ruleHash);
+      if (rule) {
+        return {
+          group,
+          location: { ruleSourceName, namespace, groupName },
+          rule,
+        };
+      }
+    }
+  }
+  return null;
+}
+
+export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<void> {
   /*
    * fetch the rules group from backend, delete group if it is found and+
    * reload ruler rules
    */
   return async (dispatch) => {
-    const { namespace, groupName, ruleSourceName, ruleHash } = ruleLocation;
-    //const group = await fetchRulerRulesGroup(ruleSourceName, namespace, groupName);
-    const groups = await fetchRulerRulesNamespace(ruleSourceName, namespace);
-    const group = groups.find((group) => group.name === groupName);
-    if (!group) {
-      throw new Error('Failed to delete rule: group not found.');
+    const ruleWithLocation = await findExistingRule(ruleIdentifier);
+    if (!ruleWithLocation) {
+      throw new Error('Rule not found.');
     }
-    const existingRule = group.rules.find((rule) => hashRulerRule(rule) === ruleHash);
-    if (!existingRule) {
-      throw new Error('Failed to delete rule: group not found.');
-    }
-    // for cloud datasources, delete group if this rule is the last rule
-    if (group.rules.length === 1 && isCloudRulesSource(ruleSourceName)) {
-      await deleteRulerRulesGroup(ruleSourceName, namespace, groupName);
+    const {
+      location: { ruleSourceName, namespace, groupName },
+      group,
+      rule,
+    } = ruleWithLocation;
+    // in case of GRAFANA
+    if (isGrafanaRulesSource(ruleSourceName)) {
+      await deleteRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, groupName);
+      // in case of CLOUD
     } else {
-      await setRulerRuleGroup(ruleSourceName, namespace, {
-        ...group,
-        rules: group.rules.filter((rule) => rule !== existingRule),
-      });
+      // it was the last rule, delete the entire group
+      if (group.rules.length === 1) {
+        await deleteRulerRulesGroup(ruleSourceName, namespace, groupName);
+      } else {
+        // post the group with rule removed
+        await setRulerRuleGroup(ruleSourceName, namespace, {
+          ...group,
+          rules: group.rules.filter((r) => r !== rule),
+        });
+      }
     }
+    // refetch rules for this rules source
     return dispatch(fetchRulerRulesAction(ruleSourceName));
   };
 }

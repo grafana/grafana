@@ -94,6 +94,7 @@ export enum GrafanaAlertState {
 export interface GrafanaQueryModel {
   datasource: string;
   datasourceUid: string;
+
   refId: string;
   [key: string]: any;
 }
@@ -107,7 +108,6 @@ export interface GrafanaQuery {
   };
   model: GrafanaQueryModel;
 }
-
 export interface GrafanaRuleDefinition {
   uid?: string;
   title: string;
