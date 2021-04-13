@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -13,7 +13,11 @@ import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 //import { locationService } from '@grafana/runtime';
 import { RuleFormValues } from '../../types/rule-form';
 import { SAMPLE_QUERIES } from '../../mocks/grafana-queries';
-import { useSaveRuleForm } from '../../hooks/useSaveRuleForm';
+import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { initialAsyncRequestState } from '../../utils/redux';
+import { useDispatch } from 'react-redux';
+import { saveRuleFormAction } from '../../state/actions';
+import { cleanUpAction } from 'app/core/actions/cleanUp';
 
 type Props = {};
 
@@ -39,6 +43,13 @@ const defaultValues: RuleFormValues = Object.freeze({
 
 export const AlertRuleForm: FC<Props> = () => {
   const styles = useStyles(getStyles);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    return () => {
+      dispatch(cleanUpAction({ stateSelector: (state) => state.unifiedAlerting.ruleForm }));
+    };
+  }, [dispatch]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -52,30 +63,34 @@ export const AlertRuleForm: FC<Props> = () => {
 
   const showStep2 = Boolean(dataSourceName && type);
 
-  const submit = useSaveRuleForm();
+  const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
+
+  const submit = (values: RuleFormValues) => {
+    dispatch(saveRuleFormAction(values));
+  };
 
   return (
     <FormContext {...formAPI}>
-      <form onSubmit={handleSubmit(submit.execute)} className={styles.form}>
+      <form onSubmit={handleSubmit(submit)} className={styles.form}>
         <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
-          <ToolbarButton variant="default" disabled={submit.loading}>
+          <ToolbarButton variant="default" disabled={submitState.loading}>
             Cancel
           </ToolbarButton>
-          <ToolbarButton variant="primary" type="submit" disabled={submit.loading}>
-            {submit.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
+          <ToolbarButton variant="primary" type="submit" disabled={submitState.loading}>
+            {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
             Save
           </ToolbarButton>
-          <ToolbarButton variant="primary" disabled={submit.loading}>
-            {submit.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
+          <ToolbarButton variant="primary" disabled={submitState.loading}>
+            {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
             Save and exit
           </ToolbarButton>
         </PageToolbar>
         <div className={styles.contentOutter}>
           <CustomScrollbar autoHeightMin="100%">
             <div className={styles.contentInner}>
-              {submit.error && (
+              {submitState.error && (
                 <Alert severity="error" title="Error saving rule">
-                  {submit.error.message || (submit.error as any)?.data?.message || String(submit.error)}
+                  {submitState.error.message || (submitState.error as any)?.data?.message || String(submitState.error)}
                 </Alert>
               )}
               <AlertTypeStep />
