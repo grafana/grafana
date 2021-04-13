@@ -21,83 +21,91 @@ export function useNodeLimit(
     }
 
     if (config.gridLayout) {
-      let start = 0;
-      let stop = limit;
-      let markers = nodes.length > limit ? [{ node: nodes[limit], count: nodes.length - limit }] : [];
-
-      if (root) {
-        markers = [];
-        const index = nodes.indexOf(root);
-        const prevLimit = Math.floor(limit / 2);
-        let afterLimit = prevLimit;
-        start = index - prevLimit;
-        if (start < 0) {
-          afterLimit += Math.abs(start);
-          start = 0;
-        }
-        stop = index + afterLimit + 1;
-
-        if (stop > nodes.length) {
-          if (start > 0) {
-            start = Math.max(0, start - (stop - nodes.length));
-          }
-          stop = nodes.length;
-        }
-
-        if (start > 0) {
-          markers.push({ node: nodes[start - 1], count: start });
-        }
-
-        if (stop < nodes.length) {
-          markers.push({ node: nodes[stop], count: nodes.length - stop });
-        }
-      }
-
-      return {
-        nodes: nodes.slice(start, stop),
-        edges,
-        markers,
-      };
+      return limitGridLayout(nodes, edges, limit, root);
     }
 
-    const edgesMap = edges.reduce<{ [id: string]: EdgeDatumLayout[] }>((acc, e) => {
-      return {
-        ...acc,
-        [e.source.id]: [...(acc[e.source.id] || []), e],
-        [e.target.id]: [...(acc[e.target.id] || []), e],
-      };
-    }, {});
-
-    const nodesMap = nodes.reduce((acc, node) => ({ ...acc, [node.id]: node }), {} as Record<string, NodeDatum>);
-
-    let roots;
-    if (root) {
-      roots = [root];
-    } else {
-      roots = nodes.filter((n) => n.incoming === 0);
-      // TODO: same code as layout
-      if (!roots.length) {
-        roots = [nodes[0]];
-      }
-    }
-
-    const { visibleNodes, markers } = collectVisibleNodes(limit, roots, nodesMap, edgesMap);
-    const markersWithStats = collectMarkerStats(markers, visibleNodes, nodesMap, edgesMap);
-
-    const markersMap = fromPairs(markersWithStats.map((m) => [m.node.id, m]));
-
-    // Show all edges between visible nodes or placeholder markers
-    const visibleEdges = edges.filter(
-      (e) =>
-        (visibleNodes[e.source.id] || markersMap[e.source.id]) && (visibleNodes[e.target.id] || markersMap[e.target.id])
-    );
-
-    return {
-      nodes: Object.values(visibleNodes),
-      edges: visibleEdges,
-      markers: markersWithStats,
-    };
+    return limitGraphLayout(nodes, edges, limit, root);
   }, [edges, limit, nodes, root, config.gridLayout]);
+}
+
+function limitGraphLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: number, root?: NodeDatum) {
+  const edgesMap = edges.reduce<{ [id: string]: EdgeDatumLayout[] }>((acc, e) => {
+    return {
+      ...acc,
+      [e.source.id]: [...(acc[e.source.id] || []), e],
+      [e.target.id]: [...(acc[e.target.id] || []), e],
+    };
+  }, {});
+
+  const nodesMap = nodes.reduce((acc, node) => ({ ...acc, [node.id]: node }), {} as Record<string, NodeDatum>);
+
+  let roots;
+  if (root) {
+    roots = [root];
+  } else {
+    roots = nodes.filter((n) => n.incoming === 0);
+    // TODO: same code as layout
+    if (!roots.length) {
+      roots = [nodes[0]];
+    }
+  }
+
+  const { visibleNodes, markers } = collectVisibleNodes(limit, roots, nodesMap, edgesMap);
+  const markersWithStats = collectMarkerStats(markers, visibleNodes, nodesMap, edgesMap);
+
+  const markersMap = fromPairs(markersWithStats.map((m) => [m.node.id, m]));
+
+  // Show all edges between visible nodes or placeholder markers
+  const visibleEdges = edges.filter(
+    (e) =>
+      (visibleNodes[e.source.id] || markersMap[e.source.id]) && (visibleNodes[e.target.id] || markersMap[e.target.id])
+  );
+
+  return {
+    nodes: Object.values(visibleNodes),
+    edges: visibleEdges,
+    markers: markersWithStats,
+  };
+}
+
+function limitGridLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: number, root?: NodeDatum) {
+  let start = 0;
+  let stop = limit;
+  let markers = nodes.length > limit ? [{ node: nodes[limit], count: nodes.length - limit }] : [];
+
+  if (root) {
+    markers = [];
+    const index = nodes.indexOf(root);
+    const prevLimit = Math.floor(limit / 2);
+    let afterLimit = prevLimit;
+    start = index - prevLimit;
+    if (start < 0) {
+      afterLimit += Math.abs(start);
+      start = 0;
+    }
+    stop = index + afterLimit + 1;
+
+    if (stop > nodes.length) {
+      if (start > 0) {
+        start = Math.max(0, start - (stop - nodes.length));
+      }
+      stop = nodes.length;
+    }
+
+    if (start > 0) {
+      markers.push({ node: nodes[start - 1], count: start });
+    }
+
+    if (stop < nodes.length) {
+      markers.push({ node: nodes[stop], count: nodes.length - stop });
+    }
+  }
+
+  return {
+    nodes: nodes.slice(start, stop),
+    edges,
+    markers,
+  };
 }
 
 /**
