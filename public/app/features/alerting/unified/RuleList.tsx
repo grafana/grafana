@@ -121,14 +121,16 @@ export const RuleList: FC = () => {
           ))}
         </InfoBox>
       )}
-      <RulesFilter />
       {!showNewAlertSplash && (
-        <div className={styles.buttonsContainer}>
-          <div />
-          <a href="/alerting/new">
-            <Button icon="plus">New alert rule</Button>
-          </a>
-        </div>
+        <>
+          <RulesFilter />
+          <div className={styles.buttonsContainer}>
+            <div />
+            <a href="/alerting/new">
+              <Button icon="plus">New alert rule</Button>
+            </a>
+          </div>
+        </>
       )}
       {showNewAlertSplash && <NoRulesSplash />}
       {haveResults && <ThresholdRules namespaces={thresholdNamespaces} />}
