@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
@@ -136,7 +135,6 @@ var converterList = []sqlutil.StringConverter{
 		Replacer: &sqlutil.StringFieldReplacer{
 			OutputFieldType: data.FieldTypeNullableFloat64,
 			ReplaceFunc: func(in *string) (interface{}, error) {
-				spew.Dump(in)
 				if in == nil {
 					return nil, nil
 				}
@@ -156,7 +154,6 @@ var converterList = []sqlutil.StringConverter{
 		Replacer: &sqlutil.StringFieldReplacer{
 			OutputFieldType: data.FieldTypeNullableFloat64,
 			ReplaceFunc: func(in *string) (interface{}, error) {
-				spew.Dump(in)
 				if in == nil {
 					return nil, nil
 				}
@@ -176,7 +173,6 @@ var converterList = []sqlutil.StringConverter{
 		Replacer: &sqlutil.StringFieldReplacer{
 			OutputFieldType: data.FieldTypeNullableFloat64,
 			ReplaceFunc: func(in *string) (interface{}, error) {
-				spew.Dump(in)
 				if in == nil {
 					return nil, nil
 				}
@@ -196,7 +192,6 @@ var converterList = []sqlutil.StringConverter{
 		Replacer: &sqlutil.StringFieldReplacer{
 			OutputFieldType: data.FieldTypeNullableString,
 			ReplaceFunc: func(in *string) (interface{}, error) {
-				spew.Dump(in)
 				if in == nil {
 					return nil, nil
 				}

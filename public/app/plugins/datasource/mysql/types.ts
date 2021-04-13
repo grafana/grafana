@@ -19,6 +19,6 @@ export type ResultFormat = 'time_series' | 'table';
 
 export interface MySQLQuery extends DataQuery {
   alias?: string;
-  format?: any;
+  format?: ResultFormat;
   rawSql?: any;
 }

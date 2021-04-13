@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import { MysqlMetricFindValue } from './types';
 
 interface TableResponse extends Record<string, any> {
   type: string;
@@ -53,76 +52,6 @@ export default class ResponseParser {
     return { data: data };
   }
 
-  // get the list of template variables
-  parseMetricFindQueryResult(refId: string, results: any): MysqlMetricFindValue[] {
-    if (!results || results.data.length === 0) {
-      return [];
-    }
-
-    console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<', results.data.results[refId]);
-
-    const columns = results.data.results[refId].dataframes[0].fields;
-    const frame = results.data.results[refId].dataframes[0];
-    const textColIndex = this.findColIndex(columns, '__text');
-    const valueColIndex = this.findColIndex(columns, '__value');
-
-    if (columns.length === 2 && textColIndex !== -1 && valueColIndex !== -1) {
-      return this.transformToKeyValueList(frame, textColIndex, valueColIndex);
-    }
-
-    return this.transformToSimpleList(frame);
-  }
-
-  transformToKeyValueList(frame: any, textColIndex: number, valueColIndex: number) {
-    const res = [];
-
-    for (let i = 0; i < frame.length; i++) {
-      if (!this.containsKey(res, frame.fields[textColIndex][i])) {
-        res.push({
-          text: frame.fields[textColIndex][i],
-          value: frame.fields[valueColIndex][i],
-        });
-      }
-    }
-
-    return res;
-  }
-
-  transformToSimpleList(frame: any) {
-    const res = [];
-
-    for (let i = 0; i < frame.length; i++) {
-      for (let j = 0; j < frame.fields.length; j++) {
-        res.push(frame.fields[j][i]);
-      }
-    }
-
-    const unique = Array.from(new Set(res));
-
-    return _.map(unique, (value) => {
-      return { text: value };
-    });
-  }
-
-  findColIndex(columns: any[], colName: string) {
-    for (let i = 0; i < columns.length; i++) {
-      if (columns[i].name === colName) {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
-  containsKey(res: any[], key: any) {
-    for (let i = 0; i < res.length; i++) {
-      if (res[i].name === key) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   transformAnnotationResponse(options: any, data: any) {
     const table = data.data.results[options.annotation.name].tables[0];
 
@@ -166,7 +95,6 @@ export default class ResponseParser {
         tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
       });
     }
-
     return list;
   }
 }

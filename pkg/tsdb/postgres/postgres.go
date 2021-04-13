@@ -115,7 +115,6 @@ func (s *PostgresService) generateConnectionString(datasource *models.DataSource
 	connStr += fmt.Sprintf(" sslmode='%s'", escape(tlsSettings.Mode))
 
 	// Attach root certificate if provided
-	// Attach root certificate if provided
 	if tlsSettings.RootCertFile != "" {
 		s.logger.Debug("Setting server root certificate", "tlsRootCert", tlsSettings.RootCertFile)
 		connStr += fmt.Sprintf(" sslrootcert='%s'", escape(tlsSettings.RootCertFile))
@@ -138,7 +137,6 @@ type postgresQueryResultTransformer struct {
 }
 
 func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {
-	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", strings.ToLower(err.Error()))
 	return err
 }
 
