@@ -27,7 +27,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
             // Query strings can match alert name, label keys, and label values
             if (filters.queryString) {
               const normalizedQueryString = filters.queryString.toLocaleLowerCase();
-              const doesNameContainsQueryString = rule.name.toLocaleLowerCase().includes(normalizedQueryString);
+              const doesNameContainsQueryString = rule.name?.toLocaleLowerCase().includes(normalizedQueryString);
 
               const doLabelsContainQueryString = Object.entries(rule.labels || {}).some(
                 ([key, value]) =>
