@@ -28,7 +28,8 @@ func (api *API) conditionEvalOldEndpoint(c *models.ReqContext) response.Response
 	if err != nil {
 		return response.Error(400, "Failed to translate alert conditions", err)
 	}
-	if err := api.validateCondition(*evalCond, c.SignedInUser, c.SkipCache); err != nil {
+
+	if err := validateCondition(*evalCond, c.SignedInUser, c.SkipCache, api.DatasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 	//now := cmd.Now
@@ -70,7 +71,8 @@ func (api *API) conditionEvalOldEndpointByID(c *models.ReqContext) response.Resp
 	if err != nil {
 		return response.Error(400, "Failed to translate alert conditions", err)
 	}
-	if err := api.validateCondition(*evalCond, c.SignedInUser, c.SkipCache); err != nil {
+
+	if err := validateCondition(*evalCond, c.SignedInUser, c.SkipCache, api.DatasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 	//now := cmd.Now
