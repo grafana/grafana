@@ -32,7 +32,7 @@ import (
 var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	runMySQLTests := false
+	runMySQLTests := true
 
 	if !runMySQLTests {
 		t.Skip()
@@ -351,7 +351,6 @@ func TestMSSQL(t *testing.T) {
 				require.Equal(t, 1, len(frames))
 
 				require.NoError(t, queryResult.Error)
-				require.Equal(t, "SELECT FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 ORDER BY 1", queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
 				require.Equal(t, "SELECT FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 ORDER BY 1", frames[0].Meta.ExecutedQueryString)
 			})
 		})
@@ -745,7 +744,6 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 1, len(frames))
 			require.NoError(t, queryResult.Error)
-			require.Equal(t, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1", queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
 			require.Equal(t, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1", frames[0].Meta.ExecutedQueryString)
 		})
 

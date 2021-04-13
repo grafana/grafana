@@ -226,6 +226,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			// Convert row.Rows to dataframe
 			myCs := e.queryResultTransformer.GetConverterList()
 			frame, _, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
+
 			if err != nil {
 				errAppendDebug("db query error", err)
 				return
@@ -240,10 +241,11 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			}
 
 			if qm.timeIndex != -1 {
-				err = ConvertSqlTimeColumnToEpochMs(frame, qm.timeIndex)
-				errAppendDebug("db convert time column failed", err)
-				ch <- queryResult
-				return
+				if err := ConvertSqlTimeColumnToEpochMs(frame, qm.timeIndex); err != nil {
+					errAppendDebug("db convert time column failed", err)
+					ch <- queryResult
+					return
+				}
 			}
 
 			if qm.Format == DataQueryFormatSeries {
@@ -290,8 +292,6 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 					}
 				}
 			}
-			content, _ := frame.StringTable(-1, -1)
-			fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<", content)
 
 			frames = append(frames, frame)
 			queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
@@ -758,6 +758,7 @@ func convertNullableFloat32ToEpochMs(origin *data.Field, newField *data.Field) {
 // to make native datetime types and epoch dates work in annotation and table queries.
 // func ConvertSqlTimeColumnToEpochMs(values plugins.DataRowValues, timeIndex int) {
 func ConvertSqlTimeColumnToEpochMs(frame *data.Frame, timeIndex int) error {
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<111111", timeIndex)
 	if timeIndex >= 0 && timeIndex < len(frame.Fields) {
 		origin := frame.Fields[timeIndex]
 		valueType := origin.Type()
@@ -794,10 +795,13 @@ func ConvertSqlTimeColumnToEpochMs(frame *data.Frame, timeIndex int) error {
 		case data.FieldTypeNullableFloat32:
 			convertNullableFloat32ToEpochMs(frame.Fields[timeIndex], newField)
 		default:
+			fmt.Printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<2222222 %+v\n", valueType)
 			return fmt.Errorf("column type %s is not convertible to time.Time", valueType)
 		}
 		frame.Fields[timeIndex] = newField
+
 	} else {
+
 		return fmt.Errorf("timeIndex %d is out of range", timeIndex)
 	}
 	return nil

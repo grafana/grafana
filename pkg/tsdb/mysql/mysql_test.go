@@ -19,7 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
-
+	// "github.com/google/go-cmp/cmp"
+	// ptr "github.com/xorcare/pointer"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -140,6 +141,39 @@ func TestMySQL(t *testing.T) {
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
 			frames, _ := queryResult.Dataframes.Decoded()
+
+			// expectedFrames := data.Frames{
+			// 	data.NewFrame("",
+			// 		data.NewField("", nil,
+			// 			[]time.Time{time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC)}),
+			// 		data.NewField("", nil, []int8{
+			// 			int8(1),
+			// 		}),
+			// 		data.NewField("", nil, []*string{
+			// 			ptr.String("abc"),
+			// 		}),
+			// 		data.NewField("", nil, []*string{
+			// 			ptr.String("def"),
+			// 		}),
+			// 		data.NewField("", nil, []int32{
+			// 			int32(1),
+			// 		}),
+			// 		data.NewField("", nil, []int16{
+			// 			int16(10),
+			// 		}),
+			// 		data.NewField("", nil, []int64{
+			// 			int64(100),
+			// 		}),
+			// 		data.NewField("", nil, []int32{
+			// 			int32(1420070400),
+			// 		}),
+			// 	),
+			// }
+
+			// if diff := cmp.Diff(expectedFrames, frames, data.FrameTestCompareOptions()...); diff != "" {
+			// 	t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			// }
+
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 31, len(frames[0].Fields))
 
@@ -812,7 +846,9 @@ func TestMySQL(t *testing.T) {
 		require.NoError(t, err)
 		queryResult := resp.Results["A"]
 		require.NoError(t, queryResult.Error)
-		require.Equal(t, "SELECT time FROM metric_values WHERE time > FROM_UNIXTIME(1521118500) OR time < FROM_UNIXTIME(1521118800) OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1", queryResult.Meta.Get(sqleng.MetaKeyExecutedQueryString).MustString())
+		frames, _ := queryResult.Dataframes.Decoded()
+		require.Equal(t, 1, len(frames))
+		require.Equal(t, "SELECT time FROM metric_values WHERE time > FROM_UNIXTIME(1521118500) OR time < FROM_UNIXTIME(1521118800) OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1", frames[0].Meta.ExecutedQueryString)
 	})
 
 	t.Run("Given a table with event data", func(t *testing.T) {
