@@ -42,10 +42,8 @@ func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *models.SignedInUser,
 		JoinLeave: true,
 	}
 	query := &models.GetLastLiveMessageQuery{
-		Params: models.GetLastLiveMessageQueryParams{
-			OrgId:   u.OrgId,
-			Channel: e.Channel,
-		},
+		OrgId:   u.OrgId,
+		Channel: e.Channel,
 	}
 	msg, ok, err := b.liveMessageStore.GetLastLiveMessage(query)
 	if err != nil {
@@ -60,12 +58,10 @@ func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *models.SignedInUser,
 // OnPublish is called when a client wants to broadcast on the websocket
 func (b *BroadcastRunner) OnPublish(_ context.Context, u *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	query := &models.SaveLiveMessageQuery{
-		Params: models.SaveLiveMessageQueryParams{
-			OrgId:     u.OrgId,
-			Channel:   e.Channel,
-			Data:      e.Data,
-			CreatedBy: u.UserId,
-		},
+		OrgId:     u.OrgId,
+		Channel:   e.Channel,
+		Data:      e.Data,
+		CreatedBy: u.UserId,
 	}
 	if err := b.liveMessageStore.SaveLiveMessage(query); err != nil {
 		return models.PublishReply{}, 0, err

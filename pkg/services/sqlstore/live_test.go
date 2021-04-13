@@ -14,22 +14,18 @@ func TestLiveMessage(t *testing.T) {
 	ss := InitTestDB(t)
 
 	getQuery := &models.GetLastLiveMessageQuery{
-		Params: models.GetLastLiveMessageQueryParams{
-			OrgId:   1,
-			Channel: "test_channel",
-		},
+		OrgId:   1,
+		Channel: "test_channel",
 	}
 	_, ok, err := ss.GetLastLiveMessage(getQuery)
 	require.NoError(t, err)
 	require.False(t, ok)
 
 	saveQuery := &models.SaveLiveMessageQuery{
-		Params: models.SaveLiveMessageQueryParams{
-			OrgId:     1,
-			Channel:   "test_channel",
-			Data:      []byte(`{}`),
-			CreatedBy: 2,
-		},
+		OrgId:     1,
+		Channel:   "test_channel",
+		Data:      []byte(`{}`),
+		CreatedBy: 2,
 	}
 	err = ss.SaveLiveMessage(saveQuery)
 	require.NoError(t, err)
@@ -45,21 +41,17 @@ func TestLiveMessage(t *testing.T) {
 
 	// try saving again, should be replaced.
 	saveQuery2 := &models.SaveLiveMessageQuery{
-		Params: models.SaveLiveMessageQueryParams{
-			OrgId:     1,
-			Channel:   "test_channel",
-			Data:      []byte(`{"input": "hello"}`),
-			CreatedBy: 3,
-		},
+		OrgId:     1,
+		Channel:   "test_channel",
+		Data:      []byte(`{"input": "hello"}`),
+		CreatedBy: 3,
 	}
 	err = ss.SaveLiveMessage(saveQuery2)
 	require.NoError(t, err)
 
 	getQuery2 := &models.GetLastLiveMessageQuery{
-		Params: models.GetLastLiveMessageQueryParams{
-			OrgId:   1,
-			Channel: "test_channel",
-		},
+		OrgId:   1,
+		Channel: "test_channel",
 	}
 	msg2, ok, err := ss.GetLastLiveMessage(getQuery2)
 	require.NoError(t, err)

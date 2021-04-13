@@ -76,22 +76,14 @@ type LiveMessage struct {
 	CreatedBy int64
 }
 
-type SaveLiveMessageQueryParams struct {
+type SaveLiveMessageQuery struct {
 	OrgId     int64
 	Channel   string
 	Data      json.RawMessage
 	CreatedBy int64
 }
 
-type SaveLiveMessageQuery struct {
-	Params SaveLiveMessageQueryParams
-}
-
-type GetLastLiveMessageQueryParams struct {
+type GetLastLiveMessageQuery struct {
 	OrgId   int64
 	Channel string
-}
-
-type GetLastLiveMessageQuery struct {
-	Params GetLastLiveMessageQueryParams
 }
