@@ -301,7 +301,7 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 		alertRules := make([]*ngmodels.AlertRule, 0)
 
 		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?"
-		if err := sess.SQL(q, query.OrgID, query.RuleGroup).Find(&alertRules); err != nil {
+		if err := sess.SQL(q, query.OrgID, query.NamespaceUID, query.RuleGroup).Find(&alertRules); err != nil {
 			return err
 		}
 
