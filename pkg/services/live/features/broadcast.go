@@ -2,7 +2,6 @@ package features
 
 import (
 	"context"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,10 +14,20 @@ var (
 	logger = log.New("live.features") // scoped to all features?
 )
 
+//go:generate mockgen -destination=dispatcher_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features Dispatcher
+
+type Dispatcher interface {
+	Dispatch(msg bus.Msg) error
+}
+
 // BroadcastRunner will simply broadcast all events to `grafana/broadcast/*` channels
 // This assumes that data is a JSON object
 type BroadcastRunner struct {
-	Bus bus.Bus
+	Dispatcher Dispatcher
+}
+
+func NewBroadcastRunner(dispatcher Dispatcher) *BroadcastRunner {
+	return &BroadcastRunner{Dispatcher: dispatcher}
 }
 
 // GetHandlerForPath called on init
@@ -31,7 +40,6 @@ func (b *BroadcastRunner) OnSubscribe(ctx context.Context, u *models.SignedInUse
 	reply := models.SubscribeReply{
 		Presence:  true,
 		JoinLeave: true,
-		Recover:   true, // loads the saved value from history
 	}
 	query := &models.GetLastLiveMessageQuery{
 		Params: models.GetLastLiveMessageQueryParams{
@@ -39,7 +47,7 @@ func (b *BroadcastRunner) OnSubscribe(ctx context.Context, u *models.SignedInUse
 			Channel: e.Channel,
 		},
 	}
-	if err := b.Bus.Dispatch(query); err != nil {
+	if err := b.Dispatcher.Dispatch(query); err != nil {
 		return models.SubscribeReply{}, 0, err
 	}
 	if query.Result != nil {
@@ -58,11 +66,8 @@ func (b *BroadcastRunner) OnPublish(ctx context.Context, u *models.SignedInUser,
 			CreatedBy: u.UserId,
 		},
 	}
-	if err := b.Bus.Dispatch(query); err != nil {
+	if err := b.Dispatcher.Dispatch(query); err != nil {
 		return models.PublishReply{}, 0, err
 	}
-	return models.PublishReply{
-		HistorySize: 1, // The last message is saved for 10 min.
-		HistoryTTL:  10 * time.Minute,
-	}, backend.PublishStreamStatusOK, nil
+	return models.PublishReply{}, backend.PublishStreamStatusOK, nil
 }

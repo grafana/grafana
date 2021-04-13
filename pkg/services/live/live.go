@@ -137,9 +137,7 @@ func (g *GrafanaLive) Init() error {
 	}
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
-	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{
-		Bus: g.Bus,
-	}
+	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.Bus)
 
 	g.ManagedStreamRunner = NewManagedStreamRunner(g.Publish)
 
