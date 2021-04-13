@@ -3,7 +3,6 @@ package manager
 import (
 	"context"
 	"os"
-	"path/filepath"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -31,6 +30,27 @@ type PluginManagerV2 struct {
 	plugins map[string]*plugins.PluginV2
 }
 
+func (m *PluginManagerV2) InstallPlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
+	plugin, err := m.PluginLoader.Load(pluginJSONPath)
+	if err != nil {
+		return err
+	}
+
+	plugin.QueryDataHandler = opts.QueryDataHandler
+	plugin.CheckHealthHandler = opts.CheckHealthHandler
+	plugin.CallResourceHandler = opts.CallResourceHandler
+	plugin.StreamHandler = opts.StreamHandler
+
+	err = m.PluginInitializer.Initialize(plugin)
+	if err != nil {
+		return err
+	}
+
+	m.plugins[plugin.ID] = plugin
+
+	return nil
+}
+
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "PluginManagerV2",
@@ -42,20 +62,20 @@ func init() {
 func (m *PluginManagerV2) Init() error {
 	m.plugins = map[string]*plugins.PluginV2{}
 
-	// load Core plugins
-	err := m.loadPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"), false)
+	// install Core plugins
+	//err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"), false)
+	//if err != nil {
+	//	return err
+	//}
+
+	// install Bundled plugins
+	err := m.installPlugins(m.Cfg.BundledPluginsPath, false)
 	if err != nil {
 		return err
 	}
 
-	// load Bundled plugins
-	err = m.loadPlugins(m.Cfg.BundledPluginsPath, false)
-	if err != nil {
-		return err
-	}
-
-	// load Core plugins
-	err = m.loadPlugins(m.Cfg.PluginsPath, true)
+	// install Core plugins
+	err = m.installPlugins(m.Cfg.PluginsPath, true)
 	if err != nil {
 		return err
 	}
@@ -63,13 +83,13 @@ func (m *PluginManagerV2) Init() error {
 	return nil
 }
 
-func (m *PluginManagerV2) loadPlugins(path string, forceCreate bool) error {
+func (m *PluginManagerV2) installPlugins(path string, forceCreatePath bool) error {
 	exists, err := fs.Exists(path)
 	if err != nil {
 		return err
 	}
 
-	if !exists && forceCreate {
+	if !exists && forceCreatePath {
 		if err = os.MkdirAll(path, os.ModePerm); err != nil {
 			pmlog.Error("Failed to create plugins directory", "dir", path, "error", err)
 		} else {
@@ -82,7 +102,7 @@ func (m *PluginManagerV2) loadPlugins(path string, forceCreate bool) error {
 		return err
 	}
 
-	loadedPlugins, err := m.PluginLoader.Load(pluginJSONPaths)
+	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths)
 	if err != nil {
 		return err
 	}

@@ -369,7 +369,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 		loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(plugins.PluginLoader)
 
-		// Load the full plugin, and add it to manager
+		// LoadAll the full plugin, and add it to manager
 		if err := pm.loadPlugin(jsonParser, plugin, scanner, loader); err != nil {
 			return err
 		}

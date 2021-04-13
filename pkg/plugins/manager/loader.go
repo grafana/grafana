@@ -67,7 +67,16 @@ func (l *Loader) Init() error {
 	return nil
 }
 
-func (l *Loader) Load(pluginJSONPaths []string) ([]*plugins.PluginV2, error) {
+func (l *Loader) Load(pluginJSONPath string) (*plugins.PluginV2, error) {
+	p, err := l.LoadAll([]string{pluginJSONPath})
+	if err != nil {
+		return nil, err
+	}
+
+	return p[0], nil
+}
+
+func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) {
 	var foundPlugins = make(map[string]*plugins.PluginV2)
 
 	for _, pluginJSONPath := range pluginJSONPaths {

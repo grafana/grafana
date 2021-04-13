@@ -73,17 +73,20 @@ type DataRequestHandler interface {
 }
 
 type PluginFinderV2 interface {
-	// Load loads a plugin and returns it.
+	// Find tries to discover all plugin.json in the provider directory and then returns their file-system paths.
 	Find(string) ([]string, error)
 }
 
 type PluginLoaderV2 interface {
+	// Load loads a list plugins and returns them.
+	LoadAll([]string) ([]*PluginV2, error)
+
 	// Load loads a plugin and returns it.
-	Load([]string) ([]*PluginV2, error)
+	Load(string) (*PluginV2, error)
 }
 
 type PluginInitializerV2 interface {
-	// Load loads a plugin and returns it.
+	// Initialize initializes a plugin.
 	Initialize(plugin *PluginV2) error
 }
 
@@ -122,7 +125,16 @@ type PluginManagerV2 interface {
 
 	Register(*PluginV2) error
 
+	InstallPlugin(string, InstallOpts) error
+
 	// Plugin dashboards
+}
+
+type InstallOpts struct {
+	backend.QueryDataHandler
+	backend.StreamHandler
+	backend.CallResourceHandler
+	backend.CheckHealthHandler
 }
 
 type PluginV2 struct {

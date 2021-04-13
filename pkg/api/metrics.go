@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/registry"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -76,19 +77,19 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	//if hs.PluginManagerV2.IsSupported(ds.Type) && !hs.PluginManagerV2.(registry.CanBeDisabled).IsDisabled() {
-	//	req, err := createRequest(ds, request)
-	//	if err != nil {
-	//		return response.Error(http.StatusInternalServerError, "Request formation error", err)
-	//	}
-	//
-	//	resp, err := hs.PluginManagerV2.QueryData(c.Req.Context(), req)
-	//	if err != nil {
-	//		return response.Error(http.StatusInternalServerError, "Metric request error", err)
-	//	}
-	//
-	//	return response.JSONStreaming(http.StatusOK, resp)
-	//}
+	if hs.PluginManagerV2.IsSupported(ds.Type) && !hs.PluginManagerV2.(registry.CanBeDisabled).IsDisabled() {
+		req, err := createRequest(ds, request)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Request formation error", err)
+		}
+
+		resp, err := hs.PluginManagerV2.QueryData(c.Req.Context(), req)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Metric request error", err)
+		}
+
+		return response.JSONStreaming(http.StatusOK, resp)
+	}
 
 	resp, err := hs.DataService.HandleRequest(c.Req.Context(), ds, request)
 	if err != nil {
