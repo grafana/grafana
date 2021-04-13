@@ -91,7 +91,6 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-direction: column;
       border-bottom: 1px solid ${theme.colors.border1};
       padding-bottom: ${theme.spacing.sm};
-      margin-bottom: ${theme.spacing.sm};
 
       & > div {
         margin-bottom: ${theme.spacing.sm};

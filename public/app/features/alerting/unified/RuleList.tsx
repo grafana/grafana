@@ -124,6 +124,7 @@ export const RuleList: FC = () => {
       {!showNewAlertSplash && (
         <>
           <RulesFilter />
+          <div className={styles.break} />
           <div className={styles.buttonsContainer}>
             <div />
             <a href="/alerting/new">
@@ -140,6 +141,12 @@ export const RuleList: FC = () => {
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
+  break: css`
+    width: 100%;
+    height: 0;
+    margin-bottom: ${theme.spacing.md};
+    border-bottom: solid 1px ${theme.colors.border2};
+  `,
   iconError: css`
     color: ${theme.palette.red};
     margin-right: ${theme.spacing.md};
