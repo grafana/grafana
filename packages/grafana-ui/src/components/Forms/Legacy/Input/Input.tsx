@@ -1,7 +1,8 @@
-import React, { PureComponent, ChangeEvent } from 'react';
+import React, { ChangeEvent, PureComponent } from 'react';
 import classNames from 'classnames';
-import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';
+import { EventsWithValidation, hasValidationEvent, validate } from '../../../../utils';
 import { ValidationEvents, ValidationRule } from '../../../../types';
+import { onBeforeNumberInput } from '../../../Input/Input';
 
 export enum LegacyInputStatus {
   Invalid = 'invalid',
@@ -71,14 +72,19 @@ export class Input extends PureComponent<Props, State> {
   };
 
   render() {
-    const { validationEvents, className, hideErrorMessage, inputRef, ...restProps } = this.props;
+    const { validationEvents, className, hideErrorMessage, inputRef, type, onBeforeInput, ...restProps } = this.props;
     const { error } = this.state;
     const inputClassName = classNames('gf-form-input', { invalid: this.isInvalid }, className);
     const inputElementProps = this.populateEventPropsWithStatus(restProps, validationEvents);
 
     return (
       <div style={{ flexGrow: 1 }}>
-        <input {...inputElementProps} ref={inputRef} className={inputClassName} />
+        <input
+          {...inputElementProps}
+          ref={inputRef}
+          className={inputClassName}
+          onBeforeInput={onBeforeNumberInput({ type, onBeforeInput })}
+        />
         {error && !hideErrorMessage && <span>{error}</span>}
       </div>
     );

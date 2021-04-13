@@ -210,7 +210,19 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
 });
 
 export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
+  const {
+    className,
+    addonAfter,
+    addonBefore,
+    prefix,
+    suffix,
+    invalid,
+    loading,
+    width = 0,
+    type,
+    onBeforeInput,
+    ...restProps
+  } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -241,6 +253,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
             paddingLeft: prefixRect ? prefixRect.width : undefined,
             paddingRight: suffixRect ? suffixRect.width : undefined,
           }}
+          onBeforeInput={onBeforeNumberInput({ type, onBeforeInput })}
         />
 
         {(suffix || loading) && (
@@ -257,3 +270,25 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
 });
 
 Input.displayName = 'Input';
+
+export function onBeforeNumberInput({
+  onBeforeInput,
+  type,
+}: Pick<HTMLProps<HTMLInputElement>, 'type' | 'onBeforeInput'>) {
+  return function (event: React.FormEvent<HTMLInputElement> & { data: string }) {
+    if (onBeforeInput) {
+      onBeforeInput(event);
+      return;
+    }
+
+    if (type === 'number') {
+      const isNotNumber = isNaN(Number(event.data));
+      const length = event.data?.trim().length;
+      const hasLength = Boolean(length);
+      if (isNotNumber || !hasLength) {
+        event.preventDefault();
+      }
+      return;
+    }
+  };
+}
