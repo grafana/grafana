@@ -8,7 +8,7 @@ weight = 200
 
 # Using Google Cloud Monitoring in Grafana
 
-Grafana ships with built-in support for Google Cloud Monitoring. Just add it as a data source and you are ready to build dashboards for your Google Cloud Monitoring metrics.  Refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana ships with built-in support for Google Cloud Monitoring. Just add it as a data source and you are ready to build dashboards for your Google Cloud Monitoring metrics. Refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 > **Note** Before Grafana v7.1, Google Cloud Monitoring was referred to as Google Stackdriver.
 
@@ -16,11 +16,11 @@ Grafana ships with built-in support for Google Cloud Monitoring. Just add it as 
 
 To access Google Cloud Monitoring settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Google Cloud Monitoring data source.
 
-| Name                  | Description                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| `Name`                | The data source name. This is how you refer to the data source in panels and queries. |
-| `Default`             | Default data source means that it will be pre-selected for new panels.                |
-| `Service Account Key` | Upload or paste in the Service Account Key file for a GCP Project. Refer to [Using a Google Service Account Key File](#using-a-google-service-account-key-file) for details.|
+| Name                  | Description                                                                                                                                                                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`                | The data source name. This is how you refer to the data source in panels and queries.                                                                                        |
+| `Default`             | Default data source means that it will be pre-selected for new panels.                                                                                                       |
+| `Service Account Key` | Upload or paste in the Service Account Key file for a GCP Project. Refer to [Using a Google Service Account Key File](#using-a-google-service-account-key-file) for details. |
 
 ## Authentication
 
@@ -184,7 +184,7 @@ The link navigates the user first to the Google Account Chooser and after succes
 
 #### Automatic unit detection
 
-Grafana issues one query to the Cloud Monitoring API per query editor row, and each API response includes a unit. Grafana will attempt to convert the returned unit into a unit that is understood by the Grafana graph panel. If conversion was successfull, the unit will be displayed on the Y-axis on the panel. In case the query editor rows returned different units, the unit from the last query editor row will be used in the graph panel.
+Grafana issues one query to the Cloud Monitoring API per query editor row, and each API response includes a unit. Grafana will attempt to convert the returned unit into a unit that is understood by the Grafana graph panel. If conversion was successful, the unit will be displayed on the Y-axis on the panel. In case the query editor rows returned different units, the unit from the last query editor row will be used in the graph panel.
 
 ### SLO (Service Level Objective) queries
 
