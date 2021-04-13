@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"path/filepath"
 	"sync"
@@ -11,6 +12,7 @@ import (
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/alerting-api/pkg/api"
+	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/nflog"
@@ -153,6 +155,27 @@ func (am *Alertmanager) StopAndWait() {
 		am.dispatcher.Stop()
 	}
 	am.dispatcherWG.Wait()
+}
+
+func (am *Alertmanager) SaveAndApplyConfig(cfg *apimodels.PostableUserConfig) error {
+	rawConfig, err := json.Marshal(&cfg)
+	if err != nil {
+		return errors.Wrap(err, "failed to serialize to the Alertmanager configuration")
+	}
+
+	am.reloadConfigMtx.Lock()
+	defer am.reloadConfigMtx.Unlock()
+
+	cmd := &ngmodels.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(rawConfig),
+		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+	}
+
+	if err := am.Store.SaveAlertmanagerConfiguration(cmd); err != nil {
+		return errors.Wrap(err, "failed to save Alertmanager configuration")
+	}
+
+	return errors.Wrap(am.applyConfig(cfg), "unable to reload configuration")
 }
 
 // SyncAndApplyConfigFromDatabase picks the latest config from database and restarts
