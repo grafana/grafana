@@ -127,7 +127,7 @@ $hr-border-color: $gray-4 !default;
 $panel-bg: #fff;
 $panel-border: #fff;
 $panel-header-hover-bg: rgba(0, 0, 0, 0.04);
-$panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.2),0px 0px 0px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
+$panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.15),0px 0px 0px 0px rgba(0,0,0,0.1),0px 1px 3px 0px rgba(0,0,0,0.1);
 $panel-corner: $panel-bg;
 
 // Page header
@@ -260,7 +260,7 @@ $side-menu-header-color: #e9edf2;
 // -------------------------
 $menu-dropdown-bg: #F7F7F8;
 $menu-dropdown-hover-bg: rgba(0, 0, 0, 0.04);
-$menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.14),0px 1px 10px 0px rgba(0,0,0,0.12);
+$menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.15),0px 4px 5px 0px rgba(0,0,0,0.1),0px 1px 10px 0px rgba(0,0,0,0.1);
 
 // Tabs
 // -------------------------
@@ -282,13 +282,13 @@ $tooltipBackground: #F7F7F8;
 $tooltipColor: rgba(0, 0, 0, 0.75);
 $tooltipArrowColor: #F7F7F8;
 $tooltipBackgroundError: #E0226E;
-$tooltipShadow: 0px 2px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.14),0px 1px 5px 0px rgba(0,0,0,0.12);
+$tooltipShadow: 0px 2px 1px -2px rgba(0,0,0,0.15),0px 2px 2px 0px rgba(0,0,0,0.1),0px 1px 5px 0px rgba(0,0,0,0.1);
 
 $popover-bg: #F7F7F8;
 $popover-color: rgba(0, 0, 0, 0.75);
 $popover-border-color: rgba(0, 2, 78, 0.20);
 $popover-header-bg: #F7F7F8;
-$popover-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.14),0px 3px 14px 2px rgba(0,0,0,0.12);
+$popover-shadow: 0px 5px 5px -5px rgba(0,0,0,0.15),0px 8px 10px 1px rgba(0,0,0,0.1),0px 3px 14px 2px rgba(0,0,0,0.1);
 
 $graph-tooltip-bg: $gray-5;
 

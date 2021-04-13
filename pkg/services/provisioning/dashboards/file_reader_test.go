@@ -152,6 +152,126 @@ func TestDashboardFileReader(t *testing.T) {
 				So(len(fakeService.inserted), ShouldEqual, 1)
 			})
 
+			Convey("Dashboard with older timestamp and the same checksum will not replace imported dashboard", func() {
+				cfg.Options["path"] = oneDashboard
+				absPath, err := filepath.Abs(oneDashboard + "/dashboard1.json")
+				So(err, ShouldBeNil)
+				stat, err := os.Stat(oneDashboard + "/dashboard1.json")
+				So(err, ShouldBeNil)
+				file, err := os.Open(filepath.Clean(absPath))
+				So(err, ShouldBeNil)
+				t.Cleanup(func() {
+					_ = file.Close()
+				})
+
+				checksum, err := util.Md5Sum(file)
+				So(err, ShouldBeNil)
+
+				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
+					"Default": {
+						{
+							Name:       "Default",
+							ExternalId: absPath,
+							Updated:    stat.ModTime().AddDate(0, 0, +1).Unix(),
+							CheckSum:   checksum,
+						},
+					},
+				}
+
+				reader, err := NewDashboardFileReader(cfg, logger, nil)
+				So(err, ShouldBeNil)
+
+				err = reader.walkDisk()
+				So(err, ShouldBeNil)
+				So(len(fakeService.inserted), ShouldEqual, 0)
+			})
+
+			Convey("Dashboard with older timestamp and different checksum will replace imported dashboard", func() {
+				cfg.Options["path"] = oneDashboard
+				absPath, err := filepath.Abs(oneDashboard + "/dashboard1.json")
+				So(err, ShouldBeNil)
+				stat, err := os.Stat(oneDashboard + "/dashboard1.json")
+				So(err, ShouldBeNil)
+
+				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
+					"Default": {
+						{
+							Name:       "Default",
+							ExternalId: absPath,
+							Updated:    stat.ModTime().AddDate(0, 0, +1).Unix(),
+							CheckSum:   "fakechecksum",
+						},
+					},
+				}
+
+				reader, err := NewDashboardFileReader(cfg, logger, nil)
+				So(err, ShouldBeNil)
+
+				err = reader.walkDisk()
+				So(err, ShouldBeNil)
+				So(len(fakeService.inserted), ShouldEqual, 1)
+			})
+
+			Convey("Dashboard with newer timestamp and the same checksum will not replace imported dashboard", func() {
+				cfg.Options["path"] = oneDashboard
+				absPath, err := filepath.Abs(oneDashboard + "/dashboard1.json")
+				So(err, ShouldBeNil)
+				stat, err := os.Stat(oneDashboard + "/dashboard1.json")
+				So(err, ShouldBeNil)
+				file, err := os.Open(filepath.Clean(absPath))
+				So(err, ShouldBeNil)
+				t.Cleanup(func() {
+					_ = file.Close()
+				})
+
+				checksum, err := util.Md5Sum(file)
+				So(err, ShouldBeNil)
+
+				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
+					"Default": {
+						{
+							Name:       "Default",
+							ExternalId: absPath,
+							Updated:    stat.ModTime().AddDate(0, 0, -1).Unix(),
+							CheckSum:   checksum,
+						},
+					},
+				}
+
+				reader, err := NewDashboardFileReader(cfg, logger, nil)
+				So(err, ShouldBeNil)
+
+				err = reader.walkDisk()
+				So(err, ShouldBeNil)
+				So(len(fakeService.inserted), ShouldEqual, 0)
+			})
+
+			Convey("Dashboard with newer timestamp and different checksum should replace imported dashboard", func() {
+				cfg.Options["path"] = oneDashboard
+				absPath, err := filepath.Abs(oneDashboard + "/dashboard1.json")
+				So(err, ShouldBeNil)
+				stat, err := os.Stat(oneDashboard + "/dashboard1.json")
+				So(err, ShouldBeNil)
+
+				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
+					"Default": {
+						{
+							Name:       "Default",
+							ExternalId: absPath,
+							Updated:    stat.ModTime().AddDate(0, 0, -1).Unix(),
+							CheckSum:   "fakechecksum",
+						},
+					},
+				}
+
+				reader, err := NewDashboardFileReader(cfg, logger, nil)
+				So(err, ShouldBeNil)
+
+				err = reader.walkDisk()
+				So(err, ShouldBeNil)
+				So(len(fakeService.inserted), ShouldEqual, 1)
+			})
+
 			Convey("Overrides id from dashboard.json files", func() {
 				cfg.Options["path"] = containingID
 

@@ -26,11 +26,10 @@ found. The dashboards are located in the `devenv/dev-dashboards` folder.
 
 This command creates a docker-compose file with specified databases configured and ready to run. Each database has
 a prepared image with some fake data ready to use. For available databases, see `docker/blocks` directory. Notice that
-for some databases there are multiple images, for example there is prometheus_mac specifically for Macs or different
-version.
+for some databases there are multiple images with different versions. Some blocks such as `slow_proxy_mac` or `apache_proxy_mac` are specifically for Macs.  
 
 ```bash
-make devenv sources=influxdb,prometheus2,elastic5
+make devenv sources=influxdb,prometheus,elastic5
 ```
 
 Some of the blocks support dynamic change of the image version used in the Docker file. The signature looks like this: 
