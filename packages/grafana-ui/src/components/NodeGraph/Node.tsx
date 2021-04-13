@@ -1,11 +1,8 @@
 import React, { MouseEvent, memo } from 'react';
-import { css } from '@emotion/css';
-import tinycolor from 'tinycolor2';
 import cx from 'classnames';
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { NodeDatum } from './types';
 import { stylesFactory, useTheme } from '../../themes';
-import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { statToString } from './utils';
@@ -94,7 +91,7 @@ export const Node = memo(function Node(props: {
           <div className={cx(styles.statsText, hovering && styles.textHovering)}>
             <span>{node.mainStat && statToString(node.mainStat, node.dataFrameRowIndex)}</span>
             <br />
-            <span>{node.secondaryStat && statToString(node.secondaryStat, node.dataFrameRowIndex}</span>
+            <span>{node.secondaryStat && statToString(node.secondaryStat, node.dataFrameRowIndex)}</span>
           </div>
         </foreignObject>
         <foreignObject
