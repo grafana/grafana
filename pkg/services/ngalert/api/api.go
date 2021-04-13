@@ -77,8 +77,13 @@ func (api *API) RegisterAPIEndpoints() {
 		NewLotexRuler(proxy, logger),
 		RulerSrv{store: api.RuleStore, log: logger},
 	))
-	// Register endpoints for testing evaluation of rules and notification channels.
-	api.RegisterTestingApiEndpoints(TestingApiMock{log: logger})
+	api.RegisterTestingApiEndpoints(TestingApiSrv{
+		AlertingProxy:   proxy,
+		Cfg:             api.Cfg,
+		DataService:     api.DataService,
+		DatasourceCache: api.DatasourceCache,
+		log:             logger,
+	})
 
 	// Legacy routes; they will be removed in v8
 	api.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
