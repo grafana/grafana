@@ -58,7 +58,7 @@ export default class SupportedNamespaces {
       'Microsoft.Network/natGateways',
       'Microsoft.Network/virtualWans',
       'Microsoft.Network/vpngateways',
-      'Microsoft.Network/virtualnetworkgateway',
+      'Microsoft.Network/virtualNetworkGateways',
       'Microsoft.NotificationHubs/namespaces/notificationHubs',
       'Microsoft.OperationalInsights/workspaces',
       'Microsoft.PowerBIDedicated/capacities',
