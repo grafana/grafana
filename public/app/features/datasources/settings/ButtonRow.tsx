@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 
 import config from 'app/core/config';
+import { Button, LinkButton } from '@grafana/ui';
 
 export interface Props {
   isReadOnly: boolean;
@@ -14,33 +15,33 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
   return (
     <div className="gf-form-button-row">
       {!isReadOnly && (
-        <button
+        <Button
           type="submit"
-          className="btn btn-primary"
+          variant="primary"
           disabled={isReadOnly}
           onClick={(event) => onSubmit(event)}
           aria-label={selectors.pages.DataSource.saveAndTest}
         >
           Save &amp; test
-        </button>
+        </Button>
       )}
       {isReadOnly && (
-        <button type="submit" className="btn btn-success" onClick={onTest}>
+        <Button type="submit" variant="primary" onClick={onTest}>
           Test
-        </button>
+        </Button>
       )}
-      <button
+      <Button
         type="button"
-        className="btn btn-danger"
+        variant="destructive"
         disabled={isReadOnly}
         onClick={onDelete}
         aria-label={selectors.pages.DataSource.delete}
       >
         Delete
-      </button>
-      <a className="btn btn-inverse" href={`${config.appSubUrl}/datasources`}>
+      </Button>
+      <LinkButton variant="link" href={`${config.appSubUrl}/datasources`}>
         Back
-      </a>
+      </LinkButton>
     </div>
   );
 };
