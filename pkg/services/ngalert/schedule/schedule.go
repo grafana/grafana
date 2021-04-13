@@ -355,7 +355,7 @@ func (sch *schedule) WarmStateCache(st *state.StateTracker) {
 			sch.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 		for _, entry := range cmd.Result {
-			lbs := models.ToMap(entry.Labels)
+			lbs := map[string]string(entry.Labels)
 			stateForEntry := state.AlertState{
 				UID:                entry.DefinitionUID,
 				OrgID:              entry.DefinitionOrgID,

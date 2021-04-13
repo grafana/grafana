@@ -100,11 +100,3 @@ func tupleLablesToLabels(tuples tupleLabels) (InstanceLabels, error) {
 	}
 	return labels, nil
 }
-
-func ToMap(lbs InstanceLabels) map[string]string {
-	labels := make(map[string]string)
-	for k, v := range lbs {
-		labels[k] = v
-	}
-	return labels
-}

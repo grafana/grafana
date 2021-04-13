@@ -100,16 +100,16 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 			newRule := apimodels.Rule{
 				Name:           rule.Title,
-				Labels:         nil,                    // TODO: NG AlertRule does not have labels but does have annotations
-				Health:         "",                     // TODO: how is this determined?
-				Type:           apiv1.RuleTypeAlerting, // TODO: can we guarantee that only alerting rules will be returned by the DB?
-				LastEvaluation: time.Time{},
-				EvaluationTime: 0, // TODO: set this once we are saving it or adding it to evaluation results
+				Labels:         nil,  // TODO: NG AlertRule does not have labels but does have annotations
+				Health:         "ok", // TODO: update this in the future when error and noData states are being evaluated and set
+				Type:           apiv1.RuleTypeAlerting,
+				LastEvaluation: time.Time{}, // TODO: set this to be rule evaluation time once it is being set
+				EvaluationTime: 0,           // TODO: set this once we are saving it or adding it to evaluation results
 			}
 			for _, instance := range instanceQuery.Result {
 				activeAt := instance.CurrentStateSince
 				alert := &apimodels.Alert{
-					Labels:      ngmodels.ToMap(instance.Labels),
+					Labels:      map[string]string(instance.Labels),
 					Annotations: nil, // TODO: set these once they are added to evaluation results
 					State:       translateInstanceState(instance.CurrentState),
 					ActiveAt:    &activeAt,
@@ -132,7 +132,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			}
 			alertingRule.Rule = newRule
 			newGroup.Rules = append(newGroup.Rules, alertingRule)
-			newGroup.Interval = float64(rule.IntervalSeconds) // TODO: currently last one wins, make sure that you cannot have differing intervals in a rule group. If so, determine the best way to set this
+			newGroup.Interval = float64(rule.IntervalSeconds)
 		}
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, newGroup)
 	}

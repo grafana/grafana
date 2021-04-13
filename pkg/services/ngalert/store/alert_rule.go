@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -301,17 +300,7 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertRules := make([]*ngmodels.AlertRule, 0)
 
-		s := strings.Builder{}
-		params := make([]interface{}, 0)
-
-		addToQuery := func(stmt string, p ...interface{}) {
-			s.WriteString(stmt)
-			params = append(params, p...)
-		}
-		q := "SELECT * FROM alert_rule WHERE org_id = ? and rule_group = ?"
-		if query.NamespaceUID != "" {
-			addToQuery(` AND namespace_ui = ?`, query.NamespaceUID)
-		}
+		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?"
 		if err := sess.SQL(q, query.OrgID, query.RuleGroup).Find(&alertRules); err != nil {
 			return err
 		}
