@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -135,7 +136,13 @@ func (m *PluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataR
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	return plugin.QueryData(ctx, req)
+	var resp *backend.QueryDataResponse
+	err := instrumentation.InstrumentQueryDataRequest(req.PluginContext.PluginID, func() (innerErr error) {
+		resp, innerErr = plugin.QueryData(ctx, req)
+		return
+	})
+
+	return resp, err
 }
 
 func (m *PluginManagerV2) Reload() {
