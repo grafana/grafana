@@ -1,7 +1,7 @@
 +++
 title = "Backend plugins"
 keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "documentation"]
-aliases = ["/docs/grafana/latest/plugins/developing/backend-plugins-guide/"]
+aliases = ["/docs/grafana/next/plugins/developing/backend-plugins-guide/"]
 +++
 
 # Backend plugins
@@ -49,7 +49,7 @@ The resources capability allows a backend plugin to handle custom HTTP requests 
 
 Examples of use cases for implementing resources:
 
-- Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy](https://grafana.com/docs/grafana/latest/http_api/data_source/#data-source-proxy-calls).
+- Implement a custom data source proxy in case certain authentication/authorization or other requirements are required/needed that are not supported in Grafana's [built-in data proxy](https://grafana.com/docs/grafana/next/http_api/data_source/#data-source-proxy-calls).
 - Return data or information in a format suitable to use within a data source query editor to provide auto-complete functionality.
 - Return static resources, such as images or files.
 - Send a command to a device, such as a micro controller or IOT device.

@@ -3,6 +3,7 @@ package alerting
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"time"
@@ -12,12 +13,28 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+var unitMultiplier = map[string]int{
+	"s": 1,
+	"m": 60,
+	"h": 3600,
+	"d": 86400,
+}
+
+var (
+	valueFormatRegex = regexp.MustCompile(`^\d+`)
+	isDigitRegex     = regexp.MustCompile(`^[0-9]+$`)
+	unitFormatRegex  = regexp.MustCompile(`[a-z]+`)
+)
+
 var (
 	// ErrFrequencyCannotBeZeroOrLess frequency cannot be below zero
 	ErrFrequencyCannotBeZeroOrLess = errors.New(`"evaluate every" cannot be zero or below`)
 
 	// ErrFrequencyCouldNotBeParsed frequency cannot be parsed
 	ErrFrequencyCouldNotBeParsed = errors.New(`"evaluate every" field could not be parsed`)
+
+	// ErrWrongUnitFormat wrong unit format
+	ErrWrongUnitFormat = fmt.Errorf(`time unit not supported. supported units: %s`, reflect.ValueOf(unitMultiplier).MapKeys())
 )
 
 // Rule is the in-memory version of an alert rule.
@@ -72,20 +89,18 @@ func (e ValidationError) Error() string {
 	return fmt.Sprintf("alert validation error: %s", extraInfo)
 }
 
-var (
-	valueFormatRegex = regexp.MustCompile(`^\d+`)
-	unitFormatRegex  = regexp.MustCompile(`\w{1}$`)
-)
-
-var unitMultiplier = map[string]int{
-	"s": 1,
-	"m": 60,
-	"h": 3600,
-	"d": 86400,
-}
-
 func getTimeDurationStringToSeconds(str string) (int64, error) {
-	multiplier := 1
+	// Check if frequency lacks unit
+	if isDigitRegex.MatchString(str) || str == "" {
+		return 0, ErrFrequencyCouldNotBeParsed
+	}
+
+	unit := unitFormatRegex.FindAllString(str, 1)[0]
+	if _, ok := unitMultiplier[unit]; !ok {
+		return 0, ErrWrongUnitFormat
+	}
+
+	multiplier := unitMultiplier[unit]
 
 	matches := valueFormatRegex.FindAllString(str, 1)
 
@@ -102,13 +117,29 @@ func getTimeDurationStringToSeconds(str string) (int64, error) {
 		return 0, ErrFrequencyCannotBeZeroOrLess
 	}
 
-	unit := unitFormatRegex.FindAllString(str, 1)[0]
-
-	if val, ok := unitMultiplier[unit]; ok {
-		multiplier = val
-	}
-
 	return int64(value * multiplier), nil
+}
+
+func getForValue(rawFor string) (time.Duration, error) {
+	var forValue time.Duration
+	var err error
+
+	if rawFor != "" {
+		if rawFor != "0" {
+			strings := unitFormatRegex.FindAllString(rawFor, 1)
+			if strings == nil {
+				return 0, ValidationError{Reason: fmt.Sprintf("no specified unit, error: %s", ErrWrongUnitFormat.Error())}
+			}
+			if _, ok := unitMultiplier[strings[0]]; !ok {
+				return 0, ValidationError{Reason: fmt.Sprintf("could not parse for field, error: %s", ErrWrongUnitFormat.Error())}
+			}
+		}
+		forValue, err = time.ParseDuration(rawFor)
+		if err != nil {
+			return 0, ValidationError{Reason: "Could not parse for field"}
+		}
+	}
+	return forValue, nil
 }
 
 // NewRuleFromDBAlert maps a db version of
