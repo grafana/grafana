@@ -415,7 +415,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: ElasticsearchQuery, adhocFilters?: any, querystring?: string) {
+  getLogsQuery(target: ElasticsearchQuery, limit: number, adhocFilters?: any, querystring?: string) {
     let query: any = {
       size: 0,
       query: {
@@ -436,7 +436,7 @@ export class ElasticQueryBuilder {
       });
     }
 
-    query = this.documentQuery(query, 500);
+    query = this.documentQuery(query, limit);
 
     return {
       ...query,

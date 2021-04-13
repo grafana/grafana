@@ -148,6 +148,9 @@ export interface RawData extends BaseMetricAggregation {
 
 export interface Logs extends BaseMetricAggregation {
   type: 'logs';
+  settings?: {
+    limit?: string;
+  };
 }
 
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
@@ -289,11 +292,12 @@ export type MetricAggregationWithSettings =
   | Sum
   | Average
   | MovingAverage
-  | MovingFunction;
+  | MovingFunction
+  | Logs;
 
 export type MetricAggregationWithMeta = ExtendedStats;
 
-export type MetricAggregation = Count | Logs | PipelineMetricAggregation | MetricAggregationWithSettings;
+export type MetricAggregation = Count | PipelineMetricAggregation | MetricAggregationWithSettings;
 
 // Guards
 // Given the structure of the aggregations (ie. `settings` field being always optional) we cannot
