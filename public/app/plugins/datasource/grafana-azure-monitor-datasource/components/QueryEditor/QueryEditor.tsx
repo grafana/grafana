@@ -1,4 +1,4 @@
-import { Alert } from '@grafana/ui';
+import { Alert, VerticalGroup } from '@grafana/ui';
 import React from 'react';
 import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureQueryType, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
@@ -26,22 +26,22 @@ const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChan
     <div data-testid="azure-monitor-query-editor">
       <QueryTypeField query={query} onQueryChange={onChange} />
 
-      {/* <VerticalGroup> */}
-      <EditorForQueryType
-        subscriptionId={subscriptionId}
-        query={query}
-        datasource={datasource}
-        onChange={onChange}
-        variableOptionGroup={variableOptionGroup}
-        setError={setError}
-      />
+      <VerticalGroup>
+        <EditorForQueryType
+          subscriptionId={subscriptionId}
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          variableOptionGroup={variableOptionGroup}
+          setError={setError}
+        />
 
-      {errorMessage && (
-        <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
-          {errorMessage}
-        </Alert>
-      )}
-      {/* </VerticalGroup> */}
+        {errorMessage && (
+          <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
+            {errorMessage}
+          </Alert>
+        )}
+      </VerticalGroup>
     </div>
   );
 };
