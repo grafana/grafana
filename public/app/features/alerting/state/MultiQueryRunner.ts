@@ -1,9 +1,9 @@
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { ApplyFieldOverrideOptions, DataTransformerConfig, dateMath, FieldColorModeId, PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Observable, ReplaySubject, Subject } from 'rxjs';
-import { combineAll, shareReplay } from 'rxjs/operators';
+import { combineLatest, Observable, ReplaySubject } from 'rxjs';
 import { QueryGroupOptions } from '../../../types';
+import { first } from 'rxjs/operators';
 
 const options: ApplyFieldOverrideOptions = {
   fieldConfig: {
@@ -24,13 +24,12 @@ const dataConfig = {
 };
 
 export class MultiQueryRunner {
-  private observable: Observable<PanelData[]>;
-  private runnersSubject: Subject<Observable<PanelData>>;
+  private subject: ReplaySubject<PanelData[]>;
   private queryRunners: Record<string, PanelQueryRunner>;
   private createRunner: (config: any) => PanelQueryRunner;
 
   constructor(createRunner?: (config: any) => PanelQueryRunner) {
-    this.runnersSubject = new ReplaySubject(1);
+    this.subject = new ReplaySubject(1);
     this.queryRunners = {};
 
     if (!createRunner) {
@@ -42,7 +41,15 @@ export class MultiQueryRunner {
 
   run(queryOptions: QueryGroupOptions) {
     const allQueries = queryOptions.queries.map((query) => {
-      return this.getQueryRunner(query.refId).run({
+      const runner = this.getQueryRunner(query.refId);
+
+      const getDataFromRunners = Object.values(this.queryRunners).map((r) =>
+        r.getData({ withFieldConfig: false, withTransforms: false })
+      );
+
+      combineLatest(getDataFromRunners).pipe(first()).subscribe(this.subject.next);
+
+      return runner.run({
         timezone: 'browser',
         timeRange: {
           from: dateMath.parse(query.timeRange!.from)!,
@@ -60,7 +67,7 @@ export class MultiQueryRunner {
   }
 
   getData(): Observable<PanelData[]> {
-    return this.runnersSubject.asObservable();
+    return this.subject.asObservable();
   }
 
   getQueryRunner(refId: string) {
@@ -69,9 +76,8 @@ export class MultiQueryRunner {
     }
 
     const runner = this.createRunner(dataConfig);
-
     this.queryRunners[refId] = runner;
-    this.runnersSubject.next(runner.getData({ withTransforms: false, withFieldConfig: false }));
+
     return runner;
   }
 }
