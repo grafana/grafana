@@ -95,6 +95,7 @@ export const getButtonStyles = (props: StyleProps) => {
     '&:hover': {
       background: theme.v2.palette.action.disabledBackground,
       color: theme.v2.palette.text.disabled,
+      boxShadow: 'none',
     },
   };
 
@@ -144,7 +145,6 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemePaletteColor)
   return {
     background: color.main,
     color: color.contrastText,
-    boxShadow: theme.shadows.z1,
     border: `1px solid transparent`,
     transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
       duration: theme.transitions.duration.short,
