@@ -34,7 +34,7 @@ export const colors = {
   lightBorder1: '#E4E7E7',
 
   blueDarkMain: '#4165F5',
-  blueDarkText: '#5790FF',
+  blueDarkText: '#33a2e5', // '#5790FF',
   redDarkMain: '#D10E5C',
   redDarkText: '#FF5286',
   greenDarkMain: '#1A7F4B',
