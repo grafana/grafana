@@ -46,7 +46,7 @@ Avoid _master_ or _slave_.
 
 ## Grafana-specific style
 
-The following guidelines are specific to Grafana documentation. For the most part, these are *guidelines* are not rigid rules. If you have questions, ask in the #docs channel of Grafana Slack.
+The following guidelines are specific to Grafana documentation. For the most part, these are *guidelines* are not rigid rules. If you have questions, then please ask in the #docs channel of Grafana Slack.
 
 ### General
 
