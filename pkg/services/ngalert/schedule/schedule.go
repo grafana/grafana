@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"golang.org/x/sync/errgroup"
 
 	"github.com/benbjohnson/clock"
@@ -339,14 +337,6 @@ func (sch *schedule) saveAlertStates(states []state.AlertState) {
 	}
 }
 
-func dataLabelsFromInstanceLabels(il models.InstanceLabels) data.Labels {
-	lbs := data.Labels{}
-	for k, v := range il {
-		lbs[k] = v
-	}
-	return lbs
-}
-
 func (sch *schedule) WarmStateCache(st *state.StateTracker) {
 	sch.log.Info("warming cache for startup")
 	st.ResetCache()
@@ -365,7 +355,7 @@ func (sch *schedule) WarmStateCache(st *state.StateTracker) {
 			sch.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 		for _, entry := range cmd.Result {
-			lbs := dataLabelsFromInstanceLabels(entry.Labels)
+			lbs := map[string]string(entry.Labels)
 			stateForEntry := state.AlertState{
 				UID:                entry.DefinitionUID,
 				OrgID:              entry.DefinitionOrgID,

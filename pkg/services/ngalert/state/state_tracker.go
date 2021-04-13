@@ -57,7 +57,7 @@ func (st *StateTracker) getOrCreate(uid string, orgId int64, result eval.Result)
 	st.stateCache.mu.Lock()
 	defer st.stateCache.mu.Unlock()
 
-	idString := fmt.Sprintf("%s %s", uid, result.Instance.String())
+	idString := fmt.Sprintf("%s %s", uid, map[string]string(result.Instance))
 	if state, ok := st.stateCache.cacheMap[idString]; ok {
 		return state
 	}

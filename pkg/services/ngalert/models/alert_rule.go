@@ -140,6 +140,13 @@ type ListRuleGroupAlertRulesQuery struct {
 	Result []*AlertRule
 }
 
+// ListOrgRuleGroupsQuery is the query for listing unique rule groups
+type ListOrgRuleGroupsQuery struct {
+	OrgID int64
+
+	Result []string
+}
+
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
