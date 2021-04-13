@@ -69,6 +69,8 @@ export const RuleList: FC = () => {
   const grafanaPromError = promRuleRequests[GRAFANA_RULES_SOURCE_NAME]?.error;
   const grafanaRulerError = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME]?.error;
 
+  const showNewAlertSplash = dispatched && !loading && !haveResults;
+
   const combinedNamespaces = useCombinedRuleNamespaces();
   const [thresholdNamespaces, systemNamespaces] = useMemo(() => {
     const sorted = combinedNamespaces
@@ -116,13 +118,15 @@ export const RuleList: FC = () => {
           ))}
         </InfoBox>
       )}
-      <div className={styles.buttonsContainer}>
-        <div />
-        <a href="/alerting/new">
-          <Button icon="plus">New alert rule</Button>
-        </a>
-      </div>
-      {dispatched && !loading && !haveResults && <NoRulesSplash />}
+      {!showNewAlertSplash && (
+        <div className={styles.buttonsContainer}>
+          <div />
+          <a href="/alerting/new">
+            <Button icon="plus">New alert rule</Button>
+          </a>
+        </div>
+      )}
+      {showNewAlertSplash && <NoRulesSplash />}
       {haveResults && <ThresholdRules namespaces={thresholdNamespaces} />}
       {haveResults && <SystemOrApplicationRules namespaces={systemNamespaces} />}
     </AlertingPageWrapper>

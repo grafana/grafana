@@ -1,18 +1,18 @@
   influxdb2:
-    image: quay.io/influxdb/influxdb:v2.0.3
+    image: influxdb:2.0.4
     container_name: influxdb2
     ports:
       - '8087:8086'
     environment:
-      INFLUXDB_REPORTING_DISABLED: 'true'
+      INFLUXD_REPORTING_DISABLED: 'true'
     volumes:
-      - ./docker/blocks/influxdb2/influxdb.conf:/etc/influxdb/influxdb.conf
+      - ./docker/blocks/influxdb2/config.yaml:/etc/influxdb2/config.yaml
 
   # Use the influx cli to set up an influxdb instance.
   influxdb2_cli:
     links:
       - influxdb2
-    image: quay.io/influxdb/influxdb:v2.0.3
+    image: influxdb:2.0.4
     # The following long command does 2 things:
     #   1. It initializes the bucket
     #   2. Maps bucket to database to enable backward-compatible access (influxql queries)
