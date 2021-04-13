@@ -1,43 +1,23 @@
-import { DataFrame, dateMath, LoadingState, PanelData } from '@grafana/data';
+import { DataFrame, DataQuery, dateMath, LoadingState, PanelData } from '@grafana/data';
 import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { MultiQueryRunner } from './MultiQueryRunner';
 import { GetDataOptions, QueryRunnerOptions } from '../../query/state/PanelQueryRunner';
 
 describe('Multi query runner', () => {
-  it('should emit list with values from each queryRunner', async () => {
+  it('should emit list with latest values from each queryRunner', async () => {
     const dataA = createPanelData();
-    const runnerA = new FakePanelQueryRunner(dataA);
-
     const dataB = createPanelData();
-    const runnerB = new FakePanelQueryRunner(dataB);
 
     const createRunner = jest.fn();
-    createRunner.mockReturnValueOnce(runnerA);
-    createRunner.mockReturnValueOnce(runnerB);
+    createRunner.mockReturnValueOnce(new FakePanelQueryRunner(dataA));
+    createRunner.mockReturnValueOnce(new FakePanelQueryRunner(dataB));
 
     const multiRunner = new MultiQueryRunner(createRunner);
 
     await multiRunner.run({
       dataSource: { name: 'test' },
-      queries: [
-        {
-          refId: 'A',
-          timeRange: {
-            from: dateMath.parse('now-6h')!,
-            to: dateMath.parse('now-3h')!,
-            raw: { from: 'now-6h', to: 'now-3h' },
-          },
-        },
-        {
-          refId: 'B',
-          timeRange: {
-            from: dateMath.parse('now-3h')!,
-            to: dateMath.parse('now')!,
-            raw: { from: 'now-3h', to: 'now' },
-          },
-        },
-      ],
+      queries: [createQuery({ refId: 'A' }), createQuery({ refId: 'B' })],
     });
 
     await expect(multiRunner.getData().pipe(first())).toEmitValuesWith((value) => {
@@ -45,7 +25,7 @@ describe('Multi query runner', () => {
     });
   });
 
-  it('should emit list with latest values from each queryRunner', async () => {
+  it('should emit list with latest values from each queryRunner when run induvidualy', async () => {
     const dataA = createPanelData();
     const runnerA = new FakePanelQueryRunner(dataA);
 
@@ -60,24 +40,7 @@ describe('Multi query runner', () => {
 
     await multiRunner.run({
       dataSource: { name: 'test' },
-      queries: [
-        {
-          refId: 'A',
-          timeRange: {
-            from: dateMath.parse('now-6h')!,
-            to: dateMath.parse('now-3h')!,
-            raw: { from: 'now-6h', to: 'now-3h' },
-          },
-        },
-        {
-          refId: 'B',
-          timeRange: {
-            from: dateMath.parse('now-3h')!,
-            to: dateMath.parse('now')!,
-            raw: { from: 'now-3h', to: 'now' },
-          },
-        },
-      ],
+      queries: [createQuery({ refId: 'A' }), createQuery({ refId: 'B' })],
     });
 
     const nextDataA = createPanelData({ state: LoadingState.Loading });
@@ -85,16 +48,7 @@ describe('Multi query runner', () => {
 
     await runnerA.run({
       datasource: 'test',
-      queries: [
-        {
-          refId: 'A',
-          timeRange: {
-            from: dateMath.parse('now-6h')!,
-            to: dateMath.parse('now-3h')!,
-            raw: { from: 'now-6h', to: 'now-3h' },
-          },
-        },
-      ],
+      queries: [createQuery()],
       minInterval: null,
       maxDataPoints: 1000,
       timezone: 'browser',
@@ -121,6 +75,18 @@ const createPanelData = (data: Partial<PanelData> = {}) => {
       raw: { from: 'now-3h', to: 'now' },
     },
     ...data,
+  };
+};
+
+const createQuery = (query: Partial<DataQuery> = {}): DataQuery => {
+  return {
+    refId: 'A',
+    timeRange: {
+      from: dateMath.parse('now-3h')!,
+      to: dateMath.parse('now')!,
+      raw: { from: 'now-3h', to: 'now' },
+    },
+    ...query,
   };
 };
 class FakePanelQueryRunner {
