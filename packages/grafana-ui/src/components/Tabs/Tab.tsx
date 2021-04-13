@@ -70,7 +70,10 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       a {
         display: block;
         height: 100%;
+        color: ${theme.v2.palette.text.secondary};
       }
+
+      a:hover,
       &:hover,
       &:focus {
         color: ${theme.v2.palette.text.primary};
@@ -83,6 +86,10 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       label: activeTabStyle;
       color: ${theme.v2.palette.text.primary};
       overflow: hidden;
+
+      a {
+        color: ${theme.v2.palette.text.primary};
+      }
 
       &::before {
         display: block;
