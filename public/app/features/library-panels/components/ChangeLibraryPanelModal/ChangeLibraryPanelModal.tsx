@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, HorizontalGroup, Modal } from '@grafana/ui';
+import { ConfirmModal } from '@grafana/ui';
 
 import { PanelModel } from '../../../dashboard/state';
 
@@ -10,23 +10,18 @@ export interface ChangeLibraryPanelModalProps {
 }
 
 export const ChangeLibraryPanelModal = ({ onConfirm, onDismiss, panel }: ChangeLibraryPanelModalProps): JSX.Element => {
-  const title = `${Boolean(panel.libraryPanel) ? 'Changing' : 'Change to'} library panel`;
-  const description = `Changing ${
-    Boolean(panel.libraryPanel) ? '' : 'to'
-  } library panel will remove any changes since last save.`;
+  const isLibraryPanel = Boolean(panel.libraryPanel);
+  const title = `${isLibraryPanel ? 'Changing' : 'Change to'} library panel`;
+  const body = `Changing ${isLibraryPanel ? '' : 'to a'} library panel will remove any changes since last save.`;
   return (
-    <Modal title={title} onDismiss={onDismiss} isOpen={true}>
-      <div>
-        <p> {description} </p>
-        <HorizontalGroup>
-          <Button variant="destructive" onClick={onConfirm}>
-            Change
-          </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
-          </Button>
-        </HorizontalGroup>
-      </div>
-    </Modal>
+    <ConfirmModal
+      onConfirm={onConfirm}
+      onDismiss={onDismiss}
+      confirmText="Change"
+      title={title}
+      body={body}
+      dismissText="Cancel"
+      isOpen={true}
+    />
   );
 };
