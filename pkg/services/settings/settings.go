@@ -2,15 +2,32 @@ package settings
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 )
 
 var (
-	ErrInvalidConfiguration  = errors.New("invalid configuration")
 	ErrOperationNotPermitted = errors.New("operation not permitted")
 )
+
+type ValidationError struct {
+	Errors []error
+}
+
+func (v ValidationError) Error() string {
+	builder := strings.Builder{}
+
+	for i, e := range v.Errors {
+		builder.WriteString(e.Error())
+		if i != len(v.Errors)-1 {
+			builder.WriteString(", ")
+		}
+	}
+
+	return builder.String()
+}
 
 // Provider is a settings provider abstraction
 // with thread-safety and runtime updates.

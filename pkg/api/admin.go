@@ -43,14 +43,52 @@ func AdminGetSettings(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) AdminUpsertSettings(c *models.ReqContext, cmd models.UpsertSettingsCommand) response.Response {
+	/*
+			{
+				"errors": {
+					"saml.auth: could not validate blaha",
+					"database screwed uop big time
+				},
+				"message": "Validation failed"
+			}
+
+
+
+		{
+			"errors": {
+				{ "section":"saml.auth", "error:"bad config"}
+			},
+			"message": "Validation failed"
+		}
+			{
+				"errors": {},
+				"message": "Database update failed"
+			}
+	*/
+
 	if err := hs.SettingsProvider.Update(cmd.Settings); err != nil {
+		returnErrs := func(status int, message string, errors ...error) response.Response {
+			data := make(map[string]interface{})
+			data["message"] = message
+
+			errorDetails := make([]string, 0, len(errors))
+			for _, err := range errors {
+				errorDetails = append(errorDetails, err.Error())
+			}
+
+			data["errors"] = errorDetails
+			return response.JSON(status, data)
+		}
+
+		var validationErrors settings.ValidationError
+
 		switch {
-		case errors.Is(err, settings.ErrInvalidConfiguration):
-			return response.Error(http.StatusBadRequest, "Invalid settings", err)
+		case errors.As(err, &validationErrors):
+			return returnErrs(http.StatusBadRequest, "Invalid settings", validationErrors.Errors...)
 		case errors.Is(err, settings.ErrOperationNotPermitted):
-			return response.Error(http.StatusForbidden, "Settings update not permitted", err)
+			return returnErrs(http.StatusForbidden, "Settings update not permitted", err)
 		default:
-			return response.Error(http.StatusInternalServerError, err.Error(), err)
+			return returnErrs(http.StatusInternalServerError, err.Error(), err)
 		}
 	}
 

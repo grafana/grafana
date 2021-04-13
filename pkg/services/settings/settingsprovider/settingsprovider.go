@@ -69,7 +69,7 @@ func (i *Implementation) Update(bag models.SettingsBag) error {
 	}
 
 	if err := i.refreshWithBag(bag); err != nil {
-		return fmt.Errorf("%s - %w", err.Error(), settings.ErrInvalidConfiguration)
+		return err
 	}
 
 	return nil
@@ -166,41 +166,54 @@ func (i *Implementation) refreshWithBag(bag models.SettingsBag) error {
 		return nil
 	}
 
-	if err = i.triggerReload(toReload); err != nil {
+	// 1. Validate settings
+	if err = i.validateSettings(toReload); err != nil {
 		return err
 	}
 
+	// 2. Store settings in DB and memory
 	i.Lock()
 	i.settings = newSettingsBag
 	i.Unlock()
 
+	// 3. Reload services
+	if err = i.triggerReload(toReload); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (i *Implementation) triggerReload(bag models.SettingsBag) error {
+func (i *Implementation) validateSettings(bag models.SettingsBag) error {
 	logger.Debug("Validating settings updates")
+	return i.handleReloadable("Validating", bag, func(handler settings.ReloadHandler, section settings.Section) error {
+		return handler.Validate(section)
+	})
+}
+
+func (i *Implementation) triggerReload(bag models.SettingsBag) error {
+	logger.Debug("Reloading settings")
+	return i.handleReloadable("Reloading", bag, func(handler settings.ReloadHandler, section settings.Section) error {
+		return handler.Reload(section)
+	})
+}
+
+func (i *Implementation) handleReloadable(action string, bag models.SettingsBag, handler func(handler settings.ReloadHandler, section settings.Section) error) error {
+	var handleErrors []error
+
 	for sectionName, config := range bag {
 		if handlers, exists := i.reloadHandlers[sectionName]; exists {
-			logger.Debug("Validation settings for", "section", sectionName)
+			logger.Debug(action, "section", sectionName)
 			for _, h := range handlers {
-				if err := h.Validate(buildSection(config)); err != nil {
-					return err
+				if err := handler(h, buildSection(config)); err != nil {
+					handleErrors = append(handleErrors, fmt.Errorf("%s: %w", sectionName, err))
 				}
-				// TODO: should not return here, instead keep track of all failure and return those
 			}
 		}
 	}
 
-	logger.Debug("Reloading settings")
-	for sectionName, config := range bag {
-		if handlers, exists := i.reloadHandlers[sectionName]; exists {
-			logger.Debug("Reloading services using", "section", sectionName)
-			for _, h := range handlers {
-				if err := h.Reload(buildSection(config)); err != nil {
-					return err
-				}
-			}
-		}
+	if len(handleErrors) > 0 {
+		return settings.ValidationError{Errors: handleErrors}
 	}
 
 	return nil
