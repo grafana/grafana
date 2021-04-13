@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -309,11 +311,11 @@ func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) 
 }
 
 // GetChannelHandler gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, ChannelAddress, error) {
+func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error) {
 	// Parse the identifier ${scope}/${namespace}/${path}
-	addr := ParseChannelAddress(channel)
+	addr := live.ParseChannel(channel)
 	if !addr.IsValid() {
-		return nil, ChannelAddress{}, fmt.Errorf("invalid channel: %q", channel)
+		return nil, live.Channel{}, fmt.Errorf("invalid channel: %q", channel)
 	}
 
 	g.channelsMu.RLock()
@@ -352,15 +354,15 @@ func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel strin
 // It gives thread-safe access to the channel.
 func (g *GrafanaLive) GetChannelHandlerFactory(user *models.SignedInUser, scope string, namespace string) (models.ChannelHandlerFactory, error) {
 	switch scope {
-	case ScopeGrafana:
+	case live.ScopeGrafana:
 		return g.handleGrafanaScope(user, namespace)
-	case ScopePlugin:
+	case live.ScopePlugin:
 		return g.handlePluginScope(user, namespace)
-	case ScopeDatasource:
+	case live.ScopeDatasource:
 		return g.handleDatasourceScope(user, namespace)
-	case ScopeStream:
+	case live.ScopeStream:
 		return g.handleStreamScope(user, namespace)
-	case ScopePush:
+	case live.ScopePush:
 		return g.handlePushScope(user, namespace)
 	default:
 		return nil, fmt.Errorf("invalid scope: %q", scope)
@@ -400,13 +402,20 @@ func (g *GrafanaLive) handleStreamScope(_ *models.SignedInUser, namespace string
 }
 
 func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	return NewDemultiplexer(g.ManagedStreamRunner, namespace), nil
+	return NewDemultiplexer(namespace, g.ManagedStreamRunner), nil
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
 	ds, err := g.DatasourceCache.GetDatasourceByUID(namespace, user, false)
 	if err != nil {
-		return nil, fmt.Errorf("error getting datasource: %w", err)
+		// the namespace may be an ID
+		id, _ := strconv.ParseInt(namespace, 10, 64)
+		if id > 0 {
+			ds, err = g.DatasourceCache.GetDatasource(id, user, false)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error getting datasource: %w", err)
+		}
 	}
 	streamHandler, err := g.getStreamPlugin(ds.Type)
 	if err != nil {
@@ -433,7 +442,7 @@ func (g *GrafanaLive) IsEnabled() bool {
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
-	addr := ParseChannelAddress(cmd.Channel)
+	addr := live.ParseChannel(cmd.Channel)
 	if !addr.IsValid() {
 		return response.Error(http.StatusBadRequest, "Bad channel address", nil)
 	}

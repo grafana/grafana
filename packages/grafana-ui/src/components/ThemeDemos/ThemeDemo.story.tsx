@@ -1,6 +1,6 @@
 import React from 'react';
 import { EmotionPerfTest } from './EmotionPerfTest';
-import { NewThemeDemo as NewThemeDemoComponent } from './NewThemeDemo';
+import { ThemeDemo as NewThemeDemoComponent } from './ThemeDemo';
 
 export default {
   title: 'Docs Overview/Theme',
@@ -14,7 +14,7 @@ export default {
   },
 };
 
-export const NewThemeDemo = () => {
+export const ThemeDemo = () => {
   return <NewThemeDemoComponent />;
 };
 
