@@ -48,7 +48,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       new OptionsPaneItemDescriptor({
         title: pluginOption.name,
         description: pluginOption.description,
-        Component: function renderEditor() {
+        render: function renderEditor() {
           const onChange = (value: any) => {
             const newOptions = lodashSet({ ...currentOptions }, pluginOption.path, value);
             onPanelOptionsChanged(newOptions);
@@ -101,7 +101,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
       new OptionsPaneItemDescriptor({
         title: fieldOption.name,
         description: fieldOption.description,
-        Component: function renderEditor() {
+        render: function renderEditor() {
           const onChange = (v: any) => {
             onFieldConfigsChange(
               updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom)
