@@ -9,20 +9,20 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", SaveBroadcastMessage)
-	bus.AddHandler("sql", GetLastBroadcastMessage)
+	bus.AddHandler("sql", SaveLiveMessage)
+	bus.AddHandler("sql", GetLastLiveMessage)
 }
 
-func SaveBroadcastMessage(query *models.SaveBroadcastMessageQuery) error {
+func SaveLiveMessage(query *models.SaveLiveMessageQuery) error {
 	params := query.Params
 	return inTransaction(func(sess *DBSession) error {
-		var msg models.LiveBroadcastMessage
+		var msg models.LiveMessage
 		exists, err := sess.Where("org_id=? AND channel=?", params.OrgId, params.Channel).Get(&msg)
 		if err != nil {
 			return fmt.Errorf("error getting existing: %w", err)
 		}
 		if !exists {
-			msg = models.LiveBroadcastMessage{
+			msg = models.LiveMessage{
 				OrgId:     params.OrgId,
 				Channel:   params.Channel,
 				Data:      params.Data,
@@ -46,8 +46,8 @@ func SaveBroadcastMessage(query *models.SaveBroadcastMessageQuery) error {
 	})
 }
 
-func GetLastBroadcastMessage(query *models.GetLastBroadcastMessageQuery) error {
-	var msg models.LiveBroadcastMessage
+func GetLastLiveMessage(query *models.GetLastLiveMessageQuery) error {
+	var msg models.LiveMessage
 	exists, err := x.Where("org_id=? AND channel=?", query.Params.OrgId, query.Params.Channel).Get(&msg)
 	if err != nil {
 		return err

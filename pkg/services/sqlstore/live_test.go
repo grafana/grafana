@@ -10,31 +10,31 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLiveBroadcastMessage(t *testing.T) {
+func TestLiveMessage(t *testing.T) {
 	InitTestDB(t)
 
-	getQuery := &models.GetLastBroadcastMessageQuery{
-		Params: models.GetLastBroadcastMessageQueryParams{
+	getQuery := &models.GetLastLiveMessageQuery{
+		Params: models.GetLastLiveMessageQueryParams{
 			OrgId:   1,
 			Channel: "test_channel",
 		},
 	}
-	err := GetLastBroadcastMessage(getQuery)
+	err := GetLastLiveMessage(getQuery)
 	require.NoError(t, err)
 	require.Nil(t, getQuery.Result)
 
-	saveQuery := &models.SaveBroadcastMessageQuery{
-		Params: models.SaveBroadcastMessageQueryParams{
+	saveQuery := &models.SaveLiveMessageQuery{
+		Params: models.SaveLiveMessageQueryParams{
 			OrgId:     1,
 			Channel:   "test_channel",
 			Data:      []byte(`{}`),
 			CreatedBy: 2,
 		},
 	}
-	err = SaveBroadcastMessage(saveQuery)
+	err = SaveLiveMessage(saveQuery)
 	require.NoError(t, err)
 
-	err = GetLastBroadcastMessage(getQuery)
+	err = GetLastLiveMessage(getQuery)
 	require.NoError(t, err)
 	require.NotNil(t, getQuery.Result)
 	require.Equal(t, int64(1), getQuery.Result.OrgId)
@@ -44,24 +44,24 @@ func TestLiveBroadcastMessage(t *testing.T) {
 	require.NotZero(t, getQuery.Result.Created)
 
 	// try saving again, should be replaced.
-	saveQuery2 := &models.SaveBroadcastMessageQuery{
-		Params: models.SaveBroadcastMessageQueryParams{
+	saveQuery2 := &models.SaveLiveMessageQuery{
+		Params: models.SaveLiveMessageQueryParams{
 			OrgId:     1,
 			Channel:   "test_channel",
 			Data:      []byte(`{"input": "hello"}`),
 			CreatedBy: 3,
 		},
 	}
-	err = SaveBroadcastMessage(saveQuery2)
+	err = SaveLiveMessage(saveQuery2)
 	require.NoError(t, err)
 
-	getQuery2 := &models.GetLastBroadcastMessageQuery{
-		Params: models.GetLastBroadcastMessageQueryParams{
+	getQuery2 := &models.GetLastLiveMessageQuery{
+		Params: models.GetLastLiveMessageQueryParams{
 			OrgId:   1,
 			Channel: "test_channel",
 		},
 	}
-	err = GetLastBroadcastMessage(getQuery2)
+	err = GetLastLiveMessage(getQuery2)
 	require.NoError(t, err)
 	require.NotNil(t, getQuery2.Result)
 	require.Equal(t, int64(1), getQuery2.Result.OrgId)

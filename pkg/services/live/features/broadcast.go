@@ -33,8 +33,8 @@ func (b *BroadcastRunner) OnSubscribe(ctx context.Context, u *models.SignedInUse
 		JoinLeave: true,
 		Recover:   true, // loads the saved value from history
 	}
-	query := &models.GetLastBroadcastMessageQuery{
-		Params: models.GetLastBroadcastMessageQueryParams{
+	query := &models.GetLastLiveMessageQuery{
+		Params: models.GetLastLiveMessageQueryParams{
 			OrgId:   u.OrgId,
 			Channel: e.Channel,
 		},
@@ -50,8 +50,8 @@ func (b *BroadcastRunner) OnSubscribe(ctx context.Context, u *models.SignedInUse
 
 // OnPublish is called when a client wants to broadcast on the websocket
 func (b *BroadcastRunner) OnPublish(ctx context.Context, u *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
-	query := &models.SaveBroadcastMessageQuery{
-		Params: models.SaveBroadcastMessageQueryParams{
+	query := &models.SaveLiveMessageQuery{
+		Params: models.SaveLiveMessageQueryParams{
 			OrgId:     u.OrgId,
 			Channel:   e.Channel,
 			Data:      e.Data,
