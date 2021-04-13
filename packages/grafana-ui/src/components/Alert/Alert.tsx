@@ -50,12 +50,16 @@ export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
         </div>
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
-          <IconButton name="times" className={styles.close} onClick={onRemove} size="lg" />
+          <div className={styles.close}>
+            <IconButton name="times" onClick={onRemove} size="lg" />
+          </div>
         )}
         {onRemove && buttonContent && (
-          <Button variant="secondary" onClick={onRemove}>
-            {buttonContent}
-          </Button>
+          <div className={styles.buttonWrapper}>
+            <Button variant="secondary" onClick={onRemove}>
+              {buttonContent}
+            </Button>
+          </div>
         )}
       </div>
     );
@@ -70,15 +74,13 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boole
   return {
     alert: css`
       flex-grow: 1;
-      padding: ${theme.v2.spacing(2)};
       margin-bottom: ${theme.v2.spacing(0.5)};
       position: relative;
       border-radius: ${theme.v2.shape.borderRadius()};
       display: flex;
       flex-direction: row;
-      align-items: center;
-      border-left: 3px solid ${color.border};
-      background: ${color.transparent};
+      align-items: stretch;
+      background: ${theme.v2.palette.layer2};
       box-shadow: ${elevated ? theme.v2.shadows.z4 : theme.v2.shadows.z1};
 
       &:before {
@@ -93,26 +95,38 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boole
       }
     `,
     icon: css`
-      padding-right: ${theme.v2.spacing(2)};
-      color: ${color.border};
+      padding: ${theme.v2.spacing(2, 3)};
+      background: ${color.main};
+      color: ${color.contrastText};
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 35px;
     `,
     title: css`
       font-weight: ${theme.v2.typography.fontWeightMedium};
+      color: ${theme.v2.palette.text.primary};
     `,
     body: css`
+      color: ${theme.v2.palette.text.secondary};
+      padding: ${theme.v2.spacing(2)};
       flex-grow: 1;
-      margin: ${theme.v2.spacing(0, 1, 0, 0)};
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       overflow-wrap: break-word;
       word-break: break-word;
     `,
-    close: css`
+    buttonWrapper: css`
+      padding: ${theme.v2.spacing(1)};
       background: none;
       display: flex;
       align-items: center;
+    `,
+    close: css`
+      padding: ${theme.v2.spacing(1)};
+      background: none;
+      align-items: center;
+      display: flex;
     `,
   };
 };

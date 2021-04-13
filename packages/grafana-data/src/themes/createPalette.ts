@@ -75,8 +75,8 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'dark';
 
   text = {
-    primary: 'rgba(255, 255, 255, 0.75)',
-    secondary: 'rgba(255, 255, 255, 0.50)',
+    primary: 'rgba(255, 255, 255, 0.77)',
+    secondary: 'rgba(255, 255, 255, 0.55)',
     disabled: 'rgba(255, 255, 255, 0.35)',
     link: colors.blueDarkText,
     maxContrast: colors.white,
@@ -188,7 +188,6 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   divider = 'rgba(0, 2, 78, 0.07)';
 
   border0 = this.layer1;
-
   border1 = 'rgba(0, 2, 78, 0.20)';
   border2 = 'rgba(0, 2, 78, 0.30)';
 

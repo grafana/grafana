@@ -36,7 +36,9 @@ export const Examples: Story<Props> = ({ severity, title, buttonContent }) => {
           buttonContent={<span>{buttonContent}</span>}
           onRemove={action('Remove button clicked')}
         >
-          Child content that includes some alert details, like maybe what actually happened.
+          <VerticalGroup>
+            <div>Child content that includes some alert details, like maybe what actually happened.</div>
+          </VerticalGroup>
         </Alert>
       </StoryExample>
       <StoryExample name="No dismiss">
