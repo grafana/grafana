@@ -1,4 +1,0 @@
-@grafana = grafana
-
-GET http://admin:admin@localhost:3000/prometheus/{{grafana}}/api/v1/alerts
-content-type: application/json
