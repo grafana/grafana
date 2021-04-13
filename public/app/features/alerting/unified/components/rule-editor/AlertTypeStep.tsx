@@ -120,7 +120,6 @@ export const AlertTypeStep: FC = () => {
         <Field
           label="Group"
           className={styles.formInput}
-          key={dataSourceName || 'null'}
           error={errors.location?.message}
           invalid={!!errors.location?.message}
         >
