@@ -26,7 +26,7 @@ const LegendFormatField: React.FC<AzureQueryEditorFieldProps> = ({ onQueryChange
   }, [onQueryChange, query, value]);
 
   return (
-    <Field label="Legend Format">
+    <Field label="Legend format">
       <Input
         id="azure-monitor-metrics-legend-field"
         placeholder="Alias patterns"

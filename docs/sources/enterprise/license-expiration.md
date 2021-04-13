@@ -13,7 +13,7 @@ If your license has expired, most of Grafana keeps working as normal. Some enter
 
 ## Update your license
 
-1. Locate your current `license.jwt` file. In a standard installation it is stored inside Grafana's data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/).
+1. Locate your current `license.jwt` file. In a standard installation it is stored inside Grafana's data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration](https://grafana.com/docs/grafana/next/administration/configuration/).
 
    ```ini
    [enterprise]
