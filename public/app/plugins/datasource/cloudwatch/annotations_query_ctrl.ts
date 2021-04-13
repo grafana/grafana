@@ -3,10 +3,12 @@ import { AnnotationQuery } from './types';
 
 export class CloudWatchAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
-  annotation: any;
+  declare annotation: any;
 
   /** @ngInject */
-  constructor() {
+  constructor($scope: any) {
+    this.annotation = $scope.ctrl.annotation;
+
     _.defaultsDeep(this.annotation, {
       namespace: '',
       metricName: '',
