@@ -15,7 +15,7 @@ import (
 func TestNewBroadcastRunner(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	d := NewMockDispatcher(mockCtrl)
+	d := NewMockLiveMessageStore(mockCtrl)
 	br := NewBroadcastRunner(d)
 	require.NotNil(t, br)
 }
@@ -23,21 +23,20 @@ func TestNewBroadcastRunner(t *testing.T) {
 func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockDispatcher := NewMockDispatcher(mockCtrl)
+	mockDispatcher := NewMockLiveMessageStore(mockCtrl)
 
 	channel := "stream/channel/test"
 	data := json.RawMessage(`{}`)
 
-	mockDispatcher.EXPECT().Dispatch(&models.GetLastLiveMessageQuery{
+	mockDispatcher.EXPECT().GetLastLiveMessage(&models.GetLastLiveMessageQuery{
 		Params: models.GetLastLiveMessageQueryParams{
 			OrgId:   1,
 			Channel: channel,
 		},
-	}).Do(func(query *models.GetLastLiveMessageQuery) error {
-		query.Result = &models.LiveMessage{
+	}).DoAndReturn(func(query *models.GetLastLiveMessageQuery) (models.LiveMessage, bool, error) {
+		return models.LiveMessage{
 			Data: data,
-		}
-		return nil
+		}, true, nil
 	}).Times(1)
 
 	br := NewBroadcastRunner(mockDispatcher)
@@ -60,21 +59,21 @@ func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 func TestBroadcastRunner_OnPublish(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockDispatcher := NewMockDispatcher(mockCtrl)
+	mockDispatcher := NewMockLiveMessageStore(mockCtrl)
 
 	channel := "stream/channel/test"
 	data := json.RawMessage(`{}`)
 	var orgID int64 = 1
 	var userID int64 = 2
 
-	mockDispatcher.EXPECT().Dispatch(&models.SaveLiveMessageQuery{
+	mockDispatcher.EXPECT().SaveLiveMessage(&models.SaveLiveMessageQuery{
 		Params: models.SaveLiveMessageQueryParams{
 			OrgId:     orgID,
 			CreatedBy: userID,
 			Channel:   channel,
 			Data:      data,
 		},
-	}).Do(func(query *models.SaveLiveMessageQuery) error {
+	}).DoAndReturn(func(query *models.SaveLiveMessageQuery) error {
 		return nil
 	}).Times(1)
 

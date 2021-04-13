@@ -94,5 +94,4 @@ type GetLastLiveMessageQueryParams struct {
 
 type GetLastLiveMessageQuery struct {
 	Params GetLastLiveMessageQueryParams
-	Result *LiveMessage
 }

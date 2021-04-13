@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -59,7 +59,7 @@ type GrafanaLive struct {
 	LogsService           *cloudwatch.LogsService  `inject:""`
 	PluginManager         *manager.PluginManager   `inject:""`
 	DatasourceCache       datasources.CacheService `inject:""`
-	Bus                   bus.Bus                  `inject:""`
+	SQLStore              *sqlstore.SQLStore       `inject:""`
 
 	node *centrifuge.Node
 
@@ -137,7 +137,7 @@ func (g *GrafanaLive) Init() error {
 	}
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
-	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.Bus)
+	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.SQLStore)
 
 	g.ManagedStreamRunner = NewManagedStreamRunner(g.Publish)
 

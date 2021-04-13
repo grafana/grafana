@@ -4,16 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func init() {
-	bus.AddHandler("sql", SaveLiveMessage)
-	bus.AddHandler("sql", GetLastLiveMessage)
-}
-
-func SaveLiveMessage(query *models.SaveLiveMessageQuery) error {
+func (ss *SQLStore) SaveLiveMessage(query *models.SaveLiveMessageQuery) error {
 	params := query.Params
 	return inTransaction(func(sess *DBSession) error {
 		var msg models.LiveMessage
@@ -46,16 +40,11 @@ func SaveLiveMessage(query *models.SaveLiveMessageQuery) error {
 	})
 }
 
-func GetLastLiveMessage(query *models.GetLastLiveMessageQuery) error {
+func (ss *SQLStore) GetLastLiveMessage(query *models.GetLastLiveMessageQuery) (models.LiveMessage, bool, error) {
 	var msg models.LiveMessage
 	exists, err := x.Where("org_id=? AND channel=?", query.Params.OrgId, query.Params.Channel).Get(&msg)
 	if err != nil {
-		return err
+		return models.LiveMessage{}, false, err
 	}
-	if exists {
-		query.Result = &msg
-	} else {
-		query.Result = nil
-	}
-	return nil
+	return msg, exists, nil
 }

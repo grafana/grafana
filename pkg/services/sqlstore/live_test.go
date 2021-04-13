@@ -11,7 +11,7 @@ import (
 )
 
 func TestLiveMessage(t *testing.T) {
-	InitTestDB(t)
+	ss := InitTestDB(t)
 
 	getQuery := &models.GetLastLiveMessageQuery{
 		Params: models.GetLastLiveMessageQueryParams{
@@ -19,9 +19,9 @@ func TestLiveMessage(t *testing.T) {
 			Channel: "test_channel",
 		},
 	}
-	err := GetLastLiveMessage(getQuery)
+	_, ok, err := ss.GetLastLiveMessage(getQuery)
 	require.NoError(t, err)
-	require.Nil(t, getQuery.Result)
+	require.False(t, ok)
 
 	saveQuery := &models.SaveLiveMessageQuery{
 		Params: models.SaveLiveMessageQueryParams{
@@ -31,17 +31,17 @@ func TestLiveMessage(t *testing.T) {
 			CreatedBy: 2,
 		},
 	}
-	err = SaveLiveMessage(saveQuery)
+	err = ss.SaveLiveMessage(saveQuery)
 	require.NoError(t, err)
 
-	err = GetLastLiveMessage(getQuery)
+	msg, ok, err := ss.GetLastLiveMessage(getQuery)
 	require.NoError(t, err)
-	require.NotNil(t, getQuery.Result)
-	require.Equal(t, int64(1), getQuery.Result.OrgId)
-	require.Equal(t, "test_channel", getQuery.Result.Channel)
-	require.Equal(t, json.RawMessage(`{}`), getQuery.Result.Data)
-	require.Equal(t, int64(2), getQuery.Result.CreatedBy)
-	require.NotZero(t, getQuery.Result.Created)
+	require.True(t, ok)
+	require.Equal(t, int64(1), msg.OrgId)
+	require.Equal(t, "test_channel", msg.Channel)
+	require.Equal(t, json.RawMessage(`{}`), msg.Data)
+	require.Equal(t, int64(2), msg.CreatedBy)
+	require.NotZero(t, msg.Created)
 
 	// try saving again, should be replaced.
 	saveQuery2 := &models.SaveLiveMessageQuery{
@@ -52,7 +52,7 @@ func TestLiveMessage(t *testing.T) {
 			CreatedBy: 3,
 		},
 	}
-	err = SaveLiveMessage(saveQuery2)
+	err = ss.SaveLiveMessage(saveQuery2)
 	require.NoError(t, err)
 
 	getQuery2 := &models.GetLastLiveMessageQuery{
@@ -61,12 +61,12 @@ func TestLiveMessage(t *testing.T) {
 			Channel: "test_channel",
 		},
 	}
-	err = GetLastLiveMessage(getQuery2)
+	msg2, ok, err := ss.GetLastLiveMessage(getQuery2)
 	require.NoError(t, err)
-	require.NotNil(t, getQuery2.Result)
-	require.Equal(t, int64(1), getQuery2.Result.OrgId)
-	require.Equal(t, "test_channel", getQuery2.Result.Channel)
-	require.Equal(t, json.RawMessage(`{"input": "hello"}`), getQuery2.Result.Data)
-	require.Equal(t, int64(3), getQuery2.Result.CreatedBy)
-	require.NotZero(t, getQuery2.Result.Created)
+	require.True(t, ok)
+	require.Equal(t, int64(1), msg2.OrgId)
+	require.Equal(t, "test_channel", msg2.Channel)
+	require.Equal(t, json.RawMessage(`{"input": "hello"}`), msg2.Data)
+	require.Equal(t, int64(3), msg2.CreatedBy)
+	require.NotZero(t, msg2.Created)
 }

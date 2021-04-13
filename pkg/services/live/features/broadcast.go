@@ -3,7 +3,6 @@ package features
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 
@@ -14,29 +13,30 @@ var (
 	logger = log.New("live.features") // scoped to all features?
 )
 
-//go:generate mockgen -destination=dispatcher_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features Dispatcher
+//go:generate mockgen -destination=message_store_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features LiveMessageStore
 
-type Dispatcher interface {
-	Dispatch(msg bus.Msg) error
+type LiveMessageStore interface {
+	SaveLiveMessage(query *models.SaveLiveMessageQuery) error
+	GetLastLiveMessage(query *models.GetLastLiveMessageQuery) (models.LiveMessage, bool, error)
 }
 
 // BroadcastRunner will simply broadcast all events to `grafana/broadcast/*` channels
 // This assumes that data is a JSON object
 type BroadcastRunner struct {
-	Dispatcher Dispatcher
+	liveMessageStore LiveMessageStore
 }
 
-func NewBroadcastRunner(dispatcher Dispatcher) *BroadcastRunner {
-	return &BroadcastRunner{Dispatcher: dispatcher}
+func NewBroadcastRunner(liveMessageStore LiveMessageStore) *BroadcastRunner {
+	return &BroadcastRunner{liveMessageStore: liveMessageStore}
 }
 
 // GetHandlerForPath called on init
-func (b *BroadcastRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+func (b *BroadcastRunner) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
 	return b, nil // all dashboards share the same handler
 }
 
 // OnSubscribe will let anyone connect to the path
-func (b *BroadcastRunner) OnSubscribe(ctx context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := models.SubscribeReply{
 		Presence:  true,
 		JoinLeave: true,
@@ -47,17 +47,18 @@ func (b *BroadcastRunner) OnSubscribe(ctx context.Context, u *models.SignedInUse
 			Channel: e.Channel,
 		},
 	}
-	if err := b.Dispatcher.Dispatch(query); err != nil {
+	msg, ok, err := b.liveMessageStore.GetLastLiveMessage(query)
+	if err != nil {
 		return models.SubscribeReply{}, 0, err
 	}
-	if query.Result != nil {
-		reply.Data = query.Result.Data
+	if ok {
+		reply.Data = msg.Data
 	}
 	return reply, backend.SubscribeStreamStatusOK, nil
 }
 
 // OnPublish is called when a client wants to broadcast on the websocket
-func (b *BroadcastRunner) OnPublish(ctx context.Context, u *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
+func (b *BroadcastRunner) OnPublish(_ context.Context, u *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
 	query := &models.SaveLiveMessageQuery{
 		Params: models.SaveLiveMessageQueryParams{
 			OrgId:     u.OrgId,
@@ -66,7 +67,7 @@ func (b *BroadcastRunner) OnPublish(ctx context.Context, u *models.SignedInUser,
 			CreatedBy: u.UserId,
 		},
 	}
-	if err := b.Dispatcher.Dispatch(query); err != nil {
+	if err := b.liveMessageStore.SaveLiveMessage(query); err != nil {
 		return models.PublishReply{}, 0, err
 	}
 	return models.PublishReply{}, backend.PublishStreamStatusOK, nil
