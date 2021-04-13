@@ -28,6 +28,10 @@ export class AngularEditorLoader extends React.PureComponent<Props> {
     if (prevProps.datasource !== this.props.datasource) {
       this.loadAngular();
     }
+
+    if (this.angularComponent && prevProps.annotation !== this.props.annotation) {
+      this.angularComponent.getScope().ctrl.currentAnnotation = this.props.annotation;
+    }
   }
 
   loadAngular() {
@@ -48,7 +52,7 @@ export class AngularEditorLoader extends React.PureComponent<Props> {
     this.angularComponent.digest();
     this.angularComponent.getScope().$watch(() => {
       this.props.onChange({
-        ...this.props.annotation,
+        ...scopeProps.ctrl.currentAnnotation,
       });
     });
   }
