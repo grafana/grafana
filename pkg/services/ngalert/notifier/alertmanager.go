@@ -11,7 +11,6 @@ import (
 	"time"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/grafana/alerting-api/pkg/api"
 	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/dispatch"
@@ -210,7 +209,7 @@ func (am *Alertmanager) SyncAndApplyConfigFromDatabase() error {
 }
 
 // ApplyConfig applies a new configuration by re-initializing all components using the configuration provided.
-func (am *Alertmanager) ApplyConfig(cfg *api.PostableUserConfig) error {
+func (am *Alertmanager) ApplyConfig(cfg *apimodels.PostableUserConfig) error {
 	am.reloadConfigMtx.Lock()
 	defer am.reloadConfigMtx.Unlock()
 
@@ -221,7 +220,7 @@ const defaultTemplate = "templates/default.tmpl"
 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
-func (am *Alertmanager) applyConfig(cfg *api.PostableUserConfig) error {
+func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) error {
 	// First, let's make sure this config is not already loaded
 	var configChanged bool
 	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
@@ -289,7 +288,7 @@ func (am *Alertmanager) WorkingDirPath() string {
 }
 
 // buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*api.PostableApiReceiver, templates *template.Template) (map[string][]notify.Integration, error) {
+func (am *Alertmanager) buildIntegrationsMap(receivers []*apimodels.PostableApiReceiver, templates *template.Template) (map[string][]notify.Integration, error) {
 	integrationsMap := make(map[string][]notify.Integration, len(receivers))
 	for _, receiver := range receivers {
 		integrations, err := am.buildReceiverIntegrations(receiver, templates)
@@ -308,7 +307,7 @@ type NotificationChannel interface {
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-func (am *Alertmanager) buildReceiverIntegrations(receiver *api.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
+func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableApiReceiver, tmpl *template.Template) ([]notify.Integration, error) {
 	var integrations []notify.Integration
 
 	for i, r := range receiver.GrafanaManagedReceivers {
