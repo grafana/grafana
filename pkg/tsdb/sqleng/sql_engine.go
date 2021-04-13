@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -154,7 +155,6 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 	// Execute each query in a goroutine and wait for them to finish afterwards
 	for _, query := range queryContext.Queries {
-		fmt.Printf("%+v\n", query)
 		if query.Model.Get("rawSql").MustString() == "" {
 			continue
 		}
@@ -190,6 +190,8 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			}
 			interpolatedQuery := rawSQL
 
+			backend.Logger.Info("SQL query after interpolation", "sqlQuery", interpolatedQuery)
+
 			emptyFrame := &data.Frame{}
 			emptyFrame.SetMeta(&data.FrameMeta{
 				ExecutedQueryString: interpolatedQuery,
@@ -210,7 +212,6 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				ch <- queryResult
 				return
 			}
-
 			qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
 			if err != nil {
 				errAppendDebug("fail when getting configurations", err)
@@ -225,12 +226,14 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 			// Convert row.Rows to dataframe
 			myCs := e.queryResultTransformer.GetConverterList()
-			frame, _, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
-
+			frame, foo, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
+			spew.Dump(foo)
+			backend.Logger.Info("SQL query result row number", "queryResult", frame.Fields[0].Len())
 			if err != nil {
 				errAppendDebug("db query error", err)
 				return
 			}
+
 			frame.SetMeta(&data.FrameMeta{
 				ExecutedQueryString: rawSQL,
 			})
@@ -819,6 +822,7 @@ func ConvertSqlValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 		newField.Name = origin.Name
 		newField.Labels = origin.Labels
 
+		backend.Logger.Info("SQL column type converting to float64", "sqlConvertFloat64", valueType)
 		switch valueType {
 		case data.FieldTypeInt64:
 			convertInt64ToFloat64(frame.Fields[Index], newField)

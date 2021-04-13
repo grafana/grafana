@@ -260,6 +260,25 @@ var converterList = []sqlutil.StringConverter{
 			},
 		},
 	},
+	{
+		Name:           "handle FLOAT",
+		InputScanKind:  reflect.Struct,
+		InputTypeName:  "FLOAT",
+		ConversionFunc: func(in *string) (*string, error) { return in, nil },
+		Replacer: &sqlutil.StringFieldReplacer{
+			OutputFieldType: data.FieldTypeNullableFloat64,
+			ReplaceFunc: func(in *string) (interface{}, error) {
+				if in == nil {
+					return nil, nil
+				}
+				v, err := strconv.ParseFloat(*in, 64)
+				if err != nil {
+					return nil, err
+				}
+				return &v, nil
+			},
+		},
+	},
 }
 
 func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
