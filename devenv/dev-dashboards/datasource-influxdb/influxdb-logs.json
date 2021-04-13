@@ -23,7 +23,7 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "gdev-influxdb-telegraf",
+      "datasource": "gdev-influxdb1-influxql",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
@@ -70,7 +70,7 @@
               "type": "fill"
             }
           ],
-          "measurement": "logs",
+          "measurement": "t_logs",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
@@ -132,7 +132,7 @@
       }
     },
     {
-      "datasource": "gdev-influxdb-telegraf",
+      "datasource": "gdev-influxdb1-influxql",
       "gridPos": {
         "h": 18,
         "w": 24,
@@ -149,7 +149,7 @@
       "targets": [
         {
           "groupBy": [],
-          "measurement": "logs",
+          "measurement": "t_logs",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",

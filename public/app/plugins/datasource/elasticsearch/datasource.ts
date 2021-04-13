@@ -31,6 +31,7 @@ import { metricAggregationConfig } from './components/QueryEditor/MetricAggregat
 import {
   isMetricAggregationWithField,
   isPipelineAggregationWithMultipleBucketPaths,
+  Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
@@ -549,10 +550,19 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
       let queryObj;
       if (hasMetricOfType(target, 'logs')) {
+        // FIXME: All this logic here should be in the query builder.
+        // When moving to the BE-only implementation we should remove this and let the BE
+        // Handle this.
+        // TODO: defaultBucketAgg creates a dete_histogram aggregation without a field, so it fallbacks to
+        // the configured timeField. we should allow people to use a different time field here.
         target.bucketAggs = [defaultBucketAgg()];
+
+        const log = target.metrics?.find((m) => m.type === 'logs') as Logs;
+        const limit = log.settings?.limit ? parseInt(log.settings?.limit, 10) : 500;
+
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
-        queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, target.query);
+        queryObj = this.queryBuilder.getLogsQuery(target, limit, adhocFilters, target.query);
       } else {
         if (target.alias) {
           target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
