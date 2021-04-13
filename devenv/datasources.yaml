@@ -1,5 +1,9 @@
 apiVersion: 1
 
+deleteDatasources:
+  - name: gdev-loki-0.3
+  - name: gdev-loki-0.4
+
 datasources:
   - name: gdev-graphite
     type: graphite
