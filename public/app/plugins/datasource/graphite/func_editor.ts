@@ -166,6 +166,10 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
       function addElementsAndCompile() {
         $funcLink.appendTo(elem);
 
+        if (func.def.unknown) {
+          elem.addClass('unknown-function');
+        }
+
         const defParams: any = _.clone(func.def.params);
         const lastParam: any = _.last(func.def.params);
 

@@ -1,31 +1,36 @@
-import React, { PureComponent } from 'react';
+import React, { useState } from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { AnnotationSettingsEdit, AnnotationSettingsList } from '../AnnotationSettings';
+import { newAnnotation } from '../AnnotationSettings/AnnotationSettingsEdit';
+import { DashboardSettingsHeader } from './DashboardSettingsHeader';
 
 interface Props {
   dashboard: DashboardModel;
 }
 
-export class AnnotationsSettings extends PureComponent<Props> {
-  element?: HTMLElement | null;
-  angularCmp?: AngularComponent;
+export const AnnotationsSettings: React.FC<Props> = ({ dashboard }) => {
+  const [editIdx, setEditIdx] = useState<number | null>(null);
 
-  componentDidMount() {
-    const loader = getAngularLoader();
+  const onGoBack = () => {
+    setEditIdx(null);
+  };
 
-    const template = '<div ng-include="\'public/app/features/annotations/partials/editor.html\'" />';
-    const scopeProps = { dashboard: this.props.dashboard };
-    this.angularCmp = loader.load(this.element, scopeProps, template);
-    this.angularCmp.digest();
-  }
+  const onNew = () => {
+    dashboard.annotations.list = [...dashboard.annotations.list, { ...newAnnotation }];
+    setEditIdx(dashboard.annotations.list.length - 1);
+  };
 
-  componentWillUnmount() {
-    if (this.angularCmp) {
-      this.angularCmp.destroy();
-    }
-  }
+  const onEdit = (idx: number) => {
+    setEditIdx(idx);
+  };
 
-  render() {
-    return <div ref={(ref) => (this.element = ref)} />;
-  }
-}
+  const isEditing = editIdx !== null;
+
+  return (
+    <>
+      <DashboardSettingsHeader title="Annotations" onGoBack={onGoBack} isEditing={isEditing} />
+      {!isEditing && <AnnotationSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
+      {isEditing && <AnnotationSettingsEdit dashboard={dashboard} editIdx={editIdx!} />}
+    </>
+  );
+};
