@@ -14,6 +14,8 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   sortDesc,
   onToggleSort,
   onLabelClick,
+  onLabelMouseMove,
+  onLabelMouseOut,
   onSeriesColorChange,
   placement,
   className,
@@ -28,6 +30,8 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
           sortBy={sortKey}
           sortDesc={sortDesc}
           onLabelClick={onLabelClick}
+          onLabelMouseMove={onLabelMouseMove}
+          onLabelMouseOut={onLabelMouseOut}
           onToggleSort={onToggleSort}
           onSeriesColorChange={onSeriesColorChange}
         />
@@ -39,6 +43,8 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
           items={items}
           placement={placement}
           onLabelClick={onLabelClick}
+          onLabelMouseMove={onLabelMouseMove}
+          onLabelMouseOut={onLabelMouseOut}
           onSeriesColorChange={onSeriesColorChange}
         />
       );

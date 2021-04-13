@@ -17,6 +17,8 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
   itemRenderer,
   onSeriesColorChange,
   onLabelClick,
+  onLabelMouseMove,
+  onLabelMouseOut,
   placement,
   className,
 }) => {
@@ -25,7 +27,13 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
     itemRenderer = (item) => (
-      <VizLegendListItem item={item} onLabelClick={onLabelClick} onSeriesColorChange={onSeriesColorChange} />
+      <VizLegendListItem
+        item={item}
+        onLabelMouseOut={onLabelMouseOut}
+        onLabelMouseMove={onLabelMouseMove}
+        onLabelClick={onLabelClick}
+        onSeriesColorChange={onSeriesColorChange}
+      />
     );
   }
 

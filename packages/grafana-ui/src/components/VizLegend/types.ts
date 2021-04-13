@@ -8,6 +8,8 @@ export interface VizLegendBaseProps {
   itemRenderer?: (item: VizLegendItem, index: number) => JSX.Element;
   onSeriesColorChange?: SeriesColorChangeHandler;
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
+  onLabelMouseMove?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
+  onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
 }
 
 export interface VizLegendTableProps extends VizLegendBaseProps {

@@ -11,6 +11,8 @@ export interface Props {
   item: VizLegendItem;
   className?: string;
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelMouseMove?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
@@ -21,6 +23,8 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
   item,
   onSeriesColorChange,
   onLabelClick,
+  onLabelMouseMove,
+  onLabelMouseOut,
   className,
 }) => {
   const styles = useStyles(getStyles);
@@ -39,6 +43,16 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
             }}
           />
           <div
+            onMouseMove={(event) => {
+              if (onLabelMouseMove) {
+                onLabelMouseMove(item, event);
+              }
+            }}
+            onMouseOut={(event) => {
+              if (onLabelMouseOut) {
+                onLabelMouseOut(item, event);
+              }
+            }}
             onClick={(event) => {
               if (onLabelClick) {
                 onLabelClick(item, event);

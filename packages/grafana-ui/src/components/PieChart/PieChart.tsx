@@ -29,6 +29,7 @@ import {
   PieChartSvgProps,
   PieChartType,
 } from './types';
+import { useSetState } from 'react-use';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -36,6 +37,10 @@ const defaultLegendOptions: PieChartLegendOptions = {
   calcs: [],
   values: [PieChartLegendValues.Percent],
 };
+
+interface PieChartState {
+  highlightedTitle?: string;
+}
 
 export const PieChart: FC<PieChartProps> = ({
   data,
@@ -50,6 +55,7 @@ export const PieChart: FC<PieChartProps> = ({
   ...restProps
 }) => {
   const theme = useTheme();
+  const [state, setState] = useSetState<PieChartState>();
 
   const getLegend = (fields: FieldDisplay[], legendOptions: PieChartLegendOptions) => {
     if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
@@ -89,9 +95,19 @@ export const PieChart: FC<PieChartProps> = ({
       };
     });
 
+    const setHighlightedSlice = (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      setState({ highlightedTitle: item.label });
+    };
+
+    const resetHighlightedSlice = (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+      setState({ highlightedTitle: undefined });
+    };
+
     return (
       <VizLegend
         items={legendItems}
+        onLabelMouseMove={setHighlightedSlice}
+        onLabelMouseOut={resetHighlightedSlice}
         onSeriesColorChange={onSeriesColorChange}
         placement={legendOptions.placement}
         displayMode={legendOptions.displayMode}
@@ -112,7 +128,13 @@ export const PieChart: FC<PieChartProps> = ({
     <VizLayout width={width} height={height} legend={getLegend(fieldDisplayValues, legendOptions)}>
       {(vizWidth: number, vizHeight: number) => {
         return (
-          <PieChartSvg width={vizWidth} height={vizHeight} fieldDisplayValues={fieldDisplayValues} {...restProps} />
+          <PieChartSvg
+            width={vizWidth}
+            height={vizHeight}
+            highlightedTitle={state.highlightedTitle}
+            fieldDisplayValues={fieldDisplayValues}
+            {...restProps}
+          />
         );
       }}
     </VizLayout>
@@ -124,6 +146,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   pieType,
   width,
   height,
+  highlightedTitle,
   useGradients = true,
   displayLabels = [],
 }) => {
@@ -184,6 +207,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
             {(pie) => {
               return pie.arcs.map((arc) => {
                 const color = arc.data.display.color ?? FALLBACK_COLOR;
+                const highlighted = highlightedTitle === arc.data.display.title;
                 const label = showLabel ? (
                   <PieLabel
                     arc={arc}
@@ -200,6 +224,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
                       {(api) => (
                         <PieSlice
                           tooltip={tooltip}
+                          highlighted={highlighted}
                           arc={arc}
                           pie={pie}
                           fill={getGradientColor(color)}
@@ -212,7 +237,14 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
                   );
                 } else {
                   return (
-                    <PieSlice key={arc.index} tooltip={tooltip} arc={arc} pie={pie} fill={getGradientColor(color)}>
+                    <PieSlice
+                      key={arc.index}
+                      highlighted={highlighted}
+                      tooltip={tooltip}
+                      arc={arc}
+                      pie={pie}
+                      fill={getGradientColor(color)}
+                    >
                       {label}
                     </PieSlice>
                   );
@@ -240,10 +272,11 @@ const PieSlice: FC<{
   children: ReactNode;
   arc: PieArcDatum<FieldDisplay>;
   pie: ProvidedProps<FieldDisplay>;
+  highlighted?: boolean;
   fill: string;
   tooltip: UseTooltipParams<DisplayValue>;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
-}> = ({ arc, children, pie, openMenu, fill, tooltip }) => {
+}> = ({ arc, children, pie, highlighted, openMenu, fill, tooltip }) => {
   const theme = useTheme();
   const styles = useStyles(getStyles);
 
@@ -259,7 +292,7 @@ const PieSlice: FC<{
   return (
     <g
       key={arc.data.display.title}
-      className={styles.svgArg}
+      className={highlighted ? styles.svgArg.highlighted : styles.svgArg.normal}
       onMouseMove={(event) => onMouseMoveOverArc(event, arc.data.display)}
       onMouseOut={tooltip.hideTooltip}
       onClick={openMenu}
@@ -375,12 +408,18 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: center;
       justify-content: center;
     `,
-    svgArg: css`
-      transition: all 200ms ease-in-out;
-      &:hover {
+    svgArg: {
+      normal: css`
+        transition: all 200ms ease-in-out;
+        &:hover {
+          transform: scale3d(1.03, 1.03, 1);
+        }
+      `,
+      highlighted: css`
+        transition: all 200ms ease-in-out;
         transform: scale3d(1.03, 1.03, 1);
-      }
-    `,
+      `,
+    },
     tooltipPortal: css`
       z-index: 1050;
     `,

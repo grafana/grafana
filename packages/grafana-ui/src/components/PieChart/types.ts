@@ -6,12 +6,19 @@ export interface PieChartSvgProps {
   width: number;
   fieldDisplayValues: FieldDisplay[];
   pieType: PieChartType;
+  highlightedTitle?: string;
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
   onSeriesColorChange?: (label: string, color: string) => void;
 }
 
-export interface PieChartProps extends Omit<PieChartSvgProps, 'fieldDisplayValues'> {
+export interface PieChartProps {
+  height: number;
+  width: number;
+  pieType: PieChartType;
+  displayLabels?: PieChartLabels[];
+  useGradients?: boolean;
+  onSeriesColorChange?: (label: string, color: string) => void;
   legendOptions?: PieChartLegendOptions;
   reduceOptions: ReduceDataOptions;
   fieldConfig: FieldConfigSource<any>;
