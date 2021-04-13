@@ -15,7 +15,7 @@ import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { GraphNGLegendEvent } from './types';
 import { preparePlotConfigBuilder } from './utils';
-import { preparePlotData } from '../uPlot/utils';
+import { pluginLog, preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
 import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
@@ -30,6 +30,7 @@ export interface GraphNGProps extends Themeable {
   width: number;
   height: number;
   data: DataFrame;
+  dataRevision: number;
   timeRange: TimeRange;
   legend: VizLegendOptions;
   timeZone: TimeZone;
@@ -73,23 +74,32 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     const { data, theme } = this.props;
     let shouldConfigUpdate = false;
 
-    let stateUpdate = {} as GraphNGState;
-
     if (this.state.config === undefined || this.props.timeZone !== prevProps.timeZone) {
       shouldConfigUpdate = true;
     }
 
-    if (data !== prevProps.data) {
+    // When data passed to graph is the same result
+    if (this.props.dataRevision === prevProps.dataRevision) {
+      const hasStructureChanged = !compareArrayValues([data], [prevProps.data], compareDataFrameStructures);
+      if (shouldConfigUpdate || hasStructureChanged) {
+        pluginLog('GraphNG', false, 'config only change');
+        const builder = preparePlotConfigBuilder(data, theme, this.getTimeRange, this.getTimeZone);
+        this.setState({
+          config: builder,
+        });
+      }
+    } else {
+      let builder = this.state.config;
       const hasStructureChanged = !compareArrayValues([data], [prevProps.data], compareDataFrameStructures);
 
       if (shouldConfigUpdate || hasStructureChanged) {
-        const builder = preparePlotConfigBuilder(data, theme, this.getTimeRange, this.getTimeZone);
-        stateUpdate = { ...stateUpdate, config: builder };
+        pluginLog('GraphNG', false, 'config and data change');
+        builder = preparePlotConfigBuilder(data, theme, this.getTimeRange, this.getTimeZone);
       }
-    }
-
-    if (Object.keys(stateUpdate).length > 0) {
-      this.setState({ ...stateUpdate, data: preparePlotData(data, [FieldType.string]) });
+      this.setState({
+        config: builder,
+        data: preparePlotData(data, [FieldType.string]),
+      });
     }
   }
 

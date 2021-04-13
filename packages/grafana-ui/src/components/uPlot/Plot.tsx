@@ -67,7 +67,9 @@ export const UPlotChart: React.FC<PlotProps> = (props) => {
     }
 
     // 4. Otherwise, assume only data has changed and update uPlot data
-    updateData(props.config, props.data, plotInstance.current);
+    if (prevProps.data !== props.data) {
+      updateData(props.config, props.data, plotInstance.current);
+    }
   }, [props, isConfigReady]);
 
   // When component unmounts, clean the existing uPlot instance

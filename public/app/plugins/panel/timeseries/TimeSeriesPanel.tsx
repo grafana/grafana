@@ -53,6 +53,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     <GraphNG
       // TimeSeries asks for aligned data hence we are getting single frame from PanelQueryRunner
       data={data.series[0]}
+      dataRevision={data.revision}
       timeRange={timeRange}
       timeZone={timeZone}
       width={width}

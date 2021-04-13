@@ -213,7 +213,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   return dataFrames;
 }
 
-export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
+export function preProcessPanelData(data: PanelData, rev: number, lastResult?: PanelData): PanelData {
   const { series, annotations } = data;
 
   //  for loading states with no data, use last result
@@ -240,5 +240,6 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
     series: processedDataFrames,
     annotations: annotationsProcessed,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
+    revision: rev,
   };
 }
