@@ -163,7 +163,12 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
       <div className={styles.viewControls}>
         <ViewControls<Config>
           config={config}
-          onConfigChange={setConfig}
+          onConfigChange={(cfg) => {
+            if (cfg.gridLayout !== config.gridLayout) {
+              setFocusedNode(undefined);
+            }
+            setConfig(cfg);
+          }}
           onMinus={onStepDown}
           onPlus={onStepUp}
           scale={scale}
