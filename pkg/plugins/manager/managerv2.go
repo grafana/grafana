@@ -31,27 +31,6 @@ type PluginManagerV2 struct {
 	plugins map[string]*plugins.PluginV2
 }
 
-func (m *PluginManagerV2) InstallPlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
-	plugin, err := m.PluginLoader.Load(pluginJSONPath)
-	if err != nil {
-		return err
-	}
-
-	plugin.QueryDataHandler = opts.QueryDataHandler
-	plugin.CheckHealthHandler = opts.CheckHealthHandler
-	plugin.CallResourceHandler = opts.CallResourceHandler
-	plugin.StreamHandler = opts.StreamHandler
-
-	err = m.PluginInitializer.Initialize(plugin)
-	if err != nil {
-		return err
-	}
-
-	m.plugins[plugin.ID] = plugin
-
-	return nil
-}
-
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "PluginManagerV2",
@@ -80,6 +59,27 @@ func (m *PluginManagerV2) Init() error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (m *PluginManagerV2) InstallPlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
+	plugin, err := m.PluginLoader.Load(pluginJSONPath)
+	if err != nil {
+		return err
+	}
+
+	plugin.QueryDataHandler = opts.QueryDataHandler
+	plugin.CheckHealthHandler = opts.CheckHealthHandler
+	plugin.CallResourceHandler = opts.CallResourceHandler
+	plugin.StreamHandler = opts.StreamHandler
+
+	err = m.PluginInitializer.Initialize(plugin)
+	if err != nil {
+		return err
+	}
+
+	m.plugins[plugin.ID] = plugin
 
 	return nil
 }
