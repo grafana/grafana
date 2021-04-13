@@ -31,6 +31,7 @@ export interface GraphNGProps extends Themeable {
   height: number;
   data: DataFrame[];
   structureRev?: number; // a number that will change when the data[] structure changes
+  dataRevision: number;
   timeRange: TimeRange;
   legend: VizLegendOptions;
   timeZone: TimeZone;
