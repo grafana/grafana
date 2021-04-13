@@ -905,7 +905,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err = query.parseResponse(res, data, "")
 				require.NoError(t, err)
 				frames, err := res.Dataframes.Decoded()
-
+				require.NoError(t, err)
 				assert.Equal(t, "Bps", frames[0].Fields[1].Config.Unit)
 			})
 
@@ -919,7 +919,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err = query.parseResponse(res, data, "")
 				require.NoError(t, err)
 				frames, err := res.Dataframes.Decoded()
-
+				require.NoError(t, err)
 				assert.Equal(t, "", frames[0].Fields[1].Config.Unit)
 			})
 		})
