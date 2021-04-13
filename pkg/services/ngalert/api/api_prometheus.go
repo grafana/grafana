@@ -74,7 +74,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 		newGroup := &apimodels.RuleGroup{
 			Name:           groupId,
-			File:           "", // TODO: set this once we are setting it somewhere
+			File:           "", // This doesn't make sense in our architecture but would be a good use case for provisioned alerts.
 			LastEvaluation: time.Time{},
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
