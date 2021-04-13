@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
+import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { colors } from './colors';
 import { DeepPartial, ThemePaletteColor } from './types';
 
@@ -246,10 +246,13 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
       color.text = color.main;
     }
     if (!color.border) {
-      color.text = color.text;
+      color.border = color.text;
     }
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
+    }
+    if (!color.transparent) {
+      color.transparent = base.mode === 'light' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);
