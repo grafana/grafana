@@ -113,7 +113,6 @@ type PluginManagerV2 interface {
 	Errors(pluginID string)
 
 	// Fetch plugin data
-	//backend.QueryDataHandler
 	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
 	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
 	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
