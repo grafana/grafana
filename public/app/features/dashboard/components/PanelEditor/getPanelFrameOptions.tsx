@@ -20,7 +20,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     descriptor.addItem(
       new OptionsPaneItemDescriptor({
         title: 'Global panel information',
-        Component: function renderLibraryPanelInformation() {
+        render: function renderLibraryPanelInformation() {
           return <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
         },
       })
