@@ -85,3 +85,13 @@
 .alert-icon-on-top {
   align-items: flex-start;
 }
+
+@include media-breakpoint-down(sm) {
+  .page-alert-list {
+    min-width: 0;
+    top: 30px;
+    width: calc(100% - 20px);
+    max-height: calc(100% - 60px);
+    overflow-y: auto;
+  }
+}
