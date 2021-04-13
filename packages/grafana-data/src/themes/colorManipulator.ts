@@ -4,10 +4,10 @@
 
 /**
  * Returns a number whose value is limited to the given range.
- * @param {number} value The value to be clamped
- * @param {number} min The lower boundary of the output range
- * @param {number} max The upper boundary of the output range
- * @returns {number} A number in the range [min, max]
+ * @param value The value to be clamped
+ * @param min The lower boundary of the output range
+ * @param max The upper boundary of the output range
+ * @returns A number in the range [min, max]
  * @beta
  */
 function clamp(value: number, min = 0, max = 1) {
@@ -22,8 +22,8 @@ function clamp(value: number, min = 0, max = 1) {
 
 /**
  * Converts a color from CSS hex format to CSS rgb format.
- * @param {string} color - Hex color, i.e. #nnn or #nnnnnn
- * @returns {string} A CSS rgb color string
+ * @param color - Hex color, i.e. #nnn or #nnnnnn
+ * @returns A CSS rgb color string
  * @beta
  */
 export function hexToRgb(color: string) {
@@ -52,8 +52,8 @@ function intToHex(int: number) {
 
 /**
  * Converts a color from CSS rgb format to CSS hex format.
- * @param {string} color - RGB color, i.e. rgb(n, n, n)
- * @returns {string} A CSS rgb color string, i.e. #nnnnnn
+ * @param color - RGB color, i.e. rgb(n, n, n)
+ * @returns A CSS rgb color string, i.e. #nnnnnn
  * @beta
  */
 export function rgbToHex(color: string) {
@@ -68,8 +68,8 @@ export function rgbToHex(color: string) {
 
 /**
  * Converts a color from hsl format to rgb format.
- * @param {string} color - HSL color values
- * @returns {string} rgb color values
+ * @param color - HSL color values
+ * @returns rgb color values
  * @beta
  */
 export function hslToRgb(color: string | DecomposeColor) {
@@ -96,7 +96,7 @@ export function hslToRgb(color: string | DecomposeColor) {
  * Returns an object with the type and values of a color.
  *
  * Note: Does not support rgb % values.
- * @param {string} color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla()
+ * @param color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla()
  * @returns {object} - A MUI color object: {type: string, values: number[]}
  * @beta
  */
@@ -144,9 +144,9 @@ export function decomposeColor(color: string | DecomposeColor): DecomposeColor {
 /**
  * Converts a color object with type and values to a string.
  * @param {object} color - Decomposed color
- * @param {string} color.type - One of: 'rgb', 'rgba', 'hsl', 'hsla'
+ * @param color.type - One of: 'rgb', 'rgba', 'hsl', 'hsla'
  * @param {array} color.values - [n,n,n] or [n,n,n,n]
- * @returns {string} A CSS color string
+ * @returns A CSS color string
  * @beta
  */
 export function recomposeColor(color: DecomposeColor) {
@@ -173,9 +173,9 @@ export function recomposeColor(color: DecomposeColor) {
  * Calculates the contrast ratio between two colors.
  *
  * Formula: https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests
- * @param {string} foreground - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla()
- * @param {string} background - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla()
- * @returns {number} A contrast ratio value in the range 0 - 21.
+ * @param foreground - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla()
+ * @param background - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla()
+ * @returns A contrast ratio value in the range 0 - 21.
  * @beta
  */
 export function getContrastRatio(foreground: string, background: string) {
@@ -189,8 +189,8 @@ export function getContrastRatio(foreground: string, background: string) {
  * normalized to 0 for darkest black and 1 for lightest white.
  *
  * Formula: https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests
- * @param {string} color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
- * @returns {number} The relative brightness of the color in the range 0 - 1
+ * @param color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
+ * @returns The relative brightness of the color in the range 0 - 1
  * @beta
  */
 export function getLuminance(color: string) {
@@ -211,9 +211,9 @@ export function getLuminance(color: string) {
 /**
  * Darken or lighten a color, depending on its luminance.
  * Light colors are darkened, dark colors are lightened.
- * @param {string} color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
- * @param {number} coefficient=0.15 - multiplier in the range 0 - 1
- * @returns {string} A CSS color string. Hex input values are returned as rgb
+ * @param color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
+ * @param coefficient=0.15 - multiplier in the range 0 - 1
+ * @returns A CSS color string. Hex input values are returned as rgb
  * @beta
  */
 export function emphasize(color: string, coefficient = 0.15) {
@@ -223,9 +223,9 @@ export function emphasize(color: string, coefficient = 0.15) {
 /**
  * Set the absolute transparency of a color.
  * Any existing alpha values are overwritten.
- * @param {string} color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
- * @param {number} value - value to set the alpha channel to in the range 0 - 1
- * @returns {string} A CSS color string. Hex input values are returned as rgb
+ * @param color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
+ * @param value - value to set the alpha channel to in the range 0 - 1
+ * @returns A CSS color string. Hex input values are returned as rgb
  * @beta
  */
 export function alpha(color: string, value: number) {
@@ -246,9 +246,9 @@ export function alpha(color: string, value: number) {
 
 /**
  * Darkens a color.
- * @param {string} color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
- * @param {number} coefficient - multiplier in the range 0 - 1
- * @returns {string} A CSS color string. Hex input values are returned as rgb
+ * @param color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
+ * @param coefficient - multiplier in the range 0 - 1
+ * @returns A CSS color string. Hex input values are returned as rgb
  * @beta
  */
 export function darken(color: string, coefficient: number) {
@@ -267,9 +267,9 @@ export function darken(color: string, coefficient: number) {
 
 /**
  * Lightens a color.
- * @param {string} color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
- * @param {number} coefficient - multiplier in the range 0 - 1
- * @returns {string} A CSS color string. Hex input values are returned as rgb
+ * @param color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
+ * @param coefficient - multiplier in the range 0 - 1
+ * @returns A CSS color string. Hex input values are returned as rgb
  * @beta
  */
 export function lighten(color: string, coefficient: number) {
