@@ -29,7 +29,7 @@ a prepared image with some fake data ready to use. For available databases, see 
 for some databases there are multiple images with different versions. Some blocks such as `slow_proxy_mac` or `apache_proxy_mac` are specifically for Macs.  
 
 ```bash
-make devenv sources=influxdb,prometheus1,elastic5
+make devenv sources=influxdb,prometheus,elastic5
 ```
 
 Some of the blocks support dynamic change of the image version used in the Docker file. The signature looks like this: 
