@@ -28,24 +28,16 @@ Menu.displayName = 'Menu';
 
 /** @internal */
 const getStyles = (theme: GrafanaTheme) => {
-  const wrapperBg = theme.colors.formInputBg;
-  const wrapperShadow = theme.isDark ? theme.palette.black : theme.palette.gray3;
-  const headerBg = theme.colors.formInputBg;
-  const headerSeparator = theme.colors.border3;
-
   return {
     header: css`
-      padding: 4px;
-      border-bottom: 1px solid ${headerSeparator};
-      background: ${headerBg};
-      margin-bottom: ${theme.spacing.xs};
-      border-radius: ${theme.border.radius.sm} ${theme.border.radius.sm} 0 0;
+      padding: ${theme.v2.spacing(0.5, 0.5, 1, 0.5)};
+      border-bottom: 1px solid ${theme.v2.palette.border1};
     `,
     wrapper: css`
-      background: ${wrapperBg};
-      box-shadow: 0 2px 5px 0 ${wrapperShadow};
+      background: ${theme.v2.palette.layer2};
+      box-shadow: ${theme.v2.shadows.z2};
       display: inline-block;
-      border-radius: ${theme.border.radius.sm};
+      border-radius: ${theme.v2.shape.borderRadius()};
     `,
   };
 };

@@ -118,27 +118,37 @@ func TestLoad(t *testing.T) {
 		{
 			name: "with a valid config and template",
 			rawConfig: `
-alertmanager_config:
-  global:
-    smtp_from: noreply@grafana.net
-  route:
-    receiver: email
-  receivers:
-template_files:
-  'email.template': something with a pretty good content
+{
+  "alertmanager_config": {
+    "global": {
+      "smtp_from": "noreply@grafana.net"
+    },
+    "route": {
+      "receiver": "email"
+    },
+    "receivers": [
+      {
+        "name": "email"
+      }
+    ]
+  },
+  "template_files": {
+    "email.template": "something with a pretty good content"
+  }
+}
 `,
 			expectedTemplates: map[string]string{"email.template": "something with a pretty good content"},
 		},
 		{
 			name:          "with an empty configuration, it is not valid.",
-			rawConfig:     "",
-			expectedError: errors.New("no route provided in config"),
+			rawConfig:     "{}",
+			expectedError: errors.New("unable to parse Alertmanager configuration: no route provided in config"),
 		},
 	}
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			c, err := Load(tt.rawConfig)
+			c, err := Load([]byte(tt.rawConfig))
 
 			if tt.expectedError != nil {
 				assert.Nil(t, c)

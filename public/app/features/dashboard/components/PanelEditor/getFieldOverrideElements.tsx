@@ -110,7 +110,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: matcherUi.name,
-        Component: function renderMatcherUI() {
+        render: function renderMatcherUI() {
           return (
             <matcherUi.component
               matcher={matcherUi.matcher}
@@ -151,7 +151,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
         new OptionsPaneItemDescriptor({
           title: registryItemForProperty.name,
           skipField: true,
-          Component: function renderPropertyEditor() {
+          render: function renderPropertyEditor() {
             return (
               <DynamicConfigValueEditor
                 key={`${property.id}/${propIdx}`}
@@ -176,7 +176,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
         new OptionsPaneItemDescriptor({
           title: '----------',
           skipField: true,
-          Component: function renderAddPropertyButton() {
+          render: function renderAddPropertyButton() {
             return (
               <ValuePicker
                 label="Add override property"

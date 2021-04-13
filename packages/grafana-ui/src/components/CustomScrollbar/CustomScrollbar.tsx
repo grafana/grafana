@@ -155,12 +155,12 @@ const getStyles = (theme: GrafanaTheme) => {
         left: ${theme.spacing.xxs};
       }
       .thumb-vertical {
-        background: ${theme.colors.bg3};
+        background: ${theme.v2.palette.action.focus};
         border-radius: ${theme.border.radius.md};
         opacity: 0;
       }
       .thumb-horizontal {
-        background: ${theme.colors.bg3};
+        background: ${theme.v2.palette.action.focus};
         border-radius: ${theme.border.radius.md};
         opacity: 0;
       }
