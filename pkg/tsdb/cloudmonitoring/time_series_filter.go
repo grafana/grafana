@@ -392,4 +392,3 @@ func setDisplayNameAsFieldName(f *data.Field) {
 func (timeSeriesFilter *cloudMonitoringTimeSeriesFilter) getRefID() string {
 	return timeSeriesFilter.RefID
 }
-

@@ -894,7 +894,6 @@ func TestCloudMonitoring(t *testing.T) {
 			})
 		})
 
-
 		t.Run("Parse cloud monitoring unit", func(t *testing.T) {
 			t.Run("when mapping is found a unit should be specified on the field config", func(t *testing.T) {
 				data, err := loadTestFile("./test-data/1-series-response-agg-one-metric.json")
@@ -930,7 +929,7 @@ func TestCloudMonitoring(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, 0, len(data.TimeSeries))
 			assert.Equal(t, 1, len(data.TimeSeriesData))
-	
+
 			t.Run("and alias by is expanded", func(t *testing.T) {
 				fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 				res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
