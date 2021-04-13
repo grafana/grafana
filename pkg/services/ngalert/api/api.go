@@ -25,7 +25,7 @@ var timeNow = time.Now
 
 type Alertmanager interface {
 	// Configuration
-	ApplyConfig(config *apimodels.PostableUserConfig) error
+	SaveAndApplyConfig(config *apimodels.PostableUserConfig) error
 
 	// Silences
 	CreateSilence(ps *apimodels.PostableSilence) (string, error)

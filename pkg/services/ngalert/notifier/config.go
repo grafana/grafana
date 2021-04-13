@@ -1,6 +1,7 @@
 package notifier
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 )
 
 func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
@@ -54,7 +54,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	// Now that we have the list of _actual_ templates, let's remove the ones that we don't need.
 	existingFiles, err := ioutil.ReadDir(path)
 	if err != nil {
-		log.Error("unable to read directory for deleting alertmanager templates", "err", err, "path", path)
+		log.Error("unable to read directory for deleting Alertmanager templates", "err", err, "path", path)
 	}
 	for _, existingFile := range existingFiles {
 		p := filepath.Join(path, existingFile.Name())
@@ -75,24 +75,11 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	return paths, templatesChanged, nil
 }
 
-func Load(rawConfig string) (*api.PostableUserConfig, error) {
+func Load(rawConfig []byte) (*api.PostableUserConfig, error) {
 	cfg := &api.PostableUserConfig{}
 
-	if err := yaml.Unmarshal([]byte(rawConfig), cfg); err != nil {
+	if err := json.Unmarshal(rawConfig, cfg); err != nil {
 		return nil, errors.Wrap(err, "unable to parse Alertmanager configuration")
-	}
-
-	// Taken from https://github.com/prometheus/alertmanager/blob/master/config/config.go#L170-L191
-	// Check if we have a root route. We cannot check for it in the
-	// UnmarshalYAML method because it won't be called if the input is empty
-	// (e.g. the config file is empty or only contains whitespace).
-	if cfg.AlertmanagerConfig.Route == nil {
-		return nil, errors.New("no route provided in config")
-	}
-
-	// Check if continue in root route.
-	if cfg.AlertmanagerConfig.Route.Continue {
-		return nil, errors.New("cannot have continue in root route")
 	}
 
 	return cfg, nil

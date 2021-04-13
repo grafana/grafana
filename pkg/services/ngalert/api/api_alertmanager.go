@@ -2,10 +2,7 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-
-	"gopkg.in/yaml.v3"
 
 	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -64,8 +61,8 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 		return response.Error(http.StatusInternalServerError, "failed to get latest configuration", err)
 	}
 
-	cfg := apimodels.PostableUserConfig{}
-	if err := yaml.Unmarshal([]byte(query.Result.AlertmanagerConfiguration), &cfg); err != nil {
+	cfg, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to unmarshal alertmanager configuration", err)
 	}
 
@@ -178,21 +175,8 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	config, err := yaml.Marshal(&body)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to serialize to the Alertmanager configuration", err)
-	}
-
-	cmd := ngmodels.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(config),
-		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-	}
-	if err := srv.store.SaveAlertmanagerConfiguration(&cmd); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to save Alertmanager configuration", err)
-	}
-
-	if err := srv.am.ApplyConfig(&body); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to apply Alertmanager configuration", err)
+	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to save and apply Alertmanager configuration", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
