@@ -51,7 +51,7 @@ func extractPermission(permissions []*accesscontrol.Permission, permission strin
 		if p == nil {
 			continue
 		}
-		if p.Permission == permission {
+		if p.Action == permission {
 			ok = true
 			scopes[p.Scope] = struct{}{}
 		}

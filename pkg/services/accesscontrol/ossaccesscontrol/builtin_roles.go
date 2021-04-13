@@ -12,16 +12,16 @@ var builtInRolesMap = map[string]accesscontrol.RoleDTO{
 		Version: 1,
 		Permissions: []accesscontrol.Permission{
 			{
-				Permission: "users:read",
-				Scope:      "users:self",
+				Action: "users:read",
+				Scope:  "users:self",
 			},
 			{
-				Permission: "users.tokens:list",
-				Scope:      "users:self",
+				Action: "users.tokens:list",
+				Scope:  "users:self",
 			},
 			{
-				Permission: "users.teams:read",
-				Scope:      "users:self",
+				Action: "users.teams:read",
+				Scope:  "users:self",
 			},
 		},
 	},

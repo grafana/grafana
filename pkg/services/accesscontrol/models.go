@@ -23,8 +23,8 @@ type RoleDTO struct {
 }
 
 type Permission struct {
-	Permission string `json:"permission"`
-	Scope      string `json:"scope"`
+	Action string `json:"action"`
+	Scope  string `json:"scope"`
 }
 
 type EvaluationResult struct {
