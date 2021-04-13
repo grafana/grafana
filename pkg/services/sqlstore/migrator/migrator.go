@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -117,7 +118,7 @@ func (mg *Migrator) Start() error {
 			return err
 		})
 		if err != nil {
-			return errutil.Wrap("migration failed", err)
+			return errutil.Wrap(fmt.Sprintf("migration failed (id = %s)", m.Id()), err)
 		}
 	}
 
