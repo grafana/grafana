@@ -626,6 +626,10 @@ Text used as placeholder text on login page for password input.
 
 Set the default UI theme: `dark` or `light`. Default is `dark`.
 
+### home_page
+
+Path to a custom home page. Users are only redirected to this if the default home dashboard is used. It should match a frontend route and contain a leading slash.
+
 ### External user management
 
 If you manage users externally you can replace the user invite button for organizations with a link to an external site together with a description.

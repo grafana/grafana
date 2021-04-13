@@ -371,8 +371,15 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 // GetHomeDashboard returns the home dashboard.
 func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
+	homePage := hs.Cfg.HomePage
+
 	if err := hs.Bus.Dispatch(&prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
+	}
+
+	if prefsQuery.Result.HomeDashboardId == 0 && len(homePage) > 0 {
+		homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
+		return response.JSON(200, &homePageRedirect)
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
