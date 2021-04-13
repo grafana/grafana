@@ -86,6 +86,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       label: activeTabStyle;
       color: ${theme.v2.palette.text.primary};
       overflow: hidden;
+      font-weight: ${theme.v2.typography.fontWeightMedium};
 
       a {
         color: ${theme.v2.palette.text.primary};
