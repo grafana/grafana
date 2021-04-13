@@ -93,7 +93,7 @@ To create a metric query, follow these steps:
 1. Choose a metric from the **Metric** dropdown.
 1. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses. This step is optional.
 
-Google Cloud Monitoring metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor shows the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric. Units for the Y-axis are also automatically selected by the query editor.
+Google Cloud Monitoring metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor shows the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric.
 
 #### Filter
 
@@ -181,6 +181,10 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 Click on a time series in the panel to see a context menu with a link to View in Metrics Explorer in Google Cloud Console. Clicking that link opens the Metrics Explorer in the Google Cloud Console and runs the query from the Grafana panel there.
 The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redirected to the Metrics Explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
+
+#### Automatic unit detection
+
+Grafana issues one query to the Cloud Monitoring API per query editor row, and each API response includes a unit. Grafana will attempt to convert the returned unit into a unit that is understood by the Grafana graph panel. If conversion was successfull, the unit will be displayed on the Y-axis on the panel. In case the query editor rows returned different units, the unit from the last query editor row will be used in the graph panel.
 
 ### SLO (Service Level Objective) queries
 
