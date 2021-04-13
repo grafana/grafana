@@ -11,7 +11,7 @@ type AccessControl interface {
 	Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error)
 
 	// GetUserPermissions returns user permissions.
-	GetUserPermissions(ctx context.Context, user *models.SignedInUser, roles []string) ([]*Permission, error)
+	GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*Permission, error)
 
 	// Middleware checks if service disabled or not to switch to fallback authorization.
 	IsDisabled() bool
