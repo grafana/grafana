@@ -214,6 +214,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 
 				r.New.For = r.Existing.For
 				r.New.Annotations = r.Existing.Annotations
+				r.New.Labels = r.Existing.Labels
 
 				if err := st.ValidateAlertRule(r.New, true); err != nil {
 					return err
@@ -247,6 +248,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				ExecErrState:     r.New.ExecErrState,
 				For:              r.New.For,
 				Annotations:      r.New.Annotations,
+				Labels:           r.New.Labels,
 			})
 		}
 
@@ -435,6 +437,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 			if r.ApiRuleNode != nil {
 				new.For = time.Duration(r.ApiRuleNode.For)
 				new.Annotations = r.ApiRuleNode.Annotations
+				new.Labels = r.ApiRuleNode.Labels
 			}
 
 			upsertRule := UpsertRule{

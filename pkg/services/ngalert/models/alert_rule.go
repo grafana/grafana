@@ -56,6 +56,7 @@ type AlertRule struct {
 	// but this is currently not possible because of circular dependencies
 	For         time.Duration
 	Annotations map[string]string
+	Labels      map[string]string
 }
 
 // AlertRuleKey is the alert definition identifier
@@ -108,6 +109,7 @@ type AlertRuleVersion struct {
 	// but this is currently not possible because of circular dependencies
 	For         time.Duration
 	Annotations map[string]string
+	Labels      map[string]string
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.

@@ -216,6 +216,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule) apimodels.GettableExtended
 	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
 		For:         apimodels.ApiDuration(r.For),
 		Annotations: r.Annotations,
+		Labels:      r.Labels,
 	}
 	return gettableExtendedRuleNode
 }
@@ -235,6 +236,7 @@ func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtended
 	postableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
 		For:         apimodels.ApiDuration(r.For),
 		Annotations: r.Annotations,
+		Labels:      r.Labels,
 	}
 	return postableExtendedRuleNode
 }
