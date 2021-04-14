@@ -40,6 +40,9 @@ export interface GetDataSourceListFilters {
   /** Only return data sources that support annotations */
   annotations?: boolean;
 
+  /** Only filter data sources that support alerting */
+  alerting?: boolean;
+
   /**
    * By default only data sources that can be queried will be returned. Meaning they have tracing,
    * metrics, logs or annotations flag set in plugin.json file
@@ -54,6 +57,9 @@ export interface GetDataSourceListFilters {
 
   /** filter list by plugin  */
   pluginId?: string;
+
+  /** apply a function to filter */
+  filter?: (dataSource: DataSourceInstanceSettings) => boolean;
 }
 
 let singletonInstance: DataSourceSrv;

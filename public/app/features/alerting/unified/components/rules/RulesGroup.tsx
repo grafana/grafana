@@ -67,6 +67,8 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, rulesSource
     actionIcons.push(<ActionIcon key="manage-perms" icon="lock" tooltip="manage permissions" />);
   }
 
+  const groupName = isCloudRulesSource(rulesSource) ? `${namespace} > ${group.name}` : namespace;
+
   return (
     <div className={styles.wrapper} data-testid="rule-group">
       <div className={styles.header} data-testid="rule-group-header">
@@ -82,10 +84,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, rulesSource
             <img className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} />
           </Tooltip>
         )}
-        <h6 className={styles.heading}>
-          {namespace && `${namespace} > `}
-          {group.name}
-        </h6>
+        <h6 className={styles.heading}>{groupName}</h6>
         <div className={styles.spacer} />
         <div className={styles.headerStats}>
           {group.rules.length} {pluralize('rule', group.rules.length)}

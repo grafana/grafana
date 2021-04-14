@@ -26,3 +26,10 @@ export function hash(value: string): number {
   }
   return hash;
 }
+
+export function arrayToRecord(items: Array<{ key: string; value: string }>): Record<string, string> {
+  return items.reduce<Record<string, string>>((rec, { key, value }) => {
+    rec[key] = value;
+    return rec;
+  }, {});
+}
