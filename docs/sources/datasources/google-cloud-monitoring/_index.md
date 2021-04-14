@@ -19,7 +19,7 @@ To access Google Cloud Monitoring settings, hover your mouse over the **Configur
 | Name                  | Description                                                                                                                                                                  |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Name`                | The data source name. This is how you refer to the data source in panels and queries.                                                                                        |
-| `Default`             | Default data source means that it will be pre-selected for new panels.                                                                                                       |
+| `Default`             | Default data source means that it is pre-selected for new panels.                                                                                                       |
 | `Service Account Key` | Upload or paste in the Service Account Key file for a GCP Project. Refer to [Using a Google Service Account Key File](#using-a-google-service-account-key-file) for details. |
 
 ## Authentication
