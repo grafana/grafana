@@ -1,4 +1,6 @@
 import {
+  Annotations,
+  Labels,
   PromRuleType,
   RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
@@ -13,6 +15,7 @@ import {
   RecordingRule,
   Rule,
   RuleIdentifier,
+  RuleWithLocation,
 } from 'app/types/unified-alerting';
 import { AsyncRequestState } from './redux';
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
@@ -46,8 +49,26 @@ export function isRulerNotSupportedResponse(resp: AsyncRequestState<any>) {
   return resp.error && resp.error?.message === RULER_NOT_SUPPORTED_MSG;
 }
 
+function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
+  return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
+}
+
+// this is used to identify lotex rules, as they do not have a unique identifier
 export function hashRulerRule(rule: RulerRuleDTO): number {
-  return hash(JSON.stringify(rule));
+  if (isRecordingRulerRule(rule)) {
+    return hash(JSON.stringify([rule.record, rule.expr, hashLabelsOrAnnotations(rule.labels)]));
+  } else if (isAlertingRulerRule(rule)) {
+    return hash(
+      JSON.stringify([
+        rule.alert,
+        rule.expr,
+        hashLabelsOrAnnotations(rule.annotations),
+        hashLabelsOrAnnotations(rule.labels),
+      ])
+    );
+  } else {
+    throw new Error('only recording and alerting ruler rules can be hashed');
+  }
 }
 
 export function isGrafanaRuleIdentifier(location: RuleIdentifier): location is GrafanaRuleIdentifier {
@@ -101,4 +122,13 @@ export function getRuleIdentifier(
     groupName,
     ruleHash: hashRulerRule(rule),
   };
+}
+
+export function ruleWithLocationToRuleIdentifier(ruleWithLocation: RuleWithLocation): RuleIdentifier {
+  return getRuleIdentifier(
+    ruleWithLocation.ruleSourceName,
+    ruleWithLocation.namespace,
+    ruleWithLocation.group.name,
+    ruleWithLocation.rule
+  );
 }

@@ -42,3 +42,7 @@ export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): RuleFilterSta
 
   return { queryString, alertState, dataSource };
 };
+
+export function recordToArray(record: Record<string, string>): Array<{ key: string; value: string }> {
+  return Object.entries(record).map(([key, value]) => ({ key, value }));
+}

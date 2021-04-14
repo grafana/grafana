@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useMemo } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -9,48 +9,30 @@ import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
 import { useForm, FormContext } from 'react-hook-form';
 
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 //import { locationService } from '@grafana/runtime';
 import { RuleFormValues } from '../../types/rule-form';
-import { SAMPLE_QUERIES } from '../../mocks/grafana-queries';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { useDispatch } from 'react-redux';
 import { saveRuleFormAction } from '../../state/actions';
-import { cleanUpAction } from 'app/core/actions/cleanUp';
+import { RuleWithLocation } from 'app/types/unified-alerting';
+import { useDispatch } from 'react-redux';
+import { useCleanup } from 'app/core/hooks/useCleanup';
+import { rulerRuleToFormValues, defaultFormValues } from '../../utils/rule-form';
 
-type Props = {};
+type Props = {
+  existing?: RuleWithLocation;
+};
 
-const defaultValues: RuleFormValues = Object.freeze({
-  name: '',
-  labels: [{ key: '', value: '' }],
-  annotations: [{ key: '', value: '' }],
-  dataSourceName: null,
-
-  // threshold
-  folder: null,
-  queries: SAMPLE_QUERIES, // @TODO remove the sample eventually
-  condition: '',
-  noDataState: GrafanaAlertState.NoData,
-  execErrState: GrafanaAlertState.Alerting,
-  evaluateEvery: '1m',
-  evaluateFor: '5m',
-
-  // system
-  expression: '',
-  forTime: 1,
-  forTimeUnit: 'm',
-});
-
-export const AlertRuleForm: FC<Props> = () => {
+export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const styles = useStyles(getStyles);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    return () => {
-      dispatch(cleanUpAction({ stateSelector: (state) => state.unifiedAlerting.ruleForm }));
-    };
-  }, [dispatch]);
+  const defaultValues: RuleFormValues = useMemo(() => {
+    if (existing) {
+      return rulerRuleToFormValues(existing);
+    }
+    return defaultFormValues;
+  }, [existing]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -65,13 +47,18 @@ export const AlertRuleForm: FC<Props> = () => {
   const showStep2 = Boolean(dataSourceName && type);
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
+  useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
 
   const submit = (values: RuleFormValues) => {
+    console.log('submit', values);
     dispatch(
       saveRuleFormAction({
-        ...values,
-        annotations: values.annotations.filter(({ key }) => !!key),
-        labels: values.labels.filter(({ key }) => !!key),
+        values: {
+          ...values,
+          annotations: values.annotations?.filter(({ key }) => !!key) ?? [],
+          labels: values.labels?.filter(({ key }) => !!key) ?? [],
+        },
+        existing,
       })
     );
   };
@@ -93,7 +80,7 @@ export const AlertRuleForm: FC<Props> = () => {
           </ToolbarButton>
         </PageToolbar>
         <div className={styles.contentOutter}>
-          <CustomScrollbar autoHeightMin="100%">
+          <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
               {submitState.error && (
                 <Alert severity="error" title="Error saving rule">

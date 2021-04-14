@@ -110,6 +110,7 @@ export interface GrafanaQuery {
 }
 export interface GrafanaRuleDefinition {
   uid?: string;
+  namespace_uid?: string;
   title: string;
   condition: string;
   for: number; //@TODO Sofia will update to accept string

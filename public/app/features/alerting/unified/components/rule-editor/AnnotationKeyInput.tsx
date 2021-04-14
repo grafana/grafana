@@ -19,7 +19,7 @@ interface Props {
 }
 
 export const AnnotationKeyInput: FC<Props> = ({ value, onChange, existingKeys, width, className }) => {
-  const [isCustom, setIsCustom] = useState(false);
+  const [isCustom, setIsCustom] = useState(!!value && !Object.keys(AnnotationOptions).includes(value));
 
   const annotationOptions = useMemo(
     (): SelectableValue[] => [
