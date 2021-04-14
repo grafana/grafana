@@ -14,20 +14,20 @@ var PredefinedRoles = map[string]RoleDTO{
 		Version: 1,
 		Permissions: []Permission{
 			{
-				Permission: ActionUsersRead,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersRead,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersTeamRead,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersTeamRead,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersAuthTokenList,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersAuthTokenList,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersQuotasList,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersQuotasList,
+				Scope:  ScopeUsersAll,
 			},
 		},
 	},
@@ -37,62 +37,62 @@ var PredefinedRoles = map[string]RoleDTO{
 		Permissions: []Permission{
 			{
 				// Inherited from grafana:roles:users:admin:read
-				Permission: ActionUsersRead,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersRead,
+				Scope:  ScopeUsersAll,
 			},
 			{
 				// Inherited from grafana:roles:users:admin:read
-				Permission: ActionUsersTeamRead,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersTeamRead,
+				Scope:  ScopeUsersAll,
 			},
 			{
 				// Inherited from grafana:roles:users:admin:read
-				Permission: ActionUsersAuthTokenList,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersAuthTokenList,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersPasswordUpdate,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersPasswordUpdate,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersCreate,
+				Action: ActionUsersCreate,
 			},
 			{
-				Permission: ActionUsersWrite,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersWrite,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersDelete,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersDelete,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersEnable,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersEnable,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersDisable,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersDisable,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersPermissionsUpdate,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersPermissionsUpdate,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersLogout,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersLogout,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersAuthTokenUpdate,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersAuthTokenUpdate,
+				Scope:  ScopeUsersAll,
 			},
 			{
 				// Inherited from grafana:roles:users:admin:read
-				Permission: ActionUsersQuotasList,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersQuotasList,
+				Scope:  ScopeUsersAll,
 			},
 			{
-				Permission: ActionUsersQuotasUpdate,
-				Scope:      ScopeUsersAll,
+				Action: ActionUsersQuotasUpdate,
+				Scope:  ScopeUsersAll,
 			},
 		},
 	},
