@@ -96,8 +96,7 @@ type NamespaceConfigResponse map[string][]GettableRuleGroupConfig
 
 // swagger:model
 type PostableRuleGroupConfig struct {
-	Name string `yaml:"name" json:"name"`
-	// Example 1m
+	Name     string                     `yaml:"name" json:"name"`
 	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
 	Rules    []PostableExtendedRuleNode `yaml:"rules" json:"rules"`
 }
@@ -188,10 +187,9 @@ func (c *GettableRuleGroupConfig) validate() error {
 }
 
 type ApiRuleNode struct {
-	Record string `yaml:"record,omitempty" json:"record,omitempty"`
-	Alert  string `yaml:"alert,omitempty" json:"alert,omitempty"`
-	Expr   string `yaml:"expr" json:"expr"`
-	// Example: 1m
+	Record      string            `yaml:"record,omitempty" json:"record,omitempty"`
+	Alert       string            `yaml:"alert,omitempty" json:"alert,omitempty"`
+	Expr        string            `yaml:"expr" json:"expr"`
 	For         model.Duration    `yaml:"for,omitempty" json:"for,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
