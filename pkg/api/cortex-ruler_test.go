@@ -207,8 +207,7 @@ func Test_Rule_Group_Type(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			bt, err := tc.input.Type()
-			require.NoError(t, err)
+			bt := tc.input.Type()
 			require.Equal(t, tc.expected, bt)
 		})
 	}

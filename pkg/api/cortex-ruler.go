@@ -112,13 +112,13 @@ func (c *PostableRuleGroupConfig) UnmarshalJSON(b []byte) error {
 }
 
 // Type requires validate has been called and just checks the first rule type
-func (c *PostableRuleGroupConfig) Type() (backend Backend, err error) {
+func (c *PostableRuleGroupConfig) Type() (backend Backend) {
 	for _, rule := range c.Rules {
 		switch rule.Type() {
 		case GrafanaManagedRule:
-			return GrafanaBackend, nil
+			return GrafanaBackend
 		case LoTexManagedRule:
-			return LoTexRulerBackend, nil
+			return LoTexRulerBackend
 		}
 	}
 	return
@@ -158,13 +158,13 @@ func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {
 }
 
 // Type requires validate has been called and just checks the first rule type
-func (c *GettableRuleGroupConfig) Type() (backend Backend, err error) {
+func (c *GettableRuleGroupConfig) Type() (backend Backend) {
 	for _, rule := range c.Rules {
 		switch rule.Type() {
 		case GrafanaManagedRule:
-			return GrafanaBackend, nil
+			return GrafanaBackend
 		case LoTexManagedRule:
-			return LoTexRulerBackend, nil
+			return LoTexRulerBackend
 		}
 	}
 	return
