@@ -3,7 +3,7 @@ import { ApplyFieldOverrideOptions, DataTransformerConfig, dateMath, FieldColorM
 import { config } from '@grafana/runtime';
 import { Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { QueryGroupOptions } from '../../../types';
-import { combineAll } from 'rxjs/operators';
+import { combineAll, map } from 'rxjs/operators';
 
 const options: ApplyFieldOverrideOptions = {
   fieldConfig: {
@@ -25,7 +25,7 @@ const dataConfig = {
 
 export class MultiQueryRunner {
   private runnersSubscription: Subscription | undefined;
-  private runnersResult: ReplaySubject<PanelData[]>;
+  private runnersResult: ReplaySubject<Record<string, PanelData>>;
   private queryRunners: Record<string, PanelQueryRunner>;
   private createRunner: (config: any) => PanelQueryRunner;
 
@@ -59,7 +59,7 @@ export class MultiQueryRunner {
     return Promise.all(allQueries);
   }
 
-  getData(): Observable<PanelData[]> {
+  getData(): Observable<Record<string, PanelData>> {
     return this.runnersResult.asObservable();
   }
 
@@ -80,9 +80,25 @@ export class MultiQueryRunner {
     }
 
     const subject = new Subject<Observable<PanelData>>();
-    this.runnersSubscription = subject.pipe(combineAll()).subscribe((data) => {
-      this.runnersResult.next(data);
-    });
+    this.runnersSubscription = subject
+      .pipe(
+        combineAll(),
+        map((data) => {
+          return data.reduce((record: Record<string, PanelData>, panelData) => {
+            const refId = panelData.series[0].refId;
+
+            if (!refId) {
+              return record;
+            }
+
+            record[refId] = panelData;
+            return record;
+          }, {});
+        })
+      )
+      .subscribe((data) => {
+        this.runnersResult.next(data);
+      });
 
     const runner = this.createRunner(dataConfig);
     this.queryRunners[refId] = runner;

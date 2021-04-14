@@ -40,6 +40,7 @@ export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, on
     const subscription = forkJoin(runningQueries)
       .pipe(mergeAll())
       .subscribe((value) => {
+        console.log('value', value);
         data = value;
       });
     return () => subscription.unsubscribe();
