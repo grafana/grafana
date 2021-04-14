@@ -2,7 +2,7 @@ import { DataFrame, dateTime, FieldType } from '@grafana/data';
 import { AlignedData, Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
 import { createLogger } from '../../utils/logger';
-import { attachDebbuger } from '../../utils/debug';
+import { attachDebugger } from '../../utils';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
