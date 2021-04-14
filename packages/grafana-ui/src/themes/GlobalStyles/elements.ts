@@ -109,17 +109,21 @@ export function getElementStyles(theme: GrafanaThemeV2) {
 
     a {
       cursor: pointer;
-      color: ${theme.palette.text.link};
+      color: ${theme.palette.text.primary};
       text-decoration: none;
 
       &:focus {
-        outline: 0 none !important;
+        outline: none;
       }
 
       &: [disabled] {
         cursor: default;
         pointer-events: none !important;
       }
+    }
+
+    .text-link {
+      text-decoration: underline;
     }
 
     .text-left {
