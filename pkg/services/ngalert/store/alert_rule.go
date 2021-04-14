@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/guardian"
+
 	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -43,8 +45,8 @@ type RuleStore interface {
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
-	GetNamespaceUIDByTitle(string, int64, *models.SignedInUser) (string, error)
-	GetNamespaceByUID(string, int64, *models.SignedInUser) (string, error)
+	GetNamespaceByTitle(string, int64, *models.SignedInUser, bool) (*models.Folder, error)
+	GetNamespaceByUID(string, int64, *models.SignedInUser) (*models.Folder, error)
 	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules([]UpsertRule) error
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
@@ -312,24 +314,33 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 	})
 }
 
-// GetNamespaceUIDByTitle is a handler for retrieving a namespace UID by its title.
-func (st DBstore) GetNamespaceUIDByTitle(namespace string, orgID int64, user *models.SignedInUser) (string, error) {
+// GetNamespaceByTitle is a handler for retrieving a namespace UID by its title.
+func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *models.SignedInUser, withEdit bool) (*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
 	folder, err := s.GetFolderByTitle(namespace)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return folder.Uid, nil
+
+	if withEdit {
+		g := guardian.New(folder.Id, orgID, user)
+		if canAdmin, err := g.CanEdit(); err != nil || !canAdmin {
+			return nil, ngmodels.ErrCannotEditNamespace
+		}
+	}
+
+	return folder, nil
 }
 
 // GetNamespaceByUID is a handler for retrieving namespace by its UID.
-func (st DBstore) GetNamespaceByUID(UID string, orgID int64, user *models.SignedInUser) (string, error) {
+func (st DBstore) GetNamespaceByUID(UID string, orgID int64, user *models.SignedInUser) (*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
 	folder, err := s.GetFolderByUID(UID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return folder.Title, nil
+
+	return folder, nil
 }
 
 // GetAlertRulesForScheduling returns alert rule info (identifier, interval, version state)
