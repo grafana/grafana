@@ -16,7 +16,7 @@ type FolderService interface {
 	GetFolders(limit int64) ([]*models.Folder, error)
 	GetFolderByID(id int64) (*models.Folder, error)
 	GetFolderByUID(uid string) (*models.Folder, error)
-	GetFolderBySlug(slug string) (*models.Folder, error)
+	GetFolderByTitle(title string) (*models.Folder, error)
 	CreateFolder(title, uid string) (*models.Folder, error)
 	UpdateFolder(uid string, cmd *models.UpdateFolderCommand) error
 	DeleteFolder(uid string) (*models.Folder, error)
@@ -97,9 +97,8 @@ func (dr *dashboardServiceImpl) GetFolderByUID(uid string) (*models.Folder, erro
 	return dashToFolder(dashFolder), nil
 }
 
-func (dr *dashboardServiceImpl) GetFolderBySlug(slug string) (*models.Folder, error) {
-	query := models.GetDashboardQuery{OrgId: dr.orgId, Slug: slug}
-	dashFolder, err := getFolder(query)
+func (dr *dashboardServiceImpl) GetFolderByTitle(title string) (*models.Folder, error) {
+	dashFolder, err := dr.dashboardStore.GetFolderByTitle(dr.orgId, title)
 	if err != nil {
 		return nil, toFolderError(err)
 	}

@@ -202,6 +202,32 @@ func (ss *SQLStore) GetDashboard(id, orgID int64, uid, slug string) (*models.Das
 	return &dashboard, nil
 }
 
+// GetDashboardByTitle gets a dashboard by its title.
+func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboard, error) {
+	if title == "" {
+		return nil, models.ErrDashboardIdentifierNotSet
+	}
+
+	// there is a unique constraint on org_id, folder_id, title
+	// there are no nested folders so the parent folder id is always 0
+	dashboard := models.Dashboard{OrgId: orgID, FolderId: 0, Title: title}
+	has, err := ss.engine.Get(&dashboard)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, models.ErrDashboardNotFound
+	}
+
+	// if there is a dashboard instead of a folder with that title
+	if !dashboard.IsFolder {
+		return nil, models.ErrDashboardNotFound
+	}
+
+	dashboard.SetId(dashboard.Id)
+	dashboard.SetUid(dashboard.Uid)
+	return &dashboard, nil
+}
+
 // TODO: Remove me
 func GetDashboard(query *models.GetDashboardQuery) error {
 	if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
