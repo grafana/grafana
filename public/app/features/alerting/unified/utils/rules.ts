@@ -1,6 +1,7 @@
 import {
   PromRuleType,
   RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
   RulerRecordingRuleDTO,
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
@@ -23,6 +24,10 @@ export function isAlertingRulerRule(rule: RulerRuleDTO): rule is RulerAlertingRu
 
 export function isRecordingRulerRule(rule: RulerRuleDTO): rule is RulerRecordingRuleDTO {
   return 'record' in rule;
+}
+
+export function isGrafanaRulerRule(rule: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
+  return 'grafana_alert' in rule;
 }
 
 export function alertInstanceKey(alert: Alert): string {
