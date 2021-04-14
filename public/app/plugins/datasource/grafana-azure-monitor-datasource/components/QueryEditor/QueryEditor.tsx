@@ -5,6 +5,7 @@ import { AzureMonitorQuery, AzureQueryType, AzureMonitorOption, AzureMonitorErro
 import MetricsQueryEditor from '../MetricsQueryEditor';
 import QueryTypeField from './QueryTypeField';
 import useLastError from '../../utils/useLastError';
+import LogsQueryEditor from '../LogsQueryEditor';
 
 interface BaseQueryEditorProps {
   query: AzureMonitorQuery;
@@ -62,6 +63,18 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
     case AzureQueryType.AzureMonitor:
       return (
         <MetricsQueryEditor
+          subscriptionId={subscriptionId}
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          variableOptionGroup={variableOptionGroup}
+          setError={setError}
+        />
+      );
+
+    case AzureQueryType.LogAnalytics:
+      return (
+        <LogsQueryEditor
           subscriptionId={subscriptionId}
           query={query}
           datasource={datasource}
