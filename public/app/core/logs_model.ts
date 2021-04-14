@@ -204,15 +204,36 @@ export function dataFrameToLogsModel(
   const { logSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
 
-  // unification: Removed logic for using metrics data in LogsModel as with the unification changes this would result
-  // in the incorrect data being used. Instead logs series are always derived from logs.
   if (logsModel) {
     // Create histogram metrics from logs using the interval as bucket size for the line count
     if (intervalMs && logsModel.rows.length > 0) {
       const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
-      const { visibleRange, bucketSize } = getSeriesProperties(sortedRows, intervalMs, absoluteRange);
+      const { visibleRange, bucketSize, rangeReceivedLogs, rangeAbsolute } = getSeriesProperties(
+        sortedRows,
+        intervalMs,
+        absoluteRange
+      );
       logsModel.visibleRange = visibleRange;
       logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
+
+      const limitIndex = logsModel.meta?.findIndex((meta) => meta.label === 'Log limit');
+      const limit = limitIndex && logsModel.meta![limitIndex]?.value;
+      if (limitIndex && limit && limit > 0) {
+        const rangeCoverage = rangeReceivedLogs && rangeAbsolute && (rangeReceivedLogs / rangeAbsolute) * 100;
+        const metaLimitValue =
+          limit === logsModel.rows.length && rangeCoverage
+            ? `Log limit ${limit} reached. Received logs cover ${(rangeCoverage > 100 ? 100 : rangeCoverage).toFixed(
+                2
+              )}% (${getFormattedMetaTimeString(
+                rangeReceivedLogs!
+              )}) of your selected time range (${getFormattedMetaTimeString(rangeAbsolute!)}).`
+            : `${limit} (${logsModel.rows.length} returned)`;
+        logsModel.meta![limitIndex] = {
+          label: 'Log limit',
+          value: metaLimitValue,
+          kind: LogsMetaKind.String,
+        };
+      }
     } else {
       logsModel.series = [];
     }
@@ -245,11 +266,19 @@ export function getSeriesProperties(
   let visibleRange = absoluteRange;
   let resolutionIntervalMs = intervalMs;
   let bucketSize = Math.max(resolutionIntervalMs * pxPerBar, minimumBucketSize);
+  let rangeReceivedLogs;
+  let rangeAbsolute;
   // Clamp time range to visible logs otherwise big parts of the graph might look empty
   if (absoluteRange) {
-    const earliest = sortedRows[0].timeEpochMs;
-    const latest = absoluteRange.to;
-    const visibleRangeMs = latest - earliest;
+    const earliestLogs = sortedRows[0].timeEpochMs;
+    const latestLogs = sortedRows[sortedRows.length - 1].timeEpochMs;
+    const earliestAbsolute = absoluteRange.from;
+    const latestAbsolute = absoluteRange.to;
+
+    rangeReceivedLogs = latestLogs - earliestLogs;
+    rangeAbsolute = latestAbsolute - earliestAbsolute;
+
+    const visibleRangeMs = latestAbsolute - earliestLogs;
     if (visibleRangeMs > 0) {
       // Adjust interval bucket size for potentially shorter visible range
       const clampingFactor = visibleRangeMs / (absoluteRange.to - absoluteRange.from);
@@ -257,11 +286,11 @@ export function getSeriesProperties(
       // Minimum bucketsize of 1s for nicer graphing
       bucketSize = Math.max(Math.ceil(resolutionIntervalMs * pxPerBar), minimumBucketSize);
       // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
-      const adjustedEarliest = Math.floor(earliest / bucketSize) * bucketSize;
-      visibleRange = { from: adjustedEarliest, to: latest };
+      const adjustedEarliest = Math.floor(earliestLogs / bucketSize) * bucketSize;
+      visibleRange = { from: adjustedEarliest, to: latestAbsolute };
     }
   }
-  return { bucketSize, visibleRange };
+  return { bucketSize, visibleRange, rangeReceivedLogs, rangeAbsolute };
 }
 
 function separateLogsAndMetrics(dataFrames: DataFrame[]) {
@@ -413,26 +442,19 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       acc[elem.refId] = elem.meta.limit;
       return acc;
     }, {})
-  ).reduce((acc: number, elem: any) => (acc += elem), 0);
+  ).reduce((acc: number, elem: any) => (acc += elem), 0) as number;
 
-  if (limits.length > 0) {
+  if (limitValue > 0) {
     meta.push({
-      label: 'Limit',
-      value: `${limitValue} (${rows.length} returned)`,
-      kind: LogsMetaKind.String,
+      label: 'Log limit',
+      value: limitValue,
+      kind: LogsMetaKind.Number,
     });
   }
-
-  // Hack to print loki stats in Explore. Should be using proper stats display via drawer in Explore (rework in 7.1)
-  let totalBytes = 0;
-  const queriesVisited: { [refId: string]: boolean } = {};
   // To add just 1 error message
   let errorMetaAdded = false;
 
   for (const series of logSeries) {
-    const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
-    const { refId } = series; // Stats are per query, keeping track by refId
-
     if (!errorMetaAdded && series.meta?.custom?.error) {
       meta.push({
         label: '',
@@ -441,28 +463,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       });
       errorMetaAdded = true;
     }
-
-    if (refId && !queriesVisited[refId]) {
-      if (totalBytesKey && series.meta?.stats) {
-        const byteStat = series.meta.stats.find((stat) => stat.displayName === totalBytesKey);
-        if (byteStat) {
-          totalBytes += byteStat.value;
-        }
-      }
-
-      queriesVisited[refId] = true;
-    }
   }
-
-  if (totalBytes > 0) {
-    const { text, suffix } = SIPrefix('B')(totalBytes);
-    meta.push({
-      label: 'Total bytes processed',
-      value: `${text} ${suffix}`,
-      kind: LogsMetaKind.String,
-    });
-  }
-
   return {
     hasUniqueLabels,
     meta,
@@ -479,4 +480,16 @@ function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
     }
   }
   return undefined;
+}
+
+function getFormattedMetaTimeString(range: number): string {
+  const rangeSec = range / 1000;
+  const hours = Math.floor(rangeSec / 60 / 60);
+  const minutes = Math.floor(rangeSec / 60) - hours * 60;
+  const seconds = (rangeSec % 60).toFixed();
+  const fromattedHours = hours ? (hours > 1 ? hours + ' hours ' : hours + ' hour') : '';
+  const fromattedMinutes = minutes ? (minutes > 1 ? minutes + ' minutes ' : minutes + ' minute') : '';
+  const fromattedSeconds = Number(seconds) ? (Number(seconds) !== 1 ? seconds + ' seconds' : seconds + ' second') : '';
+  const formattedLogsTimeRangeCoverage = fromattedHours + fromattedMinutes + fromattedSeconds || 'less than 1 second';
+  return formattedLogsTimeRangeCoverage;
 }
