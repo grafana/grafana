@@ -17,6 +17,7 @@ export class User {
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;
   email?: string;
+  permissions: UserPermission;
 
   constructor() {
     if (config.bootData.user) {
@@ -24,6 +25,16 @@ export class User {
     }
   }
 }
+
+/**
+ * UserPermission is a map storing permissions in a form of
+ * {
+ *   action: { scope: scope }
+ * }
+ */
+export type UserPermission = {
+  [key: string]: { [key: string]: string };
+};
 
 export class ContextSrv {
   pinned: any;
@@ -59,6 +70,11 @@ export class ContextSrv {
 
   hasRole(role: string) {
     return this.user.orgRole === role;
+  }
+
+  // Checks whether user has required permission
+  hasPermission(action: string, scope?: string): boolean {
+    return !!(this.user.permissions[action] && (scope ? this.user.permissions[action][scope] : true));
   }
 
   isGrafanaVisible() {
