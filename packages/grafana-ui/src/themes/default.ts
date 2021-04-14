@@ -53,7 +53,7 @@ const theme: GrafanaThemeCommons = {
       light: 300,
       regular: 400,
       semibold: 500,
-      bold: 600,
+      bold: 500,
     },
     lineHeight: {
       xs: 1,
