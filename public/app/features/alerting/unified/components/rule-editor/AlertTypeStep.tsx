@@ -68,6 +68,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
       </Field>
       <div className={styles.flexRow}>
         <Field
+          disabled={editingExistingRule}
           label="Alert type"
           className={styles.formInput}
           error={errors.type?.message}
@@ -76,7 +77,6 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           <InputControl
             as={Select}
             name="type"
-            disabled={editingExistingRule}
             options={alertTypeOptions}
             control={control}
             rules={{
