@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { css } from 'emotion';
 import { Alert, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -9,7 +9,7 @@ export interface Props {
   initError?: DashboardInitError;
 }
 
-export const DashboardFailed: FC<Props> = ({ initError }) => {
+export const DashboardFailed = ({ initError }: Props) => {
   const styles = useStyles(getStyles);
   if (!initError) {
     return null;

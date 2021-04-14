@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { css } from 'emotion';
 import { Button, HorizontalGroup, Spinner, useStyles, VerticalGroup } from '@grafana/ui';
 import { locationService } from '@grafana/runtime';
@@ -9,7 +9,7 @@ export interface Props {
   initPhase: DashboardInitPhase;
 }
 
-export const DashboardLoading: FC<Props> = ({ initPhase }) => {
+export const DashboardLoading = ({ initPhase }: Props) => {
   const styles = useStyles(getStyles);
   const cancelVariables = () => {
     locationService.push('/');
