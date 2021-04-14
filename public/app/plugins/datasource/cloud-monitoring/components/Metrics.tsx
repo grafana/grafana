@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { startCase, uniqBy } from 'lodash';
 
+import { InlineField, Select } from '@grafana/ui';
 import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue } from '@grafana/data';
+import { InlineFields } from '.';
 import CloudMonitoringDatasource from '../datasource';
-import { Segment } from '@grafana/ui';
+import { LABEL_WIDTH } from '../constants';
 import { MetricDescriptor } from '../types';
 
 export interface Props {
@@ -118,44 +120,37 @@ export function Metrics(props: Props) {
 
   return (
     <>
-      <div className="gf-form-inline">
-        <span className="gf-form-label width-9 query-keyword">Service</span>
-        <Segment
-          onChange={onServiceChange}
-          value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
-          options={[
-            {
-              label: 'Template Variables',
-              options: templateVariableOptions,
-            },
-            ...services,
-          ]}
-          placeholder="Select Services"
-        ></Segment>
-        <div className="gf-form gf-form--grow">
-          <div className="gf-form-label gf-form-label--grow" />
-        </div>
-      </div>
-      <div className="gf-form-inline">
-        <span className="gf-form-label width-9 query-keyword">Metric</span>
+      <InlineFields transparent label="Metric" labelWidth={LABEL_WIDTH}>
+        <InlineField className="width-16" label="Service">
+          <Select
+            onChange={onServiceChange}
+            value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
+            options={[
+              {
+                label: 'Template Variables',
+                options: templateVariableOptions,
+              },
+              ...services,
+            ]}
+            placeholder="Select Services"
+          ></Select>
+        </InlineField>
+        <InlineField label="Metric name">
+          <Select
+            onChange={onMetricTypeChange}
+            value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}
+            options={[
+              {
+                label: 'Template Variables',
+                options: templateVariableOptions,
+              },
+              ...metrics,
+            ]}
+            placeholder="Select Metric"
+          ></Select>
+        </InlineField>
+      </InlineFields>
 
-        <Segment
-          className="query-part"
-          onChange={onMetricTypeChange}
-          value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}
-          options={[
-            {
-              label: 'Template Variables',
-              options: templateVariableOptions,
-            },
-            ...metrics,
-          ]}
-          placeholder="Select Metric"
-        ></Segment>
-        <div className="gf-form gf-form--grow">
-          <div className="gf-form-label gf-form-label--grow" />
-        </div>
-      </div>
       {children(state.metricDescriptor)}
     </>
   );

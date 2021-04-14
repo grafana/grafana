@@ -6,7 +6,7 @@ import { SelectableValue } from '@grafana/data';
 import CloudMonitoringDatasource from '../datasource';
 import { AnnotationsHelp, LabelFilter, Metrics, Project } from './';
 import { toOption } from '../functions';
-import { AnnotationTarget, EditorMode, MetricDescriptor } from '../types';
+import { AnnotationTarget, EditorMode, MetricDescriptor, MetricKind } from '../types';
 
 const { Input } = LegacyForms;
 
@@ -30,7 +30,7 @@ const DefaultTarget: State = {
   projects: [],
   metricType: '',
   filters: [],
-  metricKind: '',
+  metricKind: MetricKind.GAUGE,
   valueType: '',
   refId: 'annotationQuery',
   title: '',

@@ -63,33 +63,86 @@ export enum EditorMode {
   MQL = 'mql',
 }
 
+export enum PreprocessorType {
+  None = 'none',
+  Rate = 'rate',
+  Delta = 'delta',
+}
+
+export enum MetricKind {
+  METRIC_KIND_UNSPECIFIED = 'METRIC_KIND_UNSPECIFIED',
+  GAUGE = 'GAUGE',
+  DELTA = 'DELTA',
+  CUMULATIVE = 'CUMULATIVE',
+}
+
+export enum ValueTypes {
+  VALUE_TYPE_UNSPECIFIED = 'VALUE_TYPE_UNSPECIFIED',
+  BOOL = 'BOOL',
+  INT64 = 'INT64',
+  DOUBLE = 'DOUBLE',
+  STRING = 'STRING',
+  DISTRIBUTION = 'DISTRIBUTION',
+  MONEY = 'MONEY',
+}
+
+export enum AlignmentTypes {
+  ALIGN_DELTA = 'ALIGN_DELTA',
+  ALIGN_RATE = 'ALIGN_RATE',
+  ALIGN_INTERPOLATE = 'ALIGN_INTERPOLATE',
+  ALIGN_NEXT_OLDER = 'ALIGN_NEXT_OLDER',
+  ALIGN_MIN = 'ALIGN_MIN',
+  ALIGN_MAX = 'ALIGN_MAX',
+  ALIGN_MEAN = 'ALIGN_MEAN',
+  ALIGN_COUNT = 'ALIGN_COUNT',
+  ALIGN_SUM = 'ALIGN_SUM',
+  ALIGN_STDDEV = 'ALIGN_STDDEV',
+  ALIGN_COUNT_TRUE = 'ALIGN_COUNT_TRUE',
+  ALIGN_COUNT_FALSE = 'ALIGN_COUNT_FALSE',
+  ALIGN_FRACTION_TRUE = 'ALIGN_FRACTION_TRUE',
+  ALIGN_PERCENTILE_99 = 'ALIGN_PERCENTILE_99',
+  ALIGN_PERCENTILE_95 = 'ALIGN_PERCENTILE_95',
+  ALIGN_PERCENTILE_50 = 'ALIGN_PERCENTILE_50',
+  ALIGN_PERCENTILE_05 = 'ALIGN_PERCENTILE_05',
+  ALIGN_PERCENT_CHANGE = 'ALIGN_PERCENT_CHANGE',
+}
+
+export const preprocessors = [
+  { label: 'None', value: PreprocessorType.None },
+  {
+    label: 'Rate',
+    value: PreprocessorType.Rate,
+  },
+  { label: 'Delta', value: PreprocessorType.Delta },
+];
+
 export const queryTypes = [
   { label: 'Metrics', value: QueryType.METRICS },
   { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
 ];
 
-export interface MetricQuery {
-  editorMode: EditorMode;
+export interface BaseQuery {
   projectName: string;
+  perSeriesAligner?: string;
+  alignmentPeriod?: string;
+  aliasBy?: string;
+}
+
+export interface MetricQuery extends BaseQuery {
+  editorMode: EditorMode;
   unit?: string;
   metricType: string;
   crossSeriesReducer: string;
-  alignmentPeriod?: string;
-  perSeriesAligner?: string;
   groupBys?: string[];
   filters?: string[];
-  aliasBy?: string;
-  metricKind?: string;
+  metricKind?: MetricKind;
   valueType?: string;
   view?: string;
   query: string;
+  preprocessor?: PreprocessorType;
 }
 
-export interface SLOQuery {
-  projectName: string;
-  alignmentPeriod?: string;
-  perSeriesAligner?: string;
-  aliasBy?: string;
+export interface SLOQuery extends BaseQuery {
   selectorName: string;
   serviceId: string;
   serviceName: string;
@@ -124,7 +177,7 @@ export interface AnnotationTarget {
   metricType: string;
   refId: string;
   filters: string[];
-  metricKind: string;
+  metricKind: MetricKind;
   valueType: string;
   title: string;
   text: string;
@@ -141,7 +194,7 @@ export interface QueryMeta {
 
 export interface MetricDescriptor {
   valueType: string;
-  metricKind: string;
+  metricKind: MetricKind;
   type: string;
   unit: string;
   service: string;
@@ -160,4 +213,9 @@ export interface Filter {
   operator: string;
   value: string;
   condition?: string;
+}
+
+export interface CustomMetaData {
+  perSeriesAligner?: string;
+  alignmentPeriod?: string;
 }

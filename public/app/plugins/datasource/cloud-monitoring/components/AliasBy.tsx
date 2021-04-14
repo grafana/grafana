@@ -1,6 +1,9 @@
 import React, { FunctionComponent, useState } from 'react';
 import { debounce } from 'lodash';
-import { QueryInlineField } from '.';
+import { Input } from '@grafana/ui';
+import { InlineFields } from '.';
+
+import { INPUT_WIDTH, LABEL_WIDTH } from '../constants';
 
 export interface Props {
   onChange: (alias: any) => void;
@@ -18,8 +21,8 @@ export const AliasBy: FunctionComponent<Props> = ({ value = '', onChange }) => {
   };
 
   return (
-    <QueryInlineField label="Alias By">
-      <input type="text" className="gf-form-input width-26" value={alias} onChange={onChange} />
-    </QueryInlineField>
+    <InlineFields label="Alias By" grow transparent labelWidth={LABEL_WIDTH}>
+      <Input width={INPUT_WIDTH} type="text" value={alias} onChange={onChange} />
+    </InlineFields>
   );
 };

@@ -1,12 +1,11 @@
 import React from 'react';
-import { Aggregations, Metrics, LabelFilter, GroupBys, Alignments, AlignmentPeriods } from '.';
-import { MetricQuery, MetricDescriptor } from '../types';
-import { getAlignmentPickerData } from '../functions';
-import CloudMonitoringDatasource from '../datasource';
 import { SelectableValue } from '@grafana/data';
+import { Metrics, LabelFilter, GroupBy, Preprocessor, Alignment } from '.';
+import { MetricQuery, MetricDescriptor, CustomMetaData } from '../types';
+import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
-  usedAlignmentPeriod?: number;
+  customMetaData: CustomMetaData;
   variableOptionGroup: SelectableValue<string>;
   onMetricTypeChange: (query: MetricDescriptor) => void;
   onChange: (query: MetricQuery) => void;
@@ -21,11 +20,9 @@ function Editor({
   datasource,
   onChange,
   onMetricTypeChange,
-  usedAlignmentPeriod,
+  customMetaData,
   variableOptionGroup,
 }: React.PropsWithChildren<Props>) {
-  const { perSeriesAligner, alignOptions } = getAlignmentPickerData(query, datasource.templateSrv);
-
   return (
     <Metrics
       templateSrv={datasource.templateSrv}
@@ -43,37 +40,20 @@ function Editor({
             onChange={(filters) => onChange({ ...query, filters })}
             variableOptionGroup={variableOptionGroup}
           />
-          <GroupBys
-            groupBys={Object.keys(labels)}
-            values={query.groupBys!}
-            onChange={(groupBys) => onChange({ ...query, groupBys })}
+          <Preprocessor metricDescriptor={metric} query={query} onChange={onChange} />
+          <GroupBy
+            labels={Object.keys(labels)}
+            query={query}
+            onChange={onChange}
             variableOptionGroup={variableOptionGroup}
-          />
-          <Aggregations
             metricDescriptor={metric}
+          />
+          <Alignment
+            datasource={datasource}
             templateVariableOptions={variableOptionGroup.options}
-            crossSeriesReducer={query.crossSeriesReducer}
-            groupBys={query.groupBys!}
-            onChange={(crossSeriesReducer) => onChange({ ...query, crossSeriesReducer })}
-          >
-            {(displayAdvancedOptions) =>
-              displayAdvancedOptions && (
-                <Alignments
-                  alignOptions={alignOptions}
-                  templateVariableOptions={variableOptionGroup.options}
-                  perSeriesAligner={perSeriesAligner || ''}
-                  onChange={(perSeriesAligner) => onChange({ ...query, perSeriesAligner })}
-                />
-              )
-            }
-          </Aggregations>
-          <AlignmentPeriods
-            templateSrv={datasource.templateSrv}
-            templateVariableOptions={variableOptionGroup.options}
-            alignmentPeriod={query.alignmentPeriod || ''}
-            perSeriesAligner={query.perSeriesAligner || ''}
-            usedAlignmentPeriod={usedAlignmentPeriod}
-            onChange={(alignmentPeriod) => onChange({ ...query, alignmentPeriod })}
+            query={query}
+            customMetaData={customMetaData}
+            onChange={onChange}
           />
         </>
       )}

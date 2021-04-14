@@ -1,13 +1,13 @@
 import React, { PureComponent } from 'react';
-import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
-import { ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
-import { Segment } from '@grafana/ui';
-import { Help, MetricQueryEditor, SLOQueryEditor } from './';
+import { css } from '@emotion/css';
+import { ExploreQueryFieldProps } from '@grafana/data';
+import { Button, Select } from '@grafana/ui';
+import { MetricQueryEditor, SLOQueryEditor, InlineFields } from './';
 import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, queryTypes, EditorMode } from '../types';
+import { LABEL_WIDTH, SELECT_WIDTH } from '../constants';
 import { defaultQuery } from './MetricQueryEditor';
-import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
-import { formatCloudMonitoringError, toOption } from '../functions';
+import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
+import { toOption } from '../functions';
 import CloudMonitoringDatasource from '../datasource';
 
 export type Props = ExploreQueryFieldProps<CloudMonitoringDatasource, CloudMonitoringQuery>;
@@ -44,7 +44,7 @@ export class QueryEditor extends PureComponent<Props> {
     const sloQuery = { ...defaultSLOQuery(datasource), ...query.sloQuery };
     const queryType = query.queryType || QueryType.METRICS;
     const meta = this.props.data?.series.length ? this.props.data?.series[0].meta : {};
-    const usedAlignmentPeriod = meta?.alignmentPeriod;
+    const customMetaData = meta?.custom ?? {};
     const variableOptionGroup = {
       label: 'Template Variables',
       expanded: false,
@@ -53,26 +53,23 @@ export class QueryEditor extends PureComponent<Props> {
 
     return (
       <>
-        <div className="gf-form-inline">
-          <label className="gf-form-label query-keyword width-9">Query Type</label>
-          <Segment
-            value={[...queryTypes, ...variableOptionGroup.options].find((qt) => qt.value === queryType)}
-            options={[
-              ...queryTypes,
-              {
-                label: 'Template Variables',
-                options: variableOptionGroup.options,
-              },
-            ]}
-            onChange={({ value }: SelectableValue<QueryType>) => {
+        <InlineFields label="Query Type" transparent labelWidth={LABEL_WIDTH}>
+          <Select
+            width={SELECT_WIDTH}
+            value={queryType}
+            options={queryTypes}
+            onChange={({ value }) => {
               onChange({ ...query, sloQuery, queryType: value! });
               onRunQuery();
             }}
           />
 
           {query.queryType !== QueryType.SLO && (
-            <button
-              className="gf-form-label "
+            <Button
+              className={css`
+                margin-left: auto;
+              `}
+              icon="edit"
               onClick={() =>
                 this.onQueryChange('metricQuery', {
                   ...metricQuery,
@@ -80,21 +77,16 @@ export class QueryEditor extends PureComponent<Props> {
                 })
               }
             >
-              <span className="query-keyword">{'<>'}</span>&nbsp;&nbsp;
               {metricQuery.editorMode === EditorMode.MQL ? 'Switch to builder' : 'Edit MQL'}
-            </button>
+            </Button>
           )}
-
-          <div className="gf-form gf-form--grow">
-            <label className="gf-form-label gf-form-label--grow"></label>
-          </div>
-        </div>
+        </InlineFields>
 
         {queryType === QueryType.METRICS && (
           <MetricQueryEditor
             refId={query.refId}
             variableOptionGroup={variableOptionGroup}
-            usedAlignmentPeriod={usedAlignmentPeriod}
+            customMetaData={customMetaData}
             onChange={(metricQuery: MetricQuery) => {
               this.props.onChange({ ...this.props.query, metricQuery });
             }}
@@ -107,7 +99,7 @@ export class QueryEditor extends PureComponent<Props> {
         {queryType === QueryType.SLO && (
           <SLOQueryEditor
             variableOptionGroup={variableOptionGroup}
-            usedAlignmentPeriod={usedAlignmentPeriod}
+            customMetaData={customMetaData}
             onChange={(query: SLOQuery) => this.onQueryChange('sloQuery', query)}
             onRunQuery={onRunQuery}
             datasource={datasource}
