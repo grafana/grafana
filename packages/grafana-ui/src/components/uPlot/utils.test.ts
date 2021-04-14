@@ -61,17 +61,17 @@ describe('preparePlotData', () => {
           {
             name: 'a',
             values: [-10, 20, 10],
-            config: { custom: { stackingMode: StackingMode.None } },
+            config: { custom: { stacking: { mode: StackingMode.None } } },
           },
           {
             name: 'b',
             values: [10, 10, 10],
-            config: { custom: { stackingMode: StackingMode.None } },
+            config: { custom: { stacking: { mode: StackingMode.None } } },
           },
           {
             name: 'c',
             values: [20, 20, 20],
-            config: { custom: { stackingMode: StackingMode.None } },
+            config: { custom: { stacking: { mode: StackingMode.None } } },
           },
         ],
       });
@@ -108,44 +108,44 @@ describe('preparePlotData', () => {
           {
             name: 'a',
             values: [-10, 20, 10],
-            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
           },
           {
             name: 'b',
             values: [10, 10, 10],
-            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
           },
           {
             name: 'c',
             values: [20, 20, 20],
-            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
           },
         ],
       });
       expect(preparePlotData(df)).toMatchInlineSnapshot(`
-              Array [
-                Array [
-                  9997,
-                  9998,
-                  9999,
-                ],
-                Array [
-                  -10,
-                  20,
-                  10,
-                ],
-                Array [
-                  0,
-                  30,
-                  20,
-                ],
-                Array [
-                  20,
-                  50,
-                  40,
-                ],
-              ]
-          `);
+        Array [
+          Array [
+            9997,
+            9998,
+            9999,
+          ],
+          Array [
+            -10,
+            20,
+            10,
+          ],
+          Array [
+            0,
+            30,
+            20,
+          ],
+          Array [
+            20,
+            50,
+            40,
+          ],
+        ]
+      `);
     });
 
     it('standard with multiple groups', () => {
@@ -155,32 +155,32 @@ describe('preparePlotData', () => {
           {
             name: 'a',
             values: [-10, 20, 10],
-            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
           },
           {
             name: 'b',
             values: [10, 10, 10],
-            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
           },
           {
             name: 'c',
             values: [20, 20, 20],
-            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackA' } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
           },
           {
             name: 'd',
             values: [1, 2, 3],
-            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackB' } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' } } },
           },
           {
             name: 'e',
             values: [1, 2, 3],
-            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackB' } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' } } },
           },
           {
             name: 'f',
             values: [1, 2, 3],
-            config: { custom: { stackingMode: StackingMode.Standard, stackingGroup: 'stackB' } },
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' } } },
           },
         ],
       });

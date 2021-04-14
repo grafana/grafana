@@ -75,19 +75,6 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         defaultValue: VizOrientation.Auto,
       })
       .addRadio({
-        path: 'stacking',
-        name: 'Stacking',
-        settings: {
-          options: [
-            { value: StackingMode.None, label: 'None' },
-            { value: StackingMode.Standard, label: 'Standard' },
-            { value: StackingMode.Percent, label: 'Percent' },
-          ],
-        },
-        defaultValue: StackingMode.None,
-        showIf: () => false, // <<< Hide from the UI for now
-      })
-      .addRadio({
         path: 'showValue',
         name: 'Show values',
         settings: {

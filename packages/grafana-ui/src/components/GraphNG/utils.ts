@@ -224,11 +224,11 @@ export function preparePlotConfigBuilder(
       hideInLegend: customConfig.hideFrom?.legend,
     });
 
-    if (customConfig?.stackingMode !== StackingMode.None && customConfig?.stackingGroup) {
-      if (!stackingGroups[customConfig.stackingGroup]) {
-        stackingGroups[customConfig.stackingGroup] = [seriesIndex];
+    if (customConfig?.stacking?.mode !== StackingMode.None && customConfig?.stacking?.group) {
+      if (!stackingGroups[customConfig.stacking.group]) {
+        stackingGroups[customConfig.stacking.group] = [seriesIndex];
       } else {
-        stackingGroups[customConfig.stackingGroup].push(seriesIndex);
+        stackingGroups[customConfig.stacking.group].push(seriesIndex);
       }
     }
   }

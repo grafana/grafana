@@ -34,6 +34,7 @@ import { LineStyleEditor } from './LineStyleEditor';
 import { FillBellowToEditor } from './FillBelowToEditor';
 import { OptionsWithLegend } from './types';
 import { SpanNullsEditor } from './SpanNullsEditor';
+import { StackingEditor } from './StackingEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
@@ -42,13 +43,15 @@ export const defaultGraphConfig: GraphFieldConfig = {
   fillOpacity: 0,
   gradientMode: GraphGradientMode.None,
   barAlignment: BarAlignment.Center,
-  stackingMode: StackingMode.None,
-  stackingGroup: 'A',
+  stacking: {
+    mode: StackingMode.None,
+    group: 'A',
+  },
 };
 
-export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
-  const categoryStyles = ['Graph styles'];
+const categoryStyles = ['Graph styles'];
 
+export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
   return {
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -185,7 +188,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
         });
 
       addAxisConfig(builder, cfg);
-      addStackingConfig(builder, cfg);
+      addStackingConfig(builder, cfg.stacking);
       addHideFrom(builder);
     },
   };
@@ -325,25 +328,22 @@ export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOpti
     });
 }
 
-export function addStackingConfig(builder: FieldConfigEditorBuilder<StackingConfig>, cfg: StackingConfig) {
-  builder
-    .addRadio({
-      path: 'stackingMode',
-      name: 'Type',
-      category: ['Stacking'],
-      defaultValue: cfg.stackingMode,
-      settings: {
-        options: graphFieldOptions.stacking,
-      },
-      shouldApply: (f) => f.type === FieldType.number,
-    })
-    .addTextInput({
-      path: 'stackingGroup',
-      name: 'Group',
-      category: ['Stacking'],
-      defaultValue: cfg.stackingGroup,
-      hideFromDefaults: true,
-      showIf: (c) => c.stackingMode !== StackingMode.None,
-      shouldApply: (f) => f.type === FieldType.number,
-    });
+export function addStackingConfig(
+  builder: FieldConfigEditorBuilder<{ stacking: StackingConfig }>,
+  defaultConfig?: StackingConfig
+) {
+  builder.addCustomEditor({
+    id: 'stacking',
+    path: 'stacking',
+    name: 'Stack series',
+    category: categoryStyles,
+    defaultValue: defaultConfig,
+    editor: StackingEditor,
+    override: StackingEditor,
+    settings: {
+      options: graphFieldOptions.stacking,
+    },
+    process: identityOverrideProcessor,
+    shouldApply: (f) => f.type === FieldType.number,
+  });
 }

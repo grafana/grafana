@@ -215,12 +215,8 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             break;
           case 'stack':
             rule.properties.push({
-              id: 'custom.stackingMode',
-              value: StackingMode.Standard,
-            });
-            rule.properties.push({
-              id: 'custom.stackingGroup',
-              value: v,
+              id: 'custom.stacking',
+              value: { mode: StackingMode.Normal, group: v },
             });
             break;
           default:
@@ -279,8 +275,10 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   if (angular.stack) {
-    graph.stackingMode = StackingMode.Standard;
-    graph.stackingGroup = defaultGraphConfig.stackingGroup;
+    graph.stacking = {
+      mode: StackingMode.Normal,
+      group: defaultGraphConfig.stacking!.group,
+    };
   }
 
   y1.custom = omitBy(graph, isNil);

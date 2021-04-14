@@ -15,6 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 379,
   "links": [],
   "panels": [
     {
@@ -162,8 +163,10 @@
             },
             "showPoints": "never",
             "spanNulls": true,
-            "stackingGroup": "A",
-            "stackingMode": "standard"
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -196,7 +199,6 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "stacking": "none",
         "tooltipOptions": {
           "mode": "single"
         }
@@ -383,8 +385,10 @@
             },
             "showPoints": "never",
             "spanNulls": true,
-            "stackingGroup": "A",
-            "stackingMode": "standard"
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -417,7 +421,6 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "stacking": "none",
         "tooltipOptions": {
           "mode": "single"
         }
@@ -596,8 +599,10 @@
             },
             "showPoints": "never",
             "spanNulls": true,
-            "stackingGroup": "A",
-            "stackingMode": "none"
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -630,7 +635,6 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "stacking": "none",
         "tooltipOptions": {
           "mode": "single"
         }
@@ -801,8 +805,10 @@
             },
             "showPoints": "never",
             "spanNulls": true,
-            "stackingGroup": "A",
-            "stackingMode": "standard"
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -876,7 +882,9 @@
       "dashes": false,
       "datasource": null,
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "unit": "short"
+        },
         "overrides": []
       },
       "fill": 1,
@@ -911,28 +919,24 @@
       "renderer": "flot",
       "seriesOverrides": [
         {
-          "$$hashKey": "object:110",
           "alias": "A-series",
           "stack": "A"
         },
         {
-          "$$hashKey": "object:117",
           "alias": "B-series",
           "stack": "A"
         },
         {
-          "$$hashKey": "object:124",
           "alias": "C-series",
           "stack": "B"
         },
         {
-          "$$hashKey": "object:129",
           "alias": "D-series",
           "stack": "B"
         }
       ],
       "spaceLength": 10,
-      "stack": true,
+      "stack": false,
       "steppedLine": false,
       "targets": [
         {
@@ -1026,8 +1030,10 @@
             },
             "showPoints": "never",
             "spanNulls": true,
-            "stackingGroup": "A",
-            "stackingMode": "none"
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -1053,12 +1059,11 @@
             },
             "properties": [
               {
-                "id": "custom.stackingMode",
-                "value": "standard"
-              },
-              {
-                "id": "custom.stackingGroup",
-                "value": "A"
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "normal"
+                }
               }
             ]
           },
@@ -1069,8 +1074,11 @@
             },
             "properties": [
               {
-                "id": "custom.stackingMode",
-                "value": "standard"
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "normal"
+                }
               }
             ]
           },
@@ -1081,12 +1089,11 @@
             },
             "properties": [
               {
-                "id": "custom.stackingMode",
-                "value": "standard"
-              },
-              {
-                "id": "custom.stackingGroup",
-                "value": "B"
+                "id": "custom.stacking",
+                "value": {
+                  "group": "B",
+                  "mode": "normal"
+                }
               }
             ]
           },
@@ -1097,12 +1104,11 @@
             },
             "properties": [
               {
-                "id": "custom.stackingMode",
-                "value": "standard"
-              },
-              {
-                "id": "custom.stackingGroup",
-                "value": "B"
+                "id": "custom.stacking",
+                "value": {
+                  "group": "B",
+                  "mode": "normal"
+                }
               }
             ]
           }
@@ -1171,5 +1177,5 @@
   "timezone": "",
   "title": "Panel Tests - TimeSeries - stacking",
   "uid": "Ei86FP_Mx",
-  "version": 2
+  "version": 5
 }

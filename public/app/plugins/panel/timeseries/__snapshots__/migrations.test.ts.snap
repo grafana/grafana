@@ -91,8 +91,10 @@ Object {
         "lineWidth": 5,
         "showPoints": "never",
         "spanNulls": true,
-        "stackingGroup": "A",
-        "stackingMode": "standard",
+        "stacking": Object {
+          "group": "A",
+          "mode": "normal",
+        },
       },
       "nullValueMode": "null",
       "unit": "short",
@@ -120,12 +122,11 @@ Object {
         },
         "properties": Array [
           Object {
-            "id": "custom.stackingMode",
-            "value": "standard",
-          },
-          Object {
-            "id": "custom.stackingGroup",
-            "value": "A",
+            "id": "custom.stacking",
+            "value": Object {
+              "group": "A",
+              "mode": "normal",
+            },
           },
         ],
       },
@@ -136,12 +137,11 @@ Object {
         },
         "properties": Array [
           Object {
-            "id": "custom.stackingMode",
-            "value": "standard",
-          },
-          Object {
-            "id": "custom.stackingGroup",
-            "value": "A",
+            "id": "custom.stacking",
+            "value": Object {
+              "group": "A",
+              "mode": "normal",
+            },
           },
         ],
       },
@@ -178,8 +178,10 @@ Object {
         "lineWidth": 5,
         "showPoints": "never",
         "spanNulls": true,
-        "stackingGroup": "A",
-        "stackingMode": "standard",
+        "stacking": Object {
+          "group": "A",
+          "mode": "normal",
+        },
       },
       "nullValueMode": "null",
       "unit": "short",

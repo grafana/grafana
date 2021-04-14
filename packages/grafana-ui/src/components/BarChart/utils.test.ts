@@ -94,7 +94,7 @@ describe('GraphNG utils', () => {
       ).toMatchSnapshot();
     });
 
-    it.each([StackingMode.None, StackingMode.Percent, StackingMode.Standard])('stacking', (v) => {
+    it.each([StackingMode.None, StackingMode.Percent, StackingMode.Normal])('stacking', (v) => {
       expect(
         preparePlotConfigBuilder(frame!, { colors: { panelBg: '#000000' } } as GrafanaTheme, {
           ...config,

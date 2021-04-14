@@ -46,8 +46,10 @@ function mockDataFrame() {
       fillColor: '#ff0000',
       fillOpacity: 0.1,
       showPoints: PointVisibility.Always,
-      stackingGroup: 'A',
-      stackingMode: StackingMode.Standard,
+      stacking: {
+        group: 'A',
+        mode: StackingMode.Normal,
+      },
     },
   };
 
@@ -68,8 +70,10 @@ function mockDataFrame() {
       fillColor: '#ff0000',
       fillOpacity: 0.1,
       showPoints: PointVisibility.Always,
-      stackingGroup: 'A',
-      stackingMode: StackingMode.Standard,
+      stacking: {
+        group: 'A',
+        mode: StackingMode.Normal,
+      },
     },
   };
 
@@ -90,8 +94,10 @@ function mockDataFrame() {
       fillColor: '#ff0000',
       fillOpacity: 0.1,
       showPoints: PointVisibility.Always,
-      stackingGroup: 'B',
-      stackingMode: StackingMode.Standard,
+      stacking: {
+        group: 'B',
+        mode: StackingMode.Normal,
+      },
     },
   };
   const f4Config: FieldConfig<GraphFieldConfig> = {
@@ -111,8 +117,10 @@ function mockDataFrame() {
       fillColor: '#ff0000',
       fillOpacity: 0.1,
       showPoints: PointVisibility.Always,
-      stackingGroup: 'B',
-      stackingMode: StackingMode.Standard,
+      stacking: {
+        group: 'B',
+        mode: StackingMode.Normal,
+      },
     },
   };
   const f5Config: FieldConfig<GraphFieldConfig> = {
@@ -132,8 +140,10 @@ function mockDataFrame() {
       fillColor: '#ff0000',
       fillOpacity: 0.1,
       showPoints: PointVisibility.Always,
-      stackingGroup: 'B',
-      stackingMode: StackingMode.None,
+      stacking: {
+        group: 'B',
+        mode: StackingMode.None,
+      },
     },
   };
 

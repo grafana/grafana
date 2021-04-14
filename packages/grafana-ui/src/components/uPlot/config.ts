@@ -180,7 +180,7 @@ export interface HideableFieldConfig {
  */
 export enum StackingMode {
   None = 'none',
-  Standard = 'standard',
+  Normal = 'normal',
   Percent = 'percent',
 }
 
@@ -188,8 +188,8 @@ export enum StackingMode {
  * @alpha
  */
 export interface StackingConfig {
-  stackingMode?: StackingMode;
-  stackingGroup?: string;
+  mode?: StackingMode;
+  group?: string;
 }
 
 /**
@@ -200,11 +200,11 @@ export interface GraphFieldConfig
     FillConfig,
     PointsConfig,
     AxisConfig,
-    StackingConfig,
     BarConfig,
     HideableFieldConfig {
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;
+  stacking?: StackingConfig;
 }
 
 /**
@@ -251,8 +251,7 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<GraphGradientMode>>,
 
   stacking: [
-    { label: 'None', value: StackingMode.None },
-    { label: 'Standard', value: StackingMode.Standard },
-    { label: 'Percent(TODO)', value: StackingMode.Percent },
+    { label: 'Off', value: StackingMode.None },
+    { label: 'Normal', value: StackingMode.Normal },
   ] as Array<SelectableValue<StackingMode>>,
 };

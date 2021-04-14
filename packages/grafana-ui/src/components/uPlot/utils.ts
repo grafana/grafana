@@ -58,13 +58,13 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
       continue;
     }
 
-    if (f.config.custom?.stackingMode !== StackingMode.None && f.config.custom?.stackingGroup) {
-      if (!stackingGroups.has(f.config.custom.stackingGroup)) {
-        stackingGroups.set(f.config.custom.stackingGroup, [result.length]);
+    if (f.config.custom?.stacking?.mode !== StackingMode.None && f.config.custom?.stacking?.group) {
+      if (!stackingGroups.has(f.config.custom.stacking.group)) {
+        stackingGroups.set(f.config.custom.stacking.group, [result.length]);
       } else {
         stackingGroups.set(
-          f.config.custom.stackingGroup,
-          stackingGroups.get(f.config.custom.stackingGroup)!.concat(result.length)
+          f.config.custom.stacking.group,
+          stackingGroups.get(f.config.custom.stacking.group)!.concat(result.length)
         );
       }
     }
