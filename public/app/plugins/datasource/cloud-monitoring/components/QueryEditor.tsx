@@ -12,13 +12,7 @@ import CloudMonitoringDatasource from '../datasource';
 
 export type Props = ExploreQueryFieldProps<CloudMonitoringDatasource, CloudMonitoringQuery>;
 
-interface State {
-  lastQueryError: string;
-}
-
-export class QueryEditor extends PureComponent<Props, State> {
-  state: State = { lastQueryError: '' };
-
+export class QueryEditor extends PureComponent<Props> {
   async UNSAFE_componentWillMount() {
     const { datasource, query } = this.props;
 
@@ -37,24 +31,6 @@ export class QueryEditor extends PureComponent<Props, State> {
     if (!query.metricQuery.projectName) {
       this.props.query.metricQuery.projectName = datasource.getDefaultProject();
     }
-  }
-
-  componentDidMount() {
-    appEvents.on(CoreEvents.dsRequestError, this.onDataError.bind(this));
-    appEvents.on(CoreEvents.dsRequestResponse, this.onDataResponse.bind(this));
-  }
-
-  componentWillUnmount() {
-    appEvents.off(CoreEvents.dsRequestResponse, this.onDataResponse.bind(this));
-    appEvents.on(CoreEvents.dsRequestError, this.onDataError.bind(this));
-  }
-
-  onDataResponse() {
-    this.setState({ lastQueryError: '' });
-  }
-
-  onDataError(error: any) {
-    this.setState({ lastQueryError: formatCloudMonitoringError(error) });
   }
 
   onQueryChange(prop: string, value: any) {
@@ -138,11 +114,6 @@ export class QueryEditor extends PureComponent<Props, State> {
             query={sloQuery}
           ></SLOQueryEditor>
         )}
-
-        <Help
-          rawQuery={decodeURIComponent(meta?.executedQueryString ?? '')}
-          lastQueryError={this.state.lastQueryError}
-        />
       </>
     );
   }
