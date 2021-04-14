@@ -10,6 +10,7 @@ exports[`Alias should render component 1`] = `
 >
   <input
     className="gf-form-input gf-form-input width-16"
+    onBeforeInput={[Function]}
     onChange={[Function]}
     type="text"
     value="legend"

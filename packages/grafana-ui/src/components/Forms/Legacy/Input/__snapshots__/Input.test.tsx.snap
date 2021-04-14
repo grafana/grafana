@@ -10,6 +10,7 @@ exports[`Input renders correctly 1`] = `
 >
   <input
     className="gf-form-input"
+    onBeforeInput={[Function]}
   />
 </div>
 `;

@@ -83,6 +83,7 @@ export class Input extends PureComponent<Props, State> {
           {...inputElementProps}
           ref={inputRef}
           className={inputClassName}
+          type={type}
           onBeforeInput={onBeforeNumberInput({ type, onBeforeInput })}
         />
         {error && !hideErrorMessage && <span>{error}</span>}

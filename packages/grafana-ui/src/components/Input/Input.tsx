@@ -253,6 +253,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
             paddingLeft: prefixRect ? prefixRect.width : undefined,
             paddingRight: suffixRect ? suffixRect.width : undefined,
           }}
+          type={type}
           onBeforeInput={onBeforeNumberInput({ type, onBeforeInput })}
         />
 
