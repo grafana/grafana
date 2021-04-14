@@ -9,10 +9,15 @@ export async function setRulerRuleGroup(
   namespace: string,
   group: RulerRuleGroupDTO
 ): Promise<void> {
-  await getBackendSrv().post(
-    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
-    group
-  );
+  await await getBackendSrv()
+    .fetch<unknown>({
+      method: 'POST',
+      url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+      data: group,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
 }
 
 // fetch all ruler rule namespaces and included groups

@@ -7,7 +7,7 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { SystemOrApplicationRules } from './components/rules/SystemOrApplicationRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAllPromAndRulerRules } from './state/actions';
+import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import {
   getAllRulesSourceNames,
   getRulesDataSources,
@@ -27,8 +27,8 @@ export const RuleList: FC = () => {
 
   // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
   useEffect(() => {
-    dispatch(fetchAllPromAndRulerRules());
-    const interval = setInterval(() => dispatch(fetchAllPromAndRulerRules()), RULE_LIST_POLL_INTERVAL_MS);
+    dispatch(fetchAllPromAndRulerRulesAction());
+    const interval = setInterval(() => dispatch(fetchAllPromAndRulerRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
     return () => {
       clearInterval(interval);
     };

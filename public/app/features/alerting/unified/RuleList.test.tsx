@@ -113,7 +113,7 @@ describe('RuleList', () => {
       } else if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
         return Promise.resolve([
           mockPromRuleNamespace({
-            name: '',
+            name: 'foofolder',
             dataSourceName: GRAFANA_RULES_SOURCE_NAME,
             groups: [
               mockPromRuleGroup({
@@ -132,7 +132,7 @@ describe('RuleList', () => {
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(5);
 
-    expect(groups[0]).toHaveTextContent('grafana-group');
+    expect(groups[0]).toHaveTextContent('foofolder');
     expect(groups[1]).toHaveTextContent('default > group-1');
     expect(groups[2]).toHaveTextContent('default > group-1');
     expect(groups[3]).toHaveTextContent('default > group-2');

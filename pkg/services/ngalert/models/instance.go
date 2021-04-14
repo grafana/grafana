@@ -25,6 +25,8 @@ const (
 	InstanceStateFiring InstanceStateType = "Alerting"
 	// InstanceStateNormal is for a normal alert.
 	InstanceStateNormal InstanceStateType = "Normal"
+	// InstanceStatePending is for an alert that is firing but has not met the duration
+	InstanceStatePending InstanceStateType = "Pending"
 	// InstanceStateNoData is for an alert with no data.
 	InstanceStateNoData InstanceStateType = "NoData"
 	// InstanceStateError is for a erroring alert.
