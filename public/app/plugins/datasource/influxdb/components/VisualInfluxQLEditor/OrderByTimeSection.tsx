@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { HorizontalGroup, InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
+import { RadioButtonGroup } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { unwrap } from './unwrap';
 
@@ -16,8 +16,8 @@ type Props = {
 
 export const OrderByTimeSection: FC<Props> = ({ value, onChange }) => {
   return (
-    <HorizontalGroup>
-      <InlineFormLabel>Order by time</InlineFormLabel>
+    <div className="gf-form-inline">
+      <label className="gf-form-label query-keyword width-9">Order by time</label>
       <RadioButtonGroup<Mode>
         options={options}
         value={value}
@@ -25,6 +25,9 @@ export const OrderByTimeSection: FC<Props> = ({ value, onChange }) => {
           onChange(unwrap(v));
         }}
       />
-    </HorizontalGroup>
+      <div className="gf-form gf-form--grow">
+        <label className="gf-form-label gf-form-label--grow"></label>
+      </div>
+    </div>
   );
 };

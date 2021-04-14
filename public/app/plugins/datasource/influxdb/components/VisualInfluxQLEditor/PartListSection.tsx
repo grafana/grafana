@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { SegmentAsync, Segment, SegmentInput, HorizontalGroup, InlineFormLabel } from '@grafana/ui';
+import { SegmentAsync, Segment, SegmentInput } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { unwrap } from './unwrap';
 
@@ -40,8 +40,8 @@ const Part: FC<PartProps> = ({ name, params, onChange, onRemove }) => {
   // FIXME: parts with no options look a little strange,
   // maybe special-case it and do not use segmentasync there?
   return (
-    <HorizontalGroup>
-      {name}
+    <div className="gf-form-inline">
+      <label className="gf-form-label query-keyword width-9">{name}</label>
       {params.map((p, i) => {
         const { value, options } = p;
         return options != null ? (
@@ -64,14 +64,17 @@ const Part: FC<PartProps> = ({ name, params, onChange, onRemove }) => {
         );
       })}
       <input type="button" value="X" onClick={onRemove} />
-    </HorizontalGroup>
+      <div className="gf-form gf-form--grow">
+        <label className="gf-form-label gf-form-label--grow"></label>
+      </div>
+    </div>
   );
 };
 
 export const PartListSection: FC<Props> = ({ name, parts, newPartOptions, onAddNewPart, onRemovePart, onChange }) => {
   return (
-    <HorizontalGroup>
-      <InlineFormLabel>{name}</InlineFormLabel>
+    <div className="gf-form-inline">
+      <label className="gf-form-label query-keyword width-9">{name}</label>
       {parts.map((part, index) => (
         <Part
           key={index.toString()}
@@ -92,6 +95,9 @@ export const PartListSection: FC<Props> = ({ name, parts, newPartOptions, onAddN
           onAddNewPart(unwrap(v.value));
         }}
       />
-    </HorizontalGroup>
+      <div className="gf-form gf-form--grow">
+        <label className="gf-form-label gf-form-label--grow"></label>
+      </div>
+    </div>
   );
 };

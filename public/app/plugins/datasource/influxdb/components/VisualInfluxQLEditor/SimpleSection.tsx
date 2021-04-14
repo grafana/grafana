@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { HorizontalGroup, InlineFormLabel, Input } from '@grafana/ui';
+import { Input } from '@grafana/ui';
 import { useShadowedState } from '../useShadowedState';
 import { useUniqueId } from '../useUniqueId';
 
@@ -20,9 +20,12 @@ export const SimpleSection: FC<Props> = ({ name, value, onChange }) => {
   };
 
   return (
-    <HorizontalGroup>
-      <InlineFormLabel htmlFor={inputId}>{name}</InlineFormLabel>
+    <div className="gf-form-inline">
+      <label className="gf-form-label query-keyword width-9" htmlFor={inputId}>
+        {name}
+      </label>
       <Input
+        className="width-30"
         id={inputId}
         type="text"
         spellCheck={false}
@@ -32,6 +35,9 @@ export const SimpleSection: FC<Props> = ({ name, value, onChange }) => {
         }}
         value={currentValue ?? ''}
       />
-    </HorizontalGroup>
+      <div className="gf-form gf-form--grow">
+        <label className="gf-form-label gf-form-label--grow"></label>
+      </div>
+    </div>
   );
 };

@@ -16,7 +16,7 @@ import {
   getTagKeysForMeasurement,
   getTagValues,
 } from '../../influxQLMetadataQuery';
-import { HorizontalGroup, InlineFormLabel, Select } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import queryPart from '../../query_part';
 import { QueryPartDef } from '../../../../../core/components/query_part/query_part';
 
@@ -282,16 +282,20 @@ export const Editor: FC<Props> = (props) => {
           onAppliedChange(removeGroupByPart(query, partIndex));
         }}
       />
-      <HorizontalGroup>
-        <InlineFormLabel>Format as</InlineFormLabel>
+      <div className="gf-form-inline">
+        <label className="gf-form-label query-keyword width-9">Format as</label>
         <Select
+          className="width-9"
           onChange={(v) => {
             onAppliedChange({ ...query, resultFormat: v.value });
           }}
           value={query.resultFormat ?? DEFAULT_RESULT_FORMAT}
           options={RESULT_FORMATS}
         />
-      </HorizontalGroup>
+        <div className="gf-form gf-form--grow">
+          <label className="gf-form-label gf-form-label--grow"></label>
+        </div>
+      </div>
       {/* query.fill is ignored in the query-editor, and it is deleted whenever
           query-editor changes. the influx_query_model still handles it, but the new
           approach seem to be to handle "fill" inside query.groupBy. so, if you
@@ -331,10 +335,13 @@ export const Editor: FC<Props> = (props) => {
           onAppliedChange({ ...query, alias });
         }}
       />
-      <HorizontalGroup>
-        <InlineFormLabel>rendered</InlineFormLabel>
+      <div className="gf-form-inline">
+        <label className="gf-form-label query-keyword width-9">rendered</label>
         {renderedQuery}
-      </HorizontalGroup>
+        <div className="gf-form gf-form--grow">
+          <label className="gf-form-label gf-form-label--grow"></label>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { SegmentAsync, Segment, HorizontalGroup, InlineFormLabel } from '@grafana/ui';
+import { SegmentAsync, Segment, HorizontalGroup } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { InfluxQueryTag } from '../../types';
 
@@ -132,8 +132,8 @@ export const TagsSection: FC<Props> = ({ tags, onChange, getTagKeys, getTagValue
   };
 
   return (
-    <HorizontalGroup>
-      <InlineFormLabel>Where</InlineFormLabel>
+    <div className="gf-form-inline">
+      <label className="gf-form-label query-keyword width-9">Where</label>
       {tags.map((t, i) => (
         <Tag
           tag={t}
@@ -156,6 +156,9 @@ export const TagsSection: FC<Props> = ({ tags, onChange, getTagKeys, getTagValue
           addNewTag(v.value ?? '', tags.length === 0);
         }}
       />
-    </HorizontalGroup>
+      <div className="gf-form gf-form--grow">
+        <label className="gf-form-label gf-form-label--grow"></label>
+      </div>
+    </div>
   );
 };

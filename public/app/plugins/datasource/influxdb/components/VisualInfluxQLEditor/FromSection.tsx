@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { SegmentAsync, HorizontalGroup, InlineFormLabel } from '@grafana/ui';
+import { SegmentAsync } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 
 const DEFAULT_POLICY: SelectableValue<string> = {
@@ -53,8 +53,8 @@ export const FromSection: FC<Props> = ({ policy, measurement, onChange, getAllPo
 
   const policyValue = isDefaultPolicy(policy) ? DEFAULT_POLICY.value : policy;
   return (
-    <HorizontalGroup>
-      <InlineFormLabel>From</InlineFormLabel>
+    <div className="gf-form-inline">
+      <label className="gf-form-label query-keyword width-9">From</label>
       <SegmentAsync
         value={policyValue}
         loadOptions={handlePolicyLoadOptions}
@@ -70,6 +70,9 @@ export const FromSection: FC<Props> = ({ policy, measurement, onChange, getAllPo
           onChange(policy, v.value);
         }}
       />
-    </HorizontalGroup>
+      <div className="gf-form gf-form--grow">
+        <label className="gf-form-label gf-form-label--grow"></label>
+      </div>
+    </div>
   );
 };
