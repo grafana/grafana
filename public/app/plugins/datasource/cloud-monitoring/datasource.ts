@@ -285,7 +285,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     });
   }
 
-  getProjects() {
+  getProjects(): Promise<Array<SelectableValue<string>>> {
     return this.api.get(`projects`, {
       responseMap: ({ projectId, name }: { projectId: string; name: string }) => ({
         value: projectId,
