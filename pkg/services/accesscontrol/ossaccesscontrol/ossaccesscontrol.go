@@ -65,7 +65,7 @@ func (ac *OSSAccessControlService) GetUserBuiltInRoles(user *models.SignedInUser
 		roles = append(roles, string(role))
 	}
 	if user.IsGrafanaAdmin {
-		roles = append(roles, roleGrafanaAdmin)
+		roles = append(roles, accesscontrol.RoleGrafanaAdmin)
 	}
 
 	return roles
