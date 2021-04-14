@@ -144,7 +144,7 @@ type ListRuleGroupAlertRulesQuery struct {
 type ListOrgRuleGroupsQuery struct {
 	OrgID int64
 
-	Result []string
+	Result [][]string
 }
 
 // Condition contains backend expressions and queries and the RefID
