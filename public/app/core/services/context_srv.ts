@@ -2,6 +2,7 @@ import config from '../../core/config';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { rangeUtil } from '@grafana/data';
+import { AccessControlAction, AccessControlScope } from 'app/types';
 
 export class User {
   id: number;
@@ -73,7 +74,7 @@ export class ContextSrv {
   }
 
   // Checks whether user has required permission
-  hasPermission(action: string, scope?: string): boolean {
+  hasPermission(action: AccessControlAction, scope?: AccessControlScope): boolean {
     return !!(this.user.permissions[action] && (scope ? this.user.permissions[action][scope] : true));
   }
 
