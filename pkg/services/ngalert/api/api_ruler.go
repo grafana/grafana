@@ -230,7 +230,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimode
 		},
 	}
 	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
-		For:         apimodels.ApiDuration(r.For),
+		For:         model.Duration(r.For),
 		Annotations: r.Annotations,
 		Labels:      r.Labels,
 	}
@@ -250,7 +250,7 @@ func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtended
 		},
 	}
 	postableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
-		For:         apimodels.ApiDuration(r.For),
+		For:         model.Duration(r.For),
 		Annotations: r.Annotations,
 		Labels:      r.Labels,
 	}
