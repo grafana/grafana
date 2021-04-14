@@ -67,9 +67,9 @@ exports[`Render should render component 1`] = `
       <pre
         className="small"
       >
-        curl -H "Authorization: Bearer
+        curl -H "Authorization: Bearer 
         api key test
-        "
+        " 
         test/path
         /api/dashboards/home
       </pre>
