@@ -3,7 +3,7 @@ name: publish_docs
 on:
   push:
     branches:
-    - master
+    - v7.5.x
     paths:
     - 'docs/sources/**'
     - 'packages/grafana-*/**'
