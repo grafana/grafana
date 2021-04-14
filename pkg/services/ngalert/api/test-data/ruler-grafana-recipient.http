@@ -1,7 +1,7 @@
 @grafanaRecipient = grafana
 
 // should point to an existing folder named alerting
-@namespace1 = alerting
+@namespace1 = foo%20bar
 
 // create group42 under unknown namespace - it should fail
 POST http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/unknown

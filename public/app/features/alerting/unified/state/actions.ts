@@ -1,14 +1,24 @@
+import { AppEvents } from '@grafana/data';
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { appEvents } from 'app/core/core';
 import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkResult } from 'app/types';
 import { RuleLocation, RuleNamespace } from 'app/types/unified-alerting';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { fetchAlertManagerConfig, fetchSilences } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
-import { deleteRulerRulesGroup, fetchRulerRules, fetchRulerRulesNamespace, setRulerRuleGroup } from '../api/ruler';
-import { getAllRulesSourceNames, isCloudRulesSource } from '../utils/datasource';
+import {
+  deleteRulerRulesGroup,
+  fetchRulerRules,
+  fetchRulerRulesGroup,
+  fetchRulerRulesNamespace,
+  setRulerRuleGroup,
+} from '../api/ruler';
+import { RuleFormType, RuleFormValues } from '../types/rule-form';
+import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../utils/datasource';
 import { withSerializedError } from '../utils/redux';
-import { hashRulerRule } from '../utils/rules';
+import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
+import { hashRulerRule, isRulerNotSupportedResponse } from '../utils/rules';
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
@@ -35,7 +45,18 @@ export const fetchSilencesAction = createAsyncThunk(
   }
 );
 
-export function fetchAllPromAndRulerRules(force = false): ThunkResult<void> {
+// this will only trigger ruler rules fetch if rules are not loaded yet and request is not in flight
+export function fetchRulerRulesIfNotFetchedYet(dataSourceName: string): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const { rulerRules } = getStore().unifiedAlerting;
+    const resp = rulerRules[dataSourceName];
+    if (!resp?.result && !(resp && isRulerNotSupportedResponse(resp)) && !resp?.loading) {
+      dispatch(fetchRulerRulesAction(dataSourceName));
+    }
+  };
+}
+
+export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void> {
   return (dispatch, getStore) => {
     const { promRules, rulerRules } = getStore().unifiedAlerting;
     getAllRulesSourceNames().map((name) => {
@@ -78,3 +99,71 @@ export function deleteRuleAction(ruleLocation: RuleLocation): ThunkResult<void> 
     return dispatch(fetchRulerRulesAction(ruleSourceName));
   };
 }
+
+async function saveLotexRule(values: RuleFormValues): Promise<void> {
+  const { dataSourceName, location } = values;
+  if (dataSourceName && location) {
+    const existingGroup = await fetchRulerRulesGroup(dataSourceName, location.namespace, location.group);
+    const rule = formValuesToRulerAlertingRuleDTO(values);
+
+    // @TODO handle "update" case
+    const payload: RulerRuleGroupDTO = existingGroup
+      ? {
+          ...existingGroup,
+          rules: [...existingGroup.rules, rule],
+        }
+      : {
+          name: location.group,
+          rules: [rule],
+        };
+
+    await setRulerRuleGroup(dataSourceName, location.namespace, payload);
+  } else {
+    throw new Error('Data source and location must be specified');
+  }
+}
+
+async function saveGrafanaRule(values: RuleFormValues): Promise<void> {
+  const { folder, evaluateEvery } = values;
+  if (folder) {
+    const existingNamespace = await fetchRulerRulesNamespace(GRAFANA_RULES_SOURCE_NAME, folder.title);
+
+    // set group name to rule name, but be super paranoid and check that this group does not already exist
+    let group = values.name;
+    let idx = 1;
+    while (!!existingNamespace.find((g) => g.name === group)) {
+      group = `${values.name}-${++idx}`;
+    }
+
+    const rule = formValuesToRulerGrafanaRuleDTO(values);
+
+    const payload: RulerRuleGroupDTO = {
+      name: group,
+      interval: evaluateEvery,
+      rules: [rule],
+    };
+    await setRulerRuleGroup(GRAFANA_RULES_SOURCE_NAME, folder.title, payload);
+  } else {
+    throw new Error('Folder must be specified');
+  }
+}
+
+export const saveRuleFormAction = createAsyncThunk(
+  'unifiedalerting/saveRuleForm',
+  (values: RuleFormValues): Promise<void> =>
+    withSerializedError(
+      (async () => {
+        const { type } = values;
+        // in case of system (cortex/loki)
+        if (type === RuleFormType.system) {
+          await saveLotexRule(values);
+          // in case of grafana managed
+        } else if (type === RuleFormType.threshold) {
+          await saveGrafanaRule(values);
+        } else {
+          throw new Error('Unexpected rule form type');
+        }
+        appEvents.emit(AppEvents.alertSuccess, ['Rule saved.']);
+      })()
+    )
+);
