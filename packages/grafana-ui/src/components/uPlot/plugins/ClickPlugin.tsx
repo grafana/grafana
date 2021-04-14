@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { css as cssCore, Global } from '@emotion/core';
+import { css as cssCore, Global } from '@emotion/react';
 import { CartesianCoords2D } from '@grafana/data';
 
 import { PlotPluginProps } from '../types';
@@ -27,7 +27,10 @@ interface ClickPluginProps extends PlotPluginProps {
   children: (api: ClickPluginAPI) => React.ReactElement | null;
 }
 
-// Exposes API for Graph click interactions
+/**
+ * @alpha
+ * Exposes API for Graph click interactions
+ */
 export const ClickPlugin: React.FC<ClickPluginProps> = ({ id, onClick, children }) => {
   const pluginId = `ClickPlugin:${id}`;
 

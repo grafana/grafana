@@ -2,7 +2,7 @@
 title = "Microsoft SQL Server"
 description = "Guide for using Microsoft SQL Server in Grafana"
 keywords = ["grafana", "MSSQL", "Microsoft", "SQL", "guide", "Azure SQL Database"]
-aliases = ["/docs/grafana/latest/features/datasources/mssql/"]
+aliases = ["/docs/grafana/next/features/datasources/mssql/"]
 weight = 900
 +++
 
@@ -16,7 +16,7 @@ Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin t
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `Name`           | The data source name. This is how you refer to the data source in panels and queries.                                                 |
 | `Default`        | Default data source means that it will be pre-selected for new panels.                                                                |
-| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If port is omitted, default 1433 will be used.                     |
+| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If the port is omitted, the driver default will be used (0).       |
 | `Database`       | Name of your MS SQL database.                                                                                                         |
 | `Authentication` | Authentication mode. Either using SQL Server Authentication or Windows Authentication (single sign on for Windows users).             |
 | `User`           | Database user's login/username                                                                                                        |

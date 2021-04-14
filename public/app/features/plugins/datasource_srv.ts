@@ -21,6 +21,7 @@ export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {};
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
+  private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
   private defaultName = '';
 
   /** @ngInject */
@@ -38,6 +39,7 @@ export class DatasourceSrv implements DataSourceService {
 
     for (const dsSettings of Object.values(settingsMapByName)) {
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
+      this.settingsMapById[dsSettings.id] = dsSettings;
     }
   }
 
@@ -69,6 +71,9 @@ export class DatasourceSrv implements DataSourceService {
       // The return name or uid needs preservet string containing the variable
       const clone = cloneDeep(dsSettings);
       clone.name = nameOrUid;
+      // A data source being looked up using a variable should not be considered default
+      clone.isDefault = false;
+
       return clone;
     }
 
@@ -112,9 +117,12 @@ export class DatasourceSrv implements DataSourceService {
       return Promise.resolve(expressionDatasource);
     }
 
-    const dsConfig = this.settingsMapByName[name];
+    let dsConfig = this.settingsMapByName[name];
     if (!dsConfig) {
-      return Promise.reject({ message: `Datasource named ${name} was not found` });
+      dsConfig = this.settingsMapById[name];
+      if (!dsConfig) {
+        return Promise.reject({ message: `Datasource named ${name} was not found` });
+      }
     }
 
     try {

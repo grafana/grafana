@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { DataQuery, GrafanaTheme } from '@grafana/data';
 import { FieldValidationMessage, Icon, Input, stylesFactory, useTheme } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -136,8 +136,8 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
 
       &:hover {
         .query-name-wrapper {
-          background: ${theme.colors.bg3};
-          border: 1px dashed ${theme.colors.border3};
+          background: ${theme.v2.palette.action.hover};
+          border: 1px dashed ${theme.v2.palette.border1};
         }
 
         .query-name-edit-icon {

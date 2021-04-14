@@ -2,7 +2,7 @@ import React, { HTMLProps, useCallback } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { getLabelStyles } from './Label';
 import { useTheme, stylesFactory } from '../../themes';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { focusCss } from '../../themes/mixins';
 
 export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
@@ -33,6 +33,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme) => {
       position: relative;
       padding-left: ${checkboxSize};
       vertical-align: middle;
+      height: ${theme.spacing.lg};
     `,
     input: css`
       position: absolute;

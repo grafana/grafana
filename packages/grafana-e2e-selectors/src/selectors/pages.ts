@@ -14,6 +14,7 @@ export const Pages = {
   DataSource: {
     name: 'Data source settings page name input field',
     delete: 'Data source settings page Delete button',
+    readOnly: 'Data source settings page read only message',
     saveAndTest: 'Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
   },
@@ -148,5 +149,15 @@ export const Pages = {
   PluginPage: {
     page: 'Plugin page',
     signatureInfo: 'Plugin signature info',
+  },
+  PlaylistForm: {
+    name: 'Playlist name',
+    interval: 'Playlist interval',
+    itemRow: 'Playlist item row',
+    itemIdType: 'Playlist item dashboard by ID type',
+    itemTagType: 'Playlist item dashboard by Tag type',
+    itemMoveUp: 'Move playlist item order up',
+    itemMoveDown: 'Move playlist item order down',
+    itemDelete: 'Delete playlist item',
   },
 };

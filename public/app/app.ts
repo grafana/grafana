@@ -1,20 +1,20 @@
 import 'symbol-observable';
-import 'core-js/stable';
+import 'core-js';
 import 'regenerator-runtime/runtime';
 
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'; // fetch polyfill needed for PhantomJs rendering
-// @ts-ignore
-import ttiPolyfill from 'tti-polyfill';
-
 import 'file-saver';
 import 'jquery';
+import '@grafana/ui/src/components/Icon/iconBundle';
+
 import _ from 'lodash';
 import ReactDOM from 'react-dom';
 import React from 'react';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import {
+  locationUtil,
   setLocale,
   setTimeZoneResolver,
   standardEditorsRegistry,
@@ -41,6 +41,8 @@ import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks
 import { AngularApp } from './angular/AngularApp';
 import { PanelRenderer } from './features/panel/PanelRenderer';
 import { QueryRunner } from './features/query/state/QueryRunner';
+import { getTimeSrv } from './features/dashboard/services/TimeSrv';
+import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -81,6 +83,12 @@ export class GrafanaApp {
     setQueryRunnerFactory(() => new QueryRunner());
     setVariableQueryRunner(new VariableQueryRunner());
 
+    locationUtil.initialize({
+      config,
+      getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
+      getVariablesUrlParams: getVariablesUrlParams,
+    });
+
     // intercept anchor clicks and forward it to custom history instead of relying on browser's history
     document.addEventListener('click', interceptLinkClicks);
 
@@ -115,17 +123,28 @@ function initExtensions() {
 function initEchoSrv() {
   setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
 
-  ttiPolyfill.getFirstConsistentlyInteractive().then((tti: any) => {
-    // Collecting paint metrics first
-    const paintMetrics = performance && performance.getEntriesByType ? performance.getEntriesByType('paint') : [];
+  window.addEventListener('load', (e) => {
+    const loadMetricName = 'frontend_boot_load_time_seconds';
 
-    for (const metric of paintMetrics) {
-      reportPerformance(metric.name, Math.round(metric.startTime + metric.duration));
+    if (performance && performance.getEntriesByType) {
+      performance.mark(loadMetricName);
+
+      const paintMetrics = performance.getEntriesByType('paint');
+
+      for (const metric of paintMetrics) {
+        reportPerformance(
+          `frontend_boot_${metric.name}_time_seconds`,
+          Math.round(metric.startTime + metric.duration) / 1000
+        );
+      }
+
+      const loadMetric = performance.getEntriesByName(loadMetricName)[0];
+      reportPerformance(loadMetric.name, Math.round(loadMetric.startTime + loadMetric.duration) / 1000);
     }
-    reportPerformance('tti', tti);
   });
 
   registerEchoBackend(new PerformanceBackend({}));
+
   if (config.sentry.enabled) {
     registerEchoBackend(
       new SentryEchoBackend({
@@ -135,10 +154,6 @@ function initEchoSrv() {
       })
     );
   }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    reportPerformance('dcl', Math.round(performance.now()));
-  });
 }
 
 function addClassIfNoOverlayScrollbar() {

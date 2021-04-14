@@ -5,8 +5,14 @@ import { LoadingState } from '@grafana/data';
 
 import { StoreState } from 'app/types';
 import { VariableInput } from '../shared/VariableInput';
-import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggleAndFetchTag } from './actions';
-import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
+import {
+  commitChangesToVariable,
+  filterOrSearchOptions,
+  navigateOptions,
+  openOptions,
+  toggleAndFetchTag,
+} from './actions';
+import { OptionsPickerState, toggleAllOptions, toggleOption } from './reducer';
 import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../types';
 import { VariableOptions } from '../shared/VariableOptions';
 import { isMulti, isQuery } from '../../guard';
@@ -20,7 +26,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
   VariablePickerProps<Model>
 > => {
   const mapDispatchToProps = {
-    showOptions,
+    openOptions,
     commitChangesToVariable,
     filterOrSearchOptions,
     toggleAllOptions,
@@ -40,7 +46,8 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
   type Props = OwnProps & ConnectedProps<typeof connector>;
 
   class OptionsPickerUnconnected extends PureComponent<Props> {
-    onShowOptions = () => this.props.showOptions(this.props.variable);
+    onShowOptions = () =>
+      this.props.openOptions(toVariableIdentifier(this.props.variable), this.props.onVariableChange);
     onHideOptions = () => this.props.commitChangesToVariable(this.props.onVariableChange);
 
     onToggleOption = (option: VariableOption, clearOthers: boolean) => {
