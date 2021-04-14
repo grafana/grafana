@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -53,12 +54,12 @@ func TestEvaluatingPermissions(t *testing.T) {
 			desc: "should successfully evaluate access to the endpoint",
 			user: userTestCase{
 				name:           "testuser",
-				orgRole:        models.ROLE_EDITOR,
+				orgRole:        "Grafana Admin",
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{permission: "users.teams:read", scope: []string{"users:self"}},
-				{permission: "users:read", scope: []string{"users:self"}},
+				{permission: accesscontrol.ActionUsersDisable, scope: []string{accesscontrol.ScopeUsersAll}},
+				{permission: accesscontrol.ActionUsersEnable, scope: []string{accesscontrol.ScopeUsersAll}},
 			},
 			evalResult: true,
 		},
@@ -70,7 +71,7 @@ func TestEvaluatingPermissions(t *testing.T) {
 				isGrafanaAdmin: false,
 			},
 			endpoints: []endpointTestCase{
-				{permission: "users:create", scope: []string{"users"}},
+				{permission: accesscontrol.ActionUsersCreate, scope: []string{accesscontrol.ScopeUsersAll}},
 			},
 			evalResult: false,
 		},
