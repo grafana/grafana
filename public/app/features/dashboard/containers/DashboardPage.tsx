@@ -5,20 +5,9 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { getLegacyAngularInjector, locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  Alert,
-  Button,
-  CustomScrollbar,
-  HorizontalGroup,
-  Spinner,
-  stylesFactory,
-  withTheme,
-  Themeable,
-  VerticalGroup,
-} from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, withTheme, Themeable } from '@grafana/ui';
 
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { getMessageFromError } from 'app/core/utils/errors';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
@@ -26,7 +15,7 @@ import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp } from 'app/core/actions';
-import { AppNotificationSeverity, DashboardInitError, DashboardInitPhase, KioskMode, StoreState } from 'app/types';
+import { DashboardInitError, DashboardInitPhase, KioskMode, StoreState } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
@@ -39,6 +28,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaTheme, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
+import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -283,41 +273,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     locationService.push('/');
   };
 
-  // renderSlowInitState(dashboardLoadingstyle: string, dashboardLoadingTextStyle: string) {
-  //   return (
-  //     <div className={dashboardLoadingstyle}>
-  //       <div className={dashboardLoadingTextStyle}>
-  //         <VerticalGroup spacing="md">
-  //           <HorizontalGroup align="center" justify="center" spacing="xs">
-  //             <Spinner inline={true} /> {this.props.initPhase}
-  //           </HorizontalGroup>{' '}
-  //           <HorizontalGroup align="center" justify="center">
-  //             <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
-  //               Cancel loading dashboard
-  //             </Button>
-  //           </HorizontalGroup>
-  //         </VerticalGroup>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  renderInitFailedState(dashboardLoadingstyle: string) {
-    const { initError } = this.props;
-
-    if (!initError) {
-      return null;
-    }
-
-    return (
-      <div className={dashboardLoadingstyle}>
-        <Alert severity={AppNotificationSeverity.Error} title={initError.message}>
-          {getMessageFromError(initError.error)}
-        </Alert>
-      </div>
-    );
-  }
-
   getInspectPanel() {
     const { dashboard, queryParams } = this.props;
 
@@ -378,7 +333,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             updateAfterMountMs={500}
           >
             <div className={styles.dashboardContent}>
-              {initError && this.renderInitFailedState(styles.dashboardLoading)}
+              {initError && <DashboardFailed />}
               {!editPanel && kioskMode === KioskMode.Off && (
                 <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
