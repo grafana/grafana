@@ -178,7 +178,7 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		Condition:    sseCond.Condition,
 		NoDataState:  *noDataSetting,
 		ExecErrState: *execErrSetting,
-		For:          time.Duration(oldAlert.For),
+		For:          oldAlert.For,
 		Annotations:  ruleTags,
 	}
 	rgc := apimodels.PostableRuleGroupConfig{
