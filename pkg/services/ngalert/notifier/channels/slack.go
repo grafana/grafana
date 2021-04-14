@@ -130,11 +130,16 @@ type attachment struct {
 	Ts         int64               `json:"ts,omitempty"`
 }
 
+const (
+	ColorAlertFiring = "#D63232"
+	ColorAlertResolved
+)
+
 func getAlertStatusColor(status model.AlertStatus) string {
 	if status == model.AlertFiring {
-		return "#D63232"
+		return ColorAlertFiring
 	}
-	return "#36a64f"
+	return ColorAlertResolved
 }
 
 func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
