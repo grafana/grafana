@@ -10,7 +10,7 @@ import { QueryStep } from './QueryStep';
 import { useForm, FormContext } from 'react-hook-form';
 
 //import { locationService } from '@grafana/runtime';
-import { RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { saveRuleFormAction } from '../../state/actions';
@@ -46,7 +46,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  const showStep2 = Boolean(dataSourceName && type);
+  const showStep2 = Boolean(type && (type === RuleFormType.threshold || !!dataSourceName));
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
@@ -107,7 +107,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
                   {submitState.error.message || (submitState.error as any)?.data?.message || String(submitState.error)}
                 </Alert>
               )}
-              <AlertTypeStep />
+              <AlertTypeStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
                   <QueryStep />
