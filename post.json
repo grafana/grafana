@@ -256,10 +256,6 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
-  "ApiDuration": {
-   "$ref": "#/definitions/Duration",
-   "description": "ApiDuration extends model.Duration\nfor handling JSON serialization/deserialization"
-  },
   "ApiRuleNode": {
    "properties": {
     "alert": {
@@ -278,7 +274,7 @@
      "x-go-name": "Expr"
     },
     "for": {
-     "$ref": "#/definitions/ApiDuration"
+     "$ref": "#/definitions/Duration"
     },
     "labels": {
      "additionalProperties": {
@@ -435,8 +431,8 @@
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "Duration": {
-   "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
    "format": "int64",
+   "title": "Duration is a type used for marshalling durations.",
    "type": "integer"
   },
   "EmailConfig": {
@@ -696,7 +692,7 @@
      "x-go-name": "Expr"
     },
     "for": {
-     "$ref": "#/definitions/ApiDuration"
+     "$ref": "#/definitions/Duration"
     },
     "grafana_alert": {
      "$ref": "#/definitions/GettableGrafanaRule"
@@ -1427,7 +1423,7 @@
      "x-go-name": "Expr"
     },
     "for": {
-     "$ref": "#/definitions/ApiDuration"
+     "$ref": "#/definitions/Duration"
     },
     "grafana_alert": {
      "$ref": "#/definitions/PostableGrafanaRule"

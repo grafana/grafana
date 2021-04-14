@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -97,7 +96,8 @@ type NamespaceConfigResponse map[string][]GettableRuleGroupConfig
 
 // swagger:model
 type PostableRuleGroupConfig struct {
-	Name     string                     `yaml:"name" json:"name"`
+	Name string `yaml:"name" json:"name"`
+	// Example 1m
 	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
 	Rules    []PostableExtendedRuleNode `yaml:"rules" json:"rules"`
 }
@@ -168,11 +168,7 @@ func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {
 // Type requires validate has been called and just checks the first rule type
 func (c *GettableRuleGroupConfig) Type() (backend Backend, err error) {
 	for _, rule := range c.Rules {
-		b, err := rule.Type()
-		if err != nil {
-			return backend, err
-		}
-		switch b {
+		switch rule.Type() {
 		case GrafanaManagedRule:
 			return GrafanaBackend, nil
 		case LoTexManagedRule:
@@ -185,11 +181,7 @@ func (c *GettableRuleGroupConfig) Type() (backend Backend, err error) {
 func (c *GettableRuleGroupConfig) validate() error {
 	var hasGrafRules, hasLotexRules bool
 	for _, rule := range c.Rules {
-		b, err := rule.Type()
-		if err != nil {
-			return err
-		}
-		switch b {
+		switch rule.Type() {
 		case GrafanaManagedRule:
 			hasGrafRules = true
 		case LoTexManagedRule:
@@ -203,52 +195,12 @@ func (c *GettableRuleGroupConfig) validate() error {
 	return nil
 }
 
-// ApiDuration extends model.Duration
-// for handling JSON serialization/deserialization
-type ApiDuration model.Duration
-
-func (d ApiDuration) String() string {
-	return model.Duration(d).String()
-}
-
-// MarshalYAML implements the yaml.Marshaler interface.
-func (d ApiDuration) MarshalYAML() (interface{}, error) {
-	return model.Duration(d).MarshalYAML()
-}
-
-// UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (d *ApiDuration) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var md model.Duration
-	if err := (&md).UnmarshalYAML(unmarshal); err != nil {
-		return err
-	}
-	*d = ApiDuration(md)
-	return nil
-}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (d ApiDuration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(d.String())
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface.
-func (d *ApiDuration) UnmarshalJSON(b []byte) error {
-	// strip trailing and leading quotes
-	dur := strings.Trim(string(b), `"`)
-	md, err := model.ParseDuration(dur)
-	if err != nil {
-		return err
-	}
-	*d = ApiDuration(md)
-	return nil
-}
-
 type ApiRuleNode struct {
 	Record string `yaml:"record,omitempty" json:"record,omitempty"`
 	Alert  string `yaml:"alert,omitempty" json:"alert,omitempty"`
 	Expr   string `yaml:"expr" json:"expr"`
 	// Example: 1m
-	For         ApiDuration       `yaml:"for,omitempty" json:"for,omitempty"`
+	For         model.Duration    `yaml:"for,omitempty" json:"for,omitempty"`
 	Labels      map[string]string `yaml:"labels,omitempty" json:"labels,omitempty"`
 	Annotations map[string]string `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 }
@@ -287,8 +239,20 @@ func (n *PostableExtendedRuleNode) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	_, err := n.Type()
-	return err
+	return n.validate()
+}
+
+func (n *PostableExtendedRuleNode) validate() error {
+	if n.ApiRuleNode == nil && n.GrafanaManagedAlert == nil {
+		return fmt.Errorf("cannot have empty rule")
+	}
+
+	if n.GrafanaManagedAlert != nil {
+		if n.ApiRuleNode != nil && (n.ApiRuleNode.Expr != "" || n.ApiRuleNode.Record != "") {
+			return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
+		}
+	}
+	return nil
 }
 
 type GettableExtendedRuleNode struct {
@@ -298,18 +262,11 @@ type GettableExtendedRuleNode struct {
 	GrafanaManagedAlert *GettableGrafanaRule `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
 
-func (n *GettableExtendedRuleNode) Type() (RuleType, error) {
-	if n.ApiRuleNode == nil && n.GrafanaManagedAlert == nil {
-		return 0, fmt.Errorf("cannot have empty rule")
-	}
-
+func (n *GettableExtendedRuleNode) Type() RuleType {
 	if n.GrafanaManagedAlert != nil {
-		if n.ApiRuleNode != nil && n.ApiRuleNode.Expr != "" {
-			return 0, fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
-		}
-		return GrafanaManagedRule, nil
+		return GrafanaManagedRule
 	}
-	return LoTexManagedRule, nil
+	return LoTexManagedRule
 }
 
 func (n *GettableExtendedRuleNode) UnmarshalJSON(b []byte) error {
@@ -318,8 +275,20 @@ func (n *GettableExtendedRuleNode) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	_, err := n.Type()
-	return err
+	return n.validate()
+}
+
+func (n *GettableExtendedRuleNode) validate() error {
+	if n.ApiRuleNode == nil && n.GrafanaManagedAlert == nil {
+		return fmt.Errorf("cannot have empty rule")
+	}
+
+	if n.GrafanaManagedAlert != nil {
+		if n.ApiRuleNode != nil && (n.ApiRuleNode.Expr != "" || n.ApiRuleNode.Record != "") {
+			return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
+		}
+	}
+	return nil
 }
 
 // swagger:enum NoDataState
