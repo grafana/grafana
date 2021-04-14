@@ -88,9 +88,12 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
             }
 
             (group.rules ?? []).forEach((rule) => {
-              const existingRule = combinedGroup!.rules.find((existingRule) => {
-                return !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule);
-              });
+              //@TODO remove ?? once api is fixed
+              const existingRule = isGrafanaRulesSource(rulesSource)
+                ? combinedGroup!.rules.find((existingRule) => existingRule.name === rule.name) // assume grafana groups have only the one rule. check name anyway because paranoid
+                : combinedGroup!.rules.find((existingRule) => {
+                    return !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule);
+                  });
               if (existingRule) {
                 existingRule.promRule = rule;
               } else {
