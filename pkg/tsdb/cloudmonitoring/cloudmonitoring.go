@@ -57,11 +57,13 @@ var (
 )
 
 const (
-	gceAuthentication string = "gce"
-	jwtAuthentication string = "jwt"
-	metricQueryType   string = "metrics"
-	sloQueryType      string = "slo"
-	mqlEditorMode     string = "mql"
+	gceAuthentication         string = "gce"
+	jwtAuthentication         string = "jwt"
+	metricQueryType           string = "metrics"
+	sloQueryType              string = "slo"
+	mqlEditorMode             string = "mql"
+	crossSeriesReducerDefault string = "REDUCE_NONE"
+	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
 func init() {
@@ -207,6 +209,7 @@ func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMoni
 		if err := json.Unmarshal(model, &q); err != nil {
 			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
 		}
+		q.MetricQuery.PreprocessorType = toPreprocessorType(q.MetricQuery.Preprocessor)
 		var target string
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
@@ -342,16 +345,38 @@ func buildSLOFilterExpression(q sloQuery) string {
 
 func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds int, intervalMs int64) {
 	if query.CrossSeriesReducer == "" {
-		query.CrossSeriesReducer = "REDUCE_NONE"
+		query.CrossSeriesReducer = crossSeriesReducerDefault
 	}
 
 	if query.PerSeriesAligner == "" {
-		query.PerSeriesAligner = "ALIGN_MEAN"
+		query.PerSeriesAligner = perSeriesAlignerDefault
 	}
 
-	params.Add("aggregation.crossSeriesReducer", query.CrossSeriesReducer)
-	params.Add("aggregation.perSeriesAligner", query.PerSeriesAligner)
-	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds))
+	alignmentPeriod := calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds)
+
+	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
+	// and the aggregation that is specified in the UI becomes the secondary aggregation
+	if query.PreprocessorType != PreprocessorTypeNone {
+		params.Add("secondaryAggregation.alignmentPeriod", alignmentPeriod)
+		params.Add("aggregation.crossSeriesReducer", crossSeriesReducerDefault)
+		params.Add("secondaryAggregation.crossSeriesReducer", query.CrossSeriesReducer)
+		params.Add("secondaryAggregation.perSeriesAligner", query.PerSeriesAligner)
+
+		aligner := "ALIGN_RATE"
+		if query.PreprocessorType == PreprocessorTypeDelta {
+			aligner = "ALIGN_DELTA"
+		}
+		params.Add("aggregation.perSeriesAligner", aligner)
+
+		for _, groupBy := range query.GroupBys {
+			params.Add("secondaryAggregation.groupByFields", groupBy)
+		}
+	} else {
+		params.Add("aggregation.crossSeriesReducer", query.CrossSeriesReducer)
+		params.Add("aggregation.perSeriesAligner", query.PerSeriesAligner)
+	}
+
+	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
 
 	for _, groupBy := range query.GroupBys {
 		params.Add("aggregation.groupByFields", groupBy)
