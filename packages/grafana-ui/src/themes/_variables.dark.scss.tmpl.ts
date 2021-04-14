@@ -142,8 +142,8 @@ $page-header-border-color: ${theme.colors.pageHeaderBorder};
 $divider-border-color: $gray-1;
 
 // Graphite Target Editor
-$tight-form-func-bg: ${theme.colors.bg2};
-$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$tight-form-func-bg: ${theme.v2.palette.layer2};
+$tight-form-func-highlight-bg: ${theme.v2.palette.emphasize(theme.v2.palette.layer2, 0.03)};
 
 $modal-backdrop-bg: ${theme.colors.bg3};
 $code-tag-bg: $dark-1;
@@ -151,7 +151,7 @@ $code-tag-border: $dark-9;
 
 // cards
 $card-background: ${theme.v2.palette.layer2};
-$card-background-hover: ${theme.v2.palette.layer2};
+$card-background-hover: ${theme.v2.palette.emphasize(theme.v2.palette.layer2, 0.03)};
 $card-shadow: none;
 
 // Lists
@@ -170,8 +170,8 @@ $scrollbarBorder: black;
 // -------------------------
 $table-bg-accent: ${theme.v2.palette.layer2};
 $table-border: ${theme.v2.palette.border1};
-$table-bg-odd: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.02)};
-$table-bg-hover: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.05)};
+$table-bg-odd: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.02)};
+$table-bg-hover: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.05)};
 
 // Buttons
 // -------------------------

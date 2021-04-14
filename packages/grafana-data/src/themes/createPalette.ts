@@ -69,8 +69,8 @@ export interface ThemeHoverStrengh {}
 export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
   /** Returns a text color for the background */
   getContrastText(background: string): string;
-  /* Return a hover color for any color */
-  getHoverColor(color: string, hoverFactor?: number): string;
+  /* Brighten or darken a color by specified factor (0-1) */
+  emphasize(color: string, amount?: number): string;
 }
 
 /** @internal */
@@ -247,10 +247,6 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     return contrastText;
   }
 
-  function getHoverColor(color: string, factorOverride?: number) {
-    return emphasize(color, factorOverride ?? hoverFactor);
-  }
-
   const getRichColor = ({ color, name }: GetRichColorProps): ThemePaletteColor => {
     color = { ...color, name };
     if (!color.main) {
@@ -284,7 +280,9 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
       success: getRichColor({ color: success, name: 'success' }),
       warning: getRichColor({ color: warning, name: 'warning' }),
       getContrastText,
-      getHoverColor,
+      emphasize: (color: string, factor?: number) => {
+        return emphasize(color, factor ?? hoverFactor);
+      },
     },
     other
   );
