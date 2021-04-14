@@ -5,15 +5,29 @@ import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionPaneRenderProps } from './types';
+import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
+import { LibraryPanelInformation } from 'app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo';
 
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
-  const { panel, onPanelConfigChange } = props;
-
-  return new OptionsPaneCategoryDescriptor({
+  const { panel, onPanelConfigChange, dashboard } = props;
+  const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
     isOpenDefault: true,
-  })
+  });
+
+  if (isPanelModelLibraryPanel(panel)) {
+    descriptor.addItem(
+      new OptionsPaneItemDescriptor({
+        title: 'Global panel information',
+        render: function renderLibraryPanelInformation() {
+          return <LibraryPanelInformation panel={panel} formatDate={dashboard.formatDate} />;
+        },
+      })
+    );
+  }
+
+  return descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
         title: 'Title',
