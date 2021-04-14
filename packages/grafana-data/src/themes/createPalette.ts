@@ -81,7 +81,7 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
 
   text = {
     primary: 'rgba(255, 255, 255, 0.77)',
-    secondary: 'rgba(255, 255, 255, 0.55)',
+    secondary: 'rgba(255, 255, 255, 0.50)',
     disabled: 'rgba(255, 255, 255, 0.35)',
     link: colors.blueDarkText,
     maxContrast: colors.white,
