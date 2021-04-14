@@ -104,19 +104,19 @@ export function createTypography(palette: ThemePalette, typographyInput: ThemeTy
     fontWeight,
     fontSize: pxToRem(size),
     lineHeight,
-    letterSpacing: `${letterSpacing}px`,
+    letterSpacing: `${letterSpacing}em`,
     ...casing,
   });
 
   const variants = {
-    h1: buildVariant(fontWeightMedium, 28, 1.2, -0.1),
-    h2: buildVariant(fontWeightMedium, 24, 1.2, -0.1),
-    h3: buildVariant(fontWeightMedium, 21, 1.3, 0),
-    h4: buildVariant(fontWeightRegular, 18, 1.4, 0),
-    h5: buildVariant(fontWeightRegular, 16, 1.334, 0),
-    h6: buildVariant(fontWeightRegular, 14, 1.6, 0),
-    body: buildVariant(fontWeightRegular, 14, 1.5, 0),
-    bodySmall: buildVariant(fontWeightRegular, 12, 1.5, 0),
+    h1: buildVariant(fontWeightMedium, 28, 1.2, -0.01),
+    h2: buildVariant(fontWeightMedium, 24, 1.2, -0.01),
+    h3: buildVariant(fontWeightMedium, 21, 1.3, -0.01),
+    h4: buildVariant(fontWeightRegular, 18, 1.4, -0.005),
+    h5: buildVariant(fontWeightRegular, 16, 1.334, -0.005),
+    h6: buildVariant(fontWeightRegular, 14, 1.6, -0.005),
+    body: buildVariant(fontWeightRegular, 14, 1.5, -0.005),
+    bodySmall: buildVariant(fontWeightRegular, 12, 1.5, -0.005),
   };
 
   const size = {

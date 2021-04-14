@@ -15,6 +15,25 @@ export function getVariantStyles(variant: ThemeTypographyVariant) {
 
 export function getElementStyles(theme: GrafanaThemeV2) {
   return css`
+    html {
+      -ms-overflow-style: scrollbar;
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      height: 100%;
+      font-size: ${theme.typography.htmlFontSize}px;
+      font-family: ${theme.typography.fontFamily};
+      line-height: ${theme.typography.body.lineHeight};
+      font-kerning: normal;
+    }
+
+    body {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      color: ${theme.palette.text.primary};
+      background-color: ${theme.palette.layer0};
+      ${getVariantStyles(theme.typography.body)}
+    }
+
     h1,
     .h1 {
       ${getVariantStyles(theme.typography.h1)}
