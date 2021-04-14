@@ -1,12 +1,16 @@
 package ualert
 
 import (
+	"os"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"xorm.io/xorm"
 )
 
 func AddMigration(mg *migrator.Migrator) {
-	mg.AddMigration("move dashboard alerts to unified alerting", &migration{})
+	if os.Getenv("UALERT_MIG") == "iDidBackup" {
+		mg.AddMigration("move dashboard alerts to unified alerting", &migration{})
+	}
 }
 
 type migration struct {
