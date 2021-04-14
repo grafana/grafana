@@ -16,10 +16,10 @@ Grafana ships with built-in support for Google Cloud Monitoring. Add it as a dat
 
 To access Google Cloud Monitoring settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Google Cloud Monitoring data source.
 
-| Name                  | Description                                                                                                                                                                  |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`                | The data source name. This is how you refer to the data source in panels and queries.                                                                                        |
-| `Default`             | Default data source means that it is pre-selected for new panels.                                                                                                       |
+| Name                  | Description                                                                                                                                                                            |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`                | The data source name. This is how you refer to the data source in panels and queries.                                                                                                  |
+| `Default`             | Default data source means that it is pre-selected for new panels.                                                                                                                      |
 | `Service Account Key` | Upload or paste in the Service Account Key file for a GCP Project. For more information, refer to [Using a Google Service Account Key File](#using-a-google-service-account-key-file). |
 
 ## Authentication
@@ -93,7 +93,7 @@ To create a metric query, follow these steps:
 1. Choose a metric from the **Metric** dropdown.
 1. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses. This step is optional.
 
-Google Cloud Monitoring supports different kinds of metrics like  `GAUGE`, `DELTA,` and `CUMULATIVE`. They support different aggregation options, for example,  reducers and aligners. The Grafana query editor displays the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric.
+Google Cloud Monitoring supports different kinds of metrics like `GAUGE`, `DELTA,` and `CUMULATIVE`. They support different aggregation options, for example, reducers and aligners. The Grafana query editor displays the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric.
 
 #### Filter
 
@@ -122,7 +122,7 @@ The option is called `cloud monitoring auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. For more information about grafana auto, refer to the [interval variable](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
+The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
 
 It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -184,7 +184,7 @@ The link navigates the user first to the Google Account Chooser and after succes
 
 #### Automatic unit detection
 
-Grafana issues one query to the Cloud Monitoring API per query editor row, and each API response includes a unit. Grafana will attempt to convert the returned unit into a unit that is understood by the Grafana graph panel. If conversion was successful, the unit will be displayed on the Y-axis on the panel. If the query editor rows returned different units, then the unit from the last query editor row is used in the graph panel.
+Grafana issues one query to the Cloud Monitoring API per query editor row, and each API response includes a unit. Grafana will attempt to convert the returned unit into a unit that is understood by the Grafana time series panel. If conversion was successful, the unit will be displayed on the Y-axis on the panel. If the query editor rows returned different units, then the unit from the last query editor row is used in the time series panel.
 
 ### SLO (Service Level Objective) queries
 
