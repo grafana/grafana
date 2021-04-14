@@ -72,10 +72,10 @@ The following guidelines are specific to Grafana documentation. For the most par
 
 ### File naming conventions
 
-- Files that are displayed in the help system should have names that are all lowercase, no spaces. Use hyphens instead of spaces. Example: glossary.md
-- Documentation file names should match the title. **Note:** This only applies to new files at this time. Do not change the names of older files unless directed to do so.
-- Internal reference file names should be all uppercase except the file extension. Example: CONTRIBUTING.md
-- Image file names should be descriptive and unique. Also, add the software version number that the image applies to or the screenshot was taken in. Example: share-dashboard-link-7-3.png
+- Files that are displayed in the help system have names that are all lowercase, no spaces. Use hyphens instead of spaces. Example: glossary.md
+- Documentation file names match the title. **Note:** This only applies to new files at this time. Do not change the names of older files unless directed to do so.
+- Internal reference file names are be all uppercase except the file extension. Example: CONTRIBUTING.md
+- Image file names are be descriptive and unique. Also, add the software version number that the image applies to or the screenshot was taken in. Example: share-dashboard-link-7-3.png
 
 ### Headings
 
@@ -85,19 +85,19 @@ The following guidelines are specific to Grafana documentation. For the most par
 - Task topic headings start with a verb.
   - Write a query
   - Create a dashboard
-- Concept and reference topic headings should be nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
+- Concept and reference topic headings are be nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
 
 #### Heading don'ts
 
 - Avoid stacked headings, which is following one heading with another heading.
-- Avoid skipping heading levels. For example, an h1 should be followed by an h2 rather than an h3.
+- Avoid skipping heading levels. For example, an h1 is followed by an h2 rather than an h3.
 - Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2, h2 is a good order. Do not go h1, h2, h3, h2, h3, h2.
 - Avoid using hyphens in headings.
 - Do not include parenthetical words like (Important!) in headings.
 
 #### Step-by-step headings
 
-In most cases, headings should not be numbered steps.
+In most cases, headings are not be numbered steps.
 
 However, sometimes we need to use headings as numbered steps. This is mostly in cases where each step is complex or a series of other procedures. For example, in [Getting started with Grafana and Prometheus](https://grafana.com/docs/grafana/latest/getting-started/getting-started-prometheus/).
 
@@ -109,11 +109,11 @@ If that is the case, then use the following format for headings:
 ### Images
 
 - Preferred format is .png
-- File extension should be all lowercase.
+- File extension is all lowercase.
 - Preferred DPI is 72.
 - Assume all graphics will be exclusively viewed on the web.
 - Maximum image size is 3840px X 2160px.
-- Screenshots should be readable, but not too large.
+- Screenshots are readable, but not too large.
 - _Do not_ use image shortcodes. Follow the guidance in the [Grafana markdown guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/documentation-markdown-guide.md#images).
 - Markdown image links are preferred. Only use the HTML image links if you need to style the image in ways unsupported in Markdown.
 - When you name a file, follow the [file naming conventions](#file-naming-conventions). Example: image-name-7-3.png
@@ -122,8 +122,8 @@ If that is the case, then use the following format for headings:
 
 Here are a few general rules about unordered lists. For more guidance, refer to [Lists](https://developers.google.com/style/lists) in the [Google developer style guide](https://developers.google.com/style/).
 
-- List items should begin with a capital letter unless there is a strong reason not to. For example, you are listing case-sensitive parameters.
-- List items should end with periods if they are complete sentences. If one item in a list ends with a period, then apply periods to all of them.
+- Begin list items with a capital letter unless there is a strong reason not to. For example, you are listing case-sensitive parameters.
+- End list items with periods if they are complete sentences. If one item in a list ends with a period, then apply periods to all of them.
 
 ### Capitalization
 
@@ -187,7 +187,7 @@ Grafana documentation uses notes, tips, cautions, and warnings. Notes are the mo
 
 #### Notes
 
-Notes provide additional information that the user should be extra aware of. For example:
+Notes provide additional information for the user to be aware of. For example:
 
 > **Note:** This page describes a feature for Grafana 7.0 beta.
 
@@ -197,7 +197,7 @@ Tips describe alternate or more efficient ways of doing things. Rarely used.
 
 #### Cautions
 
-Cautions warn the user that they should proceed with caution. Use cautions to emphasize the potential downside of a course of action.
+Cautions warn the user to proceed with caution. Use cautions to emphasize the potential downside of a course of action.
 
 > **Caution:** If you turn off authentication requirements, then anyone can access your Grafana instance. This poses a considerable security risk.
 
