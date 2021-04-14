@@ -4,7 +4,7 @@ import { Logger } from './logger';
  * Allows debug helpers attachement to the window object
  * @internal
  */
-export function attachDebbuger(key: string, thebugger?: any, logger?: Logger) {
+export function attachDebugger(key: string, thebugger?: any, logger?: Logger) {
   if (process.env.NODE_ENV === 'production') {
     return;
   }
