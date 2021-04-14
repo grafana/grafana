@@ -156,7 +156,6 @@ func (i *Implementation) refreshWithBag(bag models.SettingsBag) error {
 		if !(exists && reflect.DeepEqual(newSettings, oldConfig)) {
 			logger.Debug("Settings have changed", "section", sectionName)
 			toReload[sectionName] = newSettings
-
 		}
 	}
 
