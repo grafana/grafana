@@ -30,7 +30,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   ];
 
   // Query types that have been migrated to React
-  reactQueryEditors = [AzureQueryType.AzureMonitor];
+  reactQueryEditors = [AzureQueryType.AzureMonitor, AzureQueryType.LogAnalytics];
 
   // target: AzureMonitorQuery;
 
