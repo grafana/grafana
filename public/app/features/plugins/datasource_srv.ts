@@ -99,7 +99,7 @@ export class DatasourceSrv implements DataSourceService {
     // Interpolation here is to support template variable in data source selection
     nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
-    if (nameOrUid === 'default') {
+    if (nameOrUid === 'default' && this.defaultName !== 'default') {
       return this.get(this.defaultName);
     }
 

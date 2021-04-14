@@ -38,7 +38,7 @@ Your current data source permissions will keep working as expected, but you'll b
 ### LDAP authentication
 
 - LDAP synchronization is not affected by an expired license.
-- Enhanced LDAP debugging is unavailable.
+- Team sync debugging is unavailable.
 
 ### SAML authentication
 
