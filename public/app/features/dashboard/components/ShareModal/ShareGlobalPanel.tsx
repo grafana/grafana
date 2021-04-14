@@ -10,7 +10,7 @@ interface Props {
 
 export const ShareGlobalPanel = ({ panel, initialFolderId, onDismiss }: Props) => {
   if (!panel) {
-    return <></>;
+    return null;
   }
 
   return (
