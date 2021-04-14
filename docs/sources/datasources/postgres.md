@@ -6,18 +6,13 @@ aliases = ["/docs/grafana/next/features/datasources/postgres/"]
 weight = 1200
 +++
 
-# Using PostgreSQL in Grafana
+# PostgreSQL data source
 
-Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database.
+Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database. This topic explains options, variables, querying, and other options specific to this data source. For instructions about how to add a data source to Grafana, refer to [Add a data source]({{< relref "add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
 
-## Adding the data source
+## PostgreSQL settings
 
-1. Open the side menu by clicking the Grafana icon in the top header.
-1. In the side menu under the `Configuration` icon you should find a link named `Data Sources`.
-1. Click the `+ Add data source` button in the top header.
-1. Select *PostgreSQL* from the *Type* dropdown.
-
-### Data source options
+To access PostgreSQL settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Prometheus data source.
 
 Name               | Description
 -----------------  | -------------

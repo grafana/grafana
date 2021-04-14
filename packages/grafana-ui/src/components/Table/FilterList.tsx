@@ -89,8 +89,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     padding: ${theme.spacing.xs};
+
     :hover {
-      background-color: ${theme.colors.bg3};
+      background-color: ${theme.v2.palette.action.hover};
     }
   `,
   filterListInput: css`

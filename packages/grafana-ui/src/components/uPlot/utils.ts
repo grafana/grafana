@@ -3,8 +3,8 @@ import { AlignedData, Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
 import { StackingMode } from './config';
 import { createLogger } from '../../utils/logger';
+import { attachDebugger } from '../../utils';
 
-const LOGGING_ENABLED = false;
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
 export function timeFormatToTemplate(f: string) {
@@ -97,4 +97,7 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
 // Dev helpers
 
 /** @internal */
-export const pluginLog = createLogger('uPlot Plugin', LOGGING_ENABLED);
+export const pluginLogger = createLogger('uPlot Plugin');
+export const pluginLog = pluginLogger.logger;
+
+attachDebugger('graphng', undefined, pluginLogger);

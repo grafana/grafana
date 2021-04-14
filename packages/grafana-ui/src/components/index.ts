@@ -18,13 +18,8 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export {
-  PieChart,
-  PieChartType,
-  PieChartLabels,
-  PieChartLegendOptions,
-  PieChartLegendValues,
-} from './PieChart/PieChart';
+export { PieChart } from './PieChart/PieChart';
+export { PieChartType, PieChartLabels, PieChartLegendOptions, PieChartLegendValues } from './PieChart/types';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -82,7 +77,16 @@ export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
-export { PanelChrome, PanelChromeProps, PanelPadding, PanelChromeType } from './PanelChrome';
+export {
+  PanelChrome,
+  PanelChromeProps,
+  PanelPadding,
+  PanelChromeType,
+  PanelChromeLoadingIndicator,
+  PanelChromeLoadingIndicatorProps,
+  PanelChromeErrorIndicator,
+  PanelChromeErrorIndicatorProps,
+} from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
 export { VizLegendItem } from './VizLegend/types';
 export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
