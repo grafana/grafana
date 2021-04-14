@@ -86,7 +86,7 @@ const TopSection: FC<any> = () => {
       {mainLinks.map((link, index) => {
         return <TopSectionItem link={link} key={`${link.id}-${index}`} />;
       })}
-      {linksConfig.map(({ show, linkObject }) => show && <TopSectionItem link={linkObject} />)}
+      {linksConfig.map(({ show, linkObject }) => show && <TopSectionItem key={linkObject.id} link={linkObject} />)}
     </div>
   );
 };
