@@ -31,10 +31,16 @@ export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
       </>
     );
 
+    const itemClass = cx(
+      tabsStyles.tabItem,
+      active ? tabsStyles.activeStyle : tabsStyles.notActive,
+      !href && tabsStyles.padding
+    );
+
     return (
       <li
         {...otherProps}
-        className={cx(!href && tabsStyles.padding, tabsStyles.tabItem, active && tabsStyles.activeStyle)}
+        className={itemClass}
         onClick={onChangeTab}
         aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
         ref={ref}
@@ -57,7 +63,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     tabItem: css`
       list-style: none;
-      margin-right: ${theme.v2.spacing(2)};
       position: relative;
       display: block;
       color: ${theme.v2.palette.text.secondary};
@@ -72,15 +77,28 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
         height: 100%;
         color: ${theme.v2.palette.text.secondary};
       }
-
+    `,
+    notActive: css`
       a:hover,
       &:hover,
       &:focus {
         color: ${theme.v2.palette.text.primary};
+
+        &::before {
+          display: block;
+          content: ' ';
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 4px;
+          border-radius: 2px;
+          bottom: 0px;
+          background: ${theme.v2.palette.action.hover};
+        }
       }
     `,
     padding: css`
-      padding: 11px 15px 9px;
+      padding: ${theme.v2.spacing(1.5, 2, 1)};
     `,
     activeStyle: css`
       label: activeTabStyle;
@@ -100,8 +118,8 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
         right: 0;
         height: 4px;
         border-radius: 2px;
-        bottom: 2px;
-        background-image: ${theme.v2.palette.gradients.brandHorizontal};
+        bottom: 0px;
+        background-image: ${theme.v2.palette.gradients.brandHorizontal} !important;
       }
     `,
   };

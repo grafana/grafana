@@ -101,7 +101,7 @@ $dashboard-bg: #0d0f16;
 $text-color-strong: #fff;
 $text-color: rgba(255, 255, 255, 0.77);
 $text-color-semi-weak: rgba(255, 255, 255, 0.55);
-$text-color-weak: rgba(255, 255, 255, 0.35);
+$text-color-weak: rgba(255, 255, 255, 0.55);
 $text-color-faint: rgba(255, 255, 255, 0.35);
 $text-color-emphasis: #fff;
 $text-blue: #33a2e5;
@@ -145,7 +145,7 @@ $divider-border-color: $gray-1;
 
 // Graphite Target Editor
 $tight-form-func-bg: #22252b;
-$tight-form-func-highlight-bg: #272a30;
+$tight-form-func-highlight-bg: rgb(40, 43, 49);
 
 $modal-backdrop-bg: rgba(255, 255, 255, 0.08);
 $code-tag-bg: $dark-1;
@@ -153,7 +153,7 @@ $code-tag-border: $dark-9;
 
 // cards
 $card-background: #22252b;
-$card-background-hover: #22252b;
+$card-background-hover: rgb(40, 43, 49);
 $card-shadow: none;
 
 // Lists

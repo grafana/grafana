@@ -1,6 +1,5 @@
 import React, { ChangeEvent, useState } from 'react';
 import { css } from '@emotion/css';
-
 import { Input, Field, Icon } from '@grafana/ui';
 import { getAvailableIcons, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -8,7 +7,7 @@ import { useTheme } from '../../themes';
 import mdx from './Icon.mdx';
 
 export default {
-  title: 'Docs Overview/Icon',
+  title: 'General/Icon',
   component: Icon,
   decorators: [withCenteredStory],
   parameters: {

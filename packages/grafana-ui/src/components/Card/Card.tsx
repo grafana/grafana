@@ -151,7 +151,7 @@ const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false,
 
     ...(!disableHover && {
       '&:hover': {
-        background: theme.v2.palette.getHoverColor(theme.v2.palette.layer2, 0.03),
+        background: theme.v2.palette.emphasize(theme.v2.palette.layer2, 0.03),
         cursor: 'pointer',
         zIndex: 1,
       },

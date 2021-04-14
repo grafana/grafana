@@ -4,7 +4,7 @@ export { ThemePalette } from './createPalette';
 export { ThemeBreakpoints } from './breakpoints';
 export { ThemeShadows } from './createShadows';
 export { ThemeShape } from './createShape';
-export { ThemeTypography } from './createTypography';
+export { ThemeTypography, ThemeTypographyVariant } from './createTypography';
 export { ThemeTransitions } from './createTransitions';
 export { ThemeSpacing } from './createSpacing';
 export { ThemeZIndices } from './zIndex';

@@ -19,12 +19,16 @@ export function hoverColor(color: string, theme: GrafanaTheme): string {
 
 export function listItem(theme: GrafanaTheme): string {
   return `
-  background: ${theme.colors.bg2};
+  background: ${theme.colors.bg2};  
   &:hover {
     background: ${hoverColor(theme.colors.bg2, theme)};
   }
   box-shadow: ${theme.shadows.listItem};
   border-radius: ${theme.border.radius.md};
+
+  a {
+    color: ${theme.v2.palette.text.primary};
+  }  
 `;
 }
 

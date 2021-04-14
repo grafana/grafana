@@ -1,4 +1,5 @@
 import React from 'react';
+import { GlobalStyles } from '../../themes';
 import { RenderFunction } from '../../types';
 
 const PaddedStory: React.FunctionComponent<{}> = ({ children }) => {
@@ -10,6 +11,7 @@ const PaddedStory: React.FunctionComponent<{}> = ({ children }) => {
         display: 'flex',
       }}
     >
+      <GlobalStyles />
       {children}
     </div>
   );

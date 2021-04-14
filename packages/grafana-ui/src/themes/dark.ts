@@ -56,7 +56,7 @@ const textColors = {
   textHeading: v2.palette.text.primary,
   text: v2.palette.text.primary,
   textSemiWeak: v2.palette.text.secondary,
-  textWeak: v2.palette.text.disabled,
+  textWeak: v2.palette.text.secondary,
   textFaint: v2.palette.text.disabled,
   textBlue: v2.palette.primary.text,
 };

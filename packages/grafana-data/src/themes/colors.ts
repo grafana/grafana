@@ -27,7 +27,7 @@ export const colors = {
   // Dashboard bg / layer 0 (light theme)
   gray90: '#F4F5F5',
   // Card bg / layer 1
-  gray100: '#F7F7F8',
+  gray100: '#F4F5F5',
   // divider line
   gray80: '#D0D1D3',
   // from figma

@@ -55,7 +55,7 @@ $white: #ffffff;
 
 $layer0: #F4F5F5;
 $layer1: #fff;
-$layer2: #F7F7F8;
+$layer2: #F4F5F5;
 
 $divider: rgba(0, 2, 78, 0.07);
 
@@ -96,7 +96,7 @@ $dashboard-bg: #F4F5F5;
 $text-color: rgba(0, 0, 0, 0.75);
 $text-color-strong: #000;
 $text-color-semi-weak: rgba(0, 0, 0, 0.60);
-$text-color-weak: rgba(0, 0, 0, 0.45);
+$text-color-weak: rgba(0, 0, 0, 0.60);
 $text-color-faint: rgba(0, 0, 0, 0.45);
 $text-color-emphasis: #000;
 $text-blue: #1F62E0;
@@ -110,7 +110,7 @@ $brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
 // Links
 // -------------------------
 $link-color: rgba(0, 0, 0, 0.75);
-$link-color-disabled: rgba(0, 0, 0, 0.45);
+$link-color-disabled: rgba(0, 0, 0, 0.60);
 $link-hover-color: #000;
 $external-link-color: #33a2e5;
 
@@ -131,23 +131,23 @@ $panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.15),0px 0px 0px 0px rgba(0,0,0,
 $panel-corner: $panel-bg;
 
 // Page header
-$page-header-bg: #F7F7F8;
+$page-header-bg: #F4F5F5;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
 $page-header-border-color: #fff;
 
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: #F7F7F8;
-$tight-form-func-highlight-bg: #f2f2f3;
+$tight-form-func-bg: #F4F5F5;
+$tight-form-func-highlight-bg: #eff0f0;
 
 $modal-backdrop-bg: #fff;
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: #F7F7F8;
-$card-background-hover: #F7F7F8;
+$card-background: #F4F5F5;
+$card-background-hover: #F4F5F5;
 $card-shadow: none;
 
 // Lists
@@ -164,7 +164,7 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: #F7F7F8;
+$table-bg-accent: #F4F5F5;
 $table-border: rgba(0, 2, 78, 0.20);
 $table-bg-odd: rgb(249, 249, 249);
 $table-bg-hover: rgb(242, 242, 242);
@@ -212,7 +212,7 @@ $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: #5794f2;
 $input-color-placeholder: rgba(0, 0, 0, 0.45);
-$input-label-bg: #F7F7F8;
+$input-label-bg: #F4F5F5;
 $input-color-select-arrow: #7b8087;
 
 // search
@@ -225,7 +225,7 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: #F7F7F8;
+$dropdownBackground: #F4F5F5;
 $dropdownBorder: #fff;
 $dropdownDividerTop: rgba(0, 2, 78, 0.07);
 $dropdownDividerBottom: rgba(0, 2, 78, 0.07);
@@ -258,7 +258,7 @@ $side-menu-header-color: #e9edf2;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: #F7F7F8;
+$menu-dropdown-bg: #F4F5F5;
 $menu-dropdown-hover-bg: rgba(0, 0, 0, 0.04);
 $menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.15),0px 4px 5px 0px rgba(0,0,0,0.1),0px 1px 10px 0px rgba(0,0,0,0.1);
 
@@ -278,16 +278,16 @@ $alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
 $alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
 
 // Tooltips and popovers
-$tooltipBackground: #F7F7F8;
+$tooltipBackground: #F4F5F5;
 $tooltipColor: rgba(0, 0, 0, 0.75);
-$tooltipArrowColor: #F7F7F8;
+$tooltipArrowColor: #F4F5F5;
 $tooltipBackgroundError: #E0226E;
 $tooltipShadow: 0px 2px 1px -2px rgba(0,0,0,0.15),0px 2px 2px 0px rgba(0,0,0,0.1),0px 1px 5px 0px rgba(0,0,0,0.1);
 
-$popover-bg: #F7F7F8;
+$popover-bg: #F4F5F5;
 $popover-color: rgba(0, 0, 0, 0.75);
 $popover-border-color: rgba(0, 2, 78, 0.20);
-$popover-header-bg: #F7F7F8;
+$popover-header-bg: #F4F5F5;
 $popover-shadow: 0px 5px 5px -5px rgba(0,0,0,0.15),0px 8px 10px 1px rgba(0,0,0,0.1),0px 3px 14px 2px rgba(0,0,0,0.1);
 
 $graph-tooltip-bg: $gray-5;
@@ -332,9 +332,9 @@ $diff-label-bg: rgba(0, 0, 0, 0.04);
 $diff-label-fg: $gray-2;
 
 $diff-arrow-color: $dark-2;
-$diff-group-bg: #F7F7F8;
+$diff-group-bg: #F4F5F5;
 
-$diff-json-bg: #F7F7F8;
+$diff-json-bg: #F4F5F5;
 $diff-json-fg: rgba(0, 0, 0, 0.75);
 
 $diff-json-added: $blue-shade;
