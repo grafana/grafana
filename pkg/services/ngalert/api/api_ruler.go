@@ -196,7 +196,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 }
 
 func toGettableExtendedRuleNode(r ngmodels.AlertRule) apimodels.GettableExtendedRuleNode {
-	return apimodels.GettableExtendedRuleNode{
+	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
 			ID:              r.ID,
 			OrgID:           r.OrgID,
@@ -211,14 +211,17 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule) apimodels.GettableExtended
 			RuleGroup:       r.RuleGroup,
 			NoDataState:     apimodels.NoDataState(r.NoDataState),
 			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
-			For:             r.For,
-			Annotations:     r.Annotations,
 		},
 	}
+	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
+		For:         apimodels.ApiDuration(r.For),
+		Annotations: r.Annotations,
+	}
+	return gettableExtendedRuleNode
 }
 
 func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtendedRuleNode {
-	return apimodels.PostableExtendedRuleNode{
+	postableExtendedRuleNode := apimodels.PostableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 			OrgID:        r.OrgID,
 			Title:        r.Title,
@@ -227,8 +230,11 @@ func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtended
 			UID:          r.UID,
 			NoDataState:  apimodels.NoDataState(r.NoDataState),
 			ExecErrState: apimodels.ExecutionErrorState(r.ExecErrState),
-			For:          r.For,
-			Annotations:  r.Annotations,
 		},
 	}
+	postableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
+		For:         apimodels.ApiDuration(r.For),
+		Annotations: r.Annotations,
+	}
+	return postableExtendedRuleNode
 }

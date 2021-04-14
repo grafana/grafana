@@ -104,7 +104,10 @@ func (r *ForkedRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apim
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
 	}
-	payloadType := conf.Type()
+	payloadType, err := conf.Type()
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
 
 	if backendType != payloadType {
 		return response.Error(

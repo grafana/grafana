@@ -419,21 +419,26 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 				continue
 			}
 
+			new := ngmodels.AlertRule{
+				OrgID:           cmd.OrgID,
+				Title:           r.GrafanaManagedAlert.Title,
+				Condition:       r.GrafanaManagedAlert.Condition,
+				Data:            r.GrafanaManagedAlert.Data,
+				UID:             r.GrafanaManagedAlert.UID,
+				IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
+				NamespaceUID:    cmd.NamespaceUID,
+				RuleGroup:       ruleGroup,
+				NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
+				ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
+			}
+
+			if r.ApiRuleNode != nil {
+				new.For = time.Duration(r.ApiRuleNode.For)
+				new.Annotations = r.ApiRuleNode.Annotations
+			}
+
 			upsertRule := UpsertRule{
-				New: ngmodels.AlertRule{
-					OrgID:           cmd.OrgID,
-					Title:           r.GrafanaManagedAlert.Title,
-					Condition:       r.GrafanaManagedAlert.Condition,
-					Data:            r.GrafanaManagedAlert.Data,
-					UID:             r.GrafanaManagedAlert.UID,
-					IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
-					NamespaceUID:    cmd.NamespaceUID,
-					RuleGroup:       ruleGroup,
-					For:             r.GrafanaManagedAlert.For,
-					Annotations:     r.GrafanaManagedAlert.Annotations,
-					NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
-					ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
-				},
+				New: new,
 			}
 
 			if existingGroupRule, ok := existingGroupRulesUIDs[r.GrafanaManagedAlert.UID]; ok {
