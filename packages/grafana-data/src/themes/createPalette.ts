@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
+import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { colors } from './colors';
 import { DeepPartial, ThemePaletteColor } from './types';
 
@@ -35,6 +35,11 @@ export interface ThemePaletteBase<TColor> {
   border0: string;
   border1: string;
   border2: string;
+
+  gradients: {
+    brandVertical: string;
+    brandHorizontal: string;
+  };
 
   action: {
     /** Used for selected menu item / select option */
@@ -75,8 +80,8 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'dark';
 
   text = {
-    primary: 'rgba(255, 255, 255, 0.75)',
-    secondary: 'rgba(255, 255, 255, 0.50)',
+    primary: 'rgba(255, 255, 255, 0.77)',
+    secondary: 'rgba(255, 255, 255, 0.55)',
     disabled: 'rgba(255, 255, 255, 0.35)',
     link: colors.blueDarkText,
     maxContrast: colors.white,
@@ -130,6 +135,11 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     disabledText: this.text.disabled,
     disabledBackground: 'rgba(255,255,255,0.07)',
     disabledOpacity: 0.38,
+  };
+
+  gradients = {
+    brandHorizontal: ' linear-gradient(270deg, #F55F3E 0%, #FF8833 100%);',
+    brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);',
   };
 
   contrastThreshold = 3;
@@ -188,7 +198,6 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   divider = 'rgba(0, 2, 78, 0.07)';
 
   border0 = this.layer1;
-
   border1 = 'rgba(0, 2, 78, 0.20)';
   border2 = 'rgba(0, 2, 78, 0.30)';
 
@@ -200,6 +209,11 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     disabledBackground: 'rgba(0,0,0,0.07)',
     disabledText: this.text.disabled,
     disabledOpacity: 0.38,
+  };
+
+  gradients = {
+    brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);',
+    brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
   };
 
   contrastThreshold = 3;
@@ -246,10 +260,13 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
       color.text = color.main;
     }
     if (!color.border) {
-      color.text = color.text;
+      color.border = color.text;
     }
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
+    }
+    if (!color.transparent) {
+      color.transparent = base.mode === 'light' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);
