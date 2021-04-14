@@ -133,11 +133,11 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                 <>
                   {showCTA ? (
                     <EmptyListCTA
-                      title="You haven't added any API Keys yet."
+                      title="You haven't added any API keys yet."
                       buttonIcon="key-skeleton-alt"
                       onClick={toggleIsAdding}
-                      buttonTitle="New API Key"
-                      proTip="Remember you can provide view-only API access to other applications."
+                      buttonTitle="New API key"
+                      proTip="Remember, you can provide view-only API access to other applications."
                     />
                   ) : null}
                   {showTable ? (
@@ -151,7 +151,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
                   <ApiKeysForm show={isAdding} onClose={toggleIsAdding} onKeyAdded={this.onAddApiKey} />
                   {showTable ? (
                     <>
-                      <h3 className="page-heading">Existing Keys</h3>
+                      <h3 className="page-heading">Existing API keys</h3>
                       <Switch label="Show expired" checked={includeExpired} onChange={this.onIncludeExpiredChange} />
                       <ApiKeysTable apiKeys={apiKeys} timeZone={timeZone} onDelete={this.onDeleteApiKey} />
                     </>

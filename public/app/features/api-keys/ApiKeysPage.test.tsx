@@ -61,7 +61,7 @@ describe('ApiKeysPage', () => {
   describe('when there are no API keys', () => {
     it('then it should render CTA', () => {
       setup({ apiKeys: getMultipleMockKeys(0), apiKeysCount: 0, hasFetched: true });
-      expect(screen.getByLabelText(selectors.components.CallToActionCard.button('New API Key'))).toBeInTheDocument();
+      expect(screen.getByLabelText(selectors.components.CallToActionCard.button('New API key'))).toBeInTheDocument();
     });
   });
 
@@ -98,7 +98,7 @@ describe('ApiKeysPage', () => {
     });
   });
 
-  describe('when a user searches for an api key', () => {
+  describe('when a user searches for an API key', () => {
     it('then it should dispatch setSearchQuery with correct parameters', async () => {
       const apiKeys = getMultipleMockKeys(3);
       const { setSearchQueryMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
@@ -110,7 +110,7 @@ describe('ApiKeysPage', () => {
     });
   });
 
-  describe('when a user deletes an api key', () => {
+  describe('when a user deletes an API key', () => {
     it('then it should dispatch deleteApi with correct parameters', async () => {
       const apiKeys = [
         { id: 1, name: 'First', role: OrgRole.Admin, secondsToLive: 60, expiration: '2021-01-01' },
@@ -141,18 +141,18 @@ describe('ApiKeysPage', () => {
     });
   });
 
-  describe('when a user adds an api key from CTA', () => {
+  describe('when a user adds an API key from CTA', () => {
     it('then it should call addApiKey with correct parameters', async () => {
       const apiKeys: any[] = [];
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
 
       addApiKeyMock.mockClear();
-      userEvent.click(screen.getByLabelText(selectors.components.CallToActionCard.button('New API Key')));
+      userEvent.click(screen.getByLabelText(selectors.components.CallToActionCard.button('New API key')));
       await addAndVerifyApiKey(addApiKeyMock, false);
     });
   });
 
-  describe('when a user adds an api key from Add Api Key', () => {
+  describe('when a user adds an API key from Add API key', () => {
     it('then it should call addApiKey with correct parameters', async () => {
       const apiKeys = getMultipleMockKeys(1);
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
@@ -169,7 +169,7 @@ describe('ApiKeysPage', () => {
     });
   });
 
-  describe('when a user adds an api key with an invalid expiration', () => {
+  describe('when a user adds an API key with an invalid expiration', () => {
     it('then it should display a message', async () => {
       const apiKeys = getMultipleMockKeys(1);
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
