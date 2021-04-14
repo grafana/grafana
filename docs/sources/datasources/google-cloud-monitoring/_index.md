@@ -184,7 +184,7 @@ The link navigates the user first to the Google Account Chooser and after succes
 
 #### Automatic unit detection
 
-Grafana issues one query to the Cloud Monitoring API per query editor row, and each API response includes a unit. Grafana will attempt to convert the returned unit into a unit that is understood by the Grafana graph panel. If conversion was successful, the unit will be displayed on the Y-axis on the panel. In case the query editor rows returned different units, the unit from the last query editor row will be used in the graph panel.
+Grafana issues one query to the Cloud Monitoring API per query editor row, and each API response includes a unit. Grafana will attempt to convert the returned unit into a unit that is understood by the Grafana graph panel. If conversion was successful, the unit will be displayed on the Y-axis on the panel. If the query editor rows returned different units, then the unit from the last query editor row is used in the graph panel.
 
 ### SLO (Service Level Objective) queries
 
