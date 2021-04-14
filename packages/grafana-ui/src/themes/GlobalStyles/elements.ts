@@ -1,18 +1,6 @@
 import { css } from '@emotion/react';
 import { GrafanaThemeV2, ThemeTypographyVariant } from '@grafana/data';
 
-export function getVariantStyles(variant: ThemeTypographyVariant) {
-  return `
-    margin: 0;
-    font-size: ${variant.fontSize};    
-    line-height: ${variant.lineHeight};
-    font-weight: ${variant.fontWeight};
-    letter-spacing: ${variant.letterSpacing};
-    font-family: ${variant.fontFamily};
-    margin-bottom: 0.35em;
-  `;
-}
-
 export function getElementStyles(theme: GrafanaThemeV2) {
   return css`
     html {
@@ -145,5 +133,17 @@ export function getElementStyles(theme: GrafanaThemeV2) {
     .text-center {
       text-align: center;
     }
+  `;
+}
+
+export function getVariantStyles(variant: ThemeTypographyVariant) {
+  return `
+    margin: 0;
+    font-size: ${variant.fontSize};    
+    line-height: ${variant.lineHeight};
+    font-weight: ${variant.fontWeight};
+    letter-spacing: ${variant.letterSpacing};
+    font-family: ${variant.fontFamily};
+    margin-bottom: 0.35em;
   `;
 }
