@@ -15,17 +15,8 @@ export function attachDebbuger(key: string, thebugger?: any, logger?: Logger) {
     }
 
     // @ts-ignore
-    let debugGlobal = window['_debug'];
-    if (debugGlobal) {
-      debugGlobal = {
-        ...debugGlobal,
-        [key]: completeDebugger,
-      };
-    } else {
-      debugGlobal = {
-        [key]: completeDebugger,
-      };
-    }
+    let debugGlobal = window['_debug'] ?? {};
+    debugGlobal[key] = completeDebugger;
     // @ts-ignore
     window['_debug'] = debugGlobal;
   }
