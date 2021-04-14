@@ -308,7 +308,7 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 	})
 }
 
-// GetNamespaceUIDBySlug is a handler for retrieving namespace UID by its name.
+// GetNamespaceUIDByTitle is a handler for retrieving a namespace UID by its title.
 func (st DBstore) GetNamespaceUIDByTitle(namespace string, orgID int64, user *models.SignedInUser) (string, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
 	folder, err := s.GetFolderByTitle(namespace)
