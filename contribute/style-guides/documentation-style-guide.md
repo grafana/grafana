@@ -85,7 +85,7 @@ The following guidelines are specific to Grafana documentation. For the most par
 - Task topic headings start with a verb.
   - Write a query
   - Create a dashboard
-- Concept and reference topic headings are be nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
+- Concept and reference topic headings are nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
 
 #### Heading don'ts
 
