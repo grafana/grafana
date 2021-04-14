@@ -93,7 +93,7 @@ To create a metric query, follow these steps:
 1. Choose a metric from the **Metric** dropdown.
 1. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses. This step is optional.
 
-Google Cloud Monitoring metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor displays the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric.
+Google Cloud Monitoring supports different kinds of metrics like  `GAUGE`, `DELTA,` and `CUMULATIVE`. They support different aggregation options, for example,  reducers and aligners. The Grafana query editor displays the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric.
 
 #### Filter
 
