@@ -11,7 +11,7 @@ import { DataSourceType, isCloudRulesSource } from '../utils/datasource';
 import { Well } from './Well';
 
 interface Props {
-  query: string;
+  expression: string;
   rulesSource: RulesSource;
 }
 
@@ -34,7 +34,7 @@ export const HighlightedQuery: FC<{ language: 'promql' | 'logql'; expr: string }
   return <Editor plugins={plugins} value={slateValue} readOnly={true} />;
 };
 
-export const RuleQuery: FC<Props> = ({ query, rulesSource }) => {
+export const Expression: FC<Props> = ({ expression: query, rulesSource }) => {
   const styles = useStyles(getStyles);
 
   return (
