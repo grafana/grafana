@@ -1572,6 +1572,11 @@
           "format": "int64",
           "x-go-name": "IntervalSeconds"
         },
+        "namespace_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "NamespaceID"
+        },
         "namespace_uid": {
           "type": "string",
           "x-go-name": "NamespaceUID"
