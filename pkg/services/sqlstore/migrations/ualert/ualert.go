@@ -27,8 +27,13 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	if err != nil {
 		return err
 	}
-
 	_ = dashAlerts
+
+	dsIDMap, err := m.slurpDSIDs()
+	if err != nil {
+		return err
+	}
+	_ = dsIDMap
 
 	return nil
 }
