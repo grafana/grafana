@@ -15,7 +15,8 @@ type dashAlert struct {
 	Frequency   int64
 	For         time.Duration
 
-	Settings json.RawMessage
+	Settings       json.RawMessage
+	ParsedSettings *dashAlertSettings
 }
 
 var slurpDashSQL = `
@@ -40,5 +41,51 @@ func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	for i := range dashAlerts {
+		err = json.Unmarshal(dashAlerts[i].Settings, &dashAlerts[i].ParsedSettings)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return dashAlerts, nil
+}
+
+type dashAlertSettings struct {
+	NoDataState         string               `json:"noDataState"`
+	ExecutionErrorState string               `json:"executionErrorState"`
+	Conditions          []dashAlertCondition `json:"conditions"`
+	AlertRuleTags       map[string]string    `json:"alertRuleTags"`
+	Notifications       []dashAlertNot       `json:"notifications"`
+}
+
+type dashAlertNot struct {
+	UID string `json:"uid"`
+}
+
+// dashAlertingConditionJSON is like classic.ClassicConditionJSON except that it
+// includes the model property with the query.
+type dashAlertCondition struct {
+	Evaluator conditionEvalJSON `json:"evaluator"`
+
+	Operator struct {
+		Type string `json:"type"`
+	} `json:"operator"`
+
+	Query struct {
+		Params       []string `json:"params"`
+		DatasourceID int64    `json:"datasourceId"`
+		Model        json.RawMessage
+	} `json:"query"`
+
+	Reducer struct {
+		// Params []interface{} `json:"params"` (Unused)
+		Type string `json:"type"`
+	}
+}
+
+type conditionEvalJSON struct {
+	Params []float64 `json:"params"`
+	Type   string    `json:"type"` // e.g. "gt"
 }
