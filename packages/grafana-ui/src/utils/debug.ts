@@ -5,7 +5,9 @@ import { Logger } from './logger';
  * @internal
  */
 export function attachDebbuger(key: string, thebugger?: any, logger?: Logger) {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV === 'production') {
+    return;
+  }
     let completeDebugger = thebugger ? { ...thebugger } : {};
 
     if (logger !== undefined) {
