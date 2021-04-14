@@ -44,9 +44,9 @@ tls_client_ca =
 Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
 
 Grafana generates a unique `state` value, for security purposes. You can also modify the value of the state parameter.
-- if `state` includes the text `<random>`, the text `<random>` is replaced with a randomly generated value.
-- if `state` does not include the text `<random>`, an automatically generated value is appended to the `state` value.
-- if no value is provided, `state` is set to automatically generated random value.
+- If `state` includes the text `<random>`, then the text `<random>` is replaced with a randomly-generated value.
+- If `state` does not include the text `<random>`, then an automatically-generated value is appended to the `state` value.
+- If no value is provided, then `state` is set to an automatically-generated random value.
 
 You can also specify the SSL/TLS configuration used by the client.
 - Set `tls_client_cert` to the path of the certificate.
