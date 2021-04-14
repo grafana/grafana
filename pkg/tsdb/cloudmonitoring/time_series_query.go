@@ -247,7 +247,7 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *pl
 	}
 	if len(response.TimeSeriesData) > 0 {
 		dl := timeSeriesQuery.buildDeepLink()
-		frames = addConfigData(frames, dl)
+		frames = addConfigData(frames, dl, response.Unit)
 	}
 
 	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
@@ -374,8 +374,4 @@ func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
 
 func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) getRefID() string {
 	return timeSeriesQuery.RefID
-}
-
-func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) getUnit() string {
-	return timeSeriesQuery.Unit
 }
