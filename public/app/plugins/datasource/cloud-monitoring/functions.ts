@@ -1,5 +1,5 @@
 import { chunk, flatten, initial, startCase, uniqBy } from 'lodash';
-import { alignOptions, aggOptions, ValueTypes, MetricKind, systemLabels } from './constants';
+import { ALIGNMENTS, AGGREGATIONS, SYSTEM_LABELS } from './constants';
 import { SelectableValue } from '@grafana/data';
 import CloudMonitoringDatasource from './datasource';
 import { TemplateSrv } from '@grafana/runtime';
@@ -35,7 +35,7 @@ export const getMetricTypes = (
 export const getAlignmentOptionsByMetric = (metricValueType: string, metricKind: string) => {
   return !metricValueType
     ? []
-    : alignOptions.filter((i) => {
+    : ALIGNMENTS.filter((i) => {
         return (
           i.valueTypes.indexOf(metricValueType as ValueTypes) !== -1 &&
           i.metricKinds.indexOf(metricKind as MetricKind) !== -1
@@ -46,7 +46,7 @@ export const getAlignmentOptionsByMetric = (metricValueType: string, metricKind:
 export const getAggregationOptionsByMetric = (valueType: ValueTypes, metricKind: MetricKind) => {
   return !metricKind
     ? []
-    : aggOptions.filter((i) => {
+    : AGGREGATIONS.filter((i) => {
         return i.valueTypes.indexOf(valueType) !== -1 && i.metricKinds.indexOf(metricKind) !== -1;
       });
 };
@@ -58,7 +58,7 @@ export const getLabelKeys = async (
 ) => {
   const refId = 'handleLabelKeysQuery';
   const labels = await datasource.getLabels(selectedMetricType, refId, projectName);
-  return [...Object.keys(labels), ...systemLabels];
+  return [...Object.keys(labels), ...SYSTEM_LABELS];
 };
 
 export const getAlignmentPickerData = (

@@ -1,7 +1,7 @@
 import { isString } from 'lodash';
-import { alignmentPeriods, MetricKind, selectors, ValueTypes } from './constants';
+import { ALIGNMENT_PERIODS, SELECTORS } from './constants';
 import CloudMonitoringDatasource from './datasource';
-import { CloudMonitoringVariableQuery, MetricFindQueryTypes } from './types';
+import { CloudMonitoringVariableQuery, MetricFindQueryTypes, MetricKind, ValueTypes } from './types';
 import { SelectableValue } from '@grafana/data';
 import {
   extractServicesFromMetricDescriptors,
@@ -161,11 +161,11 @@ export default class CloudMonitoringMetricFindQuery {
   }
 
   async handleSelectorQuery() {
-    return selectors.map(this.toFindQueryResult);
+    return SELECTORS.map(this.toFindQueryResult);
   }
 
   handleAlignmentPeriodQuery() {
-    return alignmentPeriods.map(this.toFindQueryResult);
+    return ALIGNMENT_PERIODS.map(this.toFindQueryResult);
   }
 
   toFindQueryResult(x: any) {
