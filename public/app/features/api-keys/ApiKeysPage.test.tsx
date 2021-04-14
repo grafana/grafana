@@ -61,7 +61,7 @@ describe('ApiKeysPage', () => {
   describe('when there are no API keys', () => {
     it('then it should render CTA', () => {
       setup({ apiKeys: getMultipleMockKeys(0), apiKeysCount: 0, hasFetched: true });
-      expect(screen.getByLabelText(selectors.components.CallToActionCard.button('New API Key'))).toBeInTheDocument();
+      expect(screen.getByLabelText(selectors.components.CallToActionCard.button('New API key'))).toBeInTheDocument();
     });
   });
 
@@ -147,7 +147,7 @@ describe('ApiKeysPage', () => {
       const { addApiKeyMock } = setup({ apiKeys, apiKeysCount: apiKeys.length, hasFetched: true });
 
       addApiKeyMock.mockClear();
-      userEvent.click(screen.getByLabelText(selectors.components.CallToActionCard.button('New API Key')));
+      userEvent.click(screen.getByLabelText(selectors.components.CallToActionCard.button('New API key')));
       await addAndVerifyApiKey(addApiKeyMock, false);
     });
   });
