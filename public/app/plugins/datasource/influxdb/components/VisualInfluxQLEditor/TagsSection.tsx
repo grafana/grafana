@@ -26,6 +26,7 @@ type Props = {
 type TagProps = {
   tag: InfluxQueryTag;
   isFirst: boolean;
+  onRemove: () => void;
   onChange: (tag: InfluxQueryTag) => void;
   getTagKeys: () => Promise<string[]>;
   getTagValuesForKey: (key: string) => Promise<string[]>;
@@ -47,7 +48,7 @@ function getCondition(tag: InfluxQueryTag, isFirst: boolean): string | undefined
   return isFirst ? undefined : tag.condition ?? 'AND';
 }
 
-const Tag: FC<TagProps> = ({ tag, isFirst, onChange, getTagKeys, getTagValuesForKey }) => {
+const Tag: FC<TagProps> = ({ tag, isFirst, onRemove, onChange, getTagKeys, getTagValuesForKey }) => {
   const operator = getOperator(tag);
   const condition = getCondition(tag, isFirst);
 
@@ -92,6 +93,7 @@ const Tag: FC<TagProps> = ({ tag, isFirst, onChange, getTagKeys, getTagValuesFor
           onChange({ ...tag, value: v.value ?? '' });
         }}
       />
+      <input type="button" value="X" onClick={onRemove} />
     </HorizontalGroup>
   );
 };
@@ -101,6 +103,11 @@ export const TagsSection: FC<Props> = ({ tags, onChange, getTagKeys, getTagValue
     const newTags = tags.map((tag, i) => {
       return index === i ? newTag : tag;
     });
+    onChange(newTags);
+  };
+
+  const onTagRemove = (index: number) => {
+    const newTags = tags.filter((t, i) => i !== index);
     onChange(newTags);
   };
 
@@ -134,6 +141,9 @@ export const TagsSection: FC<Props> = ({ tags, onChange, getTagKeys, getTagValue
           key={i.toString()}
           onChange={(newT) => {
             onTagChange(newT, i);
+          }}
+          onRemove={() => {
+            onTagRemove(i);
           }}
           getTagKeys={getTagKeys}
           getTagValuesForKey={getTagValuesForKey}

@@ -29,7 +29,7 @@ const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
       .getResourceNames(subscriptionId, resourceGroup, metricDefinition)
       .then((results) => setResourceNames(results.map(toOption)))
       .catch((err) => setError(ERROR_SOURCE, err));
-  }, [subscriptionId, query.azureMonitor.resourceGroup, query.azureMonitor.metricDefinition]);
+  }, [datasource, query.azureMonitor, resourceNames.length, setError, subscriptionId]);
 
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
@@ -45,20 +45,20 @@ const ResourceNameField: React.FC<AzureQueryEditorFieldProps> = ({
 
           metricNamespace: undefined,
           metricName: undefined,
-          aggregation: '',
+          aggregation: 'None',
           timeGrain: '',
           dimensionFilters: [],
         },
       });
     },
-    [query]
+    [onQueryChange, query]
   );
 
   const options = useMemo(() => [...resourceNames, variableOptionGroup], [resourceNames, variableOptionGroup]);
 
   const selectedResourceNameValue = findOption(resourceNames, query.azureMonitor.resourceName);
   return (
-    <Field label="Resource Name">
+    <Field label="Resource name">
       <Select
         inputId="azure-monitor-metrics-resource-name-field"
         value={selectedResourceNameValue}

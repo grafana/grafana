@@ -366,7 +366,7 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 
 			sc.requestBody = bytes.NewBuffer(buf)
 
-			rw.Header().Set("Content-Type", "application/json")
+			rw.Header().Set("Content-Type", "application/x-ndjson")
 			_, err = rw.Write([]byte(sc.responseBody))
 			require.NoError(t, err)
 			rw.WriteHeader(sc.responseStatus)

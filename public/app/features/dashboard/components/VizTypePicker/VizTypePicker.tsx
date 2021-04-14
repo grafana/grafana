@@ -4,7 +4,7 @@ import config from 'app/core/config';
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { EmptySearchResult, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 export interface Props {
   current: PanelPluginMeta;
@@ -62,7 +62,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
 
   const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
     return filterPluginList(pluginsList, searchQuery, current);
-  }, [searchQuery]);
+  }, [current, pluginsList, searchQuery]);
 
   const renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
     const isCurrent = plugin.id === current.id;

@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Field, Label } from '@grafana/ui';
-import React, { ComponentType, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 
 export interface OptionsPaneItemProps {
@@ -8,7 +8,7 @@ export interface OptionsPaneItemProps {
   value?: any;
   description?: string;
   popularRank?: number;
-  Component: ComponentType;
+  render: () => React.ReactNode;
   skipField?: boolean;
   showIf?: () => boolean;
 }
@@ -51,7 +51,7 @@ export class OptionsPaneItemDescriptor {
   }
 
   render(isSearching?: boolean) {
-    const { title, description, Component, showIf, skipField } = this.props;
+    const { title, description, render, showIf, skipField } = this.props;
     const key = `${this.parent.props.id} ${title}`;
 
     if (showIf && !showIf()) {
@@ -59,7 +59,7 @@ export class OptionsPaneItemDescriptor {
     }
 
     if (skipField) {
-      return <Component key={key} />;
+      return render();
     }
 
     return (
@@ -69,7 +69,7 @@ export class OptionsPaneItemDescriptor {
         key={key}
         aria-label={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
       >
-        <Component />
+        {render() as React.ReactElement}
       </Field>
     );
   }

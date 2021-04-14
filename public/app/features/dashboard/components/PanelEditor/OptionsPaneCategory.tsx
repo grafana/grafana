@@ -1,5 +1,5 @@
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import _ from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
 import { Counter, Icon, useStyles } from '@grafana/ui';
@@ -31,7 +31,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       if (!isExpanded && forceOpen && forceOpen > 0) {
         setIsExpanded(true);
       }
-    }, [forceOpen]);
+    }, [forceOpen, isExpanded]);
 
     const onToggle = useCallback(() => {
       setSavedState({ isExpanded: !isExpanded });
@@ -90,7 +90,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 const getStyles = (theme: GrafanaTheme) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
+      border-bottom: 1px solid ${theme.v2.palette.divider};
       &:last-child {
         border-bottom: none;
       }
@@ -114,11 +114,11 @@ const getStyles = (theme: GrafanaTheme) => {
       cursor: pointer;
       align-items: baseline;
       padding: ${theme.spacing.sm};
-      color: ${theme.colors.formLabel};
+      color: ${theme.v2.palette.text.secondary};
       font-weight: ${theme.typography.weight.semibold};
 
       &:hover {
-        color: ${theme.colors.text};
+        color: ${theme.v2.palette.text.primary};
 
         .editor-options-group-toggle {
           color: ${theme.colors.text};
@@ -126,7 +126,7 @@ const getStyles = (theme: GrafanaTheme) => {
       }
     `,
     headerExpanded: css`
-      color: ${theme.colors.text};
+      color: ${theme.v2.palette.text.primary};
     `,
     headerNested: css`
       padding-left: 0;

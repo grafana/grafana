@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '../../themes';
 import { MenuItemProps } from './MenuItem';
@@ -38,13 +38,11 @@ MenuGroup.displayName = 'MenuGroup';
 
 /** @internal */
 const getStyles = (theme: GrafanaTheme) => {
-  const groupLabelColor = theme.colors.textWeak;
   return {
     groupLabel: css`
-      color: ${groupLabelColor};
-      font-size: ${theme.typography.size.sm};
-      line-height: ${theme.typography.lineHeight.md};
-      padding: ${theme.spacing.xs} ${theme.spacing.sm};
+      color: ${theme.v2.palette.text.secondary};
+      font-size: ${theme.v2.typography.size.sm};
+      padding: ${theme.v2.spacing(0.5, 1)};
     `,
   };
 };

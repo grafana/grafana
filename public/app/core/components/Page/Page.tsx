@@ -9,11 +9,12 @@ import { PageContents } from './PageContents';
 import { CustomScrollbar, useStyles } from '@grafana/ui';
 import { GrafanaTheme, NavModel } from '@grafana/data';
 import { Branding } from '../Branding/Branding';
-import { css } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   navModel: NavModel;
+  contentWidth?: keyof GrafanaTheme['breakpoints'];
 }
 
 export interface PageType extends FC<Props> {
@@ -21,7 +22,7 @@ export interface PageType extends FC<Props> {
   Contents: typeof PageContents;
 }
 
-export const Page: PageType = ({ navModel, children, ...otherProps }) => {
+export const Page: PageType = ({ navModel, children, className, contentWidth, ...otherProps }) => {
   const styles = useStyles(getStyles);
 
   useEffect(() => {
@@ -30,7 +31,10 @@ export const Page: PageType = ({ navModel, children, ...otherProps }) => {
   }, [navModel]);
 
   return (
-    <div {...otherProps} className={styles.wrapper}>
+    <div
+      {...otherProps}
+      className={cx(styles.wrapper, className, contentWidth ? styles.contentWidth(contentWidth) : undefined)}
+    >
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className="page-scrollbar-content">
           <PageHeader model={navModel} />
@@ -54,5 +58,10 @@ const getStyles = (theme: GrafanaTheme) => ({
     bottom: 0;
     width: 100%;
     background: ${theme.colors.bg1};
+  `,
+  contentWidth: (size: keyof GrafanaTheme['breakpoints']) => css`
+    .page-container {
+      max-width: ${theme.breakpoints[size]};
+    }
   `,
 });

@@ -68,7 +68,7 @@ describe('Azure Monitor QueryEditor', () => {
         metricNamespace: undefined,
         resourceName: undefined,
         metricName: undefined,
-        aggregation: '',
+        aggregation: 'None',
         timeGrain: '',
         dimensionFilters: [],
       },
@@ -79,7 +79,7 @@ describe('Azure Monitor QueryEditor', () => {
     const mockDatasource = createMockDatasource();
     const onChange = jest.fn();
     const mockQuery = createMockQuery();
-    mockDatasource.getMetricNames = jest.fn().mockResolvedValueOnce([
+    mockDatasource.getMetricNames = jest.fn().mockResolvedValue([
       {
         value: 'metric-a',
         text: 'Metric A',

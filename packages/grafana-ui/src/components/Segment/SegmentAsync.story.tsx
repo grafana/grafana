@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AsyncState } from 'react-use/lib/useAsync';
 import { action } from '@storybook/addon-actions';
 import { SelectableValue } from '@grafana/data';
 import { SegmentAsync, Icon } from '@grafana/ui';
@@ -14,6 +15,9 @@ const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(t
 
 const loadOptions = (options: any): Promise<Array<SelectableValue<string>>> =>
   new Promise((res) => setTimeout(() => res(options), 2000));
+
+const loadOptionsErr = (): Promise<Array<SelectableValue<string>>> =>
+  new Promise((_, rej) => setTimeout(() => rej(Error('Could not find data')), 2000));
 
 const SegmentFrame = ({ loadOptions, children }: any) => (
   <>
@@ -121,6 +125,63 @@ export const CustomLabel = () => {
         }}
       />
     </SegmentFrame>
+  );
+};
+
+export const CustomStateMessageHandler = () => {
+  const stateToTextFunction = (state: AsyncState<Array<SelectableValue<string>>>) => {
+    if (state.loading) {
+      return "You're going too fast for me, please wait...";
+    }
+
+    if (state.error) {
+      return 'Outch ! We encountered an error...';
+    }
+
+    if (!Array.isArray(state.value) || state.value.length === 0) {
+      return 'It is empty :)';
+    }
+
+    return '';
+  };
+
+  const [value, setValue] = useState<any>(options[0]);
+  return (
+    <>
+      <SegmentFrame loadOptions={() => loadOptions(groupedOptions)}>
+        <SegmentAsync
+          value={value}
+          noOptionMessageHandler={stateToTextFunction}
+          loadOptions={() => loadOptions(groupedOptions)}
+          onChange={({ value }) => {
+            setValue(value);
+            action('Segment value changed')(value);
+          }}
+        />
+      </SegmentFrame>
+      <SegmentFrame loadOptions={() => loadOptions([])}>
+        <SegmentAsync
+          value={value}
+          noOptionMessageHandler={stateToTextFunction}
+          loadOptions={() => loadOptions([])}
+          onChange={({ value }) => {
+            setValue(value);
+            action('Segment value changed')(value);
+          }}
+        />
+      </SegmentFrame>
+      <SegmentFrame loadOptions={() => loadOptionsErr()}>
+        <SegmentAsync
+          value={value}
+          noOptionMessageHandler={stateToTextFunction}
+          loadOptions={() => loadOptionsErr()}
+          onChange={({ value }) => {
+            setValue(value);
+            action('Segment value changed')(value);
+          }}
+        />
+      </SegmentFrame>
+    </>
   );
 };
 

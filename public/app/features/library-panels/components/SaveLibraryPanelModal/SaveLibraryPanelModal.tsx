@@ -60,7 +60,7 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
   const discardAndClose = useCallback(() => {
     onDiscard();
     onDismiss();
-  }, []);
+  }, [onDiscard, onDismiss]);
 
   return (
     <Modal title="Update all panel instances" icon="save" onDismiss={onDismiss} isOpen={isOpen}>
@@ -109,11 +109,11 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
           >
             Update all
           </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
-          </Button>
           <Button variant="destructive" onClick={discardAndClose}>
             Discard
+          </Button>
+          <Button variant="secondary" onClick={onDismiss}>
+            Cancel
           </Button>
         </HorizontalGroup>
       </div>

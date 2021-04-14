@@ -4,7 +4,7 @@ import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
@@ -41,7 +41,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   if (isSearching) {
     mainBoxElements.push(renderSearchHits(allOptions, justOverrides, searchQuery));
 
-    // If searching for angular panel then we need to add notice that results are limited
+    // If searching for angular panel, then we need to add notice that results are limited
     if (props.plugin.angularPanelCtrl) {
       mainBoxElements.push(
         <div className={styles.searchNotice} key="Search notice">
@@ -60,8 +60,11 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
             <AngularPanelOptions plugin={plugin} dashboard={dashboard} panel={panel} key="AngularOptions" />
           );
         }
-        // Then add all panel & field defaults
+        // Then add all panel and field defaults
         for (const item of vizOptions) {
+          mainBoxElements.push(item.render());
+        }
+        for (const item of justOverrides) {
           mainBoxElements.push(item.render());
         }
         break;
@@ -95,9 +98,6 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
           <div className={styles.mainBox}>{mainBoxElements}</div>
-          {!isSearching && listMode === OptionFilter.All && (
-            <div className={styles.overridesBox}>{justOverrides.map((override) => override.render())}</div>
-          )}
         </CustomScrollbar>
       </div>
     </div>
@@ -180,13 +180,8 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   mainBox: css`
     background: ${theme.colors.bg1};
-    margin-bottom: ${theme.spacing.md};
     border: 1px solid ${theme.colors.border1};
     border-top: none;
-  `,
-  overridesBox: css`
-    background: ${theme.colors.bg1};
-    border: 1px solid ${theme.colors.border1};
-    margin-bottom: ${theme.spacing.md};
+    flex-grow: 1;
   `,
 });

@@ -12,8 +12,8 @@ This section explains how to use Time series field options to visualize time ser
 
 ## Create the panel
 
-1. [Add a panel](https://grafana.com/docs/grafana/latest/panels/add-a-panel/). Select the [Time series]({{< relref "_index.md" >}}) visualization.
-1. In the [Panel editor](https://grafana.com/docs/grafana/latest/panels/panel-editor/), click the **Field** tab.
+1. [Add a panel](https://grafana.com/docs/grafana/next/panels/add-a-panel/). Select the [Time series]({{< relref "_index.md" >}}) visualization.
+1. In the [Panel editor](https://grafana.com/docs/grafana/next/panels/panel-editor/), click the **Field** tab.
 1. In Style, click **Lines**.
 
 ## Style the lines
@@ -89,7 +89,7 @@ Fill opacity set to 95:
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme](https://grafana.com/docs/grafana/latest/panels/field-options/standard-field-options/#color-scheme) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme](https://grafana.com/docs/grafana/next/panels/field-options/standard-field-options/#color-scheme) field option.
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 
@@ -113,7 +113,7 @@ Gradient color is generated based on the hue of the line color.
 
 ### Line style
 
-Set the style of the line. To change the color, use the standard [color scheme](https://grafana.com/docs/grafana/latest/panels/field-options/standard-field-options/#color-scheme) field option.
+Set the style of the line. To change the color, use the standard [color scheme](https://grafana.com/docs/grafana/next/panels/field-options/standard-field-options/#color-scheme) field option.
 
 Line style appearance is influenced by the **Line width** and **Fill opacity** settings. In the screenshots below, **Line width** is set to 3 and **Fill opacity** is set to 20.
 
@@ -155,27 +155,17 @@ Dot spacing set to 0, 30:
 
 Choose how null values (gaps in the data) are displayed on the graph.
 
-#### Connect null values
+#### Gaps
 
-If there are null values in the series, the line can be connected or show gaps
+If there is a gap in the series, the line in the graph will be broken and show the gap.
 
 ![Null values gaps example](/img/docs/time-series-panel/line-graph-null-gaps-7-4.png)
 
-#### Never
+#### Connected
 
-When values are missing in the data, they will be rendered as gaps in the line
-
-#### Always
-
-If there is a gap in the data, the line will be shown connected to the next non-null value
+If there is a gap in the series, the line will skip the gap and connect to the next non-null value.
 
 ![Null values connected example](/img/docs/time-series-panel/line-graph-null-connected-7-4.png)
-
-#### Threshold
-
-The threshold settings allows specifying a maximum time between points that should be connected.
-
-
 
 ### Show points
 

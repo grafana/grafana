@@ -1,6 +1,4 @@
-import angular from 'angular';
-
-const module = angular.module('grafana.directives');
+import { coreModule } from 'app/core/core_module';
 
 export class QueryRowCtrl {
   target: any;
@@ -43,4 +41,4 @@ function queryEditorRowDirective() {
   };
 }
 
-module.directive('queryEditorRow', queryEditorRowDirective);
+coreModule.directive('queryEditorRow', queryEditorRowDirective);
