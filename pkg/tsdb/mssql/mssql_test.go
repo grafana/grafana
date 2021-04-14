@@ -32,18 +32,20 @@ import (
 var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
-	runMySQLTests := false
-
-	if !runMySQLTests {
-		t.Skip()
-	}
+	// Skip for now
+	t.Skip()
 
 	x := initMSSQLTestDB(t)
 	origXormEngine := sqleng.NewXormEngine
+	origInterpolate := sqleng.Interpolate
+	t.Cleanup(func() {
+		sqleng.NewXormEngine = origXormEngine
+		sqleng.Interpolate = origInterpolate
+	})
+
 	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
 		return x, nil
 	}
-	origInterpolate := sqleng.Interpolate
 	sqleng.Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 		return sql, nil
 	}
@@ -55,13 +57,9 @@ func TestMSSQL(t *testing.T) {
 	require.NoError(t, err)
 
 	sess := x.NewSession()
-	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+	t.Cleanup(sess.Close)
 
-	t.Cleanup(func() {
-		sess.Close()
-		sqleng.NewXormEngine = origXormEngine
-		sqleng.Interpolate = origInterpolate
-	})
+	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
 		sql := `
@@ -239,7 +237,7 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			// without fill this should result in 4 buckets
 			require.Equal(t, 4, frames[0].Fields[0].Len())
 
@@ -287,7 +285,7 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Equal(t, frames, 1)
 			require.Equal(t, 7, frames[0].Fields[0].Len())
 
 			dt := fromStart
@@ -319,11 +317,11 @@ func TestMSSQL(t *testing.T) {
 
 		t.Run("When doing a metric query using timeGroup and $__interval", func(t *testing.T) {
 			mockInterpolate := sqleng.Interpolate
-			sqleng.Interpolate = origInterpolate
-
 			t.Cleanup(func() {
 				sqleng.Interpolate = mockInterpolate
 			})
+
+			sqleng.Interpolate = origInterpolate
 
 			t.Run("Should replace $__interval", func(t *testing.T) {
 				query := plugins.DataQuery{

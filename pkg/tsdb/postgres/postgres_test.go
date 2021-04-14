@@ -152,7 +152,7 @@ func TestGenerateConnectionString(t *testing.T) {
 // devenv/README.md for setup instructions.
 func TestPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
-	runPostgresTests := false
+	const runPostgresTests = false
 
 	if !sqlstore.IsTestDbPostgres() && !runPostgresTests {
 		t.Skip()
@@ -190,6 +190,7 @@ func TestPostgres(t *testing.T) {
 	sess := x.NewSession()
 	t.Cleanup(sess.Close)
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+
 	t.Run("Given a table with different native data types", func(t *testing.T) {
 		sql := `
 				DROP TABLE IF EXISTS postgres_types;
@@ -281,6 +282,7 @@ func TestPostgres(t *testing.T) {
 			require.Equal(t, "00:15:00", *frames[0].Fields[16].At(0).(*string))
 		})
 	})
+
 	t.Run("Given a table with metrics that lacks data for some series ", func(t *testing.T) {
 		sql := `
 				DROP TABLE IF EXISTS metric;
@@ -452,6 +454,7 @@ func TestPostgres(t *testing.T) {
 			// check for NULL values inserted by fill
 			require.Nil(t, frames[0].Fields[1].At(6))
 		})
+
 		t.Run("When doing a metric query using timeGroup with value fill enabled", func(t *testing.T) {
 			query := plugins.DataQuery{
 				Queries: []plugins.DataSubQuery{
@@ -879,8 +882,7 @@ func TestPostgres(t *testing.T) {
 			queryResult := resp.Results["A"]
 			require.NoError(t, queryResult.Error)
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
-
+			require.Len(t, frames, 1)
 			require.Equal(t,
 				"SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1",
 				frames[0].Meta.ExecutedQueryString)
@@ -943,8 +945,8 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, err)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
-			require.Equal(t, 3, len(frames[0].Fields))
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Fields, 3)
 		})
 
 		t.Run("When doing an annotation query of ticket events should return expected result", func(t *testing.T) {
@@ -1161,7 +1163,6 @@ func TestPostgres(t *testing.T) {
 			assert.Nil(t, frames[0].Fields[0].At(0))
 		})
 	})
-
 }
 
 func InitPostgresTestDB(t *testing.T) *xorm.Engine {

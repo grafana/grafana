@@ -7,7 +7,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime time.Time, fillMissing *data.FillMissing, intermidiateRows []int, lastSeenRowIdx int) []interface{} {
+func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime time.Time,
+	fillMissing *data.FillMissing, intermidiateRows []int, lastSeenRowIdx int) []interface{} {
 	vals := make([]interface{}, 0)
 	for fieldIdx := 0; fieldIdx < len(f.Fields); fieldIdx++ {
 		// if the current field is the time index of the series

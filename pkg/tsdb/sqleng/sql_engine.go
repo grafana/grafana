@@ -181,6 +181,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 				ch <- queryResult
 				return
 			}
+
 			// datasource specific substitutions
 			rawSQL, err = e.macroEngine.Interpolate(query, timeRange, rawSQL)
 			if err != nil {
@@ -288,8 +289,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 						backend.Logger.Debug("Failed to resample dataframe", "err", err)
 						frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
 					}
-					err = trim(frame, *qm)
-					if err != nil {
+					if err := trim(frame, *qm); err != nil {
 						backend.Logger.Debug("Failed to resample dataframe", "err", err)
 						frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
 					}

@@ -21,7 +21,6 @@ import (
 
 func TestSQLEngine(t *testing.T) {
 	dt := time.Date(2018, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
-	// earlyDt := time.Date(1970, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 
 	t.Run("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func(t *testing.T) {
 		from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)

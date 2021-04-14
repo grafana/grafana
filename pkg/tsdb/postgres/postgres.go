@@ -140,66 +140,64 @@ func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {
 	return err
 }
 
-var converterList = []sqlutil.StringConverter{
-	{
-		Name:           "handle FLOAT4",
-		InputScanKind:  reflect.Interface,
-		InputTypeName:  "FLOAT4",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableFloat64,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := strconv.ParseFloat(*in, 64)
-				if err != nil {
-					return nil, err
-				}
-				return &v, nil
-			},
-		},
-	},
-	{
-		Name:           "handle FLOAT8",
-		InputScanKind:  reflect.Interface,
-		InputTypeName:  "FLOAT8",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableFloat64,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := strconv.ParseFloat(*in, 64)
-				if err != nil {
-					return nil, err
-				}
-				return &v, nil
-			},
-		},
-	},
-	{
-		Name:           "handle NUMERIC",
-		InputScanKind:  reflect.Interface,
-		InputTypeName:  "NUMERIC",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableFloat64,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := strconv.ParseFloat(*in, 64)
-				if err != nil {
-					return nil, err
-				}
-				return &v, nil
-			},
-		},
-	},
-}
-
 func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
-	return converterList
+	return []sqlutil.StringConverter{
+		{
+			Name:           "handle FLOAT4",
+			InputScanKind:  reflect.Interface,
+			InputTypeName:  "FLOAT4",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle FLOAT8",
+			InputScanKind:  reflect.Interface,
+			InputTypeName:  "FLOAT8",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle NUMERIC",
+			InputScanKind:  reflect.Interface,
+			InputTypeName:  "NUMERIC",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+	}
 }

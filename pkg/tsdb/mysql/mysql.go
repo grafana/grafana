@@ -98,189 +98,186 @@ func (t *mysqlQueryResultTransformer) TransformQueryError(err error) error {
 
 var errQueryFailed = errors.New("query failed - please inspect Grafana server log for details")
 
-// For Driver mysql, we have the list of possible data type:
-// https://www.w3schools.com/sql/sql_datatypes.asp#:~:text=In%20MySQL%20there%20are%20three,numeric%2C%20and%20date%20and%20time.
-// Since by default, we convert all into String, we need only to handle the Numeric data types
-
-var converterList = []sqlutil.StringConverter{
-	{
-		Name:           "handle DOUBLE",
-		InputScanKind:  reflect.Struct,
-		InputTypeName:  "DOUBLE",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableFloat64,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := strconv.ParseFloat(*in, 64)
-				if err != nil {
-					return nil, err
-				}
-				return &v, nil
-			},
-		},
-	},
-	{
-		Name:           "handle BIGINT",
-		InputScanKind:  reflect.Struct,
-		InputTypeName:  "BIGINT",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableInt64,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := strconv.ParseInt(*in, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-				return &v, nil
-			},
-		},
-	},
-	{
-		Name:           "handle DECIMAL",
-		InputScanKind:  reflect.Slice,
-		InputTypeName:  "DECIMAL",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableFloat64,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := strconv.ParseFloat(*in, 64)
-				if err != nil {
-					return nil, err
-				}
-				return &v, nil
-			},
-		},
-	},
-	{
-		Name:           "handle DATETIME",
-		InputScanKind:  reflect.Struct,
-		InputTypeName:  "DATETIME",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableTime,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := time.Parse(dateTimeFormat1, *in)
-				if err == nil {
-					return &v, nil
-				}
-				v, err = time.Parse(dateTimeFormat2, *in)
-				if err == nil {
-					return &v, nil
-				}
-
-				return nil, err
-			},
-		},
-	},
-	{
-		Name:           "handle DATE",
-		InputScanKind:  reflect.Struct,
-		InputTypeName:  "DATE",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableTime,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := time.Parse(dateFormat, *in)
-				if err == nil {
-					return &v, nil
-				}
-				return nil, err
-			},
-		},
-	},
-	{
-		Name:           "handle TIMESTAMP",
-		InputScanKind:  reflect.Struct,
-		InputTypeName:  "TIMESTAMP",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableTime,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := time.Parse(dateTimeFormat1, *in)
-				if err == nil {
-					return &v, nil
-				}
-				return nil, err
-			},
-		},
-	},
-	{
-		Name:           "handle YEAR",
-		InputScanKind:  reflect.Struct,
-		InputTypeName:  "YEAR",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableInt64,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := strconv.ParseInt(*in, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-				return &v, nil
-			},
-		},
-	},
-	{
-		Name:           "handle INT",
-		InputScanKind:  reflect.Struct,
-		InputTypeName:  "INT",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableInt64,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := strconv.ParseInt(*in, 10, 64)
-				if err != nil {
-					return nil, err
-				}
-				return &v, nil
-			},
-		},
-	},
-	{
-		Name:           "handle FLOAT",
-		InputScanKind:  reflect.Struct,
-		InputTypeName:  "FLOAT",
-		ConversionFunc: func(in *string) (*string, error) { return in, nil },
-		Replacer: &sqlutil.StringFieldReplacer{
-			OutputFieldType: data.FieldTypeNullableFloat64,
-			ReplaceFunc: func(in *string) (interface{}, error) {
-				if in == nil {
-					return nil, nil
-				}
-				v, err := strconv.ParseFloat(*in, 64)
-				if err != nil {
-					return nil, err
-				}
-				return &v, nil
-			},
-		},
-	},
-}
-
 func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
-	return converterList
+	// For the MySQL driver , we have these possible data types:
+	// https://www.w3schools.com/sql/sql_datatypes.asp#:~:text=In%20MySQL%20there%20are%20three,numeric%2C%20and%20date%20and%20time.
+	// Since by default, we convert all into String, we need only to handle the Numeric data types
+	return []sqlutil.StringConverter{
+		{
+			Name:           "handle DOUBLE",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "DOUBLE",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle BIGINT",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "BIGINT",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableInt64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseInt(*in, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle DECIMAL",
+			InputScanKind:  reflect.Slice,
+			InputTypeName:  "DECIMAL",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle DATETIME",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "DATETIME",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableTime,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := time.Parse(dateTimeFormat1, *in)
+					if err == nil {
+						return &v, nil
+					}
+					v, err = time.Parse(dateTimeFormat2, *in)
+					if err == nil {
+						return &v, nil
+					}
+
+					return nil, err
+				},
+			},
+		},
+		{
+			Name:           "handle DATE",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "DATE",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableTime,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := time.Parse(dateFormat, *in)
+					if err == nil {
+						return &v, nil
+					}
+					return nil, err
+				},
+			},
+		},
+		{
+			Name:           "handle TIMESTAMP",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "TIMESTAMP",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableTime,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := time.Parse(dateTimeFormat1, *in)
+					if err == nil {
+						return &v, nil
+					}
+					return nil, err
+				},
+			},
+		},
+		{
+			Name:           "handle YEAR",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "YEAR",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableInt64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseInt(*in, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle INT",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "INT",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableInt64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseInt(*in, 10, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+		{
+			Name:           "handle FLOAT",
+			InputScanKind:  reflect.Struct,
+			InputTypeName:  "FLOAT",
+			ConversionFunc: func(in *string) (*string, error) { return in, nil },
+			Replacer: &sqlutil.StringFieldReplacer{
+				OutputFieldType: data.FieldTypeNullableFloat64,
+				ReplaceFunc: func(in *string) (interface{}, error) {
+					if in == nil {
+						return nil, nil
+					}
+					v, err := strconv.ParseFloat(*in, 64)
+					if err != nil {
+						return nil, err
+					}
+					return &v, nil
+				},
+			},
+		},
+	}
 }

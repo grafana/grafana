@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -19,9 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
-	// "github.com/google/go-cmp/cmp"
-	// ptr "github.com/xorcare/pointer"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 // To run this test, set runMySqlTests=true
@@ -44,11 +42,16 @@ func TestMySQL(t *testing.T) {
 	x := InitMySQLTestDB(t)
 
 	origXormEngine := sqleng.NewXormEngine
+	origInterpolate := sqleng.Interpolate
+	t.Cleanup(func() {
+		sqleng.NewXormEngine = origXormEngine
+		sqleng.Interpolate = origInterpolate
+	})
+
 	sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
 		return x, nil
 	}
 
-	origInterpolate := sqleng.Interpolate
 	sqleng.Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
 		return sql, nil
 	}
@@ -60,18 +63,14 @@ func TestMySQL(t *testing.T) {
 	require.NoError(t, err)
 
 	sess := x.NewSession()
+	t.Cleanup(sess.Close)
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC)
 
-	t.Cleanup(func() {
-		sess.Close()
-		sqleng.NewXormEngine = origXormEngine
-		sqleng.Interpolate = origInterpolate
-	})
-
 	t.Run("Given a table with different native data types", func(t *testing.T) {
-		if exists, err := sess.IsTableExist("mysql_types"); err != nil || exists {
-			require.NoError(t, err)
-			err = sess.DropTable("mysql_types")
+		exists, err := sess.IsTableExist("mysql_types")
+		require.NoError(t, err)
+		if exists {
+			err := sess.DropTable("mysql_types")
 			require.NoError(t, err)
 		}
 
@@ -185,9 +184,10 @@ func TestMySQL(t *testing.T) {
 			Value int64
 		}
 
-		if exist, err := sess.IsTableExist(metric{}); err != nil || exist {
-			require.NoError(t, err)
-			err = sess.DropTable(metric{})
+		exists, err := sess.IsTableExist(metric{})
+		require.NoError(t, err)
+		if exists {
+			err := sess.DropTable(metric{})
 			require.NoError(t, err)
 		}
 		err := sess.CreateTable(metric{})
@@ -315,7 +315,6 @@ func TestMySQL(t *testing.T) {
 		t.Run("When doing a metric query using timeGroup and $__interval", func(t *testing.T) {
 			mockInterpolate := sqleng.Interpolate
 			sqleng.Interpolate = origInterpolate
-
 			t.Cleanup(func() {
 				sqleng.Interpolate = mockInterpolate
 			})
@@ -425,9 +424,10 @@ func TestMySQL(t *testing.T) {
 			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
 		}
 
-		if exist, err := sess.IsTableExist(metric_values{}); err != nil || exist {
-			require.NoError(t, err)
-			err = sess.DropTable(metric_values{})
+		exists, err := sess.IsTableExist(metric_values{})
+		require.NoError(t, err)
+		if exists {
+			err := sess.DropTable(metric_values{})
 			require.NoError(t, err)
 		}
 		err := sess.CreateTable(metric_values{})
@@ -826,9 +826,10 @@ func TestMySQL(t *testing.T) {
 			Tags        string
 		}
 
-		if exist, err := sess.IsTableExist(event{}); err != nil || exist {
-			require.NoError(t, err)
-			err = sess.DropTable(event{})
+		exists, err := sess.IsTableExist(event{})
+		require.NoError(t, err)
+		if exists {
+			err := sess.DropTable(event{})
 			require.NoError(t, err)
 		}
 		err := sess.CreateTable(event{})
@@ -871,8 +872,8 @@ func TestMySQL(t *testing.T) {
 			}
 
 			resp, err := exe.DataQuery(context.Background(), nil, query)
-			queryResult := resp.Results["Deploys"]
 			require.NoError(t, err)
+			queryResult := resp.Results["Deploys"]
 
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Equal(t, 1, len(frames))
@@ -898,8 +899,8 @@ func TestMySQL(t *testing.T) {
 			}
 
 			resp, err := exe.DataQuery(context.Background(), nil, query)
-			queryResult := resp.Results["Tickets"]
 			require.NoError(t, err)
+			queryResult := resp.Results["Tickets"]
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 3, len(frames[0].Fields))
