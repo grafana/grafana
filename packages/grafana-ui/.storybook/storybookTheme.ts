@@ -28,7 +28,7 @@ const createTheme = (theme: GrafanaTheme) => {
 
     // Toolbar default and active colors
     barTextColor: theme.v2.palette.primary.text,
-    barSelectedColor: theme.v2.palette.getHoverColor(theme.v2.palette.primary.text),
+    barSelectedColor: theme.v2.palette.emphasize(theme.v2.palette.primary.text),
     barBg: theme.v2.palette.layer1,
 
     // Form colors

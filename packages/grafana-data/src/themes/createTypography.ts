@@ -25,8 +25,12 @@ export interface ThemeTypography {
   h6: ThemeTypographyVariant;
 
   body: ThemeTypographyVariant;
+  bodySmall: ThemeTypographyVariant;
 
-  /** from legacy old theme */
+  /**
+   * @deprecated
+   * from legacy old theme
+   * */
   size: {
     base: string;
     xs: string;
@@ -71,7 +75,7 @@ export function createTypography(palette: ThemePalette, typographyInput: ThemeTy
     fontWeightLight = 300,
     fontWeightRegular = 400,
     fontWeightMedium = 500,
-    fontWeightBold = 700,
+    fontWeightBold = 500,
     // Tell Grafana-UI what's the font-size on the html element.
     // 16px is the default font-size used by browsers.
     htmlFontSize = 14,
@@ -99,22 +103,20 @@ export function createTypography(palette: ThemePalette, typographyInput: ThemeTy
     fontFamily,
     fontWeight,
     fontSize: pxToRem(size),
-    // Unitless following https://meyerweb.com/eric/thoughts/2006/02/08/unitless-line-heights/
     lineHeight,
-    // The letter spacing was designed for the Roboto font-family. Using the same letter-spacing
-    // across font-families can cause issues with the kerning.
-    ...(fontFamily === defaultFontFamily ? { letterSpacing: `${round(letterSpacing / size)}em` } : {}),
+    letterSpacing: `${letterSpacing}px`,
     ...casing,
   });
 
   const variants = {
-    h1: buildVariant(fontWeightLight, 28, 1.167, -1.5),
-    h2: buildVariant(fontWeightLight, 24, 1.2, -0.5),
-    h3: buildVariant(fontWeightRegular, 21, 1.167, 0),
-    h4: buildVariant(fontWeightRegular, 18, 1.235, 0.25),
+    h1: buildVariant(fontWeightMedium, 28, 1.2, -0.1),
+    h2: buildVariant(fontWeightMedium, 24, 1.2, -0.1),
+    h3: buildVariant(fontWeightMedium, 21, 1.3, 0),
+    h4: buildVariant(fontWeightRegular, 18, 1.4, 0),
     h5: buildVariant(fontWeightRegular, 16, 1.334, 0),
-    h6: buildVariant(fontWeightMedium, 14, 1.6, 0.15),
-    body: buildVariant(fontWeightRegular, 14, 1.5, 0.15),
+    h6: buildVariant(fontWeightRegular, 14, 1.6, 0),
+    body: buildVariant(fontWeightRegular, 14, 1.5, 0),
+    bodySmall: buildVariant(fontWeightRegular, 12, 1.5, 0),
   };
 
   const size = {
@@ -138,8 +140,4 @@ export function createTypography(palette: ThemePalette, typographyInput: ThemeTy
     size,
     ...variants,
   };
-}
-
-function round(value: number) {
-  return Math.round(value * 1e5) / 1e5;
 }

@@ -39,5 +39,97 @@ export function getElementStyles(theme: GrafanaThemeV2) {
     .h6 {
       ${getVariantStyles(theme.typography.h6)}
     }
+
+    p {
+      margin: 0 0 ${theme.spacing(2)};
+    }
+
+    // Ex: 14px base font * 85% = about 12px
+    small {
+      font-size: ${theme.typography.bodySmall.fontSize};
+    }
+
+    b,
+    strong {
+      font-weight: ${theme.typography.fontWeightMedium};
+    }
+
+    em {
+      font-style: italic;
+      color: ${theme.palette.text.primary};
+    }
+
+    cite {
+      font-style: normal;
+    }
+
+    // Utility classes
+    .muted {
+      color: ${theme.palette.text.secondary};
+    }
+
+    a.muted:hover,
+    a.muted:focus {
+      color: ${theme.palette.text.primary};
+    }
+
+    .text-warning {
+      color: ${theme.palette.warning.text};
+
+      &:hover,
+      &:focus {
+        color: ${theme.palette.emphasize(theme.palette.warning.text, 0.15)};
+      }
+    }
+
+    .text-error {
+      color: ${theme.palette.error.text};
+
+      &:hover,
+      &:focus {
+        color: ${theme.palette.emphasize(theme.palette.error.text, 0.15)};
+      }
+    }
+
+    .text-success {
+      color: $success-text-color;
+
+      &:hover,
+      &:focus {
+        color: ${theme.palette.emphasize(theme.palette.success.text, 0.15)};
+      }
+    }
+
+    a {
+      cursor: pointer;
+      color: ${theme.palette.text.link};
+      text-decoration: none;
+
+      &:hover {
+        color: ${theme.palette.emphasize(theme.palette.text.link, 0.15)};
+        text-decoration: underline;
+      }
+
+      &:focus {
+        outline: 0 none !important;
+      }
+
+      &: [disabled] {
+        cursor: default;
+        pointer-events: none !important;
+      }
+    }
+
+    .text-left {
+      text-align: left;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    .text-center {
+      text-align: center;
+    }
   `;
 }
