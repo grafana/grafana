@@ -165,7 +165,7 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 	}
 
 	if len(result.Results) == 0 {
-		err = fmt.Errorf("no GEL results")
+		err = fmt.Errorf("no transformation results")
 		result.Error = err
 		return &result, err
 	}

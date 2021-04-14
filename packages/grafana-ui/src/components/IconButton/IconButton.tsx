@@ -7,6 +7,7 @@ import { useTheme } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { TooltipPlacement } from '../Tooltip/PopoverController';
+import { focusCss } from '../../themes/mixins';
 
 export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Name of the icon **/
@@ -95,6 +96,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
         box-sizing: border-box;
         transform: scale(0);
         transition-property: transform, opacity;
+      }
+
+      &:focus {
+        ${focusCss(theme)}
       }
 
       &:hover {

@@ -18,6 +18,7 @@ func TestProcessEvalResults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
+	cacheId := "test_uid map[label1:value1 label2:value2]"
 	testCases := []struct {
 		desc                       string
 		uid                        string
@@ -49,7 +50,7 @@ func TestProcessEvalResults(t *testing.T) {
 				{
 					UID:     "test_uid",
 					OrgID:   123,
-					CacheId: "test_uid label1=value1, label2=value2",
+					CacheId: cacheId,
 					Labels:  data.Labels{"label1": "value1", "label2": "value2"},
 					State:   eval.Normal,
 					Results: []StateEvaluation{
@@ -87,7 +88,7 @@ func TestProcessEvalResults(t *testing.T) {
 				{
 					UID:     "test_uid",
 					OrgID:   123,
-					CacheId: "test_uid label1=value1, label2=value2",
+					CacheId: cacheId,
 					Labels:  data.Labels{"label1": "value1", "label2": "value2"},
 					State:   eval.Alerting,
 					Results: []StateEvaluation{
@@ -126,7 +127,7 @@ func TestProcessEvalResults(t *testing.T) {
 				{
 					UID:     "test_uid",
 					OrgID:   123,
-					CacheId: "test_uid label1=value1, label2=value2",
+					CacheId: cacheId,
 					Labels:  data.Labels{"label1": "value1", "label2": "value2"},
 					State:   eval.Normal,
 					Results: []StateEvaluation{
@@ -165,7 +166,7 @@ func TestProcessEvalResults(t *testing.T) {
 				{
 					UID:     "test_uid",
 					OrgID:   123,
-					CacheId: "test_uid label1=value1, label2=value2",
+					CacheId: cacheId,
 					Labels:  data.Labels{"label1": "value1", "label2": "value2"},
 					State:   eval.Alerting,
 					Results: []StateEvaluation{
@@ -204,7 +205,7 @@ func TestProcessEvalResults(t *testing.T) {
 				{
 					UID:     "test_uid",
 					OrgID:   123,
-					CacheId: "test_uid label1=value1, label2=value2",
+					CacheId: cacheId,
 					Labels:  data.Labels{"label1": "value1", "label2": "value2"},
 					State:   eval.Normal,
 					Results: []StateEvaluation{

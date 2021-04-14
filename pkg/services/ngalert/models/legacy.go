@@ -131,11 +131,3 @@ type UpdateAlertDefinitionPausedCommand struct {
 
 	ResultCount int64
 }
-
-// EvalAlertConditionCommand is the command for evaluating a condition
-// Legacy model; It will be removed in v8
-type EvalAlertConditionCommand struct {
-	Condition string       `json:"condition"`
-	Data      []AlertQuery `json:"data"`
-	Now       time.Time    `json:"now"`
-}

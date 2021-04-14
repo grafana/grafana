@@ -1,40 +1,48 @@
-import React, { useState } from 'react';
+import React, { FC, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { Button, stylesFactory, useStyles } from '@grafana/ui';
+import { Button, useStyles } from '@grafana/ui';
+
 import { PanelModel } from 'app/features/dashboard/state';
 import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 import { LibraryPanelDTO } from '../../types';
 import { toPanelModelLibraryPanel } from '../../utils';
-import { useDispatch } from 'react-redux';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { ChangeLibraryPanelModal } from '../ChangeLibraryPanelModal/ChangeLibraryPanelModal';
 
 interface Props {
   panel: PanelModel;
   searchQuery: string;
 }
 
-export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, searchQuery }) => {
+export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
   const styles = useStyles(getStyles);
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
+  const [changeToPanel, setChangeToPanel] = useState<LibraryPanelDTO | undefined>(undefined);
   const dashboard = getDashboardSrv().getCurrent();
   const dispatch = useDispatch();
 
-  const useLibraryPanel = async (panelInfo: LibraryPanelDTO) => {
-    const panelTypeChanged = panel.type !== panelInfo.model.type;
+  const useLibraryPanel = async () => {
+    if (!changeToPanel) {
+      return;
+    }
+    setChangeToPanel(undefined);
+
+    const panelTypeChanged = panel.type !== changeToPanel.model.type;
 
     if (panelTypeChanged) {
-      await dispatch(changePanelPlugin(panel, panelInfo.model.type));
+      await dispatch(changePanelPlugin(panel, changeToPanel.model.type));
     }
 
     panel.restoreModel({
-      ...panelInfo.model,
+      ...changeToPanel.model,
       gridPos: panel.gridPos,
       id: panel.id,
-      libraryPanel: toPanelModelLibraryPanel(panelInfo),
+      libraryPanel: toPanelModelLibraryPanel(changeToPanel),
     });
 
     panel.hasChanged = false;
@@ -45,6 +53,14 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, searchQuery }
 
   const onAddToPanelLibrary = () => {
     setShowingAddPanelModal(true);
+  };
+
+  const onChangeLibraryPanel = (panel: LibraryPanelDTO) => {
+    setChangeToPanel(panel);
+  };
+
+  const onDismissChangeToPanel = () => {
+    setChangeToPanel(undefined);
   };
 
   return (
@@ -60,7 +76,7 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, searchQuery }
       <LibraryPanelsView
         currentPanelId={panel.libraryPanel?.uid}
         searchString={searchQuery}
-        onClickCard={useLibraryPanel}
+        onClickCard={onChangeLibraryPanel}
         showSecondaryActions
       />
 
@@ -72,11 +88,15 @@ export const PanelLibraryOptionsGroup: React.FC<Props> = ({ panel, searchQuery }
           isOpen={showingAddPanelModal}
         />
       )}
+
+      {changeToPanel && (
+        <ChangeLibraryPanelModal panel={panel} onDismiss={onDismissChangeToPanel} onConfirm={useLibraryPanel} />
+      )}
     </div>
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     box: css``,
     addButtonWrapper: css`
@@ -88,4 +108,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       gap: 10px;
     `,
   };
-});
+};
