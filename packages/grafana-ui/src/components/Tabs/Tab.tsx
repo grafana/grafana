@@ -54,31 +54,29 @@ export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
 Tab.displayName = 'Tab';
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
-  const colors = theme.colors;
-
   return {
     tabItem: css`
       list-style: none;
-      margin-right: ${theme.spacing.md};
+      margin-right: ${theme.v2.spacing(2)};
       position: relative;
       display: block;
-      border: solid transparent;
-      border-width: 0 1px 1px;
-      border-radius: ${theme.border.radius.md} ${theme.border.radius.md} 0 0;
-      color: ${colors.text};
+      color: ${theme.v2.palette.text.secondary};
       cursor: pointer;
 
       svg {
-        margin-right: ${theme.spacing.sm};
+        margin-right: ${theme.v2.spacing(1)};
       }
 
       a {
         display: block;
         height: 100%;
+        color: ${theme.v2.palette.text.secondary};
       }
+
+      a:hover,
       &:hover,
       &:focus {
-        color: ${colors.linkHover};
+        color: ${theme.v2.palette.text.primary};
       }
     `,
     padding: css`
@@ -86,10 +84,13 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     activeStyle: css`
       label: activeTabStyle;
-      border-color: ${theme.palette.orange} ${colors.pageHeaderBorder} transparent;
-      background: ${colors.bodyBg};
-      color: ${colors.link};
+      color: ${theme.v2.palette.text.primary};
       overflow: hidden;
+      font-weight: ${theme.v2.typography.fontWeightMedium};
+
+      a {
+        color: ${theme.v2.palette.text.primary};
+      }
 
       &::before {
         display: block;
@@ -97,9 +98,10 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
         position: absolute;
         left: 0;
         right: 0;
-        height: 2px;
-        top: 0;
-        background-image: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
+        height: 4px;
+        border-radius: 2px;
+        bottom: 2px;
+        background-image: ${theme.v2.palette.gradients.brandHorizontal};
       }
     `,
   };
