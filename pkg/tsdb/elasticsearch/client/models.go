@@ -280,8 +280,10 @@ type MetricAggregation struct {
 
 // MarshalJSON returns the JSON encoding of the metric aggregation
 func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
-	root := map[string]interface{}{
-		"field": a.Field,
+	root := map[string]interface{}{}
+
+	if a.Field != "" {
+		root["field"] = a.Field
 	}
 
 	for k, v := range a.Settings {
