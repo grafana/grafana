@@ -3,7 +3,48 @@
   "name": "Prometheus",
   "id": "prometheus",
   "category": "tsdb",
-
+  "routes": [
+    {
+      "method": "POST",
+      "path": "api/v1/query",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "path": "api/v1/query_range",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "path": "api/v1/series",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "path": "api/v1/labels",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "path": "api/v1/query_exemplars",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "GET",
+      "path": "api/v1/rules",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "path": "api/v1/rules",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "DELETE",
+      "path": "api/v1/rules",
+      "reqRole": "Editor"
+    }
+  ],
   "includes": [
     {
       "type": "dashboard",
