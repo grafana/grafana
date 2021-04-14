@@ -6,8 +6,8 @@ func addSettingsMigration(mg *Migrator) {
 	var sessionV1 = Table{
 		Name: "setting",
 		Columns: []*Column{
-			{Name: "section", Type: DB_Varchar, Length: 255, Nullable: false},
-			{Name: "key", Type: DB_Varchar, Length: 255, Nullable: false},
+			{Name: "section", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "key", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "value", Type: DB_Text, Nullable: false},
 		},
 		Indices: []*Index{
