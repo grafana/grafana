@@ -4,27 +4,24 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana-live-sdk/telemetry"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/live/convert"
+	"github.com/grafana/grafana/pkg/services/live/pushurl"
 
-	"github.com/grafana/grafana-live-sdk/telemetry/telegraf"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 type Demultiplexer struct {
-	streamID                      string
-	managedStreamRunner           *ManagedStreamRunner
-	telegrafConverterWide         *telegraf.Converter
-	telegrafConverterLabelsColumn *telegraf.Converter
+	streamID            string
+	managedStreamRunner *ManagedStreamRunner
+	converter           *convert.Converter
 }
 
 func NewDemultiplexer(streamID string, managedStreamRunner *ManagedStreamRunner) *Demultiplexer {
 	return &Demultiplexer{
-		streamID:                      streamID,
-		managedStreamRunner:           managedStreamRunner,
-		telegrafConverterWide:         telegraf.NewConverter(),
-		telegrafConverterLabelsColumn: telegraf.NewConverter(telegraf.WithUseLabelsColumn(true)),
+		streamID:            streamID,
+		managedStreamRunner: managedStreamRunner,
+		converter:           convert.NewConverter(),
 	}
 }
 
@@ -42,27 +39,16 @@ func (s *Demultiplexer) OnPublish(ctx context.Context, _ *models.SignedInUser, e
 		return models.PublishReply{}, 0, errors.New("error extracting context url values")
 	}
 
-	var converter telemetry.Converter
-	frameFormat := urlValues.Get("gf_live_frame_format")
-	if frameFormat == "" {
-		frameFormat = "wide"
-	}
-	switch frameFormat {
-	case "wide":
-		converter = s.telegrafConverterWide
-	case "labels_column":
-		converter = s.telegrafConverterLabelsColumn
-	default:
-		logger.Error("Unsupported frame format", "format", frameFormat)
-		return models.PublishReply{}, 0, errors.New("unsupported frame format")
+	stream, err := s.managedStreamRunner.GetOrCreateStream(s.streamID)
+	if err != nil {
+		logger.Error("Error getting stream", "error", err, "streamId", s.streamID)
+		return models.PublishReply{}, 0, err
 	}
 
-	var stableSchema bool
-	if urlValues.Get("gf_live_stable_schema") != "" {
-		stableSchema = true
-	}
+	frameFormat := pushurl.FrameFormatFromValues(urlValues)
+	stableSchema := pushurl.StableSchemaFromValues(urlValues)
 
-	logger.Debug("Live Push request body",
+	logger.Debug("Live Push request",
 		"protocol", "ws",
 		"streamId", s.streamID,
 		"bodyLength", len(evt.Data),
@@ -70,14 +56,9 @@ func (s *Demultiplexer) OnPublish(ctx context.Context, _ *models.SignedInUser, e
 		"frameFormat", frameFormat,
 	)
 
-	stream, err := s.managedStreamRunner.GetOrCreateStream(s.streamID)
+	metricFrames, err := s.converter.Convert(evt.Data, frameFormat)
 	if err != nil {
-		logger.Error("Error getting stream", "error", err, "streamId", s.streamID)
-		return models.PublishReply{}, 0, err
-	}
-	metricFrames, err := converter.Convert(evt.Data)
-	if err != nil {
-		logger.Error("Error converting metrics", "error", err, "data", string(evt.Data))
+		logger.Error("Error converting metrics", "error", err, "data", string(evt.Data), "frameFormat", frameFormat)
 		return models.PublishReply{}, 0, err
 	}
 	for _, mf := range metricFrames {

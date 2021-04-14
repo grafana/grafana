@@ -2,16 +2,15 @@ package push
 
 import (
 	"context"
+	"errors"
 	"net/http"
-
-	"github.com/grafana/grafana-live-sdk/telemetry"
-
-	"github.com/grafana/grafana-live-sdk/telemetry/telegraf"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/live/convert"
+	"github.com/grafana/grafana/pkg/services/live/pushurl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,8 +27,7 @@ type Gateway struct {
 	Cfg         *setting.Cfg      `inject:""`
 	GrafanaLive *live.GrafanaLive `inject:""`
 
-	telegrafConverterWide         *telegraf.Converter
-	telegrafConverterLabelsColumn *telegraf.Converter
+	converter *convert.Converter
 }
 
 // Init Gateway.
@@ -41,9 +39,7 @@ func (g *Gateway) Init() error {
 		return nil
 	}
 
-	// For now only Telegraf converter (influx format) is supported.
-	g.telegrafConverterWide = telegraf.NewConverter()
-	g.telegrafConverterLabelsColumn = telegraf.NewConverter(telegraf.WithUseLabelsColumn(true))
+	g.converter = convert.NewConverter()
 	return nil
 }
 
@@ -72,27 +68,10 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		return
 	}
 
-	// TODO Grafana 8: decide which format to use or keep all.
-	var converter telemetry.Converter
-	frameFormat := ctx.Req.URL.Query().Get("gf_live_frame_format")
-	if frameFormat == "" {
-		frameFormat = "wide"
-	}
-	switch frameFormat {
-	case "wide":
-		converter = g.telegrafConverterWide
-	case "labels_column":
-		converter = g.telegrafConverterLabelsColumn
-	default:
-		logger.Error("Unsupported frame format", "format", frameFormat)
-		ctx.Resp.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	var stableSchema bool
-	if ctx.Req.URL.Query().Get("gf_live_stable_schema") != "" {
-		stableSchema = true
-	}
+	// TODO Grafana 8: decide which formats to use or keep all.
+	urlValues := ctx.Req.URL.Query()
+	frameFormat := pushurl.FrameFormatFromValues(urlValues)
+	stableSchema := pushurl.StableSchemaFromValues(urlValues)
 
 	body, err := ctx.Req.Body().Bytes()
 	if err != nil {
@@ -100,7 +79,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	logger.Debug("Live Push request body",
+	logger.Debug("Live Push request",
 		"protocol", "http",
 		"streamId", streamID,
 		"bodyLength", len(body),
@@ -108,10 +87,14 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		"frameFormat", frameFormat,
 	)
 
-	metricFrames, err := converter.Convert(body)
+	metricFrames, err := g.converter.Convert(body, frameFormat)
 	if err != nil {
-		logger.Error("Error converting metrics", "error", err)
-		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		logger.Error("Error converting metrics", "error", err, "frameFormat", frameFormat)
+		if errors.Is(err, convert.ErrUnsupportedFrameFormat) {
+			ctx.Resp.WriteHeader(http.StatusBadRequest)
+		} else {
+			ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
 

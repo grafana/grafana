@@ -119,7 +119,7 @@ func (s *ManagedStream) Push(path string, frame *data.Frame, stableSchema bool) 
 	}
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
-	logger.Debug("Publish data to channel", "channel", channel, "data", string(frameJSON))
+	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	return s.publisher(channel, frameJSON)
 }
 
