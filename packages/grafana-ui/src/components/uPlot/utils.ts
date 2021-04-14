@@ -66,4 +66,4 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
 export const pluginLogger = createLogger('uPlot Plugin');
 export const pluginLog = pluginLogger.logger;
 
-attachDebbuger('graphng', undefined, pluginLogger);
+attachDebugger('graphng', undefined, pluginLogger);
