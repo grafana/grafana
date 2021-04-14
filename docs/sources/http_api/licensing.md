@@ -30,7 +30,7 @@ HTTP/1.1 200 OK
 Content-Type: application/json
 Content-Length: 4
 
-{"true"}
+true
 ```
 
 Status codes:
