@@ -18,14 +18,14 @@ In the context of licensing, each user is classified as either a viewer or an ed
 - An editor is a user who has permission to edit and save a dashboard. Examples of editors are as follows:
     - Grafana server administrators.
     - Users who are assigned an organizational role of Editor or Admin.
-    - Users that have been granted Admin or Edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions](https://grafana.com/docs/grafana/latest/permissions/dashboard_folder_permissions/).     
+    - Users that have been granted Admin or Edit permissions at the dashboard or folder level. Refer to [Dashboard and folder permissions]({{< relref "../permissions/dashboard_folder_permissions.md" >}}.
 - A viewer is a user with the Viewer role, which does not permit the user to save a dashboard.
 
 Restrictions are applied separately for viewers and editors.
 
 When the number of maximum active viewers or editors is reached, Grafana displays a warning banner.
 
-Sometimes it is useful to log in to an account from multiple locations concurrently. With Grafana Enterprise 7.5 and up, accounts are limited to three concurrent sessions.
+Usage billing must be agreed upon with Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license]({{< relref "enterprise-configuration.md#auto_refresh_license" >}}).
 
 ## Expiration date
 
