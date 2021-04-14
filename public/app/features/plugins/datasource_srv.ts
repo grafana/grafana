@@ -99,7 +99,7 @@ export class DatasourceSrv implements DataSourceService {
     // Interpolation here is to support template variable in data source selection
     nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
-    if (nameOrUid === 'default') {
+    if (nameOrUid === 'default' && this.defaultName !== 'default') {
       return this.get(this.defaultName);
     }
 
@@ -164,6 +164,9 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.metrics && !x.meta.metrics) {
         return false;
       }
+      if (filters.alerting && !x.meta.alerting) {
+        return false;
+      }
       if (filters.tracing && !x.meta.tracing) {
         return false;
       }
@@ -171,6 +174,9 @@ export class DatasourceSrv implements DataSourceService {
         return false;
       }
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
+        return false;
+      }
+      if (filters.filter && !filters.filter(x)) {
         return false;
       }
       if (
@@ -212,7 +218,7 @@ export class DatasourceSrv implements DataSourceService {
       return 0;
     });
 
-    if (!filters.pluginId) {
+    if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
         base.push(this.getInstanceSettings('-- Mixed --')!);
       }
