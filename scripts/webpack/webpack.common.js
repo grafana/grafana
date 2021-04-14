@@ -57,6 +57,13 @@ module.exports = {
       // some of data source pluginis use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
       prismjs: path.resolve(__dirname, '../../node_modules/prismjs'),
+      'vs/language/kusto/kustoMode': require.resolve('@kusto/monaco-kusto/release/esm/kustoMode.js'),
+
+      'bridge.min': require.resolve('@kusto/monaco-kusto/release/min/bridge.min.js'),
+      'kusto.javascript.client.min': require.resolve('@kusto/monaco-kusto/release/min/kusto.javascript.client.min.js'),
+      'Kusto.Language.Bridge.min': require.resolve('@kusto/monaco-kusto/release/min/Kusto.Language.Bridge.min.js'),
+      Kusto: require.resolve('@kusto/monaco-kusto/release/min/Kusto.Language.Bridge.min.js'),
+      'monaco.contribution': require.resolve('@kusto/monaco-kusto/release/min/monaco.contribution'),
     },
     modules: [
       'node_modules',
@@ -140,6 +147,11 @@ module.exports = {
           },
         ],
       },
+      { test: /bridge\.js/, parser: { system: false } },
+      { test: /kusto\.javascript\.client\.min\.js/, parser: { system: false } },
+      { test: /Kusto\.Language\.Bridge\.min\.js/, parser: { system: false } },
+      { test: /kustoLanguageService/, parser: { system: false } },
+
       {
         test: require.resolve('jquery'),
         use: [

@@ -2946,6 +2946,24 @@
     "@types/yargs" "^15.0.0"
     chalk "^4.0.0"
 
+"@kusto/language-service-next@0.0.42":
+  version "0.0.42"
+  resolved "https://registry.yarnpkg.com/@kusto/language-service-next/-/language-service-next-0.0.42.tgz#58d69d0a7b5727f0101e59da39928b5dfb8c2749"
+  integrity sha512-WI/gZjm4/qeXkA/MpnorXNlhImREafVabGwXOsjnb7VQ8fehOxUTGHbhP9kirJqqSJYx9HG7Pf1CFSYIX9CJJw==
+
+"@kusto/language-service@2.0.0-beta.0":
+  version "2.0.0-beta.0"
+  resolved "https://registry.yarnpkg.com/@kusto/language-service/-/language-service-2.0.0-beta.0.tgz#70ea2f7c5d076d762a7c9a03194479effd870cd3"
+  integrity sha512-HBMASNCxtUe+BPOONpiXhzlCXuS0UIWl9YRrh521dTbEsoDwBN7Orlq6SUlDqKKdy7i4N4+7KtGFwwRjsgke7A==
+
+"@kusto/monaco-kusto@^3.2.5":
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/@kusto/monaco-kusto/-/monaco-kusto-3.2.5.tgz#92f294936f99c6af1d575e0c7250a7e833447596"
+  integrity sha512-+PC2emKVRzJj9/Hm07VyMVOEKwZ/7XiUUpC6XgZgwWbtSqK0dDBWI2sjpmpxCP26n3eKjvqR9+NHC887hwkZGQ==
+  dependencies:
+    "@kusto/language-service" "2.0.0-beta.0"
+    "@kusto/language-service-next" "0.0.42"
+
 "@leeoniya/react-inlinesvg@2.2.4":
   version "2.2.4"
   resolved "https://registry.yarnpkg.com/@leeoniya/react-inlinesvg/-/react-inlinesvg-2.2.4.tgz#b1f226136945fc692ea37f5a889e6545c9334336"

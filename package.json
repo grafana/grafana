@@ -213,6 +213,7 @@
     "@emotion/react": "11.1.5",
     "@grafana/aws-sdk": "0.0.3",
     "@grafana/slate-react": "0.22.9-grafana",
+    "@kusto/monaco-kusto": "^3.2.5",
     "@leeoniya/react-inlinesvg": "2.2.4",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",

@@ -41,9 +41,13 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
   };
 
   editorWillMount = (m: typeof monaco) => {
-    const { language, getSuggestions } = this.props;
+    const { language, getSuggestions, editorWillMount } = this.props;
     if (getSuggestions) {
       this.completionCancel = registerSuggestions(language, getSuggestions);
+    }
+
+    if (editorWillMount) {
+      editorWillMount(m);
     }
   };
 
