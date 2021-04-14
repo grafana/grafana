@@ -3,6 +3,7 @@ import { create } from '@storybook/theming/create';
 import lightTheme from '../src/themes/light';
 import darkTheme from '../src/themes/dark';
 import { GrafanaTheme } from '@grafana/data';
+import '..src/components/Icon/iconBundle';
 
 const createTheme = (theme: GrafanaTheme) => {
   return create({

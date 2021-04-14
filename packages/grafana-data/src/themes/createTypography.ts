@@ -60,7 +60,7 @@ export interface ThemeTypographyInput {
 }
 
 const defaultFontFamily = '"Inter", "Helvetica", "Arial", sans-serif';
-const defaultFontFamilyMonospace = "Menlo, Monaco, Consolas, 'Courier New', monospace";
+const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
 
 export function createTypography(palette: ThemePalette, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
   const {

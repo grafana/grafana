@@ -32,7 +32,7 @@ const theme: GrafanaThemeCommons = {
   typography: {
     fontFamily: {
       sansSerif: "'Inter', 'Helvetica Neue', Arial, sans-serif",
-      monospace: "Menlo, Monaco, Consolas, 'Courier New', monospace",
+      monospace: "'Roboto Mono', monospace",
     },
     size: {
       base: '14px',
