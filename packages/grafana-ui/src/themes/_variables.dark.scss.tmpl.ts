@@ -253,7 +253,7 @@ $side-menu-bg: $panel-bg;
 $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
 $side-menu-item-hover-bg: ${theme.colors.bg2};
-$side-menu-shadow: 0 0 20px black;
+$side-menu-shadow: 0 0 30px #111;
 $side-menu-icon-color: ${theme.palette.gray70};
 $side-menu-header-color: ${theme.colors.text};
 
