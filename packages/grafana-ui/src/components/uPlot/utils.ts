@@ -37,7 +37,7 @@ export function buildPlotConfig(props: PlotProps, plugins: Record<string, PlotPl
 
 export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]): AlignedData {
   const result: any[] = [];
-  const stackingGroups: Record<string, number[]> = {};
+  const stackingGroups: Map<string, number[]> = new Map();
 
   for (let i = 0; i < frame.fields.length; i++) {
     const f = frame.fields[i];
@@ -59,26 +59,22 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
     }
 
     if (f.config.custom?.stackingMode !== StackingMode.None && f.config.custom?.stackingGroup) {
-      if (!stackingGroups[f.config.custom.stackingGroup]) {
-        stackingGroups[f.config.custom.stackingGroup] = [result.length];
+      if (!stackingGroups.has(f.config.custom.stackingGroup)) {
+        stackingGroups.set(f.config.custom.stackingGroup, [result.length]);
       } else {
-        stackingGroups[f.config.custom.stackingGroup].push(result.length);
+        stackingGroups.set(
+          f.config.custom.stackingGroup,
+          stackingGroups.get(f.config.custom.stackingGroup)!.concat(result.length)
+        );
       }
     }
     result.push(f.values.toArray());
   }
 
   // Stacking
-  if (Object.keys(stackingGroups).length !== 0) {
+  if (stackingGroups.size !== 0) {
     // array or stacking groups
-    const groups = Object.keys(stackingGroups);
-
-    for (let i = 0; i < groups.length; i++) {
-      // stacking group key
-      const group = groups[i];
-      // series indexes within results array
-      const seriesIdxs = stackingGroups[group];
-
+    for (const [_, seriesIdxs] of stackingGroups.entries()) {
       const acc = Array(result[0].length).fill(0);
       for (let j = 0; j < seriesIdxs.length; j++) {
         const currentlyStacking = result[seriesIdxs[j]];
@@ -89,6 +85,7 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
         result[seriesIdxs[j]] = acc.slice();
       }
     }
+
     return result as AlignedData;
   }
   return result as AlignedData;
