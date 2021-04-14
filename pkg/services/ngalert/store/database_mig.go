@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+// AddAlertDefinitionMigrations should not be modified.
 func AddAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
 	mg.AddMigration("delete alert_definition table", migrator.NewDropTableMigration("alert_definition"))
 
@@ -53,6 +54,7 @@ func AddAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds 
 	}))
 }
 
+// AddAlertDefinitionMigrations should not be modified.
 func AddAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("delete alert_definition_version table", migrator.NewDropTableMigration("alert_definition_version"))
 

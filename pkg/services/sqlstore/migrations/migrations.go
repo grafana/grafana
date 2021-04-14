@@ -1,6 +1,9 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 // --- Migration Guide line ---
 // 1. Never change a migration that is committed and pushed to master
@@ -13,7 +16,7 @@ func AddMigrations(mg *Migrator) {
 	addTempUserMigrations(mg)
 	addStarMigrations(mg)
 	addOrgMigrations(mg)
-	addDashboardMigration(mg)
+	addDashboardMigration(mg) // Do NOT add more migrations to this function.
 	addDataSourceMigration(mg)
 	addApiKeyMigrations(mg)
 	addDashboardSnapshotMigrations(mg)
@@ -27,7 +30,7 @@ func AddMigrations(mg *Migrator) {
 	addTestDataMigrations(mg)
 	addDashboardVersionMigration(mg)
 	addTeamMigrations(mg)
-	addDashboardAclMigrations(mg)
+	addDashboardAclMigrations(mg) // Do NOT add more migrations to this function.
 	addTagMigration(mg)
 	addLoginAttemptMigrations(mg)
 	addUserAuthMigrations(mg)
@@ -35,6 +38,7 @@ func AddMigrations(mg *Migrator) {
 	addUserAuthTokenMigrations(mg)
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
+	ualert.AddMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
