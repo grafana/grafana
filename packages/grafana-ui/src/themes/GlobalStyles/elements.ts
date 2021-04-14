@@ -107,7 +107,6 @@ export function getElementStyles(theme: GrafanaThemeV2) {
 
       &:hover {
         color: ${theme.palette.emphasize(theme.palette.text.link, 0.15)};
-        text-decoration: underline;
       }
 
       &:focus {
