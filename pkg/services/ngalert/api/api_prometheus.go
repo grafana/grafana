@@ -64,10 +64,10 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 	}
 
 	for _, r := range ruleGroupQuery.Result {
-		if len(r) < 2 {
+		if len(r) < 3 {
 			continue
 		}
-		groupId, namespaceUID := r[0], r[1]
+		groupId, namespaceUID, namespace := r[0], r[1], r[2]
 		alertRuleQuery := ngmodels.ListRuleGroupAlertRulesQuery{OrgID: c.SignedInUser.OrgId, NamespaceUID: namespaceUID, RuleGroup: groupId}
 		if err := srv.store.GetRuleGroupAlertRules(&alertRuleQuery); err != nil {
 			ruleResponse.DiscoveryBase.Status = "error"
@@ -77,8 +77,10 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		}
 
 		newGroup := &apimodels.RuleGroup{
-			Name:           groupId,
-			File:           "", // This doesn't make sense in our architecture but would be a good use case for provisioned alerts.
+			Name: groupId,
+			// This doesn't make sense in our architecture
+			// so we use this field for passing to the frontend the namaspace
+			File:           namespace,
 			LastEvaluation: time.Time{},
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
