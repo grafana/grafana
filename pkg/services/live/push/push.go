@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/grafana/grafana-live-sdk/telemetry"
+
 	"github.com/grafana/grafana-live-sdk/telemetry/telegraf"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -70,10 +72,26 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		return
 	}
 
-	// TODO Grafana 8: decide which format to use or keep both.
-	converter := g.telegrafConverterWide
-	if ctx.Req.URL.Query().Get("format") == "labels_column" {
+	// TODO Grafana 8: decide which format to use or keep all.
+	var converter telemetry.Converter
+	frameFormat := ctx.Req.URL.Query().Get("gf_live_frame_format")
+	if frameFormat == "" {
+		frameFormat = "wide"
+	}
+	switch frameFormat {
+	case "wide":
+		converter = g.telegrafConverterWide
+	case "labels_column":
 		converter = g.telegrafConverterLabelsColumn
+	default:
+		logger.Error("Unsupported frame format", "format", frameFormat)
+		ctx.Resp.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var stableSchema bool
+	if ctx.Req.URL.Query().Get("gf_live_stable_schema") != "" {
+		stableSchema = true
 	}
 
 	body, err := ctx.Req.Body().Bytes()
@@ -82,7 +100,13 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	logger.Debug("Live Push request body", "streamId", streamID, "bodyLength", len(body))
+	logger.Debug("Live Push request body",
+		"protocol", "http",
+		"streamId", streamID,
+		"bodyLength", len(body),
+		"stableSchema", stableSchema,
+		"frameFormat", frameFormat,
+	)
 
 	metricFrames, err := converter.Convert(body)
 	if err != nil {
@@ -95,7 +119,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	// interval = "1s" vs flush_interval = "5s"
 
 	for _, mf := range metricFrames {
-		err := stream.Push(mf.Key(), mf.Frame())
+		err := stream.Push(mf.Key(), mf.Frame(), stableSchema)
 		if err != nil {
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return

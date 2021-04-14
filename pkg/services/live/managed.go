@@ -87,33 +87,39 @@ func (s *ManagedStream) ListChannels(prefix string) []util.DynMap {
 }
 
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
-func (s *ManagedStream) Push(path string, frame *data.Frame) error {
+func (s *ManagedStream) Push(path string, frame *data.Frame, stableSchema bool) error {
 	// Keep schema + data for last packet.
 	frameJSON, err := data.FrameToJSON(frame, true, true)
 	if err != nil {
-		logger.Error("Error marshaling Frame to Schema", "error", err)
+		logger.Error("Error marshaling frame with Schema", "error", err)
 		return err
 	}
 
-	// Locks until we totally finish?
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	if stableSchema {
+		// If schema is stable we can safely cache it, and only send values if
+		// stream already has schema cached.
+		// For unstable schema we always need to send everything to a connection.
+		// And we don't want to cache schema for unstable case.
+		s.mu.Lock()
+		_, exists := s.last[path]
+		s.last[path] = frameJSON
+		s.mu.Unlock()
 
-	_, exists := s.last[path]
-	s.last[path] = frameJSON
-
-	// When the packet already exits, only send the data.
-	if exists {
-		frameJSON, err = data.FrameToJSON(frame, false, true)
-		if err != nil {
-			logger.Error("Error marshaling Frame to JSON", "error", err)
-			return err
+		// When the packet already exits, only send the data.
+		// TODO: maybe a good idea would be MarshalJSON function of
+		// frame to keep Schema JSON and Values JSON in frame object
+		// to avoid encoding twice.
+		if exists {
+			frameJSON, err = data.FrameToJSON(frame, false, true)
+			if err != nil {
+				logger.Error("Error marshaling Frame to JSON", "error", err)
+				return err
+			}
 		}
 	}
-
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
-	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
+	logger.Debug("Publish data to channel", "channel", channel, "data", string(frameJSON))
 	return s.publisher(channel, frameJSON)
 }
 
@@ -145,7 +151,7 @@ func (s *ManagedStream) OnPublish(_ context.Context, _ *models.SignedInUser, evt
 		// Stream scope only deals with data frames.
 		return models.PublishReply{}, 0, err
 	}
-	err = s.Push(evt.Path, &frame)
+	err = s.Push(evt.Path, &frame, true)
 	if err != nil {
 		// Stream scope only deals with data frames.
 		return models.PublishReply{}, 0, err
