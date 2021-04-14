@@ -509,7 +509,7 @@ def codespell_step():
         ],
         'commands': [
             # Important: all words have to be in lowercase, and separated by "\n".
-            'echo -e "unknwon\nreferer\nerrorstring\neror\niam" > words_to_ignore.txt',
+            'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
             'codespell -I words_to_ignore.txt docs/',
         ],
     }
