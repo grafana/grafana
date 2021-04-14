@@ -97,7 +97,7 @@ The following guidelines are specific to Grafana documentation. For the most par
 
 #### Step-by-step headings
 
-In most cases, headings are not be numbered steps.
+In most cases, headings are not numbered steps.
 
 However, sometimes we need to use headings as numbered steps. This is mostly in cases where each step is complex or a series of other procedures. For example, in [Getting started with Grafana and Prometheus](https://grafana.com/docs/grafana/latest/getting-started/getting-started-prometheus/).
 
