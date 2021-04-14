@@ -111,16 +111,8 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64]st
 				return nil, err
 			}
 
-			// getDsInfo := &models.GetDataSourceQuery{
-			// 	OrgId: orgID,
-			// 	Id:    set.Conditions[condIdx].Query.DatasourceID,
-			// }
-
-			// if err := bus.Dispatch(getDsInfo); err != nil {
-			// 	return nil, fmt.Errorf("could not find datasource: %w", err)
-			// }
-
-			dsUID, _ := dsIDMap[[2]int64{orgID, set.Conditions[condIdx].Query.DatasourceID}]
+			// one could have an alert saved but datasource deleted, so can not require match.
+			dsUID := dsIDMap[[2]int64{orgID, set.Conditions[condIdx].Query.DatasourceID}]
 			queryObj["datasourceUid"] = dsUID
 			queryObj["refId"] = refID
 
@@ -234,7 +226,8 @@ type alertQuery struct {
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
 
-	modelProps map[string]interface{}
+	//TODO: Needed for PreSave, if PreSave needed?
+	//modelProps map[string]interface{}
 }
 
 // RelativeTimeRange is the per query start and end time
