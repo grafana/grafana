@@ -1,8 +1,13 @@
-import { MetricKind, ValueTypes } from './types';
+import { AuthType, MetricKind, QueryType, ValueTypes } from './types';
 
 export const LABEL_WIDTH = 16;
 export const SELECT_WIDTH = 32;
 export const INPUT_WIDTH = 74;
+
+export const AUTH_TYPES = [
+  { value: 'Google JWT File', key: AuthType.JWT },
+  { value: 'GCE Default Service Account', key: AuthType.GCE },
+];
 
 export const ALIGNMENTS = [
   {
@@ -252,4 +257,9 @@ export const SELECTORS = [
   { label: 'SLI Value', value: 'select_slo_health' },
   { label: 'SLO Compliance', value: 'select_slo_compliance' },
   { label: 'SLO Error Budget Remaining', value: 'select_slo_budget_fraction' },
+];
+
+export const QUERY_TYPES = [
+  { label: 'Metrics', value: QueryType.METRICS },
+  { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
 ];

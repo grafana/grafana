@@ -3,8 +3,8 @@ import { css } from '@emotion/css';
 import { ExploreQueryFieldProps } from '@grafana/data';
 import { Button, Select } from '@grafana/ui';
 import { MetricQueryEditor, SLOQueryEditor, InlineFields } from './';
-import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, queryTypes, EditorMode } from '../types';
-import { LABEL_WIDTH, SELECT_WIDTH } from '../constants';
+import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery, EditorMode } from '../types';
+import { LABEL_WIDTH, SELECT_WIDTH, QUERY_TYPES } from '../constants';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLO/SLOQueryEditor';
 import { toOption } from '../functions';
@@ -57,7 +57,7 @@ export class QueryEditor extends PureComponent<Props> {
           <Select
             width={SELECT_WIDTH}
             value={queryType}
-            options={queryTypes}
+            options={QUERY_TYPES}
             onChange={({ value }) => {
               onChange({ ...query, sloQuery, queryType: value! });
               onRunQuery();

@@ -18,25 +18,23 @@ export const AlignmentFunction: FC<Props> = ({ query, templateVariableOptions, o
   );
 
   return (
-    <>
-      <InlineField label="Alignment function" className="width-16">
-        <Select
-          onChange={({ value }) => onChange({ ...query, perSeriesAligner: value! })}
-          value={[...alignOptions, ...templateVariableOptions].find((s) => s.value === perSeriesAligner)}
-          options={[
-            {
-              label: 'Template Variables',
-              options: templateVariableOptions,
-            },
-            {
-              label: 'Alignment options',
-              expanded: true,
-              options: alignOptions,
-            },
-          ]}
-          placeholder="Select Alignment"
-        ></Select>
-      </InlineField>
-    </>
+    <InlineField label="Alignment function" className="width-16">
+      <Select
+        onChange={({ value }) => onChange({ ...query, perSeriesAligner: value! })}
+        value={[...alignOptions, ...templateVariableOptions].find((s) => s.value === perSeriesAligner)}
+        options={[
+          {
+            label: 'Template Variables',
+            options: templateVariableOptions,
+          },
+          {
+            label: 'Alignment options',
+            expanded: true,
+            options: alignOptions,
+          },
+        ]}
+        placeholder="Select Alignment"
+      ></Select>
+    </InlineField>
   );
 };

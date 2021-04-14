@@ -107,20 +107,6 @@ export enum AlignmentTypes {
   ALIGN_PERCENT_CHANGE = 'ALIGN_PERCENT_CHANGE',
 }
 
-export const preprocessors = [
-  { label: 'None', value: PreprocessorType.None },
-  {
-    label: 'Rate',
-    value: PreprocessorType.Rate,
-  },
-  { label: 'Delta', value: PreprocessorType.Delta },
-];
-
-export const queryTypes = [
-  { label: 'Metrics', value: QueryType.METRICS },
-  { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
-];
-
 export interface BaseQuery {
   projectName: string;
   perSeriesAligner?: string;

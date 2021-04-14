@@ -16,28 +16,23 @@ export interface Props {
 }
 
 const operators = ['=', '!=', '=~', '!=~'];
-const FilterButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(
-  ({ value, isOpen, invalid, ...rest }, ref) => {
-    return (
-      <Button ref={ref} {...rest} variant="secondary" icon="plus">
-        Add filter
-      </Button>
-    );
-  }
-);
 
+const FilterButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(({ value, ...rest }, ref) => {
+  return (
+    <Button ref={ref} {...rest} variant="secondary" icon="plus">
+      Add filter
+    </Button>
+  );
+});
 FilterButton.displayName = 'FilterButton';
 
-const OperatorButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(
-  ({ value, isOpen, invalid, ...rest }, ref) => {
-    return (
-      <Button ref={ref} {...rest} variant="secondary">
-        <span className="query-segment-operator">{value?.label}</span>
-      </Button>
-    );
-  }
-);
-
+const OperatorButton = React.forwardRef<HTMLButtonElement, CustomControlProps<string>>(({ value, ...rest }, ref) => {
+  return (
+    <Button ref={ref} {...rest} variant="secondary">
+      <span className="query-segment-operator">{value?.label}</span>
+    </Button>
+  );
+});
 OperatorButton.displayName = 'OperatorButton';
 
 export const LabelFilter: FunctionComponent<Props> = ({

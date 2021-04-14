@@ -24,7 +24,7 @@ export const Alignment: FC<Props> = ({ templateVariableOptions, onChange, query,
       tooltip="The process of alignment consists of collecting all data points received in a fixed length of time, applying a function to combine those data points, and assigning a timestamp to the result."
     >
       <AlignmentFunction templateVariableOptions={templateVariableOptions} query={query} onChange={onChange} />
-      <InlineField label="Period" className="">
+      <InlineField label="Period">
         <AlignmentPeriod templateVariableOptions={templateVariableOptions} query={query} onChange={onChange} />
       </InlineField>
       <AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />
