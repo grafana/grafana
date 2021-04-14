@@ -3,7 +3,7 @@ name: publish_docs
 on:
   push:
     branches:
-    - master
+    - v7.5.x
     paths:
     - 'docs/sources/**'
     - 'packages/grafana-*/**'
@@ -32,7 +32,7 @@ jobs:
       id: publish
       with:
         repository: grafana/website
-        branch: v7.5.x
+        branch: master
         host: github.com
         github_pat: '${{ secrets.GH_BOT_ACCESS_TOKEN }}'
         source_folder: docs/sources
