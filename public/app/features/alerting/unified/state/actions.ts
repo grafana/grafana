@@ -5,7 +5,12 @@ import { appEvents } from 'app/core/core';
 import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
-import { RulerGrafanaRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import {
+  PostableRulerRuleGroupDTO,
+  RulerGrafanaRuleDTO,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 import { fetchAlertManagerConfig, fetchSilences } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -242,7 +247,7 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
       group = `${values.name}-${++idx}`;
     }
 
-    const payload: RulerRuleGroupDTO = {
+    const payload: PostableRulerRuleGroupDTO = {
       name: group,
       interval: evaluateEvery,
       rules: [formRule],

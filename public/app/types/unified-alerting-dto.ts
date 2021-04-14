@@ -108,9 +108,9 @@ export interface GrafanaQuery {
   };
   model: GrafanaQueryModel;
 }
-export interface GrafanaRuleDefinition {
+
+export interface PostableGrafanaRuleDefinition {
   uid?: string;
-  namespace_uid?: string;
   title: string;
   condition: string;
   for: number; //@TODO Sofia will update to accept string
@@ -120,6 +120,10 @@ export interface GrafanaRuleDefinition {
   annotations: Annotations;
   labels: Labels;
 }
+export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
+  uid: string;
+  namespace_uid: string;
+}
 
 export interface RulerGrafanaRuleDTO {
   grafana_alert: GrafanaRuleDefinition;
@@ -127,12 +131,20 @@ export interface RulerGrafanaRuleDTO {
   // annotations?: Annotations;
 }
 
+export interface PostableRuleGrafanaRuleDTO {
+  grafana_alert: PostableGrafanaRuleDefinition;
+}
+
 export type RulerRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | RulerGrafanaRuleDTO;
 
-export type RulerRuleGroupDTO = {
+export type PostableRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | PostableRuleGrafanaRuleDTO;
+
+export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
   name: string;
   interval?: string;
-  rules: RulerRuleDTO[];
+  rules: R[];
 };
+
+export type PostableRulerRuleGroupDTO = RulerRuleGroupDTO<PostableRuleDTO>;
 
 export type RulerRulesConfigDTO = { [namespace: string]: RulerRuleGroupDTO[] };

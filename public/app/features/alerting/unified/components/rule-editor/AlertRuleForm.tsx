@@ -49,8 +49,8 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
 
-  const submit = (values: RuleFormValues) => {
-    console.log('submit', values);
+  const submit = (values: RuleFormValues, e: React.SyntheticEvent) => {
+    console.log('submit', values, e);
     dispatch(
       saveRuleFormAction({
         values: {
@@ -67,14 +67,16 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     <FormContext {...formAPI}>
       <form onSubmit={handleSubmit(submit)} className={styles.form}>
         <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
-          <ToolbarButton variant="default" disabled={submitState.loading}>
-            Cancel
-          </ToolbarButton>
-          <ToolbarButton variant="primary" type="submit" disabled={submitState.loading}>
+          <a href="/alerting/list">
+            <ToolbarButton variant="default" disabled={submitState.loading} type="button">
+              Cancel
+            </ToolbarButton>
+          </a>
+          <ToolbarButton variant="primary" type="submit" name="submit" disabled={submitState.loading}>
             {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
             Save
           </ToolbarButton>
-          <ToolbarButton variant="primary" disabled={submitState.loading}>
+          <ToolbarButton variant="primary" type="submit" name="submit_and_exit" disabled={submitState.loading}>
             {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
             Save and exit
           </ToolbarButton>

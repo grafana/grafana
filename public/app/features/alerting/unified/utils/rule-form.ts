@@ -4,8 +4,8 @@ import {
   Annotations,
   GrafanaAlertState,
   Labels,
+  PostableRuleGrafanaRuleDTO,
   RulerAlertingRuleDTO,
-  RulerGrafanaRuleDTO,
 } from 'app/types/unified-alerting-dto';
 import { SAMPLE_QUERIES } from '../mocks/grafana-queries';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
@@ -62,7 +62,7 @@ function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Arr
   return [...recordToArray(item || {}), { key: '', value: '' }];
 }
 
-export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): RulerGrafanaRuleDTO {
+export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
   const { name, condition, noDataState, execErrState, evaluateFor, queries } = values;
   if (condition) {
     return {
