@@ -114,11 +114,7 @@ func (c *PostableRuleGroupConfig) UnmarshalJSON(b []byte) error {
 // Type requires validate has been called and just checks the first rule type
 func (c *PostableRuleGroupConfig) Type() (backend Backend, err error) {
 	for _, rule := range c.Rules {
-		b, err := rule.Type()
-		if err != nil {
-			return backend, err
-		}
-		switch b {
+		switch rule.Type() {
 		case GrafanaManagedRule:
 			return GrafanaBackend, nil
 		case LoTexManagedRule:
@@ -131,11 +127,7 @@ func (c *PostableRuleGroupConfig) Type() (backend Backend, err error) {
 func (c *PostableRuleGroupConfig) validate() error {
 	var hasGrafRules, hasLotexRules bool
 	for _, rule := range c.Rules {
-		b, err := rule.Type()
-		if err != nil {
-			return err
-		}
-		switch b {
+		switch rule.Type() {
 		case GrafanaManagedRule:
 			hasGrafRules = true
 		case LoTexManagedRule:
@@ -219,18 +211,12 @@ type PostableExtendedRuleNode struct {
 	GrafanaManagedAlert *PostableGrafanaRule `yaml:"grafana_alert,omitempty" json:"grafana_alert,omitempty"`
 }
 
-func (n *PostableExtendedRuleNode) Type() (RuleType, error) {
-	if n.ApiRuleNode == nil && n.GrafanaManagedAlert == nil {
-		return 0, fmt.Errorf("cannot have empty rule")
+func (n *PostableExtendedRuleNode) Type() RuleType {
+	if n.GrafanaManagedAlert != nil {
+		return GrafanaManagedRule
 	}
 
-	if n.GrafanaManagedAlert != nil {
-		if n.ApiRuleNode != nil && (n.ApiRuleNode.Expr != "" || n.ApiRuleNode.Record != "") {
-			return 0, fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
-		}
-		return GrafanaManagedRule, nil
-	}
-	return LoTexManagedRule, nil
+	return LoTexManagedRule
 }
 
 func (n *PostableExtendedRuleNode) UnmarshalJSON(b []byte) error {
