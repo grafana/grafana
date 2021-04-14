@@ -1,6 +1,6 @@
 +++
 title = "Add authentication for data source plugins"
-aliases = ["/docs/grafana/next/plugins/developing/auth-for-datasources/",  "/docs/grafana/next/developers/plugins/authentication/"]
+aliases = ["/docs/grafana/next/plugins/developing/auth-for-datasources/", "/docs/grafana/next/developers/plugins/authentication/"]
 +++
 
 # Add authentication for data source plugins
@@ -11,7 +11,7 @@ When a user saves a password or any other sensitive data as a data source option
 
 To minimize the amount of sensitive information sent to and from the browser, data source plugins can use the Grafana _data source proxy_. When using the data source proxy, any requests containing sensitive information go through the Grafana server. No sensitive data is sent to the browser after the data is saved.
 
-Some data sources, like [Prometheus](https://grafana.com/docs/grafana/next/features/datasources/prometheus/) and [InfluxDB](https://grafana.com/docs/grafana/next/features/datasources/influxdb/), allow users to configure whether to use the data source proxy, through a setting called _access modes_.
+Some data sources, like [Prometheus]({{< relref "../../datasources/prometheus.md" >}}) and [InfluxDB]({{< relref "../../datasources/influxdb" >}}), allow users to configure whether to use the data source proxy, through a setting called _access modes_.
 
 ## Add a proxy route to your plugin
 
