@@ -38,6 +38,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaTheme, UrlQueryValue } from '@grafana/data';
+import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -282,24 +283,24 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     locationService.push('/');
   };
 
-  renderSlowInitState(dashboardLoadingstyle: string, dashboardLoadingTextStyle: string) {
-    return (
-      <div className={dashboardLoadingstyle}>
-        <div className={dashboardLoadingTextStyle}>
-          <VerticalGroup spacing="md">
-            <HorizontalGroup align="center" justify="center" spacing="xs">
-              <Spinner inline={true} /> {this.props.initPhase}
-            </HorizontalGroup>{' '}
-            <HorizontalGroup align="center" justify="center">
-              <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
-                Cancel loading dashboard
-              </Button>
-            </HorizontalGroup>
-          </VerticalGroup>
-        </div>
-      </div>
-    );
-  }
+  // renderSlowInitState(dashboardLoadingstyle: string, dashboardLoadingTextStyle: string) {
+  //   return (
+  //     <div className={dashboardLoadingstyle}>
+  //       <div className={dashboardLoadingTextStyle}>
+  //         <VerticalGroup spacing="md">
+  //           <HorizontalGroup align="center" justify="center" spacing="xs">
+  //             <Spinner inline={true} /> {this.props.initPhase}
+  //           </HorizontalGroup>{' '}
+  //           <HorizontalGroup align="center" justify="center">
+  //             <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
+  //               Cancel loading dashboard
+  //             </Button>
+  //           </HorizontalGroup>
+  //         </VerticalGroup>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   renderInitFailedState(dashboardLoadingstyle: string) {
     const { initError } = this.props;
@@ -343,7 +344,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     if (!dashboard) {
       if (isInitSlow) {
-        return this.renderSlowInitState(styles.dashboardLoading, styles.dashboardLoadingText);
+        return <DashboardLoading initPhase={this.props.initPhase} />;
       }
 
       return null;
