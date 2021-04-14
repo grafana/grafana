@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { dateTime, toUtc, DataSourceInstanceSettings } from '@grafana/data';
+import { dateTime, DataSourceInstanceSettings } from '@grafana/data';
 
 import { MysqlDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -22,23 +22,12 @@ describe('MySQLDatasource', () => {
       },
     } as unknown) as DataSourceInstanceSettings<MySQLOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
-    const raw = {
-      from: toUtc('2018-04-25 10:00'),
-      to: toUtc('2018-04-25 11:00'),
-    };
-    const timeSrvMock: any = {
-      timeRange: () => ({
-        from: raw.from,
-        to: raw.to,
-        raw: raw,
-      }),
-    };
     const variable = { ...initialCustomVariableModelState };
 
     jest.clearAllMocks();
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
-    const ds = new MysqlDatasource(instanceSettings, templateSrv, timeSrvMock);
+    const ds = new MysqlDatasource(instanceSettings, templateSrv);
 
     return { ds, variable, templateSrv };
   };

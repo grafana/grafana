@@ -800,9 +800,7 @@ func ConvertSqlTimeColumnToEpochMs(frame *data.Frame, timeIndex int) error {
 			return fmt.Errorf("column type %s is not convertible to time.Time", valueType)
 		}
 		frame.Fields[timeIndex] = newField
-
 	} else {
-
 		return fmt.Errorf("timeIndex %d is out of range", timeIndex)
 	}
 	return nil
