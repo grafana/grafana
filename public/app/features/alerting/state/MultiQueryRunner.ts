@@ -85,7 +85,7 @@ export class MultiQueryRunner {
         combineAll(),
         map((data) => {
           return data.reduce((record: Record<string, PanelData>, panelData) => {
-            const refId = panelData.series[0].refId;
+            const refId = panelData.request?.targets[0].refId;
 
             if (!refId) {
               return record;

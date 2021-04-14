@@ -98,7 +98,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
                   return (
                     <QueryEditorRow
-                      dsSettings={dsSettings}
+                      dsSettings={{ ...dsSettings, meta: { ...dsSettings.meta, mixed: true } }}
                       id={query.refId}
                       index={index}
                       key={query.refId}
