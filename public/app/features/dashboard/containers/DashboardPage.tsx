@@ -269,10 +269,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     this.setState({ updateScrollTop: 0 });
   };
 
-  cancelVariables = () => {
-    locationService.push('/');
-  };
-
   getInspectPanel() {
     const { dashboard, queryParams } = this.props;
 
@@ -389,15 +385,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex: 1 1 0;
       flex-direction: column;
-    `,
-    dashboardLoading: css`
-      height: 60vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `,
-    dashboardLoadingText: css`
-      font-size: ${theme.typography.size.lg};
     `,
     dashboardScroll: css`
       width: 100%;
