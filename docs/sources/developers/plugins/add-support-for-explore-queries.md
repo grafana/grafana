@@ -107,3 +107,5 @@ export default (props: Props) => {
   }
 }
 ```
+
+For possible options, refer to [PreferredVisualisationType](https://grafana.com/docs/grafana/latest/packages_api/data/preferredvisualisationtype/).
