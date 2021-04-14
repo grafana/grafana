@@ -269,7 +269,15 @@ async function saveGrafanaRule(values: RuleFormValues, existing?: RuleWithLocati
 
 export const saveRuleFormAction = createAsyncThunk(
   'unifiedalerting/saveRuleForm',
-  ({ values, existing }: { values: RuleFormValues; existing?: RuleWithLocation }): Promise<void> =>
+  ({
+    values,
+    existing,
+    exitOnSave,
+  }: {
+    values: RuleFormValues;
+    existing?: RuleWithLocation;
+    exitOnSave: boolean;
+  }): Promise<void> =>
     withSerializedError(
       (async () => {
         const { type } = values;
@@ -283,12 +291,18 @@ export const saveRuleFormAction = createAsyncThunk(
         } else {
           throw new Error('Unexpected rule form type');
         }
-        // redirect to edit page
-        const newLocation = `/alerting/${encodeURIComponent(stringifyRuleIdentifier(identifier))}/edit`;
-        if (locationService.getLocation().pathname !== newLocation) {
-          locationService.replace(newLocation);
+        if (exitOnSave) {
+          locationService.push('/alerting/list');
+        } else {
+          // redirect to edit page
+          const newLocation = `/alerting/${encodeURIComponent(stringifyRuleIdentifier(identifier))}/edit`;
+          if (locationService.getLocation().pathname !== newLocation) {
+            locationService.replace(newLocation);
+          }
         }
-        appEvents.emit(AppEvents.alertSuccess, ['Rule saved.']);
+        appEvents.emit(AppEvents.alertSuccess, [
+          existing ? `Rule "${values.name}" updated.` : `Rule "${values.name}" saved.`,
+        ]);
       })()
     )
 );
