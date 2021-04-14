@@ -431,8 +431,8 @@
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
   "Duration": {
-   "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
    "format": "int64",
+   "title": "Duration is a type used for marshalling durations.",
    "type": "integer"
   },
   "EmailConfig": {
@@ -730,13 +730,6 @@
   },
   "GettableGrafanaRule": {
    "properties": {
-    "annotations": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object",
-     "x-go-name": "Annotations"
-    },
     "condition": {
      "type": "string",
      "x-go-name": "Condition"
@@ -756,9 +749,6 @@
      "type": "string",
      "x-go-name": "ExecErrState"
     },
-    "for": {
-     "$ref": "#/definitions/Duration"
-    },
     "id": {
      "format": "int64",
      "type": "integer",
@@ -768,6 +758,11 @@
      "format": "int64",
      "type": "integer",
      "x-go-name": "IntervalSeconds"
+    },
+    "namespace_id": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "NamespaceID"
     },
     "namespace_uid": {
      "type": "string",
@@ -1466,13 +1461,6 @@
   },
   "PostableGrafanaRule": {
    "properties": {
-    "annotations": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object",
-     "x-go-name": "Annotations"
-    },
     "condition": {
      "type": "string",
      "x-go-name": "Condition"
@@ -1491,9 +1479,6 @@
      ],
      "type": "string",
      "x-go-name": "ExecErrState"
-    },
-    "for": {
-     "$ref": "#/definitions/Duration"
     },
     "no_data_state": {
      "enum": [

@@ -1236,9 +1236,9 @@
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
     "Duration": {
-      "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
       "format": "int64",
+      "title": "Duration is a type used for marshalling durations.",
       "$ref": "#/definitions/Duration"
     },
     "EmailConfig": {
@@ -1539,13 +1539,6 @@
     "GettableGrafanaRule": {
       "type": "object",
       "properties": {
-        "annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Annotations"
-        },
         "condition": {
           "type": "string",
           "x-go-name": "Condition"
@@ -1565,9 +1558,6 @@
           ],
           "x-go-name": "ExecErrState"
         },
-        "for": {
-          "$ref": "#/definitions/Duration"
-        },
         "id": {
           "type": "integer",
           "format": "int64",
@@ -1577,6 +1567,11 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "IntervalSeconds"
+        },
+        "namespace_id": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "NamespaceID"
         },
         "namespace_uid": {
           "type": "string",
@@ -2278,13 +2273,6 @@
     "PostableGrafanaRule": {
       "type": "object",
       "properties": {
-        "annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Annotations"
-        },
         "condition": {
           "type": "string",
           "x-go-name": "Condition"
@@ -2303,9 +2291,6 @@
             "KeepLastState"
           ],
           "x-go-name": "ExecErrState"
-        },
-        "for": {
-          "$ref": "#/definitions/Duration"
         },
         "no_data_state": {
           "type": "string",

@@ -210,10 +210,11 @@ type PostableExtendedRuleNode struct {
 }
 
 func (n *PostableExtendedRuleNode) Type() RuleType {
-	if n.ApiRuleNode != nil {
-		return LoTexManagedRule
+	if n.GrafanaManagedAlert != nil {
+		return GrafanaManagedRule
 	}
-	return GrafanaManagedRule
+
+	return LoTexManagedRule
 }
 
 func (n *PostableExtendedRuleNode) UnmarshalJSON(b []byte) error {
@@ -222,13 +223,19 @@ func (n *PostableExtendedRuleNode) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if n.ApiRuleNode != nil && n.GrafanaManagedAlert != nil {
-		return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
-	}
+	return n.validate()
+}
+
+func (n *PostableExtendedRuleNode) validate() error {
 	if n.ApiRuleNode == nil && n.GrafanaManagedAlert == nil {
 		return fmt.Errorf("cannot have empty rule")
 	}
 
+	if n.GrafanaManagedAlert != nil {
+		if n.ApiRuleNode != nil && (n.ApiRuleNode.Expr != "" || n.ApiRuleNode.Record != "") {
+			return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
+		}
+	}
 	return nil
 }
 
@@ -240,10 +247,10 @@ type GettableExtendedRuleNode struct {
 }
 
 func (n *GettableExtendedRuleNode) Type() RuleType {
-	if n.ApiRuleNode != nil {
-		return LoTexManagedRule
+	if n.GrafanaManagedAlert != nil {
+		return GrafanaManagedRule
 	}
-	return GrafanaManagedRule
+	return LoTexManagedRule
 }
 
 func (n *GettableExtendedRuleNode) UnmarshalJSON(b []byte) error {
@@ -252,13 +259,19 @@ func (n *GettableExtendedRuleNode) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if n.ApiRuleNode != nil && n.GrafanaManagedAlert != nil {
-		return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
-	}
+	return n.validate()
+}
+
+func (n *GettableExtendedRuleNode) validate() error {
 	if n.ApiRuleNode == nil && n.GrafanaManagedAlert == nil {
 		return fmt.Errorf("cannot have empty rule")
 	}
 
+	if n.GrafanaManagedAlert != nil {
+		if n.ApiRuleNode != nil && (n.ApiRuleNode.Expr != "" || n.ApiRuleNode.Record != "") {
+			return fmt.Errorf("cannot have both Prometheus style rules and Grafana rules together")
+		}
+	}
 	return nil
 }
 
@@ -289,8 +302,6 @@ type PostableGrafanaRule struct {
 	UID          string              `json:"uid" yaml:"uid"`
 	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	For          models.Duration     `json:"for" yaml:"for"`
-	Annotations  map[string]string   `json:"annotations" yaml:"annotations"`
 }
 
 // swagger:model
@@ -305,9 +316,8 @@ type GettableGrafanaRule struct {
 	Version         int64               `json:"version" yaml:"version"`
 	UID             string              `json:"uid" yaml:"uid"`
 	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
+	NamespaceID     int64               `json:"namespace_id" yaml:"namespace_id"`
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	For             models.Duration     `json:"for" yaml:"for"`
-	Annotations     map[string]string   `json:"annotations" yaml:"annotations"`
 }
