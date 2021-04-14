@@ -39,7 +39,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -285,7 +285,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -733,7 +733,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -1101,7 +1101,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -1668,7 +1668,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -2025,7 +2025,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -2585,7 +2585,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -2913,7 +2913,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
