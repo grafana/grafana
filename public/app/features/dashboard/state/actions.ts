@@ -134,8 +134,10 @@ export function initDashboardPanel(panel: PanelModel): ThunkResult<void> {
         plugin = await dispatch(loadPanelPlugin(pluginToLoad));
       } catch (e) {
         // When plugin not found
-        plugin = getPanelPluginNotFound(pluginToLoad);
-        notFound = true;
+        plugin = getPanelPluginNotFound(pluginToLoad, pluginToLoad === 'row');
+        if (pluginToLoad !== 'row') {
+          notFound = true;
+        }
       }
     }
 
