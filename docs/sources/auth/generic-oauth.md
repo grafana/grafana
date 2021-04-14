@@ -194,7 +194,7 @@ To ease configuration of a proper JMESPath expression, you can test/evaluate exp
 
 ### Role mapping
 
-By default the user is assigned the role `Viewer` if `role_attribute_path` doesn't return a role for the user, this is not always desirable and can be disabled by setting `role_attribute_strict = true`, which will deny the user access if no role is returned.
+By default the user is assigned the role `Viewer` if `role_attribute_path` doesn't return a role for the user, this is not always desirable and can be disabled by setting `role_attribute_strict = true`, which will deny the user access if no role or an invalid role is returned.
 
 **Basic example:**
 
