@@ -1,35 +1,34 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { useTheme, VizLegend } from '@grafana/ui';
-import { number, select } from '@storybook/addon-knobs';
+import { Story, Meta } from '@storybook/react';
 import {} from './VizLegendListItem';
 import { DisplayValue, getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VizLegendItem } from './types';
 import { LegendDisplayMode, LegendPlacement } from './models.gen';
 
-const getStoriesKnobs = (table = false) => {
-  const seriesCount = number('Number of series', 5);
-  const containerWidth = select(
-    'Container width',
-    {
-      Small: '200px',
-      Medium: '500px',
-      'Full width': '100%',
-    },
-    '100%'
-  );
-
-  return {
-    seriesCount,
-    containerWidth,
-  };
-};
-
 export default {
   title: 'Visualizations/VizLegend',
   component: VizLegend,
   decorators: [withCenteredStory],
-};
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+  },
+  args: {
+    containerWidth: '100%',
+    seriesCount: 5,
+  },
+  argTypes: {
+    containerWidth: {
+      control: {
+        type: 'select',
+        options: ['200px', '500px', '100%'],
+      },
+    },
+  },
+} as Meta;
 
 interface LegendStoryDemoProps {
   name: string;
@@ -42,6 +41,10 @@ interface LegendStoryDemoProps {
 const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, name, placement, stats }) => {
   const theme = useTheme();
   const [items, setItems] = useState<VizLegendItem[]>(generateLegendItems(seriesCount, theme, stats));
+
+  useEffect(() => {
+    setItems(generateLegendItems(seriesCount, theme, stats));
+  }, [seriesCount, theme, stats]);
 
   const onSeriesColorChange = (label: string, color: string) => {
     setItems(
@@ -90,9 +93,7 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
   );
 };
 
-export const WithNoValues = () => {
-  const { seriesCount, containerWidth } = getStoriesKnobs();
-
+export const WithNoValues: Story = ({ containerWidth, seriesCount }) => {
   return (
     <div style={{ width: containerWidth }}>
       <LegendStoryDemo
@@ -117,8 +118,7 @@ export const WithNoValues = () => {
   );
 };
 
-export const WithValues = () => {
-  const { seriesCount, containerWidth } = getStoriesKnobs();
+export const WithValues: Story = ({ containerWidth, seriesCount }) => {
   const stats: DisplayValue[] = [
     {
       title: 'Min',

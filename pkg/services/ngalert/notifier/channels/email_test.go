@@ -1,6 +1,7 @@
 package channels
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -9,6 +10,9 @@ import (
 )
 
 func TestEmailNotifier(t *testing.T) {
+	externalURL, err := url.Parse("http://localhost")
+	require.NoError(t, err)
+
 	t.Run("empty settings should return error", func(t *testing.T) {
 		json := `{ }`
 
@@ -19,7 +23,7 @@ func TestEmailNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := NewEmailNotifier(model)
+		_, err := NewEmailNotifier(model, externalURL)
 		require.Error(t, err)
 	})
 
@@ -32,7 +36,7 @@ func TestEmailNotifier(t *testing.T) {
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
-		})
+		}, externalURL)
 
 		require.NoError(t, err)
 		require.Equal(t, "ops", emailNotifier.Name)
@@ -49,7 +53,7 @@ func TestEmailNotifier(t *testing.T) {
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
-		})
+		}, externalURL)
 
 		require.NoError(t, err)
 		require.Equal(t, "ops", emailNotifier.Name)

@@ -45,6 +45,7 @@ type RuleStore interface {
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
 	GetNamespaceUIDBySlug(string, int64, *models.SignedInUser) (string, error)
 	GetNamespaceByUID(string, int64, *models.SignedInUser) (string, error)
+	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules([]UpsertRule) error
 	UpdateRuleGroup(UpdateRuleGroupCmd) error
 	GetAlertInstance(*ngmodels.GetAlertInstanceQuery) error
@@ -211,6 +212,9 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				r.New.RuleGroup = r.Existing.RuleGroup
 				r.New.Version = r.Existing.Version + 1
 
+				r.New.For = r.Existing.For
+				r.New.Annotations = r.Existing.Annotations
+
 				if err := st.ValidateAlertRule(r.New, true); err != nil {
 					return err
 				}
@@ -241,6 +245,8 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				IntervalSeconds:  r.New.IntervalSeconds,
 				NoDataState:      r.New.NoDataState,
 				ExecErrState:     r.New.ExecErrState,
+				For:              r.New.For,
+				Annotations:      r.New.Annotations,
 			})
 		}
 
@@ -293,6 +299,7 @@ func (st DBstore) GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRules
 func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertRules := make([]*ngmodels.AlertRule, 0)
+
 		q := "SELECT * FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?"
 		if err := sess.SQL(q, query.OrgID, query.NamespaceUID, query.RuleGroup).Find(&alertRules); err != nil {
 			return err
@@ -422,6 +429,8 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 					IntervalSeconds: int64(time.Duration(cmd.RuleGroupConfig.Interval).Seconds()),
 					NamespaceUID:    cmd.NamespaceUID,
 					RuleGroup:       ruleGroup,
+					For:             r.GrafanaManagedAlert.For,
+					Annotations:     r.GrafanaManagedAlert.Annotations,
 					NoDataState:     ngmodels.NoDataState(r.GrafanaManagedAlert.NoDataState),
 					ExecErrState:    ngmodels.ExecutionErrorState(r.GrafanaManagedAlert.ExecErrState),
 				},
@@ -445,6 +454,19 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 				return err
 			}
 		}
+		return nil
+	})
+}
+
+func (st DBstore) GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error {
+	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		var ruleGroups []string
+		q := "SELECT DISTINCT rule_group FROM alert_rule WHERE org_id = ?"
+		if err := sess.SQL(q, query.OrgID).Find(&ruleGroups); err != nil {
+			return err
+		}
+
+		query.Result = ruleGroups
 		return nil
 	})
 }
