@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
 
 func Test_Rule_Marshaling(t *testing.T) {
+	dur, err := model.ParseDuration("1m")
+	require.NoError(t, err)
+
 	for _, tc := range []struct {
 		desc  string
 		input PostableExtendedRuleNode
@@ -27,12 +31,30 @@ func Test_Rule_Marshaling(t *testing.T) {
 			},
 		},
 		{
-			desc: "failure mixed",
+			desc: "failure mixed with alert lotex rule",
 			input: PostableExtendedRuleNode{
-				ApiRuleNode:         &ApiRuleNode{},
+				ApiRuleNode:         &ApiRuleNode{Expr: "<string>"},
 				GrafanaManagedAlert: &PostableGrafanaRule{},
 			},
 			err: true,
+		},
+		{
+			desc: "failure mixed with record lotex rule",
+			input: PostableExtendedRuleNode{
+				ApiRuleNode:         &ApiRuleNode{Record: "<string>"},
+				GrafanaManagedAlert: &PostableGrafanaRule{},
+			},
+			err: true,
+		},
+		{
+			desc: "grafana with for, annotation and label properties",
+			input: PostableExtendedRuleNode{
+				ApiRuleNode: &ApiRuleNode{
+					For:         ApiDuration(dur),
+					Annotations: map[string]string{"foo": "bar"},
+					Labels:      map[string]string{"label1": "val1"}},
+				GrafanaManagedAlert: &PostableGrafanaRule{},
+			},
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -53,6 +75,9 @@ func Test_Rule_Marshaling(t *testing.T) {
 }
 
 func Test_Rule_Group_Marshaling(t *testing.T) {
+	dur, err := model.ParseDuration("1m")
+	require.NoError(t, err)
+
 	for _, tc := range []struct {
 		desc  string
 		input PostableRuleGroupConfig
@@ -80,6 +105,26 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 				Interval: 0,
 				Rules: []PostableExtendedRuleNode{
 					PostableExtendedRuleNode{
+						GrafanaManagedAlert: &PostableGrafanaRule{},
+					},
+					PostableExtendedRuleNode{
+						GrafanaManagedAlert: &PostableGrafanaRule{},
+					},
+				},
+			},
+		},
+		{
+			desc: "success grafana with for and annotations",
+			input: PostableRuleGroupConfig{
+				Name:     "foo",
+				Interval: 0,
+				Rules: []PostableExtendedRuleNode{
+					PostableExtendedRuleNode{
+						ApiRuleNode: &ApiRuleNode{
+							For:         ApiDuration(dur),
+							Annotations: map[string]string{"foo": "bar"},
+							Labels:      map[string]string{"label1": "val1"},
+						},
 						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
 					PostableExtendedRuleNode{
@@ -162,7 +207,9 @@ func Test_Rule_Group_Type(t *testing.T) {
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			require.Equal(t, tc.expected, tc.input.Type())
+			bt, err := tc.input.Type()
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, bt)
 		})
 	}
 }

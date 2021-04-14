@@ -1061,6 +1061,10 @@
       },
       "x-go-package": "github.com/grafana/alerting-api/pkg/api"
     },
+    "ApiDuration": {
+      "description": "ApiDuration extends model.Duration\nfor handling JSON serialization/deserialization",
+      "$ref": "#/definitions/Duration"
+    },
     "ApiRuleNode": {
       "type": "object",
       "properties": {
@@ -1080,7 +1084,7 @@
           "x-go-name": "Expr"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "$ref": "#/definitions/ApiDuration"
         },
         "labels": {
           "type": "object",
@@ -1501,7 +1505,7 @@
           "x-go-name": "Expr"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "$ref": "#/definitions/ApiDuration"
         },
         "grafana_alert": {
           "$ref": "#/definitions/GettableGrafanaRule"
@@ -1539,13 +1543,6 @@
     "GettableGrafanaRule": {
       "type": "object",
       "properties": {
-        "annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Annotations"
-        },
         "condition": {
           "type": "string",
           "x-go-name": "Condition"
@@ -1564,9 +1561,6 @@
             "KeepLastState"
           ],
           "x-go-name": "ExecErrState"
-        },
-        "for": {
-          "$ref": "#/definitions/Duration"
         },
         "id": {
           "type": "integer",
@@ -2240,7 +2234,7 @@
           "x-go-name": "Expr"
         },
         "for": {
-          "$ref": "#/definitions/Duration"
+          "$ref": "#/definitions/ApiDuration"
         },
         "grafana_alert": {
           "$ref": "#/definitions/PostableGrafanaRule"
@@ -2278,13 +2272,6 @@
     "PostableGrafanaRule": {
       "type": "object",
       "properties": {
-        "annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "x-go-name": "Annotations"
-        },
         "condition": {
           "type": "string",
           "x-go-name": "Condition"
@@ -2303,9 +2290,6 @@
             "KeepLastState"
           ],
           "x-go-name": "ExecErrState"
-        },
-        "for": {
-          "$ref": "#/definitions/Duration"
         },
         "no_data_state": {
           "type": "string",

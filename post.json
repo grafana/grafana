@@ -256,6 +256,10 @@
    "type": "object",
    "x-go-package": "github.com/grafana/alerting-api/pkg/api"
   },
+  "ApiDuration": {
+   "$ref": "#/definitions/Duration",
+   "description": "ApiDuration extends model.Duration\nfor handling JSON serialization/deserialization"
+  },
   "ApiRuleNode": {
    "properties": {
     "alert": {
@@ -274,7 +278,7 @@
      "x-go-name": "Expr"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "$ref": "#/definitions/ApiDuration"
     },
     "labels": {
      "additionalProperties": {
@@ -692,7 +696,7 @@
      "x-go-name": "Expr"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "$ref": "#/definitions/ApiDuration"
     },
     "grafana_alert": {
      "$ref": "#/definitions/GettableGrafanaRule"
@@ -730,13 +734,6 @@
   },
   "GettableGrafanaRule": {
    "properties": {
-    "annotations": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object",
-     "x-go-name": "Annotations"
-    },
     "condition": {
      "type": "string",
      "x-go-name": "Condition"
@@ -755,9 +752,6 @@
      ],
      "type": "string",
      "x-go-name": "ExecErrState"
-    },
-    "for": {
-     "$ref": "#/definitions/Duration"
     },
     "id": {
      "format": "int64",
@@ -1428,7 +1422,7 @@
      "x-go-name": "Expr"
     },
     "for": {
-     "$ref": "#/definitions/Duration"
+     "$ref": "#/definitions/ApiDuration"
     },
     "grafana_alert": {
      "$ref": "#/definitions/PostableGrafanaRule"
@@ -1466,13 +1460,6 @@
   },
   "PostableGrafanaRule": {
    "properties": {
-    "annotations": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object",
-     "x-go-name": "Annotations"
-    },
     "condition": {
      "type": "string",
      "x-go-name": "Condition"
@@ -1491,9 +1478,6 @@
      ],
      "type": "string",
      "x-go-name": "ExecErrState"
-    },
-    "for": {
-     "$ref": "#/definitions/Duration"
     },
     "no_data_state": {
      "enum": [
