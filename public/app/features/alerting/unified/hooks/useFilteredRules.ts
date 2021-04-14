@@ -28,13 +28,13 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
 
 const reduceNamespaces = (filters: RuleFilterState) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
-    const namespaceCopy = { ...namespace };
-    const { groups } = namespaceCopy;
-    const filteredGroups = groups.reduce(reduceGroups(filters), [] as CombinedRuleGroup[]);
+    const groups = namespace.groups.reduce(reduceGroups(filters), [] as CombinedRuleGroup[]);
 
-    if (filteredGroups.length) {
-      namespace.groups = filteredGroups;
-      namespaceAcc.push(namespace);
+    if (groups.length) {
+      namespaceAcc.push({
+        ...namespace,
+        groups,
+      });
     }
 
     return namespaceAcc;
@@ -44,8 +44,7 @@ const reduceNamespaces = (filters: RuleFilterState) => {
 // Reduces groups to only groups that have rules matching the filters
 const reduceGroups = (filters: RuleFilterState) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
-    const groupCopy = { ...group };
-    const rules = groupCopy.rules.filter((rule) => {
+    const rules = group.rules.filter((rule) => {
       let shouldKeep = true;
       // Query strings can match alert name, label keys, and label values
       if (filters.queryString) {
@@ -70,8 +69,10 @@ const reduceGroups = (filters: RuleFilterState) => {
     });
     // Add rules to the group that match the rule list filters
     if (rules.length) {
-      groupCopy.rules = rules;
-      groupAcc.push(groupCopy);
+      groupAcc.push({
+        ...group,
+        rules,
+      });
     }
     return groupAcc;
   };
