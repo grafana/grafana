@@ -266,7 +266,11 @@ export class AlertTabCtrl {
   checkFrequency() {
     this.frequencyWarning = '';
 
-    if (!(this.alert.frequency || '').match(/^\d+([dhms])$/)) {
+    if (!this.alert.frequency) {
+      return;
+    }
+
+    if (!this.alert.frequency.match(/^\d+([dhms])$/)) {
       this.frequencyWarning =
         'Invalid frequency, has to be numeric followed by one of the following units: "d, h, m, s"';
       return;
