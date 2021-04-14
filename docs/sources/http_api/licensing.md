@@ -20,10 +20,7 @@ Checks if a valid license is available.
 ```http
 GET /api/licensing/check
 Accept: application/json
-Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-{}
 ```
 
 **Example response:**
