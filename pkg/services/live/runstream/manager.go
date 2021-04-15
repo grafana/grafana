@@ -7,9 +7,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+)
+
+var (
+	logger = log.New("live.runstream")
 )
 
 //go:generate mockgen -destination=mock.go -package=runstream github.com/grafana/grafana/pkg/services/live/runstream StreamPacketSender,PresenceGetter,StreamRunner
