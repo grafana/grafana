@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func responseFromJSON(t *testing.T, text string) *Response {
+func responseFromJSON(t *testing.T, text string) Response {
 	buf := ioutil.NopCloser(strings.NewReader(text))
 	response, err := parseJSON(buf)
 	require.NoError(t, err)

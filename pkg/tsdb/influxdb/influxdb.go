@@ -41,13 +41,13 @@ func init() {
 	glog = log.New("tsdb.influxdb")
 }
 
-func parseJSON(buf io.ReadCloser) (*Response, error) {
+func parseJSON(buf io.ReadCloser) (Response, error) {
 	var response Response
 	dec := json.NewDecoder(buf)
 	dec.UseNumber()
 
 	err := dec.Decode(&response)
-	return &response, err
+	return response, err
 }
 
 func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (

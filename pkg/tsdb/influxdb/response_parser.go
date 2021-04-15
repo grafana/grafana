@@ -22,7 +22,7 @@ func init() {
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$\s*([\@\/\w-]+?)*`)
 }
 
-func (rp *ResponseParser) Parse(response *Response, query *Query) plugins.DataQueryResult {
+func (rp *ResponseParser) Parse(response Response, query *Query) plugins.DataQueryResult {
 	var queryRes plugins.DataQueryResult
 
 	if response.Error != "" {
