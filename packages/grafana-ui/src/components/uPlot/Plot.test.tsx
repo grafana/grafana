@@ -133,7 +133,6 @@ describe('UPlotChart', () => {
   describe('config update', () => {
     it('skips uPlot intialization for width and height equal 0', async () => {
       const { data, timeRange, config } = mockData();
-
       const { queryAllByTestId } = render(
         <UPlotChart data={preparePlotData(data)} config={config} timeRange={timeRange} width={0} height={0} />
       );

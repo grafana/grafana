@@ -6,6 +6,7 @@ import {
   isSystemOverride as isSystemOverrideGuard,
   VariableSuggestionsScope,
   DynamicConfigValue,
+  ConfigOverrideRule,
 } from '@grafana/data';
 import { Container, fieldMatchersUI, ValuePicker } from '@grafana/ui';
 import { OptionPaneRenderProps } from './types';
@@ -51,6 +52,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
   const context = {
     data,
     getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+    isOverride: true,
   };
 
   /**
@@ -88,7 +90,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
       onOverrideChange(idx, override);
     };
 
-    const onDynamicConfigValueAdd = (value: SelectableValue<string>) => {
+    const onDynamicConfigValueAdd = (o: ConfigOverrideRule, value: SelectableValue<string>) => {
       const registryItem = registry.get(value.value!);
       const propertyConfig: DynamicConfigValue = {
         id: registryItem.id,
@@ -96,12 +98,12 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
       };
 
       if (override.properties) {
-        override.properties.push(propertyConfig);
+        o.properties.push(propertyConfig);
       } else {
-        override.properties = [propertyConfig];
+        o.properties = [propertyConfig];
       }
 
-      onOverrideChange(idx, override);
+      onOverrideChange(idx, o);
     };
 
     /**
@@ -185,7 +187,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
                 icon="plus"
                 menuPlacement="auto"
                 options={configPropertiesOptions}
-                onChange={onDynamicConfigValueAdd}
+                onChange={(v) => onDynamicConfigValueAdd(override, v)}
               />
             );
           },
@@ -241,8 +243,8 @@ function getOverrideProperties(registry: FieldConfigOptionsRegistry) {
     .filter((o) => !o.hideFromOverrides)
     .map((item) => {
       let label = item.name;
-      if (item.category && item.category.length > 1) {
-        label = [...item.category!.slice(1), item.name].join(' > ');
+      if (item.category) {
+        label = [...item.category, item.name].join(' > ');
       }
       return {
         label,

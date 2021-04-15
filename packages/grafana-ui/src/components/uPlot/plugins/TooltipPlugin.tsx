@@ -58,10 +58,11 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
 
         // when interacting with a point in single mode
         if (mode === 'single' && originFieldIndex !== null) {
-          const field = otherProps.data[originFieldIndex.frameIndex].fields[originFieldIndex.fieldIndex];
+          const field = graphContext.alignedData.fields[focusedSeriesIdx!];
           const plotSeries = plotContext.getSeries();
           const fieldFmt = field.display || getDisplayProcessor({ field, timeZone });
-          const value = fieldFmt(plotContext.data[focusedSeriesIdx!][focusedPointIdx]);
+
+          const value = fieldFmt(field.values.get(focusedPointIdx));
 
           tooltip = (
             <SeriesTable
@@ -95,7 +96,9 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
               continue;
             }
 
-            const value = field.display!(plotContext.data[i][focusedPointIdx]);
+            // using aligned data value field here as it's indexes are in line with Plot data
+            const valueField = graphContext.alignedData.fields[i];
+            const value = valueField.display!(valueField.values.get(focusedPointIdx));
 
             series.push({
               // TODO: align with uPlot typings
