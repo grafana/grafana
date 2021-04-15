@@ -447,6 +447,15 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 			}
 		}
 
+		// useful if you already have a database that you want to use for tests.
+		// cannot just set it on testSQLStore as it overrides the config in Init
+		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
+			t.Log("Skipping database migrations")
+			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
+				t.Fatalf("Failed to create key: %s", err)
+			}
+		}
+
 		// need to get engine to clean db before we init
 		t.Logf("Creating database connection: %q", sec.Key("connection_string"))
 		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
