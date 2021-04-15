@@ -10,7 +10,7 @@ exports[`Render should enable save button 1`] = `
     <h3
       className="page-sub-heading"
     >
-      Folder Settings
+      Folder settings
     </h3>
     <div
       className="section gf-form-group"
@@ -68,7 +68,7 @@ exports[`Render should render component 1`] = `
     <h3
       className="page-sub-heading"
     >
-      Folder Settings
+      Folder settings
     </h3>
     <div
       className="section gf-form-group"

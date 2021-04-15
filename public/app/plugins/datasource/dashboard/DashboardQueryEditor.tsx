@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { LegacyForms, VerticalGroup } from '@grafana/ui';
 import { DataQuery, PanelData, SelectableValue } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { DashboardQuery, ResultInfo, SHARED_DASHBODARD_QUERY } from './types';
 import config from 'app/core/config';
@@ -21,6 +21,7 @@ interface Props {
   queries: DataQuery[];
   panelData: PanelData;
   onChange: (queries: DataQuery[]) => void;
+  onRunQueries: () => void;
 }
 
 type State = {
@@ -59,7 +60,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     const query = queries[0] as DashboardQuery;
     const defaultDS = await getDatasourceSrv().get();
     const dashboard = getDashboardSrv().getCurrent();
-    const panel = dashboard.getPanelById(query.panelId ?? -124134);
+    const panel = dashboard?.getPanelById(query.panelId ?? -124134);
 
     if (!panel) {
       this.setState({ defaultDatasource: defaultDS.name });
@@ -97,6 +98,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
         panelId: id,
       } as DashboardQuery,
     ]);
+    this.props.onRunQueries();
   };
 
   renderQueryData(editURL: string) {
@@ -124,6 +126,10 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const dashboard = getDashboardSrv().getCurrent();
+    if (!dashboard) {
+      return null;
+    }
+
     const query = this.getQuery();
 
     let selected: SelectableValue<number> | undefined;

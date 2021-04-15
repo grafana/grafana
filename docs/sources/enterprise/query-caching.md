@@ -7,7 +7,7 @@ weight = 110
 
 # Query caching
 
-> **Note:** Query caching is available behind a feature flag in Grafana Enterprise 7.5+.
+> **Note:** Query caching is available behind the `caching` feature flag in Grafana Enterprise 7.5+.
 
 When query caching is enabled, Grafana temporarily stores the results of data source queries. When you or another user submit the exact same query again, the results will come back from the cache instead of from the data source (like Splunk or ServiceNow) itself.
 
@@ -21,7 +21,7 @@ Query caching currently works for all backend data sources. You can enable the c
 
 ## Enable query caching
 
-To enable and configure query caching, please refer the the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#query-caching" >}}).
+To enable and configure query caching, please refer the the [Query caching section of Enterprise Configuration]({{< relref "./enterprise-configuration.md#caching" >}}).
 
 ## Sending a request without cache
 

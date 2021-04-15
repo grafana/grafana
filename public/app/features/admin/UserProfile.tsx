@@ -1,9 +1,9 @@
-import React, { PureComponent, FC } from 'react';
+import React, { FC, PureComponent } from 'react';
 import { UserDTO } from 'app/types';
-import { cx, css } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { config } from 'app/core/config';
 import { GrafanaTheme } from '@grafana/data';
-import { ConfirmButton, ConfirmModal, LegacyInputStatus, Button, stylesFactory, Input } from '@grafana/ui';
+import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, stylesFactory } from '@grafana/ui';
 
 interface Props {
   user: UserDTO;
@@ -127,7 +127,7 @@ export class UserProfile extends PureComponent<Props, State> {
           </div>
           <div className={styles.buttonRow}>
             <Button variant="destructive" onClick={this.showDeleteUserModal(true)}>
-              Delete User
+              Delete user
             </Button>
             <ConfirmModal
               isOpen={showDeleteModal}
@@ -139,11 +139,11 @@ export class UserProfile extends PureComponent<Props, State> {
             />
             {user.isDisabled ? (
               <Button variant="secondary" onClick={this.onUserEnable}>
-                Enable User
+                Enable user
               </Button>
             ) : (
               <Button variant="secondary" onClick={this.showDisableUserModal(true)}>
-                Disable User
+                Disable user
               </Button>
             )}
             <ConfirmModal
@@ -187,7 +187,7 @@ interface UserProfileRowState {
 }
 
 export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfileRowState> {
-  inputElem: HTMLInputElement;
+  inputElem?: HTMLInputElement;
 
   static defaultProps: Partial<UserProfileRowProps> = {
     value: '',

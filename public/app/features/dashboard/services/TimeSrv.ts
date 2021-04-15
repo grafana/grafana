@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import { ITimeoutService } from 'angular';
 import {
   dateMath,
   dateTime,
@@ -10,34 +9,33 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-
-import coreModule from 'app/core/core_module';
-import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
-import { appEvents } from '../../../core/core';
 import { config } from 'app/core/config';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 import { locationService } from '@grafana/runtime';
 import { ShiftTimeEvent, ShiftTimeEventPayload, ZoomOutEvent } from '../../../types/events';
+import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
+import appEvents from 'app/core/app_events';
 
 export class TimeSrv {
   time: any;
   refreshTimer: any;
   refresh: any;
   oldRefresh: string | null | undefined;
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
   timeAtLoad: any;
-  private autoRefreshBlocked: boolean;
+  private autoRefreshBlocked?: boolean;
 
-  /** @ngInject */
-  constructor(private $timeout: ITimeoutService, private timer: any, private contextSrv: ContextSrv) {
+  constructor(private contextSrv: ContextSrv) {
     // default time
     this.time = getDefaultTimeRange().raw;
     this.refreshDashboard = this.refreshDashboard.bind(this);
+
     appEvents.subscribe(ZoomOutEvent, (e) => {
       this.zoomOut(e.payload);
     });
+
     appEvents.subscribe(ShiftTimeEvent, (e) => {
       this.shiftTime(e.payload);
     });
@@ -51,8 +49,6 @@ export class TimeSrv {
   }
 
   init(dashboard: DashboardModel) {
-    this.timer.cancelAll();
-
     this.dashboard = dashboard;
     this.time = dashboard.time;
     this.refresh = dashboard.refresh;
@@ -145,7 +141,9 @@ export class TimeSrv {
     // if absolute ignore refresh option saved to dashboard
     if (params.get('to') && params.get('to')!.indexOf('now') === -1) {
       this.refresh = false;
-      this.dashboard.refresh = false;
+      if (this.dashboard) {
+        this.dashboard.refresh = false;
+      }
     }
 
     let paramsJSON: Record<string, string> = {};
@@ -192,19 +190,20 @@ export class TimeSrv {
   }
 
   setAutoRefresh(interval: any) {
-    this.dashboard.refresh = interval;
-    this.cancelNextRefresh();
+    if (this.dashboard) {
+      this.dashboard.refresh = interval;
+    }
+
+    this.stopAutoRefresh();
 
     if (interval) {
       const validInterval = this.contextSrv.getValidInterval(interval);
       const intervalMs = rangeUtil.intervalToMs(validInterval);
 
-      this.refreshTimer = this.timer.register(
-        this.$timeout(() => {
-          this.startNextRefreshTimer(intervalMs);
-          this.refreshDashboard();
-        }, intervalMs)
-      );
+      this.refreshTimer = setTimeout(() => {
+        this.startNextRefreshTimer(intervalMs);
+        this.refreshDashboard();
+      }, intervalMs);
     }
 
     if (interval) {
@@ -216,25 +215,22 @@ export class TimeSrv {
   }
 
   refreshDashboard() {
-    this.dashboard.timeRangeUpdated(this.timeRange());
+    this.dashboard?.timeRangeUpdated(this.timeRange());
   }
 
   private startNextRefreshTimer(afterMs: number) {
-    this.cancelNextRefresh();
-    this.refreshTimer = this.timer.register(
-      this.$timeout(() => {
-        this.startNextRefreshTimer(afterMs);
-        if (this.contextSrv.isGrafanaVisible()) {
-          this.refreshDashboard();
-        } else {
-          this.autoRefreshBlocked = true;
-        }
-      }, afterMs)
-    );
+    this.refreshTimer = setTimeout(() => {
+      this.startNextRefreshTimer(afterMs);
+      if (this.contextSrv.isGrafanaVisible()) {
+        this.refreshDashboard();
+      } else {
+        this.autoRefreshBlocked = true;
+      }
+    }, afterMs);
   }
 
-  private cancelNextRefresh() {
-    this.timer.cancel(this.refreshTimer);
+  stopAutoRefresh() {
+    clearTimeout(this.refreshTimer);
   }
 
   setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
@@ -242,9 +238,9 @@ export class TimeSrv {
 
     // disable refresh if zoom in or zoom out
     if (isDateTime(time.to)) {
-      this.oldRefresh = this.dashboard.refresh || this.oldRefresh;
+      this.oldRefresh = this.dashboard?.refresh || this.oldRefresh;
       this.setAutoRefresh(false);
-    } else if (this.oldRefresh && this.oldRefresh !== this.dashboard.refresh) {
+    } else if (this.oldRefresh && this.oldRefresh !== this.dashboard?.refresh) {
       this.setAutoRefresh(this.oldRefresh);
       this.oldRefresh = null;
     }
@@ -313,14 +309,16 @@ export class TimeSrv {
   }
 }
 
-let singleton: TimeSrv;
+let singleton: TimeSrv | undefined;
 
 export function setTimeSrv(srv: TimeSrv) {
   singleton = srv;
 }
 
 export function getTimeSrv(): TimeSrv {
+  if (!singleton) {
+    singleton = new TimeSrv(contextSrv);
+  }
+
   return singleton;
 }
-
-coreModule.service('timeSrv', TimeSrv);

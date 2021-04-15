@@ -13,12 +13,12 @@ import (
 
 // corePlugin represents a plugin that's part of Grafana core.
 type corePlugin struct {
-	isDataPlugin bool
-	pluginID     string
-	logger       log.Logger
+	pluginID string
+	logger   log.Logger
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
+	backend.StreamHandler
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
@@ -30,6 +30,7 @@ func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 			CheckHealthHandler:  opts.CheckHealthHandler,
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,
+			StreamHandler:       opts.StreamHandler,
 		}, nil
 	}
 }
@@ -42,10 +43,6 @@ func (cp *corePlugin) Logger() log.Logger {
 	return cp.logger
 }
 
-func (cp *corePlugin) CanHandleDataQueries() bool {
-	return cp.isDataPlugin
-}
-
 func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	// TODO: Inline the adapter, since it shouldn't be necessary
@@ -55,9 +52,6 @@ func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (cp *corePlugin) Start(ctx context.Context) error {
-	if cp.QueryDataHandler != nil {
-		cp.isDataPlugin = true
-	}
 	return nil
 }
 
@@ -90,5 +84,26 @@ func (cp *corePlugin) CallResource(ctx context.Context, req *backend.CallResourc
 		return cp.CallResourceHandler.CallResource(ctx, req, sender)
 	}
 
+	return backendplugin.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if cp.StreamHandler != nil {
+		return cp.StreamHandler.SubscribeStream(ctx, req)
+	}
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	if cp.StreamHandler != nil {
+		return cp.StreamHandler.PublishStream(ctx, req)
+	}
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	if cp.StreamHandler != nil {
+		return cp.StreamHandler.RunStream(ctx, req, sender)
+	}
 	return backendplugin.ErrMethodNotImplemented
 }

@@ -19,9 +19,10 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
-import { Observable, of, OperatorFunction, pipe } from 'rxjs';
+import { Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
+import { reduceError } from './utils';
 
 export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
   basicAuth: string;
@@ -261,6 +262,10 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       const tags = this.templateSrv.replace(options.annotation.tags);
       return this.events({ range: options.range, tags: tags }).then((results: any) => {
         const list = [];
+        if (!_.isArray(results.data)) {
+          console.error(`Unable to get annotations from ${results.url}.`);
+          return [];
+        }
         for (let i = 0; i < results.data.length; i++) {
           const e = results.data[i];
 
@@ -581,7 +586,17 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       .pipe(
         map((results: any) => {
           if (results.status !== 200 || typeof results.data !== 'object') {
-            this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+            if (typeof results.data === 'string') {
+              // Fix for a Graphite bug: https://github.com/graphite-project/graphite-web/issues/2609
+              // There is a fix for it https://github.com/graphite-project/graphite-web/pull/2612 but
+              // it was merged to master in July 2020 but it has never been released (the last Graphite
+              // release was 1.1.7 - March 2020). The bug was introduced in Graphite 1.1.7, in versions
+              // 1.1.0 - 1.1.6 /functions endpoint returns a valid JSON
+              const fixedData = JSON.parse(results.data.replace(/"default": ?Infinity/g, '"default": 1e9999'));
+              this.funcDefs = gfunc.parseFuncDefs(fixedData);
+            } else {
+              this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+            }
           } else {
             this.funcDefs = gfunc.parseFuncDefs(results.data);
           }
@@ -631,7 +646,13 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     options.url = this.url + options.url;
     options.inspect = { type: 'graphite' };
 
-    return getBackendSrv().fetch(options);
+    return getBackendSrv()
+      .fetch(options)
+      .pipe(
+        catchError((err: any) => {
+          return throwError(reduceError(err));
+        })
+      );
   }
 
   buildGraphiteParams(options: any, scopedVars?: ScopedVars): string[] {

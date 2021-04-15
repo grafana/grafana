@@ -37,7 +37,7 @@ export const TestStuffPage: FC = () => {
   /**
    * Subscribe to data
    */
-  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
+  const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), [queryRunner]);
   const data = useObservable(observable);
 
   return (
@@ -62,7 +62,7 @@ export const TestStuffPage: FC = () => {
             timeRange={data.timeRange}
             timeZone="browser"
           />
-          <hr></hr>
+          <hr />
           <Table data={data.series[0]} width={1200} height={300} />
         </div>
       )}
