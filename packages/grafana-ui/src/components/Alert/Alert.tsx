@@ -74,7 +74,6 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boole
   return {
     alert: css`
       flex-grow: 1;
-      margin-bottom: ${theme.v2.spacing(0.5)};
       position: relative;
       border-radius: ${theme.v2.shape.borderRadius()};
       display: flex;
