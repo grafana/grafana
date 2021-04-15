@@ -188,6 +188,8 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	require.NoError(t, err)
 	_, err = anonSect.NewKey("enabled", "true")
 	require.NoError(t, err)
+	_, err = anonSect.NewKey("org_role", "Editor")
+	require.NoError(t, err)
 
 	for _, o := range opts {
 		if o.EnableCSP {
