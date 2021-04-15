@@ -70,9 +70,7 @@ export async function loadAndInitDatasource(
     // Falling back to the default data source in case the provided data source was not found.
     // It may happen if last used data source or the data source provided in the URL has been
     // removed or it is not provisioned anymore.
-    console.error(error);
     instance = await getDatasourceSrv().get();
-    console.info('Default datasource loaded.');
   }
   if (instance.init) {
     try {
