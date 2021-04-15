@@ -35,11 +35,8 @@ export function fuzzyMatch(stack: string, needle: string): FuzzyMatch {
     };
   }
 
-  let letters: string[] = needle.split('');
-
-  while (letters.length) {
-    const letter = letters.shift(),
-      letterIndex = stack.indexOf(letter!, searchIndex);
+  for (const letter of needle) {
+    const letterIndex = stack.indexOf(letter, searchIndex);
 
     if (letterIndex === -1) {
       return { distance: Infinity, ranges: [], found: false };
