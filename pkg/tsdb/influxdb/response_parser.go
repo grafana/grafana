@@ -66,7 +66,7 @@ func transformRows(rows []Row, query *Query) data.Frames {
 					valueArray = append(valueArray, value)
 				}
 			}
-			name := formatSeriesName(row, column, query)
+			name := formatFrameName(row, column, query)
 
 			frames = append(frames, data.NewFrame(name,
 				data.NewField("time", nil, timeArray),
@@ -77,9 +77,9 @@ func transformRows(rows []Row, query *Query) data.Frames {
 	return frames
 }
 
-func formatSeriesName(row Row, column string, query *Query) string {
+func formatFrameName(row Row, column string, query *Query) string {
 	if query.Alias == "" {
-		return buildSeriesNameFromQuery(row, column)
+		return buildFrameNameFromQuery(row, column)
 	}
 	nameSegment := strings.Split(row.Name, ".")
 
@@ -117,7 +117,7 @@ func formatSeriesName(row Row, column string, query *Query) string {
 	return string(result)
 }
 
-func buildSeriesNameFromQuery(row Row, column string) string {
+func buildFrameNameFromQuery(row Row, column string) string {
 	var tags []string
 	for k, v := range row.Tags {
 		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
