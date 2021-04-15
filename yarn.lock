@@ -8684,10 +8684,10 @@ ccount@^1.0.0:
   resolved "https://registry.yarnpkg.com/ccount/-/ccount-1.1.0.tgz#246687debb6014735131be8abab2d93898f8d043"
   integrity sha512-vlNK021QdI7PNeiUh/lKkC/mNHHfV0m/Ad5JoI0TYtlBnJAslM/JIkm/tGC88bkLIwO6OQ5uV6ztS6kVAtCDlg==
 
-centrifuge@^2.7.3:
-  version "2.7.3"
-  resolved "https://registry.yarnpkg.com/centrifuge/-/centrifuge-2.7.3.tgz#991e872838a62a363de9afee10aeea166a1c14c4"
-  integrity sha512-0WqBbF/Iol9ziJcGCIPrJi7U+sZ8y7liq19CZ0XcY+GmKybvdjWm+XkupRSupzRZus5BAtH97wdFFZItFOjIfQ==
+centrifuge@2.7.5:
+  version "2.7.5"
+  resolved "https://registry.yarnpkg.com/centrifuge/-/centrifuge-2.7.5.tgz#f5c32bbbb50b79af40df2807012c8c8c57559a0a"
+  integrity sha512-GLphYNOIS/wgCg9PpirrcTKE79FOt0G1xXn0ON79OOeC4dt+SH6nQ3tZ5CvUxMhAomBriUjFYwynB9BQrs6nDg==
   dependencies:
     protobufjs "^6.10.2"
 

@@ -184,8 +184,6 @@ If the period field is left blank or set to `auto`, then it calculates automatic
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
-> Only available in Grafana v6.5+.
-
 {{< docs-imagebox img="/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
 
 Left clicking a time series in the panel shows a context menu with a link to `View in CloudWatch console`. Clicking that link will open a new tab that will take you to the CloudWatch console and display all the metrics for that query. If you're not currently logged in to the CloudWatch console, the link will forward you to the login page. The provided link is valid for any account but will only display the right metrics if you're logged in to the account that corresponds to the selected data source in Grafana.
@@ -194,7 +192,7 @@ This feature is not available for metrics that are based on metric math expressi
 
 ## Using the Logs Query Editor
 
-> Only available in Grafana v7.0+.
+> **Note:** Available in Grafana v7.0+.
 
 To query CloudWatch Logs, select the region and up to 20 log groups which you want to query. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html)
 
@@ -223,8 +221,6 @@ Since CloudWatch Logs queries can return numeric data, for example through the u
 See the [Alerting]({{< relref "../alerting/_index.md" >}}) documentation for more on Grafana alerts.
 
 ## Curated dashboards
-
-> Only available in Grafana v6.5+.
 
 The updated CloudWatch data source ships with pre-configured dashboards for five of the most popular AWS services:
 
@@ -344,7 +340,7 @@ Example `ec2_instance_attribute()` query
 ec2_instance_attribute(us - east - 1, Tags.Name, { 'tag:Team': ['sysops'] });
 ```
 
-## Using json format template variables
+## Using JSON format template variables
 
 Some queries accept filters in JSON format and Grafana supports the conversion of template variables to JSON.
 
@@ -375,7 +371,7 @@ Please see the AWS documentation for [Service Quotas](https://docs.aws.amazon.co
 
 ## Configure the data source with grafana.ini
 
-In the [Grafana configuration](https://grafana.com/docs/grafana/next/administration/configuration/#aws) there's an `AWS` section that allows you to customize the data source.
+In the Grafana [configuration]({{< relref "../administration/configuration.md#aws" >}}) file, there's an `AWS` section that allows you to customize the data source.
 
 ### allowed_auth_providers
 
