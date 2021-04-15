@@ -314,8 +314,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		require.Equal(t, decoded[1].Fields[0].Len(), 3)
 		require.Equal(t, decoded[1].Fields[1].Len(), 3)
 
-		require.Error(t, result.Error)
-		require.Equal(t, result.Error.Error(), "query-timeout limit exceeded")
+		require.EqualError(t, result.Error, "query-timeout limit exceeded")
 	})
 
 	t.Run("Influxdb response parser with top-level error", func(t *testing.T) {
@@ -333,8 +332,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		require.Nil(t, result.Dataframes)
 
-		require.Error(t, result.Error)
-		require.Equal(t, result.Error.Error(), "error parsing query: found THING")
+		require.EqualError(t, result.Error, "error parsing query: found THING")
 	})
 
 	t.Run("Influxdb response parser parseValue nil", func(t *testing.T) {
