@@ -27,7 +27,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey strin
 }
 
 func (rs *RenderingService) renderViaPluginV1(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
-	pngPath, err := rs.getFilePathForNewImage()
+	filePath, err := rs.getNewFilePath(opts.RenderType)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func (rs *RenderingService) renderViaPluginV1(ctx context.Context, renderKey str
 		Url:       rs.getURL(opts.Path),
 		Width:     int32(opts.Width),
 		Height:    int32(opts.Height),
-		FilePath:  pngPath,
+		FilePath:  filePath,
 		Timeout:   int32(opts.Timeout.Seconds()),
 		RenderKey: renderKey,
 		Encoding:  opts.Encoding,
@@ -57,11 +57,11 @@ func (rs *RenderingService) renderViaPluginV1(ctx context.Context, renderKey str
 		return nil, fmt.Errorf("rendering failed: %v", rsp.Error)
 	}
 
-	return &RenderResult{FilePath: pngPath}, nil
+	return &RenderResult{FilePath: filePath}, nil
 }
 
 func (rs *RenderingService) renderViaPluginV2(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
-	pngPath, err := rs.getFilePathForNewImage()
+	filePath, err := rs.getNewFilePath(opts.RenderType)
 	if err != nil {
 		return nil, err
 	}
@@ -79,12 +79,13 @@ func (rs *RenderingService) renderViaPluginV2(ctx context.Context, renderKey str
 		Width:             int32(opts.Width),
 		Height:            int32(opts.Height),
 		DeviceScaleFactor: float32(opts.DeviceScaleFactor),
-		FilePath:          pngPath,
+		FilePath:          filePath,
 		Timeout:           int32(opts.Timeout.Seconds()),
 		RenderKey:         renderKey,
 		Timezone:          isoTimeOffsetToPosixTz(opts.Timezone),
 		Domain:            rs.domain,
 		Headers:           headers,
+		RenderType:        string(opts.RenderType),
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
 
@@ -100,5 +101,5 @@ func (rs *RenderingService) renderViaPluginV2(ctx context.Context, renderKey str
 		return nil, fmt.Errorf("rendering failed: %s", rsp.Error)
 	}
 
-	return &RenderResult{FilePath: pngPath}, err
+	return &RenderResult{FilePath: filePath}, err
 }

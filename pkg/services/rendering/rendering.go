@@ -205,17 +205,27 @@ func (rs *RenderingService) GetRenderUser(key string) (*RenderUser, bool) {
 	return nil, false
 }
 
-func (rs *RenderingService) getFilePathForNewImage() (string, error) {
+func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 	rand, err := util.GetRandomString(20)
 	if err != nil {
 		return "", err
 	}
-	pngPath, err := filepath.Abs(filepath.Join(rs.Cfg.ImagesDir, rand))
+	filePath, err := filepath.Abs(filepath.Join(rs.Cfg.ImagesDir, rand))
 	if err != nil {
 		return "", err
 	}
 
-	return pngPath + ".png", nil
+	var ext string
+	switch rt {
+	case RENDER_CSV:
+		ext = "csv"
+	case RENDER_PNG:
+		ext = "png"
+	default:
+		ext = "png"
+	}
+
+	return fmt.Sprintf("%s.%s", filePath, ext), nil
 }
 
 func (rs *RenderingService) getURL(path string) string {

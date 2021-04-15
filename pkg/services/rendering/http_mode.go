@@ -28,7 +28,7 @@ var netClient = &http.Client{
 }
 
 func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
-	filePath, err := rs.getFilePathForNewImage()
+	filePath, err := rs.getNewFilePath(opts.RenderType)
 	if err != nil {
 		return nil, err
 	}
@@ -39,15 +39,20 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	}
 
 	queryParams := rendererUrl.Query()
+	queryParams.Add("renderType", string(opts.RenderType))
 	queryParams.Add("url", rs.getURL(opts.Path))
 	queryParams.Add("renderKey", renderKey)
-	queryParams.Add("width", strconv.Itoa(opts.Width))
-	queryParams.Add("height", strconv.Itoa(opts.Height))
 	queryParams.Add("domain", rs.domain)
 	queryParams.Add("timezone", isoTimeOffsetToPosixTz(opts.Timezone))
 	queryParams.Add("encoding", opts.Encoding)
 	queryParams.Add("timeout", strconv.Itoa(int(opts.Timeout.Seconds())))
-	queryParams.Add("deviceScaleFactor", fmt.Sprintf("%f", opts.DeviceScaleFactor))
+
+	if opts.RenderType == RENDER_PNG {
+		queryParams.Add("width", strconv.Itoa(opts.Width))
+		queryParams.Add("height", strconv.Itoa(opts.Height))
+		queryParams.Add("deviceScaleFactor", fmt.Sprintf("%f", opts.DeviceScaleFactor))
+	}
+
 	rendererUrl.RawQuery = queryParams.Encode()
 
 	req, err := http.NewRequest("GET", rendererUrl.String(), nil)

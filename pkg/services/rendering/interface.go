@@ -11,7 +11,15 @@ import (
 var ErrTimeout = errors.New("timeout error - you can set timeout in seconds with &timeout url parameter")
 var ErrPhantomJSNotInstalled = errors.New("PhantomJS executable not found")
 
+type RenderType string
+
+const (
+	RENDER_CSV RenderType = "csv"
+	RENDER_PNG RenderType = "png"
+)
+
 type Opts struct {
+	RenderType        RenderType
 	Width             int
 	Height            int
 	Timeout           time.Duration

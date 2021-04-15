@@ -18,6 +18,7 @@ message RenderRequest {
   int32 timeout = 8;
   string timezone = 9;
   map<string, StringList> headers = 10;
+  string renderType = 11;
 }
 
 message RenderResponse {
