@@ -134,9 +134,14 @@ func (s *Service) buildGraph(req *backend.QueryDataRequest) (*simple.DirectedGra
 			return nil, err
 		}
 
+		dsUID, err := rn.GetDatasourceUid()
+		if err != nil {
+			return nil, err
+		}
+
 		var node graph.Node
-		switch dsName {
-		case DatasourceName:
+		switch {
+		case dsName == DatasourceName || dsUID == DatasourceUID:
 			node, err = buildCMDNode(dp, rn)
 		default: // If it's not an expression query, it's a data source query.
 			node, err = s.buildDSNode(dp, rn, req.PluginContext.OrgID)

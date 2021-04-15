@@ -96,17 +96,6 @@ func (aq *AlertQuery) setDatasource() error {
 		}
 	}
 
-	dsName, ok := aq.modelProps["datasource"]
-	if !ok {
-		return fmt.Errorf("failed to get datasource from query model")
-	}
-
-	if dsName == expr.DatasourceName {
-		aq.DatasourceUID = expr.DatasourceUID
-		aq.modelProps["datasourceUid"] = expr.DatasourceUID
-		return nil
-	}
-
 	i, ok := aq.modelProps["datasourceUid"]
 	if !ok {
 		return fmt.Errorf("failed to get datasourceUid from query model")
