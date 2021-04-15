@@ -153,6 +153,9 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 
 	// add annotations column
 	mg.AddMigration("add column annotations to alert_rule", migrator.NewAddColumnMigration(alertRule, &migrator.Column{Name: "annotations", Type: migrator.DB_Text, Nullable: true}))
+
+	// add labels column
+	mg.AddMigration("add column labels to alert_rule", migrator.NewAddColumnMigration(alertRule, &migrator.Column{Name: "labels", Type: migrator.DB_Text, Nullable: true}))
 }
 
 func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
@@ -193,4 +196,7 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 
 	// add annotations column
 	mg.AddMigration("add column annotations to alert_rule_version", migrator.NewAddColumnMigration(alertRuleVersion, &migrator.Column{Name: "annotations", Type: migrator.DB_Text, Nullable: true}))
+
+	// add labels column
+	mg.AddMigration("add column labels to alert_rule_version", migrator.NewAddColumnMigration(alertRuleVersion, &migrator.Column{Name: "labels", Type: migrator.DB_Text, Nullable: true}))
 }
