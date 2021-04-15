@@ -1,6 +1,7 @@
 package influxdb
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -333,5 +334,22 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		require.Error(t, result.Error)
 		require.Equal(t, result.Error.Error(), "error parsing query: found THING")
+	})
+
+	t.Run("Influxdb response parser parseValue nil", func(t *testing.T) {
+		value, err := parseValue(nil)
+		require.NoError(t, err)
+		require.Nil(t, value)
+	})
+
+	t.Run("Influxdb response parser parseValue valid JSON.number", func(t *testing.T) {
+		value, err := parseValue(json.Number("95.4"))
+		require.NoError(t, err)
+		require.Equal(t, *value, 95.4)
+	})
+
+	t.Run("Influxdb response parser parseValue invalid type", func(t *testing.T) {
+		_, err := parseValue("95.4")
+		require.Error(t, err)
 	})
 }
