@@ -1,40 +1,37 @@
-import { GrafanaTheme, rangeUtil } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { ConfirmModal, useStyles } from '@grafana/ui';
-import { CombinedRuleGroup, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, Fragment, useState } from 'react';
 import { getRuleIdentifier, isAlertingRule, stringifyRuleIdentifier } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from '@emotion/css';
-import { TimeToNow } from '../TimeToNow';
 import { StateTag } from '../StateTag';
 import { RuleDetails } from './RuleDetails';
 import { getAlertTableStyles } from '../../styles/table';
 import { ActionIcon } from './ActionIcon';
 import { createExploreLink } from '../../utils/misc';
 import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 import { useDispatch } from 'react-redux';
 import { deleteRuleAction } from '../../state/actions';
 import { useHasRuler } from '../../hooks/useHasRuler';
+import { CombinedRule } from 'app/types/unified-alerting';
 
 interface Props {
-  namespace: string;
-  group: CombinedRuleGroup;
-  rulesSource: RulesSource;
+  rules: CombinedRule[];
+  showGuidelines?: boolean;
+  emptyMessage?: string;
 }
 
-export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
-  const { rules } = group;
+export const RulesTable: FC<Props> = ({ rules, showGuidelines = false, emptyMessage = 'No rules found.' }) => {
   const dispatch = useDispatch();
 
-  const hasRuler = useHasRuler(rulesSource);
+  const hasRuler = useHasRuler();
 
   const styles = useStyles(getStyles);
   const tableStyles = useStyles(getAlertTableStyles);
 
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
-  const [ruleToDelete, setRuleToDelete] = useState<RulerRuleDTO>();
+  const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
 
   const toggleExpandedState = (ruleKey: string) =>
     setExpandedKeys(
@@ -42,20 +39,29 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
     );
 
   const deleteRule = () => {
-    if (ruleToDelete) {
+    if (ruleToDelete && ruleToDelete.rulerRule) {
       dispatch(
-        deleteRuleAction(getRuleIdentifier(getRulesSourceName(rulesSource), namespace, group.name, ruleToDelete))
+        deleteRuleAction(
+          getRuleIdentifier(
+            getRulesSourceName(ruleToDelete.namespace.rulesSource),
+            ruleToDelete.namespace.name,
+            ruleToDelete.group.name,
+            ruleToDelete.rulerRule
+          )
+        )
       );
       setRuleToDelete(undefined);
     }
   };
 
+  const wrapperClass = cx(styles.wrapper, { [styles.wrapperMargin]: showGuidelines });
+
   if (!rules.length) {
-    return <div className={styles.wrapper}>Folder is empty.</div>;
+    return <div className={wrapperClass}>{emptyMessage}</div>;
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={wrapperClass}>
       <table className={tableStyles.table} data-testid="rules-table">
         <colgroup>
           <col className={styles.colExpand} />
@@ -68,12 +74,11 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
         <thead>
           <tr>
             <th className={styles.relative}>
-              <div className={cx(styles.headerGuideline, styles.guideline)} />
+              {showGuidelines && <div className={cx(styles.headerGuideline, styles.guideline)} />}
             </th>
             <th>State</th>
             <th>Name</th>
             <th>Status</th>
-            <th>Evaluation</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -81,6 +86,8 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
           {(() => {
             const seenKeys: string[] = [];
             return rules.map((rule, ruleIdx) => {
+              const { namespace, group } = rule;
+              const { rulesSource } = namespace;
               let key = JSON.stringify([rule.promRule?.type, rule.labels, rule.query, rule.name, rule.annotations]);
               if (seenKeys.includes(key)) {
                 key += `-${ruleIdx}`;
@@ -97,9 +104,13 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
                 <Fragment key={key}>
                   <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
                     <td className={styles.relative}>
-                      <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
-                      {!(ruleIdx === rules.length - 1) && (
-                        <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
+                      {showGuidelines && (
+                        <>
+                          <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
+                          {!(ruleIdx === rules.length - 1) && (
+                            <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
+                          )}
+                        </>
                       )}
                       <CollapseToggle
                         isCollapsed={!isExpanded}
@@ -110,20 +121,10 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
                     <td>{promRule && isAlertingRule(promRule) ? <StateTag status={promRule.state} /> : 'n/a'}</td>
                     <td>{rule.name}</td>
                     <td>{statuses.join(', ') || 'n/a'}</td>
-                    <td>
-                      {promRule?.lastEvaluation && promRule.evaluationTime ? (
-                        <>
-                          <TimeToNow date={promRule.lastEvaluation} />, for{' '}
-                          {rangeUtil.secondsToHms(promRule.evaluationTime)}
-                        </>
-                      ) : (
-                        'n/a'
-                      )}
-                    </td>
                     <td className={styles.actionsCell}>
                       {isCloudRulesSource(rulesSource) && (
                         <ActionIcon
-                          icon="compass"
+                          icon="chart-line"
                           tooltip="view in explore"
                           target="__blank"
                           href={createExploreLink(rulesSource.name, rule.query)}
@@ -135,24 +136,24 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
                           tooltip="edit rule"
                           href={`/alerting/${encodeURIComponent(
                             stringifyRuleIdentifier(
-                              getRuleIdentifier(getRulesSourceName(rulesSource), namespace, group.name, rulerRule)
+                              getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
                             )
                           )}/edit`}
                         />
                       )}
                       {!!rulerRule && (
-                        <ActionIcon icon="trash-alt" tooltip="delete rule" onClick={() => setRuleToDelete(rulerRule)} />
+                        <ActionIcon icon="trash-alt" tooltip="delete rule" onClick={() => setRuleToDelete(rule)} />
                       )}
                     </td>
                   </tr>
                   {isExpanded && (
                     <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
                       <td className={styles.relative}>
-                        {!(ruleIdx === rules.length - 1) && (
+                        {!(ruleIdx === rules.length - 1) && showGuidelines && (
                           <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
                         )}
                       </td>
-                      <td colSpan={5}>
+                      <td colSpan={4}>
                         <RuleDetails rulesSource={rulesSource} rule={rule} />
                       </td>
                     </tr>
@@ -179,9 +180,11 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
 };
 
 export const getStyles = (theme: GrafanaTheme) => ({
+  wrapperMargin: css`
+    margin-left: 36px;
+  `,
   wrapper: css`
     margin-top: ${theme.spacing.md};
-    margin-left: 36px;
     width: auto;
     padding: ${theme.spacing.sm};
     background-color: ${theme.colors.bg2};
