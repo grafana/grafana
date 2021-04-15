@@ -477,7 +477,7 @@ function formatTimeSpanToTimeString(timeSpanSec: number): string {
   let formattedS = s ? s + 'sec' : '';
 
   formattedH && formattedM ? (formattedH = formattedH + ' ') : (formattedH = formattedH);
-  formattedM || (formattedH && formattedS) ? (formattedM = formattedM + ' ') : (formattedM = formattedM);
+  (formattedM || formattedH) && formattedS ? (formattedM = formattedM + ' ') : (formattedM = formattedM);
 
   return formattedH + formattedM + formattedS || 'less than 1sec';
 }
