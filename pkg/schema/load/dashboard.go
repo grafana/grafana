@@ -138,13 +138,8 @@ func (cds *compositeDashboardSchema) ApplyDefaults(_ schema.Resource) (schema.Re
 // TrimDefaults returns a new, concrete copy of the Resource where all paths
 // in the  where the values at those paths are the same as the default value
 // given in the schema.
-func (cds *compositeDashboardSchema) TrimDefaults(r schema.Resource) (schema.Resource, error) {
-	rvInstance, err := rt.Compile("resource", r.Value)
-	if err != nil {
-		return r, err
-	}
-	rv := schema.Resource{Value: rvInstance.Value()}
-	return rv, nil
+func (cds *compositeDashboardSchema) TrimDefaults(_ schema.Resource) (schema.Resource, error) {
+	panic("not implemented") // TODO: Implement
 }
 
 // CUE returns the cue.Value representing the actual schema.

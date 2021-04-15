@@ -46,6 +46,124 @@ func dashboardGuardianResponse(err error) response.Response {
 	return response.Error(403, "Access denied to this dashboard", nil)
 }
 
+func (hs *HTTPServer) GetTrimedDashboard(c *models.ReqContext) response.Response {
+	slug := c.Params(":slug")
+	uid := c.Params(":uid")
+	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
+	if rsp != nil {
+		return rsp
+	}
+
+	// When dash contains only keys id, uid that means dashboard data is not valid and json decode failed.
+	if dash.Data != nil {
+		isEmptyData := true
+		for k := range dash.Data.MustMap() {
+			if k != "id" && k != "uid" {
+				isEmptyData = false
+				break
+			}
+		}
+		if isEmptyData {
+			return response.Error(500, "Error while loading dashboard, dashboard data is invalid", nil)
+		}
+	}
+
+	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
+	if canView, err := guardian.CanView(); err != nil || !canView {
+		return dashboardGuardianResponse(err)
+	}
+
+	canEdit, _ := guardian.CanEdit()
+	canSave, _ := guardian.CanSave()
+	canAdmin, _ := guardian.CanAdmin()
+
+	isStarred, err := isDashboardStarredByUser(c, dash.Id)
+	if err != nil {
+		return response.Error(500, "Error while checking if dashboard was starred by user", err)
+	}
+
+	// Finding creator and last updater of the dashboard
+	updater, creator := anonString, anonString
+	if dash.UpdatedBy > 0 {
+		updater = getUserLogin(dash.UpdatedBy)
+	}
+	if dash.CreatedBy > 0 {
+		creator = getUserLogin(dash.CreatedBy)
+	}
+
+	meta := dtos.DashboardMeta{
+		IsStarred:   isStarred,
+		Slug:        dash.Slug,
+		Type:        models.DashTypeDB,
+		CanStar:     c.IsSignedIn,
+		CanSave:     canSave,
+		CanEdit:     canEdit,
+		CanAdmin:    canAdmin,
+		Created:     dash.Created,
+		Updated:     dash.Updated,
+		UpdatedBy:   updater,
+		CreatedBy:   creator,
+		Version:     dash.Version,
+		HasAcl:      dash.HasAcl,
+		IsFolder:    dash.IsFolder,
+		FolderId:    dash.FolderId,
+		Url:         dash.GetUrl(),
+		FolderTitle: "General",
+	}
+
+	// lookup folder title
+	if dash.FolderId > 0 {
+		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
+		if err := bus.Dispatch(&query); err != nil {
+			return response.Error(500, "Dashboard folder could not be read", err)
+		}
+		meta.FolderTitle = query.Result.Title
+		meta.FolderUrl = query.Result.GetUrl()
+	}
+
+	svc := dashboards.NewProvisioningService(hs.SQLStore)
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
+	if err != nil {
+		return response.Error(500, "Error while checking if dashboard is provisioned", err)
+	}
+
+	if provisioningData != nil {
+		allowUIUpdate := hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
+		if !allowUIUpdate {
+			meta.Provisioned = true
+		}
+
+		meta.ProvisionedExternalId, err = filepath.Rel(
+			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
+			provisioningData.ExternalId,
+		)
+		if err != nil {
+			// Not sure when this could happen so not sure how to better handle this. Right now ProvisionedExternalId
+			// is for better UX, showing in Save/Delete dialogs and so it won't break anything if it is empty.
+			hs.log.Warn("Failed to create ProvisionedExternalId", "err", err)
+		}
+	}
+
+	// make sure db version is in sync with json model version
+	dash.Data.Set("version", dash.Version)
+
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// load library panels JSON for this dashboard
+		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c, dash)
+		if err != nil {
+			return response.Error(500, "Error while loading library panels", err)
+		}
+	}
+
+	dto := dtos.DashboardFullWithMeta{
+		Dashboard: dash.Data,
+		Meta:      meta,
+	}
+
+	c.TimeRequest(metrics.MApiDashboardGet)
+	return response.JSON(200, dto)
+}
+
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	slug := c.Params(":slug")
 	uid := c.Params(":uid")
@@ -159,6 +277,9 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		Dashboard: dash.Data,
 		Meta:      meta,
 	}
+
+	val, _ := json.Marshal(dash.Data)
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", string(val))
 
 	c.TimeRequest(metrics.MApiDashboardGet)
 	return response.JSON(200, dto)
