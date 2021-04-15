@@ -73,7 +73,10 @@ export class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
    */
   async getChannelSupport(namespace: string) {
     const ds = await getDataSourceSrv().get(namespace);
-    return ds.channelSupport;
+    if (ds.channelSupport) {
+      return ds.channelSupport;
+    }
+    return new LiveMeasurementsSupport(); // default support?
   }
 
   /**
@@ -119,10 +122,13 @@ export class GrafanaLivePluginScope extends GrafanaLiveScope {
    */
   async getChannelSupport(namespace: string) {
     const plugin = await loadPlugin(namespace);
-    if (!plugin.channelSupport) {
-      throw new Error('Unknown plugin: ' + namespace);
+    if (!plugin) {
+      throw new Error('Unknown streaming plugin: ' + namespace);
     }
-    return plugin.channelSupport;
+    if (plugin.channelSupport) {
+      return plugin.channelSupport; // explicit
+    }
+    throw new Error('Plugin does not support streaming: ' + namespace);
   }
 
   /**

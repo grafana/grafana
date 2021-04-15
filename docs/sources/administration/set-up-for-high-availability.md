@@ -1,7 +1,7 @@
 +++
 title = "Set up Grafana for high availability"
 keywords = ["grafana", "tutorials", "HA", "high availability"]
-aliases = ["/docs/grafana/latest/tutorials/ha_setup/"]
+aliases = ["/docs/grafana/next/tutorials/ha_setup/"]
 weight = 1200
 +++
 
@@ -22,7 +22,7 @@ Grafana will now persist all long term data in the database. How to configure th
 
 ## Alerting
 
-Currently alerting supports a limited form of high availability. Since v4.2.0, [alert notifications](https://grafana.com/docs/grafana/latest/alerting/notifications/) are deduped when running multiple servers. This means all alerts are executed on every server but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
+Currently alerting supports a limited form of high availability. Since v4.2.0, [alert notifications](https://grafana.com/docs/grafana/next/alerting/notifications/) are deduped when running multiple servers. This means all alerts are executed on every server but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
 
 ## User sessions
 
