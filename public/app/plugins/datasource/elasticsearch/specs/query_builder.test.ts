@@ -680,7 +680,7 @@ describe('ElasticQueryBuilder', () => {
 
       describe('getLogsQuery', () => {
         it('should return query with defaults', () => {
-          const query = builder.getLogsQuery({ refId: 'A' }, null, '*');
+          const query = builder.getLogsQuery({ refId: 'A' }, 500, null, '*');
 
           expect(query.size).toEqual(500);
 
@@ -714,7 +714,7 @@ describe('ElasticQueryBuilder', () => {
         });
 
         it('with querystring', () => {
-          const query = builder.getLogsQuery({ refId: 'A', query: 'foo' }, null, 'foo');
+          const query = builder.getLogsQuery({ refId: 'A', query: 'foo' }, 500, null, 'foo');
 
           const expectedQuery = {
             bool: {
@@ -737,7 +737,7 @@ describe('ElasticQueryBuilder', () => {
             { key: 'key5', operator: '=~', value: 'value5' },
             { key: 'key6', operator: '!~', value: 'value6' },
           ];
-          const query = builder.getLogsQuery({ refId: 'A' }, adhocFilters, '*');
+          const query = builder.getLogsQuery({ refId: 'A' }, 500, adhocFilters, '*');
 
           expect(query.query.bool.must[0].match_phrase['key1'].query).toBe('value1');
           expect(query.query.bool.must_not[0].match_phrase['key2'].query).toBe('value2');

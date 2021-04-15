@@ -46,7 +46,7 @@ Avoid _master_ or _slave_.
 
 ## Grafana-specific style
 
-The following guidelines are specific to Grafana documentation. For the most part, these are *guidelines* are not rigid rules. If you have questions, ask in the #docs channel of Grafana Slack.
+The following guidelines are specific to Grafana documentation. For the most part, these are *guidelines* are not rigid rules. If you have questions, then please ask in the #docs channel of Grafana Slack.
 
 ### General
 
@@ -117,6 +117,13 @@ If that is the case, then use the following format for headings:
 - _Do not_ use image shortcodes. Follow the guidance in the [Grafana markdown guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/documentation-markdown-guide.md#images).
 - Markdown image links are preferred. Only use the HTML image links if you need to style the image in ways unsupported in Markdown.
 - When you name a file, follow the [file naming conventions](#file-naming-conventions). Example: image-name-7-3.png
+
+### Unordered lists
+
+Here are a few general rules about unordered lists. For more guidance, refer to [Lists](https://developers.google.com/style/lists) in the [Google developer style guide](https://developers.google.com/style/).
+
+- List items should begin with a capital letter unless there is a strong reason not to. For example, you are listing case-sensitive parameters.
+- List items should end with periods if they are complete sentences. If one item in a list ends with a period, then apply periods to all of them.
 
 ### Capitalization
 
