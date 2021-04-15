@@ -43,7 +43,7 @@ export const colors = {
   orangeDarkText: '#F8D06B',
 
   blueLightMain: '#3871DC',
-  blueLightText: '#1F62E0',
+  blueLightText: '#0465d7', // '#1F62E0',
   redLightMain: '#E0226E',
   redLightText: '#CF0E5B',
   greenLightMain: '#1A7F4B',
