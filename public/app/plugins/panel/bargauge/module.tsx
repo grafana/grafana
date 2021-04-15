@@ -7,6 +7,7 @@ import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 
 export const plugin = new PanelPlugin<BarGaugeOptions>(BarGaugePanel)
   .useFieldConfig()
+  .setScrollable(true)
   .setPanelOptions((builder) => {
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder);
