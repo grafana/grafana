@@ -193,42 +193,42 @@ func TestPostgres(t *testing.T) {
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
 		sql := `
-				DROP TABLE IF EXISTS postgres_types;
-				CREATE TABLE postgres_types(
-					c00_smallint smallint,
-					c01_integer integer,
-					c02_bigint bigint,
+			DROP TABLE IF EXISTS postgres_types;
+			CREATE TABLE postgres_types(
+				c00_smallint smallint,
+				c01_integer integer,
+				c02_bigint bigint,
 
-					c03_real real,
-					c04_double double precision,
-					c05_decimal decimal(10,2),
-					c06_numeric numeric(10,2),
+				c03_real real,
+				c04_double double precision,
+				c05_decimal decimal(10,2),
+				c06_numeric numeric(10,2),
 
-					c07_char char(10),
-					c08_varchar varchar(10),
-					c09_text text,
+				c07_char char(10),
+				c08_varchar varchar(10),
+				c09_text text,
 
-					c10_timestamp timestamp without time zone,
-					c11_timestamptz timestamp with time zone,
-					c12_date date,
-					c13_time time without time zone,
-					c14_timetz time with time zone,
-					time date,
-					c15_interval interval
-				);
-			`
+				c10_timestamp timestamp without time zone,
+				c11_timestamptz timestamp with time zone,
+				c12_date date,
+				c13_time time without time zone,
+				c14_timetz time with time zone,
+				time date,
+				c15_interval interval
+			);
+		`
 		_, err := sess.Exec(sql)
 		require.NoError(t, err)
 
 		sql = `
-				INSERT INTO postgres_types VALUES(
-					1,2,3,
-					4.5,6.7,1.1,1.2,
-					'char10','varchar10','text',
+			INSERT INTO postgres_types VALUES(
+				1,2,3,
+				4.5,6.7,1.1,1.2,
+				'char10','varchar10','text',
 
-					now(),now(),now(),now(),now(),now(),'15m'::interval
-				);
-			`
+				now(),now(),now(),now(),now(),now(),'15m'::interval
+			);
+		`
 		_, err = sess.Exec(sql)
 		require.NoError(t, err)
 
@@ -984,10 +984,10 @@ func TestPostgres(t *testing.T) {
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
-									CAST('%s' AS TIMESTAMP) as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`, dt.Format(dtFormat)),
+								CAST('%s' AS TIMESTAMP) as time,
+								'message' as text,
+								'tag1,tag2' as tags
+							`, dt.Format(dtFormat)),
 							"format": "table",
 						}),
 						RefID: "A",
@@ -1079,10 +1079,10 @@ func TestPostgres(t *testing.T) {
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
-									 %d as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`, dt.Unix()*1000),
+								 %d as time,
+								'message' as text,
+								'tag1,tag2' as tags
+							`, dt.Unix()*1000),
 							"format": "table",
 						}),
 						RefID: "A",
@@ -1109,10 +1109,10 @@ func TestPostgres(t *testing.T) {
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": `SELECT
-									 cast(null as bigint) as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`,
+								 cast(null as bigint) as time,
+								'message' as text,
+								'tag1,tag2' as tags
+							`,
 							"format": "table",
 						}),
 						RefID: "A",

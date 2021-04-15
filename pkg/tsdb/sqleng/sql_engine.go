@@ -163,7 +163,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 		go func(query plugins.DataSubQuery) {
 			defer wg.Done()
-			frames := data.Frames{}
+			var frames data.Frames
 			queryResult := plugins.DataQueryResult{
 				Meta:  simplejson.New(),
 				RefID: query.RefID,
@@ -175,7 +175,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			}
 
 			// global substitutions
-			rawSQL, err := Interpolate(query, timeRange, rawSQL)
+			interpolatedQuery, err := Interpolate(query, timeRange, rawSQL)
 			if err != nil {
 				queryResult.Error = err
 				ch <- queryResult
@@ -183,13 +183,12 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			}
 
 			// datasource specific substitutions
-			rawSQL, err = e.macroEngine.Interpolate(query, timeRange, rawSQL)
+			interpolatedQuery, err = e.macroEngine.Interpolate(query, timeRange, rawSQL)
 			if err != nil {
 				queryResult.Error = err
 				ch <- queryResult
 				return
 			}
-			interpolatedQuery := rawSQL
 
 			backend.Logger.Info("SQL query after interpolation", "sqlQuery", interpolatedQuery)
 
@@ -207,7 +206,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			defer session.Close()
 			db := session.DB()
 
-			rows, err := db.Query(rawSQL)
+			rows, err := db.Query(interpolatedQuery)
 			if err != nil {
 				errAppendDebug("db query error", e.queryResultTransformer.TransformQueryError(err))
 				ch <- queryResult
@@ -236,7 +235,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			}
 
 			frame.SetMeta(&data.FrameMeta{
-				ExecutedQueryString: rawSQL,
+				ExecutedQueryString: interpolatedQuery,
 			})
 
 			// If no rows were returned, no point checking anything else.
@@ -332,7 +331,8 @@ var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 	return sql, nil
 }
 
-func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery, rows *core.Rows, interpolatedQuery string) (*DataQueryModel, error) {
+func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery,
+	rows *core.Rows, interpolatedQuery string) (*DataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err

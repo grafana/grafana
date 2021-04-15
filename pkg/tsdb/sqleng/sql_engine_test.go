@@ -384,9 +384,11 @@ func TestSQLEngine(t *testing.T) {
 			}),
 		)
 		for i := 0; i < 10; i++ {
-			_, err := ConvertSqlValueColumnToFloat(originFrame, i)
-			require.NoError(t, err)
-			require.Nil(t, originFrame.Fields[i].At(0))
+			t.Run("", func(t *testing.T) {
+				_, err := ConvertSqlValueColumnToFloat(originFrame, i)
+				require.NoError(t, err)
+				require.Nil(t, originFrame.Fields[i].At(0))
+			})
 		}
 	})
 
@@ -429,6 +431,5 @@ func (t *testQueryResultTransformer) TransformQueryError(err error) error {
 }
 
 func (t *testQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
-	var convertors []sqlutil.StringConverter
-	return convertors
+	return nil
 }

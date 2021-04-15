@@ -840,35 +840,35 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, err)
 
 			sql = `
-								CREATE PROCEDURE sp_test_datetime(
-									@from 		datetime,
-									@to 			datetime,
-									@interval nvarchar(50) = '5m',
-									@metric 	nvarchar(200) = 'ALL'
-								)	AS
-								BEGIN
-									DECLARE @dInterval int
-									SELECT @dInterval = 300
+				CREATE PROCEDURE sp_test_datetime(
+					@from 		datetime,
+					@to 			datetime,
+					@interval nvarchar(50) = '5m',
+					@metric 	nvarchar(200) = 'ALL'
+				)	AS
+				BEGIN
+					DECLARE @dInterval int
+					SELECT @dInterval = 300
 
-									IF @interval = '10m'
-										SELECT @dInterval = 600
+					IF @interval = '10m'
+						SELECT @dInterval = 600
 
-									SELECT
-										CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
-										measurement as metric,
-										avg(valueOne) as valueOne,
-										avg(valueTwo) as valueTwo
-									FROM
-										metric_values
-									WHERE
-										time BETWEEN @from AND @to AND
-										(@metric = 'ALL' OR measurement = @metric)
-									GROUP BY
-										CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
-										measurement
-									ORDER BY 1
-								END
-							`
+					SELECT
+						CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
+						measurement as metric,
+						avg(valueOne) as valueOne,
+						avg(valueTwo) as valueTwo
+					FROM
+						metric_values
+					WHERE
+						time BETWEEN @from AND @to AND
+						(@metric = 'ALL' OR measurement = @metric)
+					GROUP BY
+						CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
+						measurement
+					ORDER BY 1
+				END
+			`
 
 			_, err = sess.Exec(sql)
 			require.NoError(t, err)
@@ -919,15 +919,15 @@ func TestMSSQL(t *testing.T) {
 
 	t.Run("Given a table with event data", func(t *testing.T) {
 		sql := `
-						IF OBJECT_ID('dbo.[event]', 'U') IS NOT NULL
-							DROP TABLE dbo.[event]
+			IF OBJECT_ID('dbo.[event]', 'U') IS NOT NULL
+				DROP TABLE dbo.[event]
 
-						CREATE TABLE [event] (
-							time_sec int,
-							description nvarchar(100),
-							tags nvarchar(100),
-						)
-					`
+			CREATE TABLE [event] (
+				time_sec int,
+				description nvarchar(100),
+				tags nvarchar(100),
+			)
+		`
 
 		_, err := sess.Exec(sql)
 		require.NoError(t, err)
