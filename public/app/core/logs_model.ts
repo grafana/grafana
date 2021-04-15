@@ -32,8 +32,6 @@ import {
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 
-import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
-
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
   [LogLevel.warning]: colors[1],
@@ -208,7 +206,7 @@ export function dataFrameToLogsModel(
     // Create histogram metrics from logs using the interval as bucket size for the line count
     if (intervalMs && logsModel.rows.length > 0) {
       const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
-      const { visibleRange, bucketSize, rangeReceivedLogs, rangeAbsolute } = getSeriesProperties(
+      const { visibleRange, bucketSize, timeSpanMsFromLogs, timeSpanMsFromRange } = getSeriesProperties(
         sortedRows,
         intervalMs,
         absoluteRange
@@ -217,7 +215,7 @@ export function dataFrameToLogsModel(
       logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
 
       if (logsModel.meta) {
-        logsModel.meta = adjustMetaInfo(logsModel, rangeReceivedLogs, rangeAbsolute);
+        logsModel.meta = adjustMetaInfo(logsModel, timeSpanMsFromLogs, timeSpanMsFromRange);
       }
     } else {
       logsModel.series = [];
@@ -251,19 +249,20 @@ export function getSeriesProperties(
   let visibleRange = absoluteRange;
   let resolutionIntervalMs = intervalMs;
   let bucketSize = Math.max(resolutionIntervalMs * pxPerBar, minimumBucketSize);
-  let rangeReceivedLogs;
-  let rangeAbsolute;
+  let timeSpanMsFromLogs;
+  let timeSpanMsFromRange;
   // Clamp time range to visible logs otherwise big parts of the graph might look empty
   if (absoluteRange) {
-    const earliestLogs = sortedRows[0].timeEpochMs;
-    const latestLogs = sortedRows[sortedRows.length - 1].timeEpochMs;
-    const earliestAbsolute = absoluteRange.from;
-    const latestAbsolute = absoluteRange.to;
+    const earliestTsLogs = sortedRows[0].timeEpochMs;
+    const latestTsLogs = sortedRows[sortedRows.length - 1].timeEpochMs;
+    const earliestTsAbsolute = absoluteRange.from;
+    const latestTsAbsolute = absoluteRange.to;
 
-    rangeReceivedLogs = latestLogs - earliestLogs;
-    rangeAbsolute = latestAbsolute - earliestAbsolute;
+    // Calculate timespan (in ms) for receive logs and for time range
+    timeSpanMsFromLogs = latestTsLogs - earliestTsLogs;
+    timeSpanMsFromRange = latestTsAbsolute - earliestTsAbsolute;
 
-    const visibleRangeMs = latestAbsolute - earliestLogs;
+    const visibleRangeMs = latestTsAbsolute - earliestTsLogs;
     if (visibleRangeMs > 0) {
       // Adjust interval bucket size for potentially shorter visible range
       const clampingFactor = visibleRangeMs / (absoluteRange.to - absoluteRange.from);
@@ -271,11 +270,11 @@ export function getSeriesProperties(
       // Minimum bucketsize of 1s for nicer graphing
       bucketSize = Math.max(Math.ceil(resolutionIntervalMs * pxPerBar), minimumBucketSize);
       // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
-      const adjustedEarliest = Math.floor(earliestLogs / bucketSize) * bucketSize;
-      visibleRange = { from: adjustedEarliest, to: latestAbsolute };
+      const adjustedEarliest = Math.floor(earliestTsLogs / bucketSize) * bucketSize;
+      visibleRange = { from: adjustedEarliest, to: latestTsAbsolute };
     }
   }
-  return { bucketSize, visibleRange, rangeReceivedLogs, rangeAbsolute };
+  return { bucketSize, visibleRange, timeSpanMsFromLogs, timeSpanMsFromRange };
 }
 
 function separateLogsAndMetrics(dataFrames: DataFrame[]) {
@@ -467,15 +466,16 @@ function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
   return undefined;
 }
 
-function getFormattedMetaTimeString(range: number): string {
-  const rangeSec = range / 1000;
+// Format timeSpan (ms) to string used in log's meta info
+function formatTimeSpanToTimeString(timeSpanMs: number): string {
+  const timeSpanSec = timeSpanMs / 1000;
 
-  const h = Math.floor(rangeSec / 60 / 60);
-  const m = Math.floor(rangeSec / 60) - h * 60;
-  const s = (rangeSec % 60).toFixed();
+  const h = Math.floor(timeSpanSec / 60 / 60);
+  const m = Math.floor(timeSpanSec / 60) - h * 60;
+  const s = Number((timeSpanSec % 60).toFixed());
   let formattedH = h ? (h > 1 ? h + 'h' : h + 'h') : '';
   let formattedM = m ? (m > 1 ? m + 'min ' : m + 'min') : '';
-  let formattedS = Number(s) ? (Number(s) !== 1 ? s + 'sec' : s + 'sec') : '';
+  let formattedS = s ? (s !== 1 ? s + 'sec' : s + 'sec') : '';
 
   formattedH && formattedM ? (formattedH = formattedH + ' ') : (formattedH = formattedH);
   formattedM && formattedS ? (formattedM = formattedM + ' ') : (formattedM = formattedM);
@@ -484,23 +484,24 @@ function getFormattedMetaTimeString(range: number): string {
 }
 
 // Used to add additional information to Line limit meta info
-function adjustMetaInfo(logsModel: LogsModel, rangeReceivedLogs?: number, rangeAbsolute?: number): LogsMetaItem[] {
+function adjustMetaInfo(
+  logsModel: LogsModel,
+  timeSpanMsFromLogs?: number,
+  timeSpanMsFromRange?: number
+): LogsMetaItem[] {
   let logsModelMeta = [...logsModel.meta!];
 
   const limitIndex = logsModelMeta.findIndex((meta) => meta.label === 'Line limit');
   const limit = limitIndex && logsModelMeta[limitIndex]?.value;
 
   if (limit && limit > 0) {
-    const rangeCoverage = rangeReceivedLogs && rangeAbsolute && (rangeReceivedLogs / rangeAbsolute) * 100;
     let metaLimitValue;
 
-    if (limit === logsModel.rows.length && rangeCoverage) {
-      metaLimitValue = `Line limit ${limit} reached, received logs cover ${(rangeCoverage > 100
-        ? 100
-        : rangeCoverage
-      ).toFixed(2)}% (${getFormattedMetaTimeString(
-        rangeReceivedLogs!
-      )}) of your selected time range (${getFormattedMetaTimeString(rangeAbsolute!)})`;
+    if (limit === logsModel.rows.length && timeSpanMsFromLogs && timeSpanMsFromRange) {
+      const coverage = ((timeSpanMsFromLogs / timeSpanMsFromRange) * 100).toFixed(2);
+      metaLimitValue = `Line limit ${limit} reached, received logs cover ${coverage}% (${formatTimeSpanToTimeString(
+        timeSpanMsFromLogs
+      )}) of your selected time range (${formatTimeSpanToTimeString(timeSpanMsFromRange)})`;
     } else {
       metaLimitValue = `${limit} (${logsModel.rows.length} returned)`;
     }
