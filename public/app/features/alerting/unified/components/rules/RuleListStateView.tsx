@@ -34,9 +34,10 @@ export const RuleListStateView: FC<Props> = ({ namespaces }) => {
   }, [namespaces]);
   return (
     <>
-      <RuleListStateSection state={PromAlertingRuleState.Firing} rules={[]} />
+      <RuleListStateSection state={PromAlertingRuleState.Firing} rules={groupedRules[PromAlertingRuleState.Firing]} />
       <RuleListStateSection state={PromAlertingRuleState.Pending} rules={groupedRules[PromAlertingRuleState.Pending]} />
       <RuleListStateSection
+        defaultCollapsed={true}
         state={PromAlertingRuleState.Inactive}
         rules={groupedRules[PromAlertingRuleState.Inactive]}
       />

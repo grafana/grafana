@@ -18,10 +18,16 @@ import { CombinedRule } from 'app/types/unified-alerting';
 interface Props {
   rules: CombinedRule[];
   showGuidelines?: boolean;
+  showGroupColumn?: boolean;
   emptyMessage?: string;
 }
 
-export const RulesTable: FC<Props> = ({ rules, showGuidelines = false, emptyMessage = 'No rules found.' }) => {
+export const RulesTable: FC<Props> = ({
+  rules,
+  showGuidelines = false,
+  emptyMessage = 'No rules found.',
+  showGroupColumn = false,
+}) => {
   const dispatch = useDispatch();
 
   const hasRuler = useHasRuler();
@@ -70,6 +76,7 @@ export const RulesTable: FC<Props> = ({ rules, showGuidelines = false, emptyMess
           <col />
           <col />
           <col />
+          {showGroupColumn && <col />}
         </colgroup>
         <thead>
           <tr>
@@ -78,6 +85,7 @@ export const RulesTable: FC<Props> = ({ rules, showGuidelines = false, emptyMess
             </th>
             <th>State</th>
             <th>Name</th>
+            {showGroupColumn && <th>Group</th>}
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -120,6 +128,9 @@ export const RulesTable: FC<Props> = ({ rules, showGuidelines = false, emptyMess
                     </td>
                     <td>{promRule && isAlertingRule(promRule) ? <StateTag status={promRule.state} /> : 'n/a'}</td>
                     <td>{rule.name}</td>
+                    {showGroupColumn && (
+                      <td>{isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name}</td>
+                    )}
                     <td>{statuses.join(', ') || 'n/a'}</td>
                     <td className={styles.actionsCell}>
                       {isCloudRulesSource(rulesSource) && (
@@ -153,7 +164,7 @@ export const RulesTable: FC<Props> = ({ rules, showGuidelines = false, emptyMess
                           <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
                         )}
                       </td>
-                      <td colSpan={4}>
+                      <td colSpan={showGroupColumn ? 5 : 4}>
                         <RuleDetails rulesSource={rulesSource} rule={rule} />
                       </td>
                     </tr>
