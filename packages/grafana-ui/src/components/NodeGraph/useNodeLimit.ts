@@ -52,8 +52,14 @@ function limitGraphLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: n
 
   const { visibleNodes, markers } = collectVisibleNodes(limit, roots, nodesMap, edgesMap);
   const markersWithStats = collectMarkerStats(markers, visibleNodes, nodesMap, edgesMap);
-
   const markersMap = fromPairs(markersWithStats.map((m) => [m.node.id, m]));
+
+  for (const marker of markersWithStats) {
+    if (marker.count === 1) {
+      delete markersMap[marker.node.id];
+      visibleNodes[marker.node.id] = marker.node;
+    }
+  }
 
   // Show all edges between visible nodes or placeholder markers
   const visibleEdges = edges.filter(
@@ -64,17 +70,16 @@ function limitGraphLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: n
   return {
     nodes: Object.values(visibleNodes),
     edges: visibleEdges,
-    markers: markersWithStats,
+    markers: Object.values(markersMap),
   };
 }
 
 function limitGridLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: number, root?: NodeDatum) {
   let start = 0;
   let stop = limit;
-  let markers = nodes.length > limit ? [{ node: nodes[limit], count: nodes.length - limit }] : [];
+  let markers: NodesMarker[] = [];
 
   if (root) {
-    markers = [];
     const index = nodes.indexOf(root);
     const prevLimit = Math.floor(limit / 2);
     let afterLimit = prevLimit;
@@ -92,12 +97,16 @@ function limitGridLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: nu
       stop = nodes.length;
     }
 
-    if (start > 0) {
+    if (start > 1) {
       markers.push({ node: nodes[start - 1], count: start });
     }
 
-    if (stop < nodes.length) {
+    if (nodes.length - stop > 1) {
       markers.push({ node: nodes[stop], count: nodes.length - stop });
+    }
+  } else {
+    if (nodes.length - limit > 1) {
+      markers = [{ node: nodes[limit], count: nodes.length - limit }];
     }
   }
 
