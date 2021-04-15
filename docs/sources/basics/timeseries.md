@@ -2,7 +2,7 @@
 title = "Time series"
 description = "Introduction to time series"
 keywords = ["grafana", "intro", "guide", "concepts", "timeseries"]
-aliases = ["/docs/grafana/next/guides/timeseries", "/docs/grafana/next/getting-started/timeseries"]
+aliases = ["/docs/grafana/latest/guides/timeseries", "/docs/grafana/latest/getting-started/timeseries"]
 weight = 500
 +++
 

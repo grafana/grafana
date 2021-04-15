@@ -2,7 +2,7 @@
 title = "Azure Monitor"
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-aliases = ["/docs/grafana/next/features/datasources/azuremonitor"]
+aliases = ["/docs/grafana/latest/features/datasources/azuremonitor"]
 weight = 300
 +++
 

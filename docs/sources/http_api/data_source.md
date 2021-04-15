@@ -2,7 +2,7 @@
 title = "Data source HTTP API "
 description = "Grafana Data source HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "data source"]
-aliases = ["/docs/grafana/next/http_api/datasource/"]
+aliases = ["/docs/grafana/latest/http_api/datasource/"]
 +++
 
 
