@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -350,6 +351,19 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 	t.Run("Influxdb response parser parseValue invalid type", func(t *testing.T) {
 		_, err := parseValue("95.4")
+		require.Error(t, err)
+	})
+
+	t.Run("Influxdb response parser parseTimestamp valid JSON.number", func(t *testing.T) {
+		// currently we use seconds-precision with influxdb, so the test works with that.
+		// if we change this to for example milliseconds-precision, the tests will have to change.
+		timestamp, err := parseTimestamp(json.Number("1609556645"))
+		require.NoError(t, err)
+		require.Equal(t, timestamp.Format(time.RFC3339), "2021-01-02T03:04:05Z")
+	})
+
+	t.Run("Influxdb response parser parseValue invalid type", func(t *testing.T) {
+		_, err := parseTimestamp("hello")
 		require.Error(t, err)
 	})
 }
