@@ -1,4 +1,11 @@
-import { CombinedRule, CombinedRuleNamespace, Rule, RuleNamespace } from 'app/types/unified-alerting';
+import {
+  CombinedRule,
+  CombinedRuleGroup,
+  CombinedRuleNamespace,
+  Rule,
+  RuleNamespace,
+  RulesSource,
+} from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { useMemo, useRef } from 'react';
 import { getAllRulesSources, isCloudRulesSource, isGrafanaRulesSource } from '../utils/datasource';
@@ -88,12 +95,7 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
             }
 
             (group.rules ?? []).forEach((rule) => {
-              //@TODO remove ?? once api is fixed
-              const existingRule = isGrafanaRulesSource(rulesSource)
-                ? combinedGroup!.rules.find((existingRule) => existingRule.name === rule.name) // assume grafana groups have only the one rule. check name anyway because paranoid
-                : combinedGroup!.rules.find((existingRule) => {
-                    return !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule);
-                  });
+              const existingRule = getExistingRuleInGroup(rule, combinedGroup!, rulesSource);
               if (existingRule) {
                 existingRule.promRule = rule;
               } else {
@@ -127,6 +129,18 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
       .flat();
     return retv;
   }, [promRulesResponses, rulerRulesResponses]);
+}
+
+function getExistingRuleInGroup(
+  rule: Rule,
+  group: CombinedRuleGroup,
+  rulesSource: RulesSource
+): CombinedRule | undefined {
+  return isGrafanaRulesSource(rulesSource)
+    ? group!.rules.find((existingRule) => existingRule.name === rule.name) // assume grafana groups have only the one rule. check name anyway because paranoid
+    : group!.rules.find((existingRule) => {
+        return !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule);
+      });
 }
 
 function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule): boolean {

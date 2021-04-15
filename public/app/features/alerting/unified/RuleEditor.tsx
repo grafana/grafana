@@ -10,7 +10,11 @@ import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchExistingRuleAction } from './state/actions';
 import { parseRuleIdentifier } from './utils/rules';
 
-const ExistingRuleEditor: FC<{ identifier: RuleIdentifier }> = ({ identifier }) => {
+interface ExistingRuleEditorProps {
+  identifier: RuleIdentifier;
+}
+
+const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
   useCleanup((state) => state.unifiedAlerting.ruleForm.existingRule);
   const { loading, result, error, dispatched } = useUnifiedAlertingSelector((state) => state.ruleForm.existingRule);
   const dispatch = useDispatch();
@@ -51,7 +55,9 @@ const ExistingRuleEditor: FC<{ identifier: RuleIdentifier }> = ({ identifier }) 
   return <AlertRuleForm existing={result} />;
 };
 
-const RuleEditor: FC<GrafanaRouteComponentProps<{ id?: string }>> = ({ match }) => {
+type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string }>;
+
+const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
   const id = match.params.id;
   if (id) {
     const identifier = parseRuleIdentifier(decodeURIComponent(id));

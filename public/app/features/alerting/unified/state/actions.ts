@@ -129,19 +129,19 @@ async function deleteRule(ruleWithLocation: RuleWithLocation): Promise<void> {
   // in case of GRAFANA, each group implicitly only has one rule. delete the group.
   if (isGrafanaRulesSource(ruleSourceName)) {
     await deleteRulerRulesGroup(GRAFANA_RULES_SOURCE_NAME, namespace, group.name);
-    // in case of CLOUD
-  } else {
-    // it was the last rule, delete the entire group
-    if (group.rules.length === 1) {
-      await deleteRulerRulesGroup(ruleSourceName, namespace, group.name);
-    } else {
-      // post the group with rule removed
-      await setRulerRuleGroup(ruleSourceName, namespace, {
-        ...group,
-        rules: group.rules.filter((r) => r !== rule),
-      });
-    }
+    return;
   }
+  // in case of CLOUD
+  // it was the last rule, delete the entire group
+  if (group.rules.length === 1) {
+    await deleteRulerRulesGroup(ruleSourceName, namespace, group.name);
+    return;
+  }
+  // post the group with rule removed
+  await setRulerRuleGroup(ruleSourceName, namespace, {
+    ...group,
+    rules: group.rules.filter((r) => r !== rule),
+  });
 }
 
 export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<void> {

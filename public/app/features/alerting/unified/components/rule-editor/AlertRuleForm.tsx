@@ -9,7 +9,6 @@ import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
 import { useForm, FormContext } from 'react-hook-form';
 
-//import { locationService } from '@grafana/runtime';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
@@ -18,6 +17,7 @@ import { RuleWithLocation } from 'app/types/unified-alerting';
 import { useDispatch } from 'react-redux';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { rulerRuleToFormValues, defaultFormValues } from '../../utils/rule-form';
+import { Link } from 'react-router-dom';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -70,11 +70,11 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     <FormContext {...formAPI}>
       <form onSubmit={handleSubmit((values) => submit(values, false))} className={styles.form}>
         <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
-          <a href="/alerting/list">
+          <Link to="/alerting/list">
             <ToolbarButton variant="default" disabled={submitState.loading} type="button">
               Cancel
             </ToolbarButton>
-          </a>
+          </Link>
           <ToolbarButton
             variant="primary"
             type="button"
