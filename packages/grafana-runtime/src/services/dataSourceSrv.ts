@@ -60,6 +60,9 @@ export interface GetDataSourceListFilters {
 
   /** apply a function to filter */
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
+
+  /** Only returns datasources matching the specified types (ie. Loki, Prometheus) */
+  type?: string | string[];
 }
 
 let singletonInstance: DataSourceSrv;

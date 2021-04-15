@@ -36,7 +36,7 @@ export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
         )}
       </div>
 
-      {namespaces.map(({ rulesSource, name, groups }) =>
+      {namespaces?.map(({ rulesSource, name, groups }) =>
         groups.map((group) => (
           <RulesGroup
             group={group}
@@ -46,7 +46,7 @@ export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
           />
         ))
       )}
-      {namespaces?.length === 0 && !!rulesDataSources.length && <p>No rules found.</p>}
+      {namespaces?.length === 0 && !dataSourcesLoading.length && !!rulesDataSources.length && <p>No rules found.</p>}
       {!rulesDataSources.length && <p>There are no Prometheus or Loki datas sources configured.</p>}
     </section>
   );

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { getValueFormat, ValueFormatter, stringToJsRegex, DecimalCount, formattedValueToString } from '@grafana/data';
+import { DecimalCount, formattedValueToString, getValueFormat, stringToJsRegex, ValueFormatter } from '@grafana/data';
 
 function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
   if (!aliasOrRegex) {
@@ -72,15 +72,15 @@ export default class TimeSeries {
   valueFormater: any;
   stats: any;
   legend: boolean;
-  hideTooltip: boolean;
-  allIsNull: boolean;
-  allIsZero: boolean;
+  hideTooltip?: boolean;
+  allIsNull?: boolean;
+  allIsZero?: boolean;
   decimals: DecimalCount;
   hasMsResolution: boolean;
-  isOutsideRange: boolean;
+  isOutsideRange?: boolean;
 
   lines: any;
-  hiddenSeries: boolean;
+  hiddenSeries?: boolean;
   dashes: any;
   bars: any;
   points: any;

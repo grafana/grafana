@@ -1,7 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Explore should render component 1`] = `
-<Fragment>
+<CustomScrollbar
+  autoHeightMin="100%"
+>
   <Connect(UnConnectedExploreToolbar)
     exploreId="left"
     onChangeTime={[Function]}
@@ -38,5 +40,5 @@ exports[`Explore should render component 1`] = `
       <Component />
     </AutoSizer>
   </div>
-</Fragment>
+</CustomScrollbar>
 `;
