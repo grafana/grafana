@@ -138,7 +138,6 @@ export class ElasticResponse {
               }
               return null;
             });
-            console.log(values);
             newSeries.datapoints.push([
               aggValues(metric.settings?.aggregateBy ?? 'avg', values, metric.settings?.seperator),
               bucket.key,

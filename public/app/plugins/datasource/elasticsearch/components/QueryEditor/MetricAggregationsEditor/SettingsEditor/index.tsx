@@ -45,7 +45,6 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
   const datasource = useDatasource();
 
   const getFields = useCallback(async () => {
-    console.log('getFields called');
     return (await datasource.getFields().toPromise()).map(
       ({ value, text }: MetricFindValue): SelectableValue<string> => ({
         label: text,
