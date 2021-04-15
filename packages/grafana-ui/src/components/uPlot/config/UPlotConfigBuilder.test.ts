@@ -1,7 +1,6 @@
 // TODO: migrate tests below to the builder
 
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
-import { GrafanaTheme } from '@grafana/data';
 import {
   GraphGradientMode,
   AxisPlacement,
@@ -292,7 +291,7 @@ describe('UPlotConfigBuilder', () => {
       formatValue: () => 'test value',
       grid: false,
       show: true,
-      theme: { isDark: true, palette: { gray25: '#ffffff' }, colors: { text: 'gray' } } as GrafanaTheme,
+      theme: darkTheme,
       values: [],
     });
 
@@ -300,15 +299,15 @@ describe('UPlotConfigBuilder', () => {
       Object {
         "axes": Array [
           Object {
-            "font": "12px 'Roboto'",
+            "font": "12px 'Inter', 'Helvetica Neue', Arial, sans-serif",
             "gap": 5,
             "grid": Object {
               "show": false,
-              "stroke": "#ffffff",
+              "stroke": "#2c3235",
               "width": 1,
             },
             "label": "test label",
-            "labelFont": "12px 'Roboto'",
+            "labelFont": "12px 'Inter', 'Helvetica Neue', Arial, sans-serif",
             "labelSize": 18,
             "scale": "scale-x",
             "show": true,
@@ -316,10 +315,10 @@ describe('UPlotConfigBuilder', () => {
             "size": [Function],
             "space": [Function],
             "splits": undefined,
-            "stroke": "gray",
+            "stroke": "rgba(255, 255, 255, 0.77)",
             "ticks": Object {
               "show": true,
-              "stroke": "#ffffff",
+              "stroke": "#2c3235",
               "width": 1,
             },
             "timeZone": "browser",
