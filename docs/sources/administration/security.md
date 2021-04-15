@@ -42,5 +42,5 @@ To address this vulnerability, you can restrict data source query access in the 
 When you enable Anonymous access to a dashboard, it is publicly available. This section lists the security implications of enabling Anonymous access.
 
 - Anyone with the URL can access the dashboard. 
-- Anyone can make view calls to the API and list all folders, dashboards and data sources.
+- Anyone can make view calls to the API and list all folders, dashboards, and data sources.
 - Anyone can make arbitrary queries to any data source that the Grafana instance is configured with.
