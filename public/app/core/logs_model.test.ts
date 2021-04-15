@@ -246,7 +246,7 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: 'Limit',
+      label: 'Line limit',
       value: `1000 (2 returned)`,
       kind: LogsMetaKind.String,
     });
@@ -316,7 +316,7 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: 'Limit',
+      label: 'Line limit',
       value: `1000 (2 returned)`,
       kind: LogsMetaKind.String,
     });
@@ -588,8 +588,6 @@ describe('logSeriesToLogsModel', () => {
         meta: {
           searchWords: ['test'],
           limit: 1000,
-          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
-          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
           preferredVisualisationType: 'logs',
         },
       },
@@ -597,10 +595,7 @@ describe('logSeriesToLogsModel', () => {
 
     const metaData = {
       hasUniqueLabels: false,
-      meta: [
-        { label: 'Limit', value: '1000 (0 returned)', kind: 1 },
-        { label: 'Total bytes processed', value: '97.0  kB', kind: 1 },
-      ],
+      meta: [{ label: 'Line limit', value: 1000, kind: 0 }],
       rows: [],
     };
 
@@ -634,8 +629,6 @@ describe('logSeriesToLogsModel', () => {
         meta: {
           searchWords: ['test'],
           limit: 1000,
-          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
-          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
           preferredVisualisationType: 'logs',
         },
       }),
@@ -646,8 +639,6 @@ describe('logSeriesToLogsModel', () => {
         meta: {
           searchWords: ['test'],
           limit: 1000,
-          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
-          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
           preferredVisualisationType: 'logs',
         },
       }),
@@ -656,8 +647,7 @@ describe('logSeriesToLogsModel', () => {
     const logsModel = dataFrameToLogsModel(logSeries, 0, 'utc');
     expect(logsModel.meta).toMatchObject([
       { kind: 2, label: 'Common labels', value: { foo: 'bar', level: 'dbug' } },
-      { kind: 1, label: 'Limit', value: '2000 (3 returned)' },
-      { kind: 1, label: 'Total bytes processed', value: '194  kB' },
+      { kind: 0, label: 'Line limit', value: 2000 },
     ]);
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
