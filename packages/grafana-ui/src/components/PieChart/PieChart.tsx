@@ -274,28 +274,8 @@ const PieSlice: FC<{
     tooltip.showTooltip({
       tooltipLeft: coords!.x,
       tooltipTop: coords!.y,
-      tooltipData: getTooltipSeries(),
+      tooltipData: getTooltipData(pie, arc, tooltipOptions),
     });
-  };
-
-  const getTooltipSeries = () => {
-    if (tooltipOptions.mode === 'multi') {
-      return pie.arcs.map((pieArc) => {
-        return {
-          color: pieArc.data.display.color ?? FALLBACK_COLOR,
-          label: pieArc.data.display.title,
-          value: formattedValueToString(pieArc.data.display),
-          isActive: pieArc.index === arc.index,
-        };
-      });
-    }
-    return [
-      {
-        color: arc.data.display.color ?? FALLBACK_COLOR,
-        label: arc.data.display.title,
-        value: formattedValueToString(arc.data.display),
-      },
-    ];
   };
 
   return (
@@ -362,6 +342,30 @@ const PieLabel: FC<{
     </g>
   );
 };
+
+function getTooltipData(
+  pie: ProvidedProps<FieldDisplay>,
+  arc: PieArcDatum<FieldDisplay>,
+  tooltipOptions: GraphTooltipOptions
+) {
+  if (tooltipOptions.mode === 'multi') {
+    return pie.arcs.map((pieArc) => {
+      return {
+        color: pieArc.data.display.color ?? FALLBACK_COLOR,
+        label: pieArc.data.display.title,
+        value: formattedValueToString(pieArc.data.display),
+        isActive: pieArc.index === arc.index,
+      };
+    });
+  }
+  return [
+    {
+      color: arc.data.display.color ?? FALLBACK_COLOR,
+      label: arc.data.display.title,
+      value: formattedValueToString(arc.data.display),
+    },
+  ];
+}
 
 function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerRadius: number) {
   const r = (outerRadius + innerRadius) / 2;
