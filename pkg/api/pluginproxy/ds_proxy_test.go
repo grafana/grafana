@@ -895,3 +895,40 @@ func runDatasourceAuthTest(t *testing.T, test *testCase) {
 
 	test.checkReq(req)
 }
+
+func Test_PathCheck(t *testing.T) {
+	// Ensure that we test routes appropriately. This test reproduces a historical bug where two routes were defined with different role requirements but the same method and the more privileged route was tested first. Here we ensure auth checks are applied based on the correct route, not just the method.
+	plugin := &plugins.DataSourcePlugin{
+		Routes: []*plugins.AppPluginRoute{
+			{
+				Path:    "a",
+				URL:     "https://www.google.com",
+				ReqRole: models.ROLE_EDITOR,
+				Method:  http.MethodGet,
+			},
+			{
+				Path:    "b",
+				URL:     "https://www.google.com",
+				ReqRole: models.ROLE_VIEWER,
+				Method:  http.MethodGet,
+			},
+		},
+	}
+	setUp := func() (*models.ReqContext, *http.Request) {
+		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
+		require.NoError(t, err)
+		ctx := &models.ReqContext{
+			Context: &macaron.Context{
+				Req: macaron.Request{Request: req},
+			},
+			SignedInUser: &models.SignedInUser{OrgRole: models.ROLE_VIEWER},
+		}
+		return ctx, req
+	}
+	ctx, _ := setUp()
+	proxy, err := NewDataSourceProxy(&models.DataSource{}, plugin, ctx, "b", &setting.Cfg{})
+	require.NoError(t, err)
+
+	require.Nil(t, proxy.validateRequest())
+	require.Equal(t, plugin.Routes[1], proxy.route)
+}
