@@ -139,8 +139,8 @@ func TestMSSQL(t *testing.T) {
 			}
 
 			resp, err := endpoint.DataQuery(context.Background(), nil, query)
-			queryResult := resp.Results["A"]
 			require.NoError(t, err)
+			queryResult := resp.Results["A"]
 
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Equal(t, 1, len(frames))
@@ -285,7 +285,7 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, frames, 1)
+			require.Len(t, frames, 1)
 			require.Equal(t, 7, frames[0].Fields[0].Len())
 
 			dt := fromStart
@@ -344,11 +344,10 @@ func TestMSSQL(t *testing.T) {
 				resp, err := endpoint.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
+				require.NoError(t, queryResult.Error)
 
 				frames, _ := queryResult.Dataframes.Decoded()
-				require.Equal(t, 1, len(frames))
-
-				require.NoError(t, queryResult.Error)
+				require.Len(t, frames, 1)
 				require.Equal(t, "SELECT FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 AS time, avg(value) as value FROM metric GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time)/60)*60 ORDER BY 1", frames[0].Meta.ExecutedQueryString)
 			})
 		})
@@ -397,12 +396,13 @@ func TestMSSQL(t *testing.T) {
 			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
 		}
 
-		if exist, err := sess.IsTableExist(metric_values{}); err != nil || exist {
-			require.NoError(t, err)
-			err = sess.DropTable(metric_values{})
+		exists, err := sess.IsTableExist(metric_values{})
+		require.NoError(t, err)
+		if exists {
+			err := sess.DropTable(metric_values{})
 			require.NoError(t, err)
 		}
-		err := sess.CreateTable(metric_values{})
+		err = sess.CreateTable(metric_values{})
 		require.NoError(t, err)
 
 		rand.Seed(time.Now().Unix())
@@ -738,10 +738,10 @@ func TestMSSQL(t *testing.T) {
 			resp, err := endpoint.DataQuery(context.Background(), nil, query)
 			require.NoError(t, err)
 			queryResult := resp.Results["A"]
+			require.NoError(t, queryResult.Error)
 			frames, err := queryResult.Dataframes.Decoded()
 			require.NoError(t, err)
 			require.Equal(t, 1, len(frames))
-			require.NoError(t, queryResult.Error)
 			require.Equal(t, "SELECT time FROM metric_values WHERE time > '2018-03-15T12:55:00Z' OR time < '2018-03-15T12:55:00Z' OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1", frames[0].Meta.ExecutedQueryString)
 		})
 
@@ -755,35 +755,35 @@ func TestMSSQL(t *testing.T) {
 			require.NoError(t, err)
 
 			sql = `
-								CREATE PROCEDURE sp_test_epoch(
-									@from 		int,
-									@to 			int,
-									@interval nvarchar(50) = '5m',
-									@metric 	nvarchar(200) = 'ALL'
-								)	AS
-								BEGIN
-									DECLARE @dInterval int
-									SELECT @dInterval = 300
+				CREATE PROCEDURE sp_test_epoch(
+					@from 		int,
+					@to 			int,
+					@interval nvarchar(50) = '5m',
+					@metric 	nvarchar(200) = 'ALL'
+				)	AS
+				BEGIN
+					DECLARE @dInterval int
+					SELECT @dInterval = 300
 
-									IF @interval = '10m'
-										SELECT @dInterval = 600
+					IF @interval = '10m'
+						SELECT @dInterval = 600
 
-									SELECT
-										CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
-										measurement as metric,
-										avg(valueOne) as valueOne,
-										avg(valueTwo) as valueTwo
-									FROM
-										metric_values
-									WHERE
-										time BETWEEN DATEADD(s, @from, '1970-01-01') AND DATEADD(s, @to, '1970-01-01') AND
-										(@metric = 'ALL' OR measurement = @metric)
-									GROUP BY
-										CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
-										measurement
-									ORDER BY 1
-								END
-							`
+					SELECT
+						CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval as time,
+						measurement as metric,
+						avg(valueOne) as valueOne,
+						avg(valueTwo) as valueTwo
+					FROM
+						metric_values
+					WHERE
+						time BETWEEN DATEADD(s, @from, '1970-01-01') AND DATEADD(s, @to, '1970-01-01') AND
+						(@metric = 'ALL' OR measurement = @metric)
+					GROUP BY
+						CAST(ROUND(DATEDIFF(second, '1970-01-01', time)/CAST(@dInterval as float), 0) as bigint)*@dInterval,
+						measurement
+					ORDER BY 1
+				END
+			`
 
 			_, err = sess.Exec(sql)
 			require.NoError(t, err)
@@ -812,8 +812,8 @@ func TestMSSQL(t *testing.T) {
 				}
 
 				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				queryResult := resp.Results["A"]
 				require.NoError(t, err)
+				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
 				frames, err := queryResult.Dataframes.Decoded()
 				require.NoError(t, err)
@@ -897,8 +897,8 @@ func TestMSSQL(t *testing.T) {
 				}
 
 				resp, err := endpoint.DataQuery(context.Background(), nil, query)
-				queryResult := resp.Results["A"]
 				require.NoError(t, err)
+				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
 
 				frames, err := queryResult.Dataframes.Decoded()
@@ -1007,8 +1007,8 @@ func TestMSSQL(t *testing.T) {
 			}
 
 			resp, err := endpoint.DataQuery(context.Background(), nil, query)
-			queryResult := resp.Results["Tickets"]
 			require.NoError(t, err)
+			queryResult := resp.Results["Tickets"]
 			frames, err := queryResult.Dataframes.Decoded()
 			require.NoError(t, err)
 			require.Equal(t, 1, len(frames))

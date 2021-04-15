@@ -251,8 +251,8 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
-			require.Equal(t, 17, len(frames[0].Fields))
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Fields, 17)
 
 			require.Equal(t, int16(1), *frames[0].Fields[0].At(0).(*int16))
 			require.Equal(t, int32(2), *frames[0].Fields[1].At(0).(*int32))
@@ -600,7 +600,7 @@ func TestPostgres(t *testing.T) {
 				require.NoError(t, queryResult.Error)
 
 				frames, _ := queryResult.Dataframes.Decoded()
-				require.Equal(t, 1, len(frames))
+				require.Len(t, frames, 1)
 				require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 			})
 
@@ -624,7 +624,7 @@ func TestPostgres(t *testing.T) {
 				require.NoError(t, queryResult.Error)
 
 				frames, _ := queryResult.Dataframes.Decoded()
-				require.Equal(t, 1, len(frames))
+				require.Len(t, frames, 1)
 				require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 			})
 
@@ -648,7 +648,7 @@ func TestPostgres(t *testing.T) {
 				require.NoError(t, queryResult.Error)
 
 				frames, _ := queryResult.Dataframes.Decoded()
-				require.Equal(t, 1, len(frames))
+				require.Len(t, frames, 1)
 				require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 			})
 
@@ -1015,10 +1015,10 @@ func TestPostgres(t *testing.T) {
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
-									 %d as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`, dt.Unix()),
+								%d as time,
+								'message' as text,
+								'tag1,tag2' as tags
+							`, dt.Unix()),
 							"format": "table",
 						}),
 						RefID: "A",
@@ -1047,10 +1047,10 @@ func TestPostgres(t *testing.T) {
 					{
 						Model: simplejson.NewFromAny(map[string]interface{}{
 							"rawSql": fmt.Sprintf(`SELECT
-									 cast(%d as bigint) as time,
-									'message' as text,
-									'tag1,tag2' as tags
-								`, dt.Unix()),
+								cast(%d as bigint) as time,
+								'message' as text,
+								'tag1,tag2' as tags
+							`, dt.Unix()),
 							"format": "table",
 						}),
 						RefID: "A",

@@ -349,7 +349,6 @@ func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plug
 		timeIndex:    -1,
 		metricIndex:  -1,
 		metricPrefix: false,
-		FillMissing:  nil,
 		queryContext: queryContext,
 	}
 

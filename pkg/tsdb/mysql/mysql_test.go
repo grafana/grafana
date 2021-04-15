@@ -340,11 +340,9 @@ func TestMySQL(t *testing.T) {
 				resp, err := exe.DataQuery(context.Background(), nil, query)
 				require.NoError(t, err)
 				queryResult := resp.Results["A"]
-
+				require.NoError(t, queryResult.Error)
 				frames, _ := queryResult.Dataframes.Decoded()
 				require.Equal(t, 1, len(frames))
-
-				require.NoError(t, queryResult.Error)
 				require.Equal(t, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1", frames[0].Meta.ExecutedQueryString)
 			})
 		})
@@ -850,7 +848,7 @@ func TestMySQL(t *testing.T) {
 		}
 
 		for _, e := range events {
-			_, err = sess.Insert(e)
+			_, err := sess.Insert(e)
 			require.NoError(t, err)
 		}
 
@@ -1092,7 +1090,6 @@ func TestMySQL(t *testing.T) {
 			require.Nil(t, frames[0].Fields[0].At(0))
 		})
 	})
-
 }
 
 func InitMySQLTestDB(t *testing.T) *xorm.Engine {
