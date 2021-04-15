@@ -173,10 +173,16 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.annotations && !x.meta.annotations) {
         return false;
       }
+      if (filters.alerting && !x.meta.alerting) {
+        return false;
+      }
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
         return false;
       }
       if (filters.filter && !filters.filter(x)) {
+        return false;
+      }
+      if (filters.type && (Array.isArray(filters.type) ? !filters.type.includes(x.type) : filters.type !== x.type)) {
         return false;
       }
       if (
@@ -184,7 +190,8 @@ export class DatasourceSrv implements DataSourceService {
         x.meta.metrics !== true &&
         x.meta.annotations !== true &&
         x.meta.tracing !== true &&
-        x.meta.logs !== true
+        x.meta.logs !== true &&
+        x.meta.alerting !== true
       ) {
         return false;
       }

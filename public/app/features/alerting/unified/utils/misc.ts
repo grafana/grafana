@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
-import { urlUtil } from '@grafana/data';
+import { urlUtil, UrlQueryMap } from '@grafana/data';
+import { RuleFilterState } from 'app/types/unified-alerting';
 
 export function createExploreLink(dataSourceName: string, query: string) {
   return urlUtil.renderUrl(config.appSubUrl + '/explore', {
@@ -33,3 +34,11 @@ export function arrayToRecord(items: Array<{ key: string; value: string }>): Rec
     return rec;
   }, {});
 }
+
+export const getFiltersFromUrlParams = (queryParams: UrlQueryMap): RuleFilterState => {
+  const queryString = queryParams['queryString'] === undefined ? undefined : String(queryParams['queryString']);
+  const alertState = queryParams['alertState'] === undefined ? undefined : String(queryParams['alertState']);
+  const dataSource = queryParams['dataSource'] === undefined ? undefined : String(queryParams['dataSource']);
+
+  return { queryString, alertState, dataSource };
+};

@@ -91,3 +91,9 @@ export interface RuleLocation {
   groupName: string;
   ruleHash: number;
 }
+
+export interface RuleFilterState {
+  queryString?: string;
+  dataSource?: string;
+  alertState?: string;
+}

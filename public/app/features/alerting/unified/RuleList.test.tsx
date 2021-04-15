@@ -14,11 +14,13 @@ import {
   mockPromRecordingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
+  MockDataSourceSrv,
 } from './mocks';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { SerializedError } from '@reduxjs/toolkit';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import userEvent from '@testing-library/user-event';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 jest.mock('./api/prometheus');
 jest.mock('./utils/config');
@@ -66,10 +68,15 @@ const ui = {
 };
 
 describe('RuleList', () => {
-  afterEach(() => jest.resetAllMocks());
+  afterEach(() => {
+    jest.resetAllMocks();
+    setDataSourceSrv(undefined as any);
+  });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
+
+    setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
       if (dataSourceName === dataSources.prom.name) {
@@ -145,6 +152,7 @@ describe('RuleList', () => {
 
   it('expand rule group, rule and alert details', async () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
+    setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
     mocks.api.fetchRules.mockImplementation((dataSourceName: string) => {
       if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
         return Promise.resolve([]);

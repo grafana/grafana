@@ -1,6 +1,8 @@
-import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
+import { DataSourceApi, DataSourceInstanceSettings, DataSourcePluginMeta, ScopedVars } from '@grafana/data';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
 
 let nextDataSourceId = 1;
 
@@ -91,3 +93,47 @@ export const mockPromRuleNamespace = (partial: Partial<RuleNamespace> = {}): Rul
     ...partial,
   };
 };
+
+export class MockDataSourceSrv implements DataSourceSrv {
+  // @ts-ignore
+  private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
+  private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
+  private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
+  // @ts-ignore
+  private templateSrv = {
+    getVariables: () => [],
+    replace: (name: any) => name,
+  };
+
+  constructor(datasources: Record<string, DataSourceInstanceSettings>) {
+    this.settingsMapByName = Object.values(datasources).reduce<Record<string, DataSourceInstanceSettings>>(
+      (acc, ds) => {
+        acc[ds.name] = ds;
+        return acc;
+      },
+      {}
+    );
+    for (const dsSettings of Object.values(this.settingsMapByName)) {
+      this.settingsMapByUid[dsSettings.uid] = dsSettings;
+      this.settingsMapById[dsSettings.id] = dsSettings;
+    }
+  }
+
+  get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+    return Promise.reject(new Error('not implemented'));
+  }
+
+  /**
+   * Get a list of data sources
+   */
+  getList(filters?: GetDataSourceListFilters): DataSourceInstanceSettings[] {
+    return DatasourceSrv.prototype.getList.call(this, filters);
+  }
+
+  /**
+   * Get settings and plugin metadata by name or uid
+   */
+  getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
+    return DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) || { meta: { info: { logos: {} } } };
+  }
+}

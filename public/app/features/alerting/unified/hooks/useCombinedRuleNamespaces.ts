@@ -87,7 +87,7 @@ export function useCombinedRuleNamespaces(): CombinedRuleNamespace[] {
               ns.groups.push(combinedGroup);
             }
 
-            group.rules.forEach((rule) => {
+            (group.rules ?? []).forEach((rule) => {
               const existingRule = combinedGroup!.rules.find((existingRule) => {
                 return !existingRule.promRule && isCombinedRuleEqualToPromRule(existingRule, rule);
               });

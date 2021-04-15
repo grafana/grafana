@@ -7,6 +7,7 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { SystemOrApplicationRules } from './components/rules/SystemOrApplicationRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { useFilteredRules } from './hooks/useFilteredRules';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import {
   getAllRulesSourceNames,
@@ -19,6 +20,7 @@ import { ThresholdRules } from './components/rules/ThresholdRules';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { isRulerNotSupportedResponse } from './utils/rules';
+import RulesFilter from './components/rules/RulesFilter';
 
 export const RuleList: FC = () => {
   const dispatch = useDispatch();
@@ -72,8 +74,9 @@ export const RuleList: FC = () => {
   const showNewAlertSplash = dispatched && !loading && !haveResults;
 
   const combinedNamespaces = useCombinedRuleNamespaces();
+  const filteredNamespaces = useFilteredRules(combinedNamespaces);
   const [thresholdNamespaces, systemNamespaces] = useMemo(() => {
-    const sorted = combinedNamespaces
+    const sorted = filteredNamespaces
       .map((namespace) => ({
         ...namespace,
         groups: namespace.groups.sort((a, b) => a.name.localeCompare(b.name)),
@@ -83,7 +86,7 @@ export const RuleList: FC = () => {
       sorted.filter((ns) => ns.rulesSource === GRAFANA_RULES_SOURCE_NAME),
       sorted.filter((ns) => isCloudRulesSource(ns.rulesSource)),
     ];
-  }, [combinedNamespaces]);
+  }, [filteredNamespaces]);
 
   return (
     <AlertingPageWrapper pageId="alert-list" isLoading={loading && !haveResults}>
@@ -119,12 +122,16 @@ export const RuleList: FC = () => {
         </InfoBox>
       )}
       {!showNewAlertSplash && (
-        <div className={styles.buttonsContainer}>
-          <div />
-          <a href="/alerting/new">
-            <Button icon="plus">New alert rule</Button>
-          </a>
-        </div>
+        <>
+          <RulesFilter />
+          <div className={styles.break} />
+          <div className={styles.buttonsContainer}>
+            <div />
+            <a href="/alerting/new">
+              <Button icon="plus">New alert rule</Button>
+            </a>
+          </div>
+        </>
       )}
       {showNewAlertSplash && <NoRulesSplash />}
       {haveResults && <ThresholdRules namespaces={thresholdNamespaces} />}
@@ -134,6 +141,12 @@ export const RuleList: FC = () => {
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
+  break: css`
+    width: 100%;
+    height: 0;
+    margin-bottom: ${theme.spacing.md};
+    border-bottom: solid 1px ${theme.colors.border2};
+  `,
   iconError: css`
     color: ${theme.palette.red};
     margin-right: ${theme.spacing.md};
