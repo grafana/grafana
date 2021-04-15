@@ -14,7 +14,7 @@ const getFilter = (aggregationType: AggregationType) => {
   // metricAggregationConfig and bucketAggregationConfig so that each aggregation type can specify on
   // which kind of data it operates.
   if (isMetricAggregationType(aggregationType)) {
-    if (aggregationType !== 'cardinality') {
+    if (!['cardinality', 'top_metrics'].includes(aggregationType)) {
       return 'number';
     }
 

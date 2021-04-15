@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { isNumber, max, mean, min, sum } from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
@@ -18,16 +18,19 @@ import {
 import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
-function aggValues(method: string, values: number[]) {
+function aggValues(method: string, values: Array<number | null | string>, seperator = ' ') {
+  const nonNullValues = values.filter(isNumber) as number[];
   switch (method) {
     case 'sum':
-      return values.reduce((prev, value) => prev + value, 0);
+      return sum(nonNullValues);
     case 'min':
-      return values.reduce((prev, value) => (prev > value ? value : prev), 0);
+      return min(nonNullValues);
     case 'max':
-      return values.reduce((prev, value) => (prev < value ? value : prev), 0);
+      return max(nonNullValues);
+    case 'avg':
+      return mean(nonNullValues);
     default:
-      return values.reduce((prev, value) => prev + value, 0) / values.length;
+      return values.join(seperator);
   }
 }
 
@@ -129,17 +132,17 @@ export class ElasticResponse {
           for (let i = 0; i < esAgg.buckets.length; i++) {
             const bucket = esAgg.buckets[i];
             const stats = bucket[metric.id];
-
-            // add stats that are in nested obj to top level obj
-            const values = stats.top
-              .map((hit: { metrics: Record<string, number> }) => {
-                if (hit.metrics[metric.field!]) {
-                  return hit.metrics[metric.field!];
-                }
-                return null;
-              })
-              .filter(Boolean);
-            newSeries.datapoints.push([aggValues(metric.settings?.aggregateBy ?? 'avg', values), bucket.key]);
+            const values = stats.top.map((hit: { metrics: Record<string, number> }) => {
+              if (hit.metrics[metric.field!]) {
+                return hit.metrics[metric.field!];
+              }
+              return null;
+            });
+            console.log(values);
+            newSeries.datapoints.push([
+              aggValues(metric.settings?.aggregateBy ?? 'avg', values, metric.settings?.seperator),
+              bucket.key,
+            ]);
           }
 
           seriesList.push(newSeries);
@@ -228,6 +231,22 @@ export class ElasticResponse {
 
               addMetricValue(values, this.getMetricName(statName as ExtendedStatMetaType), stats[statName]);
             }
+            break;
+          }
+          case 'top_metrics': {
+            const stats = bucket[metric.id];
+            const topMetricValues = stats.top.map((hit: { metrics: Record<string, number> }) => {
+              if (hit.metrics[metric.field!]) {
+                return hit.metrics[metric.field!];
+              }
+              return null;
+            });
+            const finalValue = aggValues(
+              metric.settings?.aggregateBy ?? 'avg',
+              topMetricValues,
+              metric.settings?.seperator
+            );
+            addMetricValue(values, this.getMetricName(metric.type), finalValue);
             break;
           }
           case 'percentiles': {

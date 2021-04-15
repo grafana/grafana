@@ -253,6 +253,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
         order: 'desc',
         aggregateBy: 'avg',
         orderBy: '@timestamp',
+        seperator: ' ',
       },
     },
   },

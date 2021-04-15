@@ -35,6 +35,7 @@ const aggregateByOptions = [
   { value: 'sum', label: 'Sum' },
   { value: 'max', label: 'Max' },
   { value: 'min', label: 'Min' },
+  { value: 'concat', label: 'Concatenate' },
 ];
 
 export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetrics }) => {
@@ -113,6 +114,9 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
               value={metric.settings?.aggregateBy}
             />
           </InlineField>
+          {metric.settings?.aggregateBy === 'concat' && (
+            <SettingField label="Seperator" metric={metric} settingName="seperator" />
+          )}
         </>
       )}
 

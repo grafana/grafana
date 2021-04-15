@@ -126,18 +126,22 @@ function createOrderByOptionsForPercentiles(metric: Percentiles): OrderByOption[
   });
 }
 
+const INCOMPATIBLE_ORDER_BY_AGGS = ['top_metrics'];
+
 /**
  * This creates all the valid order by options based on the metrics
  */
 export const createOrderByOptionsFromMetrics = (metrics: MetricAggregation[] = []): OrderByOption[] => {
-  const metricOptions = metrics.flatMap((metric) => {
-    if (metric.type === 'extended_stats') {
-      return createOrderByOptionsForExtendedStats(metric);
-    } else if (metric.type === 'percentiles') {
-      return createOrderByOptionsForPercentiles(metric);
-    } else {
-      return { label: describeMetric(metric), value: metric.id };
-    }
-  });
+  const metricOptions = metrics
+    .filter((metric) => !INCOMPATIBLE_ORDER_BY_AGGS.includes(metric.type))
+    .flatMap((metric) => {
+      if (metric.type === 'extended_stats') {
+        return createOrderByOptionsForExtendedStats(metric);
+      } else if (metric.type === 'percentiles') {
+        return createOrderByOptionsForPercentiles(metric);
+      } else {
+        return { label: describeMetric(metric), value: metric.id };
+      }
+    });
   return [...orderByOptions, ...metricOptions];
 };
