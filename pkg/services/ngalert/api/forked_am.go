@@ -14,6 +14,7 @@ type ForkedAMSvc struct {
 	DatasourceCache   datasources.CacheService
 }
 
+// NewForkedAM implements a set of routes that proxy to various Alertmanager-compatible backends.
 func NewForkedAM(datasourceCache datasources.CacheService, proxy, grafana AlertmanagerApiService) *ForkedAMSvc {
 	return &ForkedAMSvc{
 		AMSvc:           proxy,
@@ -38,7 +39,7 @@ func (am *ForkedAMSvc) getService(ctx *models.ReqContext) (AlertmanagerApiServic
 	}
 }
 
-func (am *ForkedAMSvc) RouteCreateSilence(ctx *models.ReqContext, body apimodels.SilenceBody) response.Response {
+func (am *ForkedAMSvc) RouteCreateSilence(ctx *models.ReqContext, body apimodels.PostableSilence) response.Response {
 	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)

@@ -3,7 +3,7 @@ import { PopoverContent } from '../Tooltip/Tooltip';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { ToolbarButtonVariant, ToolbarButton } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useStyles } from '../../themes/ThemeContext';
 import { Menu } from '../Menu/Menu';
 import { MenuItem } from '../Menu/MenuItem';
@@ -79,10 +79,6 @@ ButtonSelect.displayName = 'ButtonSelect';
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
-    wrapper: css`
-      position: relative;
-      display: inline-flex;
-    `,
     menuWrapper: css`
       position: absolute;
       z-index: ${theme.zIndex.dropdown};

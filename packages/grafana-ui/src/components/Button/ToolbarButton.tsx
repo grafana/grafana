@@ -1,5 +1,5 @@
 import React, { forwardRef, ButtonHTMLAttributes } from 'react';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { styleMixins, useStyles } from '../../themes';
 import { IconName } from '../../types/icon';
@@ -104,42 +104,54 @@ function renderIcon(icon: IconName | React.ReactNode) {
 }
 
 const getStyles = (theme: GrafanaTheme) => {
-  const primaryVariant = getPropertiesForVariant(theme, 'primary');
-  const destructiveVariant = getPropertiesForVariant(theme, 'destructive');
+  const primaryVariant = getPropertiesForVariant(theme.v2, 'primary');
+  const destructiveVariant = getPropertiesForVariant(theme.v2, 'destructive');
 
   return {
     button: css`
       label: toolbar-button;
       display: flex;
       align-items: center;
-      height: ${theme.height.md}px;
-      padding: 0 ${theme.spacing.sm};
-      border-radius: ${theme.border.radius.sm};
-      line-height: ${theme.height.md - 2}px;
-      font-weight: ${theme.typography.weight.semibold};
-      border: 1px solid ${theme.colors.border2};
+      height: ${theme.v2.spacing(theme.v2.components.height.md)};
+      padding: ${theme.v2.spacing(0, 1)};
+      border-radius: ${theme.v2.shape.borderRadius()};
+      line-height: ${theme.v2.components.height.md * theme.v2.spacing.gridSize - 2}px;
+      font-weight: ${theme.v2.typography.fontWeightMedium};
+      border: 1px solid ${theme.v2.palette.border1};      
       white-space: nowrap;
+      transition: ${theme.v2.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
+        duration: theme.v2.transitions.duration.short,
+      })},
 
       &:focus {
         outline: none;
       }
 
+      &:hover {
+        box-shadow: ${theme.v2.shadows.z2};
+      }
+
       &[disabled],
       &:disabled {
         cursor: not-allowed;
-        opacity: 0.5;
+        opacity: ${theme.v2.palette.action.disabledOpacity};
+        background: ${theme.v2.palette.action.disabledBackground};
+        box-shadow: none;
+
         &:hover {
-          color: ${theme.colors.textWeak};
-          background: ${theme.colors.bg1};
+          color: ${theme.v2.palette.text.disabled};
+          background: ${theme.v2.palette.action.disabledBackground};
+          box-shadow: none;
         }
-      }
+      }      
     `,
     default: css`
-      color: ${theme.colors.textWeak};
-      background-color: ${theme.colors.bg1};
+      color: ${theme.v2.palette.text.secondary};
+      background-color: ${theme.v2.palette.layer1};
+
       &:hover {
-        color: ${theme.colors.text};
-        background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
+        color: ${theme.v2.palette.text.primary};
+        background: ${theme.v2.palette.layer2};
       }
     `,
     active: css`
@@ -151,14 +163,8 @@ const getStyles = (theme: GrafanaTheme) => {
         background: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
       }
     `,
-    primary: css`
-      border-color: ${primaryVariant.borderColor};
-      ${primaryVariant.variantStyles}
-    `,
-    destructive: css`
-      border-color: ${destructiveVariant.borderColor};
-      ${destructiveVariant.variantStyles}
-    `,
+    primary: css(primaryVariant),
+    destructive: css(destructiveVariant),
     narrow: css`
       padding: 0 ${theme.spacing.xs};
     `,

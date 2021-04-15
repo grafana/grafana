@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme, TimeZone, dateTimeFormat } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
 import isString from 'lodash/isString';
@@ -21,7 +21,6 @@ export const TimeZoneOffset: React.FC<PropsWithChildren<Props>> = (props) => {
 
   return (
     <>
-      <span className={styles.localTime}>{formatLocalTime(timestamp, timeZone)}</span>
       <span className={cx(styles.offset, className)}>{formatUtcOffset(timestamp, timeZone)}</span>
     </>
   );
@@ -39,13 +38,6 @@ export const formatUtcOffset = (timestamp: number, timeZone: TimeZone): string =
   return `UTC${offset}`;
 };
 
-const formatLocalTime = (timestamp: number, timeZone: TimeZone): string => {
-  return dateTimeFormat(timestamp, {
-    timeZone,
-    format: 'HH:mm',
-  });
-};
-
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const textBase = css`
     font-weight: normal;
@@ -55,11 +47,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   `;
 
   return {
-    localTime: css`
-      display: none;
-      ${textBase};
-      color: ${theme.colors.text};
-    `,
     offset: css`
       ${textBase};
       color: ${theme.colors.text};

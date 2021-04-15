@@ -5,7 +5,7 @@ import { Spinner, Icon, IconName, Button } from '@grafana/ui';
 
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 import { standardAnnotationSupport } from '../standardAnnotationSupport';
 import { executeAnnotationQuery } from '../annotations_srv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -16,7 +16,7 @@ import coreModule from 'app/core/core_module';
 interface Props {
   datasource: DataSourceApi;
   annotation: AnnotationQuery<DataQuery>;
-  change: (annotation: AnnotationQuery<DataQuery>) => void;
+  onChange: (annotation: AnnotationQuery<DataQuery>) => void;
 }
 
 interface State {
@@ -48,7 +48,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
     const fixed = processor.prepareAnnotation!(annotation);
     if (fixed !== annotation) {
-      this.props.change(fixed);
+      this.props.onChange(fixed);
     } else {
       this.onRunQuery();
     }
@@ -75,14 +75,14 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
   };
 
   onQueryChange = (target: DataQuery) => {
-    this.props.change({
+    this.props.onChange({
       ...this.props.annotation,
       target,
     });
   };
 
   onMappingChange = (mappings: AnnotationEventMappings) => {
-    this.props.change({
+    this.props.onChange({
       ...this.props.annotation,
       mappings,
     });

@@ -301,6 +301,17 @@ type Cfg struct {
 	SAMLEnabled             bool
 	SAMLSingleLogoutEnabled bool
 
+	// JWT Auth
+	JWTAuthEnabled       bool
+	JWTAuthHeaderName    string
+	JWTAuthEmailClaim    string
+	JWTAuthUsernameClaim string
+	JWTAuthExpectClaims  string
+	JWTAuthJWKSetURL     string
+	JWTAuthCacheTTL      time.Duration
+	JWTAuthKeyFile       string
+	JWTAuthJWKSetFile    string
+
 	// Dataproxy
 	SendUserHeader bool
 
@@ -355,6 +366,7 @@ type Cfg struct {
 	Quota QuotaSettings
 
 	DefaultTheme string
+	HomePage     string
 
 	AutoAssignOrg     bool
 	AutoAssignOrgId   int
@@ -1179,6 +1191,18 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 	cfg.BasicAuthEnabled = BasicAuthEnabled
 
+	// JWT auth
+	authJWT := iniFile.Section("auth.jwt")
+	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
+	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
+	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
+	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
+	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")
+	cfg.JWTAuthJWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
+	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
+	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
+	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
+
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 	cfg.AuthProxyEnabled = AuthProxyEnabled
@@ -1229,6 +1253,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
 	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
+	cfg.HomePage = valueAsString(users, "home_page", "")
 	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")

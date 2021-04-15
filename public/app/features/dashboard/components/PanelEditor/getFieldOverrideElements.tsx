@@ -62,7 +62,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
     const matcherUi = fieldMatchersUI.get(override.matcher.id);
     const configPropertiesOptions = getOverrideProperties(registry);
     const isSystemOverride = isSystemOverrideGuard(override);
-    // A way force open new override categories
+    // A way to force open new override categories
     const forceOpen = override.properties.length === 0 ? 1 : 0;
 
     const category = new OptionsPaneCategoryDescriptor({
@@ -110,7 +110,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: matcherUi.name,
-        Component: function renderMatcherUI() {
+        render: function renderMatcherUI() {
           return (
             <matcherUi.component
               matcher={matcherUi.matcher}
@@ -151,7 +151,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
         new OptionsPaneItemDescriptor({
           title: registryItemForProperty.name,
           skipField: true,
-          Component: function renderPropertyEditor() {
+          render: function renderPropertyEditor() {
             return (
               <DynamicConfigValueEditor
                 key={`${property.id}/${propIdx}`}
@@ -176,7 +176,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
         new OptionsPaneItemDescriptor({
           title: '----------',
           skipField: true,
-          Component: function renderAddPropertyButton() {
+          render: function renderAddPropertyButton() {
             return (
               <ValuePicker
                 label="Add override property"
@@ -229,7 +229,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
   //     margin: ${theme.spacing.md};
   //   `}
   // >
-  //   Field override rules give you a fine grained control over how your data is displayed.
+  //   Field override rules give you fine-grained control over how your data is displayed.
   // </FeatureInfoBox>
 
   return categories;

@@ -1,6 +1,6 @@
 import React, { FC, HTMLAttributes, ReactNode } from 'react';
 import { stylesFactory, useTheme } from '../../themes';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -11,6 +11,7 @@ const getTabContentStyle = stylesFactory((theme: GrafanaTheme) => {
   return {
     tabContent: css`
       padding: ${theme.spacing.sm};
+      background: ${theme.v2.palette.layer1};
     `,
   };
 });

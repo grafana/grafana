@@ -3,9 +3,8 @@ import { zip, fromPairs } from 'lodash';
 
 import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
 import { Input } from './Input';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import { EventsWithValidation } from '../../../../utils';
-import { NOOP_CONTROL } from '../../../../utils/storybook/noopControl';
 
 export default {
   title: 'Forms/Legacy/Input',
@@ -14,6 +13,9 @@ export default {
   parameters: {
     knobs: {
       disable: true,
+    },
+    controls: {
+      exclude: ['inputRef'],
     },
   },
   argTypes: {
@@ -24,9 +26,8 @@ export default {
       },
     },
     validation: { name: 'Validation regex (will do a partial match if you do not anchor it)' },
-    inputRef: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 const Wrapper: Story = (args) => {
   const [value, setValue] = useState('');

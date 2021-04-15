@@ -10,6 +10,7 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 import { GridPos, PanelModel } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import {
+  AnnotationQuery,
   AppEvent,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
@@ -66,7 +67,7 @@ export class DashboardModel {
   timepicker: any;
   templating: { list: any[] };
   private originalTemplating: any;
-  annotations: { list: any[] };
+  annotations: { list: AnnotationQuery[] };
   refresh: any;
   snapshot: any;
   schemaVersion: number;
@@ -209,8 +210,33 @@ export class DashboardModel {
     }
 
     // get panel save models
-    copy.panels = this.panels
-      .filter((panel: PanelModel) => panel.type !== 'add-panel')
+    copy.panels = this.getPanelSaveModels();
+
+    //  sort by keys
+    copy = sortByKeys(copy);
+    copy.getVariables = () => {
+      return copy.templating.list;
+    };
+
+    return copy;
+  }
+
+  private getPanelSaveModels() {
+    return this.panels
+      .filter((panel: PanelModel) => {
+        if (panel.type === 'add-panel') {
+          return false;
+        }
+        // skip repeated panels in the saved model
+        if (panel.repeatPanelId) {
+          return false;
+        }
+        // skip repeated rows in the saved model
+        if (panel.repeatedByRow) {
+          return false;
+        }
+        return true;
+      })
       .map((panel: PanelModel) => {
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel
@@ -222,15 +248,24 @@ export class DashboardModel {
         }
 
         return panel.getSaveModel();
+      })
+      .map((model: any) => {
+        // Clear any scopedVars from persisted mode. This cannot be part of getSaveModel as we need to be able to copy
+        // panel models with preserved scopedVars, for example when going into edit mode.
+        delete model.scopedVars;
+
+        // Clear any repeated panels from collapsed rows
+        if (model.type === 'row' && model.panels && model.panels.length > 0) {
+          model.panels = model.panels
+            .filter((rowPanel: PanelModel) => !rowPanel.repeatPanelId)
+            .map((model: PanelModel) => {
+              delete model.scopedVars;
+              return model;
+            });
+        }
+
+        return model;
       });
-
-    //  sort by keys
-    copy = sortByKeys(copy);
-    copy.getVariables = () => {
-      return copy.templating.list;
-    };
-
-    return copy;
   }
 
   private updateTemplatingSaveModelClone(
@@ -726,25 +761,20 @@ export class DashboardModel {
     }
   }
 
-  updateSubmenuVisibility() {
-    this.meta.submenuEnabled = (() => {
-      if (this.links.length > 0) {
-        return true;
-      }
+  isSubMenuVisible() {
+    if (this.links.length > 0) {
+      return true;
+    }
 
-      const visibleVars = _.filter(this.templating.list, (variable: any) => variable.hide !== 2);
-      if (visibleVars.length > 0) {
-        return true;
-      }
+    if (this.getVariables().find((variable) => variable.hide !== 2)) {
+      return true;
+    }
 
-      const visibleAnnotations = _.filter(this.annotations.list, (annotation: any) => annotation.hide !== true);
-      if (visibleAnnotations.length > 0) {
-        return true;
-      }
+    if (this.annotations.list.find((annotation) => annotation.hide !== true)) {
+      return true;
+    }
 
-      return false;
-    })();
-    this.events.emit(CoreEvents.submenuVisibilityChanged, this.meta.submenuEnabled);
+    return false;
   }
 
   getPanelInfoById(panelId: number) {

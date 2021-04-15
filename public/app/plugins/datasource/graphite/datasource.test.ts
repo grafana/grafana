@@ -233,15 +233,14 @@ describe('graphiteDatasource', () => {
         },
       ];
 
-      beforeEach(() => {
+      beforeEach(async () => {
         fetchMock.mockImplementation((options: any) => {
           return of(createFetchResponse(response));
         });
 
-        ctx.ds.annotationQuery(options).then((data: any) => {
+        await ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
         });
-        // ctx.$rootScope.$apply();
       });
 
       it('should parse the tags string into an array', () => {
@@ -250,6 +249,16 @@ describe('graphiteDatasource', () => {
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');
       });
+    });
+
+    it('and tags response is invalid', async () => {
+      fetchMock.mockImplementation((options: any) => {
+        return of(createFetchResponse('zzzzzzz'));
+      });
+      await ctx.ds.annotationQuery(options).then((data: any) => {
+        results = data;
+      });
+      expect(results).toEqual([]);
     });
   });
 

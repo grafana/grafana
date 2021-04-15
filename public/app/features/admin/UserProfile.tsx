@@ -1,6 +1,6 @@
 import React, { PureComponent, FC } from 'react';
 import { UserDTO } from 'app/types';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 import { config } from 'app/core/config';
 import { GrafanaTheme } from '@grafana/data';
 import { ConfirmButton, ConfirmModal, LegacyInputStatus, Button, stylesFactory, Input } from '@grafana/ui';
