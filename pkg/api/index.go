@@ -343,28 +343,21 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		})
 	}
 
-	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionOrgsRead, ac.ScopeOrgsAll) {
+	if c.IsGrafanaAdmin {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Orgs", Id: "global-orgs", Url: hs.Cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})
-	}
-
-	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionSettingsRead) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Settings", Id: "server-settings", Url: hs.Cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
 		})
-	}
-
-	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionServerStatsRead) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Stats", Id: "server-stats", Url: hs.Cfg.AppSubURL + "/admin/stats", Icon: "graph-bar",
 		})
-	}
-
-	if hs.Cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.ActionLDAPSettingsRead) {
-		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-			Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",
-		})
+		if hs.Cfg.LDAPEnabled {
+			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+				Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",
+			})
+		}
 	}
 
 	return adminNavLinks

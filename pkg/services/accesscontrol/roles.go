@@ -96,63 +96,17 @@ var PredefinedRoles = map[string]RoleDTO{
 			},
 		},
 	},
-	orgsAdminRead: {
-		Name:    orgsAdminRead,
-		Version: 1,
-		Permissions: []Permission{
-			{
-				Action: ActionOrgsRead,
-				Scope:  ScopeOrgsAll,
-			},
-		},
-	},
-	orgsAdminEdit: {
-		Name:    orgsAdminEdit,
-		Version: 1,
-		Permissions: []Permission{
-			// Inherited from grafana:roles:orgs:admin:read
-			{
-				Action: ActionOrgsRead,
-				Scope:  ScopeOrgsAll,
-			},
-			{
-				Action: ActionOrgsWrite,
-				Scope:  ScopeOrgsAll,
-			},
-		},
-	},
-	settingsAdminRead: {
-		Name:    settingsAdminRead,
-		Version: 1,
-		Permissions: []Permission{
-			{
-				Action: ActionSettingsRead,
-			},
-			{
-				Action: ActionLDAPSettingsRead,
-			},
-			{
-				Action: ActionServerStatsRead,
-			},
-		},
-	},
 }
 
 const (
-	usersAdminEdit    = "grafana:roles:users:admin:edit"
-	usersAdminRead    = "grafana:roles:users:admin:read"
-	orgsAdminRead     = "grafana:roles:orgs:admin:read"
-	orgsAdminEdit     = "grafana:roles:orgs:admin:edit"
-	settingsAdminRead = "grafana:roles:settings:admin:read"
+	usersAdminEdit = "grafana:roles:users:admin:edit"
+	usersAdminRead = "grafana:roles:users:admin:read"
 )
 
 // PredefinedRoleGrants specifies which organization roles are assigned
 // to which set of PredefinedRoles by default. Alphabetically sorted.
 var PredefinedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
-		orgsAdminEdit,
-		orgsAdminRead,
-		settingsAdminRead,
 		usersAdminEdit,
 		usersAdminRead,
 	},
