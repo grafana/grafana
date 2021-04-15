@@ -52,7 +52,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     const font = `12px ${theme.v2.typography.fontFamily}`;
 
-    const gridColor = theme.v2.isDark ? 'rgba(240, 250, 255, 0.08)' : 'rgba(0, 10, 23, 0.08)';
+    const gridColor = theme.v2.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
 
     let config: Axis = {
       scale: scaleKey,
