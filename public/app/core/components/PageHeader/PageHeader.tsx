@@ -124,7 +124,7 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
   for (const bc of breadcrumbs) {
     if (bc.url) {
       breadcrumbsResult.push(
-        <a className="text-link" key={breadcrumbsResult.length} href={bc.url}>
+        <a className="page-header__link" key={breadcrumbsResult.length} href={bc.url}>
           {bc.title}
         </a>
       );

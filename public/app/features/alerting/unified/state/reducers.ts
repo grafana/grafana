@@ -1,10 +1,11 @@
 import { combineReducers } from 'redux';
-import { createAsyncMapSlice } from '../utils/redux';
+import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 import {
   fetchAlertManagerConfigAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
   fetchSilencesAction,
+  saveRuleFormAction,
 } from './actions';
 
 export const reducer = combineReducers({
@@ -17,6 +18,9 @@ export const reducer = combineReducers({
   ).reducer,
   silences: createAsyncMapSlice('silences', fetchSilencesAction, (alertManagerSourceName) => alertManagerSourceName)
     .reducer,
+  ruleForm: combineReducers({
+    saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
+  }),
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;
