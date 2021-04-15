@@ -216,23 +216,8 @@ export function dataFrameToLogsModel(
       logsModel.visibleRange = visibleRange;
       logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
 
-      const limitIndex = logsModel.meta?.findIndex((meta) => meta.label === 'Log limit');
-      const limit = limitIndex && logsModel.meta![limitIndex]?.value;
-      if (limitIndex && limit && limit > 0) {
-        const rangeCoverage = rangeReceivedLogs && rangeAbsolute && (rangeReceivedLogs / rangeAbsolute) * 100;
-        const metaLimitValue =
-          limit === logsModel.rows.length && rangeCoverage
-            ? `Log limit ${limit} reached. Received logs cover ${(rangeCoverage > 100 ? 100 : rangeCoverage).toFixed(
-                2
-              )}% (${getFormattedMetaTimeString(
-                rangeReceivedLogs!
-              )}) of your selected time range (${getFormattedMetaTimeString(rangeAbsolute!)}).`
-            : `${limit} (${logsModel.rows.length} returned)`;
-        logsModel.meta![limitIndex] = {
-          label: 'Log limit',
-          value: metaLimitValue,
-          kind: LogsMetaKind.String,
-        };
+      if (logsModel.meta) {
+        logsModel.meta = adjustMetaInfo(logsModel, rangeReceivedLogs, rangeAbsolute);
       }
     } else {
       logsModel.series = [];
@@ -446,7 +431,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
   if (limitValue > 0) {
     meta.push({
-      label: 'Log limit',
+      label: 'Line limit',
       value: limitValue,
       kind: LogsMetaKind.Number,
     });
@@ -484,12 +469,48 @@ function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
 
 function getFormattedMetaTimeString(range: number): string {
   const rangeSec = range / 1000;
-  const hours = Math.floor(rangeSec / 60 / 60);
-  const minutes = Math.floor(rangeSec / 60) - hours * 60;
-  const seconds = (rangeSec % 60).toFixed();
-  const fromattedHours = hours ? (hours > 1 ? hours + ' hours ' : hours + ' hour') : '';
-  const fromattedMinutes = minutes ? (minutes > 1 ? minutes + ' minutes ' : minutes + ' minute') : '';
-  const fromattedSeconds = Number(seconds) ? (Number(seconds) !== 1 ? seconds + ' seconds' : seconds + ' second') : '';
-  const formattedLogsTimeRangeCoverage = fromattedHours + fromattedMinutes + fromattedSeconds || 'less than 1 second';
-  return formattedLogsTimeRangeCoverage;
+
+  const h = Math.floor(rangeSec / 60 / 60);
+  const m = Math.floor(rangeSec / 60) - h * 60;
+  const s = (rangeSec % 60).toFixed();
+  let formattedH = h ? (h > 1 ? h + 'h' : h + 'h') : '';
+  let formattedM = m ? (m > 1 ? m + 'min ' : m + 'min') : '';
+  let formattedS = Number(s) ? (Number(s) !== 1 ? s + 'sec' : s + 'sec') : '';
+
+  formattedH && formattedM ? (formattedH = formattedH + ' ') : (formattedH = formattedH);
+  formattedM && formattedS ? (formattedM = formattedM + ' ') : (formattedM = formattedM);
+
+  return formattedH + formattedM + formattedS || 'less than 1 sec';
+}
+
+// Used to add additional information to Line limit meta info
+function adjustMetaInfo(logsModel: LogsModel, rangeReceivedLogs?: number, rangeAbsolute?: number): LogsMetaItem[] {
+  let logsModelMeta = [...logsModel.meta!];
+
+  const limitIndex = logsModelMeta.findIndex((meta) => meta.label === 'Line limit');
+  const limit = limitIndex && logsModelMeta[limitIndex]?.value;
+
+  if (limit && limit > 0) {
+    const rangeCoverage = rangeReceivedLogs && rangeAbsolute && (rangeReceivedLogs / rangeAbsolute) * 100;
+    let metaLimitValue;
+
+    if (limit === logsModel.rows.length && rangeCoverage) {
+      metaLimitValue = `Line limit ${limit} reached, received logs cover ${(rangeCoverage > 100
+        ? 100
+        : rangeCoverage
+      ).toFixed(2)}% (${getFormattedMetaTimeString(
+        rangeReceivedLogs!
+      )}) of your selected time range (${getFormattedMetaTimeString(rangeAbsolute!)})`;
+    } else {
+      metaLimitValue = `${limit} (${logsModel.rows.length} returned)`;
+    }
+
+    logsModelMeta[limitIndex] = {
+      label: 'Line limit',
+      value: metaLimitValue,
+      kind: LogsMetaKind.String,
+    };
+  }
+
+  return logsModelMeta;
 }
