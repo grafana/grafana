@@ -8,6 +8,7 @@ import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchSilencesAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
+import SilencesTable from './components/silences/SilencesTable';
 
 const Silences: FC = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
@@ -41,7 +42,7 @@ const Silences: FC = () => {
         </Alert>
       )}
       {loading && <LoadingPlaceholder text="loading silences..." />}
-      {result && !loading && !error && <pre>{JSON.stringify(result, null, 2)}</pre>}
+      {result && !loading && !error && <SilencesTable silences={result} />}
     </AlertingPageWrapper>
   );
 };
