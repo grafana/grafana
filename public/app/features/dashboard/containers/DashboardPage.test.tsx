@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow, ShallowWrapper } from 'enzyme';
-import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
+import { UnthemedDashboardPage, mapStateToProps, Props, State } from './DashboardPage';
 import { DashboardModel } from '../state';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { DashboardInitPhase, DashboardRoutes } from 'app/types';
@@ -16,7 +16,7 @@ interface ScenarioContext {
   cleanUpDashboardAndVariablesMock: typeof cleanUpDashboardAndVariables;
   dashboard?: DashboardModel | null;
   setDashboardProp: (overrides?: any, metaOverrides?: any) => void;
-  wrapper?: ShallowWrapper<Props, State, DashboardPage>;
+  wrapper?: ShallowWrapper<Props, State, UnthemedDashboardPage>;
   mount: (propOverrides?: Partial<Props>) => void;
   setup: (fn: () => void) => void;
 }
@@ -74,7 +74,7 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
         Object.assign(props, propOverrides);
 
         ctx.dashboard = props.dashboard;
-        ctx.wrapper = shallow(<DashboardPage {...props} />);
+        ctx.wrapper = shallow(<UnthemedDashboardPage {...props} />);
       },
     };
 
