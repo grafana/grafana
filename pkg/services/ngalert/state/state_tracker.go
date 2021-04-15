@@ -65,12 +65,17 @@ func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.R
 	lbs["__alert_rule_namespace_uid__"] = alertRule.NamespaceUID
 	lbs["__alert_rule_title__"] = alertRule.Title
 
+	annotations := map[string]string{}
+	if len(alertRule.Annotations) > 0 {
+		annotations = alertRule.Annotations
+	}
+
 	idString := fmt.Sprintf("%s", map[string]string(lbs))
 	if state, ok := st.stateCache.cacheMap[idString]; ok {
 		return state
 	}
-	st.Log.Debug("adding new alert state cache entry", "cacheId", idString, "state", result.State.String(), "evaluatedAt", result.EvaluatedAt.String())
 
+	st.Log.Debug("adding new alert state cache entry", "cacheId", idString, "state", result.State.String(), "evaluatedAt", result.EvaluatedAt.String())
 	newState := AlertState{
 		UID:         alertRule.UID,
 		OrgID:       alertRule.OrgID,
@@ -78,7 +83,7 @@ func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.R
 		Labels:      lbs,
 		State:       result.State,
 		Results:     []StateEvaluation{},
-		Annotations: alertRule.Annotations,
+		Annotations: annotations,
 	}
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
@@ -149,6 +154,7 @@ func (st *StateTracker) setNextState(alertRule *ngModels.AlertRule, result eval.
 			EvaluationTime:  result.EvaluatedAt,
 			EvaluationState: result.State,
 		})
+		currentState.Annotations["alerting"] = result.EvaluatedAt.String()
 		st.set(currentState)
 		return currentState, true
 	case currentState.State == eval.Alerting && result.State == eval.Normal:
