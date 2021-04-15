@@ -252,5 +252,8 @@ func toNamespaceErrorResponse(err error) response.Response {
 	if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
 		return response.Error(http.StatusForbidden, err.Error(), err)
 	}
+	if errors.Is(err, models.ErrDashboardIdentifierNotSet) {
+		return response.Error(http.StatusBadRequest, err.Error(), err)
+	}
 	return coreapi.ToFolderErrorResponse(err)
 }

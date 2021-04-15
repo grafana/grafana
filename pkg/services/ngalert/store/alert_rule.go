@@ -2,10 +2,9 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
 
@@ -158,7 +157,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				existingAlertRule, err := getAlertRuleByUID(sess, r.New.UID, r.New.OrgID)
 				if err != nil {
 					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-						return errors.Wrapf(err, "failed to get alert rule: %s", r.New.UID)
+						return fmt.Errorf("failed to get alert rule %s: %w", r.New.UID, err)
 					}
 					return err
 				}
