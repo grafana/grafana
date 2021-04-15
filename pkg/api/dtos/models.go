@@ -41,7 +41,7 @@ type CurrentUser struct {
 	Locale                     string             `json:"locale"`
 	HelpFlags1                 models.HelpFlags1  `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
-	Permissions                UserPermissionsMap `json:"permissions"`
+	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
 }
 
 type UserPermissionsMap map[string]map[string]string

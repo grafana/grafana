@@ -18,7 +18,7 @@ export class User {
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;
   email?: string;
-  permissions: UserPermission;
+  permissions?: UserPermission;
 
   constructor() {
     if (config.bootData.user) {
@@ -75,7 +75,11 @@ export class ContextSrv {
 
   // Checks whether user has required permission
   hasPermission(action: AccessControlAction, scope?: AccessControlScope): boolean {
-    return !!(this.user.permissions[action] && (scope ? this.user.permissions[action][scope] : true));
+    return !!(
+      this.user.permissions &&
+      this.user.permissions[action] &&
+      (scope ? this.user.permissions[action][scope] : true)
+    );
   }
 
   isGrafanaVisible() {
