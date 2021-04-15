@@ -123,11 +123,11 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   layer1 = colors.gray10;
   layer2 = colors.gray15;
 
-  divider = `rgba(${this.whiteBase}, 0.06)`;
+  divider = `rgba(${this.whiteBase}, 0.10)`;
 
   border0 = this.layer1;
-  border1 = `rgba(${this.whiteBase}, 0.15)`;
-  border2 = `rgba(${this.whiteBase}, 0.20)`;
+  border1 = `rgba(${this.whiteBase}, 0.20)`;
+  border2 = `rgba(${this.whiteBase}, 0.25)`;
 
   action = {
     hover: `rgba(${this.whiteBase}, 0.08)`,
@@ -189,8 +189,8 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
 
   text = {
     primary: `rgba(${this.blackBase}, 1)`,
-    secondary: `rgba(${this.blackBase}, 0.65)`,
-    disabled: `rgba(${this.blackBase}, 0.45)`,
+    secondary: `rgba(${this.blackBase}, 0.75)`,
+    disabled: `rgba(${this.blackBase}, 0.50)`,
     link: this.primary.text,
     maxContrast: colors.black,
   };
@@ -199,11 +199,11 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   layer1 = colors.white;
   layer2 = colors.gray100;
 
-  divider = `rgba(${this.blackBase}, 0.07)`;
+  divider = `rgba(${this.blackBase}, 0.12)`;
 
   border0 = this.layer1;
-  border1 = `rgba(${this.blackBase}, 0.20)`;
-  border2 = `rgba(${this.blackBase}, 0.30)`;
+  border1 = `rgba(${this.blackBase}, 0.30)`;
+  border2 = `rgba(${this.blackBase}, 0.40)`;
 
   action = {
     hover: `rgba(${this.blackBase}, 0.04)`,

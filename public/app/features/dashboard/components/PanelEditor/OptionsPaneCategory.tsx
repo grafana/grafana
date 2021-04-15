@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaTheme) => {
       font-weight: ${theme.typography.weight.semibold};
 
       &:hover {
-        background: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.02)};
+        background: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.03)};
       }
     `,
     headerExpanded: css`
