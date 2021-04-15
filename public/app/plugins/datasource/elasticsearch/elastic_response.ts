@@ -18,6 +18,19 @@ import {
 import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
+function aggValues(method: string, values: number[]) {
+  switch (method) {
+    case 'sum':
+      return values.reduce((prev, value) => prev + value, 0);
+    case 'min':
+      return values.reduce((prev, value) => (prev > value ? value : prev), 0);
+    case 'max':
+      return values.reduce((prev, value) => (prev < value ? value : prev), 0);
+    default:
+      return values.reduce((prev, value) => prev + value, 0) / values.length;
+  }
+}
+
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
 
 export class ElasticResponse {
@@ -100,6 +113,36 @@ export class ElasticResponse {
 
             seriesList.push(newSeries);
           }
+
+          break;
+        }
+        case 'top_metrics': {
+          newSeries = {
+            datapoints: [],
+            metric: metric.type,
+            metricId: metric.id,
+            props: props,
+            refId: target.refId,
+            field: metric.field,
+          };
+
+          for (let i = 0; i < esAgg.buckets.length; i++) {
+            const bucket = esAgg.buckets[i];
+            const stats = bucket[metric.id];
+
+            // add stats that are in nested obj to top level obj
+            const values = stats.top
+              .map((hit: { metrics: Record<string, number> }) => {
+                if (hit.metrics[metric.field!]) {
+                  return hit.metrics[metric.field!];
+                }
+                return null;
+              })
+              .filter(Boolean);
+            newSeries.datapoints.push([aggValues(metric.settings?.aggregateBy ?? 'avg', values), bucket.key]);
+          }
+
+          seriesList.push(newSeries);
 
           break;
         }

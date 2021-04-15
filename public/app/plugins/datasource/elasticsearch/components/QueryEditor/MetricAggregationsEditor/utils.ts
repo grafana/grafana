@@ -236,6 +236,26 @@ export const metricAggregationConfig: MetricsConfiguration = {
       },
     },
   },
+  top_metrics: {
+    label: 'Top Metrics',
+    xpack: true,
+    minVersion: 77,
+    requiresField: true,
+    isPipelineAgg: false,
+    supportsMissing: false,
+    supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
+    hasMeta: false,
+    defaults: {
+      settings: {
+        size: 1,
+        order: 'desc',
+        aggregateBy: 'avg',
+        orderBy: '@timestamp',
+      },
+    },
+  },
 };
 
 interface PipelineOption {

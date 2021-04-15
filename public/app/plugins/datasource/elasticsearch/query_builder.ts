@@ -340,7 +340,13 @@ export class ElasticQueryBuilder {
         metricAgg = { field: metric.field };
       }
 
-      if (isMetricAggregationWithSettings(metric)) {
+      if (isMetricAggregationWithSettings(metric) && metric.type === 'top_metrics') {
+        metricAgg = {
+          metrics: [{ field: metric.field }],
+          size: metric.settings?.size ?? 1,
+        };
+        metricAgg.sort = [{ [metric.settings?.orderBy ?? '@timestamp']: metric.settings?.order ?? 'asc' }];
+      } else if (isMetricAggregationWithSettings(metric)) {
         Object.entries(metric.settings || {})
           .filter(([_, v]) => v !== null)
           .forEach(([k, v]) => {
