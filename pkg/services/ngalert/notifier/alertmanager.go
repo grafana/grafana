@@ -334,6 +334,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewEmailNotifier(cfg, externalURL)
 		case "pagerduty":
 			n, err = channels.NewPagerdutyNotifier(cfg, tmpl, externalURL)
+		case "slack":
+			n, err = channels.NewSlackNotifier(cfg, tmpl, externalURL)
 		}
 		if err != nil {
 			return nil, err

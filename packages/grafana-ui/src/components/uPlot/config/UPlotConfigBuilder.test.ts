@@ -1,7 +1,6 @@
 // TODO: migrate tests below to the builder
 
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
-import { GrafanaTheme } from '@grafana/data';
 import {
   GraphGradientMode,
   AxisPlacement,
@@ -292,7 +291,7 @@ describe('UPlotConfigBuilder', () => {
       formatValue: () => 'test value',
       grid: false,
       show: true,
-      theme: { isDark: true, palette: { gray25: '#ffffff' }, colors: { text: 'gray' } } as GrafanaTheme,
+      theme: darkTheme,
       values: [],
     });
 
@@ -300,15 +299,15 @@ describe('UPlotConfigBuilder', () => {
       Object {
         "axes": Array [
           Object {
-            "font": "12px 'Roboto'",
+            "font": "12px 'Inter', 'Helvetica Neue', Arial, sans-serif",
             "gap": 5,
             "grid": Object {
               "show": false,
-              "stroke": "#ffffff",
+              "stroke": "#2c3235",
               "width": 1,
             },
             "label": "test label",
-            "labelFont": "12px 'Roboto'",
+            "labelFont": "12px 'Inter', 'Helvetica Neue', Arial, sans-serif",
             "labelSize": 18,
             "scale": "scale-x",
             "show": true,
@@ -316,10 +315,10 @@ describe('UPlotConfigBuilder', () => {
             "size": [Function],
             "space": [Function],
             "splits": undefined,
-            "stroke": "gray",
+            "stroke": "rgba(255, 255, 255, 0.77)",
             "ticks": Object {
               "show": true,
-              "stroke": "#ffffff",
+              "stroke": "#2c3235",
               "width": 1,
             },
             "timeZone": "browser",
@@ -351,7 +350,7 @@ describe('UPlotConfigBuilder', () => {
     `);
   });
 
-  it('Handles auto axis placement', () => {
+  it('handles auto axis placement', () => {
     const builder = new UPlotConfigBuilder();
 
     builder.addAxis({
@@ -371,7 +370,7 @@ describe('UPlotConfigBuilder', () => {
     expect(builder.getConfig().axes![1].grid!.show).toBe(false);
   });
 
-  it('When fillColor is not set fill', () => {
+  it('when fillColor is not set fill', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
       drawStyle: DrawStyle.Line,
@@ -384,7 +383,7 @@ describe('UPlotConfigBuilder', () => {
     expect(builder.getConfig().series[1].fill).toBe(undefined);
   });
 
-  it('When fillOpacity is set', () => {
+  it('when fillOpacity is set', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
       drawStyle: DrawStyle.Line,
@@ -398,7 +397,7 @@ describe('UPlotConfigBuilder', () => {
     expect(builder.getConfig().series[1].fill).toBe('rgba(255, 170, 187, 0.5)');
   });
 
-  it('When fillColor is set ignore fillOpacity', () => {
+  it('when fillColor is set ignore fillOpacity', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
       drawStyle: DrawStyle.Line,
@@ -413,7 +412,7 @@ describe('UPlotConfigBuilder', () => {
     expect(builder.getConfig().series[1].fill).toBe('#FF0000');
   });
 
-  it('When fillGradient mode is opacity', () => {
+  it('when fillGradient mode is opacity', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
       drawStyle: DrawStyle.Line,
@@ -486,5 +485,148 @@ describe('UPlotConfigBuilder', () => {
         "tzDate": [Function],
       }
     `);
+  });
+
+  describe('Stacking', () => {
+    it('allows stacking config', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.setStacking();
+      builder.addSeries({
+        drawStyle: DrawStyle.Line,
+        scaleKey: 'scale-x',
+        fieldName: 'A-series',
+        fillOpacity: 50,
+        gradientMode: GraphGradientMode.Opacity,
+        showPoints: PointVisibility.Auto,
+        lineColor: '#0000ff',
+        lineWidth: 1,
+        spanNulls: false,
+        theme: darkTheme,
+      });
+      builder.addSeries({
+        drawStyle: DrawStyle.Line,
+        scaleKey: 'scale-x',
+        fieldName: 'B-series',
+        fillOpacity: 50,
+        gradientMode: GraphGradientMode.Opacity,
+        showPoints: PointVisibility.Auto,
+        pointSize: 5,
+        lineColor: '#00ff00',
+        lineWidth: 1,
+        spanNulls: false,
+        theme: darkTheme,
+      });
+
+      builder.addSeries({
+        drawStyle: DrawStyle.Line,
+        scaleKey: 'scale-x',
+        fieldName: 'C-series',
+        fillOpacity: 50,
+        gradientMode: GraphGradientMode.Opacity,
+        showPoints: PointVisibility.Auto,
+        pointSize: 5,
+        lineColor: '#ff0000',
+        lineWidth: 1,
+        spanNulls: false,
+        theme: darkTheme,
+      });
+
+      builder.addBand({
+        series: [3, 2],
+        fill: 'red',
+      });
+      builder.addBand({
+        series: [2, 1],
+        fill: 'blue',
+      });
+
+      expect(builder.getConfig()).toMatchInlineSnapshot(`
+        Object {
+          "axes": Array [],
+          "bands": Array [
+            Object {
+              "fill": "red",
+              "series": Array [
+                3,
+                2,
+              ],
+            },
+            Object {
+              "fill": "blue",
+              "series": Array [
+                2,
+                1,
+              ],
+            },
+          ],
+          "cursor": Object {
+            "drag": Object {
+              "setScale": false,
+            },
+            "focus": Object {
+              "prox": 30,
+            },
+            "points": Object {
+              "fill": [Function],
+              "size": [Function],
+              "stroke": [Function],
+              "width": [Function],
+            },
+          },
+          "hooks": Object {},
+          "scales": Object {},
+          "select": undefined,
+          "series": Array [
+            Object {},
+            Object {
+              "fill": [Function],
+              "paths": [Function],
+              "points": Object {
+                "fill": undefined,
+                "size": undefined,
+                "stroke": undefined,
+              },
+              "pxAlign": undefined,
+              "scale": "scale-x",
+              "show": true,
+              "spanGaps": false,
+              "stroke": "#0000ff",
+              "width": 1,
+            },
+            Object {
+              "fill": [Function],
+              "paths": [Function],
+              "points": Object {
+                "fill": undefined,
+                "size": 5,
+                "stroke": undefined,
+              },
+              "pxAlign": undefined,
+              "scale": "scale-x",
+              "show": true,
+              "spanGaps": false,
+              "stroke": "#00ff00",
+              "width": 1,
+            },
+            Object {
+              "fill": [Function],
+              "paths": [Function],
+              "points": Object {
+                "fill": undefined,
+                "size": 5,
+                "stroke": undefined,
+              },
+              "pxAlign": undefined,
+              "scale": "scale-x",
+              "show": true,
+              "spanGaps": false,
+              "stroke": "#ff0000",
+              "width": 1,
+            },
+          ],
+          "tzDate": [Function],
+        }
+      `);
+    });
   });
 });
