@@ -33,7 +33,10 @@ var serverIP = "localhost"
 
 func TestMSSQL(t *testing.T) {
 	// Skip for now
-	t.Skip()
+	const shouldSkip = true
+	if shouldSkip {
+		t.Skip()
+	}
 
 	x := initMSSQLTestDB(t)
 	origXormEngine := sqleng.NewXormEngine

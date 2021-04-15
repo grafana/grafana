@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -83,7 +82,7 @@ type DataPluginConfiguration struct {
 func (e *dataPlugin) transformQueryError(err error) error {
 	// OpError is the error type usually returned by functions in the net
 	// package. It describes the operation, network type, and address of
-	// an error. We log this error rather than returing it to the client
+	// an error. We log this error rather than return it to the client
 	// for security purposes.
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
@@ -143,16 +142,11 @@ func NewDataPlugin(config DataPluginConfiguration, queryResultTransformer SqlQue
 
 const rowLimit = 1000000
 
+// DataQuery queries for data.
 func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
-	var timeRange plugins.DataTimeRange
-	if queryContext.TimeRange != nil {
-		timeRange = *queryContext.TimeRange
-	}
-
 	ch := make(chan plugins.DataQueryResult, len(queryContext.Queries))
 	var wg sync.WaitGroup
-
 	// Execute each query in a goroutine and wait for them to finish afterwards
 	for _, query := range queryContext.Queries {
 		if query.Model.Get("rawSql").MustString() == "" {
@@ -160,145 +154,7 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 		}
 
 		wg.Add(1)
-
-		go func(query plugins.DataSubQuery) {
-			defer wg.Done()
-			var frames data.Frames
-			queryResult := plugins.DataQueryResult{
-				Meta:  simplejson.New(),
-				RefID: query.RefID,
-			}
-
-			rawSQL := query.Model.Get("rawSql").MustString()
-			if rawSQL == "" {
-				panic("Query model property rawSql should not be empty at this point")
-			}
-
-			// global substitutions
-			interpolatedQuery, err := Interpolate(query, timeRange, rawSQL)
-			if err != nil {
-				queryResult.Error = err
-				ch <- queryResult
-				return
-			}
-
-			// datasource specific substitutions
-			interpolatedQuery, err = e.macroEngine.Interpolate(query, timeRange, rawSQL)
-			if err != nil {
-				queryResult.Error = err
-				ch <- queryResult
-				return
-			}
-
-			backend.Logger.Info("SQL query after interpolation", "sqlQuery", interpolatedQuery)
-
-			emptyFrame := &data.Frame{}
-			emptyFrame.SetMeta(&data.FrameMeta{
-				ExecutedQueryString: interpolatedQuery,
-			})
-
-			errAppendDebug := func(frameErr string, err error) {
-				frames = append(frames, emptyFrame)
-				queryResult.Error = fmt.Errorf(frameErr+": %w", err)
-				queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
-			}
-			session := e.engine.NewSession()
-			defer session.Close()
-			db := session.DB()
-
-			rows, err := db.Query(interpolatedQuery)
-			if err != nil {
-				errAppendDebug("db query error", e.queryResultTransformer.TransformQueryError(err))
-				ch <- queryResult
-				return
-			}
-			qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
-			if err != nil {
-				errAppendDebug("fail when getting configurations", err)
-				return
-			}
-
-			defer func() {
-				if err := rows.Close(); err != nil {
-					e.log.Warn("Failed to close rows", "err", err)
-				}
-			}()
-
-			// Convert row.Rows to dataframe
-			myCs := e.queryResultTransformer.GetConverterList()
-			frame, foo, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
-			spew.Dump(foo)
-			backend.Logger.Info("SQL query result row number", "queryResult", frame.Fields[0].Len())
-			if err != nil {
-				errAppendDebug("db query error", err)
-				return
-			}
-
-			frame.SetMeta(&data.FrameMeta{
-				ExecutedQueryString: interpolatedQuery,
-			})
-
-			// If no rows were returned, no point checking anything else.
-			if frame.Rows() == 0 {
-				return
-			}
-
-			if qm.timeIndex != -1 {
-				if err := ConvertSqlTimeColumnToEpochMs(frame, qm.timeIndex); err != nil {
-					errAppendDebug("db convert time column failed", err)
-					ch <- queryResult
-					return
-				}
-			}
-
-			if qm.Format == DataQueryFormatSeries {
-				var err error
-				// timeserie has to have time column
-				if qm.timeIndex == -1 {
-					errAppendDebug("db get no time column", errors.New("no time column found"))
-					ch <- queryResult
-					return
-				}
-				for i := range qm.columnNames {
-					if i == qm.timeIndex || i == qm.metricIndex {
-						continue
-					}
-
-					if frame, err = ConvertSqlValueColumnToFloat(frame, i); err != nil {
-						errAppendDebug("convert value to float failed", err)
-						ch <- queryResult
-						return
-					}
-				}
-
-				tsSchema := frame.TimeSeriesSchema()
-				backend.Logger.Debug("Timeseries schema", "schema", tsSchema.Type)
-
-				if tsSchema.Type == data.TimeSeriesTypeLong {
-					frame, err = data.LongToWide(frame, qm.FillMissing)
-					if err != nil {
-						errAppendDebug("failed to convert long to wide series when converting from dataframe", err)
-						ch <- queryResult
-						return
-					}
-				}
-				if qm.FillMissing != nil {
-					frame, err = resample(frame, *qm)
-					if err != nil {
-						backend.Logger.Debug("Failed to resample dataframe", "err", err)
-						frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
-					}
-					if err := trim(frame, *qm); err != nil {
-						backend.Logger.Debug("Failed to resample dataframe", "err", err)
-						frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
-					}
-				}
-			}
-
-			frames = append(frames, frame)
-			queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
-			ch <- queryResult
-		}(query)
+		go e.executeQuery(query, &wg, queryContext, ch)
 	}
 
 	wg.Wait()
@@ -313,6 +169,149 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	}
 
 	return result, nil
+}
+
+func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup, queryContext plugins.DataQuery,
+	ch chan plugins.DataQueryResult) {
+	defer wg.Done()
+
+	queryResult := plugins.DataQueryResult{
+		Meta:  simplejson.New(),
+		RefID: query.RefID,
+	}
+
+	rawSQL := query.Model.Get("rawSql").MustString()
+	if rawSQL == "" {
+		panic("Query model property rawSql should not be empty at this point")
+	}
+	var timeRange plugins.DataTimeRange
+	if queryContext.TimeRange != nil {
+		timeRange = *queryContext.TimeRange
+	}
+
+	// global substitutions
+	interpolatedQuery, err := Interpolate(query, timeRange, rawSQL)
+	if err != nil {
+		queryResult.Error = err
+		ch <- queryResult
+		return
+	}
+
+	// data source specific substitutions
+	interpolatedQuery, err = e.macroEngine.Interpolate(query, timeRange, rawSQL)
+	if err != nil {
+		queryResult.Error = err
+		ch <- queryResult
+		return
+	}
+
+	backend.Logger.Debug("SQL query after interpolation", "sqlQuery", interpolatedQuery)
+
+	errAppendDebug := func(frameErr string, err error) {
+		var emptyFrame data.Frame
+		emptyFrame.SetMeta(&data.FrameMeta{
+			ExecutedQueryString: interpolatedQuery,
+		})
+		queryResult.Error = fmt.Errorf("%s: %w", frameErr, err)
+		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{&emptyFrame})
+	}
+	session := e.engine.NewSession()
+	defer session.Close()
+	db := session.DB()
+
+	rows, err := db.Query(interpolatedQuery)
+	if err != nil {
+		errAppendDebug("db query error", e.transformQueryError(err))
+		ch <- queryResult
+		return
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			e.log.Warn("Failed to close rows", "err", err)
+		}
+	}()
+
+	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
+	if err != nil {
+		errAppendDebug("fail when getting configurations", err)
+		return
+	}
+
+	// Convert row.Rows to dataframe
+	myCs := e.queryResultTransformer.GetConverterList()
+	frame, _, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, myCs...)
+	if err != nil {
+		errAppendDebug("db query error", err)
+		return
+	}
+
+	frame.SetMeta(&data.FrameMeta{
+		ExecutedQueryString: interpolatedQuery,
+	})
+
+	backend.Logger.Debug("SQL query result row number", "queryResult", frame.Fields[0].Len())
+
+	// If no rows were returned, no point checking anything else.
+	if frame.Rows() == 0 {
+		return
+	}
+
+	if qm.timeIndex != -1 {
+		if err := ConvertSqlTimeColumnToEpochMs(frame, qm.timeIndex); err != nil {
+			errAppendDebug("db convert time column failed", err)
+			ch <- queryResult
+			return
+		}
+	}
+
+	if qm.Format == DataQueryFormatSeries {
+		// time series has to have time column
+		if qm.timeIndex == -1 {
+			errAppendDebug("db has no time column", errors.New("no time column found"))
+			ch <- queryResult
+			return
+		}
+		for i := range qm.columnNames {
+			if i == qm.timeIndex || i == qm.metricIndex {
+				continue
+			}
+
+			var err error
+			if frame, err = ConvertSqlValueColumnToFloat(frame, i); err != nil {
+				errAppendDebug("convert value to float failed", err)
+				ch <- queryResult
+				return
+			}
+		}
+
+		tsSchema := frame.TimeSeriesSchema()
+		backend.Logger.Debug("Timeseries schema", "schema", tsSchema.Type)
+
+		if tsSchema.Type == data.TimeSeriesTypeLong {
+			var err error
+			frame, err = data.LongToWide(frame, qm.FillMissing)
+			if err != nil {
+				errAppendDebug("failed to convert long to wide series when converting from dataframe", err)
+				ch <- queryResult
+				return
+			}
+		}
+		if qm.FillMissing != nil {
+			var err error
+			frame, err = resample(frame, *qm)
+			if err != nil {
+				backend.Logger.Debug("Failed to resample dataframe", "err", err)
+				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
+			}
+			if err := trim(frame, *qm); err != nil {
+				backend.Logger.Debug("Failed to trim dataframe", "err", err)
+				frame.AppendNotices(data.Notice{Text: "Failed to trim dataframe", Severity: data.NoticeSeverityWarning})
+			}
+		}
+	}
+
+	queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{frame})
+	ch <- queryResult
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
