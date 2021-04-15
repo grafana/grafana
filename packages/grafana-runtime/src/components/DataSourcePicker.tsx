@@ -26,9 +26,11 @@ export interface DataSourcePickerProps {
   metrics?: boolean;
   annotations?: boolean;
   variables?: boolean;
+  alerting?: boolean;
   pluginId?: string;
   noDefault?: boolean;
   width?: number;
+  filter?: (dataSource: DataSourceInstanceSettings) => boolean;
 }
 
 /**
@@ -106,7 +108,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   getDataSourceOptions() {
-    const { tracing, metrics, mixed, dashboard, variables, annotations, pluginId } = this.props;
+    const { tracing, metrics, mixed, dashboard, variables, annotations, pluginId, alerting, filter } = this.props;
     const options = this.dataSourceSrv
       .getList({
         tracing,
@@ -116,6 +118,8 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
         variables,
         annotations,
         pluginId,
+        alerting,
+        filter,
       })
       .map((ds) => ({
         value: ds.name,
@@ -149,7 +153,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           maxMenuHeight={500}
           placeholder={placeholder}
           noOptionsMessage="No datasources found"
-          value={value}
+          value={value ?? null}
           invalid={!!error}
           getOptionLabel={(o) => {
             if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {

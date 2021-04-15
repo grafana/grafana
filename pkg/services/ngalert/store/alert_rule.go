@@ -43,7 +43,7 @@ type RuleStore interface {
 	GetOrgAlertRules(query *ngmodels.ListAlertRulesQuery) error
 	GetNamespaceAlertRules(query *ngmodels.ListNamespaceAlertRulesQuery) error
 	GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRulesQuery) error
-	GetNamespaceUIDBySlug(string, int64, *models.SignedInUser) (string, error)
+	GetNamespaceUIDByTitle(string, int64, *models.SignedInUser) (string, error)
 	GetNamespaceByUID(string, int64, *models.SignedInUser) (string, error)
 	GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error
 	UpsertAlertRules([]UpsertRule) error
@@ -310,10 +310,10 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 	})
 }
 
-// GetNamespaceUIDBySlug is a handler for retrieving namespace UID by its name.
-func (st DBstore) GetNamespaceUIDBySlug(namespace string, orgID int64, user *models.SignedInUser) (string, error) {
+// GetNamespaceUIDByTitle is a handler for retrieving a namespace UID by its title.
+func (st DBstore) GetNamespaceUIDByTitle(namespace string, orgID int64, user *models.SignedInUser) (string, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
-	folder, err := s.GetFolderBySlug(namespace)
+	folder, err := s.GetFolderByTitle(namespace)
 	if err != nil {
 		return "", err
 	}
@@ -460,8 +460,8 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 
 func (st DBstore) GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		var ruleGroups []string
-		q := "SELECT DISTINCT rule_group FROM alert_rule WHERE org_id = ?"
+		var ruleGroups [][]string
+		q := "SELECT DISTINCT rule_group, namespace_uid, (select title from dashboard where org_id = alert_rule.org_id and uid = alert_rule.namespace_uid) FROM alert_rule WHERE org_id = ?"
 		if err := sess.SQL(q, query.OrgID).Find(&ruleGroups); err != nil {
 			return err
 		}

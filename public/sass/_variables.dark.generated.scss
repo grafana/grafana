@@ -58,7 +58,7 @@ $gray-6: #f4f5f8;
 $input-black: #0b0c0e;
 $white: #ffffff;
 
-$layer0: #0d0f16;
+$layer0: #111217;
 $layer1: #181b1f;
 $layer2: #22252b;
 
@@ -96,12 +96,12 @@ $critical: #e02f44;
 // -------------------------
 $body-bg: #181b1f;
 $page-bg: #181b1f;
-$dashboard-bg: #0d0f16;
+$dashboard-bg: #111217;
 
 $text-color-strong: #fff;
 $text-color: rgba(255, 255, 255, 0.77);
-$text-color-semi-weak: rgba(255, 255, 255, 0.55);
-$text-color-weak: rgba(255, 255, 255, 0.35);
+$text-color-semi-weak: rgba(255, 255, 255, 0.50);
+$text-color-weak: rgba(255, 255, 255, 0.50);
 $text-color-faint: rgba(255, 255, 255, 0.35);
 $text-color-emphasis: #fff;
 $text-blue: #33a2e5;
@@ -133,7 +133,7 @@ $hr-border-color: $dark-9;
 $panel-bg: #181b1f;
 $panel-border: #181b1f;
 $panel-header-hover-bg: rgba(255, 255, 255, 0.08);
-$panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.5),0px 1px 1px 0px rgba(0,0,0,0.4),0px 1px 3px 0px rgba(0,0,0,0.3);
+$panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.15),0px 1px 3px 0px rgba(0,0,0,0.1);
 $panel-corner: $panel-bg;
 
 // page header
@@ -145,7 +145,7 @@ $divider-border-color: $gray-1;
 
 // Graphite Target Editor
 $tight-form-func-bg: #22252b;
-$tight-form-func-highlight-bg: #272a30;
+$tight-form-func-highlight-bg: rgb(40, 43, 49);
 
 $modal-backdrop-bg: rgba(255, 255, 255, 0.08);
 $code-tag-bg: $dark-1;
@@ -153,7 +153,7 @@ $code-tag-border: $dark-9;
 
 // cards
 $card-background: #22252b;
-$card-background-hover: #22252b;
+$card-background-hover: rgb(40, 43, 49);
 $card-shadow: none;
 
 // Lists
@@ -256,7 +256,7 @@ $side-menu-bg: $panel-bg;
 $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
 $side-menu-item-hover-bg: #22252b;
-$side-menu-shadow: 0 0 20px black;
+$side-menu-shadow: 0 0 30px #111;
 $side-menu-icon-color: #9fa7b3;
 $side-menu-header-color: rgba(255, 255, 255, 0.77);
 
@@ -264,7 +264,7 @@ $side-menu-header-color: rgba(255, 255, 255, 0.77);
 // -------------------------
 $menu-dropdown-bg: #22252b;
 $menu-dropdown-hover-bg: rgba(255, 255, 255, 0.08);
-$menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.5),0px 4px 5px 0px rgba(0,0,0,0.4),0px 1px 10px 0px rgba(0,0,0,0.3);
+$menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.15),0px 1px 10px 0px rgba(0,0,0,0.1);
 
 // Tabs
 // -------------------------
@@ -291,13 +291,13 @@ $tooltipBackground: #22252b;
 $tooltipColor: rgba(255, 255, 255, 0.77);
 $tooltipArrowColor: #22252b;
 $tooltipBackgroundError: #D10E5C;
-$tooltipShadow: 0px 3px 1px -2px rgba(0,0,0,0.5),0px 2px 2px 0px rgba(0,0,0,0.4),0px 1px 5px 0px rgba(0,0,0,0.3);
+$tooltipShadow: 0px 3px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.15),0px 1px 5px 0px rgba(0,0,0,0.1);
 
 $popover-bg: #22252b;
 $popover-color: rgba(255, 255, 255, 0.77);
 $popover-border-color: rgba(218,224,254,0.15);
 $popover-header-bg: #22252b;
-$popover-shadow: 0px 5px 5px -3px rgba(0,0,0,0.5),0px 8px 10px 1px rgba(0,0,0,0.4),0px 3px 14px 2px rgba(0,0,0,0.3);
+$popover-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.15),0px 3px 14px 2px rgba(0,0,0,0.1);
 
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $text-color;

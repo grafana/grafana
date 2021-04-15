@@ -2,8 +2,7 @@ import React from 'react';
 import { css } from '@emotion/css';
 import { IconButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { useTheme } from '../../themes/ThemeContext';
-import { GrafanaTheme } from '@grafana/data';
+import { useTheme } from '../../themes';
 import { IconSize, IconName } from '../../types';
 import mdx from './IconButton.mdx';
 
@@ -19,42 +18,29 @@ export default {
 };
 
 export const Simple = () => {
-  const theme = useTheme();
-
   return (
     <div>
-      {renderScenario(
-        'dashboard',
-        theme,
-        ['sm', 'md', 'lg', 'xl', 'xxl'],
-        ['search', 'trash-alt', 'arrow-left', 'times']
-      )}
-      {renderScenario('panel', theme, ['sm', 'md', 'lg', 'xl', 'xxl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
-      {renderScenario('header', theme, ['sm', 'md', 'lg', 'xl', 'xxl'], ['search', 'trash-alt', 'arrow-left', 'times'])}
+      <RenderScenario layer="layer0" />
+      <RenderScenario layer="layer1" />
+      <RenderScenario layer="layer2" />
     </div>
   );
 };
 
-function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[], icons: IconName[]) {
-  let bg = 'red';
+interface ScenarioProps {
+  layer: 'layer0' | 'layer1' | 'layer2';
+}
 
-  switch (surface) {
-    case 'dashboard':
-      bg = theme.colors.dashboardBg;
-      break;
-    case 'panel':
-      bg = theme.colors.bodyBg;
-      break;
-    case 'header': {
-      bg = theme.colors.pageHeaderBg;
-    }
-  }
+const RenderScenario = ({ layer }: ScenarioProps) => {
+  const theme = useTheme();
+  const sizes: IconSize[] = ['sm', 'md', 'lg', 'xl', 'xxl'];
+  const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
 
   return (
     <div
       className={css`
         padding: 30px;
-        background: ${bg};
+        background: ${theme.v2.palette[layer]};
         button {
           margin-right: 8px;
           margin-left: 8px;
@@ -62,14 +48,14 @@ function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[],
         }
       `}
     >
-      <div>Surface: {surface}</div>
+      <div>{layer}</div>
       {icons.map((icon) => {
         return sizes.map((size) => (
           <span key={icon + size}>
-            <IconButton name={icon} size={size} surface={surface as any} />
+            <IconButton name={icon} size={size} />
           </span>
         ));
       })}
     </div>
   );
-}
+};

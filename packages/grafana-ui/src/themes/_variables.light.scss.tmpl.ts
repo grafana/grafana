@@ -164,8 +164,8 @@ $scrollbarBorder: $gray-7;
 // -------------------------
 $table-bg-accent: ${theme.v2.palette.layer2};
 $table-border: ${theme.v2.palette.border1};
-$table-bg-odd: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.02)};
-$table-bg-hover: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.05)};
+$table-bg-odd: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.02)};
+$table-bg-hover: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.05)};
 
 // Buttons
 // -------------------------
