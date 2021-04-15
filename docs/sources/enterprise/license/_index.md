@@ -13,4 +13,3 @@ See also:
 
 - [License expiration]({{< relref "./license-expiration.md" >}})
 - [License restrictions]({{< relref "./license-restrictions.md" >}})
-
