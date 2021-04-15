@@ -104,7 +104,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             invalid={!!errors.dataSourceName?.message}
           >
             <InputControl
-              as={DataSourcePicker as React.ComponentType<Omit<DataSourcePickerProps, 'current'>>}
+              as={(DataSourcePicker as unknown) as React.ComponentType<Omit<DataSourcePickerProps, 'current'>>}
               valueName="current"
               filter={dataSourceFilter}
               name="dataSourceName"

@@ -28,6 +28,7 @@ import {
   getRuleIdentifier,
   hashRulerRule,
   isGrafanaRuleIdentifier,
+  isGrafanaRulerRule,
   isRulerNotSupportedResponse,
   ruleWithLocationToRuleIdentifier,
   stringifyRuleIdentifier,
@@ -89,7 +90,9 @@ async function findExistingRule(ruleIdentifier: RuleIdentifier): Promise<RuleWit
     // find namespace and group that contains the uid for the rule
     for (const [namespace, groups] of Object.entries(namespaces)) {
       for (const group of groups) {
-        const rule = group.rules.find((rule: RulerGrafanaRuleDTO) => rule.grafana_alert?.uid === ruleIdentifier.uid);
+        const rule = group.rules.find(
+          (rule) => isGrafanaRulerRule(rule) && rule.grafana_alert?.uid === ruleIdentifier.uid
+        );
         if (rule) {
           return {
             group,
