@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/live/runstream"
+
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -75,7 +77,7 @@ type GrafanaLive struct {
 	ManagedStreamRunner *ManagedStreamRunner
 
 	contextGetter *pluginContextGetter
-	streamManager *features.StreamManager
+	streamManager *runstream.Manager
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -128,7 +130,7 @@ func (g *GrafanaLive) Init() error {
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
 	packetSender := newPluginPacketSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
-	g.streamManager = features.NewStreamManager(packetSender, presenceGetter)
+	g.streamManager = runstream.NewManager(packetSender, presenceGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
