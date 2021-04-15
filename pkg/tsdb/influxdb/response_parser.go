@@ -57,11 +57,7 @@ func transformRows(rows []Row, query *Query) data.Frames {
 				timestamp, timestampErr := parseTimestamp(valuePair[0])
 				// we only add this row if the timestamp is valid
 				if timestampErr == nil {
-					value, valueErr := parseValue(valuePair[columnIndex])
-					// if there is a value-error, we use nil as the value
-					if valueErr != nil {
-						value = nil
-					}
+					value := parseValue(valuePair[columnIndex])
 					timeArray = append(timeArray, timestamp)
 					valueArray = append(valueArray, value)
 				}
@@ -148,7 +144,7 @@ func parseTimestamp(value interface{}) (time.Time, error) {
 	return t, nil
 }
 
-func parseValue(value interface{}) (*float64, error) {
+func parseValue(value interface{}) *float64 {
 	// NOTE: we use pointers-to-float64 because we need
 	// to represent null-json-values. they come for example
 	// when we do a group-by with fill(null)
@@ -165,18 +161,20 @@ func parseValue(value interface{}) (*float64, error) {
 
 	if value == nil {
 		// this is what json-nulls become
-		return nil, nil
+		return nil
 	}
 
 	number, ok := value.(json.Number)
 	if !ok {
-		return nil, fmt.Errorf("value has invalid type: %#v", value)
+		// in the current inmplementation, errors become nils
+		return nil
 	}
 
 	fvalue, err := number.Float64()
 	if err != nil {
-		return nil, err
+		// in the current inmplementation, errors become nils
+		return nil
 	}
 
-	return &fvalue, nil
+	return &fvalue
 }

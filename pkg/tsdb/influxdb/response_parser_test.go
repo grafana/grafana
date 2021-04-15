@@ -336,20 +336,18 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser parseValue nil", func(t *testing.T) {
-		value, err := parseValue(nil)
-		require.NoError(t, err)
+		value := parseValue(nil)
 		require.Nil(t, value)
 	})
 
 	t.Run("Influxdb response parser parseValue valid JSON.number", func(t *testing.T) {
-		value, err := parseValue(json.Number("95.4"))
-		require.NoError(t, err)
+		value := parseValue(json.Number("95.4"))
 		require.Equal(t, *value, 95.4)
 	})
 
 	t.Run("Influxdb response parser parseValue invalid type", func(t *testing.T) {
-		_, err := parseValue("95.4")
-		require.Error(t, err)
+		value := parseValue("95.4")
+		require.Nil(t, value)
 	})
 
 	t.Run("Influxdb response parser parseTimestamp valid JSON.number", func(t *testing.T) {
