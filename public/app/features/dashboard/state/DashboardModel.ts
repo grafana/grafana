@@ -85,6 +85,7 @@ export class DashboardModel {
 
   // repeat process cycles
   iteration?: number;
+  // @ts-ignore has no initializer and is not definitely assigned in the constructor. This is assigned in the constructor on this.initMeta(meta);
   meta: DashboardMeta;
   events: EventBusExtended;
 

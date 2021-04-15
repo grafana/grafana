@@ -11,6 +11,7 @@ import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
 
 export class FolderPickerCtrl {
+  // @ts-ignore has no initializer and is not definitely assigned in the constructor. Property is set by Angular.
   initialTitle: string;
   initialFolderId?: number;
   labelClass: string;
@@ -19,14 +20,16 @@ export class FolderPickerCtrl {
   onCreateFolder: any;
   enterFolderCreation: any;
   exitFolderCreation: any;
+  // @ts-ignore has no initializer and is not definitely assigned in the constructor. Property is set by Angular.
   enableCreateNew: boolean;
+  // @ts-ignore has no initializer and is not definitely assigned in the constructor. Property is set by Angular.
   enableReset: boolean;
   rootName = 'General';
   folder: any;
-  createNewFolder: boolean;
-  newFolderName: string;
-  newFolderNameTouched: boolean;
-  hasValidationError: boolean;
+  createNewFolder?: boolean;
+  newFolderName?: string;
+  newFolderNameTouched?: boolean;
+  hasValidationError?: boolean;
   validationError: any;
   isEditor: boolean;
   dashboardId?: number;

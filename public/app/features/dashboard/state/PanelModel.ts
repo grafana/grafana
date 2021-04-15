@@ -135,9 +135,10 @@ export class PanelModel implements DataConfigSource {
   collapsed?: boolean;
 
   panels?: any;
+  // @ts-ignore has no initializer and is not definitely assigned in the constructor. This is set by this.restoreModel(model); in constructor.
   targets: DataQuery[];
   transformations?: DataTransformerConfig[];
-  datasource: string | null;
+  datasource: string | null = null;
   thresholds?: any;
   pluginVersion?: string;
 
@@ -154,17 +155,18 @@ export class PanelModel implements DataConfigSource {
   interval?: string | null;
   description?: string;
   links?: DataLink[];
+  // @ts-ignore has no initializer and is not definitely assigned in the constructor. This is set by this.restoreModel(model); in constructor.
   transparent: boolean;
 
   libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
 
   // non persisted
-  isViewing: boolean;
-  isEditing: boolean;
-  isInView: boolean;
-  hasChanged: boolean;
+  isViewing = false;
+  isEditing = false;
+  isInView = false;
+  hasChanged = false;
 
-  hasRefreshed: boolean;
+  hasRefreshed?: boolean;
   events: EventBus;
   cacheTimeout?: any;
   cachedPluginOptions: Record<string, PanelOptionsCache>;

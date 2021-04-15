@@ -10,7 +10,7 @@ import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
 import { RemovePanelEvent } from '../../../types/events';
 
 export class DashboardSrv {
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
 
   /** @ngInject */
   constructor(private $rootScope: GrafanaRootScope) {
@@ -26,6 +26,9 @@ export class DashboardSrv {
   }
 
   getCurrent(): DashboardModel {
+    if (!this.dashboard) {
+      throw new Error('Calling DashboardSrv.getCurrent without calling setCurrent first');
+    }
     return this.dashboard;
   }
 
@@ -38,7 +41,7 @@ export class DashboardSrv {
     const parsedJson = JSON.parse(json);
     return saveDashboard({
       dashboard: parsedJson,
-      folderId: this.dashboard.meta.folderId || parsedJson.folderId,
+      folderId: this.dashboard?.meta.folderId || parsedJson.folderId,
     });
   }
 
