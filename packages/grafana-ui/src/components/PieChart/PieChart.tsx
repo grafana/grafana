@@ -29,6 +29,7 @@ import {
   PieChartSvgProps,
   PieChartType,
 } from './types';
+import { getTooltipContainerStyles } from '../../themes/mixins';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -228,8 +229,13 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
           top={tooltip.tooltipTop}
           className={styles.tooltipPortal}
           left={tooltip.tooltipLeft}
+          unstyled={true}
+          applyPositionStyle={true}
         >
-          {tooltip.tooltipData!.title} {formattedValueToString(tooltip.tooltipData!)}
+          {`${tooltip.tooltipData!.title}: ${formattedValueToString(tooltip.tooltipData!)} (${(
+            (tooltip.tooltipData!.numeric / total) *
+            100
+          ).toFixed(2)}%)`}
         </TooltipInPortal>
       )}
     </div>
@@ -382,7 +388,7 @@ const getStyles = (theme: GrafanaTheme) => {
       }
     `,
     tooltipPortal: css`
-      z-index: 1050;
+      ${getTooltipContainerStyles(theme)}
     `,
   };
 };

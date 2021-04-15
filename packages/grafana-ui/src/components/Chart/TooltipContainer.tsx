@@ -1,7 +1,7 @@
 import React, { useState, useLayoutEffect, useRef, HTMLAttributes, useMemo } from 'react';
-import { stylesFactory } from '../../themes/stylesFactory';
 import { css, cx } from '@emotion/css';
-import { useTheme } from '../../themes/ThemeContext';
+import { useStyles } from '../../themes';
+import { getTooltipContainerStyles } from '../../themes/mixins';
 import useWindowSize from 'react-use/lib/useWindowSize';
 import { Dimensions2D, GrafanaTheme } from '@grafana/data';
 
@@ -18,7 +18,6 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({
   className,
   ...otherProps
 }) => {
-  const theme = useTheme();
   const tooltipRef = useRef<HTMLDivElement>(null);
   const tooltipMeasurementRef = useRef<Dimensions2D>({ width: 0, height: 0 });
   const { width, height } = useWindowSize();
@@ -80,7 +79,7 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({
     });
   }, [width, height, positionX, offsetX, positionY, offsetY]);
 
-  const styles = getTooltipContainerStyles(theme);
+  const styles = useStyles(getStyles);
 
   return (
     <div
@@ -101,16 +100,8 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({
 
 TooltipContainer.displayName = 'TooltipContainer';
 
-const getTooltipContainerStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    wrapper: css`
-      overflow: hidden;
-      background: ${theme.colors.bg2};
-      /* max-width is set up based on .grafana-tooltip class that's used in dashboard */
-      max-width: 800px;
-      padding: ${theme.spacing.sm};
-      border-radius: ${theme.border.radius.sm};
-      z-index: ${theme.zIndex.tooltip};
-    `,
-  };
+const getStyles = (theme: GrafanaTheme) => ({
+  wrapper: css`
+    ${getTooltipContainerStyles(theme)}
+  `,
 });
