@@ -56,11 +56,12 @@ const getKnobs = () => {
     showLabelName: boolean('Label.showName', true),
     showLabelValue: boolean('Label.showValue', false),
     showLabelPercent: boolean('Label.showPercent', false),
+    tooltipMode: select('Tooltip mode', ['single', 'multi', 'none'], 'single'),
   };
 };
 
 export const basic = () => {
-  const { pieType, width, height } = getKnobs();
+  const { pieType, width, height, tooltipMode } = getKnobs();
 
   return (
     <PieChart
@@ -71,12 +72,13 @@ export const basic = () => {
       fieldConfig={fieldConfig}
       data={datapoints}
       pieType={pieType}
+      tooltipOptions={{ mode: tooltipMode }}
     />
   );
 };
 
 export const donut = () => {
-  const { width, height } = getKnobs();
+  const { width, height, tooltipMode } = getKnobs();
 
   return (
     <PieChart
@@ -87,6 +89,7 @@ export const donut = () => {
       fieldConfig={fieldConfig}
       data={datapoints}
       pieType={PieChartType.Donut}
+      tooltipOptions={{ mode: tooltipMode }}
     />
   );
 };
