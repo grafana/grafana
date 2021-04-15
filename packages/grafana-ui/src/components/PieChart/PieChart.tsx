@@ -45,6 +45,7 @@ export const PieChart: FC<PieChartProps> = ({
   fieldConfig,
   replaceVariables,
   legendOptions = defaultLegendOptions,
+  tooltipOptions,
   onSeriesColorChange,
   width,
   height,
@@ -113,7 +114,13 @@ export const PieChart: FC<PieChartProps> = ({
     <VizLayout width={width} height={height} legend={getLegend(fieldDisplayValues, legendOptions)}>
       {(vizWidth: number, vizHeight: number) => {
         return (
-          <PieChartSvg width={vizWidth} height={vizHeight} fieldDisplayValues={fieldDisplayValues} {...restProps} />
+          <PieChartSvg
+            width={vizWidth}
+            height={vizHeight}
+            fieldDisplayValues={fieldDisplayValues}
+            tooltipOptions={tooltipOptions}
+            {...restProps}
+          />
         );
       }}
     </VizLayout>
@@ -127,6 +134,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   height,
   useGradients = true,
   displayLabels = [],
+  tooltipOptions,
 }) => {
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
@@ -148,6 +156,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   };
 
   const showLabel = displayLabels.length > 0;
+  const showTooltip = tooltipOptions.mode !== 'none' && tooltip.tooltipOpen;
   const total = fieldDisplayValues.reduce((acc, item) => item.display.numeric + acc, 0);
   const layout = getPieLayout(width, height, pieType);
   const colors = [
@@ -223,7 +232,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
           </Pie>
         </Group>
       </svg>
-      {tooltip.tooltipOpen && (
+      {showTooltip ? (
         <TooltipInPortal
           key={Math.random()}
           top={tooltip.tooltipTop}
@@ -237,7 +246,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
             100
           ).toFixed(2)}%)`}
         </TooltipInPortal>
-      )}
+      ) : null}
     </div>
   );
 };
@@ -258,7 +267,7 @@ const PieSlice: FC<{
     tooltip.showTooltip({
       tooltipLeft: coords!.x,
       tooltipTop: coords!.y,
-      tooltipData: datum,
+      tooltipData: getTooltipData(datum),
     });
   };
 
@@ -266,7 +275,7 @@ const PieSlice: FC<{
     <g
       key={arc.data.display.title}
       className={styles.svgArg}
-      onMouseMove={(event) => onMouseMoveOverArc(event, arc.data.display)}
+      onMouseMove={(event) => onMouseMoveOverArc(event, arc.data)}
       onMouseOut={tooltip.hideTooltip}
       onClick={openMenu}
     >
@@ -274,6 +283,11 @@ const PieSlice: FC<{
       {children}
     </g>
   );
+};
+
+const getTooltipData = (datum: any) => {
+  console.log(datum);
+  return datum.display;
 };
 
 const PieLabel: FC<{

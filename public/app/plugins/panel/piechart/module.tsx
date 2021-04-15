@@ -51,7 +51,7 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
       })
       .addRadio({
         name: 'Tooltip mode',
-        path: 'tooltipOptions.mode',
+        path: 'tooltip.mode',
         description: '',
         defaultValue: 'single',
         settings: {

@@ -10,6 +10,7 @@ export interface PieChartSvgProps {
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
   onSeriesColorChange?: (label: string, color: string) => void;
+  tooltipOptions: GraphTooltipOptions;
 }
 
 export interface PieChartProps extends Omit<PieChartSvgProps, 'fieldDisplayValues'> {
