@@ -281,7 +281,6 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"attachments": []map[string]interface{}{
 			attachment,
 		},
-		"parse": "full", // to linkify urls, users and channels in alert message.
 	}
 	if len(blocks) > 0 {
 		body["blocks"] = blocks
