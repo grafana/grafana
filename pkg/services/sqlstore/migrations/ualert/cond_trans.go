@@ -111,6 +111,13 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64]st
 				return nil, err
 			}
 
+			var queryType string
+			if v, ok := queryObj["queryType"]; ok {
+				if s, ok := v.(string); ok {
+					queryType = s
+				}
+			}
+
 			// one could have an alert saved but datasource deleted, so can not require match.
 			dsUID := dsIDMap[[2]int64{orgID, set.Conditions[condIdx].Query.DatasourceID}]
 			queryObj["datasourceUid"] = dsUID
@@ -134,6 +141,7 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64]st
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
 				DatasourceUID:     dsUID,
+				QueryType:         queryType,
 			}
 			newCond.Data = append(newCond.Data, alertQuery)
 		}
