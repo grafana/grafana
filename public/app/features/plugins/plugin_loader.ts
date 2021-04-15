@@ -28,7 +28,7 @@ import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
-import * as emotion from 'emotion';
+import * as emotion from '@emotion/css';
 import * as grafanaData from '@grafana/data';
 import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
@@ -51,6 +51,7 @@ const bust = `?_cache=${Date.now()}`;
 function locate(load: { address: string }) {
   return load.address + bust;
 }
+
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
 
 grafanaRuntime.SystemJS.config({
@@ -101,6 +102,7 @@ exposeToPlugin('react-dom', reactDom);
 exposeToPlugin('react-redux', reactRedux);
 exposeToPlugin('redux', redux);
 exposeToPlugin('emotion', emotion);
+exposeToPlugin('@emotion/css', emotion);
 
 exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressionSrv,
@@ -213,7 +215,7 @@ export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaDa
   });
 }
 
-import { getPanelPluginNotFound, getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
+import { getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
 import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
 
 interface PanelCache {
@@ -223,7 +225,6 @@ const panelCache: PanelCache = {};
 
 export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> {
   const loaded = panelCache[id];
-
   if (loaded) {
     return loaded;
   }
@@ -231,7 +232,7 @@ export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> 
   const meta = config.panels[id];
 
   if (!meta) {
-    return Promise.resolve(getPanelPluginNotFound(id));
+    throw new Error(`Plugin ${id} not found`);
   }
 
   panelCache[id] = importPluginModule(meta.module)

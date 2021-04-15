@@ -4,7 +4,7 @@ import { QueryEditorHelpProps } from '@grafana/data';
 import Prism from 'prismjs';
 import tokenizer from '../syntax';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { CloudWatchLogsQuery } from '../types';
 
 interface QueryExample {

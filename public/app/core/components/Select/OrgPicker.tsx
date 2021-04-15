@@ -21,7 +21,7 @@ export interface State {
 }
 
 export class OrgPicker extends PureComponent<Props, State> {
-  orgs: Organization[];
+  orgs: Organization[] = [];
 
   state: State = {
     isLoading: false,

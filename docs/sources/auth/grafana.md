@@ -52,7 +52,7 @@ api_key_max_seconds_to_live = -1
 
 ### Anonymous authentication
 
-You can make Grafana accessible without any login required by enabling anonymous access in the configuration file.
+You can make Grafana accessible without any login required by enabling anonymous access in the configuration file. For more information, refer to [Implications of allowing `Anonymous` access to dashboards]({{< relref "../administration/security.md" >}}).
 
 Example:
 
@@ -103,7 +103,7 @@ oauth_auto_login = true
 
 ### Hide sign-out menu
 
-Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy.
+Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy or JWT authentication.
 
 ```bash
 [auth]

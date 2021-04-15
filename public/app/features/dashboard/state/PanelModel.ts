@@ -29,7 +29,7 @@ import {
   RenderEvent,
 } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
-import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
+import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import {
   filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
@@ -38,6 +38,7 @@ import {
 } from './getPanelOptionsWithDefaults';
 import { QueryGroupOptions } from 'app/types';
 import { PanelModelLibraryPanel } from '../../library-panels/types';
+import { isDeprecatedPanel } from '../utils/panel';
 
 export interface GridPos {
   x: number;
@@ -134,9 +135,9 @@ export class PanelModel implements DataConfigSource {
   collapsed?: boolean;
 
   panels?: any;
-  targets: DataQuery[];
+  declare targets: DataQuery[];
   transformations?: DataTransformerConfig[];
-  datasource: string | null;
+  datasource: string | null = null;
   thresholds?: any;
   pluginVersion?: string;
 
@@ -144,29 +145,29 @@ export class PanelModel implements DataConfigSource {
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;
-  options: {
+  declare options: {
     [key: string]: any;
   };
-  fieldConfig: FieldConfigSource;
+  declare fieldConfig: FieldConfigSource;
 
   maxDataPoints?: number | null;
   interval?: string | null;
   description?: string;
   links?: DataLink[];
-  transparent: boolean;
+  declare transparent: boolean;
 
   libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
 
   // non persisted
-  isViewing: boolean;
-  isEditing: boolean;
-  isInView: boolean;
-  hasChanged: boolean;
+  isViewing = false;
+  isEditing = false;
+  isInView = false;
+  hasChanged = false;
 
-  hasRefreshed: boolean;
+  hasRefreshed?: boolean;
   events: EventBus;
   cacheTimeout?: any;
-  cachedPluginOptions: Record<string, PanelOptionsCache>;
+  declare cachedPluginOptions: Record<string, PanelOptionsCache>;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
 
@@ -339,10 +340,9 @@ export class PanelModel implements DataConfigSource {
 
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
+    const version = getPluginVersion(plugin);
 
     if (plugin.onPanelMigration) {
-      const version = getPluginVersion(plugin);
-
       if (version !== this.pluginVersion) {
         this.options = plugin.onPanelMigration(this);
         this.pluginVersion = version;
@@ -380,8 +380,7 @@ export class PanelModel implements DataConfigSource {
     const oldOptions: any = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
-    const wasAngular = this.isAngularPlugin();
-
+    const wasAngular = this.isAngularPlugin() || isDeprecatedPanel(this.type);
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,
@@ -511,6 +510,17 @@ export class PanelModel implements DataConfigSource {
   setProperty(key: keyof this, value: any) {
     this[key] = value;
     this.hasChanged = true;
+
+    // Custom handling of repeat dependent options, handled here as PanelEditor can
+    // update one key at a time right now
+    if (key === 'repeat') {
+      if (this.repeat && !this.repeatDirection) {
+        this.repeatDirection = 'h';
+      } else if (!this.repeat) {
+        delete this.repeatDirection;
+        delete this.maxPerRow;
+      }
+    }
   }
 
   replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
@@ -519,7 +529,8 @@ export class PanelModel implements DataConfigSource {
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
-    const allVariablesParams = getAllVariableValuesForUrl(vars);
+
+    const allVariablesParams = getVariablesUrlParams(vars);
     const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
     const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
 
@@ -565,10 +576,6 @@ export class PanelModel implements DataConfigSource {
 
 function getPluginVersion(plugin: PanelPlugin): string {
   return plugin && plugin.meta.info.version ? plugin.meta.info.version : config.buildInfo.version;
-}
-
-export function isLibraryPanel(panel: PanelModel): panel is PanelModel & Required<Pick<PanelModel, 'libraryPanel'>> {
-  return panel.libraryPanel !== undefined;
 }
 
 interface PanelOptionsCache {

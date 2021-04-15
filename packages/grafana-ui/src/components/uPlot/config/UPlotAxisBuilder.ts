@@ -50,6 +50,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       theme,
     } = this.props;
 
+    let { typography } = theme;
+
+    let font = `${typography.size.sm} ${typography.fontFamily.sansSerif}`;
+
     const gridColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray90;
 
     let config: Axis = {
@@ -57,8 +61,8 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       show,
       stroke: theme.colors.text,
       side: getUPlotSideFromAxis(placement),
-      font: `12px 'Roboto'`,
-      labelFont: `12px 'Roboto'`,
+      font,
+      labelFont: font,
       size: this.props.size ?? calculateAxisSize,
       gap,
       grid: {
@@ -163,11 +167,11 @@ function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: 
     format = systemDateFormats.interval.second.replace('ss', 'ss.SS');
   } else if (foundIncr <= timeUnitSize.minute) {
     format = systemDateFormats.interval.second;
-  } else if (foundIncr <= timeUnitSize.hour || range <= timeUnitSize.day) {
+  } else if (range <= timeUnitSize.day) {
     format = systemDateFormats.interval.minute;
   } else if (foundIncr <= timeUnitSize.day) {
     format = systemDateFormats.interval.hour;
-  } else if (foundIncr <= timeUnitSize.month || range < timeUnitSize.year) {
+  } else if (range < timeUnitSize.year) {
     format = systemDateFormats.interval.day;
   } else if (incrementRoundedToDay === yearRoundedToDay) {
     format = systemDateFormats.interval.year;

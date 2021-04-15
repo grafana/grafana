@@ -6,13 +6,28 @@ import {
   DataQuery,
   DataSourceJsonData,
   ScopedVars,
+  makeClassES5Compatible,
+  DataFrame,
+  parseLiveChannelAddress,
+  StreamingFrameOptions,
 } from '@grafana/data';
-import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { merge, Observable, of } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { getBackendSrv, getDataSourceSrv } from '../services';
-import { toDataQueryResponse } from './queryResponse';
+import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
+import { getLiveDataStream } from './liveQuery';
 
 const ExpressionDatasourceID = '__expr__';
+
+class HealthCheckError extends Error {
+  details: HealthCheckResultDetails;
+
+  constructor(message: string, details: HealthCheckResultDetails) {
+    super(message);
+    this.details = details;
+    this.name = 'HealthCheckError';
+  }
+}
 
 /**
  * Describes the current health status of a data source plugin.
@@ -26,6 +41,16 @@ export enum HealthStatus {
 }
 
 /**
+ * Describes the details in the payload returned when checking the health of a data source
+ * plugin.
+ *
+ * If the 'message' key exists, this will be displayed in the error message in DataSourceSettingsPage
+ *
+ * @public
+ */
+export type HealthCheckResultDetails = Record<string, any> | undefined;
+
+/**
  * Describes the payload returned when checking the health of a data source
  * plugin.
  *
@@ -34,7 +59,7 @@ export enum HealthStatus {
 export interface HealthCheckResult {
   status: HealthStatus;
   message: string;
-  details?: Record<string, any>;
+  details: HealthCheckResultDetails;
 }
 
 /**
@@ -43,7 +68,7 @@ export interface HealthCheckResult {
  *
  * @public
  */
-export class DataSourceWithBackend<
+class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
@@ -104,15 +129,20 @@ export class DataSourceWithBackend<
     }
 
     return getBackendSrv()
-      .fetch({
+      .fetch<BackendDataSourceResponse>({
         url: '/api/ds/query',
         method: 'POST',
         data: body,
         requestId,
       })
       .pipe(
-        map((rsp: any) => {
-          return toDataQueryResponse(rsp, queries as DataQuery[]);
+        switchMap((raw) => {
+          const rsp = toDataQueryResponse(raw, queries as DataQuery[]);
+          // Check if any response should subscribe to a live stream
+          if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
+            return toStreamingDataResponse(request, rsp);
+          }
+          return of(rsp);
         }),
         catchError((err) => {
           return of(toDataQueryResponse(err));
@@ -182,7 +212,51 @@ export class DataSourceWithBackend<
           message: res.message,
         };
       }
-      throw new Error(res.message);
+
+      throw new HealthCheckError(res.message, res.details);
     });
   }
 }
+
+export function toStreamingDataResponse(
+  request: DataQueryRequest,
+  rsp: DataQueryResponse
+): Observable<DataQueryResponse> {
+  const buffer: StreamingFrameOptions = {
+    maxLength: request.maxDataPoints ?? 500,
+  };
+
+  // For recent queries, clamp to the current time range
+  if (request.rangeRaw?.to === 'now') {
+    buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+  }
+
+  const staticdata: DataFrame[] = [];
+  const streams: Array<Observable<DataQueryResponse>> = [];
+  for (const frame of rsp.data) {
+    const addr = parseLiveChannelAddress(frame.meta?.channel);
+    if (addr) {
+      streams.push(
+        getLiveDataStream({
+          addr,
+          buffer,
+          frame: frame as DataFrame,
+        })
+      );
+    } else {
+      staticdata.push(frame);
+    }
+  }
+  if (staticdata.length) {
+    streams.push(of({ ...rsp, data: staticdata }));
+  }
+  if (streams.length === 1) {
+    return streams[0]; // avoid merge wrapper
+  }
+  return merge(...streams);
+}
+
+//@ts-ignore
+DataSourceWithBackend = makeClassES5Compatible(DataSourceWithBackend);
+
+export { DataSourceWithBackend };

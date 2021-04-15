@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Button, TooltipPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
+import { Button, GraphNG, GraphNGLegendEvent, TooltipPlugin } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
@@ -20,20 +20,6 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
 }) => {
   const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
 
-  if (dims.error) {
-    return (
-      <div>
-        <div>ERROR: {dims.error}</div>
-        {dims.hasData && (
-          <div>
-            <Button onClick={() => alert('TODO, switch vis')}>Show as Table</Button>
-            {dims.hasTime && <Button onClick={() => alert('TODO, switch vis')}>Show as Time series</Button>}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   const frames = useMemo(() => [dims.frame], [dims]);
 
   const onLegendClick = useCallback(
@@ -49,6 +35,20 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
     },
     [fieldConfig, onFieldConfigChange]
   );
+
+  if (dims.error) {
+    return (
+      <div>
+        <div>ERROR: {dims.error}</div>
+        {dims.hasData && (
+          <div>
+            <Button onClick={() => alert('TODO, switch vis')}>Show as Table</Button>
+            {dims.hasTime && <Button onClick={() => alert('TODO, switch vis')}>Show as Time series</Button>}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <GraphNG

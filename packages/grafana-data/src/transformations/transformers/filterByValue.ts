@@ -110,11 +110,11 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
               }
             }
 
-            // TODO: what parts needs to be excluded from field.
+            // We keep field config, but clean the state as it's being recalculated when the field overrides are applied
             fields.push({
               ...field,
               values: new ArrayVector(buffer),
-              config: {},
+              state: {},
             });
           }
 

@@ -23,7 +23,7 @@ import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
-import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
@@ -31,6 +31,7 @@ import { metricAggregationConfig } from './components/QueryEditor/MetricAggregat
 import {
   isMetricAggregationWithField,
   isPipelineAggregationWithMultipleBucketPaths,
+  Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
@@ -104,11 +105,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.languageProvider = new LanguageProvider(this);
   }
 
-  private request(method: string, url: string, data?: undefined): Observable<any> {
-    const options: any = {
+  private request(
+    method: string,
+    url: string,
+    data?: undefined,
+    headers?: BackendSrvRequest['headers']
+  ): Observable<any> {
+    const options: BackendSrvRequest = {
       url: this.url + '/' + url,
-      method: method,
-      data: data,
+      method,
+      data,
+      headers,
     };
 
     if (this.basicAuth || this.withCredentials) {
@@ -192,7 +199,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   private post(url: string, data: any): Observable<any> {
-    return this.request('POST', url, data);
+    return this.request('POST', url, data, { 'Content-Type': 'application/x-ndjson' });
   }
 
   annotationQuery(options: any): Promise<any> {
@@ -543,10 +550,19 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
       let queryObj;
       if (hasMetricOfType(target, 'logs')) {
+        // FIXME: All this logic here should be in the query builder.
+        // When moving to the BE-only implementation we should remove this and let the BE
+        // Handle this.
+        // TODO: defaultBucketAgg creates a dete_histogram aggregation without a field, so it fallbacks to
+        // the configured timeField. we should allow people to use a different time field here.
         target.bucketAggs = [defaultBucketAgg()];
+
+        const log = target.metrics?.find((m) => m.type === 'logs') as Logs;
+        const limit = log.settings?.limit ? parseInt(log.settings?.limit, 10) : 500;
+
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
-        queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, target.query);
+        queryObj = this.queryBuilder.getLogsQuery(target, limit, adhocFilters, target.query);
       } else {
         if (target.alias) {
           target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
@@ -603,6 +619,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   // TODO: instead of being a string, this could be a custom type representing all the elastic types
+  // FIXME: This doesn't seem to return actual MetricFindValues, we should either change the return type
+  // or fix the implementation.
   getFields(type?: string, range?: TimeRange): Observable<MetricFindValue[]> {
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping', range).pipe(

@@ -3,6 +3,8 @@ import Datasource from './datasource';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
+export type AzureResultFormat = 'time_series' | 'table';
+
 export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
   ApplicationInsights = 'Application Insights',
@@ -53,11 +55,11 @@ export interface AzureMetricDimension {
 }
 
 export interface AzureMetricQuery {
-  resourceGroup: string;
-  resourceName: string;
-  metricDefinition: string;
-  metricNamespace: string;
-  metricName: string;
+  resourceGroup: string | undefined;
+  resourceName: string | undefined;
+  metricDefinition: string | undefined;
+  metricNamespace: string | undefined;
+  metricName: string | undefined;
   timeGrainUnit?: string;
   timeGrain: string;
   allowedTimeGrainsMs: number[];
@@ -89,6 +91,10 @@ export interface InsightsAnalyticsQuery {
   query: string;
   resultFormat: string;
 }
+
+// Represents an errors that come back from frontend requests.
+// Not totally sure how accurate this type is.
+export type AzureMonitorErrorish = Error;
 
 // Azure Monitor API Types
 
@@ -191,4 +197,5 @@ export interface AzureQueryEditorFieldProps {
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
+  setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }

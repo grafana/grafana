@@ -1,7 +1,7 @@
 import React from 'react';
 import { Themeable } from '../../types/theme';
 import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { stylesFactory } from '../../themes';
 
 export interface CallToActionCardProps extends Themeable {
@@ -21,6 +21,7 @@ const getCallToActionCardStyles = stylesFactory((theme: GrafanaTheme) => ({
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    flex-grow: 1;
   `,
   message: css`
     margin-bottom: ${theme.spacing.lg};

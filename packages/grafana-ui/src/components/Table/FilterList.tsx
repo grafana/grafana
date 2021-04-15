@@ -1,6 +1,6 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
 import { stylesFactory, useTheme } from '../../themes';
@@ -89,8 +89,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     padding: ${theme.spacing.xs};
+
     :hover {
-      background-color: ${theme.colors.bg3};
+      background-color: ${theme.v2.palette.action.hover};
     }
   `,
   filterListInput: css`
