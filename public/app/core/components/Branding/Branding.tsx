@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { useTheme } from '@grafana/ui';
-import { regionalizeText } from '../../utils/regionalizeText';
 
 export interface BrandComponentProps {
   className?: string;
@@ -42,11 +41,12 @@ export class Branding {
   static AppTitle = 'Grafana';
   static LoginTitle = 'Welcome to Grafana';
   static GetLoginSubTitle = () => {
+    const democratizingSlogan = navigator.language === 'en-US' ? 'Democratizing data' : 'Democratising data';
     const slogans = [
       "Don't get in the way of the data",
       'Your single pane of glass',
       'Built better together',
-      regionalizeText('Democratising') + ' data',
+      democratizingSlogan,
     ];
     const count = slogans.length;
     return slogans[Math.floor(Math.random() * count)];
