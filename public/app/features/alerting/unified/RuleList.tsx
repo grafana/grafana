@@ -122,12 +122,6 @@ export const RuleList: FC = () => {
           <RulesFilter />
           <div className={styles.break} />
           <div className={styles.buttonsContainer}>
-            <div />
-            <a href="/alerting/new">
-              <Button icon="plus">New alert rule</Button>
-            </a>
-          </div>
-          <div className={styles.buttonsContainer}>
             <ButtonGroup>
               <a href={urlUtil.renderUrl('/alerting/list', { ...queryParams, view: 'group' })}>
                 <ToolbarButton variant={view === 'groups' ? 'active' : 'default'} icon="folder">
