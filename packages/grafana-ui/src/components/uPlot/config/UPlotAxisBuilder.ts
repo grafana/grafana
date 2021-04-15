@@ -50,6 +50,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       theme,
     } = this.props;
 
+    let { typography } = theme;
+
+    let font = `${typography.size.sm} ${typography.fontFamily.sansSerif}`;
+
     const gridColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray90;
 
     let config: Axis = {
@@ -57,8 +61,8 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       show,
       stroke: theme.colors.text,
       side: getUPlotSideFromAxis(placement),
-      font: `12px 'Roboto'`,
-      labelFont: `12px 'Roboto'`,
+      font,
+      labelFont: font,
       size: this.props.size ?? calculateAxisSize,
       gap,
       grid: {
