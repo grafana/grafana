@@ -20,12 +20,26 @@ func TestProcessEvalResults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
-	cacheId := "test_uid map[label1:value1 label2:value2]"
+	cacheId := "map[__alert_rule_namespace_uid__:test_namespace __alert_rule_title__:test_title __alert_rule_uid__:test_uid label1:value1 label2:value2]"
+	alertRule := models.AlertRule{
+		ID:           1,
+		OrgID:        123,
+		Title:        "test_title",
+		Condition:    "A",
+		UID:          "test_uid",
+		NamespaceUID: "test_namespace",
+	}
+	expectedLabels := data.Labels{
+		"label1":                       "value1",
+		"label2":                       "value2",
+		"__alert_rule_uid__":           "test_uid",
+		"__alert_rule_namespace_uid__": "test_namespace",
+		"__alert_rule_title__":         "test_title",
+	}
 	testCases := []struct {
 		desc                       string
 		uid                        string
 		evalResults                eval.Results
-		condition                  models.Condition
 		expectedState              eval.State
 		expectedReturnedStateCount int
 		expectedResultCount        int
@@ -41,10 +55,6 @@ func TestProcessEvalResults(t *testing.T) {
 					EvaluatedAt: evaluationTime,
 				},
 			},
-			condition: models.Condition{
-				Condition: "A",
-				OrgID:     123,
-			},
 			expectedState:              eval.Normal,
 			expectedReturnedStateCount: 0,
 			expectedResultCount:        1,
@@ -53,7 +63,7 @@ func TestProcessEvalResults(t *testing.T) {
 					UID:     "test_uid",
 					OrgID:   123,
 					CacheId: cacheId,
-					Labels:  data.Labels{"label1": "value1", "label2": "value2"},
+					Labels:  expectedLabels,
 					State:   eval.Normal,
 					Results: []state.StateEvaluation{
 						{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
@@ -79,10 +89,6 @@ func TestProcessEvalResults(t *testing.T) {
 					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
 				},
 			},
-			condition: models.Condition{
-				Condition: "A",
-				OrgID:     123,
-			},
 			expectedState:              eval.Alerting,
 			expectedReturnedStateCount: 1,
 			expectedResultCount:        2,
@@ -91,7 +97,7 @@ func TestProcessEvalResults(t *testing.T) {
 					UID:     "test_uid",
 					OrgID:   123,
 					CacheId: cacheId,
-					Labels:  data.Labels{"label1": "value1", "label2": "value2"},
+					Labels:  expectedLabels,
 					State:   eval.Alerting,
 					Results: []state.StateEvaluation{
 						{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
@@ -118,10 +124,6 @@ func TestProcessEvalResults(t *testing.T) {
 					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
 				},
 			},
-			condition: models.Condition{
-				Condition: "A",
-				OrgID:     123,
-			},
 			expectedState:              eval.Normal,
 			expectedReturnedStateCount: 1,
 			expectedResultCount:        2,
@@ -130,7 +132,7 @@ func TestProcessEvalResults(t *testing.T) {
 					UID:     "test_uid",
 					OrgID:   123,
 					CacheId: cacheId,
-					Labels:  data.Labels{"label1": "value1", "label2": "value2"},
+					Labels:  expectedLabels,
 					State:   eval.Normal,
 					Results: []state.StateEvaluation{
 						{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
@@ -157,10 +159,6 @@ func TestProcessEvalResults(t *testing.T) {
 					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
 				},
 			},
-			condition: models.Condition{
-				Condition: "A",
-				OrgID:     123,
-			},
 			expectedState:              eval.Alerting,
 			expectedReturnedStateCount: 0,
 			expectedResultCount:        2,
@@ -169,7 +167,7 @@ func TestProcessEvalResults(t *testing.T) {
 					UID:     "test_uid",
 					OrgID:   123,
 					CacheId: cacheId,
-					Labels:  data.Labels{"label1": "value1", "label2": "value2"},
+					Labels:  expectedLabels,
 					State:   eval.Alerting,
 					Results: []state.StateEvaluation{
 						{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
@@ -196,10 +194,6 @@ func TestProcessEvalResults(t *testing.T) {
 					EvaluatedAt: evaluationTime.Add(1 * time.Minute),
 				},
 			},
-			condition: models.Condition{
-				Condition: "A",
-				OrgID:     123,
-			},
 			expectedState:              eval.Normal,
 			expectedReturnedStateCount: 0,
 			expectedResultCount:        2,
@@ -208,10 +202,10 @@ func TestProcessEvalResults(t *testing.T) {
 					UID:     "test_uid",
 					OrgID:   123,
 					CacheId: cacheId,
-					Labels:  data.Labels{"label1": "value1", "label2": "value2"},
+					Labels:  expectedLabels,
 					State:   eval.Normal,
 					Results: []state.StateEvaluation{
-						{evaluationTime, eval.Normal},
+						{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
 						{EvaluationTime: evaluationTime.Add(1 * time.Minute), EvaluationState: eval.Normal},
 					},
 					StartsAt:           time.Time{},
@@ -225,7 +219,7 @@ func TestProcessEvalResults(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run("all fields for a cache entry are set correctly", func(t *testing.T) {
 			st := state.NewStateTracker(log.New("test_state_tracker"))
-			_ = st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
+			_ = st.ProcessEvalResults(&alertRule, tc.evalResults)
 			for _, entry := range tc.expectedCacheEntries {
 				if !entry.Equals(st.Get(entry.CacheId)) {
 					t.Log(tc.desc)
@@ -237,7 +231,7 @@ func TestProcessEvalResults(t *testing.T) {
 
 		t.Run("the expected number of entries are added to the cache", func(t *testing.T) {
 			st := state.NewStateTracker(log.New("test_state_tracker"))
-			st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
+			st.ProcessEvalResults(&alertRule, tc.evalResults)
 			assert.Equal(t, len(tc.expectedCacheEntries), len(st.GetAll()))
 		})
 
@@ -246,7 +240,7 @@ func TestProcessEvalResults(t *testing.T) {
 		//for a unique set of labels.
 		t.Run("the expected number of states are returned to the caller", func(t *testing.T) {
 			st := state.NewStateTracker(log.New("test_state_tracker"))
-			results := st.ProcessEvalResults(tc.uid, tc.evalResults, tc.condition)
+			results := st.ProcessEvalResults(&alertRule, tc.evalResults)
 			assert.Equal(t, len(tc.evalResults), len(results))
 		})
 	}
