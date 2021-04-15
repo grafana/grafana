@@ -1,5 +1,5 @@
 import React, { FunctionComponent } from 'react';
-import { QueryEditorProps } from '@grafana/data';
+import { getDefaultTimeRange, QueryEditorProps } from '@grafana/data';
 import { ElasticDatasource } from '../../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
@@ -17,8 +17,15 @@ export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({
   onChange,
   onRunQuery,
   datasource,
+  range,
 }) => (
-  <ElasticsearchProvider datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} query={query}>
+  <ElasticsearchProvider
+    datasource={datasource}
+    onChange={onChange}
+    onRunQuery={onRunQuery}
+    query={query}
+    range={range || getDefaultTimeRange()}
+  >
     <QueryEditorForm value={query} />
   </ElasticsearchProvider>
 );
