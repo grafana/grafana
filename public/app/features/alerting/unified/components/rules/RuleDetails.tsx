@@ -3,13 +3,13 @@ import React, { FC } from 'react';
 import { useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { RuleQuery } from '../RuleQuery';
 import { isAlertingRule } from '../../utils/rules';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { Annotation } from '../Annotation';
 import { AlertLabels } from '../AlertLabels';
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { DetailsField } from './DetailsField';
+import { RuleQuery } from './RuleQuery';
 
 interface Props {
   rule: CombinedRule;
@@ -33,7 +33,7 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
             </DetailsField>
           )}
           <DetailsField label="Expression" className={cx({ [styles.exprRow]: !!annotations.length })} horizontal={true}>
-            <RuleQuery query={rule.query} rulesSource={rulesSource} />
+            <RuleQuery rule={rule} rulesSource={rulesSource} />
           </DetailsField>
           {annotations.map(([key, value]) => (
             <DetailsField key={key} label={key} horizontal={true}>

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
-import { CustomScrollbar, ErrorBoundaryAlert } from '@grafana/ui';
+import { ErrorBoundaryAlert } from '@grafana/ui';
 import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
 import { getRichHistory } from '../../core/utils/richHistory';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
@@ -31,18 +31,16 @@ export class Wrapper extends Component<WrapperProps> {
 
     return (
       <div className="page-scrollbar-wrapper">
-        <CustomScrollbar autoHeightMin={'100%'}>
-          <div className="explore-wrapper">
+        <div className="explore-wrapper">
+          <ErrorBoundaryAlert style="page">
+            <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
+          </ErrorBoundaryAlert>
+          {hasSplit && (
             <ErrorBoundaryAlert style="page">
-              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.left} urlQuery={left} />
+              <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
             </ErrorBoundaryAlert>
-            {hasSplit && (
-              <ErrorBoundaryAlert style="page">
-                <ExplorePaneContainer split={hasSplit} exploreId={ExploreId.right} urlQuery={right} />
-              </ErrorBoundaryAlert>
-            )}
-          </div>
-        </CustomScrollbar>
+          )}
+        </div>
       </div>
     );
   }

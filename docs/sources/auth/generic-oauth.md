@@ -194,6 +194,8 @@ To ease configuration of a proper JMESPath expression, you can test/evaluate exp
 
 ### Role mapping
 
+If  the`role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role by default. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
+
 **Basic example:**
 
 In the following example user will get `Editor` as role when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.

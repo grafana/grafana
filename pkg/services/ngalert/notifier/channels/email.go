@@ -2,22 +2,20 @@ package channels
 
 import (
 	"context"
-	"fmt"
 	"net/url"
-	"strings"
 
 	gokit_log "github.com/go-kit/kit/log"
+	"github.com/prometheus/alertmanager/notify"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
-	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
 )
 
 // EmailNotifier is responsible for sending
@@ -34,6 +32,10 @@ type EmailNotifier struct {
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
 func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL) (*EmailNotifier, error) {
+	if model.Settings == nil {
+		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+	}
+
 	addressesString := model.Settings.Get("addresses").MustString()
 	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
 	autoResolve := model.Settings.Get("autoResolve").MustBool(true)
@@ -93,18 +95,6 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	return true, nil
-}
-
-func getTitleFromTemplateData(data *template.Data) string {
-	title := "[" + data.Status
-	if data.Status == string(model.AlertFiring) {
-		title += fmt.Sprintf(":%d", len(data.Alerts.Firing()))
-	}
-	title += "] " + strings.Join(data.GroupLabels.SortedPairs().Values(), " ") + " "
-	if len(data.CommonLabels) > len(data.GroupLabels) {
-		title += "(" + strings.Join(data.CommonLabels.Remove(data.GroupLabels.Names()).Values(), " ") + ")"
-	}
-	return title
 }
 
 func (en *EmailNotifier) SendResolved() bool {
