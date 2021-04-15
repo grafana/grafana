@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 
-import { AnnotationEventMappings, DataQuery, LoadingState, DataSourceApi, AnnotationQuery } from '@grafana/data';
-import { Spinner, Icon, IconName, Button } from '@grafana/ui';
+import { AnnotationEventMappings, AnnotationQuery, DataQuery, DataSourceApi, LoadingState } from '@grafana/data';
+import { Button, Icon, IconName, Spinner } from '@grafana/ui';
 
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { cx, css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { standardAnnotationSupport } from '../standardAnnotationSupport';
 import { executeAnnotationQuery } from '../annotations_srv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -56,6 +56,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
 
   onRunQuery = async () => {
     const { datasource, annotation } = this.props;
+    const dashboard = getDashboardSrv().getCurrent();
+    if (!dashboard) {
+      return;
+    }
+
     this.setState({
       running: true,
     });
@@ -63,7 +68,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       {
         range: getTimeSrv().timeRange(),
         panel: {} as PanelModel,
-        dashboard: getDashboardSrv().getCurrent(),
+        dashboard,
       },
       datasource,
       annotation
