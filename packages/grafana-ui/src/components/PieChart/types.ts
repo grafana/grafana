@@ -1,4 +1,5 @@
 import { DataFrame, FieldConfigSource, FieldDisplay, InterpolateFunction, ReduceDataOptions } from '@grafana/data';
+import { GraphTooltipOptions } from '../Graph/GraphTooltip/types';
 import { VizLegendOptions } from '..';
 
 export interface PieChartSvgProps {
@@ -13,6 +14,7 @@ export interface PieChartSvgProps {
 
 export interface PieChartProps extends Omit<PieChartSvgProps, 'fieldDisplayValues'> {
   legendOptions?: PieChartLegendOptions;
+  tooltipOptions: GraphTooltipOptions;
   reduceOptions: ReduceDataOptions;
   fieldConfig: FieldConfigSource<any>;
   replaceVariables: InterpolateFunction;

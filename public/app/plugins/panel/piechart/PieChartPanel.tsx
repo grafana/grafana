@@ -22,7 +22,7 @@ export const PieChartPanel: React.FC<Props> = ({
     },
     [fieldConfig, onFieldConfigChange]
   );
-
+  console.log(options);
   return (
     <PieChart
       width={width}
@@ -36,6 +36,7 @@ export const PieChartPanel: React.FC<Props> = ({
       pieType={options.pieType}
       displayLabels={options.displayLabels}
       legendOptions={options.legend}
+      tooltipOptions={options.tooltip}
     />
   );
 };
