@@ -482,7 +482,7 @@ export const variableUpdated = (
     let promises: Array<Promise<any>> = [];
     if (node) {
       promises = node.getOptimizedInputEdges().map((e) => {
-        const variable = variables.find((v) => v.name === e.inputNode.name);
+        const variable = variables.find((v) => v.name === e.inputNode?.name);
         if (!variable) {
           return Promise.resolve();
         }

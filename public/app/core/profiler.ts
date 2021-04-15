@@ -1,10 +1,10 @@
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class Profiler {
-  panelsRendered: number;
-  enabled: boolean;
-  $rootScope: GrafanaRootScope;
-  window: any;
+  panelsRendered = 0;
+  enabled?: boolean = undefined;
+  $rootScope?: GrafanaRootScope = undefined;
+  window?: any = undefined;
 
   init(config: any, $rootScope: GrafanaRootScope) {
     this.$rootScope = $rootScope;
@@ -18,7 +18,7 @@ export class Profiler {
   renderingCompleted() {
     // add render counter to root scope
     // used by image renderer to know when panel has rendered
-    this.panelsRendered = (this.panelsRendered || 0) + 1;
+    this.panelsRendered += 1;
 
     // this window variable is used by backend rendering tools to know
     // all panels have completed rendering

@@ -10,7 +10,7 @@ export interface Props {
 
 export class AngularEditorLoader extends React.PureComponent<Props> {
   ref: HTMLDivElement | null = null;
-  angularComponent: AngularComponent;
+  angularComponent?: AngularComponent;
 
   componentWillUnmount() {
     if (this.angularComponent) {

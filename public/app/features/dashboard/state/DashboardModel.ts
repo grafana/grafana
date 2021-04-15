@@ -85,7 +85,7 @@ export class DashboardModel {
 
   // repeat process cycles
   iteration?: number;
-  meta: DashboardMeta;
+  declare meta: DashboardMeta;
   events: EventBusExtended;
 
   static nonPersistedProperties: { [str: string]: boolean } = {

@@ -14,6 +14,14 @@ import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelNotSupported } from '../dashboard/components/PanelEditor/PanelNotSupported';
+import { AlertState } from '../../plugins/datasource/alertmanager/types';
+
+interface AngularPanelController {
+  _enableAlert: () => void;
+  alertState: AlertState | null;
+  render: () => void;
+  refresh: () => void;
+}
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -36,9 +44,9 @@ interface State {
 }
 
 class UnConnectedAlertTab extends PureComponent<Props, State> {
-  element: any;
-  component: AngularComponent;
-  panelCtrl: any;
+  element?: HTMLDivElement | null;
+  component?: AngularComponent;
+  panelCtrl?: AngularPanelController;
 
   state: State = {
     validationMessage: '',
@@ -103,8 +111,8 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   }
 
   onAddAlert = () => {
-    this.panelCtrl._enableAlert();
-    this.component.digest();
+    this.panelCtrl?._enableAlert();
+    this.component?.digest();
     this.forceUpdate();
   };
 
@@ -153,9 +161,11 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
         onConfirm={() => {
           delete panel.alert;
           panel.thresholds = [];
-          this.panelCtrl.alertState = null;
-          this.panelCtrl.render();
-          this.component.digest();
+          if (this.panelCtrl) {
+            this.panelCtrl.alertState = null;
+            this.panelCtrl.render();
+          }
+          this.component?.digest();
           onDismiss();
         }}
       />
@@ -175,7 +185,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
         <StateHistory
           dashboard={dashboard}
           panelId={panel.editSourceId ?? panel.id}
-          onRefresh={() => this.panelCtrl.refresh()}
+          onRefresh={() => this.panelCtrl?.refresh()}
         />
       </Modal>
     );

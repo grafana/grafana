@@ -36,7 +36,7 @@ export class FormDropdownCtrl {
   lookupText: boolean;
   placeholder: any;
   startOpen: any;
-  debounce: number;
+  debounce: boolean;
 
   /** @ngInject */
   constructor(private $scope: any, $element: JQLite, private $sce: ISCEService, private templateSrv: any) {
@@ -44,6 +44,9 @@ export class FormDropdownCtrl {
     this.linkElement = $element.find('a').first();
     this.linkMode = true;
     this.cancelBlur = null;
+    this.labelMode = false;
+    this.lookupText = false;
+    this.debounce = false;
 
     // listen to model changes
     $scope.$watch('ctrl.model', this.modelChanged.bind(this));

@@ -23,9 +23,9 @@ export class TimeSrv {
   refreshTimer: any;
   refresh: any;
   oldRefresh: string | null | undefined;
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
   timeAtLoad: any;
-  private autoRefreshBlocked: boolean;
+  private autoRefreshBlocked?: boolean;
 
   constructor(private contextSrv: ContextSrv) {
     // default time
@@ -141,7 +141,9 @@ export class TimeSrv {
     // if absolute ignore refresh option saved to dashboard
     if (params.get('to') && params.get('to')!.indexOf('now') === -1) {
       this.refresh = false;
-      this.dashboard.refresh = false;
+      if (this.dashboard) {
+        this.dashboard.refresh = false;
+      }
     }
 
     let paramsJSON: Record<string, string> = {};
@@ -188,7 +190,10 @@ export class TimeSrv {
   }
 
   setAutoRefresh(interval: any) {
-    this.dashboard.refresh = interval;
+    if (this.dashboard) {
+      this.dashboard.refresh = interval;
+    }
+
     this.stopAutoRefresh();
 
     if (interval) {
@@ -210,7 +215,7 @@ export class TimeSrv {
   }
 
   refreshDashboard() {
-    this.dashboard.timeRangeUpdated(this.timeRange());
+    this.dashboard?.timeRangeUpdated(this.timeRange());
   }
 
   private startNextRefreshTimer(afterMs: number) {
@@ -233,9 +238,9 @@ export class TimeSrv {
 
     // disable refresh if zoom in or zoom out
     if (isDateTime(time.to)) {
-      this.oldRefresh = this.dashboard.refresh || this.oldRefresh;
+      this.oldRefresh = this.dashboard?.refresh || this.oldRefresh;
       this.setAutoRefresh(false);
-    } else if (this.oldRefresh && this.oldRefresh !== this.dashboard.refresh) {
+    } else if (this.oldRefresh && this.oldRefresh !== this.dashboard?.refresh) {
       this.setAutoRefresh(this.oldRefresh);
       this.oldRefresh = null;
     }

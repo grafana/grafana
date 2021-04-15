@@ -67,7 +67,7 @@ export class TablePanel extends Component<Props> {
 
   onCellFilterAdded = (filter: FilterItem) => {
     const { key, value, operator } = filter;
-    const panelModel = getDashboardSrv().getCurrent().getPanelById(this.props.id);
+    const panelModel = getDashboardSrv().getCurrent()?.getPanelById(this.props.id);
     const datasource = panelModel?.datasource;
 
     if (!datasource) {

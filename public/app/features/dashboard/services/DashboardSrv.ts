@@ -10,7 +10,7 @@ import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
 import { RemovePanelEvent } from '../../../types/events';
 
 export class DashboardSrv {
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
 
   /** @ngInject */
   constructor(private $rootScope: GrafanaRootScope) {
@@ -25,20 +25,25 @@ export class DashboardSrv {
     this.dashboard = dashboard;
   }
 
-  getCurrent(): DashboardModel {
+  getCurrent(): DashboardModel | undefined {
+    if (!this.dashboard) {
+      console.warn('Calling getDashboardSrv().getCurrent() without calling getDashboardSrv().setCurrent() first.');
+    }
     return this.dashboard;
   }
 
   onRemovePanel = (panelId: number) => {
     const dashboard = this.getCurrent();
-    removePanel(dashboard, dashboard.getPanelById(panelId)!, true);
+    if (dashboard) {
+      removePanel(dashboard, dashboard.getPanelById(panelId)!, true);
+    }
   };
 
   saveJSONDashboard(json: string) {
     const parsedJson = JSON.parse(json);
     return saveDashboard({
       dashboard: parsedJson,
-      folderId: this.dashboard.meta.folderId || parsedJson.folderId,
+      folderId: this.dashboard?.meta.folderId || parsedJson.folderId,
     });
   }
 

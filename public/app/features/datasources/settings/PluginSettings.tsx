@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
 import {
-  DataSourceSettings,
+  DataQuery,
+  DataSourceApi,
+  DataSourceJsonData,
   DataSourcePlugin,
   DataSourcePluginMeta,
-  DataSourceApi,
-  DataQuery,
-  DataSourceJsonData,
+  DataSourceSettings,
 } from '@grafana/data';
-import { getAngularLoader, AngularComponent } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 
 export type GenericDataSourcePlugin = DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>>;
 
@@ -20,8 +20,8 @@ export interface Props {
 }
 
 export class PluginSettings extends PureComponent<Props> {
-  element: any;
-  component: AngularComponent;
+  element: HTMLDivElement | null = null;
+  component?: AngularComponent;
   scopeProps: {
     ctrl: { datasourceMeta: DataSourcePluginMeta; current: DataSourceSettings };
     onModelChanged: (dataSource: DataSourceSettings) => void;
@@ -59,7 +59,7 @@ export class PluginSettings extends PureComponent<Props> {
     if (!plugin.components.ConfigEditor && this.props.dataSource !== prevProps.dataSource) {
       this.scopeProps.ctrl.current = _.cloneDeep(this.props.dataSource);
 
-      this.component.digest();
+      this.component?.digest();
     }
   }
 

@@ -11,7 +11,7 @@ import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
 
 export class FolderPickerCtrl {
-  initialTitle: string;
+  declare initialTitle: string;
   initialFolderId?: number;
   labelClass: string;
   onChange: any;
@@ -19,14 +19,14 @@ export class FolderPickerCtrl {
   onCreateFolder: any;
   enterFolderCreation: any;
   exitFolderCreation: any;
-  enableCreateNew: boolean;
-  enableReset: boolean;
+  declare enableCreateNew: boolean;
+  declare enableReset: boolean;
   rootName = 'General';
   folder: any;
-  createNewFolder: boolean;
-  newFolderName: string;
-  newFolderNameTouched: boolean;
-  hasValidationError: boolean;
+  createNewFolder?: boolean;
+  newFolderName?: string;
+  newFolderNameTouched?: boolean;
+  hasValidationError?: boolean;
   validationError: any;
   isEditor: boolean;
   dashboardId?: number;

@@ -84,7 +84,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
         <AddLibraryPanelModal
           panel={panel}
           onDismiss={() => setShowingAddPanelModal(false)}
-          initialFolderId={dashboard.meta.folderId}
+          initialFolderId={dashboard?.meta.folderId}
           isOpen={showingAddPanelModal}
         />
       )}
