@@ -5,7 +5,7 @@ import (
 
 	glog "github.com/grafana/grafana/pkg/infra/log"
 
-	"xorm.io/core"
+	xormlog "xorm.io/xorm/log"
 )
 
 type XormLogger struct {
@@ -22,83 +22,83 @@ func NewXormLogger(level glog.Lvl, grafanaLog glog.Logger) *XormLogger {
 	}
 }
 
-// Error implement core.ILogger
+// Error implement xormlog.ILogger
 func (s *XormLogger) Error(v ...interface{}) {
 	if s.level <= glog.LvlError {
 		s.grafanaLog.Error(fmt.Sprint(v...))
 	}
 }
 
-// Errorf implement core.ILogger
+// Errorf implement xormlog.ILogger
 func (s *XormLogger) Errorf(format string, v ...interface{}) {
 	if s.level <= glog.LvlError {
 		s.grafanaLog.Error(fmt.Sprintf(format, v...))
 	}
 }
 
-// Debug implement core.ILogger
+// Debug implement xormlog.ILogger
 func (s *XormLogger) Debug(v ...interface{}) {
 	if s.level <= glog.LvlDebug {
 		s.grafanaLog.Debug(fmt.Sprint(v...))
 	}
 }
 
-// Debugf implement core.ILogger
+// Debugf implement xormlog.ILogger
 func (s *XormLogger) Debugf(format string, v ...interface{}) {
 	if s.level <= glog.LvlDebug {
 		s.grafanaLog.Debug(fmt.Sprintf(format, v...))
 	}
 }
 
-// Info implement core.ILogger
+// Info implement xormlog.ILogger
 func (s *XormLogger) Info(v ...interface{}) {
 	if s.level <= glog.LvlInfo {
 		s.grafanaLog.Info(fmt.Sprint(v...))
 	}
 }
 
-// Infof implement core.ILogger
+// Infof implement xormlog.ILogger
 func (s *XormLogger) Infof(format string, v ...interface{}) {
 	if s.level <= glog.LvlInfo {
 		s.grafanaLog.Info(fmt.Sprintf(format, v...))
 	}
 }
 
-// Warn implement core.ILogger
+// Warn implement xormlog.ILogger
 func (s *XormLogger) Warn(v ...interface{}) {
 	if s.level <= glog.LvlWarn {
 		s.grafanaLog.Warn(fmt.Sprint(v...))
 	}
 }
 
-// Warnf implement core.ILogger
+// Warnf implement xormlog.ILogger
 func (s *XormLogger) Warnf(format string, v ...interface{}) {
 	if s.level <= glog.LvlWarn {
 		s.grafanaLog.Warn(fmt.Sprintf(format, v...))
 	}
 }
 
-// Level implement core.ILogger
-func (s *XormLogger) Level() core.LogLevel {
+// Level implement xormlog.ILogger
+func (s *XormLogger) Level() xormlog.LogLevel {
 	switch s.level {
 	case glog.LvlError:
-		return core.LOG_ERR
+		return xormlog.LOG_ERR
 	case glog.LvlWarn:
-		return core.LOG_WARNING
+		return xormlog.LOG_WARNING
 	case glog.LvlInfo:
-		return core.LOG_INFO
+		return xormlog.LOG_INFO
 	case glog.LvlDebug:
-		return core.LOG_DEBUG
+		return xormlog.LOG_DEBUG
 	default:
-		return core.LOG_ERR
+		return xormlog.LOG_ERR
 	}
 }
 
-// SetLevel implement core.ILogger
-func (s *XormLogger) SetLevel(l core.LogLevel) {
+// SetLevel implement xormlog.ILogger
+func (s *XormLogger) SetLevel(l xormlog.LogLevel) {
 }
 
-// ShowSQL implement core.ILogger
+// ShowSQL implement xormlog.ILogger
 func (s *XormLogger) ShowSQL(show ...bool) {
 	s.grafanaLog.Error("ShowSQL", "show", "show")
 	if len(show) == 0 {
@@ -108,7 +108,7 @@ func (s *XormLogger) ShowSQL(show ...bool) {
 	s.showSQL = show[0]
 }
 
-// IsShowSQL implement core.ILogger
+// IsShowSQL implement xormlog.ILogger
 func (s *XormLogger) IsShowSQL() bool {
 	return s.showSQL
 }

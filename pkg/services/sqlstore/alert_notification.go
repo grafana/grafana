@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -329,6 +330,10 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 			if v == "" {
 				delete(cmd.SecureSettings, k)
 			}
+		}
+
+		if cmd.Settings == nil {
+			cmd.Settings = simplejson.New()
 		}
 
 		alertNotification := &models.AlertNotification{

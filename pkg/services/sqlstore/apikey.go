@@ -75,7 +75,7 @@ func AddApiKey(cmd *models.AddApiKeyCommand) error {
 
 func GetApiKeyById(query *models.GetApiKeyByIdQuery) error {
 	var apikey models.ApiKey
-	has, err := x.Id(query.ApiKeyId).Get(&apikey)
+	has, err := x.ID(query.ApiKeyId).Get(&apikey)
 
 	if err != nil {
 		return err

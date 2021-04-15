@@ -144,10 +144,15 @@ func (db *PostgresDialect) CleanDB() error {
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *PostgresDialect) TruncateDBTables() error {
+	tables, err := db.engine.DBMetas()
+	if err != nil {
+		return err
+	}
+
 	sess := db.engine.NewSession()
 	defer sess.Close()
 
-	for _, table := range db.engine.Tables {
+	for _, table := range tables {
 		switch table.Name {
 		case "":
 			continue

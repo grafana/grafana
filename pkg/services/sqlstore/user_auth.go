@@ -52,7 +52,7 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 
 				authQuery.Result = nil
 			} else {
-				has, err = x.Id(authQuery.Result.UserId).Get(user)
+				has, err = x.ID(authQuery.Result.UserId).Get(user)
 				if err != nil {
 					return err
 				}
@@ -74,7 +74,7 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 
 	// If not found, try to find the user by id
 	if !has && query.UserId != 0 {
-		has, err = x.Id(query.UserId).Get(user)
+		has, err = x.ID(query.UserId).Get(user)
 		if err != nil {
 			return err
 		}

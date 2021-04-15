@@ -402,7 +402,7 @@ func isLastAdmin(sess *DBSession, orgId int64, teamId int64, userId int64) (bool
 func GetTeamMembers(query *models.GetTeamMembersQuery) error {
 	query.Result = make([]*models.TeamMemberDTO, 0)
 	sess := x.Table("team_member")
-	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quote("user")))
+	sess.Join("INNER", x.Dialect().Quoter().Quote("user"), fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quoter().Quote("user")))
 
 	// Join with only most recent auth module
 	authJoinCondition := `(

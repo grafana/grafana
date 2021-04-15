@@ -22,6 +22,10 @@ type Json struct {
 }
 
 func (j *Json) FromDB(data []byte) error {
+	if j == nil {
+		j = &Json{}
+	}
+
 	j.data = make(map[string]interface{})
 
 	dec := json.NewDecoder(bytes.NewBuffer(data))
@@ -30,6 +34,10 @@ func (j *Json) FromDB(data []byte) error {
 }
 
 func (j *Json) ToDB() ([]byte, error) {
+	if j == nil {
+		j = &Json{}
+	}
+
 	if j == nil || j.data == nil {
 		return nil, nil
 	}
@@ -77,6 +85,10 @@ func (j *Json) EncodePretty() ([]byte, error) {
 
 // Implements the json.Marshaler interface.
 func (j *Json) MarshalJSON() ([]byte, error) {
+	if j == nil {
+		j = New()
+	}
+
 	return json.Marshal(&j.data)
 }
 

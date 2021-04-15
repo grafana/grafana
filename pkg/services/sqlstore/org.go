@@ -50,7 +50,7 @@ func SearchOrgs(query *models.SearchOrgsQuery) error {
 
 func GetOrgById(query *models.GetOrgByIdQuery) error {
 	var org models.Org
-	exists, err := x.Id(query.Id).Get(&org)
+	exists, err := x.ID(query.Id).Get(&org)
 	if err != nil {
 		return err
 	}

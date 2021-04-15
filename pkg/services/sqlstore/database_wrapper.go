@@ -15,7 +15,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
-	"xorm.io/core"
+	"xorm.io/xorm/dialects"
 )
 
 var (
@@ -50,7 +50,7 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 
 	driverWithHooks := dbType + "WithHooks"
 	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics")}))
-	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
+	dialects.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
 	return driverWithHooks
 }
 
@@ -92,13 +92,13 @@ func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query str
 	return err
 }
 
-// databaseQueryWrapperDriver satisfies the xorm.io/core.Driver interface
+// databaseQueryWrapperDriver satisfies the xorm.io/xorm/dialects/Driver interface
 type databaseQueryWrapperDriver struct {
 	dbType string
 }
 
-func (hp *databaseQueryWrapperDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
-	driver := core.QueryDriver(hp.dbType)
+func (hp *databaseQueryWrapperDriver) Parse(driverName, dataSourceName string) (*dialects.URI, error) {
+	driver := dialects.QueryDriver(hp.dbType)
 	if driver == nil {
 		return nil, fmt.Errorf("could not find driver with name %s", hp.dbType)
 	}

@@ -26,6 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 	_ "github.com/lib/pq"
 	"xorm.io/xorm"
+	"xorm.io/xorm/dialects"
+	xormlog "xorm.io/xorm/log"
 )
 
 var (
@@ -63,7 +65,7 @@ func (ss *SQLStore) Register() {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
-	xorm.DefaultPostgresSchema = ""
+	dialects.DefaultPostgresSchema = ""
 
 	registry.Register(&registry.Descriptor{
 		Name:         ServiceName,
@@ -328,11 +330,11 @@ func (ss *SQLStore) initEngine() error {
 	// configure sql logging
 	debugSQL := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
 	if !debugSQL {
-		engine.SetLogger(&xorm.DiscardLogger{})
+		engine.SetLogger(&xormlog.DiscardLogger{})
 	} else {
 		engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
 		engine.ShowSQL(true)
-		engine.ShowExecTime(true)
+		// engine.ShowExecTime(true)
 	}
 
 	ss.engine = engine

@@ -98,7 +98,7 @@ func GetOrgUsers(query *models.GetOrgUsersQuery) error {
 	query.Result = make([]*models.OrgUserDTO, 0)
 
 	sess := x.Table("org_user")
-	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
+	sess.Join("INNER", x.Dialect().Quoter().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quoter().Quote("user")))
 
 	whereConditions := make([]string, 0)
 	whereParams := make([]interface{}, 0)

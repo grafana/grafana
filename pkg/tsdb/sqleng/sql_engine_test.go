@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/core"
+	"xorm.io/xorm/core"
 )
 
 func TestSQLEngine(t *testing.T) {

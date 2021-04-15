@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -127,6 +128,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 		AlertId:     10,
 		Text:        "",
 		Created:     time.Now().AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond),
+		Data:        simplejson.New(),
 	}
 
 	session := fakeSQL.NewSession()
@@ -189,6 +191,7 @@ func createTestAnnotations(t *testing.T, sqlstore *SQLStore, expectedCount int, 
 			UserId:      1,
 			PanelId:     1,
 			Text:        "",
+			Data:        simplejson.New(),
 		}
 
 		// mark every third as an API annotation

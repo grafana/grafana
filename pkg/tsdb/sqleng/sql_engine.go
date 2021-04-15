@@ -24,8 +24,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"xorm.io/core"
 	"xorm.io/xorm"
+	"xorm.io/xorm/core"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
