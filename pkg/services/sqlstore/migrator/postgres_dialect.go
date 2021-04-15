@@ -8,6 +8,7 @@ import (
 
 	"github.com/lib/pq"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"
 )
@@ -128,7 +129,11 @@ func (db *PostgresDialect) UpdateTableSQL(tableName string, columns []*Column) s
 
 func (db *PostgresDialect) CleanDB() error {
 	sess := db.engine.NewSession()
-	defer sess.Close()
+	defer func() {
+		if err := sess.Close(); err != nil {
+			log.Warn("Failed to close session", "error", err)
+		}
+	}()
 
 	if _, err := sess.Exec("DROP SCHEMA public CASCADE;"); err != nil {
 		return errutil.Wrap("failed to drop schema public", err)
@@ -150,7 +155,11 @@ func (db *PostgresDialect) TruncateDBTables() error {
 	}
 
 	sess := db.engine.NewSession()
-	defer sess.Close()
+	defer func() {
+		if err := sess.Close(); err != nil {
+			log.Warn("Failed to close session", "error", err)
+		}
+	}()
 
 	for _, table := range tables {
 		switch table.Name {

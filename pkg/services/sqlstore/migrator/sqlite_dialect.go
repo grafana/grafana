@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
@@ -97,7 +98,11 @@ func (db *SQLite3) TruncateDBTables() error {
 	}
 
 	sess := db.engine.NewSession()
-	defer sess.Close()
+	defer func() {
+		if err := sess.Close(); err != nil {
+			log.Warn("Failed to close session", "error", err)
+		}
+	}()
 
 	for _, table := range tables {
 		switch table.Name {

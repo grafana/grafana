@@ -53,7 +53,11 @@ func (ss *SQLStore) WithDbSession(ctx context.Context, callback dbTransactionFun
 
 func withDbSession(ctx context.Context, engine *xorm.Engine, callback dbTransactionFunc) error {
 	sess := &DBSession{Session: engine.NewSession()}
-	defer sess.Close()
+	defer func() {
+		if err := sess.Close(); err != nil {
+			sqlog.Warn("Failed to close session", "error", err)
+		}
+	}()
 
 	return callback(sess)
 }

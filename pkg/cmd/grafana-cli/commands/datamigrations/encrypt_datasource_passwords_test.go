@@ -16,7 +16,11 @@ func TestPasswordMigrationCommand(t *testing.T) {
 	// setup datasources with password, basic_auth and none
 	sqlstore := sqlstore.InitTestDB(t)
 	session := sqlstore.NewSession()
-	defer session.Close()
+	defer func() {
+		if err := session.Close(); err != nil {
+			t.Logf("Failed to close session: %v", err)
+		}
+	}()
 
 	datasources := []*models.DataSource{
 		{Type: "influxdb", Name: "influxdb", Password: "foobar", Uid: "influx"},

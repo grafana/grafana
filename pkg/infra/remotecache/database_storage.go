@@ -55,7 +55,11 @@ func (dc *databaseCache) internalRunGC() {
 func (dc *databaseCache) Get(key string) (interface{}, error) {
 	cacheHit := CacheData{}
 	session := dc.SQLStore.NewSession()
-	defer session.Close()
+	defer func() {
+		if err := session.Close(); err != nil {
+			dc.log.Warn("Failed to close session", "error", err)
+		}
+	}()
 
 	exist, err := session.Where("cache_key= ?", key).Get(&cacheHit)
 
@@ -94,7 +98,11 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 	}
 
 	session := dc.SQLStore.NewSession()
-	defer session.Close()
+	defer func() {
+		if err := session.Close(); err != nil {
+			dc.log.Warn("Failed to close session", "error", err)
+		}
+	}()
 
 	var expiresInSeconds int64
 	if expire != 0 {

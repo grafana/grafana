@@ -171,7 +171,11 @@ type dbTransactionFunc func(sess *xorm.Session) error
 
 func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
 	sess := mg.x.NewSession()
-	defer sess.Close()
+	defer func() {
+		if err := sess.Close(); err != nil {
+			mg.Logger.Error("Failed to close session", "error", err)
+		}
+	}()
 
 	if err := sess.Begin(); err != nil {
 		return err

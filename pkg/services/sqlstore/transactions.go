@@ -38,7 +38,11 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 		return err
 	}
 
-	defer sess.Close()
+	defer func() {
+		if err := sess.Close(); err != nil {
+			sqlog.Warn("Failed to close session", "error", err)
+		}
+	}()
 
 	err = callback(sess)
 

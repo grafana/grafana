@@ -183,7 +183,11 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 			queryResult.Meta.Set(MetaKeyExecutedQueryString, rawSQL)
 
 			session := e.engine.NewSession()
-			defer session.Close()
+			defer func() {
+				if err := session.Close(); err != nil {
+					e.log.Warn("Failed to close session", "error", err)
+				}
+			}()
 			db := session.DB()
 
 			rows, err := db.Query(rawSQL)

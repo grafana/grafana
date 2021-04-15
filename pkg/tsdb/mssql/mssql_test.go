@@ -55,7 +55,9 @@ func TestMSSQL(t *testing.T) {
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
 		Reset(func() {
-			sess.Close()
+			if err := sess.Close(); err != nil {
+				t.Logf("Failed to close session: %v", err)
+			}
 			sqleng.NewXormEngine = origXormEngine
 			sqleng.Interpolate = origInterpolate
 		})

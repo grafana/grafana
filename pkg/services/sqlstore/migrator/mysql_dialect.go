@@ -8,6 +8,7 @@ import (
 
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"
 )
@@ -122,7 +123,11 @@ func (db *MySQLDialect) CleanDB() error {
 		return err
 	}
 	sess := db.engine.NewSession()
-	defer sess.Close()
+	defer func() {
+		if err := sess.Close(); err != nil {
+			log.Warn("Failed to close session", "error", err)
+		}
+	}()
 
 	for _, table := range tables {
 		switch table.Name {
@@ -151,7 +156,11 @@ func (db *MySQLDialect) TruncateDBTables() error {
 		return err
 	}
 	sess := db.engine.NewSession()
-	defer sess.Close()
+	defer func() {
+		if err := sess.Close(); err != nil {
+			log.Warn("Failed to close session", "error", err)
+		}
+	}()
 
 	for _, table := range tables {
 		switch table.Name {

@@ -132,7 +132,11 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	}
 
 	session := fakeSQL.NewSession()
-	defer session.Close()
+	defer func() {
+		if err := session.Close(); err != nil {
+			t.Logf("Failed to close session: %v", err)
+		}
+	}()
 
 	_, err := session.Insert(a)
 	require.NoError(t, err, "cannot insert annotation")
@@ -162,7 +166,11 @@ func assertAnnotationCount(t *testing.T, fakeSQL *SQLStore, sql string, expected
 	t.Helper()
 
 	session := fakeSQL.NewSession()
-	defer session.Close()
+	defer func() {
+		if err := session.Close(); err != nil {
+			t.Logf("Failed to close session: %v", err)
+		}
+	}()
 	count, err := session.Where(sql).Count(&annotations.Item{})
 	require.NoError(t, err)
 	require.Equal(t, expectedCount, count)
@@ -172,7 +180,11 @@ func assertAnnotationTagCount(t *testing.T, fakeSQL *SQLStore, expectedCount int
 	t.Helper()
 
 	session := fakeSQL.NewSession()
-	defer session.Close()
+	defer func() {
+		if err := session.Close(); err != nil {
+			t.Logf("Failed to close session: %v", err)
+		}
+	}()
 
 	count, err := session.SQL("select count(*) from annotation_tag").Count()
 	require.NoError(t, err)
