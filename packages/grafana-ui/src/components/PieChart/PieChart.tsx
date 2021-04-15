@@ -1,6 +1,5 @@
 import React, { FC, ReactNode } from 'react';
 import {
-  DisplayValue,
   FALLBACK_COLOR,
   FieldDisplay,
   formattedValueToString,
@@ -30,6 +29,8 @@ import {
   PieChartType,
 } from './types';
 import { getTooltipContainerStyles } from '../../themes/mixins';
+import { SeriesTable, SeriesTableRowProps } from '../Graph/GraphTooltip/SeriesTable';
+import { GraphTooltipOptions } from '../Graph/GraphTooltip/models.gen';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -139,7 +140,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
   const styles = useStyles(getStyles);
-  const tooltip = useTooltip<DisplayValue>();
+  const tooltip = useTooltip<SeriesTableRowProps[]>();
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
     detectBounds: true,
     scroll: true,
@@ -214,6 +215,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
                           pie={pie}
                           fill={getGradientColor(color)}
                           openMenu={api.openMenu}
+                          tooltipOptions={tooltipOptions}
                         >
                           {label}
                         </PieSlice>
@@ -222,7 +224,14 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
                   );
                 } else {
                   return (
-                    <PieSlice key={arc.index} tooltip={tooltip} arc={arc} pie={pie} fill={getGradientColor(color)}>
+                    <PieSlice
+                      key={arc.index}
+                      tooltip={tooltip}
+                      arc={arc}
+                      pie={pie}
+                      fill={getGradientColor(color)}
+                      tooltipOptions={tooltipOptions}
+                    >
                       {label}
                     </PieSlice>
                   );
@@ -241,10 +250,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
           unstyled={true}
           applyPositionStyle={true}
         >
-          {`${tooltip.tooltipData!.title}: ${formattedValueToString(tooltip.tooltipData!)} (${(
-            (tooltip.tooltipData!.numeric / total) *
-            100
-          ).toFixed(2)}%)`}
+          <SeriesTable series={tooltip.tooltipData!} />
         </TooltipInPortal>
       ) : null}
     </div>
@@ -256,26 +262,47 @@ const PieSlice: FC<{
   arc: PieArcDatum<FieldDisplay>;
   pie: ProvidedProps<FieldDisplay>;
   fill: string;
-  tooltip: UseTooltipParams<DisplayValue>;
+  tooltip: UseTooltipParams<SeriesTableRowProps[]>;
+  tooltipOptions: GraphTooltipOptions;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
-}> = ({ arc, children, pie, openMenu, fill, tooltip }) => {
+}> = ({ arc, children, pie, openMenu, fill, tooltip, tooltipOptions }) => {
   const theme = useTheme();
   const styles = useStyles(getStyles);
 
-  const onMouseMoveOverArc = (event: any, datum: any) => {
+  const onMouseMoveOverArc = (event: any) => {
     const coords = localPoint(event.target.ownerSVGElement, event);
     tooltip.showTooltip({
       tooltipLeft: coords!.x,
       tooltipTop: coords!.y,
-      tooltipData: getTooltipData(datum),
+      tooltipData: getTooltipSeries(),
     });
+  };
+
+  const getTooltipSeries = () => {
+    if (tooltipOptions.mode === 'multi') {
+      return pie.arcs.map((pieArc) => {
+        return {
+          color: pieArc.data.display.color ?? FALLBACK_COLOR,
+          label: pieArc.data.display.title,
+          value: formattedValueToString(pieArc.data.display),
+          isActive: pieArc.index === arc.index,
+        };
+      });
+    }
+    return [
+      {
+        color: arc.data.display.color ?? FALLBACK_COLOR,
+        label: arc.data.display.title,
+        value: formattedValueToString(arc.data.display),
+      },
+    ];
   };
 
   return (
     <g
       key={arc.data.display.title}
       className={styles.svgArg}
-      onMouseMove={(event) => onMouseMoveOverArc(event, arc.data)}
+      onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={tooltip.hideTooltip}
       onClick={openMenu}
     >
@@ -283,11 +310,6 @@ const PieSlice: FC<{
       {children}
     </g>
   );
-};
-
-const getTooltipData = (datum: any) => {
-  console.log(datum);
-  return datum.display;
 };
 
 const PieLabel: FC<{
