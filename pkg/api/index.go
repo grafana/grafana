@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -125,6 +126,7 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 }
 
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dtos.NavLink, error) {
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
 	if hasEditPerm {
@@ -298,20 +300,39 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if c.IsGrafanaAdmin {
-		adminNavLinks := []*dtos.NavLink{
-			{Text: "Users", Id: "global-users", Url: hs.Cfg.AppSubURL + "/admin/users", Icon: "user"},
-			{Text: "Orgs", Id: "global-orgs", Url: hs.Cfg.AppSubURL + "/admin/orgs", Icon: "building"},
-			{Text: "Settings", Id: "server-settings", Url: hs.Cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt"},
-			{Text: "Stats", Id: "server-stats", Url: hs.Cfg.AppSubURL + "/admin/stats", Icon: "graph-bar"},
-		}
+	adminNavLinks := []*dtos.NavLink{}
 
-		if hs.Cfg.LDAPEnabled {
-			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-				Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",
-			})
-		}
+	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionUsersRead, ac.ScopeUsersAll) {
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text: "Users", Id: "global-users", Url: hs.Cfg.AppSubURL + "/admin/users", Icon: "user",
+		})
+	}
 
+	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionOrgsRead, ac.ScopeOrgsAll) {
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text: "Orgs", Id: "global-orgs", Url: hs.Cfg.AppSubURL + "/admin/orgs", Icon: "building",
+		})
+	}
+
+	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionSettingsRead) {
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text: "Settings", Id: "server-settings", Url: hs.Cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
+		})
+	}
+
+	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionServerStatsRead) {
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text: "Stats", Id: "server-stats", Url: hs.Cfg.AppSubURL + "/admin/stats", Icon: "graph-bar",
+		})
+	}
+
+	if hs.Cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.ActionLDAPSettingsRead) {
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",
+		})
+	}
+
+	if len(adminNavLinks) > 0 {
 		navTree = append(navTree, &dtos.NavLink{
 			Text:         "Server Admin",
 			SubTitle:     "Manage all users and orgs",
