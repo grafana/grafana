@@ -10,6 +10,7 @@ export interface StandardEditorContext<TOptions> {
   eventBus?: EventBus;
   getSuggestions?: (scope?: VariableSuggestionsScope) => VariableSuggestion[];
   options?: TOptions;
+  isOverride?: boolean;
 }
 
 export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = any> {

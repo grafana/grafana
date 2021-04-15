@@ -2,7 +2,6 @@
 
 import { GrafanaTheme } from '@grafana/data';
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
-import { styleMixins } from '.';
 
 export const darkThemeVarsTemplate = (theme: GrafanaTheme) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/dark.ts', 'grafana-ui/src/themes/_variables.dark.scss.tmpl.ts')}
@@ -142,8 +141,8 @@ $page-header-border-color: ${theme.colors.pageHeaderBorder};
 $divider-border-color: $gray-1;
 
 // Graphite Target Editor
-$tight-form-func-bg: ${theme.colors.bg2};
-$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$tight-form-func-bg: ${theme.v2.palette.layer2};
+$tight-form-func-highlight-bg: ${theme.v2.palette.emphasize(theme.v2.palette.layer2, 0.03)};
 
 $modal-backdrop-bg: ${theme.colors.bg3};
 $code-tag-bg: $dark-1;
@@ -151,7 +150,7 @@ $code-tag-border: $dark-9;
 
 // cards
 $card-background: ${theme.v2.palette.layer2};
-$card-background-hover: ${theme.v2.palette.layer2};
+$card-background-hover: ${theme.v2.palette.emphasize(theme.v2.palette.layer2, 0.03)};
 $card-shadow: none;
 
 // Lists
@@ -170,8 +169,8 @@ $scrollbarBorder: black;
 // -------------------------
 $table-bg-accent: ${theme.v2.palette.layer2};
 $table-border: ${theme.v2.palette.border1};
-$table-bg-odd: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.02)};
-$table-bg-hover: ${theme.v2.palette.getHoverColor(theme.v2.palette.layer1, 0.05)};
+$table-bg-odd: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.02)};
+$table-bg-hover: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.05)};
 
 // Buttons
 // -------------------------
@@ -254,7 +253,7 @@ $side-menu-bg: $panel-bg;
 $side-menu-bg-mobile: $panel-bg;
 $side-menu-border: none;
 $side-menu-item-hover-bg: ${theme.colors.bg2};
-$side-menu-shadow: 0 0 20px black;
+$side-menu-shadow: 0 0 30px #111;
 $side-menu-icon-color: ${theme.palette.gray70};
 $side-menu-header-color: ${theme.colors.text};
 
