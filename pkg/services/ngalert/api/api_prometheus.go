@@ -100,7 +100,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				State:       "inactive",
 				Name:        rule.Title,
 				Query:       rule.DataToString(), // TODO: don't escape <>& etc
-				Duration:    time.Duration(rule.For).Seconds(),
+				Duration:    rule.For.Seconds(),
 				Annotations: rule.Annotations,
 			}
 
