@@ -1,4 +1,4 @@
-package models
+package settings
 
 type Setting struct {
 	Section string

@@ -4,8 +4,6 @@ import (
 	"errors"
 	"strings"
 	"time"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 var (
@@ -33,7 +31,7 @@ func (v ValidationError) Error() string {
 // with thread-safety and runtime updates.
 type Provider interface {
 	// Update
-	Update(settings models.SettingsBag) error
+	Update(settings SettingsBag) error
 	// KeyValue returns a key-value abstraction
 	// for the given pair of section and key.
 	KeyValue(section, key string) KeyValue

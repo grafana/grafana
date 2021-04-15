@@ -42,7 +42,7 @@ func AdminGetSettings(c *models.ReqContext) response.Response {
 	return response.JSON(200, settings)
 }
 
-func (hs *HTTPServer) AdminUpsertSettings(c *models.ReqContext, cmd models.UpsertSettingsCommand) response.Response {
+func (hs *HTTPServer) AdminUpsertSettings(c *models.ReqContext, cmd settings.UpsertSettingsCommand) response.Response {
 	/*
 			{
 				"errors": {

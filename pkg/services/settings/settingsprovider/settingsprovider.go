@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/settings"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -36,11 +35,13 @@ type Implementation struct {
 	sync.RWMutex
 	FileCfg        *setting.Cfg       `inject:""`
 	SQLStore       *sqlstore.SQLStore `inject:""`
-	settings       models.SettingsBag
+	db             *database
+	settings       settings.SettingsBag
 	reloadHandlers map[string][]settings.ReloadHandler
 }
 
 func (i *Implementation) Init() (err error) {
+	i.db = &database{SQLStore: i.SQLStore}
 	i.settings, err = i.loadAndMergeSettings()
 	i.reloadHandlers = map[string][]settings.ReloadHandler{}
 	if err != nil {
@@ -63,7 +64,7 @@ func (i *Implementation) Init() (err error) {
 	return
 }
 
-func (i *Implementation) Update(bag models.SettingsBag) error {
+func (i *Implementation) Update(bag settings.SettingsBag) error {
 	if err := i.validateUpdate(bag); err != nil {
 		return err
 	}
@@ -75,7 +76,7 @@ func (i *Implementation) Update(bag models.SettingsBag) error {
 	return nil
 }
 
-func (i *Implementation) validateUpdate(changes models.SettingsBag) error {
+func (i *Implementation) validateUpdate(changes settings.SettingsBag) error {
 	for section, keyvalues := range changes {
 		for key := range keyvalues {
 			if !i.isPermitted(section, key) {
@@ -129,7 +130,7 @@ func (i *Implementation) refresh() error {
 	return i.refreshWithBag(nil)
 }
 
-func (i *Implementation) refreshWithBag(bag models.SettingsBag) error {
+func (i *Implementation) refreshWithBag(bag settings.SettingsBag) error {
 	newSettingsBag, err := i.loadAndMergeSettings()
 	if err != nil {
 		return err
@@ -172,6 +173,10 @@ func (i *Implementation) refreshWithBag(bag models.SettingsBag) error {
 
 	// 2. Store settings in DB and memory
 	i.Lock()
+	err = i.db.UpsertSettings(bag)
+	if err != nil {
+		return err
+	}
 	i.settings = newSettingsBag
 	i.Unlock()
 
@@ -183,21 +188,21 @@ func (i *Implementation) refreshWithBag(bag models.SettingsBag) error {
 	return nil
 }
 
-func (i *Implementation) validateSettings(bag models.SettingsBag) error {
+func (i *Implementation) validateSettings(bag settings.SettingsBag) error {
 	logger.Debug("Validating settings updates")
 	return i.handleReloadable("Validating", bag, func(handler settings.ReloadHandler, section settings.Section) error {
 		return handler.Validate(section)
 	})
 }
 
-func (i *Implementation) triggerReload(bag models.SettingsBag) error {
+func (i *Implementation) triggerReload(bag settings.SettingsBag) error {
 	logger.Debug("Reloading settings")
 	return i.handleReloadable("Reloading", bag, func(handler settings.ReloadHandler, section settings.Section) error {
 		return handler.Reload(section)
 	})
 }
 
-func (i *Implementation) handleReloadable(action string, bag models.SettingsBag, handler func(handler settings.ReloadHandler, section settings.Section) error) error {
+func (i *Implementation) handleReloadable(action string, bag settings.SettingsBag, handler func(handler settings.ReloadHandler, section settings.Section) error) error {
 	var handleErrors []error
 
 	for sectionName, config := range bag {
@@ -227,8 +232,8 @@ func (i *Implementation) RegisterReloadHandler(section string, h settings.Reload
 	i.reloadHandlers[section] = handlers
 }
 
-func (i *Implementation) loadAndMergeSettings() (models.SettingsBag, error) {
-	bag := make(models.SettingsBag)
+func (i *Implementation) loadAndMergeSettings() (settings.SettingsBag, error) {
+	bag := make(settings.SettingsBag)
 
 	// Settings from INI file
 	for _, section := range i.FileCfg.Raw.Sections() {
@@ -240,7 +245,7 @@ func (i *Implementation) loadAndMergeSettings() (models.SettingsBag, error) {
 	}
 
 	// Settings from database
-	dbSettings, err := i.SQLStore.GetSettings()
+	dbSettings, err := i.db.GetSettings()
 	if err != nil {
 		return nil, err
 	}
