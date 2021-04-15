@@ -174,9 +174,9 @@ func parseValue(value interface{}) (*float64, error) {
 	}
 
 	fvalue, err := number.Float64()
-	if err == nil {
-		return &fvalue, nil
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, err
+	return &fvalue, nil
 }
