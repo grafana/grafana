@@ -17,13 +17,13 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return toFolderError(models.ErrFolderAccessDenied)
+		return ToFolderErrorResponse(models.ErrFolderAccessDenied)
 	}
 
 	acl, err := g.GetAcl()
@@ -64,17 +64,17 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
 	canAdmin, err := g.CanAdmin()
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	if !canAdmin {
-		return toFolderError(models.ErrFolderAccessDenied)
+		return ToFolderErrorResponse(models.ErrFolderAccessDenied)
 	}
 
 	var items []*models.DashboardAcl

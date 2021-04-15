@@ -1,13 +1,14 @@
 package api
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	apimodels "github.com/grafana/alerting-api/pkg/api"
+	coreapi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,40 +23,41 @@ type RulerSrv struct {
 }
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
-	namespace := c.Params(":Namespace")
-	namespaceUID, err := srv.store.GetNamespaceUIDByTitle(namespace, c.SignedInUser.OrgId, c.SignedInUser)
+	namespaceTitle := c.Params(":Namespace")
+	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
+		return toNamespaceErrorResponse(err)
 	}
-	if err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespaceUID); err != nil {
+
+	if err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to delete namespace alert rules", err)
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
 }
 
 func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Response {
-	namespace := c.Params(":Namespace")
-	namespaceUID, err := srv.store.GetNamespaceUIDByTitle(namespace, c.SignedInUser.OrgId, c.SignedInUser)
+	namespaceTitle := c.Params(":Namespace")
+	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
+		return toNamespaceErrorResponse(err)
 	}
 	ruleGroup := c.Params(":Groupname")
-	if err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespaceUID, ruleGroup); err != nil {
+	if err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to delete group alert rules", err)
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
 }
 
 func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.Response {
-	namespace := c.Params(":Namespace")
-	namespaceUID, err := srv.store.GetNamespaceUIDByTitle(namespace, c.SignedInUser.OrgId, c.SignedInUser)
+	namespaceTitle := c.Params(":Namespace")
+	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
+		return toNamespaceErrorResponse(err)
 	}
 
 	q := ngmodels.ListNamespaceAlertRulesQuery{
 		OrgID:        c.SignedInUser.OrgId,
-		NamespaceUID: namespaceUID,
+		NamespaceUID: namespace.Uid,
 	}
 	if err := srv.store.GetNamespaceAlertRules(&q); err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
@@ -71,33 +73,33 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 				Name:     r.RuleGroup,
 				Interval: ruleGroupInterval,
 				Rules: []apimodels.GettableExtendedRuleNode{
-					toGettableExtendedRuleNode(*r),
+					toGettableExtendedRuleNode(*r, namespace.Id),
 				},
 			}
 		} else {
-			ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r))
+			ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r, namespace.Id))
 			ruleGroupConfigs[r.RuleGroup] = ruleGroupConfig
 		}
 	}
 
 	for _, ruleGroupConfig := range ruleGroupConfigs {
-		result[namespace] = append(result[namespace], ruleGroupConfig)
+		result[namespaceTitle] = append(result[namespaceTitle], ruleGroupConfig)
 	}
 
 	return response.JSON(http.StatusAccepted, result)
 }
 
 func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Response {
-	namespace := c.Params(":Namespace")
-	namespaceUID, err := srv.store.GetNamespaceUIDByTitle(namespace, c.SignedInUser.OrgId, c.SignedInUser)
+	namespaceTitle := c.Params(":Namespace")
+	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
+		return toNamespaceErrorResponse(err)
 	}
 
 	ruleGroup := c.Params(":Groupname")
 	q := ngmodels.ListRuleGroupAlertRulesQuery{
 		OrgID:        c.SignedInUser.OrgId,
-		NamespaceUID: namespaceUID,
+		NamespaceUID: namespace.Uid,
 		RuleGroup:    ruleGroup,
 	}
 	if err := srv.store.GetRuleGroupAlertRules(&q); err != nil {
@@ -108,7 +110,7 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(q.Result))
 	for _, r := range q.Result {
 		ruleGroupInterval = model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
-		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r))
+		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, namespace.Id))
 	}
 
 	result := apimodels.RuleGroupConfigResponse{
@@ -131,10 +133,11 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 
 	configs := make(map[string]map[string]apimodels.GettableRuleGroupConfig)
 	for _, r := range q.Result {
-		namespace, err := srv.store.GetNamespaceByUID(r.NamespaceUID, c.SignedInUser.OrgId, c.SignedInUser)
+		folder, err := srv.store.GetNamespaceByUID(r.NamespaceUID, c.SignedInUser.OrgId, c.SignedInUser)
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", r.NamespaceUID), err)
+			return toNamespaceErrorResponse(err)
 		}
+		namespace := folder.Title
 		_, ok := configs[namespace]
 		if !ok {
 			ruleGroupInterval := model.Duration(time.Duration(r.IntervalSeconds) * time.Second)
@@ -143,7 +146,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 				Name:     r.RuleGroup,
 				Interval: ruleGroupInterval,
 				Rules: []apimodels.GettableExtendedRuleNode{
-					toGettableExtendedRuleNode(*r),
+					toGettableExtendedRuleNode(*r, folder.Id),
 				},
 			}
 		} else {
@@ -154,11 +157,11 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 					Name:     r.RuleGroup,
 					Interval: ruleGroupInterval,
 					Rules: []apimodels.GettableExtendedRuleNode{
-						toGettableExtendedRuleNode(*r),
+						toGettableExtendedRuleNode(*r, folder.Id),
 					},
 				}
 			} else {
-				ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r))
+				ruleGroupConfig.Rules = append(ruleGroupConfig.Rules, toGettableExtendedRuleNode(*r, folder.Id))
 				configs[namespace][r.RuleGroup] = ruleGroupConfig
 			}
 		}
@@ -174,10 +177,10 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 }
 
 func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConfig apimodels.PostableRuleGroupConfig) response.Response {
-	namespace := c.Params(":Namespace")
-	namespaceUID, err := srv.store.GetNamespaceUIDByTitle(namespace, c.SignedInUser.OrgId, c.SignedInUser)
+	namespaceTitle := c.Params(":Namespace")
+	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespace), err)
+		return toNamespaceErrorResponse(err)
 	}
 
 	// TODO check permissions
@@ -186,17 +189,20 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,
-		NamespaceUID:    namespaceUID,
+		NamespaceUID:    namespace.Uid,
 		RuleGroupConfig: ruleGroupConfig,
 	}); err != nil {
+		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+			return response.Error(http.StatusNotFound, "failed to update rule group", err)
+		}
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
 }
 
-func toGettableExtendedRuleNode(r ngmodels.AlertRule) apimodels.GettableExtendedRuleNode {
-	return apimodels.GettableExtendedRuleNode{
+func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimodels.GettableExtendedRuleNode {
+	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
 			ID:              r.ID,
 			OrgID:           r.OrgID,
@@ -208,17 +214,22 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule) apimodels.GettableExtended
 			Version:         r.Version,
 			UID:             r.UID,
 			NamespaceUID:    r.NamespaceUID,
+			NamespaceID:     namespaceID,
 			RuleGroup:       r.RuleGroup,
 			NoDataState:     apimodels.NoDataState(r.NoDataState),
 			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
-			For:             r.For,
-			Annotations:     r.Annotations,
 		},
 	}
+	gettableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
+		For:         model.Duration(r.For),
+		Annotations: r.Annotations,
+		Labels:      r.Labels,
+	}
+	return gettableExtendedRuleNode
 }
 
 func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtendedRuleNode {
-	return apimodels.PostableExtendedRuleNode{
+	postableExtendedRuleNode := apimodels.PostableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 			OrgID:        r.OrgID,
 			Title:        r.Title,
@@ -227,8 +238,22 @@ func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtended
 			UID:          r.UID,
 			NoDataState:  apimodels.NoDataState(r.NoDataState),
 			ExecErrState: apimodels.ExecutionErrorState(r.ExecErrState),
-			For:          r.For,
-			Annotations:  r.Annotations,
 		},
 	}
+	postableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
+		For:         model.Duration(r.For),
+		Annotations: r.Annotations,
+		Labels:      r.Labels,
+	}
+	return postableExtendedRuleNode
+}
+
+func toNamespaceErrorResponse(err error) response.Response {
+	if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
+		return response.Error(http.StatusForbidden, err.Error(), err)
+	}
+	if errors.Is(err, models.ErrDashboardIdentifierNotSet) {
+		return response.Error(http.StatusBadRequest, err.Error(), err)
+	}
+	return coreapi.ToFolderErrorResponse(err)
 }
