@@ -14,7 +14,6 @@ func trim(f *data.Frame, qm DataQueryModel) error {
 		return fmt.Errorf("can not trim, not timeseries frame")
 	}
 	timeField := f.Fields[tsSchema.TimeIndex]
-
 	if timeField.Len() == 0 {
 		return nil
 	}
@@ -30,7 +29,6 @@ func trim(f *data.Frame, qm DataQueryModel) error {
 			continue
 		}
 
-		// if t.Equal(qm.TimeRange.To) || t.Before(qm.TimeRange.To)
 		break
 	}
 
@@ -40,14 +38,14 @@ func trim(f *data.Frame, qm DataQueryModel) error {
 			return fmt.Errorf("time point is nil")
 		}
 
-		if t.(time.Time).Before(qm.TimeRange.From) {
-			f.DeleteRow(i)
-			i--
-			continue
+		if !t.(time.Time).Before(qm.TimeRange.From) {
+			break
 		}
 
-		// if t.Equal(qm.TimeRange.From) || t.After(qm.TimeRange.From)
-		break
+		f.DeleteRow(i)
+		// FIXME
+		i--
 	}
+
 	return nil
 }

@@ -17,7 +17,6 @@ func TestTrimWide(t *testing.T) {
 		input     *data.Frame
 		timeRange backend.TimeRange
 		output    *data.Frame
-		err       require.ErrorAssertionFunc
 	}{
 		{
 			name: "needs trimming",
@@ -81,7 +80,6 @@ func TestTrimWide(t *testing.T) {
 					nil,
 					pointer.Float64(15.0),
 				})),
-			err: require.NoError,
 		},
 		{
 			name: "does not need trimming",
@@ -157,7 +155,6 @@ func TestTrimWide(t *testing.T) {
 					nil,
 					nil,
 				})),
-			err: require.NoError,
 		},
 	}
 	for _, tt := range tests {
@@ -165,7 +162,7 @@ func TestTrimWide(t *testing.T) {
 			err := trim(tt.input, DataQueryModel{
 				TimeRange: tt.timeRange,
 			})
-			tt.err(t, err)
+			require.NoError(t, err)
 			if diff := cmp.Diff(tt.output, tt.input, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}

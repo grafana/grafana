@@ -19,7 +19,6 @@ func TestResampleWide(t *testing.T) {
 		timeRange   backend.TimeRange
 		interval    time.Duration
 		output      *data.Frame
-		err         require.ErrorAssertionFunc
 	}{
 		{
 			name:        "interval 1s; fill null",
@@ -79,7 +78,6 @@ func TestResampleWide(t *testing.T) {
 					nil,
 					nil,
 				})),
-			err: require.NoError,
 		},
 		{
 			name:        "interval 1s; fill value",
@@ -139,7 +137,6 @@ func TestResampleWide(t *testing.T) {
 					pointer.Float64(-1),
 					pointer.Float64(-1),
 				})),
-			err: require.NoError,
 		},
 		{
 			name:        "interval 1s; fill previous",
@@ -199,7 +196,6 @@ func TestResampleWide(t *testing.T) {
 					pointer.Float64(15.0),
 					pointer.Float64(15.0),
 				})),
-			err: require.NoError,
 		},
 		{
 			name:        "interval 2s; fill null",
@@ -247,7 +243,6 @@ func TestResampleWide(t *testing.T) {
 					pointer.Float64(15.0),
 					nil,
 				})),
-			err: require.NoError,
 		},
 		{
 			name:        "interval 1s; fill null; rows outside timerange window",
@@ -295,7 +290,6 @@ func TestResampleWide(t *testing.T) {
 					nil,
 					pointer.Float64(15.0),
 				})),
-			err: require.NoError,
 		},
 	}
 
@@ -306,7 +300,7 @@ func TestResampleWide(t *testing.T) {
 				TimeRange:   tt.timeRange,
 				Interval:    tt.interval,
 			})
-			tt.err(t, err)
+			require.NoError(t, err)
 			if diff := cmp.Diff(tt.output, frame, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}

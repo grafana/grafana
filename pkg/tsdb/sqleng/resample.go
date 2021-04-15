@@ -8,12 +8,12 @@ import (
 )
 
 func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime time.Time,
-	fillMissing *data.FillMissing, intermidiateRows []int, lastSeenRowIdx int) []interface{} {
-	vals := make([]interface{}, 0)
-	for fieldIdx := 0; fieldIdx < len(f.Fields); fieldIdx++ {
+	fillMissing *data.FillMissing, intermediateRows []int, lastSeenRowIdx int) []interface{} {
+	vals := make([]interface{}, 0, len(f.Fields))
+	for i, field := range f.Fields {
 		// if the current field is the time index of the series
 		// set the new value to be added to the new timestamp
-		if fieldIdx == tsSchema.TimeIndex {
+		if i == tsSchema.TimeIndex {
 			switch f.Fields[tsSchema.TimeIndex].Type() {
 			case data.FieldTypeTime:
 				vals = append(vals, currentTime)
@@ -25,12 +25,10 @@ func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime
 
 		isValueField := false
 		for _, idx := range tsSchema.ValueIndices {
-			if fieldIdx == idx {
+			if i == idx {
 				isValueField = true
 			}
 		}
-
-		var newVal interface{}
 
 		// if the current field is value Field
 		// set the new value to the last seen field value (if such exists)
@@ -38,23 +36,21 @@ func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime
 		// if the current field is string field)
 		// set the new value to be added to the last seen value (if such exists)
 		// if the Frame is wide then there should not be any string fields
-		switch isValueField {
-		case true:
-			if len(intermidiateRows) > 0 {
+		var newVal interface{}
+		if isValueField {
+			if len(intermediateRows) > 0 {
 				// instead of setting the last seen
 				// we could set avg, sum, min or max
 				// of the intermediate values for each field
-				newVal = f.At(fieldIdx, intermidiateRows[len(intermidiateRows)-1])
+				newVal = f.At(i, intermediateRows[len(intermediateRows)-1])
 			} else {
-				val, err := data.GetMissing(fillMissing, f.Fields[fieldIdx], lastSeenRowIdx)
+				val, err := data.GetMissing(fillMissing, field, lastSeenRowIdx)
 				if err == nil {
 					newVal = val
 				}
 			}
-		case false:
-			if lastSeenRowIdx >= 0 {
-				newVal = f.At(fieldIdx, lastSeenRowIdx)
-			}
+		} else if lastSeenRowIdx >= 0 {
+			newVal = f.At(i, lastSeenRowIdx)
 		}
 		vals = append(vals, newVal)
 	}
@@ -71,11 +67,11 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 		return f, nil
 	}
 
-	newFields := make([]*data.Field, 0)
-	for fieldIdx := 0; fieldIdx < len(f.Fields); fieldIdx++ {
-		newField := data.NewFieldFromFieldType(f.Fields[fieldIdx].Type(), 0)
-		newField.Name = f.Fields[fieldIdx].Name
-		newField.Labels = f.Fields[fieldIdx].Labels
+	newFields := make([]*data.Field, 0, len(f.Fields))
+	for _, field := range f.Fields {
+		newField := data.NewFieldFromFieldType(field.Type(), 0)
+		newField.Name = field.Name
+		newField.Labels = field.Labels
 		newFields = append(newFields, newField)
 	}
 	resampledFrame := data.NewFrame(f.Name, newFields...)
@@ -90,7 +86,7 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 		if lastSeenRowIdx > 0 {
 			initialRowIdx = lastSeenRowIdx + 1
 		}
-		intermidiateRows := make([]int, 0)
+		intermediateRows := make([]int, 0)
 		for {
 			rowLen, err := f.RowLen()
 			if err != nil {
@@ -99,30 +95,33 @@ func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
 			if initialRowIdx == rowLen {
 				break
 			}
+
 			t, ok := timeField.ConcreteAt(initialRowIdx)
 			if !ok {
 				return f, fmt.Errorf("time point is nil")
 			}
+
 			if t.(time.Time).After(currentTime) {
 				nextTime := currentTime.Add(qm.Interval)
 				if t.(time.Time).Before(nextTime) {
-					intermidiateRows = append(intermidiateRows, initialRowIdx)
+					intermediateRows = append(intermediateRows, initialRowIdx)
 					lastSeenRowIdx = initialRowIdx
 					initialRowIdx++
 				}
 				break
 			}
 
-			intermidiateRows = append(intermidiateRows, initialRowIdx)
+			intermediateRows = append(intermediateRows, initialRowIdx)
 			lastSeenRowIdx = initialRowIdx
 			initialRowIdx++
 		}
 
 		// no intermediate points; set values following fill missing mode
-		fieldVals := getRowFillValues(f, tsSchema, currentTime, qm.FillMissing, intermidiateRows, lastSeenRowIdx)
+		fieldVals := getRowFillValues(f, tsSchema, currentTime, qm.FillMissing, intermediateRows, lastSeenRowIdx)
 
 		resampledFrame.InsertRow(resampledRowidx, fieldVals...)
 		resampledRowidx++
 	}
+
 	return resampledFrame, nil
 }
