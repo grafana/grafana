@@ -71,8 +71,8 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 		Logger:         log.New("context"),
 	}
 
-	traceID, exist := cw.ExtractTraceID(c.Req.Request.Context())
-	if exist {
+	traceID, exists := cw.ExtractTraceID(c.Req.Request.Context())
+	if exists {
 		ctx.Logger = ctx.Logger.New("traceID", traceID)
 	}
 
