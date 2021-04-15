@@ -48,6 +48,10 @@ type PagerdutyNotifier struct {
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
 func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*PagerdutyNotifier, error) {
+	if model.Settings == nil {
+		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+	}
+
 	key := model.DecryptedValue("integrationKey", model.Settings.Get("integrationKey").MustString())
 	if key == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
