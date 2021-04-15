@@ -1,10 +1,9 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
-import uniqBy from 'lodash/uniqBy';
+import _, { uniqBy } from 'lodash';
 // Types
 import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
-import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
 import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';

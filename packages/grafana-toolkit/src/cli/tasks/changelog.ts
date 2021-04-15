@@ -1,8 +1,6 @@
-// @ts-ignore
-import * as _ from 'lodash';
+import _, { difference } from 'lodash';
 import { Task } from './task';
 import GithubClient from '../utils/githubClient';
-import difference from 'lodash/difference';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 
