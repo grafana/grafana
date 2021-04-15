@@ -47,11 +47,29 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		rule, err := m.makeAlertRule(*newCond, da)
+		tempFolderUID := os.Getenv("UALERT_FOLDER_UID")
+		if tempFolderUID == "" {
+			return fmt.Errorf("missing folder UID for alerts")
+		}
+		type dashboard struct {
+			IsFolder bool
+		}
+		folder := dashboard{}
+		exists, err := m.sess.Where("org_id=? AND uid=?", da.OrgId, tempFolderUID).Get(&folder)
 		if err != nil {
 			return err
 		}
-		_ = rule
+		if !exists {
+			return fmt.Errorf("folder with UID %v not found", tempFolderUID)
+		}
+		if !folder.IsFolder {
+			return fmt.Errorf("uid %v is a dashboard not a folder", tempFolderUID)
+		}
+
+		rule, err := m.makeAlertRule(*newCond, da, tempFolderUID)
+		if err != nil {
+			return err
+		}
 
 		_, err = m.sess.Insert(rule)
 		if err != nil {

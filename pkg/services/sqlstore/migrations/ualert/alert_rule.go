@@ -25,7 +25,7 @@ type alertRule struct {
 	// Labels (Check Type)
 }
 
-func (m *migration) makeAlertRule(cond condition, da dashAlert) (*alertRule, error) {
+func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	ar := &alertRule{
 		OrgId:           da.OrgId,
 		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
@@ -33,7 +33,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert) (*alertRule, err
 		Data:            cond.Data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		//Uid: util.GenerateShortUID()
-		NamespaceUid: `kgcgEpXGk`, //HardCoded to a Folder already created in Kyle's instance
+		NamespaceUid: folderUID, //HardCoded to a Folder already created in Kyle's instance
 		RuleGroup:    da.Name,
 		For:          duration(da.For),
 		Updated:      time.Now().UTC(),
