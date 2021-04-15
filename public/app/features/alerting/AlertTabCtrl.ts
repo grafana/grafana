@@ -29,7 +29,7 @@ export class AlertTabCtrl {
   addNotificationSegment: any;
   notifications: any;
   alertNotifications: any;
-  error: string;
+  error?: string;
   appSubUrl: string;
   alertHistory: any;
   newAlertRuleTag: any;

@@ -1,9 +1,9 @@
-import React, { PureComponent, FC } from 'react';
+import React, { FC, PureComponent } from 'react';
 import { UserDTO } from 'app/types';
-import { cx, css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { config } from 'app/core/config';
 import { GrafanaTheme } from '@grafana/data';
-import { ConfirmButton, ConfirmModal, LegacyInputStatus, Button, stylesFactory, Input } from '@grafana/ui';
+import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, stylesFactory } from '@grafana/ui';
 
 interface Props {
   user: UserDTO;
@@ -187,7 +187,7 @@ interface UserProfileRowState {
 }
 
 export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfileRowState> {
-  inputElem: HTMLInputElement;
+  inputElem?: HTMLInputElement;
 
   static defaultProps: Partial<UserProfileRowProps> = {
     value: '',
