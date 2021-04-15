@@ -189,9 +189,9 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
 
   if (parseQuery(query.query).folder === 'current') {
     try {
-      const { folderId } = getDashboardSrv().getCurrent()?.meta;
-      if (folderId) {
-        folderIds = [folderId];
+      const dash = getDashboardSrv().getCurrent();
+      if (dash?.meta.folderId) {
+        folderIds = [dash?.meta.folderId];
       }
     } catch (e) {
       console.error(e);

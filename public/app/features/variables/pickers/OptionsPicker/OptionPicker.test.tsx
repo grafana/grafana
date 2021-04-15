@@ -6,7 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LoadingState } from '@grafana/data';
 
 import { VariablePickerProps } from '../types';
-import { QueryVariableModel } from '../../types';
+import { QueryVariableModel, VariableWithMultiSupport, VariableWithOptions } from '../../types';
 import { queryBuilder } from '../../shared/testing/builders';
 import { optionPickerFactory } from './OptionsPicker';
 import { initialState, OptionsPickerState } from './reducer';
@@ -30,7 +30,7 @@ function setupTestContext({ pickerState = {}, variable = {} }: Args = {}) {
     ...variable,
   };
   const onVariableChange = jest.fn();
-  const props: VariablePickerProps<QueryVariableModel> = {
+  const props: VariablePickerProps<VariableWithMultiSupport | VariableWithOptions> = {
     variable: v,
     onVariableChange,
   };
