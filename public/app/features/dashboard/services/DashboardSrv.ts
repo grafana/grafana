@@ -25,16 +25,18 @@ export class DashboardSrv {
     this.dashboard = dashboard;
   }
 
-  getCurrent(): DashboardModel {
+  getCurrent(): DashboardModel | undefined {
     if (!this.dashboard) {
-      throw new Error('Calling DashboardSrv.getCurrent without calling setCurrent first');
+      console.warn('Calling getDashboardSrv().getCurrent() without calling getDashboardSrv().setCurrent() first.');
     }
     return this.dashboard;
   }
 
   onRemovePanel = (panelId: number) => {
     const dashboard = this.getCurrent();
-    removePanel(dashboard, dashboard.getPanelById(panelId)!, true);
+    if (dashboard) {
+      removePanel(dashboard, dashboard.getPanelById(panelId)!, true);
+    }
   };
 
   saveJSONDashboard(json: string) {
