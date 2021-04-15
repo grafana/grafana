@@ -2,7 +2,8 @@
 title = "License expiration"
 description = ""
 keywords = ["grafana", "licensing"]
-weight = 120
+aliases = ["/docs/grafana/next/enterprise/license-expiration"]
+weight = 102
 +++
 
 # License expiration

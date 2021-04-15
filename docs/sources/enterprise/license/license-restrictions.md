@@ -2,6 +2,7 @@
 title = "License restrictions"
 description = "Grafana Enterprise license restrictions"
 keywords = ["grafana", "licensing", "enterprise"]
+aliases = ["/docs/grafana/next/enterprise/license-restrictions"]
 weight = 103
 +++
 

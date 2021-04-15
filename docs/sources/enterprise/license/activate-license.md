@@ -2,6 +2,7 @@
 title = "Activate an Enterprise license"
 description = "Activate an Enterprise license"
 keywords = ["grafana", "licensing", "enterprise"]
+aliases = ["/docs/grafana/next/enterprise/activate-license"]
 weight = 101
 +++
 
