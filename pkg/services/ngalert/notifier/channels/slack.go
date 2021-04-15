@@ -16,7 +16,6 @@ import (
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -52,6 +51,10 @@ var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*
 
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewSlackNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*SlackNotifier, error) {
+	if model.Settings == nil {
+		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+	}
+
 	slackURL := model.DecryptedValue("url", model.Settings.Get("url").MustString())
 	if slackURL == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -130,18 +133,6 @@ type attachment struct {
 	Ts         int64               `json:"ts,omitempty"`
 }
 
-const (
-	ColorAlertFiring = "#D63232"
-	ColorAlertResolved
-)
-
-func getAlertStatusColor(status model.AlertStatus) string {
-	if status == model.AlertFiring {
-		return ColorAlertFiring
-	}
-	return ColorAlertResolved
-}
-
 func (sn *SlackNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	msg, err := sn.buildSlackMessage(ctx, as)
 	if err != nil {
@@ -191,7 +182,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 				Title:      tmpl(sn.Title),
 				Fallback:   tmpl(sn.Fallback),
 				Footer:     "Grafana v" + setting.BuildVersion,
-				FooterIcon: "https://grafana.com/assets/img/fav32.png",
+				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
 				TitleLink:  "TODO: rule URL",
 				Text:       tmpl(sn.Text),
