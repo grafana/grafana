@@ -2,9 +2,10 @@ package store
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
 
@@ -70,7 +71,6 @@ func getAlertRuleByUID(sess *sqlstore.DBSession, alertRuleUID string, orgID int6
 }
 
 // DeleteAlertRuleByUID is a handler for deleting an alert rule.
-// It returns ngmodels.ErrAlertRuleNotFound if no alert rule is found for the provided ID.
 func (st DBstore) DeleteAlertRuleByUID(orgID int64, ruleUID string) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		_, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? AND uid = ?", orgID, ruleUID)
@@ -158,7 +158,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				existingAlertRule, err := getAlertRuleByUID(sess, r.New.UID, r.New.OrgID)
 				if err != nil {
 					if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-						return fmt.Errorf("err: %w, UID: %s", err, r.New.UID)
+						return errors.Wrapf(err, "failed to get alert rule: %s", r.New.UID)
 					}
 					return err
 				}

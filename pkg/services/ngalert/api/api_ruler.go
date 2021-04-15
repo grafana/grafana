@@ -2,13 +2,13 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
 	apimodels "github.com/grafana/alerting-api/pkg/api"
+	coreapi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -26,10 +26,7 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 	namespaceTitle := c.Params(":Namespace")
 	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
-		if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
-			return response.Error(http.StatusForbidden, fmt.Sprintf("no edit access to namespace: %s", namespaceTitle), err)
-		}
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespaceTitle), err)
+		return toNamespaceErrorResponse(err)
 	}
 
 	if err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid); err != nil {
@@ -42,10 +39,7 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 	namespaceTitle := c.Params(":Namespace")
 	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
-		if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
-			return response.Error(http.StatusForbidden, fmt.Sprintf("no edit access to namespace: %s", namespaceTitle), err)
-		}
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespaceTitle), err)
+		return toNamespaceErrorResponse(err)
 	}
 	ruleGroup := c.Params(":Groupname")
 	if err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup); err != nil {
@@ -58,7 +52,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *models.ReqContext) response.
 	namespaceTitle := c.Params(":Namespace")
 	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespaceTitle), err)
+		return toNamespaceErrorResponse(err)
 	}
 
 	q := ngmodels.ListNamespaceAlertRulesQuery{
@@ -99,7 +93,7 @@ func (srv RulerSrv) RouteGetRulegGroupConfig(c *models.ReqContext) response.Resp
 	namespaceTitle := c.Params(":Namespace")
 	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, false)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespaceTitle), err)
+		return toNamespaceErrorResponse(err)
 	}
 
 	ruleGroup := c.Params(":Groupname")
@@ -141,7 +135,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	for _, r := range q.Result {
 		folder, err := srv.store.GetNamespaceByUID(r.NamespaceUID, c.SignedInUser.OrgId, c.SignedInUser)
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", r.NamespaceUID), err)
+			return toNamespaceErrorResponse(err)
 		}
 		namespace := folder.Title
 		_, ok := configs[namespace]
@@ -186,10 +180,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	namespaceTitle := c.Params(":Namespace")
 	namespace, err := srv.store.GetNamespaceByTitle(namespaceTitle, c.SignedInUser.OrgId, c.SignedInUser, true)
 	if err != nil {
-		if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
-			return response.Error(http.StatusForbidden, fmt.Sprintf("no edit access to namespace: %s", namespaceTitle), err)
-		}
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("failed to get namespace: %s", namespaceTitle), err)
+		return toNamespaceErrorResponse(err)
 	}
 
 	// TODO check permissions
@@ -202,7 +193,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		RuleGroupConfig: ruleGroupConfig,
 	}); err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-			return response.Error(http.StatusBadRequest, "failed to update rule group", err)
+			return response.Error(http.StatusNotFound, "failed to update rule group", err)
 		}
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
 	}
@@ -255,4 +246,11 @@ func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtended
 		Labels:      r.Labels,
 	}
 	return postableExtendedRuleNode
+}
+
+func toNamespaceErrorResponse(err error) response.Response {
+	if errors.Is(err, ngmodels.ErrCannotEditNamespace) {
+		return response.Error(http.StatusForbidden, err.Error(), err)
+	}
+	return coreapi.ToFolderErrorResponse(err)
 }
