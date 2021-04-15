@@ -162,14 +162,14 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64]st
 	newCond.OrgID = orgID
 
 	exprModel := struct {
-		Type       string                 `json:"type"`
-		RefID      string                 `json:"refId"`
-		Datasource string                 `json:"datasource"`
-		Conditions []classicConditionJSON `json:"conditions"`
+		Type          string                 `json:"type"`
+		RefID         string                 `json:"refId"`
+		DatasourceUid string                 `json:"datasourceUid"`
+		Conditions    []classicConditionJSON `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
-		"__expr__",
+		"-100",
 		conditions,
 	}
 
@@ -208,58 +208,6 @@ type condition struct {
 
 	// Data is an array of data source queries and/or server side expressions.
 	Data []alertQuery `json:"data"`
-}
-
-type alertQuery struct {
-	// RefID is the unique identifier of the query, set by the frontend call.
-	RefID string `json:"refId"`
-
-	// QueryType is an optional identifier for the type of query.
-	// It can be used to distinguish different types of queries.
-	QueryType string `json:"queryType"`
-
-	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
-	RelativeTimeRange relativeTimeRange `json:"relativeTimeRange"`
-
-	DatasourceUID string `json:"-"`
-
-	// JSON is the raw JSON query and includes the above properties as well as custom properties.
-	Model json.RawMessage `json:"model"`
-
-	//TODO: Needed for PreSave, if PreSave needed?
-	//modelProps map[string]interface{}
-}
-
-// RelativeTimeRange is the per query start and end time
-// for requests.
-type relativeTimeRange struct {
-	From duration `json:"from"`
-	To   duration `json:"to"`
-}
-
-// duration is a type used for marshalling durations.
-type duration time.Duration
-
-func (d duration) String() string {
-	return time.Duration(d).String()
-}
-
-func (d duration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Duration(d).Seconds())
-}
-
-func (d *duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	switch value := v.(type) {
-	case float64:
-		*d = duration(time.Duration(value) * time.Second)
-		return nil
-	default:
-		return fmt.Errorf("invalid duration %v", v)
-	}
 }
 
 const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
