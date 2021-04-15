@@ -105,8 +105,8 @@ export const RulesTable: FC<Props> = ({
               const { promRule, rulerRule } = rule;
               const statuses = [
                 promRule?.health,
-                hasRuler && promRule && !rulerRule ? 'deleting' : '',
-                hasRuler && rulerRule && !promRule ? 'creating' : '',
+                hasRuler(rulesSource) && promRule && !rulerRule ? 'deleting' : '',
+                hasRuler(rulesSource) && rulerRule && !promRule ? 'creating' : '',
               ].filter((x) => !!x);
               return (
                 <Fragment key={key}>
