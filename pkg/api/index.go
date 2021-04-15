@@ -126,7 +126,6 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 }
 
 func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dtos.NavLink, error) {
-	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	navTree := []*dtos.NavLink{}
 
 	if hasEditPerm {
@@ -300,6 +299,42 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
+	adminNavLinks := hs.buildAdminNavLinks(c)
+
+	if len(adminNavLinks) > 0 {
+		navTree = append(navTree, &dtos.NavLink{
+			Text:         "Server Admin",
+			SubTitle:     "Manage all users and orgs",
+			HideFromTabs: true,
+			Id:           "admin",
+			Icon:         "shield",
+			Url:          hs.Cfg.AppSubURL + "/admin/users",
+			SortWeight:   dtos.WeightAdmin,
+			Children:     adminNavLinks,
+		})
+	}
+
+	helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
+	if hs.Cfg.AnonymousHideVersion && !c.IsSignedIn {
+		helpVersion = setting.ApplicationName
+	}
+
+	navTree = append(navTree, &dtos.NavLink{
+		Text:         "Help",
+		SubTitle:     helpVersion,
+		Id:           "help",
+		Url:          "#",
+		Icon:         "question-circle",
+		HideFromMenu: true,
+		SortWeight:   dtos.WeightHelp,
+		Children:     []*dtos.NavLink{},
+	})
+
+	return navTree, nil
+}
+
+func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	adminNavLinks := []*dtos.NavLink{}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionUsersRead, ac.ScopeUsersAll) {
@@ -332,36 +367,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if len(adminNavLinks) > 0 {
-		navTree = append(navTree, &dtos.NavLink{
-			Text:         "Server Admin",
-			SubTitle:     "Manage all users and orgs",
-			HideFromTabs: true,
-			Id:           "admin",
-			Icon:         "shield",
-			Url:          hs.Cfg.AppSubURL + "/admin/users",
-			SortWeight:   dtos.WeightAdmin,
-			Children:     adminNavLinks,
-		})
-	}
-
-	helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
-	if hs.Cfg.AnonymousHideVersion && !c.IsSignedIn {
-		helpVersion = setting.ApplicationName
-	}
-
-	navTree = append(navTree, &dtos.NavLink{
-		Text:         "Help",
-		SubTitle:     helpVersion,
-		Id:           "help",
-		Url:          "#",
-		Icon:         "question-circle",
-		HideFromMenu: true,
-		SortWeight:   dtos.WeightHelp,
-		Children:     []*dtos.NavLink{},
-	})
-
-	return navTree, nil
+	return adminNavLinks
 }
 
 func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
