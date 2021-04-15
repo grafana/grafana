@@ -187,8 +187,8 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           showIf: (c) => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
         });
 
-      addAxisConfig(builder, cfg);
       addStackingConfig(builder, cfg.stacking);
+      addAxisConfig(builder, cfg);
       addHideFrom(builder);
     },
   };

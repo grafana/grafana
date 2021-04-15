@@ -1,4 +1,4 @@
-import { DataFrame, dateTime, FieldType } from '@grafana/data';
+import { DataFrame, dateTime, Field, FieldType } from '@grafana/data';
 import { AlignedData, Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
 import { StackingMode } from './config';
@@ -38,6 +38,7 @@ export function buildPlotConfig(props: PlotProps, plugins: Record<string, PlotPl
 export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]): AlignedData {
   const result: any[] = [];
   const stackingGroups: Map<string, number[]> = new Map();
+  let seriesIndex = 0;
 
   for (let i = 0; i < frame.fields.length; i++) {
     const f = frame.fields[i];
@@ -49,26 +50,19 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
           timestamps.push(dateTime(f.values.get(i)).valueOf());
         }
         result.push(timestamps);
+        seriesIndex++;
         continue;
       }
       result.push(f.values.toArray());
+      seriesIndex++;
       continue;
     }
     if (ignoreFieldTypes && ignoreFieldTypes.indexOf(f.type) > -1) {
       continue;
     }
-
-    if (f.config.custom?.stacking?.mode !== StackingMode.None && f.config.custom?.stacking?.group) {
-      if (!stackingGroups.has(f.config.custom.stacking.group)) {
-        stackingGroups.set(f.config.custom.stacking.group, [result.length]);
-      } else {
-        stackingGroups.set(
-          f.config.custom.stacking.group,
-          stackingGroups.get(f.config.custom.stacking.group)!.concat(result.length)
-        );
-      }
-    }
+    collectStackingGroups(f, stackingGroups, seriesIndex);
     result.push(f.values.toArray());
+    seriesIndex++;
   }
 
   // Stacking
@@ -89,6 +83,24 @@ export function preparePlotData(frame: DataFrame, ignoreFieldTypes?: FieldType[]
     return result as AlignedData;
   }
   return result as AlignedData;
+}
+
+export function collectStackingGroups(f: Field, groups: Map<string, number[]>, seriesIdx: number) {
+  const customConfig = f.config.custom;
+  if (!customConfig) {
+    return;
+  }
+  if (
+    customConfig.stacking?.mode !== StackingMode.None &&
+    customConfig.stacking?.group &&
+    !customConfig.hideFrom?.graph
+  ) {
+    if (!groups.has(customConfig.stacking.group)) {
+      groups.set(customConfig.stacking.group, [seriesIdx]);
+    } else {
+      groups.set(customConfig.stacking.group, groups.get(customConfig.stacking.group)!.concat(seriesIdx));
+    }
+  }
 }
 
 // Dev helpers

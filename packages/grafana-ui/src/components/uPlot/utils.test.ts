@@ -225,5 +225,75 @@ describe('preparePlotData', () => {
         ]
       `);
     });
+
+    it('standard with multiple groups and hidden fields', () => {
+      const df = new MutableDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [9997, 9998, 9999] },
+          {
+            name: 'a',
+            values: [-10, 20, 10],
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' }, hideFrom: { graph: true } } },
+          },
+          {
+            // Will ignore a series as stacking base as it's hidden from graph
+            name: 'b',
+            values: [10, 10, 10],
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackA' } } },
+          },
+          {
+            name: 'd',
+            values: [1, 2, 3],
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' } } },
+          },
+          {
+            name: 'e',
+            values: [1, 2, 3],
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' }, hideFrom: { graph: true } } },
+          },
+          {
+            // Will ignore e series as stacking base as it's hidden from graph
+            name: 'f',
+            values: [1, 2, 3],
+            config: { custom: { stacking: { mode: StackingMode.Normal, group: 'stackB' } } },
+          },
+        ],
+      });
+
+      expect(preparePlotData(df)).toMatchInlineSnapshot(`
+        Array [
+          Array [
+            9997,
+            9998,
+            9999,
+          ],
+          Array [
+            -10,
+            20,
+            10,
+          ],
+          Array [
+            10,
+            10,
+            10,
+          ],
+          Array [
+            1,
+            2,
+            3,
+          ],
+          Array [
+            1,
+            2,
+            3,
+          ],
+          Array [
+            2,
+            4,
+            6,
+          ],
+        ]
+      `);
+    });
   });
 });

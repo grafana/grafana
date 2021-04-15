@@ -25,8 +25,8 @@ import {
   PointVisibility,
   ScaleDirection,
   ScaleOrientation,
-  StackingMode,
 } from '../uPlot/config';
+import { collectStackingGroups } from '../uPlot/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -131,7 +131,7 @@ export function preparePlotConfigBuilder(
     });
   }
 
-  const stackingGroups: Record<string, number[]> = {};
+  const stackingGroups: Map<string, number[]> = new Map();
 
   let indexByName: Map<string, number> | undefined = undefined;
 
@@ -224,23 +224,15 @@ export function preparePlotConfigBuilder(
       hideInLegend: customConfig.hideFrom?.legend,
     });
 
-    if (customConfig?.stacking?.mode !== StackingMode.None && customConfig?.stacking?.group) {
-      if (!stackingGroups[customConfig.stacking.group]) {
-        stackingGroups[customConfig.stacking.group] = [seriesIndex];
-      } else {
-        stackingGroups[customConfig.stacking.group].push(seriesIndex);
-      }
-    }
+    collectStackingGroups(field, stackingGroups, seriesIndex);
   }
 
-  if (Object.keys(stackingGroups).length !== 0) {
+  if (stackingGroups.size !== 0) {
     builder.setStacking(true);
-    const groups = Object.keys(stackingGroups);
-    for (let i = 0; i < groups.length; i++) {
-      const group = stackingGroups[groups[i]];
-      for (let j = group.length - 1; j > 0; j--) {
+    for (const [_, seriesIdxs] of stackingGroups.entries()) {
+      for (let j = seriesIdxs.length - 1; j > 0; j--) {
         builder.addBand({
-          series: [group[j], group[j - 1]],
+          series: [seriesIdxs[j], seriesIdxs[j - 1]],
         });
       }
     }
