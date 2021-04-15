@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
 	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 )
 
@@ -45,10 +46,18 @@ func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 		Results: map[string]plugins.DataQueryResult{},
 	}
 
+	tlsConfig, err := dsInfo.GetTLSConfig()
+	if err != nil {
+		return plugins.DataResponse{}, err
+	}
+
 	client := &client.DefaultClient{
 		Address:  dsInfo.Url,
 		Username: dsInfo.BasicAuthUser,
 		Password: dsInfo.DecryptedBasicAuthPassword(),
+		TLSConfig: config.TLSConfig{
+			InsecureSkipVerify: tlsConfig.InsecureSkipVerify,
+		},
 	}
 
 	queries, err := e.parseQuery(dsInfo, queryContext)
