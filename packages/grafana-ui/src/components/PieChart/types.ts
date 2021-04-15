@@ -1,4 +1,11 @@
-import { DataFrame, FieldConfigSource, FieldDisplay, InterpolateFunction, ReduceDataOptions } from '@grafana/data';
+import {
+  DataFrame,
+  EventBus,
+  FieldConfigSource,
+  FieldDisplay,
+  InterpolateFunction,
+  ReduceDataOptions,
+} from '@grafana/data';
 import { VizLegendOptions } from '..';
 
 export interface PieChartSvgProps {
@@ -19,6 +26,7 @@ export interface PieChartProps {
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
   onSeriesColorChange?: (label: string, color: string) => void;
+  eventBus?: EventBus;
   legendOptions?: PieChartLegendOptions;
   reduceOptions: ReduceDataOptions;
   fieldConfig: FieldConfigSource<any>;

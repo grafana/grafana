@@ -1,5 +1,7 @@
 import React, { FC, ReactNode } from 'react';
 import {
+  DataHoverClearEvent,
+  DataHoverEvent,
   DisplayValue,
   FALLBACK_COLOR,
   FieldDisplay,
@@ -52,6 +54,7 @@ export const PieChart: FC<PieChartProps> = ({
   onSeriesColorChange,
   width,
   height,
+  eventBus,
   ...restProps
 }) => {
   const theme = useTheme();
@@ -95,19 +98,21 @@ export const PieChart: FC<PieChartProps> = ({
       };
     });
 
-    const setHighlightedSlice = (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
-      setState({ highlightedTitle: item.label });
+    const setHighlightedSlice = (event: DataHoverEvent) => {
+      setState({ highlightedTitle: event.payload.dataId });
     };
 
-    const resetHighlightedSlice = (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    const resetHighlightedSlice = (event: DataHoverClearEvent) => {
       setState({ highlightedTitle: undefined });
     };
+
+    eventBus?.subscribe(DataHoverEvent, setHighlightedSlice);
+    eventBus?.subscribe(DataHoverClearEvent, resetHighlightedSlice);
 
     return (
       <VizLegend
         items={legendItems}
-        onLabelMouseMove={setHighlightedSlice}
-        onLabelMouseOut={resetHighlightedSlice}
+        eventBus={eventBus}
         onSeriesColorChange={onSeriesColorChange}
         placement={legendOptions.placement}
         displayMode={legendOptions.displayMode}

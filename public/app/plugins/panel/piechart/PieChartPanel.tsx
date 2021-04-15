@@ -15,6 +15,7 @@ export const PieChartPanel: React.FC<Props> = ({
   replaceVariables,
   fieldConfig,
   timeZone,
+  eventBus,
 }) => {
   const onSeriesColorChange = useCallback(
     (label: string, color: string) => {
@@ -28,6 +29,7 @@ export const PieChartPanel: React.FC<Props> = ({
       width={width}
       height={height}
       timeZone={timeZone}
+      eventBus={eventBus}
       fieldConfig={fieldConfig}
       reduceOptions={options.reduceOptions}
       replaceVariables={replaceVariables}

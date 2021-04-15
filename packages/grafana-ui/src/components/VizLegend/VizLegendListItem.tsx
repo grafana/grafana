@@ -4,14 +4,13 @@ import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem, SeriesColorChangeHandler } from './types';
 import { VizLegendStatsList } from './VizLegendStatsList';
 import { useStyles } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, EventBus, GrafanaTheme } from '@grafana/data';
 
 export interface Props {
   item: VizLegendItem;
   className?: string;
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  onLabelMouseMove?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  eventBus?: EventBus;
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
@@ -22,8 +21,7 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({
   item,
   onSeriesColorChange,
   onLabelClick,
-  onLabelMouseMove,
-  onLabelMouseOut,
+  eventBus,
 }) => {
   const styles = useStyles(getStyles);
 
@@ -40,13 +38,29 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({
       />
       <div
         onMouseMove={(event) => {
-          if (onLabelMouseMove) {
-            onLabelMouseMove(item, event);
+          if (eventBus) {
+            eventBus.publish({
+              type: DataHoverEvent.type,
+              payload: {
+                raw: event,
+                x: 0,
+                y: 0,
+                dataId: item.label,
+              },
+            });
           }
         }}
         onMouseOut={(event) => {
-          if (onLabelMouseOut) {
-            onLabelMouseOut(item, event);
+          if (eventBus) {
+            eventBus.publish({
+              type: DataHoverClearEvent.type,
+              payload: {
+                raw: event,
+                x: 0,
+                y: 0,
+                dataId: item.label,
+              },
+            });
           }
         }}
         onClick={(event) => {

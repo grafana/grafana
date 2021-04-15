@@ -19,8 +19,7 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
   className,
   onToggleSort,
   onLabelClick,
-  onLabelMouseMove,
-  onLabelMouseOut,
+  eventBus,
   onSeriesColorChange,
 }) => {
   const styles = useStyles(getStyles);
@@ -60,8 +59,7 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
         item={item}
         onSeriesColorChange={onSeriesColorChange}
         onLabelClick={onLabelClick}
-        onLabelMouseMove={onLabelMouseMove}
-        onLabelMouseOut={onLabelMouseOut}
+        eventBus={eventBus}
       />
     );
   }
