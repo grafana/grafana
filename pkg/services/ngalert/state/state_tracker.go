@@ -57,7 +57,10 @@ func NewStateTracker(logger log.Logger) *StateTracker {
 func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) AlertState {
 	st.stateCache.mu.Lock()
 	defer st.stateCache.mu.Unlock()
-	lbs := result.Instance
+	lbs := data.Labels{}
+	if len(result.Instance) > 0 {
+		lbs = result.Instance
+	}
 	lbs["__alert_rule_uid__"] = alertRule.UID
 	lbs["__alert_rule_namespace_uid__"] = alertRule.NamespaceUID
 	lbs["__alert_rule_title__"] = alertRule.Title
