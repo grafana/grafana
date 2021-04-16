@@ -299,7 +299,7 @@ describe('UPlotConfigBuilder', () => {
       Object {
         "axes": Array [
           Object {
-            "font": "12px \\"Inter\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+            "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
             "gap": 5,
             "grid": Object {
               "show": false,
@@ -307,7 +307,7 @@ describe('UPlotConfigBuilder', () => {
               "width": 1,
             },
             "label": "test label",
-            "labelFont": "12px \\"Inter\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+            "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
             "labelSize": 18,
             "scale": "scale-x",
             "show": true,
@@ -315,7 +315,7 @@ describe('UPlotConfigBuilder', () => {
             "size": [Function],
             "space": [Function],
             "splits": undefined,
-            "stroke": "rgba(255, 255, 255, 0.77)",
+            "stroke": "rgb(201, 209, 217)",
             "ticks": Object {
               "show": true,
               "stroke": "rgba(240, 250, 255, 0.09)",
