@@ -127,6 +127,7 @@ const getStyles = (theme: GrafanaTheme) => {
       &:focus,
       &:focus-visible {
         ${focusCss(theme)}
+        z-index: 1;
       }
 
       &:focus:not(:focus-visible) {

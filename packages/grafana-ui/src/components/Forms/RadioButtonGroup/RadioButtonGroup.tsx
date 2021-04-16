@@ -6,7 +6,6 @@ import { RadioButtonSize, RadioButton } from './RadioButton';
 import { Icon } from '../../Icon/Icon';
 import { IconName } from '../../../types/icon';
 import { useStyles } from '../../../themes';
-import { CSSObject } from '@emotion/serialize';
 
 export interface RadioButtonGroupProps<T> {
   value?: T;
