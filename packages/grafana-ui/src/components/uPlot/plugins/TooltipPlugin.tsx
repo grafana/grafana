@@ -2,7 +2,7 @@ import React from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import { CursorPlugin } from './CursorPlugin';
-import { SeriesTable, SeriesTableRowProps, TooltipDisplayMode } from '../../VizTooltip/VizTooltip';
+import { VizTooltipContainer, SeriesTable, SeriesTableRowProps, TooltipDisplayMode } from '../../VizTooltip';
 import {
   DataFrame,
   FieldType,
@@ -11,7 +11,6 @@ import {
   getFieldDisplayName,
   TimeZone,
 } from '@grafana/data';
-import { TooltipContainer } from '../../Chart/TooltipContainer';
 import { useGraphNGContext } from '../../GraphNG/hooks';
 
 interface TooltipPluginProps {
@@ -120,9 +119,9 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
 
         return (
           <Portal>
-            <TooltipContainer position={{ x: coords.viewport.x, y: coords.viewport.y }} offset={{ x: 10, y: 10 }}>
+            <VizTooltipContainer position={{ x: coords.viewport.x, y: coords.viewport.y }} offset={{ x: 10, y: 10 }}>
               {tooltip}
-            </TooltipContainer>
+            </VizTooltipContainer>
           </Portal>
         );
       }}

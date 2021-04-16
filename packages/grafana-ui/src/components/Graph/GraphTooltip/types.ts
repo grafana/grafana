@@ -1,4 +1,4 @@
-import { ActiveDimensions } from '../../Chart/Tooltip';
+import { ActiveDimensions } from '../../VizTooltip';
 import { Dimension, Dimensions, TimeZone } from '@grafana/data';
 
 export interface GraphDimensions extends Dimensions {

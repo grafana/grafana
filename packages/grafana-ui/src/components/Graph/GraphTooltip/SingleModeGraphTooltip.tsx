@@ -6,7 +6,7 @@ import {
   getDisplayProcessor,
   getFieldDisplayName,
 } from '@grafana/data';
-import { SeriesTable } from '../../VizTooltip/VizTooltip';
+import { SeriesTable } from '../../VizTooltip';
 import { GraphTooltipContentProps } from './types';
 
 export const SingleModeGraphTooltip: React.FC<GraphTooltipContentProps> = ({

@@ -29,7 +29,7 @@ import {
   PieChartType,
 } from './types';
 import { getTooltipContainerStyles } from '../../themes/mixins';
-import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip/VizTooltip';
+import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,

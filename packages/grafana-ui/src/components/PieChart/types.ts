@@ -1,5 +1,5 @@
 import { DataFrame, FieldConfigSource, FieldDisplay, InterpolateFunction, ReduceDataOptions } from '@grafana/data';
-import { VizTooltipOptions } from '../VizTooltip/VizTooltip';
+import { VizTooltipOptions } from '../VizTooltip';
 import { VizLegendOptions } from '..';
 
 export interface PieChartSvgProps {

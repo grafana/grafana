@@ -6,7 +6,7 @@ import uniqBy from 'lodash/uniqBy';
 import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
 import _ from 'lodash';
 import { FlotPosition, FlotItem } from './types';
-import { TooltipProps, TooltipContentProps, ActiveDimensions, Tooltip } from '../Chart/Tooltip';
+import { VizTooltipProps, VizTooltipContentProps, ActiveDimensions, VizTooltip } from '../VizTooltip';
 import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphDimensions } from './GraphTooltip/types';
@@ -125,7 +125,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   renderTooltip = () => {
     const { children, series, timeZone } = this.props;
     const { pos, activeItem, isTooltipVisible } = this.state;
-    let tooltipElement: React.ReactElement<TooltipProps> | null = null;
+    let tooltipElement: React.ReactElement<VizTooltipProps> | null = null;
 
     if (!isTooltipVisible || !pos || series.length === 0) {
       return null;
@@ -140,15 +140,15 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       // @ts-ignore
       const childType = c && c.type && (c.type.displayName || c.type.name);
 
-      if (childType === Tooltip.displayName) {
-        tooltipElement = c as React.ReactElement<TooltipProps>;
+      if (childType === VizTooltip.displayName) {
+        tooltipElement = c as React.ReactElement<VizTooltipProps>;
       }
     });
     // If no tooltip provided, skip rendering
     if (!tooltipElement) {
       return null;
     }
-    const tooltipElementProps = (tooltipElement as React.ReactElement<TooltipProps>).props;
+    const tooltipElementProps = (tooltipElement as React.ReactElement<VizTooltipProps>).props;
 
     const tooltipMode = tooltipElementProps.mode || 'single';
 
@@ -173,7 +173,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       yAxis: activeItem ? [activeItem.series.seriesIndex, activeItem.dataIndex] : null,
     };
 
-    const tooltipContentProps: TooltipContentProps<GraphDimensions> = {
+    const tooltipContentProps: VizTooltipContentProps<GraphDimensions> = {
       dimensions: {
         // time/value dimension columns are index-aligned - see getGraphSeriesModel
         xAxis: createDimension(
@@ -193,7 +193,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     const tooltipContent = React.createElement(tooltipContentRenderer, { ...tooltipContentProps });
 
-    return React.cloneElement<TooltipProps>(tooltipElement as React.ReactElement<TooltipProps>, {
+    return React.cloneElement<VizTooltipProps>(tooltipElement as React.ReactElement<VizTooltipProps>, {
       content: tooltipContent,
       position: { x: pos.pageX, y: pos.pageY },
       offset: { x: 10, y: 10 },

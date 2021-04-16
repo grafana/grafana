@@ -11,7 +11,7 @@ import {
   Collapse,
   GraphSeriesToggler,
   GraphSeriesTogglerAPI,
-  Chart,
+  VizTooltip,
   Icon,
   TooltipDisplayMode,
 } from '@grafana/ui';
@@ -131,7 +131,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               onHorizontalRegionSelected={this.onChangeTime}
             >
               {/* For logs we are using mulit mode until we refactor logs histogram to use barWidth instead of lineWidth to render bars */}
-              <Chart.Tooltip mode={showBars ? TooltipDisplayMode.Multi : TooltipDisplayMode.Single} />
+              <VizTooltip mode={showBars ? TooltipDisplayMode.Multi : TooltipDisplayMode.Single} />
             </GraphWithLegend>
           );
         }}
