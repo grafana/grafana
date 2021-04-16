@@ -87,9 +87,8 @@ In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" 
 
 ## Step 7. Start building dashboards
 
-Now that you have a curated list of queries, create [dashboards]({{< relref "../dashboards/_index.md" >}}) to render system metrics monitored by InfluxDB.
 
-
+DFP note - copied this from Prometheus, not sure it makes sense.
 
 
 
