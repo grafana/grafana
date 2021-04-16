@@ -5,7 +5,7 @@ import { Select } from '@grafana/ui';
 import { getAllDataSources } from '../utils/config';
 
 interface Props {
-  onChange: (alertManagerSourceName?: string) => void;
+  onChange: (alertManagerSourceName: string) => void;
   current?: string;
 }
 
@@ -35,7 +35,7 @@ export const AlertManagerPicker: FC<Props> = ({ onChange, current }) => {
       isMulti={false}
       isClearable={false}
       backspaceRemovesValue={false}
-      onChange={(value) => onChange(value.value)}
+      onChange={(value) => value.value && onChange(value.value)}
       options={options}
       maxMenuHeight={500}
       noOptionsMessage="No datasources found"

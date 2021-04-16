@@ -24,7 +24,11 @@ const alertTypeOptions: SelectableValue[] = [
   },
 ];
 
-export const AlertTypeStep: FC = () => {
+interface Props {
+  editingExistingRule: boolean;
+}
+
+export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const styles = useStyles(getStyles);
 
   const { register, control, watch, errors, setValue } = useFormContext<RuleFormValues>();
@@ -64,6 +68,7 @@ export const AlertTypeStep: FC = () => {
       </Field>
       <div className={styles.flexRow}>
         <Field
+          disabled={editingExistingRule}
           label="Alert type"
           className={styles.formInput}
           error={errors.type?.message}
@@ -91,30 +96,32 @@ export const AlertTypeStep: FC = () => {
             }}
           />
         </Field>
-        <Field
-          className={styles.formInput}
-          label="Select data source"
-          error={errors.dataSourceName?.message}
-          invalid={!!errors.dataSourceName?.message}
-        >
-          <InputControl
-            as={DataSourcePicker as React.ComponentType<Omit<DataSourcePickerProps, 'current'>>}
-            valueName="current"
-            filter={dataSourceFilter}
-            name="dataSourceName"
-            noDefault={true}
-            control={control}
-            alerting={true}
-            rules={{
-              required: { value: true, message: 'Please select a data source' },
-            }}
-            onChange={(ds: DataSourceInstanceSettings[]) => {
-              // reset location if switching data sources, as differnet rules source will have different groups and namespaces
-              setValue('location', undefined);
-              return ds[0]?.name ?? null;
-            }}
-          />
-        </Field>
+        {ruleFormType === RuleFormType.system && (
+          <Field
+            className={styles.formInput}
+            label="Select data source"
+            error={errors.dataSourceName?.message}
+            invalid={!!errors.dataSourceName?.message}
+          >
+            <InputControl
+              as={(DataSourcePicker as unknown) as React.ComponentType<Omit<DataSourcePickerProps, 'current'>>}
+              valueName="current"
+              filter={dataSourceFilter}
+              name="dataSourceName"
+              noDefault={true}
+              control={control}
+              alerting={true}
+              rules={{
+                required: { value: true, message: 'Please select a data source' },
+              }}
+              onChange={(ds: DataSourceInstanceSettings[]) => {
+                // reset location if switching data sources, as differnet rules source will have different groups and namespaces
+                setValue('location', undefined);
+                return ds[0]?.name ?? null;
+              }}
+            />
+          </Field>
+        )}
       </div>
       {ruleFormType === RuleFormType.system && (
         <Field

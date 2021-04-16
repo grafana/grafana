@@ -2,6 +2,7 @@ import { combineReducers } from 'redux';
 import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 import {
   fetchAlertManagerConfigAction,
+  fetchExistingRuleAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
   fetchSilencesAction,
@@ -20,6 +21,7 @@ export const reducer = combineReducers({
     .reducer,
   ruleForm: combineReducers({
     saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
+    existingRule: createAsyncSlice('existingRule', fetchExistingRuleAction).reducer,
   }),
 });
 

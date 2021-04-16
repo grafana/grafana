@@ -2,7 +2,7 @@ import { GrafanaTheme, rangeUtil } from '@grafana/data';
 import { ConfirmModal, useStyles } from '@grafana/ui';
 import { CombinedRuleGroup, RulesSource } from 'app/types/unified-alerting';
 import React, { FC, Fragment, useState } from 'react';
-import { hashRulerRule, isAlertingRule } from '../../utils/rules';
+import { getRuleIdentifier, isAlertingRule, stringifyRuleIdentifier } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from '@emotion/css';
 import { TimeToNow } from '../TimeToNow';
@@ -44,12 +44,7 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
   const deleteRule = () => {
     if (ruleToDelete) {
       dispatch(
-        deleteRuleAction({
-          ruleSourceName: getRulesSourceName(rulesSource),
-          groupName: group.name,
-          namespace,
-          ruleHash: hashRulerRule(ruleToDelete),
-        })
+        deleteRuleAction(getRuleIdentifier(getRulesSourceName(rulesSource), namespace, group.name, ruleToDelete))
       );
       setRuleToDelete(undefined);
     }
@@ -134,7 +129,17 @@ export const RulesTable: FC<Props> = ({ group, rulesSource, namespace }) => {
                           href={createExploreLink(rulesSource.name, rule.query)}
                         />
                       )}
-                      {!!rulerRule && <ActionIcon icon="pen" tooltip="edit rule" />}
+                      {!!rulerRule && (
+                        <ActionIcon
+                          icon="pen"
+                          tooltip="edit rule"
+                          href={`/alerting/${encodeURIComponent(
+                            stringifyRuleIdentifier(
+                              getRuleIdentifier(getRulesSourceName(rulesSource), namespace, group.name, rulerRule)
+                            )
+                          )}/edit`}
+                        />
+                      )}
                       {!!rulerRule && (
                         <ActionIcon icon="trash-alt" tooltip="delete rule" onClick={() => setRuleToDelete(rulerRule)} />
                       )}

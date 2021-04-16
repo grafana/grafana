@@ -134,6 +134,9 @@ export class MockDataSourceSrv implements DataSourceSrv {
    * Get settings and plugin metadata by name or uid
    */
   getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
-    return DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) || { meta: { info: { logos: {} } } };
+    return (
+      DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) ||
+      (({ meta: { info: { logos: {} } } } as unknown) as DataSourceInstanceSettings)
+    );
   }
 }

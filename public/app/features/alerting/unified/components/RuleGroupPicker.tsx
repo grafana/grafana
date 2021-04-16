@@ -45,6 +45,7 @@ export const RuleGroupPicker: FC<Props> = ({ value, onChange, dataSourceName }) 
     return [];
   }, [rulesConfig]);
 
+  // @TODO replace cascader with separate dropdowns
   return (
     <Cascader
       placeholder="Select a rule group"
@@ -55,6 +56,7 @@ export const RuleGroupPicker: FC<Props> = ({ value, onChange, dataSourceName }) 
       initialValue={value ? stringifyValue(value) : undefined}
       displayAllSelectedLevels={true}
       separator=" > "
+      key={JSON.stringify(options)}
       options={options}
       changeOnSelect={false}
     />
