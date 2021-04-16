@@ -60,6 +60,21 @@ export const PieChart: FC<PieChartProps> = ({
   const theme = useTheme();
   const [state, setState] = useSetState<PieChartState>();
 
+  const setHighlightedSlice = (event: DataHoverEvent) => {
+    if (event.payload.source && eventBus?.isSourceOf(event.payload.source)) {
+      setState({ highlightedTitle: event.payload.dataId });
+    }
+  };
+
+  const resetHighlightedSlice = (event: DataHoverClearEvent) => {
+    if (event.payload.source && eventBus?.isSourceOf(event.payload.source)) {
+      setState({ highlightedTitle: undefined });
+    }
+  };
+
+  eventBus?.subscribe(DataHoverEvent, setHighlightedSlice);
+  eventBus?.subscribe(DataHoverClearEvent, resetHighlightedSlice);
+
   const getLegend = (fields: FieldDisplay[], legendOptions: PieChartLegendOptions) => {
     if (legendOptions.displayMode === LegendDisplayMode.Hidden) {
       return undefined;
@@ -97,17 +112,6 @@ export const PieChart: FC<PieChartProps> = ({
         },
       };
     });
-
-    const setHighlightedSlice = (event: DataHoverEvent) => {
-      setState({ highlightedTitle: event.payload.dataId });
-    };
-
-    const resetHighlightedSlice = (event: DataHoverClearEvent) => {
-      setState({ highlightedTitle: undefined });
-    };
-
-    eventBus?.subscribe(DataHoverEvent, setHighlightedSlice);
-    eventBus?.subscribe(DataHoverClearEvent, resetHighlightedSlice);
 
     return (
       <VizLegend

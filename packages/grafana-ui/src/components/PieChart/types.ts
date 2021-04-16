@@ -1,6 +1,6 @@
 import {
   DataFrame,
-  EventBus,
+  EventBusWithSource,
   FieldConfigSource,
   FieldDisplay,
   InterpolateFunction,
@@ -26,7 +26,7 @@ export interface PieChartProps {
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
   onSeriesColorChange?: (label: string, color: string) => void;
-  eventBus?: EventBus;
+  eventBus?: EventBusWithSource;
   legendOptions?: PieChartLegendOptions;
   reduceOptions: ReduceDataOptions;
   fieldConfig: FieldConfigSource<any>;

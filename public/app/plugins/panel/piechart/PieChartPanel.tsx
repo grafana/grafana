@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { PieChart } from '@grafana/ui';
 import { PieChartOptions } from './types';
-import { PanelProps } from '@grafana/data';
+import { EventBusWithSource, PanelProps } from '@grafana/data';
 import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 
 interface Props extends PanelProps<PieChartOptions> {}
@@ -16,6 +16,7 @@ export const PieChartPanel: React.FC<Props> = ({
   fieldConfig,
   timeZone,
   eventBus,
+  id,
 }) => {
   const onSeriesColorChange = useCallback(
     (label: string, color: string) => {
@@ -29,7 +30,7 @@ export const PieChartPanel: React.FC<Props> = ({
       width={width}
       height={height}
       timeZone={timeZone}
-      eventBus={eventBus}
+      eventBus={new EventBusWithSource(eventBus, id.toString(10))}
       fieldConfig={fieldConfig}
       reduceOptions={options.reduceOptions}
       replaceVariables={replaceVariables}

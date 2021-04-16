@@ -90,3 +90,62 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     this.emitter.removeAllListeners();
   }
 }
+
+export class EventBusWithSource implements EventBus {
+  private _source: string;
+  get source(): string[] {
+    if (this.eventBus instanceof EventBusWithSource) {
+      return this.eventBus.source.concat([this._source]);
+    }
+    return [this._source];
+  }
+
+  eventBus: EventBus;
+
+  constructor(eventBus: EventBus, source: string) {
+    this.eventBus = eventBus;
+    this._source = source;
+  }
+
+  publish<T extends BusEvent>(event: T): void {
+    var decoratedEvent = { ...event, ...{ payload: { ...event.payload, ...{ source: this.source } } } };
+    this.eventBus.publish(decoratedEvent);
+  }
+
+  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+    return this.eventBus.subscribe(eventType, handler);
+  }
+
+  getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
+    return this.eventBus.getStream(eventType);
+  }
+
+  removeAllListeners(): void {
+    this.eventBus.removeAllListeners();
+  }
+
+  /**
+   * Appends a source fragment to the source
+   *
+   * @alpha
+   * @param source source to append to EventBusWithSource
+   * @returns a new instance of EventBusWithSource with the new source appended
+   */
+  appendSource = (source: string) => {
+    return new EventBusWithSource(this.eventBus, source);
+  };
+
+  /**
+   * Checks if the this eventbus is the parent of the eventbus that published the event
+   *
+   * @param source of the payload to be checked
+   */
+  isSourceOf = (source: string[]) => {
+    for (let i in this.source) {
+      if (this.source[i] !== source[i]) {
+        return false;
+      }
+    }
+    return true;
+  };
+}

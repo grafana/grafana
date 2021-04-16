@@ -12,6 +12,7 @@ export interface DataHoverPayload {
   rowIndex?: number; // the hover row
   columnIndex?: number; // the hover column
   dataId?: string; // identifying string to correlate data between publishers and subscribers
+  source?: string[];
 
   // When dragging, this will capture the original state
   down?: Omit<DataHoverPayload, 'down'>;
