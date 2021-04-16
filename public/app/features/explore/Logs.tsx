@@ -32,6 +32,7 @@ import {
   stylesFactory,
   Icon,
   Tooltip,
+  CustomScrollbar,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
@@ -390,27 +391,31 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             ]}
           />
         )}
-
-        <LogRows
-          logRows={logRows}
-          deduplicatedRows={dedupedRows}
-          dedupStrategy={dedupStrategy}
-          getRowContext={this.props.getRowContext}
-          highlighterExpressions={highlighterExpressions}
-          onClickFilterLabel={onClickFilterLabel}
-          onClickFilterOutLabel={onClickFilterOutLabel}
-          showContextToggle={showContextToggle}
-          showLabels={showLabels}
-          showTime={showTime}
-          forceEscape={forceEscape}
-          wrapLogMessage={wrapLogMessage}
-          timeZone={timeZone}
-          getFieldLinks={getFieldLinks}
-          logsSortOrder={logsSortOrder}
-          showDetectedFields={showDetectedFields}
-          onClickShowDetectedField={this.showDetectedField}
-          onClickHideDetectedField={this.hideDetectedField}
-        />
+        <div style={{ display: 'flex', flexDirection: 'row', height: '90vh' }}>
+          <CustomScrollbar>
+            <LogRows
+              logRows={logRows}
+              deduplicatedRows={dedupedRows}
+              dedupStrategy={dedupStrategy}
+              getRowContext={this.props.getRowContext}
+              highlighterExpressions={highlighterExpressions}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              showContextToggle={showContextToggle}
+              showLabels={showLabels}
+              showTime={showTime}
+              forceEscape={forceEscape}
+              wrapLogMessage={wrapLogMessage}
+              timeZone={timeZone}
+              getFieldLinks={getFieldLinks}
+              logsSortOrder={logsSortOrder}
+              showDetectedFields={showDetectedFields}
+              onClickShowDetectedField={this.showDetectedField}
+              onClickHideDetectedField={this.hideDetectedField}
+            />
+          </CustomScrollbar>
+          <div style={{ width: '70px', height: '90vh', border: '1px solid black' }}></div>
+        </div>
 
         {!loading && !hasData && !scanning && (
           <div className={styles.noData}>

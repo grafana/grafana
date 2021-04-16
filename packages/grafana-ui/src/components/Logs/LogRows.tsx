@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
+import { cx } from '@emotion/css';
 import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
@@ -24,9 +25,7 @@ export interface Props extends Themeable {
   logsSortOrder?: LogsSortOrder | null;
   allowDetails?: boolean;
   previewLimit?: number;
-  // Passed to fix problems with inactive scrolling in Logs Panel
-  // Can be removed when we unify scrolling for Panel and Explore
-  disableCustomHorizontalScroll?: boolean;
+  withNavigation?: boolean;
   forceEscape?: boolean;
   showDetectedFields?: string[];
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -97,7 +96,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       allowDetails,
       previewLimit,
       getFieldLinks,
-      disableCustomHorizontalScroll,
+      withNavigation,
       logsSortOrder,
       showDetectedFields,
       onClickShowDetectedField,
@@ -105,18 +104,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       forceEscape,
     } = this.props;
     const { renderAll } = this.state;
-    const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
+    const { logsRowsTable, exploreLogsPanelWithNavigation } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-
-    // For horizontal scrolling we can't use CustomScrollbar as it causes the problem with logs context - it is not visible
-    // for top log rows. Therefore we use CustomScrollbar only in LogsPanel and for Explore, we use custom css styling.
-    const horizontalScrollWindow = wrapLogMessage || disableCustomHorizontalScroll ? '' : logsRowsHorizontalScroll;
-
+    const exploreWidth = withNavigation ? exploreLogsPanelWithNavigation : '';
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
     const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
@@ -128,8 +123,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
-      <div className={horizontalScrollWindow}>
-        <table className={logsRowsTable}>
+      <>
+        <table className={cx(logsRowsTable, exploreWidth)}>
           <tbody>
             {hasData &&
               firstRows.map((row, index) => (
@@ -188,7 +183,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             )}
           </tbody>
         </table>
-      </div>
+      </>
     );
   }
 }
