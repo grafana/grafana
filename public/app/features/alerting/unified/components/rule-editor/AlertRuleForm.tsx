@@ -56,6 +56,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     dispatch(
       saveRuleFormAction({
         values: {
+          ...defaultValues,
           ...values,
           annotations: values.annotations?.filter(({ key }) => !!key) ?? [],
           labels: values.labels?.filter(({ key }) => !!key) ?? [],
