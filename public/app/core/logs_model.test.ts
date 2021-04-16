@@ -554,6 +554,52 @@ describe('dataFrameToLogsModel', () => {
     ]);
   });
 
+  it('should return expected line limit meta info when returned number of series equal the log limit', () => {
+    const series: DataFrame[] = [
+      new MutableDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: [
+              't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+              't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+            ],
+            labels: {
+              filename: '/var/log/grafana/grafana.log',
+              job: 'grafana',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['foo', 'bar'],
+          },
+        ],
+        meta: {
+          limit: 2,
+        },
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc', { from: 1556270591353, to: 1556289770991 });
+    expect(logsModel.meta).toHaveLength(2);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: 'Common labels',
+      value: series[0].fields[1].labels,
+      kind: LogsMetaKind.LabelsMap,
+    });
+    expect(logsModel.meta![1]).toMatchObject({
+      label: 'Line limit',
+      value: `Line limit 2 reached, received logs cover 98.44% (5h 14min 40sec) of your selected time range (5h 19min 40sec)`,
+      kind: LogsMetaKind.String,
+    });
+  });
+
   it('should fallback to row index if no id', () => {
     const series: DataFrame[] = [
       toDataFrame({
