@@ -56,6 +56,7 @@ export function RadioButtonGroup<T>({
             id={`option-${o.value}-${id}`}
             name={groupName.current}
             description={o.description}
+            fullWidth={fullWidth}
           >
             {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
             {o.label}
