@@ -12,6 +12,7 @@ import (
 )
 
 type pluginClient interface {
+	backend.QueryDataHandler
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
@@ -34,14 +35,19 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 			descriptor: descriptor,
 			logger:     logger,
 			clientFactory: func() *plugin.Client {
-				return plugin.NewClient(newClientConfig(descriptor.executablePath, env, logger, descriptor.versionedPlugins))
+				return plugin.NewClient(NewClientConfig(descriptor.ExecutablePath, env, logger, descriptor.VersionedPlugins))
 			},
 		}, nil
 	}
 }
 
+// newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
+func newPluginV2(descriptor PluginDescriptor, logger log.Logger, env []string) *plugin.Client {
+	return plugin.NewClient(NewClientConfig(descriptor.ExecutablePath, env, logger, descriptor.VersionedPlugins))
+}
+
 func (p *grpcPlugin) PluginID() string {
-	return p.descriptor.pluginID
+	return p.descriptor.PluginID
 }
 
 func (p *grpcPlugin) Logger() log.Logger {
@@ -109,6 +115,14 @@ func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()
 	return pluginClient, true
+}
+
+func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.QueryData(ctx, req)
 }
 
 func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {

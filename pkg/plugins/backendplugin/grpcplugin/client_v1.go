@@ -22,7 +22,7 @@ func newClientV1(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	logger.Warn("Plugin uses a deprecated version of Grafana's backend plugin system which will be removed in a future release. " +
 		"Consider upgrading to a newer plugin version or reach out to the plugin repository/developer and request an upgrade.")
 
-	raw, err := rpcClient.Dispense(descriptor.pluginID)
+	raw, err := rpcClient.Dispense(descriptor.PluginID)
 	if err != nil {
 		return nil, err
 	}
@@ -38,17 +38,21 @@ func newClientV1(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		c.RendererPlugin = plugin
 	}
 
-	if descriptor.startFns.OnLegacyStart != nil {
+	if descriptor.StartFns.OnLegacyStart != nil {
 		legacyClient := &LegacyClient{
 			DatasourcePlugin: c.DatasourcePlugin,
 			RendererPlugin:   c.RendererPlugin,
 		}
-		if err := descriptor.startFns.OnLegacyStart(descriptor.pluginID, legacyClient, logger); err != nil {
+		if err := descriptor.StartFns.OnLegacyStart(descriptor.PluginID, legacyClient, logger); err != nil {
 			return nil, err
 		}
 	}
 
 	return &c, nil
+}
+
+func (c *clientV1) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
 }
 
 func (c *clientV1) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {

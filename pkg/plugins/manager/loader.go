@@ -15,9 +15,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	grpcplugin2 "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
+	goplugin "github.com/hashicorp/go-plugin"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 
@@ -198,9 +201,36 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 			return nil, err
 		}
 
-		err = loader.LoadV2(plugin.PluginDir, l.BackendPluginManager)
-		if err != nil {
-			return nil, err
+		if plugin.Backend {
+			startCmd := plugin.Executable
+			if plugin.Type == "renderer" {
+				startCmd = "plugin_start"
+			}
+			cmd := plugins.ComposePluginStartCommand(startCmd)
+			fullpath := filepath.Join(plugin.PluginDir, cmd)
+
+			//client := grpcplugin.NewBackendPluginV2(plugin.ID, fullpath, l.log.New("pluginId", plugin.ID), []string{})
+			//
+			//if err := l.BackendPluginManager.Register(plugin.ID, factory); err != nil {
+			//	return nil, errutil.Wrapf(err, "failed to register backend plugin")
+			//}
+
+			err = plugin.Setup(grpcplugin.PluginDescriptor{
+				PluginID:       plugin.ID,
+				ExecutablePath: fullpath,
+				VersionedPlugins: map[int]goplugin.PluginSet{
+					grpcplugin2.ProtocolVersion: grpcplugin.GetV2PluginSet(),
+				},
+			}, l.log.New("pluginID", plugin.ID))
+
+			if err != nil {
+				return nil, err
+			}
+
+			//err = plugin.Start(context.Background())
+			//if err != nil {
+			//	return nil, err
+			//}
 		}
 
 		//var pb *plugins.PluginV2

@@ -2,7 +2,10 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -28,7 +31,8 @@ type PluginManagerV2 struct {
 	PluginLoader         plugins.PluginLoaderV2      `inject:""`
 	PluginInitializer    plugins.PluginInitializerV2 `inject:""`
 
-	plugins map[string]*plugins.PluginV2
+	plugins   map[string]*plugins.PluginV2
+	pluginsMu sync.RWMutex
 }
 
 func init() {
@@ -63,16 +67,93 @@ func (m *PluginManagerV2) Init() error {
 	return nil
 }
 
+func (m *PluginManagerV2) Run(ctx context.Context) error {
+	m.start(ctx)
+	<-ctx.Done()
+	m.stop(ctx)
+	return ctx.Err()
+}
+
+// start starts all managed backend plugins
+func (m *PluginManagerV2) start(ctx context.Context) {
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+	for _, p := range m.plugins {
+		if !p.IsManaged() || p.IsCorePlugin {
+			continue
+		}
+
+		if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+			p.Logger().Error("Failed to start plugin", "error", err)
+			continue
+		}
+	}
+}
+
+func (m *PluginManagerV2) stop(ctx context.Context) {
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+	var wg sync.WaitGroup
+	for _, p := range m.plugins {
+		wg.Add(1)
+		go func(p backendplugin.Plugin, ctx context.Context) {
+			defer wg.Done()
+			p.Logger().Debug("Stopping plugin")
+			if err := p.Stop(ctx); err != nil {
+				p.Logger().Error("Failed to stop plugin", "error", err)
+			}
+			p.Logger().Debug("Plugin stopped")
+		}(p, ctx)
+	}
+	wg.Wait()
+}
+
+func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.PluginV2) error {
+	if err := p.Start(ctx); err != nil {
+		return err
+	}
+
+	go func(ctx context.Context, p *plugins.PluginV2) {
+		if err := restartKilledProcess(ctx, p); err != nil {
+			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
+		}
+	}(ctx, p)
+
+	return nil
+}
+
+func restartKilledProcess(ctx context.Context, p *plugins.PluginV2) error {
+	ticker := time.NewTicker(time.Second * 1)
+
+	for {
+		select {
+		case <-ctx.Done():
+			if err := ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
+				return err
+			}
+			return nil
+		case <-ticker.C:
+			if !p.Exited() {
+				continue
+			}
+
+			p.Logger().Debug("Restarting plugin")
+			if err := p.Start(ctx); err != nil {
+				p.Logger().Error("Failed to restart plugin", "error", err)
+				continue
+			}
+			p.Logger().Debug("Plugin restarted")
+		}
+	}
+}
+
 func (m *PluginManagerV2) InstallPlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
 	plugin, err := m.PluginLoader.Load(pluginJSONPath)
 	if err != nil {
 		return err
 	}
 
-	plugin.QueryDataHandler = opts.QueryDataHandler
-	plugin.CheckHealthHandler = opts.CheckHealthHandler
-	plugin.CallResourceHandler = opts.CallResourceHandler
-	plugin.StreamHandler = opts.StreamHandler
+	plugin.Client = opts
 
 	err = m.PluginInitializer.Initialize(plugin)
 	if err != nil {
@@ -124,10 +205,6 @@ func (m *PluginManagerV2) installPlugins(path string, forceCreatePath bool) erro
 func (m *PluginManagerV2) IsDisabled() bool {
 	_, exists := m.Cfg.FeatureToggles["pluginManagerV2"]
 	return !exists
-}
-
-func (m *PluginManagerV2) Run(ctx context.Context) error {
-	return nil
 }
 
 func (m *PluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

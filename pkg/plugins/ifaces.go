@@ -2,10 +2,15 @@ package plugins
 
 import (
 	"context"
+	"sync"
+
+	"github.com/hashicorp/go-plugin"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 )
 
 // Manager is the plugin manager service interface.
@@ -131,18 +136,19 @@ type PluginManagerV2 interface {
 
 type InstallOpts struct {
 	backend.QueryDataHandler
-	backend.StreamHandler
-	backend.CallResourceHandler
+	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
+	backend.CallResourceHandler
+	backend.StreamHandler
 }
 
 type PluginV2 struct {
-	// Would be nice that when we retrieve plugins, we will know their capability
-	// This will also allow any plugin to have different responsibilities
-	backend.QueryDataHandler
-	backend.StreamHandler
-	backend.CallResourceHandler
-	backend.CheckHealthHandler
+	Client      client
+	hashiClient *plugin.Client
+	descriptor  grpcplugin.PluginDescriptor
+
+	logger glog.Logger
+	mutex  sync.RWMutex
 
 	// Common settings
 	Type         string                `json:"type"`

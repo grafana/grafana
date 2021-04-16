@@ -31,7 +31,7 @@ var handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-func newClientConfig(executablePath string, env []string, logger log.Logger,
+func NewClientConfig(executablePath string, env []string, logger log.Logger,
 	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
 	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
 	// nolint:gosec
@@ -61,15 +61,15 @@ type PluginStartFuncs struct {
 
 // PluginDescriptor is a descriptor used for registering backend plugins.
 type PluginDescriptor struct {
-	pluginID         string
-	executablePath   string
+	PluginID         string
+	ExecutablePath   string
 	managed          bool
-	versionedPlugins map[int]goplugin.PluginSet
-	startFns         PluginStartFuncs
+	VersionedPlugins map[int]goplugin.PluginSet
+	StartFns         PluginStartFuncs
 }
 
 // getV2PluginSet returns list of plugins supported on v2.
-func getV2PluginSet() goplugin.PluginSet {
+func GetV2PluginSet() goplugin.PluginSet {
 	return goplugin.PluginSet{
 		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
 		"resource":    &grpcplugin.ResourceGRPCPlugin{},
@@ -82,32 +82,32 @@ func getV2PluginSet() goplugin.PluginSet {
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
 func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
-		pluginID:       pluginID,
-		executablePath: executablePath,
+		PluginID:       pluginID,
+		ExecutablePath: executablePath,
 		managed:        true,
-		versionedPlugins: map[int]goplugin.PluginSet{
+		VersionedPlugins: map[int]goplugin.PluginSet{
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			grpcplugin.ProtocolVersion: getV2PluginSet(),
+			grpcplugin.ProtocolVersion: GetV2PluginSet(),
 		},
-		startFns: startFns,
+		StartFns: startFns,
 	})
 }
 
 // NewRendererPlugin creates a new renderer plugin factory used for registering a backend renderer plugin.
 func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
-		pluginID:       pluginID,
-		executablePath: executablePath,
+		PluginID:       pluginID,
+		ExecutablePath: executablePath,
 		managed:        false,
-		versionedPlugins: map[int]goplugin.PluginSet{
+		VersionedPlugins: map[int]goplugin.PluginSet{
 			DefaultProtocolVersion: {
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
-			grpcplugin.ProtocolVersion: getV2PluginSet(),
+			grpcplugin.ProtocolVersion: GetV2PluginSet(),
 		},
-		startFns: startFns,
+		StartFns: startFns,
 	})
 }
 
