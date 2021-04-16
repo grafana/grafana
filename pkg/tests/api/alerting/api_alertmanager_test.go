@@ -281,6 +281,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 // createFolder creates a folder for storing our alerts under. Grafana uses folders as a replacement for alert namespaces to match its permission model.
 // We use the dashboard command using IsFolder = true to tell it's a folder, it takes the dashboard as the name of the folder.
 func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folderName string) error {
+	t.Helper()
+
 	cmd := models.SaveDashboardCommand{
 		OrgId:    2, // This is the orgID of the anonymous user.
 		FolderId: folderID,
@@ -294,7 +296,7 @@ func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folder
 	return err
 }
 
-// rulesNamespaceWithoutVariableValues takes a apimodels.NamespaceConfigResponse JSON-based input and makes the dynamic inputs static e.g. uid, dates, etc.
+// rulesNamespaceWithoutVariableValues takes a apimodels.NamespaceConfigResponse JSON-based input and makes the dynamic fields static e.g. uid, dates, etc.
 func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) string {
 	t.Helper()
 
