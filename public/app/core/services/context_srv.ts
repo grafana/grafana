@@ -70,11 +70,7 @@ export class ContextSrv {
       return true;
     }
 
-    return !!(
-      this.user.permissions &&
-      this.user.permissions[action] &&
-      (scope ? this.user.permissions[action][scope] : true)
-    );
+    return !!(this.user.permissions?.[action] && (scope ? this.user.permissions[action][scope] : true));
   }
 
   isGrafanaVisible() {
