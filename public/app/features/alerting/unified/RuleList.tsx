@@ -1,31 +1,40 @@
-import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
-import { Icon, InfoBox, useStyles, Button } from '@grafana/ui';
+import { DataSourceInstanceSettings, GrafanaTheme, urlUtil } from '@grafana/data';
+import { Icon, InfoBox, useStyles, Button, ButtonGroup, ToolbarButton } from '@grafana/ui';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
-import { SystemOrApplicationRules } from './components/rules/SystemOrApplicationRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { useFilteredRules } from './hooks/useFilteredRules';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
-import {
-  getAllRulesSourceNames,
-  getRulesDataSources,
-  GRAFANA_RULES_SOURCE_NAME,
-  isCloudRulesSource,
-} from './utils/datasource';
+import { getAllRulesSourceNames, getRulesDataSources, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { css } from '@emotion/css';
-import { ThresholdRules } from './components/rules/ThresholdRules';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { isRulerNotSupportedResponse } from './utils/rules';
 import RulesFilter from './components/rules/RulesFilter';
+import { RuleListGroupView } from './components/rules/RuleListGroupView';
+import { RuleListStateView } from './components/rules/RuleListStateView';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+
+const VIEWS = {
+  groups: RuleListGroupView,
+  state: RuleListStateView,
+};
 
 export const RuleList: FC = () => {
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
+
+  const [queryParams] = useQueryParams();
+
+  const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
+    ? (queryParams['view'] as keyof typeof VIEWS)
+    : 'groups';
+
+  const ViewComponent = VIEWS[view];
 
   // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
   useEffect(() => {
@@ -75,19 +84,6 @@ export const RuleList: FC = () => {
 
   const combinedNamespaces = useCombinedRuleNamespaces();
   const filteredNamespaces = useFilteredRules(combinedNamespaces);
-  const [thresholdNamespaces, systemNamespaces] = useMemo(() => {
-    const sorted = filteredNamespaces
-      .map((namespace) => ({
-        ...namespace,
-        groups: namespace.groups.sort((a, b) => a.name.localeCompare(b.name)),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    return [
-      sorted.filter((ns) => ns.rulesSource === GRAFANA_RULES_SOURCE_NAME),
-      sorted.filter((ns) => isCloudRulesSource(ns.rulesSource)),
-    ];
-  }, [filteredNamespaces]);
-
   return (
     <AlertingPageWrapper pageId="alert-list" isLoading={loading && !haveResults}>
       {(promReqeustErrors.length || rulerRequestErrors.length || grafanaPromError) && (
@@ -126,6 +122,18 @@ export const RuleList: FC = () => {
           <RulesFilter />
           <div className={styles.break} />
           <div className={styles.buttonsContainer}>
+            <ButtonGroup>
+              <a href={urlUtil.renderUrl('/alerting/list', { ...queryParams, view: 'group' })}>
+                <ToolbarButton variant={view === 'groups' ? 'active' : 'default'} icon="folder">
+                  Groups
+                </ToolbarButton>
+              </a>
+              <a href={urlUtil.renderUrl('/alerting/list', { ...queryParams, view: 'state' })}>
+                <ToolbarButton variant={view === 'state' ? 'active' : 'default'} icon="heart-rate">
+                  State
+                </ToolbarButton>
+              </a>
+            </ButtonGroup>
             <div />
             <a href="/alerting/new">
               <Button icon="plus">New alert rule</Button>
@@ -134,8 +142,7 @@ export const RuleList: FC = () => {
         </>
       )}
       {showNewAlertSplash && <NoRulesSplash />}
-      {haveResults && <ThresholdRules namespaces={thresholdNamespaces} />}
-      {haveResults && <SystemOrApplicationRules namespaces={systemNamespaces} />}
+      {haveResults && <ViewComponent namespaces={filteredNamespaces} />}
     </AlertingPageWrapper>
   );
 };

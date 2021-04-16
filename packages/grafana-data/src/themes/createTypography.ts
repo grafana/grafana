@@ -63,7 +63,7 @@ export interface ThemeTypographyInput {
   htmlFontSize?: number;
 }
 
-const defaultFontFamily = '"Inter", "Helvetica", "Arial", sans-serif';
+const defaultFontFamily = '"Roboto", "Helvetica", "Arial", sans-serif';
 const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
 
 export function createTypography(palette: ThemePalette, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
@@ -104,19 +104,19 @@ export function createTypography(palette: ThemePalette, typographyInput: ThemeTy
     fontWeight,
     fontSize: pxToRem(size),
     lineHeight,
-    letterSpacing: `${letterSpacing}em`,
+    ...(fontFamily === defaultFontFamily ? { letterSpacing: `${round(letterSpacing / size)}em` } : {}),
     ...casing,
   });
 
   const variants = {
-    h1: buildVariant(fontWeightMedium, 28, 1.2, -0.01),
-    h2: buildVariant(fontWeightMedium, 24, 1.2, -0.01),
-    h3: buildVariant(fontWeightMedium, 21, 1.3, -0.01),
-    h4: buildVariant(fontWeightRegular, 18, 1.4, -0.005),
-    h5: buildVariant(fontWeightRegular, 16, 1.334, -0.005),
-    h6: buildVariant(fontWeightRegular, 14, 1.6, -0.005),
-    body: buildVariant(fontWeightRegular, 14, 1.5, -0.005),
-    bodySmall: buildVariant(fontWeightRegular, 12, 1.5, -0.005),
+    h1: buildVariant(fontWeightLight, 28, 1.167, -0.25),
+    h2: buildVariant(fontWeightLight, 24, 1.2, 0),
+    h3: buildVariant(fontWeightRegular, 21, 1.167, 0),
+    h4: buildVariant(fontWeightRegular, 18, 1.235, 0.25),
+    h5: buildVariant(fontWeightRegular, 16, 1.334, 0),
+    h6: buildVariant(fontWeightMedium, 14, 1.6, 0.15),
+    body: buildVariant(fontWeightRegular, 14, 1.5, 0.15),
+    bodySmall: buildVariant(fontWeightRegular, 12, 1.5, 0.15),
   };
 
   const size = {
@@ -140,4 +140,8 @@ export function createTypography(palette: ThemePalette, typographyInput: ThemeTy
     size,
     ...variants,
   };
+}
+
+function round(value: number) {
+  return Math.round(value * 1e5) / 1e5;
 }

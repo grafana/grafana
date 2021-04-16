@@ -1,7 +1,14 @@
 /* Prometheus internal models */
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { PromAlertingRuleState, PromRuleType, RulerRuleDTO, Labels, Annotations } from './unified-alerting-dto';
+import {
+  PromAlertingRuleState,
+  PromRuleType,
+  RulerRuleDTO,
+  Labels,
+  Annotations,
+  RulerRuleGroupDTO,
+} from './unified-alerting-dto';
 
 export type Alert = {
   activeAt: string;
@@ -72,6 +79,8 @@ export interface CombinedRule {
   annotations: Annotations;
   promRule?: Rule;
   rulerRule?: RulerRuleDTO;
+  group: CombinedRuleGroup;
+  namespace: CombinedRuleNamespace;
 }
 
 export interface CombinedRuleGroup {
@@ -85,7 +94,14 @@ export interface CombinedRuleNamespace {
   groups: CombinedRuleGroup[];
 }
 
-export interface RuleLocation {
+export interface RuleWithLocation {
+  ruleSourceName: string;
+  namespace: string;
+  group: RulerRuleGroupDTO;
+  rule: RulerRuleDTO;
+}
+
+export interface CloudRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
@@ -97,3 +113,8 @@ export interface RuleFilterState {
   dataSource?: string;
   alertState?: string;
 }
+export interface GrafanaRuleIdentifier {
+  uid: string;
+}
+
+export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier;
