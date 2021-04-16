@@ -156,8 +156,8 @@ function rulerRuleToCombinedRule(
     : {
         name: rule.grafana_alert.title,
         query: '',
-        labels: rule.grafana_alert.labels || {},
-        annotations: rule.grafana_alert.annotations || {},
+        labels: rule.labels || {},
+        annotations: rule.annotations || {},
         rulerRule: rule,
         namespace,
         group,

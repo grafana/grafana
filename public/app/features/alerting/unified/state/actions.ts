@@ -159,7 +159,8 @@ export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<vo
     }
     await deleteRule(ruleWithLocation);
     // refetch rules for this rules source
-    return dispatch(fetchRulerRulesAction(ruleWithLocation.ruleSourceName));
+    dispatch(fetchRulerRulesAction(ruleWithLocation.ruleSourceName));
+    dispatch(fetchPromRulesAction(ruleWithLocation.ruleSourceName));
   };
 }
 
