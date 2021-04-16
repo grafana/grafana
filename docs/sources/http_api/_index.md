@@ -38,7 +38,7 @@ dashboards, creating users and updating data sources.
 
 - [Data Source Permissions API]({{< relref "datasource_permissions.md" >}})
 - [External Group Sync API]({{< relref "external_group_sync.md" >}})
-- [License API]{{< relref "licensing.md" >}})
+- [License API]({{< relref "licensing.md" >}})
 - [Reporting API]({{< relref "reporting.md" >}})
 
 
