@@ -61,6 +61,12 @@ func (rs *RenderingService) Init() error {
 		return fmt.Errorf("failed to create images directory %q: %w", rs.Cfg.ImagesDir, err)
 	}
 
+	// ensure CSVsDir exists
+	err = os.MkdirAll(rs.Cfg.CSVsDir, 0700)
+	if err != nil {
+		return fmt.Errorf("failed to create CSVs directory %q: %w", rs.Cfg.CSVsDir, err)
+	}
+
 	// set value used for domain attribute of renderKey cookie
 	switch {
 	case rs.Cfg.RendererUrl != "":
@@ -210,22 +216,15 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	filePath, err := filepath.Abs(filepath.Join(rs.Cfg.ImagesDir, rand))
-	if err != nil {
-		return "", err
-	}
 
-	var ext string
-	switch rt {
-	case RENDER_CSV:
+	ext := "png"
+	folder := rs.Cfg.ImagesDir
+	if rt == RENDER_CSV {
 		ext = "csv"
-	case RENDER_PNG:
-		ext = "png"
-	default:
-		ext = "png"
+		folder = rs.Cfg.CSVsDir
 	}
 
-	return fmt.Sprintf("%s.%s", filePath, ext), nil
+	return filepath.Abs(filepath.Join(folder, fmt.Sprintf("%s.%s", rand, ext)))
 }
 
 func (rs *RenderingService) getURL(path string) string {
