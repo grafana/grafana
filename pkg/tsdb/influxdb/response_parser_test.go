@@ -2,6 +2,7 @@ package influxdb
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"strings"
 	"testing"
@@ -12,11 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func responseFromJSON(t *testing.T, text string) Response {
-	buf := ioutil.NopCloser(strings.NewReader(text))
-	response, err := parseJSON(buf)
-	require.NoError(t, err)
-	return response
+func prepare(text string) io.ReadCloser {
+	return ioutil.NopCloser(strings.NewReader(text))
 }
 
 func decodedFrames(t *testing.T, result *plugins.DataQueryResult) data.Frames {
@@ -26,10 +24,23 @@ func decodedFrames(t *testing.T, result *plugins.DataQueryResult) data.Frames {
 }
 
 func TestInfluxdbResponseParser(t *testing.T) {
+	t.Run("Influxdb response parser should handle invalid JSON", func(t *testing.T) {
+		parser := &ResponseParser{}
+
+		response := `{ invalid }`
+
+		query := &Query{}
+
+		result := parser.Parse(prepare(response), query)
+
+		require.Nil(t, result.Dataframes)
+		require.Error(t, result.Error)
+	})
+
 	t.Run("Influxdb response parser should parse everything normally", func(t *testing.T) {
 		parser := &ResponseParser{}
 
-		response := responseFromJSON(t, `
+		response := `
 		{
 			"results": [
 				{
@@ -48,11 +59,11 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}
 			]
 		}
-		`)
+		`
 
 		query := &Query{}
 
-		result := parser.Parse(response, query)
+		result := parser.Parse(prepare(response), query)
 
 		decoded := decodedFrames(t, &result)
 		require.Len(t, decoded, 2)
@@ -78,7 +89,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser with invalid value-format", func(t *testing.T) {
 		parser := &ResponseParser{}
 
-		response := responseFromJSON(t, `
+		response := `
 		{
 			"results": [
 				{
@@ -96,11 +107,11 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}
 			]
 		}
-		`)
+		`
 
 		query := &Query{}
 
-		result := parser.Parse(response, query)
+		result := parser.Parse(prepare(response), query)
 
 		// the current behavior is that we do not report an error, we turn the invalid value into `nil`
 		require.Nil(t, result.Error)
@@ -127,7 +138,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser with invalid timestamp-format", func(t *testing.T) {
 		parser := &ResponseParser{}
 
-		response := responseFromJSON(t, `
+		response := `
 		{
 			"results": [
 				{
@@ -146,11 +157,11 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}
 			]
 		}
-		`)
+		`
 
 		query := &Query{}
 
-		result := parser.Parse(response, query)
+		result := parser.Parse(prepare(response), query)
 
 		// the current behavior is that we do not report an error, we skip the item with the invalid timestamp
 		require.Nil(t, result.Error)
@@ -176,7 +187,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser with alias", func(t *testing.T) {
 		parser := &ResponseParser{}
 
-		response := responseFromJSON(t, `
+		response := `
 		{
 			"results": [
 				{
@@ -199,77 +210,77 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}
 			]
 		}
-		`)
+		`
 
 		query := &Query{Alias: "series alias"}
-		result := parser.Parse(response, query)
+		result := parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "series alias")
 
 		query = &Query{Alias: "alias $m $measurement", Measurement: "10m"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias 10m 10m")
 
 		query = &Query{Alias: "alias $col", Measurement: "10m"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias mean")
 		require.Equal(t, decodedFrames(t, &result)[1].Name, "alias sum")
 
 		query = &Query{Alias: "alias $tag_datacenter"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias America")
 
 		query = &Query{Alias: "alias $1"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias upc")
 
 		query = &Query{Alias: "alias $5"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias $5")
 
 		query = &Query{Alias: "series alias"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "series alias")
 
 		query = &Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias 10m 10m")
 
 		query = &Query{Alias: "alias [[col]]", Measurement: "10m"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias mean")
 		require.Equal(t, decodedFrames(t, &result)[1].Name, "alias sum")
 
 		query = &Query{Alias: "alias [[tag_datacenter]]"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias America")
 
 		query = &Query{Alias: "alias [[tag_dc.region.name]]"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Northeast")
 
 		query = &Query{Alias: "alias [[tag_cluster-name]]"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Cluster")
 
 		query = &Query{Alias: "alias [[tag_/cluster/name/]]"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Cluster/")
 
 		query = &Query{Alias: "alias [[tag_@cluster@name@]]"}
-		result = parser.Parse(response, query)
+		result = parser.Parse(prepare(response), query)
 
 		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Cluster@")
 	})
@@ -277,7 +288,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {
 		parser := &ResponseParser{}
 
-		response := responseFromJSON(t, `
+		response := `
 		{
 			"results": [
 				{
@@ -299,11 +310,11 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				}
 			]
 		}
-		`)
+		`
 
 		query := &Query{}
 
-		result := parser.Parse(response, query)
+		result := parser.Parse(prepare(response), query)
 
 		decoded := decodedFrames(t, &result)
 
@@ -320,15 +331,15 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser with top-level error", func(t *testing.T) {
 		parser := &ResponseParser{}
 
-		response := responseFromJSON(t, `
+		response := `
 		{
 			"error": "error parsing query: found THING"
 		}
-		`)
+		`
 
 		query := &Query{}
 
-		result := parser.Parse(response, query)
+		result := parser.Parse(prepare(response), query)
 
 		require.Nil(t, result.Dataframes)
 

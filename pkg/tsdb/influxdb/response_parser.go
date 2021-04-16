@@ -3,6 +3,7 @@ package influxdb
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"regexp"
 	"strconv"
 	"strings"
@@ -22,8 +23,14 @@ func init() {
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$\s*([\@\/\w-]+?)*`)
 }
 
-func (rp *ResponseParser) Parse(response Response, query *Query) plugins.DataQueryResult {
+func (rp *ResponseParser) Parse(buf io.ReadCloser, query *Query) plugins.DataQueryResult {
 	var queryRes plugins.DataQueryResult
+
+	response, jsonErr := parseJSON(buf)
+	if jsonErr != nil {
+		queryRes.Error = jsonErr
+		return queryRes
+	}
 
 	if response.Error != "" {
 		queryRes.Error = fmt.Errorf(response.Error)
@@ -40,6 +47,15 @@ func (rp *ResponseParser) Parse(response Response, query *Query) plugins.DataQue
 	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
 
 	return queryRes
+}
+
+func parseJSON(buf io.ReadCloser) (Response, error) {
+	var response Response
+	dec := json.NewDecoder(buf)
+	dec.UseNumber()
+
+	err := dec.Decode(&response)
+	return response, err
 }
 
 func transformRows(rows []Row, query *Query) data.Frames {
