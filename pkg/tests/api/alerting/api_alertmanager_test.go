@@ -89,6 +89,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 						For:    dur,
 						Labels: map[string]string{"label1": "val1"},
 					},
+					// this rule does not explicitly set no data and error states
+					// thererfore it should get the default values
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						OrgID:     2,
 						Title:     "AlwaysFiring",
@@ -261,7 +263,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 	})
 
 	t.Run("can update rules", func(t *testing.T) {
-		// update the first rule and completely ermove the other
+		// update the first rule and completely remove the other
 		dur, err := model.ParseDuration("30s")
 		require.NoError(t, err)
 
