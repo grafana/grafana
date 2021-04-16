@@ -111,7 +111,7 @@ export class EventBusWithSource implements EventBus {
     const payload = event.payload ?? { source: [] };
     var decoratedEvent = {
       ...event,
-      ...{ payload: { ...payload, ...{ source: [...[this._source], ...payload.source] } } },
+      ...{ payload: { ...payload, ...{ source: [...[this._source], ...(payload.source ?? [])] } } },
     };
     this.eventBus.publish(decoratedEvent);
   }
