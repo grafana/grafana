@@ -73,7 +73,7 @@ The following guidelines are specific to Grafana documentation. For the most par
 ### File naming conventions
 
 - Files that are displayed in the help system have names that are all lowercase, no spaces. Use hyphens instead of spaces. Example: glossary.md
-- Documentation file names match the title. **Note:** This only applies to new files at this time. Do not change the names of older files unless directed to do so.
+- Documentation file names should match the title. **Note:** This only applies to new files at this time. Do not change the names of older files unless directed to do so.
 - Internal reference file names are all uppercase except the file extension. Example: CONTRIBUTING.md
 - Image file names are descriptive and unique. Also, add the software version number that the image applies to or the screenshot was taken in. Example: share-dashboard-link-7-3.png
 
@@ -187,7 +187,7 @@ Grafana documentation uses notes, tips, cautions, and warnings. Notes are the mo
 
 #### Notes
 
-Notes provide additional information for the user to be aware of. For example:
+Notes provide additional information the user should be aware of. For example:
 
 > **Note:** This page describes a feature for Grafana 7.0 beta.
 
