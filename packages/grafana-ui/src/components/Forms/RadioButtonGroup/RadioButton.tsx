@@ -3,7 +3,7 @@ import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { getPropertiesForButtonSize } from '../commonStyles';
-import { focusCss, getMouseFocusStyles } from '../../../themes/mixins';
+import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
 
 export type RadioButtonSize = 'sm' | 'md';
 
@@ -57,15 +57,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
 
   const textColor = theme.v2.palette.text.secondary;
   const textColorHover = theme.v2.palette.text.primary;
-  const textColorActive = theme.v2.palette.primary.text;
-  const borderColor = theme.v2.components.form.border;
-  const borderColorHover = theme.v2.components.form.borderHover;
-  const borderColorActive = theme.v2.components.form.border;
   const bg = theme.colors.bodyBg;
-  const bgActive = theme.v2.palette.layer2;
-  const border = `1px solid ${borderColor}`;
-  const borderActive = `1px solid ${borderColorActive}`;
-  const borderHover = `1px solid ${borderColorHover}`;
 
   return {
     radio: css`
@@ -74,16 +66,15 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       z-index: -1000;
 
       &:checked + label {
-        border: ${borderActive};
-        color: ${textColorActive};
-        background: ${bgActive};
+        color: ${theme.v2.palette.text.primary};
+        font-weight: ${theme.v2.typography.fontWeightMedium};
+        background: ${theme.v2.palette.action.selected};
         z-index: 3;
       }
 
       &:focus + label,
       &:focus-visible + label {
-        ${focusCss(theme)};
-        z-index: 3;
+        ${getFocusStyles(theme.v2)};
       }
 
       &:focus:not(:focus-visible) + label {
@@ -105,9 +96,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       line-height: ${theme.v2.spacing.gridSize * height - 2}px;
       color: ${textColor};
       padding: ${theme.v2.spacing(0, padding)};
-      margin-left: -1px;
-      border-radius: ${theme.border.radius.sm};
-      border: ${border};
+      border-radius: ${theme.v2.shape.borderRadius()};
       background: ${bg};
       cursor: pointer;
       z-index: 1;
@@ -117,8 +106,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
 
       &:hover {
         color: ${textColorHover};
-        border: ${borderHover};
-        z-index: 2;
       }
     `,
   };
