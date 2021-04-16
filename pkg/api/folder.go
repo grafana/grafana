@@ -19,7 +19,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 	folders, err := s.GetFolders(c.QueryInt64("limit"))
 
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	result := make([]dtos.FolderSearchHit, 0)
@@ -39,7 +39,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
@@ -50,7 +50,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.GetFolderByID(c.ParamsInt64(":id"))
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
@@ -61,7 +61,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolder
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	folder, err := s.CreateFolder(cmd.Title, cmd.Uid)
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	if hs.Cfg.EditorsCanAdmin {
@@ -79,7 +79,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolder
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 	err := s.UpdateFolder(c.Params(":uid"), &cmd)
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
@@ -94,13 +94,13 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 			if errors.Is(err, librarypanels.ErrFolderHasConnectedLibraryPanels) {
 				return response.Error(403, "Folder could not be deleted because it contains linked library panels", err)
 			}
-			return toFolderError(err)
+			return ToFolderErrorResponse(err)
 		}
 	}
 
 	f, err := s.DeleteFolder(c.Params(":uid"))
 	if err != nil {
-		return toFolderError(err)
+		return ToFolderErrorResponse(err)
 	}
 
 	return response.JSON(200, util.DynMap{
@@ -141,7 +141,8 @@ func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folde
 	}
 }
 
-func toFolderError(err error) response.Response {
+// ToFolderErrorResponse returns a different response status according to the folder error type
+func ToFolderErrorResponse(err error) response.Response {
 	var dashboardErr models.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		return response.Error(dashboardErr.StatusCode, err.Error(), err)

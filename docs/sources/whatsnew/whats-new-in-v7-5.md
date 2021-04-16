@@ -3,7 +3,7 @@ title = "What's new in Grafana v7.5"
 description = "Feature and improvement highlights for Grafana v7.5"
 keywords = ["grafana", "new", "documentation", "7.5", "release notes"]
 weight = -32
-aliases = ["/docs/grafana/next/guides/whats-new-in-v7-5/"]
+aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-5/"]
 [_build]
 list = false
 +++
@@ -66,6 +66,8 @@ Instead of the file path, users can now paste the SSL certification content in t
 
 > **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
 
+[Postgres data source]({{< relref "../datasources/postgres.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of this change.
+
 ### Deprecation notice for some Azure Monitor queries
 
 In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs.
@@ -95,6 +97,8 @@ We have converted Tempo to a backend data source and dropped support for tempo-q
 server:
   http_listen_port: 3101
 ```
+
+[Azure Monitor data source]({{< relref "../datasources/azuremonitor.md" >}}) was updated as a result of this change.
 
 ## Enterprise features
 

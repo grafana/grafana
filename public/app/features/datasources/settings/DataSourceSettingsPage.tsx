@@ -233,7 +233,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           />
         )}
 
-        <div className="gf-form-group">
+        <div className="gf-form-group p-t-2">
           {testingStatus?.message && (
             <Alert
               severity={testingStatus.status === 'error' ? 'error' : 'success'}

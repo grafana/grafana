@@ -1,4 +1,4 @@
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { getDatasourceAPIId } from '../utils/datasource';
 import { getBackendSrv } from '@grafana/runtime';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
@@ -7,12 +7,17 @@ import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 export async function setRulerRuleGroup(
   dataSourceName: string,
   namespace: string,
-  group: RulerRuleGroupDTO
+  group: PostableRulerRuleGroupDTO
 ): Promise<void> {
-  await getBackendSrv().post(
-    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
-    group
-  );
+  await await getBackendSrv()
+    .fetch<unknown>({
+      method: 'POST',
+      url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(namespace)}`,
+      data: group,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
 }
 
 // fetch all ruler rule namespaces and included groups

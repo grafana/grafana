@@ -1,31 +1,20 @@
-import React, { FC } from 'react';
-import {
-  Button,
-  Field,
-  FieldArray,
-  FormAPI,
-  IconButton,
-  InputControl,
-  Label,
-  Select,
-  TextArea,
-  stylesFactory,
-} from '@grafana/ui';
+import React, { FC, useCallback } from 'react';
+import { Button, Field, FieldArray, InputControl, Label, TextArea, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { config } from 'app/core/config';
 import { css, cx } from '@emotion/css';
+import { useFormContext } from 'react-hook-form';
+import { RuleFormValues } from '../../types/rule-form';
+import { AnnotationKeyInput } from './AnnotationKeyInput';
 
-interface Props extends FormAPI<any> {}
+const AnnotationsField: FC = () => {
+  const styles = useStyles(getStyles);
+  const { control, register, watch, errors } = useFormContext<RuleFormValues>();
+  const annotations = watch('annotations');
 
-enum AnnotationOptions {
-  summary = 'Summary',
-  description = 'Description',
-  runbook = 'Runbook url',
-}
-
-const AnnotationsField: FC<Props> = ({ control, register }) => {
-  const styles = getStyles(config.theme);
-  const annotationOptions = Object.entries(AnnotationOptions).map(([key, value]) => ({ value: key, label: value }));
+  const existingKeys = useCallback(
+    (index: number): string[] => annotations.filter((_, idx) => idx !== index).map(({ key }) => key),
+    [annotations]
+  );
 
   return (
     <>
@@ -34,43 +23,50 @@ const AnnotationsField: FC<Props> = ({ control, register }) => {
         {({ fields, append, remove }) => {
           return (
             <div className={styles.flexColumn}>
-              {fields.map((field, index) => {
-                return (
-                  <div key={`${field.annotationKey}-${index}`} className={styles.flexRow}>
-                    <Field className={styles.annotationSelect}>
-                      <InputControl
-                        as={Select}
-                        name={`annotations[${index}].key`}
-                        options={annotationOptions}
-                        control={control}
-                        defaultValue={field.key}
-                      />
-                    </Field>
-                    <Field className={cx(styles.annotationTextArea, styles.flexRowItemMargin)}>
-                      <TextArea
-                        name={`annotations[${index}].value`}
-                        ref={register()}
-                        placeholder={`Text`}
-                        defaultValue={field.value}
-                      />
-                    </Field>
-                    <IconButton
-                      className={styles.flexRowItemMargin}
-                      aria-label="delete annotation"
-                      name="trash-alt"
-                      onClick={() => {
-                        remove(index);
-                      }}
+              {fields.map((field, index) => (
+                <div key={`${field.annotationKey}-${index}`} className={styles.flexRow}>
+                  <Field
+                    className={styles.field}
+                    invalid={!!errors.annotations?.[index]?.key?.message}
+                    error={errors.annotations?.[index]?.key?.message}
+                  >
+                    <InputControl
+                      as={AnnotationKeyInput}
+                      width={15}
+                      name={`annotations[${index}].key`}
+                      existingKeys={existingKeys(index)}
+                      control={control}
+                      rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
                     />
-                  </div>
-                );
-              })}
+                  </Field>
+                  <Field
+                    className={cx(styles.flexRowItemMargin, styles.field)}
+                    invalid={!!errors.annotations?.[index]?.value?.message}
+                    error={errors.annotations?.[index]?.value?.message}
+                  >
+                    <TextArea
+                      name={`annotations[${index}].value`}
+                      className={styles.annotationTextArea}
+                      ref={register({ required: { value: !!annotations[index]?.key, message: 'Required.' } })}
+                      placeholder={`value`}
+                      defaultValue={field.value}
+                    />
+                  </Field>
+                  <Button
+                    type="button"
+                    className={styles.flexRowItemMargin}
+                    aria-label="delete annotation"
+                    icon="trash-alt"
+                    variant="secondary"
+                    onClick={() => remove(index)}
+                  />
+                </div>
+              ))}
               <Button
                 className={styles.addAnnotationsButton}
                 icon="plus-circle"
                 type="button"
                 variant="secondary"
-                size="sm"
                 onClick={() => {
                   append({});
                 }}
@@ -85,32 +81,31 @@ const AnnotationsField: FC<Props> = ({ control, register }) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    annotationSelect: css`
-      width: 120px;
-    `,
-    annotationTextArea: css`
-      width: 450px;
-      height: 76px;
-    `,
-    addAnnotationsButton: css`
-      flex-grow: 0;
-      align-self: flex-start;
-    `,
-    flexColumn: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    flexRow: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-    `,
-    flexRowItemMargin: css`
-      margin-left: ${theme.spacing.sm};
-    `,
-  };
+const getStyles = (theme: GrafanaTheme) => ({
+  annotationTextArea: css`
+    width: 450px;
+    height: 76px;
+  `,
+  addAnnotationsButton: css`
+    flex-grow: 0;
+    align-self: flex-start;
+    margin-left: 124px;
+  `,
+  flexColumn: css`
+    display: flex;
+    flex-direction: column;
+  `,
+  field: css`
+    margin-bottom: ${theme.spacing.xs};
+  `,
+  flexRow: css`
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+  `,
+  flexRowItemMargin: css`
+    margin-left: ${theme.spacing.xs};
+  `,
 });
 
 export default AnnotationsField;
