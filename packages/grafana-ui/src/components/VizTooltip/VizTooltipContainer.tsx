@@ -5,13 +5,13 @@ import { getTooltipContainerStyles } from '../../themes/mixins';
 import useWindowSize from 'react-use/lib/useWindowSize';
 import { Dimensions2D, GrafanaTheme } from '@grafana/data';
 
-interface TooltipContainerProps extends HTMLAttributes<HTMLDivElement> {
+export interface VizTooltipContainerProps extends HTMLAttributes<HTMLDivElement> {
   position: { x: number; y: number };
   offset: { x: number; y: number };
   children?: JSX.Element;
 }
 
-export const TooltipContainer: React.FC<TooltipContainerProps> = ({
+export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
   position: { x: positionX, y: positionY },
   offset: { x: offsetX, y: offsetY },
   children,
@@ -98,7 +98,7 @@ export const TooltipContainer: React.FC<TooltipContainerProps> = ({
   );
 };
 
-TooltipContainer.displayName = 'TooltipContainer';
+VizTooltipContainer.displayName = 'VizTooltipContainer';
 
 const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`

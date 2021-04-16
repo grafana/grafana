@@ -75,12 +75,14 @@ export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export {
+  VizTooltip,
+  VizTooltipContainer,
+  SeriesTable,
   VizTooltipOptions,
   TooltipDisplayMode,
-  SeriesTable,
   SeriesTableProps,
   SeriesTableRowProps,
-} from './VizTooltip/VizTooltip';
+} from './VizTooltip';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export {
@@ -138,8 +140,6 @@ export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
-export { default as Chart } from './Chart';
-export { TooltipContainer } from './Chart/TooltipContainer';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 export { RangeSlider } from './Slider/RangeSlider';
