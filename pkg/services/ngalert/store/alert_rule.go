@@ -188,6 +188,16 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 
 				r.New.Version = 1
 
+				if r.New.NoDataState == "" {
+					// set default no data state
+					r.New.NoDataState = ngmodels.NoData
+				}
+
+				if r.New.ExecErrState == "" {
+					// set default error state
+					r.New.ExecErrState = ngmodels.AlertingErrState
+				}
+
 				if err := st.ValidateAlertRule(r.New, true); err != nil {
 					return err
 				}
@@ -222,9 +232,17 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				r.New.RuleGroup = r.Existing.RuleGroup
 				r.New.Version = r.Existing.Version + 1
 
-				r.New.For = r.Existing.For
-				r.New.Annotations = r.Existing.Annotations
-				r.New.Labels = r.Existing.Labels
+				if r.New.For == 0 {
+					r.New.For = r.Existing.For
+				}
+
+				if len(r.New.Annotations) == 0 {
+					r.New.Annotations = r.Existing.Annotations
+				}
+
+				if len(r.New.Labels) == 0 {
+					r.New.Labels = r.Existing.Labels
+				}
 
 				if err := st.ValidateAlertRule(r.New, true); err != nil {
 					return err

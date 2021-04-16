@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/common/model"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -73,12 +75,20 @@ func TestAlertRuleCRUD(t *testing.T) {
 	// Create the namespace we'll save our alerts to.
 	require.NoError(t, createFolder(t, store, 0, "default"))
 
+	dur, err := model.ParseDuration("1m")
+	require.NoError(t, err)
+
+	ruleUIDs := make([]string, 2)
 	// Now, let's create two alerts.
-	{
+	t.Run("can create rules", func(t *testing.T) {
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:    dur,
+						Labels: map[string]string{"label1": "val1"},
+					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						OrgID:     2,
 						Title:     "AlwaysFiring",
@@ -118,6 +128,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 									}`),
 							},
 						},
+						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.KeepLastStateErrState),
 					},
 				},
 			},
@@ -141,10 +153,10 @@ func TestAlertRuleCRUD(t *testing.T) {
 		fmt.Println(string(b))
 		assert.Equal(t, resp.StatusCode, 202)
 		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
-	}
+	})
 
 	// With the rules created, let's make sure that rule definition is stored correctly.
-	{
+	t.Run("can get rules", func(t *testing.T) {
 		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
 		// nolint:gosec
 		resp, err := http.Get(u)
@@ -166,6 +178,10 @@ func TestAlertRuleCRUD(t *testing.T) {
          "rules":[
             {
                "expr":"",
+			   "for": "1m",
+			   "labels": {
+					"label1": "val1"
+			   },
                "grafana_alert":{
                   "id":1,
                   "orgId":2,
@@ -196,8 +212,8 @@ func TestAlertRuleCRUD(t *testing.T) {
                   "namespace_uid":"nsuid",
                   "namespace_id":1,
                   "rule_group":"arulegroup",
-                  "no_data_state":"",
-                  "exec_err_state":""
+                  "no_data_state":"NoData",
+                  "exec_err_state":"Alerting"
                }
             },
             {
@@ -232,24 +248,67 @@ func TestAlertRuleCRUD(t *testing.T) {
                   "namespace_uid":"nsuid",
                   "namespace_id":1,
                   "rule_group":"arulegroup",
-                  "no_data_state":"",
-                  "exec_err_state":""
+                  "no_data_state":"Alerting",
+                  "exec_err_state":"KeepLastState"
                }
             }
          ]
       }
    ]
-}`, rulesNamespaceWithoutVariableValues(t, b))
-	}
+}`, rulesNamespaceWithoutVariableValues(t, b, ruleUIDs))
+		require.Equal(t, 2, len(ruleUIDs))
+		assert.NotEqual(t, ruleUIDs[0], ruleUIDs[1])
+	})
 
-	client := &http.Client{}
-	// Finally, make sure we can delete it.
-	{
-		// If the rule group name does not exists
-		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default/groupnotexist", grafanaListedAddr)
-		req, err := http.NewRequest(http.MethodDelete, u, nil)
+	t.Run("can update rules", func(t *testing.T) {
+		// update the first rule and completely ermove the other
+		dur, err := model.ParseDuration("30s")
 		require.NoError(t, err)
-		resp, err := client.Do(req)
+
+		rules := apimodels.PostableRuleGroupConfig{
+			Name: "arulegroup",
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For: dur,
+						Labels: map[string]string{
+							"label1": "val42",
+							"foo":    "bar",
+						},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						OrgID:     2,
+						UID:       ruleUIDs[0],
+						Title:     "AlwaysNormal",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								Model: json.RawMessage(`{
+											"datasource": "__expr__",
+											"type": "math",
+											"expression": "2 + 3 < 1"
+											}`),
+							},
+						},
+						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.KeepLastStateErrState),
+					},
+				},
+			},
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err = enc.Encode(&rules)
+		require.NoError(t, err)
+
+		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", &buf)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
@@ -258,14 +317,14 @@ func TestAlertRuleCRUD(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		require.Equal(t, http.StatusNotFound, resp.StatusCode)
-		require.JSONEq(t, `{"error":"rule group not found under this namespace", "message": "failed to delete rule group"}`, string(b))
+		fmt.Println(string(b))
+		assert.Equal(t, resp.StatusCode, 202)
+		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
 
-		// If the rule group name does exist
-		u = fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default/arulegroup", grafanaListedAddr)
-		req, err = http.NewRequest(http.MethodDelete, u, nil)
-		require.NoError(t, err)
-		resp, err = client.Do(req)
+		// let's make sure that rule definitions are updated correctly.
+		u = fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
+		resp, err = http.Get(u)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
@@ -274,9 +333,98 @@ func TestAlertRuleCRUD(t *testing.T) {
 		b, err = ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		require.Equal(t, http.StatusAccepted, resp.StatusCode)
-		require.JSONEq(t, `{"message":"rule group deleted"}`, string(b))
-	}
+		assert.Equal(t, resp.StatusCode, 202)
+		assert.JSONEq(t, `
+		{
+		   "default":[
+		      {
+		         "name":"arulegroup",
+		         "interval":"1m",
+		         "rules":[
+		            {
+		               "expr":"",
+					   "for": "30s",
+					   "labels": {
+							"foo": "bar",
+							"label1": "val42"
+					   },
+		               "grafana_alert":{
+		                  "id":1,
+		                  "orgId":2,
+		                  "title":"AlwaysNormal",
+		                  "condition":"A",
+		                  "data":[
+		                     {
+		                        "refId":"A",
+		                        "queryType":"",
+		                        "relativeTimeRange":{
+		                           "from":18000,
+		                           "to":10800
+		                        },
+		                        "model":{
+		                           "datasource":"__expr__",
+		                           "datasourceUid":"-100",
+		                           "expression":"2 + 3 \u003C 1",
+		                           "intervalMs":1000,
+		                           "maxDataPoints":100,
+		                           "type":"math"
+		                        }
+		                     }
+		                  ],
+		                  "updated":"2021-02-21T01:10:30Z",
+		                  "intervalSeconds":60,
+		                  "version":2,
+		                  "uid":"uid",
+		                  "namespace_uid":"nsuid",
+		                  "namespace_id":1,
+		                  "rule_group":"arulegroup",
+		                  "no_data_state":"Alerting",
+		                  "exec_err_state":"KeepLastState"
+		               }
+		            }
+		         ]
+		      }
+		   ]
+		}`, rulesNamespaceWithoutVariableValues(t, b, ruleUIDs))
+	})
+
+	client := &http.Client{}
+	// Finally, make sure we can delete it.
+	t.Run("when delete rules", func(t *testing.T) {
+		t.Run("fail if he rule group name does not exists", func(t *testing.T) {
+			u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default/groupnotexist", grafanaListedAddr)
+			req, err := http.NewRequest(http.MethodDelete, u, nil)
+			require.NoError(t, err)
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			require.Equal(t, http.StatusNotFound, resp.StatusCode)
+			require.JSONEq(t, `{"error":"rule group not found under this namespace", "message": "failed to delete rule group"}`, string(b))
+		})
+
+		t.Run("succeed if the rule group name does exist", func(t *testing.T) {
+			u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default/arulegroup", grafanaListedAddr)
+			req, err := http.NewRequest(http.MethodDelete, u, nil)
+			require.NoError(t, err)
+			resp, err := client.Do(req)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			require.Equal(t, http.StatusAccepted, resp.StatusCode)
+			require.JSONEq(t, `{"message":"rule group deleted"}`, string(b))
+		})
+	})
 }
 
 // createFolder creates a folder for storing our alerts under. Grafana uses folders as a replacement for alert namespaces to match its permission model.
@@ -298,14 +446,15 @@ func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folder
 }
 
 // rulesNamespaceWithoutVariableValues takes a apimodels.NamespaceConfigResponse JSON-based input and makes the dynamic fields static e.g. uid, dates, etc.
-func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) string {
+func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte, ruleUIDs []string) string {
 	t.Helper()
 
 	var r apimodels.NamespaceConfigResponse
 	require.NoError(t, json.Unmarshal(b, &r))
 	for _, nodes := range r {
 		for _, node := range nodes {
-			for _, rule := range node.Rules {
+			for idx, rule := range node.Rules {
+				ruleUIDs[idx] = rule.GrafanaManagedAlert.UID
 				rule.GrafanaManagedAlert.UID = "uid"
 				rule.GrafanaManagedAlert.NamespaceUID = "nsuid"
 				rule.GrafanaManagedAlert.Updated = time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC)
