@@ -31,7 +31,8 @@ export interface RuleFormValues {
   evaluateFor: string;
 
   // system alerts
-  location?: { namespace: string; group: string };
+  namespace: string;
+  group: string;
   forTime: number;
   forTimeUnit: string;
   expression: string;

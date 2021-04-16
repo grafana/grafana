@@ -13,6 +13,8 @@ var (
 	ErrAlertRuleFailedGenerateUniqueUID = errors.New("failed to generate alert rule UID")
 	// ErrCannotEditNamespace is an error returned if the user does not have permissions to edit the namespace
 	ErrCannotEditNamespace = errors.New("user does not have permissions to edit the namespace")
+	// ErrRuleGroupNamespaceNotFound
+	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
 )
 
 type NoDataState string
@@ -59,6 +61,18 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+}
+
+func (alertRule *AlertRule) DataToString() string {
+	response := "["
+	for i, part := range alertRule.Data {
+		response += string(part.Model)
+		if i < len(alertRule.Data)-1 {
+			response += ","
+		}
+	}
+	response += "]"
+	return response
 }
 
 // AlertRuleKey is the alert definition identifier
