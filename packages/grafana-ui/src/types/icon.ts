@@ -135,6 +135,7 @@ export type IconName =
   | 'user'
   | 'users-alt'
   | 'wrap-text'
+  | 'heart-rate'
   | 'x';
 
 export const getAvailableIcons = (): IconName[] => [

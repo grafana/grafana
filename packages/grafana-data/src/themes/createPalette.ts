@@ -79,10 +79,12 @@ export type ThemePaletteInput = DeepPartial<ThemePaletteBase<ThemePaletteColor>>
 class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'dark';
 
+  whiteBase = '201, 209, 217';
+
   text = {
-    primary: 'rgba(255, 255, 255, 0.77)',
-    secondary: 'rgba(255, 255, 255, 0.50)',
-    disabled: 'rgba(255, 255, 255, 0.35)',
+    primary: `rgb(${this.whiteBase})`,
+    secondary: `rgba(${this.whiteBase}, 0.65)`,
+    disabled: `rgba(${this.whiteBase}, 0.40)`,
     link: colors.blueDarkText,
     maxContrast: colors.white,
   };
@@ -94,10 +96,10 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   secondary = {
-    main: 'rgba(255,255,255,0.1)',
-    shade: 'rgba(255,255,255,0.15)',
-    text: 'rgba(255,255,255,0.13)',
-    contrastText: 'rgba(255, 255, 255, 0.8)',
+    main: `rgba(${this.whiteBase}, 0.1)`,
+    shade: `rgba(${this.whiteBase}, 0.15)`,
+    text: `rgba(${this.whiteBase}, 0.13)`,
+    contrastText: `rgb(${this.whiteBase})`,
   };
 
   info = this.primary;
@@ -121,19 +123,19 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   layer1 = colors.gray10;
   layer2 = colors.gray15;
 
-  divider = 'rgba(218,224,254,0.06)';
+  divider = `rgba(${this.whiteBase}, 0.10)`;
 
   border0 = this.layer1;
-  border1 = 'rgba(218,224,254,0.15)';
-  border2 = 'rgba(218,224,254,0.20)';
+  border1 = `rgba(${this.whiteBase}, 0.15)`;
+  border2 = `rgba(${this.whiteBase}, 0.20)`;
 
   action = {
-    hover: 'rgba(255, 255, 255, 0.08)',
-    selected: 'rgba(255, 255, 255, 0.12)',
-    focus: 'rgba(255, 255, 255, 0.16)',
+    hover: `rgba(${this.whiteBase}, 0.08)`,
+    selected: `rgba(${this.whiteBase}, 0.12)`,
+    focus: `rgba(${this.whiteBase}, 0.16)`,
     hoverOpacity: 0.08,
     disabledText: this.text.disabled,
-    disabledBackground: 'rgba(255,255,255,0.07)',
+    disabledBackground: `rgba(${this.whiteBase}, 0.07)`,
     disabledOpacity: 0.38,
   };
 
@@ -143,12 +145,14 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   contrastThreshold = 3;
-  hoverFactor = 0.15;
+  hoverFactor = 0.03;
   tonalOffset = 0.15;
 }
 
 class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'light';
+
+  blackBase = '36, 41, 46';
 
   primary = {
     main: colors.blueLightMain,
@@ -157,9 +161,9 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   secondary = {
-    main: 'rgba(0,0,0,0.11)',
-    shade: 'rgba(0,0,0,0.16)',
-    contrastText: 'rgba(0, 0, 0, 0.75)',
+    main: `rgba(${this.blackBase}, 0.11)`,
+    shade: `rgba(${this.blackBase}, 0.16)`,
+    contrastText: `rgba(${this.blackBase},  1)`,
   };
 
   info = {
@@ -184,9 +188,9 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   text = {
-    primary: 'rgba(0, 0, 0, 0.75)',
-    secondary: 'rgba(0, 0, 0, 0.60)',
-    disabled: 'rgba(0, 0, 0, 0.45)',
+    primary: `rgba(${this.blackBase}, 1)`,
+    secondary: `rgba(${this.blackBase}, 0.75)`,
+    disabled: `rgba(${this.blackBase}, 0.50)`,
     link: this.primary.text,
     maxContrast: colors.black,
   };
@@ -195,18 +199,18 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   layer1 = colors.white;
   layer2 = colors.gray100;
 
-  divider = 'rgba(0, 2, 78, 0.07)';
+  divider = `rgba(${this.blackBase}, 0.12)`;
 
   border0 = this.layer1;
-  border1 = 'rgba(0, 2, 78, 0.20)';
-  border2 = 'rgba(0, 2, 78, 0.30)';
+  border1 = `rgba(${this.blackBase}, 0.30)`;
+  border2 = `rgba(${this.blackBase}, 0.40)`;
 
   action = {
-    hover: 'rgba(0, 0, 0, 0.04)',
-    selected: 'rgba(0, 0, 0, 0.08)',
+    hover: `rgba(${this.blackBase}, 0.04)`,
+    selected: `rgba(${this.blackBase}, 0.08)`,
     hoverOpacity: 0.08,
-    focus: 'rgba(0, 0, 0, 0.12)',
-    disabledBackground: 'rgba(0,0,0,0.07)',
+    focus: `rgba(${this.blackBase}, 0.12)`,
+    disabledBackground: `rgba(${this.blackBase}, 0.07)`,
     disabledText: this.text.disabled,
     disabledOpacity: 0.38,
   };
@@ -217,7 +221,7 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   contrastThreshold = 3;
-  hoverFactor = 0.15;
+  hoverFactor = 0.03;
   tonalOffset = 0.2;
 }
 
@@ -240,7 +244,7 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
 
   function getContrastText(background: string) {
     const contrastText =
-      getContrastRatio(background, dark.text.primary) >= contrastThreshold
+      getContrastRatio(background, dark.text.maxContrast) >= contrastThreshold
         ? dark.text.maxContrast
         : light.text.maxContrast;
     // todo, need color framework

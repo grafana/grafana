@@ -135,9 +135,9 @@ export class PanelModel implements DataConfigSource {
   collapsed?: boolean;
 
   panels?: any;
-  targets: DataQuery[];
+  declare targets: DataQuery[];
   transformations?: DataTransformerConfig[];
-  datasource: string | null;
+  datasource: string | null = null;
   thresholds?: any;
   pluginVersion?: string;
 
@@ -145,29 +145,29 @@ export class PanelModel implements DataConfigSource {
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;
-  options: {
+  declare options: {
     [key: string]: any;
   };
-  fieldConfig: FieldConfigSource;
+  declare fieldConfig: FieldConfigSource;
 
   maxDataPoints?: number | null;
   interval?: string | null;
   description?: string;
   links?: DataLink[];
-  transparent: boolean;
+  declare transparent: boolean;
 
   libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
 
   // non persisted
-  isViewing: boolean;
-  isEditing: boolean;
-  isInView: boolean;
-  hasChanged: boolean;
+  isViewing = false;
+  isEditing = false;
+  isInView = false;
+  hasChanged = false;
 
-  hasRefreshed: boolean;
+  hasRefreshed?: boolean;
   events: EventBus;
   cacheTimeout?: any;
-  cachedPluginOptions: Record<string, PanelOptionsCache>;
+  declare cachedPluginOptions: Record<string, PanelOptionsCache>;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
 
