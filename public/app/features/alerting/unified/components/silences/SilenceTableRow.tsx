@@ -1,6 +1,7 @@
 import React, { FC, Fragment, useState } from 'react';
+import { dateMath, GrafanaTheme, toDuration } from '@grafana/data';
+import { css } from '@emotion/css';
 import { Silence, SilenceMatcher } from 'app/plugins/datasource/alertmanager/types';
-import { dateMath, toDuration } from '@grafana/data';
 import { AlertLabel } from '../AlertLabel';
 import { StateTag } from '../StateTag';
 import { CollapseToggle } from '../CollapseToggle';
@@ -8,6 +9,7 @@ import { useRulesByMatcher } from '../../hooks/useRulesByMatcher';
 import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
 import { CombinedRule } from 'app/types/unified-alerting';
+import { useStyles } from '@grafana/ui';
 
 interface Props {
   className?: string;
@@ -17,6 +19,7 @@ interface Props {
 const SilenceTableRow: FC<Props> = ({ silence, className }) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
 
+  const styles = useStyles(getStyles);
   const { status, matchers, startsAt, endsAt, comment, createdBy } = silence;
   const rulesNamespaces = useRulesByMatcher(matchers as SilenceMatcher[]);
   const matchingRules = rulesNamespaces.reduce((ruleAcc, { groups }) => {
@@ -42,7 +45,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className }) => {
         <td>
           <StateTag status={status.state}>{status.state}</StateTag>
         </td>
-        <td>
+        <td className={styles.matchersCell}>
           {matchers?.map(({ name, value }) => {
             return <AlertLabel key={`${name}-${value}`} labelKey={name} value={value} />;
           })}
@@ -53,8 +56,12 @@ const SilenceTableRow: FC<Props> = ({ silence, className }) => {
           <br />
           {endsAtDate?.format(dateDisplayFormat)}
         </td>
-        <td>
-          <ActionButton icon="bell">Unsilence</ActionButton>
+        <td className={styles.actionsCell}>
+          {status.state === 'expired' ? (
+            <ActionButton icon="sync">Recreate</ActionButton>
+          ) : (
+            <ActionButton icon="bell">Unsilence</ActionButton>
+          )}
           <ActionIcon icon="pen" tooltip="edit" />
           <ActionIcon icon="trash-alt" tooltip="delete" />
         </td>
@@ -83,17 +90,36 @@ const SilenceTableRow: FC<Props> = ({ silence, className }) => {
             <td>Created by</td>
             <td colSpan={4}>{createdBy}</td>
           </tr>
-          <tr className={className}>
-            <td />
-            <td>Affected alert rules</td>
-            <td colSpan={4}>
-              <pre>{JSON.stringify(matchingRules, null, 2)}</pre>
-            </td>
-          </tr>
+          {matchingRules.length > 0 && (
+            <tr className={className}>
+              <td />
+              <td>Affected alert rules</td>
+              <td colSpan={4}>
+                <pre>{JSON.stringify(matchingRules, null, 2)}</pre>
+              </td>
+            </tr>
+          )}
         </>
       )}
     </Fragment>
   );
 };
+
+const getStyles = (theme: GrafanaTheme) => ({
+  matchersCell: css`
+    & > * + * {
+      margin-left: ${theme.spacing.xs};
+    }
+  `,
+  actionsCell: css`
+    text-align: right;
+    width: 1%;
+    white-space: nowrap;
+
+    & > * + * {
+      margin-left: ${theme.spacing.sm};
+    }
+  `,
+});
 
 export default SilenceTableRow;

@@ -14,7 +14,6 @@ const Silences: FC = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
   const rulesDataSources = useMemo(getRulesDataSources, []);
-
   const silences = useUnifiedAlertingSelector((state) => state.silences);
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
 
