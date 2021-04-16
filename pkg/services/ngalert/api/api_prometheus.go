@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -84,17 +85,9 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			LastEvaluation: time.Time{},
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
+
+		stateMap := srv.stateTracker.GetStatesByRuleUID()
 		for _, rule := range alertRuleQuery.Result {
-			instanceQuery := ngmodels.ListAlertInstancesQuery{
-				DefinitionOrgID: c.SignedInUser.OrgId,
-				DefinitionUID:   rule.UID,
-			}
-			if err := srv.store.ListAlertInstances(&instanceQuery); err != nil {
-				ruleResponse.DiscoveryBase.Status = "error"
-				ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting alerts for rule %s: %s", rule.UID, err.Error())
-				ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
-				return response.JSON(http.StatusInternalServerError, ruleResponse)
-			}
 
 			alertingRule := apimodels.AlertingRule{
 				State:       "inactive",
@@ -110,32 +103,40 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				Health:         "ok", // TODO: update this in the future when error and noData states are being evaluated and set
 				Type:           apiv1.RuleTypeAlerting,
 				LastEvaluation: time.Time{},
-				EvaluationTime: 0, // TODO: set this once we are saving it or adding it to evaluation results
 			}
-			for _, instance := range instanceQuery.Result {
-				activeAt := instance.CurrentStateSince
+
+			for _, alertState := range stateMap[rule.UID] {
+				activeAt := alertState.StartsAt
 				alert := &apimodels.Alert{
-					Labels:      map[string]string(instance.Labels),
-					Annotations: nil, // TODO: set these once they are added to evaluation results
-					State:       translateInstanceState(instance.CurrentState),
+					Labels:      map[string]string(alertState.Labels),
+					Annotations: alertState.Annotations,
+					State:       alertState.State.String(),
 					ActiveAt:    &activeAt,
 					Value:       "", // TODO: set this once it is added to the evaluation results
 				}
-				if instance.LastEvalTime.After(newRule.LastEvaluation) {
-					newRule.LastEvaluation = instance.LastEvalTime
-					newGroup.LastEvaluation = instance.LastEvalTime
-				}
-				switch alert.State {
-				case "pending":
-					if alertingRule.State == "inactive" {
-						alertingRule.State = "pending"
-					}
-				case "firing":
-					alertingRule.State = "firing"
+
+				if alertState.LastEvaluationTime.After(newRule.LastEvaluation) {
+					newRule.LastEvaluation = alertState.LastEvaluationTime
+					newGroup.LastEvaluation = alertState.LastEvaluationTime
 				}
 
+				alertingRule.Duration = alertState.ProcessingTime.Seconds()
+
+				switch alertState.State {
+				case eval.Pending:
+					if alertingRule.State == "inactive" {
+						alertingRule.State = "firing"
+					}
+				case eval.Alerting:
+					alertingRule.State = "firing"
+				case eval.Error:
+					// handle Error case based on configuration in alertRule
+				case eval.NoData:
+					// handle NoData case based on configuration in alertRule
+				}
 				alertingRule.Alerts = append(alertingRule.Alerts, alert)
 			}
+
 			alertingRule.Rule = newRule
 			newGroup.Rules = append(newGroup.Rules, alertingRule)
 			newGroup.Interval = float64(rule.IntervalSeconds)

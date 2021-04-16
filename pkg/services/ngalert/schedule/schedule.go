@@ -332,7 +332,7 @@ func (sch *schedule) saveAlertStates(states []state.AlertState) {
 		}
 		err := sch.store.SaveAlertInstance(&cmd)
 		if err != nil {
-			sch.log.Error("failed to save alert state", "uid", s.UID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
+			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
 		}
 	}
 }
@@ -357,7 +357,7 @@ func (sch *schedule) WarmStateCache(st *state.StateTracker) {
 		for _, entry := range cmd.Result {
 			lbs := map[string]string(entry.Labels)
 			stateForEntry := state.AlertState{
-				UID:                entry.DefinitionUID,
+				AlertRuleUID:       entry.DefinitionUID,
 				OrgID:              entry.DefinitionOrgID,
 				CacheId:            fmt.Sprintf("%s %s", entry.DefinitionUID, lbs),
 				Labels:             lbs,

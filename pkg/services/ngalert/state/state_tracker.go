@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	prometheusModel "github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -13,7 +15,7 @@ import (
 )
 
 type AlertState struct {
-	UID                string
+	AlertRuleUID       string
 	OrgID              int64
 	CacheId            string
 	Labels             data.Labels
@@ -63,7 +65,7 @@ func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.R
 	lbs := mergeLabels(alertRule.Labels, result.Instance)
 	lbs["__alert_rule_uid__"] = alertRule.UID
 	lbs["__alert_rule_namespace_uid__"] = alertRule.NamespaceUID
-	lbs["__alert_rule_title__"] = alertRule.Title
+	lbs[prometheusModel.AlertNameLabel] = alertRule.Title
 
 	idString := fmt.Sprintf("%s", map[string]string(lbs))
 	if state, ok := st.stateCache.cacheMap[idString]; ok {
@@ -77,7 +79,7 @@ func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.R
 
 	st.Log.Debug("adding new alert state cache entry", "cacheId", idString, "state", result.State.String(), "evaluatedAt", result.EvaluatedAt.String())
 	newState := AlertState{
-		UID:            alertRule.UID,
+		AlertRuleUID:   alertRule.UID,
 		OrgID:          alertRule.OrgID,
 		CacheId:        idString,
 		Labels:         lbs,
@@ -125,8 +127,6 @@ func (st *StateTracker) ProcessEvalResults(alertRule *ngModels.AlertRule, result
 
 //TODO: When calculating if an alert should not be firing anymore, we should take three things into account:
 // 1. The re-send the delay if any, we don't want to send every firing alert every time, we should have a fixed delay across all alerts to avoid saturating the notification system
-// 2. The evaluation interval defined for this particular alert - we don't support that yet but will eventually allow you to define how often do you want this alert to be evaluted
-// 3. The base interval defined by the scheduler - in the case where #2 is not yet an option we can use the base interval at which every alert runs.
 //Set the current state based on evaluation results
 func (st *StateTracker) setNextState(alertRule *ngModels.AlertRule, result eval.Result, processingTime time.Duration) AlertState {
 	currentState := st.getOrCreate(alertRule, result, processingTime)
@@ -186,6 +186,22 @@ func (st *StateTracker) GetAll() []AlertState {
 	return states
 }
 
+func (st *StateTracker) GetStatesByRuleUID() map[string][]AlertState {
+	ruleMap := make(map[string][]AlertState)
+	st.stateCache.mu.Lock()
+	defer st.stateCache.mu.Unlock()
+	for _, state := range st.stateCache.cacheMap {
+		if ruleStates, ok := ruleMap[state.AlertRuleUID]; ok {
+			ruleStates = append(ruleStates, state)
+			ruleMap[state.AlertRuleUID] = ruleStates
+		} else {
+			ruleStates := []AlertState{state}
+			ruleMap[state.AlertRuleUID] = ruleStates
+		}
+	}
+	return ruleMap
+}
+
 func (st *StateTracker) cleanUp() {
 	ticker := time.NewTicker(time.Duration(60) * time.Minute)
 	st.Log.Debug("starting cleanup process", "intervalMinutes", 60)
@@ -217,7 +233,7 @@ func (st *StateTracker) trim() {
 }
 
 func (a AlertState) Equals(b AlertState) bool {
-	return a.UID == b.UID &&
+	return a.AlertRuleUID == b.AlertRuleUID &&
 		a.OrgID == b.OrgID &&
 		a.CacheId == b.CacheId &&
 		a.Labels.String() == b.Labels.String() &&
