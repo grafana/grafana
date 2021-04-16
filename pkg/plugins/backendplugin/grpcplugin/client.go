@@ -65,7 +65,7 @@ type PluginDescriptor struct {
 	ExecutablePath   string
 	managed          bool
 	VersionedPlugins map[int]goplugin.PluginSet
-	StartFns         PluginStartFuncs
+	startFns         PluginStartFuncs
 }
 
 // getV2PluginSet returns list of plugins supported on v2.
@@ -91,7 +91,7 @@ func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs
 			},
 			grpcplugin.ProtocolVersion: GetV2PluginSet(),
 		},
-		StartFns: startFns,
+		startFns: startFns,
 	})
 }
 
@@ -107,7 +107,7 @@ func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFunc
 			},
 			grpcplugin.ProtocolVersion: GetV2PluginSet(),
 		},
-		StartFns: startFns,
+		startFns: startFns,
 	})
 }
 

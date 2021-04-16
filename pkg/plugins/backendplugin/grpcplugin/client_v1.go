@@ -38,12 +38,12 @@ func newClientV1(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		c.RendererPlugin = plugin
 	}
 
-	if descriptor.StartFns.OnLegacyStart != nil {
+	if descriptor.startFns.OnLegacyStart != nil {
 		legacyClient := &LegacyClient{
 			DatasourcePlugin: c.DatasourcePlugin,
 			RendererPlugin:   c.RendererPlugin,
 		}
-		if err := descriptor.StartFns.OnLegacyStart(descriptor.PluginID, legacyClient, logger); err != nil {
+		if err := descriptor.startFns.OnLegacyStart(descriptor.PluginID, legacyClient, logger); err != nil {
 			return nil, err
 		}
 	}

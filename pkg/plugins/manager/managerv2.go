@@ -58,7 +58,7 @@ func (m *PluginManagerV2) Init() error {
 		return err
 	}
 
-	// install Core plugins
+	// install External plugins
 	err = m.installPlugins(m.Cfg.PluginsPath, true)
 	if err != nil {
 		return err

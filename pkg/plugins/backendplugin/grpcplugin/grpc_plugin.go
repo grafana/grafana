@@ -41,11 +41,6 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 	}
 }
 
-// newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
-func newPluginV2(descriptor PluginDescriptor, logger log.Logger, env []string) *plugin.Client {
-	return plugin.NewClient(NewClientConfig(descriptor.ExecutablePath, env, logger, descriptor.VersionedPlugins))
-}
-
 func (p *grpcPlugin) PluginID() string {
 	return p.descriptor.PluginID
 }

@@ -37,13 +37,9 @@ func (e DuplicatePluginError) Is(err error) bool {
 }
 
 // PluginLoader can load a plugin.
-// Invoked directory on plugins.PluginV2?
 type PluginLoader interface {
 	// Load loads a plugin and returns it.
 	Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (interface{}, error)
-
-	// Can probably remove pluginDir arg
-	LoadV2(pluginDir string, backendPluginManager backendplugin.Manager) error
 }
 
 // PluginBase is the base plugin type.

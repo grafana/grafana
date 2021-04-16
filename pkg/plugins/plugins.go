@@ -4,6 +4,7 @@ package plugins
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"github.com/hashicorp/go-plugin"
 
@@ -16,6 +17,77 @@ import (
 )
 
 var _ backendplugin.Plugin = (*PluginV2)(nil)
+
+type PluginV2 struct {
+	Client      client
+	hashiClient *plugin.Client
+	descriptor  grpcplugin.PluginDescriptor
+
+	logger glog.Logger
+	mutex  sync.RWMutex
+
+	// Common settings
+	Type         string                `json:"type"`
+	Name         string                `json:"name"`
+	ID           string                `json:"id"`
+	Info         PluginInfo            `json:"info"`
+	Dependencies PluginDependencies    `json:"dependencies"`
+	Includes     []*PluginInclude      `json:"includes"`
+	Module       string                `json:"module"`
+	BaseUrl      string                `json:"baseUrl"`
+	Category     string                `json:"category"`
+	HideFromList bool                  `json:"hideFromList,omitempty"`
+	Preload      bool                  `json:"preload"`
+	State        PluginState           `json:"state,omitempty"`
+	Signature    PluginSignatureStatus `json:"signature"`
+	Backend      bool                  `json:"backend"`
+
+	IncludedInAppID string              `json:"-"`
+	PluginDir       string              `json:"-"`
+	DefaultNavURL   string              `json:"-"`
+	IsCorePlugin    bool                `json:"-"`
+	Files           []string            `json:"-"`
+	SignatureType   PluginSignatureType `json:"-"`
+	SignatureOrg    string              `json:"-"`
+
+	// App settings
+	GrafanaNetVersion   string `json:"-"`
+	GrafanaNetHasUpdate bool   `json:"-"`
+
+	AutoEnabled bool `json:"autoEnabled"`
+
+	//FoundChildPlugins []*PluginInclude `json:"-"` // unused
+	Pinned bool `json:"-"`
+
+	// Datasource settings
+	Annotations  bool            `json:"annotations"`
+	Metrics      bool            `json:"metrics"`
+	Alerting     bool            `json:"alerting"`
+	Explore      bool            `json:"explore"`
+	Table        bool            `json:"tables"`
+	Logs         bool            `json:"logs"`
+	Tracing      bool            `json:"tracing"`
+	QueryOptions map[string]bool `json:"queryOptions,omitempty"`
+	BuiltIn      bool            `json:"builtIn,omitempty"`
+	Mixed        bool            `json:"mixed,omitempty"`
+	Streaming    bool            `json:"streaming"`
+	SDK          bool            `json:"sdk,omitempty"`
+
+	// Backend (App + Datasource_ settings
+	Routes     []*AppPluginRoute `json:"routes"`
+	Executable string            `json:"executable,omitempty"`
+
+	Parent   *PluginV2   `json:"-"`
+	Children []*PluginV2 `json:"-"`
+}
+
+type InstallOpts struct {
+	backend.QueryDataHandler
+	backend.CollectMetricsHandler
+	backend.CheckHealthHandler
+	backend.CallResourceHandler
+	backend.StreamHandler
+}
 
 func (p *PluginV2) Logger() glog.Logger {
 	return p.logger
@@ -221,7 +293,7 @@ func NewClientV2(descriptor grpcplugin.PluginDescriptor, logger glog.Logger, rpc
 
 	if rawData != nil {
 		if dataClient, ok := rawData.(sdk.DataClient); ok {
-			c.DataClient = dataClient // not instrument
+			c.DataClient = dataClient
 		}
 	}
 
@@ -234,17 +306,6 @@ func NewClientV2(descriptor grpcplugin.PluginDescriptor, logger glog.Logger, rpc
 	if rawRenderer != nil {
 		if rendererPlugin, ok := rawRenderer.(pluginextensionv2.RendererPlugin); ok {
 			c.RendererPlugin = rendererPlugin
-		}
-	}
-
-	if descriptor.StartFns.OnStart != nil {
-		client := &grpcplugin.Client{
-			DataPlugin:     c.DataClient,
-			RendererPlugin: c.RendererPlugin,
-			StreamClient:   c.StreamClient,
-		}
-		if err := descriptor.StartFns.OnStart(descriptor.PluginID, client, logger); err != nil {
-			return nil, err
 		}
 	}
 

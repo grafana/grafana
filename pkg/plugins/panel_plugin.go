@@ -19,7 +19,3 @@ func (p *PanelPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 
 	return p, nil
 }
-
-func (p *PanelPlugin) LoadV2(pluginDir string, backendPluginManager backendplugin.Manager) error {
-	return nil
-}

@@ -78,19 +78,6 @@ func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 	return app, nil
 }
 
-func (app *AppPlugin) LoadV2(pluginDir string, backendPluginManager backendplugin.Manager) error {
-	if app.Backend {
-		cmd := ComposePluginStartCommand(app.Executable)
-		fullpath := filepath.Join(pluginDir, cmd)
-		factory := grpcplugin.NewBackendPlugin(app.Id, fullpath, grpcplugin.PluginStartFuncs{})
-		if err := backendPluginManager.Register(app.Id, factory); err != nil {
-			return errutil.Wrapf(err, "failed to register backend plugin")
-		}
-	}
-
-	return nil
-}
-
 func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[string]*DataSourcePlugin,
 	cfg *setting.Cfg) []*PluginStaticRoute {
 	staticRoutes := app.InitFrontendPlugin(cfg)
