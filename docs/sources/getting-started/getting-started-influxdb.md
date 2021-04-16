@@ -25,20 +25,30 @@ If you chose to use InfluxDB Cloud, then you should [download and install the In
 
 ## Step 4. Get data into InfluxDB
 
-DFP NOTE - STILL TESTING THIS
-
 If you downloaded and installed InfluxDB on your local machine, then use the [Quick Start][https://docs.influxdata.com/influxdb/v2.0/write-data/#quick-start-for-influxdb-oss] feature to visualize InfluxDB metrics.
 
 If you are using the cloud account, then the wizards will guide you through the initial process. For more information, refer to [Configure Telegraf](https://docs.influxdata.com/influxdb/cloud/write-data/no-code/use-telegraf/#configure-telegraf).
 
 > **Note:** Windows users might need to make additional adjustments. Look for special instructions in the InfluxData documentation and [Using Telegraf on Windows](https://www.influxdata.com/blog/using-telegraf-on-windows/) blog post.
 
+> **Note:** The regular system monitoring template in InfluxDB Cloud is not compatible with Windows. Windows users who use InfluxDB Cloud to monitor their system will need to use the [Windows System Monitoring Template](https://github.com/influxdata/community-templates/tree/master/windows_system).
+
 ## Step 4. Add your InfluxDB data source to Grafana
 
 You can have more than one InfluxDB data source defined in Grafana.
 
 1. Follow the general instructions to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}).
-1. Refer to [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}}) for information about specific data source fields.
+1. 
+
+
+
+Refer to [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}}) for information about specific data source fields.
+
+### Important tips
+
+- Make sure your Grafana token has read access. If it doesn't, then you'll get an authentication error and be unable to connect Grafana to InfluxDB.
+- Avoid apostrophes and other non-standard characters in bucket and token names.
+- If the text name of the organization or bucket doesn't work, then try the ID number.
 
 ## Step 5. Add a query
 
