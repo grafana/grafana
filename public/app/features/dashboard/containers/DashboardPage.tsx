@@ -1,13 +1,13 @@
 import $ from 'jquery';
 import React, { MouseEvent, PureComponent } from 'react';
+import { css } from 'emotion';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { getLegacyAngularInjector, locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, withTheme, Themeable } from '@grafana/ui';
 
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { getMessageFromError } from 'app/core/utils/errors';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
@@ -15,7 +15,7 @@ import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp } from 'app/core/actions';
-import { AppNotificationSeverity, DashboardInitError, DashboardInitPhase, KioskMode, StoreState } from 'app/types';
+import { DashboardInitError, DashboardInitPhase, KioskMode, StoreState } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
@@ -26,7 +26,9 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getKioskMode } from 'app/core/navigation/kiosk';
-import { UrlQueryValue } from '@grafana/data';
+import { GrafanaTheme, UrlQueryValue } from '@grafana/data';
+import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
+import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -47,7 +49,9 @@ type DashboardPageRouteSearchParams = {
   refresh?: string;
 };
 
-export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
+export interface Props
+  extends Themeable,
+    GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {
   initPhase: DashboardInitPhase;
   isInitSlow: boolean;
   dashboard: DashboardModel | null;
@@ -69,7 +73,7 @@ export interface State {
   showLoadingState: boolean;
 }
 
-export class DashboardPage extends PureComponent<Props, State> {
+export class UnthemedDashboardPage extends PureComponent<Props, State> {
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
 
@@ -265,45 +269,6 @@ export class DashboardPage extends PureComponent<Props, State> {
     this.setState({ updateScrollTop: 0 });
   };
 
-  cancelVariables = () => {
-    locationService.push('/');
-  };
-
-  renderSlowInitState() {
-    return (
-      <div className="dashboard-loading">
-        <div className="dashboard-loading__text">
-          <VerticalGroup spacing="md">
-            <HorizontalGroup align="center" justify="center" spacing="xs">
-              <Spinner inline={true} /> {this.props.initPhase}
-            </HorizontalGroup>{' '}
-            <HorizontalGroup align="center" justify="center">
-              <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
-                Cancel loading dashboard
-              </Button>
-            </HorizontalGroup>
-          </VerticalGroup>
-        </div>
-      </div>
-    );
-  }
-
-  renderInitFailedState() {
-    const { initError } = this.props;
-
-    if (!initError) {
-      return null;
-    }
-
-    return (
-      <div className="dashboard-loading">
-        <Alert severity={AppNotificationSeverity.Error} title={initError.message}>
-          {getMessageFromError(initError.error)}
-        </Alert>
-      </div>
-    );
-  }
-
   getInspectPanel() {
     const { dashboard, queryParams } = this.props;
 
@@ -324,12 +289,13 @@ export class DashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, isInitSlow, initError, isPanelEditorOpen, queryParams } = this.props;
+    const { dashboard, isInitSlow, initError, isPanelEditorOpen, queryParams, theme } = this.props;
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
+    const styles = getStyles(theme);
 
     if (!dashboard) {
       if (isInitSlow) {
-        return this.renderSlowInitState();
+        return <DashboardLoading initPhase={this.props.initPhase} />;
       }
 
       return null;
@@ -341,7 +307,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     const kioskMode = getKioskMode(queryParams.kiosk);
 
     return (
-      <div className="dashboard-container">
+      <div className={styles.dashboardContainer}>
         {kioskMode !== KioskMode.Full && (
           <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
             <DashNav
@@ -354,7 +320,7 @@ export class DashboardPage extends PureComponent<Props, State> {
           </div>
         )}
 
-        <div className="dashboard-scroll">
+        <div className={styles.dashboardScroll}>
           <CustomScrollbar
             autoHeightMin="100%"
             setScrollTop={this.setScrollTop}
@@ -362,8 +328,8 @@ export class DashboardPage extends PureComponent<Props, State> {
             hideHorizontalTrack={true}
             updateAfterMountMs={500}
           >
-            <div className="dashboard-content">
-              {initError && this.renderInitFailedState()}
+            <div className={styles.dashboardContent}>
+              {initError && <DashboardFailed />}
               {!editPanel && kioskMode === KioskMode.Off && (
                 <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
                   <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
@@ -405,4 +371,35 @@ const mapDispatchToProps = {
   templateVarsChangedInUrl,
 };
 
+/*
+ * Styles
+ */
+export const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    dashboardContainer: css`
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex: 1 1 0;
+      flex-direction: column;
+    `,
+    dashboardScroll: css`
+      width: 100%;
+      flex-grow: 1;
+      min-height: 0;
+      display: flex;
+    `,
+    dashboardContent: css`
+      padding: ${theme.spacing.md};
+      flex-basis: 100%;
+      flex-grow: 1;
+    `,
+  };
+});
+
+export const DashboardPage = withTheme(UnthemedDashboardPage);
+DashboardPage.displayName = 'DashboardPage';
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage));

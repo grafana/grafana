@@ -19,6 +19,19 @@ export class User {
   email?: string;
 
   constructor() {
+    this.id = 0;
+    this.isGrafanaAdmin = false;
+    this.isSignedIn = false;
+    this.orgRole = '';
+    this.orgId = 0;
+    this.orgName = '';
+    this.login = '';
+    this.orgCount = 0;
+    this.timezone = '';
+    this.helpFlags1 = 0;
+    this.lightTheme = false;
+    this.hasEditPermissionInFolders = false;
+    this.email = undefined;
     if (config.bootData.user) {
       _.extend(this, config.bootData.user);
     }

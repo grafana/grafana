@@ -1,15 +1,6 @@
 import { VizOrientation } from '@grafana/data';
-import { AxisConfig, GraphGradientMode, HideableFieldConfig } from '../uPlot/config';
+import { AxisConfig, GraphGradientMode, HideableFieldConfig, StackingMode } from '../uPlot/config';
 import { VizLegendOptions } from '../VizLegend/models.gen';
-
-/**
- * @alpha
- */
-export enum BarStackingMode {
-  None = 'none',
-  Standard = 'standard',
-  Percent = 'percent',
-}
 
 /**
  * @alpha
@@ -26,7 +17,7 @@ export enum BarValueVisibility {
 export interface BarChartOptions {
   orientation: VizOrientation;
   legend: VizLegendOptions;
-  stacking: BarStackingMode;
+  stacking: StackingMode;
   showValue: BarValueVisibility;
   barWidth: number;
   groupWidth: number;

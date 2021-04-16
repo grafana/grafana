@@ -237,7 +237,7 @@
     "baron": "3.0.3",
     "brace": "0.11.1",
     "calculate-size": "1.1.1",
-    "centrifuge": "^2.7.3",
+    "centrifuge": "2.7.5",
     "classnames": "2.2.6",
     "clipboard": "2.0.4",
     "common-tags": "^1.8.0",

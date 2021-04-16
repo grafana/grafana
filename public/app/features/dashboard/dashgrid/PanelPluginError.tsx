@@ -51,14 +51,15 @@ export function getPanelPluginLoadError(meta: PanelPluginMeta, err: any): PanelP
   return plugin;
 }
 
-export function getPanelPluginNotFound(id: string): PanelPlugin {
+export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugin {
   const NotFound = class NotFound extends PureComponent<PanelProps> {
     render() {
       return <PanelPluginError title={`Panel plugin not found: ${id}`} />;
     }
   };
 
-  const plugin = new PanelPlugin(NotFound);
+  const plugin = new PanelPlugin(silent ? () => null : NotFound);
+
   plugin.meta = {
     id: id,
     name: id,
