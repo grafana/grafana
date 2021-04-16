@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { PieChart } from '@grafana/ui';
 import { PieChartOptions } from './types';
 import { EventBusWithSource, PanelProps } from '@grafana/data';
@@ -25,12 +25,14 @@ export const PieChartPanel: React.FC<Props> = ({
     [fieldConfig, onFieldConfigChange]
   );
 
+  const [eventBusWithSource] = useState<EventBusWithSource>(new EventBusWithSource(eventBus, id.toString(10)));
+
   return (
     <PieChart
       width={width}
       height={height}
       timeZone={timeZone}
-      eventBus={new EventBusWithSource(eventBus, id.toString(10))}
+      eventBus={eventBusWithSource}
       fieldConfig={fieldConfig}
       reduceOptions={options.reduceOptions}
       replaceVariables={replaceVariables}
