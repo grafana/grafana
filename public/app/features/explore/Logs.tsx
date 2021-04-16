@@ -39,6 +39,7 @@ import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { MetaInfoText } from './MetaInfoText';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
+import LogsNavigation from './LogsNavigation';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -392,7 +393,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           />
         )}
         <div style={{ display: 'flex', flexDirection: 'row', height: '90vh' }}>
-          <CustomScrollbar>
+          <CustomScrollbar autoHide>
             <LogRows
               logRows={logRows}
               deduplicatedRows={dedupedRows}
@@ -414,7 +415,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               onClickHideDetectedField={this.hideDetectedField}
             />
           </CustomScrollbar>
-          <div style={{ width: '70px', height: '90vh', border: '1px solid black' }}></div>
+          <LogsNavigation />
         </div>
 
         {!loading && !hasData && !scanning && (

@@ -51,7 +51,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     `,
     exploreLogsPanelWithNavigation: css`
       label: logs-exploreLogsPanelWithNavigation;
-      width: calc(100% - 70px);
+      width: calc(100% - 75px);
     `,
     context: css`
       label: context;
