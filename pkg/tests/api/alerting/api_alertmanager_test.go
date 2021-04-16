@@ -65,6 +65,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
+		AnonymousUserRole:    models.ROLE_EDITOR,
 	})
 	store := testinfra.SetUpDatabase(t, dir)
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
