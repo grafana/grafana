@@ -2,7 +2,7 @@
 title = "Sort dashboards by using insights data"
 description = "Sort dashboards by using insights data"
 keywords = ["grafana", "search", "sort", "enterprise"]
-aliases = ["/docs/grafana/next/enterprise/usage-insights/improved-search.md"]
+aliases = ["/docs/grafana/latest/enterprise/usage-insights/improved-search.md"]
 weight = 400
 +++
 

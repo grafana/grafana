@@ -183,7 +183,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
               <ValuePicker
                 label="Add override property"
                 variant="secondary"
-                isFullWidth={false}
+                isFullWidth={true}
                 icon="plus"
                 menuPlacement="auto"
                 options={configPropertiesOptions}
@@ -209,9 +209,9 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
               icon="plus"
               label="Add a field override"
               variant="secondary"
-              size="sm"
               menuPlacement="auto"
-              isFullWidth={false}
+              isFullWidth={true}
+              size="md"
               options={fieldMatchersUI
                 .list()
                 .filter((o) => !o.excludeFromPicker)

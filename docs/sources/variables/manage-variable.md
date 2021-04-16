@@ -1,7 +1,7 @@
 +++
 title = "Manage variables"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-aliases = ["/docs/grafana/next/reference/templating"]
+aliases = ["/docs/grafana/latest/reference/templating"]
 weight = 120
 +++
 

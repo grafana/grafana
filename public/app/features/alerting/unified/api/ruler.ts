@@ -1,4 +1,4 @@
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { getDatasourceAPIId } from '../utils/datasource';
 import { getBackendSrv } from '@grafana/runtime';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
@@ -7,7 +7,7 @@ import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
 export async function setRulerRuleGroup(
   dataSourceName: string,
   namespace: string,
-  group: RulerRuleGroupDTO
+  group: PostableRulerRuleGroupDTO
 ): Promise<void> {
   await await getBackendSrv()
     .fetch<unknown>({
@@ -70,7 +70,7 @@ async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
       .toPromise();
     return response.data;
   } catch (e) {
-    if (e?.status === 404) {
+    if (e?.status === 404 || e?.data?.message?.includes('group does not exist')) {
       return empty;
     } else if (e?.status === 500 && e?.data?.message?.includes('mapping values are not allowed in this context')) {
       throw {
