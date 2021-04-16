@@ -28,7 +28,9 @@ func TestProcessEvalResults(t *testing.T) {
 		Condition:    "A",
 		UID:          "test_uid",
 		NamespaceUID: "test_namespace",
+		For:          10 * time.Second,
 	}
+	processingTime := 10 * time.Millisecond
 	expectedLabels := data.Labels{
 		"label1":                       "value1",
 		"label2":                       "value2",
@@ -104,7 +106,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{EvaluationTime: evaluationTime.Add(1 * time.Minute), EvaluationState: eval.Alerting},
 					},
 					StartsAt:           evaluationTime.Add(1 * time.Minute),
-					EndsAt:             evaluationTime.Add(100 * time.Second),
+					EndsAt:             evaluationTime.Add(alertRule.For * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 				},
 			},
@@ -174,7 +176,7 @@ func TestProcessEvalResults(t *testing.T) {
 						{EvaluationTime: evaluationTime.Add(1 * time.Minute), EvaluationState: eval.Alerting},
 					},
 					StartsAt:           evaluationTime,
-					EndsAt:             evaluationTime.Add(100 * time.Second),
+					EndsAt:             evaluationTime.Add(alertRule.For * time.Second).Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(1 * time.Minute),
 				},
 			},
@@ -219,7 +221,7 @@ func TestProcessEvalResults(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run("all fields for a cache entry are set correctly", func(t *testing.T) {
 			st := state.NewStateTracker(log.New("test_state_tracker"))
-			_ = st.ProcessEvalResults(&alertRule, tc.evalResults)
+			_ = st.ProcessEvalResults(&alertRule, tc.evalResults, processingTime)
 			for _, entry := range tc.expectedCacheEntries {
 				if !entry.Equals(st.Get(entry.CacheId)) {
 					t.Log(tc.desc)
@@ -231,7 +233,7 @@ func TestProcessEvalResults(t *testing.T) {
 
 		t.Run("the expected number of entries are added to the cache", func(t *testing.T) {
 			st := state.NewStateTracker(log.New("test_state_tracker"))
-			st.ProcessEvalResults(&alertRule, tc.evalResults)
+			st.ProcessEvalResults(&alertRule, tc.evalResults, processingTime)
 			assert.Equal(t, len(tc.expectedCacheEntries), len(st.GetAll()))
 		})
 
@@ -240,7 +242,7 @@ func TestProcessEvalResults(t *testing.T) {
 		//for a unique set of labels.
 		t.Run("the expected number of states are returned to the caller", func(t *testing.T) {
 			st := state.NewStateTracker(log.New("test_state_tracker"))
-			results := st.ProcessEvalResults(&alertRule, tc.evalResults)
+			results := st.ProcessEvalResults(&alertRule, tc.evalResults, processingTime)
 			assert.Equal(t, len(tc.evalResults), len(results))
 		})
 	}

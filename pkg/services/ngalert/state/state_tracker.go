@@ -22,6 +22,7 @@ type AlertState struct {
 	StartsAt           time.Time
 	EndsAt             time.Time
 	LastEvaluationTime time.Time
+	ProcessingTime     time.Duration
 	Annotations        map[string]string
 }
 
@@ -54,7 +55,7 @@ func NewStateTracker(logger log.Logger) *StateTracker {
 	return tracker
 }
 
-func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) AlertState {
+func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result, processingTime time.Duration) AlertState {
 	st.stateCache.mu.Lock()
 	defer st.stateCache.mu.Unlock()
 	lbs := data.Labels{}
@@ -77,13 +78,14 @@ func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.R
 
 	st.Log.Debug("adding new alert state cache entry", "cacheId", idString, "state", result.State.String(), "evaluatedAt", result.EvaluatedAt.String())
 	newState := AlertState{
-		UID:         alertRule.UID,
-		OrgID:       alertRule.OrgID,
-		CacheId:     idString,
-		Labels:      lbs,
-		State:       result.State,
-		Results:     []StateEvaluation{},
-		Annotations: annotations,
+		UID:            alertRule.UID,
+		OrgID:          alertRule.OrgID,
+		CacheId:        idString,
+		Labels:         lbs,
+		State:          result.State,
+		Results:        []StateEvaluation{},
+		Annotations:    annotations,
+		ProcessingTime: processingTime,
 	}
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
@@ -111,11 +113,11 @@ func (st *StateTracker) ResetCache() {
 	st.stateCache.cacheMap = make(map[string]AlertState)
 }
 
-func (st *StateTracker) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []AlertState {
+func (st *StateTracker) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results, processingTime time.Duration) []AlertState {
 	st.Log.Info("state tracker processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var changedStates []AlertState
 	for _, result := range results {
-		s, _ := st.setNextState(alertRule, result)
+		s := st.setNextState(alertRule, result, processingTime)
 		changedStates = append(changedStates, s)
 	}
 	st.Log.Debug("returning changed states to scheduler", "count", len(changedStates))
@@ -127,49 +129,51 @@ func (st *StateTracker) ProcessEvalResults(alertRule *ngModels.AlertRule, result
 // 2. The evaluation interval defined for this particular alert - we don't support that yet but will eventually allow you to define how often do you want this alert to be evaluted
 // 3. The base interval defined by the scheduler - in the case where #2 is not yet an option we can use the base interval at which every alert runs.
 //Set the current state based on evaluation results
-//return the state and a bool indicating whether a state transition occurred
-func (st *StateTracker) setNextState(alertRule *ngModels.AlertRule, result eval.Result) (AlertState, bool) {
-	currentState := st.getOrCreate(alertRule, result)
+func (st *StateTracker) setNextState(alertRule *ngModels.AlertRule, result eval.Result, processingTime time.Duration) AlertState {
+	currentState := st.getOrCreate(alertRule, result, processingTime)
 	st.Log.Debug("setting alert state", "uid", alertRule.UID)
 	switch {
 	case currentState.State == result.State:
 		st.Log.Debug("no state transition", "cacheId", currentState.CacheId, "state", currentState.State.String())
 		currentState.LastEvaluationTime = result.EvaluatedAt
+		currentState.ProcessingTime = processingTime
 		currentState.Results = append(currentState.Results, StateEvaluation{
 			EvaluationTime:  result.EvaluatedAt,
 			EvaluationState: result.State,
 		})
 		if currentState.State == eval.Alerting {
-			currentState.EndsAt = result.EvaluatedAt.Add(40 * time.Second)
+			currentState.EndsAt = result.EvaluatedAt.Add(alertRule.For * time.Second)
 		}
 		st.set(currentState)
-		return currentState, false
+		return currentState
 	case currentState.State == eval.Normal && result.State == eval.Alerting:
 		st.Log.Debug("state transition from normal to alerting", "cacheId", currentState.CacheId)
 		currentState.State = eval.Alerting
 		currentState.LastEvaluationTime = result.EvaluatedAt
 		currentState.StartsAt = result.EvaluatedAt
-		currentState.EndsAt = result.EvaluatedAt.Add(40 * time.Second)
+		currentState.EndsAt = result.EvaluatedAt.Add(alertRule.For * time.Second)
+		currentState.ProcessingTime = processingTime
 		currentState.Results = append(currentState.Results, StateEvaluation{
 			EvaluationTime:  result.EvaluatedAt,
 			EvaluationState: result.State,
 		})
 		currentState.Annotations["alerting"] = result.EvaluatedAt.String()
 		st.set(currentState)
-		return currentState, true
+		return currentState
 	case currentState.State == eval.Alerting && result.State == eval.Normal:
 		st.Log.Debug("state transition from alerting to normal", "cacheId", currentState.CacheId)
 		currentState.State = eval.Normal
 		currentState.LastEvaluationTime = result.EvaluatedAt
 		currentState.EndsAt = result.EvaluatedAt
+		currentState.ProcessingTime = processingTime
 		currentState.Results = append(currentState.Results, StateEvaluation{
 			EvaluationTime:  result.EvaluatedAt,
 			EvaluationState: result.State,
 		})
 		st.set(currentState)
-		return currentState, true
+		return currentState
 	default:
-		return currentState, false
+		return currentState
 	}
 }
 
