@@ -135,21 +135,21 @@ export class EventBusWithSource implements EventBus {
    * @param source source to append to EventBusWithSource
    * @returns a new instance of EventBusWithSource with the new source appended
    */
-  appendSource = (source: string) => {
+  appendSource(source: string) {
     return new EventBusWithSource(this, source);
-  };
+  }
 
   /**
    * Checks if the this eventbus is the parent of the eventbus that published the event
    *
    * @param source of the payload to be checked
    */
-  isSourceOf = (source: string[]) => {
+  isSourceOf(source: string[]) {
     for (let i in this.source) {
       if (this.source[i] !== source[i]) {
         return false;
       }
     }
     return true;
-  };
+  }
 }
