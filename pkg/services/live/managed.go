@@ -98,8 +98,6 @@ func (s *ManagedStream) Push(path string, frame *data.Frame, stableSchema bool) 
 	if stableSchema {
 		// If schema is stable we can safely cache it, and only send values if
 		// stream already has schema cached.
-		// For unstable schema we always need to send everything to a connection.
-		// And we don't want to cache schema for unstable case.
 		s.mu.Lock()
 		_, exists := s.last[path]
 		s.last[path] = frameJSON
@@ -116,6 +114,13 @@ func (s *ManagedStream) Push(path string, frame *data.Frame, stableSchema bool) 
 				return err
 			}
 		}
+	} else {
+		// For unstable schema we always need to send everything to a connection.
+		// And we don't want to cache schema for unstable case. But we still need to
+		// set path to a map to make stream visible in UI stream select widget.
+		s.mu.Lock()
+		s.last[path] = nil
+		s.mu.Unlock()
 	}
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
@@ -128,7 +133,7 @@ func (s *ManagedStream) getLastPacket(path string) (json.RawMessage, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	schema, ok := s.last[path]
-	return schema, ok
+	return schema, ok && schema != nil
 }
 
 func (s *ManagedStream) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
