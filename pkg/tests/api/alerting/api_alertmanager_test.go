@@ -80,14 +80,15 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 	ruleUIDs := make([]string, 2)
 	// Now, let's create two alerts.
-	t.Run("can create rules", func(t *testing.T) {
+	{
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:    dur,
-						Labels: map[string]string{"label1": "val1"},
+						For:         dur,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					// this rule does not explicitly set no data and error states
 					// thererfore it should get the default values
@@ -155,10 +156,10 @@ func TestAlertRuleCRUD(t *testing.T) {
 		fmt.Println(string(b))
 		assert.Equal(t, resp.StatusCode, 202)
 		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
-	})
+	}
 
 	// With the rules created, let's make sure that rule definition is stored correctly.
-	t.Run("can get rules", func(t *testing.T) {
+	{
 		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
 		// nolint:gosec
 		resp, err := http.Get(u)
@@ -179,6 +180,9 @@ func TestAlertRuleCRUD(t *testing.T) {
          "interval":"1m",
          "rules":[
             {
+				"annotations": {
+					"annotation1": "val1"
+			   },
                "expr":"",
 			   "for": "1m",
 			   "labels": {
@@ -258,10 +262,10 @@ func TestAlertRuleCRUD(t *testing.T) {
 }`, rulesNamespaceWithoutVariableValues(t, b, ruleUIDs))
 		require.Equal(t, 2, len(ruleUIDs))
 		assert.NotEqual(t, ruleUIDs[0], ruleUIDs[1])
-	})
+	}
 
-	t.Run("can update rules", func(t *testing.T) {
-		// update the first rule and completely remove the other
+	// update the first rule and completely remove the other
+	{
 		dur, err := model.ParseDuration("30s")
 		require.NoError(t, err)
 
@@ -274,6 +278,10 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Labels: map[string]string{
 							"label1": "val42",
 							"foo":    "bar",
+						},
+						Annotations: map[string]string{
+							"annotation1": "val42",
+							"foo":         "bar",
 						},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
@@ -342,6 +350,10 @@ func TestAlertRuleCRUD(t *testing.T) {
 		         "interval":"1m",
 		         "rules":[
 		            {
+						"annotations": {
+							"annotation1": "val42",
+							"foo": "bar"
+					   },	
 		               "expr":"",
 					   "for": "30s",
 					   "labels": {
@@ -385,11 +397,11 @@ func TestAlertRuleCRUD(t *testing.T) {
 		      }
 		   ]
 		}`, rulesNamespaceWithoutVariableValues(t, b, ruleUIDs))
-	})
+	}
 
 	client := &http.Client{}
 	// Finally, make sure we can delete it.
-	t.Run("when delete rules", func(t *testing.T) {
+	{
 		t.Run("fail if he rule group name does not exists", func(t *testing.T) {
 			u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default/groupnotexist", grafanaListedAddr)
 			req, err := http.NewRequest(http.MethodDelete, u, nil)
@@ -423,7 +435,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
 			require.JSONEq(t, `{"message":"rule group deleted"}`, string(b))
 		})
-	})
+	}
 }
 
 // createFolder creates a folder for storing our alerts under. Grafana uses folders as a replacement for alert namespaces to match its permission model.
