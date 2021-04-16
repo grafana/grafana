@@ -108,7 +108,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
                 </Alert>
               )}
               <AlertTypeStep editingExistingRule={!!existing} />
-              {showStep2 && (
+              {true && (
                 <>
                   <QueryStep />
                   <ConditionsStep />

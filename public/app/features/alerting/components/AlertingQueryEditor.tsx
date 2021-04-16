@@ -59,7 +59,6 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props, State> {
       ...this.props.queryOptions,
       queries: this.state.queries,
     });
-    //this.props.onRunQueries();
   };
 
   onIntervalChanged = (interval: string) => {
@@ -121,16 +120,18 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props, State> {
   render() {
     const { queries } = this.state;
     const styles = getStyles(config.theme);
-
+    console.log(queries.length);
     return (
       <div className={styles.container}>
-        <div className={styles.refreshWrapper}>
-          <RefreshPicker
-            onIntervalChanged={this.onIntervalChanged}
-            onRefresh={this.onRunQueries}
-            intervals={['15s', '30s']}
-          />
-        </div>
+        {queries.length > 0 && (
+          <div className={styles.refreshWrapper}>
+            <RefreshPicker
+              onIntervalChanged={this.onIntervalChanged}
+              onRefresh={this.onRunQueries}
+              intervals={['15s', '30s']}
+            />
+          </div>
+        )}
         <AlertingQueryRows
           queryRunner={this.queryRunner}
           queries={queries}
