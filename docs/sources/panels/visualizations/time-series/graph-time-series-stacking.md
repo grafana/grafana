@@ -6,7 +6,7 @@ weight = 400
 
 # Graph stacked time series
 
-> **Note:** This is a beta feature. Time series panel is going to replace the Graph panel in the future releases.
+> **Note:** This is a beta feature. Time series panel is going to replace the Graph panel in a future release.
 
 This section explains how to use Time series field options to control the stacking of the series and illustrates what the stacking options do.
 
@@ -54,5 +54,4 @@ The following image shows a graph with two stacking groups (A & B) defined.
 1. Name the stacking group you want the series to appear in. The stacking group name option is only available when creating an override.
 
 ![Stack series override](/img/docs/time-series-panel/stack-series-override-editor-8-0)
-
 
