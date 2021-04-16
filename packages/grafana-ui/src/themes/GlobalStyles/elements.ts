@@ -51,6 +51,10 @@ export function getElementStyles(theme: GrafanaThemeV2) {
       margin: 0 0 ${theme.spacing(2)};
     }
 
+    button {
+      letter-spacing: ${theme.typography.body.letterSpacing};
+    }
+
     // Ex: 14px base font * 85% = about 12px
     small {
       font-size: ${theme.typography.bodySmall.fontSize};

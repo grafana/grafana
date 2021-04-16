@@ -23,11 +23,11 @@ const createTheme = (theme: GrafanaTheme) => {
     fontCode: theme.v2.typography.fontFamilyMonospace,
 
     // Text colors
-    textColor: theme.v2.palette.text.primary,
+    textColor: theme.v2.palette.primary.text,
     textInverseColor: theme.v2.palette.primary.contrastText,
 
     // Toolbar default and active colors
-    barTextColor: theme.v2.palette.primary.text,
+    barTextColor: theme.v2.palette.text.primary,
     barSelectedColor: theme.v2.palette.emphasize(theme.v2.palette.primary.text),
     barBg: theme.v2.palette.layer1,
 

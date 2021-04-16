@@ -9,7 +9,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: counter;
       margin-left: ${theme.spacing.sm};
       border-radius: ${theme.spacing.lg};
-      background-color: ${theme.colors.bg2};
+      background-color: ${theme.v2.palette.action.hover};
       padding: ${theme.spacing.xxs} ${theme.spacing.sm};
       color: ${theme.colors.textWeak};
       font-weight: ${theme.typography.weight.semibold};

@@ -43,6 +43,7 @@ export const parameters = {
     dark: GrafanaDark,
     light: GrafanaLight,
   },
+  layout: 'fullscreen',
   actions: { argTypesRegex: '^on[A-Z].*' },
   options: {
     showPanel: true,

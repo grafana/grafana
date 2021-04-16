@@ -3,7 +3,6 @@ import { GrafanaTheme } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
 import { css as cssCore } from '@emotion/react';
 import { css } from '@emotion/css';
-import tinycolor from 'tinycolor2';
 
 export const getFocusStyle = (theme: GrafanaTheme) => css`
   &:focus {
@@ -12,11 +11,11 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 `;
 
 export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => {
-  const { spacing, palette } = theme;
-  const railColor = theme.isLight ? palette.gray5 : palette.dark6;
-  const trackColor = theme.isLight ? palette.blue85 : palette.blue77;
-  const handleColor = theme.isLight ? palette.blue85 : palette.blue80;
-  const blueOpacity = tinycolor(handleColor).setAlpha(0.2).toString();
+  const { spacing } = theme;
+  const railColor = theme.v2.palette.border2;
+  const trackColor = theme.v2.palette.primary.main;
+  const handleColor = theme.v2.palette.primary.main;
+  const blueOpacity = theme.v2.palette.primary.transparent;
   const hoverSyle = `box-shadow: 0px 0px 0px 6px ${blueOpacity}`;
 
   return {
@@ -37,6 +36,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
       .rc-slider-handle {
         border: none;
         background-color: ${handleColor};
+        box-shadow: ${theme.v2.shadows.z1};
         cursor: pointer;
       }
       .rc-slider-handle:hover,
@@ -51,7 +51,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
       }
       .rc-slider-rail {
         background-color: ${railColor};
-        border: 1px solid ${railColor};
         cursor: pointer;
       }
     `,

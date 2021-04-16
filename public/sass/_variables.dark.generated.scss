@@ -62,10 +62,10 @@ $layer0: #111217;
 $layer1: #181b1f;
 $layer2: #22252b;
 
-$divider: rgba(218,224,254,0.06);
+$divider: rgba(201, 209, 217, 0.10);
 
 $border0: #181b1f;
-$border1: rgba(218,224,254,0.15);
+$border1: rgba(201, 209, 217, 0.20);
 
 // Accent colors
 // -------------------------
@@ -74,7 +74,7 @@ $red: $red-base;
 $yellow: #ecbb13;
 $orange: #eb7b18;
 $purple: #9933cc;
-$variable: #33a2e5;
+$variable: #58a6ff;
 
 $brand-primary: #eb7b18;
 $brand-success: #299c46;
@@ -99,12 +99,12 @@ $page-bg: #181b1f;
 $dashboard-bg: #111217;
 
 $text-color-strong: #fff;
-$text-color: rgba(255, 255, 255, 0.77);
-$text-color-semi-weak: rgba(255, 255, 255, 0.50);
-$text-color-weak: rgba(255, 255, 255, 0.50);
-$text-color-faint: rgba(255, 255, 255, 0.35);
+$text-color: rgb(201, 209, 217);
+$text-color-semi-weak: rgba(201, 209, 217, 0.65);
+$text-color-weak: rgba(201, 209, 217, 0.65);
+$text-color-faint: rgba(201, 209, 217, 0.40);
 $text-color-emphasis: #fff;
-$text-blue: #33a2e5;
+$text-blue: #58a6ff;
 
 $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 $textShadow: none;
@@ -122,7 +122,7 @@ $external-link-color: #33a2e5;
 
 // Typography
 // -------------------------
-$headings-color: rgba(255, 255, 255, 0.77);
+$headings-color: rgb(201, 209, 217);
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -132,7 +132,7 @@ $hr-border-color: $dark-9;
 // -------------------------
 $panel-bg: #181b1f;
 $panel-border: #181b1f;
-$panel-header-hover-bg: rgba(255, 255, 255, 0.08);
+$panel-header-hover-bg: rgba(201, 209, 217, 0.08);
 $panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.15),0px 1px 3px 0px rgba(0,0,0,0.1);
 $panel-corner: $panel-bg;
 
@@ -147,7 +147,7 @@ $divider-border-color: $gray-1;
 $tight-form-func-bg: #22252b;
 $tight-form-func-highlight-bg: rgb(40, 43, 49);
 
-$modal-backdrop-bg: rgba(255, 255, 255, 0.08);
+$modal-backdrop-bg: rgba(201, 209, 217, 0.08);
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
@@ -171,7 +171,7 @@ $scrollbarBorder: black;
 // Tables
 // -------------------------
 $table-bg-accent: #22252b;
-$table-border: rgba(218,224,254,0.15);
+$table-border: rgba(201, 209, 217, 0.20);
 $table-bg-odd: rgb(28, 31, 35);
 $table-bg-hover: rgb(35, 38, 42);
 
@@ -213,11 +213,11 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: #c7d0d9;
-$input-border-color: rgba(218,224,254,0.15);
+$input-border-color: rgba(201, 209, 217, 0.20);
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
 $input-box-shadow-focus: $blue-light !default;
-$input-color-placeholder: rgba(255, 255, 255, 0.35);
+$input-color-placeholder: rgba(201, 209, 217, 0.40);
 $input-label-bg: #22252b;
 $input-color-select-arrow: $white;
 
@@ -233,8 +233,8 @@ $typeahead-selected-color: $yellow;
 // -------------------------
 $dropdownBackground: #22252b;
 $dropdownBorder: #181b1f;
-$dropdownDividerTop: rgba(218,224,254,0.06);
-$dropdownDividerBottom: rgba(218,224,254,0.06);
+$dropdownDividerTop: rgba(201, 209, 217, 0.10);
+$dropdownDividerBottom: rgba(201, 209, 217, 0.10);
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -258,12 +258,12 @@ $side-menu-border: none;
 $side-menu-item-hover-bg: #22252b;
 $side-menu-shadow: 0 0 30px #111;
 $side-menu-icon-color: #9fa7b3;
-$side-menu-header-color: rgba(255, 255, 255, 0.77);
+$side-menu-header-color: rgb(201, 209, 217);
 
 // Menu dropdowns
 // -------------------------
 $menu-dropdown-bg: #22252b;
-$menu-dropdown-hover-bg: rgba(255, 255, 255, 0.08);
+$menu-dropdown-hover-bg: rgba(201, 209, 217, 0.08);
 $menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.2),0px 4px 5px 0px rgba(0,0,0,0.15),0px 1px 10px 0px rgba(0,0,0,0.1);
 
 // Tabs
@@ -288,14 +288,14 @@ $tooltipLinkColor: $link-color;
 $graph-tooltip-bg: $dark-1;
 
 $tooltipBackground: #22252b;
-$tooltipColor: rgba(255, 255, 255, 0.77);
+$tooltipColor: rgb(201, 209, 217);
 $tooltipArrowColor: #22252b;
 $tooltipBackgroundError: #D10E5C;
 $tooltipShadow: 0px 3px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.15),0px 1px 5px 0px rgba(0,0,0,0.1);
 
 $popover-bg: #22252b;
-$popover-color: rgba(255, 255, 255, 0.77);
-$popover-border-color: rgba(218,224,254,0.15);
+$popover-color: rgb(201, 209, 217);
+$popover-border-color: rgba(201, 209, 217, 0.20);
 $popover-header-bg: #22252b;
 $popover-shadow: 0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.15),0px 3px 14px 2px rgba(0,0,0,0.1);
 
@@ -332,14 +332,14 @@ $json-explorer-url-color: #027bff;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: rgba(255, 255, 255, 0.08);
+$diff-label-bg: rgba(201, 209, 217, 0.08);
 $diff-label-fg: $white;
 
 $diff-group-bg: #22252b;
 $diff-arrow-color: $white;
 
 $diff-json-bg: #22252b;
-$diff-json-fg: rgba(255, 255, 255, 0.77);
+$diff-json-fg: rgb(201, 209, 217);
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;

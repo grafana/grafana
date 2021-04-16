@@ -2,7 +2,7 @@
 
 exports[`MetaInfoText should render component 1`] = `
 <div
-  className="css-7qzshi"
+  className="css-1nu680j"
 >
   <Memo(MetaInfoItem)
     key="0-label"

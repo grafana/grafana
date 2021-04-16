@@ -2,7 +2,7 @@
 
 exports[`CustomScrollbar renders correctly 1`] = `
 <div
-  className="css-1xduqpt"
+  className="css-d4ozb2"
   style={
     Object {
       "height": "auto",

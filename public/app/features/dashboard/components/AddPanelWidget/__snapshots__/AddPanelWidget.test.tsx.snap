@@ -8,7 +8,7 @@ exports[`Render should render component 1`] = `
     onCancel={[Function]}
     styles={
       Object {
-        "actionsRow": "css-sxfls",
+        "actionsRow": "css-l02n0m",
         "actionsWrapper": "css-gxxmom",
         "backButton": "css-1cdxa9p",
         "headerRow": "css-3sdqvi",
@@ -25,7 +25,7 @@ exports[`Render should render component 1`] = `
     className="css-gxxmom"
   >
     <div
-      className="css-sxfls"
+      className="css-l02n0m"
     >
       <div
         aria-label="Add new panel"
