@@ -93,10 +93,6 @@ type PluginInitializerV2 interface {
 type PluginManagerV2 interface {
 	Reload() // find, load and initialize dynamically
 
-	// Probably not necessary as loading/initializing will cover this step
-	//Register(pluginID string) error
-	//Unregister(pluginID string) error
-
 	StartPlugin(ctx context.Context, pluginID string) error
 	StopPlugin(ctx context.Context, pluginID string) error
 
@@ -125,6 +121,4 @@ type PluginManagerV2 interface {
 	Register(*PluginV2) error
 
 	InstallPlugin(string, InstallOpts) error
-
-	// Plugin dashboards
 }

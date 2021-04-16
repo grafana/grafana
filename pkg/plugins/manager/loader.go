@@ -18,16 +18,13 @@ import (
 	grpcplugin2 "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	goplugin "github.com/hashicorp/go-plugin"
 
+	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
-
-	"github.com/grafana/grafana/pkg/infra/fs"
-
 	"github.com/grafana/grafana/pkg/registry"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -180,8 +177,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 			}
 		}
 
-		// Probably can optimize this
-
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `jsonFPath` is based
 		// on plugin the folder structure on disk and not user input.
@@ -209,12 +204,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 			cmd := plugins.ComposePluginStartCommand(startCmd)
 			fullpath := filepath.Join(plugin.PluginDir, cmd)
 
-			//client := grpcplugin.NewBackendPluginV2(plugin.ID, fullpath, l.log.New("pluginId", plugin.ID), []string{})
-			//
-			//if err := l.BackendPluginManager.Register(plugin.ID, factory); err != nil {
-			//	return nil, errutil.Wrapf(err, "failed to register backend plugin")
-			//}
-
 			err = plugin.Setup(grpcplugin.PluginDescriptor{
 				PluginID:       plugin.ID,
 				ExecutablePath: fullpath,
@@ -226,30 +215,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 			if err != nil {
 				return nil, err
 			}
-
-			//err = plugin.Start(context.Background())
-			//if err != nil {
-			//	return nil, err
-			//}
 		}
-
-		//var pb *plugins.PluginV2
-		//switch p := loader.(type) {
-		//case *plugins.DataSourcePlugin:
-		//	//pm.dataSources[p.Id] = p
-		//	pb = &p.PluginBase
-		//case *plugins.PanelPlugin:
-		//	//pm.panels[p.Id] = p
-		//	pb = &p.PluginBase
-		//case *plugins.RendererPlugin:
-		//	//pm.renderer = p
-		//	pb = &p.PluginBase
-		//case *plugins.AppPlugin:
-		//	//pm.apps[p.Id] = p
-		//	pb = &p.PluginBase
-		//default:
-		//	panic(fmt.Sprintf("Unrecognized plugin type %T", loader))
-		//}
 
 		//if p, exists := pm.plugins[pb.Id]; exists {
 		//	l.log.Warn("Plugin is duplicate", "id", pb.Id)
@@ -257,7 +223,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 		//	return nil, nil // return duplicate error?
 		//}
 
-		// Probably can remove
 		if !strings.HasPrefix(plugin.PluginDir, l.Cfg.StaticRootPath) {
 			l.log.Info("Registering plugin", "id", plugin.ID)
 		}
@@ -275,14 +240,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string) ([]*plugins.PluginV2, error) 
 				include.Role = models.ROLE_VIEWER
 			}
 		}
-
-		// Copy relevant fields from the base
-		//pb.PluginDir = plugin.PluginDir
-		//pb.Signature = plugin.Signature
-		//pb.SignatureType = plugin.SignatureType
-		//pb.SignatureOrg = plugin.SignatureOrg
-
-		//pm.plugins[pb.Id] = pb
 
 		l.log.Debug("Successfully added plugin", "id", plugin.ID)
 
