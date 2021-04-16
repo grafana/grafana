@@ -106,11 +106,11 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 			newRule := apimodels.Rule{
 				Name:           rule.Title,
-				Labels:         nil,  // TODO: NG AlertRule does not have labels but does have annotations
+				Labels:         rule.Labels,
 				Health:         "ok", // TODO: update this in the future when error and noData states are being evaluated and set
 				Type:           apiv1.RuleTypeAlerting,
-				LastEvaluation: time.Time{}, // TODO: set this to be rule evaluation time once it is being set
-				EvaluationTime: 0,           // TODO: set this once we are saving it or adding it to evaluation results
+				LastEvaluation: time.Time{},
+				EvaluationTime: 0, // TODO: set this once we are saving it or adding it to evaluation results
 			}
 			for _, instance := range instanceQuery.Result {
 				activeAt := instance.CurrentStateSince

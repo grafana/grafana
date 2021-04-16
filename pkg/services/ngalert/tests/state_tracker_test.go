@@ -20,7 +20,11 @@ func TestProcessEvalResults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error parsing date format: %s", err.Error())
 	}
-	cacheId := "map[__alert_rule_namespace_uid__:test_namespace __alert_rule_title__:test_title __alert_rule_uid__:test_uid label1:value1 label2:value2]"
+	cacheId := "map[__alert_rule_namespace_uid__:test_namespace __alert_rule_title__:test_title __alert_rule_uid__:test_uid label1:value1 label2:value2 rule_label:rule_value]"
+
+	ruleLabels := map[string]string{
+		"rule_label": "rule_value",
+	}
 	alertRule := models.AlertRule{
 		ID:           1,
 		OrgID:        123,
@@ -29,11 +33,13 @@ func TestProcessEvalResults(t *testing.T) {
 		UID:          "test_uid",
 		NamespaceUID: "test_namespace",
 		For:          10 * time.Second,
+		Labels:       ruleLabels,
 	}
 	processingTime := 10 * time.Millisecond
 	expectedLabels := data.Labels{
 		"label1":                       "value1",
 		"label2":                       "value2",
+		"rule_label":                   "rule_value",
 		"__alert_rule_uid__":           "test_uid",
 		"__alert_rule_namespace_uid__": "test_namespace",
 		"__alert_rule_title__":         "test_title",

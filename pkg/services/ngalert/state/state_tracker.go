@@ -58,22 +58,21 @@ func NewStateTracker(logger log.Logger) *StateTracker {
 func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result, processingTime time.Duration) AlertState {
 	st.stateCache.mu.Lock()
 	defer st.stateCache.mu.Unlock()
-	lbs := data.Labels{}
-	if len(result.Instance) > 0 {
-		lbs = result.Instance
-	}
+
+	// if duplicate labels exist, alertRule label will take precedence
+	lbs := mergeLabels(alertRule.Labels, result.Instance)
 	lbs["__alert_rule_uid__"] = alertRule.UID
 	lbs["__alert_rule_namespace_uid__"] = alertRule.NamespaceUID
 	lbs["__alert_rule_title__"] = alertRule.Title
 
-	annotations := map[string]string{}
-	if len(alertRule.Annotations) > 0 {
-		annotations = alertRule.Annotations
-	}
-
 	idString := fmt.Sprintf("%s", map[string]string(lbs))
 	if state, ok := st.stateCache.cacheMap[idString]; ok {
 		return state
+	}
+
+	annotations := map[string]string{}
+	if len(alertRule.Annotations) > 0 {
+		annotations = alertRule.Annotations
 	}
 
 	st.Log.Debug("adding new alert state cache entry", "cacheId", idString, "state", result.State.String(), "evaluatedAt", result.EvaluatedAt.String())
@@ -232,4 +231,18 @@ func (st *StateTracker) Put(states []AlertState) {
 	for _, s := range states {
 		st.set(s)
 	}
+}
+
+// if duplicate labels exist, keep the value from the first set
+func mergeLabels(a, b data.Labels) data.Labels {
+	newLbs := data.Labels{}
+	for k, v := range a {
+		newLbs[k] = v
+	}
+	for k, v := range b {
+		if _, ok := newLbs[k]; !ok {
+			newLbs[k] = v
+		}
+	}
+	return newLbs
 }
