@@ -1,4 +1,4 @@
-import { CombinedRuleGroup, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React, { FC, useMemo, useState, Fragment } from 'react';
 import { Icon, Tooltip, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
@@ -13,17 +13,17 @@ import { ActionIcon } from './ActionIcon';
 import pluralize from 'pluralize';
 import { useHasRuler } from '../../hooks/useHasRuler';
 interface Props {
-  namespace: string;
-  rulesSource: RulesSource;
+  namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
 }
 
-export const RulesGroup: FC<Props> = React.memo(({ group, namespace, rulesSource }) => {
+export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
+  const { rulesSource } = namespace;
   const styles = useStyles(getStyles);
 
   const [isCollapsed, setIsCollapsed] = useState(true);
 
-  const hasRuler = useHasRuler(rulesSource);
+  const hasRuler = useHasRuler();
 
   const stats = useMemo(
     (): Record<PromAlertingRuleState, number> =>
@@ -60,14 +60,14 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, rulesSource
   }
 
   const actionIcons: React.ReactNode[] = [];
-  if (hasRuler) {
+  if (hasRuler(rulesSource)) {
     actionIcons.push(<ActionIcon key="edit" icon="pen" tooltip="edit" />);
   }
   if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
     actionIcons.push(<ActionIcon key="manage-perms" icon="lock" tooltip="manage permissions" />);
   }
 
-  const groupName = isCloudRulesSource(rulesSource) ? `${namespace} > ${group.name}` : namespace;
+  const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
 
   return (
     <div className={styles.wrapper} data-testid="rule-group">
@@ -105,7 +105,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, rulesSource
           </>
         )}
       </div>
-      {!isCollapsed && <RulesTable rulesSource={rulesSource} namespace={namespace} group={group} />}
+      {!isCollapsed && <RulesTable showGuidelines={true} rules={group.rules} />}
     </div>
   );
 });
