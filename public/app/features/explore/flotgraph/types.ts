@@ -1,4 +1,4 @@
-import { GraphTooltipOptions, LegendDisplayMode, LegendPlacement } from '@grafana/ui';
+import { VizTooltipOptions, LegendDisplayMode, LegendPlacement } from '@grafana/ui';
 import { YAxis } from '@grafana/data';
 
 export interface SeriesOptions {
@@ -21,7 +21,7 @@ export interface Options {
   series: {
     [alias: string]: SeriesOptions;
   };
-  tooltipOptions: GraphTooltipOptions;
+  tooltipOptions: VizTooltipOptions;
 }
 
 export const defaults: Options = {

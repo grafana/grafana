@@ -2,7 +2,7 @@ import React from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import { CursorPlugin } from './CursorPlugin';
-import { SeriesTable, SeriesTableRowProps } from '../../Graph/GraphTooltip/SeriesTable';
+import { SeriesTable, SeriesTableRowProps, TooltipMode } from '../../VizTooltip/VizTooltip';
 import {
   DataFrame,
   FieldType,
@@ -12,7 +12,6 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { TooltipContainer } from '../../Chart/TooltipContainer';
-import { TooltipMode } from '../../Chart/models.gen';
 import { useGraphNGContext } from '../../GraphNG/hooks';
 
 interface TooltipPluginProps {

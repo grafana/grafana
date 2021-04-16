@@ -1,5 +1,5 @@
 import { DataFrame, FieldConfigSource, FieldDisplay, InterpolateFunction, ReduceDataOptions } from '@grafana/data';
-import { GraphTooltipOptions } from '../Graph/GraphTooltip/types';
+import { VizTooltipOptions } from '../VizTooltip/VizTooltip';
 import { VizLegendOptions } from '..';
 
 export interface PieChartSvgProps {
@@ -10,12 +10,12 @@ export interface PieChartSvgProps {
   displayLabels?: PieChartLabels[];
   useGradients?: boolean;
   onSeriesColorChange?: (label: string, color: string) => void;
-  tooltipOptions: GraphTooltipOptions;
+  tooltipOptions: VizTooltipOptions;
 }
 
 export interface PieChartProps extends Omit<PieChartSvgProps, 'fieldDisplayValues'> {
   legendOptions?: PieChartLegendOptions;
-  tooltipOptions: GraphTooltipOptions;
+  tooltipOptions: VizTooltipOptions;
   reduceOptions: ReduceDataOptions;
   fieldConfig: FieldConfigSource<any>;
   replaceVariables: InterpolateFunction;

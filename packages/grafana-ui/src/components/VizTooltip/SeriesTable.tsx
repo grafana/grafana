@@ -1,9 +1,8 @@
 import React from 'react';
-import { stylesFactory } from '../../../themes/stylesFactory';
 import { GrafanaTheme, GraphSeriesValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { SeriesIcon } from '../../VizLegend/SeriesIcon';
-import { useTheme } from '../../../themes';
+import { SeriesIcon } from '../VizLegend/SeriesIcon';
+import { useStyles } from '../../themes';
 
 export interface SeriesTableRowProps {
   color?: string;
@@ -12,10 +11,11 @@ export interface SeriesTableRowProps {
   isActive?: boolean;
 }
 
-const getSeriesTableRowStyles = stylesFactory((theme: GrafanaTheme) => {
+const getSeriesTableRowStyles = (theme: GrafanaTheme) => {
   return {
     icon: css`
       margin-right: ${theme.spacing.xs};
+      vertical-align: middle;
     `,
     seriesTable: css`
       display: table;
@@ -41,11 +41,11 @@ const getSeriesTableRowStyles = stylesFactory((theme: GrafanaTheme) => {
       font-size: ${theme.typography.size.sm};
     `,
   };
-});
+};
 
 const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, isActive }) => {
-  const theme = useTheme();
-  const styles = getSeriesTableRowStyles(theme);
+  const styles = useStyles(getSeriesTableRowStyles);
+
   return (
     <div className={cx(styles.seriesTableRow, isActive && styles.activeSeries)}>
       {color && (
@@ -59,14 +59,13 @@ const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, is
   );
 };
 
-interface SeriesTableProps {
+export interface SeriesTableProps {
   timestamp?: string | GraphSeriesValue;
   series: SeriesTableRowProps[];
 }
 
 export const SeriesTable: React.FC<SeriesTableProps> = ({ timestamp, series }) => {
-  const theme = useTheme();
-  const styles = getSeriesTableRowStyles(theme);
+  const styles = useStyles(getSeriesTableRowStyles);
 
   return (
     <>

@@ -72,9 +72,6 @@ HideSeriesConfig: {
 } @cuetsy(targetType="interface")
 LegendPlacement:   "bottom" | "right"          @cuetsy(targetType="type")
 LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(targetType="enum")
-GraphTooltipOptions: {
-	mode: TooltipMode
-} @cuetsy(targetType="interface")
 TableFieldOptions: {
 	width?:      number
 	align:       FieldTextAlignment | *"auto"
@@ -90,4 +87,7 @@ VizLegendOptions: {
 	displayMode: LegendDisplayMode
 	placement:   LegendPlacement
 	calcs: [string]
+} @cuetsy(targetType="interface")
+VizTooltipOptions: {
+	mode: TooltipMode
 } @cuetsy(targetType="interface")

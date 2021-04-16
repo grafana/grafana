@@ -29,8 +29,7 @@ import {
   PieChartType,
 } from './types';
 import { getTooltipContainerStyles } from '../../themes/mixins';
-import { SeriesTable, SeriesTableRowProps } from '../Graph/GraphTooltip/SeriesTable';
-import { GraphTooltipOptions } from '../Graph/GraphTooltip/models.gen';
+import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip/VizTooltip';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -263,7 +262,7 @@ const PieSlice: FC<{
   pie: ProvidedProps<FieldDisplay>;
   fill: string;
   tooltip: UseTooltipParams<SeriesTableRowProps[]>;
-  tooltipOptions: GraphTooltipOptions;
+  tooltipOptions: VizTooltipOptions;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
 }> = ({ arc, children, pie, openMenu, fill, tooltip, tooltipOptions }) => {
   const theme = useTheme();
@@ -346,7 +345,7 @@ const PieLabel: FC<{
 function getTooltipData(
   pie: ProvidedProps<FieldDisplay>,
   arc: PieArcDatum<FieldDisplay>,
-  tooltipOptions: GraphTooltipOptions
+  tooltipOptions: VizTooltipOptions
 ) {
   if (tooltipOptions.mode === 'multi') {
     return pie.arcs.map((pieArc) => {

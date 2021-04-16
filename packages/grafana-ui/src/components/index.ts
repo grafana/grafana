@@ -74,7 +74,7 @@ export { Graph } from './Graph/Graph';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
-export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
+export { VizTooltipOptions } from './VizTooltip/VizTooltip';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export {

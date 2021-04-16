@@ -3,11 +3,11 @@ import {
   SingleStatBaseOptions,
   PieChartLabels,
   PieChartLegendOptions,
-  GraphTooltipOptions,
+  VizTooltipOptions,
 } from '@grafana/ui';
 export interface PieChartOptions extends SingleStatBaseOptions {
   pieType: PieChartType;
   displayLabels: PieChartLabels[];
   legend: PieChartLegendOptions;
-  tooltip: GraphTooltipOptions;
+  tooltip: VizTooltipOptions;
 }
