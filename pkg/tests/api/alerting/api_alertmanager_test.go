@@ -130,7 +130,10 @@ func TestAlertRuleCRUD(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", &buf)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
@@ -142,9 +145,13 @@ func TestAlertRuleCRUD(t *testing.T) {
 	// With the rules created, let's make sure that rule definition is stored correctly.
 	{
 		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
 		resp, err := http.Get(u)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
@@ -243,8 +250,10 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 		resp, err := client.Do(req)
 		require.NoError(t, err)
-
-		defer resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
@@ -257,8 +266,10 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 		resp, err = client.Do(req)
 		require.NoError(t, err)
-
-		defer resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
 		b, err = ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
