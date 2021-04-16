@@ -13,3 +13,6 @@ export { DOMUtil };
 export { renderOrCallToRender } from './renderOrCallToRender';
 export { createLogger } from './logger';
 export { attachDebugger } from './debug';
+export { useIsFocusVisible } from './useIsFocusVisible';
+export { useForkRef } from './useForkRef';
+import './focusVisible';

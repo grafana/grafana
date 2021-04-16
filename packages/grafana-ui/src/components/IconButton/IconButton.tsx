@@ -99,6 +99,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
       }
 
       &:focus {
+        outline: none;
+      }
+
+      &.focus-visible,
+      &:focus-visible {
         ${focusCss(theme)}
       }
 

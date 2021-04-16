@@ -18,6 +18,40 @@ export interface RadioButtonProps {
   fullWidth?: boolean;
 }
 
+export const RadioButton: React.FC<RadioButtonProps> = ({
+  children,
+  active = false,
+  disabled = false,
+  size = 'md',
+  onChange,
+  id,
+  name = undefined,
+  description,
+  fullWidth,
+}) => {
+  const theme = useTheme();
+  const styles = getRadioButtonStyles(theme, size, fullWidth);
+
+  return (
+    <>
+      <input
+        type="radio"
+        className={cx(styles.radio)}
+        onChange={onChange}
+        disabled={disabled}
+        id={id}
+        checked={active}
+        name={name}
+      />
+      <label className={cx(styles.radioLabel)} htmlFor={id} title={description}>
+        {children}
+      </label>
+    </>
+  );
+};
+
+RadioButton.displayName = 'RadioButton';
+
 const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme.v2);
 
@@ -84,37 +118,3 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
     `,
   };
 });
-
-export const RadioButton: React.FC<RadioButtonProps> = ({
-  children,
-  active = false,
-  disabled = false,
-  size = 'md',
-  onChange,
-  id,
-  name = undefined,
-  description,
-  fullWidth,
-}) => {
-  const theme = useTheme();
-  const styles = getRadioButtonStyles(theme, size, fullWidth);
-
-  return (
-    <>
-      <input
-        type="radio"
-        className={cx(styles.radio)}
-        onChange={onChange}
-        disabled={disabled}
-        id={id}
-        checked={active}
-        name={name}
-      />
-      <label className={cx(styles.radioLabel)} htmlFor={id} title={description}>
-        {children}
-      </label>
-    </>
-  );
-};
-
-RadioButton.displayName = 'RadioButton';
