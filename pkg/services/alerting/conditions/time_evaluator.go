@@ -113,17 +113,15 @@ func dissectTimeParts(param string) (int, int, error) {
 		i, err := strconv.Atoi(timeParts[0])
 		if err != nil {
 			return 0, 0, alerting.ValidationError{Reason: "Time Evaluator has invalid parameter, must be integers"}
-		} else {
-			hour = i
 		}
+		hour = i
 	}
 	if len(timeParts) == 2 {
 		i, err := strconv.Atoi(timeParts[1])
 		if err != nil {
 			return 0, 0, alerting.ValidationError{Reason: "Time Evaluator has invalid parameter, must be integers"}
-		} else {
-			minute = i
 		}
+		minute = i
 	}
 
 	return hour, minute, nil
@@ -195,20 +193,20 @@ func NewAlertTimeEvaluator(model *simplejson.Json) (AlertTimeEvaluator, error) {
 	// default is to return AnyTime
 	if model == nil {
 		return &anyDayTimeEvaluator{}, nil
-	} else {
-		typ := model.Get("type").MustString()
-		if typ == "" {
-			return &anyDayTimeEvaluator{}, nil
-		}
-
-		if typ == "range" {
-			return newRangedTimeEvaluator(model)
-		}
-
-		if typ == "any" {
-			return newAnyTimeEvaluator(model)
-		}
-
-		return nil, fmt.Errorf("evaluator invalid evaluator type: %s", typ)
 	}
+
+	typ := model.Get("type").MustString()
+	if typ == "" {
+		return &anyDayTimeEvaluator{}, nil
+	}
+
+	if typ == "range" {
+		return newRangedTimeEvaluator(model)
+	}
+
+	if typ == "any" {
+		return newAnyTimeEvaluator(model)
+	}
+
+	return nil, fmt.Errorf("evaluator invalid evaluator type: %s", typ)
 }
