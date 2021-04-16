@@ -228,7 +228,7 @@ export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
 export { useGraphNGContext } from './GraphNG/hooks';
 export { BarChart } from './BarChart/BarChart';
 export { TimelineChart } from './Timeline/TimelineChart';
-export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
+export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';

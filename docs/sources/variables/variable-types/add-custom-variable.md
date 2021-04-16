@@ -1,6 +1,6 @@
 +++
 title = "Add a custom variable"
-aliases = ["/docs/grafana/next/variables/add-custom-variable.md"]
+aliases = ["/docs/grafana/latest/variables/add-custom-variable.md"]
 weight = 200
 +++
 
