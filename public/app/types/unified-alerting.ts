@@ -79,6 +79,8 @@ export interface CombinedRule {
   annotations: Annotations;
   promRule?: Rule;
   rulerRule?: RulerRuleDTO;
+  group: CombinedRuleGroup;
+  namespace: CombinedRuleNamespace;
 }
 
 export interface CombinedRuleGroup {
