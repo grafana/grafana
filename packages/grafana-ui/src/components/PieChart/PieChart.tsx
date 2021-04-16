@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, useState } from 'react';
 import {
   DataHoverClearEvent,
   DataHoverEvent,
@@ -31,7 +31,6 @@ import {
   PieChartSvgProps,
   PieChartType,
 } from './types';
-import { useSetState } from 'react-use';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -39,10 +38,6 @@ const defaultLegendOptions: PieChartLegendOptions = {
   calcs: [],
   values: [PieChartLegendValues.Percent],
 };
-
-interface PieChartState {
-  highlightedTitle?: string;
-}
 
 export const PieChart: FC<PieChartProps> = ({
   data,
@@ -58,18 +53,18 @@ export const PieChart: FC<PieChartProps> = ({
   ...restProps
 }) => {
   const theme = useTheme();
-  const [state, setState] = useSetState<PieChartState>();
+  const [highlightedTitle, setHighlightedTitle] = useState<string>();
 
   if (eventBus) {
     const setHighlightedSlice = (event: DataHoverEvent) => {
       if (event.payload.source && eventBus.isSourceOf(event.payload.source)) {
-        setState({ highlightedTitle: event.payload.dataId });
+        setHighlightedTitle(event.payload.dataId);
       }
     };
 
     const resetHighlightedSlice = (event: DataHoverClearEvent) => {
       if (event.payload.source && eventBus.isSourceOf(event.payload.source)) {
-        setState({ highlightedTitle: undefined });
+        setHighlightedTitle(undefined);
       }
     };
 
@@ -142,7 +137,7 @@ export const PieChart: FC<PieChartProps> = ({
           <PieChartSvg
             width={vizWidth}
             height={vizHeight}
-            highlightedTitle={state.highlightedTitle}
+            highlightedTitle={highlightedTitle}
             fieldDisplayValues={fieldDisplayValues}
             {...restProps}
           />
