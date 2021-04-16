@@ -3,13 +3,13 @@ import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { appEvents } from 'app/core/core';
 import {
   AppEvents,
+  isLiveChannelMessageEvent,
+  isLiveChannelStatusEvent,
   LiveChannel,
-  LiveChannelScope,
-  LiveChannelEvent,
   LiveChannelConfig,
   LiveChannelConnectionState,
-  isLiveChannelStatusEvent,
-  isLiveChannelMessageEvent,
+  LiveChannelEvent,
+  LiveChannelScope,
 } from '@grafana/data';
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
@@ -111,7 +111,7 @@ class DashboardWatcher {
             }
 
             const dash = getDashboardSrv().getCurrent();
-            if (dash.uid !== event.message.uid) {
+            if (dash?.uid !== event.message.uid) {
               console.log('dashboard event for different dashboard?', event, dash);
               return;
             }
