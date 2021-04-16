@@ -50,10 +50,7 @@ const SilencesTable: FC<Props> = ({ silences }) => {
 
 const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
-    margin-top: ${theme.spacing.md};
-    margin-left: 36px;
     width: auto;
-    padding: ${theme.spacing.sm};
     background-color: ${theme.colors.bg2};
     border-radius: 3px;
     border: solid 1px ${theme.colors.border3};
@@ -83,7 +80,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     width: 110px;
   `,
   colMatchers: css`
-    width: 600px;
+    width: 50%;
   `,
 });
 

@@ -13,7 +13,6 @@ import SilencesTable from './components/silences/SilencesTable';
 const Silences: FC = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
-
   const silences = useUnifiedAlertingSelector((state) => state.silences);
 
   useEffect(() => {
