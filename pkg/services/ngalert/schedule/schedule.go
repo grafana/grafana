@@ -323,7 +323,7 @@ func (sch *schedule) saveAlertStates(states []state.AlertState) {
 	for _, s := range states {
 		cmd := models.SaveAlertInstanceCommand{
 			DefinitionOrgID:   s.OrgID,
-			DefinitionUID:     s.UID,
+			DefinitionUID:     s.AlertRuleUID,
 			Labels:            models.InstanceLabels(s.Labels),
 			State:             models.InstanceStateType(s.State.String()),
 			LastEvalTime:      s.LastEvaluationTime,

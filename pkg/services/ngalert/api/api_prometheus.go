@@ -88,7 +88,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 
 		stateMap := srv.stateTracker.GetStatesByRuleUID()
 		for _, rule := range alertRuleQuery.Result {
-
 			alertingRule := apimodels.AlertingRule{
 				State:       "inactive",
 				Name:        rule.Title,
@@ -123,6 +122,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 				alertingRule.Duration = alertState.ProcessingTime.Seconds()
 
 				switch alertState.State {
+				case eval.Normal:
 				case eval.Pending:
 					if alertingRule.State == "inactive" {
 						alertingRule.State = "firing"
@@ -144,17 +144,4 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, newGroup)
 	}
 	return response.JSON(http.StatusOK, ruleResponse)
-}
-
-func translateInstanceState(state ngmodels.InstanceStateType) string {
-	switch {
-	case state == ngmodels.InstanceStateFiring:
-		return "firing"
-	case state == ngmodels.InstanceStateNormal:
-		return "inactive"
-	case state == ngmodels.InstanceStatePending:
-		return "pending"
-	default:
-		return "inactive"
-	}
 }
