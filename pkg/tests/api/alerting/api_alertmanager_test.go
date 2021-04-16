@@ -103,7 +103,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								Model: json.RawMessage(`{
-									"datasource": "__expr__",
+									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -124,7 +124,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
 								Model: json.RawMessage(`{
-									"datasource": "__expr__",
+									"datasourceUid": "-100",
 									"type": "math",
 									"expression": "2 + 3 > 1"
 									}`),
@@ -198,7 +198,6 @@ func TestAlertRuleCRUD(t *testing.T) {
                            "to":10800
                         },
                         "model":{
-                           "datasource":"__expr__",
                            "datasourceUid":"-100",
                            "expression":"2 + 3 \u003e 1",
                            "intervalMs":1000,
@@ -234,7 +233,6 @@ func TestAlertRuleCRUD(t *testing.T) {
                            "to":10800
                         },
                         "model":{
-                           "datasource":"__expr__",
                            "datasourceUid":"-100",
                            "expression":"2 + 3 \u003e 1",
                            "intervalMs":1000,

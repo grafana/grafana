@@ -14,7 +14,7 @@ func FromAlertStateToPostableAlerts(firingStates []state.AlertState) []*notifier
 		if alertState.State == eval.Alerting {
 			alerts = append(alerts, &notifier.PostableAlert{
 				PostableAlert: models.PostableAlert{
-					Annotations: models.LabelSet{}, //TODO: add annotations to evaluation results, add them to the alertState struct, and then set them before sending to the notifier
+					Annotations: alertState.Annotations,
 					StartsAt:    strfmt.DateTime(alertState.StartsAt),
 					EndsAt:      strfmt.DateTime(alertState.EndsAt),
 					Alert: models.Alert{
