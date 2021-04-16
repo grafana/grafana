@@ -6,6 +6,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { CompletionItem, CompletionItemKind } from '../../types/completion';
 import { ThemeContext } from '../../themes/ThemeContext';
+import { PartialHighlighter } from './PartialHighlighter';
 
 interface Props {
   isSelected: boolean;
@@ -83,7 +84,15 @@ export const TypeaheadItem: React.FC<Props> = (props: Props) => {
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <Highlighter textToHighlight={label} searchWords={[prefix]} highlightClassName={highlightClassName} />
+      {item.highlightParts !== undefined ? (
+        <PartialHighlighter
+          text={label}
+          highlightClassName={highlightClassName}
+          highlightParts={item.highlightParts}
+        ></PartialHighlighter>
+      ) : (
+        <Highlighter textToHighlight={label} searchWords={[prefix]} highlightClassName={highlightClassName} />
+      )}
     </li>
   );
 };

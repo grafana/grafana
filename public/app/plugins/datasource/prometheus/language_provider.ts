@@ -3,16 +3,16 @@ import LRU from 'lru-cache';
 import { Value } from 'slate';
 
 import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
-import { CompletionItem, CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 import {
+  addLimitInfo,
   fixSummariesMetadata,
+  limitSuggestions,
   parseSelector,
   processHistogramLabels,
   processLabels,
   roundSecToMin,
-  addLimitInfo,
-  limitSuggestions,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
@@ -201,7 +201,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   getEmptyCompletionItems = (context: { history: Array<HistoryItem<PromQuery>> }): TypeaheadOutput => {
     const { history } = context;
-    const suggestions = [];
+    const suggestions: CompletionItemGroup[] = [];
 
     if (history && history.length) {
       const historyItems = _.chain(history)
@@ -214,7 +214,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         .value();
 
       suggestions.push({
-        prefixMatch: true,
+        searchFunctionType: SearchFunctionType.Prefix,
         skipSort: true,
         label: 'History',
         items: historyItems,
@@ -226,10 +226,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   getTermCompletionItems = (): TypeaheadOutput => {
     const { metrics, metricsMetadata } = this;
-    const suggestions = [];
+    const suggestions: CompletionItemGroup[] = [];
 
     suggestions.push({
-      prefixMatch: true,
+      searchFunctionType: SearchFunctionType.Prefix,
       label: 'Functions',
       items: FUNCTIONS.map(setFunctionKind),
     });
@@ -239,6 +239,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions.push({
         label: `Metrics${limitInfo}`,
         items: limitSuggestions(metrics).map((m) => addMetricsMetadata(m, metricsMetadata)),
+        searchFunctionType: SearchFunctionType.Fuzzy,
       });
     }
 
@@ -313,6 +314,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       suggestions.push({
         label: `Labels${limitInfo}`,
         items: Object.keys(labelValues).map(wrapLabel),
+        searchFunctionType: SearchFunctionType.Fuzzy,
       });
     }
     return result;
@@ -379,6 +381,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         suggestions.push({
           label: `Label values for "${labelKey}"${limitInfo}`,
           items: labelValues[labelKey].map(wrapLabel),
+          searchFunctionType: SearchFunctionType.Fuzzy,
         });
       }
     } else {
@@ -391,7 +394,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
           context = 'context-labels';
           const newItems = possibleKeys.map((key) => ({ label: key }));
           const limitInfo = addLimitInfo(newItems);
-          const newSuggestion: CompletionItemGroup = { label: `Labels${limitInfo}`, items: newItems };
+          const newSuggestion: CompletionItemGroup = {
+            label: `Labels${limitInfo}`,
+            items: newItems,
+            searchFunctionType: SearchFunctionType.Fuzzy,
+          };
           suggestions.push(newSuggestion);
         }
       }
