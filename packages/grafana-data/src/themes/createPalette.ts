@@ -274,8 +274,6 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     return color as ThemePaletteColor;
   };
 
-  console.log('primary', base.text.primary);
-
   return merge(
     {
       ...base,
