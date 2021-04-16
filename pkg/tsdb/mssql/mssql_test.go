@@ -107,10 +107,10 @@ func TestMSSQL(t *testing.T) {
 		require.NoError(t, err)
 
 		dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
-		dtFormat := "2006-01-02 15:04:05.999999999"
+		const dtFormat = "2006-01-02 15:04:05.999999999"
 		d := dt.Format(dtFormat)
 		dt2 := time.Date(2018, 3, 14, 21, 20, 6, 8896406e2, time.UTC)
-		dt2Format := "2006-01-02 15:04:05.999999999 -07:00"
+		const dt2Format = "2006-01-02 15:04:05.999999999 -07:00"
 		d2 := dt2.Format(dt2Format)
 		uuid := "B33D42A3-AC5A-4D4C-81DD-72F3D5C49025"
 
@@ -1020,7 +1020,7 @@ func TestMSSQL(t *testing.T) {
 
 		t.Run("When doing an annotation query with a time column in datetime format", func(t *testing.T) {
 			dt := time.Date(2018, 3, 14, 21, 20, 6, 527e6, time.UTC)
-			dtFormat := "2006-01-02 15:04:05.999999999"
+			const dtFormat = "2006-01-02 15:04:05.999999999"
 
 			query := plugins.DataQuery{
 				Queries: []plugins.DataSubQuery{

@@ -107,7 +107,7 @@ func TestMySQL(t *testing.T) {
 		sql += "`avarcharnull` varchar(3),"
 		sql += "`adecimalnull` decimal(10,2)"
 		sql += ") ENGINE=InnoDB DEFAULT CHARSET=latin1;"
-		_, err := sess.Exec(sql)
+		_, err = sess.Exec(sql)
 		require.NoError(t, err)
 
 		sql = "INSERT INTO `mysql_types` "
@@ -190,7 +190,7 @@ func TestMySQL(t *testing.T) {
 			err := sess.DropTable(metric{})
 			require.NoError(t, err)
 		}
-		err := sess.CreateTable(metric{})
+		err = sess.CreateTable(metric{})
 		require.NoError(t, err)
 
 		series := []*metric{}
@@ -428,7 +428,7 @@ func TestMySQL(t *testing.T) {
 			err := sess.DropTable(metric_values{})
 			require.NoError(t, err)
 		}
-		err := sess.CreateTable(metric_values{})
+		err = sess.CreateTable(metric_values{})
 		require.NoError(t, err)
 
 		rand.Seed(time.Now().Unix())
@@ -830,7 +830,7 @@ func TestMySQL(t *testing.T) {
 			err := sess.DropTable(event{})
 			require.NoError(t, err)
 		}
-		err := sess.CreateTable(event{})
+		err = sess.CreateTable(event{})
 		require.NoError(t, err)
 
 		events := []*event{}
