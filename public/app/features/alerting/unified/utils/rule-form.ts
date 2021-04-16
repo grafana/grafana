@@ -29,6 +29,8 @@ export const defaultFormValues: RuleFormValues = Object.freeze({
   evaluateFor: '5m',
 
   // system
+  group: '',
+  namespace: '',
   expression: '',
   forTime: 1,
   forTimeUnit: 'm',
@@ -114,10 +116,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         name: rule.alert,
         type: RuleFormType.system,
         dataSourceName: ruleSourceName,
-        location: {
-          namespace,
-          group: group.name,
-        },
+        namespace,
+        group: group.name,
         expression: rule.expr,
         forTime,
         forTimeUnit,
