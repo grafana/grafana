@@ -8,7 +8,7 @@ import (
 )
 
 // trim trims rows that are outside the qm.TimeRange.
-func trim(f *data.Frame, qm DataQueryModel) error {
+func trim(f *data.Frame, qm dataQueryModel) error {
 	tsSchema := f.TimeSeriesSchema()
 	if tsSchema.Type == data.TimeSeriesTypeNot {
 		return fmt.Errorf("can not trim non-timeseries frame")

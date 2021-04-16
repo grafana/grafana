@@ -27,6 +27,7 @@ func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime
 		for _, idx := range tsSchema.ValueIndices {
 			if i == idx {
 				isValueField = true
+				break
 			}
 		}
 
@@ -57,7 +58,7 @@ func getRowFillValues(f *data.Frame, tsSchema data.TimeSeriesSchema, currentTime
 	return vals
 }
 
-func resample(f *data.Frame, qm DataQueryModel) (*data.Frame, error) {
+func resample(f *data.Frame, qm dataQueryModel) (*data.Frame, error) {
 	tsSchema := f.TimeSeriesSchema()
 	if tsSchema.Type == data.TimeSeriesTypeNot {
 		return f, fmt.Errorf("can not fill missing, not timeseries frame")

@@ -159,7 +159,7 @@ func TestTrimWide(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := trim(tt.input, DataQueryModel{
+			err := trim(tt.input, dataQueryModel{
 				TimeRange: tt.timeRange,
 			})
 			require.NoError(t, err)

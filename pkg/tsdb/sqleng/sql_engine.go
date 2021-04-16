@@ -264,7 +264,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		}
 	}
 
-	if qm.Format == DataQueryFormatSeries {
+	if qm.Format == dataQueryFormatSeries {
 		// time series has to have time column
 		if qm.timeIndex == -1 {
 			errAppendDebug("db has no time column", errors.New("no time column found"))
@@ -331,7 +331,7 @@ var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 }
 
 func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery,
-	rows *core.Rows, interpolatedQuery string) (*DataQueryModel, error) {
+	rows *core.Rows, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -341,7 +341,7 @@ func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plug
 		return nil, err
 	}
 
-	qm := &DataQueryModel{
+	qm := &dataQueryModel{
 		columnTypes:  columnTypes,
 		columnNames:  columnNames,
 		rows:         rows,
@@ -374,9 +374,9 @@ func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plug
 	format := query.Model.Get("format").MustString("time_series")
 	switch format {
 	case "time_series":
-		qm.Format = DataQueryFormatSeries
+		qm.Format = dataQueryFormatSeries
 	case "table":
-		qm.Format = DataQueryFormatTable
+		qm.Format = dataQueryFormatTable
 	default:
 		panic(fmt.Sprintf("Unrecognized query model format: %q", format))
 	}
@@ -407,19 +407,19 @@ func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plug
 	return qm, nil
 }
 
-// DataQueryFormat is the type of query.
-type DataQueryFormat string
+// dataQueryFormat is the type of query.
+type dataQueryFormat string
 
 const (
-	// DataQueryFormatTable identifies a table query (default).
-	DataQueryFormatTable DataQueryFormat = "table"
-	// DataQueryFormatSeries identifies a time series query.
-	DataQueryFormatSeries DataQueryFormat = "time_series"
+	// dataQueryFormatTable identifies a table query (default).
+	dataQueryFormatTable dataQueryFormat = "table"
+	// dataQueryFormatSeries identifies a time series query.
+	dataQueryFormatSeries dataQueryFormat = "time_series"
 )
 
-type DataQueryModel struct {
+type dataQueryModel struct {
 	InterpolatedQuery string // property non set until after Interpolate()
-	Format            DataQueryFormat
+	Format            dataQueryFormat
 	TimeRange         backend.TimeRange
 	FillMissing       *data.FillMissing // property non set until after Interpolate()
 	Interval          time.Duration

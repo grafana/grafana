@@ -295,7 +295,7 @@ func TestResampleWide(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			frame, err := resample(tt.input, DataQueryModel{
+			frame, err := resample(tt.input, dataQueryModel{
 				FillMissing: tt.fillMissing,
 				TimeRange:   tt.timeRange,
 				Interval:    tt.interval,

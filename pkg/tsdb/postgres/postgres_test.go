@@ -340,7 +340,7 @@ func TestPostgres(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.Equal(t, 4, frames[0].Fields[0].Len())
 
 			// without fill this should result in 4 buckets
@@ -1003,7 +1003,7 @@ func TestPostgres(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 3, len(frames[0].Fields))
 
-			//Should be in time.Time
+			// Should be in time.Time
 			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
 		})
 
@@ -1035,7 +1035,7 @@ func TestPostgres(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 3, len(frames[0].Fields))
 
-			//Should be in time.Time
+			// Should be in time.Time
 			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
 		})
 
@@ -1067,7 +1067,7 @@ func TestPostgres(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 3, len(frames[0].Fields))
 
-			//Should be in time.Time
+			// Should be in time.Time
 			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
 		})
 
@@ -1099,7 +1099,7 @@ func TestPostgres(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 3, len(frames[0].Fields))
 
-			//Should be in time.Time
+			// Should be in time.Time
 			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
 		})
 
@@ -1129,7 +1129,7 @@ func TestPostgres(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 3, len(frames[0].Fields))
 
-			//Should be in time.Time
+			// Should be in time.Time
 			require.Nil(t, frames[0].Fields[0].At(0))
 		})
 
@@ -1159,7 +1159,7 @@ func TestPostgres(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 3, len(frames[0].Fields))
 
-			//Should be in time.Time
+			// Should be in time.Time
 			assert.Nil(t, frames[0].Fields[0].At(0))
 		})
 	})

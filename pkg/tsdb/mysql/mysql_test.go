@@ -141,8 +141,8 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 			frames, _ := queryResult.Dataframes.Decoded()
 
-			require.Equal(t, 1, len(frames))
-			require.Equal(t, 31, len(frames[0].Fields))
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Fields, 31)
 
 			require.Equal(t, int8(1), frames[0].Fields[0].At(0).(int8))
 			require.Equal(t, "abc", *frames[0].Fields[1].At(0).(*string))
@@ -342,7 +342,7 @@ func TestMySQL(t *testing.T) {
 				queryResult := resp.Results["A"]
 				require.NoError(t, queryResult.Error)
 				frames, _ := queryResult.Dataframes.Decoded()
-				require.Equal(t, 1, len(frames))
+				require.Len(t, frames, 1)
 				require.Equal(t, "SELECT UNIX_TIMESTAMP(time) DIV 60 * 60 AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1", frames[0].Meta.ExecutedQueryString)
 			})
 		})
@@ -370,7 +370,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.Equal(t, 7, frames[0].Fields[0].Len())
 			require.Equal(t, 1.5, *frames[0].Fields[1].At(3).(*float64))
 		})
@@ -398,7 +398,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.Equal(t, float64(15.0), *frames[0].Fields[1].At(2).(*float64))
 			require.Equal(t, float64(15.0), *frames[0].Fields[1].At(3).(*float64))
 			require.Equal(t, float64(20.0), *frames[0].Fields[1].At(6).(*float64))
@@ -496,7 +496,7 @@ func TestMySQL(t *testing.T) {
 
 			frames, err := queryResult.Dataframes.Decoded()
 			require.NoError(t, err)
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
 
@@ -519,7 +519,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
 
@@ -542,7 +542,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
 
@@ -565,7 +565,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
 
@@ -588,7 +588,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
 
@@ -611,7 +611,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
 
@@ -634,7 +634,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
 
@@ -657,7 +657,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
 
@@ -680,7 +680,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			aTime := time.Unix(0, int64(float64(float32(tInitial.Unix()))*1e3)*int64(time.Millisecond))
 			require.True(t, aTime.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
@@ -704,7 +704,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			aTime := time.Unix(0, int64(float64(float32(tInitial.Unix()))*1e3)*int64(time.Millisecond))
 			require.True(t, aTime.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
@@ -728,8 +728,8 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
-			require.Equal(t, 3, len(frames[0].Fields))
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Fields, 3)
 			require.Equal(t, data.Labels{"metric": "Metric A - value one"}, frames[0].Fields[1].Labels)
 			require.Equal(t, data.Labels{"metric": "Metric B - value one"}, frames[0].Fields[2].Labels)
 		})
@@ -754,8 +754,8 @@ func TestMySQL(t *testing.T) {
 
 			frames, err := queryResult.Dataframes.Decoded()
 			require.NoError(t, err)
-			require.Equal(t, 1, len(frames))
-			require.Equal(t, 5, len(frames[0].Fields))
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Fields, 5)
 			require.Equal(t, "valueOne", frames[0].Fields[1].Name)
 			require.Equal(t, data.Labels{"metric": "Metric A"}, frames[0].Fields[1].Labels)
 			require.Equal(t, "valueOne", frames[0].Fields[2].Name)
@@ -785,8 +785,8 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
-			require.Equal(t, 3, len(frames[0].Fields))
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Fields, 3)
 			require.Equal(t, "valueOne", frames[0].Fields[1].Name)
 			require.Equal(t, "valueTwo", frames[0].Fields[2].Name)
 		})
@@ -813,7 +813,7 @@ func TestMySQL(t *testing.T) {
 		queryResult := resp.Results["A"]
 		require.NoError(t, queryResult.Error)
 		frames, _ := queryResult.Dataframes.Decoded()
-		require.Equal(t, 1, len(frames))
+		require.Len(t, frames, 1)
 		require.Equal(t, "SELECT time FROM metric_values WHERE time > FROM_UNIXTIME(1521118500) OR time < FROM_UNIXTIME(1521118800) OR 1 < 1521118500 OR 1521118800 > 1 ORDER BY 1", frames[0].Meta.ExecutedQueryString)
 	})
 
@@ -874,8 +874,8 @@ func TestMySQL(t *testing.T) {
 			queryResult := resp.Results["Deploys"]
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
-			require.Equal(t, 3, len(frames[0].Fields))
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Fields, 3)
 			require.Equal(t, 3, frames[0].Fields[0].Len())
 		})
 
@@ -900,8 +900,8 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, err)
 			queryResult := resp.Results["Tickets"]
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
-			require.Equal(t, 3, len(frames[0].Fields))
+			require.Len(t, frames, 1)
+			require.Equal(t, frames[0].Fields, 3)
 			require.Equal(t, 3, frames[0].Fields[0].Len())
 		})
 
@@ -931,7 +931,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 			//Should be in time.Time
 			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
@@ -962,7 +962,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 			//Should be in time.Time
 			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
@@ -993,7 +993,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 			//Should be in time.Time
 			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
@@ -1024,7 +1024,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 			//Should be in time.Time
 			require.Equal(t, dt.Unix(), (*frames[0].Fields[0].At(0).(*time.Time)).Unix())
@@ -1053,7 +1053,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 
 			//Should be in time.Time
@@ -1083,7 +1083,7 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, queryResult.Error)
 
 			frames, _ := queryResult.Dataframes.Decoded()
-			require.Equal(t, 1, len(frames))
+			require.Len(t, frames, 1)
 			require.Equal(t, 1, frames[0].Fields[0].Len())
 
 			//Should be in time.Time
