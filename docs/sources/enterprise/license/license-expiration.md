@@ -2,7 +2,8 @@
 title = "License expiration"
 description = ""
 keywords = ["grafana", "licensing"]
-weight = 120
+aliases = ["/docs/grafana/latest/enterprise/license-expiration"]
+weight = 200
 +++
 
 # License expiration
@@ -13,7 +14,7 @@ If your license has expired, most of Grafana keeps working as normal. Some enter
 
 ## Update your license
 
-1. Locate your current `license.jwt` file. In a standard installation it is stored inside Grafana's data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration]({{< relref "../administration/configuration.md" >}}).
+1. Locate your current `license.jwt` file. In a standard installation it is stored inside the Grafana data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration]({{< relref "../../administration/configuration.md" >}}).
 
    ```ini
    [enterprise]
@@ -25,7 +26,7 @@ If your license has expired, most of Grafana keeps working as normal. Some enter
 2. Log in to your [Grafana Cloud Account](https://grafana.com/login) and make sure you're in the correct organization in the dropdown at the top of the page.
 3. Under the **Grafana Enterprise** section in the menu bar to the left, choose licenses and download the currently valid license with which you want to run Grafana. If you cannot see a valid license on Grafana.com, please contact your account manager at Grafana Labs to renew your subscription.
 4. Replace the current `license.jwt`-file with the one you've just downloaded.
-5. [Restart Grafana]({{< relref "../installation/restart-grafana.md" >}}).
+5. [Restart Grafana]({{< relref "../../installation/restart-grafana.md" >}}).
 
 ## If your license expires
 
