@@ -34,7 +34,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     });
 
     return (
-      <button className={cx(styles.button, className)} {...otherProps}>
+      <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </button>
@@ -74,7 +74,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
     const linkButtonStyles = cx(styles.button, { [styles.disabled]: disabled }, className);
 
     return (
-      <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0}>
+      <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </a>
