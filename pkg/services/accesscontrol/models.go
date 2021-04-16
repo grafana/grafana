@@ -42,7 +42,6 @@ func (p RoleDTO) Role() Role {
 const (
 	// Permission actions
 
-	// Users
 	ActionUsersRead     = "users:read"
 	ActionUsersWrite    = "users:write"
 	ActionUsersTeamRead = "users.teams:read"
@@ -64,20 +63,9 @@ const (
 	ActionUsersQuotasList        = "users.quotas:list"
 	ActionUsersQuotasUpdate      = "users.quotas:update"
 
-	// Orgs
-	ActionOrgsRead  = "orgs:read"
-	ActionOrgsWrite = "orgs:write"
-
-	// Other
-	ActionSettingsRead     = "settings:read"
-	ActionLDAPSettingsRead = "settings.ldap:read"
-	ActionServerStatsRead  = "serverstats:read"
-
 	// Global Scopes
 	ScopeUsersAll  = "users:*"
 	ScopeUsersSelf = "users:self"
-	ScopeOrgsAll   = "orgs:*"
-	ScopeOrgsSelf  = "orgs:self"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
