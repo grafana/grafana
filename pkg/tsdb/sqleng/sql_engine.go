@@ -214,6 +214,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		})
 		queryResult.Error = fmt.Errorf("%s: %w", frameErr, err)
 		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{&emptyFrame})
+		ch <- queryResult
 	}
 	session := e.engine.NewSession()
 	defer session.Close()
@@ -222,7 +223,6 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	rows, err := db.Query(interpolatedQuery)
 	if err != nil {
 		errAppendDebug("db query error", e.transformQueryError(err))
-		ch <- queryResult
 		return
 	}
 	defer func() {
@@ -259,7 +259,6 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	if qm.timeIndex != -1 {
 		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
 			errAppendDebug("db convert time column failed", err)
-			ch <- queryResult
 			return
 		}
 	}
@@ -268,7 +267,6 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		// time series has to have time column
 		if qm.timeIndex == -1 {
 			errAppendDebug("db has no time column", errors.New("no time column found"))
-			ch <- queryResult
 			return
 		}
 		for i := range qm.columnNames {
@@ -279,7 +277,6 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			var err error
 			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
 				errAppendDebug("convert value to float failed", err)
-				ch <- queryResult
 				return
 			}
 		}
@@ -292,7 +289,6 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
 				errAppendDebug("failed to convert long to wide series when converting from dataframe", err)
-				ch <- queryResult
 				return
 			}
 		}
