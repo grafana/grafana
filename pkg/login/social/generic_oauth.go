@@ -10,25 +10,62 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/mail"
+	"os"
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/oauth2"
 )
 
 type SocialGenericOAuth struct {
 	*SocialBase
-	allowedOrganizations []string
-	apiUrl               string
-	emailAttributeName   string
-	emailAttributePath   string
-	loginAttributePath   string
-	nameAttributePath    string
-	roleAttributePath    string
-	roleAttributeStrict  bool
-	idTokenAttributeName string
-	teamIds              []int
+	allowedOrganizations         []string
+	apiUrl                       string
+	emailAttributeName           string
+	emailAttributePath           string
+	loginAttributePath           string
+	nameAttributePath            string
+	roleAttributePath            string
+	roleAttributeStrict          bool
+	idTokenAttributeName         string
+	roleOrgAttributeMappingsFile string
+	teamIds                      []int
+}
+
+type RoleOrgsPathMappings struct {
+	RoleOrgsPathMappings []RoleOrgsPathMapping `json:"roleOrgsPathMappings"`
+}
+
+type RoleOrgsPathMapping struct {
+	Path string                    `json:"path"`
+	Data []RoleOrgsPathMappingData `json:"data"`
+}
+
+type RoleOrgsPathMappingData struct {
+	IsGrafanaAdmin bool             `json:"isGrafanaAdmin"`
+	Role           *models.RoleType `json:"role,omitempty"`
+	Organizations  []string         `json:"orgs"`
+}
+
+func (s *SocialGenericOAuth) LoadRoleOrgsPathMappings() *RoleOrgsPathMappings {
+	jsonFile, err := os.Open(s.roleOrgAttributeMappingsFile)
+
+	if err != nil {
+		s.log.Error("failed to load config from ", "file", s.roleOrgAttributeMappingsFile, "error", err)
+		return nil
+	}
+
+	s.log.Debug("Successfully Opened", "file", s.roleOrgAttributeMappingsFile)
+	defer jsonFile.Close()
+
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+
+	var roleOrgsPathMappings RoleOrgsPathMappings
+	json.Unmarshal(byteValue, &roleOrgsPathMappings)
+
+	return &roleOrgsPathMappings
 }
 
 func (s *SocialGenericOAuth) Type() int {
@@ -149,6 +186,44 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 			} else if role != "" {
 				s.log.Debug("Setting user info role from extracted role")
 				userInfo.Role = role
+			}
+		}
+
+		if s.roleOrgAttributeMappingsFile != "" {
+			orgRoles := make(map[int64]models.RoleType)
+			s.log.Debug("Loading JSON config file", "roleOrgAttributeMappingsFile", s.roleOrgAttributeMappingsFile)
+			mappings := *s.LoadRoleOrgsPathMappings()
+
+			for _, roleOrgsPathMapping := range mappings.RoleOrgsPathMappings {
+				s.log.Debug("Searching for path among JSON", "path", roleOrgsPathMapping.Path)
+				result, err := s.searchJSONForAttr(roleOrgsPathMapping.Path+" && 'found' || ''", data.rawJSON)
+
+				if err != nil {
+					s.log.Error("Failed to search JSON for path", "error", err)
+				} else if result != "" {
+					for _, roleOrgsPathMappingData := range roleOrgsPathMapping.Data {
+						if roleOrgsPathMappingData.IsGrafanaAdmin {
+							s.log.Debug("User marked as grafana server admin")
+							userInfo.IsGrafanaAdmin = true
+						}
+						for _, roleOrgsPathMappingDataOrganization := range roleOrgsPathMappingData.Organizations {
+							query := &models.SearchOrgsQuery{Name: roleOrgsPathMappingDataOrganization, Limit: 1}
+							err := sqlstore.SearchOrgs(query)
+							if err != nil {
+								s.log.Error("Failed to search for Org:"+roleOrgsPathMappingDataOrganization,
+									"error", err)
+							}
+							if len(query.Result) == 1 {
+								s.log.Debug("Adding/replacing role for matched user organization", "org",
+									query.Result[0].Id, "role", roleOrgsPathMappingData.Role)
+								orgRoles[query.Result[0].Id] = *roleOrgsPathMappingData.Role
+							}
+						}
+					}
+				}
+			}
+			if len(orgRoles) > 0 {
+				userInfo.OrgRoles = orgRoles
 			}
 		}
 	}

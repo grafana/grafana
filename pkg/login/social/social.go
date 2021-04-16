@@ -13,6 +13,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -22,13 +23,15 @@ var (
 )
 
 type BasicUserInfo struct {
-	Id      string
-	Name    string
-	Email   string
-	Login   string
-	Company string
-	Role    string
-	Groups  []string
+	Id             string
+	Name           string
+	Email          string
+	Login          string
+	Company        string
+	Role           string
+	Groups         []string
+	OrgRoles       map[int64]models.RoleType
+	IsGrafanaAdmin bool
 }
 
 type SocialConnector interface {
@@ -179,17 +182,18 @@ func NewOAuthService() {
 		// Generic - Uses the same scheme as GitHub.
 		if name == "generic_oauth" {
 			SocialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase:           newSocialBase(name, &config, info),
-				apiUrl:               info.ApiUrl,
-				emailAttributeName:   info.EmailAttributeName,
-				emailAttributePath:   info.EmailAttributePath,
-				nameAttributePath:    sec.Key("name_attribute_path").String(),
-				roleAttributePath:    info.RoleAttributePath,
-				roleAttributeStrict:  info.RoleAttributeStrict,
-				loginAttributePath:   sec.Key("login_attribute_path").String(),
-				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
-				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				SocialBase:                   newSocialBase(name, &config, info),
+				apiUrl:                       info.ApiUrl,
+				emailAttributeName:           info.EmailAttributeName,
+				emailAttributePath:           info.EmailAttributePath,
+				nameAttributePath:            sec.Key("name_attribute_path").String(),
+				roleAttributePath:            info.RoleAttributePath,
+				roleAttributeStrict:          info.RoleAttributeStrict,
+				loginAttributePath:           sec.Key("login_attribute_path").String(),
+				idTokenAttributeName:         sec.Key("id_token_attribute_name").String(),
+				teamIds:                      sec.Key("team_ids").Ints(","),
+				roleOrgAttributeMappingsFile: sec.Key("role_org_attribute_mappings_file").String(),
+				allowedOrganizations:         util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
 

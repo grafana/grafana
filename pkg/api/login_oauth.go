@@ -235,6 +235,14 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 		}
 	}
 
+	if userInfo.IsGrafanaAdmin {
+		extUser.IsGrafanaAdmin = &userInfo.IsGrafanaAdmin
+	}
+
+	if len(userInfo.OrgRoles) > 0 {
+		extUser.OrgRoles = userInfo.OrgRoles
+	}
+
 	return extUser
 }
 
