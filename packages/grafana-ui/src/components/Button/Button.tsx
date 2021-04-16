@@ -130,9 +130,6 @@ export const getButtonStyles = (props: StyleProps) => {
       verticalAlign: 'middle',
       cursor: 'pointer',
       borderRadius: theme.v2.shape.borderRadius(1),
-      '&::-moz-focus-inner': {
-        borderStyle: 'none',
-      },
       '&:focus': focusStyle,
       '&:focus-visible': focusStyle,
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme.v2),
