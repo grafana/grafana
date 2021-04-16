@@ -63,7 +63,6 @@ export const SelectWithAdd: FC<Props> = ({
         disabled={disabled}
         onChange={(val: SelectableValue) => {
           const value = val?.value;
-          console.log('select', value);
           if (value === '__add__') {
             setIsCustom(true);
             if (onCustomChange) {
