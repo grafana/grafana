@@ -93,7 +93,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       font-size: ${fontSize};
       height: ${theme.v2.spacing(height)};
       // Deduct border from line-height for perfect vertical centering on windows and linux
-      line-height: ${theme.v2.spacing.gridSize * height - 2}px;
+      line-height: ${theme.v2.spacing(height)};
       color: ${textColor};
       padding: ${theme.v2.spacing(0, padding)};
       border-radius: ${theme.v2.shape.borderRadius()};
