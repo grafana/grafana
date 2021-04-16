@@ -1,3 +1,13 @@
+/**
+ * UserPermission is a map storing permissions in a form of
+ * {
+ *   action: { scope: scope }
+ * }
+ */
+export type UserPermission = {
+  [key: string]: { [key: string]: string };
+};
+
 export interface AccessControlPermission {
   action: AccessControlAction;
   scope?: AccessControlScope;

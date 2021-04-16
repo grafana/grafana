@@ -2,7 +2,7 @@ import config from '../../core/config';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { rangeUtil } from '@grafana/data';
-import { AccessControlAction, AccessControlScope } from 'app/types';
+import { AccessControlAction, AccessControlScope, UserPermission } from 'app/types';
 
 export class User {
   id: number;
@@ -26,16 +26,6 @@ export class User {
     }
   }
 }
-
-/**
- * UserPermission is a map storing permissions in a form of
- * {
- *   action: { scope: scope }
- * }
- */
-export type UserPermission = {
-  [key: string]: { [key: string]: string };
-};
 
 export class ContextSrv {
   pinned: any;
