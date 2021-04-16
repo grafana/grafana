@@ -57,7 +57,7 @@ func NewStateTracker(logger log.Logger) *StateTracker {
 func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) AlertState {
 	st.stateCache.mu.Lock()
 	defer st.stateCache.mu.Unlock()
-	lbs := alertRule.Labels
+	lbs := data.Labels{}
 	if len(result.Instance) > 0 {
 		lbs = result.Instance
 	}
