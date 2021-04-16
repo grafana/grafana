@@ -39,6 +39,9 @@ const defaultLegendOptions: PieChartLegendOptions = {
   values: [PieChartLegendValues.Percent],
 };
 
+/**
+ * @beta
+ */
 export const PieChart: FC<PieChartProps> = ({
   data,
   timeZone,

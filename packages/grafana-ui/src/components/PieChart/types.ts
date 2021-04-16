@@ -8,6 +8,9 @@ import {
 } from '@grafana/data';
 import { VizLegendOptions } from '..';
 
+/**
+ * @beta
+ */
 export interface PieChartSvgProps {
   height: number;
   width: number;
@@ -19,6 +22,9 @@ export interface PieChartSvgProps {
   onSeriesColorChange?: (label: string, color: string) => void;
 }
 
+/**
+ * @beta
+ */
 export interface PieChartProps {
   height: number;
   width: number;
@@ -35,22 +41,34 @@ export interface PieChartProps {
   timeZone?: string;
 }
 
+/**
+ * @beta
+ */
 export enum PieChartType {
   Pie = 'pie',
   Donut = 'donut',
 }
 
+/**
+ * @beta
+ */
 export enum PieChartLegendValues {
   Value = 'value',
   Percent = 'percent',
 }
 
+/**
+ * @beta
+ */
 export enum PieChartLabels {
   Name = 'name',
   Value = 'value',
   Percent = 'percent',
 }
 
+/**
+ * @beta
+ */
 export interface PieChartLegendOptions extends VizLegendOptions {
   values: PieChartLegendValues[];
 }
