@@ -37,9 +37,9 @@ To address this vulnerability, you can restrict data source query access in the 
 - Create multiple data sources with some restrictions added in data source configuration that restrict access (like database name or credentials). Then use the [Data Source Permissions]({{< relref "../permissions/datasource_permissions.md" >}}) Enterprise feature to restrict user access to the data source in Grafana.
 - Create a separate Grafana organization, and in that organization, create a separate data source. Make sure the data source has some option/user/credentials setting that limits access to a subset of the data. Not all data sources have an option to limit access.
 
-## Implications of enabling `Anonymous` access to dashboards
+## Implications of enabling anonymous access to dashboards
 
-When you enable Anonymous access to a dashboard, it is publicly available. This section lists the security implications of enabling Anonymous access.
+When you enable anonymous access to a dashboard, it is publicly available. This section lists the security implications of enabling Anonymous access.
 
 - Anyone with the URL can access the dashboard. 
 - Anyone can make view calls to the API and list all folders, dashboards, and data sources.
