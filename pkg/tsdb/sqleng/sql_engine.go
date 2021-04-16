@@ -233,7 +233,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 
 	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("fail when getting configurations", err)
+		errAppendDebug("failed to get configurations", err)
 		return
 	}
 
@@ -257,7 +257,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	}
 
 	if qm.timeIndex != -1 {
-		if err := ConvertSqlTimeColumnToEpochMs(frame, qm.timeIndex); err != nil {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
 			errAppendDebug("db convert time column failed", err)
 			ch <- queryResult
 			return
@@ -277,7 +277,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			}
 
 			var err error
-			if frame, err = ConvertSqlValueColumnToFloat(frame, i); err != nil {
+			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
 				errAppendDebug("convert value to float failed", err)
 				ch <- queryResult
 				return
@@ -351,8 +351,7 @@ func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plug
 		queryContext: queryContext,
 	}
 
-	isFillMissing := query.Model.Get("fill").MustBool(false)
-	if isFillMissing {
+	if query.Model.Get("fill").MustBool(false) {
 		qm.FillMissing = &data.FillMissing{}
 		qm.Interval = time.Duration(query.Model.Get("fillInterval").MustFloat64() * float64(time.Second))
 		switch strings.ToLower(query.Model.Get("fillMode").MustString()) {
@@ -363,14 +362,13 @@ func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plug
 		case "value":
 			qm.FillMissing.Mode = data.FillModeValue
 			qm.FillMissing.Value = query.Model.Get("fillValue").MustFloat64()
+		default:
 		}
 	}
 
-	var timeRange plugins.DataTimeRange
 	if queryContext.TimeRange != nil {
-		timeRange = *queryContext.TimeRange
-		qm.TimeRange.From = timeRange.GetFromAsTimeUTC()
-		qm.TimeRange.To = timeRange.GetToAsTimeUTC()
+		qm.TimeRange.From = queryContext.TimeRange.GetFromAsTimeUTC()
+		qm.TimeRange.To = queryContext.TimeRange.GetToAsTimeUTC()
 	}
 
 	format := query.Model.Get("format").MustString("time_series")
@@ -379,6 +377,8 @@ func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plug
 		qm.Format = DataQueryFormatSeries
 	case "table":
 		qm.Format = DataQueryFormatTable
+	default:
+		panic(fmt.Sprintf("Unrecognized query model format: %q", format))
 	}
 
 	for i, col := range qm.columnNames {
@@ -629,7 +629,7 @@ func convertFloat32ToFloat64(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertInt64ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertInt64ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(int64))))*int64(time.Millisecond))
@@ -637,7 +637,7 @@ func convertInt64ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertNullableInt64ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertNullableInt64ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		iv := origin.At(i).(*int64)
@@ -650,7 +650,7 @@ func convertNullableInt64ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertUInt64ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertUInt64ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(uint64))))*int64(time.Millisecond))
@@ -658,7 +658,7 @@ func convertUInt64ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertNullableUInt64ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertNullableUInt64ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		iv := origin.At(i).(*uint64)
@@ -671,7 +671,7 @@ func convertNullableUInt64ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertInt32ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertInt32ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(int32))))*int64(time.Millisecond))
@@ -679,7 +679,7 @@ func convertInt32ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertNullableInt32ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertNullableInt32ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		iv := origin.At(i).(*int32)
@@ -692,7 +692,7 @@ func convertNullableInt32ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertUInt32ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertUInt32ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(uint32))))*int64(time.Millisecond))
@@ -700,7 +700,7 @@ func convertUInt32ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertNullableUInt32ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertNullableUInt32ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		iv := origin.At(i).(*uint32)
@@ -713,7 +713,7 @@ func convertNullableUInt32ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertFloat64ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertFloat64ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		value := time.Unix(0, int64(epochPrecisionToMS(origin.At(i).(float64)))*int64(time.Millisecond))
@@ -721,7 +721,7 @@ func convertFloat64ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertNullableFloat64ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertNullableFloat64ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		iv := origin.At(i).(*float64)
@@ -734,7 +734,7 @@ func convertNullableFloat64ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertFloat32ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(float32))))*int64(time.Millisecond))
@@ -742,7 +742,7 @@ func convertFloat32ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-func convertNullableFloat32ToEpochMs(origin *data.Field, newField *data.Field) {
+func convertNullableFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
 	valueLength := origin.Len()
 	for i := 0; i < valueLength; i++ {
 		iv := origin.At(i).(*float32)
@@ -755,116 +755,118 @@ func convertNullableFloat32ToEpochMs(origin *data.Field, newField *data.Field) {
 	}
 }
 
-// ConvertSqlTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
+// convertSQLTimeColumnToEpochMS converts column named time to unix timestamp in milliseconds
 // to make native datetime types and epoch dates work in annotation and table queries.
-// func ConvertSqlTimeColumnToEpochMs(values plugins.DataRowValues, timeIndex int) {
-func ConvertSqlTimeColumnToEpochMs(frame *data.Frame, timeIndex int) error {
-	if timeIndex >= 0 && timeIndex < len(frame.Fields) {
-		origin := frame.Fields[timeIndex]
-		valueType := origin.Type()
-		if valueType == data.FieldTypeTime || valueType == data.FieldTypeNullableTime {
-			return nil
-		}
-		newField := data.NewFieldFromFieldType(data.FieldTypeNullableTime, 0)
-		newField.Name = origin.Name
-		newField.Labels = origin.Labels
-
-		switch valueType {
-		case data.FieldTypeInt64:
-			convertInt64ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeNullableInt64:
-			convertNullableInt64ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeUint64:
-			convertUInt64ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeNullableUint64:
-			convertNullableUInt64ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeInt32:
-			convertInt32ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeNullableInt32:
-			convertNullableInt32ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeUint32:
-			convertUInt32ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeNullableUint32:
-			convertNullableUInt32ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeFloat64:
-			convertFloat64ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeNullableFloat64:
-			convertNullableFloat64ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeFloat32:
-			convertFloat32ToEpochMs(frame.Fields[timeIndex], newField)
-		case data.FieldTypeNullableFloat32:
-			convertNullableFloat32ToEpochMs(frame.Fields[timeIndex], newField)
-		default:
-			return fmt.Errorf("column type %s is not convertible to time.Time", valueType)
-		}
-		frame.Fields[timeIndex] = newField
-	} else {
+func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
+	if timeIndex < 0 || timeIndex >= len(frame.Fields) {
 		return fmt.Errorf("timeIndex %d is out of range", timeIndex)
 	}
+
+	origin := frame.Fields[timeIndex]
+	valueType := origin.Type()
+	if valueType == data.FieldTypeTime || valueType == data.FieldTypeNullableTime {
+		return nil
+	}
+
+	newField := data.NewFieldFromFieldType(data.FieldTypeNullableTime, 0)
+	newField.Name = origin.Name
+	newField.Labels = origin.Labels
+
+	switch valueType {
+	case data.FieldTypeInt64:
+		convertInt64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableInt64:
+		convertNullableInt64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeUint64:
+		convertUInt64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableUint64:
+		convertNullableUInt64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeInt32:
+		convertInt32ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableInt32:
+		convertNullableInt32ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeUint32:
+		convertUInt32ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableUint32:
+		convertNullableUInt32ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeFloat64:
+		convertFloat64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableFloat64:
+		convertNullableFloat64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeFloat32:
+		convertFloat32ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableFloat32:
+		convertNullableFloat32ToEpochMS(frame.Fields[timeIndex], newField)
+	default:
+		return fmt.Errorf("column type %q is not convertible to time.Time", valueType)
+	}
+	frame.Fields[timeIndex] = newField
+
 	return nil
 }
 
-// ConvertSqlValueColumnToFloat converts timeseries value column to float.
+// convertSQLValueColumnToFloat converts timeseries value column to float.
 //nolint: gocyclo
-func ConvertSqlValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
-	if Index >= 0 && Index < len(frame.Fields) {
-		origin := frame.Fields[Index]
-		valueType := origin.Type()
-		if valueType == data.FieldTypeFloat64 || valueType == data.FieldTypeNullableFloat64 {
-			return frame, nil
-		}
-
-		newField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
-		newField.Name = origin.Name
-		newField.Labels = origin.Labels
-
-		backend.Logger.Info("SQL column type converting to float64", "sqlConvertFloat64", valueType)
-		switch valueType {
-		case data.FieldTypeInt64:
-			convertInt64ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeNullableInt64:
-			convertNullableInt64ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeUint64:
-			convertUInt64ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeNullableUint64:
-			convertNullableUInt64ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeInt32:
-			convertInt32ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeNullableInt32:
-			convertNullableInt32ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeUint32:
-			convertUInt32ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeNullableUint32:
-			convertNullableUInt32ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeInt16:
-			convertInt16ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeNullableInt16:
-			convertNullableInt16ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeUint16:
-			convertUInt16ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeNullableUint16:
-			convertNullableUInt16ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeInt8:
-			convertInt8ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeNullableInt8:
-			convertNullableInt8ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeUint8:
-			convertUInt8ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeNullableUint8:
-			convertNullableUInt8ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeFloat32:
-			convertFloat32ToFloat64(frame.Fields[Index], newField)
-		case data.FieldTypeNullableFloat32:
-			convertNullableFloat32ToFloat64(frame.Fields[Index], newField)
-		default:
-			convertUnknownToZero(frame.Fields[Index], newField)
-			frame.Fields[Index] = newField
-			return frame, fmt.Errorf("metricIndex %d type can't be convert to float", Index)
-		}
-		frame.Fields[Index] = newField
-	} else {
+func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
+	if Index < 0 || Index >= len(frame.Fields) {
 		return frame, fmt.Errorf("metricIndex %d is out of range", Index)
 	}
+
+	origin := frame.Fields[Index]
+	valueType := origin.Type()
+	if valueType == data.FieldTypeFloat64 || valueType == data.FieldTypeNullableFloat64 {
+		return frame, nil
+	}
+
+	newField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
+	newField.Name = origin.Name
+	newField.Labels = origin.Labels
+
+	backend.Logger.Info("SQL column type converting to float64", "sqlConvertFloat64", valueType)
+	switch valueType {
+	case data.FieldTypeInt64:
+		convertInt64ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableInt64:
+		convertNullableInt64ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeUint64:
+		convertUInt64ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableUint64:
+		convertNullableUInt64ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeInt32:
+		convertInt32ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableInt32:
+		convertNullableInt32ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeUint32:
+		convertUInt32ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableUint32:
+		convertNullableUInt32ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeInt16:
+		convertInt16ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableInt16:
+		convertNullableInt16ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeUint16:
+		convertUInt16ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableUint16:
+		convertNullableUInt16ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeInt8:
+		convertInt8ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableInt8:
+		convertNullableInt8ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeUint8:
+		convertUInt8ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableUint8:
+		convertNullableUInt8ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeFloat32:
+		convertFloat32ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableFloat32:
+		convertNullableFloat32ToFloat64(frame.Fields[Index], newField)
+	default:
+		convertUnknownToZero(frame.Fields[Index], newField)
+		frame.Fields[Index] = newField
+		return frame, fmt.Errorf("metricIndex %d type can't be converted to float", Index)
+	}
+	frame.Fields[Index] = newField
+
 	return frame, nil
 }
 

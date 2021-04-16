@@ -89,8 +89,8 @@ func TestSQLEngine(t *testing.T) {
 			}),
 		)
 
-		for i := 0; i < 7; i++ {
-			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
 			require.NoError(t, err)
 		}
 
@@ -133,8 +133,8 @@ func TestSQLEngine(t *testing.T) {
 			}),
 		)
 
-		for i := 0; i < 7; i++ {
-			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
 			require.NoError(t, err)
 		}
 
@@ -163,7 +163,7 @@ func TestSQLEngine(t *testing.T) {
 			}),
 		)
 		for i := 0; i < 3; i++ {
-			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
 			require.NoError(t, err)
 		}
 
@@ -187,8 +187,8 @@ func TestSQLEngine(t *testing.T) {
 				nilInt,
 			}),
 		)
-		for i := 0; i < 3; i++ {
-			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
 			require.NoError(t, err)
 		}
 		require.Equal(t, dt.Unix(), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
@@ -226,8 +226,8 @@ func TestSQLEngine(t *testing.T) {
 			}),
 		)
 
-		for i := 0; i < 7; i++ {
-			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
 			require.NoError(t, err)
 		}
 
@@ -255,8 +255,8 @@ func TestSQLEngine(t *testing.T) {
 				nilInt,
 			}),
 		)
-		for i := 0; i < 3; i++ {
-			err := ConvertSqlTimeColumnToEpochMs(originFrame, i)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			err := convertSQLTimeColumnToEpochMS(originFrame, i)
 			require.NoError(t, err)
 		}
 		require.Equal(t, int64(tSeconds), (*originFrame.Fields[0].At(0).(*time.Time)).Unix())
@@ -327,8 +327,8 @@ func TestSQLEngine(t *testing.T) {
 				pointer.Uint8(1),
 			}),
 		)
-		for i := 0; i < 20; i++ {
-			_, err := ConvertSqlValueColumnToFloat(originFrame, i)
+		for i := 0; i < len(originFrame.Fields); i++ {
+			_, err := convertSQLValueColumnToFloat(originFrame, i)
 			require.NoError(t, err)
 			if i == 8 {
 				require.Equal(t, float64(1), originFrame.Fields[i].At(0).(float64))
@@ -383,9 +383,9 @@ func TestSQLEngine(t *testing.T) {
 				uint8NilPointer,
 			}),
 		)
-		for i := 0; i < 10; i++ {
+		for i := 0; i < len(originFrame.Fields); i++ {
 			t.Run("", func(t *testing.T) {
-				_, err := ConvertSqlValueColumnToFloat(originFrame, i)
+				_, err := convertSQLValueColumnToFloat(originFrame, i)
 				require.NoError(t, err)
 				require.Nil(t, originFrame.Fields[i].At(0))
 			})
