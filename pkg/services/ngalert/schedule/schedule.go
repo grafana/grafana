@@ -80,7 +80,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					return err
 				}
 
-				processedStates := stateTracker.ProcessEvalResults(key.UID, results, condition)
+				processedStates := stateTracker.ProcessEvalResults(alertRule, results)
 				sch.saveAlertStates(processedStates)
 				alerts := FromAlertStateToPostableAlerts(processedStates)
 				sch.log.Debug("sending alerts to notifier", "count", len(alerts))

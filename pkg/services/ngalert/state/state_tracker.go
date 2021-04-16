@@ -22,6 +22,7 @@ type AlertState struct {
 	StartsAt           time.Time
 	EndsAt             time.Time
 	LastEvaluationTime time.Time
+	Annotations        map[string]string
 }
 
 type StateEvaluation struct {
@@ -53,22 +54,36 @@ func NewStateTracker(logger log.Logger) *StateTracker {
 	return tracker
 }
 
-func (st *StateTracker) getOrCreate(uid string, orgId int64, result eval.Result) AlertState {
+func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) AlertState {
 	st.stateCache.mu.Lock()
 	defer st.stateCache.mu.Unlock()
+	lbs := data.Labels{}
+	if len(result.Instance) > 0 {
+		lbs = result.Instance
+	}
+	lbs["__alert_rule_uid__"] = alertRule.UID
+	lbs["__alert_rule_namespace_uid__"] = alertRule.NamespaceUID
+	lbs["__alert_rule_title__"] = alertRule.Title
 
-	idString := fmt.Sprintf("%s %s", uid, map[string]string(result.Instance))
+	annotations := map[string]string{}
+	if len(alertRule.Annotations) > 0 {
+		annotations = alertRule.Annotations
+	}
+
+	idString := fmt.Sprintf("%s", map[string]string(lbs))
 	if state, ok := st.stateCache.cacheMap[idString]; ok {
 		return state
 	}
+
 	st.Log.Debug("adding new alert state cache entry", "cacheId", idString, "state", result.State.String(), "evaluatedAt", result.EvaluatedAt.String())
 	newState := AlertState{
-		UID:     uid,
-		OrgID:   orgId,
-		CacheId: idString,
-		Labels:  result.Instance,
-		State:   result.State,
-		Results: []StateEvaluation{},
+		UID:         alertRule.UID,
+		OrgID:       alertRule.OrgID,
+		CacheId:     idString,
+		Labels:      lbs,
+		State:       result.State,
+		Results:     []StateEvaluation{},
+		Annotations: annotations,
 	}
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
@@ -96,11 +111,11 @@ func (st *StateTracker) ResetCache() {
 	st.stateCache.cacheMap = make(map[string]AlertState)
 }
 
-func (st *StateTracker) ProcessEvalResults(uid string, results eval.Results, condition ngModels.Condition) []AlertState {
-	st.Log.Info("state tracker processing evaluation results", "uid", uid, "resultCount", len(results))
+func (st *StateTracker) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []AlertState {
+	st.Log.Info("state tracker processing evaluation results", "uid", alertRule.UID, "resultCount", len(results))
 	var changedStates []AlertState
 	for _, result := range results {
-		s, _ := st.setNextState(uid, condition.OrgID, result)
+		s, _ := st.setNextState(alertRule, result)
 		changedStates = append(changedStates, s)
 	}
 	st.Log.Debug("returning changed states to scheduler", "count", len(changedStates))
@@ -113,9 +128,9 @@ func (st *StateTracker) ProcessEvalResults(uid string, results eval.Results, con
 // 3. The base interval defined by the scheduler - in the case where #2 is not yet an option we can use the base interval at which every alert runs.
 //Set the current state based on evaluation results
 //return the state and a bool indicating whether a state transition occurred
-func (st *StateTracker) setNextState(uid string, orgId int64, result eval.Result) (AlertState, bool) {
-	currentState := st.getOrCreate(uid, orgId, result)
-	st.Log.Debug("setting alert state", "uid", uid)
+func (st *StateTracker) setNextState(alertRule *ngModels.AlertRule, result eval.Result) (AlertState, bool) {
+	currentState := st.getOrCreate(alertRule, result)
+	st.Log.Debug("setting alert state", "uid", alertRule.UID)
 	switch {
 	case currentState.State == result.State:
 		st.Log.Debug("no state transition", "cacheId", currentState.CacheId, "state", currentState.State.String())
@@ -139,6 +154,7 @@ func (st *StateTracker) setNextState(uid string, orgId int64, result eval.Result
 			EvaluationTime:  result.EvaluatedAt,
 			EvaluationState: result.State,
 		})
+		currentState.Annotations["alerting"] = result.EvaluatedAt.String()
 		st.set(currentState)
 		return currentState, true
 	case currentState.State == eval.Alerting && result.State == eval.Normal:
