@@ -43,8 +43,12 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 	}
 	ruleGroup := c.Params(":Groupname")
 	if err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to delete group alert rules", err)
+		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
+			return response.Error(http.StatusNotFound, "failed to delete rule group", err)
+		}
+		return response.Error(http.StatusInternalServerError, "failed to delete rule group", err)
 	}
+
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
 }
 
@@ -186,6 +190,11 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	// TODO check permissions
 	// TODO check quota
 	// TODO validate UID uniqueness in the payload
+
+	//TODO: Should this belong in alerting-api?
+	if ruleGroupConfig.Name == "" {
+		return response.Error(http.StatusBadRequest, "rule group name is not valid", nil)
+	}
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,
