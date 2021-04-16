@@ -1,6 +1,6 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useMemo } from 'react';
 import { GrafanaTheme } from '@grafana/data';
-import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
+import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar, Spinner, Alert, InfoBox } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import { AlertTypeStep } from './AlertTypeStep';
@@ -9,98 +9,105 @@ import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
 import { useForm, FormContext } from 'react-hook-form';
 
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
-//import { locationService } from '@grafana/runtime';
-import { RuleFormValues } from '../../types/rule-form';
-import { SAMPLE_QUERIES } from '../../mocks/grafana-queries';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { useDispatch } from 'react-redux';
 import { saveRuleFormAction } from '../../state/actions';
-import { cleanUpAction } from 'app/core/actions/cleanUp';
+import { RuleWithLocation } from 'app/types/unified-alerting';
+import { useDispatch } from 'react-redux';
+import { useCleanup } from 'app/core/hooks/useCleanup';
+import { rulerRuleToFormValues, defaultFormValues } from '../../utils/rule-form';
+import { Link } from 'react-router-dom';
 
-type Props = {};
+type Props = {
+  existing?: RuleWithLocation;
+};
 
-const defaultValues: RuleFormValues = Object.freeze({
-  name: '',
-  labels: [{ key: '', value: '' }],
-  annotations: [{ key: '', value: '' }],
-  dataSourceName: null,
-
-  // threshold
-  folder: null,
-  queries: SAMPLE_QUERIES, // @TODO remove the sample eventually
-  condition: '',
-  noDataState: GrafanaAlertState.NoData,
-  execErrState: GrafanaAlertState.Alerting,
-  evaluateEvery: '1m',
-  evaluateFor: '5m',
-
-  // system
-  expression: '',
-  forTime: 1,
-  forTimeUnit: 'm',
-});
-
-export const AlertRuleForm: FC<Props> = () => {
+export const AlertRuleForm: FC<Props> = ({ existing }) => {
   const styles = useStyles(getStyles);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    return () => {
-      dispatch(cleanUpAction({ stateSelector: (state) => state.unifiedAlerting.ruleForm }));
-    };
-  }, [dispatch]);
+  const defaultValues: RuleFormValues = useMemo(() => {
+    if (existing) {
+      return rulerRuleToFormValues(existing);
+    }
+    return defaultFormValues;
+  }, [existing]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
     defaultValues,
   });
 
-  const { handleSubmit, watch } = formAPI;
+  const { handleSubmit, watch, errors } = formAPI;
+
+  const hasErrors = !!Object.values(errors).filter((x) => !!x).length;
 
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  const showStep2 = Boolean(dataSourceName && type);
+  const showStep2 = Boolean(type && (type === RuleFormType.threshold || !!dataSourceName));
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
+  useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
 
-  const submit = (values: RuleFormValues) => {
+  const submit = (values: RuleFormValues, exitOnSave: boolean) => {
+    console.log('submit', values);
     dispatch(
       saveRuleFormAction({
-        ...values,
-        annotations: values.annotations.filter(({ key }) => !!key),
-        labels: values.labels.filter(({ key }) => !!key),
+        values: {
+          ...values,
+          annotations: values.annotations?.filter(({ key }) => !!key) ?? [],
+          labels: values.labels?.filter(({ key }) => !!key) ?? [],
+        },
+        existing,
+        exitOnSave,
       })
     );
   };
 
   return (
     <FormContext {...formAPI}>
-      <form onSubmit={handleSubmit(submit)} className={styles.form}>
+      <form onSubmit={handleSubmit((values) => submit(values, false))} className={styles.form}>
         <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
-          <ToolbarButton variant="default" disabled={submitState.loading}>
-            Cancel
-          </ToolbarButton>
-          <ToolbarButton variant="primary" type="submit" disabled={submitState.loading}>
+          <Link to="/alerting/list">
+            <ToolbarButton variant="default" disabled={submitState.loading} type="button">
+              Cancel
+            </ToolbarButton>
+          </Link>
+          <ToolbarButton
+            variant="primary"
+            type="button"
+            onClick={handleSubmit((values) => submit(values, false))}
+            disabled={submitState.loading}
+          >
             {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
             Save
           </ToolbarButton>
-          <ToolbarButton variant="primary" disabled={submitState.loading}>
+          <ToolbarButton
+            variant="primary"
+            type="button"
+            onClick={handleSubmit((values) => submit(values, true))}
+            disabled={submitState.loading}
+          >
             {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
             Save and exit
           </ToolbarButton>
         </PageToolbar>
         <div className={styles.contentOutter}>
-          <CustomScrollbar autoHeightMin="100%">
+          <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
+              {hasErrors && (
+                <InfoBox severity="error">
+                  There are errors in the form below. Please fix them and try saving again.
+                </InfoBox>
+              )}
               {submitState.error && (
                 <Alert severity="error" title="Error saving rule">
                   {submitState.error.message || (submitState.error as any)?.data?.message || String(submitState.error)}
                 </Alert>
               )}
-              <AlertTypeStep />
+              <AlertTypeStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
                   <QueryStep />
