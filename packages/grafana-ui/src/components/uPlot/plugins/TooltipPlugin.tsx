@@ -2,7 +2,7 @@ import React from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import { CursorPlugin } from './CursorPlugin';
-import { SeriesTable, SeriesTableRowProps, TooltipMode } from '../../VizTooltip/VizTooltip';
+import { SeriesTable, SeriesTableRowProps, TooltipDisplayMode } from '../../VizTooltip/VizTooltip';
 import {
   DataFrame,
   FieldType,
@@ -15,7 +15,7 @@ import { TooltipContainer } from '../../Chart/TooltipContainer';
 import { useGraphNGContext } from '../../GraphNG/hooks';
 
 interface TooltipPluginProps {
-  mode?: TooltipMode;
+  mode?: TooltipDisplayMode;
   timeZone: TimeZone;
   data: DataFrame[];
 }

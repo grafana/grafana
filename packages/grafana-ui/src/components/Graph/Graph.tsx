@@ -11,6 +11,7 @@ import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
 import { GraphDimensions } from './GraphTooltip/types';
 import { graphTimeFormat, graphTickFormatter } from './utils';
+import { TooltipDisplayMode } from '../VizTooltip/models.gen';
 
 export interface GraphProps {
   ariaLabel?: string;
@@ -186,7 +187,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       },
       activeDimensions,
       pos,
-      mode: tooltipElementProps.mode || 'single',
+      mode: tooltipElementProps.mode || TooltipDisplayMode.Single,
       timeZone,
     };
 

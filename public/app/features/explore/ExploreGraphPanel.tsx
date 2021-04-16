@@ -13,6 +13,7 @@ import {
   GraphSeriesTogglerAPI,
   Chart,
   Icon,
+  TooltipDisplayMode,
 } from '@grafana/ui';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -130,7 +131,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               onHorizontalRegionSelected={this.onChangeTime}
             >
               {/* For logs we are using mulit mode until we refactor logs histogram to use barWidth instead of lineWidth to render bars */}
-              <Chart.Tooltip mode={showBars ? 'multi' : 'single'} />
+              <Chart.Tooltip mode={showBars ? TooltipDisplayMode.Multi : TooltipDisplayMode.Single} />
             </GraphWithLegend>
           );
         }}

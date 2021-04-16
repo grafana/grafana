@@ -5,7 +5,7 @@ import { Dimensions, TimeZone } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
 import { TooltipContainer } from './TooltipContainer';
 import { useStyles } from '../../themes';
-import { TooltipMode } from '../VizTooltip/VizTooltip';
+import { TooltipDisplayMode } from '../VizTooltip/VizTooltip';
 
 // Describes active dimensions user interacts with
 // It's a key-value pair where:
@@ -23,7 +23,7 @@ export interface TooltipContentProps<T extends Dimensions = any> {
   activeDimensions?: ActiveDimensions<T>;
   timeZone?: TimeZone;
   pos: FlotPosition;
-  mode: TooltipMode;
+  mode: TooltipDisplayMode;
 }
 
 export interface TooltipProps {
@@ -42,7 +42,7 @@ export interface TooltipProps {
   // Mode in which tooltip works
   // - single - display single series info
   // - multi - display all series info
-  mode?: TooltipMode;
+  mode?: TooltipDisplayMode;
 }
 
 export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset }) => {

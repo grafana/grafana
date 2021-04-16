@@ -23,7 +23,7 @@ TableSortByFieldState: {
   desc?: bool
 } @cuetsy(targetType="interface")
 
-TooltipMode:          "single" | "multi" | "none"          @cuetsy(targetType="type")
+TooltipDisplayMode:          "single" | "multi" | "none"          @cuetsy(targetType="enum")
 FieldTextAlignment:   "auto" | "left" | "right" | "center" @cuetsy(targetType="type")
 AxisPlacement:        "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(targetType="enum")
 PointVisibility:      "auto" | "never" | "always"                             @cuetsy(targetType="enum")
@@ -89,5 +89,5 @@ VizLegendOptions: {
 	calcs: [string]
 } @cuetsy(targetType="interface")
 VizTooltipOptions: {
-	mode: TooltipMode
+	mode: TooltipDisplayMode
 } @cuetsy(targetType="interface")

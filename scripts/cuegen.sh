@@ -46,7 +46,7 @@ cue def -s $(find packages/grafana-data -type f -name "*.cue") > cue/data/gen.cu
 #
 # It's important to understand why this is necessary, though. We are expecting
 # that these core components may depend on each other - e.g., how
-# VizTooltipOptions composes in TooltipMode. We have to preserve those
+# VizTooltipOptions composes in TooltipDisplayMode. We have to preserve those
 # literal identifiers in our assembled CUE, so that when a panel plugin's
 # models.cue imports and references something like VizTooltipOptions in CUE,
 # it's still the same identifier as appeared in the original core models.cue

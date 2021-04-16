@@ -1,7 +1,7 @@
 package grafanaschema
 
-TooltipMode: "single" | "multi" | "none" @cuetsy(targetType="type")
+TooltipDisplayMode: "single" | "multi" | "none" @cuetsy(targetType="enum")
 
 VizTooltipOptions: {
-    mode: TooltipMode
+    mode: TooltipDisplayMode
 } @cuetsy(targetType="interface")

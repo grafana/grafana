@@ -3,8 +3,12 @@
 // It is currenty hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-export type TooltipMode = 'single' | 'multi' | 'none';
+export enum TooltipDisplayMode {
+  Single = 'single',
+  Multi = 'multi',
+  None = 'none',
+}
 
 export type VizTooltipOptions = {
-  mode: TooltipMode;
+  mode: TooltipDisplayMode;
 };

@@ -5,7 +5,7 @@ import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId } fro
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TooltipContentProps } from '../Chart/Tooltip';
-import { TooltipMode } from '../Chart/models.gen';
+import { TooltipDisplayMode } from '../VizTooltip/VizTooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
 import { GraphProps } from './Graph';
 
@@ -114,7 +114,7 @@ export default {
   },
 };
 
-export const WithTooltip: Story<GraphProps & { tooltipMode: TooltipMode }> = ({ tooltipMode, ...args }) => {
+export const WithTooltip: Story<GraphProps & { tooltipMode: TooltipDisplayMode }> = ({ tooltipMode, ...args }) => {
   return (
     <Graph {...args}>
       <Chart.Tooltip mode={tooltipMode} />
@@ -131,7 +131,10 @@ const CustomGraphTooltip = ({ activeDimensions }: TooltipContentProps) => {
   );
 };
 
-export const WithCustomTooltip: Story<GraphProps & { tooltipMode: TooltipMode }> = ({ tooltipMode, ...args }) => {
+export const WithCustomTooltip: Story<GraphProps & { tooltipMode: TooltipDisplayMode }> = ({
+  tooltipMode,
+  ...args
+}) => {
   return (
     <Graph {...args}>
       <Chart.Tooltip mode={tooltipMode} tooltipComponent={CustomGraphTooltip} />
