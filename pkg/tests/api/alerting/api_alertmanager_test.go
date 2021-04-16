@@ -153,7 +153,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		fmt.Println(string(b))
 		assert.Equal(t, resp.StatusCode, 202)
 		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
 	}
@@ -325,7 +324,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		fmt.Println(string(b))
 		assert.Equal(t, resp.StatusCode, 202)
 		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
 
