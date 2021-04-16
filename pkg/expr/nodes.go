@@ -30,13 +30,25 @@ type rawNode struct {
 func (rn *rawNode) GetDatasourceName() (string, error) {
 	rawDs, ok := rn.Query["datasource"]
 	if !ok {
-		return "", fmt.Errorf("no datasource in query for refId %v", rn.RefID)
+		return "", nil
 	}
 	dsName, ok := rawDs.(string)
 	if !ok {
 		return "", fmt.Errorf("expted datasource identifier to be a string, got %T", rawDs)
 	}
 	return dsName, nil
+}
+
+func (rn *rawNode) GetDatasourceUid() (string, error) {
+	rawDs, ok := rn.Query["datasourceUid"]
+	if !ok {
+		return "", nil
+	}
+	dsUID, ok := rawDs.(string)
+	if !ok {
+		return "", fmt.Errorf("expected datasource identifier to be a string, got %T", rawDs)
+	}
+	return dsUID, nil
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {

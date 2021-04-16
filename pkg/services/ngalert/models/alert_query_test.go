@@ -27,13 +27,12 @@ func TestAlertQuery(t *testing.T) {
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasource": "__expr__",
+					"datasourceUid": "-100",
 					"queryType": "metricQuery",
 					"extraParam": "some text"
 				}`),
 			},
 			expectedIsExpression:  true,
-			expectedDatasource:    expr.DatasourceName,
 			expectedDatasourceUID: expr.DatasourceUID,
 			expectedMaxPoints:     int64(defaultMaxDataPoints),
 			expectedIntervalMS:    int64(defaultIntervalMS),
@@ -43,14 +42,12 @@ func TestAlertQuery(t *testing.T) {
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasource": "my datasource",
 					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"extraParam": "some text"
 				}`),
 			},
 			expectedIsExpression:  false,
-			expectedDatasource:    "my datasource",
 			expectedDatasourceUID: "000000001",
 			expectedMaxPoints:     int64(defaultMaxDataPoints),
 			expectedIntervalMS:    int64(defaultIntervalMS),
@@ -60,7 +57,6 @@ func TestAlertQuery(t *testing.T) {
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasource": "my datasource",
 					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"maxDataPoints": 200,
@@ -68,7 +64,6 @@ func TestAlertQuery(t *testing.T) {
 				}`),
 			},
 			expectedIsExpression:  false,
-			expectedDatasource:    "my datasource",
 			expectedDatasourceUID: "000000001",
 			expectedMaxPoints:     200,
 			expectedIntervalMS:    int64(defaultIntervalMS),
@@ -78,7 +73,6 @@ func TestAlertQuery(t *testing.T) {
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasource": "my datasource",
 					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"maxDataPoints": "invalid",
@@ -86,7 +80,6 @@ func TestAlertQuery(t *testing.T) {
 				}`),
 			},
 			expectedIsExpression:  false,
-			expectedDatasource:    "my datasource",
 			expectedDatasourceUID: "000000001",
 			expectedMaxPoints:     int64(defaultMaxDataPoints),
 			expectedIntervalMS:    int64(defaultIntervalMS),
@@ -96,7 +89,6 @@ func TestAlertQuery(t *testing.T) {
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasource": "my datasource",
 					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"maxDataPoints": 0,
@@ -104,7 +96,6 @@ func TestAlertQuery(t *testing.T) {
 				}`),
 			},
 			expectedIsExpression:  false,
-			expectedDatasource:    "my datasource",
 			expectedDatasourceUID: "000000001",
 			expectedMaxPoints:     int64(defaultMaxDataPoints),
 			expectedIntervalMS:    int64(defaultIntervalMS),
@@ -114,7 +105,6 @@ func TestAlertQuery(t *testing.T) {
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasource": "my datasource",
 					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"intervalMs": 2000,
@@ -122,7 +112,6 @@ func TestAlertQuery(t *testing.T) {
 				}`),
 			},
 			expectedIsExpression:  false,
-			expectedDatasource:    "my datasource",
 			expectedDatasourceUID: "000000001",
 			expectedMaxPoints:     int64(defaultMaxDataPoints),
 			expectedIntervalMS:    2000,
@@ -132,7 +121,6 @@ func TestAlertQuery(t *testing.T) {
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasource": "my datasource",
 					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"intervalMs": "invalid",
@@ -140,7 +128,6 @@ func TestAlertQuery(t *testing.T) {
 				}`),
 			},
 			expectedIsExpression:  false,
-			expectedDatasource:    "my datasource",
 			expectedDatasourceUID: "000000001",
 			expectedMaxPoints:     int64(defaultMaxDataPoints),
 			expectedIntervalMS:    int64(defaultIntervalMS),
@@ -150,7 +137,6 @@ func TestAlertQuery(t *testing.T) {
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
-					"datasource": "my datasource",
 					"datasourceUid": "000000001",
 					"queryType": "metricQuery",
 					"intervalMs": 0,
@@ -158,7 +144,6 @@ func TestAlertQuery(t *testing.T) {
 				}`),
 			},
 			expectedIsExpression:  false,
-			expectedDatasource:    "my datasource",
 			expectedDatasourceUID: "000000001",
 			expectedMaxPoints:     int64(defaultMaxDataPoints),
 			expectedIntervalMS:    int64(defaultIntervalMS),
@@ -204,13 +189,7 @@ func TestAlertQuery(t *testing.T) {
 				err = json.Unmarshal(blob, &model)
 				require.NoError(t, err)
 
-				i, ok := model["datasource"]
-				require.True(t, ok)
-				datasource, ok := i.(string)
-				require.True(t, ok)
-				require.Equal(t, tc.expectedDatasource, datasource)
-
-				i, ok = model["datasourceUid"]
+				i, ok := model["datasourceUid"]
 				require.True(t, ok)
 				datasourceUID, ok := i.(string)
 				require.True(t, ok)

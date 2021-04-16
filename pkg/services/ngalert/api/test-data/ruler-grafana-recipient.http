@@ -100,7 +100,6 @@ content-type: application/json
               "to": 10800
             },
             "model": {
-              "datasource": "__expr__",
               "datasourceUid": "-100",
               "expression": "query",
               "hide": false,
@@ -119,7 +118,6 @@ content-type: application/json
               "to": 10800
             },
             "model": {
-              "datasource": "__expr__",
               "datasourceUid": "-100",
               "expression": "$reduced > 10",
               "hide": false,
@@ -170,7 +168,6 @@ content-type: application/json
               "to": 10800
             },
             "model": {
-              "datasource": "gdev-prometheus",
               "datasourceUid": "000000002",
               "expr": "http_request_duration_microseconds_count",
               "hide": false,
@@ -189,7 +186,6 @@ content-type: application/json
               "to": 10800
             },
             "model": {
-              "datasource": "__expr__",
               "datasourceUid": "-100",
               "expression": "query",
               "hide": false,
@@ -208,7 +204,6 @@ content-type: application/json
               "to": 10800
             },
             "model": {
-              "datasource": "__expr__",
               "datasourceUid": "-100",
               "expression": "$reduced > 42",
               "hide": false,
@@ -272,7 +267,6 @@ Content-Type: application/json
               "to": 10800
             },
             "model": {
-              "datasource": "gdev-prometheus",
               "datasourceUid": "000000002",
               "expr": "http_request_duration_microseconds_count",
               "hide": false,
@@ -291,7 +285,6 @@ Content-Type: application/json
               "to": 10800
             },
             "model": {
-              "datasource": "__expr__",
               "datasourceUid": "-100",
               "expression": "query",
               "hide": false,
@@ -310,7 +303,6 @@ Content-Type: application/json
               "to": 10800
             },
             "model": {
-              "datasource": "__expr__",
               "datasourceUid": "-100",
               "expression": "$reduced > 42",
               "hide": false,

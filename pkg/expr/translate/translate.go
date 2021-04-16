@@ -240,14 +240,14 @@ func (dc *dashConditionsJSON) GetNew(orgID int64) (*ngmodels.Condition, error) {
 	ngCond.OrgID = orgID
 
 	exprModel := struct {
-		Type       string                         `json:"type"`
-		RefID      string                         `json:"refId"`
-		Datasource string                         `json:"datasource"`
-		Conditions []classic.ClassicConditionJSON `json:"conditions"`
+		Type          string                         `json:"type"`
+		RefID         string                         `json:"refId"`
+		DatasourceUID string                         `json:"datasourceUid"`
+		Conditions    []classic.ClassicConditionJSON `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
-		"__expr__",
+		expr.DatasourceUID,
 		conditions,
 	}
 

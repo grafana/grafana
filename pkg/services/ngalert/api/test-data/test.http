@@ -16,7 +16,7 @@ content-type: application/json
                 "to": 10800
             },
             "model": {
-                "datasource": "__expr__",
+                "datasourceUid": "-100",
                 "type":"math",
                 "expression":"1 < 2"
             }
@@ -68,7 +68,7 @@ content-type: application/json
                 "to": 10800
             },
             "model": {
-                "datasource": "__expr__",
+                "datasourceUid": "-100",
                 "type":"math",
                 "expression":"1 < 2"
             }

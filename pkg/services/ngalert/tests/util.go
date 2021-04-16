@@ -83,7 +83,7 @@ func createTestAlertRule(t *testing.T, dbstore *store.DBstore, intervalSeconds i
 						Data: []models.AlertQuery{
 							{
 								Model: json.RawMessage(`{
-										"datasource": "__expr__",
+										"datasourceUid": "-100",
 										"type":"math",
 										"expression":"2 + 2 > 1"
 									}`),
