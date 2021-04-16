@@ -81,6 +81,11 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       }
 
       &:focus + label {
+        outline: none;
+      }
+
+      &.focus-visible + label,
+      &:focus-visible + label {
         ${focusCss(theme)};
         z-index: 3;
       }

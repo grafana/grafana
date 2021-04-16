@@ -1,6 +1,7 @@
 // based on https://raw.githubusercontent.com/mui-org/material-ui/next/packages/material-ui-utils/src/useIsFocusVisible.js
 // based on https://github.com/WICG/focus-visible/blob/v4.1.5/src/focus-visible.js
 import * as React from 'react';
+import { MutableRefOrFunction } from './setRef';
 
 let hadKeyboardEvent = true;
 let hadFocusVisibleRecently = false;
@@ -121,11 +122,11 @@ export function useIsFocusVisible<T>(): {
   isFocusVisibleRef: React.MutableRefObject<boolean>;
   onBlur: (event: React.FocusEvent<any>) => void;
   onFocus: (event: React.FocusEvent<any>) => void;
-  ref: React.MutableRefObject<T>;
+  ref: MutableRefOrFunction<T>;
 } {
-  const ref = React.useCallback((node) => {
+  const ref = React.useCallback((node: T | null) => {
     if (node != null) {
-      prepare(node.ownerDocument);
+      prepare(((node as unknown) as HTMLElement).ownerDocument);
     }
   }, []);
 
