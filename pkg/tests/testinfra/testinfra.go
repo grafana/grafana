@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -202,6 +203,10 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = featureSection.NewKey("enable", strings.Join(o.EnableFeatureToggles, " "))
 			require.NoError(t, err)
 		}
+		if o.AnonymousUserRole != "" {
+			_, err = anonSect.NewKey("org_role", string(o.AnonymousUserRole))
+			require.NoError(t, err)
+		}
 	}
 
 	cfgPath := filepath.Join(cfgDir, "test.ini")
@@ -217,4 +222,5 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 type GrafanaOpts struct {
 	EnableCSP            bool
 	EnableFeatureToggles []string
+	AnonymousUserRole    models.RoleType
 }

@@ -20,7 +20,6 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 	if !ok {
 		return false, nil
 	}
-
 	for _, s := range scope {
 		var match bool
 		for dbScope := range dbScopes {

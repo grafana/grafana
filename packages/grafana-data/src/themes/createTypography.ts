@@ -25,8 +25,12 @@ export interface ThemeTypography {
   h6: ThemeTypographyVariant;
 
   body: ThemeTypographyVariant;
+  bodySmall: ThemeTypographyVariant;
 
-  /** from legacy old theme */
+  /**
+   * @deprecated
+   * from legacy old theme
+   * */
   size: {
     base: string;
     xs: string;
@@ -60,7 +64,7 @@ export interface ThemeTypographyInput {
 }
 
 const defaultFontFamily = '"Roboto", "Helvetica", "Arial", sans-serif';
-const defaultFontFamilyMonospace = "Menlo, Monaco, Consolas, 'Courier New', monospace";
+const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
 
 export function createTypography(palette: ThemePalette, typographyInput: ThemeTypographyInput = {}): ThemeTypography {
   const {
@@ -71,7 +75,7 @@ export function createTypography(palette: ThemePalette, typographyInput: ThemeTy
     fontWeightLight = 300,
     fontWeightRegular = 400,
     fontWeightMedium = 500,
-    fontWeightBold = 700,
+    fontWeightBold = 500,
     // Tell Grafana-UI what's the font-size on the html element.
     // 16px is the default font-size used by browsers.
     htmlFontSize = 14,
@@ -99,22 +103,20 @@ export function createTypography(palette: ThemePalette, typographyInput: ThemeTy
     fontFamily,
     fontWeight,
     fontSize: pxToRem(size),
-    // Unitless following https://meyerweb.com/eric/thoughts/2006/02/08/unitless-line-heights/
     lineHeight,
-    // The letter spacing was designed for the Roboto font-family. Using the same letter-spacing
-    // across font-families can cause issues with the kerning.
     ...(fontFamily === defaultFontFamily ? { letterSpacing: `${round(letterSpacing / size)}em` } : {}),
     ...casing,
   });
 
   const variants = {
-    h1: buildVariant(fontWeightLight, 28, 1.167, -1.5),
-    h2: buildVariant(fontWeightLight, 24, 1.2, -0.5),
+    h1: buildVariant(fontWeightLight, 28, 1.167, -0.25),
+    h2: buildVariant(fontWeightLight, 24, 1.2, 0),
     h3: buildVariant(fontWeightRegular, 21, 1.167, 0),
     h4: buildVariant(fontWeightRegular, 18, 1.235, 0.25),
     h5: buildVariant(fontWeightRegular, 16, 1.334, 0),
     h6: buildVariant(fontWeightMedium, 14, 1.6, 0.15),
     body: buildVariant(fontWeightRegular, 14, 1.5, 0.15),
+    bodySmall: buildVariant(fontWeightRegular, 12, 1.5, 0.15),
   };
 
   const size = {

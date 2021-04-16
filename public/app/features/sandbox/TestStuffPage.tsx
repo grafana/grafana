@@ -62,7 +62,7 @@ export const TestStuffPage: FC = () => {
             timeRange={data.timeRange}
             timeZone="browser"
           />
-          <hr></hr>
+          <hr />
           <Table data={data.series[0]} width={1200} height={300} />
         </div>
       )}
