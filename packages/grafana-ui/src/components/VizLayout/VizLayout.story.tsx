@@ -24,10 +24,15 @@ export default {
   },
 };
 
+const createArray = (legendItems: number) => {
+  const newArray = Array.from({ length: legendItems }, (_, i) => i + 1);
+  return newArray;
+};
+
 export const BottomLegend: Story = ({ height, width, legendItems }) => {
-  const [items, setItems] = useState(Array.from({ length: legendItems }, (_, i) => i + 1));
+  const [items, setItems] = useState(createArray(legendItems));
   useEffect(() => {
-    setItems(Array.from({ length: legendItems }, (_, i) => i + 1));
+    setItems(createArray(legendItems));
   }, [legendItems]);
 
   const legend = (
@@ -55,9 +60,9 @@ BottomLegend.args = {
 };
 
 export const RightLegend: Story = ({ height, width, legendItems, legendWidth }) => {
-  const [items, setItems] = useState(Array.from({ length: legendItems }, (_, i) => i + 1));
+  const [items, setItems] = useState(createArray(legendItems));
   useEffect(() => {
-    setItems(Array.from({ length: legendItems }, (_, i) => i + 1));
+    setItems(createArray(legendItems));
   }, [legendItems]);
 
   const legend = (
