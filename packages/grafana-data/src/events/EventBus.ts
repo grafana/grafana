@@ -108,7 +108,11 @@ export class EventBusWithSource implements EventBus {
   }
 
   publish<T extends BusEvent>(event: T): void {
-    var decoratedEvent = { ...event, ...{ payload: { ...event.payload, ...{ source: this.source } } } };
+    const payload = event.payload ?? { source: [] };
+    var decoratedEvent = {
+      ...event,
+      ...{ payload: { ...payload, ...{ source: [...[this._source], ...payload.source] } } },
+    };
     this.eventBus.publish(decoratedEvent);
   }
 
@@ -132,7 +136,7 @@ export class EventBusWithSource implements EventBus {
    * @returns a new instance of EventBusWithSource with the new source appended
    */
   appendSource = (source: string) => {
-    return new EventBusWithSource(this.eventBus, source);
+    return new EventBusWithSource(this, source);
   };
 
   /**
