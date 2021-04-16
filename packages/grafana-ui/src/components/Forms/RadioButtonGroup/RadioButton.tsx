@@ -3,7 +3,7 @@ import { useTheme, stylesFactory } from '../../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { getPropertiesForButtonSize } from '../commonStyles';
-import { focusCss } from '../../../themes/mixins';
+import { focusCss, getMouseFocusStyles } from '../../../themes/mixins';
 
 export type RadioButtonSize = 'sm' | 'md';
 
@@ -80,14 +80,14 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
         z-index: 3;
       }
 
-      &:focus + label {
-        outline: none;
-      }
-
-      &.focus-visible + label,
+      &:focus + label,
       &:focus-visible + label {
         ${focusCss(theme)};
         z-index: 3;
+      }
+
+      &:focus:not(:focus-visible) + label {
+        ${getMouseFocusStyles(theme.v2)}
       }
 
       &:disabled + label {

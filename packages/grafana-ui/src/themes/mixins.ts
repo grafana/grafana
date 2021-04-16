@@ -46,6 +46,22 @@ export const focusCss = (theme: GrafanaTheme) => `
   transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
 `;
 
+export function getMouseFocusCss(theme: GrafanaThemeV2): string {
+  return `
+    outline: 'none';
+    box-shadow: ${theme.shadows.z1};
+    transition: ${theme.transitions.create('box-shadow')};
+  `;
+}
+
+export function getMouseFocusStyles(theme: GrafanaThemeV2): CSSObject {
+  return {
+    outline: 'none',
+    boxShadow: `${theme.shadows.z1}`,
+    transition: theme.transitions.create('box-shadow'),
+  };
+}
+
 export function getFocusStyles(theme: GrafanaThemeV2): CSSObject {
   return {
     outline: '2px dotted transparent',

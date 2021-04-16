@@ -5,10 +5,8 @@ import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
 import { colorManipulator, GrafanaTheme, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
 import { ComponentSize } from '../../types/size';
-import { getFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
-import { useIsFocusVisible } from '../../utils/useIsFocusVisible';
-import { useForkRef } from '../../utils/useForkRef';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
 export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive', 'link'];
@@ -25,56 +23,18 @@ type CommonProps = {
 export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', size = 'md', icon, fullWidth, children, className, onBlur, onFocus, ...otherProps }, ref) => {
+  ({ variant = 'primary', size = 'md', icon, fullWidth, children, className, ...otherProps }, ref) => {
     const theme = useTheme();
-
-    const {
-      isFocusVisibleRef,
-      onBlur: handleBlurVisible,
-      onFocus: handleFocusVisible,
-      ref: focusVisibleRef,
-    } = useIsFocusVisible<HTMLButtonElement>();
-
-    const [focusVisible, setFocusVisible] = React.useState(false);
-    const handlerRef = useForkRef(ref, focusVisibleRef);
-
-    const handleBlur = (event: React.FocusEvent<any>) => {
-      handleBlurVisible(event);
-      if (isFocusVisibleRef.current === false) {
-        setFocusVisible(false);
-      }
-      if (onBlur) {
-        onBlur(event);
-      }
-    };
-
-    const handleFocus = (event: React.FocusEvent<any>) => {
-      handleFocusVisible(event);
-      if (isFocusVisibleRef.current === true) {
-        setFocusVisible(true);
-      }
-      if (onFocus) {
-        onFocus(event);
-      }
-    };
-
     const styles = getButtonStyles({
       theme,
       size,
       variant,
       fullWidth,
       iconOnly: !children,
-      focusVisible,
     });
 
     return (
-      <button
-        className={cx(styles.button, className)}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        {...otherProps}
-        ref={handlerRef}
-      >
+      <button className={cx(styles.button, className)} {...otherProps}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </button>
@@ -103,57 +63,18 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
     ref
   ) => {
     const theme = useTheme();
-
-    const {
-      isFocusVisibleRef,
-      onBlur: handleBlurVisible,
-      onFocus: handleFocusVisible,
-      ref: focusVisibleRef,
-    } = useIsFocusVisible<HTMLAnchorElement>();
-
-    const [focusVisible, setFocusVisible] = React.useState(false);
-    const handlerRef = useForkRef(ref, focusVisibleRef);
-
-    const handleBlur = (event: React.FocusEvent<any>) => {
-      handleBlurVisible(event);
-      if (isFocusVisibleRef.current === false) {
-        setFocusVisible(false);
-      }
-      if (onBlur) {
-        onBlur(event);
-      }
-    };
-
-    const handleFocus = (event: React.FocusEvent<any>) => {
-      handleFocusVisible(event);
-      if (isFocusVisibleRef.current === true) {
-        setFocusVisible(true);
-      }
-      if (onFocus) {
-        onFocus(event);
-      }
-    };
-
     const styles = getButtonStyles({
       theme,
       fullWidth,
       size,
       variant,
       iconOnly: !children,
-      focusVisible,
     });
 
     const linkButtonStyles = cx(styles.button, { [styles.disabled]: disabled }, className);
 
     return (
-      <a
-        className={linkButtonStyles}
-        {...otherProps}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        ref={handlerRef}
-        tabIndex={disabled ? -1 : 0}
-      >
+      <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </a>
@@ -170,7 +91,6 @@ export interface StyleProps {
   theme: GrafanaTheme;
   fullWidth?: boolean;
   narrow?: boolean;
-  focusVisible?: boolean;
 }
 
 export const getButtonStyles = (props: StyleProps) => {
@@ -213,11 +133,9 @@ export const getButtonStyles = (props: StyleProps) => {
       '&::-moz-focus-inner': {
         borderStyle: 'none',
       },
-      '&:focus': {
-        outline: 'none',
-      },
-      ':focus-visible': focusStyle,
-      ...(props.focusVisible && focusStyle),
+      '&:focus': focusStyle,
+      '&:focus-visible': focusStyle,
+      '&:focus:not(:focus-visible)': getMouseFocusStyles(theme.v2),
       ...(fullWidth && {
         flexGrow: 1,
         justifyContent: 'center',
