@@ -10,14 +10,14 @@ Grafana supports Flux running on InfluxDB 1.8+.  See [1.8 compatibility](https:/
 
 Name             | Description
 ---------------- | -------------
-`Name`      | The data source name. This is how you refer to the data source in panels and queries.
+`Name`      | The data source name. This is how you refer to the data source in panels and queries. We recommend something like `InfluxDB-Flux`.
 `Default`   | Default data source means that it will be pre-selected for new panels.
 `URL`            | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB 2.0 API port is by default 9999)
-`Organization`   | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries.  This is also used to for the `v.organization` query macro
-`Token`          | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/).  For influx 1.8, the token is `username:password`
-`Default Bucket` | The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries
-`Min time interval` | Refer to [Min time interval]({{< relref "#min-time-interval" >}}).
-`Max series`| Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
+`Organization`   | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries.  This is also used to for the `v.organization` query macro.
+`Token`          | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/).  For influx 1.8, the token is `username:password`.
+`Default bucket` | (Optional) The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries.
+`Min time interval` | (Optional) Refer to [Min time interval]({{< relref "#min-time-interval" >}}).
+`Max series`| (Optional) Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
 
 ## Min time interval
 
