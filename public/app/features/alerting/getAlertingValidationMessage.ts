@@ -6,6 +6,7 @@ export const getDefaultCondition = () => ({
   query: { params: ['A', '5m', 'now'] },
   reducer: { type: 'avg', params: [] as any[] },
   evaluator: { type: 'gt', params: [null] as any[] },
+  timeEvaluator: { type: 'any', params: [] as any[], day: 'all' },
   operator: { type: 'and' },
 });
 

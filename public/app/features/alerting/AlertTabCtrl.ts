@@ -24,6 +24,9 @@ export class AlertTabCtrl {
   conditionModels: any;
   evalFunctions: any;
   evalOperators: any;
+  timeEvalFunctions: any;
+  timeEvalDays: any;
+  timeEvaluator: any;
   noDataModes: any;
   executionErrorModes: any;
   addNotificationSegment: any;
@@ -50,6 +53,8 @@ export class AlertTabCtrl {
     this.subTabIndex = 0;
     this.evalFunctions = alertDef.evalFunctions;
     this.evalOperators = alertDef.evalOperators;
+    this.timeEvalFunctions = alertDef.timeEvalFunctions;
+    this.timeEvalDays = alertDef.timeEvalDays;
     this.conditionTypes = alertDef.conditionTypes;
     this.noDataModes = alertDef.noDataModes;
     this.executionErrorModes = alertDef.executionErrorModes;
@@ -207,6 +212,8 @@ export class AlertTabCtrl {
 
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
+
+    alert.timeEvaluator = alert.timeEvaluator || getDefaultCondition().timeEvaluator;
 
     this.conditionModels = _.reduce(
       alert.conditions,
@@ -366,6 +373,8 @@ export class AlertTabCtrl {
     cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
     cm.reducerPart = alertDef.createReducerPart(source.reducer);
     cm.evaluator = source.evaluator;
+    // setting default to keep backwards-compatibility with test data, but should fix test data
+    cm.timeEvaluator = source.timeEvaluator || getDefaultCondition().timeEvaluator; // { type: 'any', params: [] as any[], day: 'all' };
     cm.operator = source.operator;
 
     return cm;
@@ -478,6 +487,22 @@ export class AlertTabCtrl {
       }
       case 'no_value': {
         evaluator.params = [];
+      }
+    }
+
+    this.evaluatorParamsChanged();
+  }
+
+  timeEvaluatorTypeChanged(evaluator: any) {
+    // ensure params array is correct length
+    switch (evaluator.type) {
+      case 'range': {
+        evaluator.params = [null, null];
+        break;
+      }
+      case 'any': {
+        evaluator.params = [];
+        break;
       }
     }
 

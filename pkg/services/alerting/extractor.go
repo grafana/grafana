@@ -129,6 +129,9 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		for _, condition := range jsonAlert.Get("conditions").MustArray() {
 			jsonCondition := simplejson.NewFromAny(condition)
 
+			// set parent on each individual condition as conditions are checked independently
+			jsonCondition.Set("timeEvaluatorParent", jsonAlert.Get("timeEvaluator"))
+
 			jsonQuery := jsonCondition.Get("query")
 			queryRefID := jsonQuery.Get("params").MustArray()[0].(string)
 			panelQuery := findPanelQueryByRefID(panel, queryRefID)

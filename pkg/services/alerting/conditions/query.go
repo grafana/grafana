@@ -29,11 +29,13 @@ func init() {
 // QueryCondition is responsible for issue and query, reduce the
 // timeseries into single values and evaluate if they are firing or not.
 type QueryCondition struct {
-	Index     int
-	Query     AlertQuery
-	Reducer   *queryReducer
-	Evaluator AlertEvaluator
-	Operator  string
+	Index               int
+	Query               AlertQuery
+	Reducer             *queryReducer
+	Evaluator           AlertEvaluator
+	TimeEvaluator       AlertTimeEvaluator
+	TimeEvaluatorParent AlertTimeEvaluator
+	Operator            string
 }
 
 // AlertQuery contains information about what datasource a query
@@ -61,18 +63,23 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext, requestHandler plug
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
 		evalMatch := c.Evaluator.Eval(reducedValue)
+		timeMatch := c.TimeEvaluator.Eval(context.StartTime)
+		timeMatchParent := c.TimeEvaluatorParent.Eval(context.StartTime)
 
 		if !reducedValue.Valid {
 			emptySeriesCount++
 		}
 
+		wouldAlert := evalMatch && timeMatch && timeMatchParent
 		if context.IsTestRun {
+			// unfortunately timeMatchParent defaults to true in test run
 			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
-				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %s", c.Index, evalMatch, series.Name, reducedValue),
+				Message: fmt.Sprintf("Condition[%d]: WouldAlert: %v {Eval: %v, Time: %v}, Metric: %s, Value: %s",
+					c.Index, wouldAlert, evalMatch, timeMatch, series.Name, reducedValue),
 			})
 		}
 
-		if evalMatch {
+		if wouldAlert {
 			evalMatchCount++
 
 			matches = append(matches, &alerting.EvalMatch{
@@ -270,6 +277,20 @@ func newQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 		return nil, fmt.Errorf("error in condition %v: %v", index, err)
 	}
 	condition.Evaluator = evaluator
+
+	timeEvaluatorJson := model.Get("timeEvaluator")
+	timeEvaluator, err := NewAlertTimeEvaluator(timeEvaluatorJson)
+	if err != nil {
+		return nil, fmt.Errorf("time evaluator error in condition %v: %v", index, err)
+	}
+	condition.TimeEvaluator = timeEvaluator
+
+	timeEvaluatorParentJson := model.Get("timeEvaluatorParent")
+	timeEvaluatorParent, err := NewAlertTimeEvaluator(timeEvaluatorParentJson)
+	if err != nil {
+		return nil, fmt.Errorf("parent time evaluator error: %v", err)
+	}
+	condition.TimeEvaluatorParent = timeEvaluatorParent
 
 	operatorJSON := model.Get("operator")
 	operator := operatorJSON.Get("type").MustString("and")
