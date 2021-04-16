@@ -21,37 +21,40 @@ Some field options will not affect the visualization until you click outside of 
 
 ## Stack series
 
-![Stack series editor](/img/docs/time-series-panel/stack-series-editor-8-0.png)
+Turn series stacking on/off.
 
-Enable/disable series stacking
+![Stack series editor](/img/docs/time-series-panel/stack-series-editor-8-0.png)
 
 ### Off
 
-Do not stack series
+Disable series stacking.
 
 ![No series stacking example](/img/docs/time-series-panel/stacking-off-8-0.png)
 
 ### Normal
 
-Stack series on top of each other
+Enable stacking series on top of each other.
 
 ![Normal series stacking example](/img/docs/time-series-panel/stacking-normal-8-0.png)
 
 ## Stack series in groups
 
-> **Note:** Stacking groups are available via the field overrides
+Stacking group option is only available as an override.
 
 For more information about creating field overrides, refer to [Add a field override]({{< relref "../../field-options/configure-specific-fields.md#add-a-field-override" >}}) 
 
-The following image shows a graph with two stacking groups (A & B) defined.
-
-![Stacking groups example](/img/docs/time-series-panel/stack-series-groups-8-0.png)
+Stack series in the same group. In the Overrides section:
 
 1. Create a field override for **Stack series** option.
 
 ![Stack series override](/img/docs/time-series-panel/stacking-override-default-8-0.png)
 
+1. Click on **Normal** stacking mode.
+   
 1. Name the stacking group you want the series to appear in. The stacking group name option is only available when creating an override.
 
 ![Stack series override](/img/docs/time-series-panel/stack-series-override-editor-8-0)
 
+A-series and B-series stacked in group A, C-series and D-series stacked in group B:
+
+![Stacking groups example](/img/docs/time-series-panel/stack-series-groups-8-0.png)
