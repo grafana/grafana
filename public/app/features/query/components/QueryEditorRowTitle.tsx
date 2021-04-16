@@ -4,6 +4,7 @@ import { DataQuery, DataSourceInstanceSettings, GrafanaTheme, TimeRange } from '
 import { DataSourcePicker } from '@grafana/runtime';
 import { Icon, Input, stylesFactory, useTheme, FieldValidationMessage, TimeRangeInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
 
 export interface Props {
   query: DataQuery;
@@ -130,8 +131,12 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
       )}
       {inMixedMode && (
         <div style={{ display: 'flex', marginLeft: '8px' }}>
-          <DataSourcePicker current={dataSourceName} onChange={onDataSourceChange} />
-          <TimeRangeInput onChange={onTimeRangeChange} value={query.timeRange!} />
+          {query.datasource !== ExpressionDatasourceID && (
+            <>
+              <DataSourcePicker current={dataSourceName} onChange={onDataSourceChange} />
+              <TimeRangeInput onChange={onTimeRangeChange} value={query.timeRange!} />
+            </>
+          )}
         </div>
       )}
       {dataSourceName && <em className={styles.contextInfo}> ({dataSourceName})</em>}

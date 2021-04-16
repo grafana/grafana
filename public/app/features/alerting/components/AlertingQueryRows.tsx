@@ -1,10 +1,11 @@
 import React, { PureComponent } from 'react';
-import { DataQuery, PanelData } from '@grafana/data';
+import { Unsubscribable } from 'rxjs';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { DataSourceApi, DataSourceInstanceSettings, DataQuery, PanelData } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { MultiQueryRunner } from '../state/MultiQueryRunner';
-import { Unsubscribable } from 'rxjs';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
 
 interface Props {
   // The query configuration
@@ -19,6 +20,7 @@ interface Props {
 
 interface State {
   dataPerQuery: Record<string, PanelData>;
+  defaultDataSource: DataSourceApi;
 }
 
 export class AlertingQueryRows extends PureComponent<Props, State> {
@@ -26,14 +28,17 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { dataPerQuery: {} };
+    this.state = { dataPerQuery: {}, defaultDataSource: {} as DataSourceApi };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.querySubscription = this.props.queryRunner.getData().subscribe((data) => {
       console.log('data', data);
       this.setState({ dataPerQuery: data });
     });
+
+    const defaultDataSource = await getDataSourceSrv().get();
+    this.setState({ defaultDataSource });
   }
 
   componentWillUnmount() {
@@ -81,6 +86,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
   render() {
     const { queries } = this.props;
+    const { defaultDataSource } = this.state;
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -89,9 +95,14 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query, index) => {
-                  const dsSettings = getDataSourceSrv().getInstanceSettings(query.datasource);
+                  let dsSettings: DataSourceInstanceSettings;
+                  if (query.datasource === ExpressionDatasourceID) {
+                    dsSettings = getDataSourceSrv().getInstanceSettings(defaultDataSource.name)!;
+                  } else {
+                    dsSettings = getDataSourceSrv().getInstanceSettings(query.datasource)!;
+                  }
                   const data = this.state.dataPerQuery[query.refId];
-
+                  console.log(dsSettings);
                   if (!dsSettings) {
                     return null;
                   }

@@ -12,6 +12,7 @@ import { MultiQueryRunner } from '../state/MultiQueryRunner';
 import { selectors } from '@grafana/e2e-selectors';
 import { addQuery } from 'app/core/utils/query';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { expressionDatasource } from '../../expressions/ExpressionDatasource';
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -88,35 +89,11 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props, State> {
     }));
   };
 
-  onNewExpression = () => {};
-
-  render() {
-    const { queries } = this.state;
-    const styles = getStyles(config.theme);
-
-    return (
-      <div className={styles.wrapper}>
-        <div className={styles.container}>
-          <h4>Queries</h4>
-          <div className={styles.refreshWrapper}>
-            <RefreshPicker
-              onIntervalChanged={this.onIntervalChanged}
-              onRefresh={this.onRunQueries}
-              intervals={['15s', '30s']}
-            />
-          </div>
-          <AlertingQueryRows
-            queryRunner={this.queryRunner}
-            queries={queries}
-            onQueriesChange={this.onQueriesChanged}
-            onAddQuery={this.onAddQuery}
-            onRunQueries={this.onRunQueries}
-          />
-          {this.renderAddQueryRow(styles)}
-        </div>
-      </div>
-    );
-  }
+  onNewExpression = () => {
+    this.setState((prevState) => ({
+      queries: addQuery(prevState.queries, expressionDatasource.newQuery()),
+    }));
+  };
 
   renderAddQueryRow(styles: ReturnType<typeof getStyles>) {
     return (
@@ -140,18 +117,37 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props, State> {
       </HorizontalGroup>
     );
   }
-}
 
+  render() {
+    const { queries } = this.state;
+    const styles = getStyles(config.theme);
+
+    return (
+      <div className={styles.container}>
+        <div className={styles.refreshWrapper}>
+          <RefreshPicker
+            onIntervalChanged={this.onIntervalChanged}
+            onRefresh={this.onRunQueries}
+            intervals={['15s', '30s']}
+          />
+        </div>
+        <AlertingQueryRows
+          queryRunner={this.queryRunner}
+          queries={queries}
+          onQueriesChange={this.onQueriesChanged}
+          onAddQuery={this.onAddQuery}
+          onRunQueries={this.onRunQueries}
+        />
+        {this.renderAddQueryRow(styles)}
+      </div>
+    );
+  }
+}
 export const AlertingQueryEditor = connector(AlertingQueryEditorUnconnected);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    wrapper: css`
-      padding-left: ${theme.spacing.md};
-      height: 100%;
-    `,
     container: css`
-      padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
       height: 100%;
     `,
