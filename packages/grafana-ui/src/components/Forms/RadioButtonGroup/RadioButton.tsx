@@ -23,11 +23,15 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
 
   const textColor = theme.v2.palette.text.secondary;
   const textColorHover = theme.v2.palette.text.primary;
+  const textColorActive = theme.v2.palette.primary.text;
   const borderColor = theme.v2.components.form.border;
   const borderColorHover = theme.v2.components.form.borderHover;
-  const bg = theme.v2.palette.layer1;
-  const bgActive = theme.v2.palette.action.selected;
+  const borderColorActive = theme.v2.components.form.border;
+  const bg = theme.colors.bodyBg;
+  const bgActive = theme.v2.palette.layer2;
   const border = `1px solid ${borderColor}`;
+  const borderActive = `1px solid ${borderColorActive}`;
+  const borderHover = `1px solid ${borderColorHover}`;
 
   return {
     radio: css`
@@ -36,10 +40,9 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       z-index: -1000;
 
       &:checked + label {
-        color: ${theme.v2.palette.text.primary};
-        font-weight: ${theme.v2.typography.fontWeightMedium};
+        border: ${borderActive};
+        color: ${textColorActive};
         background: ${bgActive};
-        box-shadow: inset 2px 2px 1px ${bg}, inset -2px -2px 1px ${bg};
         z-index: 3;
       }
 
@@ -63,9 +66,9 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       line-height: ${theme.v2.spacing.gridSize * height - 2}px;
       color: ${textColor};
       padding: ${theme.v2.spacing(0, padding)};
+      margin-left: -1px;
       border-radius: ${theme.border.radius.sm};
       border: ${border};
-      border-right: none;
       background: ${bg};
       cursor: pointer;
       z-index: 1;
@@ -73,13 +76,9 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       text-align: center;
       user-select: none;
 
-      &:last-of-type {
-        border-right: ${border};
-      }
-
       &:hover {
         color: ${textColorHover};
-        border-color: ${borderColorHover};
+        border: ${borderHover};
         z-index: 2;
       }
     `,

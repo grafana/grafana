@@ -126,8 +126,8 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   divider = `rgba(${this.whiteBase}, 0.10)`;
 
   border0 = this.layer1;
-  border1 = `rgba(${this.whiteBase}, 0.20)`;
-  border2 = `rgba(${this.whiteBase}, 0.25)`;
+  border1 = `rgba(${this.whiteBase}, 0.15)`;
+  border2 = `rgba(${this.whiteBase}, 0.20)`;
 
   action = {
     hover: `rgba(${this.whiteBase}, 0.08)`,
