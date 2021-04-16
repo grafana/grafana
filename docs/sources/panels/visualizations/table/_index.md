@@ -1,7 +1,7 @@
 +++
 title = "Table panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "table panel"]
-aliases = ["/docs/grafana/next/reference/table/", "/docs/grafana/next/features/panels/table_panel/"]
+aliases = ["/docs/grafana/latest/reference/table/", "/docs/grafana/latest/features/panels/table_panel/"]
 weight = 1000
 +++
 

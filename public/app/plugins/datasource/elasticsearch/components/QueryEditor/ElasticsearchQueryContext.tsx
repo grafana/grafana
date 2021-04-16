@@ -1,4 +1,4 @@
-import React, { createContext, FunctionComponent, useCallback, useContext } from 'react';
+import React, { Context, createContext, FunctionComponent, useCallback, useContext } from 'react';
 import { ElasticDatasource } from '../../datasource';
 import { combineReducers, useStatelessReducer, DispatchContext } from '../../hooks/useStatelessReducer';
 import { ElasticsearchQuery } from '../../types';
@@ -6,15 +6,18 @@ import { ElasticsearchQuery } from '../../types';
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 import { reducer as bucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 import { aliasPatternReducer, queryReducer, initQuery } from './state';
+import { TimeRange } from '@grafana/data';
 
 const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
 const QueryContext = createContext<ElasticsearchQuery | undefined>(undefined);
+const RangeContext = createContext<TimeRange | undefined>(undefined);
 
 interface Props {
   query: ElasticsearchQuery;
   onChange: (query: ElasticsearchQuery) => void;
   onRunQuery: () => void;
   datasource: ElasticDatasource;
+  range: TimeRange;
 }
 
 export const ElasticsearchProvider: FunctionComponent<Props> = ({
@@ -23,6 +26,7 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({
   onRunQuery,
   query,
   datasource,
+  range,
 }) => {
   const onStateChange = useCallback(
     (query: ElasticsearchQuery) => {
@@ -57,27 +61,28 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({
   return (
     <DatasourceContext.Provider value={datasource}>
       <QueryContext.Provider value={query}>
-        <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+        <RangeContext.Provider value={range}>
+          <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
+        </RangeContext.Provider>
       </QueryContext.Provider>
     </DatasourceContext.Provider>
   );
 };
 
-export const useQuery = (): ElasticsearchQuery => {
-  const query = useContext(QueryContext);
+interface GetHook {
+  <T>(context: Context<T>): () => NonNullable<T>;
+}
 
-  if (!query) {
+const getHook: GetHook = (c) => () => {
+  const contextValue = useContext(c);
+
+  if (!contextValue) {
     throw new Error('use ElasticsearchProvider first.');
   }
 
-  return query;
+  return contextValue as NonNullable<typeof contextValue>;
 };
 
-export const useDatasource = () => {
-  const datasource = useContext(DatasourceContext);
-  if (!datasource) {
-    throw new Error('use ElasticsearchProvider first.');
-  }
-
-  return datasource;
-};
+export const useQuery = getHook(QueryContext);
+export const useDatasource = getHook(DatasourceContext);
+export const useRange = getHook(RangeContext);

@@ -63,8 +63,12 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		return response.JSON(http.StatusInternalServerError, ruleResponse)
 	}
 
-	for _, groupId := range ruleGroupQuery.Result {
-		alertRuleQuery := ngmodels.ListRuleGroupAlertRulesQuery{OrgID: c.SignedInUser.OrgId, RuleGroup: groupId}
+	for _, r := range ruleGroupQuery.Result {
+		if len(r) < 3 {
+			continue
+		}
+		groupId, namespaceUID, namespace := r[0], r[1], r[2]
+		alertRuleQuery := ngmodels.ListRuleGroupAlertRulesQuery{OrgID: c.SignedInUser.OrgId, NamespaceUID: namespaceUID, RuleGroup: groupId}
 		if err := srv.store.GetRuleGroupAlertRules(&alertRuleQuery); err != nil {
 			ruleResponse.DiscoveryBase.Status = "error"
 			ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules for group %s: %s", groupId, err.Error())
@@ -73,8 +77,10 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 		}
 
 		newGroup := &apimodels.RuleGroup{
-			Name:           groupId,
-			File:           "", // This doesn't make sense in our architecture but would be a good use case for provisioned alerts.
+			Name: groupId,
+			// This doesn't make sense in our architecture
+			// so we use this field for passing to the frontend the namespace
+			File:           namespace,
 			LastEvaluation: time.Time{},
 			EvaluationTime: 0, // TODO: see if we are able to pass this along with evaluation results
 		}
@@ -93,8 +99,8 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Res
 			alertingRule := apimodels.AlertingRule{
 				State:       "inactive",
 				Name:        rule.Title,
-				Query:       "", // TODO: get this from parsing AlertRule.Data
-				Duration:    time.Duration(rule.For).Seconds(),
+				Query:       rule.DataToString(), // TODO: don't escape <>& etc
+				Duration:    rule.For.Seconds(),
 				Annotations: rule.Annotations,
 			}
 

@@ -11,6 +11,8 @@ var (
 	ErrAlertRuleNotFound = fmt.Errorf("could not find alert rule")
 	// ErrAlertRuleFailedGenerateUniqueUID is an error for failure to generate alert rule UID
 	ErrAlertRuleFailedGenerateUniqueUID = errors.New("failed to generate alert rule UID")
+	// ErrCannotEditNamespace is an error returned if the user does not have permissions to edit the namespace
+	ErrCannotEditNamespace = errors.New("user does not have permissions to edit the namespace")
 )
 
 type NoDataState string
@@ -52,8 +54,23 @@ type AlertRule struct {
 	RuleGroup       string
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
-	For             Duration
-	Annotations     map[string]string
+	// ideally this field should have been apimodels.ApiDuration
+	// but this is currently not possible because of circular dependencies
+	For         time.Duration
+	Annotations map[string]string
+	Labels      map[string]string
+}
+
+func (alertRule *AlertRule) DataToString() string {
+	response := "["
+	for i, part := range alertRule.Data {
+		response += string(part.Model)
+		if i < len(alertRule.Data)-1 {
+			response += ","
+		}
+	}
+	response += "]"
+	return response
 }
 
 // AlertRuleKey is the alert definition identifier
@@ -102,8 +119,11 @@ type AlertRuleVersion struct {
 	IntervalSeconds int64
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
-	For             Duration
-	Annotations     map[string]string
+	// ideally this field should have been apimodels.ApiDuration
+	// but this is currently not possible because of circular dependencies
+	For         time.Duration
+	Annotations map[string]string
+	Labels      map[string]string
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
@@ -144,7 +164,7 @@ type ListRuleGroupAlertRulesQuery struct {
 type ListOrgRuleGroupsQuery struct {
 	OrgID int64
 
-	Result []string
+	Result [][]string
 }
 
 // Condition contains backend expressions and queries and the RefID

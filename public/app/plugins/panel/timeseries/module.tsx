@@ -23,5 +23,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
         ],
       },
     });
+
     addLegendOptions(builder);
   });
