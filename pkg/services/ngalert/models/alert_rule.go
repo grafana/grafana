@@ -13,6 +13,8 @@ var (
 	ErrAlertRuleFailedGenerateUniqueUID = errors.New("failed to generate alert rule UID")
 	// ErrCannotEditNamespace is an error returned if the user does not have permissions to edit the namespace
 	ErrCannotEditNamespace = errors.New("user does not have permissions to edit the namespace")
+	// ErrRuleGroupNamespaceNotFound
+	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
 )
 
 type NoDataState string

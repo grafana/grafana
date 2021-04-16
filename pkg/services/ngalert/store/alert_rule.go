@@ -115,6 +115,15 @@ func (st DBstore) DeleteNamespaceAlertRules(orgID int64, namespaceUID string) er
 // DeleteRuleGroupAlertRules is a handler for deleting rule group alert rules.
 func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ruleGroup string) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		exist, err := sess.Exist(&ngmodels.AlertRule{OrgID: orgID, NamespaceUID: namespaceUID, RuleGroup: ruleGroup})
+		if err != nil {
+			return err
+		}
+
+		if !exist {
+			return ngmodels.ErrRuleGroupNamespaceNotFound
+		}
+
 		if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ? and namespace_uid = ? and rule_group = ?", orgID, namespaceUID, ruleGroup); err != nil {
 			return err
 		}
