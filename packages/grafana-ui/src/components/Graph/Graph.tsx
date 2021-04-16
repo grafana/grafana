@@ -1,7 +1,7 @@
 // Libraries
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
-import _, { uniqBy } from 'lodash';
+import { uniqBy } from 'lodash';
 // Types
 import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
 import { FlotPosition, FlotItem } from './types';
