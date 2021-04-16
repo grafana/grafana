@@ -3,43 +3,17 @@ package features
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/live/runstream"
+
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-//go:generate mockgen -destination=mock.go -package=features github.com/grafana/grafana/pkg/services/live/features StreamPacketSender,PresenceGetter,PluginContextGetter,StreamRunner
-
-type StreamPacketSender interface {
-	Send(channel string, packet *backend.StreamPacket) error
-}
-
-type PresenceGetter interface {
-	GetNumSubscribers(channel string) (int, error)
-}
+//go:generate mockgen -destination=plugin_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features PluginContextGetter
 
 type PluginContextGetter interface {
 	GetPluginContext(user *models.SignedInUser, pluginID string, datasourceUID string) (backend.PluginContext, bool, error)
-}
-
-type StreamRunner interface {
-	RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error
-}
-
-type streamSender struct {
-	channel      string
-	packetSender StreamPacketSender
-}
-
-func newStreamSender(channel string, packetSender StreamPacketSender) *streamSender {
-	return &streamSender{
-		channel:      channel,
-		packetSender: packetSender,
-	}
-}
-
-func (p *streamSender) Send(packet *backend.StreamPacket) error {
-	return p.packetSender.Send(p.channel, packet)
 }
 
 // PluginRunner can handle streaming operations for channels belonging to plugins.
@@ -48,17 +22,17 @@ type PluginRunner struct {
 	datasourceUID       string
 	pluginContextGetter PluginContextGetter
 	handler             backend.StreamHandler
-	streamManager       *StreamManager
+	runStreamManager    *runstream.Manager
 }
 
 // NewPluginRunner creates new PluginRunner.
-func NewPluginRunner(pluginID string, datasourceUID string, streamManager *StreamManager, pluginContextGetter PluginContextGetter, handler backend.StreamHandler) *PluginRunner {
+func NewPluginRunner(pluginID string, datasourceUID string, runStreamManager *runstream.Manager, pluginContextGetter PluginContextGetter, handler backend.StreamHandler) *PluginRunner {
 	return &PluginRunner{
 		pluginID:            pluginID,
 		datasourceUID:       datasourceUID,
 		pluginContextGetter: pluginContextGetter,
 		handler:             handler,
-		streamManager:       streamManager,
+		runStreamManager:    runStreamManager,
 	}
 }
 
@@ -68,7 +42,7 @@ func (m *PluginRunner) GetHandlerForPath(path string) (models.ChannelHandler, er
 		path:                path,
 		pluginID:            m.pluginID,
 		datasourceUID:       m.datasourceUID,
-		streamManager:       m.streamManager,
+		runStreamManager:    m.runStreamManager,
 		handler:             m.handler,
 		pluginContextGetter: m.pluginContextGetter,
 	}, nil
@@ -79,7 +53,7 @@ type PluginPathRunner struct {
 	path                string
 	pluginID            string
 	datasourceUID       string
-	streamManager       *StreamManager
+	runStreamManager    *runstream.Manager
 	handler             backend.StreamHandler
 	pluginContextGetter PluginContextGetter
 }
@@ -108,7 +82,7 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 	}
 
 	if resp.UseRunStream {
-		submitResult, err := r.streamManager.SubmitStream(ctx, e.Channel, r.path, pCtx, r.handler)
+		submitResult, err := r.runStreamManager.SubmitStream(ctx, e.Channel, r.path, pCtx, r.handler)
 		if err != nil {
 			logger.Error("Error submitting stream to manager", "error", err, "path", r.path)
 			return models.SubscribeReply{}, 0, centrifuge.ErrorInternal

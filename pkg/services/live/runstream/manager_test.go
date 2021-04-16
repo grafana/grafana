@@ -1,7 +1,8 @@
-package features
+package runstream
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -27,7 +28,7 @@ func TestStreamManager_Run(t *testing.T) {
 	mockPacketSender := NewMockStreamPacketSender(mockCtrl)
 	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
 
-	manager := NewStreamManager(mockPacketSender, mockPresenceGetter)
+	manager := NewManager(mockPacketSender, mockPresenceGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -47,7 +48,7 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 	mockPacketSender := NewMockStreamPacketSender(mockCtrl)
 	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
 
-	manager := NewStreamManager(mockPacketSender, mockPresenceGetter)
+	manager := NewManager(mockPacketSender, mockPresenceGetter)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -63,7 +64,7 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
 		gomock.Any(), gomock.Any(), gomock.Any(),
-	).Do(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
 		require.Equal(t, "test", req.Path)
 		close(startedCh)
 		err := sender.Send(&backend.StreamPacket{
@@ -97,7 +98,8 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 	mockPacketSender := NewMockStreamPacketSender(mockCtrl)
 	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
 
-	manager := NewStreamManager(
+	// Create manager with very fast num subscribers checks.
+	manager := NewManager(
 		mockPacketSender,
 		mockPresenceGetter,
 		WithCheckConfig(10*time.Millisecond, 3),
@@ -115,7 +117,7 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 	mockPresenceGetter.EXPECT().GetNumSubscribers("test").Return(0, nil).Times(3)
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
-	mockStreamRunner.EXPECT().RunStream(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	mockStreamRunner.EXPECT().RunStream(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
 		close(startedCh)
 		<-ctx.Done()
 		close(doneCh)
@@ -128,4 +130,68 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 	waitWithTimeout(t, startedCh, time.Second)
 	waitWithTimeout(t, doneCh, time.Second)
 	require.Len(t, manager.streams, 0)
+}
+
+func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockPacketSender := NewMockStreamPacketSender(mockCtrl)
+	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
+
+	manager := NewManager(mockPacketSender, mockPresenceGetter)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		_ = manager.Run(ctx)
+	}()
+
+	numErrors := 3
+	currentErrors := 0
+
+	mockStreamRunner := NewMockStreamRunner(mockCtrl)
+	mockStreamRunner.EXPECT().RunStream(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+		if currentErrors >= numErrors {
+			return nil
+		}
+		currentErrors++
+		return errors.New("boom")
+	}).Times(numErrors + 1)
+
+	result, err := manager.SubmitStream(context.Background(), "test", "test", backend.PluginContext{}, mockStreamRunner)
+	require.NoError(t, err)
+	require.False(t, result.StreamExists)
+
+	waitWithTimeout(t, result.CloseNotify, time.Second)
+}
+
+func TestStreamManager_SubmitStream_NilErrorStopsRunStream(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockPacketSender := NewMockStreamPacketSender(mockCtrl)
+	mockPresenceGetter := NewMockPresenceGetter(mockCtrl)
+
+	manager := NewManager(mockPacketSender, mockPresenceGetter)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		_ = manager.Run(ctx)
+	}()
+
+	mockStreamRunner := NewMockStreamRunner(mockCtrl)
+	mockStreamRunner.EXPECT().RunStream(
+		gomock.Any(), gomock.Any(), gomock.Any(),
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+		return nil
+	}).Times(1)
+
+	result, err := manager.SubmitStream(context.Background(), "test", "test", backend.PluginContext{}, mockStreamRunner)
+	require.NoError(t, err)
+	require.False(t, result.StreamExists)
+	waitWithTimeout(t, result.CloseNotify, time.Second)
 }
