@@ -19,7 +19,8 @@ interface Props {
 }
 
 export const AnnotationKeyInput: FC<Props> = ({ value, onChange, existingKeys, width, className }) => {
-  const [isCustom, setIsCustom] = useState(false);
+  const isCustomByDefault = !!value && !Object.keys(AnnotationOptions).includes(value); // custom by default if value does not match any of available options
+  const [isCustom, setIsCustom] = useState(isCustomByDefault);
 
   const annotationOptions = useMemo(
     (): SelectableValue[] => [

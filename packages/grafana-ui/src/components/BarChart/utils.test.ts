@@ -1,7 +1,7 @@
 import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { FieldConfig, FieldType, GrafanaTheme, MutableDataFrame, VizOrientation } from '@grafana/data';
-import { BarChartFieldConfig, BarChartOptions, BarStackingMode, BarValueVisibility } from './types';
-import { GraphGradientMode } from '../uPlot/config';
+import { BarChartFieldConfig, BarChartOptions, BarValueVisibility } from './types';
+import { GraphGradientMode, StackingMode } from '../uPlot/config';
 import { LegendDisplayMode } from '../VizLegend/models.gen';
 
 function mockDataFrame() {
@@ -73,7 +73,7 @@ describe('GraphNG utils', () => {
         placement: 'bottom',
         calcs: [],
       },
-      stacking: BarStackingMode.None,
+      stacking: StackingMode.None,
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
@@ -94,7 +94,7 @@ describe('GraphNG utils', () => {
       ).toMatchSnapshot();
     });
 
-    it.each([BarStackingMode.None, BarStackingMode.Percent, BarStackingMode.Standard])('stacking', (v) => {
+    it.each([StackingMode.None, StackingMode.Percent, StackingMode.Normal])('stacking', (v) => {
       expect(
         preparePlotConfigBuilder(frame!, { colors: { panelBg: '#000000' } } as GrafanaTheme, {
           ...config,

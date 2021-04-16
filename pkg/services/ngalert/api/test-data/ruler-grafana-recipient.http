@@ -32,6 +32,10 @@ GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rule
 GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}/group101
 
 ###
+// get group101 rules - empty namespace
+GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules//group101
+
+###
 // get namespace rules
 GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
 
@@ -244,3 +248,82 @@ GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rule
 ###
 // get namespace rules
 GET http://admin:admin@localhost:3000/api/ruler/{{grafanaRecipient}}/api/v1/rules/{{namespace1}}
+
+###
+// update rulegroup; Bad Request; not existing UID
+POST http://admin:admin@localhost:3000/api/ruler/grafana/api/v1/rules/{{namespace1}}
+Content-Type: application/json
+
+{
+  "name": "group42",
+  "interval": "20s",
+  "rules": [
+    {
+      "grafana_alert": {
+        "title": "prom query with SSE",
+        "condition": "condition",
+        "uid": "unknown",
+        "data": [
+          {
+            "refId": "query",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "model": {
+              "datasource": "gdev-prometheus",
+              "datasourceUid": "000000002",
+              "expr": "http_request_duration_microseconds_count",
+              "hide": false,
+              "interval": "",
+              "intervalMs": 1000,
+              "legendFormat": "",
+              "maxDataPoints": 100,
+              "refId": "query"
+            }
+          },
+          {
+            "refId": "reduced",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "model": {
+              "datasource": "__expr__",
+              "datasourceUid": "-100",
+              "expression": "query",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "reducer": "mean",
+              "refId": "reduced",
+              "type": "reduce"
+            }
+          },
+          {
+            "refId": "condition",
+            "queryType": "",
+            "relativeTimeRange": {
+              "from": 18000,
+              "to": 10800
+            },
+            "model": {
+              "datasource": "__expr__",
+              "datasourceUid": "-100",
+              "expression": "$reduced > 42",
+              "hide": false,
+              "intervalMs": 1000,
+              "maxDataPoints": 100,
+              "refId": "condition",
+              "type": "math"
+            }
+          }
+        ],
+        "no_data_state": "NoData",
+        "exec_err_state": "Alerting"
+      }
+    }
+  ]
+}

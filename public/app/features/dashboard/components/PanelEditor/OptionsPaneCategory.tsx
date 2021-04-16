@@ -114,15 +114,11 @@ const getStyles = (theme: GrafanaTheme) => {
       cursor: pointer;
       align-items: baseline;
       padding: ${theme.spacing.sm};
-      color: ${theme.v2.palette.text.secondary};
+      color: ${theme.v2.palette.text.primary};
       font-weight: ${theme.typography.weight.semibold};
 
       &:hover {
-        color: ${theme.v2.palette.text.primary};
-
-        .editor-options-group-toggle {
-          color: ${theme.colors.text};
-        }
+        background: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.03)};
       }
     `,
     headerExpanded: css`
