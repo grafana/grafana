@@ -1,7 +1,6 @@
 import React from 'react';
 import { Story } from '@storybook/react';
 import { allButtonVariants, Button, ButtonProps } from './Button';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { iconOptions } from '../../utils/storybook/knobs';
 import mdx from './Button.mdx';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
@@ -12,7 +11,6 @@ import { Card } from '../Card/Card';
 export default {
   title: 'Buttons/Button',
   component: Button,
-  decorators: [withCenteredStory, withHorizontallyCenteredStory],
   argTypes: {
     variant: { control: { type: 'select', options: ['primary', 'secondary', 'destructive', 'link'] } },
     size: { control: { type: 'select', options: ['sm', 'md', 'lg'] } },

@@ -11,7 +11,6 @@ import './jquery_extended';
 import './partials';
 import './components/jsontree/jsontree';
 import './components/code_editor/code_editor';
-import './utils/outline';
 import './components/colorpicker/spectrum_picker';
 import './services/search_srv';
 import './services/ng_react';

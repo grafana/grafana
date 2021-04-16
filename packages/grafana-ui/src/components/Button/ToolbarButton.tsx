@@ -8,6 +8,7 @@ import { Icon } from '../Icon/Icon';
 import { getPropertiesForVariant } from './Button';
 import { isString } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
+import { focusCss, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Icon name */
@@ -117,14 +118,20 @@ const getStyles = (theme: GrafanaTheme) => {
       border-radius: ${theme.v2.shape.borderRadius()};
       line-height: ${theme.v2.components.height.md * theme.v2.spacing.gridSize - 2}px;
       font-weight: ${theme.v2.typography.fontWeightMedium};
-      border: 1px solid ${theme.v2.palette.border1};      
+      border: 1px solid ${theme.v2.palette.border1};
       white-space: nowrap;
       transition: ${theme.v2.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
         duration: theme.v2.transitions.duration.short,
-      })},
+      })};
 
-      &:focus {
-        outline: none;
+      &:focus,
+      &:focus-visible {
+        ${focusCss(theme)}
+        z-index: 1;
+      }
+
+      &:focus:not(:focus-visible) {
+        ${getMouseFocusStyles(theme.v2)}
       }
 
       &:hover {
@@ -143,7 +150,7 @@ const getStyles = (theme: GrafanaTheme) => {
           background: ${theme.v2.palette.action.disabledBackground};
           box-shadow: none;
         }
-      }      
+      }
     `,
     default: css`
       color: ${theme.v2.palette.text.secondary};

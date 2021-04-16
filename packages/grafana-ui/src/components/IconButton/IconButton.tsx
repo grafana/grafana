@@ -7,7 +7,7 @@ import { useTheme } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { TooltipPlacement } from '../Tooltip/PopoverController';
-import { focusCss } from '../../themes/mixins';
+import { focusCss, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Name of the icon **/
@@ -69,6 +69,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
       align-items: center;
       justify-content: center;
       position: relative;
+      border-radius: ${theme.v2.shape.borderRadius()};
       z-index: 0;
       margin-right: ${theme.spacing.xs};
 
@@ -98,8 +99,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
         transition-property: transform, opacity;
       }
 
-      &:focus {
+      &:focus,
+      &:focus-visible {
         ${focusCss(theme)}
+      }
+
+      &:focus:not(:focus-visible) {
+        ${getMouseFocusStyles(theme.v2)}
       }
 
       &:hover {

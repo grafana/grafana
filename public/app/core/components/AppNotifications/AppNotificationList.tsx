@@ -11,6 +11,7 @@ import {
 } from '../../copy/appNotification';
 import { AppEvents } from '@grafana/data';
 import { connect, ConnectedProps } from 'react-redux';
+import { VerticalGroup } from '@grafana/ui';
 
 export interface OwnProps {}
 
@@ -45,15 +46,17 @@ export class AppNotificationListUnConnected extends PureComponent<Props> {
 
     return (
       <div className="page-alert-list">
-        {appNotifications.map((appNotification, index) => {
-          return (
-            <AppNotificationItem
-              key={`${appNotification.id}-${index}`}
-              appNotification={appNotification}
-              onClearNotification={(id) => this.onClearAppNotification(id)}
-            />
-          );
-        })}
+        <VerticalGroup>
+          {appNotifications.map((appNotification, index) => {
+            return (
+              <AppNotificationItem
+                key={`${appNotification.id}-${index}`}
+                appNotification={appNotification}
+                onClearNotification={(id) => this.onClearAppNotification(id)}
+              />
+            );
+          })}
+        </VerticalGroup>
       </div>
     );
   }
