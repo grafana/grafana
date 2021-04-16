@@ -278,15 +278,15 @@ func newQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	}
 	condition.Evaluator = evaluator
 
-	timeEvaluatorJson := model.Get("timeEvaluator")
-	timeEvaluator, err := NewAlertTimeEvaluator(timeEvaluatorJson)
+	timeEvaluatorJSON := model.Get("timeEvaluator")
+	timeEvaluator, err := NewAlertTimeEvaluator(timeEvaluatorJSON)
 	if err != nil {
 		return nil, fmt.Errorf("time evaluator error in condition %v: %v", index, err)
 	}
 	condition.TimeEvaluator = timeEvaluator
 
-	timeEvaluatorParentJson := model.Get("timeEvaluatorParent")
-	timeEvaluatorParent, err := NewAlertTimeEvaluator(timeEvaluatorParentJson)
+	timeEvaluatorParentJSON := model.Get("timeEvaluatorParent")
+	timeEvaluatorParent, err := NewAlertTimeEvaluator(timeEvaluatorParentJSON)
 	if err != nil {
 		return nil, fmt.Errorf("parent time evaluator error: %v", err)
 	}
