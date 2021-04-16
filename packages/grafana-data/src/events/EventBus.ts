@@ -91,27 +91,32 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
   }
 }
 
+/**
+ * @alpha
+ *
+ * Wraps EventBus and adds a source path to help with identifying if a subscriber should react to the event or not.
+ */
 export class EventBusWithSource implements EventBus {
-  private _source: string;
+  private _sourceFragment: string;
   get source(): string[] {
     if (this.eventBus instanceof EventBusWithSource) {
-      return this.eventBus.source.concat([this._source]);
+      return this.eventBus.source.concat([this._sourceFragment]);
     }
-    return [this._source];
+    return [this._sourceFragment];
   }
 
   eventBus: EventBus;
 
-  constructor(eventBus: EventBus, source: string) {
+  constructor(eventBus: EventBus, sourceFragment: string) {
     this.eventBus = eventBus;
-    this._source = source;
+    this._sourceFragment = sourceFragment;
   }
 
   publish<T extends BusEvent>(event: T): void {
     const payload = event.payload ?? { source: [] };
     var decoratedEvent = {
       ...event,
-      ...{ payload: { ...payload, ...{ source: [...[this._source], ...(payload.source ?? [])] } } },
+      ...{ payload: { ...payload, ...{ source: [...[this._sourceFragment], ...(payload.source ?? [])] } } },
     };
     this.eventBus.publish(decoratedEvent);
   }
@@ -131,18 +136,17 @@ export class EventBusWithSource implements EventBus {
   /**
    * Appends a source fragment to the source
    *
-   * @alpha
-   * @param source source to append to EventBusWithSource
-   * @returns a new instance of EventBusWithSource with the new source appended
+   * @param sourceFragment source to append to the eventbus
+   * @returns a new instance of EventBusWithSource with the new source fragment appended
    */
-  appendSource(source: string) {
-    return new EventBusWithSource(this, source);
+  appendSource(sourceFragment: string) {
+    return new EventBusWithSource(this, sourceFragment);
   }
 
   /**
    * Checks if the this eventbus is the parent of the eventbus that published the event
    *
-   * @param source of the payload to be checked
+   * @param source source of the payload to be checked against the source of the eventbus
    */
   isSourceOf(source: string[]) {
     for (let i in this.source) {
