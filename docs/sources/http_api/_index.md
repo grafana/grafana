@@ -2,7 +2,7 @@
 title = "HTTP API"
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "overview"]
-aliases = ["/docs/grafana/next/overview"]
+aliases = ["/docs/grafana/latest/overview"]
 weight = 170
 +++
 
@@ -38,6 +38,7 @@ dashboards, creating users and updating data sources.
 
 - [Data Source Permissions API]({{< relref "datasource_permissions.md" >}})
 - [External Group Sync API]({{< relref "external_group_sync.md" >}})
+- [License API]{{< relref "licensing.md" >}})
 - [Reporting API]({{< relref "reporting.md" >}})
 
 
