@@ -38,11 +38,15 @@ If you are using the cloud account, then the wizards will guide you through the 
 You can have more than one InfluxDB data source defined in Grafana.
 
 1. Follow the general instructions to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}).
-1. 
+1. Refer to [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}}) for information about specific data source fields.
 
+### InfluxDB guides
 
+InfluxDB publishes guidance for connecting different versions of their product to Grafana.
 
-Refer to [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}}) for information about specific data source fields.
+- **InfluxDB OSS or Enterprise 1.8+.** To turn on Flux, refer to [Configure InfluxDB](https://docs.influxdata.com/influxdb/v1.8/administration/config/#flux-enabled-false.). Select your InfluxDB version in the upper right corner.
+- **InfluxDB OSS or Enterprise 2.x.** Refer to [Use Grafana with InfluxDB](https://docs.influxdata.com/influxdb/v2.0/tools/grafana/). Select your InfluxDB version in the upper right corner.
+-  **InfluxDB Cloud.** Refer to [Use Grafana with InfluxDB Cloud](https://docs.influxdata.com/influxdb/cloud/tools/grafana/).
 
 ### Important tips
 
@@ -54,8 +58,28 @@ Refer to [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >
 
 InfluxQL query
 
-Flux query
+In the query editor, click **select measurement**.
 
+INSERT SCREENSHOT
+
+Grafana displays a list of possible series. Click one to select it, and Grafana graphs any available data. If there is no data to display, then try another selection or check your data source.
+
+### Flux query
+
+Create a simple Flux query.
+
+1. [Add a panel](../panels/add-a-panel.md).
+2. In the query editor, select your InfluxDB-Flux data source. For more information, refer to [Queries](../panels/queries.md).
+3. Select the **Table** visualization.
+4. In the query editor text field, enter `buckets()` and then click outside of the query editor.
+
+This generic query returns a list of buckets.
+
+ADD SCREENSHOT
+
+You can also create Flux queries in the InfluxDB Explore view.
+
+ADD INSTRUCTIONS
 
 ## Step 6. Check InfluxDB metrics in Grafana Explore view
 
