@@ -8,7 +8,9 @@ describe('createTheme', () => {
         primary: {
           main: 'rgb(240,0,0)',
         },
-        layer0: '#123',
+        background: {
+          canvas: '#123',
+        },
       },
     });
 
