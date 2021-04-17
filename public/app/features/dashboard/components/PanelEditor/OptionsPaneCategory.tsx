@@ -90,7 +90,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 const getStyles = (theme: GrafanaTheme) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.v2.palette.divider};
+      border-bottom: 1px solid ${theme.v2.palette.border.weak};
       &:last-child {
         border-bottom: none;
       }
@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaTheme) => {
       font-weight: ${theme.typography.weight.semibold};
 
       &:hover {
-        background: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.03)};
+        background: ${theme.v2.palette.emphasize(theme.v2.palette.background.primary, 0.03)};
       }
     `,
     headerExpanded: css`
