@@ -8,18 +8,18 @@ import { IconName } from '../../types';
 import { stylesFactory, useTheme } from '../../themes';
 import { Counter } from './Counter';
 
-export interface TabProps extends HTMLProps<HTMLLIElement> {
+export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   label: string;
   active?: boolean;
   /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
   href?: string;
   icon?: IconName;
-  onChangeTab?: (event?: React.MouseEvent<HTMLLIElement>) => void;
+  onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
 }
 
-export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
+export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
   ({ label, active, icon, onChangeTab, counter, className, href, ...otherProps }, ref) => {
     const theme = useTheme();
     const tabsStyles = getTabStyles(theme);
@@ -31,27 +31,20 @@ export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
       </>
     );
 
-    const itemClass = cx(
-      tabsStyles.tabItem,
-      active ? tabsStyles.activeStyle : tabsStyles.notActive,
-      !href && tabsStyles.padding
-    );
+    const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
     return (
-      <li
-        {...otherProps}
-        className={itemClass}
-        onClick={onChangeTab}
-        aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
-        ref={ref}
-      >
-        {href ? (
-          <a href={href} className={tabsStyles.padding}>
-            {content()}
-          </a>
-        ) : (
-          <>{content()}</>
-        )}
+      <li className={tabsStyles.item}>
+        <a
+          href={href}
+          className={linkClass}
+          {...otherProps}
+          onClick={onChangeTab}
+          aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
+          ref={ref}
+        >
+          {content()}
+        </a>
       </li>
     );
   }
@@ -61,12 +54,14 @@ Tab.displayName = 'Tab';
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    tabItem: css`
+    item: css`
       list-style: none;
       position: relative;
-      display: block;
+      display: flex;
+    `,
+    link: css`
       color: ${theme.v2.palette.text.secondary};
-      cursor: pointer;
+      padding: ${theme.v2.spacing(1.5, 2, 1)};
 
       svg {
         margin-right: ${theme.v2.spacing(1)};
@@ -96,9 +91,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
           background: ${theme.v2.palette.action.hover};
         }
       }
-    `,
-    padding: css`
-      padding: ${theme.v2.spacing(1.5, 2, 1)};
     `,
     activeStyle: css`
       label: activeTabStyle;
