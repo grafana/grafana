@@ -1,4 +1,5 @@
-import { GrafanaTheme } from '@grafana/data';
+import { CSSObject } from '@emotion/css';
+import { GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 
 export function cardChrome(theme: GrafanaTheme): string {
@@ -44,3 +45,19 @@ export const focusCss = (theme: GrafanaTheme) => `
   box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline};
   transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
 `;
+
+export function getMouseFocusStyles(theme: GrafanaThemeV2): CSSObject {
+  return {
+    outline: 'none',
+    boxShadow: `none`,
+  };
+}
+
+export function getFocusStyles(theme: GrafanaThemeV2): CSSObject {
+  return {
+    outline: '2px dotted transparent',
+    outlineOffset: '2px',
+    boxShadow: `0 0 0 2px ${theme.palette.background.canvas}, 0 0 0px 4px ${theme.palette.primary.main}`,
+    transition: `all 0.2s cubic-bezier(0.19, 1, 0.22, 1)`,
+  };
+}

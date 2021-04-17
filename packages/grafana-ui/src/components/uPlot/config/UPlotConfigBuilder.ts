@@ -15,6 +15,7 @@ export class UPlotConfigBuilder {
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];
   private cursor: Cursor | undefined;
+  private isStacking = false;
   // uPlot types don't export the Select interface prior to 1.6.4
   private select: Partial<BBox> | undefined;
   private hasLeftAxis = false;
@@ -78,6 +79,9 @@ export class UPlotConfigBuilder {
     this.select = select;
   }
 
+  setStacking(enabled = true) {
+    this.isStacking = enabled;
+  }
   addSeries(props: SeriesProps) {
     this.series.push(new UPlotSeriesBuilder(props));
   }
@@ -118,16 +122,22 @@ export class UPlotConfigBuilder {
 
     config.tzDate = this.tzDate;
 
-    // When bands exist, only keep fill when defined
-    if (this.bands?.length) {
+    if (this.isStacking) {
+      // Let uPlot handle bands and fills
       config.bands = this.bands;
-      const keepFill = new Set<number>();
-      for (const b of config.bands) {
-        keepFill.add(b.series[0]);
-      }
-      for (let i = 1; i < config.series.length; i++) {
-        if (!keepFill.has(i)) {
-          config.series[i].fill = undefined;
+    } else {
+      // When fillBelowTo option enabled, handle series bands fill manually
+      if (this.bands?.length) {
+        config.bands = this.bands;
+        const keepFill = new Set<number>();
+        for (const b of config.bands) {
+          keepFill.add(b.series[0]);
+        }
+
+        for (let i = 1; i < config.series.length; i++) {
+          if (!keepFill.has(i)) {
+            config.series[i].fill = undefined;
+          }
         }
       }
     }

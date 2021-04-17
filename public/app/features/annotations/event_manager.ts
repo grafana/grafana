@@ -1,11 +1,11 @@
 import _ from 'lodash';
 import tinycolor from 'tinycolor2';
 import {
-  OK_COLOR,
   ALERTING_COLOR,
-  NO_DATA_COLOR,
-  PENDING_COLOR,
   DEFAULT_ANNOTATION_COLOR,
+  NO_DATA_COLOR,
+  OK_COLOR,
+  PENDING_COLOR,
   REGION_FILL_ALPHA,
 } from '@grafana/ui';
 import { MetricsPanelCtrl } from '../panel/metrics_panel_ctrl';
@@ -13,8 +13,8 @@ import { MetricsPanelCtrl } from '../panel/metrics_panel_ctrl';
 import { AnnotationEvent } from '@grafana/data';
 
 export class EventManager {
-  event: AnnotationEvent | null;
-  editorOpen: boolean;
+  event: AnnotationEvent | null = null;
+  editorOpen = false;
 
   constructor(private panelCtrl: MetricsPanelCtrl) {}
 

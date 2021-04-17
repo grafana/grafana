@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import sortBy from 'lodash/sortBy';
-import { PanelProps, GrafanaTheme, dateMath, dateTime } from '@grafana/data';
+import { dateMath, dateTime, GrafanaTheme, PanelProps } from '@grafana/data';
 import { Card, CustomScrollbar, Icon, stylesFactory, useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
@@ -21,7 +21,7 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
     const params: any = {
       state: getStateFilter(props.options.stateFilter),
     };
-    const panel = getDashboardSrv().getCurrent().getPanelById(props.id)!;
+    const panel = getDashboardSrv().getCurrent()?.getPanelById(props.id)!;
 
     if (props.options.alertName) {
       params.query = getTemplateSrv().replace(props.options.alertName, panel.scopedVars);
@@ -36,7 +36,7 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
     }
 
     if (props.options.dashboardAlerts) {
-      params.dashboardId = getDashboardSrv().getCurrent().id;
+      params.dashboardId = getDashboardSrv().getCurrent()?.id;
     }
 
     if (props.options.tags) {
@@ -93,11 +93,11 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
     const currentDashboard = getDashboardSrv().getCurrent();
 
     if (props.options.dashboardAlerts) {
-      params.dashboardId = currentDashboard.id;
+      params.dashboardId = currentDashboard?.id;
     }
 
-    params.from = dateMath.parse(currentDashboard.time.from)!.unix() * 1000;
-    params.to = dateMath.parse(currentDashboard.time.to)!.unix() * 1000;
+    params.from = dateMath.parse(currentDashboard?.time.from)!.unix() * 1000;
+    params.to = dateMath.parse(currentDashboard?.time.to)!.unix() * 1000;
 
     const data: AnnotationItemDTO[] = await getBackendSrv().get(
       '/api/annotations',
@@ -109,7 +109,7 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
       data.map((al) => {
         return {
           ...al,
-          time: currentDashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss'),
+          time: currentDashboard?.formatDate(al.time, 'MMM D, YYYY HH:mm:ss'),
           stateModel: alertDef.getStateDisplayModel(al.newState),
           info: alertDef.getAlertAnnotationInfo(al),
         };
