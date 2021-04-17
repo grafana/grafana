@@ -33,7 +33,7 @@ import * as grafanaData from '@grafana/data';
 import * as grafanaUIraw from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
 
-import { getPanelPluginNotFound, getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
+import { getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
 import { GenericDataSourcePlugin } from '../datasources/settings/PluginSettings';
 
 // rxjs
@@ -67,6 +67,29 @@ interface ImportMapModule {
   key: string;
   path: string;
 }
+
+// grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
+
+// grafanaRuntime.SystemJS.config({
+//   baseURL: 'public',
+//   defaultExtension: 'js',
+//   packages: {
+//     plugins: {
+//       defaultExtension: 'js',
+//     },
+//   },
+//   map: {
+//     text: 'vendor/plugin-text/text.js',
+//     css: 'vendor/plugin-css/css.js',
+//   },
+//   meta: {
+//     '/*': {
+//       esModule: true,
+//       authorization: true,
+//       loader: 'plugin-loader',
+//     },
+//   },
+// });
 
 const appendImportMap = (modules: ImportMapModule[], reprocessImportMaps: boolean): Promise<HTMLScriptElement> => {
   const script = document.createElement('script');
@@ -285,7 +308,6 @@ const panelCache: PanelCache = {};
 
 export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> {
   const loaded = panelCache[id];
-
   if (loaded) {
     return loaded;
   }
@@ -293,7 +315,7 @@ export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> 
   const meta = config.panels[id];
 
   if (!meta) {
-    return Promise.resolve(getPanelPluginNotFound(id));
+    throw new Error(`Plugin ${id} not found`);
   }
 
   panelCache[id] = importPluginModule(meta.module)

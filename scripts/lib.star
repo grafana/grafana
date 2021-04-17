@@ -1,4 +1,4 @@
-grabpl_version = '0.5.43'
+grabpl_version = '0.5.48'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -509,7 +509,7 @@ def codespell_step():
         ],
         'commands': [
             # Important: all words have to be in lowercase, and separated by "\n".
-            'echo -e "unknwon\nreferer\nerrorstring\neror\niam" > words_to_ignore.txt',
+            'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
             'codespell -I words_to_ignore.txt docs/',
         ],
     }
@@ -526,18 +526,6 @@ def shellcheck_step():
         ],
     }
 
-def dashboard_schemas_check():
-    return {
-        'name': 'check-dashboard-schemas',
-        'image': build_image,
-        'depends_on': [
-            'initialize',
-        ],
-        'commands': [
-            'cue export --out openapi -o - ./dashboard-schemas/...',
-        ],
-    }
-
 def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
     deps = [
         'build-backend',
@@ -547,7 +535,6 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
         'test-frontend',
         'codespell',
         'shellcheck',
-        'check-dashboard-schemas',
     ]
     if include_enterprise2:
         sfx = '-enterprise2'
@@ -799,6 +786,40 @@ def mysql_integration_tests_step():
         ],
     }
 
+def redis_integration_tests_step():
+    return {
+        'name': 'redis-integration-tests',
+        'image': build_image,
+        'depends_on': [
+            'test-backend',
+            'test-frontend',
+        ],
+        'environment': {
+            'REDIS_URL': 'redis://redis:6379/0',
+        },
+        'commands': [
+            './bin/dockerize -wait tcp://redis:6379/0 -timeout 120s',
+            './bin/grabpl integration-tests',
+        ],
+    }
+
+def memcached_integration_tests_step():
+    return {
+        'name': 'memcached-integration-tests',
+        'image': build_image,
+        'depends_on': [
+            'test-backend',
+            'test-frontend',
+        ],
+        'environment': {
+            'MEMCACHED_HOSTS': 'memcached:11211',
+        },
+        'commands': [
+            './bin/dockerize -wait tcp://memcached:11211 -timeout 120s',
+            './bin/grabpl integration-tests',
+        ],
+    }
+
 def release_canary_npm_packages_step(edition):
     if edition in ('enterprise', 'enterprise2'):
         return None
@@ -856,15 +877,21 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
     else:
         cmd = './bin/grabpl upload-packages --edition {}{}'.format(edition, packages_bucket)
 
+    dependencies = [
+        'package' + enterprise2_sfx(edition),
+        'end-to-end-tests' + enterprise2_sfx(edition),
+        'mysql-integration-tests',
+        'postgres-integration-tests',
+    ]
+
+    if edition in ('enterprise', 'enterprise2'):
+      dependencies.append('redis-integration-tests')
+      dependencies.append('memcached-integration-tests')
+
     return {
         'name': 'upload-packages' + enterprise2_sfx(edition),
         'image': publish_image,
-        'depends_on': [
-            'package' + enterprise2_sfx(edition),
-            'end-to-end-tests' + enterprise2_sfx(edition),
-            'mysql-integration-tests',
-            'postgres-integration-tests',
-        ],
+        'depends_on': dependencies,
         'environment': {
             'GCP_GRAFANA_UPLOAD_KEY': {
                 'from_secret': 'gcp_key',
@@ -1047,8 +1074,8 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
 
     return steps
 
-def integration_test_services():
-   return [
+def integration_test_services(edition):
+    services = [
         {
             'name': 'postgres',
             'image': 'postgres:12.3-alpine',
@@ -1069,3 +1096,16 @@ def integration_test_services():
             },
         },
     ]
+
+    if edition in ('enterprise', 'enterprise2'):
+        services.extend([{
+            'name': 'redis',
+            'image': 'redis:6.2.1-alpine',
+            'environment': {},
+        }, {
+            'name': 'memcached',
+            'image': 'memcached:1.6.9-alpine',
+            'environment': {},
+        }])
+
+    return services

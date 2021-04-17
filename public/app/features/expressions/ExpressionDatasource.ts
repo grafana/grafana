@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
-import { ExpressionQuery, GELQueryType } from './types';
+import { ExpressionQuery, ExpressionQueryType } from './types';
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { DataSourceWithBackend } from '@grafana/runtime';
 
@@ -18,7 +18,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
   newQuery(): ExpressionQuery {
     return {
       refId: '--', // Replaced with query
-      type: GELQueryType.math,
+      type: ExpressionQueryType.math,
       datasource: ExpressionDatasourceID,
     };
   }

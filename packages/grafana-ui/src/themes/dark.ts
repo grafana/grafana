@@ -1,5 +1,7 @@
 import defaultTheme, { commonColorsPalette } from './default';
-import { GrafanaThemeType, GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeType, GrafanaTheme, createTheme } from '@grafana/data';
+
+const v2 = createTheme({ palette: { mode: 'dark' } });
 
 const basicColors = {
   ...commonColorsPalette,
@@ -35,34 +37,34 @@ const basicColors = {
 };
 
 const backgrounds = {
-  bg1: basicColors.gray10,
-  bg2: basicColors.gray15,
-  bg3: basicColors.gray25,
-  dashboardBg: basicColors.gray05,
-  bgBlue1: basicColors.blue80,
-  bgBlue2: basicColors.blue77,
+  bg1: v2.palette.background.primary,
+  bg2: v2.palette.background.secondary,
+  bg3: v2.palette.action.hover,
+  dashboardBg: v2.palette.background.canvas,
+  bgBlue1: v2.palette.primary.main,
+  bgBlue2: v2.palette.primary.shade,
 };
 
 const borders = {
-  border1: basicColors.gray15,
-  border2: basicColors.gray25,
-  border3: basicColors.gray33,
+  border1: v2.palette.border.weak,
+  border2: v2.palette.border.medium,
+  border3: v2.palette.border.strong,
 };
 
 const textColors = {
-  textStrong: basicColors.gray98,
-  textHeading: basicColors.gray4,
-  text: basicColors.gray85,
-  textSemiWeak: basicColors.gray70,
-  textWeak: basicColors.gray60,
-  textFaint: basicColors.gray33,
-  textBlue: basicColors.blue85,
+  textStrong: v2.palette.text.maxContrast,
+  textHeading: v2.palette.text.primary,
+  text: v2.palette.text.primary,
+  textSemiWeak: v2.palette.text.secondary,
+  textWeak: v2.palette.text.secondary,
+  textFaint: v2.palette.text.disabled,
+  textBlue: v2.palette.primary.text,
 };
 
 const form = {
   // Next-gen forms functional colors
-  formLabel: textColors.textSemiWeak,
-  formDescription: basicColors.gray60,
+  formLabel: v2.palette.text.primary,
+  formDescription: v2.palette.text.secondary,
   formInputBg: basicColors.gray05,
   formInputBgDisabled: basicColors.gray10,
   formInputBorder: borders.border2,
@@ -112,11 +114,11 @@ const darkTheme: GrafanaTheme = {
     ...form,
     ...textColors,
 
-    bodyBg: backgrounds.bg1,
-    panelBg: backgrounds.bg1,
-    pageHeaderBg: backgrounds.bg2,
-    pageHeaderBorder: borders.border1,
-    panelBorder: borders.border1,
+    bodyBg: v2.palette.background.canvas,
+    panelBg: v2.components.panel.background,
+    panelBorder: v2.components.panel.border,
+    pageHeaderBg: v2.palette.background.canvas,
+    pageHeaderBorder: v2.palette.background.canvas,
 
     dropdownBg: form.formInputBg,
     dropdownShadow: basicColors.black,
@@ -130,6 +132,7 @@ const darkTheme: GrafanaTheme = {
   shadows: {
     listItem: 'none',
   },
+  v2: v2,
 };
 
 export default darkTheme;

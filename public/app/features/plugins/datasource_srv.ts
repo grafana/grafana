@@ -21,6 +21,7 @@ export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {};
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
+  private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
   private defaultName = '';
 
   /** @ngInject */
@@ -38,6 +39,7 @@ export class DatasourceSrv implements DataSourceService {
 
     for (const dsSettings of Object.values(settingsMapByName)) {
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
+      this.settingsMapById[dsSettings.id] = dsSettings;
     }
   }
 
@@ -97,7 +99,7 @@ export class DatasourceSrv implements DataSourceService {
     // Interpolation here is to support template variable in data source selection
     nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
-    if (nameOrUid === 'default') {
+    if (nameOrUid === 'default' && this.defaultName !== 'default') {
       return this.get(this.defaultName);
     }
 
@@ -115,9 +117,12 @@ export class DatasourceSrv implements DataSourceService {
       return Promise.resolve(expressionDatasource);
     }
 
-    const dsConfig = this.settingsMapByName[name];
+    let dsConfig = this.settingsMapByName[name];
     if (!dsConfig) {
-      return Promise.reject({ message: `Datasource named ${name} was not found` });
+      dsConfig = this.settingsMapById[name];
+      if (!dsConfig) {
+        return Promise.reject({ message: `Datasource named ${name} was not found` });
+      }
     }
 
     try {
@@ -159,13 +164,25 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.metrics && !x.meta.metrics) {
         return false;
       }
+      if (filters.alerting && !x.meta.alerting) {
+        return false;
+      }
       if (filters.tracing && !x.meta.tracing) {
         return false;
       }
       if (filters.annotations && !x.meta.annotations) {
         return false;
       }
+      if (filters.alerting && !x.meta.alerting) {
+        return false;
+      }
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
+        return false;
+      }
+      if (filters.filter && !filters.filter(x)) {
+        return false;
+      }
+      if (filters.type && (Array.isArray(filters.type) ? !filters.type.includes(x.type) : filters.type !== x.type)) {
         return false;
       }
       if (
@@ -173,7 +190,8 @@ export class DatasourceSrv implements DataSourceService {
         x.meta.metrics !== true &&
         x.meta.annotations !== true &&
         x.meta.tracing !== true &&
-        x.meta.logs !== true
+        x.meta.logs !== true &&
+        x.meta.alerting !== true
       ) {
         return false;
       }
@@ -207,7 +225,7 @@ export class DatasourceSrv implements DataSourceService {
       return 0;
     });
 
-    if (!filters.pluginId) {
+    if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
         base.push(this.getInstanceSettings('-- Mixed --')!);
       }
