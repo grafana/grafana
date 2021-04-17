@@ -33,6 +33,7 @@ export class QueryPart {
 
     part.params = part.params || _.clone(this.def.defaultParams);
     this.params = part.params;
+    this.text = '';
     this.updateText();
   }
 

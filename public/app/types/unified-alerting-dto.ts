@@ -69,7 +69,6 @@ export interface PromResponse<T> {
 export type PromRulesResponse = PromResponse<{ groups: PromRuleGroupDTO[] }>;
 
 // Ruler rule DTOs
-
 interface RulerRuleBaseDTO {
   expr: string;
   labels?: Labels;
@@ -85,12 +84,67 @@ export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
   annotations?: Annotations;
 }
 
-export type RulerRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO;
+export enum GrafanaAlertState {
+  Alerting = 'Alerting',
+  NoData = 'NoData',
+  KeepLastState = 'KeepLastState',
+  OK = 'OK',
+}
 
-export type RulerRuleGroupDTO = {
+export interface GrafanaQueryModel {
+  datasource: string;
+  datasourceUid: string;
+
+  refId: string;
+  [key: string]: any;
+}
+
+export interface GrafanaQuery {
+  refId: string;
+  queryType: string;
+  relativeTimeRange: {
+    from: number;
+    to: number;
+  };
+  model: GrafanaQueryModel;
+}
+
+export interface PostableGrafanaRuleDefinition {
+  uid?: string;
+  title: string;
+  condition: string;
+  for: number; //@TODO Sofia will update to accept string
+  no_data_state: GrafanaAlertState;
+  exec_err_state: GrafanaAlertState;
+  data: GrafanaQuery[];
+  annotations: Annotations;
+  labels: Labels;
+}
+export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
+  uid: string;
+  namespace_uid: string;
+}
+
+export interface RulerGrafanaRuleDTO {
+  grafana_alert: GrafanaRuleDefinition;
+  // labels?: Labels; @TODO to be discussed
+  // annotations?: Annotations;
+}
+
+export interface PostableRuleGrafanaRuleDTO {
+  grafana_alert: PostableGrafanaRuleDefinition;
+}
+
+export type RulerRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | RulerGrafanaRuleDTO;
+
+export type PostableRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | PostableRuleGrafanaRuleDTO;
+
+export type RulerRuleGroupDTO<R = RulerRuleDTO> = {
   name: string;
   interval?: string;
-  rules: RulerRuleDTO[];
+  rules: R[];
 };
+
+export type PostableRulerRuleGroupDTO = RulerRuleGroupDTO<PostableRuleDTO>;
 
 export type RulerRulesConfigDTO = { [namespace: string]: RulerRuleGroupDTO[] };

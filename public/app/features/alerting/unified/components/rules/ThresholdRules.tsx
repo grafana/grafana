@@ -27,12 +27,7 @@ export const ThresholdRules: FC<Props> = ({ namespaces }) => {
 
       {namespaces?.map((namespace) =>
         namespace.groups.map((group) => (
-          <RulesGroup
-            group={group}
-            key={`${namespace.name}-${group.name}`}
-            namespace={namespace.name}
-            rulesSource={GRAFANA_RULES_SOURCE_NAME}
-          />
+          <RulesGroup group={group} key={`${namespace.name}-${group.name}`} namespace={namespace} />
         ))
       )}
       {namespaces?.length === 0 && <p>No rules found.</p>}

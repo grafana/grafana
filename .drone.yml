@@ -39,7 +39,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -48,13 +48,6 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
   depends_on:
   - initialize
 
@@ -114,7 +107,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
 
 - name: package
   image: grafana/build-container:1.4.1
@@ -293,7 +285,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -302,13 +294,6 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
   depends_on:
   - initialize
 
@@ -382,7 +367,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
 
 - name: package
   image: grafana/build-container:1.4.1
@@ -749,7 +733,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -758,13 +742,6 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
   depends_on:
   - initialize
 
@@ -830,7 +807,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
 
 - name: package
   image: grafana/build-container:1.4.1
@@ -1125,7 +1101,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -1134,13 +1110,6 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
   depends_on:
   - initialize
 
@@ -1237,7 +1206,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
   - build-backend-enterprise2
   - test-backend-enterprise2
 
@@ -1700,7 +1668,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -1709,13 +1677,6 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
   depends_on:
   - initialize
 
@@ -1781,7 +1742,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
 
 - name: package
   image: grafana/build-container:1.4.1
@@ -2065,7 +2025,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -2074,13 +2034,6 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
   depends_on:
   - initialize
 
@@ -2177,7 +2130,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
   - build-backend-enterprise2
   - test-backend-enterprise2
 
@@ -2633,7 +2585,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -2642,13 +2594,6 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
   depends_on:
   - initialize
 
@@ -2711,7 +2656,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
 
 - name: package
   image: grafana/build-container:1.4.1
@@ -2969,7 +2913,7 @@ steps:
 - name: codespell
   image: grafana/build-container:1.4.1
   commands:
-  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\" > words_to_ignore.txt"
+  - "echo -e \"unknwon\nreferer\nerrorstring\neror\niam\nwan\" > words_to_ignore.txt"
   - codespell -I words_to_ignore.txt docs/
   depends_on:
   - initialize
@@ -2978,13 +2922,6 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl shellcheck
-  depends_on:
-  - initialize
-
-- name: check-dashboard-schemas
-  image: grafana/build-container:1.4.1
-  commands:
-  - cue export --out openapi -o - ./dashboard-schemas/...
   depends_on:
   - initialize
 
@@ -3075,7 +3012,6 @@ steps:
   - test-frontend
   - codespell
   - shellcheck
-  - check-dashboard-schemas
   - build-backend-enterprise2
   - test-backend-enterprise2
 

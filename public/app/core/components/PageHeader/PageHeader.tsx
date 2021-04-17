@@ -1,12 +1,11 @@
 import React, { FC } from 'react';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { Tab, TabsBar, Icon, IconName, useStyles } from '@grafana/ui';
 import { NavModel, NavModelItem, NavModelBreadcrumb, GrafanaTheme } from '@grafana/data';
 import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
 
 export interface Props {
   model: NavModel;
-  contentWidth?: keyof GrafanaTheme['breakpoints'];
 }
 
 const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCss: string }) => {
@@ -72,7 +71,7 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
   );
 };
 
-export const PageHeader: FC<Props> = ({ model, contentWidth }) => {
+export const PageHeader: FC<Props> = ({ model }) => {
   const styles = useStyles(getStyles);
 
   if (!model) {
@@ -84,7 +83,7 @@ export const PageHeader: FC<Props> = ({ model, contentWidth }) => {
 
   return (
     <div className={styles.headerCanvas}>
-      <div className={cx('page-container', contentWidth ? styles.contentWidth(contentWidth) : undefined)}>
+      <div className="page-container">
         <div className="page-header">
           {renderHeaderTitle(main)}
           {children && children.length && <Navigation>{children}</Navigation>}
@@ -125,7 +124,7 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
   for (const bc of breadcrumbs) {
     if (bc.url) {
       breadcrumbsResult.push(
-        <a className="text-link" key={breadcrumbsResult.length} href={bc.url}>
+        <a className="page-header__link" key={breadcrumbsResult.length} href={bc.url}>
           {bc.title}
         </a>
       );
@@ -140,11 +139,8 @@ function renderTitle(title: string, breadcrumbs: NavModelBreadcrumb[]) {
 
 const getStyles = (theme: GrafanaTheme) => ({
   headerCanvas: css`
-    background: ${theme.colors.bg2};
-    border-bottom: 1px solid ${theme.colors.border1};
-  `,
-  contentWidth: (size: keyof GrafanaTheme['breakpoints']) => css`
-    max-width: ${theme.breakpoints[size]};
+    background: ${theme.v2.palette.background.canvas};
+    border-bottom: 1px solid ${theme.v2.palette.border.weak};
   `,
 });
 
