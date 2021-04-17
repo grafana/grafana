@@ -212,7 +212,8 @@ exposeAsyncModules([
   { key: 'react-dom', value: reactDom },
   { key: 'react-redux', value: reactRedux },
   { key: 'redux', value: redux },
-  { key: 'emotion', value: emotion },
+  { key: 'emotion', value: emotion }, // deprecated
+  { key: '@emotion/css', value: emotion },
 
   { key: 'app/features/dashboard/impression_store', value: { impressions: impressionSrv } },
 
