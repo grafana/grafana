@@ -3,6 +3,13 @@
   "interval": "10s",
   "rules": [
     {
+      "for": "1m",
+      "annotations": {
+        "foo": "bar"
+      },
+      "labels": {
+        "label1": "val1"
+      },
       "grafana_alert": {
         "title": "prom query with SSE",
         "condition": "condition",

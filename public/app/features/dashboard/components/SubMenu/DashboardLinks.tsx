@@ -28,13 +28,6 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
     };
   });
 
-  useEffectOnce(() => {
-    dashboard.on(CoreEvents.submenuVisibilityChanged, forceUpdate);
-    return () => {
-      dashboard.off(CoreEvents.submenuVisibilityChanged, forceUpdate);
-    };
-  });
-
   if (!links.length) {
     return null;
   }

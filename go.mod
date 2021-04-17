@@ -16,9 +16,9 @@ require (
 	cuelang.org/go v0.3.0-beta.6
 	github.com/BurntSushi/toml v0.3.1
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
-	github.com/aws/aws-sdk-go v1.38.12
+	github.com/aws/aws-sdk-go v1.38.17
 	github.com/beevik/etree v1.1.0
-	github.com/benbjohnson/clock v1.0.3
+	github.com/benbjohnson/clock v1.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
 	github.com/centrifugal/centrifuge v0.16.0
 	github.com/cortexproject/cortex v1.4.1-0.20201022071705-85942c5703cf
@@ -41,11 +41,11 @@ require (
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gosimple/slug v1.9.0
-	github.com/grafana/alerting-api v0.0.0-20210407150830-64bd267999d1
+	github.com/grafana/alerting-api v0.0.0-20210414165752-6625e7a4f9a9
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-live-sdk v0.0.4
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.91.0
+	github.com/grafana/grafana-plugin-sdk-go v0.92.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-hclog v0.15.0
@@ -85,13 +85,13 @@ require (
 	go.opentelemetry.io/collector v0.22.0
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
-	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
-	golang.org/x/oauth2 v0.0.0-20210313182246-cd4f82c27b84
+	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
+	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
 	gonum.org/v1/gonum v0.9.1
-	google.golang.org/api v0.42.0
-	google.golang.org/grpc v1.36.1
+	google.golang.org/api v0.44.0
+	google.golang.org/grpc v1.37.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/ini.v1 v1.62.0
 	gopkg.in/ldap.v3 v3.0.2

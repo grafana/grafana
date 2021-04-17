@@ -1,31 +1,35 @@
   influxdb:
-    image: influxdb:${influxdb_version}
+    image: influxdb:latest
     container_name: influxdb
     ports:
-      - '2004:2004'
-      - '8083:8083'
       - '8086:8086'
     environment:
-      INFLUXDB_ADMIN_USER: grafana
-      INFLUXDB_ADMIN_PASSWORD: grafana
-      INFLUXDB_DB: site
+      INFLUXD_REPORTING_DISABLED: 'true'
     volumes:
-      - ./docker/blocks/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf
+      - ./docker/blocks/influxdb/config.yaml:/etc/influxdb2/config.yaml
 
-  fake-influxdb-data:
-    image: grafana/fake-data-gen
+  # Use the influx cli to set up an influxdb instance.
+  influxdb_cli:
     links:
       - influxdb
-    environment:
-      FD_DATASOURCE: influxdb
-      FD_PORT: 8086
+    image: influxdb:2.0.4
+    # The following long command does 2 things:
+    #   1. It initializes the bucket
+    #   2. Maps bucket to database to enable backward-compatible access (influxql queries)
+    # Use these same configurations parameters in your telegraf configuration, mytelegraf.conf.
+    entrypoint: bash -c "influx setup --bucket mybucket -t mytoken -o myorg --username=grafana --password=grafana12345 --host=http://influxdb:8086 -f && influx -t mytoken -o myorg --host=http://influxdb:8086 bucket list -n mybucket --hide-headers | cut -f 1 | xargs influx -t mytoken -o myorg --host=http://influxdb:8086 v1 dbrp create --db mybucket --rp default --default --bucket-id"
+      # Wait for the influxd service in the influxdb container has fully bootstrapped before trying to setup an influxdb instance with the influxdb_cli service.
+    restart: on-failure:10
+    depends_on:
+      - influxdb
 
   telegraf:
     image: telegraf:1.10.4
     links:
       - influxdb
+    depends_on:
+      - influxdb_cli
     volumes:
       - ./docker/blocks/influxdb/telegraf.conf:/etc/telegraf/telegraf.conf:ro
       - /var/log:/var/log
       - ../data/log:/var/log/grafana
-

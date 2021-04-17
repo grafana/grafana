@@ -3,9 +3,9 @@ import { css, CSSObject, cx } from '@emotion/css';
 import { useTheme } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getPropertiesForButtonSize } from '../Forms/commonStyles';
-import { GrafanaTheme, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
+import { colorManipulator, GrafanaTheme, GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
 import { ComponentSize } from '../../types/size';
-import { getFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'link';
@@ -47,7 +47,21 @@ Button.displayName = 'Button';
 type ButtonLinkProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement> & AnchorHTMLAttributes<HTMLAnchorElement>;
 
 export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
-  ({ variant = 'primary', size = 'md', icon, fullWidth, children, className, disabled, ...otherProps }, ref) => {
+  (
+    {
+      variant = 'primary',
+      size = 'md',
+      icon,
+      fullWidth,
+      children,
+      className,
+      onBlur,
+      onFocus,
+      disabled,
+      ...otherProps
+    },
+    ref
+  ) => {
     const theme = useTheme();
     const styles = getButtonStyles({
       theme,
@@ -60,7 +74,7 @@ export const LinkButton = React.forwardRef<HTMLAnchorElement, ButtonLinkProps>(
     const linkButtonStyles = cx(styles.button, { [styles.disabled]: disabled }, className);
 
     return (
-      <a className={linkButtonStyles} {...otherProps} ref={ref} tabIndex={disabled ? -1 : 0}>
+      <a className={linkButtonStyles} {...otherProps} tabIndex={disabled ? -1 : 0} ref={ref}>
         {icon && <Icon name={icon} size={size} className={styles.icon} />}
         {children && <span className={styles.content}>{children}</span>}
       </a>
@@ -86,18 +100,20 @@ export const getButtonStyles = (props: StyleProps) => {
 
   const disabledStyles: CSSObject = {
     cursor: 'not-allowed',
-    opacity: 0.65,
     boxShadow: 'none',
-    background: theme.v2.palette.formComponent.disabledBackground,
-    border: `1px solid ${theme.v2.palette.formComponent.disabledBackground}`,
+    background: theme.v2.palette.action.disabledBackground,
+    border: `1px solid transparent`,
     color: theme.v2.palette.text.disabled,
     pointerEvents: 'none',
 
     '&:hover': {
-      background: theme.v2.palette.formComponent.disabledBackground,
+      background: theme.v2.palette.action.disabledBackground,
       color: theme.v2.palette.text.disabled,
+      boxShadow: 'none',
     },
   };
+
+  const focusStyle = getFocusStyles(theme.v2);
 
   return {
     button: css({
@@ -114,6 +130,9 @@ export const getButtonStyles = (props: StyleProps) => {
       verticalAlign: 'middle',
       cursor: 'pointer',
       borderRadius: theme.v2.shape.borderRadius(1),
+      '&:focus': focusStyle,
+      '&:focus-visible': focusStyle,
+      '&:focus:not(:focus-visible)': getMouseFocusStyles(theme.v2),
       ...(fullWidth && {
         flexGrow: 1,
         justifyContent: 'center',
@@ -145,16 +164,15 @@ function getButtonVariantStyles(theme: GrafanaThemeV2, color: ThemePaletteColor)
   return {
     background: color.main,
     color: color.contrastText,
-    boxShadow: theme.shadows.z1,
     border: `1px solid transparent`,
+    transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+      duration: theme.transitions.duration.short,
+    }),
 
     '&:hover': {
-      background: theme.palette.getHoverColor(color.main),
+      background: color.shade,
       color: color.contrastText,
-    },
-
-    '&:focus': {
-      ...getFocusStyles(theme),
+      boxShadow: theme.shadows.z2,
     },
   };
 }
@@ -178,7 +196,7 @@ export function getPropertiesForVariant(theme: GrafanaThemeV2, variant: ButtonVa
         },
 
         '&:hover': {
-          color: theme.palette.getHoverColor(theme.palette.text.link),
+          background: colorManipulator.alpha(theme.palette.text.link, theme.palette.action.hoverOpacity),
           textDecoration: 'underline',
         },
       };

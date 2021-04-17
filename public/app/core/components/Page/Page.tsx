@@ -31,10 +31,13 @@ export const Page: PageType = ({ navModel, children, className, contentWidth, ..
   }, [navModel]);
 
   return (
-    <div {...otherProps} className={cx(styles.wrapper, className)}>
+    <div
+      {...otherProps}
+      className={cx(styles.wrapper, className, contentWidth ? styles.contentWidth(contentWidth) : undefined)}
+    >
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className="page-scrollbar-content">
-          <PageHeader model={navModel} contentWidth={contentWidth} />
+          <PageHeader model={navModel} />
           {children}
           <Footer />
         </div>
@@ -55,5 +58,10 @@ const getStyles = (theme: GrafanaTheme) => ({
     bottom: 0;
     width: 100%;
     background: ${theme.colors.bg1};
+  `,
+  contentWidth: (size: keyof GrafanaTheme['breakpoints']) => css`
+    .page-container {
+      max-width: ${theme.breakpoints[size]};
+    }
   `,
 });

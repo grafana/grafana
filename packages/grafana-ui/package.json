@@ -78,17 +78,17 @@
     "react-transition-group": "4.4.1",
     "slate": "0.47.8",
     "tinycolor2": "1.4.1",
-    "uplot": "1.6.7"
+    "uplot": "1.6.8"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "16.0.0",
     "@rollup/plugin-image": "2.0.5",
     "@rollup/plugin-node-resolve": "10.0.0",
-    "@storybook/addon-essentials": "6.2.3",
-    "@storybook/addon-knobs": "6.2.3",
-    "@storybook/addon-storysource": "6.2.3",
-    "@storybook/react": "6.2.3",
-    "@storybook/theming": "6.2.3",
+    "@storybook/addon-essentials": "6.2.7",
+    "@storybook/addon-knobs": "6.2.7",
+    "@storybook/addon-storysource": "6.2.7",
+    "@storybook/react": "6.2.7",
+    "@storybook/theming": "6.2.7",
     "@types/react-router-dom": "^5.1.7",
     "@types/classnames": "2.2.7",
     "@types/common-tags": "^1.8.0",
