@@ -2,7 +2,7 @@
 
 exports[`Render should render component 1`] = `
 <div
-  className="panel-container css-bopjp7"
+  className="panel-container css-ozhi9g"
 >
   <AddPanelWidgetHandle
     onCancel={[Function]}
@@ -15,7 +15,7 @@ exports[`Render should render component 1`] = `
         "libraryPanelsWrapper": "css-18m13of",
         "noMargin": "css-u023fv",
         "panelSearchInput": "css-2ug8g3",
-        "wrapper": "css-bopjp7",
+        "wrapper": "css-ozhi9g",
       }
     }
   >

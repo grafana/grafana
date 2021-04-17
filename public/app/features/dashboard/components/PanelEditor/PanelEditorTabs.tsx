@@ -36,7 +36,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
 
   return (
     <div className={styles.wrapper}>
-      <TabsBar className={styles.tabBar}>
+      <TabsBar className={styles.tabBar} hideBorder>
         {tabs.map((tab) => {
           return (
             <Tab
@@ -91,12 +91,8 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.panelBg};
-      border-right: 1px solid ${theme.colors.pageHeaderBorder};
-
-      .toolbar {
-        background: transparent;
-      }
+      background: ${theme.v2.palette.background.primary};
+      border-right: 1px solid ${theme.v2.components.panel.border};
     `,
   };
 };

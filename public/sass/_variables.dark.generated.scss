@@ -64,7 +64,7 @@ $layer2: #22252b;
 
 $divider: rgba(201, 209, 217, 0.10);
 
-$border0: #181b1f;
+$border0: rgba(201, 209, 217, 0.10);
 $border1: rgba(201, 209, 217, 0.15);
 
 // Accent colors
@@ -94,8 +94,8 @@ $critical: #e02f44;
 
 // Scaffolding
 // -------------------------
-$body-bg: #181b1f;
-$page-bg: #181b1f;
+$body-bg: #111217;
+$page-bg: #111217;
 $dashboard-bg: #111217;
 
 $text-color-strong: #fff;
@@ -137,9 +137,9 @@ $panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0
 $panel-corner: $panel-bg;
 
 // page header
-$page-header-bg: #22252b;
+$page-header-bg: #111217;
 $page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: #181b1f;
+$page-header-border-color: #111217;
 
 $divider-border-color: $gray-1;
 
@@ -232,7 +232,7 @@ $typeahead-selected-color: $yellow;
 // Dropdowns
 // -------------------------
 $dropdownBackground: #22252b;
-$dropdownBorder: #181b1f;
+$dropdownBorder: rgba(201, 209, 217, 0.10);
 $dropdownDividerTop: rgba(201, 209, 217, 0.10);
 $dropdownDividerBottom: rgba(201, 209, 217, 0.10);
 

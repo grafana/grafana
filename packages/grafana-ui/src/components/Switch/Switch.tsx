@@ -127,8 +127,8 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolea
       height: ${theme.v2.spacing(theme.v2.components.height.md)};
       display: flex;
       align-items: center;
-      background: ${transparent ? 'transparent' : theme.v2.components.form.background};
-      border: 1px solid ${transparent ? 'transparent' : theme.v2.components.form.border};
+      background: ${transparent ? 'transparent' : theme.v2.components.input.background};
+      border: 1px solid ${transparent ? 'transparent' : theme.v2.components.input.border};
       border-radius: ${theme.v2.shape.borderRadius()};
     `,
   };

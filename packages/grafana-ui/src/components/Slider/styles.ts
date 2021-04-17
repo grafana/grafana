@@ -12,7 +12,7 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 
 export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => {
   const { spacing } = theme;
-  const railColor = theme.v2.palette.border2;
+  const railColor = theme.v2.palette.border.strong;
   const trackColor = theme.v2.palette.primary.main;
   const handleColor = theme.v2.palette.primary.main;
   const blueOpacity = theme.v2.palette.primary.transparent;

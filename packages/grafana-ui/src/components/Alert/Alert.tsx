@@ -79,7 +79,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boole
       display: flex;
       flex-direction: row;
       align-items: stretch;
-      background: ${theme.v2.palette.layer2};
+      background: ${theme.v2.palette.background.secondary};
       box-shadow: ${elevated ? theme.v2.shadows.z4 : theme.v2.shadows.z1};
 
       &:before {
@@ -89,7 +89,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, elevated?: boole
         left: 0;
         bottom: 0;
         right: 0;
-        background: ${theme.v2.palette.layer1};
+        background: ${theme.v2.palette.background.primary};
         z-index: -1;
       }
     `,

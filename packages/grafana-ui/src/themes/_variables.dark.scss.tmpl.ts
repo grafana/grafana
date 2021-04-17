@@ -55,14 +55,14 @@ $gray-6: ${theme.palette.gray6};
 $input-black: ${theme.colors.formInputBg};
 $white: ${theme.palette.white};
 
-$layer0: ${theme.v2.palette.layer0};
-$layer1: ${theme.v2.palette.layer1};
-$layer2: ${theme.v2.palette.layer2};
+$layer0: ${theme.v2.palette.background.canvas};
+$layer1: ${theme.v2.palette.background.primary};
+$layer2: ${theme.v2.palette.background.secondary};
 
-$divider: ${theme.v2.palette.divider};
+$divider: ${theme.v2.palette.border.weak};
 
-$border0: ${theme.v2.palette.border0};
-$border1: ${theme.v2.palette.border1};
+$border0: ${theme.v2.palette.border.weak};
+$border1: ${theme.v2.palette.border.medium};
 
 // Accent colors
 // -------------------------
@@ -141,16 +141,16 @@ $page-header-border-color: ${theme.colors.pageHeaderBorder};
 $divider-border-color: $gray-1;
 
 // Graphite Target Editor
-$tight-form-func-bg: ${theme.v2.palette.layer2};
-$tight-form-func-highlight-bg: ${theme.v2.palette.emphasize(theme.v2.palette.layer2, 0.03)};
+$tight-form-func-bg: ${theme.v2.palette.background.secondary};
+$tight-form-func-highlight-bg: ${theme.v2.palette.emphasize(theme.v2.palette.background.secondary, 0.03)};
 
 $modal-backdrop-bg: ${theme.colors.bg3};
 $code-tag-bg: $dark-1;
 $code-tag-border: $dark-9;
 
 // cards
-$card-background: ${theme.v2.palette.layer2};
-$card-background-hover: ${theme.v2.palette.emphasize(theme.v2.palette.layer2, 0.03)};
+$card-background: ${theme.v2.palette.background.secondary};
+$card-background-hover: ${theme.v2.palette.emphasize(theme.v2.palette.background.secondary, 0.03)};
 $card-shadow: none;
 
 // Lists
@@ -167,10 +167,10 @@ $scrollbarBorder: black;
 
 // Tables
 // -------------------------
-$table-bg-accent: ${theme.v2.palette.layer2};
-$table-border: ${theme.v2.palette.border1};
-$table-bg-odd: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.02)};
-$table-bg-hover: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.05)};
+$table-bg-accent: ${theme.v2.palette.background.secondary};
+$table-border: ${theme.v2.palette.border.medium};
+$table-bg-odd: ${theme.v2.palette.emphasize(theme.v2.palette.background.primary, 0.02)};
+$table-bg-hover: ${theme.v2.palette.emphasize(theme.v2.palette.background.primary, 0.05)};
 
 // Buttons
 // -------------------------
@@ -228,10 +228,10 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: ${theme.v2.palette.layer2};
-$dropdownBorder: ${theme.v2.palette.border0};
-$dropdownDividerTop: ${theme.v2.palette.divider};
-$dropdownDividerBottom: ${theme.v2.palette.divider};
+$dropdownBackground: ${theme.v2.palette.background.secondary};
+$dropdownBorder: ${theme.v2.palette.border.weak};
+$dropdownDividerTop: ${theme.v2.palette.border.weak};
+$dropdownDividerBottom: ${theme.v2.palette.border.weak};
 
 $dropdownLinkColor: $link-color;
 $dropdownLinkColorHover: $white;
@@ -259,7 +259,7 @@ $side-menu-header-color: ${theme.colors.text};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: ${theme.v2.palette.layer2};
+$menu-dropdown-bg: ${theme.v2.palette.background.secondary};
 $menu-dropdown-hover-bg: ${theme.v2.palette.action.hover};
 $menu-dropdown-shadow: ${theme.v2.shadows.z3};
 
@@ -284,16 +284,16 @@ $tooltipArrowWidth: 5px;
 $tooltipLinkColor: $link-color;
 $graph-tooltip-bg: $dark-1;
 
-$tooltipBackground: ${theme.v2.palette.layer2};
+$tooltipBackground: ${theme.v2.palette.background.secondary};
 $tooltipColor: ${theme.v2.palette.text.primary};
-$tooltipArrowColor: ${theme.v2.palette.layer2};
+$tooltipArrowColor: ${theme.v2.palette.background.secondary};
 $tooltipBackgroundError: ${theme.v2.palette.error.main};
 $tooltipShadow: ${theme.v2.shadows.z2};
 
-$popover-bg: ${theme.v2.palette.layer2};
+$popover-bg: ${theme.v2.palette.background.secondary};
 $popover-color: ${theme.v2.palette.text.primary};
-$popover-border-color: ${theme.v2.palette.border1};
-$popover-header-bg: ${theme.v2.palette.layer2};
+$popover-border-color: ${theme.v2.palette.border.medium};
+$popover-header-bg: ${theme.v2.palette.background.secondary};
 $popover-shadow: ${theme.v2.shadows.z4};
 
 $popover-help-bg: $tooltipBackground;

@@ -12,13 +12,11 @@ export interface Props {
 }
 
 const getTabsBarStyles = stylesFactory((theme: GrafanaTheme, hideBorder = false) => {
-  const colors = theme.colors;
-
   return {
     tabsWrapper:
       !hideBorder &&
       css`
-        border-bottom: 1px solid ${colors.pageHeaderBorder};
+        border-bottom: 1px solid ${theme.v2.palette.border.weak};
       `,
     tabs: css`
       position: relative;

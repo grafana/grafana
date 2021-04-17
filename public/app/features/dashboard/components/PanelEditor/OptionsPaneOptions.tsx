@@ -180,7 +180,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   mainBox: css`
     background: ${theme.colors.bg1};
-    border: 1px solid ${theme.colors.border1};
+    border: 1px solid ${theme.v2.components.panel.border};
     border-top: none;
     flex-grow: 1;
   `,
