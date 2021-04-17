@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -425,6 +426,15 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		Sentry:                  &hs.Cfg.Sentry,
 		Nonce:                   c.RequestNonce,
 		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
+	}
+
+	if hs.Cfg.FeatureToggles["accesscontrol"] {
+		userPermissions, err := hs.AccessControl.GetUserPermissions(c.Req.Context(), c.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+
+		data.User.Permissions = accesscontrol.BuildPermissionsMap(userPermissions)
 	}
 
 	if setting.DisableGravatar {
