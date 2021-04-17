@@ -1,11 +1,11 @@
 package grafanaschema
 
-TextMode: "html" | "markdown" @cuetsy(targetType="enum")
-
 Family: {
     lineages: [
         [
             {
+                TextMode: "html" | "markdown" @cuetsy(targetType="enum")
+
                 PanelOptions: {
                     mode: TextMode | *"markdown";
                     content: string | `# Title
