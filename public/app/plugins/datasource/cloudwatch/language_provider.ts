@@ -18,7 +18,7 @@ import { CloudWatchQuery, TSDBResponse } from './types';
 import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
 
 import { CloudWatchDatasource } from './datasource';
-import { Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 import Prism, { Grammar } from 'prismjs';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
@@ -167,8 +167,12 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
 
   private handleKeyword = async (context?: TypeaheadContext): Promise<TypeaheadOutput> => {
     const suggs = await this.getFieldCompletionItems(context?.logGroupNames ?? []);
-    const functionSuggestions = [
-      { prefixMatch: true, label: 'Functions', items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS) },
+    const functionSuggestions: CompletionItemGroup[] = [
+      {
+        searchFunctionType: SearchFunctionType.Prefix,
+        label: 'Functions',
+        items: STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS),
+      },
     ];
     suggs.suggestions.push(...functionSuggestions);
 
@@ -244,7 +248,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
       return {
         suggestions: [
           {
-            prefixMatch: true,
+            searchFunctionType: SearchFunctionType.Prefix,
             label: 'Sort Order',
             items: [
               {
@@ -268,22 +272,32 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   };
 
   private getCommandCompletionItems = (): TypeaheadOutput => {
-    return { suggestions: [{ prefixMatch: true, label: 'Commands', items: QUERY_COMMANDS }] };
+    return {
+      suggestions: [{ searchFunctionType: SearchFunctionType.Prefix, label: 'Commands', items: QUERY_COMMANDS }],
+    };
   };
 
   private getFieldAndFilterFunctionCompletionItems = (): TypeaheadOutput => {
-    return { suggestions: [{ prefixMatch: true, label: 'Functions', items: FIELD_AND_FILTER_FUNCTIONS }] };
+    return {
+      suggestions: [
+        { searchFunctionType: SearchFunctionType.Prefix, label: 'Functions', items: FIELD_AND_FILTER_FUNCTIONS },
+      ],
+    };
   };
 
   private getStatsAggCompletionItems = (): TypeaheadOutput => {
-    return { suggestions: [{ prefixMatch: true, label: 'Functions', items: AGGREGATION_FUNCTIONS_STATS }] };
+    return {
+      suggestions: [
+        { searchFunctionType: SearchFunctionType.Prefix, label: 'Functions', items: AGGREGATION_FUNCTIONS_STATS },
+      ],
+    };
   };
 
   private getBoolFuncCompletionItems = (): TypeaheadOutput => {
     return {
       suggestions: [
         {
-          prefixMatch: true,
+          searchFunctionType: SearchFunctionType.Prefix,
           label: 'Functions',
           items: BOOLEAN_FUNCTIONS,
         },
@@ -295,7 +309,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return {
       suggestions: [
         {
-          prefixMatch: true,
+          searchFunctionType: SearchFunctionType.Prefix,
           label: 'Functions',
           items: NUMERIC_OPERATORS.concat(BOOLEAN_FUNCTIONS),
         },
