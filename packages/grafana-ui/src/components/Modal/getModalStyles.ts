@@ -3,14 +3,16 @@ import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backdropBackground = theme.colors.bg3;
+  const backdropBackground = 'rgba(0, 0, 0, 0.5)';
+  const borderRadius = theme.v2.shape.borderRadius(2);
 
   return {
     modal: css`
       position: fixed;
-      z-index: ${theme.zIndex.modal};
-      background: ${theme.colors.bodyBg};
-      box-shadow: 0 0 20px ${theme.colors.dropdownShadow};
+      z-index: ${theme.v2.zIndex.modal};
+      background: ${theme.v2.palette.layer1};
+      box-shadow: ${theme.v2.shadows.z4};
+      border-radius: ${borderRadius};
       background-clip: padding-box;
       outline: none;
       width: 750px;
@@ -27,14 +29,14 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       right: 0;
       bottom: 0;
       left: 0;
-      z-index: ${theme.zIndex.modalBackdrop};
+      z-index: ${theme.v2.zIndex.modalBackdrop};
       background-color: ${backdropBackground};
-      opacity: 0.7;
     `,
     modalHeader: css`
       label: modalHeader;
       background: ${theme.colors.bg2};
       border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
+      border-radius: ${borderRadius} ${borderRadius} 0 0;
       display: flex;
       height: 42px;
     `,

@@ -1,6 +1,7 @@
 import React, { FC, ReactNode, PureComponent } from 'react';
 import classNames from 'classnames';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { deprecationWarning } from '@grafana/data';
 
 interface ToggleButtonGroupProps {
   label?: string;
@@ -9,6 +10,7 @@ interface ToggleButtonGroupProps {
   width?: number;
 }
 
+/** @deprecated */
 export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
   render() {
     const { children, label, transparent, width } = this.props;
@@ -20,6 +22,8 @@ export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
       'toggle-button-group--transparent': transparent,
       'toggle-button-group--padded': width, // Add extra padding to compensate for buttons border
     });
+
+    deprecationWarning('ToggleButtonGroup', 'ToggleButtonGroup', 'RadioButtonGroup');
 
     return (
       <div className="gf-form gf-form--align-center">

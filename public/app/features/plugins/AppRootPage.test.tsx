@@ -91,8 +91,8 @@ describe('AppRootPage', () => {
 
     // check that plugin and nav links were rendered, and plugin is mounted only once
     expect(await screen.findByText('my great plugin')).toBeVisible();
-    expect(await screen.findByRole('link', { name: 'A page' })).toBeVisible();
-    expect(await screen.findByRole('link', { name: 'Another page' })).toBeVisible();
+    expect(await screen.findByLabelText('Tab A page')).toBeVisible();
+    expect(await screen.findByLabelText('Tab Another page')).toBeVisible();
     expect(RootComponent.timesMounted).toEqual(1);
   });
 
