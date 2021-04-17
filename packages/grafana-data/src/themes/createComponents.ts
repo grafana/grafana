@@ -9,7 +9,7 @@ export interface ThemeComponents {
     md: number;
     lg: number;
   };
-  form: {
+  input: {
     background: string;
     border: string;
     borderHover: string;
@@ -43,7 +43,7 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
       md: 4,
       lg: 6,
     },
-    form:
+    input:
       palette.mode === 'dark'
         ? {
             background: palette.background.canvas,

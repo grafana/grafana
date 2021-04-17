@@ -32,9 +32,9 @@ const createTheme = (theme: GrafanaTheme) => {
     barBg: theme.v2.palette.background.primary,
 
     // Form colors
-    inputBg: theme.v2.components.form.background,
-    inputBorder: theme.v2.components.form.border,
-    inputTextColor: theme.v2.components.form.text,
+    inputBg: theme.v2.components.input.background,
+    inputBorder: theme.v2.components.input.border,
+    inputTextColor: theme.v2.components.input.text,
     inputBorderRadius: theme.v2.shape.borderRadius(1),
 
     brandTitle: 'Grafana UI',

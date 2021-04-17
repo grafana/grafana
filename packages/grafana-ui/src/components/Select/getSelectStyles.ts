@@ -56,7 +56,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     singleValue: css`
       label: grafana-select-single-value;
-      color: ${theme.v2.components.form.text};
+      color: ${theme.v2.components.input.text};
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

@@ -113,7 +113,7 @@ const lightTheme: GrafanaTheme = {
     ...textColors,
     ...form,
 
-    bodyBg: backgrounds.bg1,
+    bodyBg: v2.palette.background.canvas,
     panelBg: backgrounds.bg1,
     pageHeaderBg: backgrounds.bg2,
     pageHeaderBorder: borders.border1,
