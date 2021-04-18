@@ -1,12 +1,3 @@
-export interface NewsOptions {
-  feedUrl?: string;
-  useProxy?: boolean;
-}
-
-export const defaults: NewsOptions = {
-  // will default to grafana blog
-};
-
 export interface NewsItem {
   date: number;
   title: string;

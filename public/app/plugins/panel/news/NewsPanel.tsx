@@ -10,11 +10,12 @@ import { loadRSSFeed } from './rss';
 
 // Types
 import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme, textUtil } from '@grafana/data';
-import { NewsOptions, NewsItem } from './types';
+import { NewsItem } from './types';
+import { PanelOptions } from './models.gen';
 import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
 import { css } from '@emotion/css';
 
-interface Props extends PanelProps<NewsOptions> {}
+interface Props extends PanelProps<PanelOptions> {}
 
 interface State {
   news?: DataFrameView<NewsItem>;
