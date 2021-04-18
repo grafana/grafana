@@ -8,10 +8,11 @@ Family: {
 
                 PanelOptions: {
                     mode: TextMode | *"markdown"
-                    content: string | `# Title
+                    content: string | *"""
+                    # Title
 
-For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
-`
+                    For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
+                    """
                 }
             }
         ]
