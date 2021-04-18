@@ -8,13 +8,8 @@ const getStyles = (theme: GrafanaTheme) => css`
   margin-left: ${theme.spacing.md};
   font-size: ${theme.typography.size.sm};
   color: ${theme.colors.textWeak};
-  overflow: scroll;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const DetailText: FC = ({ children }) => {

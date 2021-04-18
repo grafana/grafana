@@ -130,7 +130,6 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       justify-content: space-between;
       white-space: nowrap;
-      overflow: hidden;
 
       &:focus {
         outline: none;
