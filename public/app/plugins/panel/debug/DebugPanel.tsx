@@ -36,7 +36,7 @@ export class DebugPanel extends Component<Props> {
       dataChanged: 0,
       schemaChanged: 0,
     };
-    this.setState(null); // force update
+    this.setState(this.state); // force update
   };
 
   render() {
