@@ -80,6 +80,7 @@ Family: scuemata.#Family & {
                 // synthetic Family to represent them in Go, for ease of generating
                 // e.g. JSON Schema.
                 #Panel: {
+                    ...
                     // The panel plugin type id. 
                     type: !=""
 
@@ -91,7 +92,7 @@ Family: scuemata.#Family & {
                     // _pv: { maj: int, min: int }
                     // The major and minor versions of the panel plugin for this schema.
                     // TODO 2-tuple list instead of struct?
-                    panelSchema: { maj: number, min: number }
+                    panelSchema?: { maj: number, min: number }
 
                     // Panel title.
                     title?: string
