@@ -22,7 +22,7 @@ export class DebugPanel extends Component<Props> {
       this.counters.dataChanged++;
 
       if (options.counters?.schemaChanged) {
-        if (data.schemaRev !== prevProps.data.schemaRev) {
+        if (data.structureRev !== prevProps.data.structureRev) {
           this.counters.schemaChanged++;
         }
       }

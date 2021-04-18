@@ -237,12 +237,12 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
   const annotationsProcessed = getProcessedDataFrames(annotations);
 
   // Indicate if the structure has changed since the last query
-  let schemaRev = 1;
-  if (lastResult?.schemaRev && lastResult.series) {
-    schemaRev = lastResult.schemaRev;
+  let structureRev = 1;
+  if (lastResult?.structureRev && lastResult.series) {
+    structureRev = lastResult.structureRev;
     const sameStructure = compareArrayValues(processedDataFrames, lastResult.series, compareDataFrameStructures);
     if (!sameStructure) {
-      schemaRev++;
+      structureRev++;
     }
   }
 
@@ -251,7 +251,7 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
   return {
     ...data,
     series: processedDataFrames,
-    schemaRev,
+    structureRev,
     annotations: annotationsProcessed,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
   };

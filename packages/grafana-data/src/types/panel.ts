@@ -33,7 +33,7 @@ export interface PanelData {
    * This is a key that will change when the DataFrame[] structure changes.
    * The revision is a useful way to know if only data has changed or data+structure
    */
-  schemaRev?: number;
+  structureRev?: number;
 
   /** A list of annotation items */
   annotations?: DataFrame[];

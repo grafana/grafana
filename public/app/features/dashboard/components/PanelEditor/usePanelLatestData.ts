@@ -32,7 +32,7 @@ export const usePanelLatestData = (
       .subscribe({
         next: (data) => {
           if (checkSchema) {
-            if (lastRev === data.schemaRev) {
+            if (lastRev === data.structureRev) {
               const now = Date.now();
               const elapsed = now - lastUpdate;
               if (elapsed < 10000) {
@@ -40,7 +40,7 @@ export const usePanelLatestData = (
               }
               lastUpdate = now;
             }
-            lastRev = data.schemaRev ?? -1;
+            lastRev = data.structureRev ?? -1;
           }
           setLatestData(data);
         },
