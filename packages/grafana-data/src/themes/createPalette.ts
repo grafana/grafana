@@ -26,15 +26,20 @@ export interface ThemePaletteBase<TColor> {
     maxContrast: string;
   };
 
-  layer0: string;
-  layer1: string;
-  layer2: string;
+  background: {
+    /** Dashboard and body background */
+    canvas: string;
+    /** Primary content pane background (panels etc) */
+    primary: string;
+    /** Cards and elements that need to stand out on the primary background */
+    secondary: string;
+  };
 
-  divider: string;
-
-  border0: string;
-  border1: string;
-  border2: string;
+  border: {
+    weak: string;
+    medium: string;
+    strong: string;
+  };
 
   gradients: {
     brandVertical: string;
@@ -119,15 +124,17 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     text: colors.orangeDarkText,
   };
 
-  layer0 = colors.gray05;
-  layer1 = colors.gray10;
-  layer2 = colors.gray15;
+  background = {
+    canvas: colors.gray05,
+    primary: colors.gray10,
+    secondary: colors.gray15,
+  };
 
-  divider = `rgba(${this.whiteBase}, 0.10)`;
-
-  border0 = this.layer1;
-  border1 = `rgba(${this.whiteBase}, 0.15)`;
-  border2 = `rgba(${this.whiteBase}, 0.20)`;
+  border = {
+    weak: `rgba(${this.whiteBase}, 0.10)`,
+    medium: `rgba(${this.whiteBase}, 0.15)`,
+    strong: `rgba(${this.whiteBase}, 0.20)`,
+  };
 
   action = {
     hover: `rgba(${this.whiteBase}, 0.08)`,
@@ -195,15 +202,19 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     maxContrast: colors.black,
   };
 
-  layer0 = colors.gray90;
-  layer1 = colors.white;
-  layer2 = colors.gray100;
+  background = {
+    canvas: colors.gray90,
+    primary: colors.white,
+    secondary: colors.gray100,
+  };
 
-  divider = `rgba(${this.blackBase}, 0.12)`;
+  border = {
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.30)`,
+    strong: `rgba(${this.blackBase}, 0.40)`,
+  };
 
-  border0 = this.layer1;
-  border1 = `rgba(${this.blackBase}, 0.30)`;
-  border2 = `rgba(${this.blackBase}, 0.40)`;
+  divider = this.border.weak;
 
   action = {
     hover: `rgba(${this.blackBase}, 0.04)`,

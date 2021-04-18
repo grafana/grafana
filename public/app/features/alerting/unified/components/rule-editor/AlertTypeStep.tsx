@@ -7,9 +7,9 @@ import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { DataSourcePicker, DataSourcePickerProps } from '@grafana/runtime';
-import { RuleGroupPicker } from '../RuleGroupPicker';
 import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { RuleFolderPicker } from './RuleFolderPicker';
+import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 
 const alertTypeOptions: SelectableValue[] = [
   {
@@ -123,27 +123,8 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           </Field>
         )}
       </div>
-      {ruleFormType === RuleFormType.system && (
-        <Field
-          label="Group"
-          className={styles.formInput}
-          error={errors.location?.message}
-          invalid={!!errors.location?.message}
-        >
-          {dataSourceName ? (
-            <InputControl
-              as={RuleGroupPicker}
-              name="location"
-              control={control}
-              dataSourceName={dataSourceName}
-              rules={{
-                required: { value: true, message: 'Please select a group' },
-              }}
-            />
-          ) : (
-            <Select placeholder="Select a data source first" onChange={() => {}} disabled={true} />
-          )}
-        </Field>
+      {ruleFormType === RuleFormType.system && dataSourceName && (
+        <GroupAndNamespaceFields dataSourceName={dataSourceName} />
       )}
       {ruleFormType === RuleFormType.threshold && (
         <Field
