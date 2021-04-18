@@ -198,7 +198,7 @@ for annotation events.
 Querying and displaying log data from Elasticsearch is available in [Explore]({{< relref "../explore" >}}), and in the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards.
 Select the Elasticsearch data source, and then optionally enter a lucene query to display your logs.
 
-When switching from a Prometheus or Loki datasource in Explore your query will be automatically translated to an Elasticsearch log query with a correct Lucene filter.
+When switching from a Prometheus or Loki data source in Explore, your query is translated to an Elasticsearch log query with a correct Lucene filter.
 
 ### Log Queries
 
