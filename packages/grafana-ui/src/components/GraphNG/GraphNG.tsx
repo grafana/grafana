@@ -1,8 +1,6 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
 import {
-  compareArrayValues,
-  compareDataFrameStructures,
   DataFrame,
   DataFrameFieldIndex,
   FieldMatcherID,
@@ -32,6 +30,7 @@ export interface GraphNGProps extends Themeable {
   width: number;
   height: number;
   data: DataFrame[];
+  structureRev?: number; // a number that will change when the data[] structure changes
   timeRange: TimeRange;
   legend: VizLegendOptions;
   timeZone: TimeZone;
@@ -119,7 +118,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { data, theme } = this.props;
+    const { data, theme, structureRev } = this.props;
     const { alignedDataFrame } = this.state;
     let shouldConfigUpdate = false;
     let stateUpdate = {} as GraphNGState;
@@ -133,8 +132,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
         return;
       }
 
-      const hasStructureChanged = !compareArrayValues(data, prevProps.data, compareDataFrameStructures);
-
+      const hasStructureChanged = structureRev !== prevProps.structureRev || !structureRev;
       if (shouldConfigUpdate || hasStructureChanged) {
         const builder = preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone);
         stateUpdate = { ...stateUpdate, config: builder };

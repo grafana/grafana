@@ -12,8 +12,11 @@ import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datas
 // Types
 import {
   applyFieldOverrides,
+  compareArrayValues,
+  compareDataFrameStructures,
   CoreApp,
   DataConfigSource,
+  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
@@ -72,6 +75,8 @@ export class PanelQueryRunner {
    */
   getData(options: GetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
+    let structureRev = 1;
+    let lastData: DataFrame[] = [];
 
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),
@@ -95,7 +100,14 @@ export class PanelQueryRunner {
           }
         }
 
-        return processedData;
+        const sameStructure = compareArrayValues(lastData, processedData.series, compareDataFrameStructures);
+        if (!sameStructure) {
+          structureRev++;
+        }
+
+        lastData = processedData.series;
+
+        return { ...processedData, structureRev };
       })
     );
   }

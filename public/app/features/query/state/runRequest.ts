@@ -6,8 +6,6 @@ import { catchError, finalize, map, mapTo, share, takeUntil, tap } from 'rxjs/op
 import { backendSrv } from 'app/core/services/backend_srv';
 // Types
 import {
-  compareArrayValues,
-  compareDataFrameStructures,
   DataFrame,
   DataQueryError,
   DataQueryRequest,
@@ -235,23 +233,11 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
   const STARTTIME = performance.now();
   const processedDataFrames = getProcessedDataFrames(series);
   const annotationsProcessed = getProcessedDataFrames(annotations);
-
-  // Indicate if the structure has changed since the last query
-  let structureRev = 1;
-  if (lastResult?.structureRev && lastResult.series) {
-    structureRev = lastResult.structureRev;
-    const sameStructure = compareArrayValues(processedDataFrames, lastResult.series, compareDataFrameStructures);
-    if (!sameStructure) {
-      structureRev++;
-    }
-  }
-
   const STOPTIME = performance.now();
 
   return {
     ...data,
     series: processedDataFrames,
-    structureRev,
     annotations: annotationsProcessed,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
   };
