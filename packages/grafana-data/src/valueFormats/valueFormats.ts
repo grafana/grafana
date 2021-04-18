@@ -113,12 +113,6 @@ export function toFixedUnit(unit: string, asPrefix?: boolean): ValueFormatter {
   };
 }
 
-export function booleanValueFormatter(t: string, f: string): ValueFormatter {
-  return (value: any) => {
-    return { text: value ? t : f };
-  };
-}
-
 // Formatter which scales the unit string geometrically according to the given
 // numeric factor. Repeatedly scales the value down by the factor until it is
 // less than the factor in magnitude, or the end of the array is reached.
@@ -205,7 +199,7 @@ export function getValueFormat(id?: string | null): ValueFormatter {
   const fmt = index[id];
 
   if (!fmt && id) {
-    let idx = id.indexOf(':');
+    const idx = id.indexOf(':');
 
     if (idx > 0) {
       const key = id.substring(0, idx);
@@ -235,16 +229,6 @@ export function getValueFormat(id?: string | null): ValueFormatter {
 
       if (key === 'currency') {
         return currency(sub);
-      }
-
-      if (key === 'bool') {
-        idx = sub.indexOf('/');
-        if (idx >= 0) {
-          const t = sub.substring(0, idx);
-          const f = sub.substring(idx + 1);
-          return booleanValueFormatter(t, f);
-        }
-        return booleanValueFormatter(sub, '-');
       }
     }
 
