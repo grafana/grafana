@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
