@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { SilenceMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRule } from 'app/types/unified-alerting';
 
 export const useRulesByMatcher = (matchers: SilenceMatcher[]) => {
   const namespaces = useCombinedRuleNamespaces();
   return useMemo(() => {
-    return namespaces.reduce((namespaceAcc, namespace) => {
-      const groups = namespace.groups.reduce((groupAcc, group) => {
+    return namespaces.reduce((rulesAcc, namespace) => {
+      namespace.groups.forEach((group) => {
         const rules = group.rules.filter(({ labels }) => {
           return matchers.every(({ name, value, isRegex }) => {
             return Object.entries(labels).filter(([labelKey, labelValue]) => {
@@ -19,21 +19,10 @@ export const useRulesByMatcher = (matchers: SilenceMatcher[]) => {
         });
 
         if (rules.length) {
-          groupAcc.push({
-            ...group,
-            rules,
-          });
+          rulesAcc.push(...rules);
         }
-        return groupAcc;
-      }, [] as CombinedRuleGroup[]);
-
-      if (groups.length) {
-        namespaceAcc.push({
-          ...namespace,
-          groups,
-        });
-      }
-      return namespaceAcc;
-    }, [] as CombinedRuleNamespace[]);
+      });
+      return rulesAcc;
+    }, [] as CombinedRule[]);
   }, [namespaces, matchers]);
 };
