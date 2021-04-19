@@ -10,7 +10,7 @@ import { StoreState } from 'app/types';
 
 import { splitOpen } from './state/main';
 import { updateTimeRange } from './state/time';
-import { toggleLogLevelAction, changeDedupStrategy } from './state/explorePane';
+import { toggleLogLevelAction, changeDedupStrategy, clearLogsNavigation } from './state/explorePane';
 import { deduplicatedRowsSelector } from './state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
@@ -93,6 +93,8 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       width,
       isLive,
       exploreId,
+      logsNavigationCleared,
+      clearLogsNavigation,
     } = this.props;
 
     if (!logRows) {
@@ -143,6 +145,8 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
+              logsNavigationCleared={logsNavigationCleared}
+              clearLogsNavigation={(shouldClear: boolean) => clearLogsNavigation(exploreId, shouldClear)}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -166,6 +170,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     range,
     absoluteRange,
     dedupStrategy,
+    logsNavigationCleared,
   } = item;
   const dedupedRows = deduplicatedRowsSelector(item) || undefined;
   const timeZone = getTimeZone(state.user);
@@ -186,6 +191,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
+    logsNavigationCleared,
   };
 }
 
@@ -194,6 +200,7 @@ const mapDispatchToProps = {
   toggleLogLevelAction,
   updateTimeRange,
   splitOpen,
+  clearLogsNavigation,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

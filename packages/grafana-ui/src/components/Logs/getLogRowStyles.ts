@@ -49,10 +49,6 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       font-size: ${theme.typography.size.sm};
       width: 100%;
     `,
-    exploreLogsPanelWithNavigation: css`
-      label: logs-exploreLogsPanelWithNavigation;
-      width: calc(100% - 75px);
-    `,
     context: css`
       label: context;
       visibility: hidden;

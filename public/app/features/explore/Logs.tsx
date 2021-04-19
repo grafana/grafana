@@ -75,6 +75,7 @@ interface Props {
   scanning?: boolean;
   scanRange?: RawTimeRange;
   dedupStrategy: LogsDedupStrategy;
+  logsNavigationCleared?: boolean;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -85,6 +86,7 @@ interface Props {
   onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  clearLogsNavigation: (shouldClear: boolean) => void;
 }
 
 interface State {
@@ -252,6 +254,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       getFieldLinks,
       dedupStrategy,
       theme,
+      logsNavigationCleared,
+      clearLogsNavigation,
     } = this.props;
 
     const {
@@ -263,7 +267,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       showDetectedFields,
       forceEscape,
     } = this.state;
-
+    console.log('<<<<<<<<<<<<<<<<', visibleRange);
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
@@ -415,7 +419,16 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               onClickHideDetectedField={this.hideDetectedField}
             />
           </CustomScrollbar>
-          <LogsNavigation />
+          <LogsNavigation
+            logsSortOrder={logsSortOrder}
+            visibleRange={{ from: logRows[logRows.length - 1].timeEpochMs, to: logRows[0].timeEpochMs }}
+            absoluteRange={absoluteRange}
+            timeZone={timeZone}
+            onChangeTime={onChangeTime}
+            loading={loading}
+            logsNavigationCleared={logsNavigationCleared}
+            clearLogsNavigation={clearLogsNavigation}
+          />
         </div>
 
         {!loading && !hasData && !scanning && (

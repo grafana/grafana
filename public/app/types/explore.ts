@@ -161,6 +161,7 @@ export interface ExploreItemState {
   showTable?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+  logsNavigationCleared?: boolean;
 }
 
 export interface ExploreUpdateState {

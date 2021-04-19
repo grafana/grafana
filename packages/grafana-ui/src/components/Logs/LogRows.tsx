@@ -24,7 +24,6 @@ export interface Props extends Themeable {
   logsSortOrder?: LogsSortOrder | null;
   allowDetails?: boolean;
   previewLimit?: number;
-  withNavigation?: boolean;
   forceEscape?: boolean;
   showDetectedFields?: string[];
   showContextToggle?: (row?: LogRowModel) => boolean;

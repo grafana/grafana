@@ -1,33 +1,92 @@
-import React, { memo } from 'react';
-import { ToolbarButton, Icon } from '@grafana/ui';
+import React, { memo, useState, useEffect } from 'react';
+import classNames from 'classNames';
+import { uniqBy, sortBy } from 'lodash';
 import { css } from 'emotion';
+import { LogsSortOrder, AbsoluteTimeRange, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
+import { Button, Icon, Spinner } from '@grafana/ui';
 
-function LogsNavigation() {
+type Props = {
+  logsSortOrder?: LogsSortOrder | null;
+  visibleRange: AbsoluteTimeRange;
+  absoluteRange: AbsoluteTimeRange;
+  timeZone: TimeZone;
+  loading: boolean;
+  logsNavigationCleared?: boolean;
+  onChangeTime: (range: AbsoluteTimeRange) => void;
+  clearLogsNavigation: (shouldClear: boolean) => void;
+};
+
+function LogsNavigation({
+  logsSortOrder,
+  visibleRange,
+  absoluteRange,
+  timeZone,
+  onChangeTime,
+  loading,
+  logsNavigationCleared,
+  clearLogsNavigation,
+}: Props) {
+  const [chunksArray, setChunksArray] = useState<AbsoluteTimeRange[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (logsNavigationCleared) {
+      setChunksArray([visibleRange]);
+      setCurrentIndex(0);
+    } else {
+      const currentChunksArray = chunksArray;
+      const newChunksArray = sortBy(uniqBy([...currentChunksArray, visibleRange], 'to'), 'from').reverse();
+      const currentIndex = newChunksArray.findIndex((chunk) => chunk.to === visibleRange.to);
+      setChunksArray(newChunksArray);
+      setCurrentIndex(currentIndex);
+    }
+  }, [visibleRange, logsNavigationCleared]);
+
+  function changeTime({ from, to }: AbsoluteTimeRange) {
+    clearLogsNavigation(false);
+    onChangeTime({ from, to });
+  }
+
   const styles = getStyles();
+  const newLogsOnTop = !logsSortOrder || logsSortOrder === LogsSortOrder.Descending;
   return (
     <div className={styles.wrapper}>
-      <ToolbarButton className={styles.navigationButton}>
+      <Button className={styles.navigationButton} variant="secondary">
         <div className={styles.navigationButtonContent}>
-          <Icon name="angle-up" />
-          Newer
+          <Icon name="angle-up" size="lg" />
+          <div>{newLogsOnTop ? 'Newer' : 'Older'}</div>
         </div>
-      </ToolbarButton>
+      </Button>
       <div className={styles.timeline}>
-        <div />
-        <div />
-        <div />
-        <div />
-        <div />
-      </div>
-      <div>
-        <ToolbarButton className={styles.navigationButton}>
-          <div className={styles.navigationButtonContent}>
-            Older
-            <Icon name="angle-down" />
+        {chunksArray.map((range: AbsoluteTimeRange, index) => (
+          <div className="wrap" key={range.from} onClick={() => changeTime({ from: range.from, to: range.to })}>
+            <div className={classNames('line', { blueBg: currentIndex === index })} />
+            <div className={classNames(styles.time, { blueText: currentIndex === index })}>{`${dateTimeFormat(
+              range.to,
+              {
+                format: systemDateFormats.interval.second,
+              }
+            )} - ${dateTimeFormat(range.from, {
+              format: systemDateFormats.interval.second,
+              timeZone: timeZone,
+            })}`}</div>
           </div>
-        </ToolbarButton>
-        <ToolbarButton className={styles.scrollUpButton} icon="arrow-up" iconOnly={true} />
+        ))}
       </div>
+      <Button
+        className={styles.navigationButton}
+        variant="secondary"
+        onClick={() => {
+          changeTime({ from: absoluteRange.from, to: visibleRange.from });
+        }}
+        disabled={loading}
+      >
+        <div className={styles.navigationButtonContent}>
+          <div>{newLogsOnTop ? 'Older' : 'Newer'}</div>
+          {loading ? <Spinner /> : <Icon name="angle-down" size="lg" />}
+        </div>
+      </Button>
+      <Button className={styles.scrollUpButton} icon="arrow-up" variant="secondary" />
     </div>
   );
 }
@@ -49,12 +108,18 @@ function getStyles() {
       height: 58px;
       line-height: 1;
       padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     `,
     navigationButtonContent: css`
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      width: 100%;
+      height: 100%;
     `,
     scrollUpButton: css`
       margin-top: 10px;
@@ -64,15 +129,29 @@ function getStyles() {
     timeline: css`
       height: calc(100% - 160px);
       padding-left: 4px;
-      div {
-        background: #4265f4;
-        width: 3px;
-        height: calc((100% - 84px) / 5);
+      .wrap {
+        display: flex;
+        width: 100%;
+        height: calc((100% - 84px) / 10);
         margin: 14px 0;
-        &:nth-last-child(-n + 3) {
+        cursor: pointer;
+        .line {
           background: gray;
+          width: 6px;
+          height: 100%;
         }
+        .blueBg {
+          background: #3871dc;
+        }
+        .blueText {
+          color: #3871dc;
+        }
+        align-items: center;
       }
+    `,
+    time: css`
+      font-size: 12px;
+      padding-left: 4px;
     `,
   };
 }

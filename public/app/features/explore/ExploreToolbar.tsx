@@ -12,6 +12,7 @@ import { StoreState } from 'app/types/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { changeDatasource } from './state/datasource';
 import { splitClose, splitOpen } from './state/main';
+import { clearLogsNavigation } from './state/explorePane';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { getTimeZone } from '../profile/state/selectors';
 import { updateTimeZoneForSession } from '../profile/state/reducers';
@@ -54,6 +55,7 @@ interface DispatchProps {
   syncTimes: typeof syncTimes;
   changeRefreshInterval: typeof changeRefreshInterval;
   onChangeTimeZone: typeof updateTimeZoneForSession;
+  clearLogsNavigation: typeof clearLogsNavigation;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -71,6 +73,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     if (loading) {
       return this.props.cancelQueries(this.props.exploreId);
     } else {
+      this.props.clearLogsNavigation(this.props.exploreId, true);
       return this.props.runQueries(this.props.exploreId);
     }
   };
@@ -274,6 +277,7 @@ const mapDispatchToProps: DispatchProps = {
   split: splitOpen,
   syncTimes,
   onChangeTimeZone: updateTimeZoneForSession,
+  clearLogsNavigation,
 };
 
 export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));
