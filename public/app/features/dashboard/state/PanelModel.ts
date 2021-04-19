@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
 // Utils
 import { getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -208,14 +208,14 @@ export class PanelModel implements DataConfigSource {
     }
 
     // defaults
-    _.defaultsDeep(this, _.cloneDeep(defaults));
+    defaultsDeep(this, cloneDeep(defaults));
 
     // queries must have refId
     this.ensureQueryIds();
   }
 
   ensureQueryIds() {
-    if (this.targets && _.isArray(this.targets)) {
+    if (this.targets && isArray(this.targets)) {
       for (const query of this.targets) {
         if (!query.refId) {
           query.refId = getNextRefIdChar(this.targets);
@@ -256,11 +256,11 @@ export class PanelModel implements DataConfigSource {
         continue;
       }
 
-      if (_.isEqual(this[property], defaults[property])) {
+      if (isEqual(this[property], defaults[property])) {
         continue;
       }
 
-      model[property] = _.cloneDeep(this[property]);
+      model[property] = cloneDeep(this[property]);
     }
 
     if (model.datasource === undefined) {
@@ -355,7 +355,7 @@ export class PanelModel implements DataConfigSource {
 
   clearPropertiesBeforePluginChange() {
     // remove panel type specific  options
-    for (const key of _.keys(this)) {
+    for (const key of keys(this)) {
       if (mustKeepProps[key]) {
         continue;
       }

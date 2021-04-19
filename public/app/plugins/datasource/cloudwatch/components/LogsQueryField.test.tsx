@@ -4,6 +4,7 @@ import { CloudWatchLogsQueryField } from './LogsQueryField';
 import { ExploreId } from '../../../../types';
 import { DescribeLogGroupsRequest } from '../types';
 import { SelectableValue } from '@grafana/data';
+// eslint-disable-next-line lodash/import-scope
 import _, { Cancelable } from 'lodash';
 
 jest.spyOn(_, 'debounce').mockImplementation((func: ((...args: any) => any) & Cancelable, wait: number) => func);

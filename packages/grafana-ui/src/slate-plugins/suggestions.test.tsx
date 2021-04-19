@@ -4,6 +4,7 @@ import { SuggestionsPlugin } from './suggestions';
 import { Plugin as SlatePlugin } from '@grafana/slate-react';
 import { SearchFunctionType } from '../utils';
 import { CompletionItemGroup, SuggestionsState } from '../types';
+// eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
 
 jest.spyOn(_, 'debounce').mockImplementation((func: (...args: any) => any) => {

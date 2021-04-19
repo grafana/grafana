@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';

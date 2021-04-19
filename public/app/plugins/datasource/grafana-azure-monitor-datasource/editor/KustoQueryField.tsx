@@ -1,4 +1,4 @@
-import _, { debounce } from 'lodash';
+import { debounce, map } from 'lodash';
 import Plain from 'slate-plain-serializer';
 
 import QueryField from './query_field';
@@ -322,7 +322,7 @@ export default class KustoQueryField extends QueryField {
       {
         prefixMatch: true,
         label: 'Tables',
-        items: _.map(this.schema.Databases.Default.Tables, (t: any) => ({ text: t.Name })),
+        items: map(this.schema.Databases.Default.Tables, (t: any) => ({ text: t.Name })),
       },
     ];
   }
@@ -356,7 +356,7 @@ export default class KustoQueryField extends QueryField {
           prefixMatch: true,
           label: 'Tables',
           // @ts-ignore
-          items: _.map(this.schema.Databases[db].Tables, (t: any) => ({ text: t.Name })),
+          items: map(this.schema.Databases[db].Tables, (t: any) => ({ text: t.Name })),
         },
       ];
     } else {
@@ -373,7 +373,7 @@ export default class KustoQueryField extends QueryField {
           {
             prefixMatch: true,
             label: 'Fields',
-            items: _.map(tableSchema.OrderedColumns, (f: any) => ({
+            items: map(tableSchema.OrderedColumns, (f: any) => ({
               text: f.Name,
               hint: f.Type,
             })),
