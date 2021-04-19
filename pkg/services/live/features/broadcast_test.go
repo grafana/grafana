@@ -15,7 +15,7 @@ import (
 func TestNewBroadcastRunner(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	d := NewMockLiveMessageStore(mockCtrl)
+	d := NewMockLiveChannelStore(mockCtrl)
 	br := NewBroadcastRunner(d)
 	require.NotNil(t, br)
 }
@@ -23,12 +23,12 @@ func TestNewBroadcastRunner(t *testing.T) {
 func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockDispatcher := NewMockLiveMessageStore(mockCtrl)
+	mockDispatcher := NewMockLiveChannelStore(mockCtrl)
 
 	channel := "stream/channel/test"
 	data := json.RawMessage(`{}`)
 
-	mockDispatcher.EXPECT().GetLastLiveMessage(&models.GetLiveChannelQuery{
+	mockDispatcher.EXPECT().GetLiveChannel(&models.GetLiveChannelQuery{
 		OrgId:   1,
 		Channel: channel,
 	}).DoAndReturn(func(query *models.GetLiveChannelQuery) (models.LiveChannel, bool, error) {
@@ -57,13 +57,13 @@ func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 func TestBroadcastRunner_OnPublish(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockDispatcher := NewMockLiveMessageStore(mockCtrl)
+	mockDispatcher := NewMockLiveChannelStore(mockCtrl)
 
 	channel := "stream/channel/test"
 	data := json.RawMessage(`{}`)
 	var orgID int64 = 1
 
-	mockDispatcher.EXPECT().SaveLiveMessage(&models.SaveLiveChannelDataQuery{
+	mockDispatcher.EXPECT().SaveLiveChannelData(&models.SaveLiveChannelDataQuery{
 		OrgId:   orgID,
 		Channel: channel,
 		Data:    data,

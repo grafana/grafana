@@ -13,9 +13,9 @@ var (
 	logger = log.New("live.features") // scoped to all features?
 )
 
-//go:generate mockgen -destination=message_store_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features LiveMessageStore
+//go:generate mockgen -destination=broadcast_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features LiveChannelStore
 
-type LiveMessageStore interface {
+type LiveChannelStore interface {
 	SaveLiveChannelData(query *models.SaveLiveChannelDataQuery) error
 	GetLiveChannel(query *models.GetLiveChannelQuery) (models.LiveChannel, bool, error)
 }
@@ -23,11 +23,11 @@ type LiveMessageStore interface {
 // BroadcastRunner will simply broadcast all events to `grafana/broadcast/*` channels
 // This assumes that data is a JSON object
 type BroadcastRunner struct {
-	liveMessageStore LiveMessageStore
+	liveChannelStore LiveChannelStore
 }
 
-func NewBroadcastRunner(liveMessageStore LiveMessageStore) *BroadcastRunner {
-	return &BroadcastRunner{liveMessageStore: liveMessageStore}
+func NewBroadcastRunner(liveChannelStore LiveChannelStore) *BroadcastRunner {
+	return &BroadcastRunner{liveChannelStore: liveChannelStore}
 }
 
 // GetHandlerForPath called on init
@@ -45,7 +45,7 @@ func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *models.SignedInUser,
 		OrgId:   u.OrgId,
 		Channel: e.Channel,
 	}
-	msg, ok, err := b.liveMessageStore.GetLiveChannel(query)
+	msg, ok, err := b.liveChannelStore.GetLiveChannel(query)
 	if err != nil {
 		return models.SubscribeReply{}, 0, err
 	}
@@ -62,7 +62,7 @@ func (b *BroadcastRunner) OnPublish(_ context.Context, u *models.SignedInUser, e
 		Channel: e.Channel,
 		Data:    e.Data,
 	}
-	if err := b.liveMessageStore.SaveLiveChannelData(query); err != nil {
+	if err := b.liveChannelStore.SaveLiveChannelData(query); err != nil {
 		return models.PublishReply{}, 0, err
 	}
 	return models.PublishReply{}, backend.PublishStreamStatusOK, nil
