@@ -499,7 +499,6 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
     // shift empty region back to fill gaps due to border radius
     emptyBar.left = '-3px';
-    emptyBar.width = `${maxBarWidth - barWidth}px`;
 
     if (isBasic) {
       // Basic styles

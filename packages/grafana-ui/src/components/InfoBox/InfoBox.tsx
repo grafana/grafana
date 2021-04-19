@@ -8,7 +8,6 @@ import { AlertVariant } from '../Alert/Alert';
 import panelArtDark from './panelArt_dark.svg';
 import panelArtLight from './panelArt_light.svg';
 import { stylesFactory, useTheme } from '../../themes';
-import { getColorsFromSeverity } from '../../utils/colors';
 
 export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   children: React.ReactNode;
@@ -57,61 +56,66 @@ export const InfoBox = React.memo(
 );
 InfoBox.displayName = 'InfoBox';
 
-const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme, severity: AlertVariant) => ({
-  wrapper: css`
-    position: relative;
-    padding: ${theme.spacing.md};
-    background-color: ${theme.colors.bg2};
-    border-top: 3px solid ${getColorsFromSeverity(severity, theme)[0]};
-    margin-bottom: ${theme.spacing.md};
-    flex-grow: 1;
-    color: ${theme.colors.textSemiWeak};
+const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme, severity: AlertVariant) => {
+  const color = theme.v2.palette[severity];
 
-    code {
-      font-size: ${theme.typography.size.sm};
-      background-color: ${theme.colors.bg1};
-      color: ${theme.colors.text};
-      border: 1px solid ${theme.colors.border2};
-      border-radius: 4px;
-    }
+  return {
+    wrapper: css`
+      position: relative;
+      padding: ${theme.spacing.md};
+      background-color: ${theme.colors.bg2};
+      border-left: 3px solid ${color.border};
+      margin-bottom: ${theme.spacing.md};
+      flex-grow: 1;
+      color: ${theme.colors.textSemiWeak};
+      box-shadow: ${theme.v2.shadows.z1};
 
-    p:last-child {
-      margin-bottom: 0;
-    }
+      code {
+        font-size: ${theme.typography.size.sm};
+        background-color: ${theme.colors.bg1};
+        color: ${theme.colors.text};
+        border: 1px solid ${theme.colors.border2};
+        border-radius: 4px;
+      }
 
-    &--max-lg {
-      max-width: ${theme.breakpoints.lg};
-    }
-  `,
-  wrapperBranded: css`
-    padding: ${theme.spacing.md};
-    border-radius: ${theme.border.radius.md};
-    position: relative;
-    z-index: 0;
+      p:last-child {
+        margin-bottom: 0;
+      }
 
-    &:before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: url(${theme.isLight ? panelArtLight : panelArtDark});
+      &--max-lg {
+        max-width: ${theme.breakpoints.lg};
+      }
+    `,
+    wrapperBranded: css`
+      padding: ${theme.spacing.md};
       border-radius: ${theme.border.radius.md};
-      background-position: 50% 50%;
-      background-size: cover;
-      filter: saturate(80%);
-      z-index: -1;
-    }
+      position: relative;
+      z-index: 0;
 
-    p:last-child {
-      margin-bottom: 0;
-    }
-  `,
-  docsLink: css`
-    display: inline-block;
-    margin-top: ${theme.spacing.md};
-    font-size: ${theme.typography.size.sm};
-    color: ${theme.colors.textSemiWeak};
-  `,
-}));
+      &:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url(${theme.isLight ? panelArtLight : panelArtDark});
+        border-radius: ${theme.border.radius.md};
+        background-position: 50% 50%;
+        background-size: cover;
+        filter: saturate(80%);
+        z-index: -1;
+      }
+
+      p:last-child {
+        margin-bottom: 0;
+      }
+    `,
+    docsLink: css`
+      display: inline-block;
+      margin-top: ${theme.spacing.md};
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.textSemiWeak};
+    `,
+  };
+});
