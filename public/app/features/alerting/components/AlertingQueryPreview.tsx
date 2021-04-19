@@ -1,14 +1,11 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { css } from '@emotion/css';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { DataFrame, DataQuery, GrafanaTheme, PanelData } from '@grafana/data';
 import { Icon, Tab, TabContent, TabsBar, useStyles } from '@grafana/ui';
 import { PreviewQueryTab } from './PreviewQueryTab';
 import { PreviewInstancesTab } from './PreviewInstancesTab';
-import { forkJoin } from 'rxjs';
-import { mergeAll } from 'rxjs/operators';
 import { EmptyState } from './EmptyState';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 
 enum Tabs {
   Query = 'query',
@@ -21,30 +18,16 @@ const tabs = [
 ];
 
 interface Props {
-  queryRunners: Record<string, PanelQueryRunner>;
   getInstances: () => DataFrame[];
   queries: DataQuery[];
   onTest: () => void;
-  onRunQueries: () => void;
 }
 
-export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, onTest, queryRunners, queries }) => {
+export const AlertingQueryPreview: FC<Props> = ({ getInstances, onTest, queries }) => {
   const [activeTab, setActiveTab] = useState<string>(Tabs.Query);
   const styles = useStyles(getStyles);
 
   let data = {} as PanelData;
-  useEffect(() => {
-    const runningQueries = Object.values(queryRunners).map((queryRunner) =>
-      queryRunner.getData({ withFieldConfig: true, withTransforms: true })
-    );
-    const subscription = forkJoin(runningQueries)
-      .pipe(mergeAll())
-      .subscribe((value) => {
-        console.log('value', value);
-        data = value;
-      });
-    return () => subscription.unsubscribe();
-  }, [queryRunners]);
 
   const instances = getInstances();
 
@@ -74,7 +57,6 @@ export const AlertingQueryPreview: FC<Props> = ({ getInstances, onRunQueries, on
               onTest={onTest}
               data={data}
               activeTab={activeTab}
-              onRunQueries={onRunQueries}
               queries={queries}
             />
           ))}
@@ -89,10 +71,9 @@ interface PreviewProps {
   onTest: () => void;
   data: PanelData;
   activeTab: string;
-  onRunQueries: () => void;
 }
 
-const QueriesAndInstances: FC<PreviewProps> = ({ queries, instances, onTest, data, activeTab, onRunQueries }) => {
+const QueriesAndInstances: FC<PreviewProps> = ({ queries, instances, onTest, data, activeTab }) => {
   if (queries.length === 0) {
     return (
       <EmptyState title="No queries added.">
@@ -113,7 +94,7 @@ const QueriesAndInstances: FC<PreviewProps> = ({ queries, instances, onTest, dat
 
           case Tabs.Query:
           default:
-            return <PreviewQueryTab data={data} width={width} height={height} onRunQueries={onRunQueries} />;
+            return <PreviewQueryTab data={data} width={width} height={height} />;
         }
       }}
     </AutoSizer>

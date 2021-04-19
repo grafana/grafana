@@ -62,7 +62,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex === index) {
-          return query;
+          return { ...query };
         }
         return item;
       })

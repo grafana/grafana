@@ -16,7 +16,6 @@ import {
   evaluateAlertDefinition,
   evaluateNotSavedAlertDefinition,
   getAlertDefinition,
-  onRunQueries,
   updateAlertDefinition,
   updateAlertDefinitionOption,
   updateAlertDefinitionUiState,
@@ -27,8 +26,6 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 function mapStateToProps(state: StoreState, props: RouteProps) {
   return {
     uiState: state.alertDefinition.uiState,
-    getQueryOptions: state.alertDefinition.getQueryOptions,
-    queryRunners: state.alertDefinition.queryRunners,
     getInstances: state.alertDefinition.getInstances,
     alertDefinition: state.alertDefinition.alertDefinition,
     pageId: props.match.params.id as string,
@@ -43,7 +40,6 @@ const mapDispatchToProps = {
   createAlertDefinition,
   getAlertDefinition,
   evaluateNotSavedAlertDefinition,
-  onRunQueries,
   cleanUpDefinitionState,
 };
 
@@ -125,18 +121,9 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const {
-      alertDefinition,
-      uiState,
-      updateAlertDefinitionUiState,
-      queryRunners,
-      getQueryOptions,
-      getInstances,
-      onRunQueries,
-    } = this.props;
+    const { alertDefinition, uiState, updateAlertDefinitionUiState, getInstances } = this.props;
 
     const styles = getStyles(config.theme);
-    const queryOptions = getQueryOptions();
 
     return (
       <div className={styles.wrapper}>
@@ -146,14 +133,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
         <div className={styles.splitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={[
-              <AlertingQueryPreview
-                key="queryPreview"
-                queryRunners={queryRunners!} // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
-                getInstances={getInstances}
-                queries={queryOptions.queries}
-                onTest={this.onTest}
-                onRunQueries={onRunQueries}
-              />,
+              <AlertingQueryPreview key="queryPreview" getInstances={getInstances} queries={[]} onTest={this.onTest} />,
               <AlertingQueryEditor key="queryEditor" />,
             ]}
             uiState={uiState}
@@ -164,7 +144,6 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
                 onChange={this.onChangeAlertOption}
                 onIntervalChange={this.onChangeInterval}
                 onConditionChange={this.onConditionChange}
-                queryOptions={queryOptions}
               />
             }
           />
