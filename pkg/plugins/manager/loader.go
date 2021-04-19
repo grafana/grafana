@@ -38,12 +38,10 @@ type Loader struct {
 }
 
 func init() {
-	logger := log.New("plugin.loader")
-
 	registry.Register(&registry.Descriptor{
 		Name: "PluginLoader",
 		Instance: &Loader{
-			log: logger,
+			log: log.New("plugin.loader"),
 		},
 		InitPriority: registry.MediumHigh,
 	})
@@ -53,7 +51,7 @@ func (l *Loader) Init() error {
 	return nil
 }
 
-func (l *Loader) Load(pluginJSONPath string, signatureValidator PluginSignatureValidator) (*plugins.PluginV2, error) {
+func (l *Loader) Load(pluginJSONPath string, signatureValidator plugins.PluginSignatureValidator) (*plugins.PluginV2, error) {
 	p, err := l.LoadAll([]string{pluginJSONPath}, signatureValidator)
 	if err != nil {
 		return nil, err
@@ -62,7 +60,7 @@ func (l *Loader) Load(pluginJSONPath string, signatureValidator PluginSignatureV
 	return p[0], nil
 }
 
-func (l *Loader) LoadAll(pluginJSONPaths []string, signatureValidator PluginSignatureValidator) ([]*plugins.PluginV2, error) {
+func (l *Loader) LoadAll(pluginJSONPaths []string, signatureValidator plugins.PluginSignatureValidator) ([]*plugins.PluginV2, error) {
 	var foundPlugins = make(map[string]*plugins.PluginV2)
 
 	for _, pluginJSONPath := range pluginJSONPaths {
@@ -130,16 +128,16 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, signatureValidator PluginSign
 
 	// start of second pass
 	for _, plugin := range foundPlugins {
-		pmlog.Debug("Found plugin", "id", plugin.ID, "signature", plugin.Signature, "hasParent", plugin.Parent != nil)
-		signingError := signatureValidator.validate(plugin)
+		l.log.Debug("Found plugin", "id", plugin.ID, "signature", plugin.Signature, "hasParent", plugin.Parent != nil)
+		signingError := signatureValidator.Validate(plugin)
 		if signingError != nil {
-			pmlog.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
+			l.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
 				"signature", plugin.Signature, "status", signingError.ErrorCode)
 			//pm.pluginScanningErrors[plugin.Id] = *signingError
 			return nil, nil // collect scanning error
 		}
 
-		pmlog.Debug("Attempting to add plugin", "id", plugin.ID)
+		l.log.Debug("Attempting to add plugin", "id", plugin.ID)
 
 		pluginGoType, exists := pluginTypes[plugin.Type]
 		if !exists {
@@ -156,7 +154,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, signatureValidator PluginSign
 				return nil, err
 			}
 			if !exists {
-				pmlog.Warn("Plugin missing module.js",
+				l.log.Warn("Plugin missing module.js",
 					"name", plugin.Name,
 					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
 					"path", module)
@@ -169,7 +167,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, signatureValidator PluginSign
 		reader, err := os.Open(pluginJSONPath)
 		defer func() {
 			if err := reader.Close(); err != nil {
-				pmlog.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
+				l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
 			}
 		}()
 		if err != nil {
@@ -230,7 +228,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, signatureValidator PluginSign
 		l.log.Debug("Successfully added plugin", "id", plugin.ID)
 
 		//if len(scanner.errors) > 0 {
-		//	pmlog.Warn("Some plugins failed to load", "errors", scanner.errors)
+		//	l.log.Warn("Some plugins failed to load", "errors", scanner.errors)
 		//	pm.scanningErrors = scanner.errors
 		//}
 	}

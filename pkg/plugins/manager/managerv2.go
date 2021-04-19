@@ -29,7 +29,7 @@ type PluginManagerV2 struct {
 	PluginLoader         plugins.PluginLoaderV2      `inject:""`
 	PluginInitializer    plugins.PluginInitializerV2 `inject:""`
 
-	AllowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
+	AllowUnsignedPluginsCondition plugins.UnsignedPluginV2ConditionFunc
 
 	log       log.Logger
 	plugins   map[string]*plugins.PluginV2
@@ -40,7 +40,7 @@ func init() {
 	registry.Register(&registry.Descriptor{
 		Name: "PluginManagerV2",
 		Instance: &PluginManagerV2{
-			log: logger.New("plugin.managerv2"),
+			log: log.New("plugin.managerv2"),
 		},
 		InitPriority: registry.MediumHigh,
 	})
@@ -164,11 +164,11 @@ func restartKilledProcess(ctx context.Context, p *plugins.PluginV2) error {
 func (m *PluginManagerV2) InstallCorePlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
 	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", pluginJSONPath)
 
-	plugin, err := m.PluginLoader.Load(fullPath, PluginSignatureValidator{
-		cfg:                           m.Cfg,
-		requireSigned:                 false,
-		allowUnsignedPluginsCondition: m.AllowUnsignedPluginsCondition,
-	})
+	plugin, err := m.PluginLoader.Load(fullPath, plugins.NewSignatureValidator(
+		m.Cfg,
+		false,
+		m.AllowUnsignedPluginsCondition,
+	))
 	if err != nil {
 		return err
 	}
@@ -200,11 +200,11 @@ func (m *PluginManagerV2) installPlugins(path string, requireSigning bool) error
 		return err
 	}
 
-	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths, PluginSignatureValidator{
-		cfg:                           m.Cfg,
-		allowUnsignedPluginsCondition: m.AllowUnsignedPluginsCondition,
-		requireSigned:                 requireSigning,
-	})
+	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths, plugins.NewSignatureValidator(
+		m.Cfg,
+		requireSigning,
+		m.AllowUnsignedPluginsCondition,
+	))
 	if err != nil {
 		return err
 	}
