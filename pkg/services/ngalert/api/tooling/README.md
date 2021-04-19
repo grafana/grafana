@@ -1,8 +1,8 @@
 ## What
 
-[view api](https://grafana.github.io/alerting-api/)
+[view api](http://localhost)
 
-This repo aims to define the unified alerting API as code. It generates OpenAPI definitions from go structs
+This aims to define the unified alerting API as code. It generates OpenAPI definitions from go structs
 
 
 ## Running
