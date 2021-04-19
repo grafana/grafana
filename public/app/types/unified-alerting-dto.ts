@@ -113,12 +113,9 @@ export interface PostableGrafanaRuleDefinition {
   uid?: string;
   title: string;
   condition: string;
-  for: number; //@TODO Sofia will update to accept string
   no_data_state: GrafanaAlertState;
   exec_err_state: GrafanaAlertState;
   data: GrafanaQuery[];
-  annotations: Annotations;
-  labels: Labels;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   uid: string;
@@ -127,12 +124,16 @@ export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
 
 export interface RulerGrafanaRuleDTO {
   grafana_alert: GrafanaRuleDefinition;
-  // labels?: Labels; @TODO to be discussed
-  // annotations?: Annotations;
+  for: string;
+  annotations: Annotations;
+  labels: Labels;
 }
 
 export interface PostableRuleGrafanaRuleDTO {
   grafana_alert: PostableGrafanaRuleDefinition;
+  for: string;
+  annotations: Annotations;
+  labels: Labels;
 }
 
 export type RulerRuleDTO = RulerAlertingRuleDTO | RulerRecordingRuleDTO | RulerGrafanaRuleDTO;

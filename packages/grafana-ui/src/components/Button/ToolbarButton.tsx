@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaTheme) => {
       border-radius: ${theme.v2.shape.borderRadius()};
       line-height: ${theme.v2.components.height.md * theme.v2.spacing.gridSize - 2}px;
       font-weight: ${theme.v2.typography.fontWeightMedium};
-      border: 1px solid ${theme.v2.palette.border1};
+      border: 1px solid ${theme.v2.palette.border.medium};
       white-space: nowrap;
       transition: ${theme.v2.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
         duration: theme.v2.transitions.duration.short,
@@ -154,11 +154,11 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     default: css`
       color: ${theme.v2.palette.text.secondary};
-      background-color: ${theme.v2.palette.layer1};
+      background-color: ${theme.v2.palette.background.primary};
 
       &:hover {
         color: ${theme.v2.palette.text.primary};
-        background: ${theme.v2.palette.layer2};
+        background: ${theme.v2.palette.background.secondary};
       }
     `,
     active: css`
