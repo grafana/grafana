@@ -433,6 +433,38 @@ describe('ElasticQueryBuilder', () => {
         expect(firstLevel.aggs['4']).toBe(undefined);
       });
 
+      it('with top_metrics', () => {
+        const query = builder.build({
+          refId: 'A',
+          metrics: [
+            {
+              id: '2',
+              type: 'top_metrics',
+              field: '@value',
+              settings: {
+                order: 'desc',
+                orderBy: '@timestamp',
+                aggregateBy: 'sum',
+                size: 2,
+              },
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
+        });
+
+        const firstLevel = query.aggs['3'];
+
+        expect(firstLevel.aggs['2']).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.metrics).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.size).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.sort).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.metrics.length).toBe(1);
+        expect(firstLevel.aggs['2'].top_metrics.metrics).toEqual([{ field: '@value' }]);
+        expect(firstLevel.aggs['2'].top_metrics.sort).toEqual([{ '@timestamp': 'desc' }]);
+        expect(firstLevel.aggs['2'].top_metrics.size).toBe(2);
+      });
+
       it('with derivative', () => {
         const query = builder.build({
           refId: 'A',
