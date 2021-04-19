@@ -148,7 +148,7 @@ func (hs *HTTPServer) QuerySSE(c *models.ReqContext, queries []*simplejson.Json)
 		request.Queries = append(request.Queries, backend.DataQuery{
 			RefID:         query.Get("refId").MustString("A"),
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
-			Interval:      time.Duration(time.Second * time.Duration(query.Get("intervalMs").MustInt64(1000))),
+			Interval:      time.Second * time.Duration(query.Get("intervalMs").MustInt64(1000)),
 			QueryType:     query.Get("queryType").MustString(""),
 			JSON:          encodedQuery,
 			TimeRange: backend.TimeRange{
