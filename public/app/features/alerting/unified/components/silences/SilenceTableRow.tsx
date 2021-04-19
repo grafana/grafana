@@ -10,6 +10,7 @@ import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { useStyles } from '@grafana/ui';
+import { RulesTable } from '../rules/RulesTable';
 
 interface Props {
   className?: string;
@@ -90,12 +91,18 @@ const SilenceTableRow: FC<Props> = ({ silence, className }) => {
             <td>Created by</td>
             <td colSpan={4}>{createdBy}</td>
           </tr>
-          {matchingRules.length > 0 && (
+          {!!matchingRules.length && (
             <tr className={className}>
               <td />
               <td>Affected alert rules</td>
               <td colSpan={4}>
-                <pre>{JSON.stringify(matchingRules, null, 2)}</pre>
+                {rulesNamespaces.map(({ name, groups, rulesSource }) => {
+                  return groups.map((group, index) => {
+                    return (
+                      <RulesTable key={`${name}-${index}`} namespace={name} group={group} rulesSource={rulesSource} />
+                    );
+                  });
+                })}
               </td>
             </tr>
           )}
