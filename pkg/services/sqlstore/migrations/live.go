@@ -5,14 +5,13 @@ import (
 )
 
 func addLiveMigrations(mg *Migrator) {
-	liveMessage := Table{
-		Name: "live_message",
+	liveChannel := Table{
+		Name: "live_channel",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, Nullable: false, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "channel", Type: DB_NVarchar, Length: 189, Nullable: false},
 			{Name: "data", Type: DB_Text, Nullable: false},
-			{Name: "created_by", Type: DB_Int, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 		},
 		Indices: []*Index{
@@ -20,6 +19,6 @@ func addLiveMigrations(mg *Migrator) {
 		},
 	}
 
-	mg.AddMigration("create live message table", NewAddTableMigration(liveMessage))
-	mg.AddMigration("add index live_message.org_id_channel_unique", NewAddIndexMigration(liveMessage, liveMessage.Indices[0]))
+	mg.AddMigration("create live channel table", NewAddTableMigration(liveChannel))
+	mg.AddMigration("add index live_channel.org_id_channel_unique", NewAddIndexMigration(liveChannel, liveChannel.Indices[0]))
 }

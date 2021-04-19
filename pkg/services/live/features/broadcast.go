@@ -16,8 +16,8 @@ var (
 //go:generate mockgen -destination=message_store_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features LiveMessageStore
 
 type LiveMessageStore interface {
-	SaveLiveMessage(query *models.SaveLiveMessageQuery) error
-	GetLastLiveMessage(query *models.GetLastLiveMessageQuery) (models.LiveMessage, bool, error)
+	SaveLiveChannelData(query *models.SaveLiveChannelDataQuery) error
+	GetLiveChannel(query *models.GetLiveChannelQuery) (models.LiveChannel, bool, error)
 }
 
 // BroadcastRunner will simply broadcast all events to `grafana/broadcast/*` channels
@@ -41,11 +41,11 @@ func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *models.SignedInUser,
 		Presence:  true,
 		JoinLeave: true,
 	}
-	query := &models.GetLastLiveMessageQuery{
+	query := &models.GetLiveChannelQuery{
 		OrgId:   u.OrgId,
 		Channel: e.Channel,
 	}
-	msg, ok, err := b.liveMessageStore.GetLastLiveMessage(query)
+	msg, ok, err := b.liveMessageStore.GetLiveChannel(query)
 	if err != nil {
 		return models.SubscribeReply{}, 0, err
 	}
@@ -57,13 +57,12 @@ func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *models.SignedInUser,
 
 // OnPublish is called when a client wants to broadcast on the websocket
 func (b *BroadcastRunner) OnPublish(_ context.Context, u *models.SignedInUser, e models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
-	query := &models.SaveLiveMessageQuery{
-		OrgId:     u.OrgId,
-		Channel:   e.Channel,
-		Data:      e.Data,
-		CreatedBy: u.UserId,
+	query := &models.SaveLiveChannelDataQuery{
+		OrgId:   u.OrgId,
+		Channel: e.Channel,
+		Data:    e.Data,
 	}
-	if err := b.liveMessageStore.SaveLiveMessage(query); err != nil {
+	if err := b.liveMessageStore.SaveLiveChannelData(query); err != nil {
 		return models.PublishReply{}, 0, err
 	}
 	return models.PublishReply{}, backend.PublishStreamStatusOK, nil

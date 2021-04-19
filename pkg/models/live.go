@@ -67,23 +67,21 @@ type DashboardActivityChannel interface {
 	DashboardDeleted(uid string, userID int64) error
 }
 
-type LiveMessage struct {
-	Id        int64
-	OrgId     int64
-	Channel   string
-	Data      json.RawMessage
-	Created   time.Time
-	CreatedBy int64
+type LiveChannel struct {
+	Id      int64
+	OrgId   int64
+	Channel string
+	Data    json.RawMessage
+	Created time.Time
 }
 
-type SaveLiveMessageQuery struct {
-	OrgId     int64
-	Channel   string
-	Data      json.RawMessage
-	CreatedBy int64
+type SaveLiveChannelDataQuery struct {
+	OrgId   int64
+	Channel string
+	Data    json.RawMessage
 }
 
-type GetLastLiveMessageQuery struct {
+type GetLiveChannelQuery struct {
 	OrgId   int64
 	Channel string
 }

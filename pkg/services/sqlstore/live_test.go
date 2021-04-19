@@ -13,52 +13,48 @@ import (
 func TestLiveMessage(t *testing.T) {
 	ss := InitTestDB(t)
 
-	getQuery := &models.GetLastLiveMessageQuery{
+	getQuery := &models.GetLiveChannelQuery{
 		OrgId:   1,
 		Channel: "test_channel",
 	}
-	_, ok, err := ss.GetLastLiveMessage(getQuery)
+	_, ok, err := ss.GetLiveChannel(getQuery)
 	require.NoError(t, err)
 	require.False(t, ok)
 
-	saveQuery := &models.SaveLiveMessageQuery{
-		OrgId:     1,
-		Channel:   "test_channel",
-		Data:      []byte(`{}`),
-		CreatedBy: 2,
+	saveQuery := &models.SaveLiveChannelDataQuery{
+		OrgId:   1,
+		Channel: "test_channel",
+		Data:    []byte(`{}`),
 	}
-	err = ss.SaveLiveMessage(saveQuery)
+	err = ss.SaveLiveChannelData(saveQuery)
 	require.NoError(t, err)
 
-	msg, ok, err := ss.GetLastLiveMessage(getQuery)
+	msg, ok, err := ss.GetLiveChannel(getQuery)
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, int64(1), msg.OrgId)
 	require.Equal(t, "test_channel", msg.Channel)
 	require.Equal(t, json.RawMessage(`{}`), msg.Data)
-	require.Equal(t, int64(2), msg.CreatedBy)
 	require.NotZero(t, msg.Created)
 
 	// try saving again, should be replaced.
-	saveQuery2 := &models.SaveLiveMessageQuery{
-		OrgId:     1,
-		Channel:   "test_channel",
-		Data:      []byte(`{"input": "hello"}`),
-		CreatedBy: 3,
+	saveQuery2 := &models.SaveLiveChannelDataQuery{
+		OrgId:   1,
+		Channel: "test_channel",
+		Data:    []byte(`{"input": "hello"}`),
 	}
-	err = ss.SaveLiveMessage(saveQuery2)
+	err = ss.SaveLiveChannelData(saveQuery2)
 	require.NoError(t, err)
 
-	getQuery2 := &models.GetLastLiveMessageQuery{
+	getQuery2 := &models.GetLiveChannelQuery{
 		OrgId:   1,
 		Channel: "test_channel",
 	}
-	msg2, ok, err := ss.GetLastLiveMessage(getQuery2)
+	msg2, ok, err := ss.GetLiveChannel(getQuery2)
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, int64(1), msg2.OrgId)
 	require.Equal(t, "test_channel", msg2.Channel)
 	require.Equal(t, json.RawMessage(`{"input": "hello"}`), msg2.Data)
-	require.Equal(t, int64(3), msg2.CreatedBy)
 	require.NotZero(t, msg2.Created)
 }

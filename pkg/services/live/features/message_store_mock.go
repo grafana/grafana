@@ -35,10 +35,10 @@ func (m *MockLiveMessageStore) EXPECT() *MockLiveMessageStoreMockRecorder {
 }
 
 // GetLastLiveMessage mocks base method.
-func (m *MockLiveMessageStore) GetLastLiveMessage(arg0 *models.GetLastLiveMessageQuery) (models.LiveMessage, bool, error) {
+func (m *MockLiveMessageStore) GetLiveChannel(arg0 *models.GetLiveChannelQuery) (models.LiveChannel, bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLastLiveMessage", arg0)
-	ret0, _ := ret[0].(models.LiveMessage)
+	ret := m.ctrl.Call(m, "GetLiveChannel", arg0)
+	ret0, _ := ret[0].(models.LiveChannel)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -47,13 +47,13 @@ func (m *MockLiveMessageStore) GetLastLiveMessage(arg0 *models.GetLastLiveMessag
 // GetLastLiveMessage indicates an expected call of GetLastLiveMessage.
 func (mr *MockLiveMessageStoreMockRecorder) GetLastLiveMessage(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastLiveMessage", reflect.TypeOf((*MockLiveMessageStore)(nil).GetLastLiveMessage), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLiveChannel", reflect.TypeOf((*MockLiveMessageStore)(nil).GetLiveChannel), arg0)
 }
 
 // SaveLiveMessage mocks base method.
-func (m *MockLiveMessageStore) SaveLiveMessage(arg0 *models.SaveLiveMessageQuery) error {
+func (m *MockLiveMessageStore) SaveLiveChannelData(arg0 *models.SaveLiveChannelDataQuery) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveLiveMessage", arg0)
+	ret := m.ctrl.Call(m, "SaveLiveChannelData", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -61,5 +61,5 @@ func (m *MockLiveMessageStore) SaveLiveMessage(arg0 *models.SaveLiveMessageQuery
 // SaveLiveMessage indicates an expected call of SaveLiveMessage.
 func (mr *MockLiveMessageStoreMockRecorder) SaveLiveMessage(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLiveMessage", reflect.TypeOf((*MockLiveMessageStore)(nil).SaveLiveMessage), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLiveChannelData", reflect.TypeOf((*MockLiveMessageStore)(nil).SaveLiveChannelData), arg0)
 }

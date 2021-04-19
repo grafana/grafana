@@ -28,11 +28,11 @@ func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 	channel := "stream/channel/test"
 	data := json.RawMessage(`{}`)
 
-	mockDispatcher.EXPECT().GetLastLiveMessage(&models.GetLastLiveMessageQuery{
+	mockDispatcher.EXPECT().GetLastLiveMessage(&models.GetLiveChannelQuery{
 		OrgId:   1,
 		Channel: channel,
-	}).DoAndReturn(func(query *models.GetLastLiveMessageQuery) (models.LiveMessage, bool, error) {
-		return models.LiveMessage{
+	}).DoAndReturn(func(query *models.GetLiveChannelQuery) (models.LiveChannel, bool, error) {
+		return models.LiveChannel{
 			Data: data,
 		}, true, nil
 	}).Times(1)
@@ -62,14 +62,12 @@ func TestBroadcastRunner_OnPublish(t *testing.T) {
 	channel := "stream/channel/test"
 	data := json.RawMessage(`{}`)
 	var orgID int64 = 1
-	var userID int64 = 2
 
-	mockDispatcher.EXPECT().SaveLiveMessage(&models.SaveLiveMessageQuery{
-		OrgId:     orgID,
-		CreatedBy: userID,
-		Channel:   channel,
-		Data:      data,
-	}).DoAndReturn(func(query *models.SaveLiveMessageQuery) error {
+	mockDispatcher.EXPECT().SaveLiveMessage(&models.SaveLiveChannelDataQuery{
+		OrgId:   orgID,
+		Channel: channel,
+		Data:    data,
+	}).DoAndReturn(func(query *models.SaveLiveChannelDataQuery) error {
 		return nil
 	}).Times(1)
 
