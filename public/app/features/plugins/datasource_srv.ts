@@ -99,7 +99,7 @@ export class DatasourceSrv implements DataSourceService {
     // Interpolation here is to support template variable in data source selection
     nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
-    if (nameOrUid === 'default') {
+    if (nameOrUid === 'default' && this.defaultName !== 'default') {
       return this.get(this.defaultName);
     }
 
@@ -164,13 +164,25 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.metrics && !x.meta.metrics) {
         return false;
       }
+      if (filters.alerting && !x.meta.alerting) {
+        return false;
+      }
       if (filters.tracing && !x.meta.tracing) {
         return false;
       }
       if (filters.annotations && !x.meta.annotations) {
         return false;
       }
+      if (filters.alerting && !x.meta.alerting) {
+        return false;
+      }
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
+        return false;
+      }
+      if (filters.filter && !filters.filter(x)) {
+        return false;
+      }
+      if (filters.type && (Array.isArray(filters.type) ? !filters.type.includes(x.type) : filters.type !== x.type)) {
         return false;
       }
       if (
@@ -178,7 +190,8 @@ export class DatasourceSrv implements DataSourceService {
         x.meta.metrics !== true &&
         x.meta.annotations !== true &&
         x.meta.tracing !== true &&
-        x.meta.logs !== true
+        x.meta.logs !== true &&
+        x.meta.alerting !== true
       ) {
         return false;
       }
@@ -212,7 +225,7 @@ export class DatasourceSrv implements DataSourceService {
       return 0;
     });
 
-    if (!filters.pluginId) {
+    if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
         base.push(this.getInstanceSettings('-- Mixed --')!);
       }

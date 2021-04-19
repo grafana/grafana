@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
+import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { colors } from './colors';
 import { DeepPartial, ThemePaletteColor } from './types';
 
@@ -26,15 +26,25 @@ export interface ThemePaletteBase<TColor> {
     maxContrast: string;
   };
 
-  layer0: string;
-  layer1: string;
-  layer2: string;
+  background: {
+    /** Dashboard and body background */
+    canvas: string;
+    /** Primary content pane background (panels etc) */
+    primary: string;
+    /** Cards and elements that need to stand out on the primary background */
+    secondary: string;
+  };
 
-  divider: string;
+  border: {
+    weak: string;
+    medium: string;
+    strong: string;
+  };
 
-  border0: string;
-  border1: string;
-  border2: string;
+  gradients: {
+    brandVertical: string;
+    brandHorizontal: string;
+  };
 
   action: {
     /** Used for selected menu item / select option */
@@ -64,8 +74,8 @@ export interface ThemeHoverStrengh {}
 export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
   /** Returns a text color for the background */
   getContrastText(background: string): string;
-  /* Return a hover color for any color */
-  getHoverColor(color: string, hoverFactor?: number): string;
+  /* Brighten or darken a color by specified factor (0-1) */
+  emphasize(color: string, amount?: number): string;
 }
 
 /** @internal */
@@ -74,10 +84,12 @@ export type ThemePaletteInput = DeepPartial<ThemePaletteBase<ThemePaletteColor>>
 class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'dark';
 
+  whiteBase = '201, 209, 217';
+
   text = {
-    primary: 'rgba(255, 255, 255, 0.75)',
-    secondary: 'rgba(255, 255, 255, 0.50)',
-    disabled: 'rgba(255, 255, 255, 0.35)',
+    primary: `rgb(${this.whiteBase})`,
+    secondary: `rgba(${this.whiteBase}, 0.65)`,
+    disabled: `rgba(${this.whiteBase}, 0.40)`,
     link: colors.blueDarkText,
     maxContrast: colors.white,
   };
@@ -89,10 +101,10 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   secondary = {
-    main: 'rgba(255,255,255,0.1)',
-    shade: 'rgba(255,255,255,0.15)',
-    text: 'rgba(255,255,255,0.13)',
-    contrastText: 'rgba(255, 255, 255, 0.8)',
+    main: `rgba(${this.whiteBase}, 0.1)`,
+    shade: `rgba(${this.whiteBase}, 0.15)`,
+    text: `rgba(${this.whiteBase}, 0.13)`,
+    contrastText: `rgb(${this.whiteBase})`,
   };
 
   info = this.primary;
@@ -112,33 +124,42 @@ class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
     text: colors.orangeDarkText,
   };
 
-  layer0 = colors.gray05;
-  layer1 = colors.gray10;
-  layer2 = colors.gray15;
+  background = {
+    canvas: colors.gray05,
+    primary: colors.gray10,
+    secondary: colors.gray15,
+  };
 
-  divider = 'rgba(218,224,254,0.06)';
-
-  border0 = this.layer1;
-  border1 = 'rgba(218,224,254,0.15)';
-  border2 = 'rgba(218,224,254,0.20)';
+  border = {
+    weak: `rgba(${this.whiteBase}, 0.10)`,
+    medium: `rgba(${this.whiteBase}, 0.15)`,
+    strong: `rgba(${this.whiteBase}, 0.20)`,
+  };
 
   action = {
-    hover: 'rgba(255, 255, 255, 0.08)',
-    selected: 'rgba(255, 255, 255, 0.12)',
-    focus: 'rgba(255, 255, 255, 0.16)',
+    hover: `rgba(${this.whiteBase}, 0.08)`,
+    selected: `rgba(${this.whiteBase}, 0.12)`,
+    focus: `rgba(${this.whiteBase}, 0.16)`,
     hoverOpacity: 0.08,
     disabledText: this.text.disabled,
-    disabledBackground: 'rgba(255,255,255,0.07)',
+    disabledBackground: `rgba(${this.whiteBase}, 0.07)`,
     disabledOpacity: 0.38,
   };
 
+  gradients = {
+    brandHorizontal: ' linear-gradient(270deg, #F55F3E 0%, #FF8833 100%);',
+    brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);',
+  };
+
   contrastThreshold = 3;
-  hoverFactor = 0.15;
+  hoverFactor = 0.03;
   tonalOffset = 0.15;
 }
 
 class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'light';
+
+  blackBase = '36, 41, 46';
 
   primary = {
     main: colors.blueLightMain,
@@ -147,9 +168,9 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   secondary = {
-    main: 'rgba(0,0,0,0.11)',
-    shade: 'rgba(0,0,0,0.16)',
-    contrastText: 'rgba(0, 0, 0, 0.75)',
+    main: `rgba(${this.blackBase}, 0.11)`,
+    shade: `rgba(${this.blackBase}, 0.16)`,
+    contrastText: `rgba(${this.blackBase},  1)`,
   };
 
   info = {
@@ -174,36 +195,44 @@ class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   };
 
   text = {
-    primary: 'rgba(0, 0, 0, 0.75)',
-    secondary: 'rgba(0, 0, 0, 0.60)',
-    disabled: 'rgba(0, 0, 0, 0.45)',
+    primary: `rgba(${this.blackBase}, 1)`,
+    secondary: `rgba(${this.blackBase}, 0.75)`,
+    disabled: `rgba(${this.blackBase}, 0.50)`,
     link: this.primary.text,
     maxContrast: colors.black,
   };
 
-  layer0 = colors.gray90;
-  layer1 = colors.white;
-  layer2 = colors.gray100;
+  background = {
+    canvas: colors.gray90,
+    primary: colors.white,
+    secondary: colors.gray100,
+  };
 
-  divider = 'rgba(0, 2, 78, 0.07)';
+  border = {
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.30)`,
+    strong: `rgba(${this.blackBase}, 0.40)`,
+  };
 
-  border0 = this.layer1;
-
-  border1 = 'rgba(0, 2, 78, 0.20)';
-  border2 = 'rgba(0, 2, 78, 0.30)';
+  divider = this.border.weak;
 
   action = {
-    hover: 'rgba(0, 0, 0, 0.04)',
-    selected: 'rgba(0, 0, 0, 0.08)',
+    hover: `rgba(${this.blackBase}, 0.04)`,
+    selected: `rgba(${this.blackBase}, 0.08)`,
     hoverOpacity: 0.08,
-    focus: 'rgba(0, 0, 0, 0.12)',
-    disabledBackground: 'rgba(0,0,0,0.07)',
+    focus: `rgba(${this.blackBase}, 0.12)`,
+    disabledBackground: `rgba(${this.blackBase}, 0.07)`,
     disabledText: this.text.disabled,
     disabledOpacity: 0.38,
   };
 
+  gradients = {
+    brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);',
+    brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
+  };
+
   contrastThreshold = 3;
-  hoverFactor = 0.15;
+  hoverFactor = 0.03;
   tonalOffset = 0.2;
 }
 
@@ -226,15 +255,11 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
 
   function getContrastText(background: string) {
     const contrastText =
-      getContrastRatio(background, dark.text.primary) >= contrastThreshold
+      getContrastRatio(background, dark.text.maxContrast) >= contrastThreshold
         ? dark.text.maxContrast
         : light.text.maxContrast;
     // todo, need color framework
     return contrastText;
-  }
-
-  function getHoverColor(color: string, factorOverride?: number) {
-    return emphasize(color, factorOverride ?? hoverFactor);
   }
 
   const getRichColor = ({ color, name }: GetRichColorProps): ThemePaletteColor => {
@@ -246,10 +271,13 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
       color.text = color.main;
     }
     if (!color.border) {
-      color.text = color.text;
+      color.border = color.text;
     }
     if (!color.shade) {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
+    }
+    if (!color.transparent) {
+      color.transparent = base.mode === 'light' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);
@@ -267,7 +295,9 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
       success: getRichColor({ color: success, name: 'success' }),
       warning: getRichColor({ color: warning, name: 'warning' }),
       getContrastText,
-      getHoverColor,
+      emphasize: (color: string, factor?: number) => {
+        return emphasize(color, factor ?? hoverFactor);
+      },
     },
     other
   );
