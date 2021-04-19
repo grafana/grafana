@@ -18,6 +18,7 @@
 //      type: basic
 //
 // swagger:meta
+
 package api
 
 // swagger:model
