@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/schema/load"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
@@ -163,87 +162,18 @@ func (hs *HTTPServer) GetTrimedDashboard(c *models.ReqContext) response.Response
 		}
 	}
 
+	// trimedJson, err := hs.LoadSchemaService.DashboardTrimDefaults(*dash.Data)
+	// if err != nil {
+	// 	return response.Error(500, "Error while trim default value from dashboard json", err)
+	// }
+
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta:      meta,
 	}
 
-	val, _ := dash.Data.Map()
-	val = removeNils(val)
-
-	data, _ := json.Marshal(val)
-	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", string(data))
-
-	dashFamily, err := load.BaseDashboardFamily(baseLoadPath)
-	if err != nil {
-		return response.Error(500, "Error while loading dashboard definition", err)
-	}
-
-	dsSchema, err := schema.SearchAndValidate(dashFamily, data)
-	if err != nil {
-		return response.Error(500, "Error while search dashboard schema", err)
-	}
-	_, err = dsSchema.TrimDefaults(schema.Resource{Value: data})
-	if err != nil {
-		return response.Error(500, "Error while trimming dashboard json", err)
-	}
-
 	c.TimeRequest(metrics.MApiDashboardGet)
 	return response.JSON(200, dto)
-}
-
-func removeNils(initialMap map[string]interface{}) map[string]interface{} {
-	withoutNils := map[string]interface{}{}
-	for key, value := range initialMap {
-		_, ok := value.(map[string]interface{})
-		if ok {
-			value = removeNils(value.(map[string]interface{}))
-			withoutNils[key] = value
-			continue
-		}
-		_, ok = value.([]interface{})
-		if ok {
-			value = removeNilArray(value.([]interface{}))
-			withoutNils[key] = value
-			continue
-		}
-		if value != nil {
-			if val, ok := value.(string); ok {
-				if val == "" {
-					continue
-				}
-			}
-			withoutNils[key] = value
-		}
-	}
-	return withoutNils
-}
-
-func removeNilArray(initialArray []interface{}) []interface{} {
-	withoutNils := []interface{}{}
-	for _, value := range initialArray {
-		_, ok := value.(map[string]interface{})
-		if ok {
-			value = removeNils(value.(map[string]interface{}))
-			withoutNils = append(withoutNils, value)
-			continue
-		}
-		_, ok = value.([]interface{})
-		if ok {
-			value = removeNilArray(value.([]interface{}))
-			withoutNils = append(withoutNils, value)
-			continue
-		}
-		if value != nil {
-			if val, ok := value.(string); ok {
-				if val == "" {
-					continue
-				}
-			}
-			withoutNils = append(withoutNils, value)
-		}
-	}
-	return withoutNils
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {

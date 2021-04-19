@@ -1,6 +1,8 @@
 package load
 
 import (
+	"fmt"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
@@ -114,12 +116,13 @@ func (gvs *genericVersionedSchema) ApplyDefaults(_ schema.Resource) (schema.Reso
 // in the  where the values at those paths are the same as the default value
 // given in the schema.
 func (gvs *genericVersionedSchema) TrimDefaults(r schema.Resource) (schema.Resource, error) {
-	rvInstance, err := rt.Compile("resource", r.Value)
-	if err != nil {
-		return r, err
-	}
-	rv := schema.Resource{Value: rvInstance.Value()}
-	return rv, nil
+	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>yoooooooooooo")
+	// rvInstance, err := rt.Compile("resource", r.Value)
+	// if err != nil {
+	// 	return r, err
+	// }
+	// rv := schema.Resource{Value: rvInstance.Value()}
+	return r, nil
 }
 
 // CUE returns the cue.Value representing the actual schema.
