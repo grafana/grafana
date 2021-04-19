@@ -19,7 +19,7 @@ import (
 var _ backendplugin.Plugin = (*PluginV2)(nil)
 
 type PluginV2 struct {
-	Client      client
+	Client      PluginClient
 	hashiClient *plugin.Client
 	descriptor  grpcplugin.PluginDescriptor
 
@@ -51,13 +51,11 @@ type PluginV2 struct {
 	SignatureOrg    string              `json:"-"`
 
 	// App settings
-	GrafanaNetVersion   string `json:"-"`
-	GrafanaNetHasUpdate bool   `json:"-"`
-
 	AutoEnabled bool `json:"autoEnabled"`
 
-	//FoundChildPlugins []*PluginInclude `json:"-"` // unused
-	Pinned bool `json:"-"`
+	GrafanaNetVersion   string `json:"-"`
+	GrafanaNetHasUpdate bool   `json:"-"`
+	Pinned              bool   `json:"-"`
 
 	// Datasource settings
 	Annotations  bool            `json:"annotations"`
@@ -73,7 +71,7 @@ type PluginV2 struct {
 	Streaming    bool            `json:"streaming"`
 	SDK          bool            `json:"sdk,omitempty"`
 
-	// Backend (App + Datasource_ settings
+	// Backend (App + Datasource settings)
 	Routes     []*AppPluginRoute `json:"routes"`
 	Executable string            `json:"executable,omitempty"`
 
@@ -123,7 +121,7 @@ func (p *PluginV2) Start(ctx context.Context) error {
 		return errors.New("incompatible version")
 	}
 
-	p.Client, err = NewClientV2(p.descriptor, p.logger, rpcClient)
+	p.Client, err = NewClientV2(rpcClient)
 	if err != nil {
 		return err
 	}
@@ -146,7 +144,7 @@ func (p *PluginV2) Stop(ctx context.Context) error {
 }
 
 func (p *PluginV2) IsManaged() bool {
-	return true // false
+	return p.descriptor.Managed
 }
 
 func (p *PluginV2) Exited() bool {
@@ -158,32 +156,48 @@ func (p *PluginV2) Exited() bool {
 	return true
 }
 
-func (p *PluginV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
-	pluginClient, ok := p.getClient()
-	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+func (p *PluginV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if p.IsCorePlugin {
+		pluginClient, ok := p.getClientAsCorePlugin()
+		if !ok {
+			return nil, backendplugin.ErrPluginUnavailable
+		}
+		return pluginClient.QueryData(ctx, req)
 	}
-	return pluginClient.CollectMetrics(ctx)
-}
 
-func (p *PluginV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	pluginClient, ok := p.getClient()
+	pluginClient, ok := p.getClientAsGRPCPlugin()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	return pluginClient.CheckHealth(ctx, req)
+	return pluginClient.QueryData(ctx, req)
 }
 
 func (p *PluginV2) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	pluginClient, ok := p.getClient()
+	pluginClient, ok := p.getClientAsGRPCPlugin()
 	if !ok {
 		return backendplugin.ErrPluginUnavailable
 	}
 	return pluginClient.CallResource(ctx, req, sender)
 }
 
+func (p *PluginV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	pluginClient, ok := p.getClientAsGRPCPlugin()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.CheckHealth(ctx, req)
+}
+
+func (p *PluginV2) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+	pluginClient, ok := p.getClientAsGRPCPlugin()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.CollectMetrics(ctx)
+}
+
 func (p *PluginV2) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	pluginClient, ok := p.getClient()
+	pluginClient, ok := p.getClientAsGRPCPlugin()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
@@ -191,7 +205,7 @@ func (p *PluginV2) SubscribeStream(ctx context.Context, req *backend.SubscribeSt
 }
 
 func (p *PluginV2) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	pluginClient, ok := p.getClient()
+	pluginClient, ok := p.getClientAsGRPCPlugin()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
@@ -199,30 +213,14 @@ func (p *PluginV2) PublishStream(ctx context.Context, req *backend.PublishStream
 }
 
 func (p *PluginV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
-	pluginClient, ok := p.getClient()
+	pluginClient, ok := p.getClientAsGRPCPlugin()
 	if !ok {
 		return backendplugin.ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
-func (p *PluginV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if p.IsCorePlugin {
-		pluginClient, ok := p.getCorePluginClient()
-		if !ok {
-			return nil, backendplugin.ErrPluginUnavailable
-		}
-		return pluginClient.QueryData(ctx, req)
-	}
-
-	pluginClient, ok := p.getClient()
-	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
-	}
-	return pluginClient.QueryData(ctx, req)
-}
-
-func (p *PluginV2) getClient() (client, bool) {
+func (p *PluginV2) getClientAsGRPCPlugin() (PluginClient, bool) {
 	p.mutex.RLock()
 	if p.hashiClient == nil || p.hashiClient.Exited() || p.Client == nil {
 		p.mutex.RUnlock()
@@ -233,7 +231,7 @@ func (p *PluginV2) getClient() (client, bool) {
 	return c, true
 }
 
-func (p *PluginV2) getCorePluginClient() (client, bool) {
+func (p *PluginV2) getClientAsCorePlugin() (PluginClient, bool) {
 	p.mutex.RLock()
 	if p.Client == nil {
 		p.mutex.RUnlock()
@@ -244,7 +242,7 @@ func (p *PluginV2) getCorePluginClient() (client, bool) {
 	return c, true
 }
 
-type client interface {
+type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
@@ -252,7 +250,7 @@ type client interface {
 	backend.StreamHandler
 }
 
-func NewClientV2(descriptor grpcplugin.PluginDescriptor, logger glog.Logger, rpcClient plugin.ClientProtocol) (client, error) {
+func NewClientV2(rpcClient plugin.ClientProtocol) (PluginClient, error) {
 	rawDiagnostics, err := rpcClient.Dispense("diagnostics")
 	if err != nil {
 		return nil, err

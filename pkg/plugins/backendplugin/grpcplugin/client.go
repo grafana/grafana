@@ -63,7 +63,7 @@ type PluginStartFuncs struct {
 type PluginDescriptor struct {
 	PluginID         string
 	ExecutablePath   string
-	managed          bool
+	Managed          bool
 	VersionedPlugins map[int]goplugin.PluginSet
 	startFns         PluginStartFuncs
 }
@@ -84,7 +84,7 @@ func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs
 	return newPlugin(PluginDescriptor{
 		PluginID:       pluginID,
 		ExecutablePath: executablePath,
-		managed:        true,
+		Managed:        true,
 		VersionedPlugins: map[int]goplugin.PluginSet{
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
@@ -100,7 +100,7 @@ func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFunc
 	return newPlugin(PluginDescriptor{
 		PluginID:       pluginID,
 		ExecutablePath: executablePath,
-		managed:        false,
+		Managed:        false,
 		VersionedPlugins: map[int]goplugin.PluginSet{
 			DefaultProtocolVersion: {
 				pluginID: &rendererV1.RendererPluginImpl{},

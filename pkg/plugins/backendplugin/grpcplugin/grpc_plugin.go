@@ -89,7 +89,7 @@ func (p *grpcPlugin) Stop(ctx context.Context) error {
 }
 
 func (p *grpcPlugin) IsManaged() bool {
-	return p.descriptor.managed
+	return p.descriptor.Managed
 }
 
 func (p *grpcPlugin) Exited() bool {
