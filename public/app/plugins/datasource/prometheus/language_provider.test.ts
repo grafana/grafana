@@ -5,6 +5,7 @@ import { PrometheusDatasource } from './datasource';
 import { HistoryItem } from '@grafana/data';
 import { PromQuery } from './types';
 import Mock = jest.Mock;
+import { SearchFunctionType } from '@grafana/ui';
 
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = ({
@@ -123,14 +124,14 @@ describe('Language completion provider', () => {
       expect(result.suggestions).toMatchObject([
         {
           items: [
-            { label: '$__interval', sortText: '$__interval' }, // TODO: figure out why this row and sortText is needed
-            { label: '$__rate_interval', sortText: '$__rate_interval' },
-            { label: '1m', sortText: '00:01:00' },
-            { label: '5m', sortText: '00:05:00' },
-            { label: '10m', sortText: '00:10:00' },
-            { label: '30m', sortText: '00:30:00' },
-            { label: '1h', sortText: '01:00:00' },
-            { label: '1d', sortText: '24:00:00' },
+            { label: '$__interval', sortValue: '$__interval' }, // TODO: figure out why this row and sortValue is needed
+            { label: '$__rate_interval', sortValue: '$__rate_interval' },
+            { label: '1m', sortValue: '00:01:00' },
+            { label: '5m', sortValue: '00:05:00' },
+            { label: '10m', sortValue: '00:10:00' },
+            { label: '30m', sortValue: '00:30:00' },
+            { label: '1h', sortValue: '01:00:00' },
+            { label: '1d', sortValue: '24:00:00' },
           ],
           label: 'Range vector',
         },
@@ -236,7 +237,13 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'job' }, { label: 'instance' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        {
+          items: [{ label: 'job' }, { label: 'instance' }],
+          label: 'Labels',
+          searchFunctionType: SearchFunctionType.Fuzzy,
+        },
+      ]);
     });
 
     it('returns label suggestions on label context and metric', async () => {
@@ -255,7 +262,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'bar' }], label: 'Labels', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label suggestions on label context but leaves out labels that already exist', async () => {
@@ -286,7 +295,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'bar' }], label: 'Labels', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label value suggestions inside a label value context after a negated matching operator', async () => {
@@ -311,6 +322,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'value1' }, { label: 'value2' }],
           label: 'Label values for "job"',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });
@@ -346,7 +358,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-label-values');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'baz' }], label: 'Label values for "bar"' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'baz' }], label: 'Label values for "bar"', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label suggestions on aggregation context and metric w/ selector', async () => {
@@ -364,7 +378,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-aggregation');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'bar' }], label: 'Labels', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label suggestions on aggregation context and metric w/o selector', async () => {
@@ -382,7 +398,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-aggregation');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'bar' }], label: 'Labels', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label suggestions inside a multi-line aggregation context', async () => {
@@ -406,6 +424,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'bar' }],
           label: 'Labels',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });
@@ -429,6 +448,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'bar' }],
           label: 'Labels',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });
@@ -452,6 +472,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'bar' }],
           label: 'Labels',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });
@@ -490,6 +511,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'bar' }],
           label: 'Labels',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });

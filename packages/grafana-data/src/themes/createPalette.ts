@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { emphasize, getContrastRatio } from './colorManipulator';
+import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { colors } from './colors';
 import { DeepPartial, ThemePaletteColor } from './types';
 
@@ -26,20 +26,41 @@ export interface ThemePaletteBase<TColor> {
     maxContrast: string;
   };
 
-  layer0: string;
-  layer1: string;
-  layer2: string;
+  background: {
+    /** Dashboard and body background */
+    canvas: string;
+    /** Primary content pane background (panels etc) */
+    primary: string;
+    /** Cards and elements that need to stand out on the primary background */
+    secondary: string;
+  };
 
-  border0: string;
-  border1: string;
-  border2: string;
+  border: {
+    weak: string;
+    medium: string;
+    strong: string;
+  };
 
-  formComponent: {
-    background: string;
-    text: string;
-    border: string;
+  gradients: {
+    brandVertical: string;
+    brandHorizontal: string;
+  };
+
+  action: {
+    /** Used for selected menu item / select option */
+    selected: string;
+    /** Used for hovered menu item / select option */
+    hover: string;
+    /** Used for button/colored background hover opacity */
+    hoverOpacity: number;
+    /** Used focused menu item / select option */
+    focus: string;
+    /** Used for disabled buttons and inputs */
     disabledBackground: string;
+    /** Disabled text */
     disabledText: string;
+    /** Disablerd opacity */
+    disabledOpacity: number;
   };
 
   hoverFactor: number;
@@ -47,12 +68,14 @@ export interface ThemePaletteBase<TColor> {
   tonalOffset: number;
 }
 
+export interface ThemeHoverStrengh {}
+
 /** @beta */
 export interface ThemePalette extends ThemePaletteBase<ThemePaletteColor> {
   /** Returns a text color for the background */
   getContrastText(background: string): string;
-  /* Retruns a hover color for any default color */
-  getHoverColor(defaultColor: string): string;
+  /* Brighten or darken a color by specified factor (0-1) */
+  emphasize(color: string, amount?: number): string;
 }
 
 /** @internal */
@@ -61,123 +84,155 @@ export type ThemePaletteInput = DeepPartial<ThemePaletteBase<ThemePaletteColor>>
 class DarkPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'dark';
 
+  whiteBase = '201, 209, 217';
+
   text = {
-    primary: 'rgba(255, 255, 255, 0.75)',
-    secondary: 'rgba(255, 255, 255, 0.50)',
-    disabled: 'rgba(255, 255, 255, 0.3)',
-    link: colors.blueDark2,
+    primary: `rgb(${this.whiteBase})`,
+    secondary: `rgba(${this.whiteBase}, 0.65)`,
+    disabled: `rgba(${this.whiteBase}, 0.40)`,
+    link: colors.blueDarkText,
     maxContrast: colors.white,
   };
 
   primary = {
-    main: colors.blueDark1,
-    border: colors.blueDark2,
-    text: colors.blueDark2,
+    main: colors.blueDarkMain,
+    text: colors.blueDarkText,
+    border: colors.blueDarkText,
   };
 
   secondary = {
-    main: 'rgba(255,255,255,0.1)',
-    contrastText: 'rgba(255, 255, 255, 0.8)',
+    main: `rgba(${this.whiteBase}, 0.1)`,
+    shade: `rgba(${this.whiteBase}, 0.15)`,
+    text: `rgba(${this.whiteBase}, 0.13)`,
+    contrastText: `rgb(${this.whiteBase})`,
   };
 
   info = this.primary;
 
   error = {
-    main: colors.redDark1,
-    border: colors.redDark2,
-    text: colors.redDark2,
+    main: colors.redDarkMain,
+    text: colors.redDarkText,
   };
 
   success = {
-    main: colors.green1,
-    text: colors.green2,
-    border: colors.green2,
+    main: colors.greenDarkMain,
+    text: colors.greenDarkText,
   };
 
   warning = {
-    main: colors.orange,
+    main: colors.orangeDarkMain,
+    text: colors.orangeDarkText,
   };
 
-  layer0 = colors.gray05;
-  layer1 = colors.gray10;
-  layer2 = colors.gray15;
+  background = {
+    canvas: colors.gray05,
+    primary: colors.gray10,
+    secondary: colors.gray15,
+  };
 
-  border0 = colors.gray15;
-  border1 = colors.gray25;
-  border2 = colors.gray33;
+  border = {
+    weak: `rgba(${this.whiteBase}, 0.10)`,
+    medium: `rgba(${this.whiteBase}, 0.15)`,
+    strong: `rgba(${this.whiteBase}, 0.20)`,
+  };
 
-  formComponent = {
-    background: this.layer0,
-    border: this.border1,
-    text: this.text.primary,
+  action = {
+    hover: `rgba(${this.whiteBase}, 0.08)`,
+    selected: `rgba(${this.whiteBase}, 0.12)`,
+    focus: `rgba(${this.whiteBase}, 0.16)`,
+    hoverOpacity: 0.08,
     disabledText: this.text.disabled,
-    disabledBackground: 'rgba(255, 255, 255, 0.04)',
+    disabledBackground: `rgba(${this.whiteBase}, 0.07)`,
+    disabledOpacity: 0.38,
+  };
+
+  gradients = {
+    brandHorizontal: ' linear-gradient(270deg, #F55F3E 0%, #FF8833 100%);',
+    brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);',
   };
 
   contrastThreshold = 3;
-  hoverFactor = 0.15;
-  tonalOffset = 0.1;
+  hoverFactor = 0.03;
+  tonalOffset = 0.15;
 }
 
 class LightPalette implements ThemePaletteBase<Partial<ThemePaletteColor>> {
   mode: ThemePaletteMode = 'light';
 
+  blackBase = '36, 41, 46';
+
   primary = {
-    main: colors.blueLight1,
-    border: colors.blueLight3,
-    text: colors.blueLight3,
+    main: colors.blueLightMain,
+    border: colors.blueLightText,
+    text: colors.blueLightText,
   };
 
   secondary = {
-    main: 'rgba(0,0,0,0.18)',
-    contrastText: 'rgba(0, 0, 0, 0.75)',
+    main: `rgba(${this.blackBase}, 0.11)`,
+    shade: `rgba(${this.blackBase}, 0.16)`,
+    contrastText: `rgba(${this.blackBase},  1)`,
   };
 
   info = {
-    main: colors.blueLight1,
-    text: colors.blueLight3,
+    main: colors.blueLightMain,
+    text: colors.blueLightText,
   };
 
   error = {
-    main: colors.redLight1,
-    text: colors.redLight2,
-    border: colors.redLight2,
+    main: colors.redLightMain,
+    text: colors.redLightText,
+    border: colors.redLightText,
   };
 
   success = {
-    main: colors.greenBase,
+    main: colors.greenLightMain,
+    text: colors.greenLightText,
   };
 
   warning = {
-    main: colors.orange,
+    main: colors.orangeLightMain,
+    text: colors.orangeLightText,
   };
 
   text = {
-    primary: 'rgba(0, 0, 0, 0.87)',
-    secondary: 'rgba(0, 0, 0, 0.54)',
-    disabled: 'rgba(0, 0, 0, 0.38)',
+    primary: `rgba(${this.blackBase}, 1)`,
+    secondary: `rgba(${this.blackBase}, 0.75)`,
+    disabled: `rgba(${this.blackBase}, 0.50)`,
     link: this.primary.text,
     maxContrast: colors.black,
   };
 
-  layer0 = colors.gray98;
-  layer1 = colors.white;
-  layer2 = colors.gray97;
+  background = {
+    canvas: colors.gray90,
+    primary: colors.white,
+    secondary: colors.gray100,
+  };
 
-  border0 = colors.gray90;
-  border1 = colors.gray85;
-  border2 = colors.gray70;
+  border = {
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.30)`,
+    strong: `rgba(${this.blackBase}, 0.40)`,
+  };
 
-  formComponent = {
-    background: this.layer1,
-    border: this.border1,
-    text: this.text.primary,
-    disabledBackground: colors.gray95,
+  divider = this.border.weak;
+
+  action = {
+    hover: `rgba(${this.blackBase}, 0.04)`,
+    selected: `rgba(${this.blackBase}, 0.08)`,
+    hoverOpacity: 0.08,
+    focus: `rgba(${this.blackBase}, 0.12)`,
+    disabledBackground: `rgba(${this.blackBase}, 0.07)`,
     disabledText: this.text.disabled,
+    disabledOpacity: 0.38,
+  };
+
+  gradients = {
+    brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);',
+    brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
   };
 
   contrastThreshold = 3;
-  hoverFactor = 0.15;
+  hoverFactor = 0.03;
   tonalOffset = 0.2;
 }
 
@@ -200,15 +255,11 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
 
   function getContrastText(background: string) {
     const contrastText =
-      getContrastRatio(background, dark.text.primary) >= contrastThreshold
+      getContrastRatio(background, dark.text.maxContrast) >= contrastThreshold
         ? dark.text.maxContrast
         : light.text.maxContrast;
     // todo, need color framework
     return contrastText;
-  }
-
-  function getHoverColor(color: string) {
-    return emphasize(color, hoverFactor);
   }
 
   const getRichColor = ({ color, name }: GetRichColorProps): ThemePaletteColor => {
@@ -216,11 +267,17 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
     if (!color.main) {
       throw new Error(`Missing main color for ${name}`);
     }
-    if (!color.border) {
-      color.border = color.main;
-    }
     if (!color.text) {
       color.text = color.main;
+    }
+    if (!color.border) {
+      color.border = color.text;
+    }
+    if (!color.shade) {
+      color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
+    }
+    if (!color.transparent) {
+      color.transparent = base.mode === 'light' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);
@@ -238,7 +295,9 @@ export function createPalette(palette: ThemePaletteInput): ThemePalette {
       success: getRichColor({ color: success, name: 'success' }),
       warning: getRichColor({ color: warning, name: 'warning' }),
       getContrastText,
-      getHoverColor,
+      emphasize: (color: string, factor?: number) => {
+        return emphasize(color, factor ?? hoverFactor);
+      },
     },
     other
   );

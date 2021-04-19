@@ -18,13 +18,8 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export {
-  PieChart,
-  PieChartType,
-  PieChartLabels,
-  PieChartLegendOptions,
-  PieChartLegendValues,
-} from './PieChart/PieChart';
+export { PieChart } from './PieChart/PieChart';
+export { PieChartType, PieChartLabels, PieChartLegendOptions, PieChartLegendValues } from './PieChart/types';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -38,7 +33,7 @@ export { Tag, OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
-export { ConfirmModal } from './ConfirmModal/ConfirmModal';
+export { ConfirmModal, ConfirmModalProps } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Code editor
@@ -82,7 +77,16 @@ export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
-export { PanelChrome, PanelChromeProps, PanelPadding, PanelChromeType } from './PanelChrome';
+export {
+  PanelChrome,
+  PanelChromeProps,
+  PanelPadding,
+  PanelChromeType,
+  PanelChromeLoadingIndicator,
+  PanelChromeLoadingIndicatorProps,
+  PanelChromeErrorIndicator,
+  PanelChromeErrorIndicatorProps,
+} from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
 export { VizLegendItem } from './VizLegend/types';
 export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
@@ -224,7 +228,7 @@ export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
 export { useGraphNGContext } from './GraphNG/hooks';
 export { BarChart } from './BarChart/BarChart';
 export { TimelineChart } from './Timeline/TimelineChart';
-export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
+export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';

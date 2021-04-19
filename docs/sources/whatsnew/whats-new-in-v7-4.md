@@ -3,7 +3,7 @@ title = "What's New in Grafana v7.4"
 description = "Feature and improvement highlights for Grafana v7.4"
 keywords = ["grafana", "new", "documentation", "7.4", "release notes"]
 weight = -31
-aliases = ["/docs/grafana/next/guides/whats-new-in-v7-4/"]
+aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-4/"]
 [_build]
 list = false
 +++
@@ -192,7 +192,7 @@ After the number of Viewers or Editors has reached its license limit, only Admin
 
 Grafana Enterprise license tokens update automatically on a daily basis, which means you no longer need to manually update your license, and the process for adding additional users to a license is smoother than it was before.
 
-Refer to [Licensing restrictions]({{< relref "../enterprise/license-restrictions.md" >}}) for more information.
+Refer to [Licensing restrictions]({{< relref "../enterprise/license/license-restrictions.md" >}}) for more information.
 
 ### Export usage insights to Loki
 
