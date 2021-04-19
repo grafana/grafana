@@ -86,25 +86,14 @@ func (aq *AlertQuery) setModelProps() error {
 	return nil
 }
 
-// setDatasource sets DatasourceID.
-// If it's an expression sets DefaultExprDatasourceID.
+// setDatasource sets DatasourceUID.
+// If it's an expression sets DefaultExprDatasourceUID.
 func (aq *AlertQuery) setDatasource() error {
 	if aq.modelProps == nil {
 		err := aq.setModelProps()
 		if err != nil {
 			return err
 		}
-	}
-
-	dsName, ok := aq.modelProps["datasource"]
-	if !ok {
-		return fmt.Errorf("failed to get datasource from query model")
-	}
-
-	if dsName == expr.DatasourceName {
-		aq.DatasourceUID = expr.DatasourceUID
-		aq.modelProps["datasourceUid"] = expr.DatasourceUID
-		return nil
 	}
 
 	i, ok := aq.modelProps["datasourceUid"]

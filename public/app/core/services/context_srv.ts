@@ -2,6 +2,7 @@ import config from '../../core/config';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { rangeUtil } from '@grafana/data';
+import { AccessControlAction, AccessControlScope, UserPermission } from 'app/types';
 
 export class User {
   id: number;
@@ -17,8 +18,22 @@ export class User {
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;
   email?: string;
+  permissions?: UserPermission;
 
   constructor() {
+    this.id = 0;
+    this.isGrafanaAdmin = false;
+    this.isSignedIn = false;
+    this.orgRole = '';
+    this.orgId = 0;
+    this.orgName = '';
+    this.login = '';
+    this.orgCount = 0;
+    this.timezone = '';
+    this.helpFlags1 = 0;
+    this.lightTheme = false;
+    this.hasEditPermissionInFolders = false;
+    this.email = undefined;
     if (config.bootData.user) {
       _.extend(this, config.bootData.user);
     }
@@ -59,6 +74,16 @@ export class ContextSrv {
 
   hasRole(role: string) {
     return this.user.orgRole === role;
+  }
+
+  // Checks whether user has required permission
+  hasPermission(action: AccessControlAction, scope?: AccessControlScope): boolean {
+    // Fallback if access control disabled
+    if (!config.featureToggles['accesscontrol']) {
+      return true;
+    }
+
+    return !!(this.user.permissions?.[action] && (scope ? this.user.permissions[action][scope] : true));
   }
 
   isGrafanaVisible() {

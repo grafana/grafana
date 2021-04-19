@@ -14,7 +14,7 @@ export const colors = {
   gray25: '#2c3235',
   gray15: '#22252b', //'#202226',
   gray10: '#181b1f', // old '#141619',
-  gray05: '#0d0f16', // old '#0b0c0e',
+  gray05: '#111217', // old '#0b0c0e',
 
   // new from figma,
   darkLayer0: '#18181A',
@@ -34,7 +34,7 @@ export const colors = {
   lightBorder1: '#E4E7E7',
 
   blueDarkMain: '#4165F5',
-  blueDarkText: '#33a2e5', // '#5790FF',
+  blueDarkText: '#58a6ff', //'#33a2e5', // '#5790FF',
   redDarkMain: '#D10E5C',
   redDarkText: '#FF5286',
   greenDarkMain: '#1A7F4B',
@@ -43,7 +43,7 @@ export const colors = {
   orangeDarkText: '#F8D06B',
 
   blueLightMain: '#3871DC',
-  blueLightText: '#1F62E0',
+  blueLightText: '#0465d7', // '#1F62E0',
   redLightMain: '#E0226E',
   redLightText: '#CF0E5B',
   greenLightMain: '#1A7F4B',

@@ -19,16 +19,12 @@ export function hoverColor(color: string, theme: GrafanaTheme): string {
 
 export function listItem(theme: GrafanaTheme): string {
   return `
-  background: ${theme.colors.bg2};  
+  background: ${theme.colors.bg2};
   &:hover {
     background: ${hoverColor(theme.colors.bg2, theme)};
   }
   box-shadow: ${theme.shadows.listItem};
   border-radius: ${theme.border.radius.md};
-
-  a {
-    color: ${theme.v2.palette.text.primary};
-  }  
 `;
 }
 
@@ -50,11 +46,18 @@ export const focusCss = (theme: GrafanaTheme) => `
   transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
 `;
 
+export function getMouseFocusStyles(theme: GrafanaThemeV2): CSSObject {
+  return {
+    outline: 'none',
+    boxShadow: `none`,
+  };
+}
+
 export function getFocusStyles(theme: GrafanaThemeV2): CSSObject {
   return {
     outline: '2px dotted transparent',
     outlineOffset: '2px',
-    boxShadow: `0 0 0 2px ${theme.palette.layer0}, 0 0 0px 4px ${theme.palette.primary.border}`,
+    boxShadow: `0 0 0 2px ${theme.palette.background.canvas}, 0 0 0px 4px ${theme.palette.primary.main}`,
     transition: `all 0.2s cubic-bezier(0.19, 1, 0.22, 1)`,
   };
 }
