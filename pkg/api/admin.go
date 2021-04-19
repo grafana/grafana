@@ -43,30 +43,7 @@ func AdminGetSettings(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) AdminUpsertSettings(c *models.ReqContext, cmd settings.UpsertSettingsCommand) response.Response {
-	/*
-			{
-				"errors": {
-					"saml.auth: could not validate blaha",
-					"database screwed uop big time
-				},
-				"message": "Validation failed"
-			}
-
-
-
-		{
-			"errors": {
-				{ "section":"saml.auth", "error:"bad config"}
-			},
-			"message": "Validation failed"
-		}
-			{
-				"errors": {},
-				"message": "Database update failed"
-			}
-	*/
-
-	if err := hs.SettingsProvider.Update(cmd.Settings); err != nil {
+	if err := hs.SettingsProvider.Update(cmd.Settings.Updates, cmd.Settings.Removals); err != nil {
 		returnErrs := func(status int, message string, errors ...error) response.Response {
 			data := make(map[string]interface{})
 			data["message"] = message

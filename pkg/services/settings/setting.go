@@ -7,10 +7,16 @@ type Setting struct {
 }
 
 type SettingsBag map[string]map[string]string
+type SettingsRemovals map[string][]string
 
 // ----------------------
 // COMMANDS
 
 type UpsertSettingsCommand struct {
-	Settings SettingsBag `json:"settings" binding:"Required"`
+	Settings updateRemoveSettings `json:"settings" binding:"Required"`
+}
+
+type updateRemoveSettings struct {
+	Updates  SettingsBag      `json:"updates"`
+	Removals SettingsRemovals `json:"removals"`
 }

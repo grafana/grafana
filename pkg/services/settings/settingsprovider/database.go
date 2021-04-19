@@ -20,23 +20,26 @@ func (db *database) GetSettings() ([]settings.Setting, error) {
 	return cfg, err
 }
 
-func (db *database) UpsertSettings(bag settings.SettingsBag) error {
+func (db *database) UpsertSettings(updates settings.SettingsBag, removals settings.SettingsRemovals) error {
 	var toUpdate = make([]settings.Setting, 0)
 	var toRemove = make([]settings.Setting, 0)
-	for section, sectionConfig := range bag {
+
+	for section, sectionConfig := range updates {
 		for k, v := range sectionConfig {
-			if len(v) == 0 {
-				toRemove = append(toRemove, settings.Setting{
-					Section: section,
-					Key:     k,
-				})
-			} else {
-				toUpdate = append(toUpdate, settings.Setting{
-					Section: section,
-					Key:     k,
-					Value:   v,
-				})
-			}
+			toUpdate = append(toUpdate, settings.Setting{
+				Section: section,
+				Key:     k,
+				Value:   v,
+			})
+		}
+	}
+
+	for section, sectionRemovals := range removals {
+		for _, k := range sectionRemovals {
+			toRemove = append(toRemove, settings.Setting{
+				Section: section,
+				Key:     k,
+			})
 		}
 	}
 
@@ -58,16 +61,16 @@ func (db *database) UpsertSettings(bag settings.SettingsBag) error {
 			return exists
 		}
 
-		for _, up := range toUpdate {
-			if exists(up) {
-				if _, err := sess.Where("section = ? and key = ?", up.Section, up.Key).Update(up); err != nil {
+		for _, setUp := range toUpdate {
+			if exists(setUp) {
+				if _, err := sess.Where("section = ? and key = ?", setUp.Section, setUp.Key).Update(setUp); err != nil {
 					rbErr := sess.Rollback()
 					logger.Error("Could not rollback", "error", rbErr)
 					return err
 				}
 
 			} else {
-				if _, err := sess.Insert(up); err != nil {
+				if _, err := sess.Insert(setUp); err != nil {
 					rbErr := sess.Rollback()
 					logger.Error("Could not rollback", "error", rbErr)
 					return err

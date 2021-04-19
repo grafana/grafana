@@ -42,7 +42,7 @@ type Implementation struct {
 
 func (i *Implementation) Init() (err error) {
 	i.db = &database{SQLStore: i.SQLStore}
-	i.settings, err = i.loadAndMergeSettings()
+	i.settings, err = i.loadAndMergeSettings(settings.SettingsRemovals{})
 	i.reloadHandlers = map[string][]settings.ReloadHandler{}
 	if err != nil {
 		return err
@@ -64,12 +64,12 @@ func (i *Implementation) Init() (err error) {
 	return
 }
 
-func (i *Implementation) Update(bag settings.SettingsBag) error {
-	if err := i.validateUpdate(bag); err != nil {
+func (i *Implementation) Update(updates settings.SettingsBag, removals settings.SettingsRemovals) error {
+	if err := i.validateUpdate(updates); err != nil {
 		return err
 	}
 
-	if err := i.refreshWithBag(bag); err != nil {
+	if err := i.refreshWithBag(updates, removals); err != nil {
 		return err
 	}
 
@@ -127,16 +127,16 @@ func (i *Implementation) KeyValue(section, key string) settings.KeyValue {
 }
 
 func (i *Implementation) refresh() error {
-	return i.refreshWithBag(nil)
+	return i.refreshWithBag(nil, nil)
 }
 
-func (i *Implementation) refreshWithBag(bag settings.SettingsBag) error {
-	newSettingsBag, err := i.loadAndMergeSettings()
+func (i *Implementation) refreshWithBag(updates settings.SettingsBag, removals settings.SettingsRemovals) error {
+	newSettingsBag, err := i.loadAndMergeSettings(removals)
 	if err != nil {
 		return err
 	}
 
-	for section, keyvalues := range bag {
+	for section, keyvalues := range updates {
 		for key, value := range keyvalues {
 			if _, ok := newSettingsBag[section]; !ok {
 				newSettingsBag[section] = make(map[string]string)
@@ -149,8 +149,6 @@ func (i *Implementation) refreshWithBag(bag settings.SettingsBag) error {
 	i.RLock()
 	toReload := map[string]map[string]string{}
 
-	// still does not cover config that exists in the old settings but not in the new
-	// will this reload settings from the filesystem too, and do we want that?
 	for sectionName, newSettings := range newSettingsBag {
 		oldConfig, exists := i.settings[sectionName]
 
@@ -173,7 +171,7 @@ func (i *Implementation) refreshWithBag(bag settings.SettingsBag) error {
 
 	// 2. Store settings in DB and memory
 	i.Lock()
-	err = i.db.UpsertSettings(bag)
+	err = i.db.UpsertSettings(updates, removals)
 	if err != nil {
 		return err
 	}
@@ -232,7 +230,7 @@ func (i *Implementation) RegisterReloadHandler(section string, h settings.Reload
 	i.reloadHandlers[section] = handlers
 }
 
-func (i *Implementation) loadAndMergeSettings() (settings.SettingsBag, error) {
+func (i *Implementation) loadAndMergeSettings(removals settings.SettingsRemovals) (settings.SettingsBag, error) {
 	bag := make(settings.SettingsBag)
 
 	// Settings from INI file
@@ -250,7 +248,19 @@ func (i *Implementation) loadAndMergeSettings() (settings.SettingsBag, error) {
 		return nil, err
 	}
 
+	unsetDbSettings := map[string]struct{}{}
+	for sec, secRem := range removals {
+		for _, key := range secRem {
+			unsetDbSettings[sec+key] = struct{}{}
+		}
+	}
+
 	for _, dbSetting := range dbSettings {
+		// Don't load settings that are going to be removed from the db
+		if _, exists := unsetDbSettings[dbSetting.Section+dbSetting.Key]; exists {
+			continue
+		}
+
 		if _, ok := bag[dbSetting.Section]; !ok {
 			bag[dbSetting.Section] = make(map[string]string)
 		}

@@ -31,7 +31,7 @@ func (v ValidationError) Error() string {
 // with thread-safety and runtime updates.
 type Provider interface {
 	// Update
-	Update(settings SettingsBag) error
+	Update(updates SettingsBag, removals SettingsRemovals) error
 	// KeyValue returns a key-value abstraction
 	// for the given pair of section and key.
 	KeyValue(section, key string) KeyValue
