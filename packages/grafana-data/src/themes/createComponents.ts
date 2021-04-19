@@ -9,7 +9,7 @@ export interface ThemeComponents {
     md: number;
     lg: number;
   };
-  form: {
+  input: {
     background: string;
     border: string;
     borderHover: string;
@@ -32,8 +32,8 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
   const panel = {
     padding: 1,
     headerHeight: 4,
-    background: palette.layer1,
-    border: palette.border0,
+    background: palette.background.primary,
+    border: palette.background.primary,
     boxShadow: shadows.z0,
   };
 
@@ -43,23 +43,23 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
       md: 4,
       lg: 6,
     },
-    form:
+    input:
       palette.mode === 'dark'
         ? {
-            background: palette.layer0,
-            border: palette.border1,
-            borderHover: palette.border2,
+            background: palette.background.canvas,
+            border: palette.border.medium,
+            borderHover: palette.border.strong,
             text: palette.text.primary,
           }
         : {
-            background: palette.layer1,
-            border: palette.border1,
-            borderHover: palette.border2,
+            background: palette.background.primary,
+            border: palette.border.medium,
+            borderHover: palette.border.strong,
             text: palette.text.primary,
           },
     panel,
     dashboard: {
-      background: palette.layer0,
+      background: palette.background.canvas,
       padding: 1,
     },
   };

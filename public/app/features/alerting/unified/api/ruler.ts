@@ -70,7 +70,7 @@ async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
       .toPromise();
     return response.data;
   } catch (e) {
-    if (e?.status === 404) {
+    if (e?.status === 404 || e?.data?.message?.includes('group does not exist')) {
       return empty;
     } else if (e?.status === 500 && e?.data?.message?.includes('mapping values are not allowed in this context')) {
       throw {
