@@ -162,13 +162,13 @@ func (hs *HTTPServer) GetTrimedDashboard(c *models.ReqContext) response.Response
 		}
 	}
 
-	// trimedJson, err := hs.LoadSchemaService.DashboardTrimDefaults(*dash.Data)
-	// if err != nil {
-	// 	return response.Error(500, "Error while trim default value from dashboard json", err)
-	// }
+	trimedJson, err := hs.LoadSchemaService.DashboardTrimDefaults(*dash.Data)
+	if err != nil {
+		return response.Error(500, "Error while trim default value from dashboard json", err)
+	}
 
 	dto := dtos.DashboardFullWithMeta{
-		Dashboard: dash.Data,
+		Dashboard: &trimedJson,
 		Meta:      meta,
 	}
 

@@ -83,13 +83,16 @@ type VersionedCueSchema interface {
 // which the provided resource passed validation.
 func SearchAndValidate(s VersionedCueSchema, v interface{}) (VersionedCueSchema, error) {
 	arr := AsArray(s)
-
 	// Work from latest to earliest
 	var err error
 	for o := len(arr) - 1; o >= 0; o-- {
 		for i := len(arr[o]) - 1; i >= 0; i-- {
-			if err = arr[o][i].Validate(Resource{Value: v}); err == nil {
+			err = arr[o][i].Validate(Resource{Value: v})
+			if err == nil {
+				fmt.Println(">>>>>>>>>>>>>>> I found somethinggggggggggggg")
 				return arr[o][i], nil
+			} else {
+				fmt.Println(">>>>>>>>>>>>>>> I found nothinggggggggggggg", err)
 			}
 		}
 	}

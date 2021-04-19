@@ -1,10 +1,9 @@
 package load
 
 import (
-	"fmt"
-
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
+	cuejson "cuelang.org/go/pkg/encoding/json"
 	"github.com/grafana/grafana/pkg/schema"
 )
 
@@ -108,21 +107,66 @@ func (gvs *genericVersionedSchema) Validate(r schema.Resource) error {
 // ApplyDefaults returns a new, concrete copy of the Resource with all paths
 // that are 1) missing in the Resource AND 2) specified by the schema,
 // filled with default values specified by the schema.
-func (gvs *genericVersionedSchema) ApplyDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
+func (gvs *genericVersionedSchema) ApplyDefaults(r schema.Resource) (schema.Resource, error) {
+	rv, err := rt.Compile("resource", r.Value)
+	if err != nil {
+		return r, err
+	}
+	rvUnified := rv.Value().Unify(gvs.CUE())
+	result, err := cuejson.Marshal(rvUnified)
+	if err != nil {
+		return r, err
+	}
+	return schema.Resource{Value: result}, nil
 }
 
 // TrimDefaults returns a new, concrete copy of the Resource where all paths
 // in the  where the values at those paths are the same as the default value
 // given in the schema.
 func (gvs *genericVersionedSchema) TrimDefaults(r schema.Resource) (schema.Resource, error) {
-	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>yoooooooooooo")
-	// rvInstance, err := rt.Compile("resource", r.Value)
-	// if err != nil {
-	// 	return r, err
-	// }
-	// rv := schema.Resource{Value: rvInstance.Value()}
-	return r, nil
+	rvInstance, err := rt.Compile("resource", r.Value)
+	if err != nil {
+		return r, err
+	}
+	rv, _, err := removeDefaultHelper(gvs.actual, rvInstance.Value())
+	if err != nil {
+		return r, err
+	}
+
+	return schema.Resource{Value: rv}, nil
+}
+
+func removeDefaultHelper(schema cue.Value, r cue.Value) (cue.Value, bool, error) {
+	var rv cue.Value
+	if schema.Kind() == cue.StructKind {
+		iter, err := r.Fields(cue.Definitions(true), cue.Optional(true))
+		if err != nil {
+			return rv, false, err
+		}
+		for iter.Next() {
+			lv := r.LookupPath(iter.Value().Path())
+			if lv.Exists() {
+				newlv, isEqual, err := removeDefaultHelper(iter.Value(), lv)
+				if err != nil {
+					return r, false, err
+				}
+				if isEqual {
+					continue
+				}
+				rv = rv.Unify(newlv)
+			}
+		}
+	} else {
+		if schema.Kind() == cue.ListKind {
+			rv = rv.Unify(r)
+		} else {
+			val, isDefault := schema.Default()
+			if !isDefault || (isDefault && !val.Equals(r)) {
+				rv = rv.Unify(r)
+			}
+		}
+	}
+	return rv, false, nil
 }
 
 // CUE returns the cue.Value representing the actual schema.
