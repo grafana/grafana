@@ -12,8 +12,6 @@ import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
-  dateMath,
-  dateTime,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
@@ -30,12 +28,11 @@ import { css } from '@emotion/css';
 import { QueryGroupOptions } from 'app/types';
 
 interface Props {
-  queryRunner?: PanelQueryRunner;
+  queryRunner: PanelQueryRunner;
   options: QueryGroupOptions;
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
   onOptionsChange: (options: QueryGroupOptions) => void;
-  hideTopSection?: boolean;
 }
 
 interface State {
@@ -56,10 +53,6 @@ export class QueryGroup extends PureComponent<Props, State> {
   dataSourceSrv = getDataSourceSrv();
   querySubscription: Unsubscribable | null;
 
-  static defaultProps: Partial<Props> = {
-    hideTopSection: false,
-  };
-
   state: State = {
     isLoadingHelp: false,
     helpContent: null,
@@ -77,11 +70,9 @@ export class QueryGroup extends PureComponent<Props, State> {
   async componentDidMount() {
     const { queryRunner, options } = this.props;
 
-    if (queryRunner) {
-      this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
-        next: (data: PanelData) => this.onPanelDataUpdate(data),
-      });
-    }
+    this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
+      next: (data: PanelData) => this.onPanelDataUpdate(data),
+    });
 
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource.name);
@@ -158,11 +149,6 @@ export class QueryGroup extends PureComponent<Props, State> {
       this.onChange({
         queries: addQuery(options.queries, {
           datasource: defaultDataSource?.name,
-          timeRange: {
-            from: dateMath.parse('now-6h')!,
-            to: dateTime(),
-            raw: { from: 'now-6h', to: 'now' },
-          },
         }),
       });
     } else {
@@ -359,14 +345,13 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   render() {
-    const { hideTopSection } = this.props;
     const { scrollTop, isHelpOpen, dsSettings } = this.state;
     const styles = getStyles();
 
     return (
       <CustomScrollbar autoHeightMin="100%" scrollTop={scrollTop} setScrollTop={this.setScrollTop}>
         <div className={styles.innerWrapper}>
-          {!hideTopSection && this.renderTopSection(styles)}
+          {this.renderTopSection(styles)}
           {dsSettings && (
             <>
               <div className={styles.queriesWrapper}>{this.renderQueries(dsSettings)}</div>
