@@ -12,6 +12,8 @@ export interface Props {
   dataSourceName: string;
   inMixedMode?: boolean;
   disabled?: boolean;
+  timeRange?: TimeRange;
+  onTimeRangeChange?: (timeRange: TimeRange) => void;
   onChange: (query: DataQuery) => void;
   onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
@@ -25,6 +27,8 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
   queries,
   onClick,
   onChange,
+  onTimeRangeChange,
+  timeRange,
   collapsedText,
 }) => {
   const theme = useTheme();
@@ -91,13 +95,6 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
     onChange({ ...query, datasource: dataSource.name });
   };
 
-  const onTimeRangeChange = (timeRange: TimeRange) => {
-    onChange({
-      ...query,
-      timeRange,
-    });
-  };
-
   return (
     <div className={styles.wrapper}>
       {!isEditing && (
@@ -134,12 +131,12 @@ export const QueryEditorRowTitle: React.FC<Props> = ({
           {query.datasource !== ExpressionDatasourceID && (
             <>
               <DataSourcePicker current={dataSourceName} onChange={onDataSourceChange} />
-              <TimeRangeInput onChange={onTimeRangeChange} value={query.timeRange!} />
+              {onTimeRangeChange && timeRange && <TimeRangeInput onChange={onTimeRangeChange} value={timeRange} />}
             </>
           )}
         </div>
       )}
-      {dataSourceName && <em className={styles.contextInfo}> ({dataSourceName})</em>}
+      {dataSourceName && !inMixedMode && <em className={styles.contextInfo}> ({dataSourceName})</em>}
       {disabled && <em className={styles.contextInfo}> Disabled</em>}
 
       {collapsedText && (

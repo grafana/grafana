@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Unsubscribable } from 'rxjs';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataSourceApi, DataSourceInstanceSettings, DataQuery, PanelData } from '@grafana/data';
+import { DataSourceApi, DataSourceInstanceSettings, DataQuery, PanelData, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { MultiQueryRunner } from '../state/MultiQueryRunner';
@@ -50,6 +50,10 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
   onRemoveQuery = (query: DataQuery) => {
     this.props.onQueriesChange(this.props.queries.filter((item) => item !== query));
   };
+
+  onChangeTimeRange(timeRange: TimeRange, query: DataQuery, index: number) {
+    this.onChangeQuery({ ...query, timeRange }, index);
+  }
 
   onChangeQuery(query: DataQuery, index: number) {
     const { queries, onQueriesChange } = this.props;
@@ -116,6 +120,8 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       data={data}
                       query={query}
                       onChange={(query) => this.onChangeQuery(query, index)}
+                      timeRange={query.timeRange}
+                      onChangeTimeRange={(timeRange) => this.onChangeTimeRange(timeRange, query, index)}
                       onRemoveQuery={this.onRemoveQuery}
                       onAddQuery={this.props.onAddQuery}
                       onRunQuery={this.props.onRunQueries}

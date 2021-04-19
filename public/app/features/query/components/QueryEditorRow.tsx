@@ -36,6 +36,8 @@ interface Props {
   dsSettings: DataSourceInstanceSettings;
   id: string;
   index: number;
+  timeRange?: TimeRange;
+  onChangeTimeRange?: (timeRange: TimeRange) => void;
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onChange: (query: DataQuery) => void;
@@ -301,7 +303,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderTitle = (props: QueryOperationRowRenderProps) => {
-    const { query, dsSettings, onChange, queries } = this.props;
+    const { query, dsSettings, onChange, queries, onChangeTimeRange, timeRange } = this.props;
     const { datasource } = this.state;
     const isDisabled = query.hide;
 
@@ -309,6 +311,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       <QueryEditorRowTitle
         query={query}
         queries={queries}
+        onTimeRangeChange={onChangeTimeRange}
+        timeRange={timeRange}
         inMixedMode={dsSettings.meta.mixed}
         dataSourceName={datasource!.name}
         disabled={isDisabled}
