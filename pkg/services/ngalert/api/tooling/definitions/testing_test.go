@@ -22,9 +22,20 @@ func TestRulePayloadMarshaling(t *testing.T) {
 		},
 		{
 			desc: "success grafana",
-			input: TestRulePayload{
-				GrafanaManagedCondition: &models.EvalAlertConditionCommand{},
-			},
+			input: func() TestRulePayload {
+				data := models.AlertQuery{}
+
+				// hack around that the struct embeds the json message inside of it as well
+				raw, _ := json.Marshal(data)
+				data.Model = raw
+
+				return TestRulePayload{
+					GrafanaManagedCondition: &models.EvalAlertConditionCommand{
+						Condition: "placeholder",
+						Data:      []models.AlertQuery{data},
+					},
+				}
+			}(),
 		},
 		{
 			desc: "failure mixed",
