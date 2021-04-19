@@ -31,6 +31,7 @@ export const AlertManagerPicker: FC<Props> = ({ onChange, current }) => {
 
   return (
     <Select
+      width={29}
       className="ds-picker select-container"
       isMulti={false}
       isClearable={false}

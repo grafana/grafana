@@ -1,7 +1,7 @@
 import { Alert } from 'app/types/unified-alerting';
 import React, { FC } from 'react';
 import { Annotation } from '../Annotation';
-import { DetailsField } from './DetailsField';
+import { DetailsField } from '../DetailsField';
 
 interface Props {
   instance: Alert;

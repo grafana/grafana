@@ -8,7 +8,7 @@ import { isCloudRulesSource } from '../../utils/datasource';
 import { Annotation } from '../Annotation';
 import { AlertLabels } from '../AlertLabels';
 import { AlertInstancesTable } from './AlertInstancesTable';
-import { DetailsField } from './DetailsField';
+import { DetailsField } from '../DetailsField';
 import { RuleQuery } from './RuleQuery';
 import { getDataSourceSrv } from '@grafana/runtime';
 

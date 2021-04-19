@@ -372,7 +372,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/alerting/notifications',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
     },
     {

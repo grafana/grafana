@@ -1,4 +1,4 @@
-import { InfoBox, LoadingPlaceholder } from '@grafana/ui';
+import { Field, InfoBox, LoadingPlaceholder } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -22,7 +22,9 @@ const Silences: FC = () => {
 
   return (
     <AlertingPageWrapper pageId="silences">
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <Field label="Choose alert manager">
+        <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      </Field>
       <br />
       <br />
       {error && !loading && (

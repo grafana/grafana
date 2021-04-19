@@ -71,7 +71,7 @@ export const RulesTable: FC<Props> = ({
     <div className={wrapperClass}>
       <table className={tableStyles.table} data-testid="rules-table">
         <colgroup>
-          <col className={styles.colExpand} />
+          <col className={tableStyles.colExpand} />
           <col className={styles.colState} />
           <col />
           <col />
@@ -133,7 +133,7 @@ export const RulesTable: FC<Props> = ({
                       <td>{isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name}</td>
                     )}
                     <td>{statuses.join(', ') || 'n/a'}</td>
-                    <td className={styles.actionsCell}>
+                    <td className={tableStyles.actionsCell}>
                       {isCloudRulesSource(rulesSource) && (
                         <ActionIcon
                           icon="chart-line"
@@ -222,9 +222,6 @@ export const getStyles = (theme: GrafanaTheme) => ({
   evenRow: css`
     background-color: ${theme.colors.bodyBg};
   `,
-  colExpand: css`
-    width: 36px;
-  `,
   colState: css`
     width: 110px;
   `,
@@ -253,14 +250,5 @@ export const getStyles = (theme: GrafanaTheme) => ({
   headerGuideline: css`
     top: -24px;
     bottom: 0;
-  `,
-  actionsCell: css`
-    text-align: right;
-    width: 1%;
-    white-space: nowrap;
-
-    & > * + * {
-      margin-left: ${theme.spacing.sm};
-    }
   `,
 });

@@ -19,7 +19,10 @@ export async function fetchAlertManagerConfig(alertmanagerSourceName: string): P
         showSuccessAlert: false,
       })
       .toPromise();
-    return result.data;
+    return {
+      template_files: result.data.template_files ?? {},
+      alertmanager_config: result.data.alertmanager_config ?? {},
+    };
   } catch (e) {
     // if no config has been uploaded to grafana, it returns error instead of latest config
     if (
