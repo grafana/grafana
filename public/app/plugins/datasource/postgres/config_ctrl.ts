@@ -19,6 +19,7 @@ export class PostgresConfigCtrl {
 
   /** @ngInject */
   constructor($scope: any, datasourceSrv: DatasourceSrv) {
+    this.current = $scope.ctrl.current;
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
     this.current.jsonData.tlsConfigurationMethod = this.current.jsonData.tlsConfigurationMethod || 'file-path';
