@@ -29,10 +29,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const styles = useStyles(getStyles);
 
   const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
-    () => {
-      console.log('NEW options');
-      return [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)];
-    },
+    () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
 
     /**
      * Props change frequently, we only want to update when the config or
