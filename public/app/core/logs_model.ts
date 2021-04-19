@@ -29,8 +29,11 @@ import {
   dateTime,
   AbsoluteTimeRange,
   sortInAscendingOrder,
+  rangeUtil,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
+
+export const LIMIT_LABEL = 'Line limit';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -206,7 +209,7 @@ export function dataFrameToLogsModel(
     // Create histogram metrics from logs using the interval as bucket size for the line count
     if (intervalMs && logsModel.rows.length > 0) {
       const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
-      const { visibleRange, bucketSize, timeSpanOfLogs, timeSpanOfRange } = getSeriesProperties(
+      const { visibleRange, bucketSize, visibleRangeMs, requestedRangeMs } = getSeriesProperties(
         sortedRows,
         intervalMs,
         absoluteRange
@@ -215,7 +218,7 @@ export function dataFrameToLogsModel(
       logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
 
       if (logsModel.meta) {
-        logsModel.meta = adjustMetaInfo(logsModel, timeSpanOfLogs, timeSpanOfRange);
+        logsModel.meta = adjustMetaInfo(logsModel, visibleRangeMs, requestedRangeMs);
       }
     } else {
       logsModel.series = [];
@@ -249,21 +252,17 @@ export function getSeriesProperties(
   let visibleRange = absoluteRange;
   let resolutionIntervalMs = intervalMs;
   let bucketSize = Math.max(resolutionIntervalMs * pxPerBar, minimumBucketSize);
-  let timeSpanOfLogs;
-  let timeSpanOfRange;
+  let visibleRangeMs;
+  let requestedRangeMs;
   // Clamp time range to visible logs otherwise big parts of the graph might look empty
   if (absoluteRange) {
     const earliestTsLogs = sortedRows[0].timeEpochMs;
-    const latestTsLogs = sortedRows[sortedRows.length - 1].timeEpochMs;
     const earliestTsAbsolute = absoluteRange.from;
     const latestTsAbsolute = absoluteRange.to;
 
-    // Calculate timespan for received logs and range. This is used to calculate timespan coverage meta info of received logs.
-    // We are rounding this as some ds are rounding range in their requests which resulted in incorrect coverage (in edge cases).
-    timeSpanOfLogs = Math.ceil((latestTsLogs - earliestTsLogs) / 1000);
-    timeSpanOfRange = Math.ceil((latestTsAbsolute - earliestTsAbsolute) / 1000);
+    requestedRangeMs = latestTsAbsolute - earliestTsAbsolute;
+    visibleRangeMs = latestTsAbsolute - earliestTsLogs;
 
-    const visibleRangeMs = latestTsAbsolute - earliestTsLogs;
     if (visibleRangeMs > 0) {
       // Adjust interval bucket size for potentially shorter visible range
       const clampingFactor = visibleRangeMs / (absoluteRange.to - absoluteRange.from);
@@ -273,9 +272,13 @@ export function getSeriesProperties(
       // makeSeriesForLogs() aligns dataspoints with time buckets, so we do the same here to not cut off data
       const adjustedEarliest = Math.floor(earliestTsLogs / bucketSize) * bucketSize;
       visibleRange = { from: adjustedEarliest, to: latestTsAbsolute };
+    } else {
+      // We use visibleRangeMs to calculate range coverage of received logs. However, some data sources are rounding up range in requests. This means that received logs
+      // can (in edge cases) be outside of the requested range and visibleRangeMs < 0. In that case, we want to change visibleRangeMs to be 1 so we can calculate coverage.
+      visibleRangeMs = 1;
     }
   }
-  return { bucketSize, visibleRange, timeSpanOfLogs, timeSpanOfRange };
+  return { bucketSize, visibleRange, visibleRangeMs, requestedRangeMs };
 }
 
 function separateLogsAndMetrics(dataFrames: DataFrame[]) {
@@ -431,7 +434,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
 
   if (limitValue > 0) {
     meta.push({
-      label: 'Line limit',
+      label: LIMIT_LABEL,
       value: limitValue,
       kind: LogsMetaKind.Number,
     });
@@ -467,43 +470,28 @@ function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
   return undefined;
 }
 
-// Format timeSpan (in sec) to string used in log's meta info
-function formatTimeSpanToTimeString(timeSpanSec: number): string {
-  const h = Math.floor(timeSpanSec / 60 / 60);
-  const m = Math.floor(timeSpanSec / 60) - h * 60;
-  const s = Number((timeSpanSec % 60).toFixed());
-  let formattedH = h ? h + 'h' : '';
-  let formattedM = m ? m + 'min' : '';
-  let formattedS = s ? s + 'sec' : '';
-
-  formattedH && formattedM ? (formattedH = formattedH + ' ') : (formattedH = formattedH);
-  (formattedM || formattedH) && formattedS ? (formattedM = formattedM + ' ') : (formattedM = formattedM);
-
-  return formattedH + formattedM + formattedS || 'less than 1sec';
-}
-
 // Used to add additional information to Line limit meta info
-function adjustMetaInfo(logsModel: LogsModel, timeSpanOfLogs?: number, timeSpanOfRange?: number): LogsMetaItem[] {
+function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requestedRangeMs?: number): LogsMetaItem[] {
   let logsModelMeta = [...logsModel.meta!];
 
-  const limitIndex = logsModelMeta.findIndex((meta) => meta.label === 'Line limit');
+  const limitIndex = logsModelMeta.findIndex((meta) => meta.label === LIMIT_LABEL);
   const limit = limitIndex && logsModelMeta[limitIndex]?.value;
 
   if (limit && limit > 0) {
     let metaLimitValue;
 
-    if (limit === logsModel.rows.length && timeSpanOfLogs && timeSpanOfRange) {
-      const coverage = ((timeSpanOfLogs / timeSpanOfRange) * 100).toFixed(2);
+    if (limit === logsModel.rows.length && visibleRangeMs && requestedRangeMs) {
+      const coverage = ((visibleRangeMs / requestedRangeMs) * 100).toFixed(2);
 
-      metaLimitValue = `Line limit ${limit} reached, received logs cover ${coverage}% (${formatTimeSpanToTimeString(
-        timeSpanOfLogs
-      )}) of your selected time range (${formatTimeSpanToTimeString(timeSpanOfRange)})`;
+      metaLimitValue = `${limit} reached, received logs cover ${coverage}% (${rangeUtil.msRangeToTimeString(
+        visibleRangeMs
+      )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
     } else {
       metaLimitValue = `${limit} (${logsModel.rows.length} returned)`;
     }
 
     logsModelMeta[limitIndex] = {
-      label: 'Line limit',
+      label: LIMIT_LABEL,
       value: metaLimitValue,
       kind: LogsMetaKind.String,
     };

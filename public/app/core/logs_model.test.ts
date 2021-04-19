@@ -8,7 +8,13 @@ import {
   MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
-import { dataFrameToLogsModel, dedupLogRows, getSeriesProperties, logSeriesToLogsModel } from './logs_model';
+import {
+  dataFrameToLogsModel,
+  dedupLogRows,
+  getSeriesProperties,
+  logSeriesToLogsModel,
+  LIMIT_LABEL,
+} from './logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -246,7 +252,7 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: 'Line limit',
+      label: LIMIT_LABEL,
       value: `1000 (2 returned)`,
       kind: LogsMetaKind.String,
     });
@@ -316,7 +322,7 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: 'Line limit',
+      label: LIMIT_LABEL,
       value: `1000 (2 returned)`,
       kind: LogsMetaKind.String,
     });
@@ -594,8 +600,8 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: 'Line limit',
-      value: `Line limit 2 reached, received logs cover 98.44% (5h 14min 40sec) of your selected time range (5h 19min 40sec)`,
+      label: LIMIT_LABEL,
+      value: `2 reached, received logs cover 98.44% (5h 14min 40sec) of your selected time range (5h 19min 40sec)`,
       kind: LogsMetaKind.String,
     });
   });
@@ -641,7 +647,7 @@ describe('logSeriesToLogsModel', () => {
 
     const metaData = {
       hasUniqueLabels: false,
-      meta: [{ label: 'Line limit', value: 1000, kind: 0 }],
+      meta: [{ label: LIMIT_LABEL, value: 1000, kind: 0 }],
       rows: [],
     };
 
@@ -693,7 +699,7 @@ describe('logSeriesToLogsModel', () => {
     const logsModel = dataFrameToLogsModel(logSeries, 0, 'utc');
     expect(logsModel.meta).toMatchObject([
       { kind: 2, label: 'Common labels', value: { foo: 'bar', level: 'dbug' } },
-      { kind: 0, label: 'Line limit', value: 2000 },
+      { kind: 0, label: LIMIT_LABEL, value: 2000 },
     ]);
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
