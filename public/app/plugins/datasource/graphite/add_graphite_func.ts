@@ -25,6 +25,7 @@ export function graphiteAddFunc($compile: any) {
       $input.appendTo(elem);
       $button.appendTo(elem);
 
+      // TODO: ctrl.state is not ready yet when link is called. This can be moved to an action.
       ctrl.datasource.getFuncDefs().then((funcDefs: FuncDef[]) => {
         const allFunctions = _.map(funcDefs, 'name').sort();
 
@@ -36,7 +37,7 @@ export function graphiteAddFunc($compile: any) {
           minLength: 1,
           items: 10,
           updater: (value: any) => {
-            let funcDef: any = ctrl.datasource.getFuncDef(value);
+            let funcDef: any = ctrl.state.datasource.getFuncDef(value);
             if (!funcDef) {
               // try find close match
               value = value.toLowerCase();
@@ -50,7 +51,7 @@ export function graphiteAddFunc($compile: any) {
             }
 
             $scope.$apply(() => {
-              ctrl.addFunction(funcDef);
+              ctrl.dispatchAddFunction(funcDef);
             });
 
             $input.trigger('blur');
@@ -96,7 +97,7 @@ export function graphiteAddFunc($compile: any) {
 
           let funcDef;
           try {
-            funcDef = ctrl.datasource.getFuncDef($('a', this).text());
+            funcDef = ctrl.state.datasource.getFuncDef($('a', this).text());
           } catch (e) {
             // ignore
           }
@@ -147,7 +148,7 @@ function createFunctionDropDownMenu(funcDefs: FuncDef[]) {
     }
     categories[funcDef.category].push({
       text: funcDef.name,
-      click: "ctrl.addFunction('" + funcDef.name + "')",
+      click: "ctrl.dispatchAddFunction('" + funcDef.name + "')",
     });
   });
 

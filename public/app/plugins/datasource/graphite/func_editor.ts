@@ -2,6 +2,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { actions } from './actions';
 
 /** @ngInject */
 export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
@@ -28,15 +29,15 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
       let cancelBlur: any = null;
 
       ctrl.handleRemoveFunction = (func: any) => {
-        ctrl.removeFunction(func);
+        ctrl.dispatch(actions.removeFunction(func));
       };
 
       ctrl.handleMoveLeft = (func: any) => {
-        ctrl.moveFunction(func, -1);
+        ctrl.dispatch(actions.moveFunction(func, -1));
       };
 
       ctrl.handleMoveRight = (func: any) => {
-        ctrl.moveFunction(func, 1);
+        ctrl.dispatch(actions.moveFunction(func, 1));
       };
 
       function clickFuncParam(this: any, paramIndex: any) {
@@ -102,7 +103,10 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
         scheduledRelinkIfNeeded();
 
         $scope.$apply(() => {
-          ctrl.targetChanged();
+          // HACK: without it, a typed parameter is rendered but not updated in the model
+          // When it's migrated to React the component should not modify the state directly
+          // but dispatch an action to modify it.
+          ctrl.dispatchTargetChanged();
         });
 
         if ($link.hasClass('query-part__last') && newValue === '') {
