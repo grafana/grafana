@@ -3,7 +3,7 @@ import React, { FC, useMemo, useState, Fragment } from 'react';
 import { Icon, Tooltip, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
-import { isAlertingRule } from '../../utils/rules';
+import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { StateColoredText } from '../StateColoredText';
 import { CollapseToggle } from '../CollapseToggle';
@@ -12,6 +12,9 @@ import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datas
 import { ActionIcon } from './ActionIcon';
 import pluralize from 'pluralize';
 import { useHasRuler } from '../../hooks/useHasRuler';
+import kbn from 'app/core/utils/kbn';
+import { config } from '@grafana/runtime';
+
 interface Props {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
@@ -60,11 +63,28 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
   }
 
   const actionIcons: React.ReactNode[] = [];
-  if (hasRuler(rulesSource)) {
-    actionIcons.push(<ActionIcon key="edit" icon="pen" tooltip="edit" />);
-  }
+
+  // for grafana, link to folder views
   if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
-    actionIcons.push(<ActionIcon key="manage-perms" icon="lock" tooltip="manage permissions" />);
+    const rulerRule = group.rules[0]?.rulerRule;
+    const folderUID = rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid;
+    if (folderUID) {
+      const baseUrl = `${config.appSubUrl ?? ''}/dashboards/f/${folderUID}/${kbn.slugifyForUrl(namespace.name)}`;
+      actionIcons.push(
+        <ActionIcon key="edit" icon="pen" tooltip="edit" href={baseUrl + '/settings'} target="__blank" />
+      );
+      actionIcons.push(
+        <ActionIcon
+          key="manage-perms"
+          icon="lock"
+          tooltip="manage permissions"
+          href={baseUrl + '/permissions'}
+          target="__blank"
+        />
+      );
+    } else if (hasRuler(rulesSource)) {
+      actionIcons.push(<ActionIcon key="edit" icon="pen" tooltip="edit" />); // @TODO
+    }
   }
 
   const groupName = isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name;
