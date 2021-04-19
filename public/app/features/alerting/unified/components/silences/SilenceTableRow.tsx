@@ -96,13 +96,7 @@ const SilenceTableRow: FC<Props> = ({ silence, className }) => {
               <td />
               <td>Affected alert rules</td>
               <td colSpan={4}>
-                {rulesNamespaces.map(({ name, groups, rulesSource }) => {
-                  return groups.map((group, index) => {
-                    return (
-                      <RulesTable key={`${name}-${index}`} namespace={name} group={group} rulesSource={rulesSource} />
-                    );
-                  });
-                })}
+                <RulesTable rules={matchingRules} />
               </td>
             </tr>
           )}
