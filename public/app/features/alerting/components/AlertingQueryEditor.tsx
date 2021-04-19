@@ -2,17 +2,17 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { css } from '@emotion/css';
 import { DataQuery, DataSourceApi, dateMath, dateTime, GrafanaTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, RefreshPicker, stylesFactory, Tooltip } from '@grafana/ui';
-
-import { config } from 'app/core/config';
-import { onRunQueries, queryOptionsChange } from '../state/actions';
-import { QueryGroupOptions, StoreState } from 'app/types';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AlertingQueryRows } from './AlertingQueryRows';
 import { MultiQueryRunner } from '../state/MultiQueryRunner';
-import { selectors } from '@grafana/e2e-selectors';
-import { addQuery } from 'app/core/utils/query';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { expressionDatasource } from '../../expressions/ExpressionDatasource';
+import { addQuery } from 'app/core/utils/query';
+import { defaultCondition } from '../../expressions/utils/expressionTypes';
+import { onRunQueries, queryOptionsChange } from '../state/actions';
+import { QueryGroupOptions, StoreState } from 'app/types';
+import { ExpressionQueryType } from '../../expressions/types';
 
 function mapStateToProps(state: StoreState) {
   return {
@@ -90,7 +90,13 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props, State> {
 
   onNewExpression = () => {
     this.setState((prevState) => ({
-      queries: addQuery(prevState.queries, expressionDatasource.newQuery()),
+      queries: addQuery(
+        prevState.queries,
+        expressionDatasource.newQuery({
+          type: ExpressionQueryType.classic,
+          conditions: [defaultCondition],
+        })
+      ),
     }));
   };
 
@@ -120,7 +126,6 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props, State> {
   render() {
     const { queries } = this.state;
     const styles = getStyles(config.theme);
-    console.log(queries.length);
     return (
       <div className={styles.container}>
         {queries.length > 0 && (
