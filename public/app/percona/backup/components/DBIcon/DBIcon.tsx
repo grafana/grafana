@@ -1,12 +1,13 @@
 import React, { FC } from 'react';
 import { Tooltip } from '@grafana/ui';
 import { DBIconProps, DBIconMap } from './DBIcon.types';
-import { Edit, Delete, See, Backup } from './assets';
+import { Edit, Delete, See, Restore, Backup } from './assets';
 
 const Icons: DBIconMap = {
   edit: Edit,
   delete: Delete,
   see: See,
+  restore: Restore,
   backup: Backup,
 };
 

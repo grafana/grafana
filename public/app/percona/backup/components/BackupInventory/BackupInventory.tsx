@@ -14,6 +14,7 @@ import { BackupCreation } from './BackupCreation';
 import { Messages } from './BackupInventory.messages';
 import { Backup } from './BackupInventory.types';
 import { BackupInventoryService } from './BackupInventory.service';
+import { RestoreBackupModal } from './RestoreBackupModal';
 import { getStyles } from './BackupInventory.styles';
 
 const { columns, noData } = Messages;
@@ -21,6 +22,7 @@ const { name, created, location, vendor, status, actions } = columns;
 
 export const BackupInventory: FC = () => {
   const [pending, setPending] = useState(false);
+  const [restoreModalVisible, setRestoreModalVisible] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<Backup | null>(null);
   const [backupModalVisible, setBackupModalVisible] = useState(false);
   const [data, setData] = useState<Backup[]>([]);
@@ -55,13 +57,35 @@ export const BackupInventory: FC = () => {
       {
         Header: actions,
         accessor: 'id',
-        Cell: ({ row }) => <BackupInventoryActions onBackup={onBackupClick} backup={row.original as Backup} />,
-        width: '80px',
+        Cell: ({ row }) => (
+          <BackupInventoryActions onRestore={onRestoreClick} onBackup={onBackupClick} backup={row.original as Backup} />
+        ),
+        width: '110px',
       },
     ],
     []
   );
   const styles = useStyles(getStyles);
+
+  const onRestoreClick = (backup: Backup) => {
+    setSelectedBackup(backup);
+    setRestoreModalVisible(true);
+  };
+
+  const handleClose = () => {
+    setSelectedBackup(null);
+    setRestoreModalVisible(false);
+    setBackupModalVisible(false);
+  };
+
+  const handleRestore = async (serviceId: string, locationId: string, artifactId: string) => {
+    try {
+      await BackupInventoryService.restore(serviceId, locationId, artifactId);
+      setRestoreModalVisible(false);
+    } catch (e) {
+      logger.error(e);
+    }
+  };
 
   const getData = async () => {
     setPending(true);
@@ -90,11 +114,6 @@ export const BackupInventory: FC = () => {
   const onBackupClick = (backup: Backup | null) => {
     setSelectedBackup(backup);
     setBackupModalVisible(true);
-  };
-
-  const handleClose = () => {
-    setSelectedBackup(null);
-    setBackupModalVisible(false);
   };
 
   const handleBackup = async ({ service, location, backupName, description }: AddBackupFormProps) => {
@@ -133,6 +152,12 @@ export const BackupInventory: FC = () => {
         pendingRequest={pending}
         renderExpandedRow={renderSelectedSubRow}
       ></Table>
+      <RestoreBackupModal
+        backup={selectedBackup}
+        isVisible={restoreModalVisible}
+        onClose={handleClose}
+        onRestore={handleRestore}
+      />
       <AddBackupModal
         backup={selectedBackup}
         isVisible={backupModalVisible}

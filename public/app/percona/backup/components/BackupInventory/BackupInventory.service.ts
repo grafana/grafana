@@ -32,7 +32,14 @@ export const BackupInventoryService = {
       })
     );
   },
-  async backup(serviceId: string, locationId: string, name: string, description: string): Promise<any> {
+  async restore(serviceId: string, locationId: string, artifactId: string) {
+    return api.post(`${BASE_URL}/Backups/RestoreBackup`, {
+      service_id: serviceId,
+      location_id: locationId,
+      artifact_id: artifactId,
+    });
+  },
+  async backup(serviceId: string, locationId: string, name: string, description: string) {
     return api.post(`${BASE_URL}/Backups/StartBackup`, {
       service_id: serviceId,
       location_id: locationId,
