@@ -4,7 +4,7 @@ description = "Guide for Flux in Grafana"
 weight = 200
 +++
 
-# Flux support in Grafana
+# Flux query language in Grafana
 
 Grafana supports Flux running on InfluxDB 1.8+.  See [1.8 compatibility](https://github.com/influxdata/influxdb-client-go/#influxdb-18-api-compatibility) for more information and connection details.
 

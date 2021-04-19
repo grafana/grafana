@@ -38,7 +38,9 @@ If you are using the cloud account, then the wizards will guide you through the 
 You can have more than one InfluxDB data source defined in Grafana.
 
 1. Follow the general instructions to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}).
-1. Refer to [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}}) for information about specific data source fields.
+1. Decide if you will use InfluxQL or Flux as your query language.
+   - For InfluxQL, refer to [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}}) for information about specific data source fields.
+   - For Flux, refer to [Flux query language in Grafana]({{< relref "../datasources/influxdb/influxdb-flux.md" >}}) for information about specific data source fields.
 
 ### InfluxDB guides
 
@@ -69,9 +71,9 @@ Grafana displays a list of possible series. Click one to select it, and Grafana 
 Create a simple Flux query.
 
 1. [Add a panel](../panels/add-a-panel.md).
-2. In the query editor, select your InfluxDB-Flux data source. For more information, refer to [Queries](../panels/queries.md).
-3. Select the **Table** visualization.
-4. In the query editor text field, enter `buckets()` and then click outside of the query editor.
+1. In the query editor, select your InfluxDB-Flux data source. For more information, refer to [Queries](../panels/queries.md).
+1. Select the **Table** visualization.
+1. In the query editor text field, enter `buckets()` and then click outside of the query editor.
 
 This generic query returns a list of buckets.
 
