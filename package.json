@@ -171,8 +171,8 @@
     "mini-css-extract-plugin": "0.9.0",
     "mocha": "7.0.1",
     "module-alias": "2.2.2",
-    "monaco-editor": "0.20.0",
-    "monaco-editor-webpack-plugin": "1.9.0",
+    "monaco-editor": "0.23.0",
+    "monaco-editor-webpack-plugin": "3.0.1",
     "mutationobserver-shim": "0.3.3",
     "ngtemplate-loader": "2.0.1",
     "optimize-css-assets-webpack-plugin": "5.0.4",
@@ -214,6 +214,7 @@
     "@grafana/aws-sdk": "0.0.3",
     "@grafana/slate-react": "0.22.9-grafana",
     "@kusto/monaco-kusto": "^3.2.5",
+    "@monaco-editor/react": "^3.6.3",
     "@leeoniya/react-inlinesvg": "2.2.4",
     "@popperjs/core": "2.5.4",
     "@reduxjs/toolkit": "1.5.0",
@@ -249,12 +250,14 @@
     "dangerously-set-html-content": "1.0.6",
     "debounce-promise": "3.1.2",
     "eventemitter3": "4.0.0",
+    "exports-loader": "1.1.1",
     "fast-json-patch": "2.2.1",
     "fast-text-encoding": "^1.0.0",
     "file-saver": "2.0.2",
     "history": "4.10.1",
     "hoist-non-react-statics": "3.3.2",
     "immutable": "3.8.2",
+    "imports-loader": "1.1.0",
     "is-hotkey": "0.1.6",
     "jquery": "3.5.1",
     "json-source-map": "0.6.1",
@@ -307,7 +310,8 @@
     "tinycolor2": "1.4.1",
     "uuid": "8.3.0",
     "visjs-network": "4.25.0",
-    "whatwg-fetch": "3.1.0"
+    "whatwg-fetch": "3.1.0",
+    "worker-loader": "^3.0.8"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"

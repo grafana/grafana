@@ -57,13 +57,15 @@ module.exports = {
       // some of data source pluginis use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
       prismjs: path.resolve(__dirname, '../../node_modules/prismjs'),
-      'vs/language/kusto/kustoMode': require.resolve('@kusto/monaco-kusto/release/esm/kustoMode.js'),
 
-      'bridge.min': require.resolve('@kusto/monaco-kusto/release/min/bridge.min.js'),
-      'kusto.javascript.client.min': require.resolve('@kusto/monaco-kusto/release/min/kusto.javascript.client.min.js'),
-      'Kusto.Language.Bridge.min': require.resolve('@kusto/monaco-kusto/release/min/Kusto.Language.Bridge.min.js'),
-      Kusto: require.resolve('@kusto/monaco-kusto/release/min/Kusto.Language.Bridge.min.js'),
-      'monaco.contribution': require.resolve('@kusto/monaco-kusto/release/min/monaco.contribution'),
+      'vs/language/kusto/kustoMode': require.resolve('@kusto/monaco-kusto/release/esm/kustoMode.js'),
+      'monaco-editor-core/esm/vs/editor/editor.worker': require.resolve('monaco-editor/esm/vs/editor/editor.worker'),
+
+      // 'bridge.min': require.resolve('@kusto/monaco-kusto/release/min/bridge.min.js'),
+      // 'kusto.javascript.client.min': require.resolve('@kusto/monaco-kusto/release/min/kusto.javascript.client.min.js'),
+      // 'Kusto.Language.Bridge.min': require.resolve('@kusto/monaco-kusto/release/min/Kusto.Language.Bridge.min.js'),
+      // Kusto: require.resolve('@kusto/monaco-kusto/release/min/Kusto.Language.Bridge.min.js'),
+      // 'monaco.contribution': require.resolve('@kusto/monaco-kusto/release/min/monaco.contribution'),
     },
     modules: [
       'node_modules',
@@ -85,6 +87,17 @@ module.exports = {
     new MonacoWebpackPlugin({
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
       filename: 'monaco-[name].worker.js',
+      customLanguages: [
+        {
+          label: 'kusto',
+          entry: require.resolve('@kusto/monaco-kusto/release/esm/monaco.contribution'),
+          worker: {
+            id: 'kusto.worker',
+            label: 'kusto-worker',
+            entry: require.resolve('@kusto/monaco-kusto/release/esm/kusto.worker.js'),
+          },
+        },
+      ],
       languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript'],
       features: [
         '!accessibilityHelp',
@@ -131,6 +144,21 @@ module.exports = {
     }),
   ],
   module: {
+    // noParse: (content) => {
+    //   const matches = content.includes('@kusto/monaco-kusto/release/min');
+
+    //   if (content.includes('kusto')) {
+    //     console.log('\n### looking at', content, '\n');
+    //   }
+    //   if (matches) {
+    //     console.log('\n### noParse', content, '\n');
+    //   }
+
+    //   return matches;
+    // },
+    // ,
+    //   require.resolve('@kusto/monaco-kusto/release/min/bridge.min.js'),
+    // ],
     rules: [
       /**
        * Some npm packages are bundled with es2015 syntax, ie. debug
@@ -147,10 +175,102 @@ module.exports = {
           },
         ],
       },
-      { test: /bridge\.js/, parser: { system: false } },
-      { test: /kusto\.javascript\.client\.min\.js/, parser: { system: false } },
-      { test: /Kusto\.Language\.Bridge\.min\.js/, parser: { system: false } },
-      { test: /kustoLanguageService/, parser: { system: false } },
+      // { test: /bridge\.js/, parser: { system: false } },
+      // { test: /kusto\.javascript\.client\.min\.js/, parser: { system: false } },
+      // { test: /Kusto\.Language\.Bridge\.min\.js/, parser: { system: false } },
+      // { test: /kustoLanguageService/, parser: { system: false } },
+
+      {
+        test: [
+          require.resolve('@kusto/monaco-kusto/release/esm/monaco.contribution'),
+          require.resolve('@kusto/monaco-kusto/release/esm/languageFeatures.js'),
+          require.resolve('@kusto/monaco-kusto/release/esm/kustoMode.js'),
+          require.resolve('@kusto/monaco-kusto/release/esm/workerManager.js'),
+          require.resolve('@kusto/monaco-kusto/release/esm/extendedEditor.js'),
+          require.resolve('@kusto/monaco-kusto/release/esm/commandFormatter.js'),
+        ],
+        use: [
+          {
+            loader: 'imports-loader',
+            options: {
+              imports: [
+                {
+                  syntax: 'namespace',
+                  moduleName: 'monaco-editor/esm/vs/editor/editor.api',
+                  name: 'monaco',
+                },
+              ],
+            },
+          },
+        ],
+      },
+
+      {
+        test: require.resolve('@kusto/monaco-kusto/release/esm/languageService/kustoLanguageService.js'),
+
+        use: [
+          {
+            loader: require.resolve('./stupidKustoLoader.js'),
+          },
+        ],
+      },
+
+      // {
+      //   test: require.resolve('@kusto/monaco-kusto/release/esm/languageService/kustoMonarchLanguageDefinition.js'),
+      //   use: [
+      //     {
+      //       loader: 'imports-loader',
+      //       options: {
+      //         imports: [
+      //           {
+      //             syntax: 'default',
+      //             moduleName: require.resolve('@kusto/monaco-kusto/release/min/Kusto.Language.Bridge.min.js'),
+      //             name: 'Kusto',
+      //           },
+      //         ],
+      //       },
+      //     },
+      //   ],
+      // },
+
+      {
+        test: [
+          require.resolve('@kusto/monaco-kusto/release/min/Kusto.Language.Bridge.min.js'),
+          require.resolve('@kusto/monaco-kusto/release/esm/languageService/kustoLanguageService.js'),
+        ],
+        use: [
+          {
+            loader: 'imports-loader',
+            options: {
+              imports: [
+                {
+                  syntax: 'default',
+                  moduleName: require.resolve('@kusto/monaco-kusto/release/min/bridge.min.js'),
+                  name: 'Bridge',
+                },
+              ],
+            },
+          },
+        ],
+      },
+
+      // {
+      //   test: require.resolve('@kusto/monaco-kusto/release/min/Kusto.Language.Bridge.min.js'),
+      //   use: [
+      //     {
+      //       loader: 'exports-loader',
+      //       options: {
+      //         exports: 'window.Kusto',
+      //       },
+      //     },
+      //   ],
+      // },
+
+      // {
+      //   test: /Kusto\.Language\.Bridge\.min/,
+      //   loader: ['exports-loader?window.Kusto', 'imports-loader?bridge.min,kusto.javascript.client.min'],
+      // },
+      // { test: /kustoMonarchLanguageDefinition/, loader: 'imports-loader?Kusto=Kusto' },
 
       {
         test: require.resolve('jquery'),

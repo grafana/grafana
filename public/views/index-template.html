@@ -40,6 +40,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        display: none;
       }
 
       .preloader__enter {
@@ -254,12 +255,12 @@
         };
 
       // In case the js files fails to load the code below will show an info message.
-        window.onload = function() {
-          var preloader = document.getElementsByClassName("preloader");
-          if (preloader.length) {
-            preloader[0].className = "preloader preloader--done";
-          }
-        };
+        // window.onload = function() {
+        //   var preloader = document.getElementsByClassName("preloader");
+        //   if (preloader.length) {
+        //     preloader[0].className = "preloader preloader--done";
+        //   }
+        // };
         [[if .ContentDeliveryURL]]
           window.public_cdn_path = '[[.ContentDeliveryURL]]public/build/';
         [[end]]
