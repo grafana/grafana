@@ -1,13 +1,12 @@
 package notifier
 
 import (
-	"context"
-	"errors"
 	"testing"
+	"time"
 
-	"github.com/go-kit/kit/log"
+	"github.com/go-openapi/strfmt"
+	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/provider"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/client_golang/prometheus"
@@ -15,91 +14,89 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAlertProvider_PutPostableAlert(t *testing.T) {
+func TestAlertProvider(t *testing.T) {
 	marker := types.NewMarker(prometheus.DefaultRegisterer)
-	stage := &mockStage{alerts: make(map[string][]*types.Alert)}
-	provider := &mockAlertProvider{}
+	alertProvider := &mockAlertProvider{}
 
-	ap, err := NewAlertProvider(stage, marker)
+	ap, err := NewAlertProvider(marker)
 	require.NoError(t, err)
-	ap.Alerts = provider
+	ap.Alerts = alertProvider
 
-	postableAlerts := []*PostableAlert{
-		{
-			// Goes through routing since no receiver.
-			PostableAlert: models.PostableAlert{
-				Annotations: models.LabelSet{"msg": "AlertOne annotation"},
+	startTime := time.Now()
+	endTime := startTime.Add(2 * time.Hour)
+	postableAlerts := apimodels.PostableAlerts{
+		PostableAlerts: []models.PostableAlert{
+			{ // Start and end set.
+				Annotations: models.LabelSet{"msg": "Alert1 annotation"},
 				Alert: models.Alert{
-					Labels: models.LabelSet{"alertname": "AlertOne"},
+					Labels:       models.LabelSet{"alertname": "Alert1"},
+					GeneratorURL: "http://localhost/url1",
 				},
-			},
-		}, {
-			// Goes directly through notification pipeling since there is receiver.
-			PostableAlert: models.PostableAlert{
-				Annotations: models.LabelSet{"msg": "AlertTwo annotation"},
+				StartsAt: strfmt.DateTime(startTime),
+				EndsAt:   strfmt.DateTime(endTime),
+			}, { // Only end is set.
+				Annotations: models.LabelSet{"msg": "Alert2 annotation"},
 				Alert: models.Alert{
-					Labels: models.LabelSet{"alertname": "AlertTwo"},
+					Labels:       models.LabelSet{"alertname": "Alert2"},
+					GeneratorURL: "http://localhost/url2",
 				},
-			},
-			Receivers: []string{"recv1", "recv2"},
-		}, {
-			// Goes directly through notification pipeling since there is receiver.
-			PostableAlert: models.PostableAlert{
-				Annotations: models.LabelSet{"msg": "AlertThree annotation"},
+				StartsAt: strfmt.DateTime{},
+				EndsAt:   strfmt.DateTime(endTime),
+			}, { // Only start is set.
+				Annotations: models.LabelSet{"msg": "Alert3 annotation"},
 				Alert: models.Alert{
-					Labels: models.LabelSet{"alertname": "AlertThree"},
+					Labels:       models.LabelSet{"alertname": "Alert3"},
+					GeneratorURL: "http://localhost/url3",
 				},
+				StartsAt: strfmt.DateTime(startTime),
+				EndsAt:   strfmt.DateTime{},
+			}, { // Both start and end are not set.
+				Annotations: models.LabelSet{"msg": "Alert4 annotation"},
+				Alert: models.Alert{
+					Labels:       models.LabelSet{"alertname": "Alert4"},
+					GeneratorURL: "http://localhost/url4",
+				},
+				StartsAt: strfmt.DateTime{},
+				EndsAt:   strfmt.DateTime{},
 			},
-			Receivers: []string{"recv2", "recv3"},
 		},
 	}
 
-	require.NoError(t, ap.PutPostableAlert(postableAlerts...))
+	require.NoError(t, ap.PutPostableAlert(postableAlerts))
 
 	// Alerts that should be sent for routing.
 	expProviderAlerts := []*types.Alert{
 		{
 			Alert: model.Alert{
-				Annotations: model.LabelSet{"msg": "AlertOne annotation"},
-				Labels:      model.LabelSet{"alertname": "AlertOne"},
+				Annotations:  model.LabelSet{"msg": "Alert1 annotation"},
+				Labels:       model.LabelSet{"alertname": "Alert1"},
+				StartsAt:     startTime,
+				EndsAt:       endTime,
+				GeneratorURL: "http://localhost/url1",
+			},
+		}, {
+			Alert: model.Alert{
+				Annotations:  model.LabelSet{"msg": "Alert2 annotation"},
+				Labels:       model.LabelSet{"alertname": "Alert2"},
+				EndsAt:       endTime,
+				GeneratorURL: "http://localhost/url2",
+			},
+		}, {
+			Alert: model.Alert{
+				Annotations:  model.LabelSet{"msg": "Alert3 annotation"},
+				Labels:       model.LabelSet{"alertname": "Alert3"},
+				StartsAt:     startTime,
+				GeneratorURL: "http://localhost/url3",
+			},
+		}, {
+			Alert: model.Alert{
+				Annotations:  model.LabelSet{"msg": "Alert4 annotation"},
+				Labels:       model.LabelSet{"alertname": "Alert4"},
+				GeneratorURL: "http://localhost/url4",
 			},
 		},
 	}
-	require.Equal(t, expProviderAlerts, provider.alerts)
-
-	// Alerts that should go directly to the notification pipeline.
-	expPipelineAlerts := map[string][]*types.Alert{
-		"recv1": {
-			{
-				Alert: model.Alert{
-					Annotations: model.LabelSet{"msg": "AlertTwo annotation"},
-					Labels:      model.LabelSet{"alertname": "AlertTwo"},
-				},
-			},
-		},
-		"recv2": {
-			{
-				Alert: model.Alert{
-					Annotations: model.LabelSet{"msg": "AlertTwo annotation"},
-					Labels:      model.LabelSet{"alertname": "AlertTwo"},
-				},
-			}, {
-				Alert: model.Alert{
-					Annotations: model.LabelSet{"msg": "AlertThree annotation"},
-					Labels:      model.LabelSet{"alertname": "AlertThree"},
-				},
-			},
-		},
-		"recv3": {
-			{
-				Alert: model.Alert{
-					Annotations: model.LabelSet{"msg": "AlertThree annotation"},
-					Labels:      model.LabelSet{"alertname": "AlertThree"},
-				},
-			},
-		},
-	}
-	require.Equal(t, expPipelineAlerts, stage.alerts)
+	require.Equal(t, expProviderAlerts, alertProvider.alerts)
 }
 
 type mockAlertProvider struct {
@@ -113,17 +110,4 @@ func (a *mockAlertProvider) Get(model.Fingerprint) (*types.Alert, error) { retur
 func (a *mockAlertProvider) Put(alerts ...*types.Alert) error {
 	a.alerts = append(a.alerts, alerts...)
 	return nil
-}
-
-type mockStage struct {
-	alerts map[string][]*types.Alert
-}
-
-func (s *mockStage) Exec(ctx context.Context, _ log.Logger, alerts ...*types.Alert) (context.Context, []*types.Alert, error) {
-	recv, ok := notify.ReceiverName(ctx)
-	if !ok {
-		return ctx, nil, errors.New("receiver name not found")
-	}
-	s.alerts[recv] = append(s.alerts[recv], alerts...)
-	return ctx, nil, nil
 }

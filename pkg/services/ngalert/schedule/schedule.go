@@ -6,18 +6,16 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/benbjohnson/clock"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	apimodels "github.com/grafana/alerting-api/pkg/api"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -83,10 +81,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				processedStates := stateTracker.ProcessEvalResults(alertRule, results)
 				sch.saveAlertStates(processedStates)
 				alerts := FromAlertStateToPostableAlerts(processedStates)
-				sch.log.Debug("sending alerts to notifier", "count", len(alerts))
+				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts))
 				err = sch.sendAlerts(alerts)
 				if err != nil {
-					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts), "err", err)
+					sch.log.Error("failed to put alerts in the notifier", "count", len(alerts.PostableAlerts), "err", err)
 				}
 				return nil
 			}
@@ -118,7 +116,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 // Notifier handles the delivery of alert notifications to the end user
 type Notifier interface {
-	PutAlerts(alerts ...*notifier.PostableAlert) error
+	PutAlerts(alerts apimodels.PostableAlerts) error
 }
 
 type schedule struct {
@@ -314,8 +312,8 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateTracker *state.Stat
 	}
 }
 
-func (sch *schedule) sendAlerts(alerts []*notifier.PostableAlert) error {
-	return sch.notifier.PutAlerts(alerts...)
+func (sch *schedule) sendAlerts(alerts apimodels.PostableAlerts) error {
+	return sch.notifier.PutAlerts(alerts)
 }
 
 func (sch *schedule) saveAlertStates(states []state.AlertState) {
