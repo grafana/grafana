@@ -1,11 +1,4 @@
-import {
-  AppEvents,
-  applyFieldOverrides,
-  dataFrameFromJSON,
-  DataFrameJSON,
-  DataSourceApi,
-  dateMath,
-} from '@grafana/data';
+import { AppEvents, applyFieldOverrides, dataFrameFromJSON, DataFrameJSON, DataSourceApi } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import store from 'app/core/store';
@@ -19,7 +12,6 @@ import {
   setAlertDefinitions,
   setInstanceData,
   setNotificationChannels,
-  setQueryOptions,
   setUiState,
   updateAlertDefinitionOptions,
 } from './reducers';
@@ -159,35 +151,6 @@ export function updateAlertDefinitionOption(alertDefinition: Partial<AlertDefini
   };
 }
 
-export function queryOptionsChange(queryOptions: QueryGroupOptions): ThunkResult<void> {
-  return (dispatch) => {
-    dispatch(setQueryOptions(queryOptions));
-  };
-}
-
-export function onRunQueries(): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const { queryRunners, getQueryOptions } = getStore().alertDefinition;
-    const queryOptions = getQueryOptions();
-
-    queryOptions.queries.forEach((query) => {
-      queryRunners[query.refId]!.run({
-        // if the queryRunner is undefined here somethings very wrong so it's ok to throw an unhandled error
-        timezone: 'browser',
-        timeRange: {
-          from: dateMath.parse(query.timeRange!.from)!,
-          to: dateMath.parse(query.timeRange!.to)!,
-          raw: query.timeRange!,
-        },
-        maxDataPoints: queryOptions.maxDataPoints ?? 100,
-        minInterval: queryOptions.minInterval,
-        queries: [query],
-        datasource: query.datasource!,
-      });
-    });
-  };
-}
-
 export function evaluateAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { alertDefinition } = getStore().alertDefinition;
@@ -205,12 +168,12 @@ export function evaluateAlertDefinition(): ThunkResult<void> {
 
 export function evaluateNotSavedAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const { alertDefinition, getQueryOptions } = getStore().alertDefinition;
+    const { alertDefinition } = getStore().alertDefinition;
     const defaultDataSource = await getDataSourceSrv().get(null);
 
     const response: { instances: DataFrameJSON[] } = await getBackendSrv().post('/api/alert-definitions/eval', {
       condition: alertDefinition.condition,
-      data: buildDataQueryModel(getQueryOptions(), defaultDataSource),
+      data: buildDataQueryModel({} as QueryGroupOptions, defaultDataSource),
     });
 
     const handledResponse = handleJSONResponse(response.instances);
@@ -226,7 +189,7 @@ export function cleanUpDefinitionState(): ThunkResult<void> {
 }
 
 async function buildAlertDefinition(state: AlertDefinitionState) {
-  const queryOptions = state.getQueryOptions();
+  const queryOptions = {} as QueryGroupOptions;
   const currentAlertDefinition = state.alertDefinition;
   const defaultDataSource = await getDataSourceSrv().get(null);
 

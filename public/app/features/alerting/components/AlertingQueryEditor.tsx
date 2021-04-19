@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
 import { css } from '@emotion/css';
 import { DataQuery, DataSourceApi, dateMath, dateTime, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,33 +9,17 @@ import { MultiQueryRunner } from '../state/MultiQueryRunner';
 import { expressionDatasource } from '../../expressions/ExpressionDatasource';
 import { addQuery } from 'app/core/utils/query';
 import { defaultCondition } from '../../expressions/utils/expressionTypes';
-import { onRunQueries, queryOptionsChange } from '../state/actions';
-import { QueryGroupOptions, StoreState } from 'app/types';
+import { QueryGroupOptions } from 'app/types';
 import { ExpressionQueryType } from '../../expressions/types';
 
-function mapStateToProps(state: StoreState) {
-  return {
-    queryOptions: state.alertDefinition.getQueryOptions(),
-  };
-}
-
-const mapDispatchToProps = {
-  queryOptionsChange,
-  onRunQueries,
-};
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
-
-interface OwnProps {}
+interface Props {}
 
 interface State {
   queries: DataQuery[];
   defaultDataSource?: DataSourceApi;
 }
 
-type Props = OwnProps & ConnectedProps<typeof connector>;
-
-class AlertingQueryEditorUnconnected extends PureComponent<Props, State> {
+export class AlertingQueryEditor extends PureComponent<Props, State> {
   private queryRunner: MultiQueryRunner;
 
   constructor(props: Props) {
@@ -50,20 +33,11 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props, State> {
     this.setState({ defaultDataSource });
   }
 
-  onQueryOptionsChange = (queryOptions: QueryGroupOptions) => {
-    this.props.queryOptionsChange(queryOptions);
-  };
+  onQueryOptionsChange = (queryOptions: QueryGroupOptions) => {};
 
-  onRunQueries = () => {
-    this.queryRunner.run({
-      ...this.props.queryOptions,
-      queries: this.state.queries,
-    });
-  };
+  onRunQueries = () => {};
 
-  onIntervalChanged = (interval: string) => {
-    this.props.queryOptionsChange({ ...this.props.queryOptions, minInterval: interval });
-  };
+  onIntervalChanged = (interval: string) => {};
 
   onQueriesChanged = (queries: DataQuery[]) => {
     this.setState({ queries });
@@ -149,7 +123,6 @@ class AlertingQueryEditorUnconnected extends PureComponent<Props, State> {
     );
   }
 }
-export const AlertingQueryEditor = connector(AlertingQueryEditorUnconnected);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
