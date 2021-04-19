@@ -87,9 +87,11 @@ You can also create Flux queries in the InfluxDB Explore view.
 1. In your browser, log in to the InfluxDB native UI (OSS is typically something like http://localhost:8086 or for InfluxDB Cloud use: https://cloud2.influxdata.com).
 1. Click **Explore** to open the Data Explorer.
 1. The InfluxDB Data Explorer provides two mechanisms for creating Flux queries: a graphical query editor and a script editor. Using the graphical query editor, [create a query](https://docs.influxdata.com/influxdb/cloud/query-data/execute-queries/data-explorer/). It will look something like this:
+   
    ![InfluxDB Explore query](/img/docs/influxdb/influx-explore-query-7-5.png)
 
 1. Click **Script Editor** to view the text of the query, and then copy all the lines of your Flux code, which will look something like this:
+   
    ![InfluxDB Explore Script Editor](/img/docs/influxdb/explore-query-text-7-5.png)
 
 1. In Grafana, [add a panel](../panels/add-a-panel.md) and then paste your Flux code into the query editor.
@@ -102,3 +104,7 @@ In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" 
 ## Step 7. Start building dashboards
 
 There you go! Use Explore and Data Explorer to experiment with your data, and add the queries that you like to your dashboard as panels. Have fun!
+
+Here are some resources to learn more:
+- Grafana documentation: [InfluxDB data source](../datasources/influxdb/_index.md)
+- InfluxDB documentation: [Comparison of Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/)
