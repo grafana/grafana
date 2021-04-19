@@ -55,18 +55,21 @@ InfluxDB publishes guidance for connecting different versions of their product t
 - Make sure your Grafana token has read access. If it doesn't, then you'll get an authentication error and be unable to connect Grafana to InfluxDB.
 - Avoid apostrophes and other non-standard characters in bucket and token names.
 - If the text name of the organization or bucket doesn't work, then try the ID number.
+- If you change your bucket name in InfluxDB, then you must also change it in Grafana and your Telegraf .conf file as well.
 
 ## Step 5. Add a query
 
-InfluxQL query
+This step varies depending on the query language that you selected when you set up your data source in Grafana.
+
+### InfluxQL query language
 
 In the query editor, click **select measurement**.
 
-INSERT SCREENSHOT
+![InfluxQL query](/img/docs/influxdb/influxql-query-7-5.png)
 
 Grafana displays a list of possible series. Click one to select it, and Grafana graphs any available data. If there is no data to display, then try another selection or check your data source.
 
-### Flux query
+### Flux query language
 
 Create a simple Flux query.
 
@@ -77,11 +80,20 @@ Create a simple Flux query.
 
 This generic query returns a list of buckets.
 
-ADD SCREENSHOT
+![Flux query](/img/docs/influxdb/flux-query-7-5.png)
 
 You can also create Flux queries in the InfluxDB Explore view.
 
-ADD INSTRUCTIONS
+1. In your browser, log in to the InfluxDB native UI (OSS is typically something like http://localhost:8086 or for InfluxDB Cloud use: https://cloud2.influxdata.com).
+1. Click **Explore** to open the Data Explorer.
+1. The InfluxDB Data Explorer provides two mechanisms for creating Flux queries: a graphical query editor and a script editor. Using the graphical query editor, [create a query](https://docs.influxdata.com/influxdb/cloud/query-data/execute-queries/data-explorer/). It will look something like this:
+   ![InfluxDB Explore query](/img/docs/influxdb/influx-explore-query-7-5.png)
+
+1. Click **Script Editor** to view the text of the query, and then copy all the lines of your Flux code, which will look something like this:
+   ![InfluxDB Explore Script Editor](/img/docs/influxdb/explore-query-text-7-5.png)
+
+1. In Grafana, [add a panel](../panels/add-a-panel.md) and then paste your Flux code into the query editor.
+1. Click **Apply**. Your new panel should be visible with data from your Flux query.
 
 ## Step 6. Check InfluxDB metrics in Grafana Explore view
 
@@ -89,14 +101,4 @@ In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" 
 
 ## Step 7. Start building dashboards
 
-
-DFP note - copied this from Prometheus, not sure it makes sense.
-
-
-
-
-When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
-
-The following image shows a dashboard with three panels showing some system metrics.
-
-<img width="850px" src="/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Prometheus dashboards" >
+There you go! Use Explore and Data Explorer to experiment with your data, and add the queries that you like to your dashboard as panels. Have fun!
