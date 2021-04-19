@@ -78,6 +78,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
     return (
       <HorizontalGroup spacing="md" align="flex-start">
         <Button
+          type="button"
           icon="plus"
           onClick={this.onNewQuery}
           variant="secondary"
@@ -87,7 +88,13 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
         </Button>
         {config.expressionsEnabled && (
           <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
-            <Button icon="plus" onClick={this.onNewExpression} variant="secondary" className={styles.expressionButton}>
+            <Button
+              type="button"
+              icon="plus"
+              onClick={this.onNewExpression}
+              variant="secondary"
+              className={styles.expressionButton}
+            >
               <span>Expression&nbsp;</span>
               <Icon name="exclamation-triangle" className="muted" size="sm" />
             </Button>
