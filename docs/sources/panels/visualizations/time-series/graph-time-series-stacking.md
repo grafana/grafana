@@ -23,7 +23,7 @@ Some field options will not affect the visualization until you click outside of 
 
 ## Stack series
 
-Turn series stacking on/off.
+Turn series stacking on or off.
 
 ![Stack series editor](/img/docs/time-series-panel/stack-series-editor-8-0.png)
 
