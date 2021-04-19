@@ -67,7 +67,7 @@ function getStyles() {
       div {
         background: #4265f4;
         width: 3px;
-        height: 86px;
+        height: calc((100% - 84px) / 5);
         margin: 14px 0;
         &:nth-last-child(-n + 3) {
           background: gray;

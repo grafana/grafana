@@ -392,7 +392,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             ]}
           />
         )}
-        <div style={{ display: 'flex', flexDirection: 'row', height: '90vh' }}>
+        <div className={styles.logsSection}>
           <CustomScrollbar autoHide>
             <LogRows
               logRows={logRows}
@@ -465,6 +465,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     radioButtons: css`
       margin: 0 ${theme.spacing.sm};
+    `,
+    logsSection: css`
+      display: flex;
+      flexdirection: row;
+      height: 90vh;
     `,
   };
 });

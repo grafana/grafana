@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import memoizeOne from 'memoize-one';
-import { cx } from '@emotion/css';
 import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, sortLogRows } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
@@ -96,7 +95,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       allowDetails,
       previewLimit,
       getFieldLinks,
-      withNavigation,
       logsSortOrder,
       showDetectedFields,
       onClickShowDetectedField,
@@ -104,14 +102,13 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       forceEscape,
     } = this.props;
     const { renderAll } = this.state;
-    const { logsRowsTable, exploreLogsPanelWithNavigation } = getLogRowStyles(theme);
+    const { logsRowsTable } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
       ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    const exploreWidth = withNavigation ? exploreLogsPanelWithNavigation : '';
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
     const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
@@ -123,67 +120,65 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
-      <>
-        <table className={cx(logsRowsTable, exploreWidth)}>
-          <tbody>
-            {hasData &&
-              firstRows.map((row, index) => (
-                <LogRow
-                  key={row.uid}
-                  getRows={getRows}
-                  getRowContext={getRowContext}
-                  highlighterExpressions={highlighterExpressions}
-                  row={row}
-                  showContextToggle={showContextToggle}
-                  showDuplicates={showDuplicates}
-                  showLabels={showLabels}
-                  showTime={showTime}
-                  showDetectedFields={showDetectedFields}
-                  wrapLogMessage={wrapLogMessage}
-                  timeZone={timeZone}
-                  allowDetails={allowDetails}
-                  onClickFilterLabel={onClickFilterLabel}
-                  onClickFilterOutLabel={onClickFilterOutLabel}
-                  onClickShowDetectedField={onClickShowDetectedField}
-                  onClickHideDetectedField={onClickHideDetectedField}
-                  getFieldLinks={getFieldLinks}
-                  logsSortOrder={logsSortOrder}
-                  forceEscape={forceEscape}
-                />
-              ))}
-            {hasData &&
-              renderAll &&
-              lastRows.map((row, index) => (
-                <LogRow
-                  key={row.uid}
-                  getRows={getRows}
-                  getRowContext={getRowContext}
-                  row={row}
-                  showContextToggle={showContextToggle}
-                  showDuplicates={showDuplicates}
-                  showLabels={showLabels}
-                  showTime={showTime}
-                  showDetectedFields={showDetectedFields}
-                  wrapLogMessage={wrapLogMessage}
-                  timeZone={timeZone}
-                  allowDetails={allowDetails}
-                  onClickFilterLabel={onClickFilterLabel}
-                  onClickFilterOutLabel={onClickFilterOutLabel}
-                  onClickShowDetectedField={onClickShowDetectedField}
-                  onClickHideDetectedField={onClickHideDetectedField}
-                  getFieldLinks={getFieldLinks}
-                  logsSortOrder={logsSortOrder}
-                  forceEscape={forceEscape}
-                />
-              ))}
-            {hasData && !renderAll && (
-              <tr>
-                <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </>
+      <table className={logsRowsTable}>
+        <tbody>
+          {hasData &&
+            firstRows.map((row, index) => (
+              <LogRow
+                key={row.uid}
+                getRows={getRows}
+                getRowContext={getRowContext}
+                highlighterExpressions={highlighterExpressions}
+                row={row}
+                showContextToggle={showContextToggle}
+                showDuplicates={showDuplicates}
+                showLabels={showLabels}
+                showTime={showTime}
+                showDetectedFields={showDetectedFields}
+                wrapLogMessage={wrapLogMessage}
+                timeZone={timeZone}
+                allowDetails={allowDetails}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowDetectedField={onClickShowDetectedField}
+                onClickHideDetectedField={onClickHideDetectedField}
+                getFieldLinks={getFieldLinks}
+                logsSortOrder={logsSortOrder}
+                forceEscape={forceEscape}
+              />
+            ))}
+          {hasData &&
+            renderAll &&
+            lastRows.map((row, index) => (
+              <LogRow
+                key={row.uid}
+                getRows={getRows}
+                getRowContext={getRowContext}
+                row={row}
+                showContextToggle={showContextToggle}
+                showDuplicates={showDuplicates}
+                showLabels={showLabels}
+                showTime={showTime}
+                showDetectedFields={showDetectedFields}
+                wrapLogMessage={wrapLogMessage}
+                timeZone={timeZone}
+                allowDetails={allowDetails}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowDetectedField={onClickShowDetectedField}
+                onClickHideDetectedField={onClickHideDetectedField}
+                getFieldLinks={getFieldLinks}
+                logsSortOrder={logsSortOrder}
+                forceEscape={forceEscape}
+              />
+            ))}
+          {hasData && !renderAll && (
+            <tr>
+              <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     );
   }
 }
