@@ -1,0 +1,29 @@
+@startuml
+
+title: 2. Text Editor: Scopes and Directives
+
+object QueryCtrl
+object "query.editor.html" as Template
+
+package "scopes" {
+    object "scope: text editor" as textEditor {
+       <div class="gf-form" ng-show="**ctrl.target.textEditor**">
+    }
+
+}
+
+package "directives" {
+
+    object "html: input" as input {
+        <input class="gf-form-input"
+        ng-model="**ctrl.target.target**"
+        ng-blur="**ctrl.targetTextChanged()**">
+    }
+}
+
+Template *- QueryCtrl
+Template o-- textEditor
+
+textEditor o-- input
+
+@enduml

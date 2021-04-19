@@ -1,0 +1,17 @@
+@startuml
+
+title Diagrams
+
+rectangle "1. Query Editor: Overview" as Root
+rectangle "2. Text Editor: Scopes and Directives" as TextEditor
+rectangle "3. Visual Editor: Overview" as VisualEditorOverview
+rectangle "4. Visual Editor: Series Scopes and Directives" as VisualEditorSeriesScopesAndDirectives
+rectangle "5. Visual Editor: Functions Scopes and Directives" as VisualEditorFunctionsScopesAndDirectives
+
+Root -- TextEditor
+Root -- VisualEditorOverview
+
+VisualEditorOverview -- VisualEditorSeriesScopesAndDirectives
+VisualEditorOverview -- VisualEditorFunctionsScopesAndDirectives
+
+@enduml

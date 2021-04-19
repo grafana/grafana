@@ -1,0 +1,45 @@
+@startuml
+
+title: 1. Query Editor: Overview
+
+object QueryCtrl
+object "query.editor.html" as Template
+
+package "scopes" {
+    object "scope: text editor" as textEditor {
+      <div class="gf-form" ng-show="**ctrl.target.textEditor**">
+    }
+
+    object "scope: visual editor" as visualEditor {
+       <div ng-hide="**ctrl.target.textEditor**">
+    }
+
+    object "scope: series" as series {
+      <div class="gf-form-inline">
+    }
+
+    object "scope: functions" as functions {
+      <div class="gf-form-inline">
+    }
+
+}
+
+Template *- QueryCtrl
+Template o-- textEditor
+Template o-- visualEditor
+
+visualEditor o-- series
+visualEditor o-- functions
+
+
+note "Diagram: 2" as N2
+note "Diagram: 3" as N3
+note "Diagram: 4" as N4
+note "Diagram: 5" as N5
+
+N2 -- textEditor
+N3 -- visualEditor
+N4 - series
+functions -- N5
+
+@enduml

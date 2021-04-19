@@ -1,0 +1,107 @@
+@startuml
+
+title: 4. Visual Editor: Series Scopes and Directives
+
+object QueryCtrl
+object "query.editor.html" as Template
+
+package "scopes" {
+    object "scope: visual editor" as visualEditor {
+       <div ng-hide="**ctrl.target.textEditor**">
+    }
+
+    object "scope: series" as seriesAndTagsSegments {
+    }
+
+    package "tags" as tagsUsed {
+        object "scope: tags segments" as tagsSegments {
+            <div
+              ng-if="**ctrl.queryModel.seriesByTagUsed**"
+              ng-repeat="**tag in ctrl.queryModel.tags**">
+        }
+        object "scope: add new tag" as addNewTag {
+           <div
+            ng-if="**ctrl.queryModel.seriesByTagUsed**"
+            ng-repeat="**segment in ctrl.addTagSegments**">
+        }
+    }
+
+    package "metrics" as tagsNotUsed {
+        object "scope: series segments" as seriesSegments {
+            <div
+            ng-if="**!ctrl.queryModel.seriesByTagUsed**"
+            ng-repeat="**segment in ctrl.segments**">
+        }
+    }
+
+    object "scope pause button" as pauseButton {
+     <div ng-if="**ctrl.paused**">
+    }
+
+}
+
+package "directives" {
+
+    object "directive: metric-segment" as metricSegment {
+       <metric-segment
+       segment="segment"
+       get-options="**ctrl.getAltSegments($index, $query)**"
+       on-change="**ctrl.segmentValueChanged(segment, $index)**" />
+    }
+
+    object "directive: metric-segment" as addNewTagSegment {
+      <metric-segment
+        segment="segment"
+        get-options="**ctrl.getTagsAsSegments($query)**"
+        on-change="**ctrl.addNewTag(segment)**" />
+
+    }
+
+    object "html: a" as pauseButtonLink {
+      <a
+      ng-click="**ctrl.unpause()**">
+    }
+
+    package "dropdowns" {
+        object "directive: gf-form-dropdown" as tagNameDropdown {
+            <gf-form-dropdown
+              model="**tag.key**"
+              get-options="**ctrl.getTags($index, $query)**"
+              on-change="**ctrl.tagChanged(tag, $index)**>
+        }
+        object "directive: gf-form-dropdown" as tagOparatorDropdown2 {
+            <gf-form-dropdown
+              model="**tag.operator**"
+              get-options="**ctrl.getTagOperators()**"
+              on-change="**ctrl.tagChanged(tag, $index)**>
+        }
+        object "directive: gf-form-dropdown" as tagValueDropdown {
+            <gf-form-dropdown
+              model="**tag.value**"
+              get-options="**ctrl.getTagValues(tag, $index, $query)**"
+              on-change="**ctrl.tagChanged(tag, $index)**>
+        }
+    }
+}
+
+Template *- QueryCtrl
+Template o-- visualEditor
+
+visualEditor o-- seriesAndTagsSegments
+
+seriesAndTagsSegments o-- tagsUsed
+pauseButton o-- pauseButtonLink
+
+seriesAndTagsSegments o-- pauseButton
+
+
+addNewTag o-- addNewTagSegment
+tagsSegments o-- dropdowns
+tagNameDropdown -- tagOparatorDropdown2
+tagOparatorDropdown2 -- tagValueDropdown
+
+
+seriesAndTagsSegments o-- tagsNotUsed
+
+seriesSegments --> metricSegment
+@enduml

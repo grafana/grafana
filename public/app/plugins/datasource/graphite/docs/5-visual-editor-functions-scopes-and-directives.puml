@@ -1,0 +1,71 @@
+@startuml
+
+title: 5. Visual Editor: Functions scopes and directives
+
+object QueryCtrl
+object "query.editor.html" as Template
+
+package "scopes" {
+
+    object "scope: visual editor" as visualEditor {
+       <div ng-hide="**ctrl.target.textEditor**">
+    }
+
+    object "scope: functions segments" as functionsSegments  {
+    }
+
+    object "scope: functions" as functions {
+      <div ng-repeat="**func in ctrl.queryModel.functions**">
+    }
+
+}
+
+package "directives" {
+
+    object "directive: graphite-func-editor" as graphiteFunctionEditor {
+        <span graphite-func-editor
+          func="**func**"
+          ng-hide="**func.hidden**">
+    }
+
+    object "directive: function-editor" as functionEditorDirective {
+        <function-editor
+          func="**func**"
+          onRemove="**ctrl.handleRemoveFunction**"
+          onMoveLeft="**ctrl.handleMoveLeft**"
+          onMoveRight="**ctrl.handleMoveRight**">
+        </function-editor>
+    }
+
+    object "params editor" as paramsEditor {
+      **func**
+    }
+
+    object "directive: graphite-add-func" as graphiteAddFunc {
+      <span graphite-add-func>
+      **ctrl.datasource.getFuncDefs()...**
+    }
+
+}
+
+package "react" {
+    object "react: FunctionEditor" as FunctionEditor {
+    }
+}
+
+
+Template *- QueryCtrl
+Template o-- visualEditor
+
+visualEditor o-- functionsSegments
+
+functionsSegments o-- functions
+
+functions o-- graphiteFunctionEditor
+functionsSegments o-- graphiteAddFunc
+
+graphiteFunctionEditor o-- paramsEditor
+graphiteFunctionEditor o-- functionEditorDirective
+functionEditorDirective -- FunctionEditor : react2AngularDirective
+
+@enduml

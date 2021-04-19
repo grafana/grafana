@@ -1,0 +1,33 @@
+@startuml
+
+title: 3. Visual Editor: Overview
+
+object QueryCtrl
+object "query.editor.html" as Template
+
+
+package "scopes" {
+    object "scope: visual editor" as visualEditor {
+        <div ng-hide="**ctrl.target.textEditor**">
+    }
+
+    object "scope: series" as seriesAndTagsSegments {
+      <div class="gf-form-inline">
+    }
+
+    object "scope: functions " as functionsSegments {
+      <div class="gf-form-inline">
+    }
+}
+
+Template *- QueryCtrl
+Template o-- visualEditor
+
+visualEditor o-- seriesAndTagsSegments
+visualEditor o-- functionsSegments
+note "Diagram: 4" as N4
+seriesAndTagsSegments -- N4
+
+note "Diagram: 5" as N5
+functionsSegments -- N5
+@enduml
