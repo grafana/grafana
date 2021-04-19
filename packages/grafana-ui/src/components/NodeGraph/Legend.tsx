@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { VizLegendItem } from '../VizLegend/types';
 import { LegendDisplayMode } from '../VizLegend/models.gen';
@@ -33,26 +33,25 @@ export const Legend = React.memo(function Legend(props: Props) {
   const styles = useStyles(getStyles);
   const colorItems = getColorLegendItems(nodes, theme);
 
+  const onClick = useCallback(
+    (item) => {
+      onSort({
+        field: item.data!.field,
+        ascending: item.data!.field === sort?.field ? !sort?.ascending : true,
+      });
+    },
+    [sort, onSort]
+  );
+
   return (
     <VizLegend<ItemData>
       displayMode={LegendDisplayMode.List}
-      placement={'right'}
+      placement={'bottom'}
       items={colorItems}
       itemRenderer={(item) => {
         return (
           <>
-            <VizLegendListItem
-              item={item}
-              className={styles.item}
-              onLabelClick={(item) => {
-                if (sortable) {
-                  onSort({
-                    field: item.data!.field,
-                    ascending: item.data!.field === sort?.field ? !sort?.ascending : true,
-                  });
-                }
-              }}
-            />
+            <VizLegendListItem item={item} className={styles.item} onLabelClick={sortable ? onClick : undefined} />
             {sortable &&
               (sort?.field === item.data!.field ? <Icon name={sort!.ascending ? 'angle-up' : 'angle-down'} /> : '')}
           </>

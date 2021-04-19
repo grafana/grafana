@@ -47,8 +47,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 
   viewControls: css`
     position: absolute;
-    left: 10px;
-    top: 10px;
+    left: 2px;
+    bottom: 3px;
+    right: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  `,
+  legend: css`
+    background: ${theme.v2.palette.background.secondary};
+    box-shadow: ${theme.v2.shadows.z2};
+    padding-bottom: 5px;
   `,
   alert: css`
     padding: 5px 8px;
@@ -161,6 +170,22 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
       </svg>
 
       <div className={styles.viewControls}>
+        {nodes.length && (
+          <div className={styles.legend}>
+            <Legend
+              sortable={config.gridLayout}
+              nodes={nodes}
+              sort={config.sort}
+              onSort={(sort) => {
+                setConfig({
+                  ...config,
+                  sort: sort,
+                });
+              }}
+            />
+          </div>
+        )}
+
         <ViewControls<Config>
           config={config}
           onConfigChange={(cfg) => {
@@ -175,19 +200,6 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
           disableZoomIn={isMaxZoom}
           disableZoomOut={isMinZoom}
         />
-        {nodes.length && (
-          <Legend
-            sortable={config.gridLayout}
-            nodes={nodes}
-            sort={config.sort}
-            onSort={(sort) => {
-              setConfig({
-                ...config,
-                sort: sort,
-              });
-            }}
-          />
-        )}
       </div>
 
       {hiddenNodesCount > 0 && (

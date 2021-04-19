@@ -41,7 +41,7 @@ export const VizLegendListItem = <T extends unknown = any>({
             onLabelClick(item, event);
           }
         }}
-        className={cx(styles.label, item.disabled && styles.labelDisabled)}
+        className={cx(styles.label, item.disabled && styles.labelDisabled, onLabelClick && styles.clickable)}
       >
         {item.label}
       </div>
@@ -56,8 +56,11 @@ VizLegendListItem.displayName = 'VizLegendListItem';
 const getStyles = (theme: GrafanaTheme) => ({
   label: css`
     label: LegendLabel;
-    cursor: pointer;
     white-space: nowrap;
+  `,
+  clickable: css`
+    label: LegendClickabel;
+    cursor: pointer;
   `,
   labelDisabled: css`
     label: LegendLabelDisabled;
