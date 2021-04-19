@@ -82,7 +82,7 @@ func (s *CloudWatchService) Init() error {
 	if s.PluginManagerV2.IsEnabled() {
 		pluginJSONPath := filepath.Join(s.Cfg.StaticRootPath, "app/plugins/datasource/cloudwatch/plugin.json")
 
-		return s.PluginManagerV2.InstallPlugin(pluginJSONPath, plugins.InstallOpts{
+		return s.PluginManagerV2.InstallCorePlugin(pluginJSONPath, plugins.InstallOpts{
 			QueryDataHandler: cw,
 		})
 	}

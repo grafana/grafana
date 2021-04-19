@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -30,6 +31,8 @@ type PluginManagerV2 struct {
 	PluginFinder         plugins.PluginFinderV2      `inject:""`
 	PluginLoader         plugins.PluginLoaderV2      `inject:""`
 	PluginInitializer    plugins.PluginInitializerV2 `inject:""`
+
+	AllowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
 
 	plugins   map[string]*plugins.PluginV2
 	pluginsMu sync.RWMutex
@@ -59,6 +62,17 @@ func (m *PluginManagerV2) Init() error {
 	}
 
 	// install External plugins
+	externalPluginsDir := m.Cfg.PluginsPath
+	exists, err := fs.Exists(externalPluginsDir)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		if err = os.MkdirAll(m.Cfg.PluginsPath, os.ModePerm); err != nil {
+			pmlog.Error("Failed to create plugins directory", "dir", externalPluginsDir, "error", err)
+		}
+	}
 	err = m.installPlugins(m.Cfg.PluginsPath, true)
 	if err != nil {
 		return err
@@ -147,8 +161,13 @@ func restartKilledProcess(ctx context.Context, p *plugins.PluginV2) error {
 	}
 }
 
-func (m *PluginManagerV2) InstallPlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
-	plugin, err := m.PluginLoader.Load(pluginJSONPath)
+func (m *PluginManagerV2) InstallCorePlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
+	plugin, err := m.PluginLoader.Load(pluginJSONPath, PluginSignatureValidator{
+		cfg:                           m.Cfg,
+		log:                           pmlog,
+		requireSigned:                 false,
+		allowUnsignedPluginsCondition: m.AllowUnsignedPluginsCondition,
+	})
 	if err != nil {
 		return err
 	}
@@ -165,18 +184,14 @@ func (m *PluginManagerV2) InstallPlugin(pluginJSONPath string, opts plugins.Inst
 	return nil
 }
 
-func (m *PluginManagerV2) installPlugins(path string, forceCreatePath bool) error {
+func (m *PluginManagerV2) installPlugins(path string, requireSigning bool) error {
 	exists, err := fs.Exists(path)
 	if err != nil {
 		return err
 	}
 
-	if !exists && forceCreatePath {
-		if err = os.MkdirAll(path, os.ModePerm); err != nil {
-			pmlog.Error("Failed to create plugins directory", "dir", path, "error", err)
-		} else {
-			pmlog.Info("Plugins directory created", "directory", path)
-		}
+	if !exists {
+		return fmt.Errorf("aborting install as plugins directory %s does not exist", path)
 	}
 
 	pluginJSONPaths, err := m.PluginFinder.Find(path)
@@ -184,7 +199,12 @@ func (m *PluginManagerV2) installPlugins(path string, forceCreatePath bool) erro
 		return err
 	}
 
-	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths)
+	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths, PluginSignatureValidator{
+		cfg:                           m.Cfg,
+		log:                           pmlog,
+		requireSigned:                 requireSigning,
+		allowUnsignedPluginsCondition: m.AllowUnsignedPluginsCondition,
+	})
 	if err != nil {
 		return err
 	}

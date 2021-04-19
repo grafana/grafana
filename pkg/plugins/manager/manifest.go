@@ -225,3 +225,130 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		SigningOrg: manifest.SignedByOrgName,
 	}, nil
 }
+
+func pluginSignatureState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSignatureState, error) {
+	log.Debug("Getting signature state of plugin", "plugin", plugin.ID, "isBackend", plugin.Backend)
+	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
+	// on plugin the folder structure on disk and not user input.
+	byteValue, err := ioutil.ReadFile(manifestPath)
+	if err != nil || len(byteValue) < 10 {
+		log.Debug("Plugin is unsigned", "id", plugin.ID)
+		return plugins.PluginSignatureState{
+			Status: plugins.PluginSignatureUnsigned,
+		}, nil
+	}
+
+	manifest, err := readPluginManifest(byteValue)
+	if err != nil {
+		log.Debug("Plugin signature invalid", "id", plugin.ID)
+		return plugins.PluginSignatureState{
+			Status: plugins.PluginSignatureInvalid,
+		}, nil
+	}
+
+	// Make sure the versions all match
+	if manifest.Plugin != plugin.ID || manifest.Version != plugin.Info.Version {
+		return plugins.PluginSignatureState{
+			Status: plugins.PluginSignatureModified,
+		}, nil
+	}
+
+	// Validate that private is running within defined root URLs
+	if manifest.SignatureType == plugins.PrivateType {
+		appURL, err := url.Parse(setting.AppUrl)
+		if err != nil {
+			return plugins.PluginSignatureState{}, err
+		}
+
+		foundMatch := false
+		for _, u := range manifest.RootURLs {
+			rootURL, err := url.Parse(u)
+			if err != nil {
+				log.Warn("Could not parse plugin root URL", "plugin", plugin.ID, "rootUrl", rootURL)
+				return plugins.PluginSignatureState{}, err
+			}
+			if rootURL.Scheme == appURL.Scheme &&
+				rootURL.Host == appURL.Host &&
+				rootURL.RequestURI() == appURL.RequestURI() {
+				foundMatch = true
+				break
+			}
+		}
+
+		if !foundMatch {
+			log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.ID,
+				"appUrl", appURL, "rootUrls", manifest.RootURLs)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureInvalid,
+			}, nil
+		}
+	}
+
+	manifestFiles := make(map[string]bool, len(manifest.Files))
+
+	// Verify the manifest contents
+	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.ID)
+	for p, hash := range manifest.Files {
+		// Open the file
+		fp := filepath.Join(plugin.PluginDir, p)
+
+		// nolint:gosec
+		// We can ignore the gosec G304 warning on this one because `fp` is based
+		// on the manifest file for a plugin and not user input.
+		f, err := os.Open(fp)
+		if err != nil {
+			log.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.ID, "filename", p, "dir", plugin.PluginDir)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureModified,
+			}, nil
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Warn("Failed to close plugin file", "path", fp, "err", err)
+			}
+		}()
+
+		h := sha256.New()
+		if _, err := io.Copy(h, f); err != nil {
+			log.Warn("Couldn't read plugin file", "plugin", plugin.ID, "filename", fp)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureModified,
+			}, nil
+		}
+		sum := hex.EncodeToString(h.Sum(nil))
+		if sum != hash {
+			log.Warn("Plugin file's signature has been modified versus manifest", "plugin", plugin.ID, "filename", fp)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureModified,
+			}, nil
+		}
+		manifestFiles[p] = true
+	}
+
+	if manifest.isV2() {
+		// Track files missing from the manifest
+		var unsignedFiles []string
+		for _, f := range plugin.Files {
+			if _, exists := manifestFiles[f]; !exists {
+				unsignedFiles = append(unsignedFiles, f)
+			}
+		}
+
+		if len(unsignedFiles) > 0 {
+			log.Warn("The following files were not included in the signature", "plugin", plugin.ID, "files", unsignedFiles)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureModified,
+			}, nil
+		}
+	}
+
+	log.Debug("Plugin signature valid", "id", plugin.ID)
+	return plugins.PluginSignatureState{
+		Status:     plugins.PluginSignatureValid,
+		Type:       manifest.SignatureType,
+		SigningOrg: manifest.SignedByOrgName,
+	}, nil
+}

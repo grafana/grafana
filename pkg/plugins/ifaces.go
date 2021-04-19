@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 )
 
 // Manager is the plugin manager service interface.
@@ -79,10 +80,10 @@ type PluginFinderV2 interface {
 
 type PluginLoaderV2 interface {
 	// Load loads a list plugins and returns them.
-	LoadAll([]string) ([]*PluginV2, error)
+	LoadAll([]string, manager.PluginSignatureValidator) ([]*PluginV2, error)
 
 	// Load loads a plugin and returns it.
-	Load(string) (*PluginV2, error)
+	Load(string, manager.PluginSignatureValidator) (*PluginV2, error)
 }
 
 type PluginInitializerV2 interface {
@@ -120,5 +121,5 @@ type PluginManagerV2 interface {
 
 	Register(*PluginV2) error
 
-	InstallPlugin(string, InstallOpts) error
+	InstallCorePlugin(string, InstallOpts) error
 }
