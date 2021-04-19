@@ -363,7 +363,7 @@ export class ElasticQueryBuilder {
                   Object.entries(metricAgg.settings || {})
                     // Only format properties that are required to be numbers
                     .filter(([settingName]) => ['alpha', 'beta', 'gamma', 'period'].includes(settingName))
-                    // except for falsy values
+                    // omitting undefined
                     .filter(([_, stringValue]) => stringValue !== undefined)
                     .map(([_, stringValue]) => [_, this.toNumber(stringValue)])
                 ),
@@ -387,12 +387,13 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  private toNumber(stringValue: any) {
-    if (isNaN(stringValue)) {
-      throw 'Not a Number';
+  private toNumber(stringValue: unknown): unknown | number {
+    const parsedValue = parseInt(`${stringValue}`, 10);
+    if (isNaN(parsedValue)) {
+      return stringValue;
     }
 
-    return parseInt(stringValue!, 10);
+    return parsedValue;
   }
 
   getTermsQuery(queryDef: any) {
