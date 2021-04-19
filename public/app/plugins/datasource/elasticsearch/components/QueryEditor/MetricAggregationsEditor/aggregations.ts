@@ -244,6 +244,7 @@ export const isMovingAverageWithModelSettings = (
   metric: MovingAverage
 ): metric is MovingAverage<'ewma'> | MovingAverage<'holt'> | MovingAverage<'holt_winters'> =>
   ['holt', 'ewma', 'holt_winters'].includes(metric.settings?.model || '');
+
 export interface MovingFunction extends BasePipelineMetricAggregation {
   type: 'moving_fn';
   settings?: {

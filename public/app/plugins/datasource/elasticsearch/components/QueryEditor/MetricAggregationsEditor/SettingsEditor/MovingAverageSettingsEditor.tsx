@@ -70,7 +70,7 @@ export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }
                 dispatch(
                   changeMetricSetting(metric, 'settings', {
                     ...metric.settings?.settings,
-                    gamma: e.target.value!,
+                    gamma: e.target.value,
                   })
                 )
               }
