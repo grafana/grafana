@@ -63,7 +63,7 @@ export class PanelQueryRunner {
   private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
-  private lastResultRev = 0;
+  private lastResultRev?: number;
   private dataConfigSource: DataConfigSource;
 
   constructor(dataConfigSource: DataConfigSource) {
@@ -244,7 +244,7 @@ export class PanelQueryRunner {
 
     this.subscription = observable.subscribe({
       next: (data) => {
-        this.lastResultRev = this.lastResultRev + 1;
+        this.lastResultRev = (this.lastResultRev || 0) + 1;
         this.lastResult = preProcessPanelData(data, this.lastResultRev, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);

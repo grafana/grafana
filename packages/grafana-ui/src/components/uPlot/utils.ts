@@ -107,6 +107,7 @@ export function collectStackingGroups(f: Field, groups: Map<string, number[]>, s
 
 /** @internal */
 export const pluginLogger = createLogger('uPlot Plugin');
+pluginLogger.enable();
 export const pluginLog = pluginLogger.logger;
 
 attachDebugger('graphng', undefined, pluginLogger);

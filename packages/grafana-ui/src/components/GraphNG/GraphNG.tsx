@@ -31,7 +31,7 @@ export interface GraphNGProps extends Themeable {
   height: number;
   data: DataFrame[];
   structureRev?: number; // a number that will change when the data[] structure changes
-  dataRevision: number;
+  resultRev: number;
   timeRange: TimeRange;
   legend: VizLegendOptions;
   timeZone: TimeZone;
@@ -45,40 +45,17 @@ export interface GraphNGProps extends Themeable {
  * @internal -- not a public API
  */
 export interface GraphNGState {
-  data: AlignedData;
-  alignedDataFrame: DataFrame;
-  dimFields: XYFieldMatchers;
-  seriesToDataFrameFieldIndexMap: DataFrameFieldIndex[];
+  data?: AlignedData;
+  alignedDataFrame?: DataFrame;
+  seriesToDataFrameFieldIndexMap?: DataFrameFieldIndex[];
   config?: UPlotConfigBuilder;
+  dimFields: XYFieldMatchers;
 }
 
 class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   constructor(props: GraphNGProps) {
     super(props);
-    let dimFields = props.fields;
 
-    if (!dimFields) {
-      dimFields = {
-        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-      };
-    }
-    this.state = { dimFields } as GraphNGState;
-  }
-
-  /**
-   * Since no matter the nature of the change (data vs config only) we always calculate the plot-ready AlignedData array.
-   * It's cheaper than run prev and current AlignedData comparison to indicate necessity of data-only update. We assume
-   * that if there were no config updates, we can do data only updates(as described in Plot.tsx, L32)
-   *
-   * Preparing the uPlot-ready data in getDerivedStateFromProps makes the data updates happen only once for a render cycle.
-   * If we did it in componendDidUpdate we will end up having two data-only updates: 1) for props and 2) for state update
-   *
-   * This is a way of optimizing the uPlot rendering, yet there are consequences: when there is a config update,
-   * the data is updated first, and then the uPlot is re-initialized. But since the config updates does not happen that
-   * often (apart from the edit mode interactions) this should be a fair performance compromise.
-   */
-  static getDerivedStateFromProps(props: GraphNGProps, state: GraphNGState) {
     let dimFields = props.fields;
 
     if (!dimFields) {
@@ -88,54 +65,50 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
       };
     }
 
-    const frame = preparePlotFrame(props.data, dimFields);
+    const alignedDataFrame = preparePlotFrame(props.data, dimFields);
+    const data = alignedDataFrame && preparePlotData(alignedDataFrame, [FieldType.string]);
 
-    if (!frame) {
-      return { ...state, dimFields };
-    }
-
-    return {
-      ...state,
-      data: preparePlotData(frame, [FieldType.string]),
-      alignedDataFrame: frame,
-      seriesToDataFrameFieldIndexMap: frame.fields.map((f) => f.state!.origin!),
+    this.state = {
       dimFields,
+      alignedDataFrame,
+      data,
+      seriesToDataFrameFieldIndexMap: alignedDataFrame?.fields.map((f) => f.state!.origin!),
+      config:
+        alignedDataFrame &&
+        preparePlotConfigBuilder(alignedDataFrame, props.theme, this.getTimeRange, this.getTimeZone),
     };
   }
 
-  componentDidMount() {
-    const { theme } = this.props;
-
-    // alignedDataFrame is already prepared by getDerivedStateFromProps method
-    const { alignedDataFrame } = this.state;
-
-    if (!alignedDataFrame) {
-      return;
-    }
-
-    this.setState({
-      config: preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone),
-    });
-  }
-
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { data, theme, structureRev } = this.props;
-    const { alignedDataFrame } = this.state;
-    let shouldConfigUpdate = false;
+    const { data, theme, structureRev, resultRev } = this.props;
     let stateUpdate = {} as GraphNGState;
 
-    if (this.state.config === undefined || this.props.timeZone !== prevProps.timeZone) {
-      shouldConfigUpdate = true;
-    }
+    if (prevProps.data !== this.props.data) {
+      const alignedDataFrame = preparePlotFrame(data, this.props.fields || this.state.dimFields);
+      const plotData = alignedDataFrame && preparePlotData(alignedDataFrame, [FieldType.string]);
+      const hasStructureChanged = structureRev !== prevProps.structureRev || !structureRev;
+      let shouldConfigUpdate = this.state.config === undefined || this.props.timeZone !== prevProps.timeZone;
+      let shouldDataUpdate =
+        resultRev !== prevProps.resultRev || !alignedDataFrame || prevProps.fields !== this.props.fields;
 
-    if (data !== prevProps.data) {
-      if (!alignedDataFrame) {
-        return;
+      if (shouldDataUpdate) {
+        if (plotData) {
+          stateUpdate = {
+            ...stateUpdate,
+            alignedDataFrame,
+            data: plotData,
+          };
+        }
       }
 
-      const hasStructureChanged = structureRev !== prevProps.structureRev || !structureRev;
       if (shouldConfigUpdate || hasStructureChanged) {
-        const builder = preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone);
+        const builder = preparePlotConfigBuilder(
+          // use either a newly aligned data if data changed, or reuse previous one
+          alignedDataFrame || this.state.alignedDataFrame!,
+          theme,
+          this.getTimeRange,
+          this.getTimeZone
+        );
         stateUpdate = { ...stateUpdate, config: builder };
       }
     }
@@ -146,7 +119,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   mapSeriesIndexToDataFrameFieldIndex = (i: number) => {
-    return this.state.seriesToDataFrameFieldIndexMap[i];
+    return this.state.seriesToDataFrameFieldIndexMap![i];
   };
 
   getTimeRange = () => {
@@ -181,7 +154,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   render() {
     const { width, height, children, timeZone, timeRange, ...plotProps } = this.props;
 
-    if (!this.state.data || !this.state.config) {
+    if (!this.state.data || !this.state.config || !this.state.alignedDataFrame) {
       return null;
     }
 

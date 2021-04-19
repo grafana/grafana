@@ -240,6 +240,6 @@ export function preProcessPanelData(data: PanelData, rev: number, lastResult?: P
     series: processedDataFrames,
     annotations: annotationsProcessed,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
-    revision: rev,
+    resultRev: rev,
   };
 }

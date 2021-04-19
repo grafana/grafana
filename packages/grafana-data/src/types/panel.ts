@@ -35,6 +35,9 @@ export interface PanelData {
    */
   structureRev?: number;
 
+  /** Contains the current revision of query results(an incremental counter) */
+  resultRev: number;
+
   /** A list of annotation items */
   annotations?: DataFrame[];
 
@@ -49,9 +52,6 @@ export interface PanelData {
 
   /** Contains the range from the request or a shifted time range if a request uses relative time */
   timeRange: TimeRange;
-
-  /** Contains the current revision of query results(an incremental counter) */
-  revision: number;
 }
 
 export interface PanelProps<T = any> {
