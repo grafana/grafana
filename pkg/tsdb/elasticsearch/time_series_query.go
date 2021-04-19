@@ -162,46 +162,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 						}
 
 						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
-							// Casting values to int when required by Elastic's query DSL
-							switch m.Type {
-							case "moving_avg":
-								if stringValue, err := m.Settings.GetPath("window").String(); err == nil {
-									value, _ := strconv.Atoi(stringValue)
-									m.Settings.SetPath([]string{"window"}, value)
-								}
-
-								if stringValue, err := m.Settings.GetPath("predict").String(); err == nil {
-									value, _ := strconv.Atoi(stringValue)
-									m.Settings.SetPath([]string{"predict"}, value)
-								}
-
-								if stringValue, err := m.Settings.GetPath("settings", "alpha").String(); err == nil {
-									value, _ := strconv.Atoi(stringValue)
-									m.Settings.SetPath([]string{"settings", "alpha"}, value)
-								}
-
-								if stringValue, err := m.Settings.GetPath("settings", "beta").String(); err == nil {
-									value, _ := strconv.Atoi(stringValue)
-									m.Settings.SetPath([]string{"settings", "beta"}, value)
-								}
-
-								if stringValue, err := m.Settings.GetPath("settings", "gamma").String(); err == nil {
-									value, _ := strconv.Atoi(stringValue)
-									m.Settings.SetPath([]string{"settings", "gamma"}, value)
-								}
-
-								if stringValue, err := m.Settings.GetPath("settings", "period").String(); err == nil {
-									value, _ := strconv.Atoi(stringValue)
-									m.Settings.SetPath([]string{"settings", "period"}, value)
-								}
-							case "serial_diff":
-								if stringValue, err := m.Settings.GetPath("lag").String(); err == nil {
-									value, _ := strconv.Atoi(stringValue)
-									m.Settings.SetPath([]string{"lag"}, value)
-								}
-							}
-
-							a.Settings = m.Settings.MustMap()
+							a.Settings = m.castSettings()
 						})
 					}
 				} else {
@@ -216,6 +177,49 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	}
 
 	return nil
+}
+
+// Casts values to int when required by Elastic's query DSL
+func (metricAggregation MetricAgg) castSettings() map[string]interface{} {
+	switch metricAggregation.Type {
+	case "moving_avg":
+		if stringValue, err := metricAggregation.Settings.GetPath("window").String(); err == nil {
+			value, _ := strconv.Atoi(stringValue)
+			metricAggregation.Settings.SetPath([]string{"window"}, value)
+		}
+
+		if stringValue, err := metricAggregation.Settings.GetPath("predict").String(); err == nil {
+			value, _ := strconv.Atoi(stringValue)
+			metricAggregation.Settings.SetPath([]string{"predict"}, value)
+		}
+
+		if stringValue, err := metricAggregation.Settings.GetPath("settings", "alpha").String(); err == nil {
+			value, _ := strconv.Atoi(stringValue)
+			metricAggregation.Settings.SetPath([]string{"settings", "alpha"}, value)
+		}
+
+		if stringValue, err := metricAggregation.Settings.GetPath("settings", "beta").String(); err == nil {
+			value, _ := strconv.Atoi(stringValue)
+			metricAggregation.Settings.SetPath([]string{"settings", "beta"}, value)
+		}
+
+		if stringValue, err := metricAggregation.Settings.GetPath("settings", "gamma").String(); err == nil {
+			value, _ := strconv.Atoi(stringValue)
+			metricAggregation.Settings.SetPath([]string{"settings", "gamma"}, value)
+		}
+
+		if stringValue, err := metricAggregation.Settings.GetPath("settings", "period").String(); err == nil {
+			value, _ := strconv.Atoi(stringValue)
+			metricAggregation.Settings.SetPath([]string{"settings", "period"}, value)
+		}
+	case "serial_diff":
+		if stringValue, err := metricAggregation.Settings.GetPath("lag").String(); err == nil {
+			value, _ := strconv.Atoi(stringValue)
+			metricAggregation.Settings.SetPath([]string{"lag"}, value)
+		}
+	}
+
+	return metricAggregation.Settings.MustMap()
 }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo string) es.AggBuilder {
