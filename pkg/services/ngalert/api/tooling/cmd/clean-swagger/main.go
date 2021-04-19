@@ -21,6 +21,7 @@ func main() {
 		log.Fatal("no file specified, input", input, ", output", output)
 	}
 
+	//nolint
 	b, err := ioutil.ReadFile(input)
 	if err != nil {
 		log.Fatal(err)

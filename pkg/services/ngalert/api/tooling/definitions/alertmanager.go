@@ -260,7 +260,6 @@ func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 
 	c.TemplateFiles = tmp.TemplateFiles
 	return nil
-
 }
 
 // swagger:model
@@ -288,7 +287,6 @@ func (c *GettableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 
 	c.TemplateFiles = tmp.TemplateFiles
 	return nil
-
 }
 
 type GettableApiAlertingConfig struct {
@@ -478,7 +476,6 @@ func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 	}
 
 	return nil
-
 }
 
 func (r *GettableApiReceiver) Type() ReceiverType {
