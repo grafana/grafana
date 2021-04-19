@@ -31,10 +31,6 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
     () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
 
-    /**
-     * Props change frequently, we only want to update when the config or
-     * Query result structure changes (TODO: )
-     */
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel.configRev]
   );
