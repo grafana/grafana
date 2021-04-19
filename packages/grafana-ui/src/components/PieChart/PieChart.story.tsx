@@ -1,6 +1,6 @@
 import React from 'react';
 import { select, number, boolean } from '@storybook/addon-knobs';
-import { PieChart, PieChartType } from '@grafana/ui';
+import { PieChart, PieChartType, TooltipDisplayMode } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import {
   FieldColorModeId,
@@ -52,11 +52,11 @@ const getKnobs = () => {
   return {
     width: number('Width', 500),
     height: number('Height', 500),
-    pieType: select('pieType', [PieChartType.Pie, PieChartType.Donut], PieChartType.Pie),
+    pieType: select('pieType', Object.values(PieChartType), PieChartType.Pie),
     showLabelName: boolean('Label.showName', true),
     showLabelValue: boolean('Label.showValue', false),
     showLabelPercent: boolean('Label.showPercent', false),
-    tooltipMode: select('Tooltip mode', ['single', 'multi', 'none'], 'single'),
+    tooltipMode: select('Tooltip mode', Object.values(TooltipDisplayMode), TooltipDisplayMode.Single),
   };
 };
 
