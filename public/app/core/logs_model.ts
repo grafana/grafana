@@ -263,7 +263,7 @@ export function getSeriesProperties(
 
     if (visibleRangeMs > 0) {
       // Adjust interval bucket size for potentially shorter visible range
-      const clampingFactor = visibleRangeMs / (absoluteRange.to - absoluteRange.from);
+      const clampingFactor = visibleRangeMs / requestedRangeMs;
       resolutionIntervalMs *= clampingFactor;
       // Minimum bucketsize of 1s for nicer graphing
       bucketSize = Math.max(Math.ceil(resolutionIntervalMs * pxPerBar), minimumBucketSize);
