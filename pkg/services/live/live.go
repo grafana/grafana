@@ -274,6 +274,7 @@ func (g *GrafanaLive) Init() error {
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = setContextSignedUser(newCtx, user)
+		newCtx = setContextValues(newCtx, ctx.Req.URL.Query())
 
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx) // Set a user ID.
