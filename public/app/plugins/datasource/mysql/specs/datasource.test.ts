@@ -1,21 +1,18 @@
 import { of } from 'rxjs';
-import { dateTime, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
 
 import { MysqlDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { FetchResponse } from '@grafana/runtime';
+import { FetchResponse, setBackendSrv } from '@grafana/runtime';
 import { MySQLOptions } from './../types';
 
-jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-  getBackendSrv: () => backendSrv,
-}));
-
 describe('MySQLDatasource', () => {
-  const fetchMock = jest.spyOn(backendSrv, 'fetch');
   const setupTextContext = (response: any) => {
+    jest.clearAllMocks();
+    setBackendSrv(backendSrv);
+    const fetchMock = jest.spyOn(backendSrv, 'fetch');
     const instanceSettings = ({
       jsonData: {
         defaultProject: 'testproject',
@@ -24,12 +21,11 @@ describe('MySQLDatasource', () => {
     const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = { ...initialCustomVariableModelState };
 
-    jest.clearAllMocks();
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
     const ds = new MysqlDatasource(instanceSettings, templateSrv);
 
-    return { ds, variable, templateSrv };
+    return { ds, variable, templateSrv, fetchMock };
   };
 
   describe('When performing annotationQuery', () => {
@@ -138,7 +134,7 @@ describe('MySQLDatasource', () => {
     };
 
     it('should return list of all column values', async () => {
-      const { ds } = setupTextContext(response);
+      const { ds, fetchMock } = setupTextContext(response);
       const results = await ds.metricFindQuery(query, { searchFilter: 'aTit' });
 
       expect(fetchMock).toBeCalledTimes(1);
@@ -173,7 +169,7 @@ describe('MySQLDatasource', () => {
     };
 
     it('should return list of all column values', async () => {
-      const { ds } = setupTextContext(response);
+      const { ds, fetchMock } = setupTextContext(response);
       const results = await ds.metricFindQuery(query, {});
 
       expect(fetchMock).toBeCalledTimes(1);
