@@ -90,7 +90,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 const getStyles = (theme: GrafanaTheme) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.v2.palette.divider};
+      border-bottom: 1px solid ${theme.v2.palette.border.weak};
       &:last-child {
         border-bottom: none;
       }
@@ -102,7 +102,7 @@ const getStyles = (theme: GrafanaTheme) => {
       margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
     `,
     toggle: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.v2.palette.text.secondary};
       margin-right: ${theme.spacing.sm};
     `,
     title: css`
@@ -113,23 +113,22 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       cursor: pointer;
       align-items: baseline;
-      padding: ${theme.spacing.sm};
+      padding: ${theme.v2.spacing(1)};
       color: ${theme.v2.palette.text.primary};
-      font-weight: ${theme.typography.weight.semibold};
+      font-weight: ${theme.v2.typography.fontWeightMedium};
 
       &:hover {
-        background: ${theme.v2.palette.emphasize(theme.v2.palette.layer1, 0.03)};
+        background: ${theme.v2.palette.emphasize(theme.v2.palette.background.primary, 0.03)};
       }
     `,
     headerExpanded: css`
       color: ${theme.v2.palette.text.primary};
     `,
     headerNested: css`
-      padding-left: 0;
-      padding-right: 0;
+      padding: ${theme.v2.spacing(0.5, 0, 0.5, 0)};
     `,
     body: css`
-      padding: ${theme.spacing.sm} ${theme.spacing.md} ${theme.spacing.sm} ${theme.spacing.xl};
+      padding: ${theme.v2.spacing(1, 2, 1, 4)};
     `,
     bodyNested: css`
       position: relative;
@@ -141,7 +140,7 @@ const getStyles = (theme: GrafanaTheme) => {
         left: 8px;
         width: 1px;
         height: 100%;
-        background: ${theme.colors.pageHeaderBorder};
+        background: ${theme.v2.palette.border.weak};
       }
     `,
   };

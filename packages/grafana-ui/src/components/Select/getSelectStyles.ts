@@ -6,7 +6,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     menu: css`
       label: grafana-select-menu;
-      background: ${theme.v2.palette.layer2};
+      background: ${theme.v2.palette.background.secondary};
       box-shadow: ${theme.v2.shadows.z3};
       position: relative;
       min-width: 100%;
@@ -56,7 +56,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     singleValue: css`
       label: grafana-select-single-value;
-      color: ${theme.v2.components.form.text};
+      color: ${theme.v2.components.input.text};
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -88,7 +88,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       line-height: 1;
-      background: ${theme.v2.palette.layer2};
+      background: ${theme.v2.palette.background.secondary};
       border-radius: ${theme.v2.shape.borderRadius()};
       margin: ${theme.v2.spacing(0, 1, 0, 0)};
       padding: ${theme.v2.spacing(0.25, 0, 0.25, 1)};
