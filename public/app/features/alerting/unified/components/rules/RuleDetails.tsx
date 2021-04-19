@@ -24,7 +24,7 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
 
   const annotations = Object.entries(rule.annotations);
 
-  const datasources: Array<{ name: string; icon?: string }> = useMemo(() => {
+  const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
     if (isCloudRulesSource(rulesSource)) {
       return [{ name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
     } else if (rule.queries) {
@@ -60,9 +60,9 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
           ))}
         </div>
         <div className={styles.rightSide}>
-          {!!datasources.length && (
+          {!!dataSources.length && (
             <DetailsField label="Data source">
-              {datasources.map(({ name, icon }) => (
+              {dataSources.map(({ name, icon }) => (
                 <div key={name}>
                   {icon && (
                     <>
