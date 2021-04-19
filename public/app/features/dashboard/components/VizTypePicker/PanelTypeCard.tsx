@@ -69,7 +69,7 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       flex-shrink: 0;
       cursor: pointer;
-      background: ${theme.v2.palette.layer2};
+      background: ${theme.v2.palette.background.secondary};
       border-radius: ${theme.v2.shape.borderRadius()};
       box-shadow: ${theme.v2.shadows.z0};
       align-items: center;
@@ -83,7 +83,7 @@ const getStyles = (theme: GrafanaTheme) => {
       })};
 
       &:hover {
-        background: ${styleMixins.hoverColor(theme.v2.palette.layer2, theme)};
+        background: ${styleMixins.hoverColor(theme.v2.palette.background.secondary, theme)};
       }
     `,
     itemContent: css`
