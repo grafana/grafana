@@ -20,7 +20,19 @@ func TestManagedStream_GetLastPacket(t *testing.T) {
 	c := NewManagedStream("a", noopPublisher)
 	_, ok := c.getLastPacket("test")
 	require.False(t, ok)
-	err := c.Push("test", data.NewFrame("hello"))
+	err := c.Push("test", data.NewFrame("hello"), false)
+	require.NoError(t, err)
+
+	_, ok = c.getLastPacket("test")
+	require.NoError(t, err)
+	require.False(t, ok)
+}
+
+func TestManagedStream_GetLastPacket_StableSchema(t *testing.T) {
+	c := NewManagedStream("a", noopPublisher)
+	_, ok := c.getLastPacket("test")
+	require.False(t, ok)
+	err := c.Push("test", data.NewFrame("hello"), true)
 	require.NoError(t, err)
 
 	s, ok := c.getLastPacket("test")
