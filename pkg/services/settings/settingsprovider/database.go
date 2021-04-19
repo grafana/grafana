@@ -2,8 +2,10 @@ package settingsprovider
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/services/settings"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type database struct {
@@ -61,19 +63,22 @@ func (db *database) UpsertSettings(updates settings.SettingsBag, removals settin
 			return exists
 		}
 
+		rollbackAndReturn := func(err error) error {
+			if rollErr := sess.Rollback(); rollErr != nil {
+				logger.Error("Could not rollback", "error", rollErr)
+				return errutil.Wrapf(err, "roll back transaction due to error failed: %s", rollErr)
+			}
+			return err
+		}
+
 		for _, setUp := range toUpdate {
 			if exists(setUp) {
 				if _, err := sess.Where("section = ? and key = ?", setUp.Section, setUp.Key).Update(setUp); err != nil {
-					rbErr := sess.Rollback()
-					logger.Error("Could not rollback", "error", rbErr)
-					return err
+					return rollbackAndReturn(err)
 				}
-
 			} else {
 				if _, err := sess.Insert(setUp); err != nil {
-					rbErr := sess.Rollback()
-					logger.Error("Could not rollback", "error", rbErr)
-					return err
+					return rollbackAndReturn(err)
 				}
 			}
 		}
@@ -83,14 +88,11 @@ func (db *database) UpsertSettings(updates settings.SettingsBag, removals settin
 				deleted, err := sess.Delete(del)
 				logger.Debug("Deleted", "setting", del, "affected", deleted)
 				if err != nil {
-					rbErr := sess.Rollback()
-					logger.Error("Could not rollback", "error", rbErr)
-					return err
+					return rollbackAndReturn(err)
 				}
 			}
 		}
 
-		sess.Commit()
-		return nil
+		return sess.Commit()
 	})
 }
