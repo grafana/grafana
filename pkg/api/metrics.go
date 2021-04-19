@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr"
@@ -100,6 +101,75 @@ func toMacronResponse(qdr *backend.QueryDataResponse) response.Response {
 	return response.JSONStreaming(statusCode, qdr)
 }
 
+// QuerySSE returns query metrics from server side expressions.
+// Data sources are identified by UID. Time ranges are per query.
+// POST /api/ds/see
+func (hs *HTTPServer) QuerySSE(c *models.ReqContext, queries []*simplejson.Json) response.Response {
+	if len(queries) == 0 {
+		return response.Error(http.StatusBadRequest, "No queries found in query", nil)
+	}
+
+	request := &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			OrgID: c.OrgId,
+		},
+		Queries: []backend.DataQuery{},
+	}
+
+	for _, query := range queries {
+		datasourceUID, err := query.Get("datasourceUid").String()
+		if err != nil {
+			hs.log.Debug("Can't process query since it's missing data source UID")
+			return response.Error(400, "Query missing data source UID", nil)
+		}
+
+		if datasourceUID != expr.DatasourceUID {
+			// Expression requests have everything in one request, so need to check
+			// all data source queries for possible permission / not found issues.
+			if _, err = hs.DatasourceCache.GetDatasourceByUID(datasourceUID, c.SignedInUser, c.SkipCache); err != nil {
+				return hs.handleGetDataSourceByUIDError(err, datasourceUID)
+			}
+		}
+
+		encodedQuery, err := query.Encode()
+
+		if err != nil {
+			return response.Error(400, "could not encode query", nil)
+		}
+
+		// epochMS
+		fromMS := query.Get("timeRange").Get("from").MustInt64(0)
+		toMS := query.Get("timeRange").Get("to").MustInt64(0)
+
+		if datasourceUID != expr.DatasourceUID && (fromMS == 0 || toMS == 0) {
+			response.Error(400, "query is missing time range", nil)
+		}
+
+		request.Queries = append(request.Queries, backend.DataQuery{
+			RefID:         query.Get("refId").MustString("A"),
+			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
+			Interval:      time.Duration(time.Second * time.Duration(query.Get("intervalMs").MustInt64(1000))),
+			QueryType:     query.Get("queryType").MustString(""),
+			JSON:          encodedQuery,
+			TimeRange: backend.TimeRange{
+				From: time.Unix(fromMS/1000, 0),
+				To:   time.Unix(toMS/1000, 0),
+			},
+		})
+	}
+
+	exprService := expr.Service{
+		Cfg:         hs.Cfg,
+		DataService: hs.DataService,
+	}
+
+	qdr, err := exprService.TransformData(c.Req.Context(), request)
+	if err != nil {
+		return response.Error(500, "expression request error", err)
+	}
+	return toMacronResponse(qdr)
+}
+
 // handleExpressions handles POST /api/ds/query when there is an expression.
 func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.MetricRequest) response.Response {
 	timeRange := plugins.NewDataTimeRange(reqDTO.From, reqDTO.To)
@@ -150,6 +220,17 @@ func (hs *HTTPServer) handleExpressions(c *models.ReqContext, reqDTO dtos.Metric
 
 func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *response.NormalResponse {
 	hs.log.Debug("Encountered error getting data source", "err", err, "id", datasourceID)
+	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		return response.Error(403, "Access denied to data source", err)
+	}
+	if errors.Is(err, models.ErrDataSourceNotFound) {
+		return response.Error(400, "Invalid data source ID", err)
+	}
+	return response.Error(500, "Unable to load data source metadata", err)
+}
+
+func (hs *HTTPServer) handleGetDataSourceByUIDError(err error, datasourceUID string) *response.NormalResponse {
+	hs.log.Debug("Encountered error getting data source", "err", err, "uid", datasourceUID)
 	if errors.Is(err, models.ErrDataSourceAccessDenied) {
 		return response.Error(403, "Access denied to data source", err)
 	}
