@@ -329,9 +329,15 @@ func pluginSignatureState(log log.Logger, plugin *plugins.PluginV2) (plugins.Plu
 	}
 
 	if manifest.isV2() {
-		// Track files missing from the manifest
 		var unsignedFiles []string
-		for _, f := range plugin.Files {
+
+		// Track files missing from the manifest
+		pluginFiles, err := collectPluginFilesWithin(plugin.PluginDir)
+		if err != nil {
+			log.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
+			return plugins.PluginSignatureState{}, err
+		}
+		for _, f := range pluginFiles {
 			if _, exists := manifestFiles[f]; !exists {
 				unsignedFiles = append(unsignedFiles, f)
 			}
@@ -351,4 +357,23 @@ func pluginSignatureState(log log.Logger, plugin *plugins.PluginV2) (plugins.Plu
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
 	}, nil
+}
+
+// gets plugin filenames that require verification for plugin signing
+func collectPluginFilesWithin(rootDir string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && info.Name() != "MANIFEST.txt" {
+			file, err := filepath.Rel(rootDir, path)
+			if err != nil {
+				return err
+			}
+			files = append(files, filepath.ToSlash(file))
+		}
+		return nil
+	})
+	return files, err
 }

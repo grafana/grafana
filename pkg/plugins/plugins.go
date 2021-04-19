@@ -46,7 +46,6 @@ type PluginV2 struct {
 	PluginDir       string              `json:"-"`
 	DefaultNavURL   string              `json:"-"`
 	IsCorePlugin    bool                `json:"-"`
-	Files           []string            `json:"-"`
 	SignatureType   PluginSignatureType `json:"-"`
 	SignatureOrg    string              `json:"-"`
 

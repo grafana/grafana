@@ -14,8 +14,8 @@ import (
 
 type Finder struct {
 	Cfg *setting.Cfg `inject:""`
-	log log.Logger
 
+	log   log.Logger
 	found []string
 }
 

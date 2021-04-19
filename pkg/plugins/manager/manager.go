@@ -649,25 +649,6 @@ func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte
 	return data, nil
 }
 
-// gets plugin filenames that require verification for plugin signing
-func collectPluginFilesWithin(rootDir string) ([]string, error) {
-	var files []string
-	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() && info.Name() != "MANIFEST.txt" {
-			file, err := filepath.Rel(rootDir, path)
-			if err != nil {
-				return err
-			}
-			files = append(files, filepath.ToSlash(file))
-		}
-		return nil
-	})
-	return files, err
-}
-
 // GetDataPlugin gets a DataPlugin with a certain name. If none is found, nil is returned.
 func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
 	if p, exists := pm.dataSources[id]; exists && p.CanHandleDataQueries() {

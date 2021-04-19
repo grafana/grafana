@@ -3,10 +3,8 @@ package manager
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"runtime"
 	"strings"
 
@@ -23,20 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var pluginTypes = map[string]interface{}{
-	"panel":      plugins.PanelPlugin{},
-	"datasource": plugins.DataSourcePlugin{},
-	"app":        plugins.AppPlugin{},
-	"renderer":   plugins.RendererPlugin{},
-}
-
 type Loader struct {
 	Cfg                  *setting.Cfg          `inject:""`
 	BackendPluginManager backendplugin.Manager `inject:""`
 
 	allowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
-
-	log log.Logger
+	log                           log.Logger
 }
 
 func init() {
@@ -74,16 +64,14 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		if err != nil {
 			return nil, err
 		}
-		defer func() {
-			if err := reader.Close(); err != nil {
-				l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
-			}
-		}()
 
-		jsonParser := json.NewDecoder(reader)
 		plugin := &plugins.PluginV2{}
-		if err := jsonParser.Decode(&plugin); err != nil {
+		if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
 			return nil, err
+		}
+
+		if err := reader.Close(); err != nil {
+			l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
 		}
 
 		if plugin.ID == "" || plugin.Type == "" {
@@ -91,12 +79,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		}
 
 		plugin.PluginDir = filepath.Dir(pluginJSONPath)
-		plugin.Files, err = collectPluginFilesWithin(plugin.PluginDir)
-		if err != nil {
-			l.log.Warn("Could not collect plugin file information in directory", "pluginID", plugin.ID, "dir", plugin.PluginDir)
-			return nil, err
-		}
-
 		signatureState, err := pluginSignatureState(l.log, plugin)
 		if err != nil {
 			l.log.Warn("Could not get plugin signature state", "pluginID", plugin.ID, "err", err)
@@ -111,7 +93,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 
 	// wire up plugin dependencies
 	for _, plugin := range foundPlugins {
-		ancestors := strings.Split(plugin.PluginDir, string(filepath.Separator)) // safe to use PluginDir instead of `key`?
+		ancestors := strings.Split(plugin.PluginDir, string(filepath.Separator))
 		ancestors = ancestors[0 : len(ancestors)-1]
 		aPath := ""
 
@@ -141,11 +123,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 
 		l.log.Debug("Attempting to add plugin", "id", plugin.ID)
 
-		pluginGoType, exists := pluginTypes[plugin.Type]
-		if !exists {
-			return nil, fmt.Errorf("unknown plugin type %q", plugin.Type)
-		}
-
 		pluginJSONPath := filepath.Join(plugin.PluginDir, "plugin.json")
 
 		// External plugins need a module.js file for SystemJS to load
@@ -163,36 +140,16 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 			}
 		}
 
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `jsonFPath` is based
-		// on plugin the folder structure on disk and not user input.
-		reader, err := os.Open(pluginJSONPath)
-		defer func() {
-			if err := reader.Close(); err != nil {
-				l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
-			}
-		}()
-		if err != nil {
-			return nil, err
-		}
-		jsonParser := json.NewDecoder(reader)
-		loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(plugins.PluginLoader)
-
-		if err := jsonParser.Decode(loader); err != nil {
-			return nil, err
-		}
-
 		if plugin.Backend {
 			startCmd := plugin.Executable
 			if plugin.Type == "renderer" {
 				startCmd = "plugin_start"
 			}
-			cmd := plugins.ComposePluginStartCommand(startCmd)
-			fullpath := filepath.Join(plugin.PluginDir, cmd)
-
-			err = plugin.Setup(grpcplugin.PluginDescriptor{
+			executableFilename := plugins.ComposePluginStartCommand(startCmd)
+			err := plugin.Setup(grpcplugin.PluginDescriptor{
 				PluginID:       plugin.ID,
-				ExecutablePath: fullpath,
+				ExecutablePath: filepath.Join(plugin.PluginDir, executableFilename),
+				Managed:        true,
 				VersionedPlugins: map[int]goplugin.PluginSet{
 					grpcplugin2.ProtocolVersion: grpcplugin.GetV2PluginSet(),
 				},
