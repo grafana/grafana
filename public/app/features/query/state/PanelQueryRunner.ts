@@ -77,30 +77,59 @@ export class PanelQueryRunner {
     const { withFieldConfig, withTransforms } = options;
     let structureRev = 1;
     let lastData: DataFrame[] = [];
+    let processedCount = 0;
+    const fastCompare = (a: DataFrame, b: DataFrame) => {
+      return compareDataFrameStructures(a, b, true);
+    };
 
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),
       map((data: PanelData) => {
         let processedData = data;
+        let sameStructure = false;
 
-        if (withFieldConfig) {
+        if (withFieldConfig && data.series?.length) {
           // Apply field defaults and overrides
-          const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-          const timeZone = data.request?.timezone ?? 'browser';
+          let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          let processFields = fieldConfig != null;
 
-          if (fieldConfig) {
+          // If the shape is the same, we can skip field overrides
+          if (processFields && processedCount > 0 && lastData.length) {
+            const sameTypes = compareArrayValues(lastData, processedData.series, fastCompare);
+            if (sameTypes) {
+              // NOTE: config changes will not be applied!
+              // Keep the previous field config settings
+              processedData = {
+                ...processedData,
+                series: lastData.map((frame, frameIndex) => ({
+                  ...frame,
+                  fields: frame.fields.map((field, fieldIndex) => ({
+                    ...field,
+                    values: data.series[frameIndex].fields[fieldIndex].values,
+                  })),
+                })),
+              };
+              processFields = false;
+              sameStructure = true;
+            }
+          }
+
+          if (processFields) {
+            processedCount++; // results with data
             processedData = {
               ...processedData,
               series: applyFieldOverrides({
-                timeZone: timeZone,
+                timeZone: data.request?.timezone ?? 'browser',
                 data: processedData.series,
-                ...fieldConfig,
+                ...fieldConfig!,
               }),
             };
           }
         }
 
-        const sameStructure = compareArrayValues(lastData, processedData.series, compareDataFrameStructures);
+        if (!sameStructure) {
+          sameStructure = compareArrayValues(lastData, processedData.series, compareDataFrameStructures);
+        }
         if (!sameStructure) {
           structureRev++;
         }
