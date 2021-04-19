@@ -34,7 +34,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
-    background-color: ${tinycolor(theme.colors.bodyBg).setAlpha(0.6).toHex8String()};
+    background-color: ${tinycolor(theme.v2.palette.background.primary).setAlpha(0.6).toHex8String()};
     width: 100px;
   `,
 
@@ -49,7 +49,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   textHovering: css`
     width: 200px;
     & span {
-      background-color: ${tinycolor(theme.colors.bodyBg).setAlpha(0.8).toHex8String()};
+      background-color: ${tinycolor(theme.v2.palette.background.primary).setAlpha(0.8).toHex8String()};
     }
   `,
 }));
