@@ -48,7 +48,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     data-panelid="1"
     key="1"
   >
-    <Connect(DashboardPanelUnconnected)
+    <Connect(UnthemedDashboardPanelUnconnected)
       dashboard={
         DashboardModel {
           "annotations": Object {
@@ -289,7 +289,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     data-panelid="2"
     key="2"
   >
-    <Connect(DashboardPanelUnconnected)
+    <Connect(UnthemedDashboardPanelUnconnected)
       dashboard={
         DashboardModel {
           "annotations": Object {
@@ -530,7 +530,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     data-panelid="3"
     key="3"
   >
-    <Connect(DashboardPanelUnconnected)
+    <Connect(UnthemedDashboardPanelUnconnected)
       dashboard={
         DashboardModel {
           "annotations": Object {
@@ -771,7 +771,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
     data-panelid="4"
     key="4"
   >
-    <Connect(DashboardPanelUnconnected)
+    <Connect(UnthemedDashboardPanelUnconnected)
       dashboard={
         DashboardModel {
           "annotations": Object {
