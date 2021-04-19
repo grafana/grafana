@@ -17,10 +17,15 @@ func prepare(text string) io.ReadCloser {
 	return ioutil.NopCloser(strings.NewReader(text))
 }
 
-func decodedFrames(t *testing.T, result *plugins.DataQueryResult) data.Frames {
+func decodedFrames(t *testing.T, result plugins.DataQueryResult) data.Frames {
 	decoded, err := result.Dataframes.Decoded()
 	require.NoError(t, err)
 	return decoded
+}
+
+func assertSeriesName(t *testing.T, result plugins.DataQueryResult, index int, name string) {
+	decoded := decodedFrames(t, result)
+	require.Equal(t, decoded[index].Name, name)
 }
 
 func TestInfluxdbResponseParser(t *testing.T) {
@@ -65,13 +70,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		result := parser.Parse(prepare(response), query)
 
-		decoded := decodedFrames(t, &result)
+		decoded := decodedFrames(t, result)
 		require.Len(t, decoded, 2)
 		frame1 := decoded[0]
 		frame2 := decoded[1]
 
-		require.Equal(t, frame1.Name, "cpu.mean { datacenter: America }")
-		require.Equal(t, frame2.Name, "cpu.sum { datacenter: America }")
+		assertSeriesName(t, result, 0, "cpu.mean { datacenter: America }")
+		assertSeriesName(t, result, 1, "cpu.sum { datacenter: America }")
 
 		require.Len(t, frame1.Fields, 2)
 		require.Len(t, frame2.Fields, 2)
@@ -117,7 +122,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		require.Nil(t, result.Error)
 		require.Equal(t, result.ErrorString, "")
 
-		decoded := decodedFrames(t, &result)
+		decoded := decodedFrames(t, result)
 		require.Len(t, decoded, 1)
 
 		frame := decoded[0]
@@ -167,7 +172,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		require.Nil(t, result.Error)
 		require.Equal(t, result.ErrorString, "")
 
-		decoded := decodedFrames(t, &result)
+		decoded := decodedFrames(t, result)
 		require.Len(t, decoded, 1)
 
 		frame := decoded[0]
@@ -215,74 +220,74 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		query := &Query{Alias: "series alias"}
 		result := parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "series alias")
+		assertSeriesName(t, result, 0, "series alias")
 
 		query = &Query{Alias: "alias $m $measurement", Measurement: "10m"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias 10m 10m")
+		assertSeriesName(t, result, 0, "alias 10m 10m")
 
 		query = &Query{Alias: "alias $col", Measurement: "10m"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias mean")
-		require.Equal(t, decodedFrames(t, &result)[1].Name, "alias sum")
+		assertSeriesName(t, result, 0, "alias mean")
+		assertSeriesName(t, result, 1, "alias sum")
 
 		query = &Query{Alias: "alias $tag_datacenter"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias America")
+		assertSeriesName(t, result, 0, "alias America")
 
 		query = &Query{Alias: "alias $1"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias upc")
+		assertSeriesName(t, result, 0, "alias upc")
 
 		query = &Query{Alias: "alias $5"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias $5")
+		assertSeriesName(t, result, 0, "alias $5")
 
 		query = &Query{Alias: "series alias"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "series alias")
+		assertSeriesName(t, result, 0, "series alias")
 
 		query = &Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias 10m 10m")
+		assertSeriesName(t, result, 0, "alias 10m 10m")
 
 		query = &Query{Alias: "alias [[col]]", Measurement: "10m"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias mean")
-		require.Equal(t, decodedFrames(t, &result)[1].Name, "alias sum")
+		assertSeriesName(t, result, 0, "alias mean")
+		assertSeriesName(t, result, 1, "alias sum")
 
 		query = &Query{Alias: "alias [[tag_datacenter]]"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias America")
+		assertSeriesName(t, result, 0, "alias America")
 
 		query = &Query{Alias: "alias [[tag_dc.region.name]]"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Northeast")
+		assertSeriesName(t, result, 0, "alias Northeast")
 
 		query = &Query{Alias: "alias [[tag_cluster-name]]"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Cluster")
+		assertSeriesName(t, result, 0, "alias Cluster")
 
 		query = &Query{Alias: "alias [[tag_/cluster/name/]]"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Cluster/")
+		assertSeriesName(t, result, 0, "alias Cluster/")
 
 		query = &Query{Alias: "alias [[tag_@cluster@name@]]"}
 		result = parser.Parse(prepare(response), query)
 
-		require.Equal(t, decodedFrames(t, &result)[0].Name, "alias Cluster@")
+		assertSeriesName(t, result, 0, "alias Cluster@")
 	})
 
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {
@@ -316,7 +321,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		result := parser.Parse(prepare(response), query)
 
-		decoded := decodedFrames(t, &result)
+		decoded := decodedFrames(t, result)
 
 		require.Len(t, decoded, 2)
 
