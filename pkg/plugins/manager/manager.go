@@ -560,7 +560,7 @@ func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *plugins.P
 			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
 			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
 			return &plugins.PluginError{
-				ErrorCode: plugins.SignatureMissing,
+				ErrorCode: signatureMissing,
 			}
 		}
 		s.log.Warn("Running an unsigned backend plugin", "pluginID", plugin.Id, "pluginDir",
@@ -570,13 +570,13 @@ func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *plugins.P
 		s.log.Debug("Plugin %q has an invalid signature", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin %q has an invalid signature", plugin.Id))
 		return &plugins.PluginError{
-			ErrorCode: plugins.SignatureInvalid,
+			ErrorCode: signatureInvalid,
 		}
 	case plugins.PluginSignatureModified:
 		s.log.Debug("Plugin %q has a modified signature", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin %q's signature has been modified", plugin.Id))
 		return &plugins.PluginError{
-			ErrorCode: plugins.SignatureModified,
+			ErrorCode: signatureModified,
 		}
 	default:
 		panic(fmt.Sprintf("Plugin %q has unrecognized plugin signature state %q", plugin.Id, plugin.Signature))

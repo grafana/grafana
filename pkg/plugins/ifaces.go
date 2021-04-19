@@ -79,10 +79,10 @@ type PluginFinderV2 interface {
 
 type PluginLoaderV2 interface {
 	// Load loads a list plugins and returns them.
-	LoadAll([]string, PluginSignatureValidator) ([]*PluginV2, error)
+	LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*PluginV2, error)
 
 	// Load loads a plugin and returns it.
-	Load(string, PluginSignatureValidator) (*PluginV2, error)
+	Load(pluginJSONPath string, requireSigned bool) (*PluginV2, error)
 }
 
 type PluginInitializerV2 interface {

@@ -29,8 +29,6 @@ type PluginManagerV2 struct {
 	PluginLoader         plugins.PluginLoaderV2      `inject:""`
 	PluginInitializer    plugins.PluginInitializerV2 `inject:""`
 
-	AllowUnsignedPluginsCondition plugins.UnsignedPluginV2ConditionFunc
-
 	log       log.Logger
 	plugins   map[string]*plugins.PluginV2
 	pluginsMu sync.RWMutex
@@ -164,11 +162,7 @@ func restartKilledProcess(ctx context.Context, p *plugins.PluginV2) error {
 func (m *PluginManagerV2) InstallCorePlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
 	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", pluginJSONPath)
 
-	plugin, err := m.PluginLoader.Load(fullPath, plugins.NewSignatureValidator(
-		m.Cfg,
-		false,
-		m.AllowUnsignedPluginsCondition,
-	))
+	plugin, err := m.PluginLoader.Load(fullPath, false)
 	if err != nil {
 		return err
 	}
@@ -200,11 +194,7 @@ func (m *PluginManagerV2) installPlugins(path string, requireSigning bool) error
 		return err
 	}
 
-	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths, plugins.NewSignatureValidator(
-		m.Cfg,
-		requireSigning,
-		m.AllowUnsignedPluginsCondition,
-	))
+	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths, requireSigning)
 	if err != nil {
 		return err
 	}
