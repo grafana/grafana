@@ -167,6 +167,7 @@ export enum NullValueMode {
  * Describes and API for exposing panel specific data configurations.
  */
 export interface DataConfigSource {
+  configRev?: number;
   getTransformations: () => DataTransformerConfig[] | undefined;
   getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
 }

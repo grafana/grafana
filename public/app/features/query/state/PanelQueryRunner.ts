@@ -78,6 +78,7 @@ export class PanelQueryRunner {
     let structureRev = 1;
     let lastData: DataFrame[] = [];
     let processedCount = 0;
+    let lastConfigRev = -1;
     const fastCompare = (a: DataFrame, b: DataFrame) => {
       return compareDataFrameStructures(a, b, true);
     };
@@ -94,10 +95,14 @@ export class PanelQueryRunner {
           let processFields = fieldConfig != null;
 
           // If the shape is the same, we can skip field overrides
-          if (processFields && processedCount > 0 && lastData.length) {
+          if (
+            processFields &&
+            processedCount > 0 &&
+            lastData.length &&
+            lastConfigRev === this.dataConfigSource.configRev
+          ) {
             const sameTypes = compareArrayValues(lastData, processedData.series, fastCompare);
             if (sameTypes) {
-              // NOTE: config changes will not be applied!
               // Keep the previous field config settings
               processedData = {
                 ...processedData,
@@ -115,6 +120,7 @@ export class PanelQueryRunner {
           }
 
           if (processFields) {
+            lastConfigRev = this.dataConfigSource.configRev!;
             processedCount++; // results with data
             processedData = {
               ...processedData,
