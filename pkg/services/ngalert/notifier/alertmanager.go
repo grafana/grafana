@@ -123,7 +123,7 @@ func (am *Alertmanager) Init() (err error) {
 		return errors.Wrap(err, "unable to initialize the silencing component of alerting")
 	}
 
-	am.alerts, err = NewAlertProvider(nil, am.marker)
+	am.alerts, err = NewAlertProvider(am.marker)
 	if err != nil {
 		return errors.Wrap(err, "unable to initialize the alert provider component of alerting")
 	}
@@ -267,8 +267,6 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) error {
 		routingStage[name] = notify.MultiStage{silencingStage, stage}
 	}
 
-	am.alerts.SetStage(routingStage)
-
 	am.StopAndWait()
 	am.route = dispatch.NewRoute(cfg.AlertmanagerConfig.Route, nil)
 	am.dispatcher = dispatch.NewDispatcher(am.alerts, am.route, routingStage, am.marker, timeoutFunc, gokit_log.NewNopLogger(), am.dispatcherMetrics)
@@ -347,8 +345,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not
-func (am *Alertmanager) PutAlerts(alerts ...*PostableAlert) error {
-	return am.alerts.PutPostableAlert(alerts...)
+func (am *Alertmanager) PutAlerts(alerts apimodels.PostableAlerts) error {
+	return am.alerts.PutPostableAlert(alerts)
 }
 
 // createReceiverStage creates a pipeline of stages for a receiver.
