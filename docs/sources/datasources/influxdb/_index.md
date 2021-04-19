@@ -10,7 +10,7 @@ weight = 700
 
 {{< docs/shared "influxdb/intro.md" >}}
 
-This topic explains options, variables, querying, and other options specific to this data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+This topic explains options, variables, querying, and other options specific to this data source. Refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## Data source options
 
@@ -25,7 +25,7 @@ InfluxDB data source options differ depending on which [query language](#query-l
 
 ### InfluxQL (classic InfluxDB query)
 
-These options apply if you are using the InfluxQL query language. If you are using Flux, refer to [Flux support in Grafana]({{< relref "influx-flux.md" >}}).
+These options apply if you are using the InfluxQL query language. If you are using Flux, refer to [Flux support in Grafana]({{< relref "influxdb-flux.md" >}}).
 
 Name        | Description
 ----------- | -------------
@@ -43,7 +43,7 @@ Name        | Description
 
 ### Flux
 
-For information on data source settings and using Flux in Grafana, refer to [Flux support in Grafana]({{< relref "influx-flux.md" >}}).
+For information on data source settings and using Flux in Grafana, refer to [Flux support in Grafana]({{< relref "influxdb-flux.md" >}}).
 
 #### Min time interval
 
@@ -78,14 +78,14 @@ Enter edit mode by clicking the panel title and clicking **Edit**. The editor al
 
 ### Filter data (WHERE)
 
-To add a tag filter, click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
-the tag key and then selecting `--remove tag filter--`.
+To add a tag filter, click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on the tag key and then selecting `--remove tag filter--`.
 
 **Regex matching**
 
 You can type in regex patterns for metric names or tag filter values. Be sure to wrap the regex pattern in forward slashes (`/`). Grafana automatically adjusts the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
 ### Field and Aggregation functions
+
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:
 
@@ -98,6 +98,7 @@ SELECT derivative(mean("value"), 10s) /10 AS "REQ/s" FROM ....
 ```
 
 #### Select multiple fields
+
 Use the plus button and select Field > field to add another SELECT clause. You can also
 specify an asterix `*` to select all fields.
 
@@ -122,7 +123,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 
 ## Querying logs
 
-Querying and displaying log data from InfluxDB is available in [Explore]({{< relref "../explore" >}}), and in the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards.
+Querying and displaying log data from InfluxDB is available in [Explore]({{< relref "../../explore/_index.md" >}}), and in the [logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}) in dashboards.
 Select the InfluxDB data source, and then enter a query to display your logs.
 
 ### Log queries
@@ -137,7 +138,7 @@ To add a filter, click the plus icon to the right of the `Measurements/Fields` b
 
 ## Annotations
 
-[Annotations]({{< relref "../dashboards/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
+[Annotations]({{< relref "../../dashboards/annotations.md" >}}) allows you to overlay rich event information on top of graphs. Add annotation queries using the Annotations view in the Dashboard menu.
 
 An example query:
 

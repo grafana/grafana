@@ -8,7 +8,7 @@ weight = 300
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
 
-For more information, refer to  [Templates and variables]({{< relref "../variables/_index.md" >}}).
+For more information, refer to  [Templates and variables]({{< relref "../../variables/_index.md" >}}).
 
 ## Using variables in InfluxDB queries
 
