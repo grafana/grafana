@@ -8,11 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/centrifugal/centrifuge"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -23,9 +18,15 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/features"
+	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 )
 
 var (
@@ -74,8 +75,8 @@ type GrafanaLive struct {
 
 	ManagedStreamRunner *ManagedStreamRunner
 
-	contextGetter *pluginContextGetter
-	streamManager *features.StreamManager
+	contextGetter    *pluginContextGetter
+	runStreamManager *runstream.Manager
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -91,9 +92,9 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
-	if g.streamManager != nil {
+	if g.runStreamManager != nil {
 		// Only run stream manager if GrafanaLive properly initialized.
-		return g.streamManager.Run(ctx)
+		return g.runStreamManager.Run(ctx)
 	}
 	return nil
 }
@@ -128,7 +129,7 @@ func (g *GrafanaLive) Init() error {
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
 	packetSender := newPluginPacketSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
-	g.streamManager = features.NewStreamManager(packetSender, presenceGetter)
+	g.runStreamManager = runstream.NewManager(packetSender, presenceGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
@@ -271,6 +272,7 @@ func (g *GrafanaLive) Init() error {
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = setContextSignedUser(newCtx, user)
+		newCtx = setContextValues(newCtx, ctx.Req.URL.Query())
 
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx) // Set a user ID.
@@ -388,7 +390,7 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 	return features.NewPluginRunner(
 		namespace,
 		"", // No instance uid for non-datasource plugins.
-		g.streamManager,
+		g.runStreamManager,
 		g.contextGetter,
 		streamHandler,
 	), nil
@@ -421,7 +423,7 @@ func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace
 	return features.NewPluginRunner(
 		ds.Type,
 		ds.Uid,
-		g.streamManager,
+		g.runStreamManager,
 		g.contextGetter,
 		streamHandler,
 	), nil

@@ -18,7 +18,7 @@ export function getElementStyles(theme: GrafanaThemeV2) {
       width: 100%;
       position: absolute;
       color: ${theme.palette.text.primary};
-      background-color: ${theme.palette.layer0};
+      background-color: ${theme.palette.background.canvas};
       ${getVariantStyles(theme.typography.body)}
     }
 
@@ -49,6 +49,10 @@ export function getElementStyles(theme: GrafanaThemeV2) {
 
     p {
       margin: 0 0 ${theme.spacing(2)};
+    }
+
+    button {
+      letter-spacing: ${theme.typography.body.letterSpacing};
     }
 
     // Ex: 14px base font * 85% = about 12px
