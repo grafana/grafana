@@ -39,7 +39,7 @@ export default {
 };
 const options = generateOptions();
 
-export const Simple: Story<ValuePickerProps<T>> = (args) => {
+export const Simple: Story<ValuePickerProps<string>> = (args) => {
   return (
     <div style={{ width: '200px' }}>
       <ValuePicker {...args} options={options} onChange={(v) => console.log(v)} />
