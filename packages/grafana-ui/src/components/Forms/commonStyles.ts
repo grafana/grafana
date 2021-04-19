@@ -10,10 +10,10 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 `;
 
 export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
-  const borderColor = invalid ? theme.v2.palette.error.border : theme.v2.components.form.border;
-  const borderColorHover = invalid ? theme.v2.palette.error.shade : theme.v2.components.form.borderHover;
-  const background = theme.v2.components.form.background;
-  const textColor = theme.v2.components.form.text;
+  const borderColor = invalid ? theme.v2.palette.error.border : theme.v2.components.input.border;
+  const borderColorHover = invalid ? theme.v2.palette.error.shade : theme.v2.components.input.borderHover;
+  const background = theme.v2.components.input.background;
+  const textColor = theme.v2.components.input.text;
 
   return css`
     background: ${background};
@@ -48,6 +48,11 @@ export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
     &:disabled {
       background-color: ${theme.v2.palette.action.disabledBackground};
       color: ${theme.v2.palette.action.disabledText};
+      border: 1px solid ${theme.v2.palette.action.disabledBackground};
+
+      &:hover {
+        border-color: ${borderColor};
+      }
     }
 
     &::placeholder {

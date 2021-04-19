@@ -36,33 +36,33 @@ const basicColors = {
 };
 
 const backgrounds = {
-  bg1: v2.palette.layer1,
-  bg2: v2.palette.layer2,
+  bg1: v2.palette.background.primary,
+  bg2: v2.palette.background.secondary,
   bg3: v2.palette.action.hover,
-  dashboardBg: v2.palette.layer0,
+  dashboardBg: v2.palette.background.canvas,
   bgBlue1: basicColors.blue80,
   bgBlue2: basicColors.blue77,
 };
 
 const borders = {
-  border1: v2.palette.border0,
-  border2: v2.palette.border1,
-  border3: v2.palette.border2,
+  border1: v2.palette.border.weak,
+  border2: v2.palette.border.medium,
+  border3: v2.palette.border.strong,
 };
 
 const textColors = {
   // Text colors
-  textStrong: basicColors.gray15,
-  text: basicColors.gray33,
-  textSemiWeak: basicColors.gray33,
-  textWeak: basicColors.gray60,
-  textFaint: basicColors.gray70,
-  textBlue: basicColors.blue85,
+  textStrong: v2.palette.text.maxContrast,
+  text: v2.palette.text.primary,
+  textSemiWeak: v2.palette.text.secondary,
+  textWeak: v2.palette.text.secondary,
+  textFaint: v2.palette.text.disabled,
+  textBlue: v2.palette.primary.text,
 };
 
 const form = {
   formLabel: textColors.text,
-  formDescription: textColors.textWeak,
+  formDescription: v2.palette.text.secondary,
   formLegend: basicColors.gray25,
   formInputBg: basicColors.white,
   formInputBgDisabled: basicColors.gray95,
@@ -113,7 +113,7 @@ const lightTheme: GrafanaTheme = {
     ...textColors,
     ...form,
 
-    bodyBg: backgrounds.bg1,
+    bodyBg: v2.palette.background.canvas,
     panelBg: backgrounds.bg1,
     pageHeaderBg: backgrounds.bg2,
     pageHeaderBorder: borders.border1,
@@ -128,7 +128,7 @@ const lightTheme: GrafanaTheme = {
     linkDisabled: textColors.textWeak,
     linkHover: textColors.textStrong,
     linkExternal: basicColors.blue85,
-    textHeading: basicColors.gray25,
+    textHeading: v2.palette.text.primary,
   },
   shadows: {
     listItem: 'none',

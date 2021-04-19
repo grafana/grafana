@@ -2,7 +2,7 @@
 title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-aliases = ["/docs/grafana/next/installation/configuration/"]
+aliases = ["/docs/grafana/latest/installation/configuration/"]
 weight = 150
 +++
 
@@ -36,7 +36,7 @@ Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}
 
 ### macOS
 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
 
@@ -168,7 +168,7 @@ Override log path using the command line argument `cfg:default.paths.logs`:
 
 ### plugins
 
-Directory where Grafana automatically scans and looks for plugins. Manually or automatically install any [plugins](https://grafana.com/docs/grafana/next/plugins/installation/) here.
+Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins]({{< relref "../plugins/installation.md" >}}).
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
@@ -625,6 +625,10 @@ Text used as placeholder text on login page for password input.
 ### default_theme
 
 Set the default UI theme: `dark` or `light`. Default is `dark`.
+
+### home_page
+
+Path to a custom home page. Users are only redirected to this if the default home dashboard is used. It should match a frontend route and contain a leading slash.
 
 ### External user management
 

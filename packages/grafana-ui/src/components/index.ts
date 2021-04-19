@@ -33,7 +33,7 @@ export { Tag, OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
-export { ConfirmModal } from './ConfirmModal/ConfirmModal';
+export { ConfirmModal, ConfirmModalProps } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Code editor
@@ -229,7 +229,7 @@ export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
 export { useGraphNGContext } from './GraphNG/hooks';
 export { BarChart } from './BarChart/BarChart';
 export { TimelineChart } from './Timeline/TimelineChart';
-export { BarChartOptions, BarStackingMode, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
+export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
 export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
 export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
 export * from './NodeGraph';

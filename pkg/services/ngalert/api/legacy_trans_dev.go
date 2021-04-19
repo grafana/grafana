@@ -6,12 +6,12 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr/translate"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -28,7 +28,8 @@ func (api *API) conditionEvalOldEndpoint(c *models.ReqContext) response.Response
 	if err != nil {
 		return response.Error(400, "Failed to translate alert conditions", err)
 	}
-	if err := api.validateCondition(*evalCond, c.SignedInUser, c.SkipCache); err != nil {
+
+	if err := validateCondition(*evalCond, c.SignedInUser, c.SkipCache, api.DatasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 	//now := cmd.Now
@@ -70,7 +71,8 @@ func (api *API) conditionEvalOldEndpointByID(c *models.ReqContext) response.Resp
 	if err != nil {
 		return response.Error(400, "Failed to translate alert conditions", err)
 	}
-	if err := api.validateCondition(*evalCond, c.SignedInUser, c.SkipCache); err != nil {
+
+	if err := validateCondition(*evalCond, c.SignedInUser, c.SkipCache, api.DatasourceCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 	//now := cmd.Now
@@ -176,7 +178,7 @@ func (api *API) ruleGroupByOldID(c *models.ReqContext) response.Response {
 		Condition:    sseCond.Condition,
 		NoDataState:  *noDataSetting,
 		ExecErrState: *execErrSetting,
-		For:          ngmodels.Duration(oldAlert.For),
+		For:          oldAlert.For,
 		Annotations:  ruleTags,
 	}
 	rgc := apimodels.PostableRuleGroupConfig{

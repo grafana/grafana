@@ -37,18 +37,18 @@ const basicColors = {
 };
 
 const backgrounds = {
-  bg1: v2.palette.layer1,
-  bg2: v2.palette.layer2,
+  bg1: v2.palette.background.primary,
+  bg2: v2.palette.background.secondary,
   bg3: v2.palette.action.hover,
-  dashboardBg: v2.palette.layer0,
+  dashboardBg: v2.palette.background.canvas,
   bgBlue1: v2.palette.primary.main,
   bgBlue2: v2.palette.primary.shade,
 };
 
 const borders = {
-  border1: v2.palette.border0,
-  border2: v2.palette.border1,
-  border3: v2.palette.border2,
+  border1: v2.palette.border.weak,
+  border2: v2.palette.border.medium,
+  border3: v2.palette.border.strong,
 };
 
 const textColors = {
@@ -56,15 +56,15 @@ const textColors = {
   textHeading: v2.palette.text.primary,
   text: v2.palette.text.primary,
   textSemiWeak: v2.palette.text.secondary,
-  textWeak: v2.palette.text.disabled,
+  textWeak: v2.palette.text.secondary,
   textFaint: v2.palette.text.disabled,
   textBlue: v2.palette.primary.text,
 };
 
 const form = {
   // Next-gen forms functional colors
-  formLabel: textColors.textSemiWeak,
-  formDescription: basicColors.gray60,
+  formLabel: v2.palette.text.primary,
+  formDescription: v2.palette.text.secondary,
   formInputBg: basicColors.gray05,
   formInputBgDisabled: basicColors.gray10,
   formInputBorder: borders.border2,
@@ -114,11 +114,11 @@ const darkTheme: GrafanaTheme = {
     ...form,
     ...textColors,
 
-    bodyBg: backgrounds.bg1,
-    panelBg: backgrounds.bg1,
-    pageHeaderBg: backgrounds.bg2,
-    pageHeaderBorder: borders.border1,
-    panelBorder: borders.border1,
+    bodyBg: v2.palette.background.canvas,
+    panelBg: v2.components.panel.background,
+    panelBorder: v2.components.panel.border,
+    pageHeaderBg: v2.palette.background.canvas,
+    pageHeaderBorder: v2.palette.background.canvas,
 
     dropdownBg: form.formInputBg,
     dropdownShadow: basicColors.black,
