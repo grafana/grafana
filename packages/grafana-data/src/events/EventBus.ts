@@ -114,7 +114,7 @@ export class EventBusWithSource implements EventBus {
 
   publish<T extends BusEvent>(event: T): void {
     const payload = event.payload ?? { source: [] };
-    var decoratedEvent = {
+    const decoratedEvent = {
       ...event,
       ...{ payload: { ...payload, ...{ source: [...[this._sourceFragment], ...(payload.source ?? [])] } } },
     };
@@ -134,21 +134,21 @@ export class EventBusWithSource implements EventBus {
   }
 
   /**
-   * Appends a source fragment to the source
+   * Appends a source fragment id to the source
    *
-   * @param sourceFragment source to append to the eventbus
+   * @param sourceFragmentId source id to append to the eventbus
    * @returns a new instance of EventBusWithSource with the new source fragment appended
    */
-  appendSource(sourceFragment: string) {
-    return new EventBusWithSource(this, sourceFragment);
+  appendSource(sourceFragmentId: string) {
+    return new EventBusWithSource(this, sourceFragmentId);
   }
 
   /**
-   * Checks if the this eventbus is the parent of the eventbus that published the event
+   * Checks if this eventBus or it's descendants is the source of the event
    *
    * @param source source of the payload to be checked against the source of the eventbus
    */
-  isSourceOf(source: string[]) {
+  sourceIsDescendant(source: string[]) {
     for (let i in this.source) {
       if (this.source[i] !== source[i]) {
         return false;

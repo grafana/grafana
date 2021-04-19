@@ -60,13 +60,13 @@ export const PieChart: FC<PieChartProps> = ({
 
   if (eventBus) {
     const setHighlightedSlice = (event: DataHoverEvent) => {
-      if (event.payload.source && eventBus.isSourceOf(event.payload.source)) {
+      if (event.payload.source && eventBus.sourceIsDescendant(event.payload.source)) {
         setHighlightedTitle(event.payload.dataId);
       }
     };
 
     const resetHighlightedSlice = (event: DataHoverClearEvent) => {
-      if (event.payload.source && eventBus.isSourceOf(event.payload.source)) {
+      if (event.payload.source && eventBus.sourceIsDescendant(event.payload.source)) {
         setHighlightedTitle(undefined);
       }
     };

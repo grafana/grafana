@@ -78,7 +78,7 @@ describe('EventBus', () => {
       busWithAdditionalSources.publish({ type: DataHoverEvent.type });
 
       expect(events.length).toEqual(1);
-      expect(busWithSource.isSourceOf(events[0].payload.source)).toBeTruthy();
+      expect(busWithSource.sourceIsDescendant(events[0].payload.source)).toBeTruthy();
     });
   });
 
