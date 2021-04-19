@@ -70,14 +70,14 @@ You can query InfluxDB using InfluxQL or Flux:
 
 To help you choose the best language for your needs, here’s a comparison of [Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/), and [why InfluxData created Flux](https://www.influxdata.com/blog/why-were-building-flux-a-new-data-scripting-and-query-language/).
 
-## Query editor
+## InfluxQL query editor
 
-{{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
-
-You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Stat panels.
 Enter edit mode by clicking the panel title and clicking **Edit**. The editor allows you to select metrics and tags.
 
+![InfluxQL query editor](/img/docs/influxdb/influxql-query-editor-7-5.png)
+
 ### Filter data (WHERE)
+
 To add a tag filter, click the plus icon to the right of the `WHERE` condition. You can remove tag filters by clicking on
 the tag key and then selecting `--remove tag filter--`.
 
@@ -106,11 +106,11 @@ To group by a tag, click the plus icon at the end of the GROUP BY row. Pick a ta
 You can remove the "Group By" by clicking on the `tag` and then click on the x icon.
 
 ### Text Editor Mode (RAW)
+
 You can switch to raw query mode by clicking hamburger icon and then `Switch editor mode`.
 
-> If you use Raw Query be sure your query at minimum have `WHERE $timeFilter`
-> Also please always have a group by time and an aggregation function, otherwise InfluxDB can easily return hundreds of thousands
-> of data points that will hang the browser.
+> If you use Raw Query be sure your query at minimum have `WHERE $timeFilter`.
+> Also, always have a group by time and an aggregation function, otherwise InfluxDB can easily return hundreds of thousands of data points that will hang the browser.
 
 ### Alias patterns
 
@@ -119,13 +119,6 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 - $col = replaced with column name
 - $tag_exampletag = replaced with the value of the `exampletag` tag. The syntax is `$tag_yourTagName` (must start with `$tag_`). To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
 - You can also use [[tag_hostname]] pattern replacement syntax. For example, in the ALIAS BY field using this text `Host: [[tag_hostname]]` would substitute in the `hostname` tag value for each legend value and an example legend value would be: `Host: server1`.
-
-### Table query / raw data
-
-![](/assets/img/blog/v2.6/table_influxdb_logs.png)
-
-You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
-change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
 
 ## Querying logs
 
