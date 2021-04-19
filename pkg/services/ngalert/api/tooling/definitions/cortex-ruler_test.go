@@ -235,5 +235,4 @@ simple_rules:
 	b, err := yaml.Marshal(res)
 	require.Nil(t, err)
 	require.Equal(t, data, string(b))
-
 }

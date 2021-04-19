@@ -472,7 +472,6 @@ func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 		if len(r.VictorOpsConfigs) > 0 {
 			return fmt.Errorf("cannot have both Alertmanager VictorOpsConfigs & Grafana receivers together")
 		}
-
 	}
 
 	return nil
@@ -546,11 +545,8 @@ func (r *PostableApiReceiver) UnmarshalJSON(b []byte) error {
 		if len(r.VictorOpsConfigs) > 0 {
 			return fmt.Errorf("cannot have both Alertmanager VictorOpsConfigs & Grafana receivers together")
 		}
-
 	}
-
 	return nil
-
 }
 
 func (r *PostableApiReceiver) Type() ReceiverType {
