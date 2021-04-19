@@ -49,10 +49,10 @@ export const ConfirmModal = ({
   onDismiss,
   onAlternative,
 }: ConfirmModalProps): JSX.Element => {
-  const [disabled, setDisabled] = useState<boolean>(Boolean(confirmationText));
+  const [disabled, setDisabled] = useState(Boolean(confirmationText));
   const styles = useStyles(getStyles);
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setDisabled(confirmationText?.localeCompare(event.currentTarget.value, undefined, { sensitivity: 'accent' }) !== 0);
+    setDisabled(confirmationText?.localeCompare(event.currentTarget.value) !== 0);
   };
 
   return (
