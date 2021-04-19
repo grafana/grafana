@@ -5,37 +5,37 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAlertManagerConfigAction } from './state/actions';
+import { fetchSilencesAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
 
-const AmRoutes: FC = () => {
+const Receivers: FC = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
 
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
+  const silences = useUnifiedAlertingSelector((state) => state.silences);
 
   useEffect(() => {
-    dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+    dispatch(fetchSilencesAction(alertManagerSourceName));
   }, [alertManagerSourceName, dispatch]);
 
-  const { result, loading, error } = amConfigs[alertManagerSourceName] || initialAsyncRequestState;
+  const { result, loading, error } = silences[alertManagerSourceName] || initialAsyncRequestState;
 
   return (
-    <AlertingPageWrapper pageId="am-routes">
+    <AlertingPageWrapper pageId="receivers">
       <Field label="Choose alert manager">
         <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       </Field>
       <br />
       <br />
       {error && !loading && (
-        <InfoBox severity="error" title={<h4>Error loading alert manager config</h4>}>
+        <InfoBox severity="error" title={<h4>Error loading receivers</h4>}>
           {error.message || 'Unknown error.'}
         </InfoBox>
       )}
-      {loading && <LoadingPlaceholder text="loading alert manager config..." />}
+      {loading && <LoadingPlaceholder text="loading receivers..." />}
       {result && !loading && !error && <pre>{JSON.stringify(result, null, 2)}</pre>}
     </AlertingPageWrapper>
   );
 };
 
-export default AmRoutes;
+export default Receivers;
