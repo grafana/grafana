@@ -1,4 +1,5 @@
 import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaTheme, TimeRange } from '@grafana/data';
+import { IconName } from '@grafana/ui';
 
 /**
  * Event Payloads
@@ -35,7 +36,7 @@ export interface ShowConfirmModalPayload {
   altActionText?: string;
   yesText?: string;
   noText?: string;
-  icon?: string;
+  icon?: IconName;
 
   onConfirm?: () => void;
   onAltAction?: () => void;

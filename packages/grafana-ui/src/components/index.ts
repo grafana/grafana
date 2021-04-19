@@ -33,7 +33,7 @@ export { Tag, OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
-export { ConfirmModal } from './ConfirmModal/ConfirmModal';
+export { ConfirmModal, ConfirmModalProps } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Code editor
