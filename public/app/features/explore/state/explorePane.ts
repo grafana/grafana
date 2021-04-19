@@ -296,6 +296,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
       logsHighlighterExpressions: undefined,
+      logsNavigationCleared: true,
     };
   }
 

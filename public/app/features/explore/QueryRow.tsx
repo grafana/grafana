@@ -23,7 +23,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ExploreItemState, ExploreId } from 'app/types/explore';
-import { highlightLogsExpressionAction } from './state/explorePane';
+import { highlightLogsExpressionAction, clearLogsNavigation } from './state/explorePane';
 import { ErrorContainer } from './ErrorContainer';
 import { changeQuery, modifyQueries, removeQueryRowAction, runQueries } from './state/query';
 import { HelpToggle } from '../query/components/HelpToggle';
@@ -46,6 +46,7 @@ export interface QueryRowProps extends PropsFromParent {
   absoluteRange: AbsoluteTimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
+  clearLogsNavigation: typeof clearLogsNavigation;
   queryResponse: PanelData;
   latency: number;
   exploreEvents: EventBusExtended;
@@ -65,6 +66,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
   onRunQuery = () => {
     const { exploreId } = this.props;
+    clearLogsNavigation(exploreId, true);
     this.props.runQueries(exploreId);
   };
 
@@ -225,6 +227,7 @@ const mapDispatchToProps = {
   modifyQueries,
   removeQueryRowAction,
   runQueries,
+  clearLogsNavigation,
 };
 
 export default hot(module)(
