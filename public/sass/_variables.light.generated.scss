@@ -59,7 +59,7 @@ $layer2: #F4F5F5;
 
 $divider: rgba(36, 41, 46, 0.12);
 
-$border0: #fff;
+$border0: rgba(36, 41, 46, 0.12);
 $border1: rgba(36, 41, 46, 0.30);
 
 // Accent colors
@@ -89,8 +89,8 @@ $critical: #c4162a;
 
 // Scaffolding
 // -------------------------
-$body-bg: #fff;
-$page-bg: #fff;
+$body-bg: #F4F5F5;
+$page-bg: #F4F5F5;
 $dashboard-bg: #F4F5F5;
 
 $text-color: rgba(36, 41, 46, 1);
@@ -133,7 +133,7 @@ $panel-corner: $panel-bg;
 // Page header
 $page-header-bg: #F4F5F5;
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: #fff;
+$page-header-border-color: rgba(36, 41, 46, 0.12);
 
 $divider-border-color: $gray-2;
 
@@ -226,7 +226,7 @@ $typeahead-selected-color: $yellow;
 // Dropdowns
 // -------------------------
 $dropdownBackground: #F4F5F5;
-$dropdownBorder: #fff;
+$dropdownBorder: rgba(36, 41, 46, 0.12);
 $dropdownDividerTop: rgba(36, 41, 46, 0.12);
 $dropdownDividerBottom: rgba(36, 41, 46, 0.12);
 
