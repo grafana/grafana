@@ -8,7 +8,6 @@ import { CollapseToggle } from '../CollapseToggle';
 import { useRulesByMatcher } from '../../hooks/useRulesByMatcher';
 import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
-import { CombinedRule } from 'app/types/unified-alerting';
 import { useStyles } from '@grafana/ui';
 import { RulesTable } from '../rules/RulesTable';
 
@@ -22,16 +21,8 @@ const SilenceTableRow: FC<Props> = ({ silence, className }) => {
 
   const styles = useStyles(getStyles);
   const { status, matchers, startsAt, endsAt, comment, createdBy } = silence;
-  const rulesNamespaces = useRulesByMatcher(matchers as SilenceMatcher[]);
-  const matchingRules = rulesNamespaces.reduce((ruleAcc, { groups }) => {
-    groups.forEach(({ rules }) => {
-      rules.forEach((rule) => {
-        ruleAcc.push({ ...rule });
-      });
-    });
+  const matchingRules = useRulesByMatcher(matchers as SilenceMatcher[]);
 
-    return ruleAcc;
-  }, [] as CombinedRule[]);
   const dateDisplayFormat = 'YYYY-MM-DD HH:mm';
   const startsAtDate = dateMath.parse(startsAt);
   const endsAtDate = dateMath.parse(endsAt);
