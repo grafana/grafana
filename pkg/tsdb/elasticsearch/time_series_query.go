@@ -162,6 +162,45 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 						}
 
 						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
+							// Casting values to int when required by Elastic's query DSL
+							switch m.Type {
+							case "moving_avg":
+								if stringValue, err := m.Settings.GetPath("window").String(); err == nil {
+									value, _ := strconv.Atoi(stringValue)
+									m.Settings.SetPath([]string{"window"}, value)
+								}
+
+								if stringValue, err := m.Settings.GetPath("predict").String(); err == nil {
+									value, _ := strconv.Atoi(stringValue)
+									m.Settings.SetPath([]string{"predict"}, value)
+								}
+
+								if stringValue, err := m.Settings.GetPath("settings", "alpha").String(); err == nil {
+									value, _ := strconv.Atoi(stringValue)
+									m.Settings.SetPath([]string{"settings", "alpha"}, value)
+								}
+
+								if stringValue, err := m.Settings.GetPath("settings", "beta").String(); err == nil {
+									value, _ := strconv.Atoi(stringValue)
+									m.Settings.SetPath([]string{"settings", "beta"}, value)
+								}
+
+								if stringValue, err := m.Settings.GetPath("settings", "gamma").String(); err == nil {
+									value, _ := strconv.Atoi(stringValue)
+									m.Settings.SetPath([]string{"settings", "gamma"}, value)
+								}
+
+								if stringValue, err := m.Settings.GetPath("settings", "period").String(); err == nil {
+									value, _ := strconv.Atoi(stringValue)
+									m.Settings.SetPath([]string{"settings", "period"}, value)
+								}
+							case "serial_diff":
+								if stringValue, err := m.Settings.GetPath("lag").String(); err == nil {
+									value, _ := strconv.Atoi(stringValue)
+									m.Settings.SetPath([]string{"lag"}, value)
+								}
+							}
+
 							a.Settings = m.Settings.MustMap()
 						})
 					}
@@ -174,8 +213,6 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 				a.Settings = m.Settings.MustMap()
 			})
 		}
-
-		// TODO: Here copy the same thing i just did in the frontend query builder
 	}
 
 	return nil

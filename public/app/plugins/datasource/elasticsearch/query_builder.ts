@@ -354,20 +354,21 @@ export class ElasticQueryBuilder {
         if (metric.type === 'moving_avg') {
           metricAgg = {
             ...metricAgg,
-            settings: {
-              ...metricAgg.settings,
-              ...(metricAgg.settings?.window !== undefined && { window: this.toNumber(metricAgg.settings.window) }),
-              ...(metricAgg.settings?.predict !== undefined && { predict: this.toNumber(metricAgg.settings.predict) }),
-              ...(isMovingAverageWithModelSettings(metric) &&
-                Object.fromEntries(
+            ...(metricAgg?.window !== undefined && { window: this.toNumber(metricAgg.window) }),
+            ...(metricAgg?.predict !== undefined && { predict: this.toNumber(metricAgg.predict) }),
+            ...(isMovingAverageWithModelSettings(metric) && {
+              settings: {
+                ...metricAgg.settings,
+                ...Object.fromEntries(
                   Object.entries(metricAgg.settings || {})
                     // Only format properties that are required to be numbers
                     .filter(([settingName]) => ['alpha', 'beta', 'gamma', 'period'].includes(settingName))
                     // except for falsy values
                     .filter(([_, stringValue]) => stringValue !== undefined)
                     .map(([_, stringValue]) => [_, this.toNumber(stringValue)])
-                )),
-            },
+                ),
+              },
+            }),
           };
         } else if (metric.type === 'serial_diff') {
           metricAgg = {
