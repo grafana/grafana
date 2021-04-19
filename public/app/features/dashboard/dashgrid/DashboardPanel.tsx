@@ -14,7 +14,9 @@ import { initDashboardPanel } from '../state/actions';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
-import { PanelPlugin } from '@grafana/data';
+import { GrafanaTheme, PanelPlugin } from '@grafana/data';
+import { stylesFactory, Themeable, withTheme } from '@grafana/ui';
+import { css } from 'emotion';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -43,9 +45,9 @@ const mapDispatchToProps = { initDashboardPanel };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export type Props = OwnProps & ConnectedProps<typeof connector>;
+export type Props = OwnProps & Themeable & ConnectedProps<typeof connector>;
 
-export class DashboardPanelUnconnected extends PureComponent<Props, State> {
+export class UnthemedDashboardPanelUnconnected extends PureComponent<Props, State> {
   specialPanels: { [key: string]: Function } = {};
 
   constructor(props: Props) {
@@ -109,8 +111,9 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isViewing, plugin } = this.props;
+    const { isViewing, plugin, theme } = this.props;
     const { isLazy } = this.state;
+    const styles = getStyles(theme);
 
     // If we have not loaded plugin exports yet, wait
     if (!plugin) {
@@ -122,13 +125,28 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
       return null;
     }
 
-    const panelWrapperClass = classNames({
-      'panel-wrapper': true,
-      'panel-wrapper--view': isViewing,
-    });
-
-    return <div className={panelWrapperClass}>{this.renderPanel(plugin)}</div>;
+    return (
+      <div
+        className={isViewing === true ? classNames(styles.panelWrapper, styles.panelWrapperView) : styles.panelWrapper}
+      >
+        {this.renderPanel(plugin)}
+      </div>
+    );
   }
 }
 
+export const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    panelWrapper: css`
+      height: 100%;
+      position: relative;
+    `,
+    panelWrapperView: css`
+      flex: 1 1 0;
+      height: 90%;
+    `,
+  };
+});
+export const DashboardPanelUnconnected = withTheme(UnthemedDashboardPanelUnconnected);
+DashboardPanelUnconnected.displayName = 'UnthemedDashboardPanelUnconnected';
 export const DashboardPanel = connector(DashboardPanelUnconnected);
