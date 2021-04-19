@@ -603,6 +603,69 @@ describe('ElasticResponse', () => {
     });
   });
 
+  describe('with top_metrics', () => {
+    beforeEach(() => {
+      targets = [
+        {
+          refId: 'A',
+          metrics: [
+            {
+              type: 'top_metrics',
+              settings: { order: 'top', orderBy: '@timestamp', size: 2, aggregateBy: 'sum' },
+              id: '1',
+              field: '@value',
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', id: '2' }],
+        },
+      ];
+      response = {
+        responses: [
+          {
+            aggregations: {
+              '2': {
+                buckets: [
+                  {
+                    key: new Date('2021-01-01T00:00:00.000Z').valueOf(),
+                    key_as_string: '2021-01-01T00:00:00.000Z',
+                    '1': {
+                      top: [
+                        { sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1 } },
+                        { sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1 } },
+                      ],
+                    },
+                  },
+                  {
+                    key: new Date('2021-01-01T00:00:10.000Z').valueOf(),
+                    key_as_string: '2021-01-01T00:00:10.000Z',
+                    '1': {
+                      top: [
+                        { sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1 } },
+                        { sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1 } },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+    });
+
+    it('should return 2 series', () => {
+      const result = new ElasticResponse(targets, response).getTimeSeries();
+      expect(result.data.length).toBe(1);
+      const series = result.data[0];
+      expect(series.target).toBe('Top Metrics @value');
+      expect(series.datapoints.length).toBe(2);
+      expect(series.datapoints).toEqual([
+        [2, new Date('2021-01-01T00:00:00.000Z').valueOf()],
+        [2, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+      ]);
+    });
+  });
+
   describe('single group by with alias pattern', () => {
     let result: any;
 
