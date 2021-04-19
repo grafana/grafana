@@ -3,13 +3,11 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
-
-	"gopkg.in/macaron.v1"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -18,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
@@ -251,16 +248,6 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	headers := func(c *macaron.Context) {
-		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
-	}
-
-	if hs.Cfg.Env == setting.Dev {
-		headers = func(c *macaron.Context) {
-			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
-		}
-	}
-
 	requestedFile := filepath.Clean(c.Params("*"))
 	pluginFilePath := filepath.Join(plugin.PluginDir, requestedFile)
 
@@ -274,7 +261,7 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Printf("Failed to close file: %s\n", err)
+			hs.log.Error("Failed to close file", "err", err)
 		}
 	}()
 
@@ -284,7 +271,10 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	headers(c.Context)
+	if shouldExclude(fi) {
+		c.Handle(hs.Cfg, 404, "Plugin file not found", nil)
+		return
+	}
 
 	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
 }
@@ -370,4 +360,14 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	}
 
 	return response.Error(500, "Plugin request failed", err)
+}
+
+func shouldExclude(fi os.FileInfo) bool {
+	normalizedFilename := strings.ToLower(fi.Name())
+
+	isUnixExecutable := fi.Mode()&0111 == 0111
+	isWindowsExecutable := strings.HasSuffix(normalizedFilename, ".exe")
+	isScript := strings.HasSuffix(normalizedFilename, ".sh")
+
+	return isUnixExecutable || isWindowsExecutable || isScript
 }
