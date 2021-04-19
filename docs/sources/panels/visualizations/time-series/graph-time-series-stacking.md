@@ -57,6 +57,6 @@ Stack series in the same group. In the Overrides section:
 
 ![Stack series override](/img/docs/time-series-panel/stack-series-override-editor-8-0)
 
-A-series and B-series stacked in group A, C-series and D-series stacked in group B:
+A-series and B-series stacked in group A, C-series, and D-series stacked in group B:
 
 ![Stacking groups example](/img/docs/time-series-panel/stack-series-groups-8-0.png)
