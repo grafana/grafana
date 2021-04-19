@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"regexp"
 	"time"
 
@@ -80,7 +79,7 @@ func (s *CloudWatchService) Init() error {
 	cw := newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache())
 
 	if s.PluginManagerV2.IsEnabled() {
-		pluginJSONPath := filepath.Join(s.Cfg.StaticRootPath, "app/plugins/datasource/cloudwatch/plugin.json")
+		pluginJSONPath := "datasource/cloudwatch/plugin.json"
 
 		return s.PluginManagerV2.InstallCorePlugin(pluginJSONPath, plugins.InstallOpts{
 			QueryDataHandler: cw,

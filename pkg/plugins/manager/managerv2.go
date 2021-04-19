@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -162,7 +163,9 @@ func restartKilledProcess(ctx context.Context, p *plugins.PluginV2) error {
 }
 
 func (m *PluginManagerV2) InstallCorePlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
-	plugin, err := m.PluginLoader.Load(pluginJSONPath, PluginSignatureValidator{
+	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", pluginJSONPath)
+
+	plugin, err := m.PluginLoader.Load(fullPath, PluginSignatureValidator{
 		cfg:                           m.Cfg,
 		log:                           pmlog,
 		requireSigned:                 false,
