@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, Modal } from '@grafana/ui';
+import { logger } from '@percona/platform-core';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Form } from 'react-final-form';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { FormElement } from 'app/percona/shared/components/Form';
@@ -8,7 +11,7 @@ import { InventoryDataService } from 'app/percona/inventory/Inventory.tools';
 import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/Table.types';
 import { InventoryService } from '../Inventory.service';
 import { ServicesList } from '../Inventory.types';
-import { SERVICES_COLUMNS } from '../Inventory.constants';
+import { GET_SERVICES_CANCEL_TOKEN, SERVICES_COLUMNS } from '../Inventory.constants';
 import { styles } from './Tabs.styles';
 import { CheckboxField } from '@percona/platform-core';
 import { appEvents } from '../../../core/app_events';
@@ -28,18 +31,21 @@ export const Services = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [selected, setSelectedRows] = useState([]);
+  const [generateToken] = useCancelToken();
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const result: ServicesList = await InventoryService.getServices();
+      const result: ServicesList = await InventoryService.getServices(generateToken(GET_SERVICES_CANCEL_TOKEN));
 
       setData(InventoryDataService.getServiceModel(result));
     } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
     }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -60,11 +66,13 @@ export const Services = () => {
         `${successfullyDeleted} of ${services.length} services successfully deleted`,
       ]);
     } catch (e) {
-      console.error(e);
-    } finally {
-      setSelectedRows([]);
-      loadData();
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
     }
+    setSelectedRows([]);
+    loadData();
   }, []);
 
   return (

@@ -1,30 +1,35 @@
 import React from 'react';
 import { ReactWrapper, mount } from 'enzyme';
+import { logger, dataQa } from '@percona/platform-core';
 import { CheckService } from 'app/percona/check/Check.service';
 import { Interval } from 'app/percona/check/types';
 import { AllChecksTab } from './AllChecksTab';
 import { Messages } from './AllChecksTab.messages';
-
-const originalConsoleError = console.error;
-
-const dataQa = (label: string) => `[data-qa="${label}"]`;
+import { Spinner } from '@grafana/ui';
+import { act } from 'react-dom/test-utils';
 
 const runAllPromises = () => new Promise(setImmediate);
 
+jest.mock('@percona/platform-core', () => {
+  const originalModule = jest.requireActual('@percona/platform-core');
+  return {
+    ...originalModule,
+    logger: {
+      error: jest.fn(),
+    },
+  };
+});
+
 describe('AllChecksTab::', () => {
-  beforeEach(() => {
-    console.error = jest.fn();
-  });
-
-  afterEach(() => {
-    console.error = originalConsoleError;
-    jest.resetAllMocks();
-  });
-
-  it('should fetch checks at startup', () => {
+  it('should fetch checks at startup', async () => {
     const spy = jest.spyOn(CheckService, 'getAllChecks');
 
-    const wrapper: ReactWrapper<{}, {}, any> = mount(<AllChecksTab />);
+    const wrapper: ReactWrapper;
+
+    await act(async () => {
+      wrapper = await mount(<AllChecksTab />);
+    });
+    wrapper.update();
 
     expect(spy).toBeCalledTimes(1);
 
@@ -33,25 +38,36 @@ describe('AllChecksTab::', () => {
   });
 
   it('should render a spinner at startup, while loading', async () => {
-    const wrapper: ReactWrapper<{}, {}, any> = mount(<AllChecksTab />);
+    const wrapper: ReactWrapper;
+
+    await act(async () => {
+      wrapper = await mount(<AllChecksTab />);
+    });
+    wrapper.update();
 
     await runAllPromises();
 
     wrapper.update();
 
-    expect(wrapper.find(dataQa('db-checks-all-checks-spinner'))).toHaveLength(0);
+    expect(wrapper.find(<Spinner />)).toHaveLength(0);
 
     wrapper.unmount();
   });
 
-  it('should log an error if the API call fails', () => {
+  it('should log an error if the API call fails', async () => {
     const spy = jest.spyOn(CheckService, 'getAllChecks').mockImplementation(() => {
       throw Error('test');
     });
+    const loggerSpy = jest.spyOn(logger, 'error').mockImplementationOnce(() => null);
 
-    const wrapper: ReactWrapper<{}, {}, any> = mount(<AllChecksTab />);
+    const wrapper: ReactWrapper;
 
-    expect(console.error).toBeCalledTimes(1);
+    await act(async () => {
+      wrapper = await mount(<AllChecksTab />);
+    });
+    wrapper.update();
+
+    expect(loggerSpy).toBeCalledTimes(1);
 
     spy.mockClear();
     wrapper.unmount();
@@ -77,7 +93,12 @@ describe('AllChecksTab::', () => {
       ])
     );
 
-    const wrapper: ReactWrapper<{}, {}, any> = mount(<AllChecksTab />);
+    const wrapper: ReactWrapper;
+
+    await act(async () => {
+      wrapper = await mount(<AllChecksTab />);
+    });
+    wrapper.update();
 
     await runAllPromises();
 

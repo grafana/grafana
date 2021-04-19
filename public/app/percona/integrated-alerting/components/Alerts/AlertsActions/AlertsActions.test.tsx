@@ -8,6 +8,7 @@ import { formatAlert } from '../Alerts.utils';
 import { Bell, BellBarred } from './icons';
 import { AlertsService } from '../Alerts.service';
 
+jest.mock('app/percona/shared/components/hooks/cancelToken.hook');
 jest.mock('../Alerts.service');
 jest.mock('app/core/core', () => ({
   appEvents: {
@@ -60,7 +61,7 @@ describe('AlertActions', () => {
     });
     wrapper.update();
     expect(alertsServiceToggle).toBeCalledTimes(1);
-    expect(alertsServiceToggle).toBeCalledWith({ alert_id: '4', silenced: 'FALSE' });
+    expect(alertsServiceToggle).toBeCalledWith({ alert_id: '4', silenced: 'FALSE' }, undefined);
   });
 
   it('calls the API to silence an active alert', async () => {
@@ -77,6 +78,6 @@ describe('AlertActions', () => {
     wrapper.update();
 
     expect(alertsServiceToggle).toBeCalledTimes(1);
-    expect(alertsServiceToggle).toBeCalledWith({ alert_id: '2', silenced: 'TRUE' });
+    expect(alertsServiceToggle).toBeCalledWith({ alert_id: '2', silenced: 'TRUE' }, undefined);
   });
 });

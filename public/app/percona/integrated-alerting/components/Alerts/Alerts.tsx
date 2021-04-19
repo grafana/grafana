@@ -1,6 +1,8 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useStyles, useTheme } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Cell, Column } from 'react-table';
 import { cx } from 'emotion';
 import { Table } from '../Table/Table';
@@ -11,6 +13,7 @@ import { formatAlerts, getSeverityColors } from './Alerts.utils';
 import { AlertsService } from './Alerts.service';
 import { AlertRuleSeverity } from '../AlertRules/AlertRules.types';
 import { AlertsActions } from './AlertsActions';
+import { GET_ALERTS_CANCEL_TOKEN } from './Alerts.constants';
 
 const { noData, columns } = Messages.alerts.table;
 const {
@@ -29,6 +32,7 @@ export const Alerts: FC = () => {
   const [pendingRequest, setPendingRequest] = useState(true);
   const [data, setData] = useState<Alert[]>([]);
   const severityColors = useMemo(() => getSeverityColors(theme), [theme]);
+  const [generateToken] = useCancelToken();
   const columns = React.useMemo(
     () => [
       {
@@ -88,13 +92,15 @@ export const Alerts: FC = () => {
   const getAlerts = async () => {
     setPendingRequest(true);
     try {
-      const { alerts } = await AlertsService.list();
+      const { alerts } = await AlertsService.list(generateToken(GET_ALERTS_CANCEL_TOKEN));
       setData(formatAlerts(alerts));
     } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
       logger.error(e);
-    } finally {
-      setPendingRequest(false);
     }
+    setPendingRequest(false);
   };
 
   const getCellProps = useCallback(

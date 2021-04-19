@@ -1,5 +1,6 @@
 import { API } from 'app/percona/shared/core';
 import { api } from 'app/percona/shared/helpers/api';
+import { CancelToken } from 'axios';
 import {
   ActiveCheck,
   Alert,
@@ -22,36 +23,38 @@ export const makeApiUrl: (segment: string) => string = segment => `${API.ALERTMA
  * A service-like object to store the API methods
  */
 export const CheckService = {
-  async getActiveAlerts(includeSilenced = false): Promise<ActiveCheck[] | undefined> {
+  async getActiveAlerts(includeSilenced = false, token?: CancelToken): Promise<ActiveCheck[] | undefined> {
     const data = await api.get<Alert[], AlertRequestParams>(makeApiUrl('alerts'), {
       params: { active: true, silenced: includeSilenced, filter: 'stt_check=1' },
+      cancelToken: token,
     });
 
     return Array.isArray(data) && data.length ? processData(data as Alert[]) : undefined;
   },
-  async getFailedChecks(): Promise<FailedChecks | undefined> {
+  async getFailedChecks(token?: CancelToken): Promise<FailedChecks | undefined> {
     const data = await api.get<Alert[], AlertRequestParams>(makeApiUrl('alerts'), {
       params: { active: true, silenced: false, filter: 'stt_check=1' },
+      cancelToken: token,
     });
 
     return Array.isArray(data) && data.length ? sumFailedChecks(processData(data as Alert[])) : undefined;
   },
-  async getSettings() {
-    return api.post<Settings, {}>(API.SETTINGS, {}, true);
+  async getSettings(token?: CancelToken) {
+    return api.post<Settings, {}>(API.SETTINGS, {}, true, token);
   },
-  silenceAlert(body: SilenceBody): Promise<void | SilenceResponse> {
-    return api.post<SilenceResponse, SilenceBody>(makeApiUrl('silences'), body);
+  silenceAlert(body: SilenceBody, token?: CancelToken): Promise<void | SilenceResponse> {
+    return api.post<SilenceResponse, SilenceBody>(makeApiUrl('silences'), body, false, token);
   },
-  runDbChecks(): Promise<void | {}> {
-    return api.post<{}, {}>('/v1/management/SecurityChecks/Start', {});
+  runDbChecks(token?: CancelToken): Promise<void | {}> {
+    return api.post<{}, {}>('/v1/management/SecurityChecks/Start', {}, false, token);
   },
-  async getAllChecks(): Promise<CheckDetails[] | undefined> {
-    const response = await api.post<AllChecks, {}>('/v1/management/SecurityChecks/List', {});
+  async getAllChecks(token?: CancelToken): Promise<CheckDetails[] | undefined> {
+    const response = await api.post<AllChecks, {}>('/v1/management/SecurityChecks/List', {}, false, token);
 
     return response ? response.checks : undefined;
   },
-  changeCheck(body: ChangeCheckBody): Promise<void | {}> {
-    return api.post<{}, ChangeCheckBody>('/v1/management/SecurityChecks/Change', body);
+  changeCheck(body: ChangeCheckBody, token?: CancelToken): Promise<void | {}> {
+    return api.post<{}, ChangeCheckBody>('/v1/management/SecurityChecks/Change', body, false, token);
   },
 };
 

@@ -1,5 +1,8 @@
 import React, { FC, useEffect, useState } from 'react';
 import { cx } from 'emotion';
+import { logger } from '@percona/platform-core';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { CheckDetails } from 'app/percona/check/types';
 import { CheckService } from 'app/percona/check/Check.service';
 import { Spinner, useTheme, useStyles } from '@grafana/ui';
@@ -8,6 +11,7 @@ import { getStyles as getTableStyles } from 'app/percona/check/components/Table/
 import { getStyles as getCheckPanelStyles } from 'app/percona/check/CheckPanel.styles';
 import { Messages } from './AllChecksTab.messages';
 import * as styles from './AllChecksTab.styles';
+import { GET_ALL_CHECKS_CANCEL_TOKEN } from './AllChecksTab.constants';
 import { FetchChecks } from './types';
 import { CheckTableRow } from './CheckTableRow';
 import { ChecksReloadContext } from './AllChecks.context';
@@ -18,6 +22,7 @@ export const AllChecksTab: FC = () => {
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
   const checkPanelStyles = useStyles(getCheckPanelStyles);
+  const [generateToken] = useCancelToken();
 
   const updateUI = (check: CheckDetails) => {
     const { name, disabled } = check;
@@ -37,14 +42,16 @@ export const AllChecksTab: FC = () => {
     setFetchChecksPending(true);
 
     try {
-      const checks = await CheckService.getAllChecks();
+      const checks = await CheckService.getAllChecks(generateToken(GET_ALL_CHECKS_CANCEL_TOKEN));
 
       setChecks(checks);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setFetchChecksPending(false);
+    } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
     }
+    setFetchChecksPending(false);
   };
 
   useEffect(() => {

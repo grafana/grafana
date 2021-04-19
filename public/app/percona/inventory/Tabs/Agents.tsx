@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, Modal } from '@grafana/ui';
+import { logger } from '@percona/platform-core';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Form } from 'react-final-form';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { filterFulfilled, processPromiseResults } from 'app/percona/shared/helpers/promises';
@@ -8,7 +11,7 @@ import { FormElement } from 'app/percona/shared/components/Form';
 import { AgentsList } from 'app/percona/inventory/Inventory.types';
 import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/Table.types';
 import { InventoryService } from '../Inventory.service';
-import { AGENTS_COLUMNS } from '../Inventory.constants';
+import { AGENTS_COLUMNS, GET_AGENTS_CANCEL_TOKEN } from '../Inventory.constants';
 import { styles } from './Tabs.styles';
 import { CheckboxField } from '@percona/platform-core';
 import { appEvents } from '../../../core/app_events';
@@ -24,18 +27,21 @@ export const Agents = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [selected, setSelectedRows] = useState([]);
+  const [generateToken] = useCancelToken();
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const result: AgentsList = await InventoryService.getAgents();
+      const result: AgentsList = await InventoryService.getAgents(generateToken(GET_AGENTS_CANCEL_TOKEN));
 
       setData(InventoryDataService.getAgentModel(result));
     } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
     }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -57,11 +63,13 @@ export const Agents = () => {
         `${successfullyDeleted} of ${agents.length} agents successfully deleted`,
       ]);
     } catch (e) {
-      console.error(e);
-    } finally {
-      setSelectedRows([]);
-      loadData();
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
     }
+    setSelectedRows([]);
+    loadData();
   }, []);
 
   return (

@@ -1,9 +1,11 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Form as FormFinal } from 'react-final-form';
 import { Button, useTheme } from '@grafana/ui';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
 import AddRemoteInstanceService, { toPayload } from './AddRemoteInstance.service';
-import { getInstanceData } from './AddRemoteInstance.tools';
+import { getInstanceData, remoteToken } from './AddRemoteInstance.tools';
 import { getStyles } from './AddRemoteInstance.styles';
 import { AddRemoteInstanceProps } from './AddRemoteInstance.types';
 import { AdditionalOptions, Labels, MainDetails } from './FormParts';
@@ -13,6 +15,7 @@ import { InstanceTypes } from '../../panel.types';
 import { HAProxyConnectionDetails } from './FormParts/HAProxyConnectionDetails/HAProxyConnectionDetails';
 import { FormApi } from 'final-form';
 import { logger } from '@percona/platform-core';
+import { ADD_AZURE_CANCEL_TOKEN, ADD_RDS_CANCEL_TOKEN } from './AddRemoteInstance.constants';
 
 const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, credentials }, selectInstance }) => {
   const theme = useTheme();
@@ -20,6 +23,7 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
 
   const { remoteInstanceCredentials, discoverName } = getInstanceData(type, credentials);
   const [loading, setLoading] = useState<boolean>(false);
+  const [generateToken] = useCancelToken();
   const initialValues: any = { ...remoteInstanceCredentials };
 
   if (type === Databases.mysql || type === Databases.mariadb) {
@@ -36,19 +40,24 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
         setLoading(true);
 
         if (values.isRDS) {
-          await AddRemoteInstanceService.addRDS(toPayload(values, discoverName));
+          await AddRemoteInstanceService.addRDS(toPayload(values, discoverName), generateToken(ADD_RDS_CANCEL_TOKEN));
         } else if (values.isAzure) {
-          await AddRemoteInstanceService.addAzure(toPayload(values, discoverName));
+          await AddRemoteInstanceService.addAzure(
+            toPayload(values, discoverName),
+            generateToken(ADD_AZURE_CANCEL_TOKEN)
+          );
         } else {
-          await AddRemoteInstanceService.addRemote(type, values);
+          await AddRemoteInstanceService.addRemote(type, values, generateToken(remoteToken(type)));
         }
 
         window.location.href = '/graph/inventory/';
       } catch (e) {
+        if (isApiCancelError(e)) {
+          return;
+        }
         logger.error(e);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     },
     [type, discoverName]
   );

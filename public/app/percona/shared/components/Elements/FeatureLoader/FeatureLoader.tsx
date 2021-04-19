@@ -1,11 +1,13 @@
 import React, { FC, useEffect, useState } from 'react';
 import { Spinner, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { SettingsService } from 'app/percona/settings/Settings.service';
+import { useCancelToken } from '../../hooks/cancelToken.hook';
 import { EmptyBlock } from '../EmptyBlock';
 import { FeatureLoaderProps } from './FeatureLoader.types';
 import { Messages } from './FeatureLoader.messages';
-import { PMM_SETTINGS_URL } from './FeatureLoader.constants';
+import { GET_SETTINGS_CANCEL_TOKEN, PMM_SETTINGS_URL } from './FeatureLoader.constants';
 import { getStyles } from './FeatureLoader.styles';
 
 export const FeatureLoader: FC<FeatureLoaderProps> = ({
@@ -18,19 +20,21 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({
   const styles = useStyles(getStyles);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [featureEnabled, setFeatureEnabled] = useState(false);
+  const [generateToken] = useCancelToken();
 
   const getSettings = async () => {
     setLoadingSettings(true);
-
     try {
-      const settings = await SettingsService.getSettings();
+      const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN));
       setFeatureEnabled(!!settings[featureFlag]);
     } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
       logger.error(e);
       onError(e);
-    } finally {
-      setLoadingSettings(false);
     }
+    setLoadingSettings(false);
   };
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+import { CancelToken } from 'axios';
 import { apiManagement } from 'app/percona/shared/helpers/api';
 import {
   RemoteInstanceExternalservicePayload,
@@ -7,51 +8,51 @@ import {
 import { InstanceTypes } from '../../panel.types';
 
 class AddRemoteInstanceService {
-  static async addMysql(body: RemoteInstancePayload) {
-    return apiManagement.post<any, RemoteInstancePayload>('/MySQL/Add', body);
+  static async addMysql(body: RemoteInstancePayload, token?: CancelToken) {
+    return apiManagement.post<any, RemoteInstancePayload>('/MySQL/Add', body, false, token);
   }
 
-  static async addPostgresql(body: RemoteInstancePayload) {
-    return apiManagement.post<any, RemoteInstancePayload>('/PostgreSQL/Add', body);
+  static async addPostgresql(body: RemoteInstancePayload, token?: CancelToken) {
+    return apiManagement.post<any, RemoteInstancePayload>('/PostgreSQL/Add', body, false, token);
   }
 
-  static async addProxysql(body: RemoteInstancePayload) {
-    return apiManagement.post<any, RemoteInstancePayload>('/ProxySQL/Add', body);
+  static async addProxysql(body: RemoteInstancePayload, token?: CancelToken) {
+    return apiManagement.post<any, RemoteInstancePayload>('/ProxySQL/Add', body, false, token);
   }
 
-  static async addHaproxy(body: RemoteInstancePayload) {
-    return apiManagement.post<any, RemoteInstancePayload>('/HAProxy/Add', body);
+  static async addHaproxy(body: RemoteInstancePayload, token?: CancelToken) {
+    return apiManagement.post<any, RemoteInstancePayload>('/HAProxy/Add', body, false, token);
   }
 
-  static async addMongodb(body: RemoteInstancePayload) {
-    return apiManagement.post<any, RemoteInstancePayload>('/MongoDB/Add', body);
+  static async addMongodb(body: RemoteInstancePayload, token?: CancelToken) {
+    return apiManagement.post<any, RemoteInstancePayload>('/MongoDB/Add', body, false, token);
   }
 
-  static async addRDS(body: RemoteInstancePayload) {
-    return apiManagement.post<any, RemoteInstancePayload>('/RDS/Add', body);
+  static async addRDS(body: RemoteInstancePayload, token?: CancelToken) {
+    return apiManagement.post<any, RemoteInstancePayload>('/RDS/Add', body, false, token);
   }
-  static async addAzure(body: RemoteInstancePayload) {
-    return apiManagement.post<any, RemoteInstancePayload>('/azure/AzureDatabase/Add', body);
-  }
-
-  static async addExternal(body: any) {
-    return apiManagement.post<any, any>('/External/Add', body);
+  static async addAzure(body: RemoteInstancePayload, token?: CancelToken) {
+    return apiManagement.post<any, RemoteInstancePayload>('/azure/AzureDatabase/Add', body, false, token);
   }
 
-  static addRemote(type: InstanceTypes, data: any) {
+  static async addExternal(body: any, token?: CancelToken) {
+    return apiManagement.post<any, any>('/External/Add', body, false, token);
+  }
+
+  static addRemote(type: InstanceTypes, data: any, token?: CancelToken) {
     switch (type) {
       case InstanceTypes.mongodb:
-        return AddRemoteInstanceService.addMongodb(toPayload(data));
+        return AddRemoteInstanceService.addMongodb(toPayload(data), token);
       case InstanceTypes.mysql:
-        return AddRemoteInstanceService.addMysql(toPayload(data));
+        return AddRemoteInstanceService.addMysql(toPayload(data), token);
       case InstanceTypes.postgresql:
-        return AddRemoteInstanceService.addPostgresql(toPayload(data));
+        return AddRemoteInstanceService.addPostgresql(toPayload(data), token);
       case InstanceTypes.proxysql:
-        return AddRemoteInstanceService.addProxysql(toPayload(data));
+        return AddRemoteInstanceService.addProxysql(toPayload(data), token);
       case InstanceTypes.haproxy:
-        return AddRemoteInstanceService.addHaproxy(toExternalServicePayload(data));
+        return AddRemoteInstanceService.addHaproxy(toExternalServicePayload(data), token);
       case InstanceTypes.external:
-        return AddRemoteInstanceService.addExternal(toExternalServicePayload(data));
+        return AddRemoteInstanceService.addExternal(toExternalServicePayload(data), token);
       default:
         throw new Error('Unknown instance type');
     }

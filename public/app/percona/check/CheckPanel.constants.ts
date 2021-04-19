@@ -72,3 +72,5 @@ export const PAGE_MODEL: PageModel = {
   id: TabKeys.rootChecks,
   children: PAGE_TABS.map(({ title, id, path }) => ({ title, id, path })),
 };
+
+export const GET_SETTINGS_TOKEN = 'getSettings';

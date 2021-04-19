@@ -1,18 +1,24 @@
 import { apiManagement } from 'app/percona/shared/helpers/api';
+import { CancelToken } from 'axios';
 import { Kubernetes, KubernetesListAPI, NewKubernetesCluster, NewKubernetesClusterAPI } from './Kubernetes.types';
 
 export const KubernetesService = {
-  getKubernetes() {
-    return apiManagement.post<KubernetesListAPI, any>('/DBaaS/Kubernetes/List', {});
+  getKubernetes(token?: CancelToken) {
+    return apiManagement.post<KubernetesListAPI, any>('/DBaaS/Kubernetes/List', {}, false, token);
   },
-  deleteKubernetes(kubernetes: Kubernetes, force?: boolean) {
-    return apiManagement.post<any, any>('/DBaaS/Kubernetes/Unregister', toAPI(kubernetes, force));
+  deleteKubernetes(kubernetes: Kubernetes, force?: boolean, token?: CancelToken) {
+    return apiManagement.post<any, any>('/DBaaS/Kubernetes/Unregister', toAPI(kubernetes, force), false, token);
   },
-  getKubernetesConfig(kubernetes: Kubernetes) {
-    return apiManagement.post<any, any>('/DBaaS/Kubernetes/Get', toAPI(kubernetes));
+  getKubernetesConfig(kubernetes: Kubernetes, token?: CancelToken) {
+    return apiManagement.post<any, any>('/DBaaS/Kubernetes/Get', toAPI(kubernetes), false, token);
   },
-  addKubernetes(kubernetes: NewKubernetesCluster) {
-    return apiManagement.post<NewKubernetesClusterAPI, any>('/DBaaS/Kubernetes/Register', newClusterToApi(kubernetes));
+  addKubernetes(kubernetes: NewKubernetesCluster, token?: CancelToken) {
+    return apiManagement.post<NewKubernetesClusterAPI, any>(
+      '/DBaaS/Kubernetes/Register',
+      newClusterToApi(kubernetes),
+      false,
+      token
+    );
   },
 };
 

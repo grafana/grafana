@@ -1,4 +1,6 @@
 import React, { FC, useState } from 'react';
+import { logger } from '@percona/platform-core';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Labels } from 'app/percona/check/types';
 import { AlertsReloadContext } from 'app/percona/check/Check.context';
 import { CheckService } from 'app/percona/check/Check.service';
@@ -21,10 +23,12 @@ export const SilenceAlertButton: FC<SilenceAlertButtonProps> = ({ labels }) => {
       await CheckService.silenceAlert(silencePayload);
       await alertsReloadContext.fetchAlerts();
     } catch (e) {
-      console.error(e);
-    } finally {
-      setRequestPending(false);
+      if (isApiCancelError(e)) {
+        return;
+      }
+      logger.error(e);
     }
+    setRequestPending(false);
   };
 
   return (

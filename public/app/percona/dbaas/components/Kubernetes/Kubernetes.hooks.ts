@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { AppEvents } from '@grafana/data';
 import { logger } from '@percona/platform-core';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { appEvents } from 'app/core/app_events';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { KubernetesService } from './Kubernetes.service';
@@ -13,10 +15,12 @@ import {
   AddKubernetesAction,
 } from './Kubernetes.types';
 import { KubernetesClusterStatus } from './KubernetesClusterStatus/KubernetesClusterStatus.types';
+import { ADD_KUBERNETES_CANCEL_TOKEN, GET_KUBERNETES_CANCEL_TOKEN } from './Kubernetes.hooks.constants';
 
 export const useKubernetes = (): [Kubernetes[], DeleteKubernetesAction, AddKubernetesAction, boolean] => {
   const [kubernetes, setKubernetes] = useState<Kubernetes[]>([]);
   const [loading, setLoading] = useState(false);
+  const [generateToken] = useCancelToken();
   const {
     kubernetes: { deleteSuccess },
   } = Messages;
@@ -25,14 +29,18 @@ export const useKubernetes = (): [Kubernetes[], DeleteKubernetesAction, AddKuber
     setLoading(true);
 
     try {
-      const results = (await KubernetesService.getKubernetes()) as KubernetesListAPI;
+      const results = (await KubernetesService.getKubernetes(
+        generateToken(GET_KUBERNETES_CANCEL_TOKEN)
+      )) as KubernetesListAPI;
 
       setKubernetes(toModelList(results));
     } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
       logger.error(e);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const deleteKubernetes = async (kubernetesToDelete: Kubernetes, force?: boolean) => {
@@ -41,6 +49,9 @@ export const useKubernetes = (): [Kubernetes[], DeleteKubernetesAction, AddKuber
       await KubernetesService.deleteKubernetes(kubernetesToDelete, force);
       appEvents.emit(AppEvents.alertSuccess, [deleteSuccess]);
     } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
       logger.error(e);
     } finally {
       getKubernetes();
@@ -51,9 +62,12 @@ export const useKubernetes = (): [Kubernetes[], DeleteKubernetesAction, AddKuber
     try {
       setLoading(true);
 
-      await KubernetesService.addKubernetes(kubernetesToAdd);
+      await KubernetesService.addKubernetes(kubernetesToAdd, generateToken(ADD_KUBERNETES_CANCEL_TOKEN));
       appEvents.emit(AppEvents.alertSuccess, [Messages.kubernetes.messages.clusterAdded]);
     } catch (e) {
+      if (isApiCancelError(e)) {
+        return;
+      }
       logger.error(e);
     } finally {
       getKubernetes();

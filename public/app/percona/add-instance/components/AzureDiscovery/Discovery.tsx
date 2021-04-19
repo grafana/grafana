@@ -1,4 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import DiscoveryService from './Discovery.service';
 import Credentials from './components/Credentials/Credentials';
 import Instances from './components/Instances/Instances';
@@ -6,6 +8,7 @@ import { getStyles } from './Discovery.styles';
 import { DiscoverySearchPanelProps, Instance } from './Discovery.types';
 import { AzureCredentialsForm } from './components/Credentials/Credentials.types';
 import { logger } from '@percona/platform-core';
+import { DISCOVERY_AZURE_CANCEL_TOKEN } from './Discovery.constants';
 
 const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
   const styles = getStyles();
@@ -13,19 +16,22 @@ const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
   const [instances, setInstances] = useState<Instance[]>([]);
   const [credentials, setCredentials] = useState<AzureCredentialsForm>({});
   const [loading, startLoading] = useState(false);
+  const [generateToken] = useCancelToken();
 
   useEffect(() => {
     const updateInstances = async () => {
       try {
-        const result = await DiscoveryService.discoveryAzure(credentials);
+        const result = await DiscoveryService.discoveryAzure(credentials, generateToken(DISCOVERY_AZURE_CANCEL_TOKEN));
         if (result) {
           setInstances(result.azure_database_instance);
         }
       } catch (e) {
+        if (isApiCancelError(e)) {
+          return;
+        }
         logger.error(e);
-      } finally {
-        startLoading(false);
       }
+      startLoading(false);
     };
 
     if (
