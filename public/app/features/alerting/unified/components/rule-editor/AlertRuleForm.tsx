@@ -18,6 +18,7 @@ import { useDispatch } from 'react-redux';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { rulerRuleToFormValues, defaultFormValues } from '../../utils/rule-form';
 import { Link } from 'react-router-dom';
+import { config } from '@grafana/runtime';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -71,7 +72,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
     <FormContext {...formAPI}>
       <form onSubmit={handleSubmit((values) => submit(values, false))} className={styles.form}>
         <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
-          <Link to="/alerting/list">
+          <Link to={`${config.appSubUrl ?? ''}/alerting/list`}>
             <ToolbarButton variant="default" disabled={submitState.loading} type="button">
               Cancel
             </ToolbarButton>
