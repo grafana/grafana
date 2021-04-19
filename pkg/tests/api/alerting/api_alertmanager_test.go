@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -78,7 +79,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
 
-	ruleUIDs := make([]string, 2)
+	var ruleUID string
+	var expectedGetNamespaceResponseBody string
 	// Now, let's create two alerts.
 	{
 		rules := apimodels.PostableRuleGroupConfig{
@@ -171,96 +173,190 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, resp.StatusCode, 202)
-		assert.JSONEq(t, `
-{
-   "default":[
-      {
-         "name":"arulegroup",
-         "interval":"1m",
-         "rules":[
-            {
-				"annotations": {
-					"annotation1": "val1"
-			   },
-               "expr":"",
-			   "for": "1m",
-			   "labels": {
-					"label1": "val1"
-			   },
-               "grafana_alert":{
-                  "id":1,
-                  "orgId":2,
-                  "title":"AlwaysFiring",
-                  "condition":"A",
-                  "data":[
-                     {
-                        "refId":"A",
-                        "queryType":"",
-                        "relativeTimeRange":{
-                           "from":18000,
-                           "to":10800
-                        },
-                        "model":{
-                           "datasourceUid":"-100",
-                           "expression":"2 + 3 \u003e 1",
-                           "intervalMs":1000,
-                           "maxDataPoints":100,
-                           "type":"math"
-                        }
-                     }
-                  ],
-                  "updated":"2021-02-21T01:10:30Z",
-                  "intervalSeconds":60,
-                  "version":1,
-                  "uid":"uid",
-                  "namespace_uid":"nsuid",
-                  "namespace_id":1,
-                  "rule_group":"arulegroup",
-                  "no_data_state":"NoData",
-                  "exec_err_state":"Alerting"
-               }
-            },
-            {
-               "expr":"",
-               "grafana_alert":{
-                  "id":2,
-                  "orgId":2,
-                  "title":"AlwaysFiringButSilenced",
-                  "condition":"A",
-                  "data":[
-                     {
-                        "refId":"A",
-                        "queryType":"",
-                        "relativeTimeRange":{
-                           "from":18000,
-                           "to":10800
-                        },
-                        "model":{
-                           "datasourceUid":"-100",
-                           "expression":"2 + 3 \u003e 1",
-                           "intervalMs":1000,
-                           "maxDataPoints":100,
-                           "type":"math"
-                        }
-                     }
-                  ],
-                  "updated":"2021-02-21T01:10:30Z",
-                  "intervalSeconds":60,
-                  "version":1,
-                  "uid":"uid",
-                  "namespace_uid":"nsuid",
-                  "namespace_id":1,
-                  "rule_group":"arulegroup",
-                  "no_data_state":"Alerting",
-                  "exec_err_state":"KeepLastState"
-               }
-            }
-         ]
-      }
-   ]
-}`, rulesNamespaceWithoutVariableValues(t, b, ruleUIDs))
-		require.Equal(t, 2, len(ruleUIDs))
-		assert.NotEqual(t, ruleUIDs[0], ruleUIDs[1])
+
+		body, m := rulesNamespaceWithoutVariableValues(t, b)
+		generatedUIDs, ok := m["default,arulegroup"]
+		assert.True(t, ok)
+		assert.Equal(t, 2, len(generatedUIDs))
+		// assert that generated UIDs are unique
+		assert.NotEqual(t, generatedUIDs[0], generatedUIDs[1])
+		// copy result to a variable with a wider scope
+		// to be used by the next test
+		ruleUID = generatedUIDs[0]
+		expectedGetNamespaceResponseBody = `
+		{
+		   "default":[
+			  {
+				 "name":"arulegroup",
+				 "interval":"1m",
+				 "rules":[
+					{
+						"annotations": {
+							"annotation1": "val1"
+					   },
+					   "expr":"",
+					   "for": "1m",
+					   "labels": {
+							"label1": "val1"
+					   },
+					   "grafana_alert":{
+						  "id":1,
+						  "orgId":2,
+						  "title":"AlwaysFiring",
+						  "condition":"A",
+						  "data":[
+							 {
+								"refId":"A",
+								"queryType":"",
+								"relativeTimeRange":{
+								   "from":18000,
+								   "to":10800
+								},
+								"model":{
+								   "datasourceUid":"-100",
+								   "expression":"2 + 3 \u003e 1",
+								   "intervalMs":1000,
+								   "maxDataPoints":100,
+								   "type":"math"
+								}
+							 }
+						  ],
+						  "updated":"2021-02-21T01:10:30Z",
+						  "intervalSeconds":60,
+						  "version":1,
+						  "uid":"uid",
+						  "namespace_uid":"nsuid",
+						  "namespace_id":1,
+						  "rule_group":"arulegroup",
+						  "no_data_state":"NoData",
+						  "exec_err_state":"Alerting"
+					   }
+					},
+					{
+					   "expr":"",
+					   "grafana_alert":{
+						  "id":2,
+						  "orgId":2,
+						  "title":"AlwaysFiringButSilenced",
+						  "condition":"A",
+						  "data":[
+							 {
+								"refId":"A",
+								"queryType":"",
+								"relativeTimeRange":{
+								   "from":18000,
+								   "to":10800
+								},
+								"model":{
+								   "datasourceUid":"-100",
+								   "expression":"2 + 3 \u003e 1",
+								   "intervalMs":1000,
+								   "maxDataPoints":100,
+								   "type":"math"
+								}
+							 }
+						  ],
+						  "updated":"2021-02-21T01:10:30Z",
+						  "intervalSeconds":60,
+						  "version":1,
+						  "uid":"uid",
+						  "namespace_uid":"nsuid",
+						  "namespace_id":1,
+						  "rule_group":"arulegroup",
+						  "no_data_state":"Alerting",
+						  "exec_err_state":"KeepLastState"
+					   }
+					}
+				 ]
+			  }
+		   ]
+		}`
+		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
+	}
+
+	// try to update by pass an invalid UID
+	{
+		interval, err := model.ParseDuration("30s")
+		require.NoError(t, err)
+
+		rules := apimodels.PostableRuleGroupConfig{
+			Name: "arulegroup",
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For: interval,
+						Labels: map[string]string{
+							"label1": "val42",
+							"foo":    "bar",
+						},
+						Annotations: map[string]string{
+							"annotation1": "val42",
+							"foo":         "bar",
+						},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						OrgID:     2,
+						UID:       "unknown",
+						Title:     "AlwaysNormal",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								Model: json.RawMessage(`{
+											"datasourceUid": "-100",
+											"type": "math",
+											"expression": "2 + 3 < 1"
+											}`),
+							},
+						},
+						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.KeepLastStateErrState),
+					},
+				},
+			},
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err = enc.Encode(&rules)
+		require.NoError(t, err)
+
+		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", &buf)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+		require.JSONEq(t, `{"error":"failed to get alert rule unknown: could not find alert rule", "message": "failed to update rule group"}`, string(b))
+
+		// let's make sure that rule definitions are not affected by the failed POST request.
+		u = fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
+		resp, err = http.Get(u)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err = ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, resp.StatusCode, 202)
+
+		body, m := rulesNamespaceWithoutVariableValues(t, b)
+		returnedUIDs, ok := m["default,arulegroup"]
+		assert.True(t, ok)
+		assert.Equal(t, 2, len(returnedUIDs))
+		assert.JSONEq(t, expectedGetNamespaceResponseBody, body)
 	}
 
 	// update the first rule and completely remove the other
@@ -273,7 +369,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: dur,
+						For: interval,
 						Labels: map[string]string{
 							"label1": "val42",
 							"foo":    "bar",
@@ -285,7 +381,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						OrgID:     2,
-						UID:       ruleUIDs[0], // Including the UID in the payload makes the endpoint update the existing rule.
+						UID:       ruleUID, // Including the UID in the payload makes the endpoint update the existing rule.
 						Title:     "AlwaysNormal",
 						Condition: "A",
 						Data: []ngmodels.AlertQuery{
@@ -340,6 +436,12 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, resp.StatusCode, 202)
+
+		body, m := rulesNamespaceWithoutVariableValues(t, b)
+		returnedUIDs, ok := m["default,arulegroup"]
+		assert.True(t, ok)
+		assert.Equal(t, 1, len(returnedUIDs))
+		assert.Equal(t, ruleUID, returnedUIDs[0])
 		assert.JSONEq(t, `
 		{
 		   "default":[
@@ -394,7 +496,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		         ]
 		      }
 		   ]
-		}`, rulesNamespaceWithoutVariableValues(t, b, ruleUIDs))
+		}`, body)
 	}
 
 	client := &http.Client{}
@@ -455,15 +557,22 @@ func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folder
 }
 
 // rulesNamespaceWithoutVariableValues takes a apimodels.NamespaceConfigResponse JSON-based input and makes the dynamic fields static e.g. uid, dates, etc.
-func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte, ruleUIDs []string) string {
+func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[string][]string) {
 	t.Helper()
 
 	var r apimodels.NamespaceConfigResponse
 	require.NoError(t, json.Unmarshal(b, &r))
-	for _, nodes := range r {
+	// create a map holding the created rule UIDs per namespace/group
+	m := make(map[string][]string)
+	for namespace, nodes := range r {
 		for _, node := range nodes {
-			for idx, rule := range node.Rules {
-				ruleUIDs[idx] = rule.GrafanaManagedAlert.UID
+			compositeKey := strings.Join([]string{namespace, node.Name}, ",")
+			_, ok := m[compositeKey]
+			if !ok {
+				m[compositeKey] = make([]string, 0, len(node.Rules))
+			}
+			for _, rule := range node.Rules {
+				m[compositeKey] = append(m[compositeKey], rule.GrafanaManagedAlert.UID)
 				rule.GrafanaManagedAlert.UID = "uid"
 				rule.GrafanaManagedAlert.NamespaceUID = "nsuid"
 				rule.GrafanaManagedAlert.Updated = time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC)
@@ -473,5 +582,5 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte, ruleUIDs []stri
 
 	json, err := json.Marshal(&r)
 	require.NoError(t, err)
-	return string(json)
+	return string(json), m
 }
