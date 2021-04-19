@@ -1,10 +1,10 @@
 package notifier
 
 import (
-	"github.com/go-openapi/strfmt"
 	"testing"
 	"time"
 
+	"github.com/go-openapi/strfmt"
 	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/provider"

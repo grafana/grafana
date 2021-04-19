@@ -17,9 +17,8 @@ type AlertProvider struct {
 	provider.Alerts
 }
 
-// NewAlertProvider returns AlertProvider that also supports legacy alerts via PutPostableAlert.
-// The notify.Stage should be of the type notify.RoutingStage or something similar that takes
-// notification channel name from the context.
+// NewAlertProvider returns AlertProvider that provides a method to translate
+// Grafana alerts to Prometheus Alertmanager alerts before passing it ahead.
 func NewAlertProvider(m types.Marker) (*AlertProvider, error) {
 	alerts, err := mem.NewAlerts(context.Background(), m, 30*time.Minute, gokit_log.NewNopLogger())
 	if err != nil {
