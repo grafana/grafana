@@ -30,7 +30,9 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
 
   const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
     () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
-    [props]
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [panel.configRev]
   );
 
   const mainBoxElements: React.ReactNode[] = [];
