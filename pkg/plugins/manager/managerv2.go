@@ -86,79 +86,6 @@ func (m *PluginManagerV2) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-// start starts all managed backend plugins
-func (m *PluginManagerV2) start(ctx context.Context) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	for _, p := range m.plugins {
-		if !p.IsManaged() || p.IsCorePlugin {
-			continue
-		}
-
-		if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
-			p.Logger().Error("Failed to start plugin", "error", err)
-			continue
-		}
-	}
-}
-
-func (m *PluginManagerV2) stop(ctx context.Context) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	var wg sync.WaitGroup
-	for _, p := range m.plugins {
-		wg.Add(1)
-		go func(p backendplugin.Plugin, ctx context.Context) {
-			defer wg.Done()
-			p.Logger().Debug("Stopping plugin")
-			if err := p.Stop(ctx); err != nil {
-				p.Logger().Error("Failed to stop plugin", "error", err)
-			}
-			p.Logger().Debug("Plugin stopped")
-		}(p, ctx)
-	}
-	wg.Wait()
-}
-
-func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.PluginV2) error {
-	if err := p.Start(ctx); err != nil {
-		return err
-	}
-
-	go func(ctx context.Context, p *plugins.PluginV2) {
-		if err := restartKilledProcess(ctx, p); err != nil {
-			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
-		}
-	}(ctx, p)
-
-	return nil
-}
-
-func restartKilledProcess(ctx context.Context, p *plugins.PluginV2) error {
-	ticker := time.NewTicker(time.Second * 1)
-
-	for {
-		select {
-		case <-ctx.Done():
-			if err := ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
-				return err
-			}
-			return nil
-		case <-ticker.C:
-			if !p.Exited() {
-				continue
-			}
-
-			p.Logger().Debug("Restarting plugin")
-			if err := p.Start(ctx); err != nil {
-				p.Logger().Error("Failed to restart plugin", "error", err)
-				continue
-			}
-			p.Logger().Debug("Plugin restarted")
-		}
-	}
-}
-
 func (m *PluginManagerV2) InstallCorePlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
 	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", pluginJSONPath)
 
@@ -236,11 +163,33 @@ func (m *PluginManagerV2) Reload() {
 }
 
 func (m *PluginManagerV2) StartPlugin(ctx context.Context, pluginID string) error {
-	return nil
+	m.pluginsMu.RLock()
+	p, registered := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+	if !registered {
+		return backendplugin.ErrPluginNotRegistered
+	}
+
+	if p.IsManaged() {
+		return errors.New("backend plugin is managed and cannot be manually started")
+	}
+
+	return startPluginAndRestartKilledProcesses(ctx, p)
 }
 
 func (m *PluginManagerV2) StopPlugin(ctx context.Context, pluginID string) error {
-	return nil
+	m.pluginsMu.RLock()
+	p, registered := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+	if !registered {
+		return backendplugin.ErrPluginNotRegistered
+	}
+
+	if p.IsManaged() {
+		return errors.New("backend plugin is managed and cannot be manually started")
+	}
+
+	return stopPluginProcess(ctx, p)
 }
 
 func (m *PluginManagerV2) DataSource(pluginID string) {
@@ -300,4 +249,85 @@ func (m *PluginManagerV2) IsSupported(pluginID string) bool {
 		}
 	}
 	return false
+}
+
+// start starts all managed backend plugins
+func (m *PluginManagerV2) start(ctx context.Context) {
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+	for _, p := range m.plugins {
+		if !p.IsManaged() || p.IsCorePlugin {
+			continue
+		}
+
+		if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+			p.Logger().Error("Failed to start plugin", "error", err)
+			continue
+		}
+	}
+}
+
+func (m *PluginManagerV2) stop(ctx context.Context) {
+	m.pluginsMu.RLock()
+	defer m.pluginsMu.RUnlock()
+	var wg sync.WaitGroup
+	for _, p := range m.plugins {
+		wg.Add(1)
+		go func(p backendplugin.Plugin, ctx context.Context) {
+			defer wg.Done()
+			p.Logger().Debug("Stopping plugin")
+			if err := p.Stop(ctx); err != nil {
+				p.Logger().Error("Failed to stop plugin", "error", err)
+			}
+			p.Logger().Debug("Plugin stopped")
+		}(p, ctx)
+	}
+	wg.Wait()
+}
+
+func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.PluginV2) error {
+	if err := p.Start(ctx); err != nil {
+		return err
+	}
+
+	go func(ctx context.Context, p *plugins.PluginV2) {
+		if err := restartKilledProcess(ctx, p); err != nil {
+			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
+		}
+	}(ctx, p)
+
+	return nil
+}
+
+func stopPluginProcess(ctx context.Context, p *plugins.PluginV2) error {
+	if err := p.Stop(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func restartKilledProcess(ctx context.Context, p *plugins.PluginV2) error {
+	ticker := time.NewTicker(time.Second * 1)
+
+	for {
+		select {
+		case <-ctx.Done():
+			if err := ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
+				return err
+			}
+			return nil
+		case <-ticker.C:
+			if !p.Exited() {
+				continue
+			}
+
+			p.Logger().Debug("Restarting plugin")
+			if err := p.Start(ctx); err != nil {
+				p.Logger().Error("Failed to restart plugin", "error", err)
+				continue
+			}
+			p.Logger().Debug("Plugin restarted")
+		}
+	}
 }
