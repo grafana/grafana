@@ -60,7 +60,7 @@ require (
 	github.com/linkedin/goavro/v2 v2.10.0
 	github.com/magefile/mage v1.11.0
 	github.com/mattn/go-isatty v0.0.12
-	github.com/mattn/go-sqlite3 v1.14.6
+	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
@@ -101,7 +101,6 @@ require (
 	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	gotest.tools v2.2.0+incompatible
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
