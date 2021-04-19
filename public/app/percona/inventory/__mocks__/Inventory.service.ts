@@ -1,7 +1,7 @@
 import * as service from '../Inventory.service';
-import { ServiceList } from '../Inventory.types';
+import { DBServiceList } from '../Inventory.types';
 
-export const stubs: ServiceList = {
+export const stubs: DBServiceList = {
   mysql: [
     {
       id: 'service_1',
@@ -15,4 +15,4 @@ export const stubs: ServiceList = {
 };
 
 export const InventoryService = jest.genMockFromModule<typeof service>('../InventoryService.service').InventoryService;
-InventoryService.getServices = () => Promise.resolve(stubs);
+InventoryService.getDbServices = () => Promise.resolve(stubs);

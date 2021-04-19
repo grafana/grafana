@@ -1,4 +1,4 @@
-export type DBIconType = 'edit' | 'see' | 'delete' | 'backup';
+export type DBIconType = 'edit' | 'see' | 'delete' | 'restore' | 'backup';
 
 export interface DBIconProps extends React.HTMLAttributes<HTMLOrSVGElement> {
   type: DBIconType;
