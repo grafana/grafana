@@ -5,7 +5,7 @@ import (
 	"time"
 
 	gokit_log "github.com/go-kit/kit/log"
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/provider"
 	"github.com/prometheus/alertmanager/provider/mem"
