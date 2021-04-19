@@ -97,7 +97,7 @@ You can also create Flux queries in the InfluxDB Explore view.
 1. In Grafana, [add a panel](../panels/add-a-panel.md) and then paste your Flux code into the query editor.
 1. Click **Apply**. Your new panel should be visible with data from your Flux query.
 
-## Step 6. Check InfluxDB metrics in Grafana Explore view
+## Step 6. Check InfluxDB metrics in Grafana Explore
 
 In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics.
 
