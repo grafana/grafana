@@ -617,7 +617,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
   query: TQuery;
 }
 
-export abstract class LanguageProvider {
+abstract class LanguageProvider {
   abstract datasource: DataSourceApi<any, any>;
   abstract request: (url: string, params?: any) => Promise<any>;
 
@@ -628,6 +628,10 @@ export abstract class LanguageProvider {
   abstract start: () => Promise<Array<Promise<any>>>;
   startTask?: Promise<any[]>;
 }
+
+//@ts-ignore
+LanguageProvider = makeClassES5Compatible(LanguageProvider);
+export { LanguageProvider };
 
 //@ts-ignore
 DataSourceApi = makeClassES5Compatible(DataSourceApi);
