@@ -853,6 +853,80 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"var1": "_count",
 			})
 		})
+
+		Convey("With aggregations that requires type casting", func() {
+			Convey("Correctly cast moving_average settings", func() {
+				c := newFakeClient(5)
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+					],
+					"metrics": [
+						{ "id": "1", "type": "average", "field": "@value" },
+						{
+							"id": "3",
+							"type": "moving_avg",
+							"field": "1",
+							"pipelineAgg": "1",
+							"settings": {
+								"model": "holt_winters",
+								"window": "10",
+								"predict": "5",
+								"settings": {
+									"alpha": "1",
+									"beta": "2",
+									"gamma": "3",
+									"period": "4"
+								}
+							}
+						}
+					]
+				}`, from, to, 15*time.Second)
+				So(err, ShouldBeNil)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				movingAvgSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
+
+				So(movingAvgSettings["window"], ShouldEqual, 10)
+				So(movingAvgSettings["predict"], ShouldEqual, 5)
+
+				modelSettings := movingAvgSettings["settings"].(map[string]interface{})
+
+				So(modelSettings["alpha"], ShouldEqual, 1)
+				So(modelSettings["beta"], ShouldEqual, 2)
+				So(modelSettings["gamma"], ShouldEqual, 3)
+				So(modelSettings["period"], ShouldEqual, 4)
+			})
+
+			Convey("Correctly cast serial_diff settings", func() {
+				c := newFakeClient(5)
+				_, err := executeTsdbQuery(c, `{
+					"timeField": "@timestamp",
+					"bucketAggs": [
+						{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+					],
+					"metrics": [
+						{ "id": "1", "type": "average", "field": "@value" },
+						{
+							"id": "3",
+							"type": "serial_diff",
+							"field": "1",
+							"pipelineAgg": "1",
+							"settings": {
+								"lag": "1"
+							}
+						}
+					]
+				}`, from, to, 15*time.Second)
+				So(err, ShouldBeNil)
+				sr := c.multisearchRequests[0].Requests[0]
+
+				serialDiffSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
+
+				So(serialDiffSettings["lag"], ShouldEqual, 1)
+			})
+		})
 	})
 }
 
