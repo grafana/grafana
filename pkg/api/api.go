@@ -425,14 +425,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
 		adminRoute.Get("/settings", routing.Wrap(AdminGetSettings))
 		adminRoute.Put("/settings", bind(settings.UpsertSettingsCommand{}), routing.Wrap(hs.AdminUpsertSettings))
-		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), routing.Wrap(hs.AdminCreateUser))
-		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
-		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(hs.AdminUpdateUserPermissions))
-		adminRoute.Delete("/users/:id", routing.Wrap(AdminDeleteUser))
-		adminRoute.Post("/users/:id/disable", routing.Wrap(hs.AdminDisableUser))
-		adminRoute.Post("/users/:id/enable", routing.Wrap(AdminEnableUser))
-		adminRoute.Get("/users/:id/quotas", routing.Wrap(GetUserQuotas))
-		adminRoute.Put("/users/:id/quotas/:target", bind(models.UpdateUserQuotaCmd{}), routing.Wrap(UpdateUserQuota))
 		adminRoute.Get("/stats", routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
 
