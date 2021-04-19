@@ -45,6 +45,9 @@ export interface VizTooltipProps {
   mode?: TooltipDisplayMode;
 }
 
+/**
+ * @public
+ */
 export const VizTooltip: React.FC<VizTooltipProps> = ({ content, position, offset }) => {
   const styles = useStyles(getStyles);
   if (position) {

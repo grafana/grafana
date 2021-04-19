@@ -4,6 +4,9 @@ import { css, cx } from '@emotion/css';
 import { SeriesIcon } from '../VizLegend/SeriesIcon';
 import { useStyles } from '../../themes';
 
+/**
+ * @public
+ */
 export interface SeriesTableRowProps {
   color?: string;
   label?: string;
@@ -59,11 +62,17 @@ const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, is
   );
 };
 
+/**
+ * @public
+ */
 export interface SeriesTableProps {
   timestamp?: string | GraphSeriesValue;
   series: SeriesTableRowProps[];
 }
 
+/**
+ * @public
+ */
 export const SeriesTable: React.FC<SeriesTableProps> = ({ timestamp, series }) => {
   const styles = useStyles(getSeriesTableRowStyles);
 
