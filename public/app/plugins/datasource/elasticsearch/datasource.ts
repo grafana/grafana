@@ -61,6 +61,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   index: string;
   timeField: string;
   esVersion: number;
+  xpack: boolean;
   interval: string;
   maxConcurrentShardRequests?: number;
   queryBuilder: ElasticQueryBuilder;
@@ -84,6 +85,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     this.timeField = settingsData.timeField;
     this.esVersion = settingsData.esVersion;
+    this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;

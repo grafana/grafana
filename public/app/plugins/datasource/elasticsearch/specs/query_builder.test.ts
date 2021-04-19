@@ -7,8 +7,9 @@ describe('ElasticQueryBuilder', () => {
   const builder56 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 56 });
   const builder6x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 60 });
   const builder7x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 70 });
+  const builder77 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 77 });
 
-  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x];
+  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x, builder77];
 
   allBuilders.forEach((builder) => {
     describe(`version ${builder.esVersion}`, () => {

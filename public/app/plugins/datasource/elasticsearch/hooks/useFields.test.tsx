@@ -69,5 +69,10 @@ describe('useFields hook', () => {
     rerender('terms');
     result.current();
     expect(getFields).toHaveBeenLastCalledWith(undefined, timeRange);
+
+    // top_metrics work on any kind of data
+    rerender('top_metrics');
+    result.current();
+    expect(getFields).toHaveBeenLastCalledWith(undefined, timeRange);
   });
 });
