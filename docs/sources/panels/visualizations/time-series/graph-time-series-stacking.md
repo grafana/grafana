@@ -29,7 +29,7 @@ Turn series stacking on/off.
 
 ### Off
 
-Disable series stacking.
+Turn off series stacking. A series will share the same space in the visualization.
 
 ![No series stacking example](/img/docs/time-series-panel/stacking-off-8-0.png)
 
