@@ -3,6 +3,7 @@ import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 import {
   fetchAlertManagerConfigAction,
   fetchExistingRuleAction,
+  fetchGrafanaReceiverTypesAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
   fetchSilencesAction,
@@ -23,6 +24,7 @@ export const reducer = combineReducers({
     saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
     existingRule: createAsyncSlice('existingRule', fetchExistingRuleAction).reducer,
   }),
+  grafanaReceiverTypes: createAsyncSlice('grafanaReceiverTypes', fetchGrafanaReceiverTypesAction).reducer,
 });
 
 export type UnifiedAlertingState = ReturnType<typeof reducer>;
