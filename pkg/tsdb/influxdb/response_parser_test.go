@@ -25,7 +25,20 @@ func decodedFrames(t *testing.T, result plugins.DataQueryResult) data.Frames {
 
 func assertSeriesName(t *testing.T, result plugins.DataQueryResult, index int, name string) {
 	decoded := decodedFrames(t, result)
-	require.Equal(t, decoded[index].Name, name)
+
+	frame := decoded[index]
+
+	require.Equal(t, frame.Name, name)
+
+	// the current version of the alerting-code does not use the dataframe-name
+	// when generating the metric-names for the alerts.
+	// instead, it goes through multiple attributes on the Field.
+	// we use the `field.Config.DisplayNameFromDS` attribute.
+
+	valueFieldConfig := frame.Fields[1].Config
+
+	require.NotNil(t, valueFieldConfig)
+	require.Equal(t, valueFieldConfig.DisplayNameFromDS, name)
 }
 
 func TestInfluxdbResponseParser(t *testing.T) {

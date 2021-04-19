@@ -80,9 +80,13 @@ func transformRows(rows []Row, query *Query) data.Frames {
 			}
 			name := formatFrameName(row, column, query)
 
-			frames = append(frames, data.NewFrame(name,
-				data.NewField("time", nil, timeArray),
-				data.NewField("value", row.Tags, valueArray)))
+			timeField := data.NewField("time", nil, timeArray)
+			valueField := data.NewField("value", row.Tags, valueArray)
+
+			// set a nice name on the value-field
+			valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+
+			frames = append(frames, data.NewFrame(name, timeField, valueField))
 		}
 	}
 
