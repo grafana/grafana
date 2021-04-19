@@ -8,12 +8,20 @@ import { Messages } from './BackupInventoryActions.messages';
 import { getStyles } from './BackupInventoryActions.styles';
 import { BackupInventoryActionsProps } from './BackupInventoryActions.types';
 
-export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup, onBackup }) => {
+export const BackupInventoryActions: FC<BackupInventoryActionsProps> = ({ backup, onRestore, onBackup }) => {
   const styles = useStyles(getStyles);
+  const handeClick = () => onRestore(backup);
   const handleBackup = () => onBackup(backup);
 
   return (
     <div className={styles.actionsWrapper}>
+      <DBIcon
+        tooltipText={Messages.restoreBackup}
+        type="restore"
+        data-qa="restore-backup-artifact-button"
+        role="button"
+        onClick={handeClick}
+      />
       <DBIcon
         tooltipText={Messages.addBackup}
         type="backup"
