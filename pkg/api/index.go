@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -299,20 +299,9 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
-	if c.IsGrafanaAdmin {
-		adminNavLinks := []*dtos.NavLink{
-			{Text: "Users", Id: "global-users", Url: hs.Cfg.AppSubURL + "/admin/users", Icon: "user"},
-			{Text: "Orgs", Id: "global-orgs", Url: hs.Cfg.AppSubURL + "/admin/orgs", Icon: "building"},
-			{Text: "Settings", Id: "server-settings", Url: hs.Cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt"},
-			{Text: "Stats", Id: "server-stats", Url: hs.Cfg.AppSubURL + "/admin/stats", Icon: "graph-bar"},
-		}
+	adminNavLinks := hs.buildAdminNavLinks(c)
 
-		if hs.Cfg.LDAPEnabled {
-			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-				Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",
-			})
-		}
-
+	if len(adminNavLinks) > 0 {
 		navTree = append(navTree, &dtos.NavLink{
 			Text:         "Server Admin",
 			SubTitle:     "Manage all users and orgs",
@@ -342,6 +331,36 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	})
 
 	return navTree, nil
+}
+
+func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	adminNavLinks := []*dtos.NavLink{}
+
+	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionUsersRead, ac.ScopeUsersAll) {
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text: "Users", Id: "global-users", Url: hs.Cfg.AppSubURL + "/admin/users", Icon: "user",
+		})
+	}
+
+	if c.IsGrafanaAdmin {
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text: "Orgs", Id: "global-orgs", Url: hs.Cfg.AppSubURL + "/admin/orgs", Icon: "building",
+		})
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text: "Settings", Id: "server-settings", Url: hs.Cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
+		})
+		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+			Text: "Stats", Id: "server-stats", Url: hs.Cfg.AppSubURL + "/admin/stats", Icon: "graph-bar",
+		})
+		if hs.Cfg.LDAPEnabled {
+			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+				Text: "LDAP", Id: "ldap", Url: hs.Cfg.AppSubURL + "/admin/ldap", Icon: "book",
+			})
+		}
+	}
+
+	return adminNavLinks
 }
 
 func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
@@ -434,7 +453,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			return nil, err
 		}
 
-		data.User.Permissions = accesscontrol.BuildPermissionsMap(userPermissions)
+		data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 	}
 
 	if setting.DisableGravatar {
