@@ -6,14 +6,15 @@ import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertingQuery } from '../types';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 
 interface Props {
   // The query configuration
-  queries: Array<AlertingQuery | ExpressionQuery>;
+  queries: GrafanaQuery[];
 
   // Query editing
-  onQueriesChange: (queries: Array<AlertingQuery | ExpressionQuery>) => void;
-  onAddQuery: (query: AlertingQuery | ExpressionQuery) => void;
+  onQueriesChange: (queries: GrafanaQuery[]) => void;
+  onDuplicateQuery: (query: GrafanaQuery) => void;
   onRunQueries: () => void;
 }
 
@@ -111,7 +112,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                         query={query}
                         onChange={(query) => this.onChangeQuery(query, index)}
                         onRemoveQuery={this.onRemoveQuery}
-                        onAddQuery={this.props.onAddQuery}
+                        onAddQuery={this.props.onDuplicateQuery}
                         onRunQuery={this.props.onRunQueries}
                         queries={queries}
                       />
@@ -130,7 +131,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       timeRange={query.timeRange}
                       onChangeTimeRange={(timeRange) => this.onChangeTimeRange(timeRange, query, index)}
                       onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={this.props.onAddQuery}
+                      onAddQuery={this.props.onDuplicateQuery}
                       onRunQuery={this.props.onRunQueries}
                       queries={queries}
                     />

@@ -10,8 +10,12 @@ import { addQuery } from 'app/core/utils/query';
 import { defaultCondition } from '../../expressions/utils/expressionTypes';
 import { ExpressionQuery, ExpressionQueryType } from '../../expressions/types';
 import { AlertingQuery } from '../types';
+import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 
-interface Props {}
+interface Props {
+  queries: GrafanaQuery[];
+  onChange: (queries: GrafanaQuery[]) => void;
+}
 
 interface State {
   queries: Array<AlertingQuery | ExpressionQuery>;
@@ -31,14 +35,9 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
 
   onRunQueries = () => {};
 
-  onQueriesChanged = (queries: Array<AlertingQuery | ExpressionQuery>) => {
-    this.setState({ queries });
-  };
-
-  onDuplicateQuery = (query: AlertingQuery | ExpressionQuery) => {
-    this.setState((prevState) => ({
-      queries: [...prevState.queries, query],
-    }));
+  onDuplicateQuery = (query: GrafanaQuery) => {
+    const { onChange, queries } = this.props;
+    onChange([...queries, query]);
   };
 
   onNewAlertingQuery = () => {
@@ -90,14 +89,14 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 
   render() {
-    const { queries } = this.state;
+    const { queries } = this.props;
     const styles = getStyles(config.theme);
     return (
       <div className={styles.container}>
         <AlertingQueryRows
           queries={queries}
-          onQueriesChange={this.onQueriesChanged}
-          onAddQuery={this.onDuplicateQuery}
+          onQueriesChange={this.props.onChange}
+          onDuplicateQuery={this.onDuplicateQuery}
           onRunQueries={this.onRunQueries}
         />
         {this.renderAddQueryRow(styles)}

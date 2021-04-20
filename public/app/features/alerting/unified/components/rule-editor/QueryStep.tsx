@@ -1,10 +1,10 @@
 import React, { FC } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Field, InputControl } from '@grafana/ui';
-import { AlertingQueryEditor } from '../../../components/AlertingQueryEditor';
 import { ExpressionEditor } from './ExpressionEditor';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { GrafanaQueryEditor } from './GrafanaQueryEditor';
 
 export const QueryStep: FC = () => {
   const { control, watch, errors } = useFormContext<RuleFormValues>();
@@ -25,7 +25,21 @@ export const QueryStep: FC = () => {
           />
         </Field>
       )}
-      {type === RuleFormType.threshold && <AlertingQueryEditor />}
+      {type === RuleFormType.threshold && (
+        <Field
+          invalid={!!errors.queries}
+          error={(!!errors.queries && 'Must provide at least one valid query.') || undefined}
+        >
+          <InputControl
+            name="queries"
+            as={GrafanaQueryEditor}
+            control={control}
+            rules={{
+              validate: (queries) => Array.isArray(queries) && !!queries.length,
+            }}
+          />
+        </Field>
+      )}
     </RuleEditorSection>
   );
 };
