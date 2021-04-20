@@ -105,6 +105,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   replaceVariables: true,
   libraryPanel: true,
   getDisplayTitle: true,
+  configRev: true,
 };
 
 const defaults: any = {
