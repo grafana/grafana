@@ -38,8 +38,7 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
   interpolateVariable = (value: string | string[] | number, variable: any) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        const result = this.queryModel.quoteLiteral(value);
-        return result;
+        return this.queryModel.quoteLiteral(value);
       } else {
         return value;
       }
@@ -75,10 +74,7 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
   }
 
   filterQuery(query: MySqlQuery): boolean {
-    if (query.hide) {
-      return false;
-    }
-    return true;
+    return !query.hide;
   }
 
   applyTemplateVariables(target: MySqlQuery, scopedVars: ScopedVars): Record<string, any> {
@@ -142,22 +138,18 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
       format: 'table',
     };
 
-    return super
-      .query({
-        ...optionalOptions, // includes 'range'
-        targets: [interpolatedQuery],
-      } as DataQueryRequest)
-      .toPromise()
-      .then((rsp) => {
-        if (rsp.data?.length) {
-          return frameToMetricFindValue(rsp.data[0]);
-        }
-        return [];
-      });
+    const rsp = await super.query({
+      ...optionalOptions, // includes 'range'
+      targets: [interpolatedQuery],
+    } as DataQueryRequest).toPromise():
+    if (rsp.data?.length) {
+      return frameToMetricFindValue(rsp.data[0]);
+    }
+    return [];
   }
 
-  testDatasource() {
-    return getBackendSrv()
+  async testDatasource() {
+    await getBackendSrv()
       .fetch({
         url: '/api/tsdb/query',
         method: 'POST',
