@@ -283,7 +283,7 @@ export interface TopMetrics extends MetricAggregationWithField {
     orderBy?: string;
     size?: number;
     aggregateBy?: string;
-    seperator?: string;
+    separator?: string;
   };
 }
 

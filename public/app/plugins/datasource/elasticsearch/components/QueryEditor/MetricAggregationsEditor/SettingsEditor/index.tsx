@@ -114,7 +114,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
             />
           </InlineField>
           {metric.settings?.aggregateBy === 'concat' && (
-            <SettingField label="Seperator" metric={metric} settingName="seperator" />
+            <SettingField label="Separator" metric={metric} settingName="separator" />
           )}
         </>
       )}

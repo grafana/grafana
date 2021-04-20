@@ -18,7 +18,7 @@ import {
 import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
-function aggValues(method: string, values: Array<number | null | string>, seperator = ' ') {
+function aggValues(method: string, values: Array<number | null | string>, separator = ' ') {
   const nonNullValues = values.filter(isNumber) as number[];
   switch (method) {
     case 'sum':
@@ -30,7 +30,7 @@ function aggValues(method: string, values: Array<number | null | string>, sepera
     case 'avg':
       return mean(nonNullValues);
     default:
-      return values.join(seperator);
+      return values.join(separator);
   }
 }
 
@@ -139,7 +139,7 @@ export class ElasticResponse {
               return null;
             });
             newSeries.datapoints.push([
-              aggValues(metric.settings?.aggregateBy ?? 'avg', values, metric.settings?.seperator),
+              aggValues(metric.settings?.aggregateBy ?? 'avg', values, metric.settings?.separator),
               bucket.key,
             ]);
           }
@@ -243,7 +243,7 @@ export class ElasticResponse {
             const finalValue = aggValues(
               metric.settings?.aggregateBy ?? 'avg',
               topMetricValues,
-              metric.settings?.seperator
+              metric.settings?.separator
             );
             addMetricValue(values, this.getMetricName(metric.type), finalValue);
             break;

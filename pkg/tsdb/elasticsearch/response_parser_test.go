@@ -334,7 +334,7 @@ func TestResponseParser(t *testing.T) {
                 "order": "desc",
                 "orderBy": "@timestamp",
                 "aggregateBy": "sum",
-                "seperator": " "
+                "separator": " "
               },
               "id": "1"
             }
