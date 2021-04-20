@@ -1,3 +1,4 @@
+import { urlUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
@@ -79,17 +80,21 @@ export async function expireSilence(alertmanagerSourceName: string, silenceID: s
 
 export async function fetchAlerts(
   alertmanagerSourceName: string,
-  matchers?: SilenceMatcher[]
+  matchers?: SilenceMatcher[],
+  silenced = true,
+  active = true,
+  inhibited = true
 ): Promise<AlertmanagerAlert[]> {
   const filters =
-    matchers
-      ?.map(
-        (matcher) =>
-          `filter=${encodeURIComponent(
-            `${escapeQuotes(matcher.name)}=${matcher.isRegex ? '~' : ''}"${escapeQuotes(matcher.value)}"`
-          )}`
-      )
-      .join('&') || '';
+    urlUtil.toUrlParams({ silenced, active, inhibited }) +
+      matchers
+        ?.map(
+          (matcher) =>
+            `filter=${encodeURIComponent(
+              `${escapeQuotes(matcher.name)}=${matcher.isRegex ? '~' : ''}"${escapeQuotes(matcher.value)}"`
+            )}`
+        )
+        .join('&') || '';
 
   const result = await getBackendSrv()
     .fetch<AlertmanagerAlert[]>({

@@ -1,32 +1,35 @@
 import { Field, InfoBox, LoadingPlaceholder } from '@grafana/ui';
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchSilencesAction, fetchAllPromAndRulerRulesAction } from './state/actions';
+import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
+import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { initialAsyncRequestState } from './utils/redux';
 import SilencesTable from './components/silences/SilencesTable';
-import { getRulesDataSources } from './utils/datasource';
 
 const Silences: FC = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
-  const rulesDataSources = useMemo(getRulesDataSources, []);
   const silences = useUnifiedAlertingSelector((state) => state.silences);
-  const promRules = useUnifiedAlertingSelector((state) => state.promRules);
+  const alerts =
+    useUnifiedAlertingSelector((state) => state.amAlerts)[alertManagerSourceName] || initialAsyncRequestState;
 
   useEffect(() => {
-    dispatch(fetchSilencesAction(alertManagerSourceName));
-    dispatch(fetchAllPromAndRulerRulesAction());
+    function fetchAll() {
+      dispatch(fetchSilencesAction(alertManagerSourceName));
+      dispatch(fetchAmAlertsAction(alertManagerSourceName));
+    }
+    fetchAll();
+    const interval = setInterval(() => fetchAll, SILENCES_POLL_INTERVAL_MS);
+    return () => {
+      clearInterval(interval);
+    };
   }, [alertManagerSourceName, dispatch]);
 
   const { result, loading, error } = silences[alertManagerSourceName] || initialAsyncRequestState;
-  const dataSourcesLoading = useMemo(() => rulesDataSources.some((ds) => promRules[ds.name]?.loading), [
-    promRules,
-    rulesDataSources,
-  ]);
 
   return (
     <AlertingPageWrapper pageId="silences">
@@ -40,8 +43,8 @@ const Silences: FC = () => {
           {error.message || 'Unknown error.'}
         </InfoBox>
       )}
-      {(loading || dataSourcesLoading) && <LoadingPlaceholder text="loading silences..." />}
-      {result && !loading && !error && !dataSourcesLoading && <SilencesTable silences={result} />}
+      {loading && <LoadingPlaceholder text="loading silences..." />}
+      {result && !loading && !error && <SilencesTable silences={result} />}
     </AlertingPageWrapper>
   );
 };

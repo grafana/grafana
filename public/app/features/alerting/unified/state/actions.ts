@@ -2,7 +2,7 @@ import { AppEvents } from '@grafana/data';
 import { locationService, config } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { appEvents } from 'app/core/core';
-import { AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerAlert, AlertManagerCortexConfig, Silence } from 'app/plugins/datasource/alertmanager/types';
 import { ThunkResult } from 'app/types';
 import { RuleIdentifier, RuleNamespace, RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -11,7 +11,7 @@ import {
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
-import { fetchAlertManagerConfig, fetchSilences } from '../api/alertmanager';
+import { fetchAlertManagerConfig, fetchAlerts, fetchSilences } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
   deleteRulerRulesGroup,
@@ -311,4 +311,10 @@ export const saveRuleFormAction = createAsyncThunk(
         ]);
       })()
     )
+);
+
+export const fetchAmAlertsAction = createAsyncThunk(
+  'unifiedalerting/fetchAmAlerts',
+  (alertManagerSourceName: string): Promise<AlertmanagerAlert[]> =>
+    withSerializedError(fetchAlerts(alertManagerSourceName, [], true, true, true))
 );
