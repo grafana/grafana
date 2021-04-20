@@ -78,10 +78,6 @@ export class ChangeTracker {
       return true;
     }
 
-    if (!contextSrv.isEditor) {
-      return true;
-    }
-
     if (!current || !current.meta) {
       return true;
     }
@@ -91,8 +87,12 @@ export class ChangeTracker {
       return true;
     }
 
-    const meta = current.meta;
-    return !meta.canSave || meta.fromScript || meta.fromFile;
+    const { canSave, fromScript, fromFile } = current.meta;
+    if (!contextSrv.isEditor && !canSave) {
+      return true;
+    }
+
+    return !canSave || fromScript || fromFile;
   }
 
   // remove stuff that should not count in diff
