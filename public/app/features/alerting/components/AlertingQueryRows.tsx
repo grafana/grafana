@@ -88,7 +88,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
-        <Droppable droppableId="transformations-list" direction="vertical">
+        <Droppable droppableId="alerting-queries" direction="vertical">
           {(provided) => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
