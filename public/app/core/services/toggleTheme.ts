@@ -3,6 +3,7 @@ import { ThemeChangedEvent } from 'app/types/events';
 import appEvents from '../app_events';
 import { config } from '../config';
 import { PreferencesService } from './PreferencesService';
+import { contextSrv } from '../core';
 
 export async function toggleTheme(runtimeOnly: boolean) {
   const currentTheme = config.theme;
@@ -30,6 +31,10 @@ export async function toggleTheme(runtimeOnly: boolean) {
       // As the new css file is loading
       setTimeout(() => link.remove(), 500);
     }
+  }
+
+  if (!contextSrv.isSignedIn) {
+    return;
   }
 
   // Persist new theme
