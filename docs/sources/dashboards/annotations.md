@@ -14,7 +14,7 @@ you can get event description and event tags. The text field can include links t
 
 ## Native annotations
 
-Grafana v4.6+ comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "../http_api/annotations.md" >}}).
+Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "../http_api/annotations.md" >}}).
 
 ## Adding annotations
 
@@ -64,12 +64,4 @@ to show.
 
 ### Annotation query details
 
-The annotation query options are different for each data source.
-
-- [Graphite annotation queries]({{< relref "../datasources/graphite.md#annotations" >}})
-- [Elasticsearch annotation queries]({{< relref "../datasources/elasticsearch.md#annotations" >}})
-- [InfluxDB annotation queries]({{< relref "../datasources/influxdb.md#annotations" >}})
-- [Prometheus annotation queries]({{< relref "../datasources/prometheus.md#annotations" >}})
-- [MySQL annotation queries]({{< relref "../datasources/mysql.md#annotations" >}})
-- [Postgres annotation queries]({{< relref "../datasources/postgres.md#annotations" >}})
-- [Loki annotation queries]({{< relref "../datasources/loki.md#annotations" >}})
+The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source]({{< relref "../datasources/_index.md" >}}) topic.
