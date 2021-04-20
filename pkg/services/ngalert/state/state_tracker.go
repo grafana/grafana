@@ -48,7 +48,6 @@ func NewStateTracker(logger log.Logger) *StateTracker {
 	tracker := &StateTracker{
 		stateCache: cache{
 			cacheMap: make(map[string]AlertState),
-			mu:       sync.Mutex{},
 		},
 		quit: make(chan struct{}),
 		Log:  logger,
@@ -88,6 +87,9 @@ func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.R
 		Annotations:    annotations,
 		ProcessingTime: processingTime,
 	}
+
+	// If the first result we get is alerting, set StartsAt to EvaluatedAt because we
+	// do not have data for determining StartsAt otherwise
 	if result.State == eval.Alerting {
 		newState.StartsAt = result.EvaluatedAt
 	}
@@ -98,6 +100,7 @@ func (st *StateTracker) getOrCreate(alertRule *ngModels.AlertRule, result eval.R
 func (st *StateTracker) set(stateEntry AlertState) {
 	st.stateCache.mu.Lock()
 	defer st.stateCache.mu.Unlock()
+	st.Log.Debug("setting state entry", "state", stateEntry.State)
 	st.stateCache.cacheMap[stateEntry.CacheId] = stateEntry
 }
 
@@ -130,50 +133,120 @@ func (st *StateTracker) ProcessEvalResults(alertRule *ngModels.AlertRule, result
 //Set the current state based on evaluation results
 func (st *StateTracker) setNextState(alertRule *ngModels.AlertRule, result eval.Result, processingTime time.Duration) AlertState {
 	currentState := st.getOrCreate(alertRule, result, processingTime)
-	st.Log.Debug("setting alert state", "uid", alertRule.UID)
-	switch {
-	case currentState.State == result.State:
-		st.Log.Debug("no state transition", "cacheId", currentState.CacheId, "state", currentState.State.String())
-		currentState.LastEvaluationTime = result.EvaluatedAt
-		currentState.ProcessingTime = processingTime
-		currentState.Results = append(currentState.Results, StateEvaluation{
-			EvaluationTime:  result.EvaluatedAt,
-			EvaluationState: result.State,
-		})
-		if currentState.State == eval.Alerting {
-			currentState.EndsAt = result.EvaluatedAt.Add(alertRule.For * time.Second)
-		}
-		st.set(currentState)
-		return currentState
-	case currentState.State == eval.Normal && result.State == eval.Alerting:
-		st.Log.Debug("state transition from normal to alerting", "cacheId", currentState.CacheId)
-		currentState.State = eval.Alerting
-		currentState.LastEvaluationTime = result.EvaluatedAt
-		currentState.StartsAt = result.EvaluatedAt
-		currentState.EndsAt = result.EvaluatedAt.Add(alertRule.For * time.Second)
-		currentState.ProcessingTime = processingTime
-		currentState.Results = append(currentState.Results, StateEvaluation{
-			EvaluationTime:  result.EvaluatedAt,
-			EvaluationState: result.State,
-		})
-		currentState.Annotations["alerting"] = result.EvaluatedAt.String()
-		st.set(currentState)
-		return currentState
-	case currentState.State == eval.Alerting && result.State == eval.Normal:
-		st.Log.Debug("state transition from alerting to normal", "cacheId", currentState.CacheId)
-		currentState.State = eval.Normal
-		currentState.LastEvaluationTime = result.EvaluatedAt
-		currentState.EndsAt = result.EvaluatedAt
-		currentState.ProcessingTime = processingTime
-		currentState.Results = append(currentState.Results, StateEvaluation{
-			EvaluationTime:  result.EvaluatedAt,
-			EvaluationState: result.State,
-		})
-		st.set(currentState)
-		return currentState
-	default:
-		return currentState
+
+	currentState.LastEvaluationTime = result.EvaluatedAt
+	currentState.ProcessingTime = processingTime
+	currentState.Results = append(currentState.Results, StateEvaluation{
+		EvaluationTime:  result.EvaluatedAt,
+		EvaluationState: result.State,
+	})
+	st.Log.Debug("evaluation result received", "evaluatedAt", result.EvaluatedAt, "resultState", result.State)
+
+	switch result.State {
+	case eval.Normal:
+		currentState = resultNormal(currentState, result)
+	case eval.Alerting:
+		currentState = currentState.resultAlerting(alertRule, result)
+	case eval.Error:
+		currentState = currentState.resultError(alertRule, result)
+	case eval.NoData:
+		currentState = currentState.resultNoData(alertRule, result)
+	case eval.Pending: // we do not emit results with this state
 	}
+
+	st.set(currentState)
+	return currentState
+}
+
+func resultNormal(alertState AlertState, result eval.Result) AlertState {
+	newState := alertState
+	if alertState.State != eval.Normal {
+		newState.EndsAt = result.EvaluatedAt
+	}
+	newState.State = eval.Normal
+	return newState
+}
+
+func (a AlertState) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result) AlertState {
+	switch a.State {
+	case eval.Alerting:
+		if !(alertRule.For > 0) {
+			// If there is not For set, we will set EndsAt to be twice the evaluation interval
+			// to avoid flapping with every evaluation
+			a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
+			return a
+		}
+		a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
+	case eval.Pending:
+		if result.EvaluatedAt.Sub(a.StartsAt) > alertRule.For {
+			a.State = eval.Alerting
+			a.StartsAt = result.EvaluatedAt
+			a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
+			a.Annotations["alerting_at"] = result.EvaluatedAt.String()
+		}
+	default:
+		a.StartsAt = result.EvaluatedAt
+		if !(alertRule.For > 0) {
+			a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
+			a.State = eval.Alerting
+			a.Annotations["alerting_at"] = result.EvaluatedAt.String()
+		} else {
+			a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
+			if result.EvaluatedAt.Sub(a.StartsAt) > alertRule.For {
+				a.State = eval.Alerting
+				a.Annotations["alerting_at"] = result.EvaluatedAt.String()
+			} else {
+				a.State = eval.Pending
+			}
+		}
+	}
+	return a
+}
+
+func (a AlertState) resultError(alertRule *ngModels.AlertRule, result eval.Result) AlertState {
+	if a.StartsAt.IsZero() {
+		a.StartsAt = result.EvaluatedAt
+	}
+	if !(alertRule.For > 0) {
+		a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
+	} else {
+		a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
+	}
+	if a.State != eval.Error {
+		a.Annotations["last_error"] = result.EvaluatedAt.String()
+	}
+
+	switch alertRule.ExecErrState {
+	case ngModels.AlertingErrState:
+		a.State = eval.Alerting
+	case ngModels.KeepLastStateErrState:
+	}
+	return a
+}
+
+func (a AlertState) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) AlertState {
+	if a.StartsAt.IsZero() {
+		a.StartsAt = result.EvaluatedAt
+	}
+	if !(alertRule.For > 0) {
+		a.EndsAt = result.EvaluatedAt.Add(time.Duration(alertRule.IntervalSeconds*2) * time.Second)
+	} else {
+		a.EndsAt = result.EvaluatedAt.Add(alertRule.For)
+	}
+	if a.State != eval.NoData {
+		a.Annotations["no_data"] = result.EvaluatedAt.String()
+	}
+
+	switch alertRule.NoDataState {
+	case ngModels.Alerting:
+		a.State = eval.Alerting
+	case ngModels.NoData:
+		a.State = eval.NoData
+	case ngModels.KeepLastState:
+	case ngModels.OK:
+		a.State = eval.Normal
+	}
+	return a
 }
 
 func (st *StateTracker) GetAll() []AlertState {
