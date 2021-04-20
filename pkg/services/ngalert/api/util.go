@@ -217,7 +217,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 
 	frame := evalResults.AsDataFrame()
 
-	return response.JSONStreaming(200, util.DynMap{
+	return response.JSONStreaming(http.StatusOK, util.DynMap{
 		"instances": []*data.Frame{&frame},
 	})
 }

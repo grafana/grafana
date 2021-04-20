@@ -1,12 +1,8 @@
 {
- "basePath": "/api/v1",
- "consumes": [
-  "application/json"
- ],
  "definitions": {
   "Ack": {
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Alert": {
    "properties": {
@@ -38,7 +34,7 @@
    ],
    "title": "Alert has info for an alert.",
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "AlertDiscovery": {
    "properties": {
@@ -55,7 +51,7 @@
    ],
    "title": "AlertDiscovery has info for all active alerts.",
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "AlertGroup": {
    "$ref": "#/definitions/alertGroup"
@@ -79,7 +75,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "AlertNotification": {
    "properties": {
@@ -186,7 +182,7 @@
     "status"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "AlertingRule": {
    "description": "adapted from cortex",
@@ -254,7 +250,7 @@
     "alerts"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "ApiRuleNode": {
    "properties": {
@@ -289,7 +285,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Authorization": {
    "properties": {
@@ -355,7 +351,7 @@
    },
    "title": "Config is the top-level configuration for Alertmanager's config files.",
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "CreateAlertNotificationCommand": {
    "properties": {
@@ -428,7 +424,7 @@
     "status"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Duration": {
    "format": "int64",
@@ -526,6 +522,25 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
+  "EvalQueriesPayload": {
+   "properties": {
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array",
+     "x-go-name": "Data"
+    },
+    "now": {
+     "format": "date-time",
+     "type": "string",
+     "x-go-name": "Now"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "EvalQueriesResponse": {},
   "ExtendedReceiver": {
    "properties": {
     "email_configs": {
@@ -557,15 +572,15 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Failure": {
    "$ref": "#/definitions/ResponseDetails"
   },
-  "GettableAlert": {},
-  "GettableAlerts": {
-   "$ref": "#/definitions/gettableAlerts"
+  "GettableAlert": {
+   "$ref": "#/definitions/gettableAlert"
   },
+  "GettableAlerts": {},
   "GettableApiAlertingConfig": {
    "properties": {
     "global": {
@@ -598,7 +613,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableApiReceiver": {
    "properties": {
@@ -672,7 +687,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableExtendedRuleNode": {
    "properties": {
@@ -710,7 +725,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableGrafanaReceiver": {
    "$ref": "#/definitions/AlertNotification"
@@ -726,7 +741,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableGrafanaRule": {
    "properties": {
@@ -807,7 +822,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableRuleGroupConfig": {
    "properties": {
@@ -827,11 +842,9 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "GettableSilence": {
-   "$ref": "#/definitions/gettableSilence"
-  },
+  "GettableSilence": {},
   "GettableSilences": {},
   "GettableUserConfig": {
    "properties": {
@@ -847,7 +860,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GlobalConfig": {
    "description": "GlobalConfig defines configuration parameters that are valid globally\nunless overwritten.",
@@ -1081,7 +1094,7 @@
     "type": "array"
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "NotifierConfig": {
    "properties": {
@@ -1329,7 +1342,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableApiReceiver": {
    "properties": {
@@ -1403,7 +1416,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableExtendedRuleNode": {
    "properties": {
@@ -1441,7 +1454,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableGrafanaReceiver": {
    "$ref": "#/definitions/CreateAlertNotificationCommand"
@@ -1457,7 +1470,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableGrafanaRule": {
    "properties": {
@@ -1500,7 +1513,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableRuleGroupConfig": {
    "properties": {
@@ -1520,7 +1533,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableSilence": {},
   "PostableUserConfig": {
@@ -1537,7 +1550,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PushoverConfig": {
    "properties": {
@@ -1686,7 +1699,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Route": {
    "properties": {
@@ -1720,6 +1733,13 @@
     },
     "matchers": {
      "$ref": "#/definitions/Matchers"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array",
+     "x-go-name": "MuteTimeIntervals"
     },
     "receiver": {
      "type": "string",
@@ -1783,7 +1803,7 @@
     "type"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "RuleDiscovery": {
    "properties": {
@@ -1799,7 +1819,7 @@
     "groups"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "RuleGroup": {
    "properties": {
@@ -1842,7 +1862,7 @@
     "interval"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "RuleGroupConfigResponse": {
    "properties": {
@@ -1862,7 +1882,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "RuleResponse": {
    "properties": {
@@ -1885,7 +1905,7 @@
     "status"
    ],
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "RuleType": {
    "title": "RuleType models the type of a rule.",
@@ -2157,7 +2177,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "TestRuleResponse": {
    "properties": {
@@ -2169,7 +2189,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "URL": {
    "properties": {
@@ -2221,7 +2241,7 @@
     }
    },
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "Vector": {
    "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
@@ -2375,7 +2395,7 @@
     "alerts": {
      "description": "alerts",
      "items": {
-      "$ref": "#/definitions/gettableAlert"
+      "$ref": "#/definitions/GettableAlert"
      },
      "type": "array",
      "x-go-name": "Alerts"
@@ -2589,7 +2609,7 @@
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/gettableAlert"
+    "$ref": "#/definitions/GettableAlert"
    },
    "type": "array",
    "x-go-name": "GettableAlerts",
@@ -2677,11 +2697,16 @@
    "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
    "title": "override the labels type with a map for generation.",
    "type": "object",
-   "x-go-package": "github.com/grafana/alerting-api/pkg/api"
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "matcher": {
    "description": "Matcher matcher",
    "properties": {
+    "isEqual": {
+     "description": "is equal",
+     "type": "boolean",
+     "x-go-name": "IsEqual"
+    },
     "isRegex": {
      "description": "is regex",
      "type": "boolean",
@@ -2949,10 +2974,7 @@
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
   }
  },
- "info": {
-  "title": "Documentation of the API.",
-  "version": "1.0.0"
- },
+ "info": {},
  "paths": {
   "/api/alertmanager/{Recipient}/api/v2/alerts": {
    "get": {
@@ -3655,6 +3677,38 @@
     ]
    }
   },
+  "/api/v1/eval": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Test rule",
+    "operationId": "RouteEvalQueries",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/EvalQueriesPayload"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "EvalQueriesResponse",
+      "schema": {
+       "$ref": "#/definitions/EvalQueriesResponse"
+      }
+     }
+    },
+    "tags": [
+     "testing"
+    ]
+   }
+  },
   "/api/v1/receiver/test/{Recipient}": {
    "post": {
     "consumes": [
@@ -3744,18 +3798,6 @@
      "testing"
     ]
    }
-  }
- },
- "produces": [
-  "application/json"
- ],
- "schemes": [
-  "http",
-  "https"
- ],
- "securityDefinitions": {
-  "basic": {
-   "type": "basic"
   }
  },
  "swagger": "2.0"
