@@ -27,6 +27,8 @@ import {
 } from 'app/types';
 import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
 import { ExpressionQuery } from '../../expressions/types';
+import { isExpressionQuery } from 'app/features/expressions/guards';
+import { AlertingQuery } from '../types';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async (dispatch) => {
@@ -216,25 +218,34 @@ function handleJSONResponse(frames: DataFrameJSON[]) {
 }
 
 function buildDataQueryModel(queryOptions: QueryGroupOptions, defaultDataSource: DataSourceApi) {
-  return queryOptions.queries.map((query) => {
-    let dataSource: QueryGroupDataSource;
-    const isExpression = query.datasource === ExpressionDatasourceID;
+  return queryOptions.queries.map((query: ExpressionQuery | AlertingQuery) => {
+    if (isExpressionQuery(query)) {
+      const dataSource: QueryGroupDataSource = {
+        name: ExpressionDatasourceID,
+        uid: ExpressionDatasourceID,
+      };
 
-    if (isExpression) {
-      dataSource = { name: ExpressionDatasourceID, uid: ExpressionDatasourceID };
-    } else {
-      const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
-
-      dataSource = {
-        name: dataSourceSetting?.name ?? defaultDataSource.name,
-        uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
+      return {
+        model: {
+          ...query,
+          type: query.type,
+          datasource: dataSource.name,
+          datasourceUid: dataSource.uid,
+        },
+        refId: query.refId,
       };
     }
+
+    const dataSourceSetting = getDataSourceSrv().getInstanceSettings(query.datasource);
+    const dataSource: QueryGroupDataSource = {
+      name: dataSourceSetting?.name ?? defaultDataSource.name,
+      uid: dataSourceSetting?.uid ?? defaultDataSource.uid,
+    };
 
     return {
       model: {
         ...query,
-        type: isExpression ? (query as ExpressionQuery).type : query.queryType,
+        type: query.queryType,
         datasource: dataSource.name,
         datasourceUid: dataSource.uid,
       },

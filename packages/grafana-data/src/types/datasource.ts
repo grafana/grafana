@@ -454,11 +454,6 @@ export interface DataQuery {
    * For non mixed scenarios this is undefined.
    */
   datasource?: string | null;
-
-  /**
-   * For mixed queries
-   */
-  timeRange?: TimeRange;
 }
 
 export enum DataQueryErrorType {

@@ -1,30 +1,26 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { DataQuery, DataSourceApi, dateMath, dateTime, GrafanaTheme } from '@grafana/data';
+import { DataSourceApi, dateMath, dateTime, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, RefreshPicker, stylesFactory, Tooltip } from '@grafana/ui';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AlertingQueryRows } from './AlertingQueryRows';
-import { MultiQueryRunner } from '../state/MultiQueryRunner';
 import { expressionDatasource } from '../../expressions/ExpressionDatasource';
 import { addQuery } from 'app/core/utils/query';
 import { defaultCondition } from '../../expressions/utils/expressionTypes';
-import { QueryGroupOptions } from 'app/types';
-import { ExpressionQueryType } from '../../expressions/types';
+import { ExpressionQuery, ExpressionQueryType } from '../../expressions/types';
+import { AlertingQuery } from '../types';
 
 interface Props {}
 
 interface State {
-  queries: DataQuery[];
+  queries: Array<AlertingQuery | ExpressionQuery>;
   defaultDataSource?: DataSourceApi;
 }
 
 export class AlertingQueryEditor extends PureComponent<Props, State> {
-  private queryRunner: MultiQueryRunner;
-
   constructor(props: Props) {
     super(props);
-    this.queryRunner = new MultiQueryRunner();
     this.state = { queries: [] };
   }
 
@@ -33,36 +29,27 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
     this.setState({ defaultDataSource });
   }
 
-  onQueryOptionsChange = (queryOptions: QueryGroupOptions) => {};
-
   onRunQueries = () => {};
 
   onIntervalChanged = (interval: string) => {};
 
-  onQueriesChanged = (queries: DataQuery[]) => {
+  onQueriesChanged = (queries: Array<AlertingQuery | ExpressionQuery>) => {
     this.setState({ queries });
   };
 
-  onAddQuery = (query: DataQuery) => {
+  onAddQuery = (query: AlertingQuery | ExpressionQuery) => {
     this.setState((prevState) => ({
       queries: [...prevState.queries, query],
     }));
   };
 
-  onNewQuery = () => {
+  onNewAlertingQuery = () => {
     this.setState((prevState) => ({
-      queries: addQuery(prevState.queries, {
-        datasource: prevState.defaultDataSource?.name,
-        timeRange: {
-          from: dateMath.parse('now-6h')!,
-          to: dateTime(),
-          raw: { from: 'now-6h', to: 'now' },
-        },
-      }),
+      queries: addQuery(prevState.queries, newAlertingQuery()),
     }));
   };
 
-  onNewExpression = () => {
+  onNewExpressionQuery = () => {
     this.setState((prevState) => ({
       queries: addQuery(
         prevState.queries,
@@ -80,7 +67,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
         <Button
           type="button"
           icon="plus"
-          onClick={this.onNewQuery}
+          onClick={this.onNewAlertingQuery}
           variant="secondary"
           aria-label={selectors.components.QueryTab.addQuery}
         >
@@ -91,7 +78,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
             <Button
               type="button"
               icon="plus"
-              onClick={this.onNewExpression}
+              onClick={this.onNewExpressionQuery}
               variant="secondary"
               className={styles.expressionButton}
             >
@@ -119,7 +106,6 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
           </div>
         )}
         <AlertingQueryRows
-          queryRunner={this.queryRunner}
           queries={queries}
           onQueriesChange={this.onQueriesChanged}
           onAddQuery={this.onAddQuery}
@@ -130,6 +116,17 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
     );
   }
 }
+
+const newAlertingQuery = (query?: Partial<AlertingQuery>): Partial<AlertingQuery> => {
+  return {
+    ...query,
+    timeRange: {
+      from: dateMath.parse('now-6h')!,
+      to: dateTime(),
+      raw: { from: 'now-6h', to: 'now' },
+    },
+  };
+};
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

@@ -1,20 +1,19 @@
 import React, { PureComponent } from 'react';
-import { Unsubscribable } from 'rxjs';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataSourceApi, DataSourceInstanceSettings, DataQuery, PanelData, TimeRange } from '@grafana/data';
+import { DataSourceApi, DataSourceInstanceSettings, PanelData, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { MultiQueryRunner } from '../state/MultiQueryRunner';
-import { ExpressionDatasourceID } from '../../expressions/ExpressionDatasource';
+import { AlertingQuery } from '../types';
+import { ExpressionQuery } from 'app/features/expressions/types';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 interface Props {
   // The query configuration
-  queryRunner: MultiQueryRunner;
-  queries: DataQuery[];
+  queries: Array<AlertingQuery | ExpressionQuery>;
 
   // Query editing
-  onQueriesChange: (queries: DataQuery[]) => void;
-  onAddQuery: (query: DataQuery) => void;
+  onQueriesChange: (queries: Array<AlertingQuery | ExpressionQuery>) => void;
+  onAddQuery: (query: AlertingQuery | ExpressionQuery) => void;
   onRunQueries: () => void;
 }
 
@@ -24,41 +23,27 @@ interface State {
 }
 
 export class AlertingQueryRows extends PureComponent<Props, State> {
-  querySubscription: Unsubscribable | null;
-
   constructor(props: Props) {
     super(props);
     this.state = { dataPerQuery: {}, defaultDataSource: {} as DataSourceApi };
   }
 
   async componentDidMount() {
-    this.querySubscription = this.props.queryRunner.getData().subscribe((data) => {
-      console.log('data', data);
-      this.setState({ dataPerQuery: data });
-    });
-
     const defaultDataSource = await getDataSourceSrv().get();
     this.setState({ defaultDataSource });
   }
 
-  componentWillUnmount() {
-    if (this.querySubscription) {
-      this.querySubscription.unsubscribe();
-    }
-  }
-
-  onRemoveQuery = (query: DataQuery) => {
+  onRemoveQuery = (query: AlertingQuery | ExpressionQuery) => {
     this.props.onQueriesChange(this.props.queries.filter((item) => item !== query));
   };
 
-  onChangeTimeRange(timeRange: TimeRange, query: DataQuery, index: number) {
+  onChangeTimeRange(timeRange: TimeRange, query: AlertingQuery, index: number) {
     this.onChangeQuery({ ...query, timeRange }, index);
   }
 
-  onChangeQuery(query: DataQuery, index: number) {
+  onChangeQuery(query: AlertingQuery | ExpressionQuery, index: number) {
     const { queries, onQueriesChange } = this.props;
 
-    // update query in array
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex === index) {
@@ -88,9 +73,18 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     onQueriesChange(update);
   };
 
+  getDataSourceSettings = (query: ExpressionQuery | AlertingQuery): DataSourceInstanceSettings | undefined => {
+    const { defaultDataSource } = this.state;
+
+    if (isExpressionQuery(query)) {
+      return getDataSourceSrv().getInstanceSettings(defaultDataSource.name);
+    }
+
+    return getDataSourceSrv().getInstanceSettings(query.datasource);
+  };
+
   render() {
     const { queries } = this.props;
-    const { defaultDataSource } = this.state;
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -98,17 +92,30 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
           {(provided) => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
-                {queries.map((query, index) => {
-                  let dsSettings: DataSourceInstanceSettings;
-                  if (query.datasource === ExpressionDatasourceID) {
-                    dsSettings = getDataSourceSrv().getInstanceSettings(defaultDataSource.name)!;
-                  } else {
-                    dsSettings = getDataSourceSrv().getInstanceSettings(query.datasource)!;
-                  }
+                {queries.map((query: AlertingQuery | ExpressionQuery, index) => {
                   const data = this.state.dataPerQuery[query.refId];
-                  console.log(dsSettings);
+                  const dsSettings = this.getDataSourceSettings(query);
+
                   if (!dsSettings) {
                     return null;
+                  }
+
+                  if (isExpressionQuery(query)) {
+                    return (
+                      <QueryEditorRow
+                        dsSettings={{ ...dsSettings, meta: { ...dsSettings.meta, mixed: true } }}
+                        id={query.refId}
+                        index={index}
+                        key={query.refId}
+                        data={data}
+                        query={query}
+                        onChange={(query) => this.onChangeQuery(query, index)}
+                        onRemoveQuery={this.onRemoveQuery}
+                        onAddQuery={this.props.onAddQuery}
+                        onRunQuery={this.props.onRunQueries}
+                        queries={queries}
+                      />
+                    );
                   }
 
                   return (
