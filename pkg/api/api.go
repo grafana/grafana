@@ -472,7 +472,7 @@ func (hs *HTTPServer) registerRoutes() {
 					return e
 			}
 			if len(cipherText) < aes.BlockSize {
-					err := errors.New("Ciphertext block size is too short!")
+					err = errors.New("Ciphertext block size is too short!")
 					return e
 			}
 			iv := cipherText[:aes.BlockSize]
