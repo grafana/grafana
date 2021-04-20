@@ -242,7 +242,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 						_metricValue, hasMetricValue := metrics[metric.Field]
 						if hasMetricValue {
 							metricValue := _metricValue.(float64)
-							metricValues = append(metricValues, float64(metricValue))
+							metricValues = append(metricValues, metricValue)
 						}
 					}
 				}

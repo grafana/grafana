@@ -282,7 +282,6 @@ type MetricAggregation struct {
 // MarshalJSON returns the JSON encoding of the metric aggregation
 func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 	if a.Type == "top_metrics" {
-
 		root := map[string]interface{}{}
 		root["metrics"] = []map[string]string{{"field": a.Field}}
 
