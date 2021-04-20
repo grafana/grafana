@@ -89,10 +89,10 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 				Name:     "foo",
 				Interval: 0,
 				Rules: []PostableExtendedRuleNode{
-					PostableExtendedRuleNode{
+					{
 						ApiRuleNode: &ApiRuleNode{},
 					},
-					PostableExtendedRuleNode{
+					{
 						ApiRuleNode: &ApiRuleNode{},
 					},
 				},
@@ -104,10 +104,10 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 				Name:     "foo",
 				Interval: 0,
 				Rules: []PostableExtendedRuleNode{
-					PostableExtendedRuleNode{
+					{
 						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
-					PostableExtendedRuleNode{
+					{
 						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
 				},
@@ -119,7 +119,7 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 				Name:     "foo",
 				Interval: 0,
 				Rules: []PostableExtendedRuleNode{
-					PostableExtendedRuleNode{
+					{
 						ApiRuleNode: &ApiRuleNode{
 							For:         dur,
 							Annotations: map[string]string{"foo": "bar"},
@@ -127,7 +127,7 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 						},
 						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
-					PostableExtendedRuleNode{
+					{
 						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
 				},
@@ -139,10 +139,10 @@ func Test_Rule_Group_Marshaling(t *testing.T) {
 				Name:     "foo",
 				Interval: 0,
 				Rules: []PostableExtendedRuleNode{
-					PostableExtendedRuleNode{
+					{
 						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
-					PostableExtendedRuleNode{
+					{
 						ApiRuleNode: &ApiRuleNode{},
 					},
 				},
@@ -179,10 +179,10 @@ func Test_Rule_Group_Type(t *testing.T) {
 				Name:     "foo",
 				Interval: 0,
 				Rules: []PostableExtendedRuleNode{
-					PostableExtendedRuleNode{
+					{
 						ApiRuleNode: &ApiRuleNode{},
 					},
-					PostableExtendedRuleNode{
+					{
 						ApiRuleNode: &ApiRuleNode{},
 					},
 				},
@@ -195,10 +195,10 @@ func Test_Rule_Group_Type(t *testing.T) {
 				Name:     "foo",
 				Interval: 0,
 				Rules: []PostableExtendedRuleNode{
-					PostableExtendedRuleNode{
+					{
 						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
-					PostableExtendedRuleNode{
+					{
 						GrafanaManagedAlert: &PostableGrafanaRule{},
 					},
 				},
