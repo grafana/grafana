@@ -9,7 +9,7 @@ import { UserProfile } from './UserProfile';
 import { UserPermissions } from './UserPermissions';
 import { UserSessions } from './UserSessions';
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
-import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError } from 'app/types';
+import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError, AccessControlAction } from 'app/types';
 import {
   loadAdminUserPage,
   revokeSession,
@@ -27,6 +27,7 @@ import {
 } from './state/actions';
 import { UserOrgs } from './UserOrgs';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { contextSrv } from 'app/core/core';
 
 interface Props extends GrafanaRouteComponentProps<{ id: string }> {
   navModel: NavModel;
@@ -126,6 +127,7 @@ export class UserAdminPage extends PureComponent<Props, State> {
     const { navModel, user, orgs, sessions, ldapSyncInfo, isLoading } = this.props;
     // const { isLoading } = this.state;
     const isLDAPUser = user && user.isExternal && user.authLabels && user.authLabels.includes('LDAP');
+    const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
 
     return (
       <Page navModel={navModel}>
@@ -156,7 +158,7 @@ export class UserAdminPage extends PureComponent<Props, State> {
             />
           )}
 
-          {sessions && (
+          {sessions && canReadSessions && (
             <UserSessions
               sessions={sessions}
               onSessionRevoke={this.onSessionRevoke}
