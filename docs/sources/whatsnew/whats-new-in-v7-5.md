@@ -10,8 +10,6 @@ list = false
 
 # What’s new in Grafana v7.5
 
-> **Note:** This is content for a beta version of Grafana. It will be updated several times before the stable release.
-
 This topic includes the release notes for Grafana v7.5. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Grafana OSS features
@@ -20,13 +18,19 @@ These features are included in the Grafana open source edition.
 
 ### Pie chart panel visualization (beta)
 
-Grafana 7.5 adds a beta version of the next-gen pie chart panel.
+Grafana 7.5 adds a beta version of the next-generation pie chart panel.
+
+![Pie chart panel](/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
+
+For more information, refer to [Pie chart panel]({{< relref "../panels/visualizations/pie-chart-panel.md" >}}).
 
 ### Alerting for Loki
 
 Grafana 7.5 comes with alerting support for Loki. With LogQL you can wrap a log query with the functions that allow for creating metrics out of the logs, such as "rate()". Metric queries can then be used to calculate things such as the rate of error messages. [When combined with log parsers](https://www.youtube.com/watch?v=H9z2V0Ib1q0), they can be used to calculate metrics from a value within the log line, such latency or request size.
 
-With alerting support for Loki, you can now create alerts on Loki metrics queries. Alert rules can be set up easily in the graph panel and you can learn more about the process of creating alerts in the Alert documentation.
+With alerting support for Loki, you can now create alerts on Loki metrics queries.
+
+[Alerting]({{< relref "../alerting/_index.md" >}}) was updated as a result of this change.
 
 ![Loki alerting](/img/docs/alerting/alerting-for-loki-7-5.png)
 
@@ -40,6 +44,8 @@ For new Prometheus data sources, we have changed the default HTTP method to POST
 
 > **Note:** This is not going to affect provisioned data sources or already created data sources.
 
+[Prometheus data source]({{< relref "../datasources/prometheus.md" >}}) was updated as a result of this change.
+
 ### Word highlighting for Elasticsearch
 
 When searching for text in Elasticsearch logs, matching words in the log line returned by the query are now highlighted.
@@ -50,6 +56,8 @@ When searching for text in Elasticsearch logs, matching words in the log line re
 
 In Grafana 7.5, we changed how data for the trace view is sent from the data source. The required data frame has a clear format, which is more aligned with how data is generally represented in Grafana. This makes it easier for third-party developers to implement data sources leveraging the trace view.
 
+For more information, refer to [trace data API docs]({{< relref "../explore/trace-integration.md#data-api" >}}).
+
 ### Paste in SSL certs for Postgres data source
 
 Previously, when users wanted to configure the Postgres data source to connect with SSL certification, they needed to put the certification on the server, and configure the data source with file path.
@@ -58,17 +66,64 @@ Instead of the file path, users can now paste the SSL certification content in t
 
 > **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
 
-### Deprecation notice for some Azure Monitor queries 
+[Postgres data source]({{< relref "../datasources/postgres.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of this change.
 
-In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs. 
+### Deprecation notice for some Azure Monitor queries
+
+In the upcoming Grafana 8.0 release, Application Insights and Insights Analytics query types within the Azure Monitor data source will be deprecated and be made read-only in favor of querying Application Insights from Metrics and Logs.
 
 Grafana 7.5 includes a deprecation notice for these queries, and some documentation to help users prepare for the upcoming changes.
 
-For more information refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights-and-insights-analytics" >}}).
+For more information, refer to [Deprecating Application Insights and Insights Analytics]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights-and-insights-analytics" >}}).
+
+### Cloudwatch data source enhancements
+
+- Support for region eu-south-1 has been added to the CloudWatch data source. New metrics have also been added to the namespaces AWS/Timestream, AWS/RDS (RDS Proxy metrics), AWS/NetworkFirewall, AWS/GroundStation, and AWS/DDoSProtection. Many thanks to [relvira](https://github.com/relvira), [ilyastoli](https://github.com/ilyastoli), and [rubycut](https://github.com/rubycut) for contributing!
+- Added a page limit to the List Metrics API call to improve speed and reduce memory consumption. You can change this limit by entering a higher value in [list_metrics_page_limit]({{< relref "../administration/configuration.md#list-metrics-page-limit" >}}) in the Grafana configuration file.
+- You can now enable or disable authentication providers and assume a role other than default by changing the [allowed_auth_providers]({{< relref "../administration/configuration.md#allowed-auth-providers" >}}) and [assume_role_enabled]({{< relref "../administration/configuration.md#assume-role-enabled" >}}) options in the Grafana configuration file. By default, the allowed authentication providers are _AWS SDK Default_, _Access && secret key_, and _Credentials File_, and role is _Assume role (ARN)_.
+- You can now specify a custom endpoint in the CloudWatch data source configuration page. This field is optional, and if it is left empty, then the default endpoint for CloudWatch is used. By specifying a regional endpoint, you can reduce request latency.
+
+  [AWS Cloudwatch data source]({{< relref "../datasources/cloudwatch.md#endpoint" >}}) was updated as a result of this change.
+
+### Increased API limit for CloudMonitoring Services
+
+In previous versions, when querying metrics for Service Level Objectives (SLOs) in the CloudMonitoring data source, only the first 100 services were listed in the **Service** field list. To overcome this issue, the API limit for listing services has been increased to 1000.
+
+### Tempo as a backend data source
+
+We have converted Tempo to a backend data source and dropped support for tempo-query's (Jaeger) response. To configure it, you can now point to the port that is set in the Tempo configuration file.
+
+```yaml
+server:
+  http_listen_port: 3101
+```
+
+[Azure Monitor data source]({{< relref "../datasources/azuremonitor.md" >}}) was updated as a result of this change.
 
 ## Enterprise features
 
 These features are included in the Grafana Enterprise edition.
+
+### Query caching
+
+When caching is enabled, Grafana temporarily stores the results of data source queries. When you or another user submit the same query again, the results return from the cache instead of from the data source (such as Splunk or ServiceNow).
+
+Query caching advantages:
+- Faster dashboard load times, especially for popular dashboards.
+- Reduced API costs.
+- Reduced likelihood that APIs will rate-limit or throttle requests.
+
+Caching currently works for all backend data sources. You can enable the cache globally or per data source, and you can configure the cache duration per data source. The cache is currently in-memory.
+
+For more information, refer to [Query caching]({{< relref "../enterprise/query-caching.md" >}}).
+
+### Use template variable in reports
+
+If you have created dashboards with template variables, then you can choose which values are selected when rendering a report. This makes it easier to tailor reports to their audience or generate multiple reports from the same dashboard.
+
+Enable this feature in configuration settings using the `templateVariables` flag.
+
+For more information, refer to [Reporting]({{< relref "../enterprise/reporting.md#choose-template-variables" >}}).
 
 ### Active user limits
 
@@ -91,14 +146,6 @@ Each Grafana Enterprise user will be limited to three concurrent user sessions. 
 A new session is created when you sign in to Grafana from a different device or a different browser. Multiple windows and tabs in the same browser are all part of the same session, so having many Grafana tabs open will not cause any issues.
 
 For more information on Grafana Enterprise licensing and restrictions, refer to [License restrictions]({{< relref "../enterprise/license/license-restrictions.md" >}}).
-
-### Query caching
-
-If you enable this feature, then Grafana hashes and cashes data source queries and serves cached versions of hashed queries if applicable.
-
-### Use template variable in reports
-
-If you enable the feature, then you can use template variables in reports.
 
 ## Breaking changes
 

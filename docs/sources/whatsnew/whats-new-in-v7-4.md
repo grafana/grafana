@@ -95,7 +95,7 @@ The following topics were updated as a result of this feature:
 
 _Server-side expressions_ is an experimental feature that allows you to manipulate data returned from backend data source queries. Expressions allow you to manipulate data with math and other operations when the data source is a backend data source or a **--Mixed--** data source.
 
-The main use case is for [multi-dimensional]({{< relref "../getting-started/timeseries-dimensions.md" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
+The main use case is for [multi-dimensional]({{< relref "../basics/timeseries-dimensions.md" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
 
@@ -186,7 +186,7 @@ These features are included in the Grafana Enterprise edition.
 
 ### Licensing changes
 
-When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard and folder permissions]({{< relref "../permissions/dashboard_folder_permissions.md">}}).
+When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard and folder permissions]({{< relref "../permissions/dashboard-folder-permissions.md">}}).
 
 After the number of Viewers or Editors has reached its license limit, only Admins will see a banner in Grafana indicating that the license limit has been reached. Previously, all users saw the banner.
 

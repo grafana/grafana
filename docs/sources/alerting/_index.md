@@ -37,8 +37,10 @@ The actual notifications are configured and shared between multiple alerts.
 ## Alert execution
 
 Alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `Elasticsearch`,
-`Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`.
+of core Grafana. Alert rules can query only backend data sources with alerting enabled. Such data sources are:
+- builtin or developed and maintained by grafana, such as: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
+`Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`
+- any community backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "../developers/plugins/metadata.md" >}}))
 
 ## Metrics from the alert engine
 

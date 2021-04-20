@@ -23,5 +23,4 @@ You can drag and drop panels by clicking and holding the panel title, then dragg
 - Click series name in the legend to hide series.
 - Ctrl/Shift/Meta + click legend name to hide other series.
 - Hover your cursor over a panel and press `e` to open the panel editor.
-- Hover your cursor over a panel and press `v` to open the panel in fullscreen view.
-
+- Hover your cursor over a panel and press `v` to open the panel in full screen view.

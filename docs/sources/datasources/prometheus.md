@@ -23,7 +23,8 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | `Basic Auth`              | Enable basic authentication to the Prometheus data source.                                                                                                                                              |
 | `User`                    | User name for basic authentication.                                                                                                                                                                     |
 | `Password`                | Password for basic authentication.                                                                                                                                                                      |
-| `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                                                                                       |
+| `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.             
+| `HTTP method`             | Use either POST or GET HTTP method to query your data source. POST is the recommended and pre-selected method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network.                                                                                       |
 | `Disable metrics lookup`  | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.           |
 | `Custom Query Parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
 | `Label name`              | Add the name of the field in the label object.                                                                                                                                                          |
@@ -187,6 +188,7 @@ datasources:
     type: prometheus
     # Access mode - proxy (server in the UI) or direct (browser in the UI).
     access: proxy
+    httpMethod: POST
     url: http://localhost:9090
     jsonData:
       exemplarTraceIdDestinations:

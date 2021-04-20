@@ -36,7 +36,7 @@ Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}
 
 ### macOS
 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
 
@@ -266,7 +266,7 @@ Path where the socket should be created when `protocol=socket`. Make sure that G
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
 
 For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
-`http://cdn.myserver.com/grafana-oss/v7.4.0/public/build/app.<hash>.js`.
+`http://cdn.myserver.com/grafana-oss/7.4.0/public/build/app.<hash>.js`.
 
 ### read_timeout
 
@@ -800,6 +800,12 @@ If this option is disabled, the **Assume Role** and the **External Id** field ar
 ### list_metrics_page_limit
 
 Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) option to load metrics for custom namespaces in the CloudWatch data source. By default, the page limit is 500.
+
+<hr />
+
+## [auth.jwt]
+
+Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
 
 <hr />
 
@@ -1526,7 +1532,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`,`ngalert`
+Keys of alpha features to enable, separated by space. Available alpha features are: `ngalert`
 
 ## [date_formats]
 
