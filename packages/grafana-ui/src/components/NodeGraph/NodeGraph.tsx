@@ -110,8 +110,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   // nodes should not have effect on layout it should not be recalculated.
   const layout = useLayout(processed.nodes, processed.edges, config);
 
-  const [focusedNode, setFocusedNode] = useState<NodeDatum>();
-  const { nodes, edges, markers } = useNodeLimit(layout.nodes, layout.edges, nodeCountLimit, config, focusedNode);
+  const [focusedNodeId, setFocusedNodeId] = useState<string>();
+  const { nodes, edges, markers } = useNodeLimit(layout.nodes, layout.edges, nodeCountLimit, config, focusedNodeId);
 
   // We do centering here instead of using centering force to keep this more stable
   const bounds = useMemo(() => graphBounds(nodes), [nodes]);
@@ -121,7 +121,24 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
     bounds
   );
-  const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
+  const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(
+    getLinks,
+    nodesDataFrames[0],
+    edgesDataFrames[0],
+    config.gridLayout
+      ? {
+          nodes: [
+            {
+              label: 'Show in Graph layout',
+              onClick: (node) => {
+                setConfig({ ...config, gridLayout: false });
+                setFocusedNodeId(node.id);
+              },
+            },
+          ],
+        }
+      : undefined
+  );
   const styles = getStyles(theme);
 
   // This cannot be inline func or it will create infinite render cycle.
@@ -163,7 +180,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
             hoveringId={nodeHover}
           />
 
-          <Markers markers={markers || []} onClick={(e, m) => setFocusedNode(m.node)} />
+          <Markers markers={markers || []} onClick={(e, m) => setFocusedNodeId(m.node.id)} />
           {/*We split the labels from edges so that they are shown on top of everything else*/}
           {!config.gridLayout && <EdgeLabels edges={edges} nodeHoveringId={nodeHover} edgeHoveringId={edgeHover} />}
         </g>
@@ -190,7 +207,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
           config={config}
           onConfigChange={(cfg) => {
             if (cfg.gridLayout !== config.gridLayout) {
-              setFocusedNode(undefined);
+              setFocusedNodeId(undefined);
             }
             setConfig(cfg);
           }}

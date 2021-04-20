@@ -13,7 +13,7 @@ export function useNodeLimit(
   edges: EdgeDatumLayout[],
   limit: number,
   config: Config,
-  root?: NodeDatum
+  rootId?: string
 ): { nodes: NodeDatum[]; edges: EdgeDatumLayout[]; markers?: NodesMarker[] } {
   return useMemo(() => {
     if (nodes.length <= limit) {
@@ -21,14 +21,14 @@ export function useNodeLimit(
     }
 
     if (config.gridLayout) {
-      return limitGridLayout(nodes, edges, limit, root);
+      return limitGridLayout(nodes, edges, limit, rootId);
     }
 
-    return limitGraphLayout(nodes, edges, limit, root);
-  }, [edges, limit, nodes, root, config.gridLayout]);
+    return limitGraphLayout(nodes, edges, limit, rootId);
+  }, [edges, limit, nodes, rootId, config.gridLayout]);
 }
 
-function limitGraphLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: number, root?: NodeDatum) {
+function limitGraphLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: number, rootId?: string) {
   const edgesMap = edges.reduce<{ [id: string]: EdgeDatumLayout[] }>((acc, e) => {
     return {
       ...acc,
@@ -40,8 +40,8 @@ function limitGraphLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: n
   const nodesMap = nodes.reduce((acc, node) => ({ ...acc, [node.id]: node }), {} as Record<string, NodeDatum>);
 
   let roots;
-  if (root) {
-    roots = [root];
+  if (rootId) {
+    roots = [nodesMap[rootId]];
   } else {
     roots = nodes.filter((n) => n.incoming === 0);
     // TODO: same code as layout
@@ -74,13 +74,13 @@ function limitGraphLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: n
   };
 }
 
-function limitGridLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: number, root?: NodeDatum) {
+function limitGridLayout(nodes: NodeDatum[], edges: EdgeDatumLayout[], limit: number, rootId?: string) {
   let start = 0;
   let stop = limit;
   let markers: NodesMarker[] = [];
 
-  if (root) {
-    const index = nodes.indexOf(root);
+  if (rootId) {
+    const index = nodes.findIndex((node) => node.id === rootId);
     const prevLimit = Math.floor(limit / 2);
     let afterLimit = prevLimit;
     start = index - prevLimit;

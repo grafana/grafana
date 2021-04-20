@@ -16,7 +16,11 @@ import { MenuItem } from '../Menu/MenuItem';
 export function useContextMenu(
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[],
   nodes: DataFrame,
-  edges: DataFrame
+  edges: DataFrame,
+  extraItems?: {
+    nodes?: LinkData<NodeDatum>[];
+    edges?: LinkData<EdgeDatum>[];
+  }
 ): {
   onEdgeOpen: (event: MouseEvent<SVGElement>, edge: EdgeDatum) => void;
   onNodeOpen: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
@@ -28,60 +32,32 @@ export function useContextMenu(
   const [openedEdge, setOpenedEdge] = useState<{ edge: EdgeDatum; event: MouseEvent } | undefined>(undefined);
   const onEdgeOpen = useCallback((event, edge) => setOpenedEdge({ edge, event }), []);
 
-  let MenuComponent = null;
+  if (!(openedNode || openedEdge)) {
+    return { onEdgeOpen, onNodeOpen, MenuComponent: null };
+  }
 
-  if (openedNode) {
-    const items = getItems(getLinks(nodes, openedNode.node.dataFrameRowIndex));
-    const renderMenuGroupItems = () => {
-      return items?.map((group, index) => (
-        <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
-          {(group.items || []).map((item) => (
-            <MenuItem
-              key={`${item.label}`}
-              url={item.url}
-              label={item.label}
-              ariaLabel={item.label}
-              onClick={item.onClick}
-            />
-          ))}
-        </MenuGroup>
-      ));
-    };
-    if (items.length) {
+  const renderer = openedNode
+    ? getItemsRenderer(getLinks(nodes, openedNode.node.dataFrameRowIndex), extraItems?.nodes, openedNode.node)
+    : getItemsRenderer(getLinks(edges, openedEdge!.edge.dataFrameRowIndex), extraItems?.edges, openedEdge!.edge)
+
+  let MenuComponent = null;
+  if (renderer) {
+    if (openedNode) {
       MenuComponent = (
         <ContextMenu
           renderHeader={() => <NodeHeader node={openedNode.node} nodes={nodes} />}
-          renderMenuItems={renderMenuGroupItems}
+          renderMenuItems={renderer}
           onClose={() => setOpenedNode(undefined)}
           x={openedNode.event.pageX}
           y={openedNode.event.pageY}
         />
       );
     }
-  }
-
-  if (openedEdge) {
-    const items = getItems(getLinks(edges, openedEdge.edge.dataFrameRowIndex));
-    const renderMenuGroupItems = () => {
-      return items?.map((group, index) => (
-        <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
-          {(group.items || []).map((item) => (
-            <MenuItem
-              key={item.label}
-              url={item.url}
-              label={item.label}
-              ariaLabel={item.label}
-              onClick={item.onClick}
-            />
-          ))}
-        </MenuGroup>
-      ));
-    };
-    if (items.length) {
+    if (openedEdge) {
       MenuComponent = (
         <ContextMenu
           renderHeader={() => <EdgeHeader edge={openedEdge.edge} edges={edges} />}
-          renderMenuItems={renderMenuGroupItems}
+          renderMenuItems={renderer}
           onClose={() => setOpenedEdge(undefined)}
           x={openedEdge.event.pageX}
           y={openedEdge.event.pageY}
@@ -92,6 +68,46 @@ export function useContextMenu(
 
   return { onEdgeOpen, onNodeOpen, MenuComponent };
 }
+
+function getItemsRenderer<T extends NodeDatum | EdgeDatum>(links: LinkModel[], extraItems: LinkData<T>[] | undefined, item: T) {
+  if (!(links.length || extraItems?.length)) {
+    return undefined;
+  }
+  const items = getItems(links);
+  return () => {
+    let groups = items?.map((group, index) => (
+      <MenuGroup key={`${group.label}${index}`} label={group.label} ariaLabel={group.label}>
+        {(group.items || []).map(mapMenuItem(item))}
+      </MenuGroup>
+    ));
+
+    if (extraItems) {
+      groups = [...extraItems.map(mapMenuItem(item)), ...groups];
+    }
+    return groups;
+  };
+}
+
+function mapMenuItem<T extends NodeDatum | EdgeDatum>(item: T) {
+  return (link: LinkData<T>) => {
+    return (
+      <MenuItem
+        key={link.label}
+        url={link.url}
+        label={link.label}
+        ariaLabel={link.ariaLabel || link.label}
+        onClick={link.onClick ? (() => link.onClick?.(item)) : undefined}
+      />
+    );
+  };
+}
+
+type LinkData<T extends NodeDatum | EdgeDatum> = {
+  label: string;
+  ariaLabel?: string;
+  url?: string;
+  onClick?: (item: T) => void;
+};
 
 function getItems(links: LinkModel[]) {
   const defaultGroup = 'Open in Explore';
