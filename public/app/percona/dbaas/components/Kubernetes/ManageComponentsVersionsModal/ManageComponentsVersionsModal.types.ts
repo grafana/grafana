@@ -24,7 +24,7 @@ export interface PossibleComponentOptions {
 
 export enum SupportedComponents {
   pxc = 'pxc',
-  proxysql = 'proxysql',
+  haproxy = 'haproxy',
   mongod = 'mongod',
 }
 

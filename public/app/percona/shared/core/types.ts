@@ -4,4 +4,5 @@ export enum Databases {
   mysql = 'mysql',
   mariadb = 'mariadb',
   proxysql = 'proxysql',
+  haproxy = 'haproxy',
 }
