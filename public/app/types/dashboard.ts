@@ -36,6 +36,7 @@ export interface DashboardMeta {
   fromScript?: boolean;
   fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
+  slug?: string;
 }
 
 export interface DashboardDataDTO {

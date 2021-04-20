@@ -19,6 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
+
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
+	"strings"
 )
 
 const (
@@ -49,6 +54,33 @@ func dashboardGuardianResponse(err error) response.Response {
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	slug := c.Params(":slug")
 	uid := c.Params(":uid")
+	//Apply Patch
+	validSharedUid := false
+	if c.IsSignedIn == false && len(c.QueryStrings("shareduid")) > 0 {
+		text := strings.Join(c.QueryStrings("shareduid"), "")
+		key := []byte("p0w3r3dByGr4f4n4")
+		cipherText, err := base64.URLEncoding.DecodeString(text)
+		if err != nil {
+				return response.Error(403, "Access denied to this dashboard, hash error 00x1", nil)
+		}
+		block, err := aes.NewCipher(key)
+		if err != nil {
+				return response.Error(403, "Access denied to this dashboard, hash error 00x2", nil)
+		}
+		if len(cipherText) < aes.BlockSize {
+				return response.Error(403, "Access denied to this dashboard. Hash error 00x3", nil)
+		}
+		iv := cipherText[:aes.BlockSize]
+			cipherText = cipherText[aes.BlockSize:]
+			stream := cipher.NewCFBDecrypter(block, iv)
+			stream.XORKeyStream(cipherText, cipherText)
+			decodedmess := string(cipherText)
+			s := strings.Split(decodedmess, ",")
+			validSharedUid = s[0] == c.Params(":uid")
+			if validSharedUid == false {
+					return response.Error(403, "Access denied to this dashboard, invalid shareduid.", nil)
+			}
+	}
 	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
 		return rsp
@@ -70,7 +102,14 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 
 	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canView, err := guardian.CanView(); err != nil || !canView {
-		return dashboardGuardianResponse(err)
+		//Apply Patch
+		canView, err := guardian.CanView()
+		if validSharedUid == true {
+				canView = true
+		}
+		if err != nil || !canView {
+			return dashboardGuardianResponse(err)
+		} 
 	}
 
 	canEdit, _ := guardian.CanEdit()
@@ -372,11 +411,9 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	homePage := hs.Cfg.HomePage
-
 	if err := hs.Bus.Dispatch(&prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
 	}
-
 	if prefsQuery.Result.HomeDashboardId == 0 && len(homePage) > 0 {
 		homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
 		return response.JSON(200, &homePageRedirect)

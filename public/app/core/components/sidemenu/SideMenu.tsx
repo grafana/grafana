@@ -14,12 +14,21 @@ export const SideMenu: FC = React.memo(() => {
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const kiosk = query.get('kiosk') as KioskMode;
+  const isShared = window.location.search
+    .slice(1)
+    .split('&')
+    .map((x) => x.split('='))
+    .some(([key, value]) => key === 'shareduid');
 
   const toggleSideMenuSmallBreakpoint = useCallback(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
   }, []);
 
   if (kiosk !== null) {
+    return null;
+  }
+
+  if (isShared) {
     return null;
   }
 
@@ -40,5 +49,4 @@ export const SideMenu: FC = React.memo(() => {
     </div>
   );
 });
-
 SideMenu.displayName = 'SideMenu';

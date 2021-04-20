@@ -3,9 +3,14 @@ package api
 
 import (
 	"time"
-
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
+	"errors"
+	"io"
+	"strings"
 	"github.com/go-macaron/binding"
-
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
@@ -405,13 +410,10 @@ func (hs *HTTPServer) registerRoutes() {
 		})
 
 		apiRoute.Post("/frontend-metrics", bind(metrics.PostFrontendMetricsCommand{}), routing.Wrap(hs.PostFrontendMetrics))
-
 		if hs.Live.IsEnabled() {
 			apiRoute.Post("/live/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
-
 			// POST influx line protocol
 			apiRoute.Post("/live/push/:streamId", hs.LivePushGateway.Handle)
-
 			// List available streams and fields
 			apiRoute.Get("/live/list", routing.Wrap(hs.Live.HandleListHTTP))
 		}
@@ -425,7 +427,6 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/settings", routing.Wrap(AdminGetSettings))
 		adminRoute.Get("/stats", routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
-
 		adminRoute.Post("/provisioning/dashboards/reload", routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", routing.Wrap(hs.AdminProvisioningReloadPlugins))
 		adminRoute.Post("/provisioning/datasources/reload", routing.Wrap(hs.AdminProvisioningReloadDatasources))
@@ -435,6 +436,49 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/ldap/:username", routing.Wrap(hs.GetUserFromLDAP))
 		adminRoute.Get("/ldap/status", routing.Wrap(hs.GetLDAPStatus))
 	}, reqGrafanaAdmin)
+
+	//Patch
+	r.Get("/encrypt/:uid/:slug", func(c *models.ReqContext) string {
+		text := c.Params(":uid") + "," + c.Params(":slug")
+		//use any key
+		key := []byte("p0w3r3dByGr4f4n4")
+		plainText := []byte(text)
+		block, err := aes.NewCipher(key)
+		if err != nil {
+				return "error"
+		}
+		cipherText := make([]byte, aes.BlockSize+len(plainText))
+		iv := cipherText[:aes.BlockSize]
+		if _, err = io.ReadFull(rand.Reader, iv); err != nil {
+				return "error"
+		}
+		stream := cipher.NewCFBEncrypter(block, iv)
+		stream.XORKeyStream(cipherText[aes.BlockSize:], plainText)
+		encmess := base64.URLEncoding.EncodeToString(cipherText)
+		return encmess
+	})
+	r.Get("/decrypt", func(c *models.ReqContext) string {
+			text := strings.Join(c.QueryStrings("hash"), "")
+			key := []byte("p0w3r3dByGr4f4n4")
+			cipherText, err := base64.URLEncoding.DecodeString(text)
+			if err != nil {
+					return "error"
+			}
+			block, err := aes.NewCipher(key)
+			if err != nil {
+					return "error"
+			}
+			if len(cipherText) < aes.BlockSize {
+					err = errors.New("Ciphertext block size is too short!")
+					return "error"
+			}
+			iv := cipherText[:aes.BlockSize]
+			cipherText = cipherText[aes.BlockSize:]
+			stream := cipher.NewCFBDecrypter(block, iv)
+			stream.XORKeyStream(cipherText, cipherText)
+			decodedmess := string(cipherText)
+			return decodedmess
+	})
 
 	// Administering users
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
@@ -447,7 +491,6 @@ func (hs *HTTPServer) registerRoutes() {
 		adminUserRoute.Post("/:id/enable", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersEnable, userIDScope), routing.Wrap(AdminEnableUser))
 		adminUserRoute.Get("/:id/quotas", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersQuotasList, userIDScope), routing.Wrap(GetUserQuotas))
 		adminUserRoute.Put("/:id/quotas/:target", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersQuotasUpdate, userIDScope), bind(models.UpdateUserQuotaCmd{}), routing.Wrap(UpdateUserQuota))
-
 		adminUserRoute.Post("/:id/logout", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersLogout, userIDScope), routing.Wrap(hs.AdminLogoutUser))
 		adminUserRoute.Get("/:id/auth-tokens", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersAuthTokenList, userIDScope), routing.Wrap(hs.AdminGetUserAuthTokens))
 		adminUserRoute.Post("/:id/revoke-auth-token", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersAuthTokenUpdate, userIDScope), bind(models.RevokeAuthTokenCmd{}), routing.Wrap(hs.AdminRevokeUserAuthToken))
@@ -472,6 +515,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Frontend logs
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.PluginManager, frontendlogging.ReadSourceMapFromFS)
-	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now),
-		bind(frontendlogging.FrontendSentryEvent{}), routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
+	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now), 
+	bind(frontendlogging.FrontendSentryEvent{}), routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
+	
 }

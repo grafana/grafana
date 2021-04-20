@@ -224,7 +224,6 @@ export class BackendSrv implements BackendService {
                       },
                     })
                   );
-
                   return of({});
                 }
 
@@ -408,7 +407,10 @@ export class BackendSrv implements BackendService {
   }
 
   getDashboardByUid(uid: string) {
-    return this.get(`/api/dashboards/uid/${uid}`);
+    const shareduid = location.search.match('shareduid')
+      ? `?shareduid=${new URL(location.href).searchParams.get('shareduid')}`
+      : '';
+    return this.get(`/api/dashboards/uid/${uid}${shareduid}`);
   }
 
   getFolderByUid(uid: string) {
