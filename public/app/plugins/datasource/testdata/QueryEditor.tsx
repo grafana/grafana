@@ -4,8 +4,8 @@ import { useAsync } from 'react-use';
 
 // Components
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { Input, InlineFieldRow, InlineField, Select, TextArea, InlineSwitch } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { Input, InlineFieldRow, InlineField, Select, TextArea, InlineSwitch, Switch } from '@grafana/ui';
+import { FieldConfig, QueryEditorProps, SelectableValue, standardFieldConfigEditorRegistry } from '@grafana/data';
 import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './components';
 
 // Types
@@ -121,9 +121,23 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, stringInput: value });
   };
 
+  const onDsConfigEnable = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.currentTarget.checked) {
+      onUpdate({ ...query, dsFieldConfig: { ...query.dsFieldConfig } });
+      return;
+    }
+    onUpdate({ ...query, dsFieldConfig: undefined });
+  };
+
   const onStreamClientChange = onFieldChange('stream');
   const onPulseWaveChange = onFieldChange('pulseWave');
   const onCSVWaveChange = onFieldChange('csvWave');
+
+  const onDsFieldConfigChange = (field: keyof FieldConfig) => (value: unknown) => {
+    const config = { ...query.dsFieldConfig } || {};
+    config[field] = value;
+    onUpdate({ ...query, dsFieldConfig: config });
+  };
 
   const options = useMemo(
     () =>
@@ -137,6 +151,48 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   if (loading) {
     return null;
   }
+
+  const disableFieldConfigSetting =
+    scenarioId === 'annotations' ||
+    scenarioId === 'node_graph' ||
+    scenarioId === 'grafana_api' ||
+    scenarioId === 'live' ||
+    scenarioId === 'logs' ||
+    scenarioId === 'arrow' ||
+    scenarioId === 'no_data_points' ||
+    scenarioId === 'streaming_client';
+
+  const renderFieldConfigSettings = () => {
+    return (
+      <>
+        <InlineFieldRow>
+          <InlineField label="Use data source field config">
+            <InlineSwitch onChange={onDsConfigEnable} name="dsFieldConfig" value={!!query.dsFieldConfig} />
+          </InlineField>
+        </InlineFieldRow>
+        {query.dsFieldConfig && (
+          <>
+            {standardFieldConfigEditorRegistry.list().map((item) => {
+              if (item.id === 'links' || item.id === 'mappings' || item.id === 'color' || item.id === 'thresholds') {
+                return null;
+              }
+
+              return (
+                <InlineField label={item.name} key={item.id}>
+                  {React.createElement(item.editor, {
+                    value: undefined,
+                    onChange: onDsFieldConfigChange(item.id as any),
+                    item,
+                    context: {} as any,
+                  })}
+                </InlineField>
+              );
+            })}
+          </>
+        )}
+      </>
+    );
+  };
 
   return (
     <>
@@ -252,6 +308,8 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'node_graph' && (
         <NodeGraphEditor onChange={(val: NodesQuery) => onChange({ ...query, nodes: val })} query={query} />
       )}
+
+      {!disableFieldConfigSetting && renderFieldConfigSettings()}
     </>
   );
 };
