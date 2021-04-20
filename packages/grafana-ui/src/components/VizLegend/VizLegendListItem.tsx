@@ -1,29 +1,24 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { css, cx } from '@emotion/css';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem, SeriesColorChangeHandler } from './types';
 import { VizLegendStatsList } from './VizLegendStatsList';
 import { useStyles } from '../../themes';
-import { DataHoverClearEvent, DataHoverEvent, EventBus, GrafanaTheme } from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, EventBus, EventBusWithSourceContext, GrafanaTheme } from '@grafana/data';
 
 export interface Props {
   item: VizLegendItem;
   className?: string;
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  eventBus?: EventBus;
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
 /**
  * @internal
  */
-export const VizLegendListItem: React.FunctionComponent<Props> = ({
-  item,
-  onSeriesColorChange,
-  onLabelClick,
-  eventBus,
-}) => {
+export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesColorChange, onLabelClick }) => {
   const styles = useStyles(getStyles);
+  const eventBus = useContext(EventBusWithSourceContext);
 
   return (
     <div className={styles.itemWrapper}>

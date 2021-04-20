@@ -3,6 +3,7 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   DisplayValue,
+  EventBusWithSourceContext,
   FALLBACK_COLOR,
   FieldDisplay,
   formattedValueToString,
@@ -52,11 +53,11 @@ export const PieChart: FC<PieChartProps> = ({
   onSeriesColorChange,
   width,
   height,
-  eventBus,
   ...restProps
 }) => {
   const theme = useTheme();
   const [highlightedTitle, setHighlightedTitle] = useState<string>();
+  const eventBus = React.useContext(EventBusWithSourceContext);
 
   if (eventBus) {
     const setHighlightedSlice = (event: DataHoverEvent) => {
@@ -116,7 +117,6 @@ export const PieChart: FC<PieChartProps> = ({
     return (
       <VizLegend
         items={legendItems}
-        eventBus={eventBus}
         onSeriesColorChange={onSeriesColorChange}
         placement={legendOptions.placement}
         displayMode={legendOptions.displayMode}

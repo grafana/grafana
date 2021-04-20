@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { PieChart } from '@grafana/ui';
 import { PieChartOptions } from './types';
-import { EventBusWithSource, PanelProps } from '@grafana/data';
+import { EventBusWithSourceContext, EventBusWithSource, PanelProps } from '@grafana/data';
 import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
 
 interface Props extends PanelProps<PieChartOptions> {}
@@ -28,19 +28,20 @@ export const PieChartPanel: React.FC<Props> = ({
   const [eventBusWithSource] = useState<EventBusWithSource>(new EventBusWithSource(eventBus, id.toString(10)));
 
   return (
-    <PieChart
-      width={width}
-      height={height}
-      timeZone={timeZone}
-      eventBus={eventBusWithSource}
-      fieldConfig={fieldConfig}
-      reduceOptions={options.reduceOptions}
-      replaceVariables={replaceVariables}
-      data={data.series}
-      onSeriesColorChange={onSeriesColorChange}
-      pieType={options.pieType}
-      displayLabels={options.displayLabels}
-      legendOptions={options.legend}
-    />
+    <EventBusWithSourceContext.Provider value={eventBusWithSource}>
+      <PieChart
+        width={width}
+        height={height}
+        timeZone={timeZone}
+        fieldConfig={fieldConfig}
+        reduceOptions={options.reduceOptions}
+        replaceVariables={replaceVariables}
+        data={data.series}
+        onSeriesColorChange={onSeriesColorChange}
+        pieType={options.pieType}
+        displayLabels={options.displayLabels}
+        legendOptions={options.legend}
+      />
+    </EventBusWithSourceContext.Provider>
   );
 };

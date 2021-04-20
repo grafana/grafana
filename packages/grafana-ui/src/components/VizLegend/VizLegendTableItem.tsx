@@ -1,17 +1,23 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { css, cx } from '@emotion/css';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem, SeriesColorChangeHandler } from './types';
 import { useStyles } from '../../themes/ThemeContext';
 import { styleMixins } from '../../themes';
-import { GrafanaTheme, formattedValueToString, EventBus, DataHoverClearEvent, DataHoverEvent } from '@grafana/data';
+import {
+  GrafanaTheme,
+  formattedValueToString,
+  EventBus,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  EventBusWithSourceContext,
+} from '@grafana/data';
 
 export interface Props {
   key?: React.Key;
   item: VizLegendItem;
   className?: string;
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  eventBus?: EventBus;
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
@@ -22,10 +28,10 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
   item,
   onSeriesColorChange,
   onLabelClick,
-  eventBus,
   className,
 }) => {
   const styles = useStyles(getStyles);
+  const eventBus = useContext(EventBusWithSourceContext);
 
   return (
     <tr className={cx(styles.row, className)}>

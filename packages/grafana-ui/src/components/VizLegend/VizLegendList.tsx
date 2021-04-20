@@ -19,19 +19,13 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
   onLabelClick,
   placement,
   className,
-  eventBus,
 }) => {
   const styles = useStyles(getStyles);
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
     itemRenderer = (item) => (
-      <VizLegendListItem
-        item={item}
-        eventBus={eventBus}
-        onLabelClick={onLabelClick}
-        onSeriesColorChange={onSeriesColorChange}
-      />
+      <VizLegendListItem item={item} onLabelClick={onLabelClick} onSeriesColorChange={onSeriesColorChange} />
     );
   }
 
