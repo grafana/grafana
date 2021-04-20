@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
 import { SeriesIcon } from './SeriesIcon';
 
@@ -8,21 +8,12 @@ interface Props {
   onColorChange: (color: string) => void;
 }
 
-/**
- * @internal
- */
-export class VizLegendSeriesIcon extends Component<Props> {
-  shouldComponentUpdate(nextProps: Props) {
-    return this.props.color !== nextProps.color || this.props.disabled !== nextProps.disabled;
-  }
-
-  render() {
-    const { disabled, color } = this.props;
-    if (disabled) {
-      return <SeriesIcon color={color} />;
-    }
-    return (
-      <SeriesColorPicker color={color} onChange={this.props.onColorChange} enableNamedColors>
+export const VizLegendSeriesIcon = React.memo<Props>(
+  ({ disabled, color, onColorChange }) => {
+    return disabled ? (
+      <SeriesIcon color={color} />
+    ) : (
+      <SeriesColorPicker color={color} onChange={onColorChange} enableNamedColors>
         {({ ref, showColorPicker, hideColorPicker }) => (
           <SeriesIcon
             color={color}
@@ -34,5 +25,12 @@ export class VizLegendSeriesIcon extends Component<Props> {
         )}
       </SeriesColorPicker>
     );
+  },
+  // areEqual -- return true if they are the same.
+  // onColorChange updates frequently, so ignore that
+  (prevProps, nextProps) => {
+    return prevProps.color === nextProps.color && prevProps.disabled === nextProps.disabled;
   }
-}
+);
+
+VizLegendSeriesIcon.displayName = 'VizLegendSeriesIcon';
