@@ -6,7 +6,8 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchSilencesAction } from './state/actions';
+import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
+import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { initialAsyncRequestState } from './utils/redux';
 import SilencesTable from './components/silences/SilencesTable';
 
@@ -15,18 +16,25 @@ const Silences: FC = () => {
   const dispatch = useDispatch();
   const silences = useUnifiedAlertingSelector((state) => state.silences);
 
-  useEffect(() => {
-    if (alertManagerSourceName) {
-      dispatch(fetchSilencesAction(alertManagerSourceName));
-    }
-  }, [alertManagerSourceName, dispatch]);
-
-  const { result, loading, error } =
-    (alertManagerSourceName && silences[alertManagerSourceName]) || initialAsyncRequestState;
-
   if (!alertManagerSourceName) {
     return <Redirect to="/alerting/silences" />;
   }
+  const alerts =
+    useUnifiedAlertingSelector((state) => state.amAlerts)[alertManagerSourceName] || initialAsyncRequestState;
+
+  useEffect(() => {
+    function fetchAll() {
+      dispatch(fetchSilencesAction(alertManagerSourceName));
+      dispatch(fetchAmAlertsAction(alertManagerSourceName));
+    }
+    fetchAll();
+    const interval = setInterval(() => fetchAll, SILENCES_POLL_INTERVAL_MS);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [alertManagerSourceName, dispatch]);
+
+  const { result, loading, error } = silences[alertManagerSourceName] || initialAsyncRequestState;
 
   return (
     <AlertingPageWrapper pageId="silences">
