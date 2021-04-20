@@ -36,7 +36,7 @@ export interface PanelData {
   structureRev?: number;
 
   /** Contains the current revision of query results(an incremental counter) */
-  resultRev: number;
+  resultRev?: number;
 
   /** A list of annotation items */
   annotations?: DataFrame[];

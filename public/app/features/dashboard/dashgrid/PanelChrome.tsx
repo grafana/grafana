@@ -64,7 +64,6 @@ export class PanelChrome extends Component<Props, State> {
         state: LoadingState.NotStarted,
         series: [],
         timeRange: getDefaultTimeRange(),
-        revision: -1,
       },
     };
   }

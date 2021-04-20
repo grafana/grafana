@@ -23,6 +23,7 @@ export class QueryRunner implements QueryRunnerSrv {
   private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
+  private lastResultRev?: number;
 
   constructor() {
     this.subject = new ReplaySubject(1);
@@ -117,7 +118,9 @@ export class QueryRunner implements QueryRunnerSrv {
                 }
               }
               results.structureRev = structureRev;
+              results.resultRev = this.lastResultRev;
               this.lastResult = results;
+              this.lastResultRev = (this.lastResultRev || 0) + 1;
 
               // Store preprocessed query results for applying overrides later on in the pipeline
               this.subject.next(this.lastResult);
