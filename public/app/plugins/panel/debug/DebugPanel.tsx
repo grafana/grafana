@@ -1,13 +1,5 @@
 import React, { Component } from 'react';
-import {
-  compareArrayValues,
-  compareDataFrameStructures,
-  fieldReducers,
-  getFieldDisplayName,
-  getFrameDisplayName,
-  PanelProps,
-  ReducerID,
-} from '@grafana/data';
+import { fieldReducers, getFieldDisplayName, getFrameDisplayName, PanelProps, ReducerID } from '@grafana/data';
 
 import { DebugPanelOptions, UpdateCounters, UpdateConfig } from './types';
 import { IconButton } from '@grafana/ui';
@@ -30,13 +22,8 @@ export class DebugPanel extends Component<Props> {
       this.counters.dataChanged++;
 
       if (options.counters?.schemaChanged) {
-        const oldSeries = prevProps.data?.series;
-        const series = data.series;
-        if (series && oldSeries) {
-          const sameStructure = compareArrayValues(series, oldSeries, compareDataFrameStructures);
-          if (!sameStructure) {
-            this.counters.schemaChanged++;
-          }
+        if (data.structureRev !== prevProps.data.structureRev) {
+          this.counters.schemaChanged++;
         }
       }
     }
@@ -49,7 +36,7 @@ export class DebugPanel extends Component<Props> {
       dataChanged: 0,
       schemaChanged: 0,
     };
-    this.forceUpdate();
+    this.setState(this.state); // force update
   };
 
   render() {
