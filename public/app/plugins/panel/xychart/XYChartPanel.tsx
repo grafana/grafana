@@ -54,6 +54,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
     <GraphNG
       data={frames}
       structureRev={data.structureRev}
+      resultRev={data.resultRev}
       fields={dims.fields}
       timeRange={timeRange}
       timeZone={timeZone}

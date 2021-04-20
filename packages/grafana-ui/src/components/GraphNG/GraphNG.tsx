@@ -1,14 +1,6 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
-import {
-  DataFrame,
-  DataFrameFieldIndex,
-  FieldMatcherID,
-  fieldMatchers,
-  FieldType,
-  TimeRange,
-  TimeZone,
-} from '@grafana/data';
+import { DataFrame, DataFrameFieldIndex, FieldMatcherID, fieldMatchers, TimeRange, TimeZone } from '@grafana/data';
 import { withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
@@ -31,7 +23,7 @@ export interface GraphNGProps extends Themeable {
   height: number;
   data: DataFrame[];
   structureRev?: number; // a number that will change when the data[] structure changes
-  resultRev: number;
+  resultRev?: number;
   timeRange: TimeRange;
   legend: VizLegendOptions;
   timeZone: TimeZone;
@@ -66,7 +58,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
     }
 
     const alignedDataFrame = preparePlotFrame(props.data, dimFields);
-    const data = alignedDataFrame && preparePlotData(alignedDataFrame, [FieldType.string]);
+    const data = alignedDataFrame && preparePlotData(alignedDataFrame);
 
     this.state = {
       dimFields,
@@ -82,12 +74,13 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   componentDidUpdate(prevProps: GraphNGProps) {
     const { data, theme, structureRev, resultRev } = this.props;
     let stateUpdate = {} as GraphNGState;
+    let shouldConfigUpdate = this.state.config === undefined || this.props.timeZone !== prevProps.timeZone;
 
     if (prevProps.data !== this.props.data) {
       const alignedDataFrame = preparePlotFrame(data, this.props.fields || this.state.dimFields);
-      const plotData = alignedDataFrame && preparePlotData(alignedDataFrame, [FieldType.string]);
+      const plotData = alignedDataFrame && preparePlotData(alignedDataFrame);
       const hasStructureChanged = structureRev !== prevProps.structureRev || !structureRev;
-      let shouldConfigUpdate = this.state.config === undefined || this.props.timeZone !== prevProps.timeZone;
+
       let shouldDataUpdate =
         resultRev !== prevProps.resultRev || !alignedDataFrame || prevProps.fields !== this.props.fields;
 
@@ -152,7 +145,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
   }
 
   render() {
-    const { width, height, children, timeZone, timeRange, ...plotProps } = this.props;
+    const { width, height, children, timeZone, timeRange, structureRev, resultRev, ...plotProps } = this.props;
 
     if (!this.state.data || !this.state.config || !this.state.alignedDataFrame) {
       return null;
@@ -171,7 +164,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
             <UPlotChart
               {...plotProps}
               config={this.state.config!}
-              data={this.state.data}
+              data={this.state.data!}
               width={vizWidth}
               height={vizHeight}
               timeRange={timeRange}

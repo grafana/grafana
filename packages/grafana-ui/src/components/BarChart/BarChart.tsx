@@ -20,6 +20,8 @@ export interface BarChartProps extends Themeable, BarChartOptions {
   height: number;
   width: number;
   data: DataFrame[];
+  structureRev?: number; // a number that will change when the data[] structure changes
+  resultRev?: number;
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   onSeriesColorChange?: (label: string, color: string) => void;
 }
@@ -33,33 +35,14 @@ interface BarChartState {
 class UnthemedBarChart extends React.Component<BarChartProps, BarChartState> {
   constructor(props: BarChartProps) {
     super(props);
-    this.state = {} as BarChartState;
-  }
 
-  static getDerivedStateFromProps(props: BarChartProps, state: BarChartState) {
-    const frame = preparePlotFrame(props.data);
+    const alignedDataFrame = preparePlotFrame(props.data);
+    this.state = {
+      data: preparePlotData(alignedDataFrame),
+      config: preparePlotConfigBuilder(alignedDataFrame, props.theme, props),
 
-    if (!frame) {
-      return { ...state };
-    }
-
-    return {
-      ...state,
-      data: preparePlotData(frame),
-      alignedDataFrame: frame,
+      alignedDataFrame,
     };
-  }
-
-  componentDidMount() {
-    const { alignedDataFrame } = this.state;
-
-    if (!alignedDataFrame) {
-      return;
-    }
-
-    this.setState({
-      config: preparePlotConfigBuilder(alignedDataFrame, this.props.theme, this.props),
-    });
   }
 
   componentDidUpdate(prevProps: BarChartProps) {

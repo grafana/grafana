@@ -1,5 +1,5 @@
 import React from 'react';
-import { compareArrayValues, compareDataFrameStructures, FieldMatcherID, fieldMatchers } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers } from '@grafana/data';
 import { withTheme } from '../../themes';
 import { GraphNGContext } from '../GraphNG/hooks';
 import { GraphNGState } from '../GraphNG/GraphNG';
@@ -15,7 +15,6 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
   constructor(props: TimelineProps) {
     super(props);
     let dimFields = props.fields;
-
     if (!dimFields) {
       dimFields = {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
@@ -23,70 +22,31 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
       };
     }
     this.state = { dimFields } as GraphNGState;
-  }
 
-  /**
-   * Since no matter the nature of the change (data vs config only) we always calculate the plot-ready AlignedData array.
-   * It's cheaper than run prev and current AlignedData comparison to indicate necessity of data-only update. We assume
-   * that if there were no config updates, we can do data only updates(as described in Plot.tsx, L32)
-   *
-   * Preparing the uPlot-ready data in getDerivedStateFromProps makes the data updates happen only once for a render cycle.
-   * If we did it in componendDidUpdate we will end up having two data-only updates: 1) for props and 2) for state update
-   *
-   * This is a way of optimizing the uPlot rendering, yet there are consequences: when there is a config update,
-   * the data is updated first, and then the uPlot is re-initialized. But since the config updates does not happen that
-   * often (apart from the edit mode interactions) this should be a fair performance compromise.
-   */
-  static getDerivedStateFromProps(props: TimelineProps, state: GraphNGState) {
-    let dimFields = props.fields;
+    const alignedDataFrame = preparePlotFrame(props.data, dimFields);
+    const data = alignedDataFrame && preparePlotData(alignedDataFrame);
 
-    if (!dimFields) {
-      dimFields = {
-        x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
-      };
-    }
-
-    const frame = preparePlotFrame(props.data, dimFields);
-
-    if (!frame) {
-      return { ...state, dimFields };
-    }
-
-    return {
-      ...state,
-      data: preparePlotData(frame),
-      alignedDataFrame: frame,
-      seriesToDataFrameFieldIndexMap: frame.fields.map((f) => f.state!.origin!),
+    this.state = {
       dimFields,
+      alignedDataFrame,
+      data,
+      seriesToDataFrameFieldIndexMap: alignedDataFrame?.fields.map((f) => f.state!.origin!),
+      config:
+        alignedDataFrame &&
+        preparePlotConfigBuilder(alignedDataFrame, props.theme, this.getTimeRange, this.getTimeZone, {
+          mode: props.mode,
+          rowHeight: props.rowHeight,
+          colWidth: props.colWidth,
+          showValue: props.showValue,
+        }),
     };
   }
 
-  componentDidMount() {
-    const { theme, mode, rowHeight, colWidth, showValue } = this.props;
-
-    // alignedDataFrame is already prepared by getDerivedStateFromProps method
-    const { alignedDataFrame } = this.state;
-
-    if (!alignedDataFrame) {
-      return;
-    }
-
-    this.setState({
-      config: preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone, {
-        mode,
-        rowHeight,
-        colWidth,
-        showValue,
-      }),
-    });
-  }
-
   componentDidUpdate(prevProps: TimelineProps) {
-    const { data, theme, timeZone, mode, rowHeight, colWidth, showValue } = this.props;
-    const { alignedDataFrame } = this.state;
+    const { data, theme, timeZone, mode, rowHeight, colWidth, showValue, structureRev, resultRev } = this.props;
     let shouldConfigUpdate = false;
     let stateUpdate = {} as GraphNGState;
+    let builder;
 
     if (
       this.state.config === undefined ||
@@ -98,25 +58,41 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
     ) {
       shouldConfigUpdate = true;
     }
+    const hasStructureChanged = structureRev !== prevProps.structureRev;
+    const alignedDataFrame = preparePlotFrame(data, this.props.fields || this.state.dimFields);
+    const plotData = alignedDataFrame && preparePlotData(alignedDataFrame);
 
-    if (data !== prevProps.data) {
-      if (!alignedDataFrame) {
-        return;
-      }
-
-      if (!compareArrayValues(data, prevProps.data, compareDataFrameStructures)) {
-        shouldConfigUpdate = true;
+    if (shouldConfigUpdate || hasStructureChanged) {
+      builder = preparePlotConfigBuilder(
+        // use either a newly aligned data if data changed, or reuse previous one
+        alignedDataFrame || this.state.alignedDataFrame!,
+        theme,
+        this.getTimeRange,
+        this.getTimeZone,
+        { mode, rowHeight, colWidth, showValue }
+      );
+      if (shouldConfigUpdate || hasStructureChanged) {
+        stateUpdate = { ...stateUpdate, config: builder };
       }
     }
 
-    if (shouldConfigUpdate) {
-      const builder = preparePlotConfigBuilder(alignedDataFrame, theme, this.getTimeRange, this.getTimeZone, {
-        mode,
-        rowHeight,
-        colWidth,
-        showValue,
-      });
-      stateUpdate = { ...stateUpdate, config: builder };
+    if (data !== prevProps.data) {
+      let shouldDataUpdate =
+        resultRev !== prevProps.resultRev || !alignedDataFrame || prevProps.fields !== this.props.fields;
+
+      if (shouldDataUpdate) {
+        if (plotData) {
+          stateUpdate = {
+            ...stateUpdate,
+            alignedDataFrame,
+            data: plotData,
+          };
+        }
+      }
+    } else {
+      if (builder) {
+        stateUpdate = { ...stateUpdate, config: builder };
+      }
     }
 
     if (Object.keys(stateUpdate).length > 0) {
@@ -125,7 +101,7 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
   }
 
   mapSeriesIndexToDataFrameFieldIndex = (i: number) => {
-    return this.state.seriesToDataFrameFieldIndexMap[i];
+    return this.state.seriesToDataFrameFieldIndexMap![i];
   };
 
   getTimeRange = () => {
@@ -160,7 +136,7 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
   render() {
     const { width, height, children, timeZone, timeRange, ...plotProps } = this.props;
 
-    if (!this.state.data || !this.state.config) {
+    if (!this.state.data || !this.state.config || !this.state.alignedDataFrame) {
       return null;
     }
 
@@ -177,7 +153,7 @@ class UnthemedTimelineChart extends React.Component<TimelineProps, GraphNGState>
             <UPlotChart
               {...plotProps}
               config={this.state.config!}
-              data={this.state.data}
+              data={this.state.data!}
               width={vizWidth}
               height={vizHeight}
               timeRange={timeRange}
