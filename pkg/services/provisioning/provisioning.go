@@ -18,6 +18,7 @@ import (
 )
 
 type ProvisioningService interface {
+	RunInitProvisioners() error
 	ProvisionDatasources() error
 	ProvisionPlugins() error
 	ProvisionNotifications() error
@@ -76,6 +77,10 @@ type ProvisioningServiceImpl struct {
 }
 
 func (ps *ProvisioningServiceImpl) Init() error {
+	return ps.RunInitProvisioners()
+}
+
+func (ps *ProvisioningServiceImpl) RunInitProvisioners() error {
 	err := ps.ProvisionDatasources()
 	if err != nil {
 		return err

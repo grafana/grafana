@@ -1,6 +1,7 @@
 package provisioning
 
 type Calls struct {
+	RunInitProvisioners                 []interface{}
 	ProvisionDatasources                []interface{}
 	ProvisionPlugins                    []interface{}
 	ProvisionNotifications              []interface{}
@@ -11,6 +12,7 @@ type Calls struct {
 
 type ProvisioningServiceMock struct {
 	Calls                                   *Calls
+	RunInitProvisionersFunc                 func() error
 	ProvisionDatasourcesFunc                func() error
 	ProvisionPluginsFunc                    func() error
 	ProvisionNotificationsFunc              func() error
@@ -23,6 +25,14 @@ func NewProvisioningServiceMock() *ProvisioningServiceMock {
 	return &ProvisioningServiceMock{
 		Calls: &Calls{},
 	}
+}
+
+func (mock *ProvisioningServiceMock) RunInitProvisioners() error {
+	mock.Calls.RunInitProvisioners = append(mock.Calls.RunInitProvisioners, nil)
+	if mock.RunInitProvisionersFunc != nil {
+		return mock.RunInitProvisionersFunc()
+	}
+	return nil
 }
 
 func (mock *ProvisioningServiceMock) ProvisionDatasources() error {
