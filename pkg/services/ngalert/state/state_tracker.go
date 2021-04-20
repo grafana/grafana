@@ -47,7 +47,7 @@ type StateTracker struct {
 func NewStateTracker(logger log.Logger) *StateTracker {
 	tracker := &StateTracker{
 		cache: cache{
-			states:    make(map[string]AlertState),
+			states: make(map[string]AlertState),
 		},
 		quit: make(chan struct{}),
 		Log:  logger,
