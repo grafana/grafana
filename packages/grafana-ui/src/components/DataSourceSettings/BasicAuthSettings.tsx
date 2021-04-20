@@ -1,4 +1,8 @@
 import React from 'react';
+import { GrafanaTheme } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import { useStyles } from '../..';
 import { HttpSettingsProps } from './types';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormField/SecretFormField';
@@ -31,9 +35,11 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
     });
   };
 
+  const styles = useStyles(getStyles);
+
   return (
     <>
-      <div className="gf-form">
+      <div className={styles.form}>
         <FormField
           label="User"
           labelWidth={10}
@@ -43,7 +49,7 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
           onChange={(event) => onChange({ ...dataSourceConfig, basicAuthUser: event.currentTarget.value })}
         />
       </div>
-      <div className="gf-form">
+      <div className={styles.form}>
         <SecretFormField
           isConfigured={
             !!dataSourceConfig.basicAuthPassword ||
@@ -58,4 +64,17 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
       </div>
     </>
   );
+};
+
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    form: css`
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      text-align: left;
+      position: relative;
+      margin-bottom: ${theme.v2.spacing(0.5)};
+    `,
+  };
 };
