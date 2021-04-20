@@ -12,7 +12,7 @@ min-occurrences = 5
 default-signifies-exhaustive = true
 
 [linters-settings.revive]
-ignore-generated-header = true
+ignore-generated-header = false
 severity = "warning"
 confidence = 3
 errorCode = 0
