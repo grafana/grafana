@@ -1,4 +1,3 @@
-import { describeInterval, secondsToHms } from '@grafana/data/src/datetime/rangeutil';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   Annotations,
@@ -55,11 +54,6 @@ function parseInterval(value: string): [number, string] {
   throw new Error(`Invalid interval description: ${value}`);
 }
 
-function intervalToSeconds(interval: string): number {
-  const { sec, count } = describeInterval(interval);
-  return sec * count;
-}
-
 function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Array<{ key: string; value: string }> {
   return [...recordToArray(item || {}), { key: '', value: '' }];
 }
@@ -71,13 +65,13 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
       grafana_alert: {
         title: name,
         condition,
-        for: intervalToSeconds(evaluateFor), // @TODO provide raw string once backend supports it
         no_data_state: noDataState,
         exec_err_state: execErrState,
         data: queries,
-        annotations: arrayToRecord(values.annotations || []),
-        labels: arrayToRecord(values.labels || []),
       },
+      for: evaluateFor,
+      annotations: arrayToRecord(values.annotations || []),
+      labels: arrayToRecord(values.labels || []),
     };
   }
   throw new Error('Cannot create rule without specifying alert condition');
@@ -93,14 +87,14 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         name: ga.title,
         type: RuleFormType.threshold,
         dataSourceName: ga.data[0]?.model.datasource,
-        evaluateFor: secondsToHms(ga.for),
+        evaluateFor: rule.for,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
         noDataState: ga.no_data_state,
         execErrState: ga.exec_err_state,
         queries: ga.data,
         condition: ga.condition,
-        annotations: listifyLabelsOrAnnotations(ga.annotations),
-        labels: listifyLabelsOrAnnotations(ga.labels),
+        annotations: listifyLabelsOrAnnotations(rule.annotations),
+        labels: listifyLabelsOrAnnotations(rule.labels),
         folder: { title: namespace, id: -1 },
       };
     } else {
