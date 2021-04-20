@@ -78,12 +78,12 @@ export class ChangeTracker {
       return true;
     }
 
-    if (!current || !current.meta) {
+    // Ignore changes if the user has been signed out
+    if (!contextSrv.isSignedIn) {
       return true;
     }
 
-    // Ignore changes if the user has been signed out
-    if (!contextSrv.isSignedIn) {
+    if (!current || !current.meta) {
       return true;
     }
 
