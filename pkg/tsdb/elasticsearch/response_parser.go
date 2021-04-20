@@ -18,6 +18,7 @@ const (
 	countType         = "count"
 	percentilesType   = "percentiles"
 	extendedStatsType = "extended_stats"
+	topMetricsType    = "top_metrics"
 	// Bucket types
 	dateHistType    = "date_histogram"
 	histogramType   = "histogram"
@@ -222,6 +223,46 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				}
 				*series = append(*series, newSeries)
 			}
+		case topMetricsType:
+			newSeries := plugins.DataTimeSeries{
+				Tags: make(map[string]string),
+			}
+
+			for _, v := range esAgg.Get("buckets").MustArray() {
+				bucket := simplejson.NewFromAny(v)
+				stats := bucket.GetPath(metric.ID, "top")
+
+				var metricValues []float64
+
+				for _, _stat := range stats.MustArray() {
+					stat := _stat.(map[string]interface{})
+					_metrics, hasMetrics := stat["metrics"]
+					if hasMetrics {
+						metrics := _metrics.(map[string]interface{})
+						_metricValue, hasMetricValue := metrics[metric.Field]
+						if hasMetricValue {
+							metricValue := _metricValue.(float64)
+							metricValues = append(metricValues, float64(metricValue))
+						}
+					}
+				}
+
+				key := castToNullFloat(bucket.Get("key"))
+				aggregateByMethod, hasAggregateByMethod := metric.Settings.MustMap()["aggregateBy"]
+				method := "avg"
+				if hasAggregateByMethod {
+					method = aggregateByMethod.(string)
+				}
+				aggregatedValue := aggregateValuesBy(method, metricValues)
+				newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{null.FloatFrom(aggregatedValue), key})
+			}
+
+			for k, v := range props {
+				newSeries.Tags[k] = v
+			}
+			newSeries.Tags["metric"] = topMetricsType
+			*series = append(*series, newSeries)
+
 		case extendedStatsType:
 			buckets := esAgg.Get("buckets").MustArray()
 
@@ -585,4 +626,36 @@ func getErrorFromElasticResponse(response *es.SearchResponse) plugins.DataQueryR
 	}
 
 	return result
+}
+
+func aggregateValuesBy(method string, values []float64) float64 {
+	switch method {
+	case "max":
+		var current float64
+		for _, v := range values {
+			if current < v {
+				current = v
+			}
+		}
+		return current
+	case "min":
+		var current float64
+		for _, v := range values {
+			if current == 0 {
+				current = v
+			}
+			if current > v {
+				current = v
+			}
+		}
+		return current
+	case "sum":
+		var sum float64 = 0
+		for _, v := range values {
+			sum += v
+		}
+		return sum
+	default:
+		return aggregateValuesBy("sum", values) / float64(len(values))
+	}
 }

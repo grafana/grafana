@@ -274,12 +274,36 @@ type GeoHashGridAggregation struct {
 
 // MetricAggregation represents a metric aggregation
 type MetricAggregation struct {
+	Type     string
 	Field    string
 	Settings map[string]interface{}
 }
 
 // MarshalJSON returns the JSON encoding of the metric aggregation
 func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
+	if a.Type == "top_metrics" {
+
+		root := map[string]interface{}{}
+		root["metrics"] = []map[string]string{{"field": a.Field}}
+
+		size, hasSize := a.Settings["size"]
+		order, hasOrder := a.Settings["order"]
+		orderBy, hasOrderBy := a.Settings["orderBy"]
+
+		if hasSize {
+			root["size"] = size
+		} else {
+			root["size"] = "1"
+		}
+
+		if hasOrderBy && hasOrder {
+			sortObject := map[string]interface{}{}
+			sortObject[orderBy.(string)] = order
+			root["sort"] = []map[string]interface{}{sortObject}
+		}
+
+		return json.Marshal(root)
+	}
 	root := map[string]interface{}{}
 
 	if a.Field != "" {

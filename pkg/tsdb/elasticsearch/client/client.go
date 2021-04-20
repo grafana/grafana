@@ -68,7 +68,7 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange plugi
 	clientLog.Debug("Creating new client", "version", version, "timeField", timeField, "indices", strings.Join(indices, ", "))
 
 	switch version {
-	case 2, 5, 56, 60, 70:
+	case 2, 5, 56, 60, 70, 77:
 		return &baseClientImpl{
 			ctx:       ctx,
 			ds:        ds,

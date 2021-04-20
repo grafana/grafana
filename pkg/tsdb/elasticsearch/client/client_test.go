@@ -115,6 +115,18 @@ func TestNewClient(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 70, c.GetVersion())
 	})
+	t.Run("When version 77 should return v7.7+ client", func(t *testing.T) {
+		ds := &models.DataSource{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": 77,
+				"timeField": "@timestamp",
+			}),
+		}
+
+		c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+		require.NoError(t, err)
+		assert.Equal(t, 77, c.GetVersion())
+	})
 }
 
 func TestClient_ExecuteMultisearch(t *testing.T) {

@@ -19,10 +19,10 @@ func TestResponseParser(t *testing.T) {
 		Convey("Simple query and count", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "count", "id": "1" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }]
-				}`,
+        }`,
 			}
 			response := `{
         "responses": [
@@ -43,7 +43,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -65,10 +65,10 @@ func TestResponseParser(t *testing.T) {
 		Convey("Simple query count & avg aggregation", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "count", "id": "1" }, {"type": "avg", "field": "value", "id": "2" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "count", "id": "1" }, {"type": "avg", "field": "value", "id": "2" }],
           "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
-				}`,
+        }`,
 			}
 			response := `{
         "responses": [
@@ -91,7 +91,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -121,13 +121,13 @@ func TestResponseParser(t *testing.T) {
 		Convey("Single group by query one metric", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "count", "id": "1" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [
-						{ "type": "terms", "field": "host", "id": "2" },
-						{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
-					]
-				}`,
+            { "type": "terms", "field": "host", "id": "2" },
+            { "type": "date_histogram", "field": "@timestamp", "id": "3" }
+          ]
+        }`,
 			}
 			response := `{
         "responses": [
@@ -154,7 +154,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -184,13 +184,13 @@ func TestResponseParser(t *testing.T) {
 		Convey("Single group by query two metrics", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "count", "id": "1" }, { "type": "avg", "field": "@value", "id": "4" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "count", "id": "1" }, { "type": "avg", "field": "@value", "id": "4" }],
           "bucketAggs": [
-						{ "type": "terms", "field": "host", "id": "2" },
-						{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
-					]
-				}`,
+            { "type": "terms", "field": "host", "id": "2" },
+            { "type": "date_histogram", "field": "@timestamp", "id": "3" }
+          ]
+        }`,
 			}
 			response := `{
         "responses": [
@@ -223,7 +223,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -269,10 +269,10 @@ func TestResponseParser(t *testing.T) {
 		Convey("With percentiles", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "percentiles", "settings": { "percents": [75, 90] }, "id": "1" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "percentiles", "settings": { "percents": [75, 90] }, "id": "1" }],
           "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
-				}`,
+        }`,
 			}
 			response := `{
         "responses": [
@@ -295,7 +295,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -322,16 +322,86 @@ func TestResponseParser(t *testing.T) {
 			So(seriesTwo.Points[1][1].Float64, ShouldEqual, 2000)
 		})
 
+		Convey("With top_metrics", func() {
+			targets := map[string]string{
+				"A": `{
+          "timeField": "@timestamp",
+          "metrics": [
+            {
+              "type": "top_metrics",
+              "field": "@value",
+              "settings": {
+                "order": "desc",
+                "orderBy": "@timestamp",
+                "aggregateBy": "sum",
+                "seperator": " "
+              },
+              "id": "1"
+            }
+          ],
+          "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
+        }`,
+			}
+			response := `{
+        "responses": [
+          {
+            "aggregations": {
+              "3": {
+                "buckets": [
+                  {
+                    "key": 1609459200000,
+                    "key_as_string": "2021-01-01T00:00:00.000Z",
+                    "1": {
+                      "top": [
+                        { "sort": ["2021-01-01T00:00:00.000Z"], "metrics": { "@value": 1 } },
+                        { "sort": ["2021-01-01T00:00:00.000Z"], "metrics": { "@value": 1 } }
+                      ]
+                    }
+                  },
+                  {
+                    "key": 1609459210000,
+                    "key_as_string": "2021-01-01T00:00:10.000Z",
+                    "1": {
+                      "top": [
+                        { "sort": ["2021-01-01T00:00:10.000Z"], "metrics": { "@value": 1 } },
+                        { "sort": ["2021-01-01T00:00:10.000Z"], "metrics": { "@value": 1 } }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }`
+			rp, err := newResponseParserForTest(targets, response)
+			So(err, ShouldBeNil)
+			result, err := rp.getTimeSeries()
+			So(err, ShouldBeNil)
+			So(result.Results, ShouldHaveLength, 1)
+
+			queryRes := result.Results["A"]
+			So(queryRes, ShouldNotBeNil)
+			So(queryRes.Series, ShouldHaveLength, 1)
+			seriesOne := queryRes.Series[0]
+			So(seriesOne.Name, ShouldEqual, "Top Metrics")
+			So(seriesOne.Points, ShouldHaveLength, 2)
+			So(seriesOne.Points[0][0].Float64, ShouldEqual, 2)
+			So(seriesOne.Points[0][1].Float64, ShouldEqual, 1609459200000)
+			So(seriesOne.Points[1][0].Float64, ShouldEqual, 2)
+			So(seriesOne.Points[1][1].Float64, ShouldEqual, 1609459210000)
+		})
+
 		Convey("With extended stats", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "extended_stats", "meta": { "max": true, "std_deviation_bounds_upper": true, "std_deviation_bounds_lower": true }, "id": "1" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "extended_stats", "meta": { "max": true, "std_deviation_bounds_upper": true, "std_deviation_bounds_lower": true }, "id": "1" }],
           "bucketAggs": [
-						{ "type": "terms", "field": "host", "id": "3" },
-						{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
-					]
-				}`,
+            { "type": "terms", "field": "host", "id": "3" },
+            { "type": "date_histogram", "field": "@timestamp", "id": "4" }
+          ]
+        }`,
 			}
 			response := `{
         "responses": [
@@ -376,7 +446,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -427,14 +497,14 @@ func TestResponseParser(t *testing.T) {
 		Convey("Single group by with alias pattern", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"alias": "{{term @host}} {{metric}} and {{not_exist}} {{@host}}",
-					"metrics": [{ "type": "count", "id": "1" }],
+          "timeField": "@timestamp",
+          "alias": "{{term @host}} {{metric}} and {{not_exist}} {{@host}}",
+          "metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [
-						{ "type": "terms", "field": "@host", "id": "2" },
-						{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
-					]
-				}`,
+            { "type": "terms", "field": "@host", "id": "2" },
+            { "type": "date_histogram", "field": "@timestamp", "id": "3" }
+          ]
+        }`,
 			}
 			response := `{
         "responses": [
@@ -468,7 +538,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -507,10 +577,10 @@ func TestResponseParser(t *testing.T) {
 		Convey("Histogram response", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "count", "id": "1" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
-				}`,
+        }`,
 			}
 			response := `{
         "responses": [
@@ -522,7 +592,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -552,19 +622,19 @@ func TestResponseParser(t *testing.T) {
 		Convey("With two filters agg", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "count", "id": "1" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [
-						{
-							"type": "filters",
-							"id": "2",
-							"settings": {
-								"filters": [{ "query": "@metric:cpu" }, { "query": "@metric:logins.count" }]
-							}
-						},
-						{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
-					]
-				}`,
+            {
+              "type": "filters",
+              "id": "2",
+              "settings": {
+                "filters": [{ "query": "@metric:cpu" }, { "query": "@metric:logins.count" }]
+              }
+            },
+            { "type": "date_histogram", "field": "@timestamp", "id": "3" }
+          ]
+        }`,
 			}
 			response := `{
         "responses": [
@@ -587,7 +657,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -618,17 +688,17 @@ func TestResponseParser(t *testing.T) {
 		Convey("With dropfirst and last aggregation", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
           "bucketAggs": [
-						{
-							"type": "date_histogram",
-							"field": "@timestamp",
-							"id": "2",
-							"settings": { "trimEdges": 1 }
-						}
-					]
-				}`,
+            {
+              "type": "date_histogram",
+              "field": "@timestamp",
+              "id": "2",
+              "settings": { "trimEdges": 1 }
+            }
+          ]
+        }`,
 			}
 			response := `{
         "responses": [
@@ -656,7 +726,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -683,10 +753,10 @@ func TestResponseParser(t *testing.T) {
 		Convey("No group by time", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
           "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
-				}`,
+        }`,
 			}
 			response := `{
         "responses": [
@@ -709,7 +779,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -740,10 +810,10 @@ func TestResponseParser(t *testing.T) {
 		Convey("Multiple metrics of same type", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [{ "type": "avg", "field": "test", "id": "1" }, { "type": "avg", "field": "test2", "id": "2" }],
+          "timeField": "@timestamp",
+          "metrics": [{ "type": "avg", "field": "test", "id": "1" }, { "type": "avg", "field": "test2", "id": "2" }],
           "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
-				}`,
+        }`,
 			}
 			response := `{
         "responses": [
@@ -762,7 +832,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -790,9 +860,9 @@ func TestResponseParser(t *testing.T) {
 		Convey("With bucket_script", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [
-						{ "id": "1", "type": "sum", "field": "@value" },
+          "timeField": "@timestamp",
+          "metrics": [
+            { "id": "1", "type": "sum", "field": "@value" },
             { "id": "3", "type": "max", "field": "@value" },
             {
               "id": "4",
@@ -801,9 +871,9 @@ func TestResponseParser(t *testing.T) {
               "settings": { "script": "params.var1 * params.var2" },
               "type": "bucket_script"
             }
-					],
+          ],
           "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }]
-				}`,
+        }`,
 			}
 			response := `{
         "responses": [
@@ -830,7 +900,7 @@ func TestResponseParser(t *testing.T) {
             }
           }
         ]
-			}`
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -868,56 +938,56 @@ func TestResponseParser(t *testing.T) {
 		Convey("Terms with two bucket_script", func() {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
-					"metrics": [
-						{ "id": "1", "type": "sum", "field": "@value" },
-            			{ "id": "3", "type": "max", "field": "@value" },
-            			{
-              				"id": "4",
-              				"field": "select field",
-              				"pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
-              				"settings": { "script": "params.var1 * params.var2" },
-              				"type": "bucket_script"
-						},
-            			{
-							"id": "5",
-							"field": "select field",
-							"pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
-							"settings": { "script": "params.var1 * params.var2 * 2" },
-							"type": "bucket_script"
-					  }
-					],
+          "timeField": "@timestamp",
+          "metrics": [
+            { "id": "1", "type": "sum", "field": "@value" },
+                  { "id": "3", "type": "max", "field": "@value" },
+                  {
+                      "id": "4",
+                      "field": "select field",
+                      "pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
+                      "settings": { "script": "params.var1 * params.var2" },
+                      "type": "bucket_script"
+            },
+                  {
+              "id": "5",
+              "field": "select field",
+              "pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
+              "settings": { "script": "params.var1 * params.var2 * 2" },
+              "type": "bucket_script"
+            }
+          ],
           "bucketAggs": [{ "type": "terms", "field": "@timestamp", "id": "2" }]
-				}`,
+        }`,
 			}
 			response := `{
-				"responses": [
-					{
-						"aggregations": {
-						"2": {
-							"buckets": [
-							{
-								"1": { "value": 2 },
-								"3": { "value": 3 },
-								"4": { "value": 6 },
-								"5": { "value": 24 },
-								"doc_count": 60,
-								"key": 1000
-							},
-							{
-								"1": { "value": 3 },
-								"3": { "value": 4 },
-								"4": { "value": 12 },
-								"5": { "value": 48 },
-								"doc_count": 60,
-								"key": 2000
-							}
-							]
-						}
-						}
-					}
-				]
-			}`
+        "responses": [
+          {
+            "aggregations": {
+            "2": {
+              "buckets": [
+              {
+                "1": { "value": 2 },
+                "3": { "value": 3 },
+                "4": { "value": 6 },
+                "5": { "value": 24 },
+                "doc_count": 60,
+                "key": 1000
+              },
+              {
+                "1": { "value": 3 },
+                "3": { "value": 4 },
+                "4": { "value": 12 },
+                "5": { "value": 48 },
+                "doc_count": 60,
+                "key": 2000
+              }
+              ]
+            }
+            }
+          }
+        ]
+      }`
 			rp, err := newResponseParserForTest(targets, response)
 			So(err, ShouldBeNil)
 			result, err := rp.getTimeSeries()
@@ -940,13 +1010,13 @@ func TestResponseParser(t *testing.T) {
 			So(queryRes.Tables[0].Rows[1][4].(null.Float).Float64, ShouldEqual, 48)
 		})
 		// Convey("Raw documents query", func() {
-		// 	targets := map[string]string{
-		// 		"A": `{
-		// 			"timeField": "@timestamp",
-		// 			"metrics": [{ "type": "raw_document", "id": "1" }]
-		// 		}`,
-		// 	}
-		// 	response := `{
+		//  targets := map[string]string{
+		//    "A": `{
+		//      "timeField": "@timestamp",
+		//      "metrics": [{ "type": "raw_document", "id": "1" }]
+		//    }`,
+		//  }
+		//  response := `{
 		//     "responses": [
 		//       {
 		//         "hits": {
@@ -967,29 +1037,29 @@ func TestResponseParser(t *testing.T) {
 		//         }
 		//       }
 		//     ]
-		// 	}`
-		// 	rp, err := newResponseParserForTest(targets, response)
-		// 	So(err, ShouldBeNil)
-		// 	result, err := rp.getTimeSeries()
-		// 	So(err, ShouldBeNil)
-		// 	So(result.Results, ShouldHaveLength, 1)
+		//  }`
+		//  rp, err := newResponseParserForTest(targets, response)
+		//  So(err, ShouldBeNil)
+		//  result, err := rp.getTimeSeries()
+		//  So(err, ShouldBeNil)
+		//  So(result.Results, ShouldHaveLength, 1)
 
-		// 	queryRes := result.Results["A"]
-		// 	So(queryRes, ShouldNotBeNil)
-		// 	So(queryRes.Tables, ShouldHaveLength, 1)
+		//  queryRes := result.Results["A"]
+		//  So(queryRes, ShouldNotBeNil)
+		//  So(queryRes.Tables, ShouldHaveLength, 1)
 
-		// 	rows := queryRes.Tables[0].Rows
-		// 	So(rows, ShouldHaveLength, 1)
-		// 	cols := queryRes.Tables[0].Columns
-		// 	So(cols, ShouldHaveLength, 3)
+		//  rows := queryRes.Tables[0].Rows
+		//  So(rows, ShouldHaveLength, 1)
+		//  cols := queryRes.Tables[0].Columns
+		//  So(cols, ShouldHaveLength, 3)
 
-		// 	So(cols[0].Text, ShouldEqual, "host")
-		// 	So(cols[1].Text, ShouldEqual, "Average test")
-		// 	So(cols[2].Text, ShouldEqual, "Average test2")
+		//  So(cols[0].Text, ShouldEqual, "host")
+		//  So(cols[1].Text, ShouldEqual, "Average test")
+		//  So(cols[2].Text, ShouldEqual, "Average test2")
 
-		// 	So(rows[0][0].(string), ShouldEqual, "server-1")
-		// 	So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-		// 	So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
+		//  So(rows[0][0].(string), ShouldEqual, "server-1")
+		//  So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
+		//  So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
 		// })
 	})
 }
