@@ -20,18 +20,18 @@ export default {
 export const Simple = () => {
   return (
     <div>
-      <RenderScenario layer="layer0" />
-      <RenderScenario layer="layer1" />
-      <RenderScenario layer="layer2" />
+      <RenderScenario background="canvas" />
+      <RenderScenario background="primary" />
+      <RenderScenario background="secondary" />
     </div>
   );
 };
 
 interface ScenarioProps {
-  layer: 'layer0' | 'layer1' | 'layer2';
+  background: 'canvas' | 'primary' | 'secondary';
 }
 
-const RenderScenario = ({ layer }: ScenarioProps) => {
+const RenderScenario = ({ background }: ScenarioProps) => {
   const theme = useTheme();
   const sizes: IconSize[] = ['sm', 'md', 'lg', 'xl', 'xxl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
@@ -40,7 +40,7 @@ const RenderScenario = ({ layer }: ScenarioProps) => {
     <div
       className={css`
         padding: 30px;
-        background: ${theme.v2.palette[layer]};
+        background: ${theme.v2.palette.background[background]};
         button {
           margin-right: 8px;
           margin-left: 8px;
@@ -48,7 +48,7 @@ const RenderScenario = ({ layer }: ScenarioProps) => {
         }
       `}
     >
-      <div>{layer}</div>
+      <div>{background}</div>
       {icons.map((icon) => {
         return sizes.map((size) => (
           <span key={icon + size}>
