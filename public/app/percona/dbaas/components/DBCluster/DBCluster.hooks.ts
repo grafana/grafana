@@ -18,7 +18,7 @@ const OPERATORS: Partial<OperatorDatabasesMap> = {
 
 export const useDBClusters = (kubernetes: Kubernetes[]): [DBCluster[], GetDBClustersAction, boolean] => {
   const [dbClusters, setDBClusters] = useState<DBCluster[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const getDBClusters = useCallback(
     async (triggerLoading = true) => {
@@ -44,9 +44,12 @@ export const useDBClusters = (kubernetes: Kubernetes[]): [DBCluster[], GetDBClus
   );
 
   useEffect(() => {
-    getDBClusters();
+    let timer: NodeJS.Timeout;
+    if (kubernetes && kubernetes.length > 0) {
+      getDBClusters();
 
-    let timer: NodeJS.Timeout = setInterval(() => getDBClusters(false), RECHECK_INTERVAL);
+      timer = setInterval(() => getDBClusters(false), RECHECK_INTERVAL);
+    }
 
     return () => clearTimeout(timer);
   }, [kubernetes, getDBClusters]);
