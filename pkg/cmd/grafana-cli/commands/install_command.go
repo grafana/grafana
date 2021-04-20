@@ -14,12 +14,14 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
 
 func validateInput(c utils.CommandLine, pluginFolder string) error {
@@ -57,7 +59,10 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 	pluginToInstall := c.Args().First()
 	version := c.Args().Get(1)
 
-	return InstallPlugin(pluginToInstall, version, c, cmd.Client)
+	pm := manager.PluginManager{}
+
+	logger.Infof("Plugin=%s, version=%s, folder=%s, URL=%s, repo=%s\n", pluginToInstall, version, pluginFolder, c.PluginURL(), c.RepoDirectory())
+	return pm.InstallPluginFromGCOM(pluginToInstall, version, pluginFolder, c.PluginURL(), c.RepoDirectory())
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API

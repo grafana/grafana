@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"context"
+	"os"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -69,4 +70,9 @@ type ImportDashboardInput struct {
 type DataRequestHandler interface {
 	// HandleRequest handles a data request.
 	HandleRequest(context.Context, *models.DataSource, DataQuery) (DataResponse, error)
+}
+
+type RemotePluginAPIClient interface {
+	Install(pluginName, version, pluginFolder, downloadURL, repoURL string) error
+	DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) error
 }
