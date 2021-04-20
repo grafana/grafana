@@ -422,19 +422,19 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
-		adminRoute.Get("/settings", routing.Wrap(AdminGetSettings))
-		adminRoute.Get("/stats", routing.Wrap(AdminGetStats))
-		adminRoute.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
+		adminRoute.Get("/settings", reqGrafanaAdmin, routing.Wrap(AdminGetSettings))
+		adminRoute.Get("/stats", reqGrafanaAdmin, routing.Wrap(AdminGetStats))
+		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
 
-		adminRoute.Post("/provisioning/dashboards/reload", routing.Wrap(hs.AdminProvisioningReloadDashboards))
-		adminRoute.Post("/provisioning/plugins/reload", routing.Wrap(hs.AdminProvisioningReloadPlugins))
-		adminRoute.Post("/provisioning/datasources/reload", routing.Wrap(hs.AdminProvisioningReloadDatasources))
-		adminRoute.Post("/provisioning/notifications/reload", routing.Wrap(hs.AdminProvisioningReloadNotifications))
-		adminRoute.Post("/ldap/reload", routing.Wrap(hs.ReloadLDAPCfg))
-		adminRoute.Post("/ldap/sync/:id", routing.Wrap(hs.PostSyncUserWithLDAP))
-		adminRoute.Get("/ldap/:username", routing.Wrap(hs.GetUserFromLDAP))
-		adminRoute.Get("/ldap/status", routing.Wrap(hs.GetLDAPStatus))
-	}, reqGrafanaAdmin)
+		adminRoute.Post("/provisioning/dashboards/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadDashboards))
+		adminRoute.Post("/provisioning/plugins/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadPlugins))
+		adminRoute.Post("/provisioning/datasources/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadDatasources))
+		adminRoute.Post("/provisioning/notifications/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadNotifications))
+		adminRoute.Post("/ldap/reload", reqGrafanaAdmin, routing.Wrap(hs.ReloadLDAPCfg))
+		adminRoute.Post("/ldap/sync/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPUsersSync), routing.Wrap(hs.PostSyncUserWithLDAP))
+		adminRoute.Get("/ldap/:username", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPUsersRead), routing.Wrap(hs.GetUserFromLDAP))
+		adminRoute.Get("/ldap/status", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPStatusRead), routing.Wrap(hs.GetLDAPStatus))
+	})
 
 	// Administering users
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {

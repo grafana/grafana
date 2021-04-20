@@ -63,6 +63,11 @@ const (
 	ActionUsersQuotasList        = "users.quotas:list"
 	ActionUsersQuotasUpdate      = "users.quotas:update"
 
+	// LDAP actions
+	ActionLDAPUsersRead  = "ldap.user:read"
+	ActionLDAPUsersSync  = "ldap.user:sync"
+	ActionLDAPStatusRead = "ldap.status:read"
+
 	// Global Scopes
 	ScopeUsersAll  = "users:*"
 	ScopeUsersSelf = "users:self"
