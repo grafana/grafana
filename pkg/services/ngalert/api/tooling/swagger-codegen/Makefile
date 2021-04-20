@@ -2,7 +2,7 @@
 
 swagger-codegen-api:
 	swagger-codegen generate -v \
-	-i https://grafana.github.io/alerting-api/post.json \
+	-i ../post.json \
 	-l go-server \
 	-Dapis \
 	-o ../ \
