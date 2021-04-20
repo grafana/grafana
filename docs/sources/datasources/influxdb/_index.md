@@ -31,7 +31,7 @@ Name        | Description
 ----------- | -------------
 `Name`      | The data source name. This is how you refer to the data source in panels and queries. We recommend something like `InfluxDB-InfluxQL`.
 `Default`   | Default data source means that it will be pre-selected for new panels.
-`URL`       | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
+`URL`       | The HTTP protocol, IP address and port of your InfluxDB API. InfluxDB API port is by default 8086.
 `Access`    | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
 `Whitelisted Cookies`| Cookies that will be forwarded to the data source. All other cookies will be deleted.
 `Database`  | The ID of the bucket you want to query from, copied from the [Buckets page](https://docs.influxdata.com/influxdb/v2.0/organizations/buckets/view-buckets/) of the InfluxDB UI.
