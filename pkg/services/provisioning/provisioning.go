@@ -28,17 +28,24 @@ type ProvisioningService interface {
 
 func init() {
 	registry.Register(&registry.Descriptor{
-		Name: "ProvisioningService",
-		Instance: newProvisioningServiceImpl(
-			dashboards.New,
-			notifiers.Provision,
-			datasources.Provision,
-			plugins.Provision,
-		),
+		Name:         "ProvisioningService",
+		Instance:     NewProvisioningServiceImpl(),
 		InitPriority: registry.Low,
 	})
 }
 
+// Add a public constructor for overriding service to be able to instantiate OSS as fallback
+func NewProvisioningServiceImpl() *provisioningServiceImpl {
+	return &provisioningServiceImpl{
+		log:                     log.New("provisioning"),
+		newDashboardProvisioner: dashboards.New,
+		provisionNotifiers:      notifiers.Provision,
+		provisionDatasources:    datasources.Provision,
+		provisionPlugins:        plugins.Provision,
+	}
+}
+
+// Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
