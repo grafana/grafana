@@ -12,7 +12,17 @@ const getStyles = (theme: GrafanaTheme) => css`
   text-overflow: ellipsis;
 `;
 
-export const DetailText: FC = ({ children }) => {
+interface DetailTextProps {
+  children: string;
+  title?: string;
+}
+
+export const DetailText: FC<DetailTextProps> = ({ children, title }) => {
   const collapsedTextStyles = useStyles(getStyles);
-  return <p className={collapsedTextStyles}>{children}</p>;
+
+  return (
+    <p title={title ? title : children} className={collapsedTextStyles}>
+      {children}
+    </p>
+  );
 };
