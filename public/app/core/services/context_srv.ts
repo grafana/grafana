@@ -110,8 +110,15 @@ export class ContextSrv {
   }
 }
 
-const contextSrv = new ContextSrv();
+let contextSrv = new ContextSrv();
 export { contextSrv };
+
+export const setContextSrv = (override: ContextSrv) => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('contextSrv can be only overriden in test environment');
+  }
+  contextSrv = override;
+};
 
 coreModule.factory('contextSrv', () => {
   return contextSrv;
