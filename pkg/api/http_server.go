@@ -12,10 +12,12 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -113,6 +115,85 @@ func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
 	hs.middlewares = append(hs.middlewares, middleware)
 }
 
+type CachedKey struct {
+	IsValid   bool
+	CheckedAt time.Time
+}
+
+// Note: need to periodically invalidate this cache in separate goroutine.
+var keyMu sync.RWMutex
+var keyCache = map[string]CachedKey{}
+
+func (hs *HTTPServer) handlePush(rw http.ResponseWriter, req *http.Request) {
+	header := req.Header.Get("Authorization")
+	parts := strings.SplitN(header, " ", 2)
+	var keyString string
+	if len(parts) == 2 && parts[0] == "Bearer" {
+		keyString = parts[1]
+	}
+	if keyString == "" {
+		rw.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	keyMu.RLock()
+	existingKey, ok := keyCache[keyString]
+	keyMu.RUnlock()
+	if !ok {
+		decoded, err := apikeygen.Decode(keyString)
+		if err != nil {
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		// fetch key
+		keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
+		if err := bus.Dispatch(&keyQuery); err != nil {
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		apikey := keyQuery.Result
+
+		// validate api key
+		isValid, err := apikeygen.IsValid(decoded, apikey.Key)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if !isValid {
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		// check for expiration.
+		getTime := time.Now
+
+		if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		keyMu.Lock()
+		keyCache[keyString] = CachedKey{CheckedAt: time.Now(), IsValid: true}
+		keyMu.Unlock()
+	} else {
+		if !existingKey.IsValid {
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+	}
+	hs.LivePushGateway.HandleStream(req, "telegraf")
+	rw.WriteHeader(http.StatusOK)
+}
+
+func (hs *HTTPServer) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if strings.HasPrefix(request.URL.Path, "/api/live/push") {
+		hs.handlePush(writer, request)
+		return
+	}
+	hs.macaron.ServeHTTP(writer, request)
+}
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
@@ -122,7 +203,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
 	hs.httpSrv = &http.Server{
 		Addr:        net.JoinHostPort(host, hs.Cfg.HTTPPort),
-		Handler:     hs.macaron,
+		Handler:     hs,
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 	switch hs.Cfg.Protocol {

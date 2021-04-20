@@ -3,6 +3,7 @@ package push
 import (
 	"context"
 	"errors"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -56,6 +57,56 @@ func (g *Gateway) Run(ctx context.Context) error {
 // IsEnabled returns true if the Grafana Live feature is enabled.
 func (g *Gateway) IsEnabled() bool {
 	return g.Cfg.IsLiveEnabled() // turn on when Live on for now.
+}
+
+func (g *Gateway) HandleStream(req *http.Request, streamID string) {
+	// Note: return errors to caller.
+
+	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(streamID)
+	if err != nil {
+		logger.Error("Error getting stream", "error", err)
+		return
+	}
+
+	// TODO Grafana 8: decide which formats to use or keep all.
+	urlValues := req.URL.Query()
+	frameFormat := pushurl.FrameFormatFromValues(urlValues)
+	stableSchema := pushurl.StableSchemaFromValues(urlValues)
+
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		logger.Error("Error reading body", "error", err)
+		return
+	}
+	logger.Debug("Live Push request",
+		"protocol", "http",
+		"streamId", streamID,
+		"bodyLength", len(body),
+		"stableSchema", stableSchema,
+		"frameFormat", frameFormat,
+	)
+
+	metricFrames, err := g.converter.Convert(body, frameFormat)
+	if err != nil {
+		logger.Error("Error converting metrics", "error", err, "frameFormat", frameFormat)
+		if errors.Is(err, convert.ErrUnsupportedFrameFormat) {
+			//ctx.Resp.WriteHeader(http.StatusBadRequest)
+		} else {
+			//ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// TODO -- make sure all packets are combined together!
+	// interval = "1s" vs flush_interval = "5s"
+
+	for _, mf := range metricFrames {
+		err := stream.Push(mf.Key(), mf.Frame(), stableSchema)
+		if err != nil {
+			//ctx.Resp.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
 }
 
 func (g *Gateway) Handle(ctx *models.ReqContext) {
