@@ -259,6 +259,10 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	// nolint:gosec
 	f, err := os.Open(pluginFilePath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			c.Handle(hs.Cfg, 404, "Could not find plugin file", err)
+			return
+		}
 		c.Handle(hs.Cfg, 500, "Could not open plugin file", err)
 		return
 	}
