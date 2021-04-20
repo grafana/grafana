@@ -231,29 +231,8 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			for _, v := range esAgg.Get("buckets").MustArray() {
 				bucket := simplejson.NewFromAny(v)
 				stats := bucket.GetPath(metric.ID, "top")
-
-				var metricValues []float64
-
-				for _, _stat := range stats.MustArray() {
-					stat := _stat.(map[string]interface{})
-					_metrics, hasMetrics := stat["metrics"]
-					if hasMetrics {
-						metrics := _metrics.(map[string]interface{})
-						_metricValue, hasMetricValue := metrics[metric.Field]
-						if hasMetricValue {
-							metricValue := _metricValue.(float64)
-							metricValues = append(metricValues, metricValue)
-						}
-					}
-				}
-
+				aggregatedValue := processTopMetricValues(stats, metric)
 				key := castToNullFloat(bucket.Get("key"))
-				aggregateByMethod, hasAggregateByMethod := metric.Settings.MustMap()["aggregateBy"]
-				method := "avg"
-				if hasAggregateByMethod {
-					method = aggregateByMethod.(string)
-				}
-				aggregatedValue := aggregateValuesBy(method, metricValues)
 				newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{null.FloatFrom(aggregatedValue), key})
 			}
 
@@ -658,4 +637,26 @@ func aggregateValuesBy(method string, values []float64) float64 {
 	default:
 		return aggregateValuesBy("sum", values) / float64(len(values))
 	}
+}
+
+func processTopMetricValues(stats *simplejson.Json, metric *MetricAgg) float64 {
+	var metricValues []float64
+	for _, _stat := range stats.MustArray() {
+		stat := _stat.(map[string]interface{})
+		_metrics, hasMetrics := stat["metrics"]
+		if hasMetrics {
+			metrics := _metrics.(map[string]interface{})
+			_metricValue, hasMetricValue := metrics[metric.Field]
+			if hasMetricValue {
+				metricValue := _metricValue.(float64)
+				metricValues = append(metricValues, metricValue)
+			}
+		}
+	}
+	aggregateByMethod, hasAggregateByMethod := metric.Settings.MustMap()["aggregateBy"]
+	method := "avg"
+	if hasAggregateByMethod {
+		method = aggregateByMethod.(string)
+	}
+	return aggregateValuesBy(method, metricValues)
 }
