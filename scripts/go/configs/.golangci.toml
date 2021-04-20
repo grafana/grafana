@@ -52,6 +52,7 @@ enable = [
   "asciicheck",
   "errorlint",
   "sqlclosecheck",
+  "revive",
 ]
 
 # Disabled linters (might want them later)
