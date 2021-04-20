@@ -45,7 +45,7 @@ export function updateSourcePanel(sourcePanel: PanelModel): ThunkResult<void> {
 export function discardPanelChanges(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { getPanel } = getStore().panelEditor;
-    getPanel().hasChanged = false;
+    getPanel().configRev = 0;
     dispatch(setDiscardChanges(true));
   };
 }

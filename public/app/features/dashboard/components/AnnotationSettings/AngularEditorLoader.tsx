@@ -30,7 +30,9 @@ export class AngularEditorLoader extends React.PureComponent<Props> {
     }
 
     if (this.angularComponent && prevProps.annotation !== this.props.annotation) {
-      this.angularComponent.getScope().ctrl.currentAnnotation = this.props.annotation;
+      const scope = this.angularComponent.getScope();
+      scope.ctrl.ignoreNextWatcherFiring = true;
+      scope.ctrl.currentAnnotation = this.props.annotation;
     }
   }
 
@@ -45,12 +47,19 @@ export class AngularEditorLoader extends React.PureComponent<Props> {
       ctrl: {
         currentDatasource: this.props.datasource,
         currentAnnotation: this.props.annotation,
+        ignoreNextWatcherFiring: false,
       },
     };
 
     this.angularComponent = loader.load(this.ref, scopeProps, template);
     this.angularComponent.digest();
     this.angularComponent.getScope().$watch(() => {
+      // To avoid recursive loop when the annotation is updated from outside angular in componentDidUpdate
+      if (scopeProps.ctrl.ignoreNextWatcherFiring) {
+        scopeProps.ctrl.ignoreNextWatcherFiring = false;
+        return;
+      }
+
       this.props.onChange({
         ...scopeProps.ctrl.currentAnnotation,
       });
