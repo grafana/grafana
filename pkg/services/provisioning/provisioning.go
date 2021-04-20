@@ -62,10 +62,9 @@ func newProvisioningServiceImpl(
 }
 
 type provisioningServiceImpl struct {
-	Cfg                     *setting.Cfg                  `inject:""`
-	RequestHandler          plugifaces.DataRequestHandler `inject:""`
-	SQLStore                *sqlstore.SQLStore            `inject:""`
-	PluginManager           plugifaces.Manager            `inject:""`
+	Cfg                     *setting.Cfg       `inject:""`
+	SQLStore                *sqlstore.SQLStore `inject:""`
+	PluginManager           plugifaces.Manager `inject:""`
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
@@ -144,7 +143,7 @@ func (ps *provisioningServiceImpl) ProvisionNotifications() error {
 
 func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath, ps.SQLStore, ps.RequestHandler)
+	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath, ps.SQLStore)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}
