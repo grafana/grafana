@@ -75,7 +75,7 @@ const getStyles = (theme: GrafanaTheme) => {
       display: 'inline-flex',
       flexDirection: 'row',
       flexWrap: 'nowrap',
-      border: `1px solid ${theme.v2.components.form.border}`,
+      border: `1px solid ${theme.v2.components.input.border}`,
       borderRadius: theme.v2.shape.borderRadius(),
       padding: '2px',
     }),

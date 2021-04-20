@@ -54,6 +54,7 @@ IconButton.displayName = 'IconButton';
 const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
   const hoverColor = theme.v2.palette.action.hover;
   const pixelSize = getSvgSize(size);
+  const hoverSize = pixelSize / 2;
 
   return {
     button: css`
@@ -88,10 +89,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme, size: IconSize) => {
         transition-duration: 0.2s;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         z-index: -1;
-        bottom: -8px;
-        left: -8px;
-        right: -8px;
-        top: -8px;
+        bottom: -${hoverSize}px;
+        left: -${hoverSize}px;
+        right: -${hoverSize}px;
+        top: -${hoverSize}px;
         background: none;
         border-radius: 50%;
         box-sizing: border-box;
