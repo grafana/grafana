@@ -41,7 +41,7 @@ class MysqlAnnotationsQueryCtrl {
 
 export {
   MySqlDatasource,
-  MysqlDatasource as Datasource,
+  MySqlDatasource as Datasource,
   MysqlQueryCtrl as QueryCtrl,
   MysqlConfigCtrl as ConfigCtrl,
   MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,

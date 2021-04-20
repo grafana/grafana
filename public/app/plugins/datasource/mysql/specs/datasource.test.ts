@@ -23,7 +23,7 @@ describe('MySQLDatasource', () => {
 
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
-    const ds = new MysqlDatasource(instanceSettings, templateSrv);
+    const ds = new MySqlDatasource(instanceSettings, templateSrv);
 
     return { ds, variable, templateSrv, fetchMock };
   };
