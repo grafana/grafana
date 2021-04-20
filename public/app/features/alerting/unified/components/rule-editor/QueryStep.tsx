@@ -25,7 +25,7 @@ export const QueryStep: FC = () => {
           />
         </Field>
       )}
-      {true && <AlertingQueryEditor />}
+      {type === RuleFormType.threshold && <AlertingQueryEditor />}
     </RuleEditorSection>
   );
 };
