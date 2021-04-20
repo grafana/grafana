@@ -21,8 +21,8 @@ type alertRule struct {
 	ExecErrState    string
 	For             duration
 	Updated         time.Time
-	// Annotations (Check Type)
-	// Labels (Check Type)
+	Annotations     map[string]string
+	// Labels map[string]string (Labels are not Created in the migration)
 }
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
@@ -37,6 +37,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		RuleGroup:    da.Name,
 		For:          duration(da.For),
 		Updated:      time.Now().UTC(),
+		Annotations:  da.ParsedSettings.AlertRuleTags,
 	}
 	var err error
 	ar.Uid, err = m.generateAlertRuleUID(ar.OrgId)
@@ -91,9 +92,6 @@ type alertQuery struct {
 
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
-
-	//TODO: Needed for PreSave, if PreSave needed?
-	//modelProps map[string]interface{}
 }
 
 // RelativeTimeRange is the per query start and end time

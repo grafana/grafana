@@ -34,6 +34,10 @@ FROM
 	alert
 `
 
+// slurpDashAlerts loads all alerts from the alert database table into the
+// the dashAlert type.
+// Additionally it unmarshals the json settings for the alert into the
+// ParsedSettings property of the dash alert.
 func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 	dashAlerts := []dashAlert{}
 	err := m.sess.SQL(slurpDashSQL).Find(&dashAlerts)
@@ -52,6 +56,8 @@ func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 	return dashAlerts, nil
 }
 
+// dashAlertSettings is a type for the JSON that is in the settings field of
+// the alert table.
 type dashAlertSettings struct {
 	NoDataState         string               `json:"noDataState"`
 	ExecutionErrorState string               `json:"executionErrorState"`
@@ -60,6 +66,8 @@ type dashAlertSettings struct {
 	Notifications       []dashAlertNot       `json:"notifications"`
 }
 
+// dashAlertNot is the object that represents the Notifications array in
+// dashAlertSettings
 type dashAlertNot struct {
 	UID string `json:"uid"`
 }

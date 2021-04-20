@@ -193,14 +193,6 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64]st
 
 	newCond.Data = append(newCond.Data, ccAlertQuery)
 
-	// TODO: Do I need anything from the preSave chain?
-	//for i := range newCond.Data {
-	// 	err := newCond.Data[i].PreSave() // Set query model properties
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-
 	sort.Slice(newCond.Data, func(i, j int) bool {
 		return newCond.Data[i].RefID < newCond.Data[j].RefID
 	})
