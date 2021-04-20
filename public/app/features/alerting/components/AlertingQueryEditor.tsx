@@ -37,7 +37,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
     this.setState({ queries });
   };
 
-  onAddQuery = (query: AlertingQuery | ExpressionQuery) => {
+  onDuplicateQuery = (query: AlertingQuery | ExpressionQuery) => {
     this.setState((prevState) => ({
       queries: [...prevState.queries, query],
     }));
@@ -108,7 +108,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
         <AlertingQueryRows
           queries={queries}
           onQueriesChange={this.onQueriesChanged}
-          onAddQuery={this.onAddQuery}
+          onAddQuery={this.onDuplicateQuery}
           onRunQueries={this.onRunQueries}
         />
         {this.renderAddQueryRow(styles)}
