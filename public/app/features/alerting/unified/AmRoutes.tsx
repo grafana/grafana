@@ -1,7 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { Icon, InfoBox, useStyles } from '@grafana/ui';
+import { Field, Icon, InfoBox, useStyles } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
@@ -34,7 +34,9 @@ const AmRoutes: FC = () => {
 
   return (
     <AlertingPageWrapper pageId="am-routes" isLoading={loading}>
-      <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      <Field label="Choose alert manager">
+        <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      </Field>
       {error && (
         <InfoBox
           severity="error"

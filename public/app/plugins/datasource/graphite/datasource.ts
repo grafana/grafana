@@ -350,32 +350,17 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     );
 
     // special handling for tag_values(<tag>[,<expression>]*), this is used for template variables
-    let matches = interpolatedQuery.match(/^tag_values\(([^,]+)((, *[^,]+)*)\)$/);
-    if (matches) {
-      const expressions = [];
-      const exprRegex = /, *([^,]+)/g;
-      let match = exprRegex.exec(matches[2]);
-      while (match !== null) {
-        expressions.push(match[1]);
-        match = exprRegex.exec(matches[2]);
-      }
+    let allParams = interpolatedQuery.match(/^tag_values\((.*)\)$/);
+    let expressions = allParams ? allParams[1].split(',').filter((p) => !!p) : undefined;
+    if (expressions) {
       options.limit = 10000;
-      return this.getTagValuesAutoComplete(expressions, matches[1], undefined, options);
+      return this.getTagValuesAutoComplete(expressions.slice(1), expressions[0], undefined, options);
     }
 
     // special handling for tags(<expression>[,<expression>]*), this is used for template variables
-    matches = interpolatedQuery.match(/^tags\(([^,]*)((, *[^,]+)*)\)$/);
-    if (matches) {
-      const expressions = [];
-      if (matches[1]) {
-        expressions.push(matches[1]);
-        const exprRegex = /, *([^,]+)/g;
-        let match = exprRegex.exec(matches[2]);
-        while (match !== null) {
-          expressions.push(match[1]);
-          match = exprRegex.exec(matches[2]);
-        }
-      }
+    allParams = interpolatedQuery.match(/^tags\((.*)\)$/);
+    expressions = allParams ? allParams[1].split(',').filter((p) => !!p) : undefined;
+    if (expressions) {
       options.limit = 10000;
       return this.getTagsAutoComplete(expressions, undefined, options);
     }
