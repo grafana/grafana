@@ -1,8 +1,10 @@
+// Package definitions includes the types required for generating or consuming an OpenAPI
+// spec for the Unified Alerting API.
 // Documentation of the API.
 //
 //     Schemes: http, https
 //     BasePath: /api/v1
-//     Version: 1.0.0
+//     Version: 1.1.0
 //
 //     Consumes:
 //     - application/json
@@ -18,8 +20,7 @@
 //      type: basic
 //
 // swagger:meta
-
-package api
+package definitions
 
 // swagger:model
 type ValidationError struct {
