@@ -9,6 +9,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -275,6 +278,18 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 		c.Handle(hs.Cfg, 404, "Plugin file not found", nil)
 		return
 	}
+
+	headers := func(c *macaron.Context) {
+		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
+	}
+
+	if hs.Cfg.Env == setting.Dev {
+		headers = func(c *macaron.Context) {
+			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+		}
+	}
+
+	headers(c.Context)
 
 	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
 }
