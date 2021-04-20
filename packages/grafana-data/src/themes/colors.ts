@@ -33,8 +33,8 @@ export const colors = {
   // from figma
   lightBorder1: '#E4E7E7',
 
-  blueDarkMain: '#4165F5',
-  blueDarkText: '#33a2e5', // '#5790FF',
+  blueDarkMain: '#3D71D9', // '#4165F5',
+  blueDarkText: '#6E9FFF', // '#58a6ff', //'#33a2e5', // '#5790FF',
   redDarkMain: '#D10E5C',
   redDarkText: '#FF5286',
   greenDarkMain: '#1A7F4B',
@@ -43,7 +43,7 @@ export const colors = {
   orangeDarkText: '#F8D06B',
 
   blueLightMain: '#3871DC',
-  blueLightText: '#1F62E0',
+  blueLightText: '#0465d7', // '#1F62E0',
   redLightMain: '#E0226E',
   redLightText: '#CF0E5B',
   greenLightMain: '#1A7F4B',
