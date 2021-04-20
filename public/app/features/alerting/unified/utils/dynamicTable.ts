@@ -26,7 +26,8 @@ export const collapseItem = <T = any>(
 
 export const expandItem = <T = any>(
   items: Array<DynamicTableItemProps<T>>,
-  item: DynamicTableItemProps<T>
+  item: DynamicTableItemProps<T>,
+  renderExpandedContent?: DynamicTableItemProps['renderExpandedContent']
 ): Array<DynamicTableItemProps<T>> =>
   items.map((currentItem) => {
     if (currentItem !== item) {
@@ -36,5 +37,6 @@ export const expandItem = <T = any>(
     return {
       ...currentItem,
       isExpanded: true,
+      renderExpandedContent,
     };
   });

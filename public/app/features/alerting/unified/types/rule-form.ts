@@ -5,13 +5,6 @@ export enum RuleFormType {
   system = 'system',
 }
 
-export enum TimeOptions {
-  seconds = 's',
-  minutes = 'm',
-  hours = 'h',
-  days = 'd',
-}
-
 export interface RuleFormValues {
   // common
   name: string;

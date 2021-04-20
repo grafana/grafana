@@ -1,16 +1,19 @@
+import { SelectableValue } from '@grafana/data';
 import React, { FC, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, IconButton } from '@grafana/ui';
-import { Route } from 'app/plugins/datasource/alertmanager/types';
+import { Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
 import { collapseItem, expandItem, prepareItems } from '../../utils/dynamicTable';
 import { AlertLabels } from '../AlertLabels';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
+import { AmRoutesExpandedForm } from './AmRoutesExpandedForm';
 import { AmRoutesExpandedRead } from './AmRoutesExpandedRead';
 
 export interface AmRoutesTableProps {
   routes: Route[];
+  receivers: Array<SelectableValue<Receiver['name']>>;
 }
 
-export const AmRoutesTable: FC<AmRoutesTableProps> = ({ routes }) => {
+export const AmRoutesTable: FC<AmRoutesTableProps> = ({ routes, receivers }) => {
   const [items, setItems] = useState<Array<DynamicTableItemProps<Route>>>([]);
 
   useEffect(() => {
@@ -26,37 +29,30 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ routes }) => {
     />
   );
 
-  const renderGroupBy = (item: DynamicTableItemProps<Route>) => (item.data.group_by ?? []).join(', ');
+  const renderGroupBy = (item: DynamicTableItemProps<Route>) => (item.data.group_by ?? []).join(', ') || '-';
 
-  const renderReceiverChannel = (item: DynamicTableItemProps<Route>) => item.data.receiver;
+  const renderReceiverChannel = (item: DynamicTableItemProps<Route>) => item.data.receiver ?? '-';
 
   const renderButtons = (item: DynamicTableItemProps<Route>) => {
     if (item.renderExpandedContent) {
       return null;
     }
 
+    const removeCustomExpandedContent = () => {
+      setItems(expandItem(items, item));
+    };
+
+    const expandWithCustomContent = () => {
+      setItems(
+        expandItem(items, item, () => (
+          <AmRoutesExpandedForm onExitEditMode={removeCustomExpandedContent} route={item.data} receivers={receivers} />
+        ))
+      );
+    };
+
     return (
       <HorizontalGroup>
-        <Button
-          icon="pen"
-          onClick={() => {
-            setItems(
-              items.map((currentItem) => {
-                if (currentItem !== item) {
-                  return currentItem;
-                }
-
-                return {
-                  ...currentItem,
-                  isExpanded: true,
-                  renderExpandedContent: () => 2,
-                };
-              })
-            );
-          }}
-          size="sm"
-          variant="secondary"
-        >
+        <Button icon="pen" onClick={expandWithCustomContent} size="sm" variant="secondary">
           Edit
         </Button>
         <IconButton name="trash-alt" />
@@ -87,7 +83,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ routes }) => {
       id: 'actions',
       label: 'Actions',
       renderRow: renderButtons,
-      size: 2.5,
+      size: '100px',
     },
   ];
 
@@ -99,7 +95,9 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ routes }) => {
     setItems(expandItem(items, item));
   };
 
-  const renderExpandedContent = (item: DynamicTableItemProps<Route>) => <AmRoutesExpandedRead route={item.data} />;
+  const renderExpandedContent = (item: DynamicTableItemProps<Route>) => (
+    <AmRoutesExpandedRead route={item.data} receivers={receivers} />
+  );
 
   return (
     <DynamicTable

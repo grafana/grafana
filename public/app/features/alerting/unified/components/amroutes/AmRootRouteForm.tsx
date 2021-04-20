@@ -1,62 +1,51 @@
 import React, { FC, useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { Button, Collapse, Field, Form, Input, InputControl, Link, Select, useStyles } from '@grafana/ui';
-import { Route } from 'app/plugins/datasource/alertmanager/types';
-
-const intervalTypeOptions: SelectableValue[] = [
-  {
-    label: 'seconds',
-    value: 'seconds',
-  },
-  {
-    label: 'minutes',
-    value: 'minutes',
-  },
-  {
-    label: 'hours',
-    value: 'hours',
-  },
-];
-
-const groupByOptions: SelectableValue[] = [
-  {
-    label: 'cluster',
-    value: 'cluster',
-  },
-  {
-    label: 'alertname',
-    value: 'alertname',
-  },
-  {
-    label: 'service',
-    value: 'service',
-  },
-  {
-    label: 'product',
-    value: 'product',
-  },
-  {
-    label: 'environment',
-    value: 'environment',
-  },
-  {
-    label: '...',
-    value: '...',
-  },
-];
+import { Button, Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles } from '@grafana/ui';
+import { Receiver, Route } from 'app/plugins/datasource/alertmanager/types';
+import { parseInterval, timeOptions } from '../../utils/time';
 
 export interface AmRootRouteFormProps {
   onCancel: () => void;
+  receivers: Array<SelectableValue<Receiver['name']>>;
   route: Route | undefined;
 }
 
-export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel }) => {
+export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel, receivers, route }) => {
   const styles = useStyles(getStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
+  const [groupByOptions, setGroupByOptions] = useState(
+    (route?.group_by ?? []).map((opt) => ({
+      label: opt,
+      value: opt,
+    }))
+  );
+
+  const [groupWaitValue, groupWaitValueType] = route?.group_wait
+    ? parseInterval(route?.group_wait)
+    : [undefined, undefined];
+
+  const [groupIntervalValue, groupIntervalValueType] = route?.group_interval
+    ? parseInterval(route?.group_interval)
+    : [undefined, undefined];
+
+  const [repeatIntervalValue, repeatIntervalValueType] = route?.repeat_interval
+    ? parseInterval(route?.repeat_interval)
+    : [undefined, undefined];
+
+  const defaultValue = {
+    receiver: route?.receiver,
+    groupBy: route?.group_by,
+    groupWaitValue,
+    groupWaitValueType,
+    groupIntervalValue,
+    groupIntervalValueType,
+    repeatIntervalValue,
+    repeatIntervalValueType,
+  };
 
   return (
-    <Form onSubmit={() => undefined}>
+    <Form defaultValues={defaultValue} onSubmit={() => undefined}>
       {({ control }) => (
         <>
           <Field label="Default notification channel">
@@ -65,9 +54,8 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel }) => {
                 as={Select}
                 className={styles.input}
                 control={control}
-                name="defaultNotificationChannel"
-                onChange={() => undefined}
-                options={[]}
+                name="receiver"
+                options={receivers}
               />
               <span>or</span>
               <Link href="#">Create a notification channel</Link>
@@ -75,10 +63,22 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel }) => {
           </Field>
           <Field label="Group by" description="Group alerts when you receive a notification based on labels.">
             <InputControl
-              as={Select}
+              allowCustomValue
+              as={MultiSelect}
               className={styles.input}
               control={control}
               name="groupBy"
+              onCreateOption={(opt: string) => {
+                setGroupByOptions([
+                  ...groupByOptions,
+                  {
+                    label: opt,
+                    value: opt,
+                  },
+                ]);
+
+                control.setValue('groupBy', [...(control.getValues().groupBy ?? []), opt]);
+              }}
               options={groupByOptions}
             />
           </Field>
@@ -92,15 +92,20 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel }) => {
               label="Group wait"
               description="The waiting time until the initial notification is sent for a new group created by an incoming alert."
             >
-              <div className={styles.container}>
-                <InputControl as={Input} className={styles.smallInput} control={control} name="groupWaitValue" />
+              <div className={cx(styles.container, styles.timingContainer)}>
+                <InputControl
+                  as={Input}
+                  className={styles.smallInput}
+                  control={control}
+                  name="groupWaitValue"
+                  type="number"
+                />
                 <InputControl
                   as={Select}
                   className={styles.input}
                   control={control}
-                  defaultValue={intervalTypeOptions[0]}
                   name="groupWaitValueType"
-                  options={intervalTypeOptions}
+                  options={timeOptions}
                 />
               </div>
             </Field>
@@ -108,15 +113,20 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel }) => {
               label="Group interval"
               description="The waiting time to send a batch of new alerts for that group after the first notification was sent."
             >
-              <div className={styles.container}>
-                <InputControl as={Input} className={styles.smallInput} control={control} name="groupIntervalValue" />
+              <div className={cx(styles.container, styles.timingContainer)}>
+                <InputControl
+                  as={Input}
+                  className={styles.smallInput}
+                  control={control}
+                  name="groupIntervalValue"
+                  type="number"
+                />
                 <InputControl
                   as={Select}
                   className={styles.input}
                   control={control}
-                  defaultValue={intervalTypeOptions[0]}
                   name="groupIntervalValueType"
-                  options={intervalTypeOptions}
+                  options={timeOptions}
                 />
               </div>
             </Field>
@@ -124,16 +134,21 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({ onCancel }) => {
               label="Repeat interval"
               description="The waiting time to resend an alert after they have successfully been sent."
             >
-              <div className={styles.container}>
-                <InputControl as={Input} className={styles.smallInput} control={control} name="repeatIntervalValue" />
+              <div className={cx(styles.container, styles.timingContainer)}>
+                <InputControl
+                  as={Input}
+                  className={styles.smallInput}
+                  control={control}
+                  name="repeatIntervalValue"
+                  type="number"
+                />
                 <InputControl
                   as={Select}
                   className={styles.input}
                   control={control}
-                  defaultValue={intervalTypeOptions[0]}
                   menuPlacement="top"
                   name="repeatIntervalValueType"
-                  options={intervalTypeOptions}
+                  options={timeOptions}
                 />
               </div>
             </Field>
@@ -157,15 +172,18 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       flex-flow: row nowrap;
 
-      > * + * {
+      & > * + * {
         margin-left: ${theme.spacing.sm};
       }
     `,
     input: css`
       flex: 1;
     `,
+    timingContainer: css`
+      max-width: 264px;
+    `,
     smallInput: css`
-      flex: 0.1;
+      width: 52px;
     `,
   };
 };

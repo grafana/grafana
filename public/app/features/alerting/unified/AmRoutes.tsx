@@ -1,5 +1,7 @@
-import { InfoBox, LoadingPlaceholder } from '@grafana/ui';
 import React, { FC, useEffect } from 'react';
+import { css } from '@emotion/css';
+import { GrafanaTheme } from '@grafana/data';
+import { Icon, InfoBox, useStyles } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
@@ -11,9 +13,10 @@ import { fetchAlertManagerConfigAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
 
 const AmRoutes: FC = () => {
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
+  const styles = useStyles(getStyles);
 
+  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   useEffect(() => {
@@ -22,76 +25,35 @@ const AmRoutes: FC = () => {
 
   const { result, loading, error } = amConfigs[alertManagerSourceName] || initialAsyncRequestState;
 
+  const config = result?.alertmanager_config;
+  const rootRoute = config?.route;
+  const receivers = (config?.receivers ?? []).map((receiver) => ({
+    label: receiver['name'],
+    value: receiver['name'],
+  }));
+
   return (
-    <AlertingPageWrapper pageId="am-routes">
+    <AlertingPageWrapper pageId="am-routes" isLoading={loading}>
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      <br />
-      <br />
-      {error && !loading && (
-        <InfoBox severity="error" title={<h4>Error loading alert manager config</h4>}>
+      {error && (
+        <InfoBox
+          severity="error"
+          title={
+            <h4>
+              <Icon className={styles.iconError} name="exclamation-triangle" size="xl" />
+              Errors loading AlertManager config
+            </h4>
+          }
+        >
           {error.message || 'Unknown error.'}
         </InfoBox>
       )}
-      {loading && <LoadingPlaceholder text="loading alert manager config..." />}
-      {result && !loading && !error && (
+      {result && (
         <>
-          <AmRootRoute route={result.alertmanager_config.route} />
-          <AmSpecificRouting
-            route={{
-              receiver: 'e2e-bogdanmatei1',
-              group_by: ['cluster', 'alertname'],
-              routes: [
-                {
-                  receiver: 'database-pager-root',
-                  match_re: {
-                    service: 'mysql|cassandra',
-                    service2: 'asl',
-                    service3: 'pls',
-                    service4: 'asdfads',
-                    service5: 'cassandra',
-                  },
-                  routes: [
-                    {
-                      receiver: 'database-pager-child1',
-                      match_re: {
-                        service: 'mysql',
-                      },
-                      routes: [
-                        {
-                          receiver: 'database-pager-subchild1',
-                          group_wait: '10s',
-                        },
-                        {
-                          receiver: 'database-pager-subchild2',
-                          group_wait: '20m',
-                        },
-                      ],
-                      group_wait: '10s',
-                    },
-                    {
-                      receiver: 'database-pager-child2',
-                      match_re: {
-                        service: 'cassandra',
-                      },
-                      group_wait: '20s',
-                    },
-                  ],
-                  group_wait: '10s',
-                },
-                {
-                  receiver: 'frontend-pager',
-                  group_by: ['product', 'environment'],
-                  match: {
-                    team: 'frontend',
-                  },
-                },
-              ],
-              group_wait: '30s',
-              group_interval: '5m',
-              repeat_interval: '4h',
-            }}
-          />
-          <pre>{JSON.stringify(result, null, 2)}</pre>
+          <div className={styles.break} />
+          <AmRootRoute receivers={receivers} route={rootRoute} />
+          <div className={styles.break} />
+          <AmSpecificRouting receivers={receivers} route={rootRoute} />
         </>
       )}
     </AlertingPageWrapper>
@@ -99,3 +61,16 @@ const AmRoutes: FC = () => {
 };
 
 export default AmRoutes;
+
+const getStyles = (theme: GrafanaTheme) => ({
+  iconError: css`
+    color: ${theme.palette.red};
+    margin-right: ${theme.spacing.md};
+  `,
+  break: css`
+    width: 100%;
+    height: 0;
+    margin-bottom: ${theme.spacing.md};
+    border-bottom: solid 1px ${theme.colors.border2};
+  `,
+});

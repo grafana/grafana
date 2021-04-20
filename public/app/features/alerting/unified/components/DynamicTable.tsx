@@ -1,7 +1,8 @@
 import React, { FC, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { IconButton, useStyles } from '@grafana/ui';
+import { IconButton, useStyles, useTheme } from '@grafana/ui';
+import { useMedia } from 'react-use';
 
 export interface DynamicTableColumnProps<T = any> {
   id: string | number;
@@ -38,10 +39,12 @@ export const DynamicTable: FC<DynamicTableProps> = ({
   renderExpandedContent,
 }) => {
   const styles = useStyles(getStyles(cols, isExpandable));
+  const theme = useTheme();
+  const isMobile = useMedia(`(max-width: ${theme.breakpoints.sm})`);
 
   return (
     <div className={styles.container}>
-      <div className={cx(styles.row, styles.headerRow)}>
+      <div className={styles.row}>
         {isExpandable && <div className={styles.cell} />}
         {cols.map((col) => (
           <div className={styles.cell} key={col.id}>
@@ -50,32 +53,30 @@ export const DynamicTable: FC<DynamicTableProps> = ({
         ))}
       </div>
 
-      {items.map((item) => {
-        return (
-          <div className={styles.bodyRow} key={item.id}>
-            <div className={styles.row}>
-              {isExpandable && (
-                <div className={cx(styles.cell, styles.expandCell)}>
-                  <IconButton
-                    name={item.isExpanded ? 'angle-down' : 'angle-right'}
-                    onClick={() => (item.isExpanded ? onCollapse?.(item) : onExpand?.(item))}
-                  />
-                </div>
-              )}
-              {cols.map((col) => (
-                <div className={cx(styles.cell, styles.bodyCell)} data-column={col.label} key={`${item.id}-${col.id}`}>
-                  {col.renderRow?.(item)}
-                </div>
-              ))}
+      {items.map((item) => (
+        <div className={styles.row} key={item.id}>
+          {isExpandable && (
+            <div className={cx(styles.cell, styles.expandCell)}>
+              <IconButton
+                size={isMobile ? 'xl' : 'md'}
+                className={styles.expandButton}
+                name={item.isExpanded ? 'angle-down' : 'angle-right'}
+                onClick={() => (item.isExpanded ? onCollapse?.(item) : onExpand?.(item))}
+              />
             </div>
-            {item.isExpanded && (
-              <div className={styles.expandedContentRow}>
-                {item.renderExpandedContent ? item.renderExpandedContent() : renderExpandedContent?.(item)}
-              </div>
-            )}
-          </div>
-        );
-      })}
+          )}
+          {cols.map((col) => (
+            <div className={cx(styles.cell, styles.bodyCell)} data-column={col.label} key={`${item.id}-${col.id}`}>
+              {col.renderRow?.(item)}
+            </div>
+          ))}
+          {item.isExpanded && (
+            <div className={styles.expandedContentRow}>
+              {item.renderExpandedContent ? item.renderExpandedContent() : renderExpandedContent?.(item)}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 };
@@ -99,39 +100,46 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
 
   return (theme: GrafanaTheme) => ({
     container: css`
-      background-color: ${theme.colors.bg2};
       border: 1px solid ${theme.colors.border3};
       border-radius: 2px;
     `,
     row: css`
       display: grid;
       grid-template-columns: ${sizes.join(' ')};
+      grid-template-rows: 1fr auto;
+
+      &:nth-child(2n + 1) {
+        background-color: ${theme.isLight ? theme.colors.bodyBg : theme.colors.panelBg};
+      }
+
+      &:nth-child(2n) {
+        background-color: ${theme.isLight ? theme.colors.panelBg : theme.colors.bodyBg};
+      }
 
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
         grid-template-columns: auto 1fr;
         grid-template-areas: 'left right';
-      }
-    `,
-    headerRow: css`
-      @media only screen and (max-width: ${theme.breakpoints.sm}) {
-        display: none;
-      }
-    `,
-    bodyRow: css`
-      &:nth-child(2n) {
-        background-color: ${theme.colors.bodyBg};
+        padding: 0 ${theme.spacing.xs};
+
+        &:first-child {
+          display: none;
+        }
       }
     `,
     cell: css`
       align-items: center;
       display: grid;
       padding: ${theme.spacing.sm};
+
+      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+        padding: ${theme.spacing.sm} 0;
+        grid-template-columns: 1fr;
+      }
     `,
     bodyCell: css`
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
         grid-column-end: right;
         grid-column-start: right;
-        grid-template-columns: minmax(30px, 30%) 1fr;
 
         &::before {
           content: attr(data-column);
@@ -142,12 +150,24 @@ const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
       justify-content: center;
 
       @media only screen and (max-width: ${theme.breakpoints.sm}) {
+        align-items: start;
         grid-area: left;
-        grid-template-columns: 1fr;
       }
     `,
     expandedContentRow: css`
-      padding: ${theme.spacing.sm};
+      grid-column-end: ${sizes.length + 1};
+      grid-column-start: 2;
+      grid-row: 2;
+      padding: 0 ${theme.spacing.lg} 0 ${theme.spacing.sm};
+
+      @media only screen and (max-width: ${theme.breakpoints.sm}) {
+        border-top: 1px solid ${theme.colors.border3};
+        grid-row: auto;
+        padding: ${theme.spacing.sm} 0 0 0;
+      }
+    `,
+    expandButton: css`
+      margin-right: 0;
     `,
   });
 };
