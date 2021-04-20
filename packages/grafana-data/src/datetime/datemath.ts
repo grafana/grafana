@@ -1,7 +1,7 @@
 import includes from 'lodash/includes';
 import isDate from 'lodash/isDate';
 import { DateTime, dateTime, dateTimeForTimeZone, ISO_8601, isDateTime, DurationUnit } from './moment_wrapper';
-import { TimeZone } from '../types/index';
+import { RelativeTimeRange, TimeRange, TimeZone } from '../types/index';
 
 const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
@@ -159,4 +159,29 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
     }
   }
   return dateTime;
+}
+
+export function timeRangeToRelative(timeRange: TimeRange): RelativeTimeRange {
+  const now = dateTime().unix();
+  const from = (now - timeRange.from.unix()) / 1000;
+  const to = (now - timeRange.to.unix()) / 1000;
+
+  return {
+    from,
+    to,
+  };
+}
+
+export function relativeTimeRangeToTimeRange(
+  relativeTimeRange: RelativeTimeRange,
+  now: DateTime = dateTime()
+): TimeRange {
+  const from = dateTime(now).subtract(relativeTimeRange.from, 's');
+  const to = relativeTimeRange.to === 0 ? dateTime(now) : dateTime(now).subtract(relativeTimeRange.to, 's');
+
+  return {
+    from,
+    to,
+    raw: { from, to },
+  };
 }

@@ -134,7 +134,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
           <SplitPaneWrapper
             leftPaneComponents={[
               <AlertingQueryPreview key="queryPreview" getInstances={getInstances} queries={[]} onTest={this.onTest} />,
-              <AlertingQueryEditor key="queryEditor" />,
+              <AlertingQueryEditor key="queryEditor" queries={[]} onChange={() => {}} />,
             ]}
             uiState={uiState}
             updateUiState={updateAlertDefinitionUiState}

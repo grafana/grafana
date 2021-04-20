@@ -3,6 +3,7 @@ import each from 'lodash/each';
 
 import * as dateMath from './datemath';
 import { dateTime, DurationUnit, DateTime } from './moment_wrapper';
+import { expect } from '../../../../public/test/lib/common';
 
 describe('DateMath', () => {
   const spans: DurationUnit[] = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
@@ -133,6 +134,24 @@ describe('DateMath', () => {
     it('should strip whitespace from string', () => {
       const date = dateMath.parseDateMath(' - 2d', dateTime([2014, 1, 5]));
       expect(date!.valueOf()).toEqual(dateTime([2014, 1, 3]).valueOf());
+    });
+  });
+
+  describe('relativeTimeRangeToTimeRange', () => {
+    it('should convert seconds to timeRange', () => {
+      const relativeTimeRange = { from: 600, to: 300 };
+      const timeRange = dateMath.relativeTimeRangeToTimeRange(relativeTimeRange, dateTime('2021-04-20T15:55:00Z'));
+
+      expect(timeRange.from.valueOf()).toEqual(dateTime('2021-04-20T15:45:00Z').valueOf());
+      expect(timeRange.to.valueOf()).toEqual(dateTime('2021-04-20T15:50:00Z').valueOf());
+    });
+
+    it('should convert from now', () => {
+      const relativeTimeRange = { from: 600, to: 0 };
+      const timeRange = dateMath.relativeTimeRangeToTimeRange(relativeTimeRange, dateTime('2021-04-20T15:55:00Z'));
+
+      expect(timeRange.from.valueOf()).toEqual(dateTime('2021-04-20T15:45:00Z').valueOf());
+      expect(timeRange.to.valueOf()).toEqual(dateTime('2021-04-20T15:55:00Z').valueOf());
     });
   });
 });

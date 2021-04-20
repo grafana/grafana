@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataSourceApi, DataSourceInstanceSettings, PanelData, TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceApi, DataSourceInstanceSettings, dateMath, PanelData, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertingQuery } from '../types';
@@ -34,21 +34,28 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     this.setState({ defaultDataSource });
   }
 
-  onRemoveQuery = (query: AlertingQuery | ExpressionQuery) => {
-    this.props.onQueriesChange(this.props.queries.filter((item) => item !== query));
+  onRemoveQuery = (query: DataQuery) => {
+    this.props.onQueriesChange(this.props.queries.filter((item) => item.model !== query));
   };
 
-  onChangeTimeRange(timeRange: TimeRange, query: AlertingQuery, index: number) {
-    this.onChangeQuery({ ...query, timeRange }, index);
-  }
-
-  onChangeQuery(query: AlertingQuery | ExpressionQuery, index: number) {
+  onChangeTimeRange(timeRange: TimeRange, index: number) {
     const { queries, onQueriesChange } = this.props;
-
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex === index) {
-          return { ...query };
+          return { ...item, relativeTimeRange: dateMath.timeRangeToRelative(timeRange) };
+        }
+        return item;
+      })
+    );
+  }
+
+  onChangeQuery(query: DataQuery, index: number) {
+    const { queries, onQueriesChange } = this.props;
+    onQueriesChange(
+      queries.map((item, itemIndex) => {
+        if (itemIndex === index) {
+          return { ...item, model: { ...item.model, ...query, datasource: query.datasource! } };
         }
         return item;
       })
@@ -93,30 +100,12 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
           {(provided) => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
-                {queries.map((query: AlertingQuery | ExpressionQuery, index) => {
+                {queries.map((query: GrafanaQuery, index) => {
                   const data = this.state.dataPerQuery[query.refId];
                   const dsSettings = this.getDataSourceSettings(query);
 
                   if (!dsSettings) {
                     return null;
-                  }
-
-                  if (isExpressionQuery(query)) {
-                    return (
-                      <QueryEditorRow
-                        dsSettings={{ ...dsSettings, meta: { ...dsSettings.meta, mixed: true } }}
-                        id={query.refId}
-                        index={index}
-                        key={query.refId}
-                        data={data}
-                        query={query}
-                        onChange={(query) => this.onChangeQuery(query, index)}
-                        onRemoveQuery={this.onRemoveQuery}
-                        onAddQuery={this.props.onDuplicateQuery}
-                        onRunQuery={this.props.onRunQueries}
-                        queries={queries}
-                      />
-                    );
                   }
 
                   return (
@@ -126,10 +115,18 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       index={index}
                       key={query.refId}
                       data={data}
-                      query={query}
+                      query={query.model}
                       onChange={(query) => this.onChangeQuery(query, index)}
-                      timeRange={query.timeRange}
-                      onChangeTimeRange={(timeRange) => this.onChangeTimeRange(timeRange, query, index)}
+                      timeRange={
+                        !isExpressionQuery(query.model)
+                          ? dateMath.relativeTimeRangeToTimeRange(query.relativeTimeRange)
+                          : undefined
+                      }
+                      onChangeTimeRange={
+                        !isExpressionQuery(query.model)
+                          ? (timeRange) => this.onChangeTimeRange(timeRange, index)
+                          : undefined
+                      }
                       onRemoveQuery={this.onRemoveQuery}
                       onAddQuery={this.props.onDuplicateQuery}
                       onRunQuery={this.props.onRunQueries}
