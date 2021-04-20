@@ -10,21 +10,21 @@ export const initialValuesStubs = {
   component: { name: 'mongod', value: 'mongod', label: 'PSMDB' },
   psmdbmongod: versionsStubs,
   xtradbpxc: versionsStubs,
-  xtradbproxysql: versionsStubs,
+  xtradbhaproxy: versionsStubs,
   psmdbmongoddefault: versionsStubs[1],
-  xtradbproxysqldefault: versionsStubs[1],
+  xtradbhaproxydefault: versionsStubs[1],
   xtradbpxcdefault: versionsStubs[1],
 };
 
 // use to omit default labels form testing
 // due to parsing the label to a component to show the recommended option
-export const omitDefaultLabels = ['psmdbmongoddefault.label', 'xtradbproxysqldefault.label', 'xtradbpxcdefault.label'];
+export const omitDefaultLabels = ['psmdbmongoddefault.label', 'xtradbhaproxydefault.label', 'xtradbpxcdefault.label'];
 
 export const possibleComponentOptionsStubs = {
   psmdb: [{ name: 'mongod', value: 'mongod', label: 'PSMDB' }],
   xtradb: [
     { name: 'pxc', value: 'pxc', label: 'PXC' },
-    { name: 'proxysql', value: 'proxysql', label: 'ProxySQL' },
+    { name: 'haproxy', value: 'haproxy', label: 'HAProxy' },
   ],
 };
 

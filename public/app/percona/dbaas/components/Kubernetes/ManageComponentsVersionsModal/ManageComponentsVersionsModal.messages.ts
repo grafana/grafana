@@ -19,7 +19,7 @@ export const Messages = {
   },
   componentLabel: {
     pxc: 'PXC',
-    proxysql: 'ProxySQL',
+    haproxy: 'HAProxy',
     backup: 'Backup',
     mongod: 'PSMDB',
   },

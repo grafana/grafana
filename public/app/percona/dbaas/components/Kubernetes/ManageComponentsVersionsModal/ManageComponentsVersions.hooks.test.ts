@@ -54,7 +54,7 @@ describe('ManageComponentsVersions.hooks::', () => {
     expect(_.omit(initialValues, omitDefaultLabels)).toEqual(
       _.omit(
         initialValuesStubs,
-        ['xtradbpxc', 'xtradbproxysql', 'xtradbpxcdefault', 'xtradbproxysqldefault'].concat(omitDefaultLabels)
+        ['xtradbpxc', 'xtradbhaproxy', 'xtradbpxcdefault', 'xtradbhaproxydefault'].concat(omitDefaultLabels)
       )
     );
     expect(possibleComponentOptions).toEqual(_.omit(possibleComponentOptionsStubs, 'xtradb'));

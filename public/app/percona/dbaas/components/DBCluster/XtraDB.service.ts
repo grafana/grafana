@@ -91,7 +91,7 @@ export class XtraDBService extends DBClusterService {
     return apiManagement.post<any, DBClusterChangeComponentsAPI>('/DBaaS/Components/ChangePXC', {
       kubernetes_cluster_name: kubernetesClusterName,
       pxc: getComponentChange(Operators.xtradb, SupportedComponents.pxc, componentsVersions),
-      proxysql: getComponentChange(Operators.xtradb, SupportedComponents.proxysql, componentsVersions),
+      haproxy: getComponentChange(Operators.xtradb, SupportedComponents.haproxy, componentsVersions),
     });
   }
 
@@ -153,12 +153,11 @@ const toAPI = (dbCluster: DBCluster): DBClusterPayload => ({
       image: dbCluster.databaseImage,
     },
     // Temporary mock data
-    proxysql: {
+    haproxy: {
       compute_resources: {
         cpu_m: THOUSAND,
         memory_bytes: 2 * BILLION,
       },
-      disk_size: BILLION,
     },
   },
 });
