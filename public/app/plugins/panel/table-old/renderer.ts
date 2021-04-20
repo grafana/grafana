@@ -1,4 +1,4 @@
-import { find, first, isArray, isString, isNaN, escape } from 'lodash';
+import { find, first, isArray, isString, escape } from 'lodash';
 import {
   escapeStringForRegex,
   formattedValueToString,
