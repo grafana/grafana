@@ -143,19 +143,21 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onAddQueryClick = () => {
     const { options } = this.props;
-    const { dsSettings, defaultDataSource } = this.state;
-
-    if (dsSettings?.meta.mixed) {
-      this.onChange({
-        queries: addQuery(options.queries, {
-          datasource: defaultDataSource?.name,
-        }),
-      });
-    } else {
-      this.onChange({ queries: addQuery(this.props.options.queries) });
-    }
+    this.onChange({ queries: addQuery(options.queries, this.newQuery()) });
     this.onScrollBottom();
   };
+
+  newQuery(): Partial<DataQuery> {
+    const { dsSettings, defaultDataSource } = this.state;
+
+    if (!dsSettings?.meta.mixed) {
+      return {};
+    }
+
+    return {
+      datasource: defaultDataSource?.name,
+    };
+  }
 
   onChange(changedProps: Partial<QueryGroupOptions>) {
     this.props.onOptionsChange({
