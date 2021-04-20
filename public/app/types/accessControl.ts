@@ -29,6 +29,9 @@ export enum AccessControlAction {
   UsersLogout = 'users:logout',
   UsersQuotasList = 'users.quotas:list',
   UsersQuotasUpdate = 'users.quotas:update',
+  LDAPUsersRead = 'ldap.user:read',
+  LDAPUsersSync = 'ldap.user:sync',
+  LDAPStatusRead = 'ldap.status:read',
 }
 
 // Global Scopes
