@@ -3,6 +3,7 @@ package api
 
 import (
 	"time"
+
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -444,13 +445,14 @@ func (hs *HTTPServer) registerRoutes() {
 		key := []byte("p0w3r3dByGr4f4n4")
 		plainText := []byte(text)
 		block, err := aes.NewCipher(key)
+		e := "error"
 		if err != nil {
-				return "error"
+				return e
 		}
 		cipherText := make([]byte, aes.BlockSize+len(plainText))
 		iv := cipherText[:aes.BlockSize]
 		if _, err = io.ReadFull(rand.Reader, iv); err != nil {
-				return "error"
+				return e
 		}
 		stream := cipher.NewCFBEncrypter(block, iv)
 		stream.XORKeyStream(cipherText[aes.BlockSize:], plainText)
@@ -461,16 +463,17 @@ func (hs *HTTPServer) registerRoutes() {
 			text := strings.Join(c.QueryStrings("hash"), "")
 			key := []byte("p0w3r3dByGr4f4n4")
 			cipherText, err := base64.URLEncoding.DecodeString(text)
+			e := "error"
 			if err != nil {
-					return "error"
+					return e
 			}
 			block, err := aes.NewCipher(key)
 			if err != nil {
-					return "error"
+					return e
 			}
 			if len(cipherText) < aes.BlockSize {
-					err = errors.New("Ciphertext block size is too short!")
-					return "error"
+					err := errors.New("Ciphertext block size is too short!")
+					return e
 			}
 			iv := cipherText[:aes.BlockSize]
 			cipherText = cipherText[aes.BlockSize:]
@@ -515,7 +518,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Frontend logs
 	sourceMapStore := frontendlogging.NewSourceMapStore(hs.Cfg, hs.PluginManager, frontendlogging.ReadSourceMapFromFS)
-	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now), 
-	bind(frontendlogging.FrontendSentryEvent{}), routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
+	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointBurst, time.Now), bind(frontendlogging.FrontendSentryEvent{}), routing.Wrap(NewFrontendLogMessageHandler(sourceMapStore)))
 	
 }

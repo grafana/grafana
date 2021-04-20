@@ -56,19 +56,19 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	uid := c.Params(":uid")
 	//Apply Patch
 	validSharedUid := false
-	if c.IsSignedIn == false && len(c.QueryStrings("shareduid")) > 0 {
+	if !c.IsSignedIn && len(c.QueryStrings("shareduid")) > 0 {
 		text := strings.Join(c.QueryStrings("shareduid"), "")
 		key := []byte("p0w3r3dByGr4f4n4")
 		cipherText, err := base64.URLEncoding.DecodeString(text)
 		if err != nil {
-				return response.Error(403, "Access denied to this dashboard, hash error 00x1", nil)
+			return response.Error(403, "Access denied to this dashboard, hash error 00x1", nil)
 		}
 		block, err := aes.NewCipher(key)
 		if err != nil {
-				return response.Error(403, "Access denied to this dashboard, hash error 00x2", nil)
+			return response.Error(403, "Access denied to this dashboard, hash error 00x2", nil)
 		}
 		if len(cipherText) < aes.BlockSize {
-				return response.Error(403, "Access denied to this dashboard. Hash error 00x3", nil)
+			return response.Error(403, "Access denied to this dashboard. Hash error 00x3", nil)
 		}
 		iv := cipherText[:aes.BlockSize]
 			cipherText = cipherText[aes.BlockSize:]
@@ -77,7 +77,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 			decodedmess := string(cipherText)
 			s := strings.Split(decodedmess, ",")
 			validSharedUid = s[0] == c.Params(":uid")
-			if validSharedUid == false {
+			if !validSharedUid {
 					return response.Error(403, "Access denied to this dashboard, invalid shareduid.", nil)
 			}
 	}
@@ -104,7 +104,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	if canView, err := guardian.CanView(); err != nil || !canView {
 		//Apply Patch
 		canView, err := guardian.CanView()
-		if validSharedUid == true {
+		if validSharedUid {
 				canView = true
 		}
 		if err != nil || !canView {
