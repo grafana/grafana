@@ -15,8 +15,6 @@ default-signifies-exhaustive = true
 ignore-generated-header = false
 severity = "warning"
 confidence = 3
-errorCode = 0
-warningCode = 0
 
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
