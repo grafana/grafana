@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import {
   AnnotationEvent,
@@ -84,6 +84,10 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     });
 
     return this.performTimeSeriesQuery(queries, start, end).pipe(
+      catchError((err) => {
+        // Throw the error message here instead of the whole object to workaround the error parsing error.
+        throw err?.data?.error?.message || 'Error performing time series query.';
+      }),
       map((response) => {
         const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, this.tsdbVersion);
         const result = _.map(response.data, (metricData: any, index: number) => {
