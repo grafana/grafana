@@ -96,7 +96,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     return {
       ...state,
-      data: preparePlotData(frame, [FieldType.string]),
+      data: preparePlotData(frame, [FieldType.number]),
       alignedDataFrame: frame,
       seriesToDataFrameFieldIndexMap: frame.fields.map((f) => f.state!.origin!),
       dimFields,

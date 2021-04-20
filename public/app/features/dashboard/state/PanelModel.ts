@@ -59,7 +59,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   queryRunner: true,
   replaceVariables: true,
   editSourceId: true,
-  hasChanged: true,
+  configRev: true,
   getDisplayTitle: true,
 };
 
@@ -162,7 +162,7 @@ export class PanelModel implements DataConfigSource {
   isViewing = false;
   isEditing = false;
   isInView = false;
-  hasChanged = false;
+  configRev = 0; // increments when configs change
 
   hasRefreshed?: boolean;
   events: EventBus;
@@ -232,16 +232,20 @@ export class PanelModel implements DataConfigSource {
     return this.fieldConfig;
   }
 
+  get hasChanged(): boolean {
+    return this.configRev > 0;
+  }
+
   updateOptions(options: object) {
     this.options = options;
-    this.hasChanged = true;
+    this.configRev++;
     this.events.publish(new PanelOptionsChangedEvent());
     this.render();
   }
 
   updateFieldConfig(config: FieldConfigSource) {
     this.fieldConfig = config;
-    this.hasChanged = true;
+    this.configRev++;
     this.events.publish(new PanelOptionsChangedEvent());
 
     this.resendLastResult();
@@ -398,7 +402,7 @@ export class PanelModel implements DataConfigSource {
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
-    this.hasChanged = true;
+    this.configRev++;
 
     // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
     this.replaceVariables = this.replaceVariables.bind(this);
@@ -417,7 +421,7 @@ export class PanelModel implements DataConfigSource {
     this.interval = options.minInterval;
     this.maxDataPoints = options.maxDataPoints;
     this.targets = options.queries;
-    this.hasChanged = true;
+    this.configRev++;
 
     this.events.publish(new PanelQueriesChangedEvent());
   }
@@ -426,13 +430,13 @@ export class PanelModel implements DataConfigSource {
     query = query || { refId: 'A' };
     query.refId = getNextRefIdChar(this.targets);
     this.targets.push(query as DataQuery);
-    this.hasChanged = true;
+    this.configRev++;
   }
 
   changeQuery(query: DataQuery, index: number) {
     // ensure refId is maintained
     query.refId = this.targets[index].refId;
-    this.hasChanged = true;
+    this.configRev++;
 
     // update query in array
     this.targets = this.targets.map((item, itemIndex) => {
@@ -503,13 +507,13 @@ export class PanelModel implements DataConfigSource {
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.resendLastResult();
-    this.hasChanged = true;
+    this.configRev++;
     this.events.publish(new PanelTransformationsChangedEvent());
   }
 
   setProperty(key: keyof this, value: any) {
     this[key] = value;
-    this.hasChanged = true;
+    this.configRev++;
 
     // Custom handling of repeat dependent options, handled here as PanelEditor can
     // update one key at a time right now
