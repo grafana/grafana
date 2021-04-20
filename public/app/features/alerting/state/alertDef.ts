@@ -46,6 +46,24 @@ const evalOperators = [
   { text: 'AND', value: 'and' },
 ];
 
+const timeEvalFunctions = [
+  { text: 'ALL DAY', value: 'any' },
+  { text: 'FROM', value: 'range' },
+];
+
+const timeEvalDays = [
+  { text: 'ALL DAYS', value: 'all' },
+  { text: 'WEEKDAYS', value: 'wkdy' },
+  { text: 'WEEKENDS', value: 'wknd' },
+  { text: 'MONDAY', value: 'mon' },
+  { text: 'TUESDAY', value: 'tue' },
+  { text: 'WEDNESDAY', value: 'wed' },
+  { text: 'THURSDAY', value: 'thu' },
+  { text: 'FRIDAY', value: 'fri' },
+  { text: 'SATURDAY', value: 'sat' },
+  { text: 'SUNDAY', value: 'sun' },
+];
+
 const reducerTypes = [
   { text: 'avg()', value: 'avg' },
   { text: 'min()', value: 'min' },
@@ -170,6 +188,8 @@ export default {
   conditionTypes: conditionTypes,
   evalFunctions: evalFunctions,
   evalOperators: evalOperators,
+  timeEvalFunctions: timeEvalFunctions,
+  timeEvalDays: timeEvalDays,
   noDataModes: noDataModes,
   executionErrorModes: executionErrorModes,
   reducerTypes: reducerTypes,

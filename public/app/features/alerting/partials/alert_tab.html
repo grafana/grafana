@@ -38,6 +38,45 @@
           firing for more than For duration, then the alert changes to Alerting and sends alert notifications.
         </info-popover>
       </div>
+      <div style="width:25px;"></div>
+      <div class="gf-form">
+        <label class="gf-form-label width-2">ON</label>
+        <info-popover mode="right-absolute">
+          Will check condition only during specified days and time.
+        </info-popover>
+      </div>
+      <div class="gf-form">
+        <div class="gf-form-select-wrapper">
+          <select
+            class="gf-form-input"
+            ng-model="ctrl.alert.timeEvaluator.day"
+            ng-options="f.value as f.text for f in ctrl.timeEvalDays"
+          >
+          </select>
+        </div>
+        <div class="gf-form-select-wrapper">
+          <select
+            class="gf-form-input"
+            ng-model="ctrl.alert.timeEvaluator.type"
+            ng-options="f.value as f.text for f in ctrl.timeEvalFunctions"
+            ng-change="ctrl.timeEvaluatorTypeChanged(ctrl.alert.timeEvaluator)"
+          >
+          </select>
+        </div>
+        <input
+          class="gf-form-input max-width-4"
+          type="text"
+          ng-hide="ctrl.alert.timeEvaluator.params.length === 0"
+          ng-model="ctrl.alert.timeEvaluator.params[0]"
+        />
+        <label class="gf-form-label query-keyword" ng-show="ctrl.alert.timeEvaluator.params.length === 2">TO</label>
+        <input
+          class="gf-form-input max-width-4"
+          type="text"
+          ng-if="ctrl.alert.timeEvaluator.params.length === 2"
+          ng-model="ctrl.alert.timeEvaluator.params[1]"
+        />
+      </div>
     </div>
     <div class="gf-form" ng-if="ctrl.frequencyWarning">
       <label class="gf-form-label text-warning">
@@ -100,6 +139,42 @@
           ng-if="conditionModel.evaluator.params.length === 2"
           ng-model="conditionModel.evaluator.params[1]"
           ng-change="ctrl.evaluatorParamsChanged()"
+        />
+      </div>
+      <div style="width:25px;"></div>
+      <div class="gf-form">
+        <label class="gf-form-label width-2">ON</label>
+        <info-popover mode="right-absolute">
+          Will check condition only during specified days and time.
+        </info-popover>
+      </div>
+      <div class="gf-form">
+        <metric-segment-model
+          property="conditionModel.timeEvaluator.day"
+          options="ctrl.timeEvalDays"
+          custom="false"
+          css-class="query-keyword"
+          on-change="ctrl.evaluatorParamsChanged()"
+        ></metric-segment-model>
+        <metric-segment-model
+          property="conditionModel.timeEvaluator.type"
+          options="ctrl.timeEvalFunctions"
+          custom="false"
+          css-class="query-keyword"
+          on-change="ctrl.timeEvaluatorTypeChanged(conditionModel.timeEvaluator)"
+        ></metric-segment-model>
+        <input
+          class="gf-form-input max-width-4"
+          type="text"
+          ng-hide="conditionModel.timeEvaluator.params.length === 0"
+          ng-model="conditionModel.timeEvaluator.params[0]"
+        />
+        <label class="gf-form-label query-keyword" ng-show="conditionModel.timeEvaluator.params.length === 2">TO</label>
+        <input
+          class="gf-form-input max-width-4"
+          type="text"
+          ng-if="conditionModel.timeEvaluator.params.length === 2"
+          ng-model="conditionModel.timeEvaluator.params[1]"
         />
       </div>
       <div class="gf-form">
