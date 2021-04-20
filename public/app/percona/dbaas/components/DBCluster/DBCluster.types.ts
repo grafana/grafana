@@ -136,7 +136,7 @@ export interface DBClusterActionAPI {
 interface DBClusterParamsAPI {
   cluster_size: number;
   pxc?: DBClusterContainerAPI;
-  proxysql?: DBClusterContainerAPI;
+  haproxy?: Omit<DBClusterContainerAPI, 'disk_size'>;
   replicaset?: DBClusterContainerAPI;
   image?: string;
 }
@@ -227,7 +227,7 @@ export enum DBClusterComponentVersionStatus {
 export interface DBClusterChangeComponentsAPI {
   kubernetes_cluster_name: string;
   pxc?: DBClusterChangeComponentAPI;
-  proxysql?: DBClusterChangeComponentAPI;
+  haproxy?: DBClusterChangeComponentAPI;
   mongod?: DBClusterChangeComponentAPI;
 }
 

@@ -73,7 +73,7 @@ export const dbClustersStub: DBCluster[] = [
 ];
 
 export const xtraDBClusterConnectionStub: DBClusterConnection = {
-  host: 'dbcluster-proxysql',
+  host: 'dbcluster-haproxy',
   password: '1234',
   port: 3000,
   username: 'root',
@@ -166,7 +166,7 @@ export const xtradbComponentsVersionsStubs = {
       operator: '1',
       matrix: {
         pxc: versionsStub,
-        proxysql: versionsStub,
+        haproxy: versionsStub,
       },
     },
   ],

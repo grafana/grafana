@@ -7,6 +7,7 @@ export const OPERATORS_DOCS_URL = {
   [Databases.postgresql]: '',
   [Databases.proxysql]: '',
   [Databases.mariadb]: '',
+  [Databases.haproxy]: '',
 };
 
 export const STATUS_DATA_QA = {
