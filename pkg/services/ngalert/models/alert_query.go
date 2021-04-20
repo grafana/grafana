@@ -86,8 +86,8 @@ func (aq *AlertQuery) setModelProps() error {
 	return nil
 }
 
-// setDatasource sets DatasourceID.
-// If it's an expression sets DefaultExprDatasourceID.
+// setDatasource sets DatasourceUID.
+// If it's an expression sets DefaultExprDatasourceUID.
 func (aq *AlertQuery) setDatasource() error {
 	if aq.modelProps == nil {
 		err := aq.setModelProps()

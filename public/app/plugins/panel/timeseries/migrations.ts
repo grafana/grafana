@@ -20,6 +20,7 @@ import {
   LineStyle,
   PointVisibility,
   StackingMode,
+  TooltipDisplayMode,
 } from '@grafana/ui';
 import { Options } from './types';
 import omitBy from 'lodash/omitBy';
@@ -291,7 +292,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       calcs: [],
     },
     tooltipOptions: {
-      mode: 'single',
+      mode: TooltipDisplayMode.Single,
     },
   };
 

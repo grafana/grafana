@@ -46,7 +46,7 @@ func (rn *rawNode) GetDatasourceUid() (string, error) {
 	}
 	dsUID, ok := rawDs.(string)
 	if !ok {
-		return "", fmt.Errorf("expted datasource identifier to be a string, got %T", rawDs)
+		return "", fmt.Errorf("expected datasource identifier to be a string, got %T", rawDs)
 	}
 	return dsUID, nil
 }

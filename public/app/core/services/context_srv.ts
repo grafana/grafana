@@ -2,6 +2,7 @@ import config from '../../core/config';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { rangeUtil } from '@grafana/data';
+import { AccessControlAction, AccessControlScope, UserPermission } from 'app/types';
 
 export class User {
   id: number;
@@ -17,6 +18,7 @@ export class User {
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;
   email?: string;
+  permissions?: UserPermission;
 
   constructor() {
     this.id = 0;
@@ -74,6 +76,16 @@ export class ContextSrv {
     return this.user.orgRole === role;
   }
 
+  // Checks whether user has required permission
+  hasPermission(action: AccessControlAction, scope?: AccessControlScope): boolean {
+    // Fallback if access control disabled
+    if (!config.featureToggles['accesscontrol']) {
+      return true;
+    }
+
+    return !!(this.user.permissions?.[action] && (scope ? this.user.permissions[action][scope] : true));
+  }
+
   isGrafanaVisible() {
     return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
   }
@@ -98,8 +110,15 @@ export class ContextSrv {
   }
 }
 
-const contextSrv = new ContextSrv();
+let contextSrv = new ContextSrv();
 export { contextSrv };
+
+export const setContextSrv = (override: ContextSrv) => {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('contextSrv can be only overriden in test environment');
+  }
+  contextSrv = override;
+};
 
 coreModule.factory('contextSrv', () => {
   return contextSrv;
