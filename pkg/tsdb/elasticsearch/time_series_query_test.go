@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
@@ -853,80 +854,83 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 				"var1": "_count",
 			})
 		})
+	})
+}
 
-		Convey("With aggregations that requires type casting", func() {
-			Convey("Correctly cast moving_average settings", func() {
-				c := newFakeClient(5)
-				_, err := executeTsdbQuery(c, `{
-					"timeField": "@timestamp",
-					"bucketAggs": [
-						{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
-					],
-					"metrics": [
-						{ "id": "1", "type": "average", "field": "@value" },
-						{
-							"id": "3",
-							"type": "moving_avg",
-							"field": "1",
-							"pipelineAgg": "1",
-							"settings": {
-								"model": "holt_winters",
-								"window": "10",
-								"predict": "5",
-								"settings": {
-									"alpha": "1",
-									"beta": "2",
-									"gamma": "3",
-									"period": "4"
-								}
-							}
+func TestSettingsCasting(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+
+	t.Run("Correctly cast moving_average settings", func(t *testing.T) {
+		c := newFakeClient(5)
+		_, err := executeTsdbQuery(c, `{
+			"timeField": "@timestamp",
+			"bucketAggs": [
+				{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+			],
+			"metrics": [
+				{ "id": "1", "type": "average", "field": "@value" },
+				{
+					"id": "3",
+					"type": "moving_avg",
+					"field": "1",
+					"pipelineAgg": "1",
+					"settings": {
+						"model": "holt_winters",
+						"window": "10",
+						"predict": "5",
+						"settings": {
+							"alpha": "1",
+							"beta": "2",
+							"gamma": "3",
+							"period": "4"
 						}
-					]
-				}`, from, to, 15*time.Second)
-				So(err, ShouldBeNil)
-				sr := c.multisearchRequests[0].Requests[0]
+					}
+				}
+			]
+		}`, from, to, 15*time.Second)
+		assert.Nil(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
 
-				movingAvgSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
+		movingAvgSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
 
-				So(movingAvgSettings["window"], ShouldEqual, 10)
-				So(movingAvgSettings["predict"], ShouldEqual, 5)
+		assert.Equal(t, 10, movingAvgSettings["window"])
+		assert.Equal(t, 5, movingAvgSettings["predict"])
 
-				modelSettings := movingAvgSettings["settings"].(map[string]interface{})
+		modelSettings := movingAvgSettings["settings"].(map[string]interface{})
 
-				So(modelSettings["alpha"], ShouldEqual, 1)
-				So(modelSettings["beta"], ShouldEqual, 2)
-				So(modelSettings["gamma"], ShouldEqual, 3)
-				So(modelSettings["period"], ShouldEqual, 4)
-			})
+		assert.Equal(t, 1, modelSettings["alpha"])
+		assert.Equal(t, 2, modelSettings["beta"])
+		assert.Equal(t, 3, modelSettings["gamma"])
+		assert.Equal(t, 4, modelSettings["period"])
+	})
 
-			Convey("Correctly cast serial_diff settings", func() {
-				c := newFakeClient(5)
-				_, err := executeTsdbQuery(c, `{
-					"timeField": "@timestamp",
-					"bucketAggs": [
-						{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
-					],
-					"metrics": [
-						{ "id": "1", "type": "average", "field": "@value" },
-						{
-							"id": "3",
-							"type": "serial_diff",
-							"field": "1",
-							"pipelineAgg": "1",
-							"settings": {
-								"lag": "1"
-							}
-						}
-					]
-				}`, from, to, 15*time.Second)
-				So(err, ShouldBeNil)
-				sr := c.multisearchRequests[0].Requests[0]
+	t.Run("Correctly cast serial_diff settings", func(t *testing.T) {
+		c := newFakeClient(5)
+		_, err := executeTsdbQuery(c, `{
+			"timeField": "@timestamp",
+			"bucketAggs": [
+				{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+			],
+			"metrics": [
+				{ "id": "1", "type": "average", "field": "@value" },
+				{
+					"id": "3",
+					"type": "serial_diff",
+					"field": "1",
+					"pipelineAgg": "1",
+					"settings": {
+						"lag": "1"
+					}
+				}
+			]
+		}`, from, to, 15*time.Second)
+		assert.Nil(t, err)
+		sr := c.multisearchRequests[0].Requests[0]
 
-				serialDiffSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
+		serialDiffSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.PipelineAggregation).Settings
 
-				So(serialDiffSettings["lag"], ShouldEqual, 1)
-			})
-		})
+		assert.Equal(t, 1, serialDiffSettings["lag"])
 	})
 }
 
