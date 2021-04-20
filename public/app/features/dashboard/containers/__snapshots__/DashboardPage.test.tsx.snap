@@ -56,6 +56,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           "panels": Array [
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -69,7 +70,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "x": 0,
                 "y": 0,
               },
-              "hasChanged": false,
               "id": 1,
               "isEditing": false,
               "isInView": false,
@@ -188,6 +188,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "panels": Array [
                   PanelModel {
                     "cachedPluginOptions": Object {},
+                    "configRev": 0,
                     "datasource": null,
                     "events": EventBusSrv {
                       "emitter": EventEmitter {
@@ -201,7 +202,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                       "x": 0,
                       "y": 0,
                     },
-                    "hasChanged": false,
                     "id": 1,
                     "isEditing": false,
                     "isInView": false,
@@ -290,6 +290,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "panels": Array [
                 PanelModel {
                   "cachedPluginOptions": Object {},
+                  "configRev": 0,
                   "datasource": null,
                   "events": EventBusSrv {
                     "emitter": EventEmitter {
@@ -303,7 +304,6 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                     "x": 0,
                     "y": 0,
                   },
-                  "hasChanged": false,
                   "id": 1,
                   "isEditing": false,
                   "isInView": false,
@@ -414,6 +414,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "panels": Array [
             PanelModel {
               "cachedPluginOptions": Object {},
+              "configRev": 0,
               "datasource": null,
               "events": EventBusSrv {
                 "emitter": EventEmitter {
@@ -427,7 +428,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "x": 0,
                 "y": 0,
               },
-              "hasChanged": false,
               "id": 1,
               "isEditing": false,
               "isInView": false,
@@ -546,6 +546,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "panels": Array [
                   PanelModel {
                     "cachedPluginOptions": Object {},
+                    "configRev": 0,
                     "datasource": null,
                     "events": EventBusSrv {
                       "emitter": EventEmitter {
@@ -559,7 +560,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                       "x": 0,
                       "y": 0,
                     },
-                    "hasChanged": false,
                     "id": 1,
                     "isEditing": false,
                     "isInView": false,
@@ -648,6 +648,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "panels": Array [
                 PanelModel {
                   "cachedPluginOptions": Object {},
+                  "configRev": 0,
                   "datasource": null,
                   "events": EventBusSrv {
                     "emitter": EventEmitter {
@@ -661,7 +662,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                     "x": 0,
                     "y": 0,
                   },
-                  "hasChanged": false,
                   "id": 1,
                   "isEditing": false,
                   "isInView": false,
@@ -754,6 +754,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "panels": Array [
           PanelModel {
             "cachedPluginOptions": Object {},
+            "configRev": 0,
             "datasource": null,
             "events": EventBusSrv {
               "emitter": EventEmitter {
@@ -767,7 +768,6 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "x": 0,
               "y": 0,
             },
-            "hasChanged": false,
             "id": 1,
             "isEditing": false,
             "isInView": false,
