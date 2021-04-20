@@ -2,7 +2,6 @@ import React, { FC, ReactNode, useState } from 'react';
 import {
   DataHoverClearEvent,
   DataHoverEvent,
-  DisplayValue,
   EventBusWithSourceContext,
   FALLBACK_COLOR,
   FieldDisplay,
@@ -32,6 +31,8 @@ import {
   PieChartSvgProps,
   PieChartType,
 } from './types';
+import { getTooltipContainerStyles } from '../../themes/mixins';
+import { SeriesTable, SeriesTableRowProps, VizTooltipOptions } from '../VizTooltip';
 
 const defaultLegendOptions: PieChartLegendOptions = {
   displayMode: LegendDisplayMode.List,
@@ -50,6 +51,7 @@ export const PieChart: FC<PieChartProps> = ({
   fieldConfig,
   replaceVariables,
   legendOptions = defaultLegendOptions,
+  tooltipOptions,
   onSeriesColorChange,
   width,
   height,
@@ -142,6 +144,7 @@ export const PieChart: FC<PieChartProps> = ({
             height={vizHeight}
             highlightedTitle={highlightedTitle}
             fieldDisplayValues={fieldDisplayValues}
+            tooltipOptions={tooltipOptions}
             {...restProps}
           />
         );
@@ -158,11 +161,12 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   highlightedTitle,
   useGradients = true,
   displayLabels = [],
+  tooltipOptions,
 }) => {
   const theme = useTheme();
   const componentInstanceId = useComponentInstanceId('PieChart');
   const styles = useStyles(getStyles);
-  const tooltip = useTooltip<DisplayValue>();
+  const tooltip = useTooltip<SeriesTableRowProps[]>();
   const { containerRef, TooltipInPortal } = useTooltipInPortal({
     detectBounds: true,
     scroll: true,
@@ -179,6 +183,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
   };
 
   const showLabel = displayLabels.length > 0;
+  const showTooltip = tooltipOptions.mode !== 'none' && tooltip.tooltipOpen;
   const total = fieldDisplayValues.reduce((acc, item) => item.display.numeric + acc, 0);
   const layout = getPieLayout(width, height, pieType);
   const colors = [
@@ -238,6 +243,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
                           pie={pie}
                           fill={getGradientColor(color)}
                           openMenu={api.openMenu}
+                          tooltipOptions={tooltipOptions}
                         >
                           {label}
                         </PieSlice>
@@ -253,6 +259,7 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
                       arc={arc}
                       pie={pie}
                       fill={getGradientColor(color)}
+                      tooltipOptions={tooltipOptions}
                     >
                       {label}
                     </PieSlice>
@@ -263,16 +270,18 @@ export const PieChartSvg: FC<PieChartSvgProps> = ({
           </Pie>
         </Group>
       </svg>
-      {tooltip.tooltipOpen && (
+      {showTooltip ? (
         <TooltipInPortal
           key={Math.random()}
           top={tooltip.tooltipTop}
           className={styles.tooltipPortal}
           left={tooltip.tooltipLeft}
+          unstyled={true}
+          applyPositionStyle={true}
         >
-          {tooltip.tooltipData!.title} {formattedValueToString(tooltip.tooltipData!)}
+          <SeriesTable series={tooltip.tooltipData!} />
         </TooltipInPortal>
-      )}
+      ) : null}
     </div>
   );
 };
@@ -283,18 +292,19 @@ const PieSlice: FC<{
   pie: ProvidedProps<FieldDisplay>;
   highlighted?: boolean;
   fill: string;
-  tooltip: UseTooltipParams<DisplayValue>;
+  tooltip: UseTooltipParams<SeriesTableRowProps[]>;
+  tooltipOptions: VizTooltipOptions;
   openMenu?: (event: React.MouseEvent<SVGElement>) => void;
-}> = ({ arc, children, pie, highlighted, openMenu, fill, tooltip }) => {
+}> = ({ arc, children, pie, highlighted, openMenu, fill, tooltip, tooltipOptions }) => {
   const theme = useTheme();
   const styles = useStyles(getStyles);
 
-  const onMouseMoveOverArc = (event: any, datum: any) => {
+  const onMouseMoveOverArc = (event: any) => {
     const coords = localPoint(event.target.ownerSVGElement, event);
     tooltip.showTooltip({
       tooltipLeft: coords!.x,
       tooltipTop: coords!.y,
-      tooltipData: datum,
+      tooltipData: getTooltipData(pie, arc, tooltipOptions),
     });
   };
 
@@ -302,7 +312,7 @@ const PieSlice: FC<{
     <g
       key={arc.data.display.title}
       className={highlighted ? styles.svgArg.highlighted : styles.svgArg.normal}
-      onMouseMove={(event) => onMouseMoveOverArc(event, arc.data.display)}
+      onMouseMove={tooltipOptions.mode !== 'none' ? onMouseMoveOverArc : undefined}
       onMouseOut={tooltip.hideTooltip}
       onClick={openMenu}
     >
@@ -362,6 +372,30 @@ const PieLabel: FC<{
     </g>
   );
 };
+
+function getTooltipData(
+  pie: ProvidedProps<FieldDisplay>,
+  arc: PieArcDatum<FieldDisplay>,
+  tooltipOptions: VizTooltipOptions
+) {
+  if (tooltipOptions.mode === 'multi') {
+    return pie.arcs.map((pieArc) => {
+      return {
+        color: pieArc.data.display.color ?? FALLBACK_COLOR,
+        label: pieArc.data.display.title,
+        value: formattedValueToString(pieArc.data.display),
+        isActive: pieArc.index === arc.index,
+      };
+    });
+  }
+  return [
+    {
+      color: arc.data.display.color ?? FALLBACK_COLOR,
+      label: arc.data.display.title,
+      value: formattedValueToString(arc.data.display),
+    },
+  ];
+}
 
 function getLabelPos(arc: PieArcDatum<FieldDisplay>, outerRadius: number, innerRadius: number) {
   const r = (outerRadius + innerRadius) / 2;
@@ -430,7 +464,7 @@ const getStyles = (theme: GrafanaTheme) => {
       `,
     },
     tooltipPortal: css`
-      z-index: 1050;
+      ${getTooltipContainerStyles(theme)}
     `,
   };
 };
