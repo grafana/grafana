@@ -13,6 +13,7 @@ import ResponseParser from './response_parser';
 import { MySqlQueryForInterpolation, MySqlOptions, MySqlQuery } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
+import { quoteLiteral, buildQuery } from './sql';
 
 export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOptions> {
   id: any;
@@ -29,7 +30,6 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser();
-    this.queryModel = new MySqlQuery({});
     const settingsData = instanceSettings.jsonData || ({} as MySqlOptions);
     this.interval = settingsData.timeInterval || '1m';
   }
@@ -37,7 +37,7 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
   interpolateVariable = (value: string | string[] | number, variable: any) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return this.queryModel.quoteLiteral(value);
+        return quoteLiteral(value);
       } else {
         return value;
       }
@@ -48,7 +48,7 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
     }
 
     const quotedValues = _.map(value, (v: any) => {
-      return this.queryModel.quoteLiteral(v);
+      return quoteLiteral(v);
     });
     return quotedValues.join(',');
   };
@@ -77,11 +77,22 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
   }
 
   applyTemplateVariables(target: MySqlQuery, scopedVars: ScopedVars): Record<string, any> {
-    const queryModel = new MySqlQuery(target, this.templateSrv, scopedVars);
+    // new query with no table set yet
+    let rawSql = target.rawSql;
+    if (!target.rawQuery) {
+      if (!('table' in target)) {
+        rawSql = '';
+      } else {
+        target.rawSql = buildQuery(target);
+      }
+    } else if (interpolate) {
+      rawSql = this.templateSrv.replace(rawSql, scopedVars, interpolateQueryStr);
+    }
+
     return {
       refId: target.refId,
       datasourceId: this.id,
-      rawSql: queryModel.render(this.interpolateVariable as any),
+      rawSql: rawSql,
       format: target.format,
     };
   }
@@ -187,8 +198,7 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
     if (target.rawQuery) {
       rawSql = target.rawSql;
     } else {
-      const query = new MySqlQuery(target);
-      rawSql = query.buildQuery();
+      rawSql = buildQuery(target);
     }
 
     rawSql = rawSql.replace('$__', '');
@@ -196,3 +206,21 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
     return this.templateSrv.variableExists(rawSql);
   }
 }
+
+const interpolateQueryStr = (
+  value: string,
+  variable: { multi: any; includeAll: any },
+  defaultFormatFn: any
+): string => {
+  // if no multi or include all do not regexEscape
+  if (!variable.multi && !variable.includeAll) {
+    return quoteLiteral(value);
+  }
+
+  if (typeof value === 'string') {
+    return quoteLiteral(value);
+  }
+
+  const escapedValues = _.map(value, quoteLiteral);
+  return escapedValues.join(',');
+};

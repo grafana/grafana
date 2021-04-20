@@ -1,15 +1,15 @@
 import _ from 'lodash';
 import appEvents from 'app/core/app_events';
-import { MysqlMetaQuery } from './meta_query';
+import { MySqlMetaQuery } from './meta_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { SqlPart } from 'app/core/components/sql_part/sql_part';
-import MysqlQuery from './mysql_query';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { TemplateSrv } from '@grafana/runtime';
 import { ShowConfirmModalEvent } from '../../../types/events';
+import { buildQuery, quoteLiteral, hasTimeGroup } from './sql';
 
 const defaultQuery = `SELECT
   UNIX_TIMESTAMP(<time_column>) as time_sec,
@@ -27,8 +27,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
   lastQueryError?: string;
   showHelp!: boolean;
 
-  queryModel: MysqlQuery;
-  metaBuilder: MysqlMetaQuery;
+  metaBuilder: MySqlMetaQuery;
   lastQueryMeta?: QueryResultMeta;
   tableSegment: any;
   whereAdd: any;
@@ -50,8 +49,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     this.target = this.target;
-    this.queryModel = new MysqlQuery(this.target, templateSrv, this.panel.scopedVars);
-    this.metaBuilder = new MysqlMetaQuery(this.target, this.queryModel);
+    this.metaBuilder = new MySqlMetaQuery(this.target);
     this.updateProjection();
 
     this.formats = [
@@ -107,7 +105,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
   updateRawSqlAndRefresh() {
     if (!this.target.rawQuery) {
-      this.target.rawSql = this.queryModel.buildQuery();
+      this.target.rawSql = buildQuery(this.target);
     }
 
     this.panelCtrl.refresh();
@@ -235,7 +233,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
             this.target.timeColumnType = result[0].text;
           }
           let partModel;
-          if (this.queryModel.hasUnixEpochTimecolumn()) {
+          if (hasUnixEpochTimecolumn(this.target)) {
             partModel = sqlPart.create({ type: 'macro', name: '$__unixEpochFilter', params: [] });
           } else {
             partModel = sqlPart.create({ type: 'macro', name: '$__timeFilter', params: [] });
@@ -534,7 +532,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
                   this.transformToSegments({
                     addTemplateVars: true,
                     templateQuoter: (v: string) => {
-                      return this.queryModel.quoteLiteral(v);
+                      return quoteLiteral(v);
                     },
                   })
                 )
@@ -571,7 +569,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
 
   getWhereOptions() {
     const options = [];
-    if (this.queryModel.hasUnixEpochTimecolumn()) {
+    if (hasUnixEpochTimecolumn(this.target)) {
       options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__unixEpochFilter' }));
     } else {
       options.push(this.uiSegmentSrv.newSegment({ type: 'macro', value: '$__timeFilter' }));
@@ -607,7 +605,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
       .metricFindQuery(this.metaBuilder.buildColumnQuery('group'))
       .then((tags: any) => {
         const options = [];
-        if (!this.queryModel.hasTimeGroup()) {
+        if (!hasTimeGroup(this.target)) {
           options.push(this.uiSegmentSrv.newSegment({ type: 'time', value: 'time($__interval,none)' }));
         }
         for (const tag of tags) {

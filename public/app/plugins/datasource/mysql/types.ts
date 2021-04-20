@@ -1,4 +1,5 @@
 import { MetricFindValue, DataQuery, DataSourceJsonData } from '@grafana/data';
+
 export interface MySqlQueryForInterpolation {
   alias?: any;
   format?: any;

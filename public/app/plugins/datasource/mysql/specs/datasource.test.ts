@@ -6,7 +6,7 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { FetchResponse, setBackendSrv } from '@grafana/runtime';
-import { MySQLOptions } from './../types';
+import { MySqlOptions } from './../types';
 
 describe('MySQLDatasource', () => {
   const setupTextContext = (response: any) => {
@@ -17,7 +17,7 @@ describe('MySQLDatasource', () => {
       jsonData: {
         defaultProject: 'testproject',
       },
-    } as unknown) as DataSourceInstanceSettings<MySQLOptions>;
+    } as unknown) as DataSourceInstanceSettings<MySqlOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
     const variable = { ...initialCustomVariableModelState };
 
