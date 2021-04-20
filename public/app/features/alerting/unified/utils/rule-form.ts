@@ -11,7 +11,7 @@ import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
-import { intervalToSeconds, parseInterval } from './time';
+import { parseInterval } from './time';
 
 export const defaultFormValues: RuleFormValues = Object.freeze({
   name: '',
@@ -58,7 +58,6 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
       grafana_alert: {
         title: name,
         condition,
-        for: intervalToSeconds(evaluateFor), // @TODO provide raw string once backend supports it
         no_data_state: noDataState,
         exec_err_state: execErrState,
         data: queries,
