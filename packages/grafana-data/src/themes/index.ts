@@ -1,5 +1,5 @@
-export { createTheme, GrafanaThemeV2 } from './createTheme';
-export { ThemePaletteColor } from './types';
+export { createTheme } from './createTheme';
+export { ThemePaletteColor, GrafanaThemeV2 } from './types';
 export { ThemePalette } from './createPalette';
 export { ThemeBreakpoints } from './breakpoints';
 export { ThemeShadows } from './createShadows';

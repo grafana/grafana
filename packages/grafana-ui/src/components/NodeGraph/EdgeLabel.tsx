@@ -3,13 +3,9 @@ import { EdgeDatum, NodeDatum } from './types';
 import { css } from '@emotion/css';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import tinycolor from 'tinycolor2';
-import lightTheme from '../../themes/light';
-import darkTheme from '../../themes/dark';
 import { shortenLine } from './utils';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const inverseTheme = theme.isDark ? lightTheme : darkTheme;
   return {
     mainGroup: css`
       pointer-events: none;
@@ -17,11 +13,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
 
     background: css`
-      fill: ${tinycolor(inverseTheme.colors.bodyBg).setAlpha(0.8).toHex8String()};
+      fill: ${theme.v2.components.tooltip.background};
     `,
 
     text: css`
-      fill: ${inverseTheme.colors.text};
+      fill: ${theme.v2.components.tooltip.text};
     `,
   };
 });
