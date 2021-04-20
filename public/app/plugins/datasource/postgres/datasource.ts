@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { getBackendSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
 import {
   DataQueryRequest,
   DataSourceInstanceSettings,
@@ -9,26 +9,22 @@ import {
   DataQueryResponse,
   MetricFindValue,
 } from '@grafana/data';
-
 import ResponseParser from './response_parser';
-import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-//Types
 import { PostgresMetricFindValue, PostgresQueryForInterpolation, PostgresOptions, PostgresQuery } from './types';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
-export class PostgresDatasource Extends DataSourceWithBackend<PostgresQuery, PostgresQueryOptions> {
+export class PostgresDatasource extends DataSourceWithBackend<PostgresQuery, PostgresQueryOptions> {
   id: any;
   name: any;
-  jsonData: any;
   responseParser: ResponseParser;
   queryModel: PostgresQuery;
   interval: string;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PostgresOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
@@ -52,7 +48,7 @@ export class PostgresDatasource Extends DataSourceWithBackend<PostgresQuery, Pos
       return value;
     }
 
-    const quotedValues = _.map(value, (v) => {
+    const quotedValues = _.map(value, (v: any) => {
       return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
@@ -91,11 +87,9 @@ export class PostgresDatasource Extends DataSourceWithBackend<PostgresQuery, Pos
     };
   }
 
-  annotationQuery(options: any) {
+  async annotationQuery(options: any) {
     if (!options.annotation.rawQuery) {
-      return Promise.reject({
-        message: 'Query missing in annotation definition',
-      });
+      throw new Error('Query missing in annotation definition');
     }
 
     const query = {
@@ -105,7 +99,7 @@ export class PostgresDatasource Extends DataSourceWithBackend<PostgresQuery, Pos
       format: 'table',
     };
 
-    return getBackendSrv()
+    await getBackendSrv()
       .fetch({
         url: '/api/tsdb/query',
         method: 'POST',
@@ -141,37 +135,32 @@ export class PostgresDatasource Extends DataSourceWithBackend<PostgresQuery, Pos
       format: 'table',
     };
 
-    const rsp = await super.query({
-      ...optionalOptions, // includes 'range'
-      targets: [interpolatedQuery],
-    } as DataQueryRequest).toPromise():
+    const rsp = await super
+      .query({
+        ...optionalOptions, // includes 'range'
+        targets: [interpolatedQuery],
+      } as DataQueryRequest)
+      .toPromise();
     if (rsp.data?.length) {
       return frameToMetricFindValue(rsp.data[0]);
     }
     return [];
   }
 
-  getVersion() {
-    return this.metricFindQuery("SELECT current_setting('server_version_num')::int/100", {});
-  }
+  async testDatasource() {
+    let res: any;
+    try {
+      res = await this.metricFindQuery('SELECT 1', {});
+    } catch (err: any) {
+      console.error(err);
+      if (err.data && err.data.message) {
+        return { status: 'error', message: err.data.message };
+      } else {
+        return { status: 'error', message: err.status };
+      }
+    }
 
-  getTimescaleDBVersion() {
-    return this.metricFindQuery("SELECT extversion FROM pg_extension WHERE extname = 'timescaledb'", {});
-  }
-
-  testDatasource() {
-    return this.metricFindQuery('SELECT 1', {})
-      .then((res: any) => {
-        return { status: 'success', message: 'Database Connection OK' };
-      })
-      .catch((err: any) => {
-        console.error(err);
-        if (err.data && err.data.message) {
-          return { status: 'error', message: err.data.message };
-        } else {
-          return { status: 'error', message: err.status };
-        }
-      });
+    return { status: 'success', message: 'Database Connection OK' };
   }
 
   targetContainsTemplate(target: any) {

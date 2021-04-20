@@ -9,7 +9,6 @@ import {
   DataQueryResponse,
   MetricFindValue,
 } from '@grafana/data';
-import MySqlQuery from 'app/plugins/datasource/mysql/mysql_query';
 import ResponseParser from './response_parser';
 import { MySqlQueryForInterpolation, MySqlOptions, MySqlQuery } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -93,9 +92,7 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
 
   annotationQuery(options: any) {
     if (!options.annotation.rawQuery) {
-      return Promise.reject({
-        message: 'Query missing in annotation definition',
-      });
+      throw new Error('Query missing in annotation definition');
     }
 
     const query = {
@@ -119,7 +116,7 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
       .toPromise();
   }
 
-  metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
+  async metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
@@ -138,10 +135,12 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
       format: 'table',
     };
 
-    const rsp = await super.query({
-      ...optionalOptions, // includes 'range'
-      targets: [interpolatedQuery],
-    } as DataQueryRequest).toPromise():
+    const rsp = await super
+      .query({
+        ...optionalOptions, // includes 'range'
+        targets: [interpolatedQuery],
+      } as DataQueryRequest)
+      .toPromise();
     if (rsp.data?.length) {
       return frameToMetricFindValue(rsp.data[0]);
     }

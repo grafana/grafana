@@ -1,4 +1,4 @@
-import { MysqlDatasource } from './datasource';
+import { MySqlDatasource } from './datasource';
 import { MysqlQueryCtrl } from './query_ctrl';
 import {
   createChangeHandler,
@@ -40,7 +40,7 @@ class MysqlAnnotationsQueryCtrl {
 }
 
 export {
-  MysqlDatasource,
+  MySqlDatasource,
   MysqlDatasource as Datasource,
   MysqlQueryCtrl as QueryCtrl,
   MysqlConfigCtrl as ConfigCtrl,
