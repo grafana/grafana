@@ -1,6 +1,6 @@
 import React from 'react';
 import { select, number, boolean } from '@storybook/addon-knobs';
-import { PieChart, PieChartType } from '@grafana/ui';
+import { PieChart, PieChartType, TooltipDisplayMode } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import {
   FieldColorModeId,
@@ -52,15 +52,16 @@ const getKnobs = () => {
   return {
     width: number('Width', 500),
     height: number('Height', 500),
-    pieType: select('pieType', [PieChartType.Pie, PieChartType.Donut], PieChartType.Pie),
+    pieType: select('pieType', Object.values(PieChartType), PieChartType.Pie),
     showLabelName: boolean('Label.showName', true),
     showLabelValue: boolean('Label.showValue', false),
     showLabelPercent: boolean('Label.showPercent', false),
+    tooltipMode: select('Tooltip mode', Object.values(TooltipDisplayMode), TooltipDisplayMode.Single),
   };
 };
 
 export const basic = () => {
-  const { pieType, width, height } = getKnobs();
+  const { pieType, width, height, tooltipMode } = getKnobs();
 
   return (
     <PieChart
@@ -71,12 +72,13 @@ export const basic = () => {
       fieldConfig={fieldConfig}
       data={datapoints}
       pieType={pieType}
+      tooltipOptions={{ mode: tooltipMode }}
     />
   );
 };
 
 export const donut = () => {
-  const { width, height } = getKnobs();
+  const { width, height, tooltipMode } = getKnobs();
 
   return (
     <PieChart
@@ -87,6 +89,7 @@ export const donut = () => {
       fieldConfig={fieldConfig}
       data={datapoints}
       pieType={PieChartType.Donut}
+      tooltipOptions={{ mode: tooltipMode }}
     />
   );
 };

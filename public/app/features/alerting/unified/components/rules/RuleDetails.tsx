@@ -1,5 +1,5 @@
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
-import React, { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
@@ -8,8 +8,9 @@ import { isCloudRulesSource } from '../../utils/datasource';
 import { Annotation } from '../Annotation';
 import { AlertLabels } from '../AlertLabels';
 import { AlertInstancesTable } from './AlertInstancesTable';
-import { DetailsField } from './DetailsField';
+import { DetailsField } from '../DetailsField';
 import { RuleQuery } from './RuleQuery';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 interface Props {
   rule: CombinedRule;
@@ -22,6 +23,23 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
   const { promRule } = rule;
 
   const annotations = Object.entries(rule.annotations);
+
+  const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
+    if (isCloudRulesSource(rulesSource)) {
+      return [{ name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
+    } else if (rule.queries) {
+      return rule.queries
+        .map(({ datasource }) => {
+          const ds = getDataSourceSrv().getInstanceSettings(datasource);
+          if (ds) {
+            return { name: ds.name, icon: ds.meta.info.logos.small };
+          }
+          return { name: datasource };
+        })
+        .filter(({ name }) => name !== '__expr__');
+    }
+    return [];
+  }, [rule, rulesSource]);
 
   return (
     <div>
@@ -42,9 +60,18 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
           ))}
         </div>
         <div className={styles.rightSide}>
-          {isCloudRulesSource(rulesSource) && (
+          {!!dataSources.length && (
             <DetailsField label="Data source">
-              <img className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} /> {rulesSource.name}
+              {dataSources.map(({ name, icon }) => (
+                <div key={name}>
+                  {icon && (
+                    <>
+                      <img className={styles.dataSourceIcon} src={icon} />{' '}
+                    </>
+                  )}
+                  {name}
+                </div>
+              ))}
             </DetailsField>
           )}
         </div>
