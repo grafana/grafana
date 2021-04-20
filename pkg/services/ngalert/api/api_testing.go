@@ -86,7 +86,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 	}
 
 	evaluator := eval.Evaluator{Cfg: srv.Cfg}
-	evalResults, err := evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, timeNow(), srv.DataService)
+	evalResults, err := evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.DataService)
 	if err != nil {
 		return response.Error(400, "Failed to evaluate queries and expressions", err)
 	}
