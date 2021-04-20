@@ -4,13 +4,13 @@ import tinycolor from 'tinycolor2';
 
 export function cardChrome(theme: GrafanaTheme): string {
   return `
-       background: ${theme.colors.bg2};
-       &:hover {
-         background: ${hoverColor(theme.colors.bg2, theme)};
-       }
-       box-shadow: ${theme.shadows.listItem};
-       border-radius: ${theme.border.radius.md};
-    `;
+    background: ${theme.colors.bg2};
+    &:hover {
+      background: ${hoverColor(theme.colors.bg2, theme)};
+    }
+    box-shadow: ${theme.shadows.listItem};
+    border-radius: ${theme.border.radius.md};
+`;
 }
 
 export function hoverColor(color: string, theme: GrafanaTheme): string {
@@ -30,9 +30,9 @@ export function listItem(theme: GrafanaTheme): string {
 
 export function listItemSelected(theme: GrafanaTheme): string {
   return `
-       background: ${hoverColor(theme.colors.bg2, theme)};
-       color: ${theme.colors.textStrong};
-    `;
+    background: ${hoverColor(theme.colors.bg2, theme)};
+    color: ${theme.colors.textStrong};
+`;
 }
 
 export function mediaUp(breakpoint: string) {
@@ -61,3 +61,13 @@ export function getFocusStyles(theme: GrafanaThemeV2): CSSObject {
     transition: `all 0.2s cubic-bezier(0.19, 1, 0.22, 1)`,
   };
 }
+
+// max-width is set up based on .grafana-tooltip class that's used in dashboard
+export const getTooltipContainerStyles = (theme: GrafanaTheme) => `
+  overflow: hidden;
+  background: ${theme.colors.bg2};
+  max-width: 800px;
+  padding: ${theme.spacing.sm};
+  border-radius: ${theme.border.radius.sm};
+  z-index: ${theme.zIndex.tooltip};
+`;

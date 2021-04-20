@@ -8,7 +8,7 @@ import {
   systemDateFormats,
   TimeZone,
 } from '@grafana/data';
-import { FieldLinkList, Portal, TooltipContainer, useStyles } from '@grafana/ui';
+import { FieldLinkList, Portal, VizTooltipContainer, useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useRef, useState } from 'react';
 
@@ -58,7 +58,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
     const elBBox = el.getBoundingClientRect();
 
     return (
-      <TooltipContainer
+      <VizTooltipContainer
         position={{ x: elBBox.left, y: elBBox.top + elBBox.height }}
         offset={{ x: 0, y: 0 }}
         onMouseEnter={onMouseEnter}
@@ -93,7 +93,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
             </div>
           </div>
         </div>
-      </TooltipContainer>
+      </VizTooltipContainer>
     );
   }, [dataFrame.fields, getFieldLinks, index, onMouseEnter, onMouseLeave, styles, timeFormatter]);
 

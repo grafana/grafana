@@ -1,11 +1,9 @@
 import React from 'react';
 import { Graph } from '@grafana/ui';
-import Chart from '../Chart';
 import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId } from '@grafana/data';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TooltipContentProps } from '../Chart/Tooltip';
-import { TooltipMode } from '../Chart/models.gen';
+import { VizTooltip, TooltipDisplayMode, VizTooltipContentProps } from '../VizTooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
 import { GraphProps } from './Graph';
 
@@ -114,15 +112,15 @@ export default {
   },
 };
 
-export const WithTooltip: Story<GraphProps & { tooltipMode: TooltipMode }> = ({ tooltipMode, ...args }) => {
+export const WithTooltip: Story<GraphProps & { tooltipMode: TooltipDisplayMode }> = ({ tooltipMode, ...args }) => {
   return (
     <Graph {...args}>
-      <Chart.Tooltip mode={tooltipMode} />
+      <VizTooltip mode={tooltipMode} />
     </Graph>
   );
 };
 
-const CustomGraphTooltip = ({ activeDimensions }: TooltipContentProps) => {
+const CustomGraphTooltip = ({ activeDimensions }: VizTooltipContentProps) => {
   return (
     <div style={{ height: '200px' }}>
       <div>Showing currently active active dimensions:</div>
@@ -131,10 +129,13 @@ const CustomGraphTooltip = ({ activeDimensions }: TooltipContentProps) => {
   );
 };
 
-export const WithCustomTooltip: Story<GraphProps & { tooltipMode: TooltipMode }> = ({ tooltipMode, ...args }) => {
+export const WithCustomTooltip: Story<GraphProps & { tooltipMode: TooltipDisplayMode }> = ({
+  tooltipMode,
+  ...args
+}) => {
   return (
     <Graph {...args}>
-      <Chart.Tooltip mode={tooltipMode} tooltipComponent={CustomGraphTooltip} />
+      <VizTooltip mode={tooltipMode} tooltipComponent={CustomGraphTooltip} />
     </Graph>
   );
 };

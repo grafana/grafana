@@ -21,6 +21,7 @@ import {
   useStyles,
   useTheme,
   ZoomPlugin,
+  TooltipDisplayMode,
 } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { hideSeriesConfigFactory } from 'app/plugins/panel/timeseries/overrides/hideSeriesConfigFactory';
@@ -129,7 +130,7 @@ export function ExploreGraphNGPanel({
           timeZone={timeZone}
         >
           <ZoomPlugin onZoom={onUpdateTimeRange} />
-          <TooltipPlugin data={data} mode="single" timeZone={timeZone} />
+          <TooltipPlugin data={data} mode={TooltipDisplayMode.Single} timeZone={timeZone} />
           <ContextMenuPlugin data={data} timeZone={timeZone} />
           {annotations && <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />}
         </GraphNG>
