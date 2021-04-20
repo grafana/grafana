@@ -29,6 +29,12 @@ var PredefinedRoles = map[string]RoleDTO{
 				Action: ActionUsersQuotasList,
 				Scope:  ScopeUsersAll,
 			},
+			{
+				Action: ActionLDAPUsersRead,
+			},
+			{
+				Action: ActionLDAPStatusRead,
+			},
 		},
 	},
 	usersAdminEdit: {
@@ -93,6 +99,9 @@ var PredefinedRoles = map[string]RoleDTO{
 			{
 				Action: ActionUsersQuotasUpdate,
 				Scope:  ScopeUsersAll,
+			},
+			{
+				Action: ActionLDAPUsersSync,
 			},
 		},
 	},
