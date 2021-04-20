@@ -43,4 +43,4 @@ If you're interested in contributing to the Grafana project:
 
 ## License
 
-Grafana is distributed under the [Apache 2.0 License](https://github.com/grafana/grafana/blob/master/LICENSE).
+Grafana is distributed under [AGPL-3.0-only](LICENSE). For Apache-2.0 exceptions, see [LICENSING.md](LICENSING.md).
