@@ -291,6 +291,7 @@ export class PanelQueryRunner {
 
   useLastResultFrom(runner: PanelQueryRunner) {
     this.lastResult = runner.getLastResult();
+    this.lastResultRev = this.lastResult?.resultRev;
 
     if (this.lastResult) {
       // The subject is a replay subject so anyone subscribing will get this last result
