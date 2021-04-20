@@ -1,5 +1,7 @@
 package provisioning
 
+import "context"
+
 type Calls struct {
 	RunInitProvisioners                 []interface{}
 	ProvisionDatasources                []interface{}
@@ -8,6 +10,7 @@ type Calls struct {
 	ProvisionDashboards                 []interface{}
 	GetDashboardProvisionerResolvedPath []interface{}
 	GetAllowUIUpdatesFromConfig         []interface{}
+	Run                                 []interface{}
 }
 
 type ProvisioningServiceMock struct {
@@ -19,6 +22,7 @@ type ProvisioningServiceMock struct {
 	ProvisionDashboardsFunc                 func() error
 	GetDashboardProvisionerResolvedPathFunc func(name string) string
 	GetAllowUIUpdatesFromConfigFunc         func(name string) bool
+	RunFunc                                 func(ctx context.Context) error
 }
 
 func NewProvisioningServiceMock() *ProvisioningServiceMock {
@@ -81,4 +85,12 @@ func (mock *ProvisioningServiceMock) GetAllowUIUpdatesFromConfig(name string) bo
 		return mock.GetAllowUIUpdatesFromConfigFunc(name)
 	}
 	return false
+}
+
+func (mock *ProvisioningServiceMock) Run(ctx context.Context) error {
+	mock.Calls.Run = append(mock.Calls.Run, nil)
+	if mock.RunFunc != nil {
+		return mock.RunFunc(ctx)
+	}
+	return nil
 }
