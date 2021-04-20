@@ -111,6 +111,13 @@ func TestMacroEngine(t *testing.T) {
 				So(sql, ShouldEqual, "GROUP BY time_bucket('1036800s',time_column)")
 			})
 
+			Convey("interpolate __timeGroup function with small time range as an argument and TimescaleDB enabled", func() {
+				sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '200ms')")
+				So(err, ShouldBeNil)
+
+				So(sql, ShouldEqual, "GROUP BY time_bucket('0.2s',time_column)")
+			})
+
 			Convey("interpolate __unixEpochFilter function", func() {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochFilter(time)")
 				So(err, ShouldBeNil)
