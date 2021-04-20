@@ -238,7 +238,6 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
     shadows: {
       listItem: 'none',
     },
-    v2: theme,
   };
 }
 

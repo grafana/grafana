@@ -1,8 +1,7 @@
-import { GrafanaTheme, GrafanaThemeType } from '@grafana/data';
+import { createTheme, GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import React, { useContext, useEffect } from 'react';
 import { Themeable } from '../types/theme';
-import { getTheme } from './getTheme';
 import { stylesFactory } from './stylesFactory';
 
 type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
@@ -11,14 +10,15 @@ type Subtract<T, K> = Omit<T, keyof K>;
 /**
  * Mock used in tests
  */
-let ThemeContextMock: React.Context<GrafanaTheme> | null = null;
+let ThemeContextMock: React.Context<GrafanaThemeV2> | null = null;
 
 // Used by useStyles()
 export const memoizedStyleCreators = new WeakMap();
 
 // Use Grafana Dark theme by default
 /** @public */
-export const ThemeContext = React.createContext(getTheme(GrafanaThemeType.Dark));
+export const ThemeContext = React.createContext(createTheme());
+
 ThemeContext.displayName = 'ThemeContext';
 
 export const withTheme = <P extends Themeable, S extends {} = {}>(Component: React.ComponentType<P>) => {
@@ -39,7 +39,7 @@ export const withTheme = <P extends Themeable, S extends {} = {}>(Component: Rea
 };
 
 export function useTheme(): GrafanaTheme {
-  return useContext(ThemeContextMock || ThemeContext);
+  return useContext(ThemeContextMock || ThemeContext).v1;
 }
 
 /**
@@ -70,8 +70,9 @@ export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
 /**
  * Enables theme context  mocking
  */
-export const mockThemeContext = (theme: Partial<GrafanaTheme>) => {
-  ThemeContextMock = React.createContext(theme as GrafanaTheme);
+export const mockThemeContext = (theme: Partial<GrafanaThemeV2>) => {
+  ThemeContextMock = React.createContext(theme as GrafanaThemeV2);
+
   return () => {
     ThemeContextMock = null;
   };
