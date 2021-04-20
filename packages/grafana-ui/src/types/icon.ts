@@ -56,6 +56,7 @@ export type IconName =
   | 'envelope'
   | 'exchange-alt'
   | 'exclamation-triangle'
+  | 'exclamation'
   | 'external-link-alt'
   | 'eye-slash'
   | 'eye'
@@ -134,6 +135,7 @@ export type IconName =
   | 'user'
   | 'users-alt'
   | 'wrap-text'
+  | 'heart-rate'
   | 'x';
 
 export const getAvailableIcons = (): IconName[] => [

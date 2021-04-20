@@ -30,7 +30,9 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
 
   const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
     () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
-    [props]
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [panel.configRev]
   );
 
   const mainBoxElements: React.ReactNode[] = [];
@@ -64,6 +66,9 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
         for (const item of vizOptions) {
           mainBoxElements.push(item.render());
         }
+        for (const item of justOverrides) {
+          mainBoxElements.push(item.render());
+        }
         break;
       case OptionFilter.Overrides:
         for (const override of justOverrides) {
@@ -95,9 +100,6 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
           <div className={styles.mainBox}>{mainBoxElements}</div>
-          {!isSearching && listMode === OptionFilter.All && (
-            <div className={styles.overridesBox}>{justOverrides.map((override) => override.render())}</div>
-          )}
         </CustomScrollbar>
       </div>
     </div>
@@ -180,14 +182,8 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   mainBox: css`
     background: ${theme.colors.bg1};
-    margin-bottom: ${theme.spacing.md};
-    border: 1px solid ${theme.colors.border1};
+    border: 1px solid ${theme.v2.components.panel.border};
     border-top: none;
-  `,
-  overridesBox: css`
-    background: ${theme.colors.bg1};
-    border: 1px solid ${theme.colors.border1};
-    margin-bottom: ${theme.spacing.md};
     flex-grow: 1;
   `,
 });

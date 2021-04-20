@@ -7,8 +7,9 @@ import { Plugin as SlatePlugin } from '@grafana/slate-react';
 
 import TOKEN_MARK from './slate-prism/TOKEN_MARK';
 import { Typeahead } from '../components/Typeahead/Typeahead';
-import { CompletionItem, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../types/completion';
-import { makeFragment } from '../utils/slate';
+import { CompletionItem, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types';
+import { makeFragment, SearchFunctionType } from '../utils';
+import { SearchFunctionMap } from '../utils/searchFunctions';
 
 export const TYPEAHEAD_DEBOUNCE = 250;
 
@@ -289,17 +290,16 @@ const handleTypeahead = async (
       if (!group.items) {
         return group;
       }
-
+      // Falling back to deprecated prefixMatch to support backwards compatibility with plugins using this property
+      const searchFunctionType =
+        group.searchFunctionType || (group.prefixMatch ? SearchFunctionType.Prefix : SearchFunctionType.Word);
+      const searchFunction = SearchFunctionMap[searchFunctionType];
       let newGroup = { ...group };
       if (prefix) {
         // Filter groups based on prefix
         if (!group.skipFilter) {
           newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).length >= prefix.length);
-          if (group.prefixMatch) {
-            newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).startsWith(prefix));
-          } else {
-            newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).includes(prefix));
-          }
+          newGroup.items = searchFunction(newGroup.items, prefix);
         }
 
         // Filter out the already typed value (prefix) unless it inserts custom text not matching the prefix
@@ -309,7 +309,14 @@ const handleTypeahead = async (
       }
 
       if (!group.skipSort) {
-        newGroup.items = sortBy(newGroup.items, (item: CompletionItem) => item.sortText || item.label);
+        newGroup.items = sortBy(newGroup.items, (item: CompletionItem) => {
+          if (item.sortText === undefined) {
+            return item.sortValue !== undefined ? item.sortValue : item.label;
+          } else {
+            // Falling back to deprecated sortText to support backwards compatibility with plugins using this property
+            return item.sortText || item.label;
+          }
+        });
       }
 
       return newGroup;

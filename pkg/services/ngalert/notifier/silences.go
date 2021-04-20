@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/pkg/errors"
 	v2 "github.com/prometheus/alertmanager/api/v2"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/silence"
 )
 
@@ -20,16 +19,11 @@ var (
 )
 
 // ListSilences retrieves a list of stored silences. It supports a set of labels as filters.
-func (am *Alertmanager) ListSilences(filters []string) (apimodels.GettableSilences, error) {
-	matchers := []*labels.Matcher{}
-	for _, matcherString := range filters {
-		matcher, err := labels.ParseMatcher(matcherString)
-		if err != nil {
-			am.logger.Error("failed to parse matcher", "err", err, "matcher", matcherString)
-			return nil, errors.Wrap(ErrListSilencesBadPayload, err.Error())
-		}
-
-		matchers = append(matchers, matcher)
+func (am *Alertmanager) ListSilences(filter []string) (apimodels.GettableSilences, error) {
+	matchers, err := parseFilter(filter)
+	if err != nil {
+		am.logger.Error("failed to parse matchers", "err", err)
+		return nil, errors.Wrap(ErrListSilencesBadPayload, err.Error())
 	}
 
 	psils, _, err := am.silences.Query()

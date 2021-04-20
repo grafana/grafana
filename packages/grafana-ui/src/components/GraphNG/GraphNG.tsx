@@ -20,7 +20,7 @@ import { preparePlotConfigBuilder, preparePlotFrame } from './utils';
 import { preparePlotData } from '../uPlot/utils';
 import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotChart } from '../uPlot/Plot';
-import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/types';
+import { LegendDisplayMode, VizLegendOptions } from '../VizLegend/models.gen';
 import { VizLayout } from '../VizLayout/VizLayout';
 
 /**
@@ -96,7 +96,7 @@ class UnthemedGraphNG extends React.Component<GraphNGProps, GraphNGState> {
 
     return {
       ...state,
-      data: preparePlotData(frame, [FieldType.string]),
+      data: preparePlotData(frame, [FieldType.number]),
       alignedDataFrame: frame,
       seriesToDataFrameFieldIndexMap: frame.fields.map((f) => f.state!.origin!),
       dimFields,
