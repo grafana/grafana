@@ -3,9 +3,9 @@ import { css } from '@emotion/css';
 import { Portal } from '../Portal/Portal';
 import { Dimensions, TimeZone } from '@grafana/data';
 import { FlotPosition } from '../Graph/types';
-import { TooltipContainer } from './TooltipContainer';
+import { VizTooltipContainer } from './VizTooltipContainer';
 import { useStyles } from '../../themes';
-import { TooltipMode } from './models.gen';
+import { TooltipDisplayMode } from './models.gen';
 
 // Describes active dimensions user interacts with
 // It's a key-value pair where:
@@ -14,7 +14,7 @@ import { TooltipMode } from './models.gen';
 //   If row is undefined, it means that we are not hovering over a datapoint
 export type ActiveDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };
 
-export interface TooltipContentProps<T extends Dimensions = any> {
+export interface VizTooltipContentProps<T extends Dimensions = any> {
   // Each dimension is described by array of fields representing it
   // I.e. for graph there are two dimensions: x and y axis:
   // { xAxis: [<array of time fields>], yAxis: [<array of value fields>]}
@@ -23,15 +23,15 @@ export interface TooltipContentProps<T extends Dimensions = any> {
   activeDimensions?: ActiveDimensions<T>;
   timeZone?: TimeZone;
   pos: FlotPosition;
-  mode: TooltipMode;
+  mode: TooltipDisplayMode;
 }
 
-export interface TooltipProps {
+export interface VizTooltipProps {
   /** Element used as tooltips content */
   content?: React.ReactElement<any>;
 
   /** Optional component to be used as a tooltip content */
-  tooltipComponent?: React.ComponentType<TooltipContentProps>;
+  tooltipComponent?: React.ComponentType<VizTooltipContentProps>;
 
   /** x/y position relative to the window */
   position?: { x: number; y: number };
@@ -42,24 +42,27 @@ export interface TooltipProps {
   // Mode in which tooltip works
   // - single - display single series info
   // - multi - display all series info
-  mode?: TooltipMode;
+  mode?: TooltipDisplayMode;
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ content, position, offset }) => {
+/**
+ * @public
+ */
+export const VizTooltip: React.FC<VizTooltipProps> = ({ content, position, offset }) => {
   const styles = useStyles(getStyles);
   if (position) {
     return (
       <Portal className={styles.portal}>
-        <TooltipContainer position={position} offset={offset || { x: 0, y: 0 }}>
+        <VizTooltipContainer position={position} offset={offset || { x: 0, y: 0 }}>
           {content}
-        </TooltipContainer>
+        </VizTooltipContainer>
       </Portal>
     );
   }
   return null;
 };
 
-Tooltip.displayName = 'ChartTooltip';
+VizTooltip.displayName = 'VizTooltip';
 
 const getStyles = () => {
   return {
