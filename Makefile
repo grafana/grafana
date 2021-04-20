@@ -4,7 +4,7 @@
 
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go revive golangci-lint test-go test-js test run run-frontend clean devenv devenv-down revive-strict protobuf help
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go golangci-lint test-go test-js test run run-frontend clean devenv devenv-down protobuf help
 
 GO = GO111MODULE=on go
 GO_FILES ?= ./pkg/...
@@ -69,22 +69,6 @@ test-js: ## Run tests for frontend.
 test: test-go test-js ## Run all tests.
 
 ##@ Linting
-
-scripts/go/bin/revive: scripts/go/go.mod
-	@cd scripts/go; \
-	$(GO) build -o ./bin/revive github.com/mgechev/revive
-
-revive: scripts/go/bin/revive
-	@echo "lint via revive"
-	@scripts/go/bin/revive \
-		-formatter stylish \
-		-config ./scripts/go/configs/revive.toml \
-		$(GO_FILES)
-
-revive-strict: scripts/go/bin/revive
-	@echo "lint via revive (strict)"
-	@scripts/revive-strict scripts/go/bin/revive
-
 scripts/go/bin/golangci-lint: scripts/go/go.mod
 	@cd scripts/go; \
 	$(GO) build -o ./bin/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint
@@ -95,7 +79,7 @@ golangci-lint: scripts/go/bin/golangci-lint
 		--config ./scripts/go/configs/.golangci.toml \
 		$(GO_FILES)
 
-lint-go: golangci-lint revive revive-strict # Run all code checks for backend.
+lint-go: golangci-lint # Run all code checks for backend.
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 shellcheck: $(SH_FILES) ## Run checks for shell scripts.
