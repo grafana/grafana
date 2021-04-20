@@ -295,6 +295,8 @@ async function updateModelTarget(state: GraphiteQueryEditorState): Promise<Graph
 }
 
 export async function targetChanged(state: GraphiteQueryEditorState): Promise<GraphiteQueryEditorState> {
+  state = { ...state };
+
   if (state.queryModel.error) {
     return state;
   }

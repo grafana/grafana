@@ -6,7 +6,7 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
 import { actions } from './actions';
-import { create, GraphiteQueryEditorState } from './state';
+import { createStore, GraphiteQueryEditorState } from './state';
 import {
   AngularDropdownOptions,
   GraphiteActionDispatcher,
@@ -76,7 +76,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       templateSrv: this.templateSrv,
     };
 
-    const [dispatch, state] = create(this, (state) => {
+    const [dispatch, state] = createStore((state) => {
       this.state = state;
       // HACK: inefficient but not invoked frequently. It's needed to inform angular watcher about state changes
       // for state shared between React/AngularJS. Actions invoked from React component will not mark the scope

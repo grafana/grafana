@@ -64,11 +64,7 @@ type Action = {
   payload: any;
 };
 
-const reducer = async (
-  action: Action,
-  state: GraphiteQueryEditorState,
-  _tempoCtrl: any
-): Promise<GraphiteQueryEditorState> => {
+const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise<GraphiteQueryEditorState> => {
   switch (action.type) {
     case 'INIT':
       state = await init(state, action.payload);
@@ -122,14 +118,13 @@ const reducer = async (
   return { ...state };
 };
 
-export const create = (
-  ctrl: any,
+export const createStore = (
   onChange: (state: GraphiteQueryEditorState) => void
 ): [GraphiteActionDispatcher, GraphiteQueryEditorState] => {
   let state = {} as GraphiteQueryEditorState;
 
   const dispatch = async (action: Action) => {
-    state = await reducer(action, state, ctrl);
+    state = await reducer(action, state);
     onChange(state);
   };
 
