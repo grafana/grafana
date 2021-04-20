@@ -33,8 +33,7 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) macaron.Handler {
 				return
 			}
 
-			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") ||
-				strings.HasPrefix(c.Req.URL.Path, "/public/plugins/") {
+			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") {
 				addNoCacheHeaders(c.Resp)
 			}
 
