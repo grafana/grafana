@@ -23,7 +23,7 @@ func TestEmailNotifier(t *testing.T) {
 			Settings: settingsJSON,
 		}
 
-		_, err := NewEmailNotifier(model, externalURL)
+		_, err := NewEmailNotifier(model, externalURL, "")
 		require.Error(t, err)
 	})
 
@@ -36,7 +36,7 @@ func TestEmailNotifier(t *testing.T) {
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
-		}, externalURL)
+		}, externalURL, "")
 
 		require.NoError(t, err)
 		require.Equal(t, "ops", emailNotifier.Name)
@@ -53,7 +53,7 @@ func TestEmailNotifier(t *testing.T) {
 			Name:     "ops",
 			Type:     "email",
 			Settings: settingsJSON,
-		}, externalURL)
+		}, externalURL, "")
 
 		require.NoError(t, err)
 		require.Equal(t, "ops", emailNotifier.Name)

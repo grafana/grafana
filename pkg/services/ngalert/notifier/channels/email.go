@@ -3,12 +3,12 @@ package channels
 import (
 	"context"
 	"net/url"
+	"path"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
-	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -27,11 +27,12 @@ type EmailNotifier struct {
 	AutoResolve bool
 	log         log.Logger
 	externalUrl *url.URL
+	appURL      string
 }
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL) (*EmailNotifier, error) {
+func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL, appURL string) (*EmailNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -52,6 +53,7 @@ func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL) (*E
 		Addresses:    addresses,
 		SingleEmail:  singleEmail,
 		AutoResolve:  autoResolve,
+		appURL:       appURL,
 		log:          log.New("alerting.notifier.email"),
 		externalUrl:  externalUrl,
 	}, nil
@@ -59,11 +61,6 @@ func NewEmailNotifier(model *models.AlertNotification, externalUrl *url.URL) (*E
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	// TODO(codesome): make sure the receiver name is added in the ctx before calling this.
-	ctx = notify.WithReceiverName(ctx, "email-notification-channel") // Dummy.
-	// TODO(codesome): make sure the group labels is added in the ctx before calling this.
-	ctx = notify.WithGroupLabels(ctx, model.LabelSet{}) // Dummy.
-
 	// We only need ExternalURL from this template object. This hack should go away with https://github.com/prometheus/alertmanager/pull/2508.
 	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.externalUrl}, as, gokit_log.NewNopLogger())
 
@@ -81,8 +78,8 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"CommonLabels":      data.CommonLabels,
 				"CommonAnnotations": data.CommonAnnotations,
 				"ExternalURL":       data.ExternalURL,
-				"RuleUrl":           "TODO",
-				"AlertPageUrl":      "TODO",
+				"RuleUrl":           path.Join(en.appURL, "/alerting/list"),
+				"AlertPageUrl":      path.Join(en.appURL, "/alerting/list?alertState=firing&view=state"),
 			},
 			To:          en.Addresses,
 			SingleEmail: en.SingleEmail,
