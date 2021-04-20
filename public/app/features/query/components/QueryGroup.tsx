@@ -315,7 +315,8 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
-    const showAddButton = !isSharedDashboardQuery(dsSettings.name);
+    const { isAddingMixed } = this.state;
+    const showAddButton = !(isAddingMixed || isSharedDashboardQuery(dsSettings.name));
 
     return (
       <HorizontalGroup spacing="md" align="flex-start">
