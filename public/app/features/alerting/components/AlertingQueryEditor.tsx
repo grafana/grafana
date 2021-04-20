@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
 import { DataSourceApi, dateMath, dateTime, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, HorizontalGroup, Icon, RefreshPicker, stylesFactory, Tooltip } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AlertingQueryRows } from './AlertingQueryRows';
 import { expressionDatasource } from '../../expressions/ExpressionDatasource';
@@ -30,8 +30,6 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 
   onRunQueries = () => {};
-
-  onIntervalChanged = (interval: string) => {};
 
   onQueriesChanged = (queries: Array<AlertingQuery | ExpressionQuery>) => {
     this.setState({ queries });
@@ -96,15 +94,6 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
     const styles = getStyles(config.theme);
     return (
       <div className={styles.container}>
-        {queries.length > 0 && (
-          <div className={styles.refreshWrapper}>
-            <RefreshPicker
-              onIntervalChanged={this.onIntervalChanged}
-              onRefresh={this.onRunQueries}
-              intervals={['15s', '30s']}
-            />
-          </div>
-        )}
         <AlertingQueryRows
           queries={queries}
           onQueriesChange={this.onQueriesChanged}
