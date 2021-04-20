@@ -48,7 +48,6 @@ func NewStateTracker(logger log.Logger) *StateTracker {
 	tracker := &StateTracker{
 		cache: cache{
 			states:    make(map[string]AlertState),
-			mtxStates: sync.Mutex{},
 		},
 		quit: make(chan struct{}),
 		Log:  logger,
