@@ -76,12 +76,11 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
     () => (
       <AddClusterButton
         label={Messages.dbcluster.addAction}
-        disabled={settingsLoading}
         action={() => setAddModalVisible(!addModalVisible)}
         data-qa="dbcluster-add-cluster-button"
       />
     ),
-    [addModalVisible, settingsLoading, settings]
+    [addModalVisible, settings]
   );
 
   const getSettings = async () => {
