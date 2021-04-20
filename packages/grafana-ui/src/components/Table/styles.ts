@@ -27,7 +27,7 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       ${color ? `color: ${color};` : ''};
       ${background ? `background: ${background};` : ''};
 
-      &:last-child {
+      &:last-child:not(:only-child) {
         border-right: none;
         padding-right: ${lastChildExtraPadding}px;
       }
