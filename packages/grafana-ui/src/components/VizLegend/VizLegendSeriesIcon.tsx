@@ -13,10 +13,7 @@ interface Props {
  */
 export class VizLegendSeriesIcon extends Component<Props> {
   shouldComponentUpdate(nextProps: Props) {
-    if (this.props.color !== nextProps.color) {
-      return true;
-    }
-    return this.props.disabled !== nextProps.disabled;
+return this.props.color !== nextProps.color || this.props.disabled !== nextProps.disabled;
   }
 
   render() {
