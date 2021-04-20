@@ -23,7 +23,7 @@ TableSortByFieldState: {
   desc?: bool
 } @cuetsy(targetType="interface")
 
-TooltipMode:          "single" | "multi" | "none"          @cuetsy(targetType="type")
+TooltipDisplayMode:          "single" | "multi" | "none"          @cuetsy(targetType="enum")
 FieldTextAlignment:   "auto" | "left" | "right" | "center" @cuetsy(targetType="type")
 AxisPlacement:        "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(targetType="enum")
 PointVisibility:      "auto" | "never" | "always"                             @cuetsy(targetType="enum")
@@ -72,9 +72,6 @@ HideSeriesConfig: {
 } @cuetsy(targetType="interface")
 LegendPlacement:   "bottom" | "right"          @cuetsy(targetType="type")
 LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(targetType="enum")
-GraphTooltipOptions: {
-	mode: TooltipMode
-} @cuetsy(targetType="interface")
 TableFieldOptions: {
 	width?:      number
 	align:       FieldTextAlignment | *"auto"
@@ -90,4 +87,7 @@ VizLegendOptions: {
 	displayMode: LegendDisplayMode
 	placement:   LegendPlacement
 	calcs: [string]
+} @cuetsy(targetType="interface")
+VizTooltipOptions: {
+	mode: TooltipDisplayMode
 } @cuetsy(targetType="interface")

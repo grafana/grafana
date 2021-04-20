@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/pkg/errors"
 	v2 "github.com/prometheus/alertmanager/api/v2"
 	"github.com/prometheus/alertmanager/silence"

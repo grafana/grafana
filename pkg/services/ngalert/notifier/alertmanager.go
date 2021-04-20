@@ -11,7 +11,7 @@ import (
 	"time"
 
 	gokit_log "github.com/go-kit/kit/log"
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/nflog"

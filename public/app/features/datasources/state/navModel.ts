@@ -61,6 +61,14 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       text: 'Insights',
       url: `datasources/edit/${dataSource.id}/insights`,
     });
+
+    navModel.children!.push({
+      active: false,
+      icon: 'database',
+      id: `datasource-cache-${dataSource.id}`,
+      text: 'Cache',
+      url: `datasources/edit/${dataSource.id}/cache`,
+    });
   }
 
   return navModel;
