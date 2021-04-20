@@ -1,7 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const getBabelConfig = require('./babel.config');
 
 class CopyUniconsPlugin {
@@ -14,6 +13,26 @@ class CopyUniconsPlugin {
         fs.copySync(srcDir, destDir);
       }
     });
+  }
+}
+
+// JOSH: use copy-webpack-plugin?
+class CopyMonacoPlugin {
+  apply(compiler) {
+    function copy() {
+      let srcDir = path.resolve(__dirname, '../../node_modules/monaco-editor/dev/vs');
+      let destDir = path.resolve(__dirname, '../../public/build/monaco/min/vs');
+      console.log('**** copying from', srcDir, 'to', destDir);
+      fs.copySync(srcDir, destDir);
+
+      let srcDir2 = path.resolve(__dirname, '../../node_modules/@kusto/monaco-kusto/release/min/');
+      let destDir2 = path.resolve(__dirname, '../../public/build/monaco/min/vs/language/kusto');
+      console.log('**** copying from', srcDir2, 'to', destDir2);
+      fs.copySync(srcDir2, destDir2);
+    }
+
+    compiler.hooks.run.tap('CopyMonacoPlugin', copy);
+    compiler.hooks.watchRun.tap('CopyMonacoPlugin', copy);
   }
 }
 
@@ -73,56 +92,7 @@ module.exports = {
   node: {
     fs: 'empty',
   },
-  plugins: [
-    new CopyUniconsPlugin(),
-    new MonacoWebpackPlugin({
-      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript'],
-      features: [
-        '!accessibilityHelp',
-        'bracketMatching',
-        'caretOperations',
-        '!clipboard',
-        '!codeAction',
-        '!codelens',
-        '!colorDetector',
-        '!comment',
-        '!contextmenu',
-        '!coreCommands',
-        '!cursorUndo',
-        '!dnd',
-        '!find',
-        'folding',
-        '!fontZoom',
-        '!format',
-        '!gotoError',
-        '!gotoLine',
-        '!gotoSymbol',
-        '!hover',
-        '!iPadShowKeyboard',
-        '!inPlaceReplace',
-        '!inspectTokens',
-        '!linesOperations',
-        '!links',
-        '!multicursor',
-        'parameterHints',
-        '!quickCommand',
-        '!quickOutline',
-        '!referenceSearch',
-        '!rename',
-        '!smartSelect',
-        '!snippets',
-        'suggest',
-        '!toggleHighContrast',
-        '!toggleTabFocusMode',
-        '!transpose',
-        '!wordHighlighter',
-        '!wordOperations',
-        '!wordPartOperations',
-      ],
-    }),
-  ],
+  plugins: [new CopyUniconsPlugin(), new CopyMonacoPlugin()],
   module: {
     rules: [
       /**
