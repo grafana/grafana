@@ -40,7 +40,7 @@ content-type: application/json
       "to": 10800
     },
     "model": {
-      "datasourceUid": "p5nwKzlGk",
+      "datasourceUid": "000000004",
       "intervalMs": 1000,
       "maxDataPoints": 100,
       "orgId": 0,
@@ -57,8 +57,7 @@ content-type: application/json
       "to": 10800
     },
     "model": {
-      "datasource": "__expr__",
-      "datasourceUid": "__expr__",
+      "datasourceUid": "-100",
       "expression": "$A",
       "intervalMs": 2000,
       "maxDataPoints": 200,
@@ -68,7 +67,8 @@ content-type: application/json
       "type": "reduce"
     }
   }
-]
+],
+"now": "2021-04-11T14:38:14Z"
 }
 
 ###
