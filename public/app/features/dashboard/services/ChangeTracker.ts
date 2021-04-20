@@ -78,7 +78,8 @@ export class ChangeTracker {
       return true;
     }
 
-    if (!contextSrv.isEditor) {
+    // Ignore changes if the user has been signed out
+    if (!contextSrv.isSignedIn) {
       return true;
     }
 
@@ -86,13 +87,12 @@ export class ChangeTracker {
       return true;
     }
 
-    // Ignore changes if the user has been signed out
-    if (!contextSrv.isSignedIn) {
+    const { canSave, fromScript, fromFile } = current.meta;
+    if (!contextSrv.isEditor && !canSave) {
       return true;
     }
 
-    const meta = current.meta;
-    return !meta.canSave || meta.fromScript || meta.fromFile;
+    return !canSave || fromScript || fromFile;
   }
 
   // remove stuff that should not count in diff
