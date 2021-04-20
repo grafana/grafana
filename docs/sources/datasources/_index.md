@@ -21,7 +21,7 @@ The following data sources are officially supported:
 - [Elasticsearch]({{< relref "elasticsearch.md" >}})
 - [Google Cloud Monitoring]({{< relref "google-cloud-monitoring/_index.md" >}})
 - [Graphite]({{< relref "graphite.md" >}})
-- [InfluxDB]({{< relref "influxdb.md" >}})
+- [InfluxDB]({{< relref "influxdb/_index.md" >}})
 - [Loki]({{< relref "loki.md" >}})
 - [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
 - [MySQL]({{< relref "mysql.md" >}})
