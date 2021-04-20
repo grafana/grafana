@@ -9,29 +9,29 @@ import {
   DataQueryResponse,
   MetricFindValue,
 } from '@grafana/data';
-import MysqlQuery from 'app/plugins/datasource/mysql/mysql_query';
+import MySqlQuery from 'app/plugins/datasource/mysql/mysql_query';
 import ResponseParser from './response_parser';
-import { MysqlQueryForInterpolation, MySQLOptions, MySQLQuery } from './types';
+import { MySqlQueryForInterpolation, MySqlOptions, MySqlQuery } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
-export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOptions> {
+export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOptions> {
   id: any;
   name: any;
   responseParser: ResponseParser;
-  queryModel: MysqlQuery;
+  queryModel: MySqlQuery;
   interval: string;
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<MySQLOptions>,
+    instanceSettings: DataSourceInstanceSettings<MySqlOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser();
-    this.queryModel = new MysqlQuery({});
-    const settingsData = instanceSettings.jsonData || ({} as MySQLOptions);
+    this.queryModel = new MySqlQuery({});
+    const settingsData = instanceSettings.jsonData || ({} as MySqlOptions);
     this.interval = settingsData.timeInterval || '1m';
   }
 
@@ -56,9 +56,9 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
   };
 
   interpolateVariablesInQueries(
-    queries: MysqlQueryForInterpolation[],
+    queries: MySqlQueryForInterpolation[],
     scopedVars: ScopedVars
-  ): MysqlQueryForInterpolation[] {
+  ): MySqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map((query) => {
@@ -74,15 +74,15 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
     return expandedQueries;
   }
 
-  filterQuery(query: MySQLQuery): boolean {
+  filterQuery(query: MySqlQuery): boolean {
     if (query.hide) {
       return false;
     }
     return true;
   }
 
-  applyTemplateVariables(target: MySQLQuery, scopedVars: ScopedVars): Record<string, any> {
-    const queryModel = new MysqlQuery(target, this.templateSrv, scopedVars);
+  applyTemplateVariables(target: MySqlQuery, scopedVars: ScopedVars): Record<string, any> {
+    const queryModel = new MySqlQuery(target, this.templateSrv, scopedVars);
     return {
       refId: target.refId,
       datasourceId: this.id,
@@ -91,7 +91,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
     };
   }
 
-  query(request: DataQueryRequest<MySQLQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<MySqlQuery>): Observable<DataQueryResponse> {
     return super.query(request);
   }
 
@@ -196,7 +196,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
     if (target.rawQuery) {
       rawSql = target.rawSql;
     } else {
-      const query = new MysqlQuery(target);
+      const query = new MySqlQuery(target);
       rawSql = query.buildQuery();
     }
 

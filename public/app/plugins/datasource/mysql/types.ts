@@ -1,5 +1,5 @@
 import { MetricFindValue, DataQuery, DataSourceJsonData } from '@grafana/data';
-export interface MysqlQueryForInterpolation {
+export interface MySqlQueryForInterpolation {
   alias?: any;
   format?: any;
   rawSql?: any;
@@ -7,17 +7,17 @@ export interface MysqlQueryForInterpolation {
   hide?: any;
 }
 
-export interface MysqlMetricFindValue extends MetricFindValue {
+export interface MySqlMetricFindValue extends MetricFindValue {
   value?: string;
 }
 
-export interface MySQLOptions extends DataSourceJsonData {
+export interface MySqlOptions extends DataSourceJsonData {
   timeInterval: string;
 }
 
 export type ResultFormat = 'time_series' | 'table';
 
-export interface MySQLQuery extends DataQuery {
+export interface MySqlQuery extends DataQuery {
   alias?: string;
   format?: ResultFormat;
   rawSql?: any;
