@@ -18,12 +18,14 @@ import (
 )
 
 type ProvisioningService interface {
+	RunInitProvisioners() error
 	ProvisionDatasources() error
 	ProvisionPlugins() error
 	ProvisionNotifications() error
 	ProvisionDashboards() error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
+	registry.BackgroundService
 }
 
 func init() {
