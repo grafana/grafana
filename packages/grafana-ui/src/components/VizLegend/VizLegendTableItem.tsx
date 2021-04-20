@@ -7,7 +7,6 @@ import { styleMixins } from '../../themes';
 import {
   GrafanaTheme,
   formattedValueToString,
-  EventBus,
   DataHoverClearEvent,
   DataHoverEvent,
   EventBusWithSourceContext,

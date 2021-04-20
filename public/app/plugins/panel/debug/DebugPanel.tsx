@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { fieldReducers, getFieldDisplayName, getFrameDisplayName, PanelProps, ReducerID } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 
 import { DebugPanelOptions, DebugMode, UpdateCounters } from './types';
 import { EventBusLoggerPanel } from './EventBusLogger';

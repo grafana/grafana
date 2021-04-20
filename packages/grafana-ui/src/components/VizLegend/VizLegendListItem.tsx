@@ -4,7 +4,7 @@ import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem, SeriesColorChangeHandler } from './types';
 import { VizLegendStatsList } from './VizLegendStatsList';
 import { useStyles } from '../../themes';
-import { DataHoverClearEvent, DataHoverEvent, EventBus, EventBusWithSourceContext, GrafanaTheme } from '@grafana/data';
+import { DataHoverClearEvent, DataHoverEvent, EventBusWithSourceContext, GrafanaTheme } from '@grafana/data';
 
 export interface Props {
   item: VizLegendItem;
