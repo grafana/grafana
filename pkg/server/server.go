@@ -273,7 +273,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 	objs := []interface{}{
 		bus.GetBus(),
 		s.cfg,
-		routing.NewRouteRegister(middleware.RequestTracing, middleware.RequestMetrics(s.cfg)),
+		routing.NewRouteRegister(middleware.ProvideRouteOperationName, middleware.RequestMetrics(s.cfg)),
 		localcache.New(5*time.Minute, 10*time.Minute),
 		s,
 	}
