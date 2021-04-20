@@ -18,7 +18,6 @@ import (
 )
 
 type ProvisioningService interface {
-	RunInitProvisioners() error
 	ProvisionDatasources() error
 	ProvisionPlugins() error
 	ProvisionNotifications() error
