@@ -23,7 +23,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
     <ReceiversSection
       title="Message templates"
       description="Templates construct the messages that get sent to the contact points."
-      addButtonLabel="New templates"
+      addButtonLabel="New template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
     >
       <table className={tableStyles.table}>

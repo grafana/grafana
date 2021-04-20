@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
+import { TemplateForm } from './TemplateForm';
 
 export const NewTemplateView: FC = () => {
-  return <p>@TODO new template</p>;
+  return <TemplateForm />;
 };
