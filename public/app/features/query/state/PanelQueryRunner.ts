@@ -12,8 +12,11 @@ import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datas
 // Types
 import {
   applyFieldOverrides,
+  compareArrayValues,
+  compareDataFrameStructures,
   CoreApp,
   DataConfigSource,
+  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
@@ -72,30 +75,74 @@ export class PanelQueryRunner {
    */
   getData(options: GetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
+    let structureRev = 1;
+    let lastData: DataFrame[] = [];
+    let processedCount = 0;
+    let lastConfigRev = -1;
+    const fastCompare = (a: DataFrame, b: DataFrame) => {
+      return compareDataFrameStructures(a, b, true);
+    };
 
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),
       map((data: PanelData) => {
         let processedData = data;
+        let sameStructure = false;
 
-        if (withFieldConfig) {
-          // Apply field defaults & overrides
-          const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-          const timeZone = data.request?.timezone ?? 'browser';
+        if (withFieldConfig && data.series?.length) {
+          // Apply field defaults and overrides
+          let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          let processFields = fieldConfig != null;
 
-          if (fieldConfig) {
+          // If the shape is the same, we can skip field overrides
+          if (
+            processFields &&
+            processedCount > 0 &&
+            lastData.length &&
+            lastConfigRev === this.dataConfigSource.configRev
+          ) {
+            const sameTypes = compareArrayValues(lastData, processedData.series, fastCompare);
+            if (sameTypes) {
+              // Keep the previous field config settings
+              processedData = {
+                ...processedData,
+                series: lastData.map((frame, frameIndex) => ({
+                  ...frame,
+                  fields: frame.fields.map((field, fieldIndex) => ({
+                    ...field,
+                    values: data.series[frameIndex].fields[fieldIndex].values,
+                  })),
+                })),
+              };
+              processFields = false;
+              sameStructure = true;
+            }
+          }
+
+          if (processFields) {
+            lastConfigRev = this.dataConfigSource.configRev!;
+            processedCount++; // results with data
             processedData = {
               ...processedData,
               series: applyFieldOverrides({
-                timeZone: timeZone,
+                timeZone: data.request?.timezone ?? 'browser',
                 data: processedData.series,
-                ...fieldConfig,
+                ...fieldConfig!,
               }),
             };
           }
         }
 
-        return processedData;
+        if (!sameStructure) {
+          sameStructure = compareArrayValues(lastData, processedData.series, compareDataFrameStructures);
+        }
+        if (!sameStructure) {
+          structureRev++;
+        }
+
+        lastData = processedData.series;
+
+        return { ...processedData, structureRev };
       })
     );
   }
@@ -162,7 +209,7 @@ export class PanelQueryRunner {
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
 
-      // Attach the datasource name to each query
+      // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
         if (!query.datasource) {
           query.datasource = ds.name;

@@ -1,16 +1,19 @@
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { css } from '@emotion/css';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
-export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backdropBackground = theme.colors.bg3;
+export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
+  // rgba(1,4,9,0.8)
+  const backdropBackground = 'rgba(0, 0, 0, 0.5)';
+  const borderRadius = theme.shape.borderRadius(2);
 
   return {
     modal: css`
       position: fixed;
       z-index: ${theme.zIndex.modal};
-      background: ${theme.colors.bodyBg};
-      box-shadow: 0 0 20px ${theme.colors.dropdownShadow};
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z4};
+      border-radius: ${borderRadius};
       background-clip: padding-box;
       outline: none;
       width: 750px;
@@ -29,24 +32,24 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       left: 0;
       z-index: ${theme.zIndex.modalBackdrop};
       background-color: ${backdropBackground};
-      opacity: 0.7;
     `,
     modalHeader: css`
       label: modalHeader;
-      background: ${theme.colors.bg2};
-      border-bottom: 1px solid ${theme.colors.pageHeaderBorder};
+      background: ${theme.colors.background.secondary};
+      border-bottom: 1px solid ${theme.colors.border.weak};
+      border-radius: ${borderRadius} ${borderRadius} 0 0;
       display: flex;
       height: 42px;
     `,
     modalHeaderTitle: css`
       font-size: ${theme.typography.size.lg};
-      margin: 0 ${theme.spacing.md};
+      margin: 0 ${theme.spacing(2)};
       display: flex;
       align-items: center;
       line-height: 42px;
     `,
     modalHeaderIcon: css`
-      margin-right: ${theme.spacing.md};
+      margin-right: ${theme.spacing(2)};
       font-size: inherit;
       &:before {
         vertical-align: baseline;
@@ -58,13 +61,13 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       flex-grow: 1;
       justify-content: flex-end;
-      padding-right: ${theme.spacing.sm};
+      padding-right: ${theme.spacing(1)};
     `,
     modalContent: css`
-      padding: calc(${theme.spacing.d} * 2);
+      padding: calc(${theme.spacing.gridSize} * 2);
       overflow: auto;
       width: 100%;
-      max-height: calc(90vh - ${theme.spacing.d} * 2);
+      max-height: calc(90vh - ${theme.spacing.gridSize} * 2);
     `,
   };
 });

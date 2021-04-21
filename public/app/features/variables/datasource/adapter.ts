@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { DataSourceVariableModel } from '../types';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
@@ -13,8 +13,8 @@ import { optionPickerFactory } from '../pickers';
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
     id: 'datasource',
-    description: 'Enabled you to dynamically switch the datasource for multiple panels',
-    name: 'Datasource',
+    description: 'Enabled you to dynamically switch the data source for multiple panels.',
+    name: 'Data source',
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,
     picker: optionPickerFactory<DataSourceVariableModel>(),

@@ -1,13 +1,7 @@
 import { LiveChannelSupport, LiveChannelConfig } from '@grafana/data';
-import { MeasurementCollector } from '@grafana/runtime';
-
-interface MeasurementChannel {
-  config: LiveChannelConfig;
-  collector: MeasurementCollector;
-}
 
 export class LiveMeasurementsSupport implements LiveChannelSupport {
-  private cache: Record<string, MeasurementChannel> = {};
+  private cache: Record<string, LiveChannelConfig> = {};
 
   /**
    * Get the channel handler for the path, or throw an error if invalid
@@ -15,19 +9,11 @@ export class LiveMeasurementsSupport implements LiveChannelSupport {
   getChannelConfig(path: string): LiveChannelConfig | undefined {
     let c = this.cache[path];
     if (!c) {
-      // Create a new cache for each path
-      const collector = new MeasurementCollector();
-      c = this.cache[path] = {
-        collector,
-        config: {
-          path,
-          processMessage: collector.addBatch, // << this converts the stream from a single event to the whole cache
-          getController: () => collector,
-          canPublish: () => true,
-        },
+      c = {
+        path,
       };
     }
-    return c.config;
+    return c;
   }
 
   /**

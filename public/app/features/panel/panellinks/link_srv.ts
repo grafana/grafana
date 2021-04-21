@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { chain } from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
@@ -24,7 +24,7 @@ import {
   VariableSuggestion,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
+import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 
 const timeRangeVars = [
   {
@@ -110,7 +110,7 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
     }
   }
 
-  const labels = _.chain(all).flatten().uniq().value();
+  const labels = chain(all).flatten().uniq().value();
 
   return [
     {
@@ -280,7 +280,7 @@ export class LinkSrv implements LinkService {
     if (link.includeVars) {
       params = {
         ...params,
-        ...getAllVariableValuesForUrl(),
+        ...getVariablesUrlParams(),
       };
     }
 

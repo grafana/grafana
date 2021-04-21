@@ -1,8 +1,8 @@
 import React from 'react';
-import _ from 'lodash';
+import { last } from 'lodash';
 import { useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { DiffTitle } from './DiffTitle';
 import { DiffValues } from './DiffValues';
 import { Diff, getDiffText } from './utils';
@@ -29,7 +29,7 @@ export const DiffGroup: React.FC<DiffGroupProps> = ({ diffs, title }) => {
       <ul className={styles.list}>
         {diffs.map((diff: Diff, idx: number) => {
           return (
-            <li className={styles.listItem} key={`${_.last(diff.path)}__${idx}`}>
+            <li className={styles.listItem} key={`${last(diff.path)}__${idx}`}>
               <span>{getDiffText(diff)}</span> <DiffValues diff={diff} />
             </li>
           );

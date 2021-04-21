@@ -1,4 +1,4 @@
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { styleMixins, stylesFactory } from '../../themes';
 import { getScrollbarWidth } from '../../utils';
@@ -27,7 +27,7 @@ export const getTableStyles = stylesFactory((theme: GrafanaTheme) => {
       ${color ? `color: ${color};` : ''};
       ${background ? `background: ${background};` : ''};
 
-      &:last-child {
+      &:last-child:not(:only-child) {
         border-right: none;
         padding-right: ${lastChildExtraPadding}px;
       }

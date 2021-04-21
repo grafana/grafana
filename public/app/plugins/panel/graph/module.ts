@@ -4,9 +4,8 @@ import './thresholds_form';
 import './time_regions_form';
 
 import template from './template';
-import _ from 'lodash';
+import { defaults, find, without } from 'lodash';
 
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
@@ -28,6 +27,7 @@ import { ThresholdMapper } from 'app/features/alerting/state/ThresholdMapper';
 import { getAnnotationsFromData } from 'app/features/annotations/standardAnnotationSupport';
 import { appEvents } from '../../../core/core';
 import { ZoomOutEvent } from '../../../types/events';
+import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
 
 export class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -148,11 +148,11 @@ export class GraphCtrl extends MetricsPanelCtrl {
   constructor($scope: any, $injector: auto.IInjectorService, private annotationsSrv: AnnotationsSrv) {
     super($scope, $injector);
 
-    _.defaults(this.panel, this.panelDefaults);
-    _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
-    _.defaults(this.panel.legend, this.panelDefaults.legend);
-    _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
-    _.defaults(this.panel.options, this.panelDefaults.options);
+    defaults(this.panel, this.panelDefaults);
+    defaults(this.panel.tooltip, this.panelDefaults.tooltip);
+    defaults(this.panel.legend, this.panelDefaults.legend);
+    defaults(this.panel.xaxis, this.panelDefaults.xaxis);
+    defaults(this.panel.options, this.panelDefaults.options);
 
     this.useDataFrames = true;
     this.processor = new DataProcessor(this.panel);
@@ -351,7 +351,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   };
 
   onToggleAxis = (info: { alias: any; yaxis: any }) => {
-    let override: any = _.find(this.panel.seriesOverrides, { alias: info.alias });
+    let override: any = find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
@@ -365,7 +365,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   removeSeriesOverride(override: any) {
-    this.panel.seriesOverrides = _.without(this.panel.seriesOverrides, override);
+    this.panel.seriesOverrides = without(this.panel.seriesOverrides, override);
     this.render();
   }
 

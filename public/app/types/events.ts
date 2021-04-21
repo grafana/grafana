@@ -1,4 +1,5 @@
-import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaTheme, TimeRange } from '@grafana/data';
+import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaThemeV2, TimeRange } from '@grafana/data';
+import { IconName } from '@grafana/ui';
 
 /**
  * Event Payloads
@@ -35,7 +36,7 @@ export interface ShowConfirmModalPayload {
   altActionText?: string;
   yesText?: string;
   noText?: string;
-  icon?: string;
+  icon?: IconName;
 
   onConfirm?: () => void;
   onAltAction?: () => void;
@@ -95,7 +96,6 @@ export const toggleKioskMode = eventFactory<ToggleKioskModePayload>('toggle-kios
 
 export const timeRangeUpdated = eventFactory<TimeRange>('time-range-updated');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
-export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
 export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
 
@@ -145,7 +145,7 @@ export class RenderEvent extends BusEventBase {
   static type = 'render';
 }
 
-export class ThemeChangedEvent extends BusEventWithPayload<GrafanaTheme> {
+export class ThemeChangedEvent extends BusEventWithPayload<GrafanaThemeV2> {
   static type = 'theme-changed';
 }
 

@@ -10,13 +10,15 @@ weight = 900
 
 Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. This topic explains options, variables, querying, and other options specific to the MS SQL data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-### Data source options
+## Data source options
+
+To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the data source.
 
 | Name             | Description                                                                                                                           |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `Name`           | The data source name. This is how you refer to the data source in panels and queries.                                                 |
 | `Default`        | Default data source means that it will be pre-selected for new panels.                                                                |
-| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If port is omitted, default 1433 will be used.                     |
+| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If the port is omitted, the driver default will be used (0).       |
 | `Database`       | Name of your MS SQL database.                                                                                                         |
 | `Authentication` | Authentication mode. Either using SQL Server Authentication or Windows Authentication (single sign on for Windows users).             |
 | `User`           | Database user's login/username                                                                                                        |

@@ -6,6 +6,7 @@ import {
   isSystemOverride as isSystemOverrideGuard,
   VariableSuggestionsScope,
   DynamicConfigValue,
+  ConfigOverrideRule,
 } from '@grafana/data';
 import { Container, fieldMatchersUI, ValuePicker } from '@grafana/ui';
 import { OptionPaneRenderProps } from './types';
@@ -51,6 +52,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
   const context = {
     data,
     getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
+    isOverride: true,
   };
 
   /**
@@ -62,7 +64,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
     const matcherUi = fieldMatchersUI.get(override.matcher.id);
     const configPropertiesOptions = getOverrideProperties(registry);
     const isSystemOverride = isSystemOverrideGuard(override);
-    // A way force open new override categories
+    // A way to force open new override categories
     const forceOpen = override.properties.length === 0 ? 1 : 0;
 
     const category = new OptionsPaneCategoryDescriptor({
@@ -88,7 +90,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
       onOverrideChange(idx, override);
     };
 
-    const onDynamicConfigValueAdd = (value: SelectableValue<string>) => {
+    const onDynamicConfigValueAdd = (o: ConfigOverrideRule, value: SelectableValue<string>) => {
       const registryItem = registry.get(value.value!);
       const propertyConfig: DynamicConfigValue = {
         id: registryItem.id,
@@ -96,12 +98,12 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
       };
 
       if (override.properties) {
-        override.properties.push(propertyConfig);
+        o.properties.push(propertyConfig);
       } else {
-        override.properties = [propertyConfig];
+        o.properties = [propertyConfig];
       }
 
-      onOverrideChange(idx, override);
+      onOverrideChange(idx, o);
     };
 
     /**
@@ -110,7 +112,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: matcherUi.name,
-        Component: function renderMatcherUI() {
+        render: function renderMatcherUI() {
           return (
             <matcherUi.component
               matcher={matcherUi.matcher}
@@ -151,7 +153,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
         new OptionsPaneItemDescriptor({
           title: registryItemForProperty.name,
           skipField: true,
-          Component: function renderPropertyEditor() {
+          render: function renderPropertyEditor() {
             return (
               <DynamicConfigValueEditor
                 key={`${property.id}/${propIdx}`}
@@ -176,16 +178,16 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
         new OptionsPaneItemDescriptor({
           title: '----------',
           skipField: true,
-          Component: function renderAddPropertyButton() {
+          render: function renderAddPropertyButton() {
             return (
               <ValuePicker
                 label="Add override property"
                 variant="secondary"
-                isFullWidth={false}
+                isFullWidth={true}
                 icon="plus"
                 menuPlacement="auto"
                 options={configPropertiesOptions}
-                onChange={onDynamicConfigValueAdd}
+                onChange={(v) => onDynamicConfigValueAdd(override, v)}
               />
             );
           },
@@ -207,9 +209,9 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
               icon="plus"
               label="Add a field override"
               variant="secondary"
-              size="sm"
               menuPlacement="auto"
-              isFullWidth={false}
+              isFullWidth={true}
+              size="md"
               options={fieldMatchersUI
                 .list()
                 .filter((o) => !o.excludeFromPicker)
@@ -229,7 +231,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
   //     margin: ${theme.spacing.md};
   //   `}
   // >
-  //   Field override rules give you a fine grained control over how your data is displayed.
+  //   Field override rules give you fine-grained control over how your data is displayed.
   // </FeatureInfoBox>
 
   return categories;
@@ -241,8 +243,8 @@ function getOverrideProperties(registry: FieldConfigOptionsRegistry) {
     .filter((o) => !o.hideFromOverrides)
     .map((item) => {
       let label = item.name;
-      if (item.category && item.category.length > 1) {
-        label = [...item.category!.slice(1), item.name].join(' > ');
+      if (item.category) {
+        label = [...item.category, item.name].join(' > ');
       }
       return {
         label,

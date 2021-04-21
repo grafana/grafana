@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { LoadingState, VariableType } from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
@@ -17,12 +17,18 @@ import {
   variableStateNotStarted,
 } from './sharedReducer';
 import { ConstantVariableModel, QueryVariableModel, VariableHide, VariableOption } from '../types';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload, VariableIdentifier } from './types';
+import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
+  toVariablePayload,
+  VariableIdentifier,
+  initialVariablesState,
+  VariablesState,
+} from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
 import { getVariableState, getVariableTestContext } from './helpers';
-import { initialVariablesState, VariablesState } from './variablesReducer';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { initialConstantVariableModelState } from '../constant/reducer';

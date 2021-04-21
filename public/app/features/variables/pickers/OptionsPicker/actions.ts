@@ -1,5 +1,4 @@
-import debounce from 'lodash/debounce';
-import trim from 'lodash/trim';
+import { debounce, trim } from 'lodash';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 import {
   QueryVariableModel,
@@ -16,6 +15,7 @@ import {
   hideOptions,
   moveOptionsHighlight,
   OptionsPickerState,
+  showOptions,
   toggleOption,
   toggleTag,
   updateOptionsAndFilter,
@@ -25,7 +25,7 @@ import {
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
-import { toVariablePayload } from '../../state/types';
+import { toVariablePayload, VariableIdentifier } from '../../state/types';
 import { containsSearchFilter, getCurrentText } from '../../utils';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
@@ -98,8 +98,22 @@ export const commitChangesToVariable = (callback?: (updated: any) => void): Thun
       return callback(updated);
     }
 
-    return setVariable(updated);
+    return await setVariable(updated);
   };
+};
+
+export const openOptions = ({ id }: VariableIdentifier, callback?: (updated: any) => void): ThunkResult<void> => async (
+  dispatch,
+  getState
+) => {
+  const picker = getState().templating.optionsPicker;
+
+  if (picker.id && picker.id !== id) {
+    await dispatch(commitChangesToVariable(callback));
+  }
+
+  const variable = getVariable<VariableWithMultiSupport>(id, getState());
+  dispatch(showOptions(variable));
 };
 
 export const toggleOptionByHighlight = (clearOthers: boolean, forceSelect = false): ThunkResult<void> => {

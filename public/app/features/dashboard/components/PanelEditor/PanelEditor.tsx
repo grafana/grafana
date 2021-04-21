@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { Prompt } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
@@ -486,6 +486,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       min-height: 0;
       width: 100%;
       padding-left: ${paneSpacing};
+      padding-right: 2px;
     `,
     tabsWrapper: css`
       height: 100%;

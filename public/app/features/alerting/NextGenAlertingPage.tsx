@@ -1,7 +1,7 @@
 import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { PageToolbar, stylesFactory, ToolbarButton } from '@grafana/ui';
@@ -16,19 +16,17 @@ import {
   evaluateAlertDefinition,
   evaluateNotSavedAlertDefinition,
   getAlertDefinition,
-  onRunQueries,
   updateAlertDefinition,
   updateAlertDefinitionOption,
   updateAlertDefinitionUiState,
 } from './state/actions';
 import { StoreState } from 'app/types';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { GrafanaQuery } from '../../types/unified-alerting-dto';
 
 function mapStateToProps(state: StoreState, props: RouteProps) {
   return {
     uiState: state.alertDefinition.uiState,
-    getQueryOptions: state.alertDefinition.getQueryOptions,
-    queryRunner: state.alertDefinition.queryRunner,
     getInstances: state.alertDefinition.getInstances,
     alertDefinition: state.alertDefinition.alertDefinition,
     pageId: props.match.params.id as string,
@@ -43,7 +41,6 @@ const mapDispatchToProps = {
   createAlertDefinition,
   getAlertDefinition,
   evaluateNotSavedAlertDefinition,
-  onRunQueries,
   cleanUpDefinitionState,
 };
 
@@ -98,7 +95,7 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   };
 
   onDiscard = () => {
-    locationService.replace(`${config.appSubUrl}/alerting/list`);
+    locationService.replace(`${config.appSubUrl}/alerting/ng/list`);
   };
 
   onTest = () => {
@@ -125,18 +122,9 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const {
-      alertDefinition,
-      uiState,
-      updateAlertDefinitionUiState,
-      getQueryOptions,
-      getInstances,
-      onRunQueries,
-      queryRunner,
-    } = this.props;
+    const { alertDefinition, uiState, updateAlertDefinitionUiState, getInstances } = this.props;
 
     const styles = getStyles(config.theme);
-    const queryOptions = getQueryOptions();
 
     return (
       <div className={styles.wrapper}>
@@ -146,15 +134,8 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
         <div className={styles.splitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={[
-              <AlertingQueryPreview
-                key="queryPreview"
-                onTest={this.onTest}
-                queries={queryOptions.queries}
-                getInstances={getInstances}
-                queryRunner={queryRunner!}
-                onRunQueries={onRunQueries}
-              />,
-              <AlertingQueryEditor key="queryEditor" />,
+              <AlertingQueryPreview key="queryPreview" getInstances={getInstances} queries={[]} onTest={this.onTest} />,
+              <AlertingQueryEditor key="queryEditor" value={[] as GrafanaQuery[]} onChange={() => {}} />,
             ]}
             uiState={uiState}
             updateUiState={updateAlertDefinitionUiState}
@@ -164,7 +145,6 @@ class NextGenAlertingPageUnconnected extends PureComponent<Props> {
                 onChange={this.onChangeAlertOption}
                 onIntervalChange={this.onChangeInterval}
                 onConditionChange={this.onConditionChange}
-                queryOptions={queryOptions}
               />
             }
           />

@@ -9,7 +9,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles } from './styles';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { config } from '@grafana/runtime';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Subscription } from 'rxjs';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { RefreshEvent } from 'app/types/events';
@@ -270,7 +270,7 @@ export class QueryInspector extends PureComponent<Props, State> {
           <h3 className="section-heading">Query inspector</h3>
           <p className="small muted">
             Query inspector allows you to view raw request and response. To collect this data Grafana needs to issue a
-            new query. Hit refresh button below to trigger a new query.
+            new query. Click refresh button below to trigger a new query.
           </p>
         </div>
         {this.renderExecutedQueries(executedQueries)}
@@ -313,7 +313,9 @@ export class QueryInspector extends PureComponent<Props, State> {
           {!isLoading && haveData && (
             <JSONFormatter json={response} open={openNodes} onDidRender={this.setFormattedJson} />
           )}
-          {!isLoading && !haveData && <p className="muted">No request & response collected yet. Hit refresh button</p>}
+          {!isLoading && !haveData && (
+            <p className="muted">No request and response collected yet. Hit refresh button</p>
+          )}
         </div>
       </>
     );

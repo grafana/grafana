@@ -1,12 +1,12 @@
 import React from 'react';
 import { hot } from 'react-hot-loader';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import { ErrorBoundaryAlert, stylesFactory, withTheme } from '@grafana/ui';
+import { ErrorBoundaryAlert, stylesFactory, withTheme, CustomScrollbar } from '@grafana/ui';
 import {
   AbsoluteTimeRange,
   DataQuery,
@@ -317,7 +317,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
     return (
-      <>
+      <CustomScrollbar autoHeightMin={'100%'}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceMissing ? this.renderEmptyState() : null}
         {datasourceInstance && (
@@ -376,7 +376,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
             </AutoSizer>
           </div>
         )}
-      </>
+      </CustomScrollbar>
     );
   }
 }

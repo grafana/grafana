@@ -52,7 +52,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
         <h4>Configure Grafana</h4>
         <p>Review the configuration and setup options.</p>
     </a>
-    <a href="{{< relref "getting-started/timeseries.md" >}}" class="nav-cards__item nav-cards__item--guide">
+    <a href="{{< relref "basics/timeseries.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Intro to time series</h4>
         <p>Learn about time series data.</p>
     </a>
@@ -78,7 +78,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
       <img src="/img/docs/logos/icon_elasticsearch.svg" >
       <h5>Elasticsearch</h5>
     </a>
-    <a href="{{< relref "datasources/influxdb.md" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/influxdb/_index.md" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/img/docs/logos/icon_influxdb.svg" >
       <h5>InfluxDB</h5>
     </a>

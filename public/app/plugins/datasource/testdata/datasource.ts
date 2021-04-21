@@ -4,8 +4,6 @@ import { delay } from 'rxjs/operators';
 import {
   AnnotationEvent,
   ArrayDataFrame,
-  arrowTableToDataFrame,
-  base64StringToArrowTable,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -16,14 +14,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import {
-  DataSourceWithBackend,
-  getBackendSrv,
-  getLiveMeasurementsObserver,
-  getTemplateSrv,
-  TemplateSrv,
-  toDataQueryError,
-} from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv, getLiveDataStream, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
@@ -60,9 +51,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
           break;
         case 'grafana_api':
           streams.push(runGrafanaAPI(target, options));
-          break;
-        case 'arrow':
-          streams.push(runArrowFile(target, options));
           break;
         case 'annotations':
           streams.push(this.annotationDataTopicTest(target, options));
@@ -176,24 +164,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
   }
 }
 
-function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
-  let data: DataFrame[] = [];
-  if (target.stringInput && target.stringInput.length > 10) {
-    try {
-      const table = base64StringToArrowTable(target.stringInput);
-      const frame = arrowTableToDataFrame(table);
-      frame.refId = target.refId;
-      data = [frame];
-    } catch (e) {
-      console.warn('Error reading saved arrow', e);
-      const error = toDataQueryError(e);
-      error.refId = target.refId;
-      return of({ state: LoadingState.Error, error, data });
-    }
-  }
-  return of({ state: LoadingState.Done, data, key: req.requestId + target.refId });
-}
-
 function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
   const url = `/api/${target.stringInput}`;
   return from(
@@ -218,12 +188,12 @@ function runGrafanaLiveQuery(
   if (!target.channel) {
     throw new Error(`Missing channel config`);
   }
-  return getLiveMeasurementsObserver(
-    {
+  return getLiveDataStream({
+    addr: {
       scope: LiveChannelScope.Plugin,
       namespace: 'testdata',
       path: target.channel,
     },
-    `testStream.${liveQueryCounter++}`
-  );
+    key: `testStream.${liveQueryCounter++}`,
+  });
 }

@@ -1,6 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import find from 'lodash/find';
+import { find } from 'lodash';
 // Types
 import {
   AppPlugin,
@@ -29,7 +29,7 @@ import { PluginDashboards } from './PluginDashboards';
 import { appEvents } from 'app/core/core';
 import { config } from 'app/core/config';
 import { contextSrv } from '../../core/services/context_srv';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { ShowModalEvent } from 'app/types/events';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';

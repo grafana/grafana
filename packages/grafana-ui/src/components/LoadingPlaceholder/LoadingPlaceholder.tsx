@@ -1,5 +1,5 @@
 import React, { HTMLAttributes, SFC } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { Spinner } from '../Spinner/Spinner';
 import { useStyles } from '../../themes';
