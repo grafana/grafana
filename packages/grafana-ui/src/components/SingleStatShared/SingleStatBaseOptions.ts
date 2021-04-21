@@ -1,5 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
-import omit from 'lodash/omit';
+import { cloneDeep, omit } from 'lodash';
 
 import {
   fieldReducers,

@@ -1,4 +1,4 @@
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 import { alignmentPeriods, MetricKind, selectors, ValueTypes } from './constants';
 import CloudMonitoringDatasource from './datasource';
 import { CloudMonitoringVariableQuery, MetricFindQueryTypes } from './types';
