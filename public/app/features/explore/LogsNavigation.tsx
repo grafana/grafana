@@ -9,8 +9,9 @@ import {
   systemDateFormats,
   TimeZone,
   DataQuery,
+  GrafanaTheme,
 } from '@grafana/data';
-import { Button, Icon, Spinner } from '@grafana/ui';
+import { Button, Icon, Spinner, useTheme, stylesFactory, CustomScrollbar } from '@grafana/ui';
 
 type Props = {
   absoluteRange: AbsoluteTimeRange;
@@ -82,7 +83,8 @@ function LogsNavigation({
   };
 
   const oldestFirst = logsSortOrder === LogsSortOrder.Ascending;
-  const styles = getStyles(oldestFirst);
+  const theme = useTheme();
+  const styles = getStyles(theme, oldestFirst, loading);
   return (
     <div className={styles.navContainer}>
       {/*We are going to have 2 buttons (on the top and bottom), Oldest and Newest. 
@@ -105,22 +107,28 @@ function LogsNavigation({
           </div>
         </Button>
       )}
-      <div className={styles.timeline}>
-        {pages.map((page: LogsPage, index) => (
-          <div
-            className="wrap"
-            key={page.queryRange.to}
-            onClick={() => !loading && changeTime({ from: page.queryRange.from, to: page.queryRange.to })}
-          >
-            <div className={classNames('line', { blueBg: currentPageIndex === index })} />
-            <div className={classNames(styles.time, { blueText: currentPageIndex === index })}>
-              {`${formatTime(oldestFirst ? page.logsRange.from : page.logsRange.to)} - ${formatTime(
-                oldestFirst ? page.logsRange.to : page.logsRange.from
-              )}`}
-            </div>
+      <CustomScrollbar autoHide>
+        <div className={styles.pagesWrapper}>
+          <div className={styles.pagesContainer}>
+            {pages.map((page: LogsPage, index) => (
+              <div
+                className={styles.page}
+                key={page.queryRange.to}
+                onClick={() => !loading && changeTime({ from: page.queryRange.from, to: page.queryRange.to })}
+              >
+                <div className={classNames(styles.line, { selectedBg: currentPageIndex === index })} />
+                <div className={classNames(styles.time, { selectedText: currentPageIndex === index })}>
+                  {`${formatTime(oldestFirst ? page.logsRange.from : page.logsRange.to)} - ${formatTime(
+                    oldestFirst ? page.logsRange.to : page.logsRange.from
+                  )}`}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+          <div className={styles.filler}></div>
+        </div>
+      </CustomScrollbar>
+
       {!oldestFirst && (
         <Button
           className={styles.navButton}
@@ -143,25 +151,24 @@ function LogsNavigation({
 
 export default memo(LogsNavigation);
 
-function getStyles(oldestFirst: boolean) {
+const getStyles = stylesFactory((theme: GrafanaTheme, oldestFirst: boolean, loading: boolean) => {
   return {
     navContainer: css`
-      width: 70px !important;
-      padding-left: 7px;
+      width: 70px;
       height: 90vh;
       display: flex;
       flex-direction: column;
+      padding-left: ${theme.spacing.xs};
       justify-content: ${oldestFirst ? 'flex-start' : 'space-between'};
     `,
     navButton: css`
       width: 58px;
-      height: 58px;
-      line-height: 1;
-      padding: 0;
+      height: 68px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      line-height: 1;
     `,
     navButtonContent: css`
       display: flex;
@@ -171,32 +178,53 @@ function getStyles(oldestFirst: boolean) {
       width: 100%;
       height: 100%;
     `,
-    timeline: css`
-      height: calc(100% - 160px);
-      padding-left: 4px;
-      .wrap {
-        display: flex;
-        width: 100%;
-        height: calc((100% - 84px) / 10);
-        margin: 14px 0;
-        cursor: pointer;
-        .line {
-          background: gray;
-          width: 6px;
-          height: 100%;
-        }
-        .blueBg {
-          background: #3871dc;
-        }
-        .blueText {
-          color: #3871dc;
-        }
-        align-items: center;
+    pagesWrapper: css`
+      height: 100%;
+      padding-left: ${theme.spacing.xs};
+      display: flex;
+      flex-direction: column;
+      overflow-y: scroll;
+    `,
+    pagesContainer: css`
+      display: flex;
+      width: 100%;
+      padding: 0;
+      flex-direction: column;
+    `,
+    page: css`
+      display: flex;
+      width: 100%;
+      margin: ${theme.spacing.md} 0;
+      cursor: ${loading ? 'auto' : 'pointer'};
+      .selectedBg {
+        background: ${theme.colors.bgBlue2};
+      }
+      .selectedText {
+        color: ${theme.colors.bgBlue2};
       }
     `,
+    line: css`
+      width: 6px;
+      height: 100%;
+
+      align-items: center;
+      background: ${theme.colors.textWeak};
+    `,
     time: css`
-      font-size: 12px;
-      padding-left: 4px;
+      font-size: ${theme.typography.size.sm};
+      padding: ${theme.spacing.md} 0 ${theme.spacing.md} ${theme.spacing.xs}; ;
+    `,
+    filler: css`
+      height: inherit;
+      background: repeating-linear-gradient(
+        135deg,
+        ${theme.colors.bg1},
+        ${theme.colors.bg1} 5px,
+        ${theme.colors.bg2} 5px,
+        ${theme.colors.bg2} 15px
+      );
+      width: 3px;
+      margin-bottom: 8px;
     `,
   };
-}
+});
