@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { FieldConfigSource, GrafanaThemeV2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
-import { CustomScrollbar, RadioButtonGroup, useStyles } from '@grafana/ui';
+import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
 import { getVizualizationOptions } from './getVizualizationOptions';
 import { css } from '@emotion/css';
@@ -26,7 +26,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
   const { plugin, dashboard, panel } = props;
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(OptionFilter.All);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const [panelFrameOptions, vizOptions, justOverrides] = useMemo(
     () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
@@ -143,7 +143,7 @@ function renderSearchHits(
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaThemeV2) => ({
   wrapper: css`
     height: 100%;
     display: flex;
@@ -156,19 +156,19 @@ const getStyles = (theme: GrafanaTheme) => ({
     min-height: 0;
   `,
   formRow: css`
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing(1)};
   `,
   formBox: css`
-    padding: ${theme.spacing.sm};
-    background: ${theme.colors.bg1};
-    border: 1px solid ${theme.colors.border1};
+    padding: ${theme.spacing(1)};
+    background: ${theme.colors.background.primary};
+    border: 1px solid ${theme.components.panel.border};
     border-bottom: none;
   `,
   closeButton: css`
-    margin-left: ${theme.spacing.sm};
+    margin-left: ${theme.spacing(1)};
   `,
   searchHits: css`
-    padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
+    padding: ${theme.spacing(1, 1, 0, 1)};
   `,
   scrollWrapper: css`
     flex-grow: 1;
@@ -176,13 +176,13 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   searchNotice: css`
     font-size: ${theme.typography.size.sm};
-    color: ${theme.colors.textWeak};
-    padding: ${theme.spacing.sm};
+    color: ${theme.colors.text.secondary};
+    padding: ${theme.spacing(1)};
     text-align: center;
   `,
   mainBox: css`
-    background: ${theme.colors.bg1};
-    border: 1px solid ${theme.v2.components.panel.border};
+    background: ${theme.colors.background.primary};
+    border: 1px solid ${theme.components.panel.border};
     border-top: none;
     flex-grow: 1;
   `,

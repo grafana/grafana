@@ -1,9 +1,9 @@
 import React, { HTMLProps, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import uniqueId from 'lodash/uniqueId';
-import { GrafanaTheme, deprecationWarning } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../themes';
-import { focusCss, getMouseFocusStyles } from '../../themes/mixins';
+import { uniqueId } from 'lodash';
+import { GrafanaThemeV2, deprecationWarning } from '@grafana/data';
+import { stylesFactory, useTheme2 } from '../../themes';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
@@ -12,12 +12,12 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
 }
 
 export const Switch = React.forwardRef<HTMLInputElement, Props>(
-  ({ value, checked, disabled = false, onChange, id, ...inputProps }, ref) => {
+  ({ value, checked, disabled, onChange, id, ...inputProps }, ref) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
 
-    const theme = useTheme();
+    const theme = useTheme2();
     const styles = getSwitchStyles(theme);
     const switchIdRef = useRef(id ? id : uniqueId('switch-'));
 
@@ -43,7 +43,7 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
 Switch.displayName = 'Switch';
 
 export const InlineSwitch = React.forwardRef<HTMLInputElement, Props>(({ transparent, ...props }, ref) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getSwitchStyles(theme, transparent);
 
   return (
@@ -55,7 +55,7 @@ export const InlineSwitch = React.forwardRef<HTMLInputElement, Props>(({ transpa
 
 InlineSwitch.displayName = 'Switch';
 
-const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolean) => {
+const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: boolean) => {
   return {
     switch: css`
       width: 32px;
@@ -69,29 +69,31 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolea
         position: absolute;
 
         &:disabled + label {
-          background: ${theme.v2.palette.action.disabledBackground};
+          background: ${theme.colors.action.disabledBackground};
           cursor: not-allowed;
         }
 
         &:checked + label {
-          background: ${theme.v2.palette.primary.main};
+          background: ${theme.colors.primary.main};
+          border-color: ${theme.colors.primary.main};
 
           &:hover {
-            background: ${theme.v2.palette.primary.shade};
+            background: ${theme.colors.primary.shade};
           }
 
           &::after {
             transform: translate3d(18px, -50%, 0);
+            background: ${theme.colors.primary.contrastText};
           }
         }
 
         &:focus + label,
         &:focus-visible + label {
-          ${focusCss(theme)}
+          ${getFocusStyles(theme)}
         }
 
         &:focus:not(:focus-visible) + label {
-          ${getMouseFocusStyles(theme.v2)}
+          ${getMouseFocusStyles(theme)}
         }
       }
 
@@ -101,11 +103,12 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolea
         cursor: pointer;
         border: none;
         border-radius: 50px;
-        background: ${theme.v2.palette.secondary.main};
+        background: ${theme.components.input.background};
+        border: 1px solid ${theme.components.input.border};
         transition: all 0.3s ease;
 
         &:hover {
-          background: ${theme.v2.palette.secondary.shade};
+          border-color: ${theme.components.input.borderHover};
         }
 
         &::after {
@@ -115,7 +118,8 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolea
           width: 12px;
           height: 12px;
           border-radius: 6px;
-          background: ${theme.v2.palette.text.primary};
+          background: ${theme.colors.text.secondary};
+          box-shadow: ${theme.shadows.z1};
           top: 50%;
           transform: translate3d(2px, -50%, 0);
           transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
@@ -123,13 +127,13 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme, transparent?: boolea
       }
     `,
     inlineContainer: css`
-      padding: ${theme.v2.spacing(0, 1)};
-      height: ${theme.v2.spacing(theme.v2.components.height.md)};
+      padding: ${theme.spacing(0, 1)};
+      height: ${theme.spacing(theme.components.height.md)};
       display: flex;
       align-items: center;
-      background: ${transparent ? 'transparent' : theme.v2.components.input.background};
-      border: 1px solid ${transparent ? 'transparent' : theme.v2.components.input.border};
-      border-radius: ${theme.v2.shape.borderRadius()};
+      background: ${transparent ? 'transparent' : theme.components.input.background};
+      border: 1px solid ${transparent ? 'transparent' : theme.components.input.border};
+      border-radius: ${theme.shape.borderRadius()};
     `,
   };
 });

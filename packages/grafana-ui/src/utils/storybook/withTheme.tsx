@@ -1,20 +1,35 @@
 import React from 'react';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { getTheme } from '../../themes/index';
-import { GrafanaThemeType } from '@grafana/data';
+import { createTheme, GrafanaThemeV2 } from '@grafana/data';
 import { RenderFunction } from '../../types';
 import { useDarkMode } from 'storybook-dark-mode';
+import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
 
-type SassThemeChangeHandler = (theme: GrafanaThemeType) => void;
+type SassThemeChangeHandler = (theme: GrafanaThemeV2) => void;
 const ThemeableStory: React.FunctionComponent<{ handleSassThemeChange: SassThemeChangeHandler }> = ({
   children,
   handleSassThemeChange,
 }) => {
-  const theme = useDarkMode() ? GrafanaThemeType.Dark : GrafanaThemeType.Light;
+  const theme = createTheme({ colors: { mode: useDarkMode() ? 'dark' : 'light' } });
 
   handleSassThemeChange(theme);
 
-  return <ThemeContext.Provider value={getTheme(theme)}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={theme}>
+      <div
+        style={{
+          width: '100%',
+          padding: '20px',
+          display: 'flex',
+          minHeight: '80vh',
+          background: `${theme.colors.background.primary}`,
+        }}
+      >
+        <GlobalStyles />
+        {children}
+      </div>
+    </ThemeContext.Provider>
+  );
 };
 
 // Temporary solution. When we update to Storybook V5 we will be able to pass data from decorator to story
