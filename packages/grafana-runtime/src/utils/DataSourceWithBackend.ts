@@ -221,6 +221,11 @@ export function toStreamingDataResponse(
   request: DataQueryRequest,
   rsp: DataQueryResponse
 ): Observable<DataQueryResponse> {
+  const live = getGrafanaLiveSrv();
+  if (!live) {
+    return of(rsp); // add warning?
+  }
+
   const buffer: StreamingFrameOptions = {
     maxLength: request.maxDataPoints ?? 500,
   };
@@ -236,7 +241,7 @@ export function toStreamingDataResponse(
     const addr = parseLiveChannelAddress(frame.meta?.channel);
     if (addr) {
       streams.push(
-        getGrafanaLiveSrv().getDataStream({
+        live.getDataStream({
           addr,
           buffer,
           frame: frame as DataFrame,

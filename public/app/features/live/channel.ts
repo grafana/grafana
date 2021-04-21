@@ -102,14 +102,6 @@ export class CentrifugeLiveChannel<T = any> {
       events.leave = (ctx: JoinLeaveContext) => {
         this.stream.next({ type: LiveChannelEventType.Leave, user: ctx.info.user });
       };
-
-      this.getPresence = () => {
-        return this.subscription!.presence().then((v) => {
-          return {
-            users: Object.keys(v.presence),
-          };
-        });
-      };
     }
     return events;
   }
@@ -121,6 +113,13 @@ export class CentrifugeLiveChannel<T = any> {
     }
     this.stream.next(copy);
   }
+
+  disconnectIfNoListeners = () => {
+    const count = this.stream.observers.length;
+    if (count === 0) {
+      this.disconnect();
+    }
+  };
 
   /**
    * Get the stream of events and
@@ -134,9 +133,9 @@ export class CentrifugeLiveChannel<T = any> {
         const count = this.stream.observers.length;
         console.log('unsubscribe stream', this.addr, count);
 
-        // Fully disconnect when no more listeners
+        // Wait 1/4 second to fully disconnect
         if (count === 0) {
-          this.disconnect();
+          setTimeout(this.disconnectIfNoListeners, 250);
         }
       };
     }) as Observable<LiveChannelEvent<T>>;
@@ -145,12 +144,17 @@ export class CentrifugeLiveChannel<T = any> {
   /**
    * This is configured by the server when the config supports presence
    */
-  getPresence?: () => Promise<LiveChannelPresenceStatus>;
+  async getPresence(): Promise<LiveChannelPresenceStatus> {
+    if (!this.subscription) {
+      return Promise.reject('not subscribed');
+    }
 
-  /**
-   * This is configured by the server when config supports writing
-   */
-  publish?: (msg: any) => Promise<any>;
+    return this.subscription!.presence().then((v) => {
+      return {
+        users: Object.keys(v.presence),
+      };
+    });
+  }
 
   /**
    * This will close and terminate all streams for this channel

@@ -307,8 +307,8 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
    *
    * Join and leave messages will be sent to the open stream
    */
-  async getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus> {
-    return Promise.reject('xxx');
+  getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus> {
+    return this.getChannel(address).getPresence();
   }
 }
 
