@@ -1,5 +1,5 @@
 import React from 'react';
-import _ from 'lodash';
+import { isEqual } from 'lodash';
 import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/data';
 import { Icon } from '@grafana/ui';
 import { AdHocFilter } from './AdHocFilter';
@@ -36,7 +36,7 @@ export class AdHocFilterField<
   state: State = { pairs: [] };
 
   componentDidUpdate(prevProps: Props<TQuery, TOptions>) {
-    if (_.isEqual(prevProps.extendedOptions, this.props.extendedOptions) === false) {
+    if (isEqual(prevProps.extendedOptions, this.props.extendedOptions) === false) {
       const pairs: any[] = [];
 
       this.setState({ pairs }, () => this.props.onPairsChanged(pairs));

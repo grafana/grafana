@@ -1,4 +1,4 @@
-import defaults from 'lodash/defaults';
+import { defaults } from 'lodash';
 
 import React, { PureComponent } from 'react';
 import { InlineField, Select, FeatureInfoBox, Input } from '@grafana/ui';

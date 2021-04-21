@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { defaults, each, sortBy } from 'lodash';
 
 import config from 'app/core/config';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -170,7 +170,7 @@ export class DashboardExporter {
 
     return Promise.all(promises)
       .then(() => {
-        _.each(datasources, (value: any) => {
+        each(datasources, (value: any) => {
           inputs.push(value);
         });
 
@@ -199,9 +199,9 @@ export class DashboardExporter {
         // make inputs and requires a top thing
         const newObj: { [key: string]: {} } = {};
         newObj['__inputs'] = inputs;
-        newObj['__requires'] = _.sortBy(requires, ['id']);
+        newObj['__requires'] = sortBy(requires, ['id']);
 
-        _.defaults(newObj, saveModel);
+        defaults(newObj, saveModel);
         return newObj;
       })
       .catch((err) => {

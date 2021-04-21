@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isString, isEmpty, set } from 'lodash';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { UserState, ThunkResult } from 'app/types';
 import config from 'app/core/config';
@@ -27,11 +27,11 @@ export const updateTimeZoneForSession = (timeZone: TimeZone): ThunkResult<void> 
   return async (dispatch) => {
     const { updateTimeZone } = slice.actions;
 
-    if (!_.isString(timeZone) || _.isEmpty(timeZone)) {
+    if (!isString(timeZone) || isEmpty(timeZone)) {
       timeZone = config?.bootData?.user?.timezone;
     }
 
-    _.set(contextSrv, 'user.timezone', timeZone);
+    set(contextSrv, 'user.timezone', timeZone);
     dispatch(updateTimeZone(timeZone));
   };
 };

@@ -1,6 +1,6 @@
 import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { useTheme } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { GrafanaThemeV2, ThemePaletteColor } from '@grafana/data';
@@ -53,9 +53,7 @@ export const ThemeDemo = () => {
   const [radioValue, setRadioValue] = useState('v');
   const [boolValue, setBoolValue] = useState(false);
   const [selectValue, setSelectValue] = useState('Item 2');
-  const oldTheme = useTheme();
-
-  const t = oldTheme.v2;
+  const t = useTheme2();
 
   const richColors = [
     t.palette.primary,
@@ -148,8 +146,8 @@ export const ThemeDemo = () => {
               <Field label="Switch true">
                 <Switch value={true} />
               </Field>
-              <Field label="Switch false disabled">
-                <Switch value={false} disabled />
+              <Field label="Switch false disabled" disabled={true}>
+                <Switch value={false} />
               </Field>
             </HorizontalGroup>
             <VerticalGroup>
@@ -299,7 +297,7 @@ export function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
 }
 
 export function ActionsDemo() {
-  const t = useTheme().v2;
+  const t = useTheme2();
 
   const item = css({
     padding: '8px',
