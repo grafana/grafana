@@ -84,11 +84,14 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 	if now.IsZero() {
 		now = timeNow()
 	}
+	if err := validateQueriesAndExpressions(cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+		return response.Error(http.StatusBadRequest, "invalid queries or expressions", err)
+	}
 
 	evaluator := eval.Evaluator{Cfg: srv.Cfg}
 	evalResults, err := evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.DataService)
 	if err != nil {
-		return response.Error(400, "Failed to evaluate queries and expressions", err)
+		return response.Error(http.StatusBadRequest, "Failed to evaluate queries and expressions", err)
 	}
 
 	return response.JSONStreaming(http.StatusOK, evalResults)

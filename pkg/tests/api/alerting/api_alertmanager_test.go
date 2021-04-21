@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -58,6 +59,386 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 		require.JSONEq(t, "[]", string(b))
+	}
+}
+
+func TestEvalCondition(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+	})
+	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	testCases := []struct {
+		desc               string
+		payload            string
+		expectedStatusCode int
+		expectedResponse   string
+	}{
+		{
+			desc: "alerting condition",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "A",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"model": {
+							"datasourceUid": "-100",
+							"type":"math",
+							"expression":"1 < 2"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusOK,
+			expectedResponse: `{
+			"instances": [
+			  {
+				"schema": {
+				  "name": "evaluation results",
+				  "fields": [
+					{
+					  "name": "State",
+					  "type": "string",
+					  "typeInfo": {
+						"frame": "string"
+					  }
+					}
+				  ]
+				},
+				"data": {
+				  "values": [
+					[
+					  "Alerting"
+					]
+				  ]
+				}
+			  }
+			]
+		  }`,
+		},
+		{
+			desc: "normal condition",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "A",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"model": {
+							"datasourceUid": "-100",
+							"type":"math",
+							"expression":"1 > 2"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusOK,
+			expectedResponse: `{
+			"instances": [
+			  {
+				"schema": {
+				  "name": "evaluation results",
+				  "fields": [
+					{
+					  "name": "State",
+					  "type": "string",
+					  "typeInfo": {
+						"frame": "string"
+					  }
+					}
+				  ]
+				},
+				"data": {
+				  "values": [
+					[
+					  "Normal"
+					]
+				  ]
+				}
+			  }
+			]
+		  }`,
+		},
+		{
+			desc: "condition not found in any query or expression",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "B",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"model": {
+							"datasourceUid": "-100",
+							"type":"math",
+							"expression":"1 > 2"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusBadRequest,
+			expectedResponse:   `{"error":"condition B not found in any query or expression","message":"invalid condition"}`,
+		},
+		{
+			desc: "unknown query datasource",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "A",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"model": {
+							"datasourceUid": "unknown"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusBadRequest,
+			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid condition"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			u := fmt.Sprintf("http://%s/api/v1/rule/test/grafana", grafanaListedAddr)
+			r := strings.NewReader(tc.payload)
+			// nolint:gosec
+			resp, err := http.Post(u, "application/json", r)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+			require.JSONEq(t, tc.expectedResponse, string(b))
+		})
+	}
+}
+
+func TestEvalQueries(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+	})
+	store := testinfra.SetUpDatabase(t, dir)
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	testCases := []struct {
+		desc               string
+		payload            string
+		expectedStatusCode int
+		expectedResponse   string
+	}{
+		{
+			desc: "alerting condition",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "A",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"model": {
+							"datasourceUid": "-100",
+							"type":"math",
+							"expression":"1 < 2"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusOK,
+			expectedResponse: `{
+			"instances": [
+			  {
+				"schema": {
+				  "name": "evaluation results",
+				  "fields": [
+					{
+					  "name": "State",
+					  "type": "string",
+					  "typeInfo": {
+						"frame": "string"
+					  }
+					}
+				  ]
+				},
+				"data": {
+				  "values": [
+					[
+					  "Alerting"
+					]
+				  ]
+				}
+			  }
+			]
+		  }`,
+		},
+		{
+			desc: "normal condition",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "A",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"model": {
+							"datasourceUid": "-100",
+							"type":"math",
+							"expression":"1 > 2"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusOK,
+			expectedResponse: `{
+			"instances": [
+			  {
+				"schema": {
+				  "name": "evaluation results",
+				  "fields": [
+					{
+					  "name": "State",
+					  "type": "string",
+					  "typeInfo": {
+						"frame": "string"
+					  }
+					}
+				  ]
+				},
+				"data": {
+				  "values": [
+					[
+					  "Normal"
+					]
+				  ]
+				}
+			  }
+			]
+		  }`,
+		},
+		{
+			desc: "condition not found in any query or expression",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "B",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"model": {
+							"datasourceUid": "-100",
+							"type":"math",
+							"expression":"1 > 2"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusBadRequest,
+			expectedResponse:   `{"error":"condition B not found in any query or expression","message":"invalid condition"}`,
+		},
+		{
+			desc: "unknown query datasource",
+			payload: `
+			{
+				"grafana_condition": {
+				"condition": "A",
+				"data": [
+					{
+						"refId": "A",
+						"relativeTimeRange": {
+							"from": 18000,
+							"to": 10800
+						},
+						"model": {
+							"datasourceUid": "unknown"
+						}
+					}
+				],
+				"now": "2021-04-11T14:38:14Z"
+				}
+			}
+			`,
+			expectedStatusCode: http.StatusBadRequest,
+			expectedResponse:   `{"error":"failed to get datasource: unknown: data source not found","message":"invalid condition"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			u := fmt.Sprintf("http://%s/api/v1/rule/test/grafana", grafanaListedAddr)
+			r := strings.NewReader(tc.payload)
+			// nolint:gosec
+			resp, err := http.Post(u, "application/json", r)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedStatusCode, resp.StatusCode)
+			require.JSONEq(t, tc.expectedResponse, string(b))
+		})
 	}
 }
 
@@ -138,7 +519,6 @@ func TestAlertRuleCRUD(t *testing.T) {
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		fmt.Println(string(b))
 		assert.Equal(t, resp.StatusCode, 202)
 		require.JSONEq(t, `{"message":"rule group updated successfully"}`, string(b))
 	}
