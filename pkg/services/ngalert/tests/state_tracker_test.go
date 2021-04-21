@@ -16,6 +16,7 @@ import (
 )
 
 func TestProcessEvalResults(t *testing.T) {
+	t.Skip()
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
 	if err != nil {
 		t.Fatalf("error parsing date format: %s", err.Error())
