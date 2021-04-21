@@ -18,12 +18,7 @@ import {
   LiveChannelPresenceStatus,
   isValidLiveChannelAddress,
   LoadingState,
-  StreamingDataFrame,
-  DataFrame,
-  dataFrameToJSON,
   DataFrameJSON,
-  isLiveChannelMessageEvent,
-  isLiveChannelStatusEvent,
 } from '@grafana/data';
 import { CentrifugeLiveChannel, getErrorChannel } from './channel';
 import {
@@ -34,7 +29,7 @@ import {
   GrafanaLiveStreamScope,
 } from './scopes';
 import { registerLiveFeatures } from './features';
-import { perf } from './perf';
+import { ChannelDataStream } from './channelDataStream';
 
 export const sessionId =
   (window as any)?.grafanaBootData?.user?.id +
@@ -45,6 +40,7 @@ export const sessionId =
 
 export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly open = new Map<string, CentrifugeLiveChannel>();
+  readonly data = new Map<string, ChannelDataStream>();
 
   readonly centrifuge: Centrifuge;
   readonly connectionState: BehaviorSubject<boolean>;
@@ -207,99 +203,18 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
         data: options.frame ? [options.frame] : [],
       });
     }
+    const { frame, key, ...rest } = options;
 
-    return new Observable<DataQueryResponse>((subscriber) => {
-      let data: StreamingDataFrame | undefined = undefined;
-      let filtered: DataFrame | undefined = undefined;
-      let state = LoadingState.Loading;
-      let { key } = options;
-      let last = perf.last;
-      if (options.frame) {
-        const msg = dataFrameToJSON(options.frame);
-        data = new StreamingDataFrame(msg, options.buffer);
-        state = LoadingState.Streaming;
-      }
-      if (!key) {
-        key = `xstr/${streamCounter++}`;
-      }
+    const cachekey = JSON.stringify(rest);
+    let common = this.data.get(cachekey);
+    if (!common || common.done) {
+      const channel = this.getChannel<DataFrameJSON>(options.addr);
+      common = new ChannelDataStream(channel, options);
+      this.data.set(cachekey, common);
+      console.log('Start new channel', key, Object.keys(this.data.keys));
+    }
 
-      const process = (msg: DataFrameJSON) => {
-        if (!data) {
-          data = new StreamingDataFrame(msg, options.buffer);
-        } else {
-          data.push(msg);
-        }
-        state = LoadingState.Streaming;
-
-        // Filter out fields
-        if (!filtered || msg.schema) {
-          filtered = data;
-          if (options.filter) {
-            const { fields } = options.filter;
-            if (fields?.length) {
-              filtered = {
-                ...data,
-                fields: data.fields.filter((f) => fields.includes(f.name)),
-              };
-            }
-          }
-        }
-
-        const elapsed = perf.last - last;
-        if (elapsed > 1000 || perf.ok) {
-          filtered.length = data.length; // make sure they stay up-to-date
-          subscriber.next({ state, data: [filtered], key });
-          last = perf.last;
-        }
-      };
-
-      const sub = this.getChannel<DataFrameJSON>(options.addr)
-        .getStream()
-        .subscribe({
-          error: (err: any) => {
-            console.log('LiveQuery [error]', { err }, options.addr);
-            state = LoadingState.Error;
-            subscriber.next({ state, data: [data], key, error: toDataQueryError(err) });
-            sub.unsubscribe(); // close after error
-          },
-          complete: () => {
-            console.log('LiveQuery [complete]', options.addr);
-            if (state !== LoadingState.Error) {
-              state = LoadingState.Done;
-            }
-            // or track errors? subscriber.next({ state, data: [data], key });
-            subscriber.complete();
-            sub.unsubscribe();
-          },
-          next: (evt: LiveChannelEvent<DataFrameJSON>) => {
-            if (isLiveChannelMessageEvent(evt)) {
-              process(evt.message);
-              return;
-            }
-            if (isLiveChannelStatusEvent(evt)) {
-              if (evt.error) {
-                let error = toDataQueryError(evt.error);
-                error.message = `Streaming channel error: ${error.message}`;
-                state = LoadingState.Error;
-                subscriber.next({ state, data: [data], key, error });
-                return;
-              } else if (
-                evt.state === LiveChannelConnectionState.Connected ||
-                evt.state === LiveChannelConnectionState.Pending
-              ) {
-                if (evt.message) {
-                  process(evt.message);
-                }
-              }
-              console.log('ignore state', evt);
-            }
-          },
-        });
-
-      return () => {
-        sub.unsubscribe();
-      };
-    });
+    return common.getObservable();
   }
 
   /**
@@ -311,9 +226,6 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
     return this.getChannel(address).getPresence();
   }
 }
-
-// incremet the stream ids
-let streamCounter = 10;
 
 export function getGrafanaLiveCentrifugeSrv() {
   return getGrafanaLiveSrv() as CentrifugeSrv;

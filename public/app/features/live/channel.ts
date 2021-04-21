@@ -117,6 +117,7 @@ export class CentrifugeLiveChannel<T = any> {
   disconnectIfNoListeners = () => {
     const count = this.stream.observers.length;
     if (count === 0) {
+      console.log('DISCONNECT no listeners...', this.addr);
       this.disconnect();
     }
   };
@@ -131,10 +132,10 @@ export class CentrifugeLiveChannel<T = any> {
       return () => {
         sub.unsubscribe();
         const count = this.stream.observers.length;
-        console.log('unsubscribe stream', this.addr, count);
 
         // Wait 1/4 second to fully disconnect
         if (count === 0) {
+          console.log('CHANNEL no listeners... wait to shtudown', this.addr);
           setTimeout(this.disconnectIfNoListeners, 250);
         }
       };
