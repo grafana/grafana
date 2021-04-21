@@ -9,6 +9,7 @@ import { TeamGroup } from '../../types';
 import { addTeamGroup, loadTeamGroups, removeTeamGroup } from './state/actions';
 import { getTeamGroups } from './state/selectors';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 export interface Props {
   groups: TeamGroup[];
@@ -94,9 +95,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
 
         <SlideDown in={isAdding}>
           <div className="cta-form">
-            <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-              <Icon name="times" />
-            </button>
+            <CloseButton onClick={this.onToggleAdding} />
             <h5>Add External Group</h5>
             <form className="gf-form-inline" onSubmit={this.onAddGroup}>
               <div className="gf-form">

@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import { Icon } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -13,6 +12,7 @@ import { config } from 'app/core/config';
 import { contextSrv, User as SignedInUser } from 'app/core/services/context_srv';
 import TeamMemberRow from './TeamMemberRow';
 import { setSearchMemberQuery } from './state/reducers';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 export interface Props {
   members: TeamMember[];
@@ -91,9 +91,7 @@ export class TeamMembers extends PureComponent<Props, State> {
 
         <SlideDown in={isAdding}>
           <div className="cta-form">
-            <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-              <Icon name="times" />
-            </button>
+            <CloseButton onClick={this.onToggleAdding} />
             <h5>Add team member</h5>
             <div className="gf-form-inline">
               <UserPicker onSelected={this.onUserSelected} className="min-width-30" />
