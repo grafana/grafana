@@ -147,7 +147,14 @@ func (st *StateTracker) setNextState(alertRule *ngModels.AlertRule, result eval.
 			EvaluationState: result.State,
 		})
 		if currentState.State == eval.Alerting {
-			currentState.EndsAt = result.EvaluatedAt.Add(alertRule.For * time.Second)
+			//TODO: Move me and unify me with the top level constant
+			// 10 seconds is the base evaluation interval. We use 2 times that interval to make sure we send an alert
+			// that would expire after at least 2 iterations and avoid flapping.
+			resendDelay := 10 * 2 * time.Second
+			if alertRule.For > resendDelay {
+				resendDelay = alertRule.For * 2
+			}
+			currentState.EndsAt = result.EvaluatedAt.Add(resendDelay)
 		}
 		st.set(currentState)
 		return currentState
