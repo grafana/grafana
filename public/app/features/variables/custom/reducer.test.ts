@@ -1,5 +1,5 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import { getVariableTestContext } from '../state/helpers';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload, VariablesState } from '../state/types';
 import { createCustomOptionsFromQuery, customVariableReducer } from './reducer';
