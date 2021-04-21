@@ -15,6 +15,8 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
+  EventBusWithSource,
+  EventBusWithSourceContext,
   FieldConfigSource,
   getDefaultTimeRange,
   LoadingState,
@@ -46,6 +48,7 @@ export interface State {
   renderCounter: number;
   errorMessage?: string;
   refreshWhenInView: boolean;
+  eventBus: EventBusWithSource;
   data: PanelData;
 }
 
@@ -60,6 +63,7 @@ export class PanelChrome extends Component<Props, State> {
       isFirstLoad: true,
       renderCounter: 0,
       refreshWhenInView: false,
+      eventBus: new EventBusWithSource(props.dashboard.events, props.panel.id.toString()),
       data: {
         state: LoadingState.NotStarted,
         series: [],
@@ -286,24 +290,26 @@ export class PanelChrome extends Component<Props, State> {
     return (
       <>
         <div className={panelContentClassNames}>
-          <PanelComponent
-            id={panel.id}
-            data={data}
-            title={panel.title}
-            timeRange={timeRange}
-            timeZone={this.props.dashboard.getTimezone()}
-            options={panelOptions}
-            fieldConfig={panel.fieldConfig}
-            transparent={panel.transparent}
-            width={panelWidth}
-            height={innerPanelHeight}
-            renderCounter={renderCounter}
-            replaceVariables={panel.replaceVariables}
-            onOptionsChange={this.onOptionsChange}
-            onFieldConfigChange={this.onFieldConfigChange}
-            onChangeTimeRange={this.onChangeTimeRange}
-            eventBus={dashboard.events}
-          />
+          <EventBusWithSourceContext.Provider value={this.state.eventBus}>
+            <PanelComponent
+              id={panel.id}
+              data={data}
+              title={panel.title}
+              timeRange={timeRange}
+              timeZone={this.props.dashboard.getTimezone()}
+              options={panelOptions}
+              fieldConfig={panel.fieldConfig}
+              transparent={panel.transparent}
+              width={panelWidth}
+              height={innerPanelHeight}
+              renderCounter={renderCounter}
+              replaceVariables={panel.replaceVariables}
+              onOptionsChange={this.onOptionsChange}
+              onFieldConfigChange={this.onFieldConfigChange}
+              onChangeTimeRange={this.onChangeTimeRange}
+              eventBus={dashboard.events}
+            />
+          </EventBusWithSourceContext.Provider>
         </div>
       </>
     );
