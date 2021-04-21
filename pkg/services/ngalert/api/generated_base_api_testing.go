@@ -18,12 +18,14 @@ import (
 )
 
 type TestingApiService interface {
+	RouteEvalQueries(*models.ReqContext, apimodels.EvalQueriesPayload) response.Response
 	RouteTestReceiverConfig(*models.ReqContext, apimodels.ExtendedReceiver) response.Response
 	RouteTestRuleConfig(*models.ReqContext, apimodels.TestRulePayload) response.Response
 }
 
 func (api *API) RegisterTestingApiEndpoints(srv TestingApiService) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
+		group.Post(toMacaronPath("/api/v1/eval"), binding.Bind(apimodels.EvalQueriesPayload{}), routing.Wrap(srv.RouteEvalQueries))
 		group.Post(toMacaronPath("/api/v1/receiver/test/{Recipient}"), binding.Bind(apimodels.ExtendedReceiver{}), routing.Wrap(srv.RouteTestReceiverConfig))
 		group.Post(toMacaronPath("/api/v1/rule/test/{Recipient}"), binding.Bind(apimodels.TestRulePayload{}), routing.Wrap(srv.RouteTestRuleConfig))
 	}, middleware.ReqSignedIn)

@@ -26,6 +26,52 @@ content-type: application/json
 }
 
 ###
+
+POST http://admin:admin@localhost:3000/api/v1/eval
+content-type: application/json
+
+{
+"data": [
+  {
+    "refId": "A",
+    "queryType": "",
+    "relativeTimeRange": {
+      "from": 18000,
+      "to": 10800
+    },
+    "model": {
+      "datasourceUid": "000000004",
+      "intervalMs": 1000,
+      "maxDataPoints": 100,
+      "orgId": 0,
+      "refId": "A",
+      "scenarioId": "csv_metric_values",
+      "stringInput": "1,20,90,30,5,0"
+    }
+  },
+  {
+    "refId": "B",
+    "queryType": "",
+    "relativeTimeRange": {
+      "from": 18000,
+      "to": 10800
+    },
+    "model": {
+      "datasourceUid": "-100",
+      "expression": "$A",
+      "intervalMs": 2000,
+      "maxDataPoints": 200,
+      "orgId": 0,
+      "reducer": "mean",
+      "refId": "B",
+      "type": "reduce"
+    }
+  }
+],
+"now": "2021-04-11T14:38:14Z"
+}
+
+###
 POST http://admin:admin@localhost:3000/api/v1/rule/test/{{lokiDatasourceID}}
 content-type: application/json
 

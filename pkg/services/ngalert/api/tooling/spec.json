@@ -1,14 +1,4 @@
 {
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
-  "schemes": [
-    "http",
-    "https"
-  ],
   "swagger": "2.0",
   "info": {
     "description": "Package definitions includes the types required for generating or consuming an OpenAPI\nspec for the Unified Alerting API.\nDocumentation of the API.",
@@ -717,6 +707,38 @@
         }
       }
     },
+    "/api/v1/eval": {
+      "post": {
+        "description": "Test rule",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "testing"
+        ],
+        "operationId": "RouteEvalQueries",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/EvalQueriesPayload"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "EvalQueriesResponse",
+            "schema": {
+              "$ref": "#/definitions/EvalQueriesResponse"
+            }
+          }
+        }
+      }
+    },
     "/api/v1/receiver/test/{Recipient}": {
       "post": {
         "description": "Test receiver",
@@ -1332,6 +1354,27 @@
       },
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
     },
+    "EvalQueriesPayload": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AlertQuery"
+          },
+          "x-go-name": "Data"
+        },
+        "now": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Now"
+        }
+      },
+      "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+    },
+    "EvalQueriesResponse": {
+      "$ref": "#/definitions/EvalQueriesResponse"
+    },
     "ExtendedReceiver": {
       "type": "object",
       "properties": {
@@ -1369,7 +1412,7 @@
       "$ref": "#/definitions/ResponseDetails"
     },
     "GettableAlert": {
-      "$ref": "#/definitions/GettableAlert"
+      "$ref": "#/definitions/gettableAlert"
     },
     "GettableAlerts": {
       "$ref": "#/definitions/GettableAlerts"
@@ -1638,7 +1681,7 @@
       "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
     },
     "GettableSilence": {
-      "$ref": "#/definitions/gettableSilence"
+      "$ref": "#/definitions/GettableSilence"
     },
     "GettableSilences": {
       "$ref": "#/definitions/GettableSilences"
@@ -3204,7 +3247,7 @@
           "description": "alerts",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/gettableAlert"
+            "$ref": "#/definitions/GettableAlert"
           },
           "x-go-name": "Alerts"
         },
@@ -3774,11 +3817,6 @@
       },
       "x-go-name": "VersionInfo",
       "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
-    }
-  },
-  "securityDefinitions": {
-    "basic": {
-      "type": "basic"
     }
   }
 }

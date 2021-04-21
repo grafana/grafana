@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
@@ -76,4 +77,22 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 		jsonExtractor(nil),
 		nil,
 	)
+}
+
+func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
+	now := cmd.Now
+	if now.IsZero() {
+		now = timeNow()
+	}
+	if err := validateQueriesAndExpressions(cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+		return response.Error(http.StatusBadRequest, "invalid queries or expressions", err)
+	}
+
+	evaluator := eval.Evaluator{Cfg: srv.Cfg}
+	evalResults, err := evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.DataService)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to evaluate queries and expressions", err)
+	}
+
+	return response.JSONStreaming(http.StatusOK, evalResults)
 }

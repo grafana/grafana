@@ -103,12 +103,7 @@ type AlertExecCtx struct {
 }
 
 // GetQueryDataRequest validates the condition and creates a backend.QueryDataRequest from it.
-func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (*backend.QueryDataRequest, error) {
-	if !c.IsValid() {
-		return nil, fmt.Errorf("invalid conditions")
-		// TODO: Things probably
-	}
-
+func GetQueryDataRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (*backend.QueryDataRequest, error) {
 	queryDataReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			OrgID: ctx.OrgID,
@@ -116,8 +111,8 @@ func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (
 		Queries: []backend.DataQuery{},
 	}
 
-	for i := range c.Data {
-		q := c.Data[i]
+	for i := range data {
+		q := data[i]
 		model, err := q.GetModel()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
@@ -144,25 +139,16 @@ func GetQueryDataRequest(ctx AlertExecCtx, c *models.Condition, now time.Time) (
 	return queryDataReq, nil
 }
 
-// execute runs the Condition's expressions or queries.
-func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
+func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 
-	queryDataReq, err := GetQueryDataRequest(ctx, c, now)
+	execResp, err := executeQueriesAndExpressions(ctx, c.Data, now, dataService)
+
 	if err != nil {
 		return &result, err
 	}
 
-	exprService := expr.Service{
-		Cfg:         &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
-		DataService: dataService,
-	}
-	pbRes, err := exprService.TransformData(ctx.Ctx, queryDataReq)
-	if err != nil {
-		return &result, err
-	}
-
-	for refID, res := range pbRes.Responses {
+	for refID, res := range execResp.Responses {
 		if refID != c.Condition {
 			continue
 		}
@@ -176,6 +162,19 @@ func execute(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *
 	}
 
 	return &result, nil
+}
+
+func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
+	queryDataReq, err := GetQueryDataRequest(ctx, data, now)
+	if err != nil {
+		return nil, err
+	}
+
+	exprService := expr.Service{
+		Cfg:         &setting.Cfg{ExpressionsEnabled: ctx.ExpressionsEnabled},
+		DataService: dataService,
+	}
+	return exprService.TransformData(ctx.Ctx, queryDataReq)
 }
 
 // evaluateExecutionResult takes the ExecutionResult, and returns a frame where
@@ -275,7 +274,7 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
 
-	execResult, err := execute(alertExecCtx, condition, now, dataService)
+	execResult, err := executeCondition(alertExecCtx, condition, now, dataService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}
@@ -285,4 +284,19 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 		return nil, fmt.Errorf("failed to evaluate results: %w", err)
 	}
 	return evalResults, nil
+}
+
+// QueriesAndExpressionsEval executes queries and expressions and returns the result.
+func (e *Evaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
+	defer cancelFn()
+
+	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
+
+	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, dataService)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute conditions: %w", err)
+	}
+
+	return execResult, nil
 }

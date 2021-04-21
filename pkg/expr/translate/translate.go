@@ -34,7 +34,7 @@ func DashboardAlertConditions(rawDCondJSON []byte, orgID int64) (*ngmodels.Condi
 		return nil, err
 	}
 
-	backendReq, err := eval.GetQueryDataRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, ngCond, time.Unix(500, 0))
+	backendReq, err := eval.GetQueryDataRequest(eval.AlertExecCtx{ExpressionsEnabled: true}, ngCond.Data, time.Unix(500, 0))
 
 	if err != nil {
 		return nil, err
