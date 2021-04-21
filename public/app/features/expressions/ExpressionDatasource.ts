@@ -27,6 +27,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 
 // MATCHES the constant in DataSourceWithBackend
 export const ExpressionDatasourceID = '__expr__';
+export const ExpressionDatasourceUID = '-100';
 
 export const expressionDatasource = new ExpressionDatasourceApi({
   id: -100,

@@ -1,16 +1,19 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { DataSourceApi, dateMath, dateTime, GrafanaTheme } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { AlertingQueryRows } from './AlertingQueryRows';
-import { expressionDatasource } from '../../expressions/ExpressionDatasource';
-import { addQuery } from 'app/core/utils/query';
+import {
+  expressionDatasource,
+  ExpressionDatasourceID,
+  ExpressionDatasourceUID,
+} from '../../expressions/ExpressionDatasource';
+import { getNextRefIdChar } from 'app/core/utils/query';
 import { defaultCondition } from '../../expressions/utils/expressionTypes';
-import { ExpressionQuery, ExpressionQueryType } from '../../expressions/types';
-import { AlertingQuery } from '../types';
-import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { ExpressionQueryType } from '../../expressions/types';
+import { GrafanaQuery, GrafanaQueryModel } from 'app/types/unified-alerting-dto';
 
 interface Props {
   queries: GrafanaQuery[];
@@ -18,14 +21,12 @@ interface Props {
 }
 
 interface State {
-  queries: Array<AlertingQuery | ExpressionQuery>;
   defaultDataSource?: DataSourceApi;
 }
-
 export class AlertingQueryEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { queries: [] };
+    this.state = {};
   }
 
   async componentDidMount() {
@@ -41,21 +42,34 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   };
 
   onNewAlertingQuery = () => {
-    this.setState((prevState) => ({
-      queries: addQuery(prevState.queries, newAlertingQuery()),
-    }));
+    const { onChange, queries } = this.props;
+    const { defaultDataSource } = this.state;
+
+    if (!defaultDataSource) {
+      return;
+    }
+
+    const alertingQuery: GrafanaQueryModel = {
+      refId: '',
+      datasourceUid: defaultDataSource.uid,
+      datasource: defaultDataSource.name,
+    };
+
+    onChange(addQuery(queries, alertingQuery));
   };
 
   onNewExpressionQuery = () => {
-    this.setState((prevState) => ({
-      queries: addQuery(
-        prevState.queries,
-        expressionDatasource.newQuery({
-          type: ExpressionQueryType.classic,
-          conditions: [defaultCondition],
-        })
-      ),
-    }));
+    const { onChange, queries } = this.props;
+    const expressionQuery: GrafanaQueryModel = {
+      ...expressionDatasource.newQuery({
+        type: ExpressionQueryType.classic,
+        conditions: [defaultCondition],
+      }),
+      datasourceUid: ExpressionDatasourceUID,
+      datasource: ExpressionDatasourceID,
+    };
+
+    onChange(addQuery(queries, expressionQuery));
   };
 
   renderAddQueryRow(styles: ReturnType<typeof getStyles>) {
@@ -105,15 +119,24 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 }
 
-const newAlertingQuery = (query?: Partial<AlertingQuery>): Partial<AlertingQuery> => {
-  return {
-    ...query,
-    timeRange: {
-      from: dateMath.parse('now-6h')!,
-      to: dateTime(),
-      raw: { from: 'now-6h', to: 'now' },
+const addQuery = (queries: GrafanaQuery[], model: GrafanaQueryModel): GrafanaQuery[] => {
+  const refId = getNextRefIdChar(queries);
+
+  const query: GrafanaQuery = {
+    refId,
+    queryType: '',
+    model: {
+      ...model,
+      hide: false,
+      refId: refId,
+    },
+    relativeTimeRange: {
+      from: 21600,
+      to: 0,
     },
   };
+
+  return [...queries, query];
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
