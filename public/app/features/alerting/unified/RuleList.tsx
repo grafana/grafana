@@ -17,6 +17,7 @@ import RulesFilter from './components/rules/RulesFilter';
 import { RuleListGroupView } from './components/rules/RuleListGroupView';
 import { RuleListStateView } from './components/rules/RuleListStateView';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { config } from '@grafana/runtime';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -105,13 +106,15 @@ export const RuleList: FC = () => {
           )}
           {promReqeustErrors.map(({ dataSource, error }) => (
             <div key={dataSource.name}>
-              Failed to load rules state from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
+              Failed to load rules state from{' '}
+              <a href={`${config.appSubUrl ?? ''}/datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
               {error.message || 'Unknown error.'}
             </div>
           ))}
           {rulerRequestErrors.map(({ dataSource, error }) => (
             <div key={dataSource.name}>
-              Failed to load rules config from <a href={`datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
+              Failed to load rules config from{' '}
+              <a href={`${config.appSubUrl ?? ''}/datasources/edit/${dataSource.id}`}>{dataSource.name}</a>:{' '}
               {error.message || 'Unknown error.'}
             </div>
           ))}
@@ -123,19 +126,19 @@ export const RuleList: FC = () => {
           <div className={styles.break} />
           <div className={styles.buttonsContainer}>
             <ButtonGroup>
-              <a href={urlUtil.renderUrl('/alerting/list', { ...queryParams, view: 'group' })}>
+              <a href={urlUtil.renderUrl(`${config.appSubUrl ?? ''}/alerting/list`, { ...queryParams, view: 'group' })}>
                 <ToolbarButton variant={view === 'groups' ? 'active' : 'default'} icon="folder">
                   Groups
                 </ToolbarButton>
               </a>
-              <a href={urlUtil.renderUrl('/alerting/list', { ...queryParams, view: 'state' })}>
+              <a href={urlUtil.renderUrl(`${config.appSubUrl ?? ''}/alerting/list`, { ...queryParams, view: 'state' })}>
                 <ToolbarButton variant={view === 'state' ? 'active' : 'default'} icon="heart-rate">
                   State
                 </ToolbarButton>
               </a>
             </ButtonGroup>
             <div />
-            <a href="/alerting/new">
+            <a href={`${config.appSubUrl ?? ''}/alerting/new`}>
               <Button icon="plus">New alert rule</Button>
             </a>
           </div>

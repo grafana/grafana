@@ -7,11 +7,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	coreapi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/common/model"
@@ -43,8 +43,12 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 	}
 	ruleGroup := c.Params(":Groupname")
 	if err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to delete group alert rules", err)
+		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
+			return response.Error(http.StatusNotFound, "failed to delete rule group", err)
+		}
+		return response.Error(http.StatusInternalServerError, "failed to delete rule group", err)
 	}
+
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
 }
 
@@ -186,6 +190,11 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	// TODO check permissions
 	// TODO check quota
 	// TODO validate UID uniqueness in the payload
+
+	//TODO: Should this belong in alerting-api?
+	if ruleGroupConfig.Name == "" {
+		return response.Error(http.StatusBadRequest, "rule group name is not valid", nil)
+	}
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,

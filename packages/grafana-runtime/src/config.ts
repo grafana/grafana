@@ -1,4 +1,4 @@
-import merge from 'lodash/merge';
+import { merge } from 'lodash';
 import { getTheme } from '@grafana/ui';
 import {
   BuildInfo,
@@ -57,6 +57,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     ngalert: false,
     panelLibrary: false,
     reportVariables: false,
+    accesscontrol: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

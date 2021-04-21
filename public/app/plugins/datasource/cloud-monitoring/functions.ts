@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { chunk, flatten, initial, startCase, uniqBy } from 'lodash';
 import { alignOptions, aggOptions, ValueTypes, MetricKind, systemLabels } from './constants';
 import { SelectableValue } from '@grafana/data';
 import CloudMonitoringDatasource from './datasource';
@@ -6,7 +6,7 @@ import { TemplateSrv } from '@grafana/runtime';
 import { MetricDescriptor, Filter, MetricQuery } from './types';
 
 export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
-  _.uniqBy(metricDescriptors, 'service');
+  uniqBy(metricDescriptors, 'service');
 
 export const getMetricTypesByService = (metricDescriptors: MetricDescriptor[], service: string) =>
   metricDescriptors.filter((m: MetricDescriptor) => m.service === service);
@@ -77,8 +77,8 @@ export const getAlignmentPickerData = (
 
 export const labelsToGroupedOptions = (groupBys: string[]) => {
   const groups = groupBys.reduce((acc: any, curr: string) => {
-    const arr = curr.split('.').map(_.startCase);
-    const group = (arr.length === 2 ? arr : _.initial(arr)).join(' ');
+    const arr = curr.split('.').map(startCase);
+    const group = (arr.length === 2 ? arr : initial(arr)).join(' ');
     const option = {
       value: curr,
       label: curr,
@@ -94,12 +94,12 @@ export const labelsToGroupedOptions = (groupBys: string[]) => {
 };
 
 export const filtersToStringArray = (filters: Filter[]) => {
-  const strArr = _.flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition!]));
+  const strArr = flatten(filters.map(({ key, operator, value, condition }) => [key, operator, value, condition!]));
   return strArr.filter((_, i) => i !== strArr.length - 1);
 };
 
 export const stringArrayToFilters = (filterArray: string[]) =>
-  _.chunk(filterArray, 4).map(([key, operator, value, condition = 'AND']) => ({
+  chunk(filterArray, 4).map(([key, operator, value, condition = 'AND']) => ({
     key,
     operator,
     value,
