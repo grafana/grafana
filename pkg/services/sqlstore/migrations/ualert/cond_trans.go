@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64]string) (*condition, error) {
+func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64][2]string) (*condition, error) {
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range set.Conditions {
 		if len(cond.Query.Params) != 3 {
@@ -119,8 +119,9 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64]st
 			}
 
 			// one could have an alert saved but datasource deleted, so can not require match.
-			dsUID := dsIDMap[[2]int64{orgID, set.Conditions[condIdx].Query.DatasourceID}]
-			queryObj["datasourceUid"] = dsUID
+			dsInfo := dsIDMap[[2]int64{orgID, set.Conditions[condIdx].Query.DatasourceID}]
+			queryObj["datasourceUid"] = dsInfo[0]
+			queryObj["datasource"] = dsInfo[1] // name is needed for UI to load query editor
 			queryObj["refId"] = refID
 
 			encodedObj, err := json.Marshal(queryObj)
@@ -140,7 +141,7 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64]st
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
-				DatasourceUID:     dsUID,
+				DatasourceUID:     dsInfo[0],
 				QueryType:         queryType,
 			}
 			newCond.Data = append(newCond.Data, alertQuery)
@@ -173,11 +174,13 @@ func transConditions(set dashAlertSettings, orgID int64, dsIDMap map[[2]int64]st
 		Type          string                 `json:"type"`
 		RefID         string                 `json:"refId"`
 		DatasourceUid string                 `json:"datasourceUid"`
+		Datasource    string                 `json:"datasource"`
 		Conditions    []classicConditionJSON `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
 		"-100",
+		"__expr__",
 		conditions,
 	}
 
