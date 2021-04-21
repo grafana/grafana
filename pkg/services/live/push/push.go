@@ -151,15 +151,12 @@ func (g *Gateway) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		rw.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	// TODO: properly extract streamID.
-	streamID := "telegraf"
-	g.handleStreamPush(req, streamID)
-	rw.WriteHeader(http.StatusOK)
+	g.handleStreamPush(rw, req)
 }
 
-func (g *Gateway) handleStreamPush(req *http.Request, streamID string) {
-	// TODO: return errors to caller.
-
+func (g *Gateway) handleStreamPush(rw http.ResponseWriter, req *http.Request) {
+	// TODO: properly extract streamID.
+	streamID := "telegraf"
 	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(streamID)
 	if err != nil {
 		logger.Error("Error getting stream", "error", err)
@@ -188,10 +185,10 @@ func (g *Gateway) handleStreamPush(req *http.Request, streamID string) {
 	if err != nil {
 		logger.Error("Error converting metrics", "error", err, "frameFormat", frameFormat)
 		if errors.Is(err, convert.ErrUnsupportedFrameFormat) {
-			//ctx.Resp.WriteHeader(http.StatusBadRequest)
-		} else {
-			//ctx.Resp.WriteHeader(http.StatusInternalServerError)
+			rw.WriteHeader(http.StatusBadRequest)
+			return
 		}
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -201,8 +198,11 @@ func (g *Gateway) handleStreamPush(req *http.Request, streamID string) {
 	for _, mf := range metricFrames {
 		err := stream.Push(mf.Key(), mf.Frame(), stableSchema)
 		if err != nil {
-			//ctx.Resp.WriteHeader(http.StatusInternalServerError)
+			logger.Error("Error pushing frame", "error", err, "key", mf.Key())
+			rw.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	}
+
+	rw.WriteHeader(http.StatusOK)
 }
