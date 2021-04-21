@@ -1,7 +1,7 @@
 import { GrafanaTheme } from '../types/theme';
 import { ThemeBreakpoints } from './breakpoints';
 import { ThemeComponents } from './createComponents';
-import { ThemeColors } from './createPalette';
+import { ThemeColors } from './createColors';
 import { ThemeShadows } from './createShadows';
 import { ThemeShape } from './createShape';
 import { ThemeSpacing } from './createSpacing';

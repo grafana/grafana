@@ -2,7 +2,7 @@
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
 
-import { ThemeColors } from './createPalette';
+import { ThemeColors } from './createColors';
 
 /** @beta */
 export interface ThemeTypography {

@@ -1,14 +1,14 @@
 import { merge } from 'lodash';
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
-import { colors } from './colors';
+import { palette } from './palette';
 import { DeepPartial, ThemeRichColor } from './types';
 
 /** @internal */
-export type ThemePaletteMode = 'light' | 'dark';
+export type ThemeColorsMode = 'light' | 'dark';
 
 /** @internal */
 export interface ThemeColorsBase<TColor> {
-  mode: ThemePaletteMode;
+  mode: ThemeColorsMode;
 
   primary: TColor;
   secondary: TColor;
@@ -82,7 +82,7 @@ export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
 export type ThemeColorsInput = DeepPartial<ThemeColorsBase<ThemeRichColor>>;
 
 class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
-  mode: ThemePaletteMode = 'dark';
+  mode: ThemeColorsMode = 'dark';
 
   whiteBase = '201, 209, 217';
 
@@ -90,14 +90,14 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     primary: `rgb(${this.whiteBase})`,
     secondary: `rgba(${this.whiteBase}, 0.65)`,
     disabled: `rgba(${this.whiteBase}, 0.40)`,
-    link: colors.blueDarkText,
-    maxContrast: colors.white,
+    link: palette.blueDarkText,
+    maxContrast: palette.white,
   };
 
   primary = {
-    main: colors.blueDarkMain,
-    text: colors.blueDarkText,
-    border: colors.blueDarkText,
+    main: palette.blueDarkMain,
+    text: palette.blueDarkText,
+    border: palette.blueDarkText,
   };
 
   secondary = {
@@ -110,24 +110,24 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   info = this.primary;
 
   error = {
-    main: colors.redDarkMain,
-    text: colors.redDarkText,
+    main: palette.redDarkMain,
+    text: palette.redDarkText,
   };
 
   success = {
-    main: colors.greenDarkMain,
-    text: colors.greenDarkText,
+    main: palette.greenDarkMain,
+    text: palette.greenDarkText,
   };
 
   warning = {
-    main: colors.orangeDarkMain,
-    text: colors.orangeDarkText,
+    main: palette.orangeDarkMain,
+    text: palette.orangeDarkText,
   };
 
   background = {
-    canvas: colors.gray05,
-    primary: colors.gray10,
-    secondary: colors.gray15,
+    canvas: palette.gray05,
+    primary: palette.gray10,
+    secondary: palette.gray15,
   };
 
   border = {
@@ -157,14 +157,14 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 }
 
 class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
-  mode: ThemePaletteMode = 'light';
+  mode: ThemeColorsMode = 'light';
 
   blackBase = '36, 41, 46';
 
   primary = {
-    main: colors.blueLightMain,
-    border: colors.blueLightText,
-    text: colors.blueLightText,
+    main: palette.blueLightMain,
+    border: palette.blueLightText,
+    text: palette.blueLightText,
   };
 
   secondary = {
@@ -174,24 +174,24 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   info = {
-    main: colors.blueLightMain,
-    text: colors.blueLightText,
+    main: palette.blueLightMain,
+    text: palette.blueLightText,
   };
 
   error = {
-    main: colors.redLightMain,
-    text: colors.redLightText,
-    border: colors.redLightText,
+    main: palette.redLightMain,
+    text: palette.redLightText,
+    border: palette.redLightText,
   };
 
   success = {
-    main: colors.greenLightMain,
-    text: colors.greenLightText,
+    main: palette.greenLightMain,
+    text: palette.greenLightText,
   };
 
   warning = {
-    main: colors.orangeLightMain,
-    text: colors.orangeLightText,
+    main: palette.orangeLightMain,
+    text: palette.orangeLightText,
   };
 
   text = {
@@ -199,13 +199,13 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     secondary: `rgba(${this.blackBase}, 0.75)`,
     disabled: `rgba(${this.blackBase}, 0.50)`,
     link: this.primary.text,
-    maxContrast: colors.black,
+    maxContrast: palette.black,
   };
 
   background = {
-    canvas: colors.gray90,
-    primary: colors.white,
-    secondary: colors.gray100,
+    canvas: palette.gray90,
+    primary: palette.white,
+    secondary: palette.gray100,
   };
 
   border = {

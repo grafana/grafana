@@ -1,6 +1,6 @@
 export { createTheme } from './createTheme';
 export { ThemeRichColor, GrafanaThemeV2 } from './types';
-export { ThemeColors } from './createPalette';
+export { ThemeColors } from './createColors';
 export { ThemeBreakpoints } from './breakpoints';
 export { ThemeShadows } from './createShadows';
 export { ThemeShape } from './createShape';

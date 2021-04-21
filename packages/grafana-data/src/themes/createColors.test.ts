@@ -1,4 +1,4 @@
-import { createColors } from './createPalette';
+import { createColors } from './createColors';
 
 describe('createColors', () => {
   it('Should enrich colors', () => {

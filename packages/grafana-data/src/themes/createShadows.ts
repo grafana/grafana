@@ -1,4 +1,4 @@
-import { ThemeColors } from './createPalette';
+import { ThemeColors } from './createColors';
 
 /** @beta */
 export interface ThemeShadows {

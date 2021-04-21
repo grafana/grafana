@@ -1,6 +1,6 @@
 import { createBreakpoints } from './breakpoints';
 import { createComponents } from './createComponents';
-import { createColors, ThemeColorsInput } from './createPalette';
+import { createColors, ThemeColorsInput } from './createColors';
 import { createShadows } from './createShadows';
 import { createShape, ThemeShapeInput } from './createShape';
 import { createSpacing, ThemeSpacingOptions } from './createSpacing';
