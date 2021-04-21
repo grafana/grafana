@@ -13,6 +13,7 @@ import { contextSrv, User as SignedInUser } from 'app/core/services/context_srv'
 import TeamMemberRow from './TeamMemberRow';
 import { setSearchMemberQuery } from './state/reducers';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { Button } from '@grafana/ui';
 
 export interface Props {
   members: TeamMember[];
@@ -79,14 +80,9 @@ export class TeamMembers extends PureComponent<Props, State> {
           </div>
 
           <div className="page-action-bar__spacer" />
-
-          <button
-            className="btn btn-primary pull-right"
-            onClick={this.onToggleAdding}
-            disabled={isAdding || !isTeamAdmin}
-          >
+          <Button className="pull-right" onClick={this.onToggleAdding} disabled={isAdding || !isTeamAdmin}>
             Add member
-          </button>
+          </Button>
         </div>
 
         <SlideDown in={isAdding}>
@@ -96,9 +92,9 @@ export class TeamMembers extends PureComponent<Props, State> {
             <div className="gf-form-inline">
               <UserPicker onSelected={this.onUserSelected} className="min-width-30" />
               {this.state.newTeamMember && (
-                <button className="btn btn-primary gf-form-btn" type="submit" onClick={this.onAddUserToTeam}>
+                <Button type="submit" onClick={this.onAddUserToTeam}>
                   Add to team
-                </button>
+                </Button>
               )}
             </div>
           </div>

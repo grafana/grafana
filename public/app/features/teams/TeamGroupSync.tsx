@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
-import { LegacyForms, Tooltip, Icon } from '@grafana/ui';
+import { LegacyForms, Tooltip, Icon, Button } from '@grafana/ui';
 const { Input } = LegacyForms;
 
 import { TeamGroup } from '../../types';
@@ -66,9 +66,9 @@ export class TeamGroupSync extends PureComponent<Props, State> {
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
-          <a className="btn btn-danger btn-small" onClick={() => this.onRemoveGroup(group)}>
-            <Icon name="times" style={{ marginBottom: 0 }} />
-          </a>
+          <Button size="sm" variant="destructive" onClick={() => this.onRemoveGroup(group)}>
+            <Icon name="times" />
+          </Button>
         </td>
       </tr>
     );
@@ -87,9 +87,9 @@ export class TeamGroupSync extends PureComponent<Props, State> {
           </Tooltip>
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
-            <button className="btn btn-primary pull-right" onClick={this.onToggleAdding}>
+            <Button className="pull-right" onClick={this.onToggleAdding}>
               <Icon name="plus" /> Add group
-            </button>
+            </Button>
           )}
         </div>
 
@@ -109,9 +109,9 @@ export class TeamGroupSync extends PureComponent<Props, State> {
               </div>
 
               <div className="gf-form">
-                <button className="btn btn-primary gf-form-btn" type="submit" disabled={!this.isNewGroupValid()}>
+                <Button type="submit" disabled={!this.isNewGroupValid()}>
                   Add group
-                </button>
+                </Button>
               </div>
             </form>
           </div>
