@@ -1,5 +1,5 @@
 import store from 'app/core/store';
-import _ from 'lodash';
+import { filter, isArray, isNumber } from 'lodash';
 import config from 'app/core/config';
 
 export class ImpressionSrv {
@@ -10,7 +10,7 @@ export class ImpressionSrv {
     let impressions = [];
     if (store.exists(impressionsKey)) {
       impressions = JSON.parse(store.get(impressionsKey));
-      if (!_.isArray(impressions)) {
+      if (!isArray(impressions)) {
         impressions = [];
       }
     }
@@ -32,8 +32,8 @@ export class ImpressionSrv {
 
     impressions = JSON.parse(impressions);
 
-    impressions = _.filter(impressions, (el) => {
-      return _.isNumber(el);
+    impressions = filter(impressions, (el) => {
+      return isNumber(el);
     });
 
     return impressions;

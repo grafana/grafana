@@ -1,6 +1,6 @@
 {
   "author": "Grafana Labs",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
   "version": "7.5.0-pre",
@@ -146,6 +146,7 @@
     "eslint": "7.21.0",
     "eslint-config-prettier": "7.2.0",
     "eslint-plugin-jsdoc": "31.6.1",
+    "eslint-plugin-lodash": "^7.2.0",
     "eslint-plugin-no-only-tests": "2.4.0",
     "eslint-plugin-prettier": "3.3.1",
     "eslint-plugin-react": "7.22.0",
