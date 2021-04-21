@@ -64,10 +64,10 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
       padding-right: ${theme.spacing(1)};
     `,
     modalContent: css`
-      padding: calc(${theme.spacing.gridSize} * 2);
+      padding: calc(${theme.spacing.gridSize}px * 2);
       overflow: auto;
       width: 100%;
-      max-height: calc(90vh - ${theme.spacing.gridSize} * 2);
+      max-height: calc(90vh - (${theme.spacing.gridSize}px * 2));
     `,
   };
 });
