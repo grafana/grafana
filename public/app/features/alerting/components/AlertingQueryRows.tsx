@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataQuery, DataSourceApi, DataSourceInstanceSettings, dateMath, PanelData, TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceApi, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -41,7 +41,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex === index) {
-          return { ...item, relativeTimeRange: dateMath.timeRangeToRelative(timeRange) };
+          return { ...item, relativeTimeRange: rangeUtil.timeRangeToRelative(timeRange) };
         }
         return item;
       })
@@ -117,7 +117,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                       onChange={(query) => this.onChangeQuery(query, index)}
                       timeRange={
                         !isExpressionQuery(query.model)
-                          ? dateMath.relativeToTimeRange(query.relativeTimeRange)
+                          ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
                           : undefined
                       }
                       onChangeTimeRange={
