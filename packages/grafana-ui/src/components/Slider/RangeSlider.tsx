@@ -2,7 +2,7 @@ import React, { FunctionComponent } from 'react';
 import { Range as RangeComponent, createSliderWithTooltip } from 'rc-slider';
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
-import { useTheme } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { getStyles } from './styles';
 import { RangeSliderProps } from './types';
 
@@ -24,7 +24,7 @@ export const RangeSlider: FunctionComponent<RangeSliderProps> = ({
   tooltipAlwaysVisible = true,
 }) => {
   const isHorizontal = orientation === 'horizontal';
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme, isHorizontal);
   const RangeWithTooltip = createSliderWithTooltip(RangeComponent);
   return (

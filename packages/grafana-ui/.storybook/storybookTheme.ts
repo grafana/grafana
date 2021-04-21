@@ -1,41 +1,39 @@
+import { GrafanaThemeV2, createTheme } from '@grafana/data';
 //@ts-ignore
 import { create } from '@storybook/theming/create';
-import lightTheme from '../src/themes/light';
-import darkTheme from '../src/themes/dark';
-import { GrafanaTheme } from '@grafana/data';
 import '../src/components/Icon/iconBundle';
 
-const createTheme = (theme: GrafanaTheme) => {
+const createStorybookTheme = (theme: GrafanaThemeV2) => {
   return create({
     base: theme.name.includes('Light') ? 'light' : 'dark',
 
-    colorPrimary: theme.v2.palette.primary.main,
-    colorSecondary: theme.v2.palette.error.main,
+    colorPrimary: theme.colors.primary.main,
+    colorSecondary: theme.colors.error.main,
 
     // UI
-    appBg: theme.v2.palette.background.canvas,
-    appContentBg: theme.v2.palette.background.primary,
-    appBorderColor: theme.v2.palette.border.medium,
-    appBorderRadius: theme.v2.shape.borderRadius(1),
+    appBg: theme.colors.background.canvas,
+    appContentBg: theme.colors.background.primary,
+    appBorderColor: theme.colors.border.medium,
+    appBorderRadius: theme.shape.borderRadius(1),
 
     // Typography
-    fontBase: theme.v2.typography.fontFamily,
-    fontCode: theme.v2.typography.fontFamilyMonospace,
+    fontBase: theme.typography.fontFamily,
+    fontCode: theme.typography.fontFamilyMonospace,
 
     // Text colors
-    textColor: theme.v2.palette.primary.text,
-    textInverseColor: theme.v2.palette.primary.contrastText,
+    textColor: theme.colors.primary.text,
+    textInverseColor: theme.colors.primary.contrastText,
 
     // Toolbar default and active colors
-    barTextColor: theme.v2.palette.text.primary,
-    barSelectedColor: theme.v2.palette.emphasize(theme.v2.palette.primary.text),
-    barBg: theme.v2.palette.background.primary,
+    barTextColor: theme.colors.text.primary,
+    barSelectedColor: theme.colors.emphasize(theme.colors.primary.text),
+    barBg: theme.colors.background.primary,
 
     // Form colors
-    inputBg: theme.v2.components.input.background,
-    inputBorder: theme.v2.components.input.border,
-    inputTextColor: theme.v2.components.input.text,
-    inputBorderRadius: theme.v2.shape.borderRadius(1),
+    inputBg: theme.components.input.background,
+    inputBorder: theme.components.input.border,
+    inputTextColor: theme.components.input.text,
+    inputBorderRadius: theme.shape.borderRadius(1),
 
     brandTitle: 'Grafana UI',
     brandUrl: './',
@@ -43,7 +41,7 @@ const createTheme = (theme: GrafanaTheme) => {
   });
 };
 
-const GrafanaLight = createTheme(lightTheme);
-const GrafanaDark = createTheme(darkTheme);
+const GrafanaLight = createStorybookTheme(createTheme({ colors: { mode: 'light' } }));
+const GrafanaDark = createStorybookTheme(createTheme({ colors: { mode: 'dark' } }));
 
 export { GrafanaLight, GrafanaDark };

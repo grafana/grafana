@@ -1,4 +1,4 @@
-import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaTheme, TimeRange } from '@grafana/data';
+import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaThemeV2, TimeRange } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 
 /**
@@ -145,7 +145,7 @@ export class RenderEvent extends BusEventBase {
   static type = 'render';
 }
 
-export class ThemeChangedEvent extends BusEventWithPayload<GrafanaTheme> {
+export class ThemeChangedEvent extends BusEventWithPayload<GrafanaThemeV2> {
   static type = 'theme-changed';
 }
 

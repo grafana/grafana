@@ -1,5 +1,4 @@
-import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
-import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, LayoutMode } from '@grafana/data';
 import { GenericDataSourcePlugin } from 'app/features/datasources/settings/PluginSettings';
 import { HealthCheckResultDetails } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
