@@ -10,7 +10,9 @@ weight = 900
 
 Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. This topic explains options, variables, querying, and other options specific to the MS SQL data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-### Data source options
+## Data source options
+
+To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the data source.
 
 | Name             | Description                                                                                                                           |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
