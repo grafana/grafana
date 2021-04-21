@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
-import set from 'lodash/set';
+import { set } from 'lodash';
 import { deprecationWarning } from '../utils';
 import { FieldConfigOptionsRegistry } from '../field';
 import { createFieldConfigRegistry } from './registryFactories';

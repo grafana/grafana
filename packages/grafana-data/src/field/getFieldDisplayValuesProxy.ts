@@ -1,4 +1,4 @@
-import toNumber from 'lodash/toNumber';
+import { toNumber } from 'lodash';
 import { DataFrame, DisplayValue, GrafanaTheme, TimeZone } from '../types';
 import { getDisplayProcessor } from './displayProcessor';
 import { formattedValueToString } from '../valueFormats';
