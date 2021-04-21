@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { debounce, each, map, partial, escape, unescape } from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import { promiseToDigest } from '../../utils/promiseToDigest';
@@ -90,7 +90,7 @@ export function queryPartEditorDirective(templateSrv: any) {
           if (param.options) {
             let options = param.options;
             if (param.type === 'int') {
-              options = _.map(options, (val) => {
+              options = map(options, (val) => {
                 return val.toString();
               });
             }
@@ -99,8 +99,8 @@ export function queryPartEditorDirective(templateSrv: any) {
 
           $scope.$apply(() => {
             $scope.handleEvent({ $event: { name: 'get-param-options' } }).then((result: any) => {
-              const dynamicOptions = _.map(result, (op) => {
-                return _.escape(op.value);
+              const dynamicOptions = map(result, (op) => {
+                return escape(op.value);
               });
               callback(dynamicOptions);
             });
@@ -114,7 +114,7 @@ export function queryPartEditorDirective(templateSrv: any) {
           minLength: 0,
           items: 1000,
           updater: (value: string) => {
-            value = _.unescape(value);
+            value = unescape(value);
             setTimeout(() => {
               inputBlur.call($input[0], paramIndex);
             }, 0);
@@ -130,7 +130,7 @@ export function queryPartEditorDirective(templateSrv: any) {
         };
 
         if (debounceLookup) {
-          typeahead.lookup = _.debounce(typeahead.lookup, 500, { leading: true });
+          typeahead.lookup = debounce(typeahead.lookup, 500, { leading: true });
         }
       }
 
@@ -147,7 +147,7 @@ export function queryPartEditorDirective(templateSrv: any) {
       };
 
       function addElementsAndCompile() {
-        _.each(partDef.params, (param: any, index: number) => {
+        each(partDef.params, (param: any, index: number) => {
           if (param.optional && part.params.length <= index) {
             return;
           }
@@ -163,10 +163,10 @@ export function queryPartEditorDirective(templateSrv: any) {
           $paramLink.appendTo($paramsContainer);
           $input.appendTo($paramsContainer);
 
-          $input.blur(_.partial(inputBlur, index));
+          $input.blur(partial(inputBlur, index));
           $input.keyup(inputKeyDown);
-          $input.keypress(_.partial(inputKeyPress, index));
-          $paramLink.click(_.partial(clickFuncParam, index));
+          $input.keypress(partial(inputKeyPress, index));
+          $paramLink.click(partial(clickFuncParam, index));
 
           addTypeahead($input, param, index);
         });

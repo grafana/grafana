@@ -1,6 +1,4 @@
-import each from 'lodash/each';
-import groupBy from 'lodash/groupBy';
-import has from 'lodash/has';
+import { each, groupBy, has } from 'lodash';
 
 import { RawTimeRange, TimeRange, TimeZone, IntervalValues } from '../types/time';
 

@@ -1,5 +1,5 @@
 import { AnyAction } from 'redux';
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash';
 
 import {
   DEFAULT_RANGE,
