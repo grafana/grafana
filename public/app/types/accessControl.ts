@@ -29,6 +29,12 @@ export enum AccessControlAction {
   UsersLogout = 'users:logout',
   UsersQuotasList = 'users.quotas:list',
   UsersQuotasUpdate = 'users.quotas:update',
+
+  OrgUsersRead = 'org.users:read',
+  OrgUsersAdd = 'org.users:add',
+  OrgUsersRemove = 'org.users:remove',
+  OrgUsersRoleUpdate = 'org.users.role:update',
+
   LDAPUsersRead = 'ldap.user:read',
   LDAPUsersSync = 'ldap.user:sync',
   LDAPStatusRead = 'ldap.status:read',
