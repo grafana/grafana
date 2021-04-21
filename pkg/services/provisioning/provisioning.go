@@ -18,6 +18,8 @@ import (
 )
 
 type ProvisioningService interface {
+	registry.BackgroundService
+	RunInitProvisioners() error
 	ProvisionDatasources() error
 	ProvisionPlugins() error
 	ProvisionNotifications() error
@@ -28,17 +30,24 @@ type ProvisioningService interface {
 
 func init() {
 	registry.Register(&registry.Descriptor{
-		Name: "ProvisioningService",
-		Instance: newProvisioningServiceImpl(
-			dashboards.New,
-			notifiers.Provision,
-			datasources.Provision,
-			plugins.Provision,
-		),
+		Name:         "ProvisioningService",
+		Instance:     NewProvisioningServiceImpl(),
 		InitPriority: registry.Low,
 	})
 }
 
+// Add a public constructor for overriding service to be able to instantiate OSS as fallback
+func NewProvisioningServiceImpl() *provisioningServiceImpl {
+	return &provisioningServiceImpl{
+		log:                     log.New("provisioning"),
+		newDashboardProvisioner: dashboards.New,
+		provisionNotifiers:      notifiers.Provision,
+		provisionDatasources:    datasources.Provision,
+		provisionPlugins:        plugins.Provision,
+	}
+}
+
+// Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
@@ -55,10 +64,9 @@ func newProvisioningServiceImpl(
 }
 
 type provisioningServiceImpl struct {
-	Cfg                     *setting.Cfg                  `inject:""`
-	RequestHandler          plugifaces.DataRequestHandler `inject:""`
-	SQLStore                *sqlstore.SQLStore            `inject:""`
-	PluginManager           plugifaces.Manager            `inject:""`
+	Cfg                     *setting.Cfg       `inject:""`
+	SQLStore                *sqlstore.SQLStore `inject:""`
+	PluginManager           plugifaces.Manager `inject:""`
 	log                     log.Logger
 	pollingCtxCancel        context.CancelFunc
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory
@@ -70,6 +78,10 @@ type provisioningServiceImpl struct {
 }
 
 func (ps *provisioningServiceImpl) Init() error {
+	return ps.RunInitProvisioners()
+}
+
+func (ps *provisioningServiceImpl) RunInitProvisioners() error {
 	err := ps.ProvisionDatasources()
 	if err != nil {
 		return err
@@ -137,7 +149,7 @@ func (ps *provisioningServiceImpl) ProvisionNotifications() error {
 
 func (ps *provisioningServiceImpl) ProvisionDashboards() error {
 	dashboardPath := filepath.Join(ps.Cfg.ProvisioningPath, "dashboards")
-	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath, ps.SQLStore, ps.RequestHandler)
+	dashProvisioner, err := ps.newDashboardProvisioner(dashboardPath, ps.SQLStore)
 	if err != nil {
 		return errutil.Wrap("Failed to create provisioner", err)
 	}

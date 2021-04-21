@@ -109,7 +109,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		}
 
 		if m.timescaledb {
-			return fmt.Sprintf("time_bucket('%.0fs',%s)", interval.Seconds(), args[0]), nil
+			return fmt.Sprintf("time_bucket('%.1fs',%s)", interval.Seconds(), args[0]), nil
 		}
 
 		return fmt.Sprintf(

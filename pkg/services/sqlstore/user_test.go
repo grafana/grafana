@@ -363,7 +363,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.True(t, found)
 
 		disableCmd := models.BatchDisableUsersCommand{
-			UserIds:    []int64{1, 2, 3, 4, 5},
+			UserIds:    []int64{users[0].Id, users[1].Id, users[2].Id, users[3].Id, users[4].Id},
 			IsDisabled: true,
 		}
 
@@ -406,7 +406,7 @@ func TestUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - enable all users", func(t *testing.T) {
 
-		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
+		users := createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 			return &models.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
 				Name:       fmt.Sprint("user", i),
@@ -416,7 +416,7 @@ func TestUserDataAccess(t *testing.T) {
 		})
 
 		disableCmd := models.BatchDisableUsersCommand{
-			UserIds:    []int64{1, 2, 3, 4, 5},
+			UserIds:    []int64{users[0].Id, users[1].Id, users[2].Id, users[3].Id, users[4].Id},
 			IsDisabled: false,
 		}
 
@@ -607,7 +607,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		// Cannot make themselves a non-admin
-		updatePermsError := ss.UpdateUserPermissions(1, false)
+		updatePermsError := ss.UpdateUserPermissions(user.Id, false)
 
 		require.Equal(t, updatePermsError, models.ErrLastGrafanaAdmin)
 
