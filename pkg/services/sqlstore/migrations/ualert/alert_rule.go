@@ -26,6 +26,14 @@ type alertRule struct {
 }
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
+	migAnnotation := fmt.Sprintf(`{"dashboard_uid": "%v", "panel_id": %v, "alert_id": %v}`, da.DashboardUID, da.PanelId, da.Id)
+
+	annotations := da.ParsedSettings.AlertRuleTags
+	if annotations == nil {
+		annotations = make(map[string]string, 1)
+	}
+	annotations["__migration__info__"] = migAnnotation
+
 	ar := &alertRule{
 		OrgId:           da.OrgId,
 		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
@@ -37,7 +45,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		RuleGroup:    da.Name,
 		For:          duration(da.For),
 		Updated:      time.Now().UTC(),
-		Annotations:  da.ParsedSettings.AlertRuleTags,
+		Annotations:  annotations,
 	}
 	var err error
 	ar.Uid, err = m.generateAlertRuleUID(ar.OrgId)

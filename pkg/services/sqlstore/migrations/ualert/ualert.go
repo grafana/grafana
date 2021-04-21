@@ -41,11 +41,18 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
+	dashIDMap, err := m.slurpDashUIDs()
+	if err != nil {
+		return err
+	}
+
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
 			return err
 		}
+
+		da.DashboardUID = dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
 
 		tempFolderUID := os.Getenv("UALERT_FOLDER_UID")
 		if tempFolderUID == "" {
