@@ -2,45 +2,6 @@ import { css } from '@emotion/react';
 import { GrafanaThemeV2 } from '@grafana/data';
 export function getCardStyles(theme: GrafanaThemeV2) {
   return css`
-    .layout-selector {
-      &::after {
-        content: '';
-        display: table;
-        clear: both;
-      }
-
-      margin-left: ${theme.spacing(2)};
-      text-align: right;
-
-      button {
-        background: $input-label-bg;
-        color: $text-color-weak;
-        box-shadow: $card-shadow;
-        border: none;
-        padding: ${theme.spacing(1)};
-        line-height: 1;
-        font-size: 130%;
-        float: right;
-
-        &:focus {
-          outline: none;
-        }
-
-        &.active {
-          background-color: lighten($input-label-bg, 5%);
-          color: $link-color;
-        }
-
-        &:nth-child(2) {
-          border-radius: 3px 0 0 3px;
-          border-right: $panel-border;
-        }
-
-        &:nth-child(1) {
-          border-radius: 0 3px 3px 0;
-        }
-      }
-    }
     .card-section {
       margin-bottom: ${theme.spacing(4)};
     }
@@ -55,13 +16,13 @@ export function getCardStyles(theme: GrafanaThemeV2) {
     .card-item {
       display: block;
       height: 100%;
-      background: $card-background;
-      box-shadow: $card-shadow;
+      background: ${theme.palette.background.secondary};
+      box-shadow: none;
       padding: ${theme.spacing(2)};
       border-radius: 4px;
 
       &:hover {
-        background: $card-background-hover;
+        background: ${theme.palette.emphasize(theme.palette.background.secondary, 0.03)};
       }
 
       .label-tag {
@@ -85,7 +46,7 @@ export function getCardStyles(theme: GrafanaThemeV2) {
     }
 
     .card-item-type {
-      color: $text-color-weak;
+      color: ${theme.palette.text.secondary};
       text-transform: uppercase;
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
@@ -111,14 +72,14 @@ export function getCardStyles(theme: GrafanaThemeV2) {
     }
 
     .card-item-sub-name {
-      color: $text-color-weak;
+      color: ${theme.palette.text.secondary};
       overflow: hidden;
       text-overflow: ellipsis;
       width: 100%;
     }
 
     .card-item-sub-name--header {
-      color: $text-color-weak;
+      color: ${theme.palette.text.secondary};
       text-transform: uppercase;
       margin-bottom: ${theme.spacing(2)};
       font-size: ${theme.typography.size.sm};
