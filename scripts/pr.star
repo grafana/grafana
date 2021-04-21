@@ -48,10 +48,12 @@ def pr_pipelines(edition):
     bundledPluginsFilesChanged = {
         'paths': [ 'plugins-bundled/**']
     }
-    backendFrontendFilesChanged = {
-        'paths': backendFilesChanged['paths'] + frontendFilesChanged['paths'] + [
-            'packaging/docker/**'
-        ]
+    fullBuildFilesChanged = {
+        'paths':
+            backendFilesChanged['paths'] +
+            frontendFilesChanged['paths'] +
+            bundledPluginsFilesChanged['paths'] +
+            [ 'packaging/docker/**' ]
     }
     steps = [
         lint_backend_step(edition=edition, when=backendFilesChanged),
@@ -59,8 +61,8 @@ def pr_pipelines(edition):
         shellcheck_step(when=shellFilesChanged),
         test_backend_step(edition=edition, when=backendFilesChanged),
         test_frontend_step(when=frontendFilesChanged),
-        build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants, when=backendFrontendFilesChanged),
-        build_frontend_step(edition=edition, ver_mode=ver_mode, when=backendFrontendFilesChanged),
+        build_backend_step(edition=edition, ver_mode=ver_mode, variants=variants, when=fullBuildFilesChanged),
+        build_frontend_step(edition=edition, ver_mode=ver_mode, when=fullBuildFilesChanged),
         build_plugins_step(edition=edition, when=bundledPluginsFilesChanged),
     ]
 
@@ -72,31 +74,31 @@ def pr_pipelines(edition):
         steps.extend([
             lint_backend_step(edition=edition2, when=backendFilesChanged),
             test_backend_step(edition=edition2, when=backendFilesChanged),
-            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], when=backendFrontendFilesChanged),
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], when=fullBuildFilesChanged),
         ])
 
     # Insert remaining steps
     steps.extend([
-        gen_version_step(ver_mode=ver_mode, include_enterprise2=include_enterprise2, when=backendFrontendFilesChanged),
-        package_step(edition=edition, ver_mode=ver_mode, variants=variants, when=backendFrontendFilesChanged),
-        e2e_tests_server_step(edition=edition, when=backendFrontendFilesChanged),
-        e2e_tests_step(edition=edition, when=backendFrontendFilesChanged),
+        gen_version_step(ver_mode=ver_mode, include_enterprise2=include_enterprise2, when=fullBuildFilesChanged),
+        package_step(edition=edition, ver_mode=ver_mode, variants=variants, when=fullBuildFilesChanged),
+        e2e_tests_server_step(edition=edition, when=fullBuildFilesChanged),
+        e2e_tests_step(edition=edition, when=fullBuildFilesChanged),
         build_storybook_step(edition=edition, ver_mode=ver_mode, when=frontendFilesChanged),
         build_frontend_docs_step(edition=edition, when=frontendFilesChanged),
         build_docs_website_step(when=frontendFilesChanged),
-        copy_packages_for_docker_step(when=backendFrontendFilesChanged),
-        build_docker_images_step(edition=edition, ver_mode=ver_mode, archs=['amd64',], when=backendFrontendFilesChanged),
+        copy_packages_for_docker_step(when=fullBuildFilesChanged),
+        build_docker_images_step(edition=edition, ver_mode=ver_mode, archs=['amd64',], when=fullBuildFilesChanged),
         postgres_integration_tests_step(when=backendFilesChanged),
         mysql_integration_tests_step(when=backendFilesChanged),
     ])
 
     if include_enterprise2:
         steps.extend([
-            redis_integration_tests_step(when=backendFrontendFilesChanged),
-            memcached_integration_tests_step(when=backendFrontendFilesChanged),
-            package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], when=backendFrontendFilesChanged),
-            e2e_tests_server_step(edition=edition2, port=3002, when=backendFrontendFilesChanged),
-            e2e_tests_step(edition=edition2, port=3002, when=backendFrontendFilesChanged),
+            redis_integration_tests_step(when=fullBuildFilesChanged),
+            memcached_integration_tests_step(when=fullBuildFilesChanged),
+            package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], when=fullBuildFilesChanged),
+            e2e_tests_server_step(edition=edition2, port=3002, when=fullBuildFilesChanged),
+            e2e_tests_step(edition=edition2, port=3002, when=fullBuildFilesChanged),
         ])
 
     trigger = {

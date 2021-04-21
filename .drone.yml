@@ -105,6 +105,7 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
+    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - initialize
@@ -124,6 +125,7 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
+    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - initialize
@@ -153,6 +155,7 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
+    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - build-backend
@@ -176,6 +179,7 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
+    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - gen-version
@@ -196,6 +200,7 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
+    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - package
@@ -216,6 +221,7 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
+    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - end-to-end-tests-server
@@ -279,6 +285,7 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
+    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - package
@@ -298,6 +305,7 @@ steps:
     - yarn.lock
     - public/**
     - packages/**
+    - plugins-bundled/**
     - packaging/docker/**
   depends_on:
   - copy-packages-for-docker
