@@ -20,7 +20,6 @@ export class MySqlDatasource extends DataSourceWithBackend<MySqlQuery, MySqlOpti
   id: any;
   name: any;
   responseParser: ResponseParser;
-  queryModel: MySqlQuery;
   interval: string;
 
   constructor(
