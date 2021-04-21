@@ -1,7 +1,7 @@
 .PHONY: pull docs docs-quick docs-no-pull docs-test docs-local-static
 
 IMAGE = grafana/grafana-docs-dev:latest
-CONTENT_PATH = /hugo/content/docs/grafana/latest
+CONTENT_PATH = /hugo/content/docs/grafana/next
 LOCAL_STATIC_PATH = ../../website/static
 PORT = 3002:3002
 
@@ -9,13 +9,13 @@ pull:
 	docker pull $(IMAGE)
 
 docs: pull
-	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE)
+	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "make server"
 
 docs-quick: pull
-	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "ln -s /frontend-docs/packages_api /hugo/content/docs/grafana/latest/packages_api && hugo server -p 3002 -D --bind 0.0.0.0 --environment=quick"
+	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "ln -s /frontend-docs/packages_api /hugo/content/docs/grafana/next/packages_api && make server-quick"
 
 docs-no-pull:
-	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE)
+	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z -p $(PORT) --rm -it $(IMAGE) /bin/bash -c "make server-quick"
 
 docs-test: pull
 	docker run -v $(shell pwd)/sources:$(CONTENT_PATH):Z --rm -it $(IMAGE) /bin/bash -c 'make prod'

@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 // Components
 import Page from 'app/core/components/Page/Page';
 import { PluginSettings } from './PluginSettings';
@@ -127,7 +127,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
   renderIsReadOnlyMessage() {
     return (
-      <InfoBox severity="info">
+      <InfoBox aria-label={selectors.pages.DataSource.readOnly} severity="info">
         This data source was added by config and cannot be modified using the UI. Please contact your server admin to
         update this data source.
       </InfoBox>
@@ -233,13 +233,15 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
           />
         )}
 
-        <div className="gf-form-group">
-          {testingStatus && testingStatus.message && (
+        <div className="gf-form-group p-t-2">
+          {testingStatus?.message && (
             <Alert
               severity={testingStatus.status === 'error' ? 'error' : 'success'}
               title={testingStatus.message}
               aria-label={selectors.pages.DataSource.alert}
-            />
+            >
+              {testingStatus.details?.message ?? null}
+            </Alert>
           )}
         </div>
 

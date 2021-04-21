@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map } from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
@@ -21,7 +21,7 @@ const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'Heatmap', value: 'heatmap' },
 ];
 
-const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = _.map([1, 2, 3, 4, 5, 10], (value: number) => ({
+const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
   value,
   label: '1/' + value,
 }));
@@ -32,6 +32,7 @@ interface State {
   interval?: string;
   intervalFactorOption: SelectableValue<number>;
   instant: boolean;
+  exemplar: boolean;
 }
 
 export class PromQueryEditor extends PureComponent<Props, State> {
@@ -55,6 +56,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
         INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
       // Switch options
       instant: Boolean(query.instant),
+      exemplar: Boolean(query.exemplar),
     };
   }
 
@@ -90,6 +92,11 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     this.setState({ legendFormat });
   };
 
+  onExemplarChange = (isEnabled: boolean) => {
+    this.query.exemplar = isEnabled;
+    this.setState({ exemplar: isEnabled }, this.onRunQuery);
+  };
+
   onRunQuery = () => {
     const { query } = this;
     // Change of query.hide happens outside of this component and is just passed as prop. We have to update it when running queries.
@@ -99,8 +106,8 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query, range, data, onChange } = this.props;
-    const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
+    const { datasource, query, range, data } = this.props;
+    const { formatOption, instant, interval, intervalFactorOption, legendFormat, exemplar } = this.state;
 
     return (
       <div>
@@ -186,7 +193,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             </InlineFormLabel>
           </div>
 
-          <PromExemplarField query={this.query} onChange={onChange} datasource={this.props.datasource} />
+          <PromExemplarField isEnabled={exemplar} onChange={this.onExemplarChange} datasource={datasource} />
         </div>
       </div>
     );

@@ -19,9 +19,6 @@ var TimeNow = time.Now
 // AlertDefinitionMaxTitleLength is the maximum length of the alert definition title
 const AlertDefinitionMaxTitleLength = 190
 
-// ErrEmptyTitleError is an error returned if the alert definition title is empty
-var ErrEmptyTitleError = errors.New("title is empty")
-
 // Store is the interface for persisting alert definitions and instances
 type Store interface {
 	DeleteAlertDefinitionByUID(*models.DeleteAlertDefinitionByUIDCommand) error
@@ -35,6 +32,7 @@ type Store interface {
 	SaveAlertInstance(*models.SaveAlertInstanceCommand) error
 	ValidateAlertDefinition(*models.AlertDefinition, bool) error
 	UpdateAlertDefinitionPaused(*models.UpdateAlertDefinitionPausedCommand) error
+	FetchOrgIds(cmd *models.FetchUniqueOrgIdsQuery) error
 }
 
 // AlertingStore is the database interface used by the Alertmanager service.
@@ -328,7 +326,7 @@ func (st DBstore) ValidateAlertDefinition(alertDefinition *models.AlertDefinitio
 	}
 
 	if alertDefinition.Title == "" {
-		return ErrEmptyTitleError
+		return fmt.Errorf("title is empty")
 	}
 
 	if alertDefinition.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 {

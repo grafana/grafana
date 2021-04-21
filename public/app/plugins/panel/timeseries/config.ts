@@ -11,19 +11,22 @@ import {
   stringOverrideProcessor,
 } from '@grafana/data';
 import {
+  AxisConfig,
   AxisPlacement,
   BarAlignment,
   DrawStyle,
   GraphFieldConfig,
   graphFieldOptions,
+  GraphGradientMode,
+  HideableFieldConfig,
+  LegendDisplayMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
   ScaleDistribution,
   ScaleDistributionConfig,
-  GraphGradientMode,
-  LegendDisplayMode,
-  AxisConfig,
+  StackingConfig,
+  StackingMode,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
@@ -31,6 +34,7 @@ import { LineStyleEditor } from './LineStyleEditor';
 import { FillBellowToEditor } from './FillBelowToEditor';
 import { OptionsWithLegend } from './types';
 import { SpanNullsEditor } from './SpanNullsEditor';
+import { StackingEditor } from './StackingEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
@@ -39,11 +43,15 @@ export const defaultGraphConfig: GraphFieldConfig = {
   fillOpacity: 0,
   gradientMode: GraphGradientMode.None,
   barAlignment: BarAlignment.Center,
+  stacking: {
+    mode: StackingMode.None,
+    group: 'A',
+  },
 };
 
-export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
-  const categoryStyles = ['Graph styles'];
+const categoryStyles = ['Graph styles'];
 
+export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
   return {
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -179,13 +187,14 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           showIf: (c) => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
         });
 
+      addStackingConfig(builder, cfg.stacking);
       addAxisConfig(builder, cfg);
       addHideFrom(builder);
     },
   };
 }
 
-export function addHideFrom(builder: FieldConfigEditorBuilder<AxisConfig>) {
+export function addHideFrom(builder: FieldConfigEditorBuilder<HideableFieldConfig>) {
   builder.addCustomEditor({
     id: 'hideFrom',
     name: 'Hide in area',
@@ -317,4 +326,24 @@ export function addLegendOptions<T extends OptionsWithLegend>(builder: PanelOpti
       },
       showIf: (currentConfig) => currentConfig.legend.displayMode !== LegendDisplayMode.Hidden,
     });
+}
+
+export function addStackingConfig(
+  builder: FieldConfigEditorBuilder<{ stacking: StackingConfig }>,
+  defaultConfig?: StackingConfig
+) {
+  builder.addCustomEditor({
+    id: 'stacking',
+    path: 'stacking',
+    name: 'Stack series',
+    category: categoryStyles,
+    defaultValue: defaultConfig,
+    editor: StackingEditor,
+    override: StackingEditor,
+    settings: {
+      options: graphFieldOptions.stacking,
+    },
+    process: identityOverrideProcessor,
+    shouldApply: (f) => f.type === FieldType.number,
+  });
 }

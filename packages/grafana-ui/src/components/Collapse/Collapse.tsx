@@ -1,12 +1,11 @@
-import React, { FunctionComponent, useContext, useState } from 'react';
+import React, { FunctionComponent, useState } from 'react';
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme } from '@grafana/data';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { stylesFactory } from '../../themes/stylesFactory';
+import { useStyles } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme) => ({
   collapse: css`
     label: collapse;
     margin-bottom: ${theme.spacing.sm};
@@ -89,7 +88,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-right: ${theme.spacing.sm};
     font-size: ${theme.typography.heading.h6};
   `,
-}));
+});
 
 export interface Props {
   /** Expand or collapse te content */
@@ -102,6 +101,8 @@ export interface Props {
   collapsible?: boolean;
   /** Callback for the toggle functionality */
   onToggle?: (isOpen: boolean) => void;
+  /** Additional class name for the root element */
+  className?: string;
 }
 
 export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle, ...otherProps }) => {
@@ -120,16 +121,23 @@ export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle,
   );
 };
 
-export const Collapse: FunctionComponent<Props> = ({ isOpen, label, loading, collapsible, onToggle, children }) => {
-  const theme = useContext(ThemeContext);
-  const style = getStyles(theme);
+export const Collapse: FunctionComponent<Props> = ({
+  isOpen,
+  label,
+  loading,
+  collapsible,
+  onToggle,
+  className,
+  children,
+}) => {
+  const style = useStyles(getStyles);
   const onClickToggle = () => {
     if (onToggle) {
       onToggle(!isOpen);
     }
   };
 
-  const panelClass = cx([style.collapse, 'panel-container']);
+  const panelClass = cx([style.collapse, 'panel-container', className]);
   const loaderClass = loading ? cx([style.loader, style.loaderActive]) : cx([style.loader]);
   const headerClass = collapsible ? cx([style.header]) : cx([style.headerCollapsed]);
   const headerButtonsClass = collapsible ? cx([style.headerButtons]) : cx([style.headerButtonsCollapsed]);

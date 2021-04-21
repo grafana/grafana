@@ -1,9 +1,10 @@
 import React, { FC, FormEvent, useCallback, useState } from 'react';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { getFormStyles, Icon } from '../index';
-import { stylesFactory, useTheme } from '../../themes';
+import { Icon } from '../index';
+import { stylesFactory, useTheme2 } from '../../themes';
 import { ComponentSize } from '../../types/size';
+import { getButtonStyles } from '../Button';
 
 export interface Props {
   /** Callback function to handle uploaded file  */
@@ -36,7 +37,7 @@ export const FileUpload: FC<Props> = ({
   accept = '*',
   size = 'md',
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const style = getStyles(theme, size);
   const [fileName, setFileName] = useState('');
 
@@ -74,20 +75,16 @@ export const FileUpload: FC<Props> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme, size: ComponentSize) => {
-  const buttonFormStyle = getFormStyles(theme, { variant: 'primary', invalid: false, size }).button.button;
+const getStyles = stylesFactory((theme: GrafanaThemeV2, size: ComponentSize) => {
+  const buttonStyles = getButtonStyles({ theme, variant: 'primary', size, iconOnly: false });
   return {
     fileUpload: css`
       display: none;
     `,
-    button: css`
-      ${buttonFormStyle}
-    `,
-    icon: css`
-      margin-right: ${theme.spacing.xs};
-    `,
+    button: buttonStyles.button,
+    icon: buttonStyles.icon,
     fileName: css`
-      margin-left: ${theme.spacing.xs};
+      margin-left: ${theme.spacing(0.5)};
     `,
   };
 });

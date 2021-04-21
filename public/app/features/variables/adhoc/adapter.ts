@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 
 import { AdHocVariableModel } from '../types';
 import { dispatch } from '../../../store/store';

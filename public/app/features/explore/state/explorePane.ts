@@ -1,5 +1,5 @@
 import { AnyAction } from 'redux';
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash';
 
 import {
   DEFAULT_RANGE,
@@ -127,7 +127,7 @@ export const changeDedupStrategy = (
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  datasourceName: string,
+  datasourceNameOrUid: string,
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
@@ -141,7 +141,7 @@ export function initializeExplore(
 
     if (exploreDatasources.length >= 1) {
       const orgId = getState().user.orgId;
-      const loadResult = await loadAndInitDatasource(orgId, datasourceName);
+      const loadResult = await loadAndInitDatasource(orgId, datasourceNameOrUid);
       instance = loadResult.instance;
       history = loadResult.history;
     }

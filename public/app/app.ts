@@ -8,6 +8,7 @@ import 'file-saver';
 import 'jquery';
 import '@grafana/ui/src/components/Icon/iconBundle';
 
+// eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
 import ReactDOM from 'react-dom';
 import React from 'react';
@@ -124,18 +125,22 @@ function initEchoSrv() {
   setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
 
   window.addEventListener('load', (e) => {
-    // Collecting paint metrics first
+    const loadMetricName = 'frontend_boot_load_time_seconds';
+
     if (performance && performance.getEntriesByType) {
-      performance.mark('load');
+      performance.mark(loadMetricName);
 
       const paintMetrics = performance.getEntriesByType('paint');
 
       for (const metric of paintMetrics) {
-        reportPerformance(metric.name, Math.round(metric.startTime + metric.duration));
+        reportPerformance(
+          `frontend_boot_${metric.name}_time_seconds`,
+          Math.round(metric.startTime + metric.duration) / 1000
+        );
       }
 
-      const loadMetric = performance.getEntriesByName('load')[0];
-      reportPerformance(loadMetric.name, Math.round(loadMetric.startTime + loadMetric.duration));
+      const loadMetric = performance.getEntriesByName(loadMetricName)[0];
+      reportPerformance(loadMetric.name, Math.round(loadMetric.startTime + loadMetric.duration) / 1000);
     }
   });
 
@@ -150,10 +155,6 @@ function initEchoSrv() {
       })
     );
   }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    reportPerformance('dcl', Math.round(performance.now()));
-  });
 }
 
 function addClassIfNoOverlayScrollbar() {

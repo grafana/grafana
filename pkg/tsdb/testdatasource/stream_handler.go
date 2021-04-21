@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -16,17 +15,40 @@ import (
 
 type testStreamHandler struct {
 	logger log.Logger
+	frame  *data.Frame
 }
 
 func newTestStreamHandler(logger log.Logger) *testStreamHandler {
+	frame := data.NewFrame("testdata",
+		data.NewField("Time", nil, make([]time.Time, 1)),
+		data.NewField("Value", nil, make([]float64, 1)),
+		data.NewField("Min", nil, make([]float64, 1)),
+		data.NewField("Max", nil, make([]float64, 1)),
+	)
 	return &testStreamHandler{
+		frame:  frame,
 		logger: logger,
 	}
 }
 
-func (p *testStreamHandler) CanSubscribeToStream(_ context.Context, req *backend.SubscribeToStreamRequest) (*backend.SubscribeToStreamResponse, error) {
+func (p *testStreamHandler) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	schema, err := data.FrameToJSON(p.frame, true, false)
+	if err != nil {
+		return nil, err
+	}
 	p.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
-	return &backend.SubscribeToStreamResponse{OK: true}, nil
+	return &backend.SubscribeStreamResponse{
+		Status:       backend.SubscribeStreamStatusOK,
+		Data:         schema,
+		UseRunStream: true,
+	}, nil
+}
+
+func (p *testStreamHandler) PublishStream(_ context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	p.logger.Debug("Attempt to publish into stream", "path", req.Path, "user", req.PluginContext.User)
+	return &backend.PublishStreamResponse{
+		Status: backend.PublishStreamStatusPermissionDenied,
+	}, nil
 }
 
 func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
@@ -35,12 +57,12 @@ func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunS
 	switch request.Path {
 	case "random-2s-stream":
 		conf = testStreamConfig{
-			Interval: 200 * time.Millisecond,
+			Interval: 2 * time.Second,
 		}
 	case "random-flakey-stream":
 		conf = testStreamConfig{
-			Interval: 200 * time.Millisecond,
-			Drop:     0.6,
+			Interval: 100 * time.Millisecond,
+			Drop:     0.75, // keep 25%
 		}
 	case "random-20Hz-stream":
 		conf = testStreamConfig{
@@ -64,13 +86,6 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 	ticker := time.NewTicker(conf.Interval)
 	defer ticker.Stop()
 
-	frame := data.NewFrame("testdata",
-		data.NewField("Time", nil, make([]time.Time, 1)),
-		data.NewField("Value", nil, make([]float64, 1)),
-		data.NewField("Min", nil, make([]float64, 1)),
-		data.NewField("Max", nil, make([]float64, 1)),
-	)
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -83,19 +98,19 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 			delta := rand.Float64() - 0.5
 			walker += delta
 
-			frame.Fields[0].Set(0, t)
-			frame.Fields[1].Set(0, walker)                                // Value
-			frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
-			frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
+			p.frame.Fields[0].Set(0, t)
+			p.frame.Fields[1].Set(0, walker)                                // Value
+			p.frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
+			p.frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
 
-			bytes, err := jsoniter.Marshal(frame) // schema + points
+			bytes, err := data.FrameToJSON(p.frame, false, true)
 			if err != nil {
 				logger.Warn("unable to marshal line", "error", err)
 				continue
 			}
 
 			packet := &backend.StreamPacket{
-				Payload: bytes,
+				Data: bytes,
 			}
 			if err := sender.Send(packet); err != nil {
 				return err

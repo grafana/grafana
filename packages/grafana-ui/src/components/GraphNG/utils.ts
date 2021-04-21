@@ -1,5 +1,5 @@
 import React from 'react';
-import isNumber from 'lodash/isNumber';
+import { isNumber } from 'lodash';
 import { GraphNGLegendEventMode, XYFieldMatchers } from './types';
 import {
   ArrayVector,
@@ -26,6 +26,7 @@ import {
   ScaleDirection,
   ScaleOrientation,
 } from '../uPlot/config';
+import { collectStackingGroups } from '../uPlot/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -90,6 +91,10 @@ export function preparePlotConfigBuilder(
 
   // X is the first field in the aligned frame
   const xField = frame.fields[0];
+  if (!xField) {
+    return builder; // empty frame with no options
+  }
+
   let seriesIndex = 0;
 
   if (xField.type === FieldType.time) {
@@ -125,6 +130,8 @@ export function preparePlotConfigBuilder(
       theme,
     });
   }
+
+  const stackingGroups: Map<string, number[]> = new Map();
 
   let indexByName: Map<string, number> | undefined = undefined;
 
@@ -174,6 +181,7 @@ export function preparePlotConfigBuilder(
     const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
     let { fillOpacity } = customConfig;
+
     if (customConfig.fillBelowTo) {
       if (!indexByName) {
         indexByName = getNamesToFieldIndex(frame);
@@ -215,8 +223,20 @@ export function preparePlotConfigBuilder(
       fieldName: getFieldDisplayName(field, frame),
       hideInLegend: customConfig.hideFrom?.legend,
     });
+
+    collectStackingGroups(field, stackingGroups, seriesIndex);
   }
 
+  if (stackingGroups.size !== 0) {
+    builder.setStacking(true);
+    for (const [_, seriesIdxs] of stackingGroups.entries()) {
+      for (let j = seriesIdxs.length - 1; j > 0; j--) {
+        builder.addBand({
+          series: [seriesIdxs[j], seriesIdxs[j - 1]],
+        });
+      }
+    }
+  }
   return builder;
 }
 

@@ -347,13 +347,32 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/alerting/list',
       component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertRuleListIndex" */ 'app/features/alerting/AlertRuleListIndex')
+      ),
+    },
+    {
+      path: '/alerting/ng/list',
+      component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList')
+      ),
+    },
+    {
+      path: '/alerting/routes',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
+      ),
+    },
+    {
+      path: '/alerting/silences',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
       ),
     },
     {
       path: '/alerting/notifications',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsListPage')
+        () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/NotificationsIndex')
       ),
     },
     {
@@ -374,11 +393,25 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/alerting/new',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
+      ),
+    },
+    {
+      path: '/alerting/ng/new',
+      pageClass: 'page-alerting',
+      component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
       ),
     },
     {
       path: '/alerting/:id/edit',
+      pageClass: 'page-alerting',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
+      ),
+    },
+    {
+      path: '/alerting/ng/:id/edit',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
@@ -406,6 +439,18 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/playlists/edit/:id',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "PlaylistEditPage"*/ 'app/features/playlist/PlaylistEditPage')
+      ),
+    },
+    {
+      path: '/library-panels',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
+      ),
+    },
+    {
+      path: '/sandbox/benchmarks',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "BenchmarksPage"*/ 'app/features/sandbox/BenchmarksPage')
       ),
     },
     ...extraRoutes,

@@ -1,24 +1,28 @@
 package schedule
 
 import (
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/go-openapi/strfmt"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/alertmanager/api/v2/models"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
-func FromAlertStateToPostableAlerts(firingStates []state.AlertState) []*notifier.PostableAlert {
-	alerts := make([]*notifier.PostableAlert, 0, len(firingStates))
-	for _, state := range firingStates {
-		alerts = append(alerts, &notifier.PostableAlert{
-			PostableAlert: models.PostableAlert{
-				Annotations: models.LabelSet{}, //TODO: add annotations to evaluation results, add them to the state struct, and then set them before sending to the notifier
-				StartsAt:    state.StartsAt,
-				EndsAt:      state.EndsAt,
+func FromAlertStateToPostableAlerts(firingStates []state.AlertState) apimodels.PostableAlerts {
+	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
+
+	for _, alertState := range firingStates {
+		if alertState.State == eval.Alerting {
+			alerts.PostableAlerts = append(alerts.PostableAlerts, models.PostableAlert{
+				Annotations: alertState.Annotations,
+				StartsAt:    strfmt.DateTime(alertState.StartsAt),
+				EndsAt:      strfmt.DateTime(alertState.EndsAt),
 				Alert: models.Alert{
-					Labels: models.LabelSet(state.Labels),
+					Labels: models.LabelSet(alertState.Labels),
 				},
-			},
-		})
+			})
+		}
 	}
 	return alerts
 }

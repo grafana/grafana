@@ -1,8 +1,8 @@
 import React, { HTMLProps, ReactNode } from 'react';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
-import { stylesFactory, useTheme } from '../../themes';
+import { stylesFactory, useTheme2 } from '../../themes';
 import { Spinner } from '../Spinner/Spinner';
 import { useClientRect } from '../../utils/useClientRect';
 
@@ -24,16 +24,12 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
 }
 
 interface StyleDeps {
-  theme: GrafanaTheme;
+  theme: GrafanaThemeV2;
   invalid: boolean;
   width?: number;
 }
 
 export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
-  const { palette, colors } = theme;
-  const borderRadius = theme.border.radius.sm;
-  const height = theme.spacing.formInputHeight;
-
   const prefixSuffixStaticWidth = '28px';
   const prefixSuffix = css`
     position: absolute;
@@ -48,7 +44,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     height: 100%;
     /* Min width specified for prefix/suffix classes used outside React component*/
     min-width: ${prefixSuffixStaticWidth};
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
   `;
 
   return {
@@ -57,14 +53,14 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       css`
         label: input-wrapper;
         display: flex;
-        width: ${width ? `${8 * width}px` : '100%'};
-        height: ${height}px;
-        border-radius: ${borderRadius};
+        width: ${width ? `${theme.spacing(width)}` : '100%'};
+        height: ${theme.spacing(theme.components.height.md)};
+        border-radius: ${theme.shape.borderRadius()};
         &:hover {
           > .prefix,
           .suffix,
           .input {
-            border-color: ${invalid ? palette.redBase : colors.formInputBorder};
+            border-color: ${invalid ? theme.colors.error.border : theme.colors.primary.border};
           }
 
           // only show number buttons on hover
@@ -134,21 +130,21 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     `,
 
     input: cx(
-      getFocusStyle(theme),
+      getFocusStyle(theme.v1),
       sharedInputStyle(theme, invalid),
       css`
         label: input-input;
         position: relative;
         z-index: 0;
         flex-grow: 1;
-        border-radius: ${borderRadius};
+        border-radius: ${theme.shape.borderRadius()};
         height: 100%;
         width: 100%;
       `
     ),
     inputDisabled: css`
-      background-color: ${colors.formInputBgDisabled};
-      color: ${colors.formInputDisabledText};
+      background-color: ${theme.colors.action.disabledBackground};
+      color: ${theme.colors.action.disabledText};
     `,
     addon: css`
       label: input-addon;
@@ -185,8 +181,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       prefixSuffix,
       css`
         label: input-prefix;
-        padding-left: ${theme.spacing.sm};
-        padding-right: ${theme.spacing.xs};
+        padding-left: ${theme.spacing(1)};
+        padding-right: ${theme.spacing(0.5)};
         border-right: none;
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
@@ -196,8 +192,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       prefixSuffix,
       css`
         label: input-suffix;
-        padding-right: ${theme.spacing.sm};
-        padding-left: ${theme.spacing.xs};
+        padding-left: ${theme.spacing(1)};
+        padding-right: ${theme.spacing(0.5)};
         margin-bottom: -2px;
         border-left: none;
         border-top-left-radius: 0;
@@ -207,7 +203,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     ),
     loadingIndicator: css`
       & + * {
-        margin-left: ${theme.spacing.xs};
+        margin-left: ${theme.spacing(0.5)};
       }
     `,
   };
@@ -223,7 +219,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [prefixRect, prefixRef] = useClientRect<HTMLDivElement>();
   const [suffixRect, suffixRef] = useClientRect<HTMLDivElement>();
 
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getInputStyles({ theme, invalid: !!invalid, width });
 
   return (
