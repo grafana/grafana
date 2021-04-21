@@ -62,11 +62,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 	version := c.Args().Get(1)
 	skipTLSVerify := c.Bool("insecure")
 
-	repo := c.PluginRepoURL()
-
-	pm := manager.NewManagerInstaller(skipTLSVerify, log.New("gcli.logger"))
-
-	logger.Infof("PluginID=%s, version=%s, dir=%s, pluginZipURL=%s, repo=%s\n", pluginID, version, c.PluginDirectory(), c.PluginURL(), repo)
+	pm := manager.NewManagerInstaller(skipTLSVerify, services.GrafanaVersion, log.New("gcli.logger"))
 	return pm.InstallPlugin(pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
 }
 

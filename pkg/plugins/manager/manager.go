@@ -87,16 +87,16 @@ func newManager(cfg *setting.Cfg) *PluginManager {
 	}
 }
 
-func NewManagerInstaller(skipTLSVerify bool, logger log.Logger) *PluginManager {
+func NewManagerInstaller(skipTLSVerify bool, grafanaVersion string, logger log.Logger) *PluginManager {
 	return &PluginManager{
-		installer: installer.New(skipTLSVerify, logger),
+		installer: installer.New(skipTLSVerify, grafanaVersion, logger),
 	}
 }
 
 func (pm *PluginManager) Init() error {
 	pm.log = log.New("plugins")
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
-	pm.installer = installer.New(true, pm.log.New("installer"))
+	pm.installer = installer.New(true, pm.Cfg.BuildVersion, pm.log.New("installer"))
 
 	pm.log.Info("Starting plugin search")
 
