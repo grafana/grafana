@@ -44,7 +44,7 @@ export class UserOrgs extends PureComponent<Props, State> {
     const addToOrgContainerClass = css`
       margin-top: 0.8rem;
     `;
-    const canChangePermissions = contextSrv.hasPermission(AccessControlAction.UsersPermissionsUpdate);
+    const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);
 
     return (
       <>
@@ -65,7 +65,7 @@ export class UserOrgs extends PureComponent<Props, State> {
             </table>
           </div>
           <div className={addToOrgContainerClass}>
-            {canChangePermissions && (
+            {canAddToOrg && (
               <Button variant="secondary" onClick={this.showOrgAddModal(true)}>
                 Add user to organization
               </Button>
@@ -135,7 +135,8 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
     const { currentRole, isChangingRole } = this.state;
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
-    const canChangePermissions = contextSrv.hasPermission(AccessControlAction.UsersPermissionsUpdate);
+    const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersRoleUpdate);
+    const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
 
     return (
       <tr>
@@ -149,7 +150,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
         )}
         <td colSpan={1}>
           <div className="pull-right">
-            {canChangePermissions && (
+            {canChangeRole && (
               <ConfirmButton
                 confirmText="Save"
                 onClick={this.onChangeRoleClick}
@@ -163,7 +164,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps, OrgRowState> {
         </td>
         <td colSpan={1}>
           <div className="pull-right">
-            {canChangePermissions && (
+            {canRemoveFromOrg && (
               <ConfirmButton
                 confirmText="Confirm removal"
                 confirmVariant="destructive"
