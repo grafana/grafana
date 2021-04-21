@@ -14,8 +14,8 @@ import { initDashboardPanel } from '../state/actions';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
-import { GrafanaTheme, PanelPlugin } from '@grafana/data';
-import { stylesFactory, Themeable, withTheme } from '@grafana/ui';
+import { PanelPlugin } from '@grafana/data';
+import { stylesFactory } from '@grafana/ui';
 import { css } from 'emotion';
 
 export interface OwnProps {
@@ -45,9 +45,9 @@ const mapDispatchToProps = { initDashboardPanel };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export type Props = OwnProps & Themeable & ConnectedProps<typeof connector>;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export class UnthemedDashboardPanelUnconnected extends PureComponent<Props, State> {
+export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   specialPanels: { [key: string]: Function } = {};
 
   constructor(props: Props) {
@@ -111,9 +111,9 @@ export class UnthemedDashboardPanelUnconnected extends PureComponent<Props, Stat
   }
 
   render() {
-    const { isViewing, plugin, theme } = this.props;
+    const { isViewing, plugin } = this.props;
     const { isLazy } = this.state;
-    const styles = getStyles(theme);
+    const styles = getStyles();
 
     // If we have not loaded plugin exports yet, wait
     if (!plugin) {
@@ -135,7 +135,7 @@ export class UnthemedDashboardPanelUnconnected extends PureComponent<Props, Stat
   }
 }
 
-export const getStyles = stylesFactory((theme: GrafanaTheme) => {
+export const getStyles = stylesFactory(() => {
   return {
     panelWrapper: css`
       height: 100%;
@@ -147,6 +147,5 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
   };
 });
-export const DashboardPanelUnconnected = withTheme(UnthemedDashboardPanelUnconnected);
-DashboardPanelUnconnected.displayName = 'UnthemedDashboardPanelUnconnected';
+
 export const DashboardPanel = connector(DashboardPanelUnconnected);
