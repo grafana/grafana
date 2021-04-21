@@ -388,7 +388,7 @@ export class ElasticQueryBuilder {
   }
 
   private toNumber(stringValue: unknown): unknown | number {
-    const parsedValue = parseInt(`${stringValue}`, 10);
+    const parsedValue = parseFloat(`${stringValue}`);
     if (isNaN(parsedValue)) {
       return stringValue;
     }

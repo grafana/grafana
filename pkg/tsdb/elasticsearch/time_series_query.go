@@ -181,9 +181,9 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 // Casts values to int when required by Elastic's query DSL
 func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface{} {
-	setIntPath := func(path ...string) {
+	setFloatPath := func(path ...string) {
 		if stringValue, err := metricAggregation.Settings.GetPath(path...).String(); err == nil {
-			if value, err := strconv.Atoi(stringValue); err == nil {
+			if value, err := strconv.ParseFloat(stringValue, 32); err == nil {
 				metricAggregation.Settings.SetPath(path, value)
 			}
 		}
@@ -191,14 +191,14 @@ func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface
 
 	switch metricAggregation.Type {
 	case "moving_avg":
-		setIntPath("window")
-		setIntPath("predict")
-		setIntPath("settings", "alpha")
-		setIntPath("settings", "beta")
-		setIntPath("settings", "gamma")
-		setIntPath("settings", "period")
+		setFloatPath("window")
+		setFloatPath("predict")
+		setFloatPath("settings", "alpha")
+		setFloatPath("settings", "beta")
+		setFloatPath("settings", "gamma")
+		setFloatPath("settings", "period")
 	case "serial_diff":
-		setIntPath("lag")
+		setFloatPath("lag")
 	}
 
 	return metricAggregation.Settings.MustMap()
