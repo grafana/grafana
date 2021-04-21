@@ -57,6 +57,11 @@ type Manager interface {
 	LoadPluginDashboard(pluginID, path string) (*models.Dashboard, error)
 	// IsAppInstalled returns whether an app is installed.
 	IsAppInstalled(id string) bool
+	// InstallPlugin finds the plugin given the provided information
+	// and installs in the provided  plugins directory.
+	InstallPlugin(pluginName, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
+	// UninstallPlugin removes the specified plugin from the provided plugins directory.
+	UninstallPlugin(pluginPath, pluginName string) error
 }
 
 type ImportDashboardInput struct {
