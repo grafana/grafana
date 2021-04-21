@@ -452,7 +452,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.sm} ${theme.spacing.md};
       border-radius: ${theme.border.radius.md};
       margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
-      border: 1px solid ${theme.colors.panelBorder};
+      border: 1px solid ${theme.colors.border2};
     `,
     flipButton: css`
       margin: ${theme.spacing.xs} 0 0 ${theme.spacing.sm};

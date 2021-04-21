@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -23,7 +24,9 @@ import (
 func TestAlertAndGroupsQuery(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
+		AnonymousUserRole:    models.ROLE_EDITOR,
 	})
+
 	store := testinfra.SetUpDatabase(t, dir)
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
@@ -58,6 +61,87 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 		require.JSONEq(t, "[]", string(b))
+	}
+
+	// Now, let's test the endpoint with some alerts.
+	{
+		// Create the namespace we'll save our alerts to.
+		require.NoError(t, createFolder(t, store, 0, "default"))
+	}
+
+	// Create an alert that will fire as quickly as possible
+	{
+		interval, err := model.ParseDuration("10s")
+		require.NoError(t, err)
+		rules := apimodels.PostableRuleGroupConfig{
+			Name:     "arulegroup",
+			Interval: interval,
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						OrgID:     2,
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								Model: json.RawMessage(`{
+									"datasourceUid": "-100",
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+			},
+		}
+		buf := bytes.Buffer{}
+		enc := json.NewEncoder(&buf)
+		err = enc.Encode(&rules)
+		require.NoError(t, err)
+
+		u := fmt.Sprintf("http://%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", &buf)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		require.NoError(t, err)
+		assert.Equal(t, resp.StatusCode, 202)
+	}
+
+	// Eventually, we'll get an alert with its state being active.
+	{
+		alertsURL := fmt.Sprintf("http://%s/api/alertmanager/grafana/api/v2/alerts", grafanaListedAddr)
+		// nolint:gosec
+		require.Eventually(t, func() bool {
+			resp, err := http.Get(alertsURL)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.StatusCode)
+
+			var alerts apimodels.GettableAlerts
+			err = json.Unmarshal(b, &alerts)
+			require.NoError(t, err)
+
+			if len(alerts) > 0 {
+				status := alerts[0].Status
+				return status != nil && status.State != nil && *status.State == "active"
+			}
+
+			return false
+		}, 18*time.Second, 2*time.Second)
 	}
 }
 

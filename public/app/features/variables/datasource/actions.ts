@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { chain } from 'lodash';
 import { getTemplateSrv } from '@grafana/runtime';
 import { stringToJsRegex } from '@grafana/data';
 
@@ -36,7 +36,7 @@ export const initDataSourceVariableEditor = (
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => (dispatch) => {
   const dataSources = dependencies.getDatasourceSrv().getList({ metrics: true, variables: true });
-  const dataSourceTypes = _(dataSources)
+  const dataSourceTypes = chain(dataSources)
     .uniqBy('meta.id')
     .map((ds: any) => {
       return { text: ds.meta.name, value: ds.meta.id };
