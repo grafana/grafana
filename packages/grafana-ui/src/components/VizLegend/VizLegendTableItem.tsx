@@ -32,51 +32,55 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
   const styles = useStyles(getStyles);
   const eventBus = useContext(EventBusWithSourceContext);
 
+  function onMouseEnter(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    if (eventBus) {
+      eventBus.publish({
+        type: DataHoverEvent.type,
+        payload: {
+          raw: event,
+          x: 0,
+          y: 0,
+          dataId: item.label,
+        },
+      });
+    }
+  }
+
+  function onMouseOut(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    if (eventBus) {
+      eventBus.publish({
+        type: DataHoverClearEvent.type,
+        payload: {
+          raw: event,
+          x: 0,
+          y: 0,
+          dataId: item.label,
+        },
+      });
+    }
+  }
+
+  function onClick(event: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+    if (onLabelClick) {
+      onLabelClick(item, event);
+    }
+  }
+
+  function onColorChange(color: string) {
+    if (onSeriesColorChange) {
+      onSeriesColorChange(item.label, color);
+    }
+  }
+
   return (
     <tr className={cx(styles.row, className)}>
       <td>
         <span className={styles.itemWrapper}>
-          <VizLegendSeriesIcon
-            disabled={!onSeriesColorChange}
-            color={item.color}
-            onColorChange={(color) => {
-              if (onSeriesColorChange) {
-                onSeriesColorChange(item.label, color);
-              }
-            }}
-          />
+          <VizLegendSeriesIcon disabled={!onSeriesColorChange} color={item.color} onColorChange={onColorChange} />
           <div
-            onMouseMove={(event) => {
-              if (eventBus) {
-                eventBus.publish({
-                  type: DataHoverEvent.type,
-                  payload: {
-                    raw: event,
-                    x: 0,
-                    y: 0,
-                    dataId: item.label,
-                  },
-                });
-              }
-            }}
-            onMouseOut={(event) => {
-              if (eventBus) {
-                eventBus.publish({
-                  type: DataHoverClearEvent.type,
-                  payload: {
-                    raw: event,
-                    x: 0,
-                    y: 0,
-                    dataId: item.label,
-                  },
-                });
-              }
-            }}
-            onClick={(event) => {
-              if (onLabelClick) {
-                onLabelClick(item, event);
-              }
-            }}
+            onMouseEnter={onMouseEnter}
+            onMouseOut={onMouseOut}
+            onClick={onClick}
             className={cx(styles.label, item.disabled && styles.labelDisabled)}
           >
             {item.label} {item.yAxis === 2 && <span className={styles.yAxisLabel}>(right y-axis)</span>}
