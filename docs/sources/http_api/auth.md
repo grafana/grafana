@@ -11,9 +11,9 @@ aliases = ["/docs/grafana/latest/http_api/authentication/"]
 
 Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or OAuth).
 
-## Header
+## X-Grafana-Org-Id Header
 
-**X-Grafana-Org-Id** is an optional property that specifies the org to which the action is applied on. If it is not set, the created key belongs to the current context org. You could use this header in all requests excepts requests regarding admin.
+**X-Grafana-Org-Id**  is an optional property that specifies the organization to which the action is applied. If it is not set, the created key belongs to the current context org. Use this header in all requests except those regarding admin.
 
 **Example Request**:
 
