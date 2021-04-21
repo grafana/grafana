@@ -8,6 +8,8 @@ aliases = ["/docs/grafana/latest/http_api/organization/"]
 
 # Organization API
 
+Hello world!
+
 The Organization HTTP API is divided in two resources, `/api/org` (current organization)
 and `/api/orgs` (admin organizations). One big difference between these are that
 the admin of all organizations API only works with basic authentication, see [Admin Organizations API](#admin-organizations-api) for more information.
