@@ -1,6 +1,6 @@
 import { Observable, of } from 'rxjs';
 import { cloneDeep } from 'lodash';
-import { AnnotationEvent } from '@grafana/data';
+import { AnnotationEvent, AnnotationQuery } from '@grafana/data';
 
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorker, DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult } from './utils';
@@ -16,6 +16,11 @@ export class SnapshotWorker implements DashboardQueryRunnerWorker {
       return emptyResult();
     }
 
+    const annotations = this.getAnnotationsFromSnapshot(options);
+    return of({ annotations, alertStates: [] });
+  }
+
+  getAnnotationsFromSnapshot(options: DashboardQueryRunnerOptions) {
     const { dashboard } = options;
     const dashAnnotations = dashboard.annotations.list.filter((a) => a.enable);
     const snapshots = dashAnnotations.filter((a) => Boolean(a.snapshotData));
@@ -23,10 +28,10 @@ export class SnapshotWorker implements DashboardQueryRunnerWorker {
       return acc.concat(SnapshotWorker.translateQueryResult(curr, curr.snapshotData));
     }, [] as AnnotationEvent[]);
 
-    return of({ annotations, alertStates: [] });
+    return annotations;
   }
 
-  private static translateQueryResult(annotation: any, results: AnnotationEvent[]): AnnotationEvent[] {
+  private static translateQueryResult(annotation: AnnotationQuery, results: AnnotationEvent[]): AnnotationEvent[] {
     annotation = cloneDeep(annotation);
     delete annotation.snapshotData;
 
