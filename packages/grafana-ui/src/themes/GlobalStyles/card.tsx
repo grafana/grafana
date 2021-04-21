@@ -16,13 +16,13 @@ export function getCardStyles(theme: GrafanaThemeV2) {
     .card-item {
       display: block;
       height: 100%;
-      background: ${theme.palette.background.secondary};
+      background: ${theme.colors.background.secondary};
       box-shadow: none;
       padding: ${theme.spacing(2)};
       border-radius: 4px;
 
       &:hover {
-        background: ${theme.palette.emphasize(theme.palette.background.secondary, 0.03)};
+        background: ${theme.colors.emphasize(theme.colors.background.secondary, 0.03)};
       }
 
       .label-tag {
@@ -46,7 +46,7 @@ export function getCardStyles(theme: GrafanaThemeV2) {
     }
 
     .card-item-type {
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       text-transform: uppercase;
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.fontWeightMedium};
@@ -61,7 +61,7 @@ export function getCardStyles(theme: GrafanaThemeV2) {
     }
 
     .card-item-name {
-      color: ${theme.palette.text.primary};
+      color: ${theme.colors.text.primary};
       overflow: hidden;
       text-overflow: ellipsis;
       width: 100%;
@@ -72,14 +72,14 @@ export function getCardStyles(theme: GrafanaThemeV2) {
     }
 
     .card-item-sub-name {
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       overflow: hidden;
       text-overflow: ellipsis;
       width: 100%;
     }
 
     .card-item-sub-name--header {
-      color: ${theme.palette.text.secondary};
+      color: ${theme.colors.text.secondary};
       text-transform: uppercase;
       margin-bottom: ${theme.spacing(2)};
       font-size: ${theme.typography.size.sm};
