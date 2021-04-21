@@ -1,4 +1,4 @@
-import { ThemePalette } from './createPalette';
+import { ThemeColors } from './createColors';
 
 /** @beta */
 export interface ThemeShadows {
@@ -34,8 +34,8 @@ function createLightShadow(...px: number[]) {
 }
 
 /** @alpha */
-export function createShadows(palette: ThemePalette): ThemeShadows {
-  if (palette.mode === 'dark') {
+export function createShadows(colors: ThemeColors): ThemeShadows {
+  if (colors.mode === 'dark') {
     return {
       z0: createDarkShadow(0, 1, 1, -1, 0, 1, 1, 0, 0, 1, 3, 0),
       z1: createDarkShadow(0, 1, 1, -1, 0, 1, 2, 0, 0, 1, 3, 0),

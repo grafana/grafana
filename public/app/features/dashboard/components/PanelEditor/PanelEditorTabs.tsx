@@ -1,6 +1,6 @@
 import React, { FC, useEffect } from 'react';
 import { css } from '@emotion/css';
-import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles } from '@grafana/ui';
+import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles2 } from '@grafana/ui';
 import { AlertTab } from 'app/features/alerting/AlertTab';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 import { DashboardModel, PanelModel } from '../../state';
@@ -8,7 +8,7 @@ import { PanelEditorTab, PanelEditorTabId } from './types';
 import { Subscription } from 'rxjs';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 import { PanelEditorQueries } from './PanelEditorQueries';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaThemeV2 } from '@grafana/data';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -19,7 +19,7 @@ interface PanelEditorTabsProps {
 
 export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, dashboard, tabs, onChangeTab }) => {
   const forceUpdate = useForceUpdate();
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     const eventSubs = new Subscription();
@@ -75,7 +75,7 @@ function getCounter(panel: PanelModel, tab: PanelEditorTab) {
   return null;
 }
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaThemeV2) => {
   return {
     wrapper: css`
       display: flex;
@@ -83,7 +83,7 @@ const getStyles = (theme: GrafanaTheme) => {
       height: 100%;
     `,
     tabBar: css`
-      padding-left: ${theme.spacing.md};
+      padding-left: ${theme.spacing(2)};
     `,
     tabContent: css`
       padding: 0;
@@ -91,8 +91,8 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.v2.palette.background.primary};
-      border-right: 1px solid ${theme.v2.components.panel.border};
+      background: ${theme.colors.background.primary};
+      border-right: 1px solid ${theme.components.panel.border};
     `,
   };
 };

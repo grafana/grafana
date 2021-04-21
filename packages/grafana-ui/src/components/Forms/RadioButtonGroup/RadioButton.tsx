@@ -1,6 +1,6 @@
 import React from 'react';
-import { useTheme, stylesFactory } from '../../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { useTheme2, stylesFactory } from '../../../themes';
+import { GrafanaThemeV2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { getPropertiesForButtonSize } from '../commonStyles';
 import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
@@ -29,7 +29,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   description,
   fullWidth,
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getRadioButtonStyles(theme, size, fullWidth);
 
   return (
@@ -52,14 +52,14 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
 
 RadioButton.displayName = 'RadioButton';
 
-const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButtonSize, fullWidth?: boolean) => {
-  const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme.v2);
+const getRadioButtonStyles = stylesFactory((theme: GrafanaThemeV2, size: RadioButtonSize, fullWidth?: boolean) => {
+  const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
 
-  const textColor = theme.v2.palette.text.secondary;
-  const textColorHover = theme.v2.palette.text.primary;
-  const bg = theme.v2.components.input.background;
+  const textColor = theme.colors.text.secondary;
+  const textColorHover = theme.colors.text.primary;
+  const bg = theme.components.input.background;
   // remove the group inner padding (set on RadioButtonGroup)
-  const labelHeight = height * theme.v2.spacing.gridSize - 4 - 2;
+  const labelHeight = height * theme.spacing.gridSize - 4 - 2;
 
   return {
     radio: css`
@@ -68,24 +68,24 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       z-index: -1000;
 
       &:checked + label {
-        color: ${theme.v2.palette.text.primary};
-        font-weight: ${theme.v2.typography.fontWeightMedium};
-        background: ${theme.v2.palette.action.selected};
+        color: ${theme.colors.text.primary};
+        font-weight: ${theme.typography.fontWeightMedium};
+        background: ${theme.colors.action.selected};
         z-index: 3;
       }
 
       &:focus + label,
       &:focus-visible + label {
-        ${getFocusStyles(theme.v2)};
+        ${getFocusStyles(theme)};
       }
 
       &:focus:not(:focus-visible) + label {
-        ${getMouseFocusStyles(theme.v2)}
+        ${getMouseFocusStyles(theme)}
       }
 
       &:disabled + label {
         cursor: default;
-        color: ${theme.v2.palette.text.disabled};
+        color: ${theme.colors.text.disabled};
         cursor: not-allowed;
       }
     `,
@@ -97,8 +97,8 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       // Deduct border from line-height for perfect vertical centering on windows and linux
       line-height: ${labelHeight}px;
       color: ${textColor};
-      padding: ${theme.v2.spacing(0, padding)};
-      border-radius: ${theme.v2.shape.borderRadius()};
+      padding: ${theme.spacing(0, padding)};
+      border-radius: ${theme.shape.borderRadius()};
       background: ${bg};
       cursor: pointer;
       z-index: 1;
