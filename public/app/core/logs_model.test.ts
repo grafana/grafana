@@ -8,7 +8,13 @@ import {
   MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
-import { dataFrameToLogsModel, dedupLogRows, getSeriesProperties, logSeriesToLogsModel } from './logs_model';
+import {
+  dataFrameToLogsModel,
+  dedupLogRows,
+  getSeriesProperties,
+  logSeriesToLogsModel,
+  LIMIT_LABEL,
+} from './logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -246,7 +252,7 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: 'Limit',
+      label: LIMIT_LABEL,
       value: `1000 (2 returned)`,
       kind: LogsMetaKind.String,
     });
@@ -316,7 +322,7 @@ describe('dataFrameToLogsModel', () => {
       kind: LogsMetaKind.LabelsMap,
     });
     expect(logsModel.meta![1]).toMatchObject({
-      label: 'Limit',
+      label: LIMIT_LABEL,
       value: `1000 (2 returned)`,
       kind: LogsMetaKind.String,
     });
@@ -554,6 +560,52 @@ describe('dataFrameToLogsModel', () => {
     ]);
   });
 
+  it('should return expected line limit meta info when returned number of series equal the log limit', () => {
+    const series: DataFrame[] = [
+      new MutableDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: [
+              't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+              't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+            ],
+            labels: {
+              filename: '/var/log/grafana/grafana.log',
+              job: 'grafana',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['foo', 'bar'],
+          },
+        ],
+        meta: {
+          limit: 2,
+        },
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc', { from: 1556270591353, to: 1556289770991 });
+    expect(logsModel.meta).toHaveLength(2);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: 'Common labels',
+      value: series[0].fields[1].labels,
+      kind: LogsMetaKind.LabelsMap,
+    });
+    expect(logsModel.meta![1]).toMatchObject({
+      label: LIMIT_LABEL,
+      value: `2 reached, received logs cover 98.44% (5h 14min 40sec) of your selected time range (5h 19min 40sec)`,
+      kind: LogsMetaKind.String,
+    });
+  });
+
   it('should fallback to row index if no id', () => {
     const series: DataFrame[] = [
       toDataFrame({
@@ -588,8 +640,6 @@ describe('logSeriesToLogsModel', () => {
         meta: {
           searchWords: ['test'],
           limit: 1000,
-          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
-          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
           preferredVisualisationType: 'logs',
         },
       },
@@ -597,10 +647,7 @@ describe('logSeriesToLogsModel', () => {
 
     const metaData = {
       hasUniqueLabels: false,
-      meta: [
-        { label: 'Limit', value: '1000 (0 returned)', kind: 1 },
-        { label: 'Total bytes processed', value: '97.0  kB', kind: 1 },
-      ],
+      meta: [{ label: LIMIT_LABEL, value: 1000, kind: 0 }],
       rows: [],
     };
 
@@ -634,8 +681,6 @@ describe('logSeriesToLogsModel', () => {
         meta: {
           searchWords: ['test'],
           limit: 1000,
-          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
-          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
           preferredVisualisationType: 'logs',
         },
       }),
@@ -646,8 +691,6 @@ describe('logSeriesToLogsModel', () => {
         meta: {
           searchWords: ['test'],
           limit: 1000,
-          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
-          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
           preferredVisualisationType: 'logs',
         },
       }),
@@ -656,8 +699,7 @@ describe('logSeriesToLogsModel', () => {
     const logsModel = dataFrameToLogsModel(logSeries, 0, 'utc');
     expect(logsModel.meta).toMatchObject([
       { kind: 2, label: 'Common labels', value: { foo: 'bar', level: 'dbug' } },
-      { kind: 1, label: 'Limit', value: '2000 (3 returned)' },
-      { kind: 1, label: 'Total bytes processed', value: '194  kB' },
+      { kind: 0, label: LIMIT_LABEL, value: 2000 },
     ]);
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([

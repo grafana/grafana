@@ -10,9 +10,11 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-bottom: ${theme.spacing.d};
     min-width: 30%;
     display: flex;
+    flex-wrap: wrap;
   `,
   metaItem: css`
     margin-right: ${theme.spacing.d};
+    margin-top: ${theme.spacing.xs};
     display: flex;
     align-items: baseline;
 
@@ -27,6 +29,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   metaValue: css`
     font-family: ${theme.typography.fontFamily.monospace};
+    font-size: ${theme.typography.size.sm};
   `,
 }));
 
